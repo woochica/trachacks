@@ -7,7 +7,7 @@ tickets.  This is done in response to
  * Instead of adding hours via the comment system, there is a separate
   view for hours:
 
-   - /hours is a management view.  This view displays the hours for all
+   - `/hours` is a management view.  This view displays the hours for all
    tickets for the last week (by default) in a way that combines the
    query interface for querying tickets and the timeline display for
    hours on the tickets in the time period.
@@ -15,14 +15,14 @@ tickets.  This is done in response to
    - query filters are available to find hours for people, hours for
    tickets of a certain component, etc;
 
-   - a view for /hours/<ticket number>;  this displays the accrued hours
+   - a view for `/hours/<ticket number>`;  this displays the accrued hours
    for a particular ticket with a timeline-like view, but should also
    allow adding of new hours (by default, on "today", but this should
    be changeable via dropdown menus for day, month, year, etc),
    editing previously entered hours (amount, date, description) and
    deleting previously alloted hours
 
-   - the view at /hours/<ticket number> by default only allows adding/editing
+   - the view at `/hours/<ticket number>` by default only allows adding/editing
    of one's own hours on the ticket;  however, if you are a
    TRAC_ADMIN, you should be able to add/edit/delete others' hours as well
 
@@ -34,8 +34,8 @@ tickets.  This is done in response to
   applicable views;  if a description is provided, the hours and
   description are logged to ticket comments
 
- * ticket <number> has a link to /hours/<number> so that a user
-  could add and view hours for the ticket
+ * `/ticket/<number>` has a link to `/hours/<number>` as the total
+  hours field so that a user can add and view hours for the ticket
 
 Hour tracking and estimation is most useful when the following questions
  can be answered:
