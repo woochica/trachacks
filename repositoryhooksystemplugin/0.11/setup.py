@@ -12,6 +12,7 @@ setup(name='RepositoryHookSystem',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
+      package_data={'repository_hook_system': [ 'templates/*']},
       zip_safe=False,
       entry_points = """
       [trac.plugins]
