@@ -48,6 +48,16 @@ class Service():
         self.text = self.document.Text
         self.cursor = self.text.getEnd()
         self.enumStyles = self.document.getStyleFamilies().getByName('NumberingStyles')
+     
+#---------------------------------------------------------------------------------------------------------------------------------------------------     
+     
+    def convertToURL(self, cPathname ):
+        if len( cPathname ) >= 1:
+            if cPathname[1:2] == ":":
+                cPathname = "/" + cPathname[0] + "|" + cPathname[2:]
+        cPathname = cPathname.replace("\\", "/" )
+        cPathname = "file://" + cPathname
+        return cPathname  
         
 #---------------------------------------------------------------------------------------------------------------------------------------------------            
                     
@@ -70,7 +80,7 @@ class Service():
         prop = PropertyValue()
         prop.Name = "AsTemplate"
         prop.Value = True
-        return self.desktop.loadComponentFromURL(url,"_blank", 0, (prop, ))
+        return self.desktop.loadComponentFromURL(self.convertToURL(url),"_blank", 0, (prop, ))
 
         
 #---------------------------------------------------------------------------------------------------------------------------------------------------            

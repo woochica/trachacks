@@ -87,19 +87,23 @@ class Export(Component):
         cursor.execute(self.CONF_QUERY)
         for (text,) in cursor:
             page_content = text
+            self.env.log.debug('entro aqui %s', page_content)
             break
         
         for line in page_content.strip().splitlines():
             if line.find('=') != -1:
                 name, value = [token.strip()
                     for token in line.split("=", 2)]
+                self.env.log.debug('-------> %s %s',name, value)
                 if name == 'template_list':
                     template_list = value.split(', ')
                 if name == 'template_file':
                     template_file = value.split(', ')
         i = 0
         for element in template_list:
-            if pagina.startswith(element):
+            self.env.log.debug('->>>>>>> %s',pagina)
+            if re.match('.*' + element + '.*', pagina):
+            #if pagina.startswith(element):
                 return os.path.join(self.env.path, 'attachments', 'wiki','WikiTemplateConf', template_file[i])
             i = i + 1
         return None

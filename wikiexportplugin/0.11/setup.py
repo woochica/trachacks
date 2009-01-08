@@ -9,7 +9,7 @@
 from setuptools import setup
 
 PACKAGE = 'TracWikiExport'
-VERSION = '0.1'
+VERSION = '0.2'
 
 setup(
     name = PACKAGE,
