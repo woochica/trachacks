@@ -3,6 +3,7 @@ RepositoryHookAdmin:
 admin panel interface for controlling hook setup and listeners
 """
 
+from pkg_resources import resource_filename
 from repository_hook_system.interface import IRepositoryHookSystem
 from repository_hook_system.interface import IRepositoryHookSubscriber
 from trac.admin.api import IAdminPanelProvider
@@ -52,7 +53,6 @@ class RepositoryHookAdmin(Component):
         """Return a list of directories containing the provided template
         files.
         """
-        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     ### methods for IAdminPanelProvider
