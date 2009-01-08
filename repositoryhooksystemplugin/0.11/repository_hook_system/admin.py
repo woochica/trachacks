@@ -69,7 +69,7 @@ class RepositoryHookAdmin(Component):
         """
         if req.perm.has_permission('TRAC_ADMIN'): # XXX needed?
             system = self.system()
-            if system is not None:
+            if system is not None and self.env.config.get('trac', 'repository_dir'):
                 for hook in system.available_hooks():
                     yield ('repository_hooks', 'Repository Hooks', hook, hook)
 
