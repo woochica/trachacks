@@ -1032,6 +1032,8 @@ class TracHoursPlugin(Component):
         filter the stream for the roadmap (/roadmap)
         and milestones /milestone/<milestone>
         """
+        # XXX maybe this should be refactored to deal with these
+        # views independently; see e.g. #4375
 
         hours = {}
 
