@@ -238,6 +238,7 @@ class TracHoursPlugin(Component):
         """
         handlers = { 'ticket.html': self.filter_ticket,
                      'roadmap.html': self.filter_roadmap,
+                     'milestone_view.html': self.filter_roadmap,
                     }
 
         handler = handlers.get(filename)
@@ -1027,10 +1028,28 @@ class TracHoursPlugin(Component):
         return stream
 
     def filter_roadmap(self, req, stream, data):
-        """filter the stream for the roadmap (/roadmap)"""
+        """
+        filter the stream for the roadmap (/roadmap)
+        and milestones /milestone/<milestone>
+        """
 
         hours = {}
-        for milestone in data['milestones']:
+
+        milestones = data.get('milestones')
+        this_milestone = None
+        if milestones is None:
+            # /milestone view : only one milestone
+            milestones = [ data['milestone'] ]
+            this_milestone = milestones[0].name
+            find_xpath = "//div[@class='milestone']//h1"
+            xpath = "//div[@class='milestone']//div[@class='info']"
+        else:
+            # /roadmap view
+            find_xpath = "//li[@class='milestone']//h2/a"
+            xpath = "//li[@class='milestone']//div[@class='info']"
+
+
+        for milestone in milestones:
             hours[milestone.name] = dict(totalhours=0., 
                                          estimatedhours=0.,)
                                              
@@ -1067,7 +1086,10 @@ class TracHoursPlugin(Component):
                 self.hours = hours
                 self.href = href
             def __iter__(self):
-                milestone = self.buffer.events[3][1]
+                if this_milestone is not None: # for /milestone/xxx
+                    milestone = this_milestone
+                else:
+                    milestone = self.buffer.events[3][1]
                 hours = self.hours[milestone]
                 estimatedhours = hours['estimatedhours']
                 totalhours = hours['totalhours']
@@ -1086,8 +1108,6 @@ class TracHoursPlugin(Component):
                 items.append(tag.dd(tag.a(TracHoursPlugin.hours_format % totalhours, href=link)))
                 return iter(tag.dl(*items))
 
-        find_xpath = "//li[@class='milestone']//h2/a"
-        xpath = "//li[@class='milestone']//div[@class='info']"
         b = StreamBuffer()
         stream |= Transformer(find_xpath).copy(b).end().select(xpath).append(MilestoneMarkup(b, hours, req.href))
         return stream
