@@ -261,7 +261,7 @@ class WatchlinkPlugin(Component):
     ### methods for IRequestFilter
     def post_process_request(self, req, template, data, content_type):
         # Extract realm and resid from path:
-        parts = req.path_info[1:].split('/',2)
+        parts = req.path_info[1:].split('/',1)
 
 
         # Handle special case for '/' and '/wiki'
