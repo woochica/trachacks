@@ -1007,7 +1007,7 @@ class TracHoursPlugin(Component):
 
     def get_total_hours(self, ticket_id):
         """return total SECONDS associated with ticket_id""" 
-        return sum([hour['seconds_worked'] for hour in self.get_ticket_hours(ticket_id)])
+        return sum([hour['seconds_worked'] for hour in self.get_ticket_hours(int(ticket_id))])
 
     ### internal methods for filtering genshi template streams
 
