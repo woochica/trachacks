@@ -12,7 +12,7 @@ setup(
     author_email = 'trac@gruenewaldt.net',
     maintainer = 'Bernhard Gruenewaldt',
     maintainer_email = 'trac@gruenewaldt.net',
-    url = 'https://www.gruenewaldt.net/trac/wiki/NoteBox',
+    url = 'http://trac-hacks.org/wiki/NoteBoxPlugin',
     description = 'The NoteBox Plugin for Trac',
     entry_points={'trac.plugins': ['NoteBox = notebox.notebox']},
     keywords = 'trac toc',

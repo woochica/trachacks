@@ -6,7 +6,7 @@ This macro renders a colored div box.
 
 == Installation ==
 
-See https://www.gruenewaldt.net/trac/wiki/NoteBox
+See http://trac-hacks.org/wiki/NoteBoxPlugin
 
 == Usage ==
 
@@ -16,7 +16,7 @@ argument.
 
 == Additional information and a life example ==
 
-Please visit: https://www.gruenewaldt.net/trac/wiki/NoteBox
+Please visit: http://trac-hacks.org/wiki/NoteBoxPlugin
 
 == Author and License ==
 
