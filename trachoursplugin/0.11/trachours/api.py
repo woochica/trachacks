@@ -1,3 +1,4 @@
+hours_format = '%.2f'
 
 custom_fields = { 'estimatedhours': 
                   { 'type': 'text',

@@ -12,6 +12,7 @@ import datetime
 import dateutil.parser
 import time
 
+from api import hours_format # local import
 from dbhelper import * # local import
 
 from genshi.builder import tag
@@ -72,8 +73,7 @@ def get_query(comp, query_id):
 class TracHoursPlugin(Component):
 
     ###### class data
-    date_format = '%B %d, %Y'
-    hours_format = '%.2f'
+    date_format = '%B %d, %Y'     # XXX should go to api ?
 
     fields = [dict(name='id', label='Ticket'), #note that ticket_time id is clobbered by ticket id
               dict(name='seconds_worked', label='Hours Worked'),
@@ -1025,6 +1025,9 @@ class TracHoursPlugin(Component):
             field = tag.a(hours, href=req.href('hours', data['ticket'].id), title="hours for ticket %s" % data['ticket'].id)
             totalhours['rendered'] = field
         stream |= Transformer("//input[@id='field-totalhours']").replace(field)
+
+        if ticket_id is not None:
+            stream |= Transformer("//div[@id='ticket']").after(tag.p(tag.b("BLAHBLAHBLAH")))
         return stream
 
     def filter_roadmap(self, req, stream, data):
@@ -1107,7 +1110,7 @@ class TracHoursPlugin(Component):
                                  from_month=date.month,
                                  from_day=date.day)
                 items.append(tag.dt(tag.a("Total Hours:", href=link)))
-                items.append(tag.dd(tag.a(TracHoursPlugin.hours_format % totalhours, href=link)))
+                items.append(tag.dd(tag.a(hours_format % totalhours, href=link)))
                 return iter(tag.dl(*items))
 
         b = StreamBuffer()

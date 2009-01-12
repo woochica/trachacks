@@ -14,6 +14,7 @@ from trac.core import *
 from trac.env import open_environment
 from trac.web.api import IRequestHandler
 from trac.web.href import Href
+from trachours.api import hours_format
 from trachours.feed import total_hours
 from trachours.utils import get_date
 from trachours.utils import urljoin
@@ -169,6 +170,7 @@ class MultiprojectHours(Component):
 
         data['headers'] = rows[0]
 
+        total = 0.
         for row in data['rows']:
             worker = row[0]
             kw = req.args.copy()
@@ -180,13 +182,13 @@ class MultiprojectHours(Component):
                 kw = req.args.copy()
                 kw['worker_filter'] = worker
                 url = Href('/%s' % project)('hours', **kw)
-                project_urls.append(tag.a(row[index+1], href=url, title="Hours for %s on %s" % (worker, project)))
+                hours = hours_format % row[index+1]
+                project_urls.append(tag.a(hours, href=url, title="Hours for %s on %s" % (worker, project)))
             row[1:-1] = project_urls
+            total += row[-1]
+            row[-1] = hours_format % row[-1]
 
-        if data['rows']:
-            data['total'] = sum(row[-1] for row in data['rows'])
-        else:
-            data['total'] = 0
+        data['total'] = hours_format % total
             
         return ('hours_multiproject.html', data, 'text/html')
 
