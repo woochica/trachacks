@@ -155,7 +155,11 @@ class MultiprojectHours(Component):
         kw = req.args.copy()
         kw['format'] = 'rss'
         path = Href('/hours')(**kw)
-        directory = os.path.split(self.env.path)[0]
+
+        # directory for all projects
+        # XXX this could be configurable in an intelligent way
+        directory = os.path.split(self.env.path)[0] 
+
         rows = query_from_url(url, path=path, directory=directory)
         data['rows'] = rows[1:] 
         data['projects'] = []

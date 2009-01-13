@@ -51,3 +51,16 @@ tracking plugin could generate reports to answer those questions.
 
 For other trac time-tracking solutions, see
 http://trac.edgewall.org/wiki/TimeTracking
+
+== Multiproject Hours ==
+
+The TracHoursPlugin exports RSS from the `/hours` handler.  This has
+been utilized in consumption to provide hours reports across projects
+sharing the same parent directory.  If {{{trachours.multiproject}}} is
+enabled, then `/hours/multiproject` will become a handler front-ending
+hours reports throughout the project and a link to this will appear on
+the `/hours` page to `/hours/multiproject`.
+
+The multiproject report breaks down hours by project and worker giving
+row and column totals.  If there are no hours for a project then that
+project will not be shown.
