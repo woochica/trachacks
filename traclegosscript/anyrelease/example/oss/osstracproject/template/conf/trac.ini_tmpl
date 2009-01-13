@@ -125,14 +125,6 @@ blockedby = text
 blockedby.label = Blocked By
 blocking = text
 blocking.label = Blocking
-confirmation = select
-confirmation.label = Crossed off?
-confirmation.options = 
-confirmation.value = 6
-time_to_complete = select
-time_to_complete.label = Time To Complete (estimate)
-time_to_complete.options = A few minutes|A few hours|A day or two|A long time|
-time_to_complete.value = 4
 
 [ticket-workflow]
 accept = new -> assigned
