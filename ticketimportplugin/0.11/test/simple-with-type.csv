@@ -1,0 +1,5 @@
+summary,owner,anyotherfield,priority,component,mycustomfield,type
+sum task,me,anything,mypriority,mycomp,mycustomfield1,task
+sum enhancement,you,somethingelse,yourpriority,yourcomp,customfield2,enhancement
+sum defect,you,somethingelse,yourpriority,yourcomp,customfield2,defect
+sum newtype,you,somethingelse,yourpriority,yourcomp,customfield2,newtype

@@ -200,10 +200,10 @@ class ImporterTestCase(unittest.TestCase):
         env = Environment(instancedir)
         self.assert_(self._do_test(env, 'ticket-13.xls', self._test_import))
 
-#    def test_import_with_ticket_types(self):
-#        env = self._setup()
-#        self._do_test_diffs(env, 'simple-with-types.csv', self._test_preview)
-#        self.assert_(self._do_test(env, 'simple-with-types.csv', self._test_import))
+    def test_import_with_ticket_types(self):
+        env = self._setup()
+        self._do_test_diffs(env, 'simple-with-type.csv', self._test_preview)
+        self.assert_(self._do_test(env, 'simple-with-type.csv', self._test_import))
 
     def test_import_with_reconciliation_by_owner(self):
         '''
