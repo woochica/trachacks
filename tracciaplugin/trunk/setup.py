@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracCia',
-    version = '0.3',
+    version = '0.3.9',
     packages = ['traccia'],
     entry_points = {
         'trac.plugins': [
