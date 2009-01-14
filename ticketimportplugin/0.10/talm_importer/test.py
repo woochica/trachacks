@@ -184,15 +184,11 @@ class ImporterTestCase(unittest.TestCase):
         self.assertEquals(self._do_test_with_exception(env, 'test-detect-duplicate-summary-in-spreadsheet.csv', self._test_import), 'Summary "test & integration" is duplicated in the spreadsheet. Ticket reconciliation by summary can not be done. Please modify the summaries in the spreadsheet to ensure that they are unique.')
 
     def test_import_7(self):
-        instancedir = os.path.join(tempfile.gettempdir(), 'test-importer.tickets')
-        if os.path.exists(instancedir):
-           shutil.rmtree(instancedir, False)
-        _dbfile = os.path.join(os.path.join(instancedir, 'db'), 'trac.db')
-        env = Environment(instancedir, create=True)
+        env = self._setup()
+        _dbfile = os.path.join(env.path, 'db', 'trac.db')
         os.remove(_dbfile)
         shutil.copyfile(os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(testfolder))), 'test'), 'tickets.db'), _dbfile)
-        open(os.path.join(os.path.join(instancedir, 'conf'), 'trac.ini'), 'a').write('\n[ticket-custom]\ndomain = text\ndomain.label = Domain\nstage = text\nstage.label = Stage\nusers = text\nusers.label = Users\n')
-        env = Environment(instancedir)
+        open(os.path.join(os.path.join(env.path, 'conf'), 'trac.ini'), 'a').write('\n[ticket-custom]\ndomain = text\ndomain.label = Domain\nstage = text\nstage.label = Stage\nusers = text\nusers.label = Users\n')
         self.assert_(self._do_test(env, 'ticket-13.xls', self._test_import))
 
     def test_import_with_reconciliation_by_owner(self):

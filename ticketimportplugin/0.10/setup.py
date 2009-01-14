@@ -14,9 +14,9 @@ PACKAGE='talm_importer'
 
 setup(
     name='TicketImport',
-    version='0.6',
+    version='0.6b',
     author='Francois Granade',
-    author_email='francois@nexb.com',
+    author_email='fg@nexb.com',
     url='http://nexb.com',
     license='BSD',
     description='Import CSV and Excel files',

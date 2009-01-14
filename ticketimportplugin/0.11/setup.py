@@ -14,7 +14,7 @@ PACKAGE='talm_importer'
 
 setup(
     name='TicketImport',
-    version='0.7a',
+    version='0.7b',
     author='Francois Granade',
     author_email='fg@nexb.com',
     url='http://nexb.com',

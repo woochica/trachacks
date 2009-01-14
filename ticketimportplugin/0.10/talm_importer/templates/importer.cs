@@ -32,7 +32,7 @@ The fields must be Trac fields. The valid fields for this Trac instance are:
 <?cs set numfields = #0 ?>
 <?cs each field = fields.items ?>
 <?cs set numfields = numfields + #1 ?>
-<b><?cs var: field ?></b><?cs if fields.count == $numfields + #1 ?> and <?cs elif fields.count != $numfields ?>, <?cs /if ?><?cs /each ?>. Field names are case-insensitive: 'summary', 'Summary', 'SUMMARY' refer to the same field. The order of the fields does not matter. If you want to import columns that are not Trac fields yet, these fields must have been created as custom fields in Trac (It is easy to create new fields, but must be done by the Trac administrator in the Trac configuration file. Note that it is better for usability to limit the numbers of custom fields).
+<b><?cs var: field ?></b><?cs if fields.count == $numfields + #1 ?> and <?cs elif fields.count != $numfields ?>, <?cs /if ?><?cs /each ?>. Field names are case-insensitive: 'summary', 'Summary', 'SUMMARY' refer to the same field. The order of the fields does not matter. If you want to import columns that are not Trac fields yet, these fields must have been created as custom fields in Trac (It is easy to create new fields, but must be done by the Trac administrator in the Trac configuration file).
 </p>
 <p>The only required fields are either:
 <ul>

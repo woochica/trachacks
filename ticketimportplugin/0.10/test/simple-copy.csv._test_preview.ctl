@@ -55,7 +55,7 @@ Below you can see a preview of the tickets as they will be imported. If the data
 </td></tr><tr><td>Status</td><td>new
 </td></tr><tr><td>Changetime</td><td><i>(now)</i>
 </td></tr><tr><td>Reporter</td><td>testuser
-</td></tr><tr><td>Type</td><td>task
+</td></tr><tr><td>Type</td><td>defect
 </td></tr><tr><td>Priority</td><td>major
 </td></tr><tr><td>Time</td><td><i>(now)</i>
 </td></tr><tr><td>Resolution</td><td><i>(None)</i>

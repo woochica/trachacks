@@ -131,7 +131,9 @@ class ImportModule(Component):
         if hasattr(upload.file, 'fileno'):
             size = os.fstat(upload.file.fileno())[6]
         else:
-            size = upload.file.len
+            upload.file.seek(0, 2) # seek to end of file
+            size = upload.file.tell()
+            upload.file.seek(0)
         if size == 0:
             raise TracError("Can't upload empty file")
         
@@ -286,8 +288,7 @@ class ImportModule(Component):
         #    - they shouldn't be set to empty
         # if 'set' is true, this will be the value that will be set by default (even if the default value in the Ticket class is different)
         # if 'set' is false, the value is computed by Trac and we don't have anything to do
-        computedfields = {'type':        { 'value':'task',        'set': True  }, 
-                          'status':      { 'value':'new',         'set': True }, 
+        computedfields = {'status':      { 'value':'new',         'set': True }, 
                           'resolution' : { 'value': "''(None)''", 'set': False }, 
                           'reporter' :   { 'value': reporter,     'set': True  }, 
                           'time' :       { 'value': "''(now)''",  'set': False }, 
@@ -302,7 +303,7 @@ class ImportModule(Component):
         from ticket import PatchedTicket
         ticket = PatchedTicket(self.env)
         
-        for f in [ 'cc' , 'url', 'description', 'keywords', 'component' , 'severity' , 'priority' , 'version', 'milestone' ] + customfields:
+        for f in [ 'type', 'cc' , 'url', 'description', 'keywords', 'component' , 'severity' , 'priority' , 'version', 'milestone' ] + customfields:
             if f in ticket.values:
                 computedfields[f] = {}
                 computedfields[f]['value'] = ticket.values[f]
