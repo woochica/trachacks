@@ -158,22 +158,25 @@ class CiaNotificationComponent(Component):
         self.send_message(message_template % args)
 
     def format_and_send_ticket_notification(self, ticket, action, **kwargs):
+        version = ticket.values.get('version', '')
+        milestone = ticket.values.get('milestone', '')
         status = ticket.values.get('status')
         is_new = status == 'new'
         t_url = get_resource_url(self.env, ticket.resource, self.env.abs_href)
         args = self.make_args({
             'url': is_new and t_url + '/' + str(ticket.id) or t_url,
-            'component': esc(ticket.values.get('component', '')),
+            'component': 'tickets/' + esc(ticket.values.get('component', '')),
             'timestamp': '',
             'author': esc(ticket.values.get('reporter', '')),
-            'version': esc(ticket.values.get('version', ''))
+            'version': '#' + esc(str(ticket.id))
         })
         summary = ticket.values.get('summary', '')
         author = ticket.values.get('reporter', 'anonymous')
         if action == 'deleted':
-            args['log'] = esc('Ticket %s%shas been removed' % (ticket.id, summary and ' (' + summary+ ') ' or ''))
+            args['log'] = esc('%shas been deleted' % (summary and ' (' + summary+ ') ' or ''))
         elif action == 'created':
-            args['log'] = 'new ticket '+str(ticket.id)+' ['+ticket['type']+']: "'+ticket['summary']+'"'
+            args['log'] = 'Created ['+ticket['type']+']: ('+ticket['summary']+')' + (version and (' in ' + version) or '')
+            args['log'] += ' (' + t_url + ')'
         elif action == 'changed':
             old = kwargs.get('old_values', {})
             db = self.env.get_db_cnx()
@@ -183,23 +186,26 @@ class CiaNotificationComponent(Component):
             num_comments = int(r and r[0] or 0)
             if num_comments:
                 args['url'] += '#comment:%s' % (num_comments,)
-            log = 'ticket '+str(ticket.id)+' changed: '+kwargs.get('author', 'anonymous')
-            if kwargs.get('comment', None) is not None:
-                log += ' added a comment'
-            if old.get('status', None) is not None:
-                log += '; changed status to ' + status
+            log = 'ticket '+str(ticket.id)+' changed'
+            if old.get('status', None):
+                log += '; status <- ' + status
+            if old.get('version', None):
+                log += '; version <- ' + version
+            if old.get('milestone', None):
+                log += '; milestone <- ' + milestone
             old_owner = old.get('owner', None)
-            if old.get('owner', None) is not None:
+            if old_owner:
                 if args['author'] == ticket.values.get('owner'):
                     log += "; took over the ticket from " + old_owner
                 else:
-                    log += ';reassigned the ticket to ' + ticket.values.get('owner')
+                    log += '; owner <- ' + ticket.values.get('owner')
             changes = []
             for key in TICKET_FIELDS:
-                if old.get(key, None) is not None and key not in ('owner', 'status'):
+                if old.get(key, None) is not None and key not in ('owner', 'status', 'version', 'milestone'):
                     changes.append(key)
             if changes:
-                log += "; changed " + ','.join(changes)
+                log += "; changed " + ', '.join(changes)
+            log += ' (' + t_url + ')'
             args['log'] = esc(log)
         else:
             raise Exception('Unknown action type')
