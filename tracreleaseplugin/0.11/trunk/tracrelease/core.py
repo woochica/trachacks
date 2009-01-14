@@ -228,25 +228,26 @@ class ReleaseCore(Component):
                 release.install_procedures.append(model.ReleaseInstallProcedure(None, proc, arqs))
 
                 
+        ## load selected tickets
+        for item in templateData['releaseTickets'].split(","):
+            if item.strip():
+                t = data.getTicket(self, item.strip())
+                release.tickets.append(model.ReleaseTicket(None, t.ticket_id,
+                                                           t.summary, t.component,
+                                                           t.type, t.version))
+
         if 'preview' in req.args:
             templateData['preview'] = True
             self.log.debug("_add_step_2: Preview")
 
-            ## load selected tickets
-            for item in templateData['releaseTickets'].split(","):
-                if item.strip():
-                    t = data.getTicket(self, item.strip())
-                    release.tickets.append(model.ReleaseTicket(None, t.ticket_id,
-                                                               t.summary, t.component,
-                                                               t.type, t.version))
-
-                
             templateData['release'] = release
             return ('release_add_2.html', templateData, None)
             
         elif 'submit' in req.args:
             self.log.debug("_add_step_2: Submit")
-            resp = data.createRelease(self, templateData['releaseName'], release.description,
+            resp = data.createRelease(self,
+                                      templateData['releaseName'],
+                                      release.description,
                                       req.authname, None,
                                       release.tickets,
                                       release.signatures,

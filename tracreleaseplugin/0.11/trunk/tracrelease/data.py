@@ -120,8 +120,8 @@ def createRelease(com, name, description, author, planned, tickets, signatures, 
     if flag:
         relId = db.get_last_id(cur, 'releases')
         if relId:
-            for ticket in tickets.split(","):
-                ticket = ticket.strip()
+            for ticket in tickets:
+                ticket = ticket.ticket_id
                 try:
                     ticket = int(ticket)
                 except:
@@ -137,8 +137,8 @@ def createRelease(com, name, description, author, planned, tickets, signatures, 
                         break
                     
         if relId and flag:
-            for sign in signatures.split(","):
-                sign = sign.strip()
+            for sign in signatures:
+                sign = sign.signature
                 if sign:
                     try:    
                         cur.execute(sqlSignatures, (relId, sign))
@@ -150,24 +150,33 @@ def createRelease(com, name, description, author, planned, tickets, signatures, 
         
         if relId and flag:
             for inst in install_procedures:
-                inst = inst.id
                 if inst:
-                    try:    
-                        cur.execute(sqlInstallProcedures, (relId, inst.id))
+                    com.log.debug("inst:\n%s\n%s\n\n" % (str(inst), repr(inst)))
+                    try:
+                        sqlCommand = sqlInstallProcedures
+                        sqlParams = "%s" % ([relId, inst.install_procedure.id])
                         
-                        if inst.files:
+                        com.log.debug("inst.install_procedure:\n%s\n%s\n" % (str(inst.install_procedure), repr(inst.install_procedure)))
+                        com.log.debug("inst.install_procedure.id:\n%s\n%s\n" % (str(inst.install_procedure.id), repr(inst.install_procedure.id)))
+                        cur.execute(sqlInstallProcedures, (relId, inst.install_procedure.id))
+                        
+                        if inst.install_procedure.files:
                             cnt = 1
-                            for arq in inst.files:
-                                cur.execute(sqlInstallFiles, (relId, inst.id, cnt, arq))
+                            sqlCommand = sqlInstallFiles
+                            for arq in inst.install_procedure.files:
+                                sqlParams = "%s" % ([relId, inst.install_procedure.id, cnt, arq])
+                                cur.execute(sqlInstallFiles, (relId, inst.install_procedure.id, cnt, arq))
+                                cnt += 1
                                             
                     except Exception, e:
                         flag = False
-                        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sqlInstallProcedures, (relId, inst), e));
+                        com.log.error('\n\n\nThere was a problem executing sql:%s \n with parameters:%s\nException:%s\n\n\n'%(sqlCommand, sqlParams, e));
                         db.rollback()
                         break
 
 
         if flag:
+            com.log.debug("Included... Trying to commit...")
             db.commit();
     try:
         db.close()
