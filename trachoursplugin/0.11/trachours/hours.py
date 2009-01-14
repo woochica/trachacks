@@ -56,10 +56,10 @@ def query_to_query_string(query):
             if isinstance(v, basestring):
                 args.append((k, v))
             else:
-                args.extend((k, i) for i in v)
+                args.extend([(k, i) for i in v])
         except TypeError:
             args.append((k, v))
-    args = "&".join("%s=%s" % i for i in args)
+    args = "&".join(["%s=%s" % i for i in args])
     return args
 
 def get_query(comp, query_id):
