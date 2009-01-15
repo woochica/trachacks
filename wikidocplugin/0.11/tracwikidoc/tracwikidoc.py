@@ -294,9 +294,9 @@ class WikidocParser:
 				result = result + self.head(line[4:], 3)
 				inpod = 1
 				self.indent = []
-			elif line[:2] == ' *':
+			elif line[:2] == '* ':
 				self.indent = [ 4 ]
-				result = result + self.item(line[3:])
+				result = result + self.item(line[2:])
 				inpod = 1
 			elif line[:14] == '=begin wikidoc':
 				inpod = 1
