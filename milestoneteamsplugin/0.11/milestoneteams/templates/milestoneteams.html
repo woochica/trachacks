@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+    <xi:include href="admin.html" />
+    <head>
+        <title>Milestone Teams</title>
+        <style type="text/css">
+        </style>
+    </head>
+    <body>
+        <h2>Milestone Teams</h2>
+        <py:choose test="view">
+
+            <form py:when="'detail'" class="mod" id="milestoneteams" action="${href.admin('ticket','milestoneteams')}/${milestone.title}" method="post">
+                <fieldset>
+                    <legend>Modify Team</legend>
+                    <div class="field">
+                        <label>Milestone:<br />
+                            <input type="text" name="milestone" value="${milestone.title}" disabled="true" />
+                            <input type="hidden" name="title" value="${milestone.title}" />
+                        </label>
+                    </div>
+                    <div class="field">
+                        <label>Manager:<br />
+                            <select name="manager">
+                                <option selected="${milestone.manager == '' or None}"></option>
+                                <option py:for="mtUser in users" selected="${mtUser == milestone.manager or None}" py:content="mtUser"></option>
+                            </select>
+                            <br /><em>A Trac username, the primary contact for tickets in this milestone.</em>
+                        </label>
+                    </div>
+                    <div class="field">
+                        <label>Members:<br />
+                            <select name="members" size="10" multiple="true">
+                                <option selected="${0 >= len(milestone.members) or None}"></option>
+                                <option py:for="mtUser in users" selected="${mtUser in milestone.members or None}" py:content="mtUser"></option>
+                            </select>
+                            <br /><em>A list of comma seperated Trac usernames of team members.</em>
+                        </label>
+                    </div>
+                    <div class="buttons">
+                        <input type="submit" name="action" value="Modify" />
+                    </div>
+                </fieldset>
+            </form>
+
+            <form py:otherwise="" class="mod" id="milestoneteams" action="${href.admin('ticket','milestoneteams')}" method="post">
+                <table class="listing" id="millist">
+                    <thead>
+                        <tr>
+                            <th clas="sel">&nbsp;</th>
+                            <th>Milestone</th>
+                            <th>Manager</th>
+                            <th>Members</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr py:for="milestone in milestones">
+                            <td><a href="${href.admin('ticket','milestoneteams')}/${milestone.title}" method="post">Modify</a></td>
+                            <td>${milestone.title}</td>
+                            <td>${milestone.manager}</td>
+                            <td>${','.join(milestone.members)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+            
+        </py:choose>
+    </body>
+</html>

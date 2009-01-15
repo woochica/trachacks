@@ -74,7 +74,7 @@ class mtTicketNotification(Component):
         # We need to get the team members from the database.
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT username, role FROM milestone_teams WHERE milestone=%s AND notify > 0", (self.db_version_key, ))
+        cursor.execute("SELECT username, role FROM milestone_teams WHERE milestone=%s AND notify > 0", (ticket.values['milestone'], ))
         for row in cursor:
             if int(row[1]) > 0:
                 torcpts.append(row[0])
