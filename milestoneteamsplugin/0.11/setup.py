@@ -7,7 +7,7 @@ setup(
     name = PLUGIN_NAME,
     description = 'Plugin to support developer teams for milestones',
     keywords = 'trac plugin milestone team',
-    version = '0.14',
+    version = '0.15',
     url = 'http://trac-hacks.org/wiki/MilestoneTeamsPlugin',
     license = 'http://www.opensource.org/licenses/mit-license.php',
     author = 'Matthew Chretien',

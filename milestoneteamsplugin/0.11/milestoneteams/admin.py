@@ -32,29 +32,31 @@ class mtAdminPanel(Component):
 
         try:
             # Allow removal of people from the team
-            old_milestone = self.get_milestone_team(milestone)
-            if old_milestone:
-                old_manager = old_milestone[0]['manager']
-                old_members = old_milestone[0]['members']
-            
-                for old_member in old_members:
-                    if old_member not in members:
-                        self.log.info("MilestoneTeams: Removing member %s from milestone %s" % (old_member, milestone))
-                        cursor.execute(remquery, (old_member,))
-                if old_manager != manager:
-                    self.log.info("MilestoneTeams: Removing manager %s from milestone %s" % (old_milestone['manager'], milestone))
-                    cursor.execute(remquery, (old_milestone['manager'],))
+            old_milestones = self.get_milestone_team(milestone)
+            if old_milestones:
+                old_milestone   = old_milestones[0]
+                old_manager     = old_milestone['manager']
+                old_members     = old_milestone['members']
+                
+                if old_manager and old_members:
+                    for old_member in old_members:
+                        if old_member and old_member not in members:
+                            self.log.info("MilestoneTeams: Removing member %s from milestone %s" % (old_member, milestone))
+                            cursor.execute(remquery, (old_member,))
+                    if old_manager != manager:
+                        self.log.info("MilestoneTeams: Removing manager %s from milestone %s" % (old_milestone['manager'], milestone))
+                        cursor.execute(remquery, (old_milestone['manager'],))
 
             # Add people to the team
             for member in members:
-                if member not in old_milestone['members']:
+                if member and member not in old_milestone['members']:
                     self.log.info("MilestoneTeams: Adding member %s to milestone %s" % (member, milestone))
                     cursor.execute(addquery, (milestone, member, 0, 1))
             if manager != old_milestone['manager']:
                 self.log.info("MilestoneTeams: Addming manager %s to milestone %s" % (manager, milestone))
                 cursor.execute(addquery, (milestone, manager, 1, 1))
         except Exception, e:
-            self.log.error("MilestoneTeams error in admin module: %s" % (e,))
+            self.log.error("MilestoneTeams Error: %s" % (e,))
             return False
         
         db.commit()
@@ -122,7 +124,7 @@ class mtAdminPanel(Component):
         if req.method == 'POST':
             if req.args.get('action') == 'Modify':
                 if not self.set_milestone_team(req.args.get('title'), req.args.get('manager'), req.args.get('members')):
-                    self.log.error("MilestoneTeams Error: Failed to save state for milestone'%s'" % (req.args.get('title'), ))
+                    self.log.error("MilestoneTeams Error: Failed to save state for milestone '%s'" % (req.args.get('title'), ))
         
         milestones  = self.get_milestone_team(path_info)
         users       = self.get_session_users()
