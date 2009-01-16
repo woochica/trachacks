@@ -20,15 +20,31 @@ class mtAdminPanel(Component):
         return ( )
 
     def set_milestone_team(self, milestone, manager, members):
-        db      = self.env.get_db_cnx()
-        cursor  = db.cursor()
-        query   = "INSERT OR REPLACE INTO milestone_teams (milestone, username, role, notify) VALUES (%s, %s, %s, %s)"
+        db          = self.env.get_db_cnx()
+        cursor      = db.cursor()
+        addquery    = "INSERT OR REPLACE INTO milestone_teams (milestone, username, role, notify) VALUES (%s, %s, %s, %s)"
+        remquery    = "UPDATE milestone_teams SET notify=0 WHERE username=%s"
 #        self.log.debug("MilestoneTeams: Saving data... %s" % ( (milestone, manager, members), ))
-        
+
         try:
+            # Allow removal of people from the team
+            old_milestone = self.get_milestone_team(milestone)[0]
+            for old_member in old_milestone['members']:
+                if old_member not in members:
+                    self.log.info("MilestoneTeams: Removing member %s from milestone %s" % (old_member, milestone))
+                    cursor.execute(remquery, (old_member,))
+            if old_milestone['manager'] != manager:
+                self.log.info("MilestoneTeams: Removing manager %s from milestone %s" % (old_milestone['manager'], milestone))
+                cursor.execute(remquery, (old_milestone['manager'],))
+
+            # Add people to the team
             for member in members:
-                cursor.execute(query, (milestone, member, 0, 1))
-            cursor.execute(query, (milestone, manager, 1, 1))
+                if member not in old_milestone['members']:
+                    self.log.info("MilestoneTeams: Adding member %s to milestone %s" % (member, milestone))
+                    cursor.execute(addquery, (milestone, member, 0, 1))
+            if manager != old_milestone['manager']:
+                self.log.info("MilestoneTeams: Addming manager %s to milestone %s" % (manager, milestone))
+                cursor.execute(addquery, (milestone, manager, 1, 1))
         except Exception, e:
             self.log.error("MilestoneTeams error in admin module: %s" % (e,))
             return False
