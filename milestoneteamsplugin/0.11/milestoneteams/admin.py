@@ -53,7 +53,7 @@ class mtAdminPanel(Component):
                     self.log.info("MilestoneTeams: Adding member %s to milestone %s" % (member, milestone))
                     cursor.execute(addquery, (milestone, member, 0, 1))
             if manager != old_milestone['manager']:
-                self.log.info("MilestoneTeams: Addming manager %s to milestone %s" % (manager, milestone))
+                self.log.info("MilestoneTeams: Adding manager %s to milestone %s" % (manager, milestone))
                 cursor.execute(addquery, (milestone, manager, 1, 1))
         except Exception, e:
             self.log.error("MilestoneTeams Error: %s" % (e,))
