@@ -23,7 +23,7 @@ class mtAdminPanel(Component):
         db      = self.env.get_db_cnx()
         cursor  = db.cursor()
         query   = "INSERT OR REPLACE INTO milestone_teams (milestone, username, role, notify) VALUES (%s, %s, %s, %s)"
-        self.log.debug("MilestoneTeams: Saving data... %s" % ( (milestone, manager, members), ))
+#        self.log.debug("MilestoneTeams: Saving data... %s" % ( (milestone, manager, members), ))
         
         try:
             for member in members:
@@ -42,13 +42,13 @@ class mtAdminPanel(Component):
         cursor      = db.cursor()
         milestones  = [ ]
 
-        self.log.debug("MilestoneTeams: Loading data for milestone: '%s'" % (milestone, ))
+#        self.log.debug("MilestoneTeams: Loading data for milestone: '%s'" % (milestone, ))
 
         try:
             if milestone:
                 cursor.execute("SELECT m.name FROM milestone AS m WHERE m.name=%s", (milestone, ))
             else:
-                cursor.execute("SELECT m.name FROM milestone AS m")
+                cursor.execute("SELECT m.name FROM milestone AS m WHERE m.completed=0 ORDER BY m.due DESC")
                 
             for row in cursor:
                 milestones.append({ 'title': row[0], 'manager': "", 'members': [ ],})
@@ -63,7 +63,7 @@ class mtAdminPanel(Component):
             self.log.error("MilestoneTeams error in admin module: %s" % (e,))
             raise e
         
-        self.log.debug("MilestoneTeams: %s", (milestones,))
+#        self.log.debug("MilestoneTeams: %s", (milestones,))
         
         db.close()
         return milestones
@@ -74,7 +74,7 @@ class mtAdminPanel(Component):
         users   = [ ]
         
         try:
-            cursor.execute("SELECT s.sid AS user FROM session AS s")
+            cursor.execute("SELECT s.sid AS user FROM session AS s ORDER BY s.sid ASC")
             for row in cursor:
                 users.append(row[0])
         except Exception, e:

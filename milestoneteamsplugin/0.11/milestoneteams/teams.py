@@ -107,13 +107,12 @@ class mtNotifyEmail(TicketNotifyEmail):
         newtolist = []
         newcclist = []
 
-# This is commented out so that I can get the emails for testing even though I am the reporter/owner        
-#        for notify in self.team_torcpts:
-#            if notify not in torcpts and notify not in ccrcpts:
-#                newtolist.append(notify)
-#        for notify in self.team_ccrcpts:
-#            if notify not in torcpts and notify not in ccrcpts:
-#                newcclist.append(notify)
+        for notify in self.team_torcpts:
+            if notify not in torcpts and notify not in ccrcpts:
+                newtolist.append(notify)
+        for notify in self.team_ccrcpts:
+            if notify not in torcpts and notify not in ccrcpts:
+                newcclist.append(notify)
 
         self.env.log.debug("Default To: %s" % (torcpts))
         self.env.log.debug("Changed To: %s" % (newtolist))
