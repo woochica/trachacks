@@ -20,6 +20,10 @@ class mtAdminPanel(Component):
         return ( )
 
     def set_milestone_team(self, milestone, manager, members):
+        """Saves information about a milestone team to the database.
+        
+        Takes 3 required parameters: the name of the milestone, the username of the manager, and a list of the usernames of the members.
+        """
         db          = self.env.get_db_cnx()
         cursor      = db.cursor()
         addquery    = "INSERT OR REPLACE INTO milestone_teams (milestone, username, role, notify) VALUES (%s, %s, %s, %s)"
@@ -28,14 +32,18 @@ class mtAdminPanel(Component):
 
         try:
             # Allow removal of people from the team
-            old_milestone = self.get_milestone_team(milestone)[0]
-            for old_member in old_milestone['members']:
-                if old_member not in members:
-                    self.log.info("MilestoneTeams: Removing member %s from milestone %s" % (old_member, milestone))
-                    cursor.execute(remquery, (old_member,))
-            if old_milestone['manager'] != manager:
-                self.log.info("MilestoneTeams: Removing manager %s from milestone %s" % (old_milestone['manager'], milestone))
-                cursor.execute(remquery, (old_milestone['manager'],))
+            old_milestone = self.get_milestone_team(milestone)
+            if old_milestone:
+                old_manager = old_milestone[0]['manager']
+                old_members = old_milestone[0]['members']
+            
+                for old_member in old_members:
+                    if old_member not in members:
+                        self.log.info("MilestoneTeams: Removing member %s from milestone %s" % (old_member, milestone))
+                        cursor.execute(remquery, (old_member,))
+                if old_manager != manager:
+                    self.log.info("MilestoneTeams: Removing manager %s from milestone %s" % (old_milestone['manager'], milestone))
+                    cursor.execute(remquery, (old_milestone['manager'],))
 
             # Add people to the team
             for member in members:
@@ -54,6 +62,10 @@ class mtAdminPanel(Component):
         return True
 
     def get_milestone_team(self, milestone=None):
+        """Returns a list of milestones and the manager and members of its team (if there are any)
+        
+        Takes one optional parameter to return information for a specific milestone.
+        """
         db          = self.env.get_db_cnx()
         cursor      = db.cursor()
         milestones  = [ ]
@@ -85,6 +97,7 @@ class mtAdminPanel(Component):
         return milestones
 
     def get_session_users(self):
+        """Returns a list of the usernames for people who have logged into Trac"""
         db      = self.env.get_db_cnx()
         cursor  = db.cursor()
         users   = [ ]
