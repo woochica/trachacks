@@ -1026,8 +1026,6 @@ class TracHoursPlugin(Component):
             totalhours['rendered'] = field
         stream |= Transformer("//input[@id='field-totalhours']").replace(field)
 
-        if ticket_id is not None:
-            stream |= Transformer("//div[@id='ticket']").after(tag.p(tag.b("BLAHBLAHBLAH")))
         return stream
 
     def filter_roadmap(self, req, stream, data):
