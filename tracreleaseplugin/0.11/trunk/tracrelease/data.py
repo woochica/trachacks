@@ -150,27 +150,27 @@ def createRelease(com, name, description, author, planned, tickets, signatures, 
         
         if relId and flag:
             for inst in install_procedures:
+                ## inst is an instance of ReleaseInstallProcedure
                 if inst:
-                    com.log.debug("inst:\n%s\n%s\n\n" % (str(inst), repr(inst)))
                     try:
                         sqlCommand = sqlInstallProcedures
                         sqlParams = "%s" % ([relId, inst.install_procedure.id])
-                        
-                        com.log.debug("inst.install_procedure:\n%s\n%s\n" % (str(inst.install_procedure), repr(inst.install_procedure)))
-                        com.log.debug("inst.install_procedure.id:\n%s\n%s\n" % (str(inst.install_procedure.id), repr(inst.install_procedure.id)))
                         cur.execute(sqlInstallProcedures, (relId, inst.install_procedure.id))
-                        
-                        if inst.install_procedure.files:
+                      
+                        if inst.install_files:
+                            com.log.debug("Files to save:")
+                            com.log.debug(inst.install_files)
                             cnt = 1
                             sqlCommand = sqlInstallFiles
-                            for arq in inst.install_procedure.files:
+                            for arq in inst.install_files:
+                                com.log.debug("\tArquivo: %s" % arq)
                                 sqlParams = "%s" % ([relId, inst.install_procedure.id, cnt, arq])
                                 cur.execute(sqlInstallFiles, (relId, inst.install_procedure.id, cnt, arq))
                                 cnt += 1
                                             
                     except Exception, e:
                         flag = False
-                        com.log.error('\n\n\nThere was a problem executing sql:%s \n with parameters:%s\nException:%s\n\n\n'%(sqlCommand, sqlParams, e));
+                        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s' % (sqlCommand, sqlParams, e));
                         db.rollback()
                         break
 
@@ -373,7 +373,7 @@ def loadReleaseInstallProcedures(com, releaseId):
     sql = """SELECT rip.release_id, rip.install_id, ip.name, ip.description, ip.contain_files
              FROM release_installs rip, install_procedures ip
              WHERE ip.id = rip.install_id AND rip.release_id = %s"""
-             
+
     sqlFiles = """SELECT file_order, file_name FROM release_files WHERE release_id = %s and install_id = %s ORDER BY file_order"""
              
     f = lambda row: model.ReleaseInstallProcedure(row[0], model.InstallProcedures(row[1], row[2], row[3], row[4]))

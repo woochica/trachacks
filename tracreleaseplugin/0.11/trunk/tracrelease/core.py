@@ -24,7 +24,7 @@ from trac.config import Option
 from trac.util.html import html
 
 from trac.log import logger_factory
-from trac.util.datefmt import format_datetime
+from trac.util.datefmt import format_datetime, parse_date
 
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
@@ -199,6 +199,7 @@ class ReleaseCore(Component):
         release.version                    = req.args.get("selectReleaseVersion")
         release.description                = req.args.get("txtReleaseDescription")
         release.planned_date               = req.args.get("txtReleasePlannedDate")
+        self.log.debug("Data planejada: %s" % release.planned_date)
         release.author                     = req.authname
         templateData['releaseTickets']     = req.args.get("hiddenReleaseTickets")
         templateData['releaseName']        = req.args.get("txtReleaseName")
@@ -220,7 +221,7 @@ class ReleaseCore(Component):
                 self.log.debug("_add_step_2: InstallProc: %s selected" % str(proc))
                 arqs = req.args.get("releaseProcedureFile_" + str(proc.id))
                 if arqs:
-                    proc.files = arqs
+                    ##proc.files = arqs
                     arqs = [arq.strip() for arq in arqs.split(",") if arq.strip()]
                 else:
                     arqs = None
@@ -239,6 +240,7 @@ class ReleaseCore(Component):
         if 'preview' in req.args:
             templateData['preview'] = True
             self.log.debug("_add_step_2: Preview")
+            self.log.debug("\n\n\nRelease: %s\n\n\n" % release)
 
             templateData['release'] = release
             return ('release_add_2.html', templateData, None)

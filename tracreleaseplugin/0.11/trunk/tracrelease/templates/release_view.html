@@ -11,18 +11,43 @@
     <title>Release Control</title>
     <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
     <script type="text/javascript" py:choose="">
+      function loadFiles(elemName, useInnerHTML, arqs) {
+        elem = document.getElementById(elemName);
+        if (elem) {
+          if (useInnerHTML) {
+            elem.innerHTML = arqs.toString();
+          } else {
+            elem.value = arqs.toString();
+          }
+        }
+      }
+      
+      
       $(document).ready(function() {
           $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+
+	  var files;
+          <py:for each="item in release.install_procedures">
+            files = [];
+            <py:if test="item.install_files">
+              <py:for each="arq in item.install_files">
+                files.push("$arq");
+              </py:for>
+            </py:if>
+            
+            loadFiles("releaseProcedureFile_$item.install_procedure.id", false, files);
+            loadFiles("previewReleaseProcedureFile_$item.install_procedure.id", true, files);
+          </py:for>
         });
     </script>
   </head>
 
   <body>
-    <div id="content">
+    <div id="content" class="ticket">
       <fieldset id="properties">
 	<legend>Release</legend>
 
-	<table>
+	<table class="properties">
 	  <tr>
 	    <th>Release Id:</th>
 	    <td class="fullrow" colspan="3">$release.id</td>
@@ -56,6 +81,32 @@
 	</table>
       </fieldset>
 	
+      <fieldset id="releaseTickets">
+	<legend>Tickets</legend>
+	<table id="releaseTickets" name="releaseTickets">
+	  <thead>
+	    <tr>
+	      <th>Ticket</th>
+	      <th>Summary</th>
+	      <th>Type</th>
+	      <th>Component</th>
+	      <th>Version</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    <py:for each="item in release.tickets">
+		<tr>
+		    <td><a href="$ticketURL/$item.ticket_id">$item.ticket_id</a></td>
+		    <td><a href="$ticketURL/$item.ticket_id">${wiki_to_oneliner(context, item.summary)}</a></td>
+		    <td>$item.type</td>
+		    <td>$item.component</td>
+		    <td>$item.version</td>
+		</tr>
+	    </py:for>
+	  </tbody>
+	</table>
+      </fieldset>
+  
       <fieldset id="signatures">
 	<legend>Signatures</legend>
 	<table id="releaseSignatures">
@@ -86,35 +137,8 @@
 	    </py:for>
 	  </tbody>
 	</table>
-      </fieldset>
-      
-      
-      <fieldset id="releaseTickets">
-	<legend>Tickets</legend>
-	<table id="releaseTickets" name="releaseTickets">
-	  <thead>
-	    <tr>
-	      <th>Ticket</th>
-	      <th>Summary</th>
-	      <th>Type</th>
-	      <th>Component</th>
-	      <th>Version</th>
-	    </tr>
-	  </thead>
-	  <tbody>
-	    <py:for each="item in release.tickets">
-		<tr>
-		    <td><a href="$ticketURL/$item.ticket_id">$item.ticket_id</a></td>
-		    <td><a href="$ticketURL/$item.ticket_id">${wiki_to_oneliner(context, item.summary)}</a></td>
-		    <td>$item.type</td>
-		    <td>$item.component</td>
-		    <td>$item.version</td>
-		</tr>
-	    </py:for>
-	  </tbody>
-	</table>
-      </fieldset>
-  
+      </fieldset>    
+
       <fieldset id="releaseProcedures">
 	<legend>Install Procedures</legend>
 	<table>
@@ -124,15 +148,33 @@
 	      <th>Name</th>
 	      <th>Description</th>
 	      <th>Contains Files</th>
+	      <th>Files</th>
 	    </tr>
 	  </thead>
 	  <tbody>
 	    <py:for each="item in release.install_procedures">
 	      <tr>
-		<td>$item.install_procedure.id</td>
-		<td>$item.install_procedure.name</td>
+		<td><a href="$baseURL/installproc/$item.install_procedure.id">$item.install_procedure.id</a></td>
+		<td><a href="$baseURL/installproc/$item.install_procedure.id">$item.install_procedure.name</a></td>
 		<td>${wiki_to_oneliner(context, item.install_procedure.description)}</td>
-		<td>$item.install_procedure.contain_files</td>
+		<td>
+		  <py:choose>
+		    <py:when test="item.install_procedure.contain_files">
+		      Sim
+		    </py:when>
+		    <py:otherwise>
+		      N&atilde;o
+		    </py:otherwise>
+		  </py:choose>
+		</td>
+		<td>
+
+		  <py:if test="item.install_files">
+		    <py:for each="arq in item.install_files">
+		      $arq<br/>
+		    </py:for>
+		  </py:if>
+		</td>
 	      </tr>
 	    </py:for>
 	  </tbody>

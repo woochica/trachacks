@@ -11,10 +11,16 @@
     <title>Add New Release</title>
     <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
     <script type="text/javascript" py:choose="True">
-      function loadFiles(elemName, arqs) {
+      function loadFiles(elemName, useInnerHTML, arqs) {
         elem = document.getElementById(elemName);
         if (elem) {
-          elem.value = arqs;
+          alert("loadFiles()");
+          alert(arqs);
+          if (useInnerHTML) {
+            elem.innerHTML = arqs.toString();
+          } else {
+            elem.value = arqs.toString();
+          }
         }
       }
       
@@ -29,8 +35,16 @@
           $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
           
           <py:for each="item in release.install_procedures">
+            var files;
             checkInstallProcedure("releaseProcedure_$item.install_procedure.id")
-            loadFiles("releaseProcedureFile_$item.install_procedure.id", "$item.install_files")
+            files = []
+            <py:if test="item.install_files">
+              <py:for each="arq in item.install_files">
+                files.push("$arq");
+              </py:for>
+            </py:if>
+            
+            loadFiles("releaseProcedureFile_$item.install_procedure.id", false, files);
           </py:for>
         });
     </script>
@@ -76,26 +90,6 @@
           </table>
         </fieldset>
         
-        <fieldset id="signatures">
-          <legend>Signatures</legend>
-          <table id="releaseSignatures">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Signature Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              <py:for each="item in release.signatures">
-                <tr>
-                  <td>$item.signature</td>
-                  <td>&nbsp;</td>
-                </tr>
-              </py:for>
-            </tbody>
-          </table>
-        </fieldset>
-        
         <fieldset id="releaseTickets">
           <legend>Tickets</legend>
           <table id="releaseTickets" name="releaseTickets">
@@ -121,6 +115,26 @@
             </tbody>
           </table>
         </fieldset>
+        
+        <fieldset id="signatures">
+          <legend>Signatures</legend>
+          <table id="releaseSignatures">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Signature Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <py:for each="item in release.signatures">
+                <tr>
+                  <td>$item.signature</td>
+                  <td>&nbsp;</td>
+                </tr>
+              </py:for>
+            </tbody>
+          </table>
+        </fieldset>
     
         <fieldset id="releaseProcedures">
           <legend>Install Procedures</legend>
@@ -140,8 +154,23 @@
                   <td>$item.install_procedure.id</td>
                   <td>$item.install_procedure.name</td>
                   <td>${wiki_to_oneliner(context, item.install_procedure.description)}</td>
-                  <td>$item.install_procedure.contain_files</td>
-                  <td>$item.install_files</td>
+                  <td>
+                    <py:choose>
+                      <py:when test="item.install_procedure.contain_files">
+                        Sim
+                      </py:when>
+                      <py:otherwise>
+                        N&atilde;o
+                      </py:otherwise>
+                    </py:choose>
+                  </td>
+                  <td>
+                    <py:if test="item.install_files">
+                      <py:for each="arq in item.install_files">
+                        $arq<br/>
+                      </py:for>
+                    </py:if>
+                  </td>
                 </tr>
               </py:for>
             </tbody>
@@ -189,8 +218,8 @@
             </tr>
     
             <tr>
-              <th><label for="txtPlannedDate">Planned Date:</label></th>
-              <td><input type="text" name="txtPlannedDate" id="txtPlannedDate" value="$release.planned_date"/></td>
+              <th><label for="txtReleasePlannedDate">Planned Date:</label></th>
+              <td><input type="text" name="txtReleasePlannedDate" id="txtReleasePlannedDate" value="$release.planned_date"/></td>
               <th><label for="txtInstallDate">Install Date:</label></th>
               <td>&nbsp;</td>
             </tr>

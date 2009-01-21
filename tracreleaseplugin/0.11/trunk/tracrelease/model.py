@@ -51,10 +51,9 @@ class InstallProcedures(object):
         self.name = name
         self.description = description
         self.contain_files = contain_files
-        self.files = []
         
     def __str__(self):
-        return "<InstallProcedures id=%s; files=%s>" % (self.id, str(self.files))
+        return "<InstallProcedures id=%s>" % (self.id)
 
 
 
@@ -65,6 +64,6 @@ class ReleaseInstallProcedure(object):
         self.install_files = install_files
 
     def __str__(self):
-        return "<ReleaseInstallProcedure: id: %s; procs: %s; files: %s>" % (
+        return "<ReleaseInstallProcedure: id: %s; proc: %s; files: %s>" % (
             self.release_id, str(self.install_procedure), str(self.install_files))
 
