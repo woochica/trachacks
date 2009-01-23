@@ -59,12 +59,9 @@ class TracBacksPlugin(Component):
     # ITicketChangeListener methods
 
     def ticket_created(self, ticket):
-        # TODO
-        # Note that we don't check for tracbacks on ticket
-        # creation - it's got to be in a comment. Maybe we
-        # can fix this in a later version of the ticket.
-        pass
-
+        # Check for tracbacks on ticket creation.
+        self.ticket_changed(ticket, ticket.values.get('description'),
+                            ticket.values.get('reporter'), None)
     def ticket_changed(self, ticket, comment, author, old_values):
         
         pattern = re.compile(self.TICKET_REGEX, re.VERBOSE)
