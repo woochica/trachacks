@@ -44,6 +44,7 @@ class TracBacksPlugin(Component):
         (?=                    # Don't return '#' character:
            (?<=^\#)            # Look for a TracLink Ticket at the beginning of the string
           |(?<=[\s,.;:!]\#)    # or on a whitespace boundary or some punctuation
+          |(?<=ticket:)        # or the "ticket:NNN" format
         )
         (\d+)                  # Any length ticket number (return the digits)
         (?=
