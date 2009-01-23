@@ -93,6 +93,8 @@
 	<button onclick="runCalculation();return false;">refresh calculations</button>
 	<br /><br />
 	<input type="submit" value="Save Estimate" onclick="runCalculation();this.form.submit();return false;" />
+	<input type="submit" value="Save and Go to Ticket" onclick="document.getElementById('shouldRedirect').value='True';runCalculation();this.form.submit();return false;" />
+	<input type="hidden" id="shouldRedirect" name="shouldRedirect" value="False"/>
 	<div>
 	    <h3>Comment Preview</h3>
 	    <div id="estimateoutput" >

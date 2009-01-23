@@ -102,17 +102,17 @@ class EstimationsPage(Component):
             addMessage('Error: %s' % e)
             
     def line_item_hash_from_args(self, args):
-        not_line_items=['__FORM_TOKEN','tickets','variability','communication',
-                        'rate', 'id', 'comment', 'diffcomment']
+        #line items are names like 'nameNum' (so 'description0')
         itemReg = re.compile(r"(\D+)(\d+)")
         lineItems = {}
-        def lineItemHasher( value, name, id ):
+        def lineItemHasher( value, name, id):
             if not lineItems.has_key(id):
                 lineItems[id] = {}
             lineItems[id][name] = value
-        [lineItemHasher( item[1], *itemReg.match( item[0] ).groups())
-         for item in args.items()
-         if not(not_line_items.__contains__(item[0]))]
+        for item in args.items():
+            match = itemReg.match( item[0] )
+            if match:
+                lineItemHasher( item[1],  *match.groups())
         return lineItems
 
     def notify_old_tickets(self, req, id, addMessage, changer, new_text):
@@ -218,7 +218,12 @@ class EstimationsPage(Component):
             if result == True:
                 if self.notify_new_tickets( req, id, tickets, addMessage):
                     addMessage("Estimate Saved!")
-                    req.redirect(req.href.Estimate()+'?id=%s&justsaved=true'%id)
+                    if req.args.has_key('shouldRedirect') and req.args["shouldRedirect"] == "True":
+                        ticket = args["tickets"].split(',')[0]
+                        req.redirect("%s/%s" % (req.href.ticket(), ticket))
+                    else:
+                        req.redirect(req.href.Estimate()+'?id=%s&justsaved=true'%id)
+
             else:
                 addMessage("Failed to save! %s" % result)
             
