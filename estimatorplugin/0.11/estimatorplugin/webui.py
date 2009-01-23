@@ -252,7 +252,7 @@ class EstimationsPage(Component):
             req.redirect(req.href.wiki())
         messages = []
         def addMessage(s):
-            messages.extend([s]);
+            messages.extend([Markup(s)]);
         #addMessage("Post Args: %s"% req.args.items())
         if req.method == 'POST':
             self.save_from_form(req, addMessage)
@@ -272,10 +272,9 @@ class EstimationsPage(Component):
             self.load(int(req.args['id']), addMessage, data)
             
         if req.args.has_key('justsaved'):
-            tickets = ''.join(
-                ['<a href="%s/%s" >#%s</a>' % (req.href.ticket(), i.strip(), i.strip())
-                 for i in data['estimate']['tickets'].split(',')])
-            addMessage("Estimate saved and added to tickets: "+tickets)
+            tickets =  ['<a href="%s/%s">#%s</a>' % (req.href.ticket(), i.strip(), i.strip())
+                        for i in data['estimate']['tickets'].split(',')]
+            addMessage("Estimate saved and added to tickets: "+(', '.join(tickets)))
 
         add_script(req, "Estimate/JSHelper.js")
         add_script(req, "Estimate/Controls.js")
