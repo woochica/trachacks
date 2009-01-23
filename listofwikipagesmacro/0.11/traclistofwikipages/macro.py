@@ -49,7 +49,7 @@ class MacroBase(WikiMacroBase):
                ]
 
     def formatrow(self, n, name, time, author=''):
-        name = tag.a( name, href = self.wiki_path + str(name) )
+        name = tag.a( name, href = self.wiki_path + unicode(name) )
         cols = [ tag.td( name ), tag.td( self.formattime( time )) ]
         if author:
             cols.append ( tag.td( author )  )
