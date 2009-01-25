@@ -5,6 +5,8 @@
 __author__ = 'Zhang Cong (ftofficer)'
 __version__ = '1.0'
 
+from genshi.builder import tag
+
 from trac.wiki.macros import WikiMacroBase
 from StringIO import StringIO
 from trac.wiki.formatter import Formatter
@@ -55,7 +57,7 @@ class TranslatedPagesMacro(WikiMacroBase):
 
         return (wiki_base_name, wiki_lang_code)
     
-    def is_translated_wiki_exists(self, wiki_base_name, lang_code):
+    def _is_translated_wiki_exists(self, wiki_base_name, lang_code):
         if lang_code == 'en':
             wiki_id = wiki_base_name
         else:
@@ -63,6 +65,16 @@ class TranslatedPagesMacro(WikiMacroBase):
     
         wiki_page = WikiPage(self.env, wiki_id)
         return wiki_page.exists
+        
+    def _get_lang_link(self, wiki_base_name, lang_code, formatter):
+        if lang_code != 'en':
+            wiki_id = u'%s/%s' % (wiki_base_name, lang_code)
+        else:
+            wiki_id = wiki_base_name
+        
+        text = u'  * [wiki:%s %s]' % (wiki_id, self._get_language_name(lang_code))
+        
+        return text
     
     def expand_macro(self, formatter, name, args):
         """Return a list of translated pages with the native language names.
@@ -74,16 +86,16 @@ class TranslatedPagesMacro(WikiMacroBase):
         
         (wiki_base_name, wiki_lang_code) = self._get_wiki_info(wiki_id)
 
-        text = u''
+        lang_link_list = []
 
         for lang_code in self.supported_languages:
-            if self.is_translated_wiki_exists(wiki_base_name, lang_code):
-                if lang_code != wiki_lang_code and lang_code != 'en':
-                    text += u'`[`[wiki:%s/%s %s]`]` ' % (wiki_base_name, lang_code, self._get_language_name(lang_code))
-                elif lang_code != wiki_lang_code:
-                    text += u'`[`[wiki:%s %s]`]` ' % (wiki_base_name, self._get_language_name(lang_code))
-        
+            if self._is_translated_wiki_exists(wiki_base_name, lang_code):
+                if lang_code != wiki_lang_code:
+                    lang_link_list.append(self._get_lang_link(wiki_base_name, lang_code, formatter))
+
+        text = '\n'.join(lang_link_list)
+                    
         out = StringIO()
         Formatter(self.env, formatter.context).format(text, out)
 
-        return out.getvalue()
+        return '<div class="wiki-toc trac-nav"><h4>Other Languages:</h4>' + out.getvalue() + '</div>'
