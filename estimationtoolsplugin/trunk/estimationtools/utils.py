@@ -5,32 +5,32 @@ from trac.core import TracError
 from trac.wiki.api import parse_args
 from trac.ticket.query import Query
 
-AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 'color']
+AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 'color', 'bgcolor', 'wecolor']
 
-def get_estimation_field():    
-    return Option('estimation-tools', 'estimation_field', 'estimatedhours', 
+def get_estimation_field():
+    return Option('estimation-tools', 'estimation_field', 'estimatedhours',
         doc="""Defines what custom field should be used to calculate estimation charts.
         Defaults to 'estimatedhours'""")
 
 def get_closed_states():
-    return ListOption('estimation-tools', 'closed_states', 'closed', 
-        doc="""Set to a comma separated list of workflow states that count as "closed", 
-        where the effort will be treated as zero, e.g. closed_states=closed,another_state. 
+    return ListOption('estimation-tools', 'closed_states', 'closed',
+        doc="""Set to a comma separated list of workflow states that count as "closed",
+        where the effort will be treated as zero, e.g. closed_states=closed,another_state.
         Defaults to closed.""")
-    
+
 def get_estimation_suffix():
     return Option('estimation-tools', 'estimation_suffix', 'h',
         doc="""Suffix used for estimations. Defaults to 'h'""")
 
-def parse_options(db, content, options):       
+def parse_options(db, content, options):
     """Parses the parameters, makes some sanity checks, and creates default values
-    for missing parameters.    
+    for missing parameters.
     """
     cursor = db.cursor()
 
     # check arguments
     _, parsed_options = parse_args(content, strict=False)
-    
+
     options.update(parsed_options)
 
     startdatearg = options.get('startdate')
@@ -42,9 +42,9 @@ def parse_options(db, content, options):
     if enddatearg:
         options['enddate'] = datetime(*strptime(enddatearg, "%Y-%m-%d")[0:5]).date()
 
-    if not options['enddate'] and options.get('milestone'):   
+    if not options['enddate'] and options.get('milestone'):
         # use first milestone
-        milestone = options['milestone'].split('|')[0]         
+        milestone = options['milestone'].split('|')[0]
         # try to get end date from db
         cursor.execute("SELECT completed, due FROM milestone WHERE name = %s", [milestone])
         row = cursor.fetchone()
@@ -60,8 +60,8 @@ def parse_options(db, content, options):
     todayarg = options.get('today')
     if not todayarg:
         options['today'] = datetime.now().date()
-    
-    # all arguments that are no key should be treated as part of the query  
+
+    # all arguments that are no key should be treated as part of the query
     query_args = {}
     for key in options.keys():
         if not key in AVAILABLE_OPTIONS:
@@ -76,8 +76,7 @@ def execute_query(env, req, query_args):
 
     tickets = query.execute(req)
 
-    tickets = [t for t in tickets 
+    tickets = [t for t in tickets
                if ('TICKET_VIEW' or 'TICKET_VIEW_CC') in req.perm('ticket', t['id'])]
-    
-    return tickets
 
+    return tickets
