@@ -12,7 +12,6 @@ from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from trac.admin.api import IAdminPanelProvider
 from api import CustomFields
-from trac.util.text import to_unicode
 
 
 class CustomFieldAdminPage(Component):
@@ -31,14 +30,14 @@ class CustomFieldAdminPage(Component):
         add_script(req, 'customfieldadmin/js/customfieldadmin.js')
 
         def _customfield_from_req(self, req):
-            cfdict = {'name': to_unicode(req.args.get('name')),
-                      'label': to_unicode(req.args.get('label')),
-                      'type': to_unicode(req.args.get('type')),
-                      'value': to_unicode(req.args.get('value')),
-                      'options': [x.strip() for x in to_unicode(req.args.get('options')).split("\n")],
-                      'cols': to_unicode(req.args.get('cols')),
-                      'rows': to_unicode(req.args.get('rows')),
-                      'order': req.args.get('order', '')}
+            cfdict = {'name': req.args.get('name').encode('utf-8'),
+                      'label': req.args.get('label').encode('utf-8'),
+                      'type': req.args.get('type').encode('utf-8'),
+                      'value': req.args.get('value').encode('utf-8'),
+                      'options': [x.strip().encode('utf-8') for x in req.args.get('options').split("\n")],
+                      'cols': req.args.get('cols').encode('utf-8'),
+                      'rows': req.args.get('rows').encode('utf-8'),
+                      'order': req.args.get('order', '').encode('utf-8')}
             return cfdict
         
         cfapi = CustomFields(self.env)

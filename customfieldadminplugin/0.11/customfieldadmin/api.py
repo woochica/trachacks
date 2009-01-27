@@ -12,7 +12,6 @@ import re
 
 from trac.core import *
 from trac.ticket.model import TicketSystem
-from trac.util.text import to_unicode
 
 __all__ = ['CustomFields']
 
@@ -54,7 +53,7 @@ class CustomFields(Component):
                 and customfield.get('label')):
             raise TracError("Custom field needs at least a name, type and label.")
         # Use lowercase custom fieldnames only
-        customfield['name'] = to_unicode(customfield['name']).lower()
+        customfield['name'] = customfield['name'].lower()
         # Only alphanumeric characters (and [-_]) allowed for custom fieldname
         if re.search('^[a-z0-9-_]+$', customfield['name']) == None:
            raise TracError("Only alphanumeric characters allowed for custom field name (a-z or 0-9 or -_).")
