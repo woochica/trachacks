@@ -1,4 +1,4 @@
-from trac.ticket import ITicketChangeListener, Ticket
+from trac.ticket import ITicketChangeListener, Ticket, ITicketManipulator
 from trac.perm import PermissionCache
 from trac.core import *
 import datetime
@@ -164,3 +164,31 @@ class TimeTrackingTicketObserver(Component):
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
+
+class TimeTrackingTicketValidator(Component):
+    implements(ITicketManipulator)
+
+    def __init__(self):
+        pass
+
+    def prepare_ticket(req, ticket, fields, actions):
+        """not currently called"""
+
+    def validate_ticket(self, req, ticket):
+        """Validate a ticket after it's been populated from user input.
+
+        Must return a list of `(field, message)` tuples, one for each problem
+        detected. `field` can be `None` to indicate an overall problem with the
+        ticket. Therefore, a return value of `[]` means everything is OK."""
+        errors = []
+        #some european countries use , as the decimal separator
+        convertfloat = lambda x: float(str(x).replace(',','.'))
+        try:
+            convertfloat(ticket.values['hours'])
+        except ValueError:
+            errors.append(('Add Hours to Ticket', 'Value must be a number'))
+        try:
+            convertfloat(ticket.values['estimatedhours'])
+        except ValueError:
+            errors.append(('Estimated Number of Hours', 'Value must be a number'))
+        return errors
