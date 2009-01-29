@@ -12,6 +12,12 @@ class TracLegosAdmin(TracAdmin):
 
     def __init__(self, env):
         TracAdmin.__init__(self, env)
+        
+        # new style, as of trac:changeset:7677
+        # see trac:#7770
+        if not hasattr(self, 'get_component_list'):
+            # TODO: create these functions
+            raise AssertionError
 
     def list(self, field):
         """
