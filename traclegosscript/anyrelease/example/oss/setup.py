@@ -36,8 +36,8 @@ setup(name='OSSTracProject',
       "http://trac-hacks.org/svn/masterticketsplugin/0.11#egg=TracMasterTickets",
       "http://trac-hacks.org/svn/permredirectplugin/0.11#egg=TracPermRedirect",
       "http://trac-hacks.org/svn/privateticketsplugin/0.11#egg=TracPrivateTickets",
-      "http://trac-hacks.org/svn/tagsplugin/tags/0.6#egg=TracTags"
-      "http://trac-hacks.org/svn/svnurlsplugin/0.11#egg=SVN_URLs"
+      "http://trac-hacks.org/svn/tagsplugin/tags/0.6#egg=TracTags",
+      "http://trac-hacks.org/svn/svnurlsplugin/0.11#egg=SVN_URLs",
       "http://trac-hacks.org/svn/tracbacksplugin/0.11#egg=Tracbacks",
       "http://trac-hacks.org/svn/svnsyncplugin/0.11#egg=svnsyncplugin"
       ],
