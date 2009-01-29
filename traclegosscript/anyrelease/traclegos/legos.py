@@ -276,9 +276,6 @@ def get_parser():
                       help="trac projects directory")
     parser.add_option("-i", "--inherit", dest="inherit", default=None,
                       help=".ini file to inherit from")
-    parser.add_option("-r", "--requires", # XXX not used yet
-                      dest="requirements", action="append", default=[],
-                      help="requirements files for plugins") #
     parser.add_option("-s", "--repository",  dest="repository",
                       help="repository type to use")
     parser.add_option("-t", dest="templates", action="append", default=[],
@@ -297,9 +294,12 @@ def get_parser():
                       action="store_true", default=False,
                       help="list available database types available for setup by TracLegos")
 
+# XXX as yet unused options
 #    parser.add_option("--list-variables", dest="listvariables",
 #                      help="list variables for a [someday: list of] templates") # TODO
-
+#     parser.add_option("-r", "--requires", # XXX not used yet
+#                       dest="requirements", action="append", default=[],
+#                       help="requirements files for plugins") #
 
     parser.set_usage("%prog [options] project <project2> <...> var1=1 var2=2 ...")
     parser.set_description("assemble a trac project from components")

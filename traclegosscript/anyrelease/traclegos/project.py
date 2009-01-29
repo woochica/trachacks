@@ -31,16 +31,7 @@ class TracProject(templates.Template):
     ### attrs for PasteScript Template
     
     def pre(self, command, output_dir, vars):
-
-        # install the requirements
-        for requirement in getattr(self, 'requirements', ()):
-            
-            # if the path is relative to the template, give the full path
-            path = os.path.join(self.module_dir(), requirement)
-            if os.path.exists(path):
-                requirement = path
-
-            subprocess.call(['pip', 'install', '-r', requirement])
+        pass
 
     def post(self, command, output_dir, vars):
         pass
