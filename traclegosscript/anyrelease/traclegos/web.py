@@ -184,7 +184,8 @@ class View(object):
         if errors:
             return errors
 
-        # process the request and save necessary data
+        ### process the request and save necessary data
+
         project_data = self.projects[project]
         project_data['type'] = project_type
         project_data['vars'] = self.legos.vars.copy()
@@ -212,6 +213,10 @@ class View(object):
         project_data['vars']['logo'] = logo
         
         # TODO:  get the favicon from the alternate URL or create one from the logo
+
+        # get a list of TRAC_ADMINs
+        # XXX this is a hack, for now
+        project_data['admins'] = req.POST['trac_admins'].replace(',', ' ').split()
 
     def projectDetails(self, req, errors=None):
         """second project creation step: project details
@@ -307,11 +312,13 @@ class View(object):
                                   project_data['vars'], 
                                   repository=project_data['repository'])
 
+        project_dir = os.path.join(self.directory, project)
+
         # write the logo_file to its new location
         logo_file = project_data['logo_file']
         if logo_file:
             logo_file_name = os.path.basename(project_data['vars']['logo'])
-            filename = os.path.join(self.directory, project, 'htdocs', logo_file_name)
+            filename = os.path.join(project_dir, 'htdocs', logo_file_name)
             logo = file(filename, 'wb')
             logo.write(logo_file.read())
             logo.close()
@@ -320,5 +327,9 @@ class View(object):
 
         # TODO: add authenticated user to TRAC_ADMIN of the new site
         # (and redirect to the admin panel?)
+        # XXX hack for now
+        for admin in project_data['admins']:
+            import subprocess
+            subprocess.call(['trac-admin', project_dir, 'permission', 'add', admin, 'TRAC_ADMIN'])
 
         

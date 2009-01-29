@@ -17,9 +17,12 @@ class TracLegosAdmin(TracAdmin):
         """
         list fields of a particular type
         """
+
+        # XXX these fucntions are no longer in trunk
         list_functions = { 'component': self.get_component_list,
                            'milestone': self.get_milestone_list, 
                            }
+
         assert field in list_functions
         return list_functions[field]()
 
@@ -27,9 +30,11 @@ class TracLegosAdmin(TracAdmin):
         """
         remove a field of a type with a particular name
         """
+        # XXX these fucntions are no longer in trunk
         remove_functions = { 'component': self._do_component_remove,
                              'milestone': self._do_milestone_remove,
                              }
+
         assert field in remove_functions
         remove_functions[field](name)
         

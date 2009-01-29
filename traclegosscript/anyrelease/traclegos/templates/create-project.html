@@ -34,7 +34,7 @@
   </center>
 </div>
 
-<!-- project type, TBI -->
+<!-- project type -->
 <div py:if="len(projects) &gt; 1">
   <b>Project Type:</b>
   <select name="project_type">
@@ -43,8 +43,11 @@
       </option>
   </select>  
 </div>
-
 <input type="hidden" py:if="len(projects) == 1" name="project_type" value="${projects[0]}"/>
+
+<div>
+  <b>Trac Admins:</b> <input type="text" name="trac_admins" alt="comma or space separated"/>
+</div>
 
 <input type="submit" value="Next &gt;&gt;"/><br/>
 <i><small>${next}</small></i>
