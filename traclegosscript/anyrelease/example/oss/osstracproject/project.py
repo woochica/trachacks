@@ -13,5 +13,3 @@ class OSSTracProject(TracProject):
                  default='localhost'),
              ]
 
-    requirements = ['plugins.txt']
-
