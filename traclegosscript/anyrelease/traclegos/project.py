@@ -40,7 +40,7 @@ class TracProject(templates.Template):
             if os.path.exists(path):
                 requirement = path
 
-            subprocess.call(['poacheggs', '-r', requirement])
+            subprocess.call(['pip', 'install', '-r', requirement])
 
     def post(self, command, output_dir, vars):
         pass

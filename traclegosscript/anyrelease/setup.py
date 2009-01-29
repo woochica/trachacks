@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.2'
+version = '0.3'
 
 setup(name='TracLegos',
       version=version,
@@ -23,10 +23,10 @@ setup(name='TracLegos',
         'Genshi',
         'Paste',
         'PasteScript',
-        'PoachEggs',
+        'pip',
         'WebOb',
       ],
-      dependency_links=['https://svn.openplans.org/svn/PoachEggs/trunk#egg=PoachEggs'],
+      dependency_links=['https://svn.openplans.org/svn/pip/trunk#egg=pip'],
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
