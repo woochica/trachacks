@@ -4,9 +4,6 @@
 ### these may be installed with `poach-eggs -r plugins.txt`:
 ### https://svn.openplans.org/svn/PoachEggs
 
-# always unzip
--Z 
-
 # http://trac-hacks.org/wiki/AccountManagerPlugin
 http://trac-hacks.org/svn/accountmanagerplugin/trunk#egg=TracAccountManager
 
