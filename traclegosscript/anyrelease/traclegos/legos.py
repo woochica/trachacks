@@ -6,7 +6,6 @@ the head of the octopus
 
 import inspect
 import os
-import pkg_resources
 import sys
 
 from optparse import OptionParser
@@ -209,12 +208,7 @@ class TracLegos(object):
 
         # get the default wiki pages
         # TODO: add options for importing existing wiki pages
-        cnx = env.get_db_cnx()
-        cursor = cnx.cursor()
-        pages_dir = pkg_resources.resource_filename('trac.wiki', 
-                                                    'default-pages') 
-        admin._do_wiki_load(pages_dir, cursor) # should probably make this silent
-        cnx.commit()
+        admin.load_pages()
 
         # TODO:  addition of groups, milestones, versions, etc
         # via trac-admin
