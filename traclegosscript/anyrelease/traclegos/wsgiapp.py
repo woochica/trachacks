@@ -15,7 +15,8 @@ def make_app(global_conf, **app_conf):
 
     # constructor arguments
     list_items = [ 'conf', 'site_templates', 
-                   'available_templates', 'available_repositories' ]
+                   'available_templates', 'available_repositories',
+                   'available_databases' ]
     args = dict([(key.split(key_str, 1)[-1], value)
                  for key, value in app_conf.items()
                  if key.startswith(key_str) ])

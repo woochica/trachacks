@@ -130,11 +130,6 @@ class View(object):
 
         # could otherwise take over the index.html serving ourselves
         environ['trac.env_index_template'] = os.path.join(template_directory, 'index.html')
-
-        if not step:  # site index
-            pass      # XXX needed? not for now
-#            vars = {}
-#            environ.setdefault('trac.template_vars', {}).update(vars)
         
         return dispatch_request(environ, start_response) 
         
