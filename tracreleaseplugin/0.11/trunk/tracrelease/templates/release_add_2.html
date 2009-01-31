@@ -78,7 +78,7 @@
               <th>Author:</th>
               <td>$release.author</td>
               <th>Creation Date:</th>
-              <td>$release.creation_date</td>
+              <td>${release.creation_date and format_date(release.creation_date, "%Y-%m-%d") or ""}</td>
             </tr>
     
             <tr>
@@ -117,12 +117,12 @@
         </fieldset>
         
         <fieldset id="signatures">
-          <legend>Signatures</legend>
+          <legend>Authorizations</legend>
           <table id="releaseSignatures">
             <thead>
               <tr>
                 <th>User</th>
-                <th>Signature Date</th>
+                <th>Authorization Date</th>
               </tr>
             </thead>
             <tbody>
@@ -167,7 +167,7 @@
                   <td>
                     <py:if test="item.install_files">
                       <py:for each="arq in item.install_files">
-                        $arq<br/>
+                        ${wiki_to_oneliner(context, arq)}<br/>
                       </py:for>
                     </py:if>
                   </td>
@@ -214,7 +214,7 @@
               <th>Author:</th>
               <td>$release.author</td>
               <th>Creation Date:</th>
-              <td>inserir data atual</td>
+              <td>${release.creation_date and format_date(release.creation_date, "%Y-%m-%d") or ""}</td>
             </tr>
     
             <tr>
@@ -225,7 +225,7 @@
             </tr>
           
             <tr>
-              <th><label for="hiddenReleaseSignatures">Signatures (comma-separated list):</label></th>
+              <th><label for="hiddenReleaseSignatures">Authorization (comma-separated list):</label></th>
               <td class="fullrow" colspan="3">
                 <input type="text" name="hiddenReleaseSignatures"
                        id="hiddenReleaseSignatures"

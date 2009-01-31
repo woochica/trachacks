@@ -25,6 +25,8 @@ from trac.util.html import html
 
 from trac.log import logger_factory
 from trac.util.datefmt import format_datetime, parse_date
+import trac.util.datefmt as datefmt
+
 
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
@@ -178,6 +180,8 @@ class ReleaseCore(Component):
         templateData['releaseName'] = v['name']
         release.planned_date = v['time']
         release.description = v['description']
+        release.author        = req.authname
+        release.creation_date = datefmt.to_timestamp(datefmt.to_datetime(None))
 
         templateData['releaseAvailableProcedures'] = data.findInstallProcedures(self)
 
@@ -196,10 +200,12 @@ class ReleaseCore(Component):
         templateData['preview'] = False
         release = model.Release()
 
+        release.author                     = req.authname
+        release.creation_date              = datefmt.to_timestamp(datefmt.to_datetime(None))
+        release.errors                     = []
         release.version                    = req.args.get("selectReleaseVersion")
         release.description                = req.args.get("txtReleaseDescription")
         release.planned_date               = req.args.get("txtReleasePlannedDate")
-        self.log.debug("Data planejada: %s" % release.planned_date)
         release.author                     = req.authname
         templateData['releaseTickets']     = req.args.get("hiddenReleaseTickets")
         templateData['releaseName']        = req.args.get("txtReleaseName")
@@ -209,7 +215,6 @@ class ReleaseCore(Component):
                               signee in templateData['releaseSignatures'].split(",") if
                               signee.strip()]
         
-
         ## load selected install procedures
         procs = data.findInstallProcedures(self)
         templateData['releaseAvailableProcedures'] = procs
@@ -228,6 +233,14 @@ class ReleaseCore(Component):
                     
                 release.install_procedures.append(model.ReleaseInstallProcedure(None, proc, arqs))
 
+        ## valida a data planejada
+        self.log.debug("Data planejada: %s" % release.planned_date)
+        try:
+            plnd = parse_date(release.planned_date)
+            self.log.debug(plnd)
+        except Exception, e:
+            self.log.error(e)
+            release.errors.append(e)
                 
         ## load selected tickets
         for item in templateData['releaseTickets'].split(","):
@@ -237,7 +250,7 @@ class ReleaseCore(Component):
                                                            t.summary, t.component,
                                                            t.type, t.version))
 
-        if 'preview' in req.args:
+        if ('preview' in req.args) or release.errors:
             templateData['preview'] = True
             self.log.debug("_add_step_2: Preview")
             self.log.debug("\n\n\nRelease: %s\n\n\n" % release)
@@ -246,11 +259,13 @@ class ReleaseCore(Component):
             return ('release_add_2.html', templateData, None)
             
         elif 'submit' in req.args:
+            release.planned_date = plnd
             self.log.debug("_add_step_2: Submit")
             resp = data.createRelease(self,
                                       templateData['releaseName'],
                                       release.description,
-                                      req.authname, None,
+                                      release.author,
+                                      release.planned_date,
                                       release.tickets,
                                       release.signatures,
                                       release.install_procedures)

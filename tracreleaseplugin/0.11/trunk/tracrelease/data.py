@@ -2,7 +2,8 @@
 
 import model
 import trac.util.datefmt as datefmt
-
+import pprint
+import calendar
 
 def _now():
     return datefmt.to_timestamp(datefmt.to_datetime(None))
@@ -109,9 +110,10 @@ def createRelease(com, name, description, author, planned, tickets, signatures, 
     flag = True
     relId = None
     now = _now()
+    plannedDateInSeconds = planned and calendar.timegm(planned.utctimetuple()) or None
     
     try:
-        cur.execute(sql, (name, description, author, now, planned))
+        cur.execute(sql, (name, description, author, now, plannedDateInSeconds))
     except Exception, e:
         flag = False
         com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sql, (name, description, author, now, planned), e));
@@ -210,7 +212,7 @@ def loadListFromDatabase(com, sql, f, *params):
 
     try:        
         if ret:
-            com.log.debug('data.loadListFromDatabase: result = %s' % str(ret))
+            com.log.debug('data.loadListFromDatabase: result = %s' % pprint.pprint(ret))
             for row in ret:
                 result.append(f(row))
     except Exception, e:
