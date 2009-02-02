@@ -25,10 +25,10 @@ class TT_Template(object):
             Index(['tt_name', 'modi_time'])
         ],
         Table('tt_custom')[
-            Column('user'),
+            Column('username'),
             Column('tt_name'), 
             Column('tt_text'),
-            Index(['user', 'tt_name'])
+            Index(['username', 'tt_name'])
         ],
     ]
 
@@ -164,7 +164,7 @@ class TT_Template(object):
 
     selectByName = classmethod(selectByName)
 
-    def getCustomTemplate(cls, env, user, db=None):
+    def getCustomTemplate(cls, env, username, db=None):
         """Retrieve from the database that match
         the specified criteria.
         """
@@ -175,13 +175,13 @@ class TT_Template(object):
 
         cursor.execute("SELECT tt_name,tt_text "
                        "FROM tt_custom "
-                       "WHERE user=%s ORDER BY tt_name ", (user,))
+                       "WHERE username=%s ORDER BY tt_name ", (username,))
         
         return cursor.fetchall()
 
     getCustomTemplate = classmethod(getCustomTemplate)
 
-    def saveCustom(cls, env, user, tt_name, tt_text, db=None):
+    def saveCustom(cls, env, username, tt_name, tt_text, db=None):
         """Insert a new tt custom into the database."""
         if not db:
             db = env.get_db_cnx()
@@ -192,11 +192,11 @@ class TT_Template(object):
         cursor = db.cursor()
 
         # remove exist rows
-        cursor.execute("DELETE FROM tt_custom WHERE user=%s AND tt_name=%s ;", (user, tt_name))
+        cursor.execute("DELETE FROM tt_custom WHERE username=%s AND tt_name=%s ;", (username, tt_name))
         
         cursor.execute("INSERT INTO tt_custom "
-                       "(user,tt_name,tt_text) VALUES (%s,%s,%s)",
-                       (user, tt_name, tt_text))
+                       "(username,tt_name,tt_text) VALUES (%s,%s,%s)",
+                       (username, tt_name, tt_text))
 
         if handle_ta:
             db.commit()
@@ -205,7 +205,7 @@ class TT_Template(object):
     saveCustom = classmethod(saveCustom)
 
 
-    def deleteCustom(cls, env, user, tt_name, db=None):
+    def deleteCustom(cls, env, username, tt_name, db=None):
         """Remove the custom from the database."""
         if not db:
             db = env.get_db_cnx()
@@ -214,7 +214,7 @@ class TT_Template(object):
             handle_ta = False
 
         cursor = db.cursor()
-        cursor.execute("DELETE FROM tt_custom WHERE user='%s' AND tt_name='%s' ;" % (user, tt_name))
+        cursor.execute("DELETE FROM tt_custom WHERE username='%s' AND tt_name='%s' ;" % (username, tt_name))
 
         if handle_ta:
             db.commit()
@@ -224,4 +224,4 @@ class TT_Template(object):
 
 
 schema = TT_Template._schema
-schema_version = 2
+schema_version = 3

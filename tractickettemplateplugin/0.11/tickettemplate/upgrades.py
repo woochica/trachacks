@@ -176,8 +176,28 @@ def add_tt_custom(env, db):
     table = schema[1]
     for stmt in connector.to_sql(table):
         cursor.execute(stmt)
+        
+def alter_user_username(env, db):
+    """Alter table tt_custom field from user to username."""
+    # get current custom records
+    cursor.execute("SELECT * FROM tt_custom")
+    rows = cursor.fetchall()
+    
+    # refresh tt_custom schema
+    cursor.execute("DROP TABLE tt_custom")
+    
+    add_tt_custom(env, db)
+    
+    # restore records
+    for username, tt_name, tt_text in rows:
+        cursor.execute("INSERT INTO tt_custom "
+                       "(username,tt_name,tt_text) VALUES (%s,%s,%s)",
+                       (username, tt_name, tt_text))
+                       
+    db.commit()
 
 map = {
     1: [add_tt_table],
     2: [add_tt_custom],
+    3: [alter_user_username],
 }
