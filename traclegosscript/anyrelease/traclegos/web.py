@@ -5,6 +5,7 @@ TTW view for project creation and serving trac
 import cgi
 import os
 import string
+import subprocess
 import sys
 import tempfile
 
@@ -196,6 +197,9 @@ class ProjectVariables(Step):
         # add input (form) variables to the project variables
         project['vars'].update(input)
 
+        repository_dir = project['vars'].get('repository_dir')
+        project['vars']['repository_dir'] = ''
+
         # create the project
         self.view.legos.create_project(project['vars']['project'],
                                        self.templates(project),
@@ -219,8 +223,16 @@ class ProjectVariables(Step):
         # (and redirect to the admin panel?)
         # XXX hack for now
         for admin in project['admins']:
-            import subprocess
             subprocess.call(['trac-admin', project_dir, 'permission', 'add', admin, 'TRAC_ADMIN'])
+
+        if repository_dir:
+            ini = os.path.join(project_dir, 'conf', 'trac.ini')
+            conf = ConfigMunger(ini, { 'trac': {'repository_dir': repository_dir}})
+            f = file(ini, 'w')
+            conf.write(f)
+
+        subprocess.Popen(['trac-admin', project_dir, 'resync'])
+
 
     def templates(self, project):
         templates = [project['type'], project['config']]
@@ -319,6 +331,7 @@ class View(object):
                 step.transition(self.projects[project], req.POST)
                 if index == len(self.steps) - 1:
                     destination = self.done % self.projects[project]['vars']
+                    destination = '/'
                     self.projects.pop(project) # successful project creation
                 else:
                     destination = '%s?project=%s' % (self.steps[index + 1][0], project)
