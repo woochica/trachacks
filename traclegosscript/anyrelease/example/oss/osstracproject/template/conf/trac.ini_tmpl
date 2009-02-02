@@ -53,7 +53,7 @@ src = ${logo}
 width = -1
 
 [logging]
-log_file = ${basedir}/trac.log
+log_file = trac.log
 log_level = DEBUG
 log_type = file
 
