@@ -4,6 +4,7 @@ setup(
     name = 'TracTweakUI',
     version = '0.1',
     packages = ['tractweakui'],
+    package_data = { 'tractweakui': [ '*.txt', 'templates/*.*', 'htdocs/*.*', 'tests/*.*' ] },
     include_package_data = True,
     author = "Richard Liao",
     author_email = 'richard.liao.i@gmail.com',
