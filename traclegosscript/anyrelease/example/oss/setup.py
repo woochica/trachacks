@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.2'
+version='0.2.1'
 
 setup(name='OSSTracProject',
       version=version,
@@ -23,6 +23,7 @@ setup(name='OSSTracProject',
                            'TracPermRedirect',
                            'TracPrivateTickets',
                            'TracTags',
+                           'AutocompleteUsers',
                            'SVN_URLs',
                            'Tracbacks',
                            'svnsyncplugin'],
@@ -39,6 +40,7 @@ setup(name='OSSTracProject',
       "http://trac-hacks.org/svn/tagsplugin/tags/0.6#egg=TracTags",
 
       # plugins with TOPP authors
+      "http://trac-hacks.org/svn/autocompleteusersplugin/0.11#egg=AutocompleteUsers",
       "http://trac-hacks.org/svn/svnurlsplugin/0.11#egg=SVN_URLs",
       "http://trac-hacks.org/svn/tracbacksplugin/0.11#egg=Tracbacks",
       "http://trac-hacks.org/svn/svnsyncplugin/0.11#egg=svnsyncplugin"
