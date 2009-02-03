@@ -41,7 +41,7 @@ class CreateProject(Step):
     name = 'create-project'
     def data(self, project):
         """data needed for template rendering"""
-        return { 'URL': self.base_url,
+        return { 'URL': project['base_url'],
                  'projects': self.view.available_templates }
 
     def display(self, project):
@@ -142,6 +142,7 @@ class ProjectDetails(Step):
     
     def display(self, project):
         """display this step if there is something to do"""
+        project_details = [ self.view.available_repositories, self.view.available_databases ]
         return not sum([len(i) for i in project_details]) == len(project_details)
     
     def errors(self, project, input):
@@ -312,6 +313,7 @@ class View(object):
         # if POST-ing, validate the request and store needed information
         errors = None
         name, step = self.steps[index]
+        base_url = req.url.rsplit(step.name, 1)[0]
         if req.method == 'POST':
 
             project = req.POST.get('project')
@@ -320,6 +322,7 @@ class View(object):
                 return res(environ, start_response)
 
             project_data = self.projects.get(project, {})
+            project_data['base_url'] = base_url
             errors = step.errors(project_data, req.POST)
             if index:
                 if project not in self.projects:
@@ -331,7 +334,9 @@ class View(object):
                 step.transition(self.projects[project], req.POST)
                 if index == len(self.steps) - 1:
                     destination = self.done % self.projects[project]['vars']
-                    destination = '/'
+                    import time
+                    time.sleep(2)
+#                    destination = '/'
                     self.projects.pop(project) # successful project creation
                 else:
                     destination = '%s?project=%s' % (self.steps[index + 1][0], project)
@@ -339,14 +344,18 @@ class View(object):
                 return res(environ, start_response)
         else: # GET
             project = req.GET.get('project') # None for create-project
+            project_data = self.projects.get(project, {})
+            project_data['base_url'] = base_url
             if index:
                 if project not in self.projects:
                     res = exc.HTTPSeeOther("No session found", location="create-project")
                     return res(environ, start_response)
-            else:
-                step.base_url = req.url.rsplit(step.name, 1)[0]
+            while not step.display(project_data):
+                break
+                step.transition(project_data, {})
+                
 
-        data = step.data(self.projects.get(project))
+        data = step.data(project_data)
         data['errors'] = errors
         template = self.loader.load(step.template)
         html =  template.generate(**data).render('html', doctype='html')
