@@ -53,7 +53,7 @@ class CreateProject(Step):
         errors = []        
         project_name = input.get('project')
         if project_name:
-            if project_name in self.view.projects: # TODO check for existing trac projects
+            if self.view.projects.get(project_name): # TODO check for existing trac projects
                 errors.append("The project '%s' already exists" % project_name)
         else:
             errors.append('No project URL specified')
@@ -327,34 +327,47 @@ class View(object):
         errors = None
         name, step = self.steps[index]
         base_url = req.url.rsplit(step.name, 1)[0]
+        project = req.params.get('project')
         if req.method == 'POST':
 
-            project = req.POST.get('project')
+            # check for project existence
             if not project and index:
                 res = exc.HTTPSeeOther("No session found", location="create-project")
                 return res(environ, start_response)
-
-            project_data = self.projects.get(project, {})
-            project_data['base_url'] = base_url
-            errors = step.errors(project_data, req.POST)
             if index:
                 if project not in self.projects:
                     errors.append('Project not found')
             else:
                 self.projects[project] = {}
+
+            project_data = self.projects[project]
+            errors = step.errors(project_data, req.POST)
+
+            # set *after* error check so that `create-project` doesn't find itself
+            project_data['base_url'] = base_url 
             
             if not errors: # success
-                step.transition(self.projects[project], req.POST)
-                if index == len(self.steps) - 1:
-                    destination = self.done % self.projects[project]['vars']
-                    time.sleep(1) # XXX needed?
-                    self.projects.pop(project) # successful project creation
-                else:
-                    destination = '%s?project=%s' % (self.steps[index + 1][0], project)
+                step.transition(project_data, req.POST)
+
+                # find the next step and redirect to it
+                while True:
+                    index += 1
+                    
+                    if index == len(self.steps):
+                        destination = self.done % self.projects[project]['vars']
+                        time.sleep(1) # XXX needed?
+                        self.projects.pop(project) # successful project creation
+                        break
+                    else:
+                        name, step = self.steps[index]
+                        if step.display(project_data):
+                            destination = '%s?project=%s' % (self.steps[index][0], project)        
+                            break
+                        else:
+                            step.transition(project_data, {})
                 res = exc.HTTPSeeOther(destination, location=destination)
                 return res(environ, start_response)
         else: # GET
-            project = req.GET.get('project') # None for create-project
             project_data = self.projects.get(project, {})
             project_data['base_url'] = base_url
             if index:
