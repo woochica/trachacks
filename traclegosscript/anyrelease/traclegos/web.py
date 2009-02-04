@@ -198,6 +198,9 @@ class ProjectVariables(Step):
         # add input (form) variables to the project variables
         project['vars'].update(input)
 
+        # don't add the repository directory here so that we can 
+        # sync asynchronously
+        # XXX hack
         repository_dir = project['vars'].get('repository_dir')
         project['vars']['repository_dir'] = ''
 
@@ -227,6 +230,7 @@ class ProjectVariables(Step):
         for admin in project['admins']:
             subprocess.call(['trac-admin', project_dir, 'permission', 'add', admin, 'TRAC_ADMIN'])
 
+        # XXX hack to sync the repository asynchronously
         if repository_dir:
             ini = os.path.join(project_dir, 'conf', 'trac.ini')
             conf = ConfigMunger(ini, { 'trac': {'repository_dir': repository_dir}})
