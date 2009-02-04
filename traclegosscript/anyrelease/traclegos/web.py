@@ -155,7 +155,12 @@ class ProjectDetails(Step):
         # repository information
         project['repository'] = None
         repository = input.get('repository')
-        if repository in self.view.available_repositories:
+        if not repository:
+            # repository is specified by policy
+            assert len(self.view.available_repositories) == 1
+            repository = self.view.available_repositories[0]
+
+        if repository in self.view.available_repositories: # XXX musn't this be true?!?
             args = dict((arg.split('%s_' % repository, 1)[1], value) 
                         for arg, value in input.items()
                         if arg.startswith('%s_' % repository))
@@ -166,7 +171,11 @@ class ProjectDetails(Step):
         # database information
         project['database'] = None
         database = input.get('database')
-        if database in self.view.available_databases:
+        if not database:
+            # database is specified by policy
+            assert len(self.view.available_databases) == 1
+            database = self.view.available_databases[0]
+        if database in self.view.available_databases: # XXX musn't this be true?!?
             project['database'] = self.view.databases[database]
 
 class ProjectVariables(Step):
