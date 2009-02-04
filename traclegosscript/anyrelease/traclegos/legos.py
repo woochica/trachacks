@@ -116,11 +116,18 @@ class TracLegos(object):
         ### munge configuration
 
         # get templates
-        if not isinstance(templates, ProjectTemplates):
-            if database:
-                templates.append(database.config())
-            if repository:
-                templates.append(repository.config())
+
+        _templates = []
+        if database:
+            _templates.append(database.config())
+        if repository:
+            _templates.append(repository.config())
+
+        if isinstance(templates, ProjectTemplates):
+            if _templates:
+                templates.append(*_templates)
+        else:
+            templates += _templates
             templates = self.project_templates(templates)
 
         # determine the vars/options

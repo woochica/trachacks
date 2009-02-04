@@ -20,6 +20,16 @@ class ProjectTemplates(object):
         self.templates = templates
         self.resolve()
 
+    def append(self, *templates):
+        """append templates to the configuraton"""
+        self.templates += templates
+        if hasattr(self, '_configuration'):
+            del self._configuration
+        self.resolve()
+
+    def __iadd__(self, templates):
+        self.append(*templates)
+
     def resolve(self):
         """determine pastescript templates and .ini files"""
         project_types = project_dict()
