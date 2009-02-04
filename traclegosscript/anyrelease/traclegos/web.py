@@ -232,8 +232,7 @@ class ProjectVariables(Step):
             conf = ConfigMunger(ini, { 'trac': {'repository_dir': repository_dir}})
             f = file(ini, 'w')
             conf.write(f)
-
-        subprocess.Popen(['trac-admin', project_dir, 'resync'])
+            subprocess.Popen(['trac-admin', project_dir, 'resync'])
 
 
     def templates(self, project):
