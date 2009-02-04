@@ -204,7 +204,8 @@ class ProjectVariables(Step):
         # create the project
         self.view.legos.create_project(project['vars']['project'],
                                        self.templates(project),
-                                       project['vars'], 
+                                       project['vars'],
+                                       database=project['database'],
                                        repository=project['repository'])
 
         project_dir = os.path.join(self.view.directory, project['vars']['project'])
