@@ -161,7 +161,7 @@ class ProjectDetails(Step):
                         if arg.startswith('%s_' % repository))
             project['repository'] = self.view.repositories[repository]
             project['vars'].update(args)
-            project['vars'].update(self.view.legos.repository_fields(project).get(repository, {}))
+            project['vars'].update(self.view.legos.repository_fields(project['vars']['project']).get(repository, {}))
 
         # database information
         project['database'] = None
