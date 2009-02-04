@@ -7,7 +7,7 @@ import os
 import string
 import subprocess
 import sys
-import tempfile
+import time
 
 from genshi.core import Markup
 from genshi.template import TemplateLoader
@@ -347,9 +347,7 @@ class View(object):
                 step.transition(self.projects[project], req.POST)
                 if index == len(self.steps) - 1:
                     destination = self.done % self.projects[project]['vars']
-                    import time
-                    time.sleep(2)
-#                    destination = '/'
+                    time.sleep(1) # XXX needed?
                     self.projects.pop(project) # successful project creation
                 else:
                     destination = '%s?project=%s' % (self.steps[index + 1][0], project)
