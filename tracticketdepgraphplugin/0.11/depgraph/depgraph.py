@@ -87,7 +87,7 @@ class DepGraphMacro(WikiMacroBase):
 					+ "\" fontcolor=\"#bb0000\" fillcolor=\"" + bgcolor \
 					+ "\" color=\"" + border \
 					+ "\" tooltip=\"" \
-					+ escape(ticket[2], 'true') \
+					+ escape(unicode(ticket[2], 'latin-1'), 'true') \
 						.encode('ascii', 'xmlcharrefreplace') \
 						.replace('\'', '&apos;') \
 					+ "\" ]\n"
@@ -146,7 +146,7 @@ class DepGraphMacro(WikiMacroBase):
 				+ req.href.ticket(int(ticket)) \
 				+ "\" fillcolor=\"" + bgcolor + "\" color=\"" + border \
 				+ "\" fontcolor=\"#bb0000\" tooltip=\"" \
-				+ escape(summary, 'true') \
+				+ escape(unicode(summary, 'latin-1'), 'true') \
 					.encode('ascii', 'xmlcharrefreplace') \
 					.replace('\'', '&apos;') \
 				+ "\" ]\n"
