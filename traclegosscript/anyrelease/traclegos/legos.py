@@ -92,7 +92,8 @@ class TracLegos(object):
         from variables
         """
         return { 'SVNSync': {'repository_dir': os.path.join(self.directory, project, 'mirror') },
-                 'NewSVN': {'repository_dir': os.path.join(self.directory, project, 'svn') }
+                 'NewSVN': {'repository_dir': os.path.join(self.directory, project, 'svn') },
+                 'NoRepository': { 'repository_dir': '' },
                  }
 
     def create_project(self, project, templates, vars=None,
