@@ -1,0 +1,12 @@
+The below is a rough change history for the QATrackerPlugin, a test
+case management plugin for Trac 0.11.
+
+For more details, please visit:
+http://trac-hacks.org/wiki/QaTrackerPlugin
+
+
+######################
+#  Version History:  #
+######################
+
+0.1-alpha	Barebones release that only handles the happy path

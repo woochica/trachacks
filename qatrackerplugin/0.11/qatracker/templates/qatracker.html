@@ -1,0 +1,147 @@
+<!DOCTYPE html
+		PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+		"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+			xmlns:py="http://genshi.edgewall.org/"
+			xmlns:xi="http://www.w3.org/2001/XInclude">
+	<xi:include href="layout.html" />
+	<head>
+		<title>QA Tracker - Test Case Management</title>
+	</head>
+	<body>
+		<div id="ctxtnav" class="nav"></div>
+		<div id="content" class="qatracker">
+			<table>
+			<tr>
+				<td>
+					<h2><a href="http://trac-hacks.org/wiki/QaTrackerPlugin">QA Tracker</a></h2>
+				</td>
+				<td width="50%">
+					<sub><i>Test Case management via Trac</i></sub>
+				</td>
+			</tr>
+			</table>
+			<hr />
+			<br />
+				
+
+			<fieldset>
+				<legend><b><i>Start a new Test Run</i></b></legend>
+				<form method="POST">
+					<table>
+						<tr>
+							<td> </td>
+						</tr>
+						<tr>
+							<td>Name: </td>
+							<td>
+								<input type="text" name="newrun" id="newrun" size="80" />
+							</td>
+						</tr>
+						<tr>
+							<td>Master Test Plan: </td>
+							<td>
+								<select name="masterplan1" id="masterplan1">
+									<option></option>
+									<div py:if="milestones">
+										<option py:for="ms in milestones">$ms</option>
+									</div>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>Description: </td>
+							<td>
+								<textarea name="description" id="description" rows="4" cols="80"></textarea>
+								<br />
+							</td>
+						</tr>
+						<tr>
+							<td>Due Date: </td>
+							<td>
+								<input type="text" name="duedate" id="duedate" size="10" />
+								<i>optional</i>
+							</td>
+						</tr>
+						<tr>
+							<td>Assign To: </td>
+							<td>
+								<select name="assign1" id="assign1">
+									<option></option>
+									<div py:if="usernames">
+										<option py:for="u in usernames">$u</option>
+									</div>
+								</select>
+								<i>optional</i>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<input type="submit" name="startrun" id="startrun" value="Start Run!" />
+								<input type="reset" name="clearform1" id="clearform1" value="Reset Form" />
+							</td>
+						</tr>
+					</table>
+				<input type="hidden" name="action1" id="action1" value="create" />
+				</form>
+			</fieldset>
+
+			<br />
+			<br />
+
+			<fieldset>
+				<legend><b><i>Add Test Cases to existing Test Run</i></b></legend>
+				<form method="POST">
+					<table>
+						<tr>
+							<td> </td>
+						</tr>
+						<tr>
+							<td>Existing Test Run: </td>
+							<td>
+								<select name="currentrun" id="currentrun">
+									<option></option>
+									<div py:if="milestones">
+										<option py:for="ms in milestones">$ms</option>
+									</div>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>Master Test Plan: </td>
+							<td>
+								<select name="masterplan2" id="masterplan2">
+									<option></option>
+									<div py:if="milestones">
+										<option py:for="ms in milestones">$ms</option>
+									</div>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<td>Assign To: </td>
+							<td>
+								<select name="assign2" id="assign2">
+									<option></option>
+									<div py:if="usernames">
+										<option py:for="u in usernames">$u</option>
+									</div>
+								</select>
+								<i>optional</i>
+							</td>
+						</tr>
+						<tr>
+							<td></td>
+							<td>
+								<input type="submit" name="addcases" id="addcases" value="Add Test Cases!" />
+								<input type="reset" name="clearform2" id="clearform2" value="Reset Form" />
+							</td>
+						</tr>
+					</table>
+				<input type="hidden" name="action2" id="action2" value="change" />
+				</form>
+			</fieldset>
+		</div>
+	</body>
+</html>

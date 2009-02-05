@@ -1,0 +1,20 @@
+QATrackerPlugin
+
+	+ setup.py
+	+ README.txt
+	+ VERSION.txt
+	+ makePyEgg.cmd
+
+	\ qatracker \
+			+ __init__.py
+			+ qatracker.py
+
+			\ htdocs \
+
+					\ css \
+						+ qatracker.css
+
+					\ images \
+
+			\ templates \
+				+ qatracker.html
