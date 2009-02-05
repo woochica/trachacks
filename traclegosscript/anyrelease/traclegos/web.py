@@ -295,6 +295,11 @@ class View(object):
             for name in self.repositories.keys():
                 if name not in self.available_repositories:
                     del self.repositories[name]
+        if 'variables' in kw:
+            # set repository options defaults from input variables
+            for repository in self.repositories.values():            
+                for option in repository.options:
+                    option.default = kw['variables'].get(option.name, option.default)
 
         # available database types
         self.databases = available_databases()

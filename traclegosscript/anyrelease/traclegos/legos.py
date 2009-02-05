@@ -12,6 +12,7 @@ from optparse import OptionParser
 from paste.script.templates import var
 from paste.script.templates import Template
 from trac.admin.console import TracAdmin
+from trac.core import TracError
 from trac.env import Environment
 from traclegos.admin import TracLegosAdmin
 from traclegos.config import ConfigMunger
@@ -180,8 +181,11 @@ class TracLegos(object):
         ### repository setup
         if repository:
             repository.setup(**vars)
-            repos = env.get_repository()
-            repos.sync()
+            try:
+                repos = env.get_repository()
+                repos.sync()
+            except TracError:
+                pass
 
         ### read the generated configuration 
         _conf_file = os.path.join(dirname, 'conf', 'trac.ini')
