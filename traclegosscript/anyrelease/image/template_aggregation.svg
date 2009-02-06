@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="36cm" height="7cm" viewBox="1 2 36 7">
+  <polygon style="fill: #ffffff" points="1.1,2.7 4.2,2.7 4.8,3.3 4.8,5.2 1.1,5.2 "/>
+  <polygon style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="1.1,2.7 4.2,2.7 4.8,3.3 4.8,5.2 1.1,5.2 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.05; stroke: #000000" points="4.2,2.7 4.2,3.3 4.8,3.3 "/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 2.8 cm; font-family: monospace; font-style: normal; font-weight: normal" x="1.45" y="3.8925">OSS Trac</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 2.45 cm; font-family: monospace; font-style: normal; font-weight: normal" x="1.45" y="4.6925">Project</text>
+  <polygon style="fill: #ffffff" points="6.2,2.7 11.4,2.7 12,3.3 12,5.2 6.2,5.2 "/>
+  <polygon style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="6.2,2.7 11.4,2.7 12,3.3 12,5.2 6.2,5.2 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.05; stroke: #000000" points="11.4,2.7 11.4,3.3 12,3.3 "/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.55 cm; font-family: monospace; font-style: normal; font-weight: normal" x="6.55" y="3.8925">Configuration</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.9 cm; font-family: monospace; font-style: normal; font-weight: normal" x="6.55" y="4.6925">for Plugin 'A'</text>
+  <polygon style="fill: #ffffff" points="13.9,2.75 18.75,2.75 19.35,3.35 19.35,5.25 13.9,5.25 "/>
+  <polygon style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="13.9,2.75 18.75,2.75 19.35,3.35 19.35,5.25 13.9,5.25 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.05; stroke: #000000" points="18.75,2.75 18.75,3.35 19.35,3.35 "/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 1.4 cm; font-family: monospace; font-style: normal; font-weight: normal" x="14.25" y="3.9425">Site</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.55 cm; font-family: monospace; font-style: normal; font-weight: normal" x="14.25" y="4.7425">Configuration</text>
+  <polygon style="fill: #ffffff" points="23.2,3.05 23.7,2.55 27.5975,2.55 27.5975,4.35 27.0975,4.85 23.2,4.85 23.2,3.05 "/>
+  <polygon style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="23.2,3.05 23.7,2.55 27.5975,2.55 27.5975,4.35 27.0975,4.85 23.2,4.85 23.2,3.05 "/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="23.2" y1="3.05" x2="27.0975" y2="3.05"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="27.0975" y1="3.05" x2="27.5975" y2="2.55"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="27.0975" y1="3.05" x2="27.0975" y2="4.85"/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 2.8975 cm; font-family: sans; font-style: normal; font-weight: normal" x="23.7" y="4.0925">TracLegos</text>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.05; stroke: #000000" x1="23.7" y1="4.2325" x2="26.5975" y2="4.2325"/>
+  <rect style="fill: #ffffff" x="31.2" y="3.05" width="4.885" height="1.8" rx="0.5" ry="0.5"/>
+  <rect style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x="31.2" y="3.05" width="4.885" height="1.8" rx="0.5" ry="0.5"/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 3.885 cm; font-family: sans; font-style: italic; font-weight: 700" x="31.7" y="4.0925">Trac project</text>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="4.8" y1="3.95" x2="5.97639" y2="3.95"/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="5.5882,4.2 6.0882,3.95 5.5882,3.7 "/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="12" y1="3.95" x2="13.6765" y2="3.99412"/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="13.2818,4.23382 13.7882,3.99706 13.295,3.73399 "/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="19.35" y1="4" x2="22.9764" y2="3.9529"/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="22.5915,4.20792 23.0882,3.95145 22.585,3.70797 "/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.15; stroke: #000000" x1="27.0975" y1="3.95" x2="30.6573" y2="3.95"/>
+  <polygon style="fill: none; fill-opacity:0; stroke-width: 0.15; stroke: #000000" points="31.0323,3.95 30.5323,4.2 30.6573,3.95 30.5323,3.7 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" points="1.05,5.65 1.05,6.45 11.95,6.45 11.95,5.55 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" points="13.95,5.6 13.95,6.45 19.35,6.45 19.35,5.6 "/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 5.3875 cm; font-family: sans; font-style: italic; font-weight: normal" x="3.15" y="7.45">Generic templates</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 3.545 cm; font-family: sans; font-style: italic; font-weight: normal" x="14.4" y="7.35">Site-specific</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 2.6325 cm; font-family: sans; font-style: italic; font-weight: normal" x="14.4" y="8.15">template</text>
+  <text style="fill: #000000; font-size: 0.7 cm; length: 2.035 cm; font-family: sans; font-style: normal; font-weight: 700" x="28" y="2.85">project</text>
+  <text style="fill: #000000; font-size: 0.7 cm; length: 2.3775 cm; font-family: sans; font-style: normal; font-weight: 700" x="28" y="3.55">creation</text>
+  <text style="fill: #000000; font-size: 0.7 cm; length: 2.5975 cm; font-family: sans; font-style: normal; font-weight: 700" x="19.55" y="2.9">template</text>
+  <text style="fill: #000000; font-size: 0.7 cm; length: 3.515 cm; font-family: sans; font-style: normal; font-weight: 700" x="19.55" y="3.6">aggregation</text>
+</svg>
