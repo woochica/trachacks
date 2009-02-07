@@ -1,4 +1,11 @@
-trac-cosign (0.1.0-1.3098) unstable; urgency=low
+trac-cosign (0.1.1-1.5221) unstable; urgency=low
+
+  * rename traccosign.traccosign to traccosign.login;
+  * add traccosign.accountldap module, which sync account info with LDAP;
+
+ -- Jiang Xin <worldhello.net@gmail.com>  Sat, 07 Feb 2009 23:40:19 +0800
+ 
+trac-cosign (0.1.1-1.5217) unstable; urgency=low
 
   * Initial release
 
