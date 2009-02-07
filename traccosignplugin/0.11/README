@@ -7,6 +7,10 @@ __ http://weblogin.org/
 
 Configuration
 =============
+To enable the plugin::
+    [components]
+    traccosign.* = enabled
+    trac.web.auth.LoginModule = disabled
 
 Options in the ``[cosign]`` section:
 
@@ -19,12 +23,6 @@ Options in the ``[cosign]`` section:
 ``logout_path``:
     Relative path to the logout service. Defaults to ``/cgi-bin/logout``.
 
-To enable the plugin::
-
-    [components]
-    traccosign.* = enabled
-    trac.web.auth.LoginModule = disabled
-
 .. note::
     Even if installing locally, you must disable the default LoginModule.
 
@@ -33,9 +31,20 @@ Example
 
 An example configuration::
 
+    [components]
+    traccosign.login = enabled
+    trac.web.auth.LoginModule = disabled
+    traccosign.accountldap = enabled
+
     [cosign]
     server = https://weblogin.localdomain/
     service = trac
     login_path = /cgi-bin/login
     logout_path = /cgi-bin/logout
 
+    [ldap]
+    host = localhost
+    bind_user = cn=ldapadmin,dc=foo,dc=bar
+    bind_passwd = secret
+    basedn = dc=foo,dc=bar
+    attempts = 1

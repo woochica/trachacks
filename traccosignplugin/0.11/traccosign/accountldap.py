@@ -34,12 +34,12 @@ class AccountLDAP(Component):
         for i in range(self.attempts):
             try:
                 self.ldap = ldap.open(self.config.get('ldap', 'host'))
-                self.ldap.simple_bind(self.config.get('ldap', 'bind_user'),  
+                self.ldap.simple_bind_s(self.config.get('ldap', 'bind_user'),  
                                       self.config.get('ldap', 'bind_passwd'))
                 break
             except ldap.LDAPError, e:
-                self.log.error('Connection LDAP problems. Check trac.ini ldap options. Attempt', (i + 1))
                 self.enabled = False
+                self.log.error('Connection LDAP problems. Check trac.ini ldap options. Attempt', (i + 1))
         self.log.info('Connection LDAP basdn %s" userdn "%s". Attempt %i' % (self.basedn, 
                                                                  self.userdn, (i + 1)))
         
@@ -50,13 +50,16 @@ class AccountLDAP(Component):
         return handler
     
     def post_process_request(self, req, template, data, content_type):
-        if not req.authname or req.authname == 'anonymous':
+        if not self.enabled or not req.authname or req.authname == 'anonymous':
             return template, data, None
         uid = req.authname.lower()
-        name, email = self._getUserAttributes(uid)
-        req.session['name'] = name.decode('utf-8')
-        req.session['email'] = email
-        return template, data, None        
+        try:
+            name, email = self._getUserAttributes(uid)
+            req.session['name'] = name.decode('utf-8')
+            req.session['email'] = email
+        except:
+            self.log.error('Search LDAP problems. Check trac.ini ldap options')
+        return template, data, None
     #
     #----------------------------------------------------------- helper methods
     #
@@ -65,11 +68,7 @@ class AccountLDAP(Component):
         """
         filter = '%s=%s' % (self.userFilter, uid)
         result = []
-        try:
-            id = self.ldap.search(self.basedn, ldap.SCOPE_SUBTREE, filter, None)
-            type, data = self.ldap.result(id, 0)
-        except ldap.LDAPError, e:
-            self.log.error('Search LDAP problems. Check trac.ini ldap options')
-            return ('', '')
+        id = self.ldap.search(self.basedn, ldap.SCOPE_SUBTREE, filter, None)
+        type, data = self.ldap.result(id, 0)
         self.log.info('%s - %s' % (data[0][1]['cn'][0], data[0][1]['mail'][0]))
         return (data[0][1]['cn'][0], data[0][1]['mail'][0])

@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name = 'TracCosign',
-    version = '0.1.0',
+    version = '0.1.1',
     packages = ['traccosign'],
 
     author = 'Jiang Xin',
@@ -23,8 +23,8 @@ setup(
 
     entry_points = {
         'trac.plugins': [
-            'traccosign.login = traccosign.login'
-            'traccosign.accountldap = traccosign.accountldap'
+            'traccosign.login = traccosign.login',
+            'traccosign.accountldap = traccosign.accountldap',
         ]
     }
 )
