@@ -24,6 +24,7 @@ setup(
     entry_points = {
         'trac.plugins': [
             'traccosign.login = traccosign.login'
+            'traccosign.accountldap = traccosign.accountldap'
         ]
     }
 )
