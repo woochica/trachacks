@@ -23,7 +23,7 @@ setup(
 
     entry_points = {
         'trac.plugins': [
-            'traccosign.traccosign = traccosign.traccosign'
+            'traccosign.login = traccosign.login'
         ]
     }
 )
