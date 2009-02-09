@@ -13,9 +13,13 @@
 #
 # Author: Jiang Xin <worldhello.net@gmail.com>
 
+import re
+
 from trac.core import *
 from trac.config import Option
 from trac.web.auth import LoginModule
+from trac.web.api import IRequestHandler
+from trac.web import parse_query_string
 
 from pycosign import PyCoSign
 
@@ -34,21 +38,52 @@ class CoSignLoginModule(LoginModule):
                         doc='Path component for the logout system')
     service = Option('cosign', 'service', default='',
                         doc='CoSign service name for trac. If login redirect is handled by CoSign filter, do not define this.')
-        
+
+    # IRequestHandler methods
+
+    def match_request(self, req):
+        return re.match('/(login|logout)/?$', req.path_info)
+
+    def process_request(self, req):
+        if req.path_info.startswith('/login'):
+            self._do_login(req)
+        elif req.path_info.startswith('/logout'):
+            self._do_logout(req)
+        self._redirect_back(req)
+
     # Internal methods
+    def _referer_url(self, req):
+        """Return Referer URL."""
+        referer = req.args.get('referer') or req.get_header('Referer')
+        if referer and not (referer == req.base_url or \
+                referer.startswith(req.base_url.rstrip('/')+'/')):
+            # only redirect to referer if it is from the same site
+            referer = None
+        return referer
+    
+    def _redirect_back(self, req):
+        """Redirect the user back to the URL she came from."""
+        if req.query_string:
+            args = parse_query_string(req.query_string)
+            referer = args.get('referer')
+        else:
+            referer = None
+        req.redirect(referer or req.abs_href())
+    
     def _do_login(self, req):
         if not req.remote_user:
             if not self.service:
                 raise Exception("Not define CoSign service name. Login failed.")
-            self.cosign.do_login(req)
+            referer = self._referer_url(req)
+            self.cosign.do_login(req, referer)
         super(CoSignLoginModule, self)._do_login(req)
 
     def _do_logout(self, req):
         if req.authname:
             super(CoSignLoginModule, self)._do_logout(req)
-            self.cosign.do_logout(req)
-        else:
-            req.redirect(req.abs_href())
+        if req.remote_user:
+            referer = self._referer_url(req)
+            self.cosign.do_logout(req, referer)
     
     def cosign(self):
         paths = {

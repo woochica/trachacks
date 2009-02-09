@@ -14,6 +14,7 @@
 # Author: Jiang Xin <worldhello.net@gmail.com>
 
 import random
+from urllib import urlencode
 
 class PyCoSign(object):
     """A class for working with a CoSign server."""
@@ -37,9 +38,11 @@ class PyCoSign(object):
             hash += random.choice(sample_string)
         return hash
 
-    def do_login(self, req):
+    def do_login(self, req, referer):
         """Return the login URL for the given service."""
         back_url= req.abs_href.login()
+        if referer:
+            back_url += "?" + urlencode({'referer':referer})
         service = self.paths['service'].encode('utf-8')
         hash = self.random_hash(125)
         dest_url = self.paths['server'].rstrip('/')
@@ -50,9 +53,11 @@ class PyCoSign(object):
         req.outcookie[service]['path'] = '/'
         req.redirect(dest_url)
 
-    def do_logout(self, req):
+    def do_logout(self, req, referer):
         """Return the logout URL."""
-        back_url= req.abs_href()
+        back_url= req.abs_href.logout()
+        if referer:
+            back_url += "?" + urlencode({'referer':referer})
         dest_url = self.paths['server'].rstrip('/')
         dest_url += self.paths['logout_path']
         dest_url += '?' + back_url
