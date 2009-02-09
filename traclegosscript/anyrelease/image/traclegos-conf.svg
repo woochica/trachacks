@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="42cm" height="24cm" viewBox="2 4 42 24">
+  <rect style="fill: #ffffff" x="39.45" y="5.7" width="4.895" height="1.8" rx="0.5" ry="0.5"/>
+  <rect style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x="39.45" y="5.7" width="4.895" height="1.8" rx="0.5" ry="0.5"/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 3.895 cm; font-family: sans; font-style: normal; font-weight: 700" x="39.95" y="6.7425">Trac Project</text>
+  <ellipse style="fill: #ffffff" cx="6.67304" cy="6.60574" rx="4.14162" ry="1.64003"/>
+  <ellipse style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" cx="6.67304" cy="6.60574" rx="4.14162" ry="1.64003"/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 6.65 cm; font-family: monospace; font-style: normal; font-weight: normal" x="3.34804" y="6.74824">create-trac-project</text>
+  <ellipse style="fill: #ffffff" cx="5.85673" cy="16.8534" rx="2.87946" ry="1.43973"/>
+  <ellipse style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" cx="5.85673" cy="16.8534" rx="2.87946" ry="1.43973"/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.2 cm; font-family: monospace; font-style: normal; font-weight: normal" x="3.75673" y="16.9959">paster serve</text>
+  <polygon style="fill: #ffffff" points="24.2,5.35 29.05,5.35 29.65,5.95 29.65,7.85 24.2,7.85 "/>
+  <polygon style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="24.2,5.35 29.05,5.35 29.65,5.95 29.65,7.85 24.2,7.85 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.05; stroke: #000000" points="29.05,5.35 29.05,5.95 29.65,5.95 "/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 1.4 cm; font-family: monospace; font-style: normal; font-weight: normal" x="24.55" y="6.5425">Site</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.55 cm; font-family: monospace; font-style: normal; font-weight: normal" x="24.55" y="7.3425">Configuration</text>
+  <polygon style="fill: #ffffff" points="31.45,5.3 31.95,4.8 37.12,4.8 37.12,7.4 36.62,7.9 31.45,7.9 31.45,5.3 "/>
+  <polygon style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="31.45,5.3 31.95,4.8 37.12,4.8 37.12,7.4 36.62,7.9 31.45,7.9 31.45,5.3 "/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="31.45" y1="5.3" x2="36.62" y2="5.3"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="36.62" y1="5.3" x2="37.12" y2="4.8"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="36.62" y1="5.3" x2="36.62" y2="7.9"/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 3.0825 cm; font-family: sans; font-style: normal; font-weight: normal" x="31.95" y="6.3425">TracLegos.</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.17 cm; font-family: sans; font-style: normal; font-weight: normal" x="31.95" y="7.1425">create_project</text>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.05; stroke: #000000" x1="31.95" y1="6.4825" x2="35.0325" y2="6.4825"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.05; stroke: #000000" x1="31.95" y1="7.2825" x2="36.12" y2="7.2825"/>
+  <ellipse style="fill: #ffffff" cx="5.80673" cy="26.6534" rx="2.4006" ry="1.2003"/>
+  <ellipse style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" cx="5.80673" cy="26.6534" rx="2.4006" ry="1.2003"/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 0.925 cm; font-family: sans; font-style: italic; font-weight: normal" x="5.34423" y="26.7959">API</text>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" x1="36.62" y1="6.6" x2="38.9" y2="6.6"/>
+  <polygon style="fill: #000000" points="38.9,6.85 39.4,6.6 38.9,6.35 "/>
+  <polygon style="fill: #ffffff" points="11.2,10.4 18.9587,10.4 21.545,12.9863 21.545,23.3312 11.2,23.3312 "/>
+  <polygon style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="11.2,10.4 18.9587,10.4 21.545,12.9863 21.545,23.3312 11.2,23.3312 "/>
+  <polyline style="fill: none; fill-opacity:0; stroke-width: 0.1; stroke: #000000" points="18.9587,10.4 18.9587,12.9863 21.545,12.9863 21.545,12.9863 "/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 3.85 cm; font-family: monospace; font-style: normal; font-weight: normal" x="12.3275" y="11.5844">Paster .ini</text>
+  <rect style="fill: #ffffff" x="12.0475" y="12.325" width="5.705" height="3.45"/>
+  <rect style="fill: none; fill-opacity:0; stroke-width: 0.05; stroke: #000000" x="12.0475" y="12.325" width="5.705" height="3.45"/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 3.355 cm; font-family: sans; font-style: normal; font-weight: normal" x="12.5225" y="13.3925">[DEFAULTS]</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.655 cm; font-family: sans; font-style: normal; font-weight: normal" x="12.5225" y="14.1925">traclegos.[] = []</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 0.555 cm; font-family: sans; font-style: normal; font-weight: normal" x="12.5225" y="14.9925">...</text>
+  <rect style="fill: #ffffff" x="12.02" y="16.325" width="8.72" height="5.05"/>
+  <rect style="fill: none; fill-opacity:0; stroke-width: 0.05; stroke: #000000" x="12.02" y="16.325" width="8.72" height="5.05"/>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.45 cm; font-family: sans; font-style: normal; font-weight: normal" x="12.495" y="17.3925">[app:traclegos]</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 7.67 cm; font-family: sans; font-style: normal; font-weight: normal" x="12.495" y="18.1925">traclegos.directory = /proj</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.655 cm; font-family: sans; font-style: normal; font-weight: normal" x="12.495" y="18.9925">traclegos.[] = []</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 0.555 cm; font-family: sans; font-style: normal; font-weight: normal" x="12.495" y="19.7925">...</text>
+  <text style="fill: #000000; font-size: 0.8 cm; length: 4.9975 cm; font-family: sans; font-style: normal; font-weight: normal" x="12.495" y="20.5925">traclegos.conf = </text>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" x1="8.73619" y1="16.8534" x2="11.2" y2="16.8656"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" x1="10.8147" y1="6.60574" x2="24.2" y2="6.6"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" x1="29.65" y1="6.6" x2="31.45" y2="6.6"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" x1="8.20732" y1="26.6534" x2="34.15" y2="26.65"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" x1="26.925" y1="7.85" x2="26.95" y2="20.45"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" x1="34.035" y1="7.9" x2="34.05" y2="26.65"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" x1="29.65" y1="7.85" x2="29.65" y2="26.55"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 0.001; stroke: #000000" x1="17.65" y1="20.5" x2="26.95" y2="20.5"/>
+  <text style="fill: #000000; font-size: 0.7 cm; length: 0.515 cm; font-family: sans; font-style: normal; font-weight: 700" x="17.05" y="6">-c</text>
+</svg>
