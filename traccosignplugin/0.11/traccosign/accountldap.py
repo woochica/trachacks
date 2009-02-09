@@ -52,11 +52,19 @@ class AccountLDAP(Component):
     def post_process_request(self, req, template, data, content_type):
         if not self.enabled or not req.authname or req.authname == 'anonymous':
             return template, data, None
+
+        # If login from CoSign SSO, redirecting from CoSign, no referer is set in header.
+        # Through the referer from header, we can safely narrow down LDAP queries.
+        referer = referer = req.args.get('referer') or req.get_header('Referer')
+        if referer:
+            return template, data, None
+
         uid = req.authname.lower()
         try:
             name, email = self._getUserAttributes(uid)
             req.session['name'] = name.decode('utf-8')
             req.session['email'] = email
+            self.log.info('Update user info from LDAP. URL: %s, user: %s.' % (req.path_info, uid))
         except:
             self.log.error('Search LDAP problems. Check trac.ini ldap options')
         return template, data, None
