@@ -53,7 +53,8 @@ class CreateProject(Step):
         errors = []        
         project_name = input.get('project')
         if project_name:
-            if self.view.projects.get(project_name): # TODO check for existing trac projects
+            projects = self.view.projects.keys() + os.listdir(self.view.directory)
+            if project_name in projects:
                 errors.append("The project '%s' already exists" % project_name)
         else:
             errors.append('No project URL specified')
