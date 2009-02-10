@@ -19,8 +19,8 @@
 $Id$[[BR]]
 $HeadURL$
 
-Copyright (c) 2007, 2008 Felix Tiede. All rights reserved.[[BR]]
-Copyright (c) 2007, 2008 EyeC GmbH. All rights reserved.
+Copyright (c) 2007-2009 Felix Tiede. All rights reserved.[[BR]]
+Copyright (c) 2007-2009 EyeC GmbH. All rights reserved.
 
 Thanks to andrei2102 for porting it to trac-0.11
 
@@ -81,6 +81,12 @@ class DepGraphMacro(WikiMacroBase):
 		tickets = cursor.fetchall()
 
 		for ticket in tickets:
+			links = TicketLinks(self.env, int(ticket[0]))
+			blockers = links.blocked_by
+			if len(blockers) == 0 and len(links.blocking) == 0:
+				# Orphan ticket, not blocked and not blocking, skip
+				continue
+
 			bgcolor, border = self._get_color(str(ticket[1]))
 			result += "\"" + str(ticket[0]) + "\" [ URL=\"" \
 					+ req.href.ticket(int(ticket[0])) \
@@ -88,7 +94,6 @@ class DepGraphMacro(WikiMacroBase):
 					+ "\" color=\"" + border \
 					+ "\" tooltip=\"" + ticket[2] + "\" ]\n"
 			# Use blocked_by() from mastertickets.model.TicketLinks
-			blockers = TicketLinks(self.env, int(ticket[0])).blocked_by
 			for blocker in blockers:
 #				result += "\"%s\" -> \"%s\"" % (str(ticket[0]), str(blocker))
 				result += "\"%s\" -> \"%s\"" % (str(blocker), str(ticket[0]))
@@ -122,6 +127,11 @@ class DepGraphMacro(WikiMacroBase):
 			return ''
 
 		self._seen_tickets.append(ticket)
+		links = TicketLinks(self.env, ticket)
+		blockers = links.blocked_by
+		if depth >= 0 and (len(blockers) == 0 and len(links.blocking) == 0):
+			# Orphan ticket, not belonging to query, skip
+			return ''
 
 		db = self.env.get_db_cnx()
 		cursor = db.cursor()

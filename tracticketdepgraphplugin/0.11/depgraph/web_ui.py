@@ -19,8 +19,8 @@
 $Id$
 $HeadURL$
 
-Copyright (c) 2007, 2008 Felix Tiede. All rights reserved.
-Copyright (c) 2007, 2008 EyeC GmbH. All rights reserved.
+Copyright (c) 2007-2009 Felix Tiede. All rights reserved.
+Copyright (c) 2007-2009 EyeC GmbH. All rights reserved.
 
 TODO: Get me module documentation here! ASAP!
 """
@@ -58,9 +58,15 @@ class DepGraphModule(Component):
 		return handler
 
 	def post_process_request(self, req, template, data, content_type):
+		from mastertickets.model import TicketLinks
 		if req.path_info.startswith('/ticket'):
 			ticket_id = req.path_info[8:]
-			add_ctxtnav(req, "Dependency Graph", req.href.depgraph(ticket_id),
+			links = TicketLinks(self.env, ticket_id)
+			if len(links.blocked_by) > 0:
+				depgraph_href = req.href.depgraph(ticket_id)
+			else:
+				depgraph_href = None
+			add_ctxtnav(req, "Dependency Graph", depgraph_href,
 						"Dependency Graph")
 		if req.path_info.startswith('/query'):
 			query = {}
