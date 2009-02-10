@@ -86,11 +86,7 @@ class DepGraphMacro(WikiMacroBase):
 					+ req.href.ticket(int(ticket[0])) \
 					+ "\" fontcolor=\"#bb0000\" fillcolor=\"" + bgcolor \
 					+ "\" color=\"" + border \
-					+ "\" tooltip=\"" \
-					+ escape(unicode(ticket[2], 'latin-1'), 'true') \
-						.encode('ascii', 'xmlcharrefreplace') \
-						.replace('\'', '&apos;') \
-					+ "\" ]\n"
+					+ "\" tooltip=\"" + ticket[2] + "\" ]\n"
 			# Use blocked_by() from mastertickets.model.TicketLinks
 			blockers = TicketLinks(self.env, int(ticket[0])).blocked_by
 			for blocker in blockers:
@@ -145,11 +141,7 @@ class DepGraphMacro(WikiMacroBase):
 		result = "\"" + str(ticket) + "\" [ URL=\"" \
 				+ req.href.ticket(int(ticket)) \
 				+ "\" fillcolor=\"" + bgcolor + "\" color=\"" + border \
-				+ "\" fontcolor=\"#bb0000\" tooltip=\"" \
-				+ escape(unicode(summary, 'latin-1'), 'true') \
-					.encode('ascii', 'xmlcharrefreplace') \
-					.replace('\'', '&apos;') \
-				+ "\" ]\n"
+				+ "\" fontcolor=\"#bb0000\" tooltip=\"" + summary + "\" ]\n"
 		if self._maxdepth > 0 and depth >= self._maxdepth:
 			return result
 			
