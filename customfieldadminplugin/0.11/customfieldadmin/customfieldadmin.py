@@ -4,8 +4,8 @@ Trac WebAdmin plugin for administration of custom fields.
 
 License: BSD
 
-(c) 2005-2008 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
-(c) 2007      ::: www.Optaros.com (.....)
+(c) 2005-2009 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2007-2009 ::: www.Optaros.com (.....)
 """
 
 from trac.core import *

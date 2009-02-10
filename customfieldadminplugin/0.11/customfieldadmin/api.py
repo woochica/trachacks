@@ -5,7 +5,7 @@ Supports creating, getting, updating and deleting custom fields.
 
 License: BSD
 
-(c) 2005-2008 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2005-2009 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
 import re

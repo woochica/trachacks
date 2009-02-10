@@ -1,7 +1,7 @@
 /**********
 * User Interface function for Trac Custom Field Admin plugin.
 * License: BSD
-* (c) 2007      ::: www.Optaros.com (cbalan@optaros.com)
+* (c) 2007-2009 ::: www.Optaros.com (cbalan@optaros.com)
 **********/
 (function($){
     function toggle_options(type_element){
