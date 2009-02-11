@@ -1,9 +1,10 @@
-trac-cosign (0.1.1-1.5229) unstable; urgency=low
+trac-cosign (0.1.1-1.5244) unstable; urgency=low
 
   * Bugfix: #4600: Take referer as query_string between trac and CoSign 
     SSO login/logout process;
   * Bugfix: #4601: Through the referer from header, we can safely narrow 
     down LDAP queries.
+  * Packages using python-central;
 
  -- Jiang Xin <worldhello.net@gmail.com>  Mon, 09 Feb 2009 17:21:06 +0800
 

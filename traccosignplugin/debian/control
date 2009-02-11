@@ -2,13 +2,16 @@ Source: trac-cosign
 Section: python
 Priority: optional
 Maintainer: Jiang Xin <worldhello.net@gmail.com>
-Build-Depends: debhelper (>= 5.0.38), python-setuptools, python, python-support (>= 0.3), quilt
+Build-Depends: debhelper (>= 5.0), cdbs (>= 0.4.43), quilt (>= 0.40)
+Build-Depends-Indep: python, python-central (>= 0.5), python-setuptools
 Standards-Version: 3.8.0
+XS-Python-Version: all
 Homepage: http://trac-hacks.org/wiki/TracCoSignPlugin
 
 Package: trac-cosign
 Architecture: all
-Depends: ${python:Depends}, ossxp-trac (>= 0.11) | trac (>= 0.11)
+Depends: ${misc:Depends}, ${python:Depends}, ossxp-trac (>= 0.11) | trac (>= 0.11)
+XB-Python-Version: ${python:Versions}
 Description: CoSign single sign-on integration for Trac
  TracCoSignPlugin is a plugin for Edgewall Software's Trac that allows Trac to use
  CoSign single sign-on authentication system.
