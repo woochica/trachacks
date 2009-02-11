@@ -7,14 +7,15 @@ __version__ = '1.0'
 
 from genshi.builder import tag
 
+from trac.web.main import IRequestHandler
 from trac.wiki.macros import WikiMacroBase
 from StringIO import StringIO
 from trac.wiki.formatter import Formatter
 from trac.wiki.model import WikiPage
 
-class TranslatedPagesMacro(WikiMacroBase):
-    """Macro to show the translated pages list."""
-
+class TranslatedPagesPlugin(WikiMacroBase):
+    """Plugin to show the translated pages list."""
+    
     SUPPORT_LANGUAGES = {
         'en' : u'English',
         'ru' : u'Русский',
