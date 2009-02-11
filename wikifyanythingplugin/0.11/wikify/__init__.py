@@ -1,0 +1,2 @@
+
+from wikify.plugin import *

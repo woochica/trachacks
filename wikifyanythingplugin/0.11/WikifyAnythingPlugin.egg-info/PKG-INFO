@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: WikifyAnythingPlugin
+Version: 0.2
+Summary: Allows you to "wikify" any text on any template within Trac.
+Home-page: http://ba7development/trac/WikifyAnythingPlugin
+Author: Todd Radel
+Author-email: todd.radel@eds.com
+License: GPL
+Description: UNKNOWN
+Platform: UNKNOWN
