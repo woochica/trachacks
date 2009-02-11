@@ -1,8 +1,0 @@
-setup.py
-WikifyAnythingPlugin.egg-info/PKG-INFO
-WikifyAnythingPlugin.egg-info/SOURCES.txt
-WikifyAnythingPlugin.egg-info/dependency_links.txt
-WikifyAnythingPlugin.egg-info/entry_points.txt
-WikifyAnythingPlugin.egg-info/top_level.txt
-wikify/__init__.py
-wikify/plugin.py
