@@ -12,12 +12,11 @@
                 label('#format').show();
                 break;
             case 1: // select
-                label('#options, #cols, #rows').show();
-                label('#format').hide();
+                label('#options').show();
+                label('#cols, #rows, #format').hide();
                 break;
             case 2: // checkbox
-                label('#options, #cols, #rows').hide();
-                label('#format').hide();
+                label('#options, #cols, #rows, #format').hide();
                 break;
             case 3: // radio
                 label('#options').show();

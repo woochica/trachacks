@@ -25,16 +25,9 @@
         <div class="field">
           <label>Type:<br />
             <select name="type" id="type">
-              <option value="text" selected="${cfadmin.customfield.type=='text' and 'selected' or None}">
-                Text</option>
-              <option value="select" selected="${cfadmin.customfield.type=='select' and 'selected' or None}">
-                Select</option>
-              <option value="checkbox" selected="${cfadmin.customfield.type=='checkbox' and 'selected' or None}">
-                Checkbox</option>
-              <option value="radio" selected="${cfadmin.customfield.type=='radio' and 'selected' or None}">
-                Radio</option>
-              <option value="textarea" selected="${cfadmin.customfield.type=='textarea' and 'selected' or None}">
-                Textarea</option>
+              <option py:for="value in ['text', 'select', 'checkbox', 'radio', 'textarea']"
+                  value="${value}" selected="${cfadmin.customfield.type==value and 'selected' or None}">
+                ${value.capitalize()}</option>
             </select>
           </label>
         </div>
