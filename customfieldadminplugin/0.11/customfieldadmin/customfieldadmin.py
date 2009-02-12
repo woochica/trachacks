@@ -37,7 +37,8 @@ class CustomFieldAdminPage(Component):
                       'options': [x.strip().encode('utf-8') for x in req.args.get('options').split("\n")],
                       'cols': req.args.get('cols').encode('utf-8'),
                       'rows': req.args.get('rows').encode('utf-8'),
-                      'order': req.args.get('order', '').encode('utf-8')}
+                      'order': req.args.get('order', '').encode('utf-8'),
+                      'format': req.args.get('format', '').encode('utf-8')}
             return cfdict
         
         cfapi = CustomFields(self.env)

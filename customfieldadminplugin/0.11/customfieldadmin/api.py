@@ -75,6 +75,8 @@ class CustomFields(Component):
             env.config.set('ticket-custom', customfield['name'] + '.value', customfield['value'])
         if 'options' in customfield:
             env.config.set('ticket-custom', customfield['name'] + '.options', '|'.join(customfield['options']))
+        if 'format' in customfield:
+            env.config.set('ticket-custom', customfield['name'] + '.format', customfield['format'])
         # Textarea
         if customfield['type'] == 'textarea':
             cols = customfield.get('cols') and int(customfield.get('cols', 0)) > 0 \

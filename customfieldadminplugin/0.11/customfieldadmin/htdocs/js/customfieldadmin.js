@@ -9,20 +9,23 @@
         switch (type_element.selectedIndex) {
             case 0: // text
                 label('#options, #cols, #rows').hide();
+                label('#format').show();
                 break;
             case 1: // select
                 label('#options, #cols, #rows').show();
+                label('#format').hide();
                 break;
             case 2: // checkbox
                 label('#options, #cols, #rows').hide();
+                label('#format').hide();
                 break;
             case 3: // radio
                 label('#options').show();
-                label('#cols, #rows').hide();
+                label('#cols, #rows, #format').hide();
                 break;      
             case 4: // textarea
                 label('#options').hide();
-                label('#cols, #rows').show();
+                label('#cols, #rows, #format').show();
                 break;
         }
     }

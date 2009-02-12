@@ -49,6 +49,15 @@
           </label>
         </div>
         <div class="field">
+          <label>Format (Text or Textarea):<br />
+            <select name="format" id="format">
+              <option py:for="format in ['plain', 'wiki']" value="${format}"
+                  selected="${cfadmin.customfield.format==format and 'selected' or None}">
+                ${format.capitalize()}</option>
+            </select>
+          </label>
+        </div>
+        <div class="field">
           <fieldset class="iefix">
             <label for="options">
               Options for Radio or Select (for Select, empty first line makes field optional):
@@ -94,6 +103,14 @@
         <div class="field">
           <label for="value">Default value:<br />
             <input type="text" name="value" id="value" />
+          </label>
+        </div>
+        <div class="field">
+          <label>Format:<br />
+            <select name="format" id="format">
+              <option py:for="format in ['plain', 'wiki']"
+                  value="${format}">${format.capitalize()}</option>
+            </select>
           </label>
         </div>
         <div class="field">
