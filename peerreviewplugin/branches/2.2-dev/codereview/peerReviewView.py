@@ -127,7 +127,8 @@ class UserbaseModule(Component):
         # if we are the manager, list who has voted and what their vote was.
         # if we are the author, list who has voted and who has not.
         # if we are neither, list the users who are participating in this review. 
-        if data['manager'] == '1':
+        if data['manager'] == 1:
+            self.env.log.debug("I am a manager")
             for reviewer in reviewers:
                 newrvpair.append(reviewer.Reviewer)
                 if reviewer.Vote == -1:
@@ -139,6 +140,7 @@ class UserbaseModule(Component):
                 rvs.append(newrvpair)
                 newrvpair = []
         elif review.Author == util.get_reporter_id(req):
+            self.env.log.debug("I am the author")
             for reviewer in reviewers:
                 newrvpair.append(reviewer.Reviewer)
                 if reviewer.Vote == -1:
@@ -148,6 +150,7 @@ class UserbaseModule(Component):
                 rvs.append(newrvpair)
                 newrvpair = []
         else:
+            self.env.log.debug("I am somebody else")
             for reviewer in reviewers:
                 newrvpair.append(reviewer.Reviewer)
                 rvs.append(newrvpair)
