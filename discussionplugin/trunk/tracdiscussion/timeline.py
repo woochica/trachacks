@@ -42,34 +42,36 @@ class DiscussionTimeline(Component):
                 # Return event.
                 title = 'New forum %s created' % (forum['name'],)
                 description = tag(forum['subject'], ' - ', forum['description'])
-                href = context.req.href.discussion(forum['id'])
+                ids = (forum['id'],)
                 yield ('changeset', forum['time'], forum['author'], (title,
-                  description, href))
+                  description, ids))
 
             # Get topic events
             for topic in self._get_changed_topics(context, start, stop):
                 title = 'New topic on %s created' % (topic['forum_name'])
                 description = topic['subject']
-                href = context.req.href.discussion(topic['forum'], topic['id'])
+                ids = (topic['forum'], topic['id'])
                 yield ('newticket', topic['time'], topic['author'], (title,
-                  description, href))
+                  description, ids))
 
             # Get message events
             for message in self._get_changed_messages(context, start, stop):
                 title = 'New reply on %s created' % (message['forum_name'])
                 description = message['topic_subject']
-                href = context.req.href.discussion(message['forum'],
-                  message['topic'], message['id']) + '#%s' % (message['id'],)
+                ids = (message['forum'], message['topic'], message['id'])
                 yield ('newticket', message['time'], message['author'], (title,
-                  description, href))
+                  description, ids))
 
     def render_timeline_event(self, context, field, event):
         # Decompose event data.
-        title, description, href = event[3]
+        title, description, ids = event[3]
 
         # Return apropriate content.
         if field == 'url':
-           return href
+           url = context.href.discussion(*ids)
+           if len(ids) == 3:
+               url = '%s#%s' % (url, ids[2])
+           return url
         elif field == 'title':
            return tag(title)
         elif field == 'description':

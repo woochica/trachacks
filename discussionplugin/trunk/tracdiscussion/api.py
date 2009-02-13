@@ -1,18 +1,24 @@
 # -*- coding: utf8 -*-
 
+# General includes.
 from datetime import *
 
+# Trac includes.
 from trac.core import *
 from trac.mimeview import Context
 from trac.perm import PermissionError
 from trac.web.chrome import add_stylesheet, add_script, add_ctxtnav
+from trac.web.href import Href
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
   format_datetime, pretty_timedelta
 from trac.util.html import html
 from trac.util.text import to_unicode
 
-from genshi.template import TemplateLoader
+# Genshi includes.
+from genshi.input import HTML
+from genshi.core import Markup
+from genshi.filters import Transformer
 
 class IDiscussionFilter(Interface):
     """Extension point interface for components that want to filter discussion
@@ -97,42 +103,49 @@ class DiscussionApi(Component):
         context.req.session['visited-forums'] = to_unicode(context.visited_forums)
 
         # Fill up template data structure.
-        context.data['authname'] = context.req.authname
         context.data['moderator'] = context.moderator
         context.data['group'] = context.group
         context.data['forum'] = context.forum
         context.data['topic'] = context.topic
         context.data['message'] = context.message
         context.data['mode'] = actions[-1]
-        context.data['time'] = format_datetime(datetime.now(utc))
+        context.data['time'] = datetime.now(utc)
         context.data['realm'] = context.resource.realm
         context.data['env'] = self.env
 
-        # Add context navigation.
-        if context.forum:
-            add_ctxtnav(context.req, 'Forum Index',
-              context.req.href.discussion())
-        if context.topic:
-            add_ctxtnav(context.req, context.forum['name'],
-              context.req.href.discussion(context.forum['id']),
-              context.forum['name'])
-        if context.message:
-            add_ctxtnav(context.req, context.topic['subject'],
-              context.req.href.discussion(context.forum['id'],
-              context.topic['id']), context.topic['subject'])
-
-        # Add CSS styles and scripts.
-        add_stylesheet(context.req, 'common/css/wiki.css')
-        add_stylesheet(context.req, 'discussion/css/discussion.css')
-        add_stylesheet(context.req, 'discussion/css/admin.css')
-        add_script(context.req, 'common/js/trac.js')
-        add_script(context.req, 'common/js/search.js')
-        add_script(context.req, 'common/js/wikitoolbar.js')
-
-        # Commit database changes and return template and data.
+        # Commit database changes.
         db.commit()
-        self.env.log.debug(context.data)
-        return actions[-1] + '.html', {'discussion' : context.data}
+
+        if context.redirect_url and context.resource.realm != 'discussion-wiki':
+            # Redirect request to prevent re-submit.
+            context.req.redirect(context.req.href.discussion('redirect',
+              href = context.redirect_url))
+        else:
+            # Add context navigation.
+            if context.forum:
+                add_ctxtnav(context.req, 'Forum Index',
+                  context.req.href.discussion())
+            if context.topic:
+                add_ctxtnav(context.req, format_to_oneliner_no_links(self.env,
+                  context, context.forum['name']), context.req.href.discussion(
+                  context.forum['id']), context.forum['name'])
+            if context.message:
+                add_ctxtnav(context.req, format_to_oneliner_no_links(self.env,
+                  context, context.topic['subject']),
+                  context.req.href.discussion(context.forum['id'],
+                  context.topic['id']), context.topic['subject'])
+
+            # Add CSS styles and scripts.
+            add_stylesheet(context.req, 'common/css/wiki.css')
+            add_stylesheet(context.req, 'discussion/css/discussion.css')
+            add_stylesheet(context.req, 'discussion/css/admin.css')
+            add_script(context.req, 'common/js/trac.js')
+            add_script(context.req, 'common/js/search.js')
+            add_script(context.req, 'common/js/wikitoolbar.js')
+
+            # Return request template and data.
+            self.env.log.debug(context.data)
+            return actions[-1] + '.html', {'discussion' : context.data}
 
     def _prepare_context(self, context):
         # Prepare template data.
@@ -142,6 +155,7 @@ class DiscussionApi(Component):
         context.forum = None
         context.topic = None
         context.message = None
+        context.redirect_url = None
 
         # Populate active group.
         if context.req.args.has_key('group'):
@@ -369,23 +383,20 @@ class DiscussionApi(Component):
                 self.add_group(context, group)
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'group-post-edit':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values.
-                group = {'id' : int(context.req.args.get('group') or 0),
-                         'name' : context.req.args.get('name'),
+                group = {'name' : context.req.args.get('name'),
                          'description' : context.req.args.get('description')}
 
                 # Edit group.
-                self.edit_group(context, group['id'], group)
+                self.edit_group(context, context.group['id'], group)
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'group-delete':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -404,8 +415,7 @@ class DiscussionApi(Component):
                         self.delete_group(context, int(group_id))
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'forum-list':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
@@ -450,7 +460,8 @@ class DiscussionApi(Component):
                          'subject' : context.req.args.get('subject'),
                          'description' : context.req.args.get('description'),
                          'moderators' : context.req.args.get('moderators'),
-                         'forum_group' : int(context.req.args.get('group') or 0)}
+                         'forum_group' : int(context.req.args.get('group') or 0),
+                         'time': to_timestamp(datetime.now(utc))}
 
                 # Fix moderators attribute to be a list.
                 if not forum['moderators']:
@@ -462,15 +473,13 @@ class DiscussionApi(Component):
                 self.add_forum(context, forum)
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'forum-post-edit':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get form values.
-                forum = {'id' : int(context.req.args.get('forum') or 0),
-                         'name' : context.req.args.get('name'),
+                forum = {'name' : context.req.args.get('name'),
                          'subject' : context.req.args.get('subject'),
                          'description' : context.req.args.get('description'),
                          'moderators' : context.req.args.get('moderators'),
@@ -483,11 +492,10 @@ class DiscussionApi(Component):
                      forum['moderators'] = [forum['moderators']]
 
                 # Perform forum edit.
-                self.edit_forum(context, forum['id'], forum)
+                self.edit_forum(context, context.forum['id'], forum)
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'forum-delete':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -496,8 +504,7 @@ class DiscussionApi(Component):
                 self.delete_forum(context, context.forum['id'])
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'forums-delete':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -513,8 +520,7 @@ class DiscussionApi(Component):
                         self.delete_forum(context, int(forum_id))
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'topic-list':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
@@ -536,33 +542,14 @@ class DiscussionApi(Component):
             elif action == 'topic-add':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
 
-                # Get form values.
-                new_subject = context.req.args.get('subject')
-                new_author = context.req.args.get('author')
-                new_body = context.req.args.get('body')
-
-                # Display Add Topic form.
-                if new_subject:
-                    context.data['subject'] = format_to_oneliner(self.env,
-                      context, new_subject)
-                if new_author:
-                    context.data['author'] = format_to_oneliner(self.env,
-                      context, new_author)
-                if new_body:
-                    context.data['body'] = format_to_html(self.env, context,
-                      new_body)
-
             elif action == 'topic-quote':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Prepare old content.
-                lines = topic['body'].splitlines()
+                lines = context.topic['body'].splitlines()
                 for I in xrange(len(lines)):
                     lines[I] = '> %s' % (lines[I])
                 context.req.args['body'] = '\n'.join(lines)
-
-                # Signalise that message is being added.
-                context.req.args['message'] = message and  message['id'] or '-1'
 
             elif action == 'topic-post-add':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -582,11 +569,12 @@ class DiscussionApi(Component):
 
                 # Notify change listeners.
                 for listener in self.topic_change_listeners:
-                    listener.topic_created(topic)
+                    listener.topic_created(context.topic)
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                href = Href('discussion')
+                context.redirect_url = href(context.forum['id'],
+                  context.topic['id'])
 
             elif action == 'topic-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -600,25 +588,23 @@ class DiscussionApi(Component):
 
             elif action == 'topic-post-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
-                if not context.moderator and (topic['author'] != 
+                if not context.moderator and (context.topic['author'] !=
                   context.req.authname):
                     raise PermissionError('Topic edit')
 
                 # Get form values.
-                old_topic = topic
                 topic = {'subject' : context.req.args.get('subject'),
                          'body' : context.req.args.get('body')}
 
                 # Edit topic.
-                self.edit_topic(context, old_topic['id'], topic)
+                self.edit_topic(context, context.topic['id'], topic)
 
                 # Notify change listeners.
                 for listener in self.topic_change_listeners:
-                    listener.topic_changed(topic, old_topic)
+                    listener.topic_changed(topic, context.topic)
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'topic-move':
                 context.req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -634,14 +620,14 @@ class DiscussionApi(Component):
                     raise PermissionError('Forum moderate')
 
                 # Get form values.
-                new_forum = int(context.req.args.get('new_forum') or 0)
+                forum_id = int(context.req.args.get('new_forum') or 0)
 
                 # Move topic.
-                self.set_forum(context, topic['id'], new_forum)
+                self.set_forum(context, context.topic['id'], forum_id)
 
-                # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                # Redirect request to new forum.
+                href = Href('discussion')
+                context.redirect_url =  href(forum_id, context.topic['id'])
 
             elif action == 'topic-delete':
                 context.req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -649,31 +635,31 @@ class DiscussionApi(Component):
                     raise PermissionError('Forum moderate')
 
                 # Delete topic.
-                self.delete_topic(context, topic['id'])
+                self.delete_topic(context, context.topic['id'])
+
+                # Notify change listeners.
+                for listener in self.topic_change_listeners:
+                    listener.topic_deleted(context.topic)
 
                 # Redirect request to prevent re-submit.
-                context.req.redirect(context.req.href.discussion('redirect',
-                  href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'message-list':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
                 self._prepare_message_list(context, context.topic)
 
             elif action == 'wiki-message-list':
-                if topic:
+                if context.topic:
                     self._prepare_message_list(context, context.topic)
 
             elif action == 'message-add':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
 
-                # Signalise that message is being added.
-                context.req.args['message'] = message and  message['id'] or '-1'
-
             elif action == 'message-quote':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Prepare old content.
-                lines = message['body'].splitlines()
+                lines = context.message['body'].splitlines()
                 for I in xrange(len(lines)):
                     lines[I] = '> %s' % (lines[I])
                 context.req.args['body'] = '\n'.join(lines)
@@ -682,53 +668,55 @@ class DiscussionApi(Component):
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
 
                 # Get form values.
-                new_author = context.req.args.get('author')
-                new_body = context.req.args.get('body')
-                new_time = to_timestamp(datetime.now(utc))
+                message = {'forum' : context.forum['id'],
+                           'topic' : context.topic['id'],
+                           'replyto' : context.message and context.message['id']
+                              or -1,
+                           'author' : context.req.args.get('author'),
+                           'body' : context.req.args.get('body'),
+                           'time' : to_timestamp(datetime.now(utc))}
 
                 # Add message.
-                self.add_message(context, forum['id'], topic['id'], message and
-                  message['id'] or '-1', new_time, new_author, new_body)
+                self.add_message(context, message)
 
-                # Get inserted message and notify about its creation.
-                new_message = self.get_message_by_time(context, new_time)
-                to = self.get_topic_to_recipients(context, topic['id'])
-                cc = self.get_topic_cc_recipients(context, topic['id'])
-                notifier = DiscussionNotifyEmail(self.env)
-                notifier.notify(context, mode, forum, topic, new_message, to, cc)
+                # Get inserted message with new ID.
+                context.message = self.get_message_by_time(context,
+                  message['time'])
+
+                # Notify change listeners.
+                for listener in self.message_change_listeners:
+                    listener.message_created(context.message)
 
                 # Redirect request to prevent re-submit.
-                if context.resource.realm != 'discussion-wiki':
-                    context.req.redirect(context.req.href.discussion('redirect',
-                      href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'message-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
-                if not context.moderator and (message['author'] !=
+                if not context.moderator and (context.message['author'] !=
                   context.req.authname):
                     raise PermissionError('Message edit')
 
                 # Prepare form values.
-                context.req.args['body'] = message['body']
+                context.req.args['body'] = context.message['body']
 
             elif action == 'message-post-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
-                if not context.moderator and (message['author'] !=
+                if not context.moderator and (context.message['author'] !=
                   context.req.authname):
                     raise PermissionError('Message edit')
 
                 # Get form values.
-                new_body = context.req.args.get('body')
+                message = {'body' : context.req.args.get('body')}
 
                 # Edit message.
-                message['body'] = new_body
-                self.edit_message(context, message['id'], message['forum'],
-                  message['topic'], message['replyto'], new_body)
+                self.edit_message(context, context.message['id'], message)
+
+                # Notify change listeners.
+                for listener in self.message_change_listeners:
+                    listener.message_changed(message, message.topic)
 
                 # Redirect request to prevent re-submit.
-                if context.resource.realm != 'discussion-wiki':
-                    context.req.redirect(context.req.href.discussion('redirect',
-                      href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'message-delete':
                 context.req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -736,12 +724,14 @@ class DiscussionApi(Component):
                     raise PermissionError('Forum moderate')
 
                 # Delete message.
-                self.delete_message(context, message['id'])
+                self.delete_message(context, context.message['id'])
+
+                # Notify change listeners.
+                for listener in self.message_change_listeners:
+                    listener.message_deleted(context.message)
 
                 # Redirect request to prevent re-submit.
-                if context.resource.realm != 'discussion-wiki':
-                    context.req.redirect(context.req.href.discussion('redirect',
-                      href = context.req.path_info))
+                context.redirect_url = context.req.path_info
 
             elif action == 'message-set-display':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
@@ -752,33 +742,16 @@ class DiscussionApi(Component):
                 # Set message list display mode to session.
                 context.req.session['message-list-display'] = display
 
-    def _prepare_message_list(self, context, topic):
-        # Get form values.
-        new_author = context.req.args.get('author')
-        new_subject = context.req.args.get('subject')
-        new_body = context.req.args.get('body')
+        # Redirection is not necessary.
+        return None
 
+    def _prepare_message_list(self, context, topic):
         # Get time when topic was visited from session.
         visit_time = int(context.visited_topics.has_key(topic['id']) and
           (context.visited_topics[topic['id']] or 0))
 
         # Update this topic visit time.
         context.visited_topics[topic['id']] = to_timestamp(datetime.now(utc))
-
-        # Mark new topic.
-        if topic['time'] > visit_time:
-            topic['new'] = True
-
-        # Prepare display of topic.
-        self.log.debug( (new_body,))
-        if new_author != None:
-            context.data['author'] = format_to_oneliner(self.env, context,
-              new_author)
-        if new_subject != None:
-            context.data['subject'] = format_to_oneliner(self.env, context,
-              new_subject)
-        if new_body != None:
-            context.data['body'] = format_to_html(self.env, context, new_body)
 
         # Get topic messages.
         display = context.req.session.get('message-list-display')
@@ -791,23 +764,9 @@ class DiscussionApi(Component):
              messages = self.get_messages(context, topic['id'])
 
         # Prepare display of messages.
-        for message in messages:
-            self._format_message(context, visit_time, message)
+        context.data['visit_time'] = visit_time
         context.data['display'] = display
         context.data['messages'] = messages
-
-    def _format_message(self, context, time, message):
-        # Format this message.
-        message['author'] = format_to_oneliner(self.env, context,
-          message['author'])
-        message['body'] = format_to_html(self.env, context, message['body'])
-        message['new'] = int(message['time']) > time
-        message['time'] = format_datetime(message['time'], )
-
-        # Recurse to submessages.
-        if message.has_key('replies'):
-            for reply in message['replies']:
-                self._format_message(context, time, reply)
 
     # Get one item functions.
 
@@ -962,19 +921,6 @@ class DiscussionApi(Component):
         forums = []
         for row in context.cursor:
             row = dict(zip(columns, row))
-            """row['moderators'] = format_to_oneliner(self.env, context,
-              row['moderators'])
-            row['subject'] = format_to_oneliner(self.env, context,
-              row['subject'])
-            row['description'] = format_to_oneliner(self.env, context,
-              row['description'])
-            row['lastreply'] = row['lastreply'] and pretty_timedelta(
-              to_datetime(row['lastreply'], utc)) or 'No replies'
-            row['lasttopic'] = row['lasttopic'] and  pretty_timedelta(
-              to_datetime(row['lasttopic'], utc)) or 'No topics'
-            row['topics'] = row['topics'] or 0
-            row['replies'] = row['replies'] and int(row['replies']) or 0
-            row['time'] = format_datetime(row['time'])"""
             forums.append(row)
 
         # Compute count of new replies and topics.
@@ -1013,13 +959,6 @@ class DiscussionApi(Component):
         topics = []
         for row in context.cursor:
             row = dict(zip(columns, row))
-            """row['author'] = format_to_oneliner(self.env, context, row['author'])
-            row['subject'] = format_to_oneliner(self.env, context, row['subject'])
-            row['body'] = format_to_html(self.env, context, row['body'])
-            row['lastreply'] = row['lastreply'] and pretty_timedelta(
-              to_datetime(row['lastreply'], utc)) or 'No replies'
-            row['replies'] = row['replies'] or 0
-            row['time'] = format_datetime(row['time'])"""
             topics.append(row)
 
         # Compute count of new replies.
@@ -1085,7 +1024,7 @@ class DiscussionApi(Component):
 
     def add_group(self, context, group):
         self._add_item(context, 'forum_group', group)
- 
+
     def add_forum(self, context, forum):
         # Fix forum fields.
         forum['moderators'] = ' '.join(forum['moderators'])
@@ -1187,3 +1126,8 @@ class DiscussionApi(Component):
     def edit_message(self, context, id, message):
         # Edit message,
         self._edit_item(context, 'message', id, message)
+
+# Formats wiki text to signle line HTML but removes all links.
+def format_to_oneliner_no_links(env, context, content):
+    stream = HTML(format_to_oneliner(env, context, content))
+    return Markup(stream | Transformer('//a').unwrap())

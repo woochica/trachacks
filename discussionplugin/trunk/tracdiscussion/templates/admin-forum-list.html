@@ -7,7 +7,7 @@
   </head>
 
   <?python
-    from trac.wiki.formatter import format_to_oneliner
+    from tracdiscussion.api import format_to_oneliner_no_links
   ?>
 
   <py:with vars="is_edit = discussion.forum.id and not req.args.submit">
@@ -57,7 +57,7 @@
                 <py:for each="group in discussion.groups">
                   <py:choose>
                     <option py:when="is_edit and (group.id == discussion.forum.forum_group)" value="${group.id}" selected="selected">${group.name}</option>
-                    <option py:otherwise="" value="${group.id}">${group.name}</option>
+                    <option py:otherwise="" value="${group.id}">${format_to_oneliner_no_links(discussion.env, context, group.name)}</option>
                   </py:choose>
                 </py:for>
               </select><br/>
@@ -106,35 +106,35 @@
                   <td class="name">
                     <div class="name">
                       <a href="${panel_href(forum.id)}">
-                        <span>${forum.name or '&nbsp;'}</span>
+                        <span>${format_to_oneliner_no_links(discussion.env, context, forum.name) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td class="subject">
                     <div class="subject">
                       <a href="${panel_href(forum.id)}">
-                        <span>${format_to_oneliner(discussion.env, context, forum.subject) or '&nbsp;'}</span>
+                        <span>${format_to_oneliner_no_links(discussion.env, context, forum.subject) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td class="description">
                     <div class="description">
                       <a href="${panel_href(forum.id)}">
-                        <span>${format_to_oneliner(discussion.env, context, forum.description) or '&nbsp;'}</span>
+                        <span>${format_to_oneliner_no_links(discussion.env, context, forum.description) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td class="moderators">
                     <div class="moderators">
                       <a href="${panel_href(forum.id)}">
-                        <span>${format_to_oneliner(discussion.env, context, forum.moderators) or '&nbsp;'}</span>
+                        <span>${forum.moderators or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td py:if="len(discussion.groups) > 1" class="group">
                     <div py:for="group in discussion.groups" py:if="group.id == forum.forum_group" class="group">
                       <a href="${panel_href(forum.id)}">
-                        <span>${group.name}</span>
+                        <span>${format_to_oneliner_no_links(discussion.env, context, group.name)}</span>
                       </a>
                     </div>
                   </td>

@@ -6,6 +6,11 @@
     <title>Add Topic</title>
   </head>
 
+  <?python
+    from trac.wiki.formatter import format_to_oneliner, format_to_html
+    from trac.util.datefmt import format_datetime, pretty_timedelta
+  ?>
+
   <body>
     <xi:include href="discussion-header.html"/>
 
@@ -18,17 +23,17 @@
           <div class="topic">
             <div class="header">
               <div class="subject">
-                ${discussion.subject or '&nbsp;'}
+                ${req.args.subject and format_to_oneliner(discussion.env, context, req.args.subject) or '&nbsp;'}
               </div>
               <div class="body">
-                ${discussion.body or '&nbsp;'}
+                ${req.args.body and format_to_html(discussion.env, context, req.args.body) or '&nbsp;'}
               </div>
               <div class="footer">
                 <div class="author">
-                  ${discussion.author}
+                  ${format_to_oneliner(discussion.env, context, req.args.author)}
                 </div>
                 <div class="time">
-                  ${discussion.time}
+                  ${format_datetime(discussion.time)} (${pretty_timedelta(discussion.time)} ago)
                 </div>
               </div>
             </div>
@@ -45,8 +50,8 @@
             <div class="field">
               <label for="author">Author:</label><br/>
               <py:choose>
-                <input py:when="discussion.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or 'anonymous'}"/>
-                <input py:otherwise="" type="text" id="author" name="author" value="${discussion.authname}" readonly="readonly"/>
+                <input py:when="req.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or req.authname}"/>
+                <input py:otherwise="" type="text" id="author" name="author" value="${req.authname}" readonly="readonly"/>
               </py:choose><br/>
             </div>
 

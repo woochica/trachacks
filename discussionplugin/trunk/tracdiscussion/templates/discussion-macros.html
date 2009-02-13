@@ -1,5 +1,10 @@
 <html xmlns:py="http://genshi.edgewall.org/" py:strip="">
 
+  <?python
+    from trac.wiki.formatter import format_to_oneliner, format_to_html
+    from trac.util.datefmt import format_datetime, pretty_timedelta
+  ?>
+
   <py:def function="sortable_th(order, desc, Class, title, href)">
     <th class="${Class}${order == Class and (desc and ' desc' or ' asc') or ''}">
       <a title="Sort by ${Class}${order == Class and not desc and ' (descending)' or ''}" href="${href}?order=${Class}&amp;desc=${(Class == order and not desc and 1 or None)}">
@@ -10,24 +15,24 @@
 
   <py:def function="display_discussion(discussion, href)">
     <py:with vars="is_topic_edit = not discussion.message.id and (req.args.discussion_action in ('edit', 'post-edit')) and not req.args.submit;">
-      <div class="topic ${discussion.topic.new and 'new' or None}">
+      <div class="topic ${(discussion.topic.time > discussion.visit_time) and 'new' or None}">
         <a name="-1"></a>
 
         <div class="header" py:choose="">
           <py:when test="is_topic_edit">
             <div class="subject">
-              ${discussion.subject or '&nbsp;'}
+              ${format_to_oneliner(discussion.env, context, req.args.subject) or '&nbsp;'}
             </div>
             <div class="body">
-              ${discussion.body or '&nbsp;'}
+              ${format_to_html(discussion.env, context, req.args.body) or '&nbsp;'}
             </div>
           </py:when>
           <py:otherwise>
             <div class="subject">
-              ${discussion.topic.subject or '&nbsp;'}
+              ${format_to_oneliner(discussion.env, context, discussion.topic.subject) or '&nbsp;'}
             </div>
             <div class="body">
-              ${discussion.topic.body or '&nbsp;'}
+              ${format_to_html(discussion.env, context, discussion.topic.body) or '&nbsp;'}
             </div>
           </py:otherwise>
         </div>
@@ -42,10 +47,10 @@
 
         <div class="footer">
           <div class="author">
-            ${discussion.topic.author}
+            ${format_to_oneliner(discussion.env, context, discussion.topic.author)}
           </div>
           <div class="time">
-            ${discussion.topic.time}
+            ${format_datetime(discussion.topic.time)} (${pretty_timedelta(discussion.topic.time)} ago)
           </div>
         </div>
 
@@ -54,7 +59,7 @@
         </py:if>
       </div>
 
-      <div py:if="len(discussion.messages) or str(req.args.message) == '-1'" class="replies ${discussion.topic.new and 'new' or None}">
+      <div py:if="len(discussion.messages) or str(req.args.message) == '-1'" class="replies ${(discussion.topic.time > discussion.visit_time) and 'new' or None}">
 
         ${display_set_display(href)}
 
@@ -90,8 +95,8 @@
         <div class="field">
           <label for="author">Author:</label><br/>
           <py:choose>
-            <input py:when="discussion.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or 'anonymous'}"/>
-            <input py:otherwise="" type="text" id="author" name="author" value="${discussion.authname}" readonly="readonly"/>
+            <input py:when="req.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or req.authname}"/>
+            <input py:otherwise="" type="text" id="author" name="author" value="${req.authname}" readonly="readonly"/>
           </py:choose><br/>
         </div>
 
@@ -124,17 +129,17 @@
     <li py:if="req.args.preview" class="preview">
       <a name="preview"></a>
       <div class="id">
-          Message #??
+        Message #??
       </div>
       <div class="body">
-        ${discussion.body or Markup('&lt;p&gt;&nbsp;&lt;/p&gt;')}
+        ${format_to_html(discussion.env, context, req.args.body or '&nbsp;')}
       </div>
       <div class="footer">
         <div class="author">
-          ${discussion.author}
+          ${req.authname}
         </div>
         <div class="time">
-          ${discussion.time}
+          ${format_datetime(discussion.time)} (${pretty_timedelta(discussion.time)} ago)
         </div>
       </div>
     </li>
@@ -149,7 +154,7 @@
   </py:def>
 
   <py:def function="display_messages(href, messages)">
-    <li py:for="message in messages" class="${message.new and 'new' or None}">
+    <li py:for="message in messages" class="${(message.time > discussion.visit_time) and 'new' or None}">
       <a name="${message.id}"></a>
 
       <py:with vars="is_message_edit = (str(req.args.message) == str(message.id)) and (req.args.discussion_action in ('edit', 'post-edit')) and not req.args.submit;">
@@ -159,10 +164,10 @@
 
         <div class="body" py:choose="">
           <py:when test="is_message_edit">
-            ${discussion.body or Markup('&lt;p&gt;&nbsp;&lt;/p&gt;')}
+            ${format_to_html(discussion.env, context, req.args.body or '&nbsp;')}
           </py:when>
           <py:otherwise>
-            ${message.body or Markup('&lt;p&gt;&nbsp;&lt;/p&gt;')}
+            ${format_to_html(discussion.env, context, message.body or '&nbsp;')}
           </py:otherwise>
         </div>
 
@@ -180,7 +185,7 @@
             ${is_message_edit and discussion.author or message.author}
           </div>
           <div class="time">
-            ${is_message_edit and discussion.time or message.time}
+            ${is_message_edit and format_datetime(discussion.time) or format_datetime(message.time)} (${is_message_edit and pretty_timedelta(discussion.time) or pretty_timedelta(message.time)} ago)
           </div>
         </div>
       </py:with>

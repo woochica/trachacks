@@ -11,13 +11,18 @@
     </script>
   </head>
 
+  <?python
+    from trac.wiki.formatter import format_to_oneliner
+    from trac.util.datefmt import format_datetime, pretty_timedelta
+  ?>
+
   <body>
     <xi:include href="discussion-header.html"/>
 
     <div id="content" class="discussion searchable">
       <div id="${discussion.mode}" class="${discussion.mode}">
 
-        <h1>${discussion.forum.name} (#${discussion.forum.id}) - ${discussion.topic.subject} (#${discussion.topic.id}) - Message List</h1>
+        <h1>${format_to_oneliner(discussion.env, context, discussion.forum.name)} (#${discussion.forum.id}) - ${format_to_oneliner(discussion.env, context, discussion.topic.subject)} (#${discussion.topic.id}) - Message List</h1>
 
         ${display_discussion(discussion, href.discussion(discussion.forum.id, discussion.topic.id))}
 

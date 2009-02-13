@@ -7,7 +7,7 @@
   </head>
 
   <?python
-    from trac.wiki.formatter import format_to_oneliner
+    from tracdiscussion.api import format_to_oneliner_no_links
   ?>
 
   <py:with vars="is_edit = discussion.group.id and not req.args.submit">
@@ -66,14 +66,14 @@
                   <td class="name">
                     <div class="name">
                       <a href="${panel_href(group.id)}">
-                        <span>${group.name or '&nbsp;'}</span>
+                        <span>${format_to_oneliner_no_links(discussion.env, context, group.name) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td class="description">
                     <div class="description">
                       <a href="${panel_href(group.id)}">
-                        <span>${format_to_oneliner(discussion.env, context, group.description) or '&nbsp;'}</span>
+                        <span>${format_to_oneliner_no_links(discussion.env, context, group.description) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
