@@ -930,7 +930,8 @@ class TracHoursPlugin(Component):
             ticket.save_changes(logged_in_user, comment)
             index = len(ticket.get_changelog()) - 1 # XXX can/should this be used?
 
-        req.redirect(req.href(req.path_info))
+        location = req.environ.get('HTTP_REFERER', req.href(req.path_info))
+        req.redirect(location)
 
     def edit_ticket_hours(self, req, ticket):
         """respond to a request to edithours for a ticket"""
