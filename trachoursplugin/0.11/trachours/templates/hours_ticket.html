@@ -70,7 +70,7 @@
     </form>
   </div>
   <div>
-    <form py:if="can_add_hours" method="POST">
+    <form py:if="can_add_hours and users" method="POST">
     <fieldset>
     <b>Add:</b> <input type="text" name="hours" /> hours and
       <input type="text" name="minutes" /> minutes

@@ -18,6 +18,7 @@ from dbhelper import * # local import
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
+from genshi.template import MarkupTemplate
 
 from multiproject import MultiprojectHours # local import
 
@@ -878,13 +879,18 @@ class TracHoursPlugin(Component):
         logged_in_user = req.authname
         worker = req.args.get('worker', logged_in_user)
         if not worker == logged_in_user:
-            assert req.perm.has_permission('TICKET_ADMIN')
+            assert req.perm.has_permission('TICKET_ADMIN')        
 
         # when the work was done
-        started = datetime.datetime(*map(int, [req.args[i] for i in 'year', 'month', 'day']))
-        if started == datetime.datetime(now.year, now.month, now.day):
-            # assumes entries made for today should be ordered
-            # as they are entered
+        if 'year' in req.args: # assume month and day are provided
+
+            started = datetime.datetime(*map(int, [req.args[i] for i in 'year', 'month', 'day']))
+            if started == datetime.datetime(now.year, now.month, now.day):
+                # assumes entries made for today should be ordered
+                # as they are entered
+                started = now
+
+        else:
             started = now
         started = int(time.mktime(started.timetuple()))
 
@@ -898,6 +904,9 @@ class TracHoursPlugin(Component):
             raise ValueError("Please enter a valid number of hours")
             req.redirect(req.href(req.path_info))
         
+        #
+        comments = req.args.get('comments', '').strip()
+
         # update the database
         sql = """insert into ticket_time(ticket, 
                                          time_submitted,
@@ -909,15 +918,15 @@ class TracHoursPlugin(Component):
 (%s, %s, %s, %s, %s, %s, %s)"""
         execute_non_query(self, sql, ticket.id, int(time.time()),
                           worker, logged_in_user, started,
-                          seconds_worked, req.args['comments'])
+                          seconds_worked, comments)
         self.update_ticket_hours([ticket.id])
 
         # if comments are made, anote the ticket
-        if req.args['comments'].strip():            
+        if comments:
             comment = '[%s %s hours] logged for %s: %s' % ('/hours/%s' % ticket.id, 
                                                            self.format_hours(seconds_worked), 
                                                            worker,
-                                                           req.args['comments'])
+                                                           comments)
             ticket.save_changes(logged_in_user, comment)
             index = len(ticket.get_changelog()) - 1 # XXX can/should this be used?
 
@@ -1013,6 +1022,20 @@ class TracHoursPlugin(Component):
 
     ### internal methods for filtering genshi template streams
 
+    ticket_hours_form = MarkupTemplate("""<div style="float:right; border: 1px solid black; text-align: left">
+<form method="post" action="${action}">
+<center>
+<b>Add hours to ticket:</b>
+<p>
+<input type="text" name="hours"/>:<input type="text" name="minutes"/>
+</p>
+</center>
+<input type="hidden" name="worker" value="${worker}"/>
+<input type="submit" name="addhours" value="Add Hours"/>
+</form>
+</div>
+""")
+
     def filter_ticket(self, req, stream, data):
         """filter the stream for tickets"""
 
@@ -1024,6 +1047,10 @@ class TracHoursPlugin(Component):
             hours = '%.1f' % (self.get_total_hours(ticket_id) / 3600.0)
             field = tag.a(hours, href=req.href('hours', data['ticket'].id), title="hours for ticket %s" % data['ticket'].id)
             totalhours['rendered'] = field
+            if req.perm.has_permission('TICKET_ADD_HOURS') and req.authname:
+                data = { 'worker': req.authname,
+                         'action': req.href('hours', ticket_id)}
+                stream |= Transformer("//div[@id='content']").before(self.ticket_hours_form.generate(**data))
         stream |= Transformer("//input[@id='field-totalhours']").replace(field)
 
         return stream
