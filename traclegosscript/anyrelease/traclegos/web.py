@@ -52,7 +52,7 @@ class CreateProject(Step):
         """check for errors"""
         errors = []        
         project_name = input.get('project')
-        if project_name:
+        if project_name:            
             projects = self.view.projects.keys() + os.listdir(self.view.directory)
             if project_name in projects:
                 errors.append("The project '%s' already exists" % project_name)
@@ -343,11 +343,11 @@ class View(object):
             if index:
                 if project not in self.projects:
                     errors.append('Project not found')
-            else:
-                self.projects[project] = {}
 
-            project_data = self.projects[project]
+            project_data = self.projects.get(project)
             errors = step.errors(project_data, req.POST)
+            if not index:
+                project_data = self.projects[project] = {}
 
             # set *after* error check so that `create-project` doesn't find itself
             project_data['base_url'] = base_url 
