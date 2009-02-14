@@ -8,7 +8,7 @@ from trac.util.datefmt import utc
 from trac.wiki.macros import WikiMacroBase
 import copy
 
-DEFAULT_OPTIONS = {'width': '800', 'height': '200', 'color': 'ff990000', 'bgcolor': 'ffffff', 'wecolor':'f1f1f1'}
+DEFAULT_OPTIONS = {'width': '800', 'height': '200', 'color': 'ff9900', 'bgcolor': 'ffffff00', 'wecolor':'f1f1f1'}
 
 class BurndownChart(WikiMacroBase):
     """Creates burn down chart for selected tickets.
