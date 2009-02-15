@@ -11,6 +11,7 @@ CIA Trac notification tool.
 
 from trac.core import *
 from trac.wiki.api import IWikiChangeListener
+from trac.wiki.model import WikiPage
 from trac.attachment import IAttachmentChangeListener
 from trac.ticket.api import ITicketChangeListener
 
@@ -103,6 +104,11 @@ class CiaNotificationComponent(Component):
                                 comment = None,
                                 version = None,
                                 timestamp = None):
+        if action == 'added':
+            page = WikiPage(self.env, page.name, 1)
+            author = page.author
+            version = page.version
+
         url = get_resource_url(self.env, page.resource, self.env.abs_href)
 
         args = self.make_args({
