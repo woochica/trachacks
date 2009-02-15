@@ -172,15 +172,17 @@ class CiaNotificationComponent(Component):
         t_url = get_resource_url(self.env, ticket.resource, self.env.abs_href)
         if is_new:
             t_url += '/' + str(ticket.id)
+
+        author = kwargs.get('author', 'anonymous')
+
         args = self.make_args({
             'url': t_url,
             'component': 'tickets/' + esc(ticket.values.get('component', '')),
             'timestamp': '',
-            'author': esc(ticket.values.get('reporter', '')),
+            'author': esc(author),
             'version': '<version>#' + esc(str(ticket.id)) + '</version>'
         })
         summary = ticket.values.get('summary', '')
-        author = ticket.values.get('reporter', 'anonymous')
         if action == 'deleted':
             args['log'] = esc('%shas been deleted' % (summary and ' (' + summary+ ') ' or ''))
         elif action == 'created':
@@ -204,7 +206,7 @@ class CiaNotificationComponent(Component):
                 log += '; milestone <- ' + milestone
             old_owner = old.get('owner', None)
             if old_owner:
-                if args['author'] == ticket.values.get('owner'):
+                if author == ticket.values.get('owner'):
                     log += "; took over the ticket from " + old_owner
                 else:
                     log += '; owner <- ' + ticket.values.get('owner')
