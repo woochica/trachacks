@@ -164,12 +164,14 @@ class CiaNotificationComponent(Component):
         status = ticket.values.get('status')
         is_new = status == 'new'
         t_url = get_resource_url(self.env, ticket.resource, self.env.abs_href)
+        if is_new:
+            t_url += '/' + str(ticket.id)
         args = self.make_args({
-            'url': is_new and t_url + '/' + str(ticket.id) or t_url,
+            'url': t_url,
             'component': 'tickets/' + esc(ticket.values.get('component', '')),
             'timestamp': '',
             'author': esc(ticket.values.get('reporter', '')),
-            'version': '#' + esc(str(ticket.id))
+            'version': '<version>#' + esc(str(ticket.id)) + '</version>'
         })
         summary = ticket.values.get('summary', '')
         author = ticket.values.get('reporter', 'anonymous')
