@@ -197,25 +197,31 @@ class CiaNotificationComponent(Component):
             num_comments = int(r and r[0] or 0)
             if num_comments:
                 args['url'] += '#comment:%s' % (num_comments,)
-            log = 'ticket '+str(ticket.id)+' changed'
+            log = ''
             if old.get('status', None):
-                log += '; status <- ' + status
+                if log: log += '; '
+                log += 'status <- ' + status
             if old.get('version', None):
-                log += '; version <- ' + version
+                if log: log += '; '
+                log += 'version <- ' + version
             if old.get('milestone', None):
-                log += '; milestone <- ' + milestone
+                if log: log += '; '
+                log += 'milestone <- ' + milestone
             old_owner = old.get('owner', None)
             if old_owner:
                 if author == ticket.values.get('owner'):
-                    log += "; took over the ticket from " + old_owner
+                    if log: log += '; '
+                    log += "took over the ticket from " + old_owner
                 else:
-                    log += '; owner <- ' + ticket.values.get('owner')
+                    if log: log += '; '
+                    log += 'owner <- ' + ticket.values.get('owner')
             changes = []
             for key in TICKET_FIELDS:
                 if old.get(key, None) is not None and key not in ('owner', 'status', 'version', 'milestone'):
                     changes.append(key)
             if changes:
-                log += "; changed " + ', '.join(changes)
+                if log: log += '; '
+                log += "changed " + ', '.join(changes)
             log += ' (' + t_url + ')'
             args['log'] = esc(log)
         else:
