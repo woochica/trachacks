@@ -1,4 +1,5 @@
-# (C) 2008 Mikhail Gusarov <dottedmag@dottedmag.net>
+#
+# (C) 2008,2009 Mikhail Gusarov <dottedmag@dottedmag.net>
 # (C) 2008 Igor Stroh <igor@rulim.de>
 #
 # GPLv2 or later
