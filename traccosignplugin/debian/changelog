@@ -1,3 +1,11 @@
+trac-cosign (0.1.1-1.5275) unstable; urgency=low
+
+  * Do LDAP bind only necessary, whicl get performance gain. see #4633.
+  * Fetch account info from LDAP if session email address not exist. 
+    see #4636.
+
+ -- Jiang Xin <worldhello.net@gmail.com>  Mon, 16 Feb 2009 22:07:31 +0800
+
 trac-cosign (0.1.1-1.5244) unstable; urgency=low
 
   * Bugfix: #4600: Take referer as query_string between trac and CoSign 

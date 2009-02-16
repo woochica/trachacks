@@ -59,7 +59,7 @@ class AccountLDAP(Component):
         # If login from CoSign SSO, redirecting from CoSign, no referer is set in header.
         # Through the referer from header, we can safely narrow down LDAP queries.
         referer = referer = req.args.get('referer') or req.get_header('Referer')
-        if referer:
+        if referer and req.session.get('email'):
             return template, data, None
 
         uid = req.authname.lower()
