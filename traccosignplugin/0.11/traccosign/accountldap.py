@@ -20,7 +20,11 @@ class AccountLDAP(Component):
     implements(IRequestFilter)
     
     def __init__(self):
-        """Se realiza la conexión con el LDAP.
+        self.enabled = True
+        self.ldap = None
+
+    def _ldap_bind(self):
+        """Bind to LDAP server if necessary.
         """
         self.basedn = self.config.get('ldap', 'basedn')
         self.userdn = self.config.get('ldap', 'user_rdn')
@@ -30,7 +34,6 @@ class AccountLDAP(Component):
         self.userFilter = 'uid'
         if self.config.has_option('ldap', 'user_filter'):
             self.userFilter = self.config.get('ldap', 'user_filter')
-        self.enabled = True
         for i in range(self.attempts):
             try:
                 self.ldap = ldap.open(self.config.get('ldap', 'host'))
@@ -74,6 +77,8 @@ class AccountLDAP(Component):
     def _getUserAttributes(self, uid):
         """Get CommonName, mail from LDAP.
         """
+        if self.ldap is None:
+            self._ldap_bind()
         filter = '%s=%s' % (self.userFilter, uid)
         result = []
         id = self.ldap.search(self.basedn, ldap.SCOPE_SUBTREE, filter, None)
