@@ -1,3 +1,11 @@
+"""
+SensitiveTicketsPlugin : a plugin for Trac, http://trac.edgewall.org
+
+Based on the example vulnerability_tickets plugin, but SensitivityTickets uses a checkbox to control status versus text.
+
+See: http://trac.edgewall.org/browser/trunk/sample-plugins/permissions/vulnerability_tickets.py
+"""
+
 from trac.core import *
 from trac.perm import IPermissionPolicy, IPermissionRequestor
 from trac.env import IEnvironmentSetupParticipant
