@@ -1,0 +1,14 @@
+diff -ru trac-0.10.5.old/trac/versioncontrol/svn_authz.py trac-0.10.5/trac/versioncontrol/svn_authz.py
+--- trac-0.10.5.old/trac/versioncontrol/svn_authz.py	2009-02-17 17:05:15.785612000 +0800
++++ trac-0.10.5/trac/versioncontrol/svn_authz.py	2009-02-17 18:13:45.377283048 +0800
+@@ -271,6 +271,9 @@
+         * return False：用户对象(用户名/组名/别名等) 在小节中有策略匹配，但是 *不* 允许读取
+         * return None：用户对象(用户名/组名/别名等) 在小节中 *没有* 策略匹配。可以继续查询其他小节。
+         """
++        # ConfigParser match failed if section name is not ascii.
++        if isinstance(section, unicode):
++            section = section.encode('utf-8')
+         if not self.conf_authz.has_section(section):
+             return
+ 
+Only in trac-0.10.5/trac/versioncontrol: svn_authz.py.orig
