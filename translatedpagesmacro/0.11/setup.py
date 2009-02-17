@@ -1,3 +1,5 @@
+#! /bin/env python
+
 from setuptools import setup
 
 PACKAGE = 'TranslatedPages'
@@ -7,6 +9,5 @@ setup(name=PACKAGE,
       version=VERSION,
       packages=['translatedpages'],
       entry_points={'trac.plugins': '%s = translatedpages' % PACKAGE},
-#      package_data={'helloworld': ['htdocs/css/*.css', 'htdocs/images/*.jpg',
-#                                   'templates/*.cs']},
+      package_data={'translatedpages': ['templates/*.cs']},
 )

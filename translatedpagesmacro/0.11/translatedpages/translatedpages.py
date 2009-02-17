@@ -7,15 +7,52 @@ __version__ = '1.0'
 
 from genshi.builder import tag
 
+from trac.core import *
 from trac.web.main import IRequestHandler
-from trac.wiki.macros import WikiMacroBase
+from trac.web.chrome import ITemplateProvider
+from trac.wiki.api import IWikiMacroProvider
 from StringIO import StringIO
 from trac.wiki.formatter import Formatter
 from trac.wiki.model import WikiPage
 
-class TranslatedPagesPlugin(WikiMacroBase):
+class TranslatedPagesMacro(Component):
     """Plugin to show the translated pages list."""
-    
+
+    implements(IWikiMacroProvider, IRequestHandler, ITemplateProvider)
+
+    # IWikiMacroProvider methods
+
+    def get_macros(self):
+        """Yield the name of the macro based on the class name."""
+        yield 'TranslatedPages'
+
+    def get_macro_description(self, name):
+        """Return the subclass's docstring."""
+        return to_unicode(inspect.getdoc(self.__class__))
+
+    def parse_macro(self, parser, name, content):
+        raise NotImplementedError
+
+
+    # IRequestHandler methods
+
+    def match_request(self, req):
+        return req.path_info == '/translations'
+
+    def process_request(self, req):
+        return 'translatedpages.cs', None
+
+
+    # ITemplateProvider methods
+
+    def get_templates_dirs(self):
+        """Return a list of directories containing the provided ClearSilver
+        templates.
+        """
+        
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+        
     SUPPORT_LANGUAGES = {
         'en' : u'English',
         'ru' : u'Русский',
