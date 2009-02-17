@@ -1,0 +1,114 @@
+diff -r 01d3b3e26eb4 trac/versioncontrol/svn_authz.py
+--- a/trac/versioncontrol/svn_authz.py	Tue Feb 17 16:45:30 2009 +0800
++++ b/trac/versioncontrol/svn_authz.py	Tue Feb 17 16:46:39 2009 +0800
+@@ -69,6 +69,110 @@
+     `check_permission(username, action, resource)` should be able to
+     replace `has_permission(path)` when resource is a `('source', path)`
+     and `has_permission_for_changeset` when resource is a `('changeset', rev)`.
++
++    >>> from trac.versioncontrol import svn_authz
++    >>> import StringIO
++    >>> buff = '''
++    ... [aliases]
++    ... admin=user2
++    ...
++    ... [groups]
++    ... dev=@team1,user2
++    ... team1=user1
++    ... team2=$admin
++    ...
++    ... [repos1:/trunk/src]
++    ... user1=
++    ...
++    ... [/trunk/src]
++    ... user1=r
++    ... user2=r
++    ...
++    ... [repos1:/trunk]
++    ... user1=r
++    ... user2=
++    ...
++    ... [/trunk]
++    ... user2=
++    ...
++    ... [repos1:/]
++    ... user3=
++    ...
++    ... [/]
++    ... user3=r
++    ... user4=r
++    ...
++    ... [/admin]*=
++    ... $admin=rw
++    ...
++    ... [/dev]*=
++    ... @dev=rw
++    ... '''
++    >>> fp=StringIO.StringIO(buff)
++    >>> fp.seek(0)
++    >>> authz = svn_authz.RealSubversionAuthorizer(None, 'user1', 'repos1', None, fp)
++    >>> authz.aliases
++    []
++    >>> authz.groups
++    ['team1', 'dev']
++    >>> authz.has_permission('/trunk/src/test')
++    0
++    >>> authz.has_permission('/dev/src/test')
++    1
++    >>> authz.has_permission('/admin/src/test')
++    0
++    >>> fp.seek(0)
++    >>> authz = svn_authz.RealSubversionAuthorizer(None, 'user1', '', None, fp)
++    >>> authz.has_permission('/trunk/src/test')
++    1
++    >>> fp.seek(0)
++    >>> authz = svn_authz.RealSubversionAuthorizer(None, 'user2', 'repos1', None, fp)
++    >>> authz.aliases
++    ['admin']
++    >>> authz.groups
++    ['team2', 'dev']
++    >>> authz.has_permission('/trunk/src/test')
++    1
++    >>> authz.has_permission('/dev/src/test')
++    1
++    >>> authz.has_permission('/admin/src/test')
++    1
++    >>> fp.seek(0)
++    >>> authz = svn_authz.RealSubversionAuthorizer(None, 'user2', '', None, fp)
++    >>> authz.has_permission('/trunk')
++    0
++    >>> fp.seek(0)
++    >>> authz = svn_authz.RealSubversionAuthorizer(None, 'user3', 'repos1', None, fp)
++    >>> authz.aliases
++    []
++    >>> authz.groups
++    []
++    >>> authz.has_permission('/trunk/')
++    0
++    >>> authz.has_permission('/dev/src/test')
++    0
++    >>> authz.has_permission('/admin/src/test')
++    0
++    >>> fp.seek(0)
++    >>> authz = svn_authz.RealSubversionAuthorizer(None, 'user4', 'repos1', None, fp)
++    >>> authz.aliases
++    []
++    >>> authz.groups
++    []
++    >>> authz.has_permission('/trunk/')
++    1
++    >>> authz.has_permission('/dev/src/test')
++    1
++    >>> authz.has_permission('/admin/src/test')
++    1
++    >>> fp.seek(0)
++    >>> authz = svn_authz.RealSubversionAuthorizer(None, 'user4', '', None, fp)
++    >>> authz.has_permission('/trunk')
++    1
++    >>> fp.seek(0)
++    >>> authz = svn_authz.RealSubversionAuthorizer(None, 'user5', '', None, fp)
++    >>> authz.has_permission('/trunk')
++    0
+     """
+ 
+     auth_name = ''

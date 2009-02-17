@@ -1,0 +1,121 @@
+diff -r 614b009a50c0 trac/versioncontrol/svn_authz.py
+--- a/trac/versioncontrol/svn_authz.py	Tue Feb 17 16:23:55 2009 +0800
++++ b/trac/versioncontrol/svn_authz.py	Tue Feb 17 16:45:30 2009 +0800
+@@ -87,6 +87,7 @@
+         elif cfg_file:
+             self.conf_authz.read(cfg_file)
+ 
++        self.aliases = self._aliases()
+         self.groups = self._groups()
+ 
+     def has_permission(self, path):
+@@ -114,9 +115,26 @@
+ 
+     # Internal API
+ 
++    def _aliases(self):
++        if not self.conf_authz.has_section('aliases'):
++            return []
++        if not self.auth_name:
++            return []
++
++        usr_aliases = []
++
++        for alias in self.conf_authz.options('aliases'):
++            member = self.conf_authz.get('aliases', alias).strip()
++            if member == self.auth_name:
++                usr_aliases.append(alias)
++
++        return usr_aliases
++
+     def _groups(self):
+         if not self.conf_authz.has_section('groups'):
+             return []
++        if not self.auth_name:
++            return []
+ 
+         grp_parents = {}
+         usr_grps = []
+@@ -128,6 +146,9 @@
+                     usr_grps.append(group)
+                 elif member.startswith('@'):
+                     grp_parents.setdefault(member[1:], []).append(group)
++                elif member.startswith('$'):
++                    if member[1:] in self.aliases:
++                        usr_grps.append(group)
+ 
+         expanded = {}
+ 
+@@ -145,10 +166,33 @@
+         return expanded.keys()
+ 
+     def _get_section(self, section):
++        """检查  [section] 小节，用户的权限。
++
++        * return True：用户对象(用户名/组名/别名等) 在小节中有策略匹配，且允许读取
++        * return False：用户对象(用户名/组名/别名等) 在小节中有策略匹配，但是 *不* 允许读取
++        * return None：用户对象(用户名/组名/别名等) 在小节中 *没有* 策略匹配。可以继续查询其他小节。
++        """
+         if not self.conf_authz.has_section(section):
+             return
+ 
+-        yield self._get_permission(section, self.auth_name)
++        matched = False
++
++        user_perm = self._get_permission(section, self.auth_name)
++        matched |= user_perm is not None 
++        if user_perm:
++            yield 1
++
++        alias_perm = None
++        for a in self.aliases:
++            p = self._get_permission(section, '$' + a)
++            if p is not None:
++                alias_perm = p
++
++            if alias_perm:
++                yield 1
++                break
++
++        matched |= alias_perm is not None
+ 
+         group_perm = None
+         for g in self.groups:
+@@ -158,12 +202,35 @@
+ 
+             if group_perm:
+                 yield 1
++                break
+ 
+-        yield group_perm
++        matched |= group_perm is not None
+ 
+-        yield self._get_permission(section, '*')
++        pan_perm = self._get_permission(section, '*')
++        matched |= pan_perm is not None
++        if pan_perm:
++            yield 1
++
++        if not self.auth_name or self.auth_name == 'anonymous':
++            pan_perm = self._get_permission(section, '$anonymous')
++        else:
++            pan_perm = self._get_permission(section, '$authenticated')
++        matched |= pan_perm is not None
++        if pan_perm:
++            yield 1
++
++        if matched:
++            yield 0
++        else:
++            yield None
+ 
+     def _get_permission(self, section, subject):
++        """检查  [section] 小节中 subject 对象的策略
++
++        * return True:  有策略 "subject = r|rw" 匹配， 即对象 subject 允许读取
++        * return False: 有策略 "subject = " 匹配， 即对象 subject 不允许读取
++        * return None:  没有策略匹配
++        """
+         if self.conf_authz.has_option(section, subject):
+             return 'r' in self.conf_authz.get(section, subject)
+         return None
