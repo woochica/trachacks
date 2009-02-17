@@ -3,10 +3,6 @@ from trac.perm import IPermissionPolicy, IPermissionRequestor
 from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.model import Ticket
 
-
-revision = "$Rev$"
-url = "$URL$"
-
 class SensitiveTicketsPolicy(Component):
     """Prevent public access to security sensitive tickets.
     
