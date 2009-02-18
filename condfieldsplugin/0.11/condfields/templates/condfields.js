@@ -1,32 +1,44 @@
 var condfields = {};
-<?cs each:type = condfields.types ?>
-condfields['<?cs name:type ?>'] = {};
-<?cs each:field = type ?>
-condfields['<?cs name:type ?>']['<?cs name:field ?>'] = <?cs var:field ?>;
-<?cs /each ?>
-<?cs /each ?>
+#for type, fields in condfields.types.iteritems()
+condfields['$type'] = {};
+#for field, val in fields.iteritems()
+condfields['$type']['$field'] = ${val and 'true' or 'false'};
+#end
+#end
 
-var ok_fields = [];
-<?cs each:field = condfields.ok_fields ?>
-ok_fields[<?cs name:field ?>] = '<?cs var:field ?>';
-<?cs /each ?>
+var ok_view_fields = [];
+#for field, val in enumerate(condfields.ok_view_fields)
+ok_view_fields[$field] = '$val';
+#end
+
+var ok_new_fields = [];
+#for field, val in enumerate(condfields.ok_new_fields)
+ok_new_fields[$field] = '$val';
+#end
 
 $(function() {
-    var mode = '<?cs var:condfields.mode ?>';
+    var mode = '$condfields.mode';
+
+    if(mode == 'view'){
+        ok_fields = ok_view_fields;
+    } else {
+        ok_fields = ok_new_fields;
+    }
     
     var field_data = {};
     for(var i=0;i<ok_fields.length;i++) {
         var field = ok_fields[i];
         if(mode == 'view' && field == 'owner') continue;
         field_data[field] = {
-            label: $('label[@for='+field+']').parents('th').html(),
-            input: $('#'+field).parents('td').html()
+            label: $('label[@for=field-'+field+']').parents('th').html(),
+            input: $('#field-'+field).parents('td').html()
         }
     }
-    //console.log(field_data);
-    //console.log(mode);
+    //console.info(field_data);
+    //console.info(mode);
     
     function set_type(t) {
+
         var col = 1;
         var table = '';
         var values = [];
@@ -36,41 +48,53 @@ $(function() {
             if(condfields[t][field] == 0) continue;
             
             if(col == 1) {
-                table += '<tr><th class="col1">';
+		table += '<tr><th class="col1">';
+		table += field_data[field].label + '</th>'
+		table += '<td class="col1">' + field_data[field].input + '</td>'
             } else {
                 table += '<th class="col2">'
+		table += field_data[field].label + '</th>'
+		table += '<td class="col2">' + field_data[field].input + '</td>'
             }
-            
-            table += field_data[field].label + '</th><td>' + field_data[field].input + '</td>'
-            
-            if(col == 1) {
-                col = 2;
+	
+	
+	
+	    if(col == 1){
+		col =2;	
             } else {
                 table += '</tr>'
                 col = 1;
             }
 
             // Copy out the value
-            values.push({field:field,value:$('#'+field).val()});
+            values.push({field:field,value:$('#field-'+field).val()});
 
         }
         
-        <?cs if:condfields.mode == 'new' ?>
-        $('#properties tbody').html(table);
-        <?cs else ?>
-        var n=0;
-        $('#properties tbody tr').each(function() {
-            if(n > 3) {
-                $(this).remove()
-            }
-            n += 1;
-        })
-        $('#properties tbody').append(table);
-        <?cs /if ?>
+        if(mode == 'new') {
+            //$('#properties tbody').html(table);
+            var n=0;
+            $('#properties tbody tr').each(function() {
+                if(n > 3) {
+                    $(this).remove()
+                }
+                n += 1;
+            })
+            $('#properties tbody').append(table);
+        } else {
+            var n=0;
+            $('#properties tbody tr').each(function() {
+                if(n > 3) {
+                    $(this).remove()
+                }
+                n += 1;
+            })
+            $('#properties tbody').append(table);
+        }
         
         // Restore the previous values
         for(var i=0;i<values.length;i++) {
-            $('#'+values[i].field).val(values[i].value);
+            $('#field-'+values[i].field).val(values[i].value);
         }
     }
     
@@ -120,9 +144,9 @@ $(function() {
         set_header_type(re_results[1]);
     }
     
-    set_type($('#type').val());
+    set_type($('#field-type').val());
     
-    $('#type').change(function() {
+    $('#field-type').change(function() {
         set_type($(this).val());
     })
 });

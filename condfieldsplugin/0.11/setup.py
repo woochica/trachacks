@@ -5,9 +5,9 @@ from setuptools import setup
 
 setup(
     name = 'TracCondFields',
-    version = '1.0',
+    version = '2.0',
     packages = ['condfields'],
-    package_data = { 'condfields': ['templates/*.cs', 'htdocs/*.js', 'htdocs/*.css' ] },
+    package_data = { 'condfields': ['templates/*', 'htdocs/*.js', 'htdocs/*.css' ] },
 
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
@@ -19,7 +19,7 @@ setup(
         'Framework :: Trac',
     ],
     
-    install_requires = ['TracWebAdmin'],
+    install_requires = ['Trac>=0.11'],
 
     entry_points = {
         'trac.plugins': [
