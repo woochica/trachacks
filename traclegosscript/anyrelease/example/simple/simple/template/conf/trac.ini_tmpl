@@ -30,18 +30,10 @@ acct_mgr.web_ui.accountmodule = enabled
 acct_mgr.web_ui.loginmodule = enabled
 acct_mgr.web_ui.registrationmodule = enabled
 autocompleteusers.* = enabled
-autoquery.autoquery.autoqueryplugin = enabled
 customfieldadmin.api.customfields = enabled
 customfieldadmin.customfieldadmin.customfieldadminpage = enabled
 iniadmin.iniadmin.iniadminplugin = enabled
-mastertickets.* = enabled
 permredirect.filter.permredirectmodule = enabled
-privatetickets.* = enabled
-privatetickets.api.privateticketssystem = enabled
-privatetickets.query.privateticketsqueryfilter = enabled
-privatetickets.report.privateticketsreportfilter = enabled
-privatetickets.search.privateticketssearchmodule = enabled
-privatetickets.view.privateticketsviewmodule = enabled
 svnurls.svnurls.svnurls = enabled
 trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
@@ -116,17 +108,7 @@ repository_url = ${repository_url}
 tags = tags/*
 
 [ticket]
-default_component = [unspecified]
-default_milestone = 
-default_priority = important
-default_type = defect
-restrict_owner = false
-
-[ticket-custom]
-blockedby = text
-blockedby.label = Blocked By
-blocking = text
-blocking.label = Blocking
+restrict_owner = true
 
 [ticket-workflow]
 accept = new -> assigned
