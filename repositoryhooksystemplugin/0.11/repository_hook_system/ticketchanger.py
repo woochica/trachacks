@@ -37,10 +37,10 @@ class TicketChanger(Component):
     intertrac = BoolOption('ticket-changer', 'intertrac', default=False,
                            doc='enforce using ticket prefix from intertrac linking')
     cmd_close = ListOption('ticket-changer', 'close-commands',
-                           default=['close', 'closed', 'closes', 'fix', 'fixed', 'fixes'],
+                           default='close, closed, closes, fix, fixed, fixes',
                            doc='commit message tokens that indicate ticket close [e.g. "closes #123"]')
     cmd_refs = ListOption('ticket-changer', 'references-commands',
-                          default=['addresses', 're', 'references', 'refs', 'see'],
+                          default='addresses, re, references, refs, see',
                           doc='commit message tokens that indicate ticket reference [e.g. "refs #123"]')
     
     def is_available(self, repository, hookname):
