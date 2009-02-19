@@ -31,7 +31,7 @@ from genshi.filters import Transformer
 from defaultcc.model import DefaultCC
 
 class DefaultCCAdmin(Component):
-    """Allows to setup a default CC list per component through the component 
+    """Allows to setup a default CC list per component through the component
     admin UI.
     """
 
@@ -81,7 +81,7 @@ class DefaultCCAdmin(Component):
         return template, data, content_type
 
     def pre_process_request(self, req, handler):
-        if 'TICKET_ADMIN' in req.perm and req.method == 'POST':
+        if 'TICKET_ADMIN' in req.perm and req.method == 'POST' and req.path_info.startswith('/admin/ticket/components'):
             if req.args.get('save'):
                 cc = DefaultCC(self.env, req.args.get('old_name'))
                 cc.delete()
@@ -104,13 +104,13 @@ class DefaultCCAdmin(Component):
     # Display
     def filter_stream(self, req, method, filename, stream, data):
         if 'TICKET_ADMIN' in req.perm:
-            if req.path_info == '/admin/ticket/components':
+            if req.path_info == '/admin/ticket/components' or req.path_info == '/admin/ticket/components/':
                 components = data.get('components')
                 default_ccs = DefaultCC.select(self.env)
-	
+
                 stream = stream | Transformer('//table[@id="complist"]/thead/tr') \
                     .append(tag.th('Default CC'))
-	
+
                 filter = Transformer('//table[@id="complist"]/tbody')
                 default_comp = self.config.get('ticket', 'default_component')
                 for comp in components:
@@ -118,20 +118,20 @@ class DefaultCCAdmin(Component):
                         default_tag = tag.input(type='radio', name='default', value=comp.name, checked='checked')
                     else:
                         default_tag = tag.input(type='radio', name='default', value=comp.name)
-	
+
                     if comp.name in default_ccs:
                         default_cc = default_ccs[comp.name]
                     else:
                         default_cc = ''
-	
+
                     filter = filter.append(tag.tr(tag.td(tag.input(type='checkbox', name='sel', value=comp.name), class_='sel'),
                                                   tag.td(tag.a(comp.name, href=req.href.admin('ticket', 'components') + '/' + comp.name), class_='name'),
                                                   tag.td(comp.owner, class_='owner'),
                                                   tag.td(default_tag, class_='default'),
                                                   tag.td(default_cc, class_='defaultcc')))
                 return stream | filter
-	
-            elif req.path_info.startswith('/admin/ticket/components/'):
+
+            elif req.path_info.startswith('/admin/ticket/components/') and data.get('component'):
                 cc = DefaultCC(self.env, data.get('component').name)
                 filter = Transformer('//form[@id="modcomp"]/fieldset/div[@class="buttons"]')
                 filter = filter.before(tag.div("Default CC:",
