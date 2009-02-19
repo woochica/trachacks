@@ -10,6 +10,7 @@ See:
 import calendar
 import datetime
 import dateutil.parser
+import re
 import time
 
 from api import hours_format # local import
@@ -75,6 +76,7 @@ class TracHoursPlugin(Component):
 
     ###### class data
     date_format = '%B %d, %Y'     # XXX should go to api ?
+    hours_regex = '(([0-9]+(\.[0-9]+)?)|([0-9]+:[0-5][0-9])) *hours' # for ticket comments `1 hour` 1.5 hours or 1:30 hours
 
     fields = [dict(name='id', label='Ticket'), #note that ticket_time id is clobbered by ticket id
               dict(name='seconds_worked', label='Hours Worked'),
@@ -83,11 +85,11 @@ class TracHoursPlugin(Component):
               dict(name='time_started', label='Work done on'),
               dict(name='time_submitted', label='Work recorded on')]
 
-
     ###### methods and attributes for trac Interfaces
 
     implements(IRequestHandler, ITemplateStreamFilter, INavigationContributor, 
-               ITemplateProvider, IPermissionRequestor, ITicketManipulator)
+               ITemplateProvider, IPermissionRequestor, ITicketManipulator,)
+
 
     ### methods for IPermissionRequestor
     
@@ -220,6 +222,36 @@ class TracHoursPlugin(Component):
             return [ ('estimatedhours', 'Please enter a number for Estimated Hours') ]
         if float(ticket['estimatedhours']) < 0.:
             return [ ('estimatedhours', 'Please enter a positive value for Estimated Hours') ]
+
+        ### add hours through comments
+        
+        # only allow allowed users to add hours via comments
+        if not req.perm.has_permission('TICKET_ADD_HOURS'):
+            return []
+
+        # markup the comment and add hours
+        comment = req.args.get('comment')
+        if comment is None:
+            return []
+
+        def replace(match, self=self, req=req, ticket=ticket):
+            """
+            callback for re.sub
+            this will markup the hours link and take care of
+            adding the hours
+            """
+            # XXX maybe the hours addition should go in ticket_changed; what if another validate_ticket method fails?
+            hours = match.groups()[0]
+            if ':' in hours:
+                hours, minutes = hours.split(':')
+                seconds = 3600.0*float(hours) + 60.0*float(minutes)/60.0
+            else:
+                seconds = 3600.0*float(hours)
+            self.add_ticket_hours(ticket.id, req.authname, seconds, comments=req.args['comment'])
+            return u'[%s %s]' % (('/hours/%s' % ticket.id), match.group())
+
+        comment = re.sub(self.hours_regex, replace, req.args['comment'])
+        req.args['comment'] = comment 
         return []
 
     ### method for ITemplateStreamFilter
@@ -892,7 +924,6 @@ class TracHoursPlugin(Component):
 
         else:
             started = now
-        started = int(time.mktime(started.timetuple()))
 
         # how much work was done
         hours = req.args['hours'].strip() or 0
@@ -904,22 +935,13 @@ class TracHoursPlugin(Component):
             raise ValueError("Please enter a valid number of hours")
             req.redirect(req.href(req.path_info))
         
-        #
+        # comments on hours event
         comments = req.args.get('comments', '').strip()
 
-        # update the database
-        sql = """insert into ticket_time(ticket, 
-                                         time_submitted,
-                                         worker,
-                                         submitter,
-                                         time_started,
-                                         seconds_worked,
-                                         comments) values 
-(%s, %s, %s, %s, %s, %s, %s)"""
-        execute_non_query(self, sql, ticket.id, int(time.time()),
-                          worker, logged_in_user, started,
-                          seconds_worked, comments)
-        self.update_ticket_hours([ticket.id])
+        # add the hours
+        self.add_ticket_hours(ticket.id, worker, seconds_worked, 
+                              submitter=logged_in_user, time_started=started, 
+                              comments=comments)
 
         # if comments are made, anote the ticket
         if comments:
@@ -932,6 +954,41 @@ class TracHoursPlugin(Component):
 
         location = req.environ.get('HTTP_REFERER', req.href(req.path_info))
         req.redirect(location)
+
+    def add_ticket_hours(self, ticket, worker, seconds_worked, submitter=None, time_started=None, comments=''):
+        """
+        add hours to a ticket:
+        * ticket : id of the ticket 
+        * worker : who did the work on the ticket
+        * seconds_worked : how much work was done, in seconds
+        * submitter : who recorded the work, if different from the worker
+        * time_started : when the work was begun (a Datetime object) if other than now
+        * comments : comments to record
+        """
+
+        # prepare the data
+        if submitter is None:
+            submitter = worker
+        if time_started is None:
+            time_started = datetime.datetime.now()
+        time_started = int(time.mktime(time_started.timetuple()))
+        comments = comments.strip()
+
+        # execute the SQL
+        sql = """insert into ticket_time(ticket, 
+                                         time_submitted,
+                                         worker,
+                                         submitter,
+                                         time_started,
+                                         seconds_worked,
+                                         comments) values 
+(%s, %s, %s, %s, %s, %s, %s)"""
+        execute_non_query(self, sql, ticket, int(time.time()),
+                          worker, submitter, time_started,
+                          seconds_worked, comments)
+
+        # update the hours on the ticket
+        self.update_ticket_hours([ticket])
 
     def edit_ticket_hours(self, req, ticket):
         """respond to a request to edithours for a ticket"""

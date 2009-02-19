@@ -1,15 +1,15 @@
 from setuptools import find_packages, setup
 
-version='0.2.3'
+version='0.2.4'
 
 setup(name='TracHoursPlugin',
       version=version,
       description="keep trac of the hours spent on bugs and whether these live up to estimates",
       author='David Turner and Jeff Hammel',
       author_email='jhammel@openplans.org',
-      url='http://trac-hacks.org/wiki/k0s',
+      url='http://trac-hacks.org/wiki/TracHoursPlugin',
       keywords='trac plugin',
-      license="",
+      license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
       package_data={'trachours': ['templates/*']},
