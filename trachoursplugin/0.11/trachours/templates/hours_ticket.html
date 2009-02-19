@@ -39,7 +39,7 @@
 	  <input type="text" name="hours_${record['id']}"
 	  value="${record['hours_worked']}"/>:
 	  <input type="text" name="minutes_${record['id']}"
-	  value="${record['minutes_worked']}"/>
+	  value="${'%02d' % record['minutes_worked']}"/>
 	  </td>
 	  <td py:when="False">
 	  ${record['hours_worked']}:${'%02d' % record['minutes_worked']}
