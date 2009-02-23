@@ -249,6 +249,10 @@ class ImporterTestCase(unittest.TestCase):
         self._do_test_diffs(env, 'with-id-called-id.csv', self._test_preview)
         self.assert_(self._do_test(env, 'with-id-called-id.csv', self._test_import))
 
+    def test_import_non_ascii_ticket_4458(self):
+        env = self._setup()
+        self._do_test_diffs(env, 'non_ascii_ticket_4458.csv', self._test_preview)
+
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
