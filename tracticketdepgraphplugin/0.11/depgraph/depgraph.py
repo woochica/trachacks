@@ -87,7 +87,7 @@ class DepGraphMacro(WikiMacroBase):
 				# Orphan ticket, not blocked and not blocking, skip
 				continue
 
-			bgcolor, border = self._get_color(str(ticket[1]))
+			bgcolor, border = self._get_color(ticket[1])
 			result += "\"" + str(ticket[0]) + "\" [ URL=\"" \
 					+ req.href.ticket(int(ticket[0])) \
 					+ "\" fontcolor=\"#bb0000\" fillcolor=\"" + bgcolor \
@@ -145,7 +145,7 @@ class DepGraphMacro(WikiMacroBase):
 			bgcolor = "#cceecc"
 			border  = "#00cc00"
 		else:
-			bgcolor, border = self._get_color(str(priority))
+			bgcolor, border = self._get_color(priority)
 
 		depth = (depth > -1 and depth or 0)
 
