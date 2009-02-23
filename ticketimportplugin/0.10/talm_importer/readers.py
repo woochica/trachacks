@@ -28,18 +28,22 @@ def get_reader(filename, sheet_index = 1):
             raise TracError('Unable to read this file, does not seem to be a valid Excel or CSV file.')
 
 
+class CP1252DictReader(csv.DictReader):
+    def next(self):
+        d = csv.DictReader.next(self)
+        return dict([(key, value.decode('cp1252', 'replace')) for key, value in d.iteritems()])
+
 class CSVReader(object):
     def __init__(self, filename):
         self.file =  open(filename, "rb")
         reader = csv.reader(self.file)
         self.csvfields = reader.next()
             
-    # TODO: support multiple sheets. This is not finished yet.
     def get_sheet_count():
         return 1
         
     def readers(self):
-        return self.csvfields, csv.DictReader(self.file, self.csvfields)
+        return self.csvfields, CP1252DictReader(self.file, self.csvfields)
             
     def close(self):
         self.file.close()
