@@ -11,7 +11,7 @@ from trac.core import *
 from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider
 from trac.wiki.api import IWikiMacroProvider
-from cStringIO import StringIO
+from StringIO import StringIO
 from trac.wiki.formatter import Formatter
 from trac.wiki.model import WikiPage
 from trac.wiki.api import WikiSystem
