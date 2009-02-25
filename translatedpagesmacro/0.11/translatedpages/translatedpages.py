@@ -101,7 +101,7 @@ class TranslatedPagesMacro(Component):
         if self._seems_like_lang_code(suffix):
             return (prefix, suffix)
         else:
-            retrun (page_name, self.BASE_LANG)
+            return (page_name, self.BASE_LANG)
 
     def _get_translations(self, base_page_name):
         (base_page, page_lang) = self._get_page_info(base_page_name)
