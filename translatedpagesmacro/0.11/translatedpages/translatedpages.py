@@ -24,7 +24,7 @@ class TranslatedPagesMacro(Component):
 
     def get_macros(self):
         """Yield the name of the macro based on the class name."""
-        yield 'TranslatedPages'
+        yield u'TranslatedPages'
 
     def get_macro_description(self, name):
         """Return the subclass's docstring."""
@@ -37,10 +37,10 @@ class TranslatedPagesMacro(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        return req.path_info == '/translations'
+        return req.path_info == u'/translations'
 
     def process_request(self, req):
-        return 'translatedpages.cs', None
+        return u'translatedpages.cs', None
 
 
     # ITemplateProvider methods
@@ -51,17 +51,17 @@ class TranslatedPagesMacro(Component):
         """
 
         from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
+        return [resource_filename(__name__, u'templates')]
 
     SUPPORT_LANGUAGES = {
-        'en' : u'English',
-        'ru' : u'Русский',
-        'be' : u'Беларуская мова',
-        'da' : u'dansk',
-        'es' : u'español',
-        'nl' : u'Nederlands',
-        'sv' : u'Svenska',
-        'zh' : u'中文',
+        u'en' : u'English',
+        u'ru' : u'Русский',
+        u'be' : u'Беларуская мова',
+        u'da' : u'dansk',
+        u'es' : u'español',
+        u'nl' : u'Nederlands',
+        u'sv' : u'Svenska',
+        u'zh' : u'中文',
         }
 
     def __init__(self):
@@ -80,32 +80,32 @@ class TranslatedPagesMacro(Component):
         return lang_code.isalpha()
 
     def _get_wiki_info(self, wiki_id):
-        wiki_lang_code = 'en'
+        wiki_lang_code = u'en'
         wiki_base_name = wiki_id
 
-        wiki_lang_code_start = wiki_id.rfind('/')
+        wiki_lang_code_start = wiki_id.rfind(u'/')
         if wiki_lang_code_start != -1:
             wiki_lang_code = wiki_id[wiki_lang_code_start+1:]
             wiki_base_name = wiki_id[:wiki_lang_code_start]
 
         if wiki_lang_code not in TranslatedPagesMacro.SUPPORT_LANGUAGES.keys(): # Unknown wiki language.
             if not self._seems_like_lang_code(wiki_lang_code): # seems don't like a language code.
-                wiki_lang_code = 'en'
+                wiki_lang_code = u'en'
                 wiki_base_name = wiki_id
 
         return (wiki_base_name, wiki_lang_code)
 
     def _is_translated_wiki_exists(self, wiki_base_name, lang_code):
-        if lang_code == 'en':
+        if lang_code == u'en':
             wiki_id = wiki_base_name
         else:
-            wiki_id = '%s/%s' % (wiki_base_name, lang_code)
+            wiki_id = u'%s/%s' % (wiki_base_name, lang_code)
 
         wiki_page = WikiPage(self.env, wiki_id)
         return wiki_page.exists
 
     def _get_lang_link(self, wiki_base_name, lang_code, formatter):
-        if lang_code != 'en':
+        if lang_code != u'en':
             wiki_id = u'%s/%s' % (wiki_base_name, lang_code)
         else:
             wiki_id = wiki_base_name
@@ -131,9 +131,9 @@ class TranslatedPagesMacro(Component):
                 if lang_code != wiki_lang_code:
                     lang_link_list.append(self._get_lang_link(wiki_base_name, lang_code, formatter))
 
-        text = '\n'.join(lang_link_list)
+        text = u'\n'.join(lang_link_list)
 
         out = StringIO()
         Formatter(self.env, formatter.context).format(text, out)
 
-        return '<div class="wiki-toc trac-nav"><h4>Other Languages:</h4>' + out.getvalue() + '</div>'
+        return u'<div class="wiki-toc trac-nav"><h4>Other Languages:</h4>' + out.getvalue() + u'</div>'
