@@ -44,8 +44,8 @@ class WikiCssPlugin (Component):
             db = self.env.get_db_cnx()
             cursor = db.cursor()
             cursor.execute( \
-                "SELECT text, MAX(version) FROM wiki WHERE name='%s' " \
-                "GROUP BY text ORDER BY version DESC;" % self.wikipage )
+                "SELECT text FROM wiki WHERE name='%s' " \
+                "ORDER BY version DESC;" % self.wikipage )
             content = cursor.fetchone()
             if not content:
                 raise Exception("WikiCss: Configured wiki page '%s' doesn't exits." % self.wikipage)
