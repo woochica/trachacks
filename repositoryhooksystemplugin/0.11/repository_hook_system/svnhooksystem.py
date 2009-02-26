@@ -16,6 +16,7 @@ from trac.config import Option
 from trac.config import ListOption
 from trac.core import *
 from trac.util.text import CRLF
+from trac.versioncontrol import NoSuchChangeset
 from utils import iswritable
 
 class SVNHookSystem(FileSystemHooks):
@@ -97,7 +98,7 @@ class SVNHookSystem(FileSystemHooks):
                 chgset = repo.get_changeset(revision)
             except NoSuchChangeset:
                 # XXX should probably throw an exception (same one?)
-                return # out of scope changesets are not cached
+                raise # out of scope changesets are not cached
             return chgset
         else:
             transaction = commit_id
@@ -111,14 +112,13 @@ class SVNHookSystem(FileSystemHooks):
             # get the attributes
             author = svnlook('author').strip()
             date = parse(svnlook('date').split('(')[0].strip())
+            # XXX FIXME
+#             from datetime import datetime
+#             date = datetime.now()
 
             
             message = svnlook('log').strip()
             rev = transaction
-
-            # XXX FIXME
-#             from datetime import datetime
-#             date = datetime.now()
 
             attributes = dict(author=author,
                               date=date,
