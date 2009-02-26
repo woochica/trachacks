@@ -178,14 +178,14 @@ class WatchlinkPlugin(Component):
                             newvalues = set(newvalue and newvalue.split(', ') or [])
                             added   = newvalues.difference(oldvalues)
                             removed = oldvalues.difference(newvalues)
-                            str = fieldtag
+                            strng = fieldtag
                             if added:
-                                str += tag(" ", tag.em(', '.join(added)), " added")
+                                strng += tag(" ", tag.em(', '.join(added)), " added")
                             if removed:
                                 if added:
-                                    str += tag(', ')
-                                str += tag(" ", tag.em(', '.join(removed)), " removed")
-                            return str
+                                    strng += tag(', ')
+                                strng += tag(" ", tag.em(', '.join(removed)), " removed")
+                            return strng
                         elif field == 'description':
                             return fieldtag + tag(" modified (", tag.a("diff", 
                                href=href('ticket',id,action='diff',version=commentnum)), ")")
@@ -212,10 +212,10 @@ class WatchlinkPlugin(Component):
                     # [tag(''), tag('; ')] and remove the last tag('; '):
                     changes = changes and tag(changes[2:-1]) or tag()
                     ticketlist.append({
-                        'id' : str(id),
+                        'id' : unicode(id),
                         'type' : type,
                         'author' : author,
-                        'commentnum': str(self.commentnum),
+                        'commentnum': unicode(self.commentnum),
                         'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
                         'datetime' : format_datetime( changetime ),
                         'timedelta' : pretty_timedelta( changetime ),
@@ -339,7 +339,7 @@ class WatchlinkPlugin(Component):
             cursor.execute(
                 "ALTER TABLE watchlist RENAME COLUMN id   TO resid;")
         except Exception, e:
-            raise TracError("Couldn't rename DB table columns: " + str(e))
+            raise TracError("Couldn't rename DB table columns: " + unicode(e))
         try:
             cursor.execute("INSERT INTO system (name, value) VALUES"
               " ('watchlist_version', '1')")
