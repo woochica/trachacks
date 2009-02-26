@@ -26,9 +26,11 @@ from multiproject import MultiprojectHours # local import
 from trac.core import *
 from trac.mimeview.api import Mimeview, IContentConverter, Context
 from trac.perm import IPermissionRequestor
+from trac.perm import PermissionSystem
 from trac.ticket import Ticket
 from trac.ticket.api import TicketSystem
 from trac.ticket.api import ITicketManipulator
+from trac.ticket.api import ITicketChangeListener
 from trac.ticket.query import Query
 from trac.util.datefmt import to_timestamp, utc
 from trac.util.translation import _
@@ -88,7 +90,8 @@ class TracHoursPlugin(Component):
     ###### methods and attributes for trac Interfaces
 
     implements(IRequestHandler, ITemplateStreamFilter, INavigationContributor, 
-               ITemplateProvider, IPermissionRequestor, ITicketManipulator,)
+               ITemplateProvider, IPermissionRequestor, ITicketManipulator,
+               ITicketChangeListener)
 
 
     ### methods for IPermissionRequestor
@@ -236,23 +239,50 @@ class TracHoursPlugin(Component):
 
         def replace(match, self=self, req=req, ticket=ticket):
             """
-            callback for re.sub
-            this will markup the hours link and take care of
-            adding the hours
+            callback for re.sub; this will markup the hours link
             """
-            # XXX maybe the hours addition should go in ticket_changed; what if another validate_ticket method fails?
+            return u'[%s %s]' % (('/hours/%s' % ticket.id), match.group())
+
+        comment = re.sub(self.hours_regex, replace, comment)
+        req.args['comment'] = comment 
+        return []
+
+    def add_hours_by_comment(self, comment, ticket, worker):
+        """
+        add hours to a ticket via a comment string
+        * comment : the comment string
+        * ticket : the id of the ticket
+        * worker : who worked the hours
+        """
+        for match in re.finditer(self.hours_regex, comment):
             hours = match.groups()[0]
             if ':' in hours:
                 hours, minutes = hours.split(':')
                 seconds = 3600.0*float(hours) + 60.0*float(minutes)/60.0
             else:
                 seconds = 3600.0*float(hours)
-            self.add_ticket_hours(ticket.id, req.authname, seconds, comments=req.args['comment'])
-            return u'[%s %s]' % (('/hours/%s' % ticket.id), match.group())
+            self.add_ticket_hours(ticket, worker, seconds, comments=comment)
 
-        comment = re.sub(self.hours_regex, replace, req.args['comment'])
-        req.args['comment'] = comment 
-        return []
+    ### methods for ITicketChangeListener
+
+    """Extension point interface for components that require notification
+    when tickets are created, modified, or deleted."""
+
+    def ticket_changed(self, ticket, comment, author, old_values):
+        """Called when a ticket is modified.
+        
+        `old_values` is a dictionary containing the previous values of the
+        fields that have changed.
+        """
+        if self.env.components[PermissionSystem].check_permission('TICKET_ADD_HOURS', author):
+            self.add_hours_by_comment(comment, ticket.id, author)
+
+    def ticket_created(self, ticket):
+        """Called when a ticket is created."""
+
+    def ticket_deleted(self, ticket):
+        """Called when a ticket is deleted."""
+
 
     ### method for ITemplateStreamFilter
 
