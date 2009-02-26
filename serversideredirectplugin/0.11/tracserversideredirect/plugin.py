@@ -48,6 +48,17 @@ class ServerSideRedirectPlugin (Component):
         """Only handle request when selected from `pre_process_request`."""
         return False
 
+    def split_link(self, target):
+        """Split a target along "?" and "#" in `(path, query, fragment)`."""
+        query = fragment = ''
+        idx = target.find('#')
+        if idx >= 0:
+            target, fragment = target[:idx], target[idx:]
+        idx = target.find('?')
+        if idx >= 0:
+            target, query = target[:idx], target[idx:]
+        return (target, query, fragment)
+
    # IRequestHandler methods
     def process_request(self, req):
         """Redirect to pre-selected target."""
@@ -87,10 +98,14 @@ class ServerSideRedirectPlugin (Component):
             # Add back link information for internal links:
             if target[0] == '/':
                 redirectfrom =  "redirectedfrom=" + req.path_info
-                if target.find('?') == -1:
-                    target += '?' + redirectfrom
+                # anchor should be the last in url
+                # according to http://trac.edgewall.org/ticket/8072
+                tgt, query, anchor= self.split_link(target)
+                if not query:
+                    query  = "?" + redirectfrom
                 else:
-                    target += '&' + redirectfrom
+                    query += "&" + redirectfrom
+                target = tgt + query + anchor
             req.redirect(target)
             raise RequestDone
         raise TracError("Invalid redirect target!")
