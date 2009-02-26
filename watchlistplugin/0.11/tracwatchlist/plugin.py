@@ -11,6 +11,7 @@ from  trac.web.chrome  import  INavigationContributor
 from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
 from  trac.web.chrome  import  ITemplateProvider, add_ctxtnav, add_link, add_script
 from  trac.web.href    import  Href
+from  trac.util.text   import  to_unicode
 from  genshi.builder   import  tag, Markup
 from  urllib           import  quote_plus
 
@@ -49,7 +50,7 @@ class WatchlinkPlugin(Component):
 
     def process_request(self, req):
         href = Href(req.base_path)
-        user = unicode( req.authname )
+        user = to_unicode( req.authname )
         if not user or user == 'anonymous':
             raise WatchlistError(
                     tag( "Please ", tag.a("log in", href=href('login')),
@@ -64,8 +65,8 @@ class WatchlinkPlugin(Component):
 
         if action in ('watch','unwatch'):
             try:
-                realm = unicode( args['realm'] )
-                resid    = unicode( args['resid']    )
+                realm = to_unicode( args['realm'] )
+                resid = to_unicode( args['resid']    )
             except KeyError:
                 raise WatchlistError("Realm and ResId needed for watch/unwatch action!")
             if realm not in ('wiki','ticket'):
@@ -212,10 +213,10 @@ class WatchlinkPlugin(Component):
                     # [tag(''), tag('; ')] and remove the last tag('; '):
                     changes = changes and tag(changes[2:-1]) or tag()
                     ticketlist.append({
-                        'id' : unicode(id),
+                        'id' : to_unicode(id),
                         'type' : type,
                         'author' : author,
-                        'commentnum': unicode(self.commentnum),
+                        'commentnum': to_unicode(self.commentnum),
                         'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
                         'datetime' : format_datetime( changetime ),
                         'timedelta' : pretty_timedelta( changetime ),
@@ -250,7 +251,7 @@ class WatchlinkPlugin(Component):
         cursor.execute(
             "SELECT count(*) FROM watchlist WHERE realm='%s' and resid='%s' "
             "and wluser='%s';"
-             % (realm, unicode(resid), user)
+             % (realm, to_unicode(resid), user)
         )
         count = cursor.fetchone()
         if not count or not count[0]:
@@ -339,7 +340,7 @@ class WatchlinkPlugin(Component):
             cursor.execute(
                 "ALTER TABLE watchlist RENAME COLUMN id   TO resid;")
         except Exception, e:
-            raise TracError("Couldn't rename DB table columns: " + unicode(e))
+            raise TracError("Couldn't rename DB table columns: " + to_unicode(e))
         try:
             cursor.execute("INSERT INTO system (name, value) VALUES"
               " ('watchlist_version', '1')")
