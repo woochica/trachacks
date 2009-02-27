@@ -37,8 +37,7 @@ tickets.  This is done in response to
  * `/ticket/<number>` has a link to `/hours/<number>` as the total
   hours field so that a user can add and view hours for the ticket
 
-Hour tracking and estimation is most useful when the following questions
- can be answered:
+Hour tracking and estimation is most useful when the following questions can be answered:
 
  * How much time has been spent on a project?
  * How much time remains in a budget (estimate for a project)?
