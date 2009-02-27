@@ -229,7 +229,9 @@ class TracHoursPlugin(Component):
         ### add hours through comments
         
         # only allow allowed users to add hours via comments
-        if not req.perm.has_permission('TICKET_ADD_HOURS'):
+        user = req.authname 
+        can_add_hours = PermissionSystem(self.env).check_permission('TICKET_ADD_HOURS', user)
+        if not can_add_hours:
             return []
 
         # markup the comment and add hours
@@ -261,7 +263,8 @@ class TracHoursPlugin(Component):
                 seconds = 3600.0*float(hours) + 60.0*float(minutes)/60.0
             else:
                 seconds = 3600.0*float(hours)
-            self.add_ticket_hours(ticket, worker, seconds, comments=comment)
+            _comment = re.sub('\[/hours/[0-9]+ ' + self.hours_regex + '\]', match.group(), comment)
+            self.add_ticket_hours(ticket, worker, seconds, comments=_comment)
 
     ### methods for ITicketChangeListener
 
