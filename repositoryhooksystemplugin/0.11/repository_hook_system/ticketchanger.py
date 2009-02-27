@@ -13,16 +13,15 @@ from trac.config import BoolOption
 from trac.config import ListOption
 from trac.config import Option
 from trac.core import *
+from trac.perm import PermissionCache
 from trac.ticket import Ticket
 from trac.ticket.notification import TicketNotifyEmail
 from trac.ticket.web_ui import TicketModule
 from trac.util.datefmt import utc
 
-# TODO: look only for tickets that match 
-# `projectname:#|(ticket|issue|bug)`
-# according to configuration
-# (which also means moving the regex to the class TicketChanger)
-# move more/all of configuration into the .ini file and therefor editable
+from trac.web.api import Request # XXX needed for the TicketManipulators
+
+from StringIO import StringIO
 
 class TicketChanger(Component):
     """annotes and closes tickets on repository commit messages"""
@@ -104,13 +103,36 @@ class TicketChanger(Component):
                 for cmd in cmds:
                     cmd(ticket)
 
-                # determine sequence number... 
+                # determine comment sequence number
                 cnum = 0
                 tm = TicketModule(self.env)
                 for change in tm.grouped_changelog_entries(ticket, db):
                     if change['permanent']:
                         cnum += 1
-                
+
+                # validate the ticket
+                # TODO
+
+
+                # fake a request
+                # XXX cargo-culted environ from 
+                # http://trac.edgewall.org/browser/trunk/trac/web/tests/api.py
+                environ = { 'wsgi.url_scheme': 'http',
+                            'wsgi.input': StringIO(''),
+                            'SERVER_NAME': '0.0.0.0',
+                            'REQUEST_METHOD': 'POST',
+                            'SERVER_PORT': 80,
+                            'SCRIPT_NAME': '/' + self.env.project_name,
+                            'REMOTE_USER': chgset.author,
+                            'QUERY_STRING': ''
+                            }
+                req = Request(environ, None)
+                req.args['comment'] = msg
+                req.authname = chgset.author
+                for manipulator in tm.ticket_manipulators:
+                    manipulator.validate_ticket(req, ticket)
+                msg = req.args['comment']
+
                 ticket.save_changes(chgset.author, msg, now, db, cnum+1)
                 db.commit()
                 
@@ -118,10 +140,8 @@ class TicketChanger(Component):
                 tn.notify(ticket, newticket=0, modtime=now)
 
             except Exception, e:
-                # import traceback
-                # traceback.print_exc(file=sys.stderr)
                 print>>sys.stderr, 'Unexpected error while processing ticket ' \
-                                   'ID %s: %s' % (tkt_id, e)
+                                   'ID %s: %s' % (tkt_id, repr(e))
             
 
     def _cmdClose(self, ticket):
