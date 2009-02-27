@@ -274,7 +274,10 @@ class TracHoursPlugin(Component):
         `old_values` is a dictionary containing the previous values of the
         fields that have changed.
         """
-        if self.env.components[PermissionSystem].check_permission('TICKET_ADD_HOURS', author):
+
+        can_add_hours = PermissionSystem(self.env).check_permission('TICKET_ADD_HOURS', author)
+
+        if can_add_hours:
             self.add_hours_by_comment(comment, ticket.id, author)
 
     def ticket_created(self, ticket):
