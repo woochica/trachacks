@@ -119,7 +119,7 @@ class ServerSideRedirectPlugin (Component):
         # Extract Wiki page
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT text,MAX(version) FROM wiki WHERE name='%s';" % (wiki))
+        cursor.execute("SELECT text,MAX(version) FROM wiki WHERE name=%s;" , (wiki,))
         text = cursor.fetchone();
         # If not exist or empty:
         if not text or not text[0]:
