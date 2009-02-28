@@ -1,7 +1,8 @@
-trac-cosign (0.1.2-1.5325) unstable; urgency=low
+trac-cosign (0.1.2-1.5327) unstable; urgency=low
 
   * Fixed #4722: do not change content_type of return value from 
     post_process_request.
+  * Upgrade trac-cosign to 0.1.2;
 
  -- Jiang Xin <worldhello.net@gmail.com>  Sat, 28 Feb 2009 22:49:13 +0800
 
