@@ -1,3 +1,10 @@
+trac-cosign (0.1.2-1.5325) unstable; urgency=low
+
+  * Fixed #4722: do not change content_type of return value from 
+    post_process_request.
+
+ -- Jiang Xin <worldhello.net@gmail.com>  Sat, 28 Feb 2009 22:49:13 +0800
+
 trac-cosign (0.1.1-1.5275) unstable; urgency=low
 
   * Do LDAP bind only necessary, whicl get performance gain. see #4633.
