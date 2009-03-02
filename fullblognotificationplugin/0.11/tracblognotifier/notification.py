@@ -49,8 +49,8 @@ class FullBlogNotificationEmail(NotifyEmail):
     def get_recipients(self, pagename):
         """Once day we could build a CC list from author/commenters"""
         if self.config.getbool('fullblog-notification', 'always_notify_author'):
-            return ([self.change_author or 'anonymous'], []) 
-        return ([], [])
+            return ([self.blog.author], [self.change_author or 'anonymous']) 
+        return ([self.blog.author], [])
 
     def send(self, torcpts, ccrcpts, mime_headers={}):
         """
