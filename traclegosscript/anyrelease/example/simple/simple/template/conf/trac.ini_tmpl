@@ -30,6 +30,7 @@ acct_mgr.web_ui.accountmodule = enabled
 acct_mgr.web_ui.loginmodule = enabled
 acct_mgr.web_ui.registrationmodule = enabled
 autocompleteusers.* = enabled
+autoupgrade.autoupgrade.autoupgrade = enabled
 customfieldadmin.api.customfields = enabled
 customfieldadmin.customfieldadmin.customfieldadminpage = enabled
 iniadmin.iniadmin.iniadminplugin = enabled
