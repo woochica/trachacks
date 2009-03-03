@@ -39,6 +39,8 @@ svnurls.svnurls.svnurls = enabled
 trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
 tractags.* = enabled
+tracwysiwyg.templateprovider = enabled
+tracwysiwyg.wysiwygwikifilter = enabled
 
 [header_logo]
 alt = ${description}
