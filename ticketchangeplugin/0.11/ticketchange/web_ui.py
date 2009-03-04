@@ -9,8 +9,9 @@ from trac.ticket.model import Ticket
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.web import IRequestHandler
-from trac.util.datefmt import parse_date, to_timestamp
+from trac.util.datefmt import to_timestamp
 from trac.wiki import wiki_to_html
+from trac.resource import ResourceNotFound
 
 import re
 import traceback
@@ -78,13 +79,13 @@ class TicketChangePlugin(Component):
                         db = self.env.get_db_cnx()
                         ticketchange['comment_preview'] = wiki_to_html(
                             comment, self.env, req, db)
-                        ticketchange['change']['time'] = parse_date(req.args.get('time'))
+                        ticketchange['change']['time'] = int(req.args.get('time'))
                         ticketchange['change']['author'] = req.args.get('author')
                         ticketchange['href'] = req.args.get('href')
                         ticketchange['href2'] = req.args.get('href2')
                 else:
                     if not req.args.has_key('cancel'):
-                        time = parse_date(req.args.get('time'))
+                        time = int(req.args.get('time'))
                         self._update_ticket_comment(ticket.id, time, comment, req.authname)
                     req.redirect(req.args.get('href2'))
 
@@ -103,7 +104,7 @@ class TicketChangePlugin(Component):
                 for time, author, field, oldvalue, newvalue, perm in ticket.get_changelog():
                     data = ticket_data.setdefault(str(time), {})
                     data.setdefault('fields', {})[field] = {'old': oldvalue, 'new': newvalue}
-                    data['time'] = time
+                    data['time'] = to_timestamp(time);
                     data['author'] = author
                     if field == 'comment' and oldvalue.rsplit('.', 1)[-1] == cnum :
                         selected_time = str(time)
@@ -159,13 +160,16 @@ class TicketChangePlugin(Component):
             ticketchange['message'] = "Ticket ID '%s' is not valid. Please try again." % arg
         return False
 
-    def _update_ticket_comment(self, id, when, comment, author):
+    def _update_ticket_comment(self, id, time, comment, author):
         """Update ticket change comment"""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        time = when and to_timestamp(when) or 0
         cursor.execute("SELECT author, newvalue FROM ticket_change WHERE ticket = %s AND time = %s AND field = 'comment'", (id, time))
-        old_author, old_comment = cursor.fetchall()[0]
+        row = cursor.fetchone()
+        if not row:
+            raise ResourceNotFound("Unable to update comment on Ticket #%d at time '%s' ('%s') - existing change not found.\n" \
+                                   % (id, time, strftime('%A, %d %b %Y %H:%M:%S', localtime(time))))
+        old_author, old_comment = (row[0], row[1])
         cursor.execute("UPDATE ticket_change SET newvalue=%s WHERE ticket = %s AND time = %s AND field = 'comment'", (comment, id, time))
         db.commit()
         self.env.log.info("Ticket #%d comment of '%s' by '%s' has been updated by '%s':\nold value: '%s'\n\nnew value: '%s'\n" \
