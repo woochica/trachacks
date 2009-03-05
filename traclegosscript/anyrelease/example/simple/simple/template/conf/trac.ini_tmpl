@@ -114,21 +114,18 @@ tags = tags/*
 restrict_owner = true
 
 [ticket-workflow]
-accept = new -> assigned
-accept.operations = set_owner_to_self
-accept.permissions = TICKET_MODIFY
-leave = * -> *
-leave.default = 1
-leave.operations = leave_status
-reassign = new,assigned,reopened -> new
-reassign.operations = set_owner
-reassign.permissions = TICKET_MODIFY
-reopen = closed -> reopened
-reopen.operations = del_resolution
-reopen.permissions = TICKET_CREATE
-resolve = new,assigned,reopened -> closed
-resolve.operations = set_resolution
+; trivial-workflow.ini
+resolve = new -> closed
 resolve.permissions = TICKET_MODIFY
+resolve.operations = set_resolution
+
+reopen = closed -> new
+reopen.permissions = TICKET_CREATE
+reopen.operations = del_resolution
+
+leave = * -> *
+leave.operations = leave_status
+leave.default = 1
 
 [timeline]
 changeset_long_messages = false
