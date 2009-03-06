@@ -43,6 +43,7 @@ privatetickets.report.privateticketsreportfilter = enabled
 privatetickets.search.privateticketssearchmodule = enabled
 privatetickets.view.privateticketsviewmodule = enabled
 svnurls.svnurls.svnurls = enabled
+ticketdelete.web_ui.ticketdeleteplugin = enabled
 trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
 tractags.* = enabled
