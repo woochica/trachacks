@@ -9,7 +9,7 @@ import trac.wiki
 import trac.wiki.api
 
 
-class MyPagePlugin(Component):
+class UserPagePlugin(Component):
 	trac.core.implements(IRequestHandler, IRequestFilter)
 
 	# IRequestFilter methods
