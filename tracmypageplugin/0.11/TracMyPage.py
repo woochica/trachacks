@@ -8,7 +8,7 @@ from trac.perm import IPermissionRequestor, IPermissionPolicy
 
 
 class MyPagePlugin(Component):
-	trac.core.implements(INavigationContributor, IRequestHandler)
+	trac.core.implements(INavigationContributor, IRequestHandler, IPermissionRequestor)
 
 	# INavigationContributor methods
 	def get_active_navigation_item(self, req):
@@ -19,6 +19,11 @@ class MyPagePlugin(Component):
 			yield ('mainnav', 'mypage', html.A('My Page', href=req.href.me()))
 
 
+	# IPermissionRequestor methods
+	def get_permission_actions(self):
+		yield 'MYPAGE_VIEW'
+
+
 	# IRequestHandler methods
 	def match_request(self, req):
 		url = self.mypage_url(req)
@@ -27,7 +32,6 @@ class MyPagePlugin(Component):
 		if req.path_info == '/me':
 			return True
 		return False
-
 
 	def process_request(self, req):
 		url = self.mypage_url(req)
