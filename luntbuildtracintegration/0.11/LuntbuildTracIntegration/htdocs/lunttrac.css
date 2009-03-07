@@ -1,0 +1,3 @@
+dt.build-successful, dt.build-successful a { background-image: url(success.gif) !important }
+dt.build-inprogress, dt.build-inprogress a { background-image: url(running.gif) !important }
+dt.build-failed, dt.build-failed a { background-image: url(failed.gif) !important }
