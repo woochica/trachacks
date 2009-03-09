@@ -14,6 +14,11 @@ setup(name='OSSTracProject',
       include_package_data=True,
       install_requires = [ 'PasteScript', 
                            'TracLegos',
+
+                           # trac wiki macros
+                           'TracProgressMeterMacro',
+
+                           # trac plugins
                            'IniAdmin',
                            'TracAccountManager',
                            'TracCustomFieldAdmin',
@@ -33,6 +38,7 @@ setup(name='OSSTracProject',
       dependency_links = [
       "http://trac-hacks.org/svn/traclegosscript/anyrelease#egg=TracLegos",
       "http://trac-hacks.org/svn/accountmanagerplugin/trunk#egg=TracAccountManager",
+      "http://trac-hacks.org/svn/progressmetermacro/0.11#egg=TracProgressMeterMacro",
       "http://trac-hacks.org/svn/customfieldadminplugin/0.11#egg=TracCustomFieldAdmin",
       "http://trac-hacks.org/svn/datefieldplugin/0.11#egg=TracDateField",
       "http://trac-hacks.org/svn/includemacro/0.11#egg=TracIncludeMacro",
