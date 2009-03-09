@@ -49,7 +49,14 @@ def remove_changelog(stream, field):
 def hide_field(stream , field):
     """ Replaces a field from the form area with an input type=hidden"""
     def helper (field_stream):
-        value = Stream(field_stream).select('@value').render()
+        type = Stream(field_stream).select('@type').render()
+        if type == 'checkbox':
+            if Stream(field_stream).select('@checked').render() == "checked":
+                value = 1
+            else:
+                value = 0
+        else:
+            value = Stream(field_stream).select('@value').render()
         name = Stream(field_stream).select('@name').render()
         for kind,data,pos in tag.input( value=value,
                                         type="hidden", name=name).generate():
