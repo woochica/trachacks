@@ -11,7 +11,7 @@ setup(
     package_data = {
         'tracwatchlist' : [ 'templates/*.html', 'htdocs/css/*.css',],
     },
-    description = "Example Trac Macro.",
+    description = "Watchlist Plugin for Trac",
     url = 'http://www.trac-hacks.org/wiki/WatchlistPlugin',
     license = 'BSD',
     keywords = 'trac watchlist wiki plugin',
