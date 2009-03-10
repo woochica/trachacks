@@ -95,15 +95,15 @@ class WatchlinkPlugin(Component):
             if realm_perm and not is_watching:
                 # Check if wiki/ticket exists:
                 cursor.execute(
-                    "SELECT count(*) FROM %s WHERE %s='%s';"
-                      % (realm, realm == 'wiki' and 'name' or 'id', resid) )
+                    "SELECT count(*) FROM %s WHERE %s='%s';",
+                      (realm, realm == 'wiki' and 'name' or 'id', resid) )
                 count = cursor.fetchone()
                 if not count or not count[0]:
                     raise WatchlistError(
                         "Selected resource %s:%s doesn't exists!" % (realm,resid) )
                 cursor.execute(
                     "INSERT INTO watchlist (wluser, realm, resid) "
-                    "VALUES ('%s','%s','%s');" % lst )
+                    "VALUES ('%s','%s','%s');", lst )
                 db.commit()
             action = "view"
         elif action == "unwatch":
@@ -111,8 +111,7 @@ class WatchlinkPlugin(Component):
             if realm_perm and is_watching:
                 cursor.execute(
                     "DELETE FROM watchlist "
-                    "WHERE wluser='%s' AND realm='%s' AND resid='%s';"
-                     % lst )
+                    "WHERE wluser='%s' AND realm='%s' AND resid='%s';", lst )
                 db.commit()
             action = "view"
 
@@ -126,7 +125,7 @@ class WatchlinkPlugin(Component):
                 # Watched wikis which got deleted:
                 cursor.execute(
                     "SELECT resid FROM watchlist WHERE realm='wiki' AND wluser='%s' "
-                    "AND resid NOT IN (SELECT DISTINCT name FROM wiki);" % user )
+                    "AND resid NOT IN (SELECT DISTINCT name FROM wiki);", (user,) )
                 for (name,) in cursor.fetchall():
                     wikilist.append({
                         'name' : name,
@@ -137,9 +136,9 @@ class WatchlinkPlugin(Component):
                     })
                 # Existing watched wikis:
                 cursor.execute(
-                    "SELECT name,author,time,MAX(version),comment FROM %(realm)s WHERE name IN "
-                    "(SELECT resid FROM watchlist WHERE wluser='%(wluser)s' AND realm='%(realm)s') "
-                    "GROUP BY name ORDER BY time DESC;" % { 'wluser':user, 'realm':'wiki' })
+                    "SELECT name,author,time,MAX(version),comment FROM %s WHERE name IN "
+                    "(SELECT resid FROM watchlist WHERE wluser='%s' AND realm='%s') "
+                    "GROUP BY name ORDER BY time DESC;", (realm,wluser,realm) )
                 for name,author,time,version,comment in cursor.fetchall():
                     wikilist.append({
                         'name' : name,
@@ -159,7 +158,7 @@ class WatchlinkPlugin(Component):
                     "SELECT id,type,time,changetime,summary,reporter FROM ticket WHERE id IN "
                     "(SELECT CAST(resid AS int) FROM watchlist WHERE wluser='%s' AND realm='ticket') "
                     "GROUP BY id,type,time,changetime,summary,reporter "
-                    "ORDER BY changetime DESC;" % user )
+                    "ORDER BY changetime DESC;", (user,) )
                 tickets = cursor.fetchall()
                 for id,type,time,changetime,summary,reporter in tickets:
                     self.commentnum = 0
@@ -167,8 +166,8 @@ class WatchlinkPlugin(Component):
                     cursor.execute(
                         "SELECT author,field,oldvalue,newvalue FROM ticket_change "
                         "WHERE ticket='%s' and time='%s' "
-                        "ORDER BY field=='comment' DESC;"
-                         % (id, changetime )
+                        "ORDER BY field=='comment' DESC;",
+                        (id, changetime )
                     )
 
                     def format_change(field,oldvalue,newvalue):
@@ -236,7 +235,7 @@ class WatchlinkPlugin(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute(
-            "SELECT count(*) FROM watchlist WHERE wluser='%s';" % (user)
+            "SELECT count(*) FROM watchlist WHERE wluser='%s';", (user,)
         )
         count = cursor.fetchone()
         if not count or not count[0]:
@@ -250,8 +249,7 @@ class WatchlinkPlugin(Component):
         cursor = db.cursor()
         cursor.execute(
             "SELECT count(*) FROM watchlist WHERE realm='%s' and resid='%s' "
-            "and wluser='%s';"
-             % (realm, to_unicode(resid), user)
+            "and wluser='%s';", (realm, to_unicode(resid), user)
         )
         count = cursor.fetchone()
         if not count or not count[0]:
