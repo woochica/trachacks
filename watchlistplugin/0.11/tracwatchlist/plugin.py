@@ -95,8 +95,8 @@ class WatchlinkPlugin(Component):
             if realm_perm and not is_watching:
                 # Check if wiki/ticket exists:
                 cursor.execute(
-                    "SELECT count(*) FROM %s WHERE %s=%s;",
-                      (realm, realm == 'wiki' and 'name' or 'id', resid) )
+                    "SELECT count(*) FROM %s WHERE %s=%%s;" %
+                      (realm, realm == 'wiki' and 'name' or 'id'), (resid,) )
                 count = cursor.fetchone()
                 if not count or not count[0]:
                     raise WatchlistError(
@@ -137,8 +137,8 @@ class WatchlinkPlugin(Component):
                 # Existing watched wikis:
                 cursor.execute(
                     "SELECT name,author,time,MAX(version),comment FROM %s WHERE name IN "
-                    "(SELECT resid FROM watchlist WHERE wluser=%s AND realm=%s) "
-                    "GROUP BY name ORDER BY time DESC;", (realm,wluser,realm) )
+                    "(SELECT resid FROM watchlist WHERE wluser=%%s AND realm=%%s) "
+                    "GROUP BY name ORDER BY time DESC;" % realm, (wluser,realm) )
                 for name,author,time,version,comment in cursor.fetchall():
                     wikilist.append({
                         'name' : name,
