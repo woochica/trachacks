@@ -1,6 +1,4 @@
-""" Example Plug-in file 
-
-    Copy and delete unnecessary parts.
+""" ServerSideRedirectPlugin for Trac
 
     Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
     This is Free Software under the BSD or GPL v3 or later license.
