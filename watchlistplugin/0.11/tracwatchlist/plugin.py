@@ -66,7 +66,7 @@ class WatchlinkPlugin(Component):
         if action in ('watch','unwatch'):
             try:
                 realm = to_unicode( args['realm'] )
-                resid = to_unicode( args['resid']    )
+                resid = to_unicode( args['resid'] )
             except KeyError:
                 raise WatchlistError("Realm and ResId needed for watch/unwatch action!")
             if realm not in ('wiki','ticket'):
@@ -136,9 +136,9 @@ class WatchlinkPlugin(Component):
                     })
                 # Existing watched wikis:
                 cursor.execute(
-                    "SELECT name,author,time,MAX(version),comment FROM %s WHERE name IN "
-                    "(SELECT resid FROM watchlist WHERE wluser=%%s AND realm=%%s) "
-                    "GROUP BY name ORDER BY time DESC;" % realm, (user,realm) )
+                    "SELECT name,author,time,MAX(version),comment FROM wiki WHERE name IN "
+                    "(SELECT resid FROM watchlist WHERE wluser=%s AND realm='wiki') "
+                    "GROUP BY name ORDER BY time DESC;", (user,) )
                 for name,author,time,version,comment in cursor.fetchall():
                     wikilist.append({
                         'name' : name,
