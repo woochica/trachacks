@@ -15,11 +15,12 @@ from trac.web.api   import IRequestHandler,IRequestFilter,RequestDone
 from trac.wiki.api  import IWikiMacroProvider
 from trac.mimeview.api import Context
 from tracextracturl import extract_url
+from trac.wiki.macros import WikiMacroBase
 import re
 
 MACRO = re.compile(r'^\s*\[\[redirect\((.*)\)\]\]', re.MULTILINE)
 
-class ServerSideRedirectPlugin (Component):
+class ServerSideRedirectPlugin(WikiMacroBase):
     """ This Trac plug-in implements a server sided redirect functionality.
 
     == Description ==
