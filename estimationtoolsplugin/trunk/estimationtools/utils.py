@@ -5,7 +5,9 @@ from trac.core import TracError
 from trac.wiki.api import parse_args
 from trac.ticket.query import Query
 
-AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 'color', 'bgcolor', 'wecolor']
+AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 
+                     'color', 'bgcolor', 'wecolor', 'weekends', 'gridlines',
+                     'expected', 'colorexpected']
 
 def get_estimation_field():
     return Option('estimation-tools', 'estimation_field', 'estimatedhours',
@@ -37,7 +39,7 @@ def parse_options(db, content, options):
     if startdatearg:
         options['startdate'] = datetime(*strptime(startdatearg, "%Y-%m-%d")[0:5]).date()
 
-    enddatearg = options.get("enddate")
+    enddatearg = options.get('enddate')
     options['enddate'] = None
     if enddatearg:
         options['enddate'] = datetime(*strptime(enddatearg, "%Y-%m-%d")[0:5]).date()
@@ -60,6 +62,9 @@ def parse_options(db, content, options):
     todayarg = options.get('today')
     if not todayarg:
         options['today'] = datetime.now().date()
+        
+    if options.get('weekends'):
+        options['weekends'] = parse_bool(options['weekends'] )
 
     # all arguments that are no key should be treated as part of the query
     query_args = {}
@@ -80,3 +85,9 @@ def execute_query(env, req, query_args):
                if ('TICKET_VIEW' or 'TICKET_VIEW_CC') in req.perm('ticket', t['id'])]
 
     return tickets
+
+def parse_bool(s):
+    if s is True or s is False:
+        return s
+    s = str(s).strip().lower()
+    return not s in ['false','f','n','0','']

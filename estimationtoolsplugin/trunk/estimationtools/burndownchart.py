@@ -8,7 +8,8 @@ from trac.util.datefmt import utc
 from trac.wiki.macros import WikiMacroBase
 import copy
 
-DEFAULT_OPTIONS = {'width': '800', 'height': '200', 'color': 'ff9900', 'bgcolor': 'ffffff00', 'wecolor':'f1f1f1'}
+DEFAULT_OPTIONS = {'width': '800', 'height': '200', 'color': 'ff9900', 'expected': '0',
+                   'bgcolor': 'ffffff00', 'wecolor':'ccccccaa', 'colorexpected': 'ffddaa', 'weekends':'true', 'gridlines' : '0'}
 
 class BurndownChart(WikiMacroBase):
     """Creates burn down chart for selected tickets.
@@ -22,10 +23,15 @@ class BurndownChart(WikiMacroBase):
      * `startdate`: '''mandatory''' parameter that specifies the start date of the period (ISO8601 format)
      * `enddate`: end date of the period. If omitted, it defaults to either the milestones (if given) `completed' date,
        or `due` date, or today (in that order) (ISO8601 format)
+     * `weekends`: include weekends in chart. Defaults to `true` 
+     * `expected`: show expected progress in chart, 0 or any number to define initial expected hours (defaults to 0).
+     * `gridlines`: show gridlines in chart, 0 or any number to define hour steps (defaults to 0)
      * `width`: width of resulting diagram (defaults to 800)
      * `height`: height of resulting diagram (defaults to 200)
      * `color`: color specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
        Defaults to `ff9900`, a nice orange.
+     * `colorexpected`: color for expected hours graph specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
+       Defaults to ffddaa, a nice yellow.
      * `bgcolor`: chart drawing area background color specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
        Defaults to `ffffff`.
      * `wecolor`: chart drawing area background color for weekends specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
@@ -35,7 +41,7 @@ class BurndownChart(WikiMacroBase):
     {{{
         [[BurndownChart(milestone=Sprint 1, startdate=2008-01-01)]]
         [[BurndownChart(milestone=Release 3.0|Sprint 1, startdate=2008-01-01, enddate=2008-01-15,
-            width=600, height=100, color=0000ff)]]
+            weekends=false, expected=100, gridlines=20, width=600, height=100, color=0000ff)]]
     }}}
     """
 
@@ -56,6 +62,12 @@ class BurndownChart(WikiMacroBase):
 
         # calculate data
         timetable = self._calculate_timetable(options, query_args, req)
+        
+        # remove weekends
+        if not options['weekends']:
+            for date in timetable.keys():
+                if date.weekday() >= 5:
+                    del timetable[date]
 
         # scale data
         xdata, ydata, maxhours = self._scale_data(timetable, options)
@@ -63,9 +75,20 @@ class BurndownChart(WikiMacroBase):
         # build html for google chart api
         dates = sorted(timetable.keys())
         bottomaxis = "0:|" + ("|").join([str(date.day) for date in dates]) + \
-            "|1:|%s|%s" % (dates[0].month, dates[ - 1].month) + \
-            "|2:|%s|%s" % (dates[0].year, dates[ - 1].year)
-        leftaxis = "3,0,%s" % maxhours
+            "|1:|%s/%s|%s/%s" % (dates[0].month, dates[0].year, dates[ - 1].month, dates[ - 1].year)
+        leftaxis = "2,0,%s" % maxhours
+        
+        # add line for expected progress
+        if options['expected'] == '0':
+            expecteddata = ""
+        else:
+            expecteddata = "|0,100|%s,0" % (round(Decimal(options['expected']) * 100 / maxhours, 2))
+
+        # prepare gridlines
+        if options['gridlines'] == '0':
+            gridlinesdata = "100.0,100.0,1,0"  # create top and right bounding line by using grid
+        else:
+            gridlinesdata = "%s,%s" % (xdata[1], (round(Decimal(options['gridlines']) * 100 / maxhours, 4)))
 
         # mark weekends
         weekends = []
@@ -96,20 +119,21 @@ class BurndownChart(WikiMacroBase):
         return Markup("<img src=\"http://chart.apis.google.com/chart?"
                "chs=%sx%s"
                "&amp;chf=c,s,%s|bg,s,00000000"
-               "&amp;chd=t:%s|%s"
+               "&amp;chd=t:%s|%s%s"
                "&amp;cht=lxy"
-               "&amp;chxt=x,x,x,y"
+               "&amp;chxt=x,x,y"
                "&amp;chxl=%s"
                "&amp;chxr=%s"
                "&amp;chm=%s"
-               "&amp;chg=100.0,100.0,1,0"  # create top and right bounding line by using grid
-               "&amp;chco=%s"
+               "&amp;chg=%s"
+               "&amp;chco=%s,%s"
                "&amp;chtt=%s\" "
                "alt=\'Burndown Chart\' />"
                % (options['width'], options['height'],
                   options['bgcolor'],
-                  ",".join(xdata), ",".join(ydata), bottomaxis, leftaxis,
-                  "|".join(weekends), options['color'], title))
+                  ",".join(xdata), ",".join(ydata), expecteddata, bottomaxis, leftaxis,
+                  "|".join(weekends), gridlinesdata, 
+                  options['color'], options['colorexpected'], title))
 
     def _calculate_timetable(self, options, query_args, req):
         db = self.env.get_db_cnx()
