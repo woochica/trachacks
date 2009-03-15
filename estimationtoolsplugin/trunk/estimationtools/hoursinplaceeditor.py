@@ -28,8 +28,8 @@ class HoursInPlaceEditor(Component):
         return handler
             
     def post_process_request(self, req, template, data, content_type):
-        if (req.path_info.startswith('/query')
-            and req.perm.has_permission('TICKET_MODIFY') 
+        if (req.path_info.startswith('/query') or req.path_info.startswith('/report')
+            and req.perm.has_permission('TICKET_MODIFY')
             and req.perm.has_permission('XML_RPC')):
             # add_script(req, 'estimationtools/jquery-1.2.3.min.js')
             add_script(req, 'estimationtools/jquery.jeditable.mini.js')

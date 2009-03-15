@@ -2,39 +2,52 @@
       xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/" py:strip="">
 $(document).ready(function() {
-    ids = $('td.id').each(function(i) {
-       var id = $(this).text().substr(1);
-       var estimationField = '$data.field';
+    var reportMethod = $('td.ticket'); //used in Trac reports
+    var queryMethod = $('td.id');      //used in custom queries
+    var xmlrpcPath = null;
+    var elements   = null;
+    if ( reportMethod.length != 0 ) {
+      elements   = reportMethod;
+      xmlrpcPath = '../xmlrpc';
+    } else if ( queryMethod.length != 0 ) {
+      elements   = queryMethod;
+      xmlrpcPath = 'xmlrpc';
+    }
+    if ( elements != null ) {
+      ids = elements.each(function(i) {
+        var id = jQuery.trim($(this).text()).substr(1);
+       	var estimationField = '$data.field';
 
-	   var estimationCell = $('td.' + estimationField).eq(i);
+	   	var estimationCell = $('td.' + estimationField).eq(i);
 
-	   estimationCell.editable(function(value, settings) {
-         var currentElement = this;
-         $.ajax({
-           type: 'POST',
-           url: 'xmlrpc',
-           data: '<methodCall><methodName>ticket.update</methodName>' +
-        	   '<params><param><value><int>' + id + '</int></value></param>' +
-        	   '<param><value><string></string></value></param>' +
-        	   '<param><value><struct><member><name>' + estimationField + '</name>' +
-        	   '<value><string>' + value + '</string></value></member></struct></value></param>' +
-        	   '</params></methodCall>',
-           contentType: 'text/xml',
-           success: function(){
-             $(currentElement).text(value);
-           }
+	   	estimationCell.editable(function(value, settings) {
+        var currentElement = this;
+        $.ajax({
+        	type: 'POST',
+        	url: xmlrpcPath,
+          	data: '<methodCall><methodName>ticket.update</methodName>' +
+       	 	'<params><param><value><int>' + id + '</int></value></param>' +
+       	   	'<param><value><string></string></value></param>' +
+       	   	'<param><value><struct><member><name>' + estimationField + '</name>' +
+       	   	'<value><string>' + value + '</string></value></member></struct></value></param>' +
+       	   	'</params></methodCall>',
+          	contentType: 'text/xml',
+          	success: function(){
+            	$(currentElement).text(value);
+          }
          });
          return('Saving...');
        }, {
-           	 data : jQuery.trim(estimationCell.text()),
-	         tooltip   : 'Click to edit...',
-	         placeholder: '',
-	         onblur : 'submit',
-	         select : 'true',
-	         style : 'inherit',
-	         width     : 60
+    	 data : jQuery.trim(estimationCell.text()),
+         tooltip   : 'Click to edit...',
+         placeholder: '',
+         onblur : 'submit',
+         select : 'true',
+         style : 'inherit',
+         width     : 60
        }); 
     });
+    }
  });
  </script>
  
