@@ -35,7 +35,7 @@ class BurndownChart(WikiMacroBase):
      * `bgcolor`: chart drawing area background color specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
        Defaults to `ffffff`.
      * `wecolor`: chart drawing area background color for weekends specified as 6-letter string of hexadecimal values in the format `RRGGBB`.
-       Defaults to `f1f1f1`.
+       Defaults to `ccccccaa`.
 
     Examples:
     {{{
