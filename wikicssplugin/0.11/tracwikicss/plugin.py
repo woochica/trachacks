@@ -13,7 +13,7 @@ __url      = r'$URL$'[6:-2]
 from  trac.core        import  *
 from  trac.web.chrome  import  add_stylesheet
 from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
-
+from  trac.util.text   import  to_unicode
 
 class WikiCssPlugin (Component):
     """ This Trac plug-in implements a way to use a wiki page as CSS file
@@ -45,13 +45,13 @@ class WikiCssPlugin (Component):
             cursor = db.cursor()
             cursor.execute( \
                 "SELECT text FROM wiki WHERE name='%s' " \
-                "ORDER BY version DESC;" % self.wikipage )
+                "ORDER BY version DESC;", (self.wikipage,) )
             content = cursor.fetchone()
             if not content:
                 raise Exception("WikiCss: Configured wiki page '%s' doesn't exits." % self.wikipage)
             if isinstance(content,tuple):
                 content = content[0]
-            req.send(content, content_type='text/css', status=200)
+            req.send(to_unicode(content), content_type='text/css', status=200)
         except RequestDone:
             pass
         except Exception, e:
