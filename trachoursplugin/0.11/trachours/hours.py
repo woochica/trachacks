@@ -981,7 +981,7 @@ class TracHoursPlugin(Component):
 
         # if comments are made, anote the ticket
         if comments:
-            comment = '[%s %s hours] logged for %s: %s' % ('/hours/%s' % ticket.id, 
+            comment = '[%s %s\thours] logged for %s: %s' % ('/hours/%s' % ticket.id, 
                                                            self.format_hours(seconds_worked), 
                                                            worker,
                                                            comments)
