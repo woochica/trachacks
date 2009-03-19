@@ -981,12 +981,17 @@ class TracHoursPlugin(Component):
 
         # if comments are made, anote the ticket
         if comments:
-            comment = '[%s %s\thours] logged for %s: %s' % ('/hours/%s' % ticket.id, 
+            comment = "[%s %s\thours] logged for %s: ''%s''" % ('/hours/%s' % ticket.id, 
                                                            self.format_hours(seconds_worked), 
                                                            worker,
                                                            comments)
+
+            # avoid adding hours that are (erroneously) noted in the comments
+            # see #4791
+            comment = comment.replace(' ', '\t') 
+
             ticket.save_changes(logged_in_user, comment)
-            index = len(ticket.get_changelog()) - 1 # XXX can/should this be used?
+#            index = len(ticket.get_changelog()) - 1 # XXX can/should this be used?
 
         location = req.environ.get('HTTP_REFERER', req.href(req.path_info))
         req.redirect(location)
