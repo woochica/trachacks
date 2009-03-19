@@ -20,12 +20,13 @@ import urllib
 from trac.core import *
 from trac.ticket.api import ITicketManipulator
 from trac.web.api import ITemplateStreamFilter
+from trac.wiki.api import IWikiPageManipulator
 
 from genshi.builder import tag
 from genshi.filters.transform import Transformer
 
 class MathCaptchaPlugin(Component):
-    implements(ITicketManipulator, ITemplateStreamFilter)
+    implements(ITicketManipulator, ITemplateStreamFilter, IWikiPageManipulator)
     
     timeout = 600 # limit of 10 minutes to process the page
 
@@ -47,6 +48,27 @@ class MathCaptchaPlugin(Component):
             )
         return content
 
+    def validate_mathcaptcha(self, req):
+        # keys older than the specified timeout get deleted
+        [self.keys.pop(k) for k, (var1, var2, timestamp) in self.keys.items() 
+         if time.time() - timestamp >= self.timeout]
+        
+        if req.authname == "anonymous":
+            key = req.args.get('hoomin_key')
+            if key not in self.keys:
+                return [(None, "Took too long to submit page.  Please submit again.")]
+            var1, var2, timestamp = self.keys.pop(key)
+            hoomin = req.args.get('hoomin_check')
+            #print("var1=%d var2=%d hoomin=%s" % (var1, var2, hoomin))
+            try:
+                hoomin = int(hoomin)
+                if (var1 + var2) != hoomin:
+                    return [(None, "Incorrect solution -- try solving the equation again!")]
+            except:
+                return [(None, "Anonymous users are only allowed to post by solving the math problem at the bottom of the page.")]
+
+        return []
+
 
     # ITemplateStreamFilter interface
 
@@ -62,7 +84,8 @@ class MathCaptchaPlugin(Component):
         See the Genshi documentation for more information.
         """
 
-        if filename == "ticket.html" and data['authname'] == 'anonymous':
+        #self.env.log.info(filename)
+        if filename in ["ticket.html", "wiki_edit.html"] and data['authname'] == 'anonymous':
             # Insert the math question right before the submit buttons
             stream = stream | Transformer('//div[@class="buttons"]').before(self.get_content())
         return stream
@@ -76,22 +99,14 @@ class MathCaptchaPlugin(Component):
         Must return a list of `(field, message)` tuples, one for each problem
         detected. `field` can be `None` to indicate an overall problem with the
         ticket. Therefore, a return value of `[]` means everything is OK."""
-        # keys older than the specified timeout get deleted
-        [self.keys.pop(k) for k, (var1, var2, timestamp) in self.keys.items() 
-         if time.time() - timestamp >= self.timeout]
+        return self.validate_mathcaptcha(req)
+    
+    # IWikiPageManipulator interface
+    
+    def validate_wiki_page(self, req, page):
+        """Validate a wiki page after it's been populated from user input.
         
-        if req.authname == "anonymous":
-            key = req.args.get('hoomin_key')
-            if key not in self.keys:
-                return [(None, "Took too long to submit page.  Please submit again.")]
-            var1, var2, timestamp = self.keys.pop(key)
-            hoomin = req.args.get('hoomin_check')
-            #print("var1=%d var2=%d hoomin=%s" % (var1, var2, hoomin))
-            try:
-                hoomin = int(hoomin)
-                if (var1 + var2) != hoomin:
-                    return [(None, "Incorrect solution -- try again!")]
-            except:
-                return [(None, "Anonymous users are only allowed to enter tickets by solving the math problem at the bottom of the page.")]
-
-        return []
+        Must return a list of `(field, message)` tuples, one for each problem
+        detected. `field` can be `None` to indicate an overall problem with the
+        ticket. Therefore, a return value of `[]` means everything is OK."""
+        return self.validate_mathcaptcha(req)
