@@ -260,7 +260,7 @@ class TracHoursPlugin(Component):
             hours = match.groups()[0]
             if ':' in hours:
                 hours, minutes = hours.split(':')
-                seconds = 3600.0*float(hours) + 60.0*float(minutes)/60.0
+                seconds = 3600.0*float(hours) + 60.0*float(minutes)
             else:
                 seconds = 3600.0*float(hours)
             _comment = re.sub('\[/hours/[0-9]+ ' + self.hours_regex + '\]', match.group(), comment)
