@@ -92,8 +92,8 @@ ${query_description}
 	    </option>
 	</select>
 
-	<a href="${prev_url}">Week of ${prev_week.strftime('%B %d, %Y')}
-	  - ${from_date.strftime('%B %d, %Y')}</a>
+	<a href="${prev_url}">Week of ${to_unicode(prev_week.strftime('%B %d, %Y'))}
+	  - ${to_unicode(from_date.strftime('%B %d, %Y'))}</a>
 
         <fieldset id="filters">
           <legend class="foldable">Filters</legend>
