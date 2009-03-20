@@ -78,7 +78,8 @@ class TracHoursPlugin(Component):
 
     ###### class data
     date_format = '%B %d, %Y'     # XXX should go to api ?
-    hours_regex = '(([0-9]+(\.[0-9]+)?)|([0-9]+:[0-5][0-9])) *hours' # for ticket comments `1 hour` 1.5 hours or 1:30 hours
+    hours_regex = '(([0-9]+(\.[0-9]+)?)|([0-9]+:[0-5][0-9])) *hours' # for ticket comments: 1.5 hours or 1:30 hours
+    singular_hour_regex = r'((^)|(\s))1 *hour((\W)|($))' # for singular hours: 1 hour
 
     fields = [dict(name='id', label='Ticket'), #note that ticket_time id is clobbered by ticket id
               dict(name='seconds_worked', label='Hours Worked'),
@@ -246,6 +247,8 @@ class TracHoursPlugin(Component):
             return u'[%s %s]' % (('/hours/%s' % ticket.id), match.group())
 
         comment = re.sub(self.hours_regex, replace, comment)
+        comment = re.sub(self.singular_hour_regex, u' [/hours/%s 1 hour]' % ticket.id, comment)
+
         req.args['comment'] = comment 
         return []
 
@@ -265,6 +268,10 @@ class TracHoursPlugin(Component):
                 seconds = 3600.0*float(hours)
             _comment = re.sub('\[/hours/[0-9]+ ' + self.hours_regex + '\]', match.group(), comment)
             self.add_ticket_hours(ticket, worker, seconds, comments=_comment)
+        for match in re.finditer(self.singular_hour_regex, comment):
+            _comment = re.sub('\[/hours/[0-9]+ 1 hour\]', '1 hour', comment)
+            self.add_ticket_hours(ticket, worker, 3600.0, comments=_comment)
+
 
     ### methods for ITicketChangeListener
 
