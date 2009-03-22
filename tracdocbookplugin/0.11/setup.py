@@ -6,6 +6,7 @@ setup(
 	version='0.1',
 	author = 'William Ghelfi',
 	author_email = 'trumbitta@gmail.com',
+	url = 'http://trac-hacks.org/wiki/TracDocBookPlugin',
 	description = 'DocBook syntax interpreter for Trac Wiki',
 	license = 'GPL version 2',
 	packages=find_packages(exclude=['*.tests*']),
