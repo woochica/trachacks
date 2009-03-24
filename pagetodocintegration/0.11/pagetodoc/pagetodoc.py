@@ -70,6 +70,7 @@ class PageToDocPlugin(Component):
         self.tempdir = mkdtemp(prefix="page2doc")
         htmlfilehandle, htmlfilepath = mkstemp(prefix='trac_', dir=self.tempdir)
         wordfilehandle, wordfilepath = mkstemp(prefix='word_', dir=self.tempdir)
+        os.close(wordfilehandle)
         zipfilepath = os.path.join(self.tempdir, os.path.basename(str(req.path_info) + '.zip'))
         
         # for debug: set all rights
@@ -115,7 +116,9 @@ class PageToDocPlugin(Component):
         for image in self.images:
             zipfilehandle.write(image, self.imagesubdir + os.path.basename(image))     
         zipfilehandle.close()
-        zip = open(zipfilepath, "rb").read()
+        zip_file = open(zipfilepath, "rb")
+        zip = zip_file.read()
+        zip_file.close()
         
         # delete temporary folders and files
         self.remove_dir(os.path.join(self.tempdir, self.logsubdir))
@@ -137,8 +140,10 @@ class PageToDocPlugin(Component):
         errptr, errFile = mkstemp(dir=logdir)
     
         # Call the subprocess using convenience method
-        retval = subprocess.call(command, shell=True, stderr=errptr, stdout=outptr, close_fds=True)
-        
+        retval = subprocess.call(command, shell=True, stderr=errptr, stdout=outptr)
+        os.close(outptr)
+        os.close(errptr)
+                
         # read stdout and stderr
         # its strange that all output goes to stderr instead of stdout, in both cases (error and no error)
         # so always use stderr    
