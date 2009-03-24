@@ -25,7 +25,7 @@ setup(
   name='TracBuildbot',
   version=VERSION,
   packages=['tracbb'],
-  package_data={'tracbb' : ['htdocs/*.css', 'htdocs/*.png', 'templates/*.cs', 'templates/*.html']},
+  package_data={'tracbb' : ['htdocs/*.css', 'htdocs/*.png', 'templates/*.html']},
   author = 'Etienne PIERRE',
   description = 'A plugin to integrate Buildbot into Trac',
   url = 'http://trac-hacks.org/wiki/TracBuildbotIntegration',

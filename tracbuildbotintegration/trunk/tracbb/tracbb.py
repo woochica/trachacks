@@ -17,6 +17,16 @@ class BuildBotPlugin(Component):
 		url=self.config.get("buildbot", "url")
 		return url.strip('/')
 
+	def get_num_builds_display(self):
+		num=self.config.get("buildbot", "numbuilds")
+		if num:
+			try:
+				return int(num)
+			except ValueError:
+				return 5
+		else:
+			return 5
+
 	def get_xmlrpc_url(self):
 		return self.get_buildbot_url() + "/xmlrpc"
 
@@ -74,18 +84,23 @@ class BuildBotPlugin(Component):
 			if len(lastbuilds) > 0:
 				lastbuild = lastbuilds[0]
 				lastnumber=lastbuild[1]
+				laststatus=lastbuild[5]
+				lastbranch=lastbuild[3]
 				build = { 'name' : builder,
-					'status' : server.getStatus(builder),
-					'url' : req.href.buildbot(builder),
-					'lastbuild' : lastnumber,
-					'lastbuildurl' : self.get_build_url(builder, lastnumber)
-					}
+						'status' : laststatus,
+						'url' : req.href.buildbot(builder),
+						'lastbuild' : lastnumber,
+						'lastbuildurl' : self.get_build_url(builder, lastnumber),
+						'lastbranch' : lastbranch
+						}
 			else:
 				build = { 'name' : builder,
 						'status' : "missing",
 						'url' : req.href.buildbot(builder),
 						'lastbuild' : None,
-						'lastbuildurl' : None }
+						'lastbuildurl' : None,
+						'lastbranch' : None
+						}
 
 			ret.append(build)
 
@@ -96,7 +111,7 @@ class BuildBotPlugin(Component):
 		builds = None
 		try:
 			server = self.get_server()
-			builds = server.getLastBuilds(builder, 5)
+			builds = server.getLastBuilds(builder, self.get_num_builds_display())
 		except:
 			raise TracError("Can't get builder %s on url %s" % (builder, self.get_xmlrpc_url()))
 		#last build first
@@ -104,9 +119,10 @@ class BuildBotPlugin(Component):
 		ret = []
 		for build in  builds:
 			thisbuild = { 'status' : build[5],
-				'number' : build[1],
-				'url' : self.get_build_url(builder, build[1])
-				}
+					'number' : build[1],
+					'url' : self.get_build_url(builder, build[1]),
+					'branch' : build[3]
+					}
 			ret.append(thisbuild)
 
 		return ret
@@ -114,6 +130,7 @@ class BuildBotPlugin(Component):
 	def _ctxt_nav(self, req):
 		add_ctxtnav(req, 'Buildbot Server', self.get_buildbot_url())
 		add_ctxtnav(req, 'Waterfall display', self.get_buildbot_url()+'/waterfall')
+		add_ctxtnav(req, 'Grid display', self.get_buildbot_url()+'/grid')
 		add_ctxtnav(req, 'Latest Build', self.get_buildbot_url()+'/one_box_per_builder')
 
 

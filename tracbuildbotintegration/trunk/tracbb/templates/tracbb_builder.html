@@ -19,7 +19,11 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 				<img py:when="build.status == 'success'" src="${req.base_path}/chrome/tracbb/bbsuccess.png" border="0"/> 
 				<img py:otherwise="" src="${req.base_path}/chrome/tracbb/bberror.png" border="0"/> 
 			</py:choose>
-			<a href="${build.url}">build #$build.number</a>
+            <a href="${build.url}">build #$build.number</a>
+            <py:choose test="">
+            <py:when test="build.branch">in ${build.branch}</py:when>
+            <py:otherwise>no branch</py:otherwise>
+            </py:choose>
 		</p>
 		</py:for>
 	</body>

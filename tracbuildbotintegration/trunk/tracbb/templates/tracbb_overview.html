@@ -15,14 +15,18 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 		<h2>Builders</h2>
 		<py:for each="build in bb_builders">
 		<p>
-			<py:choose>
-				<img py:when="build.status == 'success'" src="${req.base_path}/chrome/tracbb/bbsuccess.png" border="0"/> 
-				<img py:otherwise="" src="${req.base_path}/chrome/tracbb/bberror.png" border="0"/> 
+			<py:choose test="">
+                <py:when test="build.status == 'success'"> <img src="${req.base_path}/chrome/tracbb/bbsuccess.png" border="0"/> </py:when>
+                <py:otherwise> <img src="${req.base_path}/chrome/tracbb/bberror.png" border="0"/> ($build.status) </py:otherwise>
 			</py:choose>
 			<a href="${build.url}">$build.name</a>
 			<py:if test="build.lastbuildurl">
 				last build is <a href="${build.lastbuildurl}">#${build.lastbuild}</a>
-			</py:if>
+            </py:if>
+            <py:choose test="">
+            <py:when test="build.lastbranch">in ${build.lastbranch}</py:when>
+            <py:otherwise>no branch</py:otherwise>
+            </py:choose>
 		</p>
 		</py:for>
 	</body>
