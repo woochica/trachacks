@@ -1,0 +1,24 @@
+== Installation ==
+
+ The easiest way to install TracBuildbot is to generate an egg file using
+python setup.py bdist_egg
+
+ The egg file generated in the dist directory can then be copied in the plugin
+directory of your trac project.
+
+== Configuration ==
+ The only configuration to be mayed in the trac.ini file is to declare the server
+url. The url is the one were root page of the waterfall website of your buildbot
+server.
+
+The trac.ini file would look like
+
+[buildbot]
+url = http://localhost:8081/
+
+If the buildbot server is on the local machine.
+
+Don't forget to activate the plugin if it isn't by adding
+
+[components]
+buildbot.* = enabled

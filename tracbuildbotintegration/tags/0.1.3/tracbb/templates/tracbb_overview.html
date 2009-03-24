@@ -1,0 +1,33 @@
+<!DOCTYPE html
+PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude">
+	<xi:include href="layout.html" />
+	<xi:include href="macros.html" />
+	<head>
+		<title>Buildbot Status Page</title>
+	</head>
+
+	<body>
+		<h1>Buildbot Status page</h1>
+		<h2>Builders</h2>
+		<py:for each="build in bb_builders">
+		<p>
+			<py:choose test="">
+                <py:when test="build.status == 'success'"> <img src="${req.base_path}/chrome/tracbb/bbsuccess.png" border="0"/> </py:when>
+                <py:otherwise> <img src="${req.base_path}/chrome/tracbb/bberror.png" border="0"/> ($build.status) </py:otherwise>
+			</py:choose>
+			<a href="${build.url}">$build.name</a>
+			<py:if test="build.lastbuildurl">
+				last build is <a href="${build.lastbuildurl}">#${build.lastbuild}</a>
+            </py:if>
+            <py:choose test="">
+            <py:when test="build.lastbranch">in ${build.lastbranch}</py:when>
+            <py:otherwise>no branch</py:otherwise>
+            </py:choose>
+		</p>
+		</py:for>
+	</body>
+</html>
