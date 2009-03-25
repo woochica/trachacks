@@ -292,7 +292,8 @@ class SvnAuthzAdminPage(Component):
             req.hdf['editgroup.members'] = [m.__str__() for m in group]
             
             # Populate member candidates
-            not_in_list = [m.__str__() for m in group]
+            not_in_list = ['*']
+            not_in_list += [m.__str__() for m in group]
             not_in_list.append("@%s" % editgroup)
             candidates = self._get_candidate_subjects(not_in_list)
             if candidates != []:
@@ -302,6 +303,9 @@ class SvnAuthzAdminPage(Component):
 
     def _get_candidate_subjects(self, not_in_list = []):
         candidates = []
+        if '*' not in not_in_list:
+          candidates.append('*')
+          
         users = [user for user in self.account_manager.get_users() 
                  if user not in not_in_list]
         candidates += sorted(users)
