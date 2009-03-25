@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'SvnAuthzAdminPlugin'
-VERSION = '0.1'
+VERSION = '0.1.2 (Moved to Trac 0.11)'
 
 setup(  name=PACKAGE, version=VERSION,
         author = 'Gergely Kis',
@@ -15,8 +15,10 @@ setup(  name=PACKAGE, version=VERSION,
         package_dir = { 'svnauthz' : 'svnauthz', 
 			'svnauthz_test' : 'svnauthz_test' },
         packages = ['svnauthz', 'svnauthz_test' ],
-        package_data = { 'svnauthz' : ['templates/*.cs', ]},
+        package_data = { 'svnauthz' : ['templates/*', ]},
         entry_points = {'trac.plugins': ['svnauthz.admin_ui = svnauthz.admin_ui',
-					 'svnauthz.SvnAuthzFile = svnauthz.SvnAuthzFile']},
-        install_requires = ['TracWebAdmin', 'TracAccountManager']
+#					 'svnauthz.SvnAuthzFile = svnauthz.SvnAuthzFile'
+					 ]},
+	zip_safe = False,
+        install_requires = []
 )

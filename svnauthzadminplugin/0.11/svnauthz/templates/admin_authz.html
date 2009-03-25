@@ -1,0 +1,211 @@
+<!DOCTYPE html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+            xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+   <title>Plugins</title>
+   <script type="text/javascript" src="${chrome.htdocs_location}js/folding.js"></script>
+   <script type="text/javascript">
+   $(document).ready(function(){ $("div.plugin h3").enableFolding(true) });
+   </script>
+  </head>
+  <body>
+  <h2>Manage Subversion Access Rights</h2>
+
+<py:if test="editgroup_name">
+<form id="addgroupmember" class="addnew"  method="post">
+ <input type="hidden" name="editgroup" value="${editgroup_url}" />
+ <fieldset>
+  <py:if test="addgroupmember_error">
+  <div class="system-message"><p>${addgroupmember_error}</p></div>
+  </py:if>
+
+  <legend>Add Group Member to ${editgroup_name}</legend>
+  <div class="field">
+   <label>Subject: 
+    <select name="subject">
+     <option py:for="candidate in editgroup_candidates" value="$candidate">$candidate</option>
+    </select>
+   </label>
+  </div>
+  <p class="help">Add a new subject to a Subversion group.</p>
+  <div class="buttons">
+   <input type="submit" name="addgroupmember" value=" Add " />
+  </div>
+ </fieldset>
+</form>
+</py:if>
+
+<py:if test="editpath_name">
+<form id="addpathmember" class="addnew" method="post">
+ <input type="hidden" name="editpath" value="${editpath_url}" />
+ <fieldset>
+  <py:if test="addpathmember_error">
+  <div class="system-message"><p>${addpathmember_error}</p></div>
+  </py:if>
+
+  <legend>Add Path Member to $editpath_name</legend>
+  <div class="field">
+   <label>Subject:
+   <select name="subject">
+        <option py:for="candidate in editpath_candidates" value="$candidate">$candidate</option>
+	    </select>
+   </label>
+  </div>
+  <div class="field">
+   <label>Read: <input type="checkbox" name="addpathmember_acl" value="R"/>
+   </label>
+  </div>
+  <div class="field">
+   <label>Write: <input type="checkbox" name="addpathmember_acl" value="W"/>
+   </label>
+  </div>
+  <p class="help">Add a new subject to a Path.</p>
+  <div class="buttons">
+   <input type="submit" name="addpathmember" value=" Add " />
+  </div>
+ </fieldset>
+</form>
+</py:if>
+
+
+
+<form id="addgroup" class="addnew" method="post"> 
+ <fieldset>
+  <py:if test="addgroup and addgroup.error">
+  <div class="system-message"><p>$addgroup.error</p></div>
+  </py:if>
+
+  <legend>Add Group:</legend>
+  <div class="field">
+   <label>Group name: <input type="text" name="groupname" class="textwidget" /></label>
+  </div>
+  <p class="help">Add a new Subversion group.</p>
+  <div class="buttons">
+   <input type="submit" name="addgroup" value=" Add " />
+  </div>
+ </fieldset>
+</form>
+
+<form id="addpath" class="addnew" method="post">
+ <fieldset>
+  <py:if test="addpath_error">
+  <div class="system-message"><p>$addpath_error</p></div>
+  </py:if>
+
+  <legend>Add Path:</legend>
+  <div class="field">
+   <label>Path: <input type="text" name="path" class="textwidget" /></label>
+  </div>
+  <py:if test="addpath_repository">
+  <div class="field">
+   <label>Repository: <input type="text" name="repository" class="textwidget" /></label>
+  </div>
+  </py:if>
+  <p class="help">Add a new Subversion path.</p>
+  <div class="buttons">
+   <input type="submit" name="addpath" value=" Add " />
+  </div>
+ </fieldset>
+</form>
+
+<form method="post">
+  <py:if test="delgroup_error">
+	<div class="system-message"><p>$delgroup_error</p></div>
+  </py:if>
+ <table class="listing" id="grouplist">
+  <thead>
+   <tr><th class="sel">&nbsp;</th><th>Subversion Groups</th></tr>
+  </thead><tbody>
+  <py:for each="group in groups">
+   <tr>
+    <td><input type="checkbox" name="selgroup" value="${group.url}" /></td>
+    <td><a href="${group.href}">${group.name}</a>
+	<py:if test="editgroup_url == group.url"> 
+		  <py:if test="delgroupmember_error">
+  			<div class="system-message"><p>$delgroupmember_error</p></div>
+  		  </py:if>
+
+  			<input type="hidden" name="editgroup" value="${editgroup_url}" />
+		<table class="listing" id="editgrouplist">
+  			<thead>
+   				<tr><th class="sel">&nbsp;</th><th>Group Members</th></tr>
+  			</thead><tbody>			
+  			<py:for each="groupmember in editgroup_members">
+			<tr>
+			<td><input type="checkbox" name="selgroupmember" value="$groupmember"/></td>
+			<td>$groupmember</td>
+			</tr>
+			</py:for>
+		</tbody></table>
+		<div class="buttons">
+  			<input type="submit" name="removegroupmembers" value="Remove selected group members" />
+ 		</div>
+	</py:if>    
+    </td>
+   </tr>
+  </py:for>
+  </tbody>
+ </table>
+ <div class="buttons">
+  <input type="submit" name="removegroups" value="Remove selected groups" />
+ </div>
+</form>
+
+<form method="post">
+  <py:if test="delpath_error">
+	<div class="system-message"><p>$delpath_error</p></div>
+  </py:if>
+ <table class="listing" id="pathlist">
+  <thead>
+   <tr><th class="sel">&nbsp;</th><th>Subversion Paths</th></tr>
+  </thead><tbody><py:for each="path in paths">
+   <tr>
+    <td><input type="checkbox" name="selpath" value="${path.url}" /></td>
+    <td><a href="${path.href}">${path.name}</a>
+	<py:if test="path and editpath_url == path.url">
+		  <py:if test="changepathmember_error">
+  			<div class="system-message"><p>${changepathmember_error}</p></div>
+  		  </py:if>
+
+  			<input type="hidden" name="editpath" value="${editpath_url}" />
+		<table class="listing" id="editpathlist">
+  			<thead>
+   				<tr><th class="sel">Remove</th><th>Path Members</th><th>Read</th><th>Write</th></tr>
+  			</thead><tbody>			
+  			<py:for each="pathmember in editpath_members">
+			<tr>
+			<td><input type="checkbox" name="selpathmember" value="${pathmember.subject}"/></td>
+			<td>${pathmember.subject}</td>
+			<py:if test="pathmember.read == 'checked'">
+				<td><input type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_R" checked="checked" /></td>
+			</py:if>
+			<py:if test="pathmember.read != 'checked'">
+			      <td><input type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_R" /></td>
+                        </py:if>
+		        <py:if test="pathmember.write == 'checked'">
+                                <td><input type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_W" checked="checked" /></td>
+                        </py:if>
+                        <py:if test="pathmember.write != 'checked'">
+                              <td><input type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_W" /></td>
+                        </py:if>
+			</tr>
+			</py:for>
+		</tbody></table>
+		<div class="buttons">
+  			<input type="submit" name="changepathmembers" value="Change path members" />
+ 		</div>
+	</py:if>    
+    </td>
+   </tr></py:for>
+  </tbody>
+ </table>
+ <div class="buttons">
+  <input type="submit" name="removepaths" value="Remove selected paths" />
+ </div>
+</form>
+</body>
+</html>
