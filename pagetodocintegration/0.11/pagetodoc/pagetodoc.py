@@ -194,8 +194,10 @@ class PageToDocPlugin(Component):
         # create path to imagedir, if not existing
         self.create_dir(imgdir)
         
+        image_url = matchObj.group(1)
+        
         # save image to disk
-        (filename, fileext) = os.path.splitext(os.path.basename(matchObj.group(1)))
+        (filename, fileext) = os.path.splitext(os.path.basename(image_url))
         # remove any trailing GET-Parameters from the file extension e.g. '.jpg?format=raw')
         # fileext = fileext[:fileext.find('?')]
         
@@ -207,7 +209,19 @@ class PageToDocPlugin(Component):
         # create temporary file 
         fh, fn = mkstemp(prefix=filename, suffix=fileext, dir=imgdir)
         os.close(fh)
-        urlretrieve(matchObj.group(1), fn) 
+
+        # If the user has specified to replace the hostname, then 
+        # do as they requested.
+        replace_host = self.env.config.get('pagetodoc', 'replace_host', '')
+        if replace_host:
+            host_to_find, replace_host_with = replace_host.split(",")
+            host_to_find = host_to_find.strip()
+            replace_host_with = replace_host_with.strip()
+            
+            if host_to_find and replace_host_with:
+                image_url = image_url.replace(host_to_find, replace_host_with)
+        
+        urlretrieve(image_url, fn) 
         
         # resize images, if wanted, using ImageMagick
         if int(self.img_max_x)/self.cm2inch*int(self.dpi) > 0 and int(self.img_max_y)/self.cm2inch*int(self.dpi) > 0:
