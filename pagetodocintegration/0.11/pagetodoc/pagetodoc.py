@@ -11,7 +11,6 @@ import glob
 import zipfile
 import base64
 import subprocess
-import popen2
 
 
 
@@ -49,7 +48,7 @@ class PageToDocPlugin(Component):
         # TBD: Fehler ausgeben, wenn xsltfile nicht gelesen werden kann
         # TBD: Parameter aus der trac.ini an zentraler Stelle auslesen
         if False:
-            if xsltfilepath is '':
+            if xsltfilepath == '':
                 pass
         
         # maybe for later use
@@ -80,7 +79,7 @@ class PageToDocPlugin(Component):
         # replace href with absolute path and if existing, base auth login
         try:
             login = base64.b64decode(req.environ['HTTP_AUTHORIZATION'][6:]) + '@'      
-        except KeyError, TypeError:
+        except (KeyError, TypeError):
             login = ''
         html = re.sub('<img src="(?!\w+://)', '<img src="%s://%s%s:%d' % (req.scheme, login, req.server_name, req.server_port), html)
         
@@ -174,11 +173,11 @@ class PageToDocPlugin(Component):
         htmlfilehandle.close()
         
         # replace namespace
-        if which is 'html':
+        if which == 'html':
             html = re.sub('(<html xmlns="http://www.w3.org/1999/xhtml">)', '<html>', html)
         
         # remove line feeds in <pre>-tags    
-        if which is 'pre':
+        if which == 'pre':
             html = re.sub(r'<pre[^>]*>\n([^<]*)</pre>', self.remove_line_feeds, html)
         
         htmlfilehandle = open(htmlfilepath, "w")
