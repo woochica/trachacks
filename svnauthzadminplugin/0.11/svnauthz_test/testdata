@@ -1,0 +1,19 @@
+
+
+
+[groups]
+alfa = user1,@beta,user2,user4
+beta = user4,@gamma
+gamma = user5
+delta =
+
+[/]
+@alfa = r
+@beta = rw
+@gamma = rw
+user2 = 
+
+[izee:/bigyo]
+@gamma = r
+user2 = rw
+
