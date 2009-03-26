@@ -49,7 +49,9 @@ def get_recipients(self, tktid):
     filter_out = True
     defaultDomain = self.config.get('notification', 'smtp_default_domain')
     def finder(r):
-      rtn = r and (((r.find('@') and updater.find(r)) or updater.find(r+'@'+defaultDomain)) > 0)
+      rtn = r and (((r.find('@') and updater.find(r))
+		    or updater == r
+		    or updater.find(r+'@'+defaultDomain)) >= 0)
       if rtn:
 	self.env.log.debug('NeverNotifyUpdaterPlugin: blocking recipient %s' % r)
       return rtn
