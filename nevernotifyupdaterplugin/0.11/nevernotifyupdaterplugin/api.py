@@ -47,13 +47,15 @@ def get_recipients(self, tktid):
 
   if not notify_updater:
     filter_out = True
-#       if notify_reporter and (updater == self.reporter):
-#     filter_out = False
-#       if notify_owner and (updater == self.owner):
-#     filter_out = False
+    defaultDomain = self.config.get('notification', 'smtp_default_domain')
+    def finder(r):
+      rtn = r and (((r.find('@') and updater.find(r)) or updater.find(r+'@'+defaultDomain)) > 0)
+      if rtn:
+	self.env.log.debug('NeverNotifyUpdaterPlugin: blocking recipient %s' % r)
+      return rtn
     if filter_out:
-      torecipients = [r for r in torecipients if r and r != updater]
-      ccrecipients = [r for r in ccrecipients if r and r != updater]
+      torecipients = [r for r in torecipients if not finder(r)]
+      ccrecipients = [r for r in ccrecipients if not finder(r)]
   elif updater:
     torecipients.append(updater)
 
