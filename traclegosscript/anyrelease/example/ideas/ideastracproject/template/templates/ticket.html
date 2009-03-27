@@ -1,0 +1,88 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+  <head>
+    <title>
+      <py:choose>
+        <py:when test="ticket.exists">
+          ${ticket.summary}
+        </py:when>
+        <py:otherwise>
+          New TOPP Project Pitch
+        </py:otherwise>
+      </py:choose>
+    </title>
+    <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+    <script type="text/javascript" py:choose="">
+      jQuery(document).ready(function($) {
+        $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+      <py:when test="ticket.exists">
+        /* only enable control elements for the currently selected action */
+        var actions = $("#action input[name='action']");
+
+        function updateActionFields() {
+          actions.each(function () {
+            $(this).siblings().find("*[@id]").enable($(this).checked());
+            $(this).siblings().filter("*[@id]").enable($(this).checked());
+          });
+        }
+        actions.click(updateActionFields);
+        updateActionFields();
+      </py:when>
+      <py:otherwise>
+        $("#field-summary").focus();
+      </py:otherwise>
+      });
+    </script>
+  </head>
+
+  <body>
+
+    <py:def function="commentref(prefix, cnum)">
+      <a href="#comment:$cnum">$prefix$cnum</a>
+    </py:def>
+
+    <py:def function="display_change(change)">
+      <ul py:if="change.fields" class="changes">
+        <li py:for="field_name, field in change.fields.items()">
+          <strong>${field_name}</strong>
+          <py:choose>
+            <py:when test="field_name == 'attachment'">
+              <a href="${href.attachment('ticket', ticket.id, field.new)}"><em>${field.new}</em></a> added
+            </py:when>
+            <py:when test="'rendered' in field">${field.rendered}</py:when>
+            <py:when test="field.old and field.new">
+              changed from <em>${field.old}</em> to <em>${field.new}</em>
+            </py:when>
+            <py:when test="not field.old and field.new">
+              set to <em>${field.new}</em>
+            </py:when>
+            <py:otherwise>
+              <em>${field.old}</em> deleted
+            </py:otherwise>
+          </py:choose>
+        </li>
+      </ul>
+      <div py:if="'comment' in change" class="comment searchable" xml:space="preserve">
+        ${wiki_to_html(context, change.comment, escape_newlines=preserve_newlines)}
+      </div>
+    </py:def>
+    
+    <py:choose>
+      <py:when test="ticket.exists">
+        <xi:include href="existingticket.html"/>
+      </py:when>
+      <py:otherwise>
+        <xi:include href="newticket.html"/>
+      </py:otherwise>
+    </py:choose>
+
+  </body>
+</html>

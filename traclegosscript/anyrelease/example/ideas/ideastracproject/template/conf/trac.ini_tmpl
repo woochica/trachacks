@@ -1,0 +1,161 @@
+# -*- coding: utf-8 -*-
+
+[account-manager]
+force_passwd_change = True
+generated_password_length = 8
+notify_actions = []
+password_file = /usr/local/topp/trac/trac.htpasswd
+password_store = HtPasswdStore
+
+[attachment]
+max_size = 16777216
+
+[browser]
+color_scale = True
+
+[changeset]
+max_diff_bytes = 10000000
+max_diff_files = 0
+
+[components]
+acct_mgr.admin.accountmanageradminpage = enabled
+acct_mgr.api.accountmanager = enabled
+acct_mgr.htfile.htpasswdstore = enabled
+acct_mgr.web_ui.accountmodule = enabled
+acct_mgr.web_ui.loginmodule = enabled
+acct_mgr.web_ui.registrationmodule = enabled
+autocompleteusers.* = enabled
+customfieldadmin.api.customfields = enabled
+customfieldadmin.customfieldadmin.customfieldadminpage = enabled
+iniadmin.iniadmin.iniadminplugin = enabled
+permredirect.filter.permredirectmodule = enabled
+trac.ticket.admin.milestoneadminpanel = disabled
+trac.ticket.roadmap.milestonemodule = disabled
+trac.ticket.roadmap.roadmapmodule = disabled
+trac.timeline.web_ui.timelinemodule = disabled
+trac.web.auth.loginmodule = disabled
+tracbacks.tracbacks.tracbacksplugin = enabled
+tractags.* = enabled
+
+[datefield]
+first_day = 0
+
+[graphviz]
+cache_manager = False
+cache_max_count = 2000
+cache_max_size = 10485760
+cache_min_count = 1500
+cache_min_size = 5242880
+default_graph_dpi = 96
+png_antialias = False
+
+[header_logo]
+alt = TOPP Project Pitches
+height = -1
+src = 
+width = -1
+
+[inherit]
+file = /usr/local/topp/trac/sites/trac/trac.ini
+
+[logging]
+log_type = file
+
+[mainnav]
+tickets.href = /query
+
+[mastertickets]
+use_gs = False
+
+[mimeviewer]
+max_preview_size = 16777216
+tab_width = 8
+
+[notification]
+always_notify_owner = true
+always_notify_reporter = true
+smtp_default_domain = trac.openplans.org
+smtp_enabled = true
+smtp_from = trac-pitch@trac.openplans.org
+smtp_port = 25
+smtp_replyto = trac-pitch@trac.openplans.org
+smtp_subject_prefix = [pitch]
+use_public_cc = true
+
+[project]
+admin = sonali
+descr = TOPP Project Pitches
+footer = Visit <a href="http://theopenplanningproject/oss"><img src="http://theopenplanningproject.org/wp-content/themes/TOPP-v2/img/topp-logo.png" alt="The Open Planning Project"/></a>
+icon = 
+name = pitch
+
+[query]
+items_per_page = 100
+
+[report]
+items_per_page = 100
+items_per_page_rss = 0
+
+[revisionlog]
+default_log_limit = 100
+
+[search]
+min_query_length = 3
+
+[tags]
+case-sensitive = False
+ignore_closed_tickets = True
+
+[ticket]
+default_component = [unspecified]
+default_owner = nickyg
+default_priority = important
+max_comment_size = 262144
+max_description_size = 262144
+
+[ticket-custom]
+audience = textarea
+audience.label = Who is this project for?
+audience.format = wiki
+consumer = radio
+consumer.label = Is this project internal or external?
+consumer.options = internal|external
+timeestimate = radio
+timeestimate.label = Time estimation for a working prototype
+timeestimate.options = about a week|under a month|a month or two|several months|over a year
+why = textarea
+why.label = Why should TOPP do this project now?
+why.format = wiki
+
+[ticket-workflow]
+leave = * -> *
+leave.default = 1
+leave.operations = leave_status
+approve = new -> proposal
+approve.operations = set_owner_to_reporter
+approve.permissions = TICKET_ADMIN
+
+[timeline]
+abbreviated_messages = True
+default_daysback = 30
+max_daysback = 90
+
+[trac]
+auto_reload = True
+base_url = http://trac.openplans.org/pitch
+mainnav = wiki,tickets,newticket,search
+metanav = login,logout,help,about,prefs
+secure_cookies = False
+use_base_url_for_redirect = False
+
+[wiki]
+max_size = 262144
+
+[wiki-notification]
+attach_diff = False
+banned_addresses = []
+redirect_time = 5
+smtp_always_bcc = []
+smtp_always_cc = []
+use_public_cc = False
+
