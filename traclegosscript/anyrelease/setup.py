@@ -29,7 +29,6 @@ setup(name='TracLegos',
       # -*- Entry points: -*-
       [console_scripts]
       create-trac-project = traclegos.legos:main
-      ini2proj = traclegos.create:ini2proj
 
       [paste.app_factory]
       main = traclegos.wsgiapp:make_app
