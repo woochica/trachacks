@@ -25,17 +25,9 @@ from time import localtime, strftime, time, mktime
 
 from genshi.builder import tag
 
-# set HOME environment variable to a directory the httpd server can write to
-# (matplotlib needs this)
-os.environ[ 'HOME' ] = '/tmp/'
-
 #from pylab import drange, array, searchsorted, date2num, num2date, \
 #                  plot, savefig, axis, xlabel, ylable, title, legend
-import matplotlib
-matplotlib.use('Agg') # disable interactive option
 from pylab import *
-from matplotlib.dates import DayLocator, HourLocator, DateFormatter, drange
-
 from trac import __version__
 from trac import mimeview
 from trac.core import *
@@ -295,35 +287,35 @@ def make_cumulative_data(env, tkt_counts):
 #        env.log.info(tkt_cumulative[event])            
     return tkt_cumulative
 
-def create_cumulative_chart(env, milestone, numdates, tkt_cumulative_table): 
-    
-    #cla()
-    fig = figure(figsize = (8,4))
-    ax = fig.add_subplot(111) # Create supplot with key 111       
-    ax.cla()
-    ax.plot(numdates, tkt_cumulative_table['Enter'], 'b-')
-    ax.plot(numdates, tkt_cumulative_table['Leave'], 'r-') 
-    ax.plot(numdates, tkt_cumulative_table['Finish'], 'g-')
-    ax.set_xlim( numdates[0], numdates[-1] )
-    ax.xaxis.set_major_locator(DayLocator(interval=7))
-    ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
-    ax.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S')
-    labels = ax.get_xticklabels()
-    setp(labels, rotation=90, fontsize=6)
-    
-    xlabel('Dates (day)')
-    ylabel('Counts (times)')
-    title('Cumulative flow chart for ticket status history')
-    legend(('Ticket Entered', 'Ticket Left', 'Ticket Completed'), loc='best')
-    
-    mname = re.sub(r'\.', '_', milestone.name)
-    filename = "cumulativeflow_%s" % (mname,)
-    path = os.path.join(env.path, 'cache', 'tracmetrixplugin', filename)
-    #env.log.info(path)  
-    
-    fig.savefig(path)
-    
-    return path
+#def create_cumulative_chart(env, milestone, numdates, tkt_cumulative_table): 
+#    
+#    #cla()
+#    fig = figure(figsize = (8,4))
+#    ax = fig.add_subplot(111) # Create supplot with key 111       
+#    ax.cla()
+#    ax.plot(numdates, tkt_cumulative_table['Enter'], 'b-')
+#    ax.plot(numdates, tkt_cumulative_table['Leave'], 'r-') 
+#    ax.plot(numdates, tkt_cumulative_table['Finish'], 'g-')
+#    ax.set_xlim( numdates[0], numdates[-1] )
+#    ax.xaxis.set_major_locator(DayLocator(interval=7))
+#    ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
+#    ax.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S')
+#    labels = ax.get_xticklabels()
+#    setp(labels, rotation=90, fontsize=6)
+#    
+#    xlabel('Dates (day)')
+#    ylabel('Counts (times)')
+#    title('Cumulative flow chart for ticket status history')
+#    legend(('Ticket Entered', 'Ticket Left', 'Ticket Completed'), loc='best')
+#    
+#    mname = re.sub(r'\.', '_', milestone.name)
+#    filename = "cumulativeflow_%s" % (mname,)
+#    path = os.path.join(env.path, 'cache', 'tracmetrixplugin', filename)
+#    #env.log.info(path)  
+#    
+#    fig.savefig(path)
+#    
+#    return path
    
 class MDashboard(Component):
 
@@ -551,12 +543,19 @@ class MDashboard(Component):
                     dates.append(utc_date)
                     #self.env.log.info("%s: %s" % (utc_date, format_date(utc_date, tzinfo=utc)))
                 
+                    #prepare Yahoo datasource for comulative flow chart
+                dscumulative = ''
+                for idx, date in enumerate(dates):
+                    dscumulative = dscumulative +  '{ date: "%s", enter: %d, leave: %d, finish: %d}, ' \
+                          % (format_date(date,tzinfo=utc), tkt_cumulative_table['Enter'][idx], \
+                             tkt_cumulative_table['Leave'][idx], tkt_cumulative_table['Finish'][idx])
+  
+                
+                
                 data['tickethistory'] = tkt_cumulative_table
                 data['dates'] = dates
+                data['dscumulative'] = dscumulative
                 
-                create_cumulative_chart(self.env, milestone, numdates, tkt_cumulative_table)
-
-        
         return 'mdashboard.html', data, None
    
     # IWikiSyntaxProvider methods

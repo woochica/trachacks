@@ -8,16 +8,28 @@
   <xi:include href="macros.html" />
   <head>
     <title>Milestone Dashboard: ${milestone.name}</title>
+    <!-- Dependencies --> 
+	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/yahoo-dom-event/yahoo-dom-event.js"></script> 
+	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/element/element-min.js"></script> 
+	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/datasource/datasource-min.js"></script> 
+	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/json/json-min.js"></script> 
+	  <!-- OPTIONAL: Connection (enables XHR) --> 
+	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/connection/connection-min.js"></script> 
+	  <!-- Source files --> 
+	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/charts/charts-min.js"></script> 
+	  <script type="text/javascript">YAHOO.widget.Chart.SWFURL = "http://yui.yahooapis.com/2.7.0/build/charts/assets/charts.swf"; </script>
+	  
     <script type="text/javascript">
       $(document).ready(function() {
         $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
       });
     </script>
+    
+    
   </head>
 
   <body>
     <div id="ctxtnav" class="nav"></div>
-
     <div id="content" class="milestone">
       <h1>Milestone Dashboard: <a href="${href.milestone(milestone.name)}">${milestone.name}</a></h1>
       
@@ -56,7 +68,27 @@
 
       </div>
 
-	  <div>	<img src="${href.mdashboard('%s/cumulativeflow.png' % (milestone.name,))}"/></div>     
+	    <div id="cumulative_flow" style="width: 640px; height: 480px;"></div>
+		    
+			<script type = "text/javascript">
+		    //--- data
+		    var tickethistory = [ $dscumulative ]
+		
+		    var ds = new YAHOO.util.DataSource(tickethistory);
+		    ds.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
+		    ds.responseSchema = { fields: [ "date", "enter", "leave", "finish" ] };
+		
+			  var seriesDef =
+			  [
+			    {	displayName: "Ticket Entered", yField: "enter", style: { color: 0x0000FF }},
+			    { displayName: "Ticket Left", yField: "leave", style: { color: 0xFF0000 }},
+			  	{ displayName: "Ticket Completed", yField: "finish", style: { color: 0x4AA02C }} 
+			  ];
+		
+		    //--- chart
+		    var mychart = new YAHOO.widget.LineChart( "cumulative_flow", ds,
+		                 { xField: "date", series: seriesDef, style: {xAxis: {labelRotation: -60}}});
+	    </script>		       
       <div class="table">
       	<h2>Ticket History Table</h2>
       	

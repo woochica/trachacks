@@ -6,7 +6,7 @@ from setuptools import find_packages, setup
 setup(
     description='Plugin to provide Trac project metrics and statistics',
     keywords='trac plugin metrics statistics',
-    version='0.1.5',
+    version='0.1.6',
     url='',
     license='http://www.opensource.org/licenses/bsd-license.php',
     author='Bhuricha Sethanandha at Portland State University',
