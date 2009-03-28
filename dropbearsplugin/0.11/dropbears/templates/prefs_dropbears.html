@@ -11,12 +11,20 @@
   <body>
 
     <div class="field">
-      <label>
-        <input type="text" name="dropbears" value="$dropbears" />
+      <input type="text" name="dropbears" value="$dropbears" />
+      <label for="dropbears">
         Number of dropbears
       </label>
       <p class="hint">Number of dropbears to show on each page. Setting this to 0
         will disable the dropbears.</p>
+    </div>
+    
+    <div class="field">
+      <input type="checkbox" name="dropbears_physics" value="1" checked="$dropbears_physics" />
+      <label for="dropbears_physics">
+        Enable physics
+      </label>
+      <p class="hint">This will enable or disable physics support.</p>
     </div>
 
   </body>
