@@ -554,7 +554,7 @@ class MDashboard(Component):
                 
                 data['tickethistory'] = tkt_cumulative_table
                 data['dates'] = dates
-                data['dscumulative'] = dscumulative
+                data['dscumulative'] = '[ ' + dscumulative + ' ];'
                 
         return 'mdashboard.html', data, None
    

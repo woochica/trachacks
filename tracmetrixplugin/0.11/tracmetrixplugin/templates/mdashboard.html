@@ -72,7 +72,7 @@
 		    
 			<script type = "text/javascript">
 		    //--- data
-		    var tickethistory = [ $dscumulative ]
+		    var tickethistory = $dscumulative ;
 		
 		    var ds = new YAHOO.util.DataSource(tickethistory);
 		    ds.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
@@ -87,7 +87,7 @@
 		
 		    //--- chart
 		    var mychart = new YAHOO.widget.LineChart( "cumulative_flow", ds,
-		                 { xField: "date", series: seriesDef, style: {xAxis: {labelRotation: -60}}});
+		                 { xField: "date", series: seriesDef, style: {legend: {display: "bottom"}, xAxis: {labelRotation: -60}}});
 	    </script>		       
       <div class="table">
       	<h2>Ticket History Table</h2>
