@@ -182,7 +182,26 @@
 
 	<div>
 	  <h2> Repository Statistics </h2>
-	    <img src="${href.pdashboard('commitsbydate.png')}" alt="Commits by Date"/>
+
+	  <div id="commits_per_day" style="width: 640px; height: 480px;"></div>
+	            
+    <script type = "text/javascript">
+    //--- data
+	    var commitperday = $ds_commit_by_date
+	
+	    var ds = new YAHOO.util.DataSource(commitperday);
+	    ds.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
+	    ds.responseSchema = { fields: [ "date", "commits" ] };
+	
+	      var seriesDef =
+	      [
+	        { displayName: "Commits", yField: "commits", style: { color: 0x9966ff }} 
+	      ];
+	
+	    //--- chart
+	    var mychart = new YAHOO.widget.StackedColumnChart( "commits_per_day", ds,
+	                 { xField: "date", series: seriesDef, style: {legend: {display: "bottom"}, xAxis: {labelRotation: -60}}});
+	  </script> 	    
 	</div>
 
     <div id="help"><strong>Note:</strong> See

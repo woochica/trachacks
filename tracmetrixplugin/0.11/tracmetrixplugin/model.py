@@ -643,31 +643,18 @@ class ChangesetsStats:
         
         return (numdates, numcommits)
     
-    
+    # Return Yahoo JSARRAY format
     def get_commit_by_date_chart(self, commit_history):
-        
+
         numdates = commit_history[0]
         numcommits = commit_history[1]
+        
+        ds_commits = ''
+        
+        for idx, numdate in enumerate(numdates):
+                    ds_commits = ds_commits +  '{ date: "%s", commits: %d}, ' \
+                          % (format_date(num2date(numdate),tzinfo=utc), numcommits[idx])
+        
+        return '[ ' + ds_commits + ' ];'
 
-        #cla()
-        fig = figure(figsize = (6,4))
-        ax = fig.add_subplot(111) # Create supplot with key 111       
-        line1 = ax.bar(numdates, numcommits, 0.5, color='#9966ff') 
-        ax.set_xlim( numdates[0], numdates[-1] )
-        ax.xaxis.set_major_locator(DayLocator())
-        ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
-        labels = ax.get_xticklabels()
-        setp(labels, rotation=90, fontsize=6)
-        
-        xlabel('Dates (day)')
-        ylabel('Number of commits')
-        title('Commits by Date')
-        
-        filename = "commitsbydate"
-        path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
-        
-        fig.savefig(path)
-        
-        return path
-         
         

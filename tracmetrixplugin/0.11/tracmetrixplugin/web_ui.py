@@ -208,7 +208,7 @@ class PDashboard(Component):
         data['ticket_frequency_stats'] = tkt_frequency_stats
         data['ticket_duration_stats'] = tkt_duration_stats
         data['ds_daily_backlog'] = daily_backlog_chart
-        #data['ds_commit_by_date'] = commits_by_date_chart
+        data['ds_commit_by_date'] = commits_by_date_chart
         
         add_stylesheet(req, 'pd/css/dashboard.css')        
         add_stylesheet(req, 'common/css/report.css')
