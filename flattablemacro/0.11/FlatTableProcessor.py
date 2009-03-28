@@ -48,7 +48,7 @@ class FlatTableProcessor(WikiMacroBase):
     def _parse_config(self, cols):
         config = []
         for col in cols:
-            name, sep, val = col.split(':', 1)
+            name, val = col.split(':', 1)
             config.append( (name.strip(), [item.strip() for item in val.split()]) )
         return config
 
