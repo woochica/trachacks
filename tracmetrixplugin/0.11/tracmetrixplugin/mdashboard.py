@@ -31,8 +31,6 @@ from pylab import *
 from trac import __version__
 from trac import mimeview
 from trac.core import *
-#from trac.context import Context
-from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import sorted
 from trac.util.compat import sorted
@@ -40,8 +38,7 @@ from trac.util.datefmt import parse_date, utc, to_timestamp, to_datetime, \
                               get_date_format_hint, get_datetime_format_hint, \
                               format_date, format_datetime, pretty_timedelta
 from trac.util.text import shorten_line, CRLF, to_unicode
-from trac.ticket import Milestone, Ticket, TicketSystem, model #These are object
-from trac.ticket.query import Query
+from trac.ticket import Milestone, Ticket, TicketSystem, model #These are object    
 from trac.ticket.roadmap import ITicketGroupStatsProvider, DefaultTicketGroupStatsProvider, \
                                 get_ticket_stats, get_tickets_for_milestone, \
                                 milestone_stats_data, TicketGroupStats

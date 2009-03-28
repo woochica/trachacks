@@ -20,7 +20,7 @@ from trac import __version__
 from trac import mimeview
 from model import *  # need it but should have worked in __init__.py
 from trac.config import ExtensionOption
-#from trac.context import Context
+from trac.mimeview import Context
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.ticket import Milestone, Ticket, model #These are object
@@ -94,6 +94,8 @@ class PDashboard(Component):
         self.env.log.info("pdashboard match request %s" % (req.path_info,))  
                 
         urlcomp = req.path_info.split('/')
+        if len(urlcomp) < 2:
+            return False
         
         self.env.log.info(urlcomp)
         
@@ -147,7 +149,7 @@ class PDashboard(Component):
         }
         
         data = {
-#            'context': Context(self.env, req),
+            'context': Context.from_request(req),
             'milestones': milestones,
             'milestone_stats': stats,
             'queries': queries,

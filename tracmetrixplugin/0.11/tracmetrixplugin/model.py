@@ -621,9 +621,10 @@ class ChangesetsStats:
             self.changesets.append((rev,time,author))
         
         self.start_date = start_date
-        self.stop_date = stop_date    
-        
-        if self.changesets != []:
+        self.stop_date = stop_date
+        if not self.changesets:
+            self.first_rev = self.last_rev = 0
+        else:
             self.first_rev = self.changesets[0][0]
             self.last_rev = self.changesets[-1][0]
     
