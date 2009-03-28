@@ -19,7 +19,7 @@ import os
 from datetime import timedelta, datetime
 from trac.core import *
 from trac.ticket import Ticket, model
-from trac.util.datefmt import utc, to_timestamp, to_datetime
+from trac.util.datefmt import utc, to_timestamp, to_datetime, format_date
 from trac.ticket.roadmap import ITicketGroupStatsProvider, TicketGroupStats
 
 # set HOME environment variable to a directory the httpd server can write to
@@ -109,7 +109,7 @@ class ProgressTicketGroupStatsProvider(Component):
         
         for type in type_count:
                 
-            if type['name'] == 'fixed': # default ticket type 'defect'
+            if type['name'] in ('fixed', 'completed'): # default ticket type 'defect'
         
                 stat.add_interval(type['name'], type['count'],
                                   {'resolution': type['name']}, 'value', True)
@@ -435,7 +435,8 @@ class TicketGroupMetrics(object):
 #            self.env.log.info(backlog_stats['closed'][idx])                                                        
                                                                               
         return (numdates, backlog_stats)
-            
+    
+    #This method return data point based on Yahoo JSArray format.      
     def get_daily_backlog_chart(self, backlog_history):
         
         numdates = backlog_history[0]
@@ -463,31 +464,16 @@ class TicketGroupMetrics(object):
 #                                                    closed_tickets_dataset[idx],
 #                                                    opened_tickets_dataset[idx],
 #                                                    created_tickets_dataset[idx]))
+        ds_daily_backlog = ''
         
-        matplotlib.use('Agg')
-        #cla()
-        fig = figure(figsize = (6,4))
-        ax = fig.add_subplot(111) # Create supplot with key 111       
-        line1 = ax.plot_date(numdates, opened_tickets_dataset, '-')
-        line2 = ax.bar(numdates, closed_tickets_dataset, 0.5, color='#bae0ba') 
-        line3 = ax.bar(numdates, created_tickets_dataset, 0.5, color='#9966ff') 
-        ax.set_xlim( numdates[0], numdates[-1] )
-        ax.xaxis.set_major_locator(DayLocator())
-        ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
-        labels = ax.get_xticklabels()
-        setp(labels, rotation=90, fontsize=6)
-        
-        xlabel('Dates (day)')
-        ylabel('Number of tickets')
-        title('Opened/Closed Tickets')
-        ax.legend((line1, line2[0], line3[0]), ('Opened Tickets', 'Closed/day', 'Created/day'), loc='best')
-        
-        filename = "dailybacklog"
-        path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
-        
-        fig.savefig(path)
-        
-        return path
+        for idx, numdate in enumerate(numdates):
+                    ds_daily_backlog = ds_daily_backlog +  '{ date: "%s", opened: %d, closed: %d, created: %d}, ' \
+                          % (format_date(num2date(numdate),tzinfo=utc), opened_tickets_dataset[idx], \
+                             closed_tickets_dataset[idx], created_tickets_dataset[idx])
+  
+        return '[ ' + ds_daily_backlog + ' ];'
+#        
+
             
 class TicketMetrics(object):
     

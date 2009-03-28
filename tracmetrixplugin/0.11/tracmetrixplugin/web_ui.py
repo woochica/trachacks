@@ -197,16 +197,18 @@ class PDashboard(Component):
         first_day = last_day - timedelta(days=DAYS_BACK)
         
         backlog_history = tkt_group_metrics.get_daily_backlog_history(first_day, last_day)
-        daily_backlog_chart_path = tkt_group_metrics.get_daily_backlog_chart(backlog_history)
+        daily_backlog_chart = tkt_group_metrics.get_daily_backlog_chart(backlog_history)
         
         changeset_group_stats = ChangesetsStats(self.env, first_day, last_day)
         commits_by_date = changeset_group_stats.get_commit_by_date()
         commits_by_date_chart = changeset_group_stats.get_commit_by_date_chart(commits_by_date)
         
         data['project_bmi_stats'] = bmi_stats
-        self.env.log.info(bmi_stats)
+        #self.env.log.info(bmi_stats)
         data['ticket_frequency_stats'] = tkt_frequency_stats
         data['ticket_duration_stats'] = tkt_duration_stats
+        data['ds_daily_backlog'] = daily_backlog_chart
+        #data['ds_commit_by_date'] = commits_by_date_chart
         
         add_stylesheet(req, 'pd/css/dashboard.css')        
         add_stylesheet(req, 'common/css/report.css')
