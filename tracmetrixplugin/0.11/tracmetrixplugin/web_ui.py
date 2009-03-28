@@ -59,7 +59,7 @@ def last_day_of_month(year, month):
     if month == 12: 
  	year = year + 1 
  	
-    return datetime(year, (month%12)+1 , 1, tzinfo=utc) - timedelta(days=1)
+    return datetime(year+(month/12), (month%12)+1 , 1, tzinfo=utc) - timedelta(days=1)
 
 class PDashboard(Component):
 
