@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from trac.core import *
 from trac.web.chrome import Chrome
@@ -48,7 +48,7 @@ class DiscussionNotifyEmail(NotifyEmail):
             author = "    Author:  %s" % self.topic['author']
             time = "      Time:  %s" % format_datetime(self.topic['time'])
             body = self.topic['body']
-            link = self.env.abs_href.discussion(self.forum['id'], self.topic['id'])
+            link = self.env.abs_href.discussion('topic', self.topic['id'])
 
             # Save link for bad times.
             topic['link'] = link
@@ -60,8 +60,8 @@ class DiscussionNotifyEmail(NotifyEmail):
             author = "    Author:  %s" % self.message['author']
             time = "      Time:  %s" % format_datetime(self.message['time'])
             body = self.message['body']
-            link = self.env.abs_href.discussion(self.forum['id'], self.topic['id'],
-              self.message['id']) + '#%s' % self.message['id']
+            link = self.env.abs_href.discussion('message',self.message['id'])  \
+              + '#%s' % self.message['id']
 
             # Save link for bad times.
             message['link'] = link
@@ -121,4 +121,6 @@ class DiscussionNotifyEmail(NotifyEmail):
             header['X-Trac-Discussion-URL'] = self.topic['link']
 
         # Send e-mail.
+        self.log.debug("Sending notification e-mail to %s and %s." % (torcpts,
+          ccrcpts))
         NotifyEmail.send(self, torcpts, ccrcpts, header)

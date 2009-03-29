@@ -1,15 +1,19 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from tracdiscussion.api import *
 from tracdiscussion.core import *
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
-from trac.web.main import IRequestHandler, IRequestFilter
+from trac.wiki.web_ui import WikiModule
+from trac.wiki.formatter import format_to_oneliner
+from trac.web.main import IRequestFilter
 from trac.web.chrome import Chrome, add_stylesheet
 from trac.util import format_datetime
 from trac.util.html import html
 from trac.util.text import to_unicode
 import time, re
+
+from trac.web.href import Href
 
 view_topic_doc = """Displays content of discussion topic. If no argument passed
 tries to find topic with same name as name of current wiki page. If topic name
@@ -66,24 +70,23 @@ class DiscussionWiki(Component):
 
             # Prepare request object.
             if topic:
-                formatter.req.args['forum'] = topic['forum']
-                formatter.req.args['topic'] = topic['id']
+                context.req.args['topic'] = topic['id']
 
             # Process discussion request.
             template, data = api.process_discussion(context)
 
-            if context.req.args.get('body') == '':
-               context.req.args['body'] = ' '
-
             # Return rendered template.
             data['discussion']['mode'] = 'message-list'
             data['discussion']['page_name'] = page_name
+            if context.redirect_url:
+                formatter.req.args['redirect_url'] = formatter.href(
+                  context.redirect_url)
             return to_unicode(Chrome(self.env).render_template(formatter.req,
               template, data, 'text/html', True))
         else:
             raise TracError('Not implemented macro %s' % (name))
 
-    # IRequestFilter methods
+    # IRequestFilter methods.
     def pre_process_request(self, req, handler):
         # Change method from POST to GET.
         match = re.match(r'^/wiki(?:/(.*))?', req.path_info)
@@ -94,10 +97,10 @@ class DiscussionWiki(Component):
         # Continue processing request.
         return handler
 
-    def post_process_request(self, req, template, content_type):
-        return (template, content_type)
+    def post_process_request(self, req, template, data, content_type):
+        return (template, data, content_type)
 
-    # Core code methods
+    # Core code methods.
     def _discussion_link(self, formatter, ns, params, label):
         id = params
 
@@ -112,10 +115,10 @@ class DiscussionWiki(Component):
             cursor.execute(sql, (id,))
             for row in cursor:
                 row = dict(zip(columns, row))
-                return html.a(label, href = formatter.href.discussion(id),
-                  title = row['subject'].replace('"', ''))
-            return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
-              id), title = label, class_ = 'missing')
+                return html.a(label, href = formatter.href.discussion('forum',
+                  id), title = row['subject'].replace('"', ''))
+            return html.a(label, href = formatter.href.discussion('forum', id),
+              title = label, class_ = 'missing')
         elif ns == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
             sql = "SELECT t.forum, f.subject, t.subject FROM topic t LEFT" \
@@ -125,11 +128,11 @@ class DiscussionWiki(Component):
             for row in cursor:
                 row = dict(zip(columns, row))
                 return html.a(label, href = '%s#-1' % \
-                  (formatter.href.discussion(row['forum'], id),), title =
+                  (formatter.href.discussion('topic', id),), title =
                   ('%s: %s' % (row['forum_subject'], row['subject']))
                   .replace('"', ''))
-            return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
-              id), title = label.replace('"', ''), class_ = 'missing')
+            return html.a(label, href = formatter.href.discussion('topic', id),
+              title = label.replace('"', ''), class_ = 'missing')
         elif ns == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
             sql = "SELECT m.forum, m.topic, f.subject, t.subject FROM" \
@@ -141,11 +144,11 @@ class DiscussionWiki(Component):
             for row in cursor:
                 row = dict(zip(columns, row))
                 return html.a(label, href = '%s#%s' % \
-                  (formatter.href.discussion(row['forum'], row['topic'], id),
-                  id), title = ('%s: %s' % (row['forum_subject'],
-                  row['subject'])).replace('"', ''))
-            return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
-              id), title = label.replace('"', ''), class_ = 'missing')
+                  (formatter.href.discussion('message', id), id), title = (
+                  '%s: %s' % (row['forum_subject'], row['subject'])).replace(
+                  '"', ''))
+            return html.a(label, href = formatter.href.discussion('message', id),
+              title = label.replace('"', ''), class_ = 'missing')
         else:
-            return html.a(label, href = '%s/%s' % (formatter.href.discussion(),
-              id), title = label.replace('"', ''), class_ = 'missing')
+            return html.a(label, href = formatter.href.discussion('message', id),
+              title = label.replace('"', ''), class_ = 'missing')

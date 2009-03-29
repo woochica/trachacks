@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 # General includes.
 from datetime import *
@@ -87,7 +87,7 @@ class DiscussionApi(Component):
         # Get request items and actions.
         self._prepare_context(context)
         actions = self._get_actions(context)
-        self.log.debug(actions)
+        self.log.debug('actions: %s' % (actions,))
 
         # Get session data.
         context.visited_forums = eval(context.req.session.get('visited-forums')
@@ -116,36 +116,30 @@ class DiscussionApi(Component):
         # Commit database changes.
         db.commit()
 
-        if context.redirect_url and context.resource.realm != 'discussion-wiki':
-            # Redirect request to prevent re-submit.
-            context.req.redirect(context.req.href.discussion('redirect',
-              href = context.redirect_url))
-        else:
-            # Add context navigation.
-            if context.forum:
-                add_ctxtnav(context.req, 'Forum Index',
-                  context.req.href.discussion())
-            if context.topic:
-                add_ctxtnav(context.req, format_to_oneliner_no_links(self.env,
-                  context, context.forum['name']), context.req.href.discussion(
-                  context.forum['id']), context.forum['name'])
-            if context.message:
-                add_ctxtnav(context.req, format_to_oneliner_no_links(self.env,
-                  context, context.topic['subject']),
-                  context.req.href.discussion(context.forum['id'],
-                  context.topic['id']), context.topic['subject'])
+        # Add context navigation.
+        if context.forum:
+            add_ctxtnav(context.req, 'Forum Index',
+              context.req.href.discussion())
+        if context.topic:
+            add_ctxtnav(context.req, format_to_oneliner_no_links(self.env,
+              context, context.forum['name']), context.req.href.discussion(
+              'forum', context.forum['id']), context.forum['name'])
+        if context.message:
+            add_ctxtnav(context.req, format_to_oneliner_no_links(self.env,
+              context, context.topic['subject']), context.req.href.discussion(
+              'topic', context.topic['id']), context.topic['subject'])
 
-            # Add CSS styles and scripts.
-            add_stylesheet(context.req, 'common/css/wiki.css')
-            add_stylesheet(context.req, 'discussion/css/discussion.css')
-            add_stylesheet(context.req, 'discussion/css/admin.css')
-            add_script(context.req, 'common/js/trac.js')
-            add_script(context.req, 'common/js/search.js')
-            add_script(context.req, 'common/js/wikitoolbar.js')
+        # Add CSS styles and scripts.
+        add_stylesheet(context.req, 'common/css/wiki.css')
+        add_stylesheet(context.req, 'discussion/css/discussion.css')
+        add_stylesheet(context.req, 'discussion/css/admin.css')
+        add_script(context.req, 'common/js/trac.js')
+        add_script(context.req, 'common/js/search.js')
+        add_script(context.req, 'common/js/wikitoolbar.js')
 
-            # Return request template and data.
-            self.env.log.debug(context.data)
-            return actions[-1] + '.html', {'discussion' : context.data}
+        # Return request template and data.
+        self.env.log.debug(context.data)
+        return actions[-1] + '.html', {'discussion' : context.data}
 
     def _prepare_context(self, context):
         # Prepare template data.
@@ -157,25 +151,49 @@ class DiscussionApi(Component):
         context.message = None
         context.redirect_url = None
 
-        # Populate active group.
-        if context.req.args.has_key('group'):
-            group_id = int(context.req.args.get('group') or 0)
-            context.group = self.get_group(context, group_id)
-
-        # Populate active forum.
-        if context.req.args.has_key('forum'):
-            forum_id = int(context.req.args.get('forum') or 0)
-            context.forum = self.get_forum(context, forum_id)
-
-        # Populate active topic.
-        if context.req.args.has_key('topic'):
-            topic_id = int(context.req.args.get('topic') or 0)
-            context.topic = self.get_topic(context, topic_id)
-
-        # Populate active topic.
+        # Populate active message.
         if context.req.args.has_key('message'):
             message_id = int(context.req.args.get('message') or 0)
             context.message = self.get_message(context, message_id)
+            if context.message:
+                context.topic = self.get_topic(context, context.message['topic'])
+                context.forum = self.get_forum(context, context.topic['forum'])
+                context.group = self.get_group(context, context.forum[
+                  'forum_group'])
+            else:
+                raise TracError('Message with ID %s does not exist.' % (
+                  message_id,))
+
+        # Populate active topic.
+        elif context.req.args.has_key('topic'):
+            topic_id = int(context.req.args.get('topic') or 0)
+            context.topic = self.get_topic(context, topic_id)
+            if context.topic:
+                context.forum = self.get_forum(context, context.topic['forum'])
+                context.group = self.get_group(context, context.forum[
+                  'forum_group'])
+            else:
+                raise TracError('Topic with ID %s does not exist.' % (
+                  topic_id,))
+
+        # Populate active forum.
+        elif context.req.args.has_key('forum'):
+            forum_id = int(context.req.args.get('forum') or 0)
+            context.forum = self.get_forum(context, forum_id)
+            if context.forum:
+                context.group = self.get_group(context, context.forum[
+                  'forum_group'])
+            else:
+                raise TracError('Forum with ID %s does not exist.' % (
+                  forum_id,))
+
+        # Populate active group.
+        elif context.req.args.has_key('group'):
+            group_id = int(context.req.args.get('group') or 0)
+            context.group = self.get_group(context, group_id)
+            if not context.group:
+                raise TracError('Group with ID %s does not exist.' % (
+                  group_id,))
 
         # Determine moderator rights.
         context.moderator = context.forum and (context.req.authname in
@@ -203,16 +221,16 @@ class DiscussionApi(Component):
                     if preview:
                         return ['wiki-message-list']
                     else:
-                        return ['message-post-add', 'wiki-message-list']
+                        return ['message-post-add']
                 elif action == 'edit':
                     return ['message-edit', 'wiki-message-list']
                 elif action == 'post-edit':
                     if preview:
                         return ['wiki-message-list']
                     else:
-                        return ['message-post-edit', 'wiki-message-list']
+                        return ['message-post-edit']
                 elif action == 'delete':
-                    return ['message-delete', 'wiki-message-list']
+                    return ['message-delete']
                 elif action == 'set-display':
                     return ['message-set-display', 'wiki-message-list']
                 else:
@@ -226,16 +244,16 @@ class DiscussionApi(Component):
                     if preview:
                         return ['message-list']
                     else:
-                        return ['message-post-add', 'message-list']
+                        return ['message-post-add']
                 elif action == 'edit':
                     return ['message-edit', 'message-list']
                 elif action == 'post-edit':
                     if preview:
                         return ['message-list']
                     else:
-                        return ['message-post-edit', 'message-list']
+                        return ['message-post-edit']
                 elif action == 'delete':
-                    return ['message-delete', 'message-list']
+                    return ['message-delete']
                 elif action == 'set-display':
                     return ['message-set-display', 'message-list']
                 else:
@@ -252,14 +270,14 @@ class DiscussionApi(Component):
                     if preview:
                         return ['wiki-message-list']
                     else:
-                        return ['message-post-add', 'wiki-message-list']
+                        return ['message-post-add']
                 elif action == 'edit':
                     return ['topic-edit', 'wiki-message-list']
                 elif action == 'post-edit':
                     if preview:
                         return ['wiki-message-list']
                     else:
-                        return ['topic-post-edit', 'wiki-message-list']
+                        return ['topic-post-edit']
                 elif action == 'set-display':
                     return ['message-set-display', 'wiki-message-list']
                 else:
@@ -273,20 +291,20 @@ class DiscussionApi(Component):
                     if preview:
                         return ['message-list']
                     else:
-                        return ['message-post-add', 'message-list']
+                        return ['message-post-add']
                 elif action == 'edit':
                     return ['topic-edit', 'message-list']
                 elif action == 'post-edit':
                     if preview:
                         return ['message-list']
                     else:
-                        return ['topic-post-edit', 'message-list']
+                        return ['topic-post-edit']
                 elif action == 'delete':
-                    return ['topic-delete', 'topic-list']
+                    return ['topic-delete']
                 elif action == 'move':
                     return ['topic-move']
                 elif action == 'post-move':
-                    return ['topic-post-move', 'topic-list']
+                    return ['topic-post-move']
                 elif action == 'set-display':
                     return ['message-set-display', 'message-list']
                 else:
@@ -294,7 +312,7 @@ class DiscussionApi(Component):
         elif context.forum:
             if context.resource.realm == 'discussion-admin':
                 if action == 'post-edit':
-                    return ['forum-post-edit', 'admin-forum-list']
+                    return ['forum-post-edit']
                 else:
                     return ['admin-forum-list']
             elif context.resource.realm == 'discussion-wiki':
@@ -306,19 +324,19 @@ class DiscussionApi(Component):
                     if preview:
                         return ['topic-add']
                     else:
-                        return ['topic-post-add', 'topic-list']
+                        return ['topic-post-add']
                 elif action == 'delete':
-                    return ['forum-delete', 'forum-list']
+                    return ['forum-delete']
                 else:
                     return ['topic-list']
         elif context.group:
             if context.resource.realm == 'discussion-admin':
                 if action == 'post-add':
-                    return ['forum-post-add', 'admin-forum-list']
+                    return ['forum-post-add']
                 elif action == 'post-edit':
-                    return ['group-post-edit', 'admin-group-list']
+                    return ['group-post-edit']
                 elif action == 'delete':
-                    return ['forums-delete', 'admin-forum-list']
+                    return ['forums-delete']
                 else:
                     if context.group['id']:
                         return ['admin-group-list']
@@ -328,15 +346,15 @@ class DiscussionApi(Component):
                 return ['wiki-message-list']
             else:
                 if action == 'post-add':
-                    return ['forum-post-add', 'forum-list']
+                    return ['forum-post-add']
                 else:
                     return ['forum-list']
         else:
             if context.resource.realm == 'discussion-admin':
                 if action == 'post-add':
-                    return ['group-post-add', 'admin-group-list']
+                    return ['group-post-add']
                 elif action == 'delete':
-                    return ['groups-delete', 'admin-group-list']
+                    return ['groups-delete']
                 else:
                     return ['admin-group-list']
             elif context.resource.realm == 'discussion-wiki':
@@ -345,7 +363,7 @@ class DiscussionApi(Component):
                 if action == 'add':
                     return ['forum-add']
                 elif action == 'post-add':
-                    return ['forum-post-add', 'forum-list']
+                    return ['forum-post-add']
                 else:
                     return ['forum-list']
 
@@ -400,6 +418,9 @@ class DiscussionApi(Component):
 
             elif action == 'group-delete':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
+
+                # Redirect request to prevent re-submit.
+                context.redirect_url = context.req.path_info
 
             elif action == 'groups-delete':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -572,9 +593,11 @@ class DiscussionApi(Component):
                     listener.topic_created(context.topic)
 
                 # Redirect request to prevent re-submit.
-                href = Href('discussion')
-                context.redirect_url = href(context.forum['id'],
-                  context.topic['id'])
+                if context.resource.realm != 'discussion-wiki':
+                    href = Href('discussion')
+                    context.redirect_url = href('topic', context.topic['id'])
+                else:
+                    context.redirect_url = context.req.path_info
 
             elif action == 'topic-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -625,9 +648,8 @@ class DiscussionApi(Component):
                 # Move topic.
                 self.set_forum(context, context.topic['id'], forum_id)
 
-                # Redirect request to new forum.
-                href = Href('discussion')
-                context.redirect_url =  href(forum_id, context.topic['id'])
+                # Redirect request to prevent re-submit.
+                context.redirect_url = context.req.path_info
 
             elif action == 'topic-delete':
                 context.req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -642,7 +664,11 @@ class DiscussionApi(Component):
                     listener.topic_deleted(context.topic)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                if context.resource.realm != 'discussion-wiki':
+                    href = Href('discussion')
+                    context.redirect_url = href('forum', context.topic['forum'])
+                else:
+                    context.redirect_url = req.path_info
 
             elif action == 'message-list':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')

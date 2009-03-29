@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from genshi.builder import tag
 
@@ -42,7 +42,7 @@ class DiscussionTimeline(Component):
                 # Return event.
                 title = 'New forum %s created' % (forum['name'],)
                 description = tag(forum['subject'], ' - ', forum['description'])
-                ids = (forum['id'],)
+                ids = ('forum', forum['id'])
                 yield ('changeset', forum['time'], forum['author'], (title,
                   description, ids))
 
@@ -50,7 +50,7 @@ class DiscussionTimeline(Component):
             for topic in self._get_changed_topics(context, start, stop):
                 title = 'New topic on %s created' % (topic['forum_name'])
                 description = topic['subject']
-                ids = (topic['forum'], topic['id'])
+                ids = ('topic', topic['id'])
                 yield ('newticket', topic['time'], topic['author'], (title,
                   description, ids))
 
@@ -58,7 +58,7 @@ class DiscussionTimeline(Component):
             for message in self._get_changed_messages(context, start, stop):
                 title = 'New reply on %s created' % (message['forum_name'])
                 description = message['topic_subject']
-                ids = (message['forum'], message['topic'], message['id'])
+                ids = ('message', message['id'])
                 yield ('newticket', message['time'], message['author'], (title,
                   description, ids))
 

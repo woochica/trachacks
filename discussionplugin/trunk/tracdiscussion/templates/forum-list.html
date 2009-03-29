@@ -39,33 +39,33 @@
           <tr py:if="forum.forum_group == group.id" class="${line % 2 and 'even' or 'odd'}">
             <td class="id">
               <div class="id">
-                 <a href="${href.discussion(forum.id)}">
+                 <a href="${href.discussion('forum', forum.id)}">
                    <span>${forum.id}</span>
                  </a>
               </div>
             </td>
             <td class="title">
               <div class="subject">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>${format_to_oneliner_no_links(discussion.env, context, forum.subject) or '&nbsp;'}</span>
                 </a>
               </div>
               <div class="description">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>${format_to_oneliner_no_links(discussion.env, context, forum.description) or '&nbsp;'}</span>
                 </a>
               </div>
             </td>
             <td class="moderators">
               <div class="moderators">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>${forum.moderators or '&nbsp;'}</span>
                 </a>
               </div>
             </td>
             <td class="lasttopic">
               <div class="lasttopic">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>
                     ${forum.lasttopic and format_datetime(forum.lasttopic) or 'no topics'}<br/>
                     ${forum.lasttopic and pretty_timedelta(forum.lasttopic) + ' ago' or ''}
@@ -75,7 +75,7 @@
             </td>
             <td class="lastreply">
               <div class="lastreply">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>
                     ${forum.lastreply and format_datetime(forum.lastreply) or 'no replies'}<br/>
                     ${forum.lastreply and pretty_timedelta(forum.lastreply) + ' ago' or ''}
@@ -85,7 +85,7 @@
             </td>
             <td class="founded">
               <div class="founded">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>
                     ${format_datetime(forum.time)}<br/>
                     ${pretty_timedelta(forum.time) + ' ago'}
@@ -95,28 +95,28 @@
             </td>
             <td class="topics">
               <div class="topics">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>${forum.topics or '0'}</span>
                 </a>
               </div>
             </td>
             <td class="new_topics">
               <div class="new_topics">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>${forum.new_topics or '0'}</span>
                 </a>
               </div>
             </td>
             <td class="replies">
               <div class="replies">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>${forum.replies or '0'}</span>
                 </a>
               </div>
             </td>
             <td class="new_replies">
               <div class="new_replies">
-                <a href="${href.discussion(forum.id)}">
+                <a href="${href.discussion('forum', forum.id)}">
                   <span>${forum.new_replies or '0'}</span>
                 </a>
               </div>

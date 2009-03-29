@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 
@@ -51,21 +51,20 @@ class DiscussionCore(Component):
     def match_request(self, req):
         if req.path_info == '/discussion/redirect':
             # Proces redirection request.
-            req.redirect(req.href(req.args.get('href')))
+            req.redirect(req.args.get('redirect_url'))
         else:
             # Prepare regular requests.
-            match = re.match(r'''/discussion(?:/?$|/(\d+)(?:/?$|/(\d+))(?:/?$|/(\d+)))$''',
+            match = re.match(r'''/discussion(?:/?$|/(forum|topic|message)/(\d+)(?:/?$))''',
               req.path_info)
             if match:
-                forum = match.group(1)
-                topic = match.group(2)
-                message = match.group(3)
-                if forum:
-                    req.args['forum'] = forum
-                if topic:
-                    req.args['topic'] = topic
-                if message:
-                    req.args['message'] = message
+                resource_type = match.group(1)
+                resource_id = match.group(2)
+                if resource_type == 'forum':
+                    req.args['forum'] = resource_id
+                if resource_type == 'topic':
+                    req.args['topic'] = resource_id
+                if resource_type== 'message':
+                    req.args['message'] = resource_id
             return match
 
     def process_request(self, req):
@@ -74,4 +73,13 @@ class DiscussionCore(Component):
 
         # Process request and return content.
         api = self.env[DiscussionApi]
-        return api.process_discussion(context) + (None,)
+        template, data = api.process_discussion(context)
+
+        if context.redirect_url:
+            # Redirect if needed.
+            self.log.debug("Redirecting to %s" % (context.redirect_url))
+            req.redirect(req.href('discussion', 'redirect', redirect_url =
+              req.href(context.redirect_url)))
+        else:
+            # Return template and its data.
+            return template, data, None

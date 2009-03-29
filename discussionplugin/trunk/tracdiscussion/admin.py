@@ -26,7 +26,7 @@ class DiscussionWebAdmin(Component):
             yield ('discussion', 'Discussion System', 'forum', 'Forums')
 
     def render_admin_panel(self, req, category, page, path_info):
-        # Prepare request object
+        # Prepare request object.
         if page == 'forum':
             if not req.args.has_key('group'):
                 req.args['group'] = '-1'
@@ -41,4 +41,13 @@ class DiscussionWebAdmin(Component):
 
         # Process request.
         api = self.env[DiscussionApi]
-        return api.process_discussion(context)
+        template, data = api.process_discussion(context)
+
+        if context.redirect_url:
+            # Redirect request if needed.
+            self.log.debug("Redirecting to %s" % (context.redirect_url))
+            req.redirect(req.href('discussion', 'redirect', redirect_url =
+              req.href(context.redirect_url)))
+        else:
+            # Return template and data.
+            return template, data
