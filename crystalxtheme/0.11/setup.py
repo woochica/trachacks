@@ -7,7 +7,7 @@ setup(
     name = 'TracCrystalXTheme',
     version = '1.0',
     packages = ['crystalxtheme'],
-    package_data = { 'crystalxtheme': ['templates/*.html', 'htdocs/*.png', 'htdocs/*.css', 'htdocs/img/*.gif' ] },
+    package_data = { 'crystalxtheme': ['templates/*.html', 'htdocs/*.png', 'htdocs/*.css', 'htdocs/img/*.gif', 'htdocs/img/*.jpg' ] },
 
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
