@@ -9,7 +9,7 @@
   <xi:include href="macros.html" />
 
 <div id="content" class="ticket" py:with="preview_mode = 'preview' in req.args">
-  <h1>New Project Pitch <span py:if="preview_mode and ticket.type" class="status">(${ticket.type})</span></h1>
+  <h1>New Project Pitch (UNDER CONSTRUCTION) <span py:if="preview_mode and ticket.type" class="status">(${ticket.type})</span></h1>
 
   <!-- Do not show the ticket (pre)view when the user first comes to the "New Ticket" page.
        Wait until they hit preview. -->
@@ -96,24 +96,42 @@
                'TICKET_CHGPROP' in perm(ticket.resource) or
                ('TICKET_CREATE' in perm(ticket.resource) and not ticket.id))"
         action="${ticket.exists and href.ticket(ticket.id) or href.newticket()}" method="post" id="propertyform">
-    <h3 py:if="ticket.exists"><a id="edit" onfocus="$('#comment').get(0).focus()">
-        Add/Change #${ticket.id} ($ticket.summary)</a></h3>
-    <div py:if="authname == 'anonymous'" class="field">
-      <fieldset>
-        <legend>Reporter</legend>
-        <table>
-          <tr>
-            <th>
-              <label for="author">Your email or username:</label><br />
-            </th>
-            <td>
-              <input type="text" id="author" name="author" size="40" value="$author_id" />
-              <br />
-            </td>
-          </tr>
-        </table>
-      </fieldset>
-    </div>
+
+    <fieldset>
+      <div class="field-row">
+        <label for="field-summary">Project Title</label>
+        <input type="text" id="field-summary" name="field_summary" size="70" />
+      </div>
+
+      <div class="field-row">
+        <label for="author">Initiator</label>
+        <input type="text" id="author" name="author" value="$author_id" size="70"/>
+      </div>
+        
+      <div class="field-row">
+        <label for="field-description">What is the purpose of this project?</label>
+        <textarea id="field-description" name="field_description"
+                  class="wikitext" rows="10" cols="70"
+                  py:content="ticket.description"></textarea>
+      </div>
+
+      <div class="field-row">
+        <label for="field-audience">Who is this project for? What is its audience?</label>
+        <textarea id="field-audience" name="field_audience" cols="70" rows="10" class="wikitext"></textarea>
+      </div>
+      
+      <div class="field-row">
+        <label for="field-why">How is this project relevent to TOPP now?</label>
+        <textarea id="field-why" name="field_why" cols="70" rows="10" class="wikitext"></textarea>
+
+      </div>
+
+      <div class="field-row">
+        <label for="field-cc">Advocates</label>
+        <input type="text" id="field-cc" title="Space or comma delimited email addresses and usernames are accepted." size="70" name="field_cc" />
+      </div>
+
+    </fieldset>
     
     <fieldset id="properties"
               py:if="'TICKET_CHGPROP' in perm(ticket.resource)"
@@ -128,7 +146,7 @@
         </tr>
         <py:if test="'TICKET_ADMIN' in perm(ticket.resource)">
           <tr>
-            <th><label for="field-reporter">Proposer:</label></th>
+            <th><label for="field-reporter">Initiator</label></th>
             <td class="fullrow" colspan="2">
               <input type="text" id="field-reporter" name="field_reporter"
                      value="${ticket.reporter}" size="70" />
