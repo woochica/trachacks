@@ -76,37 +76,25 @@
         <legend>Effort Estimation</legend>
 
         <div class="field-row">
-          <b>$ticket.consumer</b>
           <label class="inline" for="field_consumer">This project is:</label>
-          <input class="inline" type="radio" name="field_consumer" value="internal" />
-          internal
-          <input class="inline" type="radio" name="field_consumer" value="external" />
-          external
+
+          <py:for each="value in ['internal', 'external']">
+            <input class="inline" type="radio" name="field_consumer" value="$value" py:attrs="{'checked': value == ticket.consumer and True or None}"/>$value
+          </py:for>
+
         </div>
 
         <div class="field-row">
-          <b>$ticket.timeestimate</b>
+          
           <label class="inline" for="field_timeestimate">This project will take:</label>
 
-          <input class="inline" type="radio" name="field_timeestimate" value="about a week" />
-          about a week
+          <py:for each="value in ['about a week', 'under a month', 'a month or two', 'several months', 'over a year']">
+            <input class="inline" type="radio" name="field_timeestimate" value="$value" py:attrs="{'checked': value == ticket.timeestimate and True or None}"/>$value
+          </py:for>
 
-          <input class="inline" type="radio" name="field_timeestimate" value="under a month" />
-          under a month
-
-          <input class="inline" type="radio" name="field_timeestimate" value="a month or two" />
-          a month or two
-
-          <input class="inline" type="radio" name="field_timeestimate" value="several months" />
-          several months
-
-          <input class="inline" type="radio" name="field_timeestimate" value="over a year" />
-
-          over a year
         </div>
 
         <div class="field-row">
-          <b>$ticket.people</b>
           <label class="inline" for="field_people">People this project will need:</label>
           <textarea id="field-people" name="field_people"
                     class="wikitext" rows="10" cols="70"
