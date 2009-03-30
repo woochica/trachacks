@@ -115,17 +115,26 @@ max_description_size = 262144
 
 [ticket-custom]
 audience = textarea
-audience.label = Who is this project for?
+audience.label = Audience
 audience.format = wiki
 consumer = radio
-consumer.label = Is this project internal or external?
+consumer.label = Consumer
 consumer.options = internal|external
 timeestimate = radio
-timeestimate.label = Time estimation for a working prototype
+timeestimate.label = Time estimation 
 timeestimate.options = about a week|under a month|a month or two|several months|over a year
 why = textarea
 why.label = Why should TOPP do this project now?
 why.format = wiki
+people = textarea
+people.label = People this project will need
+people.format = wiki
+risks = textarea
+risks.label = Risks
+risks.format = wiki
+research = textarea
+research.label = Further research
+research.format = wiki
 
 [ticket-workflow]
 leave = * -> *
