@@ -53,12 +53,12 @@ class AccountLDAP(Component):
     
     def post_process_request(self, req, template, data, content_type):
         if not req.remote_user or req.session.has_key('email'):
-            return template, data, None 
+            return template, data, content_type 
         uid = req.remote_user.lower()
         name, email = self._getUserAttributes(uid)
         req.session['name'] = name        
         req.session['email'] = email
-        return template, data, None        
+        return template, data, content_type        
     #
     #----------------------------------------- INavigationContributor interface
     #
