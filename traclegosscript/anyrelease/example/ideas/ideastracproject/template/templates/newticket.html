@@ -9,7 +9,7 @@
   <xi:include href="macros.html" />
 
 <div id="content" class="ticket" py:with="preview_mode = 'preview' in req.args">
-  <h1>New Project Pitch (UNDER CONSTRUCTION) <span py:if="preview_mode and ticket.type" class="status">(${ticket.type})</span></h1>
+  <h1>New Project Pitch<span py:if="preview_mode and ticket.type" class="status">(${ticket.type})</span></h1>
 
   <!-- Do not show the ticket (pre)view when the user first comes to the "New Ticket" page.
        Wait until they hit preview. -->
@@ -97,7 +97,7 @@
                ('TICKET_CREATE' in perm(ticket.resource) and not ticket.id))"
         action="${ticket.exists and href.ticket(ticket.id) or href.newticket()}" method="post" id="propertyform">
 
-    <fieldset>
+    <fieldset id="properties">
       <div class="field-row">
         <label for="field-summary">Project Title</label>
         <input type="text" id="field-summary" name="field_summary" size="70" />
@@ -121,7 +121,7 @@
       </div>
       
       <div class="field-row">
-        <label for="field-why">How is this project relevent to TOPP now?</label>
+        <label for="field-why">How is this project relevant to TOPP now?</label>
         <textarea id="field-why" name="field_why" cols="70" rows="10" class="wikitext"></textarea>
 
       </div>
@@ -130,104 +130,40 @@
         <label for="field-cc">Advocates</label>
         <input type="text" id="field-cc" title="Space or comma delimited email addresses and usernames are accepted." size="70" name="field_cc" />
       </div>
-
-    </fieldset>
-    
-    <fieldset id="properties"
-              py:if="'TICKET_CHGPROP' in perm(ticket.resource)"
-              py:with="fields = [f for f in fields if not f.skip]">
-      <table>
-        <tr>
-          <th><label for="field-summary">Project Title:</label></th>
-          <td class="fullrow" colspan="2">
-            <input type="text" id="field-summary" name="field_summary"
-                   value="$ticket.summary" size="70" />
-          </td>
-        </tr>
-        <py:if test="'TICKET_ADMIN' in perm(ticket.resource)">
-          <tr>
-            <th><label for="field-reporter">Initiator</label></th>
-            <td class="fullrow" colspan="2">
-              <input type="text" id="field-reporter" name="field_reporter"
-                     value="${ticket.reporter}" size="70" />
-            </td>
-          </tr>
-        </py:if>
-
-        <tr>
-          <th><label for="field-description">What is the purpose of this project?</label></th>
-          <td class="fullrow" colspan="2">
-            <textarea id="field-description" name="field_description"
-                      class="wikitext" rows="10" cols="68"
-                      py:content="ticket.description"></textarea>
-          </td>
-        </tr>
-        <tr py:for="row in group(fields, 1, lambda f: f.type != 'textarea' and f.name != 'owner')"
-            py:with="fullrow = len(row) == 1">
-          <py:for each="idx, field in enumerate(row)"
-                  py:with="value = ticket.get_value_or_default(field.name)">
-            <th class="col${idx + 1}" py:if="idx == 0 or not fullrow">
-              <label for="field-${field.name}" py:if="field"
-                     py:strip="field.type == 'radio'">${field.edit_label or field.label or field.name}:</label>
-            </th>
-            <td class="col${idx + 1}" py:if="idx == 0 or not fullrow"
-                colspan="${fullrow and 3 or None}">
-              <py:choose test="field.type" py:if="field">
-                <select py:when="'select'" id="field-${field.name}" name="field_${field.name}">
-                  <option py:if="field.optional"></option>
-                  <option py:for="option in field.options"
-                          selected="${value == option or None}"
-                          py:content="option"></option>
-                  <optgroup py:for="optgroup in field.optgroups"
-                            py:if="optgroup.options"
-                            label="${optgroup.label}">
-                    <option py:for="option in optgroup.options"
-                            selected="${value == option or None}"
-                            py:content="option"></option>
-                  </optgroup>
-                </select>
-                <textarea py:when="'textarea'" id="field-${field.name}" name="field_${field.name}"
-                          cols="68" rows="10"
-                          class="${field.format == 'wiki' and 'wikitext' or None}"
-                          py:content="value"></textarea>
-                <span py:when="'checkbox'">
-                  <input type="checkbox" id="field-${field.name}" name="field_${field.name}"
-                         checked="${value == '1' and 'checked' or None}" value="1" />
-                  <input type="hidden" name="field_checkbox_${field.name}" value="1" />
-                </span>
-                <label py:when="'radio'"
-                       py:for="idx, option in enumerate(field.options)">
-                  <input type="radio" name="field_${field.name}" value="${option}"
-                         checked="${value == option or None}" />
-                  ${option}
-                </label>
-                <py:otherwise><!--! Text input fields -->
-                  <py:choose>
-                    <span py:when="field.cc_entry"><!--! Special case for Cc: field -->
-                      <em>${field.cc_entry}</em>
-                      <input type="checkbox" id="field-cc" name="cc_update"
-                             title="This checkbox allows you to add or remove yourself from the CC list."
-                             checked="${field.cc_update}" />
-                    </span>
-                    <!--! Cc: when TICKET_EDIT_CC is allowed -->
-                    <span py:when="field.name == 'cc'">
-                      <input  type="text" id="field-${field.name}"
-                              title="Space or comma delimited email addresses and usernames are accepted."
-                              name="field_${field.name}" value="${value}" />
-                    </span>
-                    <!--! All the other text input fields -->
-                    <input py:otherwise="" type="text" id="field-${field.name}"
-                           name="field_${field.name}" value="${value}" />
-                  </py:choose>
-                </py:otherwise>
-              </py:choose>
-            </td>
-          </py:for>
-        </tr>
-      </table>
       
-    </fieldset>
+      <fieldset>
+        <legend>Effort Estimation</legend>
 
+        <div class="field-row">
+          <label class="inline" for="field_consumer">This project is</label>
+          <input class="inline" type="radio" name="field_consumer" value="internal" />
+          internal
+          <input class="inline" type="radio" name="field_consumer" value="external" />
+          external
+        </div>
+
+        <div class="field-row">
+          <label class="inline" for="field_timeestimate">This project will take</label>
+
+          <input class="inline" type="radio" name="field_timeestimate" value="about a week" />
+          about a week
+
+          <input class="inline" type="radio" name="field_timeestimate" value="under a month" />
+          under a month
+
+          <input class="inline" type="radio" name="field_timeestimate" value="a month or two" />
+          a month or two
+
+          <input class="inline" type="radio" name="field_timeestimate" value="several months" />
+          several months
+
+          <input class="inline" type="radio" name="field_timeestimate" value="over a year" />
+
+          over a year
+        </div>
+      </fieldset>
+
+    </fieldset>
     
     <p py:if="'ATTACHMENT_CREATE' in perm(ticket.resource.child('attachment'))">
       <label>
