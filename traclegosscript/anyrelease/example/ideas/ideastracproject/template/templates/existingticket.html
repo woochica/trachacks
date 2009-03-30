@@ -10,12 +10,13 @@
 
 <div id="content" class="ticket" py:with="preview_mode = 'preview' in req.args">
   <h1>
-    <a py:strip="not version and version != 0" href="${href.ticket(ticket.id)}">
-      #${ticket.id}
+    <a href="${href.ticket(ticket.id)}">
+      ${ticket.summary}
     </a>
-    - ${ticket.summary}
   </h1>
 
+
+  <!-- should nix preview all together -->
   <!-- Do not show the ticket (pre)view when the user first comes to the "New Ticket" page.
        Wait until they hit preview. -->
   <fieldset id="preview" py:strip="not preview_mode">
@@ -33,6 +34,109 @@
         ${display_change(change_preview)}
       </div>
     </py:if>
+
+  <form py:strip="'TICKET_MODIFY' not in perm(ticket.resource)"
+        action="${href.ticket(ticket.id)}" method="post" id="propertyform">
+
+    <fieldset id="properties">
+      <div class="field-row">
+        <label for="field-summary">Project Title</label>
+        <input type="text" id="field-summary" name="field_summary" size="70" />
+      </div>
+
+      <div class="field-row">
+        <label for="author">Initiator</label>
+        <input type="text" id="author" name="author" value="$author_id" size="70"/>
+      </div>
+
+      <div class="field-row">
+        <label for="field-cc">Advocates</label>
+        <input type="text" id="field-cc" title="Space or comma delimited email addresses and usernames are accepted." size="70" name="field_cc" />
+      </div>
+        
+      <div class="field-row">
+        <label for="field-description">What is the purpose of this project?</label>
+        <textarea id="field-description" name="field_description"
+                  class="wikitext" rows="10" cols="70"
+                  py:content="ticket.description"></textarea>
+      </div>
+
+      <div class="field-row">
+        <label for="field-audience">Who is this project for? What is its audience?</label>
+        <textarea id="field-audience" name="field_audience" cols="70" rows="10" class="wikitext"></textarea>
+      </div>
+      
+      <div class="field-row">
+        <label for="field-why">How is this project relevant to TOPP now?</label>
+        <textarea id="field-why" name="field_why" cols="70" rows="10" class="wikitext"></textarea>
+
+      </div>
+      
+      <fieldset>
+        <legend>Effort Estimation</legend>
+
+        <div class="field-row">
+          <label class="inline" for="field_consumer">This project is:</label>
+          <input class="inline" type="radio" name="field_consumer" value="internal" />
+          internal
+          <input class="inline" type="radio" name="field_consumer" value="external" />
+          external
+        </div>
+
+        <div class="field-row">
+          <label class="inline" for="field_timeestimate">This project will take:</label>
+
+          <input class="inline" type="radio" name="field_timeestimate" value="about a week" />
+          about a week
+
+          <input class="inline" type="radio" name="field_timeestimate" value="under a month" />
+          under a month
+
+          <input class="inline" type="radio" name="field_timeestimate" value="a month or two" />
+          a month or two
+
+          <input class="inline" type="radio" name="field_timeestimate" value="several months" />
+          several months
+
+          <input class="inline" type="radio" name="field_timeestimate" value="over a year" />
+
+          over a year
+        </div>
+
+        <div class="field-row">
+          <label class="inline" for="field_people">People this project will need:</label>
+          <textarea id="field-people" name="field_people"
+                    class="wikitext" rows="10" cols="70"></textarea>
+        </div>
+
+        <div class="field-row">
+          <label class="inline" for="field_risks">Risks</label>
+          <textarea id="field-risks" name="field_risks"
+                    class="wikitext" rows="10" cols="70"></textarea>
+        </div>
+
+        <div class="field-row">
+          <label class="inline" for="field_research">Any further research you would like to include</label>
+          <textarea id="field-research" name="field_research"
+                    class="wikitext" rows="10" cols="70"></textarea>
+        </div>
+
+      </fieldset>
+
+    </fieldset>
+    
+    <p py:if="'ATTACHMENT_CREATE' in perm(ticket.resource.child('attachment'))">
+      <label>
+        <input type="checkbox" name="attachment" checked="${'attachment' in req.args or None}" />
+        I have files to attach to this ticket
+      </label>
+    </p>
+    <div class="buttons">
+      <input type="submit" name="submit" value="Submit" />
+    </div>
+
+  </form>
+
 
     <!-- Ticket Box (ticket fields along with description) -->
     <div id="ticket" py:if="ticket.exists or preview_mode"

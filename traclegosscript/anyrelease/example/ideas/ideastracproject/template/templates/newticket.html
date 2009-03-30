@@ -91,11 +91,8 @@
   </fieldset>
   <!--! End of ticket box -->
 
-  <form py:if="not version and version != 0 and
-               ('TICKET_APPEND' in perm(ticket.resource) or
-               'TICKET_CHGPROP' in perm(ticket.resource) or
-               ('TICKET_CREATE' in perm(ticket.resource) and not ticket.id))"
-        action="${ticket.exists and href.ticket(ticket.id) or href.newticket()}" method="post" id="propertyform">
+  <form py:if="'TICKET_CREATE' in perm(ticket.resource)"
+        action="${href.newticket()}" method="post" id="propertyform">
 
     <fieldset id="properties">
       <div class="field-row">
@@ -192,8 +189,7 @@
     </p>
     <div class="buttons">
       <input type="hidden" name="field_status" value="new" />
-      <input type="submit" name="preview" value="${_('Preview')}" accesskey="r" />&nbsp;
-      <input type="submit" name="submit" value="${ticket.exists and 'Submit changes' or 'Create ticket'}" />
+      <input type="submit" name="submit" value="Submit" />
     </div>
 
   </form>
