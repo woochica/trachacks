@@ -107,6 +107,11 @@
         <label for="author">Initiator</label>
         <input type="text" id="author" name="author" value="$author_id" size="70"/>
       </div>
+
+      <div class="field-row">
+        <label for="field-cc">Advocates</label>
+        <input type="text" id="field-cc" title="Space or comma delimited email addresses and usernames are accepted." size="70" name="field_cc" />
+      </div>
         
       <div class="field-row">
         <label for="field-description">What is the purpose of this project?</label>
@@ -124,11 +129,6 @@
         <label for="field-why">How is this project relevant to TOPP now?</label>
         <textarea id="field-why" name="field_why" cols="70" rows="10" class="wikitext"></textarea>
 
-      </div>
-
-      <div class="field-row">
-        <label for="field-cc">Advocates</label>
-        <input type="text" id="field-cc" title="Space or comma delimited email addresses and usernames are accepted." size="70" name="field_cc" />
       </div>
       
       <fieldset>
@@ -161,6 +161,25 @@
 
           over a year
         </div>
+
+        <div class="field-row">
+          <label class="inline" for="field_people">People this project will need:</label>
+          <textarea id="field-people" name="field_people"
+                    class="wikitext" rows="10" cols="70"></textarea>
+        </div>
+
+        <div class="field-row">
+          <label class="inline" for="field_risks">Risks</label>
+          <textarea id="field-risks" name="field_risks"
+                    class="wikitext" rows="10" cols="70"></textarea>
+        </div>
+
+        <div class="field-row">
+          <label class="inline" for="field_research">Any further research you would like to include</label>
+          <textarea id="field-research" name="field_research"
+                    class="wikitext" rows="10" cols="70"></textarea>
+        </div>
+
       </fieldset>
 
     </fieldset>
