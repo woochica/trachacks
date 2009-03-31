@@ -24,7 +24,9 @@
     <script type="text/javascript" py:choose="">
       jQuery(document).ready(function($) {
         $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        
       <py:when test="ticket.exists">
+        $("fieldset legend.foldable").enableFolding(false);
         /* only enable control elements for the currently selected action */
         var actions = $("#action input[name='action']");
 
@@ -38,6 +40,7 @@
         updateActionFields();
       </py:when>
       <py:otherwise>
+        $("fieldset legend.foldable").enableFolding(true);
         $("#field-summary").focus();
       </py:otherwise>
       });
@@ -71,6 +74,26 @@ margin-top: 0;
 display: block;
 width : 600px;
 }
+
+fieldset legend.foldable :link,
+fieldset legend.foldable :visited { 
+background: url(${chrome.htdocs_location}/expanded.png) 0 50% no-repeat;
+border: none;
+color: #666;
+font-size: 110%;
+padding-left: 16px;
+}
+fieldset legend.foldable :link:hover,
+fieldset legend.foldable :visited:hover {
+background-color: transparent;
+}
+
+fieldset.collapsed legend.foldable :link,
+fieldset.collapsed legend.foldable :visited { 
+background-image: url(${chrome.htdocs_location}/collapsed.png);  
+}
+fieldset.collapsed table, fieldset.collapsed div { display: none }
+
 
 </style>
 
@@ -305,7 +328,7 @@ width : 600px;
             </div>
             
             <fieldset>
-              <legend>Effort Estimation</legend>
+              <legend class="foldable">Effort Estimation</legend>
               
               <div class="field-row">
                 <label class="inline" for="field_consumer">This project is:</label>
