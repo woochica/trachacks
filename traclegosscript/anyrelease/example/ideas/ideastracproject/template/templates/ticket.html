@@ -79,10 +79,10 @@ width : 600px;
 
   <body>
 
+    <!-- functions -->
     <py:def function="commentref(prefix, cnum)">
       <a href="#comment:$cnum">$prefix$cnum</a>
     </py:def>
-
     <py:def function="display_change(change)">
       <ul py:if="change.fields" class="changes">
         <li py:for="field_name, field in change.fields.items()">
@@ -107,16 +107,256 @@ width : 600px;
       <div py:if="'comment' in change" class="comment searchable" xml:space="preserve">
         ${wiki_to_html(context, change.comment, escape_newlines=preserve_newlines)}
       </div>
-    </py:def>
+    </py:def> <!-- functions -->
     
-    <py:choose>
-      <py:when test="ticket.exists">
-        <xi:include href="existingticket.html"/>
-      </py:when>
-      <py:otherwise>
-        <xi:include href="newticket.html"/>
-      </py:otherwise>
-    </py:choose>
 
+    <!-- content -->
+    <div id="content" class="ticket" py:with="preview_mode = 'preview' in req.args; new = not ticket.exists">
+      
+      <!-- should nix preview all together -->
+      <!-- Do not show the ticket (pre)view when the user first comes to the "New Ticket" page.
+           Wait until they hit preview. -->
+      <fieldset id="preview" py:strip="not preview_mode">
+        <py:if test="preview_mode">
+          <legend>Preview (<a href="#edit">skip</a>)</legend>
+      
+          <!-- Preview of ticket changes -->
+          <div py:if="change_preview" id="ticketchange" class="ticketdraft">
+            <h3 class="change" id="${'cnum' in change_preview and 'comment:%d' % change_preview.cnum or None}">
+              <span class="threading" py:if="'replyto' in change_preview">
+                in reply to: ${commentref('&darr;&nbsp;', change_preview.replyto)}
+              </span>
+              Changed by ${authorinfo(change_preview.author)}
+            </h3>
+            ${display_change(change_preview)}
+          </div>
+        </py:if><!-- test="preview_mode" -->
+    
+        <h1 py:if="not ticket.exists">New Project Pitch</h1>
+
+        <div py:if="ticket.exists" id="ticket">
+          <p>
+            <h1>Project Title</h1>
+            <a href="${href.ticket(ticket.id)}">${ticket.summary}</a>
+          </p>
+          
+          <p>
+            <h1>Initiator</h1>
+            $author_id
+          </p>
+          
+          <p py:if="ticket.cc">
+            <h1>Advocates</h1>
+            ${ticket.cc.rstrip(',')}
+          </p>
+          
+          <p>
+            <h1>What is the purpose of this project?</h1>
+            $ticket.description
+          </p>
+          
+          <p>
+            <h1>Who is this project for? What is its audience?</h1>
+            $ticket.audience
+          </p>
+          
+          <p>
+            <h1>How is this project relevant to TOPP now?</h1>
+            $ticket.why
+          </p>
+          
+          <p py:if="ticket.consumer">
+            This project is $ticket.consumer
+          </p>
+          
+          <p py:if="ticket.timeestimate">
+            This project will take $ticket.timeestimate
+          </p>
+          
+          <p py:if="ticket.people">
+            <h1>People this project will need:</h1>
+            $ticket.people
+          </p>
+          
+          <p py:if="ticket.risks">
+            <h1>Risks</h1>
+            $ticket.risks
+          </p>
+          
+          <p py:if="ticket.research">
+            <h1>Any further research you would like to include</h1>
+            $ticket.research
+          </p>
+        </div>
+    
+        <!--! do not show attachments for old versions of this ticket -->
+        <py:if test="not version and version != 0 and ticket.exists">
+          ${list_of_attachments(attachments)}
+        </py:if>
+  
+        <py:if test="ticket.exists and changes">
+          <h2>Change History</h2>
+
+          <div id="changelog">
+
+            <form py:for="change in changes" method="get" action="#comment" class="printableform">
+              <div class="change">
+
+                <h3 class="change">
+                  <span class="threading" py:if="'cnum' in change"
+                        py:with="change_replies = replies.get(str(change.cnum), [])">
+                    <span id="comment:$change.cnum" class="cnum">${commentref('comment:', change.cnum)}</span>
+                    <py:if test="change_replies or 'replyto' in change">
+                      <py:if test="'replyto' in change">
+                        in reply to: ${commentref('&uarr;&nbsp;', change.replyto)}
+                        <py:if test="change_replies">; </py:if>
+                      </py:if>
+
+                      <py:if test="change_replies">follow-up${len(change_replies) > 1 and 's' or ''}:
+                        <py:for each="reply in change_replies">
+                          ${commentref('&darr;&nbsp;', reply)}
+                        </py:for>
+                      </py:if>
+                      
+                    </py:if><!-- test="change_replies or 'replyto' in change" -->
+                  </span>
+              Changed ${dateinfo(change.date)} ago by ${authorinfo(change.author)}
+                </h3>
+
+                <div py:if="'cnum' in change and 'TICKET_APPEND' in perm(ticket.resource)" class="inlinebuttons">
+                  <input type="hidden" name="replyto" value="${change.cnum}" />
+                  <input type="submit" value="${_('Reply')}" title="Reply to comment ${change.cnum}" />
+                </div>
+                ${display_change(change)}
+
+              </div>
+            </form>
+
+          </div><!-- changelog -->
+        </py:if><!-- change history -->
+
+        <!-- comment field -->
+        <div class="field" py:if="ticket.exists">
+          <fieldset class="iefix">
+            <label for="comment" i18n:msg="">Comment (you may use
+              <a tabindex="42" href="${href.wiki('WikiFormatting')}">WikiFormatting</a>
+              here):
+            </label><br />
+            <p><textarea id="comment" name="comment" class="wikitext" rows="10" cols="78">${comment}</textarea></p>
+          </fieldset>
+        </div><!-- comment field -->
+
+        <form py:strip="'TICKET_MODIFY' not in perm(ticket.resource)"
+              action="${ticket.exists and href.ticket(ticket.id) or  href.newticket()}" method="post" 
+              id="propertyform">
+      
+          <fieldset id="properties">
+            <legend py:if="ticket.exists">Properties</legend>
+
+            <div class="field-row">
+              <label for="field-summary">Project Title</label>
+              <input type="text" id="field-summary" name="field_summary" size="70" value="$ticket.summary"/>
+            </div>
+        
+            <div class="field-row">
+              <label for="author">Initiator</label>
+              <input type="text" id="author" name="author" value="$author_id" size="70"/>
+            </div>
+            
+            <div class="field-row">
+              <label for="field-cc">Advocates</label>
+              <input type="text" id="field-cc" title="Space or comma delimited email addresses and usernames are accepted." size="70" name="field_cc" value="$ticket.cc"/>
+            </div>
+            
+            <div class="field-row">
+              <label for="field-description">What is the purpose of this project?</label>
+              <textarea id="field-description" name="field_description"
+                        class="wikitext" rows="10" cols="70"
+                        py:content="ticket.description"></textarea>
+            </div>
+        
+            <div class="field-row">
+              <label for="field-audience">Who is this project for? What is its audience?</label>
+              <textarea id="field-audience" name="field_audience" cols="70" rows="10" class="wikitext" py:content="ticket.audience"></textarea>
+            </div>
+            
+            <div class="field-row">
+              <label for="field-why">How is this project relevant to TOPP now?</label>
+              <textarea id="field-why" name="field_why" cols="70" rows="10" class="wikitext" py:content="ticket.why"></textarea>
+              
+            </div>
+            
+            <fieldset>
+              <legend>Effort Estimation</legend>
+              
+              <div class="field-row">
+                <label class="inline" for="field_consumer">This project is:</label>
+            
+                <py:for each="value in ['internal', 'external']">
+                  <input class="inline" type="radio" name="field_consumer" value="$value" py:attrs="{'checked': value == ticket.consumer and True or None}"/>$value
+                </py:for>
+                
+              </div>
+              
+              <div class="field-row">
+            
+                <label class="inline" for="field_timeestimate">This project will take:</label>
+                
+                <py:for each="value in ['about a week', 'under a month', 'a month or two', 'several months', 'over a year']">
+                  <input class="inline" type="radio" name="field_timeestimate" value="$value" py:attrs="{'checked': value == ticket.timeestimate and True or None}"/>$value
+                </py:for>
+                
+              </div>
+          
+              <div class="field-row">
+                <label class="inline" for="field_people">People this project will need:</label>
+                <textarea id="field-people" name="field_people"
+                          class="wikitext" rows="10" cols="70"
+                          py:content="ticket.people"></textarea>
+              </div>
+          
+              <div class="field-row">
+                <label class="inline" for="field_risks">Risks</label>
+                <textarea id="field-risks" name="field_risks"
+                          class="wikitext" rows="10" cols="70"
+                          py:content="ticket.risks"></textarea>
+              </div>
+          
+              <div class="field-row">
+                <label class="inline" for="field_research">Any further research you would like to include</label>
+                <textarea id="field-research" name="field_research"
+                          class="wikitext" rows="10" cols="70"
+                          py:content="ticket.research"></textarea>
+              </div>
+          
+            </fieldset><!-- Effort Estimation -->
+            
+          </fieldset><!-- properties -->
+
+          <!-- Workflow support -->
+          <fieldset id="action" py:if="ticket.exists">
+            <legend>Action</legend>
+            <div py:for="key, label, controls, hints in action_controls">
+              <input type="radio" id="action_$key" name="action" value="$key" checked="${action == key or None}" />
+              <label for="action_$key">$label</label>
+              $controls
+              <span class="hint" py:for="hint in hints">$hint</span>
+            </div>
+          </fieldset><!-- action -->
+      
+          <div class="buttons">
+            <input py:if="not ticket.exists" type="hidden" name="field_status" value="new" />
+            <input type="submit" name="submit" value="Submit" />
+          </div>
+      
+        </form>
+      </fieldset>
+
+      <div id="help">
+        <strong>Note:</strong> See
+        <a href="${href.wiki('TracTickets')}">TracTickets</a> for help on using
+        tickets.
+      </div>
+    </div><!-- content -->
   </body>
 </html>
