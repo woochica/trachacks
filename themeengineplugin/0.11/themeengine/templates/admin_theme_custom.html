@@ -33,8 +33,14 @@
         </py:for>
         
         // <![CDATA[
-        var colors = $('#colors').addClass('js').after('<div id="farb"></div>');
-        var farb = jQuery.farbtastic('#farb');
+        var colors = $('#colors');
+        var farb = null;
+        if(colors.length == 0)
+          colors = null;
+        else {
+          colors.addClass('js').after('<div id="farb"></div>');
+          farb = jQuery.farbtastic('#farb');
+        }
         
         var set_color = function(name, color) {
           $('#scheme').val('__none__');
@@ -86,12 +92,14 @@
         }).each(function() {
           set_color($(this).attr('name').substring(6), $(this).val());
           //$(this).css('background-color', $(this).val());
-        })[0].focus();
+        }).focus();
         
-        var off = colors.position();
-        off.left += colors.outerWidth() + 4;
-        off.top += (colors.outerHeight(true) - colors.outerHeight(false));
-        $('#farb').css('position', 'absolute').css('top', off.top+'px').css('left', off.left+'px');
+        if(colors != null) {
+          var off = colors.position();
+          off.left += colors.outerWidth() + 4;
+          off.top += (colors.outerHeight(true) - colors.outerHeight(false));
+          $('#farb').css('position', 'absolute').css('top', off.top+'px').css('left', off.left+'px');
+        }
       });
       // ]]>
     </script>
@@ -104,7 +112,7 @@
         <legend>General</legend>
         <div>
           <label for="enable_css">Enable:</label>
-          <input type="checkbox" id="enable_css" name="enable_css" value="1" checked="${enable}" />
+          <input type="checkbox" id="enable_css" name="enable_css" value="1" checked="${enable or None}" />
         </div>
       </fieldset>
       <fieldset id="schemes" py:if="current_theme and current_theme.get('schemes') and len(current_theme['schemes']) > 1">
@@ -117,7 +125,7 @@
           </select>
         </div>
       </fieldset>
-      <fieldset id="colors">
+      <fieldset id="colors" py:if="current_theme and current_theme.get('colors')">
         <legend>Colors</legend>
         <div py:for="name, color in sorted(colors.iteritems())">
           <label for="color_$name">${name.title()}:</label>

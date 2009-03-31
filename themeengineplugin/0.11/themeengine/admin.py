@@ -143,7 +143,7 @@ class CustomThemeAdminModule(Component):
                 colors[name] = val
         data['colors'] = colors
         data['enable'] = self.config.getbool('theme', 'enable_css', False)
-        if page == 'advanced':
+        if page == 'advanced' and os.path.exists(os.path.join(self.env.path, 'htdocs', 'theme.css')):
             data['css'] = open(os.path.join(self.env.path, 'htdocs', 'theme.css')).read()
         
         if req.method == 'POST':
@@ -165,7 +165,7 @@ class CustomThemeAdminModule(Component):
                 f.write(req.args.get('css', ''))
             else:
                 f.write('/* Warning: this file is auto-generated. If you edit it, changes will be lost the next time you use the simple customizer. */\n')
-                for name, prop, selector in curtheme['colors']:
+                for name, prop, selector in curtheme.get('colors', ()):
                     color = req.args.get('color_'+name, colors.get(name, '#ffffff'))
                     f.write('%s {\n'%selector)
                     f.write('  %s: %s;\n'%(prop, color))
