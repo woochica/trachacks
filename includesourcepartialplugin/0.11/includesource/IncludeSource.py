@@ -162,13 +162,19 @@ class IncludeSourceMacro(WikiMacroBase):
         src = mv.render(formatter.context, mimetype, src, file_name, url, annotations)
 
         if line_numbers:
+            # handle the case where only one line of code was included
+            # and we get back an XHTML string
+            if not hasattr(src, 'generate'):
+                from genshi.input import XML
+                src = XML(src)
+            
             # the _render_source method will always set the CSS class
             # of the annotator to it's name; there isn't an easy way
             # to override that. We could create our own CSS class for
             # givenlineno that mimics lineno, but it's cleaner to just 
             # tweak the output here by running the genshi stream from
             # src through a transformer that will make the change
-
+            
             xpath1 = 'thead/tr/th[@class="givenlineno"]'
             xpath2 = 'thead/tr/th[2]'   # last() not supported by Genshi?
             xpath3 = 'thead/tr/th[2]/text()'
