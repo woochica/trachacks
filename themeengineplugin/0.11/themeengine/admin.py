@@ -128,7 +128,7 @@ class CustomThemeAdminModule(Component):
         
         colors = {}
         if curtheme:
-            for name, prop, selector in curtheme['colors']:
+            for name, prop, selector in curtheme.get('colors', ()):
                 # Check the config first
                 val = self.config.get('theme', 'color.'+name)
                 if not val and curtheme.get('schemes'):

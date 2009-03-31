@@ -66,6 +66,8 @@
         };
         
         $('#schemes').find('select').change(function() {
+          if($(this).val() == '__none__')
+            return;
           var scheme = theme_schemes[$(this).val()];
           for(colorname in scheme) {
             set_color(colorname, scheme[colorname]);
