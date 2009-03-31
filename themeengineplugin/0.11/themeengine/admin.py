@@ -1,5 +1,7 @@
 # Created by Noah Kantrowitz on 2007-08-05.
 # Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+import os.path
+
 from pkg_resources import resource_filename, resource_string
 
 from trac.core import *
@@ -10,7 +12,7 @@ from trac.admin.api import IAdminPanelProvider
 
 from themeengine.api import ThemeEngineSystem
 
-class ThemeAdminModule(Component):
+class SimpleThemeAdminModule(Component):
     """An admin panel for ThemeEngine."""
 
     implements(IAdminPanelProvider, IPermissionRequestor, ITemplateProvider, IRequestHandler)
@@ -21,8 +23,7 @@ class ThemeAdminModule(Component):
     # IAdminPanelProvider methods
     def get_admin_panels(self, req):
         if req.perm.has_permission('THEME_ADMIN'):
-            yield 'theme', 'Theme', 'simple', 'Simple'
-            yield 'theme', 'Theme', 'advanced', 'Advanced'
+            yield 'theme', 'Theme', 'theme', 'Theme'
 
     def render_admin_panel(self, req, cat, page, path_info):
         if req.method == 'POST':
@@ -33,22 +34,27 @@ class ThemeAdminModule(Component):
         
         data = {
             'themeengine': {
-                'info': self.system.info,
+                'info': self.system.info.items(),
             },
         }
-        
-        theme_name = self.system.theme_name or 'default'
+
+        theme_name = self.system.theme_name or 'Default'
         data['themeengine']['current'] = theme_name
         index = 0
-        for i, (k, _) in enumerate(self.system.info.iteritems()):
+        curtheme = None
+        for i, (k, v) in enumerate(data['themeengine']['info']):
             if k == theme_name:
                 index = i
+                curtheme = v
                 break
-        data['themeengine']['current_index'] = index+1
-        
-        add_stylesheet(req, 'themeengine/jquery.jcarousel.css')
-        add_stylesheet(req, 'themeengine/skins/tango/skin.css')
-        add_script(req, 'themeengine/jquery.jcarousel.pack.js')
+        data['themeengine']['current_index'] = index
+        data['themeengine']['current_theme'] = curtheme
+            
+        #add_stylesheet(req, 'themeengine/jquery.jcarousel.css')
+        #add_stylesheet(req, 'themeengine/skins/tango/skin.css')
+        #add_script(req, 'themeengine/jquery.jcarousel.pack.js')
+        add_stylesheet(req, 'themeengine/admin.css')
+        add_script(req, 'themeengine/jcarousellite_1.0.1.js')
         return 'admin_theme.html', data
         
     # IPermissionRequestor methods
@@ -65,16 +71,18 @@ class ThemeAdminModule(Component):
     # IRequestHandler methods
     def match_request(self, req):
         return req.path_info.startswith('/themeengine')
-
+    
     def process_request(self, req):
         data = {}
         
         path_info = req.path_info[13:]
         if path_info.startswith('screenshot/'):
             return self._send_screenshot(req, data, path_info[11:])
-            
-        raise TracError
+        elif path_info == 'theme.css':
+            req.send_file(os.path.join(self.env.path, 'htdocs', 'theme.css'), 'text/css')
         
+        raise HTTPNotFound
+    
     def _send_screenshot(self, req, data, name):
         if name not in self.system.info:
             raise HTTPNotFound('Invalid theme name "%s"', name)
@@ -85,3 +93,95 @@ class ThemeAdminModule(Component):
         else:
             img = resource_string(__name__, 'htdocs/no_screenshot.png')
         req.send(img, 'image/png')
+
+
+class CustomThemeAdminModule(Component):
+    """An admin panel for ThemeEngine."""
+
+    implements(IAdminPanelProvider)
+
+    def __init__(self):
+        self.system = ThemeEngineSystem(self.env)
+
+    # IAdminPanelProvider methods
+    def get_admin_panels(self, req):
+        if req.perm.has_permission('THEME_ADMIN'):
+            yield 'theme', 'Theme', 'custom', 'Customize'
+            yield 'theme', 'Theme', 'advanced', 'Customize: Advanaced'
+
+    def render_admin_panel(self, req, cat, page, path_info):
+        data = {
+            'themes': self.system.info.items(),
+        }
+        
+        theme_name = self.system.theme_name or 'Default'
+        data['current'] = theme_name
+        index = 0
+        curtheme = None
+        for i, (k, v) in enumerate(data['themes']):
+            if k == theme_name:
+                index = i
+                curtheme = v
+                break
+        data['current_index'] = index
+        data['current_theme'] = curtheme
+        
+        colors = {}
+        if curtheme:
+            for name, prop, selector in curtheme['colors']:
+                # Check the config first
+                val = self.config.get('theme', 'color.'+name)
+                if not val and curtheme.get('schemes'):
+                    # Then look for a scheme
+                    val = curtheme['schemes'][0][1].get(name)
+                if not val:
+                    # Otherwise use black for foreground and white for background
+                    if prop == 'color':
+                        val = '#000000'
+                    else:
+                        val = '#ffffff'
+                colors[name] = val
+        data['colors'] = colors
+        data['enable'] = self.config.getbool('theme', 'enable_css', False)
+        if page == 'advanced':
+            data['css'] = open(os.path.join(self.env.path, 'htdocs', 'theme.css')).read()
+        
+        if req.method == 'POST':
+            if 'enable_css' in req.args:
+                self.config.set('theme', 'enable_css', 'enabled')
+            else:
+                self.config.set('theme', 'enable_css', 'disabled')
+            
+            for key, value in self.config.options('theme'):
+                if key.startswith('color.'):
+                    self.config.remove('theme', key)
+            
+            for name, color in colors.iteritems():
+                color = req.args.get('color_'+name, color)
+                self.config.set('theme', 'color.'+name, color)
+            
+            f = open(os.path.join(self.env.path, 'htdocs', 'theme.css'), 'w')
+            if page == 'advanced':
+                f.write(req.args.get('css', ''))
+            else:
+                f.write('/* Warning: this file is auto-generated. If you edit it, changes will be lost the next time you use the simple customizer. */\n')
+                for name, prop, selector in curtheme['colors']:
+                    color = req.args.get('color_'+name, colors.get(name, '#ffffff'))
+                    f.write('%s {\n'%selector)
+                    f.write('  %s: %s !important;\n'%(prop, color))
+                    f.write('}\n\n')
+            f.close()
+            
+            self.config.save()
+            req.redirect(req.href.admin(cat, page)) 
+        
+        add_stylesheet(req, 'themeengine/farbtastic/farbtastic.css')
+        add_stylesheet(req, 'themeengine/admin.css')
+        add_script(req, 'themeengine/farbtastic/farbtastic.js')
+        add_script(req, 'themeengine/jquery.rule.js')
+        if page == 'advanced':
+            return 'admin_theme_advanced.html', data
+        else:
+            return 'admin_theme_custom.html', data
+
+

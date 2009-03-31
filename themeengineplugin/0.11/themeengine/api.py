@@ -6,6 +6,13 @@ import inspect
 from trac.core import *
 from trac.config import Option
 
+class ThemeNotFound(TracError):
+    """The requested theme isn't found."""
+    
+    def __init__(self, name):
+        self.theme_name = name
+        super(TracError, self).__init__('Unknown theme %s'%self.theme_name)
+
 class IThemeProvider(Interface):
     """An interface to provide style information."""
     
@@ -25,12 +32,16 @@ class IThemeProvider(Interface):
            The folder containg the static content.
          screenshot::
            The name of the screenshot file.
+         colors::
+           A list of (name, css-property, selector) tuples.
+         schemes::
+           A list of (name, {color-name: value, ...}) tuples.
         """
 
 class ThemeEngineSystem(Component):
     """Central functionality for the theme system."""
     
-    theme_name = Option('theme', 'theme', default='default',
+    theme_name = Option('theme', 'theme', default='Default',
                    doc='The theme to use to style this Trac.')
     
     implements(IThemeProvider)
@@ -41,7 +52,7 @@ class ThemeEngineSystem(Component):
         elif self.theme_name in self.info:
             return self.info[self.theme_name]
         else:
-            raise TracError('Unknown theme %s'%self.theme_name)
+            raise ThemeNotFound(self.theme_name)
     theme = property(theme)
 
     providers = ExtensionPoint(IThemeProvider)
@@ -59,12 +70,26 @@ class ThemeEngineSystem(Component):
                 
     # IThemeProvider methods
     def get_theme_names(self):
-        yield 'default'
+        yield 'Default'
         
     def get_theme_info(self, name):
         return {
             'description': 'The default Trac theme.',
-            'screenshot': 'htdocs/default_screenshot.png'
+            'screenshot': 'htdocs/default_screenshot.png',
+            'colors': [
+                ('text', 'color', 'body'),
+                ('background', 'background-color', 'body'),
+                ('link', 'color', '*:link, *:visited'),
+                ('link hover', 'color', '*:link:hover, *:visited:hover'),
+            ],
+            'schemes': [
+                ('default', {
+                    'text': '#000000',
+                    'background': '#ffffff',
+                    'link': '#bb0000',
+                    'link hover': '#555555',
+                }),
+            ],
         }
 
 class ThemeBase(Component):

@@ -1,0 +1,36 @@
+<!--!
+	admin_theme
+	Created by Noah Kantrowitz on 2009-03-29.
+	Copyright (c) 2009 Noah Kantrowitz. All rights reserved.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="admin.html" />
+  <head>
+    <title>Customize theme</title>
+  </head>
+  <body>
+    <h2>Customize theme: Advanced</h2>
+    
+    <form method="post" id="advanced">
+      <fieldset>
+        <legend>General</legend>
+        <div>
+          <label for="enable_css">Enable:</label>
+          <input type="checkbox" id="enable_css" name="enable_css" value="1" checked="${enable}" />
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Style</legend>
+        <textarea name="css" rows="40" cols="80">$css</textarea>
+      </fieldset>
+      <div class="buttons">
+        <input type="submit" value="Submit" />
+      </div>
+    </form>
+  </body>
+</html>

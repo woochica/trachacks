@@ -1,0 +1,92 @@
+<!--!
+	admin_theme
+	Created by Noah Kantrowitz on 2009-03-29.
+	Copyright (c) 2009 Noah Kantrowitz. All rights reserved.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="admin.html" />
+  <head>
+    <title>Custom theme</title>
+    <style type="text/css" media="screen"></style>
+    <script type="text/javascript">
+      $(function() {
+        var theme_colors = {};
+        <py:for each="color in current_theme.get('colors',())">
+        theme_colors['${color[0]}'] = {
+          name: '${color[0]}',
+          prop: '${color[1]}',
+          selector: '${color[2]}',
+          color: '${colors.get(color[0], '')}'
+        };
+        </py:for>
+        
+        // <![CDATA[
+        var colors = $('#colors').addClass('js').after('<div id="farb"></div>');
+        var off = colors.position();
+        off.left += colors.outerWidth() + 4;
+        off.top += (colors.outerHeight(true) - colors.outerHeight(false));
+        $('#farb').css('position', 'absolute').css('top', off.top+'px').css('left', off.left+'px');
+        var farb = jQuery.farbtastic('#farb');
+        $('#colors input').focus(function() {
+          var elm = $(this);
+          farb.linkTo(function(color) {
+            elm.val(color).css('background-color', color);
+            var theme = theme_colors[elm.attr('name').substring(6)];
+            theme.color = color;
+            if (!document.styleSheets) {
+              if(theme.selector.search(/:/) == -1) {
+                $(theme.selector).css(theme.prop, color);
+              }
+            } else {
+              $.rule(theme.selector, 'style').remove();
+              var newcss = theme.selector + '{';
+              for(t in theme_colors) {
+                t = theme_colors[t];
+                if(t.selector == theme.selector)
+                  newcss += t.prop + ':' + t.color + '!important;';
+              }
+              newcss += '}';
+              $.rule(newcss).appendTo('style');
+            }
+          }).setColor(elm.val());
+        }).keyup(function() {
+          var val = $(this).val();
+          if(val.length == 7 && val[0] == '#')
+            farb.setColor(val);
+        }).each(function() {
+          $(this).css('background-color', $(this).val());
+          //$('body').append('<style id="sheet_'+$(this).attr('name').substring(6)+'" rel="alternate stylesheet" type="text/css" media="screen"></style>');
+        })[0].focus();
+      });
+      // ]]>
+    </script>
+  </head>
+  <body>
+    <h2>Custom theme</h2>
+    
+    <form method="post" id="simple">
+      <fieldset>
+        <legend>General</legend>
+        <div>
+          <label for="enable_css">Enable:</label>
+          <input type="checkbox" id="enable_css" name="enable_css" value="1" checked="${enable}" />
+        </div>
+      </fieldset>
+      <fieldset id="colors">
+        <legend>Colors</legend>
+        <div py:for="name, color in sorted(colors.iteritems())">
+          <label for="color_$name">${name.title()}:</label>
+          <input type="text" id="color_$name" name="color_$name" value="${color.upper()}" size="8" />
+        </div>
+      </fieldset>
+      <div class="buttons">
+        <input type="submit" value="Submit" />
+      </div>
+    </form>
+  </body>
+</html>
