@@ -266,10 +266,12 @@ width : 600px;
             </fieldset>
           </div><!-- comment field -->
       
-          <fieldset id="properties">
+          <fieldset id="properties"
+                    py:if="'TICKET_CHGPROP' in perm(ticket.resource) or
+                           (not ticket.exists and 'TICKET_CREATE' in perm)">
             <legend py:if="ticket.exists">Properties</legend>
 
-            <div class="field-row">
+            <div class="field-row" py:if="'TICKET_EDIT_DESCRIPTION' in perm(ticket.resource) or not ticket.exists">
               <label for="field-summary">Project Title</label>
               <input type="text" id="field-summary" name="field_summary" size="70" value="$ticket.summary"/>
             </div>
