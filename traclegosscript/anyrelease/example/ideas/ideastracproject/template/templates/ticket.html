@@ -235,20 +235,21 @@ width : 600px;
           </div><!-- changelog -->
         </py:if><!-- change history -->
 
-        <!-- comment field -->
-        <div class="field" py:if="ticket.exists">
-          <fieldset class="iefix">
-            <label for="comment" i18n:msg="">Comment (you may use
-              <a tabindex="42" href="${href.wiki('WikiFormatting')}">WikiFormatting</a>
-              here):
-            </label><br />
-            <p><textarea id="comment" name="comment" class="wikitext" rows="10" cols="78">${comment}</textarea></p>
-          </fieldset>
-        </div><!-- comment field -->
-
-        <form py:strip="'TICKET_MODIFY' not in perm(ticket.resource)"
+        <form py:if="'TICKET_MODIFY' in perm(ticket.resource)"
               action="${ticket.exists and href.ticket(ticket.id) or  href.newticket()}" method="post" 
               id="propertyform">
+
+
+          <!-- comment field -->
+          <div class="field" py:if="ticket.exists">
+            <fieldset class="iefix">
+              <label for="comment" i18n:msg="">Comment (you may use
+                <a tabindex="42" href="${href.wiki('WikiFormatting')}">WikiFormatting</a>
+                here):
+              </label><br />
+              <p><textarea id="comment" name="comment" class="wikitext" rows="10" cols="78">${comment}</textarea></p>
+            </fieldset>
+          </div><!-- comment field -->
       
           <fieldset id="properties">
             <legend py:if="ticket.exists">Properties</legend>
@@ -346,6 +347,9 @@ width : 600px;
       
           <div class="buttons">
             <input py:if="not ticket.exists" type="hidden" name="field_status" value="new" />
+            <py:if test="ticket.exists">
+              <input type="hidden" name="ts" value="${timestamp}" />
+            </py:if>
             <input type="submit" name="submit" value="Submit" />
           </div>
       
