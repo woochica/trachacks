@@ -142,7 +142,7 @@ width : 600px;
           
           <p>
             <h1>Initiator</h1>
-            $author_id
+            $ticket.reporter
           </p>
           
           <p py:if="ticket.cc">
@@ -335,7 +335,8 @@ width : 600px;
           </fieldset><!-- properties -->
 
           <!-- Workflow support -->
-          <fieldset id="action" py:if="ticket.exists">
+          <fieldset id="action" py:if="ticket.exists and 
+                                       ('TICKET_ADMIN' in perm(ticket.resource))">
             <legend>Action</legend>
             <div py:for="key, label, controls, hints in action_controls">
               <input type="radio" id="action_$key" name="action" value="$key" checked="${action == key or None}" />
