@@ -59,6 +59,10 @@ class IncludeSourceMacro(WikiMacroBase):
         # in CSS on page; there is no provision for defining it in this macro)
         [[IncludeSource(trunk/proj/file.py, start=20, end=50, header=New header text, header_class=my_class)]]
         
+        # includes line 20-50 inclusive, but suppresses the display of line numbers. 
+        # (0, no, false, and none are all honored for suppressing - case insensitive)
+        [[IncludeSource(trunk/proj/file.py, start=20, end=50, line_numbers=0)]]
+
     }}}
 
     See TracLinks, TracSyntaxColoring and trac/mimeview/api.py
@@ -131,6 +135,18 @@ class IncludeSourceMacro(WikiMacroBase):
         context.file_name = file_name
         context.rev = rev
         context.startline = 1
+        
+        # we generally include line numbers in the output, unless it has been
+        # explicitly requested otherwise. 0, no, false, none will suppress
+        line_numbers = kwargs.get('line_numbers', None)
+        if line_numbers is None:
+            line_numbers = True
+        else:
+            try:
+                line_numbers = int(line_numbers)
+            except:
+                negatory = ('no', 'false', 'none')
+                line_numbers = str(line_numbers).lower() not in negatory
 
         start, end = kwargs.get('start', None), kwargs.get('end', None)
         if start or end:
@@ -141,23 +157,26 @@ class IncludeSourceMacro(WikiMacroBase):
         url = None  # render method doesn't seem to use this
 
         mv = Mimeview(self.env)
-        src = mv.render(formatter.context, mimetype, src, file_name, url, ['givenlineno'])
+        annotations = line_numbers and ['givenlineno'] or None
+            
+        src = mv.render(formatter.context, mimetype, src, file_name, url, annotations)
 
-        # the _render_source method will always set the CSS class
-        # of the annotator to it's name; there isn't an easy way
-        # to override that. We could create our own CSS class for
-        # givenlineno that mimics lineno, but it's cleaner to just 
-        # tweak the output here by running the genshi stream from
-        # src through a transformer that will make the change
-        
-        xpath1 = 'thead/tr/th[@class="givenlineno"]'
-        xpath2 = 'thead/tr/th[2]'   # last() not supported by Genshi?
-        xpath3 = 'thead/tr/th[2]/text()'
-        
-        # TODO - does genshi require a QName here? Seems to work w/o it
-        src = src.generate() | Transformer(xpath1).attr('class', 'lineno') \
-                             | Transformer(xpath2).attr('class', header_class) \
-                             | Transformer(xpath3).replace(header)
+        if line_numbers:
+            # the _render_source method will always set the CSS class
+            # of the annotator to it's name; there isn't an easy way
+            # to override that. We could create our own CSS class for
+            # givenlineno that mimics lineno, but it's cleaner to just 
+            # tweak the output here by running the genshi stream from
+            # src through a transformer that will make the change
+
+            xpath1 = 'thead/tr/th[@class="givenlineno"]'
+            xpath2 = 'thead/tr/th[2]'   # last() not supported by Genshi?
+            xpath3 = 'thead/tr/th[2]/text()'
+
+            # TODO - does genshi require a QName here? Seems to work w/o it
+            src = src.generate() | Transformer(xpath1).attr('class', 'lineno') \
+                                 | Transformer(xpath2).attr('class', header_class) \
+                                 | Transformer(xpath3).replace(header)
 
         return src
 
