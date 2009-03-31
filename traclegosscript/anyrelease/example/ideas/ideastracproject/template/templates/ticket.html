@@ -135,6 +135,21 @@ width : 600px;
         <h1 py:if="not ticket.exists">New Project Pitch</h1>
 
         <div py:if="ticket.exists" id="ticket">
+
+          <div class="date">
+            <p py:choose="ticket.status">
+              <span class="status" py:when="'new'">NEW PITCH</span>
+              <span class="status" py:when="'closed'">CLOSED</span>
+              <span class="status" py:otherwise="">$ticket.status</span>
+            </p>
+            
+            
+
+            <p py:if="ticket.exists">Opened ${dateinfo(ticket.time_created)} ago</p>
+            <p py:if="ticket.time_changed != ticket.time_created">Last modified ${dateinfo(ticket.time_changed)} ago</p>
+            <p py:if="not ticket.exists"><i>(ticket not yet created)</i></p>
+          </div>
+
           <p>
             <h1>Project Title</h1>
             <a href="${href.ticket(ticket.id)}">${ticket.summary}</a>
