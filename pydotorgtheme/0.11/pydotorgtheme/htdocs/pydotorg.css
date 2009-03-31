@@ -26,27 +26,27 @@ h1, h2, h3, h4, h5 {
 h1 {
   color: #234764;
   font-size: 162%;
-  margin: 0.7em 0 0.7em 0;
+/*  margin: 0.7em 0 0.7em 0;*/
   text-decoration: none;
 }
 
 h2 {
   color: #366d9c;
   font-size: 140%;
-  margin: 0.7em 0 0.7em 0;
+/*  margin: 0.7em 0 0.7em 0;*/
 }
 
 h3 {
   color: #366d9c;
   font-size: 135%;
   font-style: italic;
-  margin: 0.4em 0 0.4em 0;
+/*  margin: 0.4em 0 0.4em 0;*/
 }
 
 h4 {
   color: #366d9c;
   font-size: 125%;
-  margin: 0.4em 0 0.4em 0;
+/*  margin: 0.4em 0 0.4em 0;*/
 }
 
 #banner {
@@ -232,9 +232,9 @@ div.system-message {
   padding: 0 0.55em 40px 0.0em;
 }
 
-.wikipage h1, .wikipage h2, .wikipage h3 {
+/*.wikipage h1, .wikipage h2, .wikipage h3 {
   margin: 0;
-}
+}*/
 
 #content.query :link, #content.query :link:hover, #content.query :visited,
 #content.report :link, #content.report :link:hover, #content.report :visited  {
