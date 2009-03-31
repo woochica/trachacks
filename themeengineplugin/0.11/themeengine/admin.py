@@ -168,7 +168,7 @@ class CustomThemeAdminModule(Component):
                 for name, prop, selector in curtheme['colors']:
                     color = req.args.get('color_'+name, colors.get(name, '#ffffff'))
                     f.write('%s {\n'%selector)
-                    f.write('  %s: %s !important;\n'%(prop, color))
+                    f.write('  %s: %s;\n'%(prop, color))
                     f.write('}\n\n')
             f.close()
             

@@ -66,6 +66,10 @@
                               label aligns textarea better in IE */
 }
 
+#simple #schemes {
+  display: none;
+}
+
 #simple .js#colors {
   min-height: 195px;
   height: 195px !important;

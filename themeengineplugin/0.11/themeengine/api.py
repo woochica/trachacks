@@ -79,12 +79,18 @@ class ThemeEngineSystem(Component):
             'colors': [
                 ('text', 'color', 'body'),
                 ('background', 'background-color', 'body'),
-                ('link', 'color', '*:link, *:visited'),
-                ('link hover', 'color', '*:link:hover, *:visited:hover'),
+                ('link', 'color', '*:link, *:visited, #tabs *:link, #tabs *:visited'),
+                ('link hover', 'color', '*:link:hover, *:visited:hover, #tabs *:link:hover, #tabs *:visited:hover'),
             ],
             'schemes': [
                 ('default', {
                     'text': '#000000',
+                    'background': '#ffffff',
+                    'link': '#bb0000',
+                    'link_hover': '#555555',
+                }),
+                ('omgponies', {
+                    'text': '#E8A1B0',
                     'background': '#ffffff',
                     'link': '#bb0000',
                     'link hover': '#555555',

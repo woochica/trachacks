@@ -24,44 +24,72 @@
           color: '${colors.get(color[0], '')}'
         };
         </py:for>
+        var theme_schemes = {};
+        <py:for each="name, scheme in current_theme.get('schemes',())">
+        theme_schemes['$name'] = {};
+        <py:for each="colorname, color in scheme.iteritems()">
+        theme_schemes['$name']['$colorname'] = '$color';
+        </py:for>
+        </py:for>
         
         // <![CDATA[
         var colors = $('#colors').addClass('js').after('<div id="farb"></div>');
-        var off = colors.position();
-        off.left += colors.outerWidth() + 4;
-        off.top += (colors.outerHeight(true) - colors.outerHeight(false));
-        $('#farb').css('position', 'absolute').css('top', off.top+'px').css('left', off.left+'px');
         var farb = jQuery.farbtastic('#farb');
+        
+        var set_color = function(name, color) {
+          $('#scheme').val('__none__');
+          var elm = $('#color_'+name).val(color).css('background-color', color);
+          var v = Math.max.apply(null, farb.unpack(color));
+          if(v < 0.5)
+            elm.css('color', '#FFF');
+          else
+            elm.css('color', '#000');
+          console.log(v);
+          
+          var theme = theme_colors[name];
+          theme.color = color;
+          if (!document.styleSheets) {
+            if(theme.selector.search(/:/) == -1) {
+              $(theme.selector).css(theme.prop, color);
+            }
+          } else {
+            $.rule(theme.selector, 'style').remove();
+            var newcss = theme.selector + '{';
+            for(t in theme_colors) {
+              t = theme_colors[t];
+              if(t.selector == theme.selector)
+                newcss += t.prop + ':' + t.color + ';';
+            }
+            newcss += '}';
+            $.rule(newcss).appendTo('style');
+          }
+        };
+        
+        $('#schemes').find('select').change(function() {
+          var scheme = theme_schemes[$(this).val()];
+          for(colorname in scheme) {
+            set_color(colorname, scheme[colorname]);
+          }
+        }).end().show();
+        
         $('#colors input').focus(function() {
           var elm = $(this);
           farb.linkTo(function(color) {
-            elm.val(color).css('background-color', color);
-            var theme = theme_colors[elm.attr('name').substring(6)];
-            theme.color = color;
-            if (!document.styleSheets) {
-              if(theme.selector.search(/:/) == -1) {
-                $(theme.selector).css(theme.prop, color);
-              }
-            } else {
-              $.rule(theme.selector, 'style').remove();
-              var newcss = theme.selector + '{';
-              for(t in theme_colors) {
-                t = theme_colors[t];
-                if(t.selector == theme.selector)
-                  newcss += t.prop + ':' + t.color + '!important;';
-              }
-              newcss += '}';
-              $.rule(newcss).appendTo('style');
-            }
+              set_color(elm.attr('name').substring(6), color);
           }).setColor(elm.val());
         }).keyup(function() {
           var val = $(this).val();
           if(val.length == 7 && val[0] == '#')
             farb.setColor(val);
         }).each(function() {
-          $(this).css('background-color', $(this).val());
-          //$('body').append('<style id="sheet_'+$(this).attr('name').substring(6)+'" rel="alternate stylesheet" type="text/css" media="screen"></style>');
+          set_color($(this).attr('name').substring(6), $(this).val());
+          //$(this).css('background-color', $(this).val());
         })[0].focus();
+        
+        var off = colors.position();
+        off.left += colors.outerWidth() + 4;
+        off.top += (colors.outerHeight(true) - colors.outerHeight(false));
+        $('#farb').css('position', 'absolute').css('top', off.top+'px').css('left', off.left+'px');
       });
       // ]]>
     </script>
@@ -77,11 +105,21 @@
           <input type="checkbox" id="enable_css" name="enable_css" value="1" checked="${enable}" />
         </div>
       </fieldset>
+      <fieldset id="schemes" py:if="current_theme and current_theme.get('schemes') and len(current_theme['schemes']) > 1">
+        <legend>Schemes</legend>
+        <div>
+          <label for="scheme">Scheme:</label>
+          <select id="scheme" name="scheme" value="__none__">
+            <option name="__none__">&nbsp;</option>
+            <option py:for="name, scheme in current_theme['schemes']" value="$name">${name.title()}</option>
+          </select>
+        </div>
+      </fieldset>
       <fieldset id="colors">
         <legend>Colors</legend>
         <div py:for="name, color in sorted(colors.iteritems())">
           <label for="color_$name">${name.title()}:</label>
-          <input type="text" id="color_$name" name="color_$name" value="${color.upper()}" size="8" />
+          <input type="text" id="color_$name" name="color_$name" value="${color.replace('_', ' ').upper()}" size="8" />
         </div>
       </fieldset>
       <div class="buttons">
