@@ -355,7 +355,7 @@ display : none;
           <fieldset id="properties"
                     py:if="'TICKET_CHGPROP' in perm(ticket.resource) or
                            (not ticket.exists and 'TICKET_CREATE' in perm)">
-            <legend class="foldable" py:if="ticket.exists">Properties</legend>
+            <legend class="foldable" py:if="ticket.exists">Edit</legend>
 
             <div class="field-row field-summary" py:if="'TICKET_EDIT_DESCRIPTION' in perm(ticket.resource) or not ticket.exists">
               <label for="field-summary">Project Title</label>
