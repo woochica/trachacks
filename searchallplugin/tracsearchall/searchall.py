@@ -14,6 +14,7 @@ except ImportError:
 
 from trac.perm import IPermissionRequestor
 from trac.env import open_environment
+from trac.util import Markup
 
 import re
 import posixpath
@@ -87,6 +88,6 @@ class SearchAllPlugin(Component):
             
             for result in results:
                 yield (result[0],
-                '%s: %s' % (env.project_name, result[1]))\
+                Markup('%s: %s' % (env.project_name, result[1])))\
                 + result[2:]
             
