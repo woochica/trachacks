@@ -262,7 +262,7 @@ display : none;
           </p>
           
           <p>
-            <h1>How is this project relevant to TOPP now?</h1>
+            <h1>How is this project relevant to TOPP now?</h1>            
             $ticket.why
           </p>
           
@@ -385,7 +385,8 @@ display : none;
             </div>
             
             <div class="field-row field-why">
-              <label for="field-why">How is this project relevant to TOPP now?</label>
+              <label for="field-why">How is this project relevant to TOPP now?</label> 
+              <i>you should use our <a href="http://www.openplans.org/projects/topp-labs/criteria-for-project-selection-and-continuation">project choosing criteria</a></i>
               <textarea id="field-why" name="field_why" cols="70" rows="10" class="wikitext" py:content="ticket.why"></textarea>
               
             </div>
@@ -398,7 +399,7 @@ display : none;
             	
 				<ul>
                 <py:for each="value in ['internal', 'external']">
-                  <li><input class="inline" type="radio" name="field_consumer" value="$value" py:attrs="{'checked': value == ticket.consumer and True or None}"/><label>$value</label></li>
+                  <li><input id="field_consumer_${value}" class="inline" type="radio" name="field_consumer" value="$value" py:attrs="{'checked': value == ticket.consumer and True or None}"/><label for="field_consumer_${value}">$value</label></li>
                 </py:for>
                 </ul>
 
@@ -410,7 +411,7 @@ display : none;
                 
 				<ul>
                 <py:for each="value in ['about a week', 'under a month', 'a month or two', 'several months', 'over a year']">
-                  <li><input class="inline" type="radio" name="field_timeestimate" value="$value" py:attrs="{'checked': value == ticket.timeestimate and True or None}"/><label>$value</label></li>
+                  <li><input id="field_timeestimate_${value.replace(' ', '_')}" class="inline" type="radio" name="field_timeestimate" value="$value" py:attrs="{'checked': value == ticket.timeestimate and True or None}"/><label for="field_timeestimate_${value.replace(' ', '_')}">$value</label></li>
                 </py:for>
 				</ul>                
               </fieldset>
