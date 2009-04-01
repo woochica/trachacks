@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 [account-manager]
 force_passwd_change = True
 generated_password_length = 8
@@ -91,6 +89,8 @@ name = pitch
 
 [query]
 items_per_page = 100
+default_anonymous_query = status=new&status=proposal&col=summary&col=status&col=timeestimate&col=consumer&order=status
+default_query = status=new&status=proposal&col=summary&col=status&col=timeestimate&col=consumer&order=status
 
 [report]
 items_per_page = 100
@@ -115,34 +115,46 @@ max_description_size = 262144
 
 [ticket-custom]
 audience = textarea
-audience.label = Audience
 audience.format = wiki
+audience.label = Audience
 consumer = radio
 consumer.label = Consumer
 consumer.options = internal|external
+people = textarea
+people.format = wiki
+people.label = People this project will need
+research = textarea
+research.format = wiki
+research.label = Further research
+risks = textarea
+risks.format = wiki
+risks.label = Risks
 timeestimate = radio
-timeestimate.label = Time estimation 
+timeestimate.label = Time estimation
 timeestimate.options = about a week|under a month|a month or two|several months|over a year
 why = textarea
-why.label = Why should TOPP do this project now?
 why.format = wiki
-people = textarea
-people.label = People this project will need
-people.format = wiki
-risks = textarea
-risks.label = Risks
-risks.format = wiki
-research = textarea
-research.label = Further research
-research.format = wiki
+why.label = Why should TOPP do this project now?
 
 [ticket-workflow]
-leave = * -> *
-leave.default = 1
-leave.operations = leave_status
 approve = new -> proposal
 approve.operations = set_owner_to_reporter
 approve.permissions = TICKET_ADMIN
+leave = * -> *
+leave.default = 1
+leave.operations = leave_status
+deny = new, proposal -> closed
+deny.name = deny
+deny.operations = set_owner_to_reporter,set_resolution
+deny.permissions = TICKET_ADMIN
+deny.set_resolution = denied
+finalize = proposal -> closed
+finalize.name = approve
+finalize.operations = set_resolution
+finalize.permissions = TICKET_ADMIN
+finalize.set_resolution = approved
+reopen = closed -> new
+reopen.permissions = TICKET_MODIFY
 
 [timeline]
 abbreviated_messages = True
@@ -167,4 +179,3 @@ redirect_time = 5
 smtp_always_bcc = []
 smtp_always_cc = []
 use_public_cc = False
-
