@@ -25,8 +25,8 @@
       jQuery(document).ready(function($) {
         $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
         
+      $("fieldset legend.foldable").enableFolding(true);
       <py:when test="ticket.exists">
-        $("fieldset legend.foldable").enableFolding(false);
         /* only enable control elements for the currently selected action */
         var actions = $("#action input[name='action']");
 
@@ -40,7 +40,6 @@
         updateActionFields();
       </py:when>
       <py:otherwise>
-        $("fieldset legend.foldable").enableFolding(true);
         $("#field-summary").focus();
       </py:otherwise>
       });
@@ -356,7 +355,7 @@ display : none;
           <fieldset id="properties"
                     py:if="'TICKET_CHGPROP' in perm(ticket.resource) or
                            (not ticket.exists and 'TICKET_CREATE' in perm)">
-            <legend py:if="ticket.exists">Properties</legend>
+            <legend class="foldable" py:if="ticket.exists">Properties</legend>
 
             <div class="field-row field-summary" py:if="'TICKET_EDIT_DESCRIPTION' in perm(ticket.resource) or not ticket.exists">
               <label for="field-summary">Project Title</label>
