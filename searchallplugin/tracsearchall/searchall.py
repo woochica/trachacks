@@ -41,6 +41,11 @@ class SearchAllPlugin(Component):
         # get search path and base_url
         search_path, this_project = os.path.split(self.env.path)
         base_url, _ = posixpath.split(req.abs_href())
+
+        #Closes #4158, thanks to jholg
+        if 'tracforge' in self.config: 
+            if self.config.get('tracforge', 'master_path') == self.env.path: 
+                base_url = '/'.join((base_url, this_project, 'projects'))  
             
         # remove 'meta' from filters
         subfilters = [];
