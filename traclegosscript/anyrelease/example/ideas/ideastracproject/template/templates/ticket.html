@@ -47,18 +47,73 @@
     </script>
 
 <style type="text/css">
+/* test */
 
+fieldset#properties, 
+fieldset#effort-estimation, 
+.field-timeestimate, 
+.field-consumer {
+border : none;
+padding : 0;
+}
+
+fieldset#effort-estimation fieldset {
+padding-left : 1em;
+}
+
+.field-timeestimate legend, 
+.field-consumer legend {
+font-weight : normal;
+color : #666;
+padding : 0;
+font-size : 100%;
+}
+
+
+.field-timeestimate ul, 
+.field-consumer ul {
+list-style-type : none;
+}
+
+.field-timeestimate ul input, 
+.field-consumer ul input,
+.field-timeestimate ul label, 
+.field-consumer ul label {
+display : inline;
+}
+
+.field-summary input {
+font-size : 1.5em;
+}
+
+.field-author, 
+.field-cc {
+width : 250px !important;
+margin-right : 5em;
+}
+
+.field-author input, 
+.field-cc input {
+width : 240px !important;
+}
+
+.field-description {
+margin-top : 2em;
+}
 
 div.field-row {
 width : 700px;
+float : left;
 margin-bottom : 2em;
-
 }
-
 .field-row label {
 display: block;
 width : 600px;
-margin-top : 2em;
+color : #666;
+}
+
+.field-timeestimate label {
+color : #000;
 }
 
 .field-row .inline {
@@ -66,18 +121,24 @@ display: inline;
 width: auto;
 margin-top: 0;
 }
-
-.field-row input, 
-.field-row textarea, 
-.field-row select, 
+.field-row input,
+.field-row textarea,
+.field-row select,
 .field-row .wikitoolbar {
 display: block;
 width : 600px;
 }
 
+.field-row .wikitoolbar {
+width : auto;
+float : left;
+margin-left : 2px;
+}
+
+
 fieldset legend.foldable :link,
-fieldset legend.foldable :visited { 
-background: url(${chrome.htdocs_location}/expanded.png) 0 50% no-repeat;
+fieldset legend.foldable :visited {
+background: url(/pitch/chrome/common//expanded.png) 0 50% no-repeat;
 border: none;
 color: #666;
 font-size: 110%;
@@ -87,12 +148,12 @@ fieldset legend.foldable :link:hover,
 fieldset legend.foldable :visited:hover {
 background-color: transparent;
 }
-
 fieldset.collapsed legend.foldable :link,
-fieldset.collapsed legend.foldable :visited { 
-background-image: url(${chrome.htdocs_location}/collapsed.png);  
+fieldset.collapsed legend.foldable :visited {
+background-image: url(/pitch/chrome/common//collapsed.png);
 }
 fieldset.collapsed table, fieldset.collapsed div { display: none }
+
 
 
 </style>
@@ -294,76 +355,79 @@ fieldset.collapsed table, fieldset.collapsed div { display: none }
                            (not ticket.exists and 'TICKET_CREATE' in perm)">
             <legend py:if="ticket.exists">Properties</legend>
 
-            <div class="field-row" py:if="'TICKET_EDIT_DESCRIPTION' in perm(ticket.resource) or not ticket.exists">
+            <div class="field-row field-summary" py:if="'TICKET_EDIT_DESCRIPTION' in perm(ticket.resource) or not ticket.exists">
               <label for="field-summary">Project Title</label>
               <input type="text" id="field-summary" name="field_summary" size="70" value="$ticket.summary"/>
             </div>
         
-            <div class="field-row">
+            <div class="field-row field-author">
               <label for="author">Initiator</label>
               <input type="text" id="author" name="author" value="$author_id" size="70"/>
             </div>
             
-            <div class="field-row">
+            <div class="field-row field-cc">
               <label for="field-cc">Advocates</label>
               <input type="text" id="field-cc" title="Space or comma delimited email addresses and usernames are accepted." size="70" name="field_cc" value="$ticket.cc"/>
             </div>
             
-            <div class="field-row">
+            <div class="field-row field-description">
               <label for="field-description">What is the purpose of this project?</label>
               <textarea id="field-description" name="field_description"
                         class="wikitext" rows="10" cols="70"
                         py:content="ticket.description"></textarea>
             </div>
         
-            <div class="field-row">
+            <div class="field-row field-audience">
               <label for="field-audience">Who is this project for? What is its audience?</label>
               <textarea id="field-audience" name="field_audience" cols="70" rows="10" class="wikitext" py:content="ticket.audience"></textarea>
             </div>
             
-            <div class="field-row">
+            <div class="field-row field-why">
               <label for="field-why">How is this project relevant to TOPP now?</label>
               <textarea id="field-why" name="field_why" cols="70" rows="10" class="wikitext" py:content="ticket.why"></textarea>
               
             </div>
             
-            <fieldset>
+            <fieldset id="effort-estimation">
               <legend class="foldable">Effort Estimation</legend>
               
-              <div class="field-row">
-                <label class="inline" for="field_consumer">This project is:</label>
-            
+              <fieldset class="field-row field-consumer">
+                <legend>This project is:</legend>
+            	
+				<ul>
                 <py:for each="value in ['internal', 'external']">
-                  <input class="inline" type="radio" name="field_consumer" value="$value" py:attrs="{'checked': value == ticket.consumer and True or None}"/>$value
+                  <li><input class="inline" type="radio" name="field_consumer" value="$value" py:attrs="{'checked': value == ticket.consumer and True or None}"/><label>$value</label></li>
                 </py:for>
-                
-              </div>
+                </ul>
+
+              </fieldset>
               
-              <div class="field-row">
+              <fieldset class="field-row field-timeestimate">
             
-                <label class="inline" for="field_timeestimate">This project will take:</label>
+                <legend>This project will take:</legend>
                 
+				<ul>
                 <py:for each="value in ['about a week', 'under a month', 'a month or two', 'several months', 'over a year']">
-                  <input class="inline" type="radio" name="field_timeestimate" value="$value" py:attrs="{'checked': value == ticket.timeestimate and True or None}"/>$value
+                  <li><input class="inline" type="radio" name="field_timeestimate" value="$value" py:attrs="{'checked': value == ticket.timeestimate and True or None}"/><label>$value</label></li>
                 </py:for>
-                
-              </div>
+				</ul>                
+              </fieldset>
           
-              <div class="field-row">
+              <div class="field-row field-people">
                 <label class="inline" for="field_people">People this project will need:</label>
                 <textarea id="field-people" name="field_people"
                           class="wikitext" rows="10" cols="70"
                           py:content="ticket.people"></textarea>
               </div>
           
-              <div class="field-row">
+              <div class="field-row field-risks">
                 <label class="inline" for="field_risks">Risks</label>
                 <textarea id="field-risks" name="field_risks"
                           class="wikitext" rows="10" cols="70"
                           py:content="ticket.risks"></textarea>
               </div>
           
-              <div class="field-row">
+              <div class="field-row field-research">
                 <label class="inline" for="field_research">Any further research you would like to include</label>
                 <textarea id="field-research" name="field_research"
                           class="wikitext" rows="10" cols="70"
@@ -405,3 +469,4 @@ fieldset.collapsed table, fieldset.collapsed div { display: none }
     </div><!-- content -->
   </body>
 </html>
+
