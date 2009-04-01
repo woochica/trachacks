@@ -226,7 +226,7 @@ display : none;
             <p py:choose="ticket.status">
               <span class="status" py:when="'new'">NEW PITCH</span>
               <span class="status" py:when="'closed'">${ticket.resolution.upper()}</span>
-              <span class="status" py:otherwise="">$ticket.status</span>
+              <span class="status" py:otherwise="">${ticket.status.upper()}</span>
             </p>
             
             
