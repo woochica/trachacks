@@ -14,7 +14,7 @@
 # Author: Bhuricha Sethanandha <khundeen@gmail.com>
 
 import os
-from trac.core import *
+from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
 
 

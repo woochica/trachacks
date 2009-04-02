@@ -13,25 +13,22 @@
 #
 # Author: Bhuricha Sethanandha <khundeen@gmail.com>
 
-import re
 from datetime import timedelta, datetime
 from genshi.builder import tag
-from trac import __version__
 from trac import mimeview
-from model import *  # need it but should have worked in __init__.py
 from trac.config import ExtensionOption
 from trac.mimeview import Context
-from trac.core import *
+from trac.core import Component, implements
 from trac.perm import IPermissionRequestor
-from trac.ticket import Milestone, Ticket, model #These are object
+from trac.ticket import Milestone
 from trac.ticket.query import Query
-from trac.ticket.roadmap import ITicketGroupStatsProvider, DefaultTicketGroupStatsProvider, \
+from trac.ticket.roadmap import ITicketGroupStatsProvider, \
                                 get_ticket_stats, get_tickets_for_milestone, \
-                                milestone_stats_data, TicketGroupStats
-from trac.util.compat import sorted
+                                milestone_stats_data
 from trac.util.datefmt import utc
-from trac.web import IRequestHandler, IRequestFilter
+from trac.web import IRequestHandler
 from trac.web.chrome import add_stylesheet, INavigationContributor, ITemplateProvider
+from tracmetrixplugin.model import ChangesetsStats, TicketGroupMetrics
 
 # Constants
 DAYS_BACK = 28

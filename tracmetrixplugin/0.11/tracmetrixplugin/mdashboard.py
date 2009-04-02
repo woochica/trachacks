@@ -16,33 +16,23 @@
 import re
 import os
 
-from string import find
 from bisect import bisect
 from itertools import groupby
-from datetime import datetime, timedelta, date
-import re
-from time import localtime, strftime, time, mktime
+from datetime import datetime, timedelta
 
 from genshi.builder import tag
 
-#from pylab import drange, array, searchsorted, date2num, num2date, \
-#                  plot, savefig, axis, xlabel, ylable, title, legend
-from pylab import *
-from trac import __version__
+from pylab import date2num, num2date, drange
 from trac import mimeview
-from trac.core import *
+from trac.core import Component, implements, TracError
 from trac.perm import IPermissionRequestor
-from trac.util import sorted
 from trac.util.compat import sorted
-from trac.util.datefmt import parse_date, utc, to_timestamp, to_datetime, \
-                              get_date_format_hint, get_datetime_format_hint, \
-                              format_date, format_datetime, pretty_timedelta
-from trac.util.text import shorten_line, CRLF, to_unicode
-from trac.ticket import Milestone, Ticket, TicketSystem, model #These are object    
-from trac.ticket.roadmap import ITicketGroupStatsProvider, DefaultTicketGroupStatsProvider, \
+from trac.util.datefmt import utc, to_datetime, format_date
+from trac.ticket import Milestone, TicketSystem #These are object    
+from trac.ticket.roadmap import ITicketGroupStatsProvider, \
                                 get_ticket_stats, get_tickets_for_milestone, \
-                                milestone_stats_data, TicketGroupStats
-from trac.web import IRequestHandler, IRequestFilter
+                                milestone_stats_data
+from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor, ITemplateProvider
 from trac.wiki.api import IWikiSyntaxProvider
 from trac.config import ExtensionOption, IntOption, BoolOption
@@ -362,7 +352,6 @@ class MDashboard(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        import re, urllib
 
         self.env.log.info("mdashboard match request %s" % (req.path_info,))  
 
