@@ -9,31 +9,31 @@
 <body>
 <form method="post" onsubmit="compile_pages(this);">
 <fieldset>
-    <legend>Style/Content Properties</legend>
+    <legend>Style/Content Properties (leave blank for defaults)</legend>
     <table>
     <tbody>
         <tr>
-            <td>CSS file or URL(blank for default):</td>
+            <td>CSS file or URL:</td>
             <td><input type="text" value="${css_url}" name="css_url" size="80"/></td>
             <td><input type="submit" name="viewcss" value="View" /></td>
         </tr>
         <tr>
-            <td>Book additional CSS file or URL(blank for default):</td>
+            <td>Book additional CSS file or URL:</td>
             <td><input type="text" value="${book_css_url}" name="book_css_url" size="80"/></td>
             <td><input type="submit" name="viewbookcss" value="View" /></td>
         </tr>
         <tr>
-            <td>Article additional CSS file or URL(blank for default):</td>
+            <td>Article additional CSS file or URL:</td>
             <td><input type="text" value="${article_css_url}" name="article_css_url" size="80"/></td>
             <td><input type="submit" name="viewarticlecss" value="View" /></td>
         </tr>
         <tr>
-            <td>Book front page file or URL (blank for default):</td>
+            <td>Book front page file or URL:</td>
             <td><input type="text" value="${frontpage_url}" name="frontpage_url" size="80"/></td>
             <td><input type="submit" name="viewfrontpage" value="View" /></td>
         </tr>
         <tr>
-            <td>Header, footer, additional content file or URL:</td>
+            <td>Header/footer/extra content file or URL:</td>
             <td><input type="text" value="${extracontent_url}" name="extracontent_url" size="80"/></td>
             <td><input type="submit" name="viewextracontent" value="View" /></td>
         </tr>
