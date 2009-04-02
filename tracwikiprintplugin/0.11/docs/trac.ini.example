@@ -1,0 +1,11 @@
+[components]
+wikiprint.* = enabled
+
+[wikiprint]
+toc_title = "Table of Contents"
+#CSS and content files (or URLS, using http://...)
+css_url=c:/path/to/file.css
+article_css_url=c:/path/to/article.css
+book_css_url=c:/path/to/book.css
+frontpage_url=c:/path/to/frontpage.html
+extracontent_url=c:/path/to/extracontent.html
