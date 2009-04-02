@@ -77,10 +77,12 @@ class ThemeEngineSystem(Component):
             'description': 'The default Trac theme.',
             'screenshot': 'htdocs/default_screenshot.png',
             'colors': [
-                ('text', 'color', 'body'),
+                ('text', 'color', 'body, .milestone .info h2 *:link, .milestone .info h2 *:visited'),
                 ('background', 'background-color', 'body'),
-                ('link', 'color', '*:link, *:visited, #tabs *:link, #tabs *:visited'),
-                ('link hover', 'color', '*:link:hover, *:visited:hover, #tabs *:link:hover, #tabs *:visited:hover'),
+                ('link', 'color', '*:link, *:visited, #tabs *:link, #tabs *:visited, .milestone .info h2 em'),
+                ('link_hover', 'color', '*:link:hover, *:visited:hover, #tabs *:link:hover, #tabs *:visited:hover'),
+                ('mainnav', 'background-color', '#mainnav'),
+                ('mainnav_active', 'background-color', '#mainnav .active *:link, #mainnav .active *:visited'),
             ],
             'schemes': [
                 ('default', {
@@ -88,12 +90,16 @@ class ThemeEngineSystem(Component):
                     'background': '#ffffff',
                     'link': '#bb0000',
                     'link_hover': '#555555',
+                    'mainnav': '#ffffff',
+                    'mainnav_active': '#000000',
                 }),
                 ('omgponies', {
-                    'text': '#E8A1B0',
-                    'background': '#ffffff',
-                    'link': '#bb0000',
-                    'link hover': '#555555',
+                    'text': '#A42D8D',
+                    'background': '#FECDE3',
+                    'link': '#E600BC',
+                    'link_hover': '#8C366C',
+                    'mainnav': '#FB88C3',
+                    'mainnav_active': '#EB009B',
                 }),
             ],
         }

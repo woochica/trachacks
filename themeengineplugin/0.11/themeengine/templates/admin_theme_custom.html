@@ -128,8 +128,8 @@
       <fieldset id="colors" py:if="current_theme and current_theme.get('colors')">
         <legend>Colors</legend>
         <div py:for="name, color in sorted(colors.iteritems())">
-          <label for="color_$name">${name.title()}:</label>
-          <input type="text" id="color_$name" name="color_$name" value="${color.replace('_', ' ').upper()}" size="8" />
+          <label for="color_$name">${name.replace('_', ' ').title()}:</label>
+          <input type="text" id="color_$name" name="color_$name" value="${color.upper()}" size="8" />
         </div>
       </fieldset>
       <div class="buttons">
