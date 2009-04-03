@@ -11,6 +11,7 @@
     <title>Release Control</title>
     <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
     <script type="text/javascript" py:choose="">
+      /*
       function loadFiles(elemName, useInnerHTML, arqs) {
         elem = document.getElementById(elemName);
         if (elem) {
@@ -21,7 +22,7 @@
           }
         }
       }
-      
+      */
       
       $(document).ready(function() {
           $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
@@ -175,7 +176,7 @@
 
 		  <py:if test="item.install_files">
 		    <py:for each="arq in item.install_files">
-		      ${wiki_to_oneliner(context, arq)}<br/>
+		      <li>${wiki_to_oneliner(context, arq)}</li><br/>
 		    </py:for>
 		  </py:if>
 		</td>

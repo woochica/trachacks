@@ -26,7 +26,7 @@ from trac.util.html import html
 from trac.log import logger_factory
 from trac.util.datefmt import format_datetime, parse_date
 import trac.util.datefmt as datefmt
-
+import trac.versioncontrol.web_ui.util as vcutil
 
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
@@ -221,17 +221,37 @@ class ReleaseCore(Component):
 
         release.install_procedures = []
         for proc in procs:
+            proc.checked = False
             sel = req.args.get("releaseProcedure_" + str(proc.id))
             if sel:
+                proc.checked = True
                 self.log.debug("_add_step_2: InstallProc: %s selected" % str(proc))
                 arqs = req.args.get("releaseProcedureFile_" + str(proc.id))
                 if arqs:
-                    ##proc.files = arqs
                     arqs = [arq.strip() for arq in arqs.split(",") if arq.strip()]
+                    proc.files = arqs
                 else:
                     arqs = None
                     
                 release.install_procedures.append(model.ReleaseInstallProcedure(None, proc, arqs))
+                
+                try:
+                    # Find node for the requested path/rev
+                    repos = self.env.get_repository(req.authname)
+                    self.log.debug("Tag 1.0 existe? " + (repos.has_node("/TracReleasePlugin/tags/1.0") and "sim" or "nao"))
+                    if arq:
+                        for arq in arqs:
+                            self.log.debug("\tArquivo: " + arq)
+                            arq = self.getSourcePath(arq)
+                            self.log.debug("\t\t\t" + str(arq))
+                            self.log.debug("\t\t\t" + (repos.has_node(arq[0]) and "sim" or "nao"))
+                except Exception, e:
+                    self.log.error(e)
+            
+            self.log.debug("Proc")
+            self.log.debug("\t\t" + str(proc))
+            for ip in release.install_procedures:
+                self.log.debug("\n\n\t\t\t" + str(ip))
 
         ## valida a data planejada
         self.log.debug("Data planejada: %s" % release.planned_date)
@@ -276,3 +296,56 @@ class ReleaseCore(Component):
             
         self.log.debug("_add_step_2: nada!")
         return ('release_add_2.html', templateData, None)
+
+
+
+    #def getSourcePath(self, arq):
+    #    if arq:
+    #        parts = arq.split(":")
+    #        if parts and (parts[0].startswith("source")):
+    #            src = [item for item in parts[1].split('"') if item]
+    #            if src:
+    #                return src[0]
+
+
+    def _clean(self, path):
+        return path.split("\"")[0].split("]")[0].strip()
+        
+        
+    def getSourcePath(self, arq):
+        e = re.compile("(\[)?(source|export)\:(\")?(.*)(\")?(.*)(\])?")
+        m = e.match(arq)
+        if m:
+            g = m.groups()
+            colchetes = g[0]
+            aspas = g[2]
+            path = g[3]
+            if not colchetes:
+                # nao tem colchetes, entao nao tem um "apelido" para o arquivo
+                path = path.split("\"")[0]
+                return (path, path)
+            else:
+                # tem colchetes, então pode ter path + alias
+                path = [item for item in path.split("\"")]
+                l = len(path)
+                if l == 2:
+                    # aspas, path, aspas, alias
+                    return (self._clean(path[0]), self._clean(path[1]))
+                if l == 1:
+                    # aspas, path, aspas
+                    if " " in path[0]:
+                        path1 = path[0].split(" ")
+                        return (self._clean(path1[0]), self._clean(" ".join(path1[1:])))
+                    else:                    
+                        return (self._clean(path[0]), self._clean(path[0]))
+
+
+
+##  e = re.compile("(\[)(source|export)\:(\")(.*)(\")(.*)(\])")
+##  e = re.compile("(\[)?(source|export)\:(\")?(.*)(\")?(.*)(\])?")
+
+
+
+
+
+

@@ -17,9 +17,9 @@
           alert("loadFiles()");
           alert(arqs);
           if (useInnerHTML) {
-            elem.innerHTML = arqs.toString();
+            //elem.innerHTML = arqs.toString();
           } else {
-            elem.value = arqs.toString();
+            //elem.value = arqs.toString();
           }
         }
       }
@@ -36,7 +36,7 @@
           
           <py:for each="item in release.install_procedures">
             var files;
-            checkInstallProcedure("releaseProcedure_$item.install_procedure.id")
+            // checkInstallProcedure("releaseProcedure_$item.install_procedure.id")
             files = []
             <py:if test="item.install_files">
               <py:for each="arq in item.install_files">
@@ -44,7 +44,7 @@
               </py:for>
             </py:if>
             
-            loadFiles("releaseProcedureFile_$item.install_procedure.id", false, files);
+            // loadFiles("releaseProcedureFile_$item.install_procedure.id", false, files);
           </py:for>
         });
     </script>
@@ -290,6 +290,7 @@
                 <tr>
                   <td>
                     <input type="checkbox" name="releaseProcedure_$item.id"
+                           checked="${item.checked or None}"
                            id="releaseProcedure_$item.id"/>
                   </td>
                   <td>$item.id</td>
@@ -297,11 +298,12 @@
                   <td>${wiki_to_oneliner(context, item.description)}</td>
                   <py:if test="item.contain_files">
                     <td>
-                      <input type="text"
-                             name="releaseProcedureFile_$item.id"
-                             id="releaseProcedureFile_$item.id"
-                             size="100"
-                              />
+                      <textarea name="releaseProcedureFile_$item.id"
+                                id="releaseProcedureFile_$item.id"
+                                class="wikitext"
+                                rows="10" cols="68">
+<py:for each="arq in item.files">$arq,
+</py:for></textarea>
                     </td>
                   </py:if>
                   <py:if test="not item.contain_files">
