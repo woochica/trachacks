@@ -392,21 +392,11 @@ class MDashboard(Component):
 
         if not milestone_id:
             req.redirect(req.href.pdashboard())     
-            
-        if req.args.get('imagename') == 'cumulativeflow.png':    
-            
-            self.env.log.info("request for image")
-            mname = re.sub(r'\.', '_', milestone.name)
-            filename = "cumulativeflow_%s.png" % (mname,)
-            path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
-            req.send_file(path, mimeview.get_mimetype(path))
-            
-        else:
-            
-            self.env.log.info("request mdashboard")
-            add_stylesheet(req, 'pd/css/dashboard.css')  
-            
-            return self._render_view(req, db, milestone)        
+                       
+        self.env.log.info("request mdashboard")
+        add_stylesheet(req, 'pd/css/dashboard.css')  
+        
+        return self._render_view(req, db, milestone)        
         
 
     def _render_view(self, req, db, milestone):

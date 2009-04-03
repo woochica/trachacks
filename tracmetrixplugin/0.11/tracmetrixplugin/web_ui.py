@@ -109,20 +109,10 @@ class PDashboard(Component):
 
         db = self.env.get_db_cnx()
         
-        filename = req.args.get('imagename')
-                    
-        if filename != None:    
-            
-            self.env.log.info("request for image")
-            path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin', filename)
-            req.send_file(path, mimeview.get_mimetype(path))
-            
-        else:
-            
-            self.env.log.info("request mdashboard")
-            add_stylesheet(req, 'pd/css/dashboard.css')  
-            
-            return self._render_view(req, db) 
+        self.env.log.info("request mdashboard")
+        add_stylesheet(req, 'pd/css/dashboard.css')  
+        
+        return self._render_view(req, db) 
         
 
     def _render_view(self, req, db):
