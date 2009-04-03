@@ -128,12 +128,14 @@ class PDashboard(Component):
     def _render_view(self, req, db):
         
         showall = req.args.get('show') == 'all'
+        showmetrics = req.args.get('showmetrics') == 'true'
                 
         # Get list of milestone object for the project
         milestones = list(Milestone.select(self.env, showall, db))
         stats = []
         queries = []
 
+        self.env.log.info("getting milestones statistics")
         for milestone in milestones:
             tickets = get_tickets_for_milestone(self.env, db, milestone.name,
                                                 'owner')
@@ -151,10 +153,11 @@ class PDashboard(Component):
             'milestone_stats': stats,
             'queries': queries,
             'showall': showall,
+            'showmetrics': showmetrics,
             'project' : project
         }
         
-        tkt_stats = {}
+        self.env.log.info("getting project statistics")
         project_tickets = get_project_tickets(self.env)
         
         # Get project progress stats
@@ -172,32 +175,39 @@ class PDashboard(Component):
                                       'interval_hrefs': [req.href.query(interval['qry_args'])
                                                          for interval in closed_stat.intervals]}
 
-
-        tkt_group_metrics = TicketGroupMetrics(self.env, project_tickets)      
-        
-        tkt_frequency_stats = tkt_group_metrics.get_frequency_metrics_stats()
-        tkt_duration_stats = tkt_group_metrics.get_duration_metrics_stats()
-        
-        #stat for this month
-        today = datetime.now()
+        tkt_frequency_stats = {}
+        tkt_duration_stats = {}
         bmi_stats = []
+        daily_backlog_chart = {}
+        today = datetime.now()
+            
+        if showmetrics:                                                     
+            self.env.log.info("getting ticket metrics")
+            tkt_group_metrics = TicketGroupMetrics(self.env, project_tickets)      
         
-        first_day = datetime(today.year, today.month, 1, tzinfo=utc)
-        last_day = last_day_of_month(today.year, today.month)
-        bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
+            tkt_frequency_stats = tkt_group_metrics.get_frequency_metrics_stats()
+            tkt_duration_stats = tkt_group_metrics.get_duration_metrics_stats()
+            
+            #stat for this month
+            first_day = datetime(today.year, today.month, 1, tzinfo=utc)
+            last_day = last_day_of_month(today.year, today.month)
+            bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
          
-        # stat for last month        
-        last_day = first_day - timedelta(days=1)
-        first_day = datetime(last_day.year, last_day.month, 1, tzinfo=utc)
-        bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
-        
-        # get daily stat from today and 4 weeks back
+            # stat for last month        
+            last_day = first_day - timedelta(days=1)
+            first_day = datetime(last_day.year, last_day.month, 1, tzinfo=utc)
+            bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
+            
+            # get daily backlog history
+            last_day = datetime(today.year, today.month, today.day, tzinfo=utc)
+            first_day = last_day - timedelta(days=DAYS_BACK)            
+            self.env.log.info("getting backlog history")
+            backlog_history = tkt_group_metrics.get_daily_backlog_history(first_day, last_day)
+            daily_backlog_chart = tkt_group_metrics.get_daily_backlog_chart(backlog_history)
+
+        # Get dialy commits history
         last_day = datetime(today.year, today.month, today.day, tzinfo=utc)
         first_day = last_day - timedelta(days=DAYS_BACK)
-        
-        backlog_history = tkt_group_metrics.get_daily_backlog_history(first_day, last_day)
-        daily_backlog_chart = tkt_group_metrics.get_daily_backlog_chart(backlog_history)
-        
         changeset_group_stats = ChangesetsStats(self.env, first_day, last_day)
         commits_by_date = changeset_group_stats.get_commit_by_date()
         commits_by_date_chart = changeset_group_stats.get_commit_by_date_chart(commits_by_date)
