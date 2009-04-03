@@ -15,6 +15,8 @@
 
 from datetime import timedelta, datetime
 from genshi.builder import tag
+from genshi.filters.transform import StreamBuffer, Transformer
+
 from trac import mimeview
 from trac.config import ExtensionOption
 from trac.mimeview import Context
@@ -26,7 +28,7 @@ from trac.ticket.roadmap import ITicketGroupStatsProvider, \
                                 get_ticket_stats, get_tickets_for_milestone, \
                                 milestone_stats_data
 from trac.util.datefmt import utc
-from trac.web import IRequestHandler
+from trac.web import IRequestHandler, IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import add_stylesheet, INavigationContributor, ITemplateProvider
 from tracmetrixplugin.model import ChangesetsStats, TicketGroupMetrics
 
@@ -57,6 +59,80 @@ def last_day_of_month(year, month):
  	year = year + 1 
  	
     return datetime(year+(month/12), (month%12)+1 , 1, tzinfo=utc) - timedelta(days=1)
+
+class GenerateMetrixLink(object):
+
+    """
+    Takes a C{StreamBuffer} object containing a milestone name and creates a
+    hyperlink to the TracMetrixPlugin dashboard page for that milestone.
+    See: http://groups.google.com/group/genshi/msg/3193e468b6b52395
+    """
+
+    def __init__(self, buffer, baseHref):
+        """
+        @param buffer: An C{StreamBuffer} instance containing the name of a milestone
+        @param baseHref: An C{trac.web.href.Href} instance that is aware of
+        TracMetrixPlugin navigation plugins.
+        """
+        self.buffer = buffer
+        self.baseHref = baseHref
+
+    def __iter__(self):
+
+        """
+        Return a <dd><a> link to be inserted at the end of the stats block of
+        the milstone summary.
+        """
+        milestoneName = u"".join(e[1] for e in self.buffer.events)
+        title = "Go to TracMetrix for %s" % milestoneName
+        href = self.baseHref.mdashboard(milestoneName)
+
+        return iter(tag.dd('[', tag.a('TracMetrix', href=href, title=title), ']'))
+
+
+
+class RoadmapMetrixIntegrator(Component):
+
+    """
+    Add a link from each milestone in the roadmap, to the corresponding
+    metrix dashboard page.
+    """
+    implements(ITemplateStreamFilter)
+
+    # ITemplateStreamFilter methods
+    def filter_stream(self, req, method, filename, stream, data):
+
+        if filename in ('roadmap.html', ):
+
+            buffer = StreamBuffer()
+            t = Transformer('//li[@class="milestone"]/div[@class="info"]/h2/a/em/text()')
+            t = t.copy(buffer).end()
+            t = t.select('//li[@class="milestone"]/div[@class="info"]/dl')
+            t = t.append(GenerateMetrixLink(buffer, req.href))
+            stream |= t
+
+        return stream
+
+class MilestoneMetrixIntegrator(Component):
+
+    """Add a link from the milestone view, to the corresponding metrix
+    dashboard page.
+    """
+    implements(ITemplateStreamFilter)
+
+    # ITemplateStreamFilter methods
+    def filter_stream(self, req, method, filename, stream, data):
+
+        if filename in ('milestone_view.html', ):
+
+            buffer = StreamBuffer()
+            t = Transformer('//div[@class="milestone"]/h1/text()[2]')
+            t = t.copy(buffer).end()
+            t = t.select('//div[@class="milestone"]/div[@class="info"]/dl')
+            t = t.append(GenerateMetrixLink(buffer, req.href))
+            stream |= t
+
+        return stream
 
 class PDashboard(Component):
 
