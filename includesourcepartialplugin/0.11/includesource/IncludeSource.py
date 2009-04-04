@@ -80,12 +80,15 @@ class IncludeSourceMacro(WikiMacroBase):
     with the existing code, but it will pull the entire file out of
     version control and trim it for each chunk, so this could be 
     optimized a bit.  This could be done with the Ranges object 
+    
+    * Refactor code a bit - there are enough special cases in it now
+    that the expand_macro call is getting a bit unwieldy. 
 
     }}}
     """    
 
     def expand_macro(self, formatter, name, content):
-        self.log.warning('Begin expand_macro for req: ' + repr(content))
+        self.log.info('Begin expand_macro for req: ' + repr(content))
         largs, kwargs = parse_args(content)
         
         if len(largs) == 0:
@@ -148,10 +151,22 @@ class IncludeSourceMacro(WikiMacroBase):
                 negatory = ('no', 'false', 'none')
                 line_numbers = str(line_numbers).lower() not in negatory
 
+        # lines added up front to "trick" renderer when rendering partial
+        render_prepend = []
+        
         start, end = kwargs.get('start', None), kwargs.get('end', None)
         if start or end:
             src, start, end = self._handle_partial(src, start, end)
             context.startline = start
+            
+            if start > 2 and file_name.endswith('.php'):
+                render_prepend = [ '#!/usr/bin/php -f', '<?' ]
+
+            if render_prepend:
+                src = '\n'.join(render_prepend) + '\n' + src
+
+                # ensure accurate start number after this gets stripped
+                context.startline = start - len(render_prepend) 
 
         mimetype = kwargs.get('mimetype', None)
         url = None  # render method doesn't seem to use this
@@ -178,11 +193,16 @@ class IncludeSourceMacro(WikiMacroBase):
             xpath1 = 'thead/tr/th[@class="givenlineno"]'
             xpath2 = 'thead/tr/th[2]'   # last() not supported by Genshi?
             xpath3 = 'thead/tr/th[2]/text()'
-
+            
             # TODO - does genshi require a QName here? Seems to work w/o it
             src = src.generate() | Transformer(xpath1).attr('class', 'lineno') \
                                  | Transformer(xpath2).attr('class', header_class) \
                                  | Transformer(xpath3).replace(header)
+                                 
+            if render_prepend:
+                # TODO - is there a better of stripping lines here?
+                for i in xrange(len(render_prepend)):
+                    src = src | Transformer('tbody/tr[1]').remove()
 
         return src
 
