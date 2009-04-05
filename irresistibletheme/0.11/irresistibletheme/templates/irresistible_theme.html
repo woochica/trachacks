@@ -1,0 +1,75 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+
+  <body py:match="body">
+    <div id="wrap">
+      <div id="header">
+        <ul id="nav" class="nav"><!--!
+          <li class="current_page_item">
+            <a href="http://www.woothemes.com/demo/irresistible/">Home</a>
+          </li>
+          <li>
+            <a href="http://www.woothemes.com/demo/irresistible/?cat=3" title="View all posts filed under Category 1">Category 1</a>
+          </li>
+          <li>
+            <a href="http://www.woothemes.com/demo/irresistible/?cat=4" title="View all posts filed under Category 2">Category 2</a>
+          </li>
+          <li>
+            <a href="http://www.woothemes.com/demo/irresistible/?cat=5" title="View all posts filed under Category 3">Category 3</a>
+          </li>
+          <li>
+            <a href="http://www.woothemes.com/demo/irresistible/?cat=1" title="View all posts filed under General">General</a>
+          </li>-->
+          <li py:for="idx, item in  enumerate(chrome.nav['mainnav'])" class="${item.active and 'active' or None}">
+            $item.label
+          </li>
+        </ul>
+
+        <form id="topSearch" class="search" method="get" action="http://www.woothemes.com/demo/irresistible">
+          <p class="fields">
+            <input type="text" value="search" name="s" id="s" onfocus="if (this.value == 'search') {this.value = '';}" onblur="if (this.value == '') {this.value = 'search';}" />
+            <button class="replace" type="submit" name="submit">Search</button>
+          </p>
+        </form>
+
+      </div><!--!  / #header -->
+
+
+        <div id="thememain" class="home">
+
+          <div class="box1">
+            
+             ${select('*|text()')}
+
+          </div><!--! / #main -->
+
+            </div><!--! / #content -->
+
+
+
+      </div><!--! / #wrap -->
+
+      <div id="footer">
+
+        <div id="footerWrap">
+
+          <!--!<p id="copy">Copyright &copy; 2009 <a href="#">Irresistible</a>. All rights reserved.</p>-->
+
+          <ul id="footerNav">
+
+            <li class="page_item page-item-2"><a href="http://www.woothemes.com/demo/irresistible/?page_id=2" title="About">About</a></li>
+    <li class="page_item page-item-163"><a href="http://www.woothemes.com/demo/irresistible/?page_id=163" title="Archives">Archives</a></li>
+           </ul>
+
+        </div><!--! / #footerWrap -->
+
+      </div><!--! / #footer -->
+
+
+    </body>
+</html>
