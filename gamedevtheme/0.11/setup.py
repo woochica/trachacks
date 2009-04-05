@@ -5,9 +5,9 @@ from setuptools import setup
 
 setup(
     name = 'TracGamedevTheme',
-    version = '1.0',
+    version = '2.0',
     packages = ['gamedevtheme'],
-    package_data = { 'gamedevtheme': ['templates/*.cs', 'htdocs/*.*' ] },
+    package_data = { 'gamedevtheme': ['htdocs/*.*' ] },
 
     author = "Noah Kantrowitz",
     author_email = "noah@coderanger.net",

@@ -40,7 +40,7 @@ div.poll {
 }
 
 #main {
-	background-image: url(<?cs var:chrome.href ?>/theme/background.jpg);
+	background-image: url(background.jpg);
 	background-repeat: no-repeat;
 	padding: 0px;
 }
