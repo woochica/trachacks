@@ -83,6 +83,7 @@ class ThemeEngineSystem(Component):
                 ('link_hover', 'color', '*:link:hover, *:visited:hover, #tabs *:link:hover, #tabs *:visited:hover'),
                 ('mainnav', 'background-color', '#mainnav'),
                 ('mainnav_active', 'background-color', '#mainnav .active *:link, #mainnav .active *:visited'),
+                ('mainnav_hover', 'background-color', '#mainnav *:link:hover, #mainnav *:visited:hover'),
             ],
             'schemes': [
                 ('default', {
@@ -92,6 +93,7 @@ class ThemeEngineSystem(Component):
                     'link_hover': '#555555',
                     'mainnav': '#ffffff',
                     'mainnav_active': '#000000',
+                    'mainnav_hover': '#cccccc',
                 }),
                 ('omgponies', {
                     'text': '#A42D8D',
@@ -100,6 +102,7 @@ class ThemeEngineSystem(Component):
                     'link_hover': '#8C366C',
                     'mainnav': '#FB88C3',
                     'mainnav_active': '#EB009B',
+                    'mainnav_hover': '#c15c9f',
                 }),
             ],
         }
