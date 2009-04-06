@@ -50,7 +50,6 @@ Any further research you would like to include
 
 $ticket.research
 
-
   #end
   #end
   #otherwise
