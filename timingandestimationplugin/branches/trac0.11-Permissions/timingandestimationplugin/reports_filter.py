@@ -100,9 +100,11 @@ class ReportScreenFilter(Component):
 
 billing_report_fname_regex = re.compile("report_(?P<reportid>\d*)")
 def report_id_from_filename(text):
-    m = billing_report_fname_regex.match(text)
-    if m:
-        return int(m.groupdict()["reportid"])
+    if text:
+        m = billing_report_fname_regex.match(text)
+        if m:
+            return int(m.groupdict()["reportid"])
+    return -1;
 
 
 def _send_csv(self, req, cols, rows, sep=',', mimetype='text/plain',
