@@ -9,6 +9,16 @@
   <body py:match="body">
     <div id="wrap">
       <div id="header">
+        <form id="topSearch" action="${href.search()}" method="get">
+          <p class="fields">
+            <input type="image" id="topSearchSubmit" name="submit" value="submit" src="${href.chrome('theme', 'images', 'ico-search.png')}" alt="Submit" />
+            <input type="text" id="topSearchInput" value="search" name="q" onfocus="if (this.value == 'search') {this.value = '';}" onblur="if (this.value == '') {this.value = 'search';}" />
+            <input type="hidden" name="wiki" value="on" />
+            <input type="hidden" name="changeset" value="on" />
+            <input type="hidden" name="ticket" value="on" />
+          </p>
+        </form>
+        
         <ul id="nav" class="nav"><!--!
           <li class="current_page_item">
             <a href="http://www.woothemes.com/demo/irresistible/">Home</a>
@@ -30,21 +40,38 @@
           </li>
         </ul>
 
-        <form id="topSearch" class="search" method="get" action="http://www.woothemes.com/demo/irresistible">
-          <p class="fields">
-            <input type="text" value="search" name="s" id="s" onfocus="if (this.value == 'search') {this.value = '';}" onblur="if (this.value == '') {this.value = 'search';}" />
-            <button class="replace" type="submit" name="submit">Search</button>
-          </p>
-        </form>
+
 
       </div><!--!  / #header -->
 
 
         <div id="thememain" class="home">
+          
+          <div id="warning" py:if="req and req.warnings" class="system-message">
+            <py:choose test="len(req.warnings)">
+              <py:when test="1">
+                <strong>Warning:</strong> ${req.warnings[0]}
+              </py:when>
+              <py:otherwise>
+                <strong>Warnings:</strong>
+                <ul><li py:for="w in req.warnings">$w</li></ul>
+              </py:otherwise>
+            </py:choose>
+          </div>
 
           <div class="box1">
             
+            <div id="ctxtnav" class="nav">
+              <h2>Context Navigation</h2>
+              <ul py:if="chrome.ctxtnav">
+                <li py:for="i, elm in enumerate(chrome.ctxtnav)"
+                    class="${classes(first_last(i, chrome.ctxtnav))}">$elm</li></ul>
+              <hr />
+            </div>
+            
              ${select('*|text()')}
+             
+             <div style="clear: both"></div>
 
           </div><!--! / #main -->
 
@@ -55,21 +82,15 @@
       </div><!--! / #wrap -->
 
       <div id="footer">
-
         <div id="footerWrap">
-
           <!--!<p id="copy">Copyright &copy; 2009 <a href="#">Irresistible</a>. All rights reserved.</p>-->
-
           <ul id="footerNav">
-
-            <li class="page_item page-item-2"><a href="http://www.woothemes.com/demo/irresistible/?page_id=2" title="About">About</a></li>
-    <li class="page_item page-item-163"><a href="http://www.woothemes.com/demo/irresistible/?page_id=163" title="Archives">Archives</a></li>
+            <li py:for="idx, item in  enumerate(chrome.nav['metanav'])">
+              $item.label
+            </li>
            </ul>
-
         </div><!--! / #footerWrap -->
-
       </div><!--! / #footer -->
-
 
     </body>
 </html>

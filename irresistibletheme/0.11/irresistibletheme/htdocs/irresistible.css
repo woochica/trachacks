@@ -9,7 +9,7 @@ Theme Name: Irresistible
 
 ------------------------------------------------------------------*/
 
-* { font-family: inherit; font-size: 100%; font-style: inherit; font-weight: inherit; margin: 0; outline: 0; padding: 0; vertical-align: baseline; }
+/** { font-family: inherit; font-size: 100%; font-style: inherit; font-weight: inherit; margin: 0; outline: 0; padding: 0; vertical-align: baseline; }
 html { height: 100% }
 body { background: #fff; color: #000; font-size: 100.01%; min-height: 101%; text-align: left; position: relative; }
 img, fieldset, abbr, acronym { border: 0 }
@@ -22,7 +22,7 @@ input, select { vertical-align: middle }
 textarea { height: auto; overflow: auto; }
 option { padding-left: 0.6em }
 button { background: none; border: 0; cursor: pointer; text-align: center; }
-ul, ol { list-style-type:none; }
+ul, ol { list-style-type:none; }*/
 
 /*------------------------------------------------------------------
 
@@ -43,6 +43,7 @@ body {
 	font-family: Arial, Helvetica, sans-serif;
 	font-size: 12px;
 	line-height: 18px;
+	margin: 0;
 }
 
 p, ul, ol, table { margin: 0 0 18px }
@@ -65,7 +66,7 @@ h6 { font-size:10px; }
 h1, h2, h3 {
 	color: #6099ff;
 	font-family: Georgia, "Times New Roman", Times, serif;
-	margin-top: 15px;
+/*  margin-top: 15px;*/
 }
 h4 {
 	color: #a3d5ea;
@@ -76,11 +77,12 @@ h4 {
 
 /* Anchors */
 a, a:link, a:visited {
-	color: #fff;
-	text-decoration: none;
+  text-decoration: none;
+  color: #6099FF;
+/*  border-bottom: 1px dotted #172F3D;*/
 }
-a:hover, a:active, a.active {
-	text-decoration: underline;
+a:hover, :link:hover, :visited:hover {
+  text-decoration: underline;
 }
 
 blockquote {
@@ -100,7 +102,7 @@ blockquote {
 #wrap {
 	margin: auto;
 	text-align: left;
-	width: 70%;
+	width: 80%;
 	position: relative;
 }
 
@@ -126,7 +128,7 @@ blockquote {
 }
 	#footerWrap {
 		color: #dadada;
-		width: 960px;
+    width: 80%;
 		margin: 0 auto;
 		position: relative;
 	}
@@ -148,14 +150,15 @@ ul.nav { margin: 0 }
 /* Main navigation */
 #nav {
 	height: 38px;
-	width: 750px;
-	position: absolute;
-	top: 10px; left: 0;
+/*  width: 750px;
+  position: absolute;
+  top: 10px; left: 0;*/
+  margin-top: 10px;
 }
 
 #nav, #nav ul {
 	padding: 0;
-	margin: 0;
+/*  margin: 0;*/
 	list-style: none; 
 	line-height: 1;
 	z-index: 100;
@@ -182,50 +185,6 @@ ul.nav { margin: 0 }
 
 #nav li {
 	float: left;
-}
-
-/* Style drop down list */
-
-#nav li ul {
-	position: absolute;
-	width: 200px;
-	left: -999em;
-}
-
-#nav li:hover ul, #nav li.sfhover ul {
-	left: auto;
-}
-
-#nav li ul li a {
-	background: url(images/bg-nav.png);
-	line-height: 18px;
-	font-size: 11px;
-	color: #fff;
-	width: 150px;
-	-moz-border-radius: 6px;
-	-khtml-border-radius: 6px;
-	-webkit-border-radius: 6px;
-	border-radius: 6px;	
-}
-
-#nav li ul li a:hover {
-	background: #FFF;
-	color:#222;
-}
-
-#nav li ul li a {
-}
-
-#nav li ul ul {
-	margin: -35px 0 0 180px;
-}
-
-#nav li:hover ul ul, #nav li.sfhover ul ul {
-	left: -999em;
-}
-
-#nav li:hover ul, #nav li li:hover ul, #nav li.sfhover ul, #nav li li.sfhover ul {
-	left: auto;
 }
 
 /* IE7 Fix */
@@ -256,66 +215,14 @@ ul#footerNav {
 		color: #6099ff;
 	}
 
-div#hi {
-	color: #2a2b2b;
-	font: 18px/18px Georgia, "Times New Roman", Times, serif;
-	text-align: right;
-	width: 440px;
-	position: absolute;
-	top: 135px; right: 0;
-}
-	div#hi p a {
-		color: #d0d0d0;
-		font: 11px/11px Arial, Helvetica, sans-serif;
-	}
-
-h3#myWritings {
-	background: url(images/bg-h2-mywritings.png) no-repeat;
-	width: 160px; height: 34px;
-	margin: 0 0 10px 12px;
-}
-
-h3#myVideos {
-	background: url(images/bg-h2-myvideos.png) no-repeat;
-	width: 138px; height: 33px;
-	margin: 0 0 11px 12px;
-}
-
-h3#myPhotos {
-	background: url(images/bg-h2-myphotos.png) no-repeat;
-	width: 137px; height: 34px;
-	margin: 0 0 10px;
-}
-h3#myPortfolio {
-	background: url(images/bg-h2-myportfolio.png) no-repeat;
-	width: 160px; height: 34px;
-	margin: 0 0 10px;
-}
-h3#myLifestream {
-	background: url(images/bg-h2-mylifestream.png) no-repeat;
-	width: 189px; height: 34px;
-	margin: 0 0 10px;
-}
-h3#myFavblog {
-	background: url(images/bg-h2-myfavblog.png) no-repeat;
-	width: 150px; height: 32px;
-	margin: 0 0 10px;
-}
-
-
-h2.lifestream_date { display:none; } 
-p.lifestream_credits { display:none; } 
-
-
-div.box1, ol.commentlist li, form#comments { background: url(images/bg-box.png) repeat !important; background: #111; }
+div.box1 { background: url(images/bg-box.png) repeat !important; background: #111; }
 
 div.box1 {
 	-moz-border-radius: 6px;
 	-khtml-border-radius: 6px;
 	-webkit-border-radius: 6px;
 	border-radius: 6px;
-	margin: 0 0 20px;
-	padding: 0px 20px;
+	padding: 15px 20px 0 20px;
 }
 	div.box1 ul, div.box1 ul.blog-list li p { margin: 0 }
 
@@ -380,51 +287,40 @@ div.box1 {
 3.a Form styles
 -------------------------------*/
 
-input.text, select.select, textarea.textarea
+/*input.text, select.select, textarea.textarea
 {
-	border: 0;
-	color: #000;
-	padding: 7px;
+  border: 0;
+  color: #000;
+  padding: 7px;
 }
 input.text { width: 168px }
 select.select { width: 200px }
 textarea.textarea { width: 375px; height: 100px; background-color: #e9eef4 }
 
 button.button {
-	color: #fff;
-	height: auto; width: auto;
-	line-height: normal;
-	white-space: nowrap;
-}
+  color: #fff;
+  height: auto; width: auto;
+  line-height: normal;
+  white-space: nowrap;
+}*/
 
 /* General forms */
-form.form {  }
+/*form.form {  }
 
-	form.form ol.fieldset {	list-style: none }
-	
-		form.form ol.fieldset li.field {
-			margin: 0 0 13px;
-			position: relative;
-		}
-			form.form ol.fieldset li.field label {
-				position: absolute;
-				top: 5px; left: 195px;
-			}
-			
-	form.form p.submit { margin: 0 }
-	
-	form.form p.submit input { padding: 5px 10px }
-
-
-/* Search forms where button and text input are next to each other  */
-form.search { /* nothing here */ }
-	
-	form.search p.fields { margin: 0 }
-
-		form.search p.fields input, form.search p.fields button {
-			display: inline;
-			vertical-align: middle;
-		}
+  form.form ol.fieldset { list-style: none }
+  
+    form.form ol.fieldset li.field {
+      margin: 0 0 13px;
+      position: relative;
+    }
+      form.form ol.fieldset li.field label {
+        position: absolute;
+        top: 5px; left: 195px;
+      }
+      
+  form.form p.submit { margin: 0 }
+  
+  form.form p.submit input { padding: 5px 10px }*/
 
 
 /*-------------------------------
@@ -434,27 +330,35 @@ form.search { /* nothing here */ }
 form#topSearch {
 	background: url(images/bg-search.png) no-repeat;
 	width: 178px; height: 32px;
-	position: absolute;
-	top: 10px; right: 0;
+/*  position: absolute;
+  top: 10px; right: 0;*/
+  float: right;
+  margin: 10px 0px;
 }
-	form#topSearch p.fields input {
+	form#topSearch p.fields #topSearchInput {
 		color: #fff;
 		font-size: 14px;
 		font-weight: bold;
-		width: 130px;
+    width: 130px;
 		background: none;
 		overflow: hidden;
 		border: none;
-		position: absolute;
-		top: 8px; left: 8px;
+/*    position: absolute;
+    top: 8px; left: 8px;*/
+    margin-top: 7px;
+    margin-left: 8px;
+    padding: 0;
 	}
-		form#topSearch p.fields button {
-			background: url(images/ico-search.png) no-repeat;
-			width: 21px; height: 21px;
-			border: none;
-			position: absolute;
-			top: 5px; right: 10px;
-		}
+	
+	form#topSearch p.fields #topSearchSubmit {
+		width: 21px; height: 21px;
+		border: none;
+/*      position: absolute;
+    top: 5px; right: 10px;*/
+    float: right;
+    margin-top: 5px;
+    margin-right: 5px;
+	}
 
 
 /*-------------------------------
@@ -493,4 +397,66 @@ Clearfix
 .clearfix { display: block }
 .fix{ clear: both; height: 1px; margin: -1px 0 0; overflow: hidden; }
 
+/* Trac fixes */
+#content { position: static; }
+#content.wiki #overview { position: relative; }
+a.missing:hover { color: inherit; }
+table#info { color: #000; }
+table#info a { color: #6099FF; text-decoration: underline; }
 
+/* For code browser */
+#content.browser h1 .first:link, #content.browser h1 .first:visited { color: inherit; }
+#content.browser table.code { color: #000; }
+#content.browser #dirlist a, #content.browser #dirlist td { color: #FFF; }
+
+/* For timeline */
+#prefs { background-color: #334C64; border-color: #172F3D; }
+
+/* twotone tables */
+table.listing thead { background-color: #1C2B39; }
+table.listing thead th { border-color: #172F3D; }
+table.listing, table.listing tbody tr { border-color: #172F3D;}
+table.listing tbody td { border-color: #172F3D; }
+table.listing tbody tr, table.listing tbody tr.even { background-color: #4A5F70;}
+table.listing tbody tr.odd { background-color: #334C64;}
+table.listing tbody tr:hover { background-color: #172842 !important }
+
+/* ticket page */
+#content.ticket h1 .status { color: inherit;}
+#ticket { background: #41596B; }
+#ticket table.properties th { color: #FFF; }
+#ticket .description h3 { color: #FFF; border-color: #FFF; }
+#ticket table.properties { border-color: #FFF;}
+#ticket .date { color: #FFF; }
+#content.ticket h3.change { font-family:Arial,Verdana,'Bitstream Vera Sans',Helvetica,sans-serif; font-size: 110%; }
+.inlinebuttons input { color:#FFFFFF; }
+.inlinebuttons input:hover { background-color:#172F3D; }
+
+/* search page */
+#content.search .filters { color: #FFF; }
+
+/* admin page */
+#content.admin h1 { float: none; }
+#content.admin #tabs { background-color: #334C64; border-color: #172F3D; }
+#content.admin #tabs li li.active { background-color: #4A5F70; border-color: #172F3D;}
+#content.admin #tabcontent h2 { color: inherit; }
+#content.admin p.help { color: #999;}
+
+/* roadmap page */
+#content.roadmap .milestone .info h2 { background-color: inherit;}
+#content.roadmap .milestone .info h2 :link, 
+#content.roadmap .milestone .info h2 :visited {
+  color: inherit;
+}
+#content.roadmap .milestone .info h2 em { color: #FFF; }
+
+#ctxtnav { margin-top: 5px; float: right;}
+#ctxtnav h2, #ctxtnav hr { display: none }
+#ctxtnav ul { font-size: 12px; list-style: none; margin: 0; text-align: right }
+#ctxtnav li {
+ border-right: 1px solid #d7d7d7;
+ display: inline;
+ padding: 0 .75em;
+ white-space: nowrap;
+}
+#ctxtnav li.last { border-right: none }

@@ -9,5 +9,5 @@ class IrresistibleTheme(ThemeBase):
     """A theme for Trac based on http://www.woothemes.com/2009/02/irresistible/."""
 
     template = htdocs = css  = True
-    disable_trac_css = True
+    #disable_trac_css = True
     
