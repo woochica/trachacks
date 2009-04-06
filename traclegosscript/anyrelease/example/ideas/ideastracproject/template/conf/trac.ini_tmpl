@@ -48,13 +48,10 @@ default_graph_dpi = 96
 png_antialias = False
 
 [header_logo]
-alt = TOPP Project Pitches
+alt = ${organization} Project Pitches
 height = -1
 src = 
 width = -1
-
-[inherit]
-file = /usr/local/topp/trac/sites/trac/trac.ini
 
 [logging]
 log_type = file
@@ -72,18 +69,18 @@ tab_width = 8
 [notification]
 always_notify_owner = true
 always_notify_reporter = true
-smtp_default_domain = trac.openplans.org
+smtp_default_domain = ${domain}
 smtp_enabled = true
-smtp_from = trac-pitch@trac.openplans.org
+smtp_from = trac-pitch@${domain}
 smtp_port = 25
-smtp_replyto = trac-pitch@trac.openplans.org
+smtp_replyto = trac-pitch@${domain}
 smtp_subject_prefix = [pitch]
 use_public_cc = true
 
 [project]
-admin = sonali
-descr = TOPP Project Pitches
-footer = Visit <a href="http://theopenplanningproject/oss"><img src="http://theopenplanningproject.org/wp-content/themes/TOPP-v2/img/topp-logo.png" alt="The Open Planning Project"/></a>
+admin = 
+descr = ${organization} Project Pitches
+footer = ${footer}
 icon = 
 name = pitch
 
@@ -108,7 +105,7 @@ ignore_closed_tickets = True
 
 [ticket]
 default_component = [unspecified]
-default_owner = nickyg
+default_owner = 
 default_priority = important
 max_comment_size = 262144
 max_description_size = 262144
@@ -134,7 +131,7 @@ timeestimate.label = Time estimation
 timeestimate.options = about a week|under a month|a month or two|several months|over a year
 why = textarea
 why.format = wiki
-why.label = Why should TOPP do this project now?
+why.label = Why should ${organization} do this project now?
 
 [ticket-workflow]
 approve = new -> proposal
@@ -163,7 +160,7 @@ max_daysback = 90
 
 [trac]
 auto_reload = True
-base_url = http://trac.openplans.org/pitch
+base_url = http://${domain}/pitch
 mainnav = wiki,tickets,newticket,search
 metanav = login,logout,help,about,prefs
 secure_cookies = False
