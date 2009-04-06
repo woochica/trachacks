@@ -52,7 +52,6 @@ $ticket.research
 
 
   #end
-
   #end
   #otherwise
 $ticket_body_hdr
