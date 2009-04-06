@@ -1,0 +1,86 @@
+#choose ticket.new
+  #when True
+New Project Pitch: $ticket_body_hdr
+
+Initiator: $ticket.reporter
+
+  #if ticket.cc
+Advocates: ${ticket.cc.rstrip(',')}
+
+  #end
+What is the purpose of this project?
+
+$ticket.description
+
+
+Who is this project for?  What is its audience?
+
+$ticket.audience
+
+
+How is this project relevent to TOPP now?
+
+$ticket.why
+
+
+  #if ticket.consumer
+This project is $ticket.consumer
+
+  #end
+  #if ticket.timeestimate
+This project will take $ticket.timeestimate
+
+  #end
+  #if ticket.people
+People this project will need:
+
+$ticket.people
+
+
+  #end
+  #if ticket.risks
+Risks
+
+$ticket.risks
+
+
+  #end
+  #if ticket.research
+Any further research you would like to include
+
+$ticket.research
+
+
+  #end
+
+  #end
+  #otherwise
+$ticket_body_hdr
+
+$ticket_props
+
+    #if changes_body
+Changes (by $change.author):
+
+$changes_body
+    #end
+    #if changes_descr
+      #if not changes_body and not change.comment and change.author
+Description changed by $change.author:
+      #end
+$changes_descr
+--
+    #end
+    #if change.comment
+
+Comment${not changes_body and '(by %s)' % change.author or ''}:
+
+$change.comment
+    #end
+  #end
+#end
+
+-- 
+Pitch URL: <$ticket.link>
+$project.descr <${project.url or abs_href()}>
+
