@@ -253,17 +253,17 @@ display : none;
           
           <p>
             <h1>What is the purpose of this project?</h1>
-            $ticket.description
+            ${wiki_to_html(context, ticket.description)}
           </p>
           
           <p>
             <h1>Who is this project for? What is its audience?</h1>
-            $ticket.audience
+            ${wiki_to_html(context, ticket.audience)}
           </p>
           
           <p>
             <h1>How is this project relevant to TOPP now?</h1>            
-            $ticket.why
+            ${wiki_to_html(context, ticket.why)}
           </p>
           
           <p py:if="ticket.consumer">
@@ -276,17 +276,17 @@ display : none;
           
           <p py:if="ticket.people">
             <h1>People this project will need:</h1>
-            $ticket.people
+            ${wiki_to_html(context, ticket.people)}
           </p>
           
           <p py:if="ticket.risks">
             <h1>Risks</h1>
-            $ticket.risks
+            ${wiki_to_html(context, ticket.risks)}
           </p>
           
           <p py:if="ticket.research">
             <h1>Any further research you would like to include</h1>
-            $ticket.research
+            ${wiki_to_html(context, ticket.research)}
           </p>
         </div>
     
