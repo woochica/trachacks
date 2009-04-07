@@ -364,7 +364,7 @@ display : none;
         
             <div class="field-row field-author">
               <label for="author">Initiator</label>
-              <input type="text" id="author" name="author" value="$author_id" size="70"/>
+              <input type="text" id="author" name="author" value="${ticket.reporter or author_id}" size="70"/>
             </div>
             
             <div class="field-row field-cc">
