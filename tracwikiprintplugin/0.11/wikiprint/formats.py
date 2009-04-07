@@ -28,8 +28,7 @@ class WikiPrintOutput(Component):
         else:
             fix_links = False            
 
-        html_pages = [wikipage_to_html(WikiPage(self.env, p).text, self.env, req, fix_links) for p in pages]
-        
+        html_pages = [wikipage_to_html(WikiPage(self.env, p).text, p, self.env, req, fix_links) for p in pages]
 
         codepage = self.env.config.get('trac', 'default_charset', 'utf-8')
 

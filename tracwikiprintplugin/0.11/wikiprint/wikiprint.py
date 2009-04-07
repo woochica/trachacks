@@ -6,11 +6,12 @@ Modified by: Alvaro Iradier <alvaro.iradier@polartech.es>
 
 from trac.core import *
 from trac.util import escape, Markup
-from trac.mimeview.api import IContentConverter
-from trac.wiki.formatter import wiki_to_html as trac_wiki_to_html
+from trac.mimeview.api import IContentConverter, Context
+from trac.wiki.formatter import format_to_html
 from trac.util.datefmt import format_datetime, to_datetime
 from trac.util.text import to_unicode
 from trac.wiki.model import WikiPage
+from trac.resource import Resource
 from pkg_resources import resource_filename
 from trac.web.href import Href
 import os
@@ -37,7 +38,7 @@ EXCLUDE_RES = [
 ]
 
 
-def wikipage_to_html(text, env, req, replace_refs = True):
+def wikipage_to_html(text, page_name, env, req, replace_refs = True):
     """
     Converts a wiki text to HTML, and makes some replacements in order to fix
     internal and external links and references
@@ -53,7 +54,14 @@ def wikipage_to_html(text, env, req, replace_refs = True):
     text = text.replace('[[PageOutline]]', '![[PageOutline]]')
 
     env.log.debug('WikiPrint => Wiki input for WikiPrint: %r' % text)
-    page = trac_wiki_to_html(text, env, req, absurls=True)    
+    #Use format_to_html instead of old wiki_to_html
+    
+    #First create a Context object from the wiki page
+    context = Context(Resource('wiki', page_name), req.abs_href, req.perm)
+    context.req = req
+    
+    #Now convert in that context
+    page = format_to_html(env, context, text)
     env.log.debug('WikiPrint => Wiki to HTML output: %r' % page)
     
     #If replace_refs, make relative URLS absolute, and change 'src' references to file references,
@@ -276,7 +284,7 @@ class WikiToPDFPage(Component):
     def convert_content(self, req, input_type, text, output_type):
         codepage = self.env.config.get('trac', 'default_charset', 'utf-8') 
         wikipage = WikiPage(self.env, req.args.get('page', 'WikiStart'))
-        page = wikipage_to_html(text, self.env, req, replace_refs = True)
+        page = wikipage_to_html(text, req.args.get('page', 'WikiStart'), self.env, req, replace_refs = True)
         out = html_to_pdf(self.env, [page], codepage, book = (output_type == 'pdfbook'),
             title=wikipage.name,
             version=str(wikipage.version),
@@ -294,6 +302,6 @@ class WikiToHtmlPage(Component):
 
     def convert_content(self, req, input_type, text, output_type):
         codepage = self.env.config.get('trac', 'default_charset', 'utf-8') 
-        page = wikipage_to_html(text, self.env, req, replace_refs = False)
+        page = wikipage_to_html(text, req.args.get('page', 'WikiStart'), self.env, req, replace_refs = False)
         out = html_to_printhtml(self.env, [page], codepage)
         return (out, 'text/html')
