@@ -362,7 +362,7 @@ display : none;
               <input type="text" id="field-summary" name="field_summary" size="70" value="$ticket.summary"/>
             </div>
         
-            <div class="field-row field-author">
+            <div class="field-row field-author" py:if="(not ticket.exists) or 'TICKET_ADMIN' in perm(ticket.resource)">
               <label for="author">Initiator</label>
               <input type="text" id="author" name="author" value="${ticket.reporter or author_id}" size="70"/>
             </div>
