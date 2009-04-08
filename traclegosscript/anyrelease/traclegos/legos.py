@@ -207,16 +207,16 @@ class TracLegos(object):
         # TODO: update the inherited file:
         # * intertrac
 
+        # trac-admin upgrade the project
+        env = Environment(dirname)
+        if env.needs_upgrade():
+            env.upgrade()
+
         ### trac-admin operations
         admin = TracLegosAdmin(dirname)
 
         # remove the default items
         admin.delete_all()
-
-        # trac-admin upgrade the project
-        env = Environment(dirname)
-        if env.needs_upgrade():
-            env.upgrade()
 
         # get the default wiki pages
         # TODO: add options for importing existing wiki pages
