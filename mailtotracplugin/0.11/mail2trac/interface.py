@@ -23,5 +23,6 @@ class IEmailHandler(Interface):
     def order():
         """
         what order to process the IEmailHandler in.
-        higher order == higher precedence
+        higher order == higher precedence;
+        None = no precedence
         """

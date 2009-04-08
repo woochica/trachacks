@@ -7,6 +7,9 @@ from trac.ticket import Ticket
 class EmailToTicket(Component):
     implements(IEmailHandler)
 
+    def match(self, message):
+        return True
+
     def invoke(self, message):
         """make a new ticket on receiving email"""
 
@@ -40,3 +43,8 @@ class EmailToTicket(Component):
 
         # create the ticket
         ticket.insert()
+
+        return message
+
+    def order(self):
+        return None
