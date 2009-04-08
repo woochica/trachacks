@@ -23,7 +23,7 @@ COUNT = '_googlemapmacro_count'
 
 _reWHITESPACES = re.compile(r'\s+')
 _reCOMMA       = re.compile(r',\s*')
-_reCOORDS      = re.compile(r'^\d+(?:\.\d*)?[:,]\d+(?:\.\d*)?$')
+_reCOORDS      = re.compile(r'^[+-]?\d+(?:\.\d*)?[:,][+-]?\d+(?:\.\d*)?$')
 _reDBLQUOTE    = re.compile(r'(?<!\\)"')
 
 #_allowed_args        = ['center','zoom','size','address']
