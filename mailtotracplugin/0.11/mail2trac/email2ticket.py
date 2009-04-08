@@ -18,8 +18,13 @@ class EmailToTicket(Component):
         ticket = Ticket(self.env)
         reporter = user or message['from']
 
-        ticket.values['reporter'] = reporter
-        ticket.values['summary'] = message['subject']
-        ticket.values['description'] = message.get_payload()
+        # effectively the interface for email -> ticket
+        values = { 'reporter': reporter,
+                   'summary': message['subject'],
+                   'description': message.get_payload(),
+                   'status': 'new' }
+
+        for key, value in values.items():
+            ticket.values[key] = value
 
         ticket.insert()
