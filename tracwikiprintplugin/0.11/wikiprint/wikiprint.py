@@ -27,9 +27,15 @@ import defaults
 
 # Kludge to workaround the lack of absolute imports in Python version prior to
 # 2.5
-pygments = __import__('pygments', {}, {}, ['lexers', 'styles', 'formatters'])
-HtmlFormatter = pygments.formatters.html.HtmlFormatter
-get_style_by_name = pygments.styles.get_style_by_name
+pigments_loaded = False
+try:
+    #TODO: A better way of importing and checking pigments? Copied from trac.mimeview.pigments
+    pygments = __import__('pygments', {}, {}, ['lexers', 'styles', 'formatters'])
+    HtmlFormatter = pygments.formatters.html.HtmlFormatter
+    get_style_by_name = pygments.styles.get_style_by_name
+    pigments_loaded = True
+except:
+    pass
 
 
 EXCLUDE_RES = [
@@ -112,18 +118,19 @@ def add_headers(env, page, codepage, book=False, title='', subject='', version='
         style = Markup(get_article_css(env))
     
     #Get pygment style
-    try:
-        style_cls = get_style_by_name('trac')
-        parts = style_cls.__module__.split('.')
-        filename = resource_filename('.'.join(parts[:-1]), parts[-1] + '.py')
-        formatter = HtmlFormatter(style=style_cls)
-        content = u'\n\n'.join([
-            formatter.get_style_defs('div.code pre'),
-            formatter.get_style_defs('table.code td')
-        ]).encode('utf-8')
-        style = style + Markup(content)
-    except ValueError, e:
-        pass
+    if pigments_loaded:
+        try:
+            style_cls = get_style_by_name('trac')
+            parts = style_cls.__module__.split('.')
+            filename = resource_filename('.'.join(parts[:-1]), parts[-1] + '.py')
+            formatter = HtmlFormatter(style=style_cls)
+            content = u'\n\n'.join([
+                formatter.get_style_defs('div.code pre'),
+                formatter.get_style_defs('table.code td')
+            ]).encode('utf-8')
+            style = style + Markup(content)
+        except ValueError, e:
+            pass
     
     
     page = Markup('<html><head>') + \
