@@ -24,7 +24,19 @@ class EmailToTicket(Component):
                    'description': message.get_payload(),
                    'status': 'new' }
 
+        # inset items from email
         for key, value in values.items():
             ticket.values[key] = value
 
+        # fill in default values
+        ### unused for now -- needed?
+        for field in ticket.fields:
+            break # XXX unused loop
+            name = field['name']
+            if name not in values:
+                value = ticket.get_value_or_default(name)
+                if value is not None:
+                    ticket.values[name] = value
+
+        # create the ticket
         ticket.insert()
