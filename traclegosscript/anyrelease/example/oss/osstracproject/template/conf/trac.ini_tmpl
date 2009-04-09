@@ -32,20 +32,19 @@ acct_mgr.web_ui.registrationmodule = enabled
 autocompleteusers.* = enabled
 customfieldadmin.api.customfields = enabled
 customfieldadmin.customfieldadmin.customfieldadminpage = enabled
+graphviz.graphviz.graphviz = enabled
+icalexporter.icalexporter.icalexporterplugin = enabled
+includemacro.macros.includemacro = enabled
 iniadmin.iniadmin.iniadminplugin = enabled
 mastertickets.* = enabled
 permredirect.filter.permredirectmodule = enabled
-privatetickets.* = enabled
-privatetickets.api.privateticketssystem = enabled
-privatetickets.query.privateticketsqueryfilter = enabled
-privatetickets.report.privateticketsreportfilter = enabled
-privatetickets.search.privateticketssearchmodule = enabled
-privatetickets.view.privateticketsviewmodule = enabled
+redirect.redirect.tracredirect = enabled
 svnurls.svnurls.svnurls = enabled
 ticketdelete.web_ui.ticketdeleteplugin = enabled
 trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
 tractags.* = enabled
+tractoc.macro.tocmacro = enabled
 
 [header_logo]
 alt = ${description}
