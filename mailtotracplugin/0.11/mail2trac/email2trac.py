@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-smtp2trac:
-a email plugin for Trac
+email2trac:
+a email handler plugin for Trac
 http://trac.edgewall.org
 """
 
@@ -53,7 +53,7 @@ def mail2project(project, message):
             break
     
 
-if __name__ == '__main__':
+def main(args=sys.argv[1:]):
 
     # parse the options
     from optparse import OptionParser
@@ -67,7 +67,7 @@ if __name__ == '__main__':
                       dest='file',
                       help='email file to read;  if not specified, taken from stdin')
 
-    options, args = parser.parse_args()
+    options, args = parser.parse_args(args)
 
     if options.file:
         f = file(options.file)
@@ -82,3 +82,5 @@ if __name__ == '__main__':
     for project in options.projects:
         mail2project(project, f.read())
         
+if __name__ == '__main__':
+    main()

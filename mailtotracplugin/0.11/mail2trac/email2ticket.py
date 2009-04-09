@@ -1,3 +1,4 @@
+from mail2trac.email2trac import EmailException
 from mail2trac.interface import IEmailHandler
 from mail2trac.utils import emailaddr2user
 from trac.core import *
@@ -5,6 +6,8 @@ from trac.ticket import Ticket
 
 
 class EmailToTicket(Component):
+    """create a ticket from an email"""
+
     implements(IEmailHandler)
 
     def match(self, message):
@@ -16,7 +19,11 @@ class EmailToTicket(Component):
 
         user = emailaddr2user(self.env, message['from'])
         
-        # TODO : check permissions
+        # check permissions
+        perm = self.env[trac.perm.PermissionSystem]
+        if perm.check_permission('TICKET_CREATE', user): # None -> 'anoymous'
+            raise EmailException("%s does not have TICKET_CREATE permissions" % (user or 'anonymous'))
+
 
         ticket = Ticket(self.env)
         reporter = user or message['from']
