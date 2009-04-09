@@ -15,6 +15,9 @@ setup(name='mail2trac',
       package_data={ 'mail2trac': ['templates/*', 'htdocs/*'] },
       zip_safe=False,
       entry_points = """
+      [console_scripts]
+      mail2trac = mail2trac.email2trac:main
+
       [trac.plugins]
       email2ticket = mail2trac.email2ticket
       """,
