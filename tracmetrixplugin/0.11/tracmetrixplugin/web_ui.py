@@ -165,20 +165,8 @@ class PDashboard(Component):
     def match_request(self, req):
 
         self.env.log.info("pdashboard match request %s" % (req.path_info,))  
-                
-        urlcomp = req.path_info.split('/')
-        if len(urlcomp) < 2:
-            return False
         
-        self.env.log.info(urlcomp)
-        
-        if len(urlcomp) >= 2:
-            if urlcomp[1] == 'pdashboard' and len(urlcomp) >= 2:
-                if len(urlcomp) == 3: #url has 2 
-                    req.args['imagename'] = urlcomp[2]
-                else:
-                    req.args['imagename'] = None
-                return True
+        return req.path_info == '/pdashboard'
 
     def process_request(self, req):
         req.perm.require('ROADMAP_VIEW')

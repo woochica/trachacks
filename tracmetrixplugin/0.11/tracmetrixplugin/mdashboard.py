@@ -274,36 +274,6 @@ def make_cumulative_data(env, tkt_counts):
 #        env.log.info(tkt_cumulative[event])            
     return tkt_cumulative
 
-#def create_cumulative_chart(env, milestone, numdates, tkt_cumulative_table): 
-#    
-#    #cla()
-#    fig = figure(figsize = (8,4))
-#    ax = fig.add_subplot(111) # Create supplot with key 111       
-#    ax.cla()
-#    ax.plot(numdates, tkt_cumulative_table['Enter'], 'b-')
-#    ax.plot(numdates, tkt_cumulative_table['Leave'], 'r-') 
-#    ax.plot(numdates, tkt_cumulative_table['Finish'], 'g-')
-#    ax.set_xlim( numdates[0], numdates[-1] )
-#    ax.xaxis.set_major_locator(DayLocator(interval=7))
-#    ax.xaxis.set_major_formatter( DateFormatter('%Y-%m-%d'))
-#    ax.fmt_xdata = DateFormatter('%Y-%m-%d %H:%M:%S')
-#    labels = ax.get_xticklabels()
-#    setp(labels, rotation=90, fontsize=6)
-#    
-#    xlabel('Dates (day)')
-#    ylabel('Counts (times)')
-#    title('Cumulative flow chart for ticket status history')
-#    legend(('Ticket Entered', 'Ticket Left', 'Ticket Completed'), loc='best')
-#    
-#    mname = re.sub(r'\.', '_', milestone.name)
-#    filename = "cumulativeflow_%s" % (mname,)
-#    path = os.path.join(env.path, 'cache', 'tracmetrixplugin', filename)
-#    #env.log.info(path)  
-#    
-#    fig.savefig(path)
-#    
-#    return path
-   
 class MDashboard(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
@@ -359,19 +329,7 @@ class MDashboard(Component):
                
         if match:
             if match.group(1):
-                
-                # split the milestone name.  This part can be 'milestone name' or 
-                # 'milestone name/image name'
-                
-                urlcomp = match.group(1).split('/')
-                
-                if len(urlcomp) == 1: #url has 2 
-                    req.args['id'] = urlcomp[0]
-                    req.args['imagename'] = None
-                else:
-                    req.args['id'] = urlcomp[0]
-                    req.args['imagename'] = urlcomp[1]
-                    
+                req.args['id'] = match.group(1)
             return True
         # This code should do what above does.
         #req.path_info.startswith('/mdashboard')
