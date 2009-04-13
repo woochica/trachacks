@@ -230,7 +230,7 @@ class TracTweakUIModule(Component):
 
         tweakui_js_path = '/tractweakui/tweakui_js'
         if req.path_info.startswith(tweakui_js_path):
-            path_pattern = req.path_info[len(tweakui_js_path) + 1 : -3]
+            path_pattern = urllib.unquote(req.path_info[len(tweakui_js_path) + 1 : -3])
             js_files = TracTweakUIModel.get_path_scripts(self.env, path_pattern)
             if js_files:
                 script = ";\n".join(js_files)
