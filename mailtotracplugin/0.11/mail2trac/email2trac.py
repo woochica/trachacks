@@ -33,8 +33,8 @@ def mail2project(project, message):
     message = email.message_from_string(message)
 
     # if the message is not to this project, ignore it
-    to = email.Utils.parseaddr(message['to'])[1]    
-    if to != env.config.get('notification', 'smtp_from'):
+    to = email.Utils.parseaddr(message['to'])[1]
+    if to != env.config.get('notification', 'smtp_replyto'):
         # XXX should be made more robust
         return
 
@@ -46,7 +46,7 @@ def mail2project(project, message):
             message = handler.invoke(message)
         except EmailException:
             # TODO : handle the exception
-            break
+            raise
 
         # if the message is consumed, quit processing
         if not message:
