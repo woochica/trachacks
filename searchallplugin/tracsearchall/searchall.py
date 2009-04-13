@@ -64,6 +64,11 @@ class SearchAllPlugin(Component):
     # ISearchSource methods
     def get_search_filters(self, req):
         
+        if hasattr(req, 'is_searchall_recursive'):
+            return
+            
+        req.is_searchall_recursive = True
+        
         #Check what filters are available in current project
         existing_filters = []
         env_search = SearchModule(self.env)
