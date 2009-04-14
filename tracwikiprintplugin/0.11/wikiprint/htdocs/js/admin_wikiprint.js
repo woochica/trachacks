@@ -4,7 +4,9 @@ function move_item(from, to) {
     for (var i = 0; i < from_box.options.length; i++) {
        var opt = from_box.options[i];
        if (opt.selected) {
-           to_box.options.add(opt);
+           var newopt = new Option(opt.innerHTML, opt.value);
+           to_box.options.add(newopt);
+           from_box.options[i] = null;
            i--;
        }
     }
