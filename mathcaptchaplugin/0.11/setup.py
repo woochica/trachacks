@@ -36,7 +36,9 @@ setup(
     name = PACKAGE,
     version = VERSION,
     packages = ['mathcaptcha'],
-    author = 'Rob McMullen <robm@users.sourceforge.net>',
+    author = 'Rob McMullen',
+    author_email = 'robm@users.sourceforge.net',
+    description = 'Simple math problems used as CAPTCHA on wiki pages and ticket submission.',
     url = "http://www.trac-hacks.org/wiki/MathCaptchaPlugin",
     license = 'BSD',
     entry_points = {
