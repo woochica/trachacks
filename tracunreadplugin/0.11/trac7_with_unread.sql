@@ -10,10 +10,10 @@ SELECT p.value AS __color__,
    reporter AS _reporter
    , CASE
     WHEN u.last_read_on IS NULL OR u.last_read_on < t.time
-    THEN '[ticket:' || t.id || ' new ticket]'
+    THEN '[ticket:' || cast(t.id AS char) || ' new ticket]'
     WHEN u.last_read_on > t.changetime
     THEN 'no unread'
-    ELSE '[comment:ticket:' || t.id || ':' || (
+    ELSE '[comment:ticket:' || cast(t.id AS char) || ':' || (
         -- fetch unread comment number
         SELECT
           CASE
