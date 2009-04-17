@@ -1,0 +1,33 @@
+<script type="text/javascript">
+      
+  var map = null;
+  
+  function init(){
+      
+  var options = { units: "dd" };
+//      maxResolution: "auto",
+//      minResolution: "auto",
+//      units: "dd"
+//      };
+
+  map = new OpenLayers.Map('map', options);
+      
+  var wms = new OpenLayers.Layer.WMS(
+  "WMS Layer",
+  "${wms_url}",
+  {layers: 'openstreetmap'}
+  );
+
+  var datalayer = new OpenLayers.Layer.Vector(
+  "Data Layer",
+  {});
+
+//      var location = new OpenLayers.LonLat(${geolon}, ${geolat});
+
+  map.addLayers([wms, datalayer]);
+  var marker = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(${geolon}, ${geolat}));
+  datalayer.addFeatures([marker]);
+  map.zoomToExtent(datalayer.getDataExtent());
+      }
+</script>
+
