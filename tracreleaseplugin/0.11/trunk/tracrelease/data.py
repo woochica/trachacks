@@ -363,10 +363,16 @@ def loadVersion(com, versionId):
     
     
 def findInstallProcedures(com):
-    """Find all available Install Procedureres"""
+    """Find all available Install Procedure"""
     sql = "SELECT id, name, description, contain_files FROM install_procedures ORDER BY id"
     f = lambda row: model.InstallProcedures(row[0], row[1], row[2], row[3])
     return loadListFromDatabase(com, sql, f)
+
+def loadInstallProcedure(com, procId):
+    """Load data from a specific Install Procedure"""
+    sql = "SELECT id, name, description, contain_files FROM install_procedures WHERE id = %s"
+    f = lambda row: model.InstallProcedures(row[0], row[1], row[2], row[3])
+    return loadFromDatabase(com, sql, f, procId)
  
 
 def loadReleaseInstallProcedures(com, releaseId):
@@ -386,3 +392,30 @@ def loadReleaseInstallProcedures(com, releaseId):
             proc.install_files = loadListFromDatabase(com, sqlFiles, f1, releaseId, proc.install_procedure.id)
             
     return ret
+
+
+def saveInstallProc(com, installProc):
+    """Save the install proc to the database"""
+
+    newId = None
+    db = com.env.get_db_cnx()
+    cur = db.cursor()
+        
+    try:
+        if installProc.id:
+            sql = """UPDATE install_procedures SET name = %s, description = %s, contain_files = %s WHERE id = %s"""
+            cur.execute(sql, (installProc.name, installProc.description, installProc.contain_files, installProc.id))
+        else:
+            sql = """INSERT INTO install_procedures (name, description, contain_files) VALUES (%s, %s, %s)"""
+            cur.execute(sql, (installProc.name, installProc.description, installProc.contain_files))
+
+        installProc.id = db.get_last_id(cur, 'install_procedures')
+        db.commit()
+        com.log.info("Saved InstallProc %d" % installProc.id)
+        flag = installProc.id
+    except:
+        db.rollback()
+        flag = False
+        
+    db.close()
+    return flag

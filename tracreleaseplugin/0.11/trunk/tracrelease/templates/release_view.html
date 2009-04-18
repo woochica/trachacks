@@ -11,41 +11,58 @@
     <title>Release Control</title>
     <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
     <script type="text/javascript" py:choose="">
-      /*
-      function loadFiles(elemName, useInnerHTML, arqs) {
-        elem = document.getElementById(elemName);
-        if (elem) {
-          if (useInnerHTML) {
-            elem.innerHTML = arqs.toString();
-          } else {
-            elem.value = arqs.toString();
-          }
-        }
-      }
-      */
-      
       $(document).ready(function() {
           $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
-
-	  var files;
-          <py:for each="item in release.install_procedures">
-            files = [];
-            <py:if test="item.install_files">
-              <py:for each="arq in item.install_files">
-                files.push("$arq");
-              </py:for>
-            </py:if>
-            
-            //loadFiles("releaseProcedureFile_$item.install_procedure.id", false, files);
-            //loadFiles("previewReleaseProcedureFile_$item.install_procedure.id", true, files);
-          </py:for>
         });
     </script>
+    <style>
+	#content td {
+	  vertical-align: top;
+	}
+	
+	#content th {
+	 color: #000;
+	 font-weight: bold;
+	 text-align: left;
+         vertical-align: top;
+	}
+	
+	#releaseBlock th {
+	 color: #000;
+	 font-weight: bold;
+	 text-align: right;
+	 width: 20%;
+	}
+	
+	#tableInstallProcedures {
+	 
+	}
+	
+	#releaseTickets td {
+	 
+	}
+	
+	#releaseSignatures td {
+	 min-width: 100px;
+	}
+	
+	@media print {
+	 #releaseLinks { display: none }
+	 #releasePrintable { display: block }
+	}
+    
+    </style>
   </head>
 
   <body>
-    <div id="content" class="ticket">
-      <fieldset id="properties">
+    <div id="content" class="release">
+      
+      <h1 id="releaseHeader">
+	Release Notes
+      </h1>
+      
+      
+      <fieldset id="releaseBlock">
 	<legend>Release</legend>
 
 	<table class="properties">
@@ -176,7 +193,7 @@
 
 		  <py:if test="item.install_files">
 		    <py:for each="arq in item.install_files">
-		      <li>${wiki_to_oneliner(context, arq)}</li><br/>
+		      <li>${wiki_to_oneliner(context, arq)}</li>
 		    </py:for>
 		  </py:if>
 		</td>
@@ -186,8 +203,9 @@
 	</table>
       </fieldset>
     </div>
-  
-    <a py:if="'RELEASE_ADMIN' in perm" href="$baseURL/edit/$release.id">Edit Release</a>
+    <div id="releaseLinks">
+      <a py:if="'RELEASE_ADMIN' in perm" href="$baseURL/edit/$release.id">Edit Release</a>
+    </div>
     <br/>
     <br/>
     <br/>

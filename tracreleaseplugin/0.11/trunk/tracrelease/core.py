@@ -46,7 +46,10 @@ class ReleaseCore(Component):
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        return ['RELEASE_VIEW', 'RELEASE_ADMIN', 'RELEASE_CREATE']
+        return ['RELEASE_VIEW',
+                'RELEASE_ADMIN',
+                'RELEASE_CREATE',
+                'RELEASE_INSTALLPROC_CREATE']
         
         
 
@@ -63,10 +66,19 @@ class ReleaseCore(Component):
     # IRequestHandler methods
     def match_request(self, req):
         if req.path_info == "/release":
+            req.args['action'] = 'list'
             return True
 
         if req.path_info == "/release/add":
             req.args['action'] = 'add'
+            return True
+        
+        if req.path_info == "/release/installproc":
+            req.args['action'] = 'install_proc_list'
+            return True
+
+        if req.path_info == "/release/installproc/add":
+            req.args['action'] = 'install_proc_add'
             return True
 
         match = re.match("/release/(\d+)$", req.path_info)
@@ -81,17 +93,59 @@ class ReleaseCore(Component):
             req.args['action'] = match.group(1)
             return True
         
+        match = re.match("/release/installproc/(\d+)$", req.path_info)
+        if match :
+            req.args['install_proc_id'] = match.group(1)
+            req.args['action'] = 'install_proc_view'
+            return True
+        
+        match = re.match("/release/installproc/([^/]+)/(\d+)$", req.path_info)
+        if match and (match.group(1) in ['add', 'edit', 'view']):
+            req.args['install_proc_id'] = match.group(2)
+            req.args['action'] = 'install_proc_' + match.group(1)
+            return True
+        
         return False
 
     def process_request(self, req):
+        self.log.info("process_request: action: %s" % req.args.get('action'))
+        
         templateData = {}
         templateData['baseURL'] = req.href.release()
         templateData['ticketURL'] = req.href.ticket()
         
         add_stylesheet(req, 'common/css/ticket.css')
         
-        if 'id' in req.args:
-            templateData['release'] = data.loadRelease(self, req.args['id'])
+        
+        if (not 'preview' in req.args) and (not 'save' in req.args) and (req.args['action'] != 'install_proc_add'):
+            if 'id' in req.args:
+                templateData['release'] = data.loadRelease(self, req.args['id'])
+                
+            if 'install_proc_id' in req.args:
+                templateData['install_proc'] = data.loadInstallProcedure(self, req.args['install_proc_id'])
+                
+        else:
+            if 'preview' in req.args:
+                templateData['preview'] = True
+                
+            if ('install_proc_id' in req.args) or (req.args['action'] == 'install_proc_add'):
+                install_proc_id = req.args.get('install_proc_id')
+                install_proc_name = req.args.get('txtProcedureName')
+                install_proc_description = req.args.get('txtProcedureDescription')
+                install_proc_contain_files = req.args.get('chkProcedureContainFiles')
+                
+                templateData['install_proc'] = model.InstallProcedures(install_proc_id,
+                                                                       install_proc_name,
+                                                                       install_proc_description,
+                                                                       install_proc_contain_files)
+            
+                if 'save' in req.args:
+                    id = data.saveInstallProc(self, templateData['install_proc'])
+                    self.log.info("process_request: saved InstallProc: %s (%s)" % (id, templateData['install_proc']))
+                    if id:
+                        templateData['install_proc'] = data.loadInstallProcedure(self, id)
+                        req.args['action'] = 'install_proc_view'
+                        preview = False
         
         if 'action' in req.args:
             if req.args['action'] == 'view':
@@ -128,6 +182,21 @@ class ReleaseCore(Component):
             if req.args['action'] == 'signed':
                 data.signRelease(self, req.args['id'], req.authname)
                 req.redirect(req.href.release() + '/view/' + req.args['id'])
+                
+            if req.args['action'] == 'install_proc_list':
+                templateData['availableInstallProcs'] = data.findInstallProcedures(self)
+                return 'install_proc_list.html', templateData, None
+                
+            if req.args['action'] == 'install_proc_edit':
+                templateData['availableInstallProcs'] = data.findInstallProcedures(self)
+                return 'install_proc_edit.html', templateData, None
+                
+            if req.args['action'] == 'install_proc_add':
+                templateData['availableInstallProcs'] = data.findInstallProcedures(self)
+                return 'install_proc_add.html', templateData, None
+                
+            if req.args['action'] == 'install_proc_view':
+                return 'install_proc.html', templateData, None
             
         # exibe listagem de releases existentes
         templateData['baseURL'] = req.href.release()

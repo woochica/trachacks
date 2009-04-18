@@ -1,0 +1,108 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+  <head>
+    <title>Install Procedure</title>
+    <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+    <script type="text/javascript" py:choose="">
+      $(document).ready(function() {
+          $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+    </script>
+    <style>
+	#content td {
+	  vertical-align: top;
+	}
+	
+	#content th {
+	 color: #000;
+	 font-weight: bold;
+	 text-align: left;
+         vertical-align: top;
+	}
+	
+	#releaseBlock th {
+	 color: #000;
+	 font-weight: bold;
+	 text-align: right;
+	 width: 20%;
+	}
+	
+	#tableInstallProcedures {
+	 
+	}
+	
+	#releaseTickets td {
+	 
+	}
+	
+	#releaseSignatures td {
+	 min-width: 100px;
+	}
+	
+	@media print {
+	 #releaseLinks { display: none }
+	 #releasePrintable { display: block }
+	}
+    
+    </style>
+  </head>
+
+  <body>
+    <div id="content" class="release">
+      
+      <fieldset id="releaseProcedures">
+	<legend>Install Procedures</legend>
+      
+      	<table class="properties">
+	  <tr>
+	    <th>Id:</th>
+	    <td class="fullrow" colspan="3">$install_proc.id</td>
+	  </tr>
+	  
+	  <tr>
+	    <th>Name:</th>
+	    <td class="fullrow" colspan="3">$install_proc.name</td>
+	  </tr>
+  
+	  <tr>
+	    <th>Description:</th>
+	    <td class="fullrow" colspan="3">
+	      ${wiki_to_html(context, install_proc.description)}
+	    </td>
+	  </tr>
+  
+	  <tr>
+	    <th>Contain Files?</th>
+	    <td>
+                <py:choose>
+                  <py:when test="install_proc.contain_files">
+                    Sim
+                  </py:when>
+                  <py:otherwise>
+                    N&atilde;o
+                  </py:otherwise>
+                </py:choose>
+            </td>
+	  </tr>
+	</table>
+      </fieldset>
+    </div>
+    <div id="releaseLinks">
+      <a py:if="('RELEASE_ADMIN' in perm) or ('RELEASE_INSTALLPROC_CREATE' in perm)" href="$baseURL/installproc/edit/$install_proc.id">Edit Procedure</a>
+      &nbsp;
+      <a href="$baseURL/installproc">Install Procs</a>
+      &nbsp;
+      <a href="$baseURL">Releases</a>
+    </div>
+    <br/>
+    <br/>
+    <br/>
+  </body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+  <head>
+    <title>Install Procedures</title>
+    <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+    <script type="text/javascript" py:choose="">
+      $(document).ready(function() {
+          $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+    </script>
+  </head>
+
+  <body>
+    <div id="content" class="release">  
+      <table id="releases" class="tableInstallProcs">
+	<thead>
+	  <tr>
+	    <th>ID</th>
+	    <th>Name</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <py:for each="item in availableInstallProcs">
+	    <tr>
+	      <td>
+		<a href="$baseURL/installproc/$item.id">$item.id</a>
+	      </td>
+	      <td>
+		<a href="$baseURL/installproc/$item.id">$item.name</a>
+	      </td>
+	    </tr>
+	  </py:for>
+	</tbody>
+      </table>
+      <br/>
+      <a py:if="('RELEASE_ADMIN' in perm) or ('RELEASE_INSTALLPROC_CREATE' in perm)" href="$baseURL/installproc/add">Add new Procedure</a>
+      &nbsp;
+      <a href="$baseURL">Releases</a>
+    </div>
+  </body>
+</html>
