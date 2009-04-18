@@ -23,6 +23,7 @@ trunk_path = trunk
 """
 
 import os.path
+import sys
 
 from trac.core import *
 from trac.versioncontrol.web_ui import ChangesetModule
@@ -32,6 +33,15 @@ BRANCHES_PATH = 'branches'
 TRUNK_PATH = 'trunk'
 FILTER_NAME_PREFIX = 'branch_filter_'
 
+python_version = tuple(sys.version_info[:2])
+# If Python version is prior to 2.5, implement any
+if python_version < (2, 5):
+    def any(iterable):
+        for member in iterable:
+            if member:
+                return True
+        return False
+    
 def _get_filter_name(branch_name):
     return "%s%s" % (FILTER_NAME_PREFIX, branch_name)
 
@@ -68,6 +78,11 @@ class BranchesTimelineModule(ChangesetModule):
         else:
             path = default_value
         return path
+
+    def _get_undisplayed_branches(self):
+        branches = self.env.config.get('timeline-branches', 'undisplayed_branches', '')
+        branches = branches.split(',')
+        return [branch.strip() for branch in branches]
         
     def _get_branches_path(self):
         return self._get_configuration_path('branches_path', BRANCHES_PATH)
@@ -79,11 +94,13 @@ class BranchesTimelineModule(ChangesetModule):
         # Find all branches and yield them
         repos = self.env.get_repository(req.authname)
         node = get_existing_node(req, repos, self._branches_path, repos.youngest_rev)
+        undisplayed_branches = self._get_undisplayed_branches()
         branches_directory_length = len(self._branches_path) # Optimization (although I never checked if that's slow)
         for branch_node in node.get_entries():
+            branch_name = branch_node.path[branches_directory_length:].strip(os.sep)
             # Branches are directories under the branches directory
-            if node.isdir:
-                yield branch_node.path[branches_directory_length:].strip(os.sep)
+            if node.isdir and (branch_name not in undisplayed_branches):
+                yield branch_name
     
     def get_timeline_filters(self, req):
         """Return a list of filters that this event provider supports.
