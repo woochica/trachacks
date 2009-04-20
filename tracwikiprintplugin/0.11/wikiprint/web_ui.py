@@ -75,7 +75,7 @@ class WikiPrintAdmin(Component):
                 raise TracError('Bad format given for WikiPrint output.')
                 
             pdfbookname = title.replace(' ', '_').replace(':', '_').replace(',', '_')
-            return formats[format]['provider'].process_wikiprint(req, format, title, subject, rightpages, date, version, pdfbookname)
+            return formats[format]['provider'].process_wikiprint(req, format, title, subject, rightpages, version, date, pdfbookname)
             
         elif req.method == 'POST' and req.args.get('saveurls'):
             self.env.config.set('wikiprint', 'css_url', req.args.get('css_url'))
