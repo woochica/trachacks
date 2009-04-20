@@ -1,5 +1,6 @@
 .sidebar { 
-           float: right;
-           border: 1px solid black; 
-           text-align: left;
- }
+float: right;
+border: 1px solid black; 
+text-align: left;
+clear: right;
+}
