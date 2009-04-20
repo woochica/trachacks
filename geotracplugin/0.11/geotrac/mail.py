@@ -18,6 +18,13 @@ try:
             location = ''
             if '@' in subject:
                 subject, location = [i.strip() for i in subject.split('@', 1)]
+
+                # from help(email.Message.Message) on __setitem__:
+                # Note: this does not overwrite an existing header 
+                # with the same field name.
+                # Use __delitem__() first to delete any existing headers.
+                del message['subject']
+
                 message['subject'] = subject
                 fields['location'] = location
             else:
