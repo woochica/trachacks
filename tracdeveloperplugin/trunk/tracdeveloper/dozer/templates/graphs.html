@@ -17,12 +17,20 @@
           float: left;
           width: 30%%;
       }
+      
+      .typecount p {
+        margin: 0;
+      }
 
       .chart {
-          border-bottom: 1px solid #CCCCCC;
           background-color: white;
           padding: 0.25em;
           margin: 0;
+      }
+      
+      .sparkline {
+        display: none;
+        padding: 5px 0;
       }
     </style>
   </head>
@@ -30,7 +38,14 @@
     <h1><a href="${req.href.developer('dozer')}">Dozer</a>: Types</h1>
 
     <div id="output">
-      $output
+      <div class="typecount" py:for="typename, hist in sorted(history.iteritems())"
+                             py:with="maxhist = max(hist)"
+                             py:if="maxhist >= req.args.get('floor', 0)">
+        <p>$typename</p>
+        <p class="chart"><span class="sparkline">${','.join([str(n) for n in hist])}</span></p>
+        <p>Min: ${min(hist)} Cur: ${hist[-1]} Max: $maxhist
+         <a href="${href.developer('dozer', 'trace', typename)}">TRACE</a></p>
+       </div>
     </div>
 
   </body>

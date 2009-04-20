@@ -8,13 +8,13 @@ from StringIO import StringIO
 from types import FrameType, ModuleType
 
 from pkg_resources import resource_filename
-
-import Image
-import ImageDraw
+# 
+# import Image
+# import ImageDraw
 
 from trac.core import *
 from trac.web.api import IRequestHandler, HTTPNotFound, HTTPForbidden
-from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 
 from genshi.core import Markup
 from genshi.builder import tag
@@ -102,34 +102,6 @@ class Dozer(Component):
         yield resource_filename(__name__, 'templates')
     
     # Internal methods
-    def __call__(self, environ, start_response):
-        assert not environ['wsgi.multiprocess'], (
-            "Dozer middleware is not usable in a "
-            "multi-process environment")
-        req = Request(environ)
-        req.base_path = req.application_url + '/_dozer'
-        if req.path_info_peek() == '_dozer':
-            return self.dowse(req)(environ, start_response)
-        else:
-            return self.app(environ, start_response)
-    
-    def dowse(self, req):
-        assert req.path_info_pop() == '_dozer'
-        next_part = req.path_info_pop()
-        method = getattr(self, next_part, None)
-        if method is None:
-            return exc.HTTPNotFound('Nothing could be found to match %r' % next_part)
-        if not getattr(method, 'exposed', False):
-            return exc.HTTPForbidden('Access to %r is forbidden' % next_part)
-        return method(req)
-    
-    def media(self, req):
-        """Static path where images and other files live"""
-        path = resource_filename('dozer', 'media')
-        app = urlparser.StaticURLParser(path)
-        return app
-    media.exposed = True
-
     def start(self):
         self.running = True
         while self.running:
@@ -171,51 +143,55 @@ class Dozer(Component):
     def stop(self):
         self.running = False
     
+    # Subpage handlers
     def index(self, req):
-        floor = req.args.get('floor', 0)
-        rows = []
-        typenames = self.history.keys()
-        typenames.sort()
-        for typename in typenames:
-            hist = self.history[typename]
-            maxhist = max(hist)
-            if maxhist > int(floor):
-                row = ('<div class="typecount">%s<br />'
-                       '<img class="chart" src="%s" style="height: 20px;" /><br />'
-                       'Min: %s Cur: %s Max: %s <a href="%s">TRACE</a></div>'
-                       % (cgi.escape(typename),
-                          req.href.developer('dozer', 'chart', typename), #url(req, "chart/%s" % typename),
-                          min(hist), hist[-1], maxhist,
-                          req.href.developer('dozer', 'trace', typename), #url(req, "trace/%s" % typename),
-                          )
-                       )
-                rows.append(row)
+        data = {}
+        # floor = req.args.get('floor', 0)
+        # rows = []
+        # typenames = self.history.keys()
+        # typenames.sort()
+        # for typename in typenames:
+        #     hist = self.history[typename]
+        #     maxhist = max(hist)
+        #     if maxhist > int(floor):
+        #         row = ('<div class="typecount">%s<br />'
+        #                '<img class="chart" src="%s" style="height: 20px;" /><br />'
+        #                'Min: %s Cur: %s Max: %s <a href="%s">TRACE</a></div>'
+        #                % (cgi.escape(typename),
+        #                   req.href.developer('dozer', 'chart', typename), #url(req, "chart/%s" % typename),
+        #                   min(hist), hist[-1], maxhist,
+        #                   req.href.developer('dozer', 'trace', typename), #url(req, "trace/%s" % typename),
+        #                   )
+        #                )
+        #         rows.append(row)
         #res = Response()
         #res.body = template(req, "graphs.html", output="\n".join(rows))
         #return res
-        data = {}
-        data['output'] = Markup('\n'.join(rows))
+        #data['output'] = Markup('\n'.join(rows))
+        data['history'] = self.history
+        add_script(req, 'dozer/excanvas.compiled.js')
+        add_script(req, 'dozer/jspark.js')
         return 'graphs.html', data, None
     index.exposed = True
     
-    def chart(self, req):
-        """Return a sparkline chart of the given type."""
-        typename = req.path_info[23:]
-        data = self.history[typename]
-        height = 20.0
-        scale = height / max(data)
-        im = Image.new("RGB", (len(data), int(height)), 'white')
-        draw = ImageDraw.Draw(im)
-        draw.line([(i, int(height - (v * scale))) for i, v in enumerate(data)],
-                  fill="#009900")
-        del draw
-        
-        f = StringIO()
-        im.save(f, "PNG")
-        result = f.getvalue()
-        
-        req.send(result, 'image/png')
-    chart.exposed = True
+    # def chart(self, req):
+    #     """Return a sparkline chart of the given type."""
+    #     typename = req.path_info[23:]
+    #     data = self.history[typename]
+    #     height = 20.0
+    #     scale = height / max(data)
+    #     im = Image.new("RGB", (len(data), int(height)), 'white')
+    #     draw = ImageDraw.Draw(im)
+    #     draw.line([(i, int(height - (v * scale))) for i, v in enumerate(data)],
+    #               fill="#009900")
+    #     del draw
+    #     
+    #     f = StringIO()
+    #     im.save(f, "PNG")
+    #     result = f.getvalue()
+    #     
+    #     req.send(result, 'image/png')
+    # chart.exposed = True
     
     def trace(self, req):
         typename = req.path_info[23:]

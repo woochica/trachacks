@@ -18,11 +18,8 @@ setup(
             'developer.plugins = tracdeveloper.plugins',
             'developer.javascript = tracdeveloper.javascript',
             'developer.log = tracdeveloper.log',
-            'developer.dozer = tracdeveloper.dozer [PIL]',
+            'developer.dozer = tracdeveloper.dozer',
         ]
-    },
-    extras_require = {
-        'PIL': ['PIL'],
     },
     package_data = {
         'tracdeveloper' : [
@@ -32,6 +29,7 @@ setup(
         ],
         'tracdeveloper.dozer' : [
             'htdocs/*.css',
+            'htdocs/*.js',
             'templates/*.html',
         ],
     }
