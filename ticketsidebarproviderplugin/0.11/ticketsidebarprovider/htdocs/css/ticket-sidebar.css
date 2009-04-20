@@ -4,3 +4,6 @@ border: 1px solid black;
 text-align: left;
 clear: right;
 }
+
+.ticket 
+{ float:left;} 
