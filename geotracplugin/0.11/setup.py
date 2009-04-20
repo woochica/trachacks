@@ -20,7 +20,7 @@ setup(name='GeoTrac',
         'CustomFieldProvider',
         'TicketSidebarProvider'
         ],
-      extras_requires={
+      extras_require={
         'mail2trac': [ 'mail2trac' ],
         },
       dependency_links=[

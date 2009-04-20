@@ -22,7 +22,7 @@ try:
                 fields['location'] = location
             else:
                 if geotrac.mandatory_location:
-                    raise EmailException('Location required. Please not with "%s @ <location>" in your email' % subject)
+                    raise EmailException('Location required. Please email with "%s @ <location>" in your subject.' % subject)
 
             return EmailToTicket.fields(self, message, **fields)
 
