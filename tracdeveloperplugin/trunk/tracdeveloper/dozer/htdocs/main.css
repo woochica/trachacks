@@ -1,0 +1,20 @@
+
+
+.obj {
+    border: 1px dashed #CCCCCC;
+    padding: 0.5em;
+    margin: 2px;
+    font: 10pt Arial, sans-serif;
+    vertical-align: middle;
+}
+
+.typename {
+    font-weight: bold;
+}
+
+.refs {
+    border: 1px solid #CCCCCC;
+    padding: 0.25em;
+    margin: 0;
+}
+

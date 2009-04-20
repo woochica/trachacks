@@ -1,0 +1,37 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>Dozer: Types</title>
+    <style type='text/css'>
+      .typecount {
+          border: 1px dashed #CCCCCC;
+          padding: 0.5em;
+          margin: 2px;
+          font: 10pt Arial, sans-serif;
+          vertical-align: middle;
+          float: left;
+          width: 30%%;
+      }
+
+      .chart {
+          border-bottom: 1px solid #CCCCCC;
+          background-color: white;
+          padding: 0.25em;
+          margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1><a href="${req.href.developer('dozer')}">Dozer</a>: Types</h1>
+
+    <div id="output">
+      $output
+    </div>
+
+  </body>
+</html>
