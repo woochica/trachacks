@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.0'
+version='0.1'
 
 setup(name='GeoTrac',
       version=version,
@@ -20,14 +20,19 @@ setup(name='GeoTrac',
         'CustomFieldProvider',
         'TicketSidebarProvider'
         ],
+      extras_requires={
+        'mail2trac': [ 'mail2trac' ],
+        },
       dependency_links=[
         "http://trac-hacks.org/svn/customfieldproviderplugin/0.11#egg=CustomFieldProvider",
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
+        "http://trac-hacks.org/svn/mailtotracplugin/0.11/#egg=mail2trac",
         ],
       entry_points = """
       [trac.plugins]
       geotrac = geotrac.ticket
       mapsidebar = geotrac.web_ui
+      geotracmail = geotrac.mail [mail2trac]
       """,
       )
 
