@@ -3,7 +3,22 @@ float: right;
 border: 1px solid black; 
 text-align: left;
 clear: right;
+width: 49%;
+overflow: hidden;
 }
 
-.ticket 
-{ float:left;} 
+.sidebar img {
+width: 100%;
+}
+
+/* overrides of default ticket.css styles */
+#content.ticket {
+float:left;
+width: 49%;
+max-width: 49%
+}
+
+#main {
+width: 1000px;
+min-width: 100%;
+}

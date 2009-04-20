@@ -42,7 +42,7 @@ class TicketSidebarProvider(Component):
         ticket = data['ticket']
         for provider in self.providers: # TODO : sorting
             if provider.enabled(req, ticket):
-                stream |= Transformer("//div[@id='content']").before(tag.div(provider.content(req, ticket), **{'class': "sidebar" }))
+                stream |= Transformer("//div[@id='content']").after(tag.div(provider.content(req, ticket), **{'class': "sidebar" }))
 
         return stream
 
