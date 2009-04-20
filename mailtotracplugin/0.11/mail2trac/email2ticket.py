@@ -11,6 +11,8 @@ class EmailToTicket(Component):
 
     implements(IEmailHandler)
 
+    ### methods for IEmailHandler
+
     def match(self, message):
         return True
 
@@ -29,14 +31,10 @@ class EmailToTicket(Component):
         ticket = Ticket(self.env)
         reporter = user or message['from']
 
-        # effectively the interface for email -> ticket
-        values = { 'reporter': reporter,
-                   'summary': message['subject'],
-                   'description': message.get_payload(),
-                   'status': 'new' }
+        fields = self.fields(message, reporter=reporter)
 
         # inset items from email
-        for key, value in values.items():
+        for key, value in fields.items():
             ticket.values[key] = value
 
         # fill in default values
@@ -54,3 +52,14 @@ class EmailToTicket(Component):
 
     def order(self):
         return None
+
+
+    ### internal methods
+
+    def fields(self, message, **fields):
+
+        # effectively the interface for email -> ticket
+        fields.update(dict(summary=message['subject'],
+                           description=message.get_payload(),
+                           status='new'))
+        return fields
