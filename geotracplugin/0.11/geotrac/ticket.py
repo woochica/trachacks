@@ -51,7 +51,12 @@ class GeoTrac(Component):
             else:
                 return []
 
-                        
+        # XXX blindly assume UTF-8
+        try:
+            location = location.encode('utf-8')
+        except UnicodeEncodeError:
+            raise
+
         # geolocate the address
         try:
             address, (lat, lon) = self.geolocate(location)
