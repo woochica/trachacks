@@ -3,31 +3,54 @@
   var map = null;
   
   function init(){
+
+      // this is the projection where lon, lat work
+      var epsg4326 = new OpenLayers.Projection("EPSG:4326");
       
-  var options = { units: "dd" };
-//      maxResolution: "auto",
-//      minResolution: "auto",
-//      units: "dd"
-//      };
+      // this is google's projection
+      var googleprojection = new OpenLayers.Projection("EPSG:900913");
+  
+      // bounds for google's projection
+      // units are in meters
+      var bounds = new OpenLayers.Bounds(
+      -2.003750834E7,-2.003750834E7,
+      2.003750834E7,2.003750834E7);
 
-  map = new OpenLayers.Map('map', options);
-      
-  var wms = new OpenLayers.Layer.WMS(
-  "WMS Layer",
-  "${wms_url}",
-  {layers: 'openstreetmap'}
-  );
+    
+      var options = { 
+//      units: "dd",  // only works in EPSG:4326
+      maxExtent: bounds,
+      maxResolution: 156543.03396025, // meters per pixel at maximum extent (world projection)
+      projection: "EPSG:900913",  // use google's projection
+      };
 
-  var datalayer = new OpenLayers.Layer.Vector(
-  "Data Layer",
-  {});
+      // create a map opject with the options 
+      map = new OpenLayers.Map('map', options);
 
-//      var location = new OpenLayers.LonLat(${geolon}, ${geolat});
+      // layer for the tiles
+      var wms = new OpenLayers.Layer.WMS(
+      "WMS Layer",
+      "${wms_url}",
+      {layers: 'openstreetmap',
+       format: 'image/png',} // use PNGs because they're cached
+      );
 
-  map.addLayers([wms, datalayer]);
-  var marker = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(${geolon}, ${geolat}));
-  datalayer.addFeatures([marker]);
-  map.zoomToExtent(datalayer.getDataExtent());
+      // layer for the marker point of interest
+      var datalayer = new OpenLayers.Layer.Vector(
+      "Data Layer",
+      {});
+
+      // add the layers to the map
+      map.addLayers([wms, datalayer]);
+
+      // add the point of interest to the data layer
+      point = new OpenLayers.Geometry.Point(${geolon}, ${geolat});
+      var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection));
+      datalayer.addFeatures([marker]);
+
+      // zoom in on the point of interest
+      map.zoomToExtent(datalayer.getDataExtent());
+
       }
 </script>
 

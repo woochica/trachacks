@@ -1,6 +1,6 @@
 """
 GeoTrac:
-a plugin for Trac
+a plugin for Trac to geolocate issues
 http://trac.edgewall.org
 """
 
