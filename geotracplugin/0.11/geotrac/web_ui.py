@@ -36,8 +36,15 @@ class SidebarMap(Component):
         lon = req.environ.get('geolon')
 
         if lat is None or lon is None: # lat or lon could be zero
+
+            # XXX blindly assume UTF-8
             try:
-                address, (lat, lon) = geotrac.geolocate(ticket['location'])
+                location = ticket['location'].encode('utf-8')
+            except UnicodeEncodeError:
+                raise
+            
+            try:
+                address, (lat, lon) = geotrac.geolocate(location)
             except ValueError:
                 return False
             req.environ['geolat'] = lat
