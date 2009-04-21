@@ -81,7 +81,7 @@
                   <td class="name">
                     <div class="name">
                       <a href="${panel_href(architecture.id)}?order=${downloads.order};desc=${downloads.desc}">
-                        ${architecture.name}
+                        ${wiki_to_oneliner(context(parent), architecture.name)}
                       </a>
                     </div>
                   </td>
@@ -89,7 +89,7 @@
                   <td class="description">
                     <div class="description">
                       <a href="${panel_href(architecture.id)}?order=${downloads.order};desc=${downloads.desc}">
-                        ${architecture.description}
+                        ${wiki_to_oneliner(context(parent), architecture.description)}
                       </a>
                     </div>
                   </td>

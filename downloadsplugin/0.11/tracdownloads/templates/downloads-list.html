@@ -12,7 +12,7 @@
         <h1>${downloads.title}</h1>
       </div>
 
-      ${downloads.description[1]}
+      ${wiki_to_html(context(parent), downloads.description)}
 
       <form py:if="'DOWNLOADS_ADMIN' in perm" method="post" action="${href.downloads()}">
         <fieldset>
@@ -21,7 +21,7 @@
           </legend>
 
           <div py:if="req.args.action == 'edit'" class="field">
-            <textarea id="description" name="description" class="wikitext" rows="10" cols="78">${downloads.description[0]}</textarea>
+            <textarea id="description" name="description" class="wikitext" rows="10" cols="78">${downloads.description}</textarea>
           </div>
 
           <div class="buttons">
@@ -109,14 +109,14 @@
 
                     <td py:if="downloads.visible_fields.description" class="description">
                       <div class="description">
-                        ${download.description}
+                        ${wiki_to_oneliner(context(parent), download.description)}
                       </div>
                     </td>
 
                     <td py:if="downloads.visible_fields.size" class="size">
                       <div class="size">
                         <a href="${href.downloads(download.id)}">
-                          ${download.size}
+                          ${pretty_size(download.size)}
                         </a>
                       </div>
                     </td>
@@ -124,7 +124,7 @@
                     <td py:if="downloads.visible_fields.time" class="time">
                       <div class="time">
                         <a href="${href.downloads(download.id)}">
-                          ${download.time}
+                          ${format_datetime(download.time)}<br/>(${pretty_timedelta(download.time)} ago)
                         </a>
                       </div>
                     </td>
@@ -132,7 +132,7 @@
                     <td py:if="downloads.visible_fields.count" class="count">
                       <div class="count">
                         <a href="${href.downloads(download.id)}">
-                          ${download.count}
+                          ${download.count or '0'}
                         </a>
                       </div>
                     </td>

@@ -54,58 +54,51 @@ class DownloadsApi(Component):
 
     # Get list functions.
 
-    def get_versions(self, context):
-        columns = ('name', 'description')
-        sql = "SELECT name, description FROM version"
-        self.log.debug(sql)
-        context.cursor.execute(sql)
-        versions = []
-        id = 0
+    def _get_items(self, context, table, columns, where = '', values = (),
+      order_by = '', desc = False):
+        sql = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + (where
+          and (' WHERE ' + where) or '') + (order_by and (' ORDER BY ' +
+          order_by + (' ASC', ' DESC')[bool(desc)]) or '')
+        self.log.debug(sql % values)
+        context.cursor.execute(sql, values)
+        items = []
         for row in context.cursor:
             row = dict(zip(columns, row))
-            row['description'] = format_to_oneliner(self.env, context,
-              row['description'])
+            items.append(row)
+        return items
+
+    def get_versions(self, context, order_by = 'name', desc = False):
+        # Get versions from table.
+        versions = self._get_items(context, 'version', ('name', 'description'),
+          order_by = order_by, desc = desc)
+
+        # Add IDs to versions according to selected sorting.
+        id = 0
+        for version in versions:
             id = id + 1
-            row['id'] = id
-            versions.append(row)
+            version['id'] = id
         return versions
 
-    def get_components(self, context):
-        columns = ('name', 'description')
-        sql = "SELECT name, description FROM component"
-        self.log.debug(sql)
-        context.cursor.execute(sql)
-        components = []
+    def get_components(self, context, order_by = '', desc = False):
+        # Get components from table.
+        components = self._get_items(context, 'component', ('name', 
+          'description'), order_by = order_by, desc = desc)
+
+        # Add IDs to versions according to selected sorting.
         id = 0
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['description'] = format_to_oneliner(self.env, context,
-              row['description'])
+        for component in components:
             id = id + 1
-            row['id'] = id
-            components.append(row)
+            component['id'] = id
         return components
 
     def get_downloads(self, context, order_by = 'id', desc = False):
-        columns = ('id', 'file', 'description', 'size', 'time', 'count',
-          'author', 'tags', 'component', 'version', 'architecture', 'platform',
-          'type')
-        sql = "SELECT id, file, description, size, time, count, author, tags," \
-          " component, version, architecture, platform, type FROM download " \
-          "ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
-        self.log.debug(sql)
-        context.cursor.execute(sql)
-        downloads = []
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['description'] = format_to_oneliner(self.env, context,
-              row['description'])
-            row['size'] = pretty_size(row['size'])
-            row['time'] = pretty_timedelta(row['time'])
-            row['count'] = row['count'] or 0
-            downloads.append(row)
+        # Get downloads from table.
+        downloads = self._get_items(context, 'download', ('id', 'file',
+          'description', 'size', 'time', 'count', 'author', 'tags', 'component',
+          'version', 'architecture', 'platform', 'type'), order_by = order_by,
+          desc = desc)
 
-        # Replace field ids with apropriate objects.
+          # Replace field IDs with apropriate objects.
         for download in downloads:
             download['architecture'] = self.get_architecture(context.cursor,
               download['architecture'])
@@ -114,62 +107,24 @@ class DownloadsApi(Component):
             download['type'] = self.get_type(context.cursor, download['type'])
         return downloads
 
-    def get_new_downloads(self, context, start, stop):
-        columns = ('id', 'file', 'description', 'size', 'time', 'count',
-          'author', 'tags', 'component', 'version', 'architecture', 'platform',
-          'type')
-        sql = "SELECT id, file, description, size, time, count, author, tags," \
-          " component, version, architecture, platform, type FROM download " \
-          "WHERE time BETWEEN %s AND %s"
-        self.log.debug(sql % (start, stop))
-        context.cursor.execute(sql, (to_timestamp(start), to_timestamp(stop)))
-        downloads = []
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            downloads.append(row)
-        return downloads
+    def get_new_downloads(self, context, start, stop, order_by = 'time',
+        desc = False):
+        return self._get_items(context, 'download', ('id', 'file',
+          'description', 'size', 'time', 'count', 'author', 'tags', 'component',
+          'version', 'architecture', 'platform', 'type'), 'time BETWEEN %s AND'
+          ' %s', (start, stop), order_by = order_by, desc = desc)
 
     def get_architectures(self, context, order_by = 'id', desc = False):
-        columns = ('id', 'name', 'description')
-        sql = "SELECT id, name, description FROM architecture ORDER BY " + \
-          order_by + (" ASC", " DESC")[bool(desc)]
-        self.log.debug(sql)
-        context.cursor.execute(sql)
-        architectures = []
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['description'] = format_to_oneliner(self.env, context,
-              row['description'])
-            architectures.append(row)
-        return architectures
+        return self._get_items(context, 'architecture', ('id', 'name',
+           'description'), order_by = order_by, desc = desc)
 
     def get_platforms(self, context, order_by = 'id', desc = False):
-        columns = ('id', 'name', 'description')
-        sql = "SELECT id, name, description FROM platform ORDER BY " + \
-          order_by + (" ASC", " DESC")[bool(desc)]
-        self.log.debug(sql)
-        context.cursor.execute(sql)
-        platforms = []
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['description'] = format_to_oneliner(self.env, context,
-              row['description'])
-            platforms.append(row)
-        return platforms
+        return self._get_items(context, 'platform', ('id', 'name',
+          'description'), order_by = order_by, desc = desc)
 
     def get_types(self, context, order_by = 'id', desc = False):
-        columns = ('id', 'name', 'description')
-        sql = "SELECT id, name, description FROM download_type ORDER BY " + \
-          order_by + (" ASC", " DESC")[bool(desc)]
-        self.log.debug(sql)
-        context.cursor.execute(sql)
-        types = []
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['description'] = format_to_oneliner(self.env, context,
-              row['description'])
-            types.append(row)
-        return types
+        return self._get_items(context, 'download_type', ('id', 'name',
+          'description'), order_by = order_by, desc = desc)
 
     def get_visible_fields(self):
         # Get list of enabled fields from config option.
@@ -183,81 +138,49 @@ class DownloadsApi(Component):
 
     # Get one item functions.
 
-    def get_download(self, context, id):
-        columns = ('id', 'file', 'description', 'size', 'time', 'count',
-          'author', 'tags', 'component', 'version', 'architecture', 'platform',
-          'type')
-        sql = "SELECT id, file, description, size, time, count, author, tags," \
-          " component, version, architecture, platform, type FROM download" \
-          " WHERE id = %s"
-        self.log.debug(sql % (id,))
-        context.cursor.execute(sql, (id,))
+    def _get_item(self, context, table, columns, where = '', values = ()):
+        sql = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + (where
+          and (' WHERE ' + where) or '')
+        self.log.debug(sql % values)
+        context.cursor.execute(sql, values)
         for row in context.cursor:
             row = dict(zip(columns, row))
-            row['count'] = row['count'] or 0
             return row
+        return None
+
+    def get_download(self, context, id):
+        return self._get_item(context, 'download', ('id', 'file', 'description',
+          'size', 'time', 'count', 'author', 'tags', 'component', 'version',
+          'architecture', 'platform', 'type'), 'id = %s', (id,))
 
     def get_download_by_time(self, context, time):
-        columns = ('id', 'file', 'description', 'size', 'time', 'count',
-          'author', 'tags', 'component', 'version', 'architecture', 'platform',
-          'type')
-        sql = "SELECT id, file, description, size, time, count, author, tags," \
-          " component, version, architecture, platform, type FROM download" \
-          " WHERE time = %s"
-        self.log.debug(sql % (time,))
-        context.cursor.execute(sql, (time,))
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['count'] = row['count'] or 0
-            return row
+        return self._get_item(context, 'download', ('id', 'file', 'description',
+          'size', 'time', 'count', 'author', 'tags', 'component', 'version',
+          'architecture', 'platform', 'type'), 'time = %s', (time,))
 
     def get_download_by_file(self, context, file):
-        columns = ('id', 'file', 'description', 'size', 'time', 'count',
-          'author', 'tags', 'component', 'version', 'architecture', 'platform',
-          'type')
-        sql = "SELECT id, file, description, size, time, count, author, tags," \
-          " component, version, architecture, platform, type FROM download" \
-          " WHERE file = %s"
-        self.log.debug(sql % (file,))
-        context.cursor.execute(sql, (file,))
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['count'] = row['count'] or 0
-            return row
+        return self._get_item(context, 'download', ('id', 'file', 'description',
+          'size', 'time', 'count', 'author', 'tags', 'component',  'version',
+          'architecture', 'platform', 'type'), 'file = %s', (file,))
 
     def get_architecture(self, context, id):
-        columns = ('id', 'name', 'description')
-        sql = "SELECT id, name, description FROM architecture WHERE id = %s"
-        self.log.debug(sql % (id,))
-        context.cursor.execute(sql, (id,))
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            return row
+        return self._get_item(context, 'architecture', ('id', 'name',
+          'description'), 'id = %s', (id,))
 
     def get_platform(self, context, id):
-        columns = ('id', 'name', 'description')
-        sql = "SELECT id, name, description FROM platform WHERE id = %s"
-        self.log.debug(sql % (id,))
-        context.cursor.execute(sql, (id,))
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            return row
+        return self._get_item(context, 'platform', ('id', 'name',
+          'description'), 'id = %s', (id,))
 
     def get_type(self, context, id):
-        columns = ('id', 'name', 'description')
-        sql = "SELECT id, name, description FROM download_type WHERE id = %s"
-        self.log.debug(sql % (id,))
-        context.cursor.execute(sql, (id,))
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            return row
+        return self._get_item(context, 'download_type', ('id', 'name',
+          'description'), 'id = %s', (id,))
 
     def get_description(self, context):
         sql = "SELECT value FROM system WHERE name = 'downloads_description'"
         self.log.debug(sql)
         context.cursor.execute(sql)
         for row in context.cursor:
-            return (row[0], format_to_html(self.env, context, row[0]))
+            return row[0]
 
     # Add item functions.
 
