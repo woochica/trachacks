@@ -4,9 +4,12 @@ a plugin for Trac to add images to tickets upon creaton
 http://trac.edgewall.org
 """
 
+from PIL import Image
+
 from trac.attachment import Attachment
 from trac.config import BoolOption
 from trac.core import *
+from trac.mimeview import Mimeview
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
 from trac.env import IEnvironmentSetupParticipant
@@ -40,10 +43,22 @@ class ImageTrac(Component):
                     return [('ticket_image', 'Images required for tickets. Please upload an image.')]
                 else:
                     return []
+            mimeview = Mimeview(self.env)
+            mimetype = mimeview.get_mimetype(image.filename)
+            if mimetype is None:
+                return[('ticket_image', 'Uploaded file is not an image')]
+            if mimetype.split('/',1)[0] != 'image':
+                return [('ticket_image', 'Uploaded file is not an image, instead it is %s' % mimetype)]
+            
+            try:
+                Image.open(image.file)
+            except IOError, e:
+                return[('ticket_image', str(e))]
+
         else:
             return []
 
-        # store the image
+        # store the image temporarily
         if not hasattr(self, 'image'):
             self.image = {}
         self.image[ticket['summary']] = req.args['ticket_image']
@@ -67,7 +82,6 @@ class ImageTrac(Component):
         """Called when a ticket is created."""
         image = self.image.pop(ticket['summary'])
         attachment = Attachment(self.env, 'ticket', ticket.id)
-#         attachment.filename = image.filename
         attachment.author = ticket['reporter']
         attachment.description = ticket['summary']
         image.file.seek(0,2) # seek to end of file

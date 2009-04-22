@@ -1,22 +1,22 @@
 from setuptools import find_packages, setup
 
-version='0.0'
+version='0.1'
 
 setup(name='ImageTrac',
       version=version,
       description="attach an image to a Trac ticket upon ticket creation",
       author='Jeff Hammel',
       author_email='jhammel@openplans.org',
-      url='http://trac-hacks.org/wiki/k0s',
+      url='http://trac-hacks.org/wiki/ImageTracPlugin',
       keywords='trac plugin',
-      license="",
+      license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
       package_data={ 'imagetrac': ['templates/*', 'htdocs/*'] },
       zip_safe=False,
       install_requires=[
-        # -*- Extra requirements: -*-
         'TicketSidebarProvider',
+        'PIL'
         ],
       extras_require={
         'mail2trac': [ 'mailtrac' ],
@@ -24,6 +24,7 @@ setup(name='ImageTrac',
       dependency_links=[
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
         "http://trac-hacks.org/svn/mailtotracplugin/0.11/#egg=mail2trac",
+        "http://www.pythonware.com/products/pil/"
         ],
       entry_points = """
       [trac.plugins]

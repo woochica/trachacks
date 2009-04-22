@@ -5,7 +5,7 @@ from ticketsidebarprovider import ITicketSidebarProvider
 from trac.attachment import Attachment
 from trac.attachment import AttachmentModule
 from trac.core import *
-from trac.mimeview import Context
+from trac.mimeview import Mimeview
 from trac.web.api import ITemplateStreamFilter
 
 
@@ -15,19 +15,25 @@ class SidebarImage(Component):
     implements(ITicketSidebarProvider)
 
     ### internal methods
+
     def image(self, ticket):
+        """
+        return the first image attachment
+        or None if there aren't any
+        """
         attachments = list(Attachment.select(self.env, 'ticket', ticket.id))
-        if len(attachments):
-            return attachments[0]
+        mimeview = Mimeview(self.env)
+        for attachment in attachments:
+            mimetype = mimeview.get_mimetype(attachment.filename)
+            if mimetype.split('/',1)[0] != 'image':
+                continue
+            return attachment
 
     ### methods for ITicketSidebarProvider
 
     def enabled(self, req, ticket):
         """should the image be shown?"""
-        if self.image(ticket):        
-            return True
-        else:
-            return False
+        return bool(self.image(ticket))
 
     def content(self, req, ticket):
         image = self.image(ticket)
