@@ -80,7 +80,10 @@ class ImageTrac(Component):
 
     def ticket_created(self, ticket):
         """Called when a ticket is created."""
-        image = self.image.pop(ticket['summary'])
+        image = self.image.pop(ticket['summary'], None)
+        if image is None:
+            # XXX should check if the image is mandatory
+            return 
         attachment = Attachment(self.env, 'ticket', ticket.id)
         attachment.author = ticket['reporter']
         attachment.description = ticket['summary']
