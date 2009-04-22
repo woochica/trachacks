@@ -37,6 +37,7 @@ class EmailToTicket(Component):
         for key, value in fields.items():
             ticket.values[key] = value
 
+        import pdb;  pdb.set_trace()
         # fill in default values
         ### unused for now -- needed?
         for field in ticket.fields:
@@ -60,5 +61,6 @@ class EmailToTicket(Component):
         # effectively the interface for email -> ticket
         fields.update(dict(summary=message['subject'],
                            description=message.get_payload(),
-                           status='new'))
+                           status='new',
+                           resolution=None))
         return fields
