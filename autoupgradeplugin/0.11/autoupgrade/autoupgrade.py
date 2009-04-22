@@ -10,6 +10,7 @@ import trac.env
 
 from trac.core import *
 from trac.env import *
+from trac.util.text import exception_to_unicode
 from trac.util.translation import _
 
 class AutoUpgrade(Component):
