@@ -1,0 +1,40 @@
+Description
+===========
+
+This is a modified authentication plugin to use the `MSU Sentinel System` __.
+
+__ http://ais.msu.edu/sentinel.htm
+
+Configuration
+=============
+
+Options in the ``[sentinel]`` section:
+
+``app_id``: **required**
+    Name of the app requiring sentinel authentication.
+``login_url``: **required**
+    URL that user is redirected to to enter credentials.
+``service_password``: **required**
+    Password to connect to sentinel web service.
+``service_url``: **required**
+    URL of sentinel web service.
+``service_username``: **required**
+    Username to connect to sentinel web service.
+
+To enable the plugin::
+
+    [components]
+    tracsentinel.* = enabled
+    trac.web.auth.LoginModule = disabled
+
+Example
+=======
+
+An example configuration::
+
+    [sentinel]
+    app_id = MyApp
+    login_url = https://login.example.com/
+    service_password = sentinel_password
+    service_url = https://sentinel.example.com/sentinel/service
+    service_username = sentinel_username
