@@ -37,7 +37,6 @@ class EmailToTicket(Component):
         for key, value in fields.items():
             ticket.values[key] = value
 
-        import pdb;  pdb.set_trace()
         # fill in default values
         ### unused for now -- needed?
         for field in ticket.fields:
