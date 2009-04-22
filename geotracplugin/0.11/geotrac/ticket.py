@@ -76,6 +76,16 @@ class GeoTrac(Component):
     ### geolocation
     
     def geolocate(self, location):
+
+        # use lat, lon if the format fits
+        if location.count(',') == 1:
+            lat, lon = location.split(',')
+            try:
+                lat, lon = float(lat), float(lon)
+                return location, (lat, lon)
+            except ValueError:
+                pass
+
         # get the geocoder
         if self.google_api_key:
             geocoder = geopy.geocoders.Google(self.google_api_key)
