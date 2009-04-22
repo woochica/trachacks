@@ -3,9 +3,9 @@ from paste.script import templates
 
 var = templates.var
 
-class SimpleTracProject(TracProject):
+class MobileGeoTracProject(TracProject):
     _template_dir = 'template'
-    summary = 'Simple trac project template'
+    summary = 'Mobile Geo Trac project template'
 
     vars = [ var('basedir', 'base directory for trac',
                  default='.'),

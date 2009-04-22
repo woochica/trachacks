@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 [account-manager]
-password_file = ${basedir}/trac.htpasswd
+account_changes_notify_addresses = 
+force_passwd_change = True
+generated_password_length = 8
+hash_method = HtDigestHashMethod
+password_file = /usr/local/topp/trac/trac.htpasswd
 password_store = HtPasswdStore
 
 [attachment]
@@ -16,6 +20,9 @@ intermediate_color =
 intermediate_point = 
 newest_color = (255, 136, 136)
 oldest_color = (136, 136, 255)
+oneliner_properties = trac:summary
+render_unsafe_content = false
+wiki_properties = trac:description
 
 [changeset]
 max_diff_bytes = 10000000
@@ -30,24 +37,61 @@ acct_mgr.web_ui.accountmodule = enabled
 acct_mgr.web_ui.loginmodule = enabled
 acct_mgr.web_ui.registrationmodule = enabled
 autocompleteusers.* = enabled
-autoupgrade.autoupgrade.autoupgrade = enabled
-customfieldadmin.api.customfields = enabled
-customfieldadmin.customfieldadmin.customfieldadminpage = enabled
+customfieldadmin.api.customfields = disabled
+customfieldadmin.customfieldadmin.customfieldadminpage = disabled
+customfieldprovider.customfieldprovider.customfieldprovider = enabled
+geotrac.mail.geomailtoticket = enabled
+geotrac.ticket.geotrac = enabled
+geotrac.web_ui.sidebarmap = enabled
+graphviz.graphviz.graphviz = enabled
+icalexporter.icalexporter.icalexporterplugin = enabled
+imagetrac.image.imagetrac = enabled
+imagetrac.web_ui.imageformfilter = enabled
+imagetrac.web_ui.sidebarimage = enabled
+includemacro.macros.includemacro = enabled
 iniadmin.iniadmin.iniadminplugin = enabled
 permredirect.filter.permredirectmodule = enabled
-svnurls.svnurls.svnurls = enabled
+redirect.redirect.tracredirect = disabled
+ticketdelete.web_ui.ticketdeleteplugin = enabled
+ticketsidebarprovider.example.sampleticketsidebarprovider = disabled
+ticketsidebarprovider.ticketsidebar.ticketsidebarprovider = enabled
 trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
 tractags.* = enabled
-tracwysiwyg.templateprovider = enabled
-tracwysiwyg.wysiwygwikifilter = enabled
+tractoc.macro.tocmacro = enabled
+
+[geo]
+mandatory_location = true
+
+[graphviz]
+cache_dir = gvcache
+cache_manager = False
+cache_max_count = 2000
+cache_max_size = 10485760
+cache_min_count = 1500
+cache_min_size = 5242880
+cmd_path = 
+default_graph_dpi = 96
+encoding = utf-8
+out_format = png
+png_antialias = False
+processor = dot
+rsvg_path = 
 
 [header_logo]
-alt = ${description}
+alt = MobileGeoTrac 
 height = -1
-link = ${url}
-src = ${logo}
+link = 
+src = 
 width = -1
+
+[inherit]
+plugins_dir = 
+templates_dir = 
+
+[iniadmin]
+excludes = iniadmin:excludes,iniadmin:passwords
+passwords = trac:database,notification:smtp_password
 
 [logging]
 log_file = trac.log
@@ -69,21 +113,25 @@ silvercity_modes =
 tab_width = 8
 
 [notification]
+admit_domains = 
 always_notify_owner = true
 always_notify_reporter = true
 always_notify_updater = true
+ignore_domains = 
 mime_encoding = base64
 smtp_always_bcc = 
 smtp_always_cc = 
-smtp_default_domain = ${domain}
+smtp_default_domain = openplans.org
 smtp_enabled = true
-smtp_from = trac-${project}@${domain}
+smtp_from = mobilegeo@blue.openplans.org
+smtp_from_name = 
 smtp_password = 
 smtp_port = 25
-smtp_replyto = trac-${project}@${domain}
+smtp_replyto = mobilegeo@blue.openplans.org
 smtp_server = localhost
-smtp_subject_prefix = [${project} trac]
+smtp_subject_prefix = [MobileGeoTrac-sandbox]
 smtp_user = 
+ticket_subject_template = $prefix #$ticket.id: $summary
 use_public_cc = true
 use_short_addr = false
 use_tls = false
@@ -93,11 +141,24 @@ group_blacklist = anonymous, authenticated
 
 [project]
 admin = 
-descr = Trac - ${description}
-footer = ${footer}
-icon = ${favicon}
-name = ${project}
-url = ${url}
+descr = Trac - MobileGeoTrac sandbox instance
+footer = 
+icon = 
+name = MobileGeoTrac-sandbox
+url = 
+
+[query]
+default_anonymous_query = status!=closed&cc~=$USER
+default_query = status!=closed&owner=$USER
+items_per_page = 100
+ticketlink_query = ?status=!closed
+
+[report]
+items_per_page = 100
+items_per_page_rss = 0
+
+[revisionlog]
+default_log_limit = 100
 
 [roadmap]
 stats_provider = DefaultTicketGroupStatsProvider
@@ -107,53 +168,104 @@ min_query_length = 3
 
 [svn]
 branches = trunk,branches/*
-repository_url = ${repository_url}
+svnlook = /usr/bin/svnlook
 tags = tags/*
 
+[tags]
+case-sensitive = True
+ignore_closed_tickets = True
+ticket_fields = keywords
+
 [ticket]
-restrict_owner = true
+default_cc = 
+default_component = [unspecified]
+default_description = 
+default_keywords = 
+default_milestone = 
+default_owner = 
+default_priority = important
+default_resolution = fixed
+default_severity = 
+default_summary = 
+default_type = defect
+default_version = 
+mandatory_image = true
+max_comment_size = 262144
+max_description_size = 262144
+preserve_newlines = default
+restrict_owner = false
+workflow = ConfigurableTicketWorkflow
+
+[ticket-changer]
+close-commands = close, closed, closes, fix, fixed, fixes
+closer = 
+intertrac = False
+opener = 
+references-commands = addresses, re, references, refs, see
 
 [ticket-workflow]
-; trivial-workflow.ini
-resolve = new -> closed
-resolve.permissions = TICKET_MODIFY
-resolve.operations = set_resolution
-
-reopen = closed -> new
-reopen.permissions = TICKET_CREATE
-reopen.operations = del_resolution
-
+accept = new -> assigned
+accept.operations = set_owner_to_self
+accept.permissions = TICKET_MODIFY
 leave = * -> *
-leave.operations = leave_status
 leave.default = 1
+leave.operations = leave_status
+reassign = new,assigned,reopened -> new
+reassign.operations = set_owner
+reassign.permissions = TICKET_MODIFY
+reopen = closed -> reopened
+reopen.operations = del_resolution
+reopen.permissions = TICKET_CREATE
+resolve = new,assigned,reopened -> closed
+resolve.operations = set_resolution
+resolve.permissions = TICKET_MODIFY
 
 [timeline]
+abbreviated_messages = True
+changeset_collapse_events = false
 changeset_long_messages = false
 changeset_show_files = 0
 default_daysback = 30
+max_daysback = 90
+newticket_formatter = oneliner
 ticket_show_details = false
 
 [trac]
 authz_file = 
 authz_module_name = 
 auto_reload = True
-base_url = http://${domain}/${project}
+base_url = http://trac.openplans.org/MobileGeoTrac-sandbox
 check_auth_ip = false
 database = sqlite:db/trac.db
 default_charset = iso-8859-15
 default_handler = WikiModule
+default_timezone = 
 htdocs_location = 
 ignore_auth_case = false
 mainnav = wiki,timeline,roadmap,browser,tickets,newticket,search
 metanav = login,logout,help,about,prefs
 permission_policies = DefaultPermissionPolicy, LegacyAttachmentPolicy
 permission_store = DefaultPermissionStore
-repository_dir = ${repository_dir}
+repository_dir = 
 repository_type = svn
+secure_cookies = False
 show_email_addresses = false
 timeout = 20
+use_base_url_for_redirect = False
 
 [wiki]
 ignore_missing_pages = false
+max_size = 262144
 render_unsafe_content = false
 split_page_names = false
+
+[wiki-notification]
+attach_diff = False
+banned_addresses = []
+redirect_time = 5
+smtp_always_bcc = []
+smtp_always_cc = []
+smtp_from = trac+wiki@localhost
+subject_template = $prefix $page.name $action
+use_public_cc = False
+
