@@ -40,10 +40,9 @@ class EmailToTicket(Component):
         # fill in default values
         ### unused for now -- needed?
         for field in ticket.fields:
-            break # XXX unused loop
             name = field['name']
-            if name not in values:
-                value = ticket.get_value_or_default(name)
+            if name not in fields:
+                value = ticket.get_value_or_default(name) or ''
                 if value is not None:
                     ticket.values[name] = value
 
