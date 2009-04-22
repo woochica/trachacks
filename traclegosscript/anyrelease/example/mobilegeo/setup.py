@@ -2,12 +2,12 @@ from setuptools import find_packages, setup
 
 version='0.1'
 
-setup(name='SimpleTracProject',
+setup(name='MobileGeoTrac',
       version=version,
-      description="Simple Trac Project Template",
+      description="Mobile Geo Trac Project Template",
       author='Jeff Hammel',
       author_email='jhammel@openplans.org',
-      url='http://trac-hacks.org/wiki/k0s',
+      url='http://trac-hacks.org/wiki/TracLegosScript',
       keywords='trac project template',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
@@ -44,7 +44,7 @@ setup(name='SimpleTracProject',
       zip_safe=False,
       entry_points = """
       [paste.paster_create_template]
-      simple_project = simple.project:SimpleTracProject
+      mobile_geo_project = mobilegeo.project:MobileGeoTracProject
       """,
       )
 
