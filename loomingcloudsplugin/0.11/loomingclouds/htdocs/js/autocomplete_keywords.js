@@ -1,4 +1,6 @@
 $(document).ready(function() {
-	$("#field-cc").autocomplete("tags?format=txt", {
-	    multiple: true,});
+	$("#field-keywords").autocomplete("tags", {
+            extraParams: {format: 'txt'},
+	    multiple: true,
+            formatItem: formatTags});
 });

@@ -49,7 +49,7 @@ class TagsRequestHandler(Component):
                     tags[tag] = tags.setdefault(tag, 0) + 1
 
         tags = sorted(tags.items(), key=lambda x: x[1], reverse=True)
-        req.write('\n'.join(['%s (%d)' % (name, number) for name, number in tags]))
+        req.write('\n'.join(['%s|%d' % (name, number) for name, number in tags]))
 
     ### methods for IRequestFilter
 
@@ -112,6 +112,7 @@ class AutocompleteTags(Component):
         if template == 'ticket.html':
             add_stylesheet(req, 'tags/css/autocomplete.css')
             add_script(req, 'tags/js/autocomplete.js')
+            add_script(req, 'tags/js/format_tags.js')
             add_script(req, 'tags/js/autocomplete_keywords.js')
 
         return (template, data, content_type)
