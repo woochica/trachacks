@@ -77,7 +77,7 @@ class AutocompleteUsers(Component):
                         break
 
             
-        users = [ '%s|%s%s' % (user[USER], 
+        users = [ '%s|%s|%s' % (user[USER], 
                                  user[EMAIL] and '&lt;%s&gt; ' % user[EMAIL] or '',
                                  user[NAME])
                   for value, user in sorted(users) ] # value unused (placeholder need for sorting)
