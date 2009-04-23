@@ -63,8 +63,10 @@ class MathCaptchaPlugin(Component):
             try:
                 hoomin = int(hoomin)
                 if (var1 + var2) != hoomin:
+                    self.env.log.error("%s %s %s%s: Error in math solution: %d + %d != %d author=%s comment:\n%s" % (req.remote_addr, req.remote_user, req.base_path, req.path_info, var1, var2, hoomin, req.args.get('author'), req.args.get('comment')))
                     return [(None, "Incorrect solution -- try solving the equation again!")]
             except:
+                self.env.log.error("%s %s %s%s: Bad digits: '%s' author=%s comment:\n%s" % (req.remote_addr, req.remote_user, req.base_path, req.path_info, hoomin, req.args.get('author'), req.args.get('comment')))
                 return [(None, "Anonymous users are only allowed to post by solving the math problem at the bottom of the page.")]
 
         return []
