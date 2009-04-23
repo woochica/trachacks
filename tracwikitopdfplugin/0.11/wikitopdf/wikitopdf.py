@@ -7,18 +7,39 @@ from trac.core import *
 from trac.util import escape
 from trac.mimeview.api import IContentConverter
 from trac.wiki.formatter import wiki_to_html
+import tempfile
 from tempfile import mkstemp
 import os
 import re
-
+import random
+from urllib import urlretrieve
+import xml.sax.saxutils
 EXCLUDE_RES = [
     re.compile(r'\[\[PageOutline([^]]*)\]\]'),
     re.compile(r'\[\[TracGuideToc([^]]*)\]\]'),
+    re.compile(r'\[\[TOC([^]]*)\]\]'),
     re.compile(r'----(\r)?$\n^Back up: \[\[ParentWiki\]\]', re.M|re.I)
 ]
 
+IMG_CACHE = { }
+
+def tagattrfind(page, tag, attr, pos):
+    tb_pos = page.find('<%s' % tag, pos)
+
+    while tb_pos != -1:
+        te_pos = page.find('>', tb_pos)
+        tc_pos = page.find(attr, tb_pos, te_pos)
+
+	if tc_pos != -1:
+	    return tb_pos, te_pos+1
+
+        tb_pos = page.find('<%s' % tag, te_pos+1)
+
+    return -1, -1
+
 
 def wiki_to_pdf(text, env, req, base_dir, codepage):
+    global IMG_CACHE
     
     env.log.debug('WikiToPdf => Start function wiki_to_pdf')
 
@@ -29,7 +50,6 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
     env.log.debug('WikiToPdf => Wiki intput for WikiToPdf: %r' % text)
     
     page = wiki_to_html(text, env, req)
-    page = page.replace('raw-attachment', 'attachments')
     page = page.replace('<img', '<img border="0"')
     page = page.replace('?format=raw', '')
 
@@ -41,17 +61,113 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
                         + '<tr><td bgcolor="#f7f7f7"><pre class="wiki">')
     page = page.replace('</pre>', '</pre></td></tr></table>')
     page = page.replace('<table class="wiki">', '<table class="wiki" border="1" width="100%">')
+    tracuri = env.config.get('wikitopdf', 'trac_uri')
+    tmp_dir = env.config.get('wikitopdf', 'tmp_dir')
+    if tracuri != '' and tmp_dir != '':
+        # Download images so that dynamic images also work right
+	# Create a random prefix
+        random.seed()
+        tmp_dir += '/%(#)04x_' %{"#":random.randint(0,65535)}
+        # Create temp dir
+        os.system('mkdir %s 2>/dev/null' % (tmp_dir))
 
-    imgpos = page.find('<img')
+        imgcounter = 0
+        imgpos = page.find('<img')
 
-    while imgpos != -1:
-        addrpos = page.find('src=',imgpos)
-        page = page[:addrpos+5] + base_dir + page[addrpos+5:]
-        imgpos = page.find('<img', addrpos)
-    
+        while imgpos != -1:
+                addrpos = page.find('src="',imgpos)
+                theimg = page[addrpos+5:]
+                thepos = theimg.find('"')
+                theimg = theimg[:thepos]
+                if theimg[:1] == '/':
+                        theimg = tracuri + theimg
+		try:
+		    newimg = IMG_CACHE[theimg]
+		except:    
+                    #newimg = tmp_dir + '%(#)d_' %{"#":imgcounter} + theimg[theimg.rfind('/')+1:]
+                    file = tempfile.NamedTemporaryFile(mode='w',prefix='%(#)d_' %{"#":imgcounter},dir=tmp_dir)
+		    newimg = file.name
+                    file.close()
+                    #download
+                    theimg = xml.sax.saxutils.unescape(theimg)
+                    theimg = theimg.replace(" ","%20")
+                    urlretrieve(theimg, newimg)
+		    IMG_CACHE[theimg] = newimg
+                    env.log.debug("ISLAM the image is %s new image is %s" % ( theimg, newimg))
+		    imgcounter += 1
+
+                page = page[:addrpos+5] + newimg + page[addrpos+5+thepos:]
+                imgpos = page.find('<img', addrpos)
+
+
+    else:
+        # Use old search for images in path
+	page = page.replace('raw-attachment', 'attachments')
+
+        imgpos = page.find('<img')
+
+        while imgpos != -1:
+            addrpos = page.find('src=',imgpos)
+#            base_dir = base_dir.encode('ascii')
+            page = page[:addrpos+5] + base_dir + page[addrpos+5:]
+            imgpos = page.find('<img', addrpos)
+
+    # Add center tags, since htmldoc 1.9 does not handle align="center"
+    (tablepos,tableend) = tagattrfind(page, 'table', 'align="center"', 0)
+    while tablepos != -1:
+        endpos = page.find('</table>',tablepos)
+	page = page[:endpos+8] + '</center>' + page[endpos+8:]
+        page = page[:tablepos] + '<center>' + page[tablepos:];
+
+	endpos = page.find('</table>',tablepos)
+        (tablepos,tableend) = tagattrfind(page, 'table', 'align="center"', endpos)
+
+    # Add table around '<div class="code">'
+    (tablepos,tableend) = tagattrfind(page, 'div', 'class="code"', 0)
+    while tablepos != -1:
+        endpos = page.find('</div>',tablepos)
+        page = page[:endpos+6] + '</td></tr></table></center>' + page[endpos+6:]
+        page = page[:tableend] + '<center><table align="center" width="95%" border="1" bordercolor="#d7d7d7"><tr><td>' + page[tableend:]
+
+        endpos = page.find('</div>',tablepos)
+        (tablepos,tableend) = tagattrfind(page, 'div', 'class="code"', endpos)
+
+    # Add table around '<div class="system-message">'
+    (tablepos,tableend) = tagattrfind(page, 'div', 'class="system-message"', 0)
+    while tablepos != -1:
+        endpos = page.find('</div>',tablepos)
+        page = page[:endpos+6] + '</td></tr></table>' + page[endpos+6:]
+        page = page[:tableend] + '<table width="100%" border="2" bordercolor="#dd0000" bgcolor="#ffddcc"><tr><td>' + page[tableend:]
+
+        endpos = page.find('</div>',tablepos)
+	(tablepos,tableend) = tagattrfind(page, 'div', 'class="system-message"', endpos)
+
+    # Add table around '<div class="error">'
+    (tablepos,tableend) = tagattrfind(page, 'div', 'class="error"', 0)
+    while tablepos != -1:
+        endpos = page.find('</div>',tablepos)
+        page = page[:endpos+6] + '</td></tr></table>' + page[endpos+6:]
+        page = page[:tableend] + '<table width="100%" border="2" bordercolor="#dd0000" bgcolor="#ffddcc"><tr><td>' + page[tableend:]
+
+        endpos = page.find('</div>',tablepos)
+        (tablepos,tableend) = tagattrfind(page, 'div', 'class="error"', endpos)
+
+    # Add table around '<div class="important">'
+    (tablepos,tableend) = tagattrfind(page, 'div', 'class="important"', 0)
+    while tablepos != -1:
+        endpos = page.find('</div>',tablepos)
+        page = page[:endpos+6] + '</td></tr></table>' + page[endpos+6:]
+        page = page[:tableend] + '<table width="100%" border="2" bordercolor="#550000" bgcolor="#ffccbb"><tr><td>' + page[tableend:]
+
+        endpos = page.find('</div>',tablepos)
+        (tablepos,tableend) = tagattrfind(page, 'div', 'class="important"', endpos)
+
     meta = ('<meta http-equiv="Content-Type" content="text/html; charset=%s"/>' % codepage)
+    css = ''
+    if env.config.get('wikitopdf', 'css_file') != '':
+        css = ('<link rel="stylesheet" href="%s" type="text/css"/>' % env.config.get('wikitopdf', 'css_file')).encode(codepage)
 
-    page = '<html><head>' + meta + '</head><body>' + page + '</body></html>'
+    page = '<html><head>' + meta + css + '</head><body>' + page + '</body></html>'
     page = page.encode(codepage,'replace')
     
     env.log.debug('WikiToPdf => HTML output for WikiToPdf in charset %s is: %r' % (codepage, page))    
@@ -63,6 +179,7 @@ def html_to_pdf(env, htmldoc_args, files, codepage):
 
     env.log.debug('WikiToPdf => Start function html_to_pdf')
 
+    global IMG_CACHE
     os.environ["HTMLDOC_NOCGI"] = 'yes'
     
     args_string = ' '.join(['--%s %s' % (arg, value or '') for arg, value
@@ -74,7 +191,12 @@ def html_to_pdf(env, htmldoc_args, files, codepage):
     cmd_string = 'htmldoc %s %s -f %s'%(args_string, ' '.join(files), pfilename)
     env.log.debug('WikiToPdf => Htmldoc command line: %s' % cmd_string)
     os.system(cmd_string.encode(codepage))
-    
+
+    # Delete files from tmp_dir
+    for v in IMG_CACHE.values():
+        if os.path.exists(v):
+    	    os.unlink(v);
+    IMG_CACHE = { }
     infile = open(pfilename, 'rb') 
     out = infile.read()
     infile.close()

@@ -24,12 +24,6 @@ import base64
 from api import IWikiToPdfFormat
 from wikitopdf import wiki_to_pdf, html_to_pdf
 
-EXCLUDE_RES = [
-    re.compile(r'\[\[PageOutline([^]]*)\]\]'),
-    re.compile(r'\[\[TracGuideToc([^]]*)\]\]'),
-    re.compile(r'----(\r)?$\n^Back up: \[\[ParentWiki\]\]', re.M|re.I)
-]
-
 class WikiToPdfOutput(Component):
     """Output wiki pages as a PDF/PS document using HTMLDOC."""
     
