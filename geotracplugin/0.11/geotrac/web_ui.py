@@ -3,6 +3,7 @@ import geopy
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
+from geotrac.ticket import GeolocationException
 from geotrac.ticket import GeoTrac
 from ticketsidebarprovider import ITicketSidebarProvider
 from trac.config import Option
@@ -45,7 +46,7 @@ class SidebarMap(Component):
             
             try:
                 address, (lat, lon) = geotrac.geolocate(location)
-            except ValueError:
+            except GeolocationException:
                 return False
             req.environ['geolat'] = lat
             req.environ['geolon'] = lon

@@ -11,13 +11,28 @@ from trac.config import Option, BoolOption
 from trac.core import *
 from trac.ticket.api import ITicketManipulator
 
+class GeolocationException(Exception):
+    """error for multiple and unfound locations"""
+    
+    def __init__(self, location, locations=()):
+        Exception.__init__(self, location, locations)
+        self.location = location
+        self.locations = locations
+    
+    def __str__(self):
+        if self.locations:
+            return "Multiple locations found: %s" % '; '.join([i[0] for i in self.locations])
+        else:
+            return "%s could not be located" % self.location
+
+
 class GeoTrac(Component):
 
     implements(ITicketManipulator, ICustomFieldProvider)
 
     ### configuration options
     mandatory_location = BoolOption('geo', 'mandatory_location', 'false',
-                                    "Enforce a mandatory location field")
+                                    "Enforce a mandatory and valid location field")
     google_api_key = Option('geo', 'google_api_key', '',
                             "Google maps API key, available at http://code.google.com/apis/maps/signup.html")
 
@@ -59,16 +74,12 @@ class GeoTrac(Component):
         
         # geolocate the address
         try:
-            address, (lat, lon) = self.geolocate(location)
-        except ValueError, e:
-            return [('location', 'Invalid location: %s' % location)]
-
-        # update the address from the geocoder
-        ticket['location'] = address
-
-        # add the latitude and longitude to the request environ
-        req.environ['geolat'] = lat
-        req.environ['geolon'] = lon
+            ticket['location'], (lat, lon) = self.geolocate(location)
+            req.environ['geolat'] = lat
+            req.environ['geolon'] = lon
+        except GeolocationException, e:
+            if self.mandatory_location:
+                return [('location', str(e))]
 
         return []
 
@@ -82,7 +93,8 @@ class GeoTrac(Component):
             lat, lon = location.split(',')
             try:
                 lat, lon = float(lat), float(lon)
-                return location, (lat, lon)
+                if (-90. < lat < 90.) and (-180. < lon < 180.):
+                    return [location, (lat, lon)]
             except ValueError:
                 pass
 
@@ -91,4 +103,12 @@ class GeoTrac(Component):
             geocoder = geopy.geocoders.Google(self.google_api_key)
         else:
             geocoder = geopy.geocoders.Google()
-        return geocoder.geocode(location)
+        locations = list(geocoder.geocode(location, exactly_one=False))
+        if len(locations) == 1:
+            return locations[0]
+        else:
+            raise GeolocationException(location, locations)
+
+    ### error handling
+
+
