@@ -40,6 +40,7 @@ class LoomingClouds(Component):
         if filename == 'ticket.html':
 
             add_stylesheet(req, 'tags/css/tractags.css')
+            add_stylesheet(req, 'tags/css/tagcloud.css')
             add_script(req, 'tags/js/tag_filler.js')
             formatter = Formatter(self.env, Context.from_request(req))
             macro = TagCloudMacro(self.env)
