@@ -4,7 +4,7 @@ from mail2trac.utils import emailaddr2user
 from trac.core import *
 from trac.perm import PermissionSystem
 from trac.ticket import Ticket
-
+from trac.ticket.notification import TicketNotifyEmail
 
 class EmailToTicket(Component):
     """create a ticket from an email"""
@@ -48,6 +48,10 @@ class EmailToTicket(Component):
 
         # create the ticket
         ticket.insert()
+
+        # ticket notification
+        tn = TicketNotifyEmail(self.env)
+        tn.notify(ticket)
 
     def order(self):
         return None
