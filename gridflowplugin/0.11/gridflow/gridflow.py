@@ -270,15 +270,15 @@ class GridFlowPlugin(Component):
 		js = ''
 		tickets = []
 
-		copy = genshi.HTML(html)
+		copy = genshi.XML(html)
 		nodes = genshi.path.Path('//td[contains(@class, "ticket")]//a/text()')
 		tickets += [int(a[1][1:]) for a in nodes.select(copy)]
 
-		copy = genshi.HTML(html)
+		copy = genshi.XML(html)
 		nodes = genshi.path.Path('//td[contains(@class, "id")]//a/text()')
 		tickets += [int(a[1][1:]) for a in nodes.select(copy)]
 
-		copy = genshi.HTML(html);
+		copy = genshi.XML(html);
 		tktDict = {}
 		for tno in tickets:
 			tktDict[tno] = {'labels': [], 'widgets': [], 'actions': []}

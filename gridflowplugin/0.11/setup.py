@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name='GridFlow',
-    version='0.11.1',
+    version='0.11.2',
     description='Invoke workflows directly from report and query results',
     author='David Champion',
     author_email='dgc@uchicago.edu',
