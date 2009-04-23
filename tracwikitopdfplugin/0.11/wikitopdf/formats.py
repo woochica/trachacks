@@ -30,7 +30,9 @@ class WikiToPdfOutput(Component):
     implements(IWikiToPdfFormat)
         
     def wikitopdf_formats(self, req):
-        yield 'pdf', 'PDF'
+        yield 'pdf' , 'PDF'
+        yield 'ps'  , 'PS'
+        yield 'html', 'HTML'
         
     def process_wikitopdf(self, req, format, title, subject, pages, version, date, pdfname):
 
@@ -40,13 +42,17 @@ class WikiToPdfOutput(Component):
         files = [self._page_to_file('', req, p) for p in pages]
         
         #Setup the title and license pages
-        title_template = self.env.config.get('wikitopdf', 'pathtocover') + '/cover.html'
+        title_template = self.env.config.get('wikitopdf', 'pathtocover')
+        if title_template == '':
+                title_template = self.env.config.get('wikitopdf', 'titlefile')
+        title_template = title_template + '/cover.html'
         titlefile = title_template and self.get_titlepage(title_template, title, subject, date, version) or None
         
         # Prepare html doc arguments
         codepage = self.env.config.get('trac', 'default_charset', 'iso-8859-1')
 
-        htmldoc_args = { 'book': '', 'format': 'pdf14', 'charset': codepage }
+        oformat = { 'pdf':'pdf14', 'ps':'ps2', 'html':'html'}[format]
+        htmldoc_args = { 'book': '', 'format': oformat, 'charset': codepage }
             
         if titlefile: htmldoc_args['titlefile'] = titlefile
         else: htmldoc_args['no-title'] = ''
@@ -62,8 +68,8 @@ class WikiToPdfOutput(Component):
               
         # Send the output
         req.send_response(200)
-        req.send_header('Content-Type', {'pdf':'application/pdf', 'ps':'application/postscript'}[format])
-        req.send_header('Content-Disposition', 'attachment; filename=' + pdfname + '.pdf')
+        req.send_header('Content-Type', {'pdf':'application/pdf', 'ps':'application/postscript', 'html':'text/html'}[format])
+        req.send_header('Content-Disposition', 'attachment; filename=' + pdfname + {'pdf':'.pdf', 'ps':'.ps', 'html': '.html'}[format])
         req.send_header('Content-Length', len(out))
         req.end_headers()
         req.write(out)
@@ -99,7 +105,11 @@ class WikiToPdfOutput(Component):
             string_page = string_page.replace('#SUBJECT#', subject)
             string_page = string_page.replace('#VERSION#', version)
             string_page = string_page.replace('#DATE#', date)
-	    string_page = string_page.replace('#PATHTOCOVER#',  self.env.config.get('wikitopdf', 'pathtocover'))
+
+            title_template = self.env.config.get('wikitopdf', 'pathtocover')
+            if title_template == '':
+                title_template = self.env.config.get('wikitopdf', 'titlefile')
+	    string_page = string_page.replace('#PATHTOCOVER#',  title_template)
         except:
             os.close(hfile)
             return None
