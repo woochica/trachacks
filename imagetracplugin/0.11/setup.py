@@ -24,7 +24,7 @@ setup(name='ImageTrac',
       dependency_links=[
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
         "http://trac-hacks.org/svn/mailtotracplugin/0.11/#egg=mail2trac",
-        "http://www.pythonware.com/products/pil/"
+        "http://dist.repoze.org/PIL-1.1.6.tar.gz",
         ],
       entry_points = """
       [trac.plugins]
