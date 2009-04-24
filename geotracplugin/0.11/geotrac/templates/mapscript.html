@@ -1,3 +1,6 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/">
+
 <script type="text/javascript">
       
   var map = null;
@@ -44,9 +47,11 @@
       map.addLayers([wms, datalayer]);
 
       // add the point of interest to the data layer
-      point = new OpenLayers.Geometry.Point(${geolon}, ${geolat});
+      <py:for each="location in locations">
+      point = new OpenLayers.Geometry.Point(${location['geolon']}, ${location['geolat']});
       var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection));
       datalayer.addFeatures([marker]);
+      </py:for>
 
       // zoom in on the point of interest
       map.zoomToExtent(datalayer.getDataExtent());
@@ -54,3 +59,4 @@
       }
 </script>
 
+</html>

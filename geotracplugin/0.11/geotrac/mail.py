@@ -7,6 +7,7 @@ Subject: loud music @ 349 W. 12 St., New York, NY
 
 from geotrac.ticket import GeolocationException
 from geotrac.ticket import GeoTrac
+from trac.config import BoolOption
 
 try:
     from mail2trac.email2trac import EmailException
@@ -14,6 +15,7 @@ try:
 
     class GeoMailToTicket(EmailToTicket):
         """create a ticket from an email with a location"""
+
         
 
         def fields(self, message, **fields):
@@ -37,7 +39,6 @@ try:
 
                 # set the message subject, sans location
                 message['subject'] = subject
-
 
                 # geolocate the issue
                 try:

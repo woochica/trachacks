@@ -8,7 +8,9 @@ from geotrac.ticket import GeoTrac
 from ticketsidebarprovider import ITicketSidebarProvider
 from trac.config import Option
 from trac.core import *
+from trac.web.api import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
+
 
 class SidebarMap(Component):
     """add a map to the ticket sidebar"""
@@ -73,8 +75,10 @@ class SidebarMap(Component):
 
         if filename == 'ticket.html' and self.enabled(req, data['ticket']):
             stream |= Transformer('//head').append(tag.script('', src="http://www.openlayers.org/api/OpenLayers.js"))
-            data = { 'geolat': req.environ['geolat'],
-                     'geolon': req.environ['geolon'],
+            locations = [ {'geolat': req.environ['geolat'],
+                           'geolon': req.environ['geolon'], }]
+
+            data = { 'locations': locations,
                      'wms_url': self.wms_url }
             stream |= Transformer('//head').append(self.mapscript(**data))
             stream |= Transformer('//body').attr('onload', 'init()')
@@ -90,3 +94,46 @@ class SidebarMap(Component):
 
         template = self.loader.load('mapscript.html')
         return template.generate(**data)
+
+
+class GeoRequestFilter(Component):
+
+    implements(IRequestFilter)
+
+    ### methods for IRequestFilter
+
+    """Extension point interface for components that want to filter HTTP
+    requests, before and/or after they are processed by the main handler."""
+
+    def post_process_request(self, req, template, data, content_type):
+        """Do any post-processing the request might need; typically adding
+        values to the template `data` dictionary, or changing template or
+        mime type.
+        
+        `data` may be update in place.
+
+        Always returns a tuple of (template, data, content_type), even if
+        unchanged.
+
+        Note that `template`, `data`, `content_type` will be `None` if:
+         - called when processing an error page
+         - the default request handler did not return any result
+
+        (Since 0.11)
+        """
+        geotrac = self.env.components.get(GeoTrac)
+        if geotrac is None:
+            return template, data, content_type
+
+        if template == 'ticket.html':
+            pass
+        return template, data, content_type
+
+    def pre_process_request(self, req, handler):
+        """Called after initial handler selection, and can be used to change
+        the selected handler or redirect request.
+        
+        Always returns the request handler, even if unchanged.
+        """
+        return handler
+
