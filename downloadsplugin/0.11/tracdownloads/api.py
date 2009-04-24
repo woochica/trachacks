@@ -459,6 +459,7 @@ class DownloadsApi(Component):
                             'description' : context.req.args.get('description'),
                             'size' : file_size,
                             'time' : to_timestamp(datetime.now(utc)),
+                            'count' : 0,
                             'author' : context.req.authname,
                             'tags' : context.req.args.get('tags'),
                             'component' : context.req.args.get('component'),
