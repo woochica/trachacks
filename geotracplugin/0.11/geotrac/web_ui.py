@@ -46,6 +46,7 @@ class SidebarMap(Component):
             except UnicodeEncodeError:
                 raise
             
+            # geolocate the issue
             try:
                 address, (lat, lon) = geotrac.geolocate(location)
             except GeolocationException:
@@ -97,6 +98,8 @@ class SidebarMap(Component):
 
 
 class GeoRequestFilter(Component):
+    """add data to the request"""
+
 
     implements(IRequestFilter)
 
@@ -126,7 +129,32 @@ class GeoRequestFilter(Component):
             return template, data, content_type
 
         if template == 'ticket.html':
-            pass
+            ticket = data['ticket']
+            locations = []
+            if ticket['location']:
+
+                # get the latitude and longitude from the request environ if set
+                lat = req.environ.get('geolat')
+                lon = req.environ.get('geolon')
+
+                if lat is None or lon is None: # lat or lon could be zero
+                    # XXX blindly assume UTF-8
+                    try:
+                        location = ticket['location'].encode('utf-8')
+                    except UnicodeEncodeError:
+                        raise
+
+                    # geolocate the issue
+                    try:
+                        address, (lat, lon) = geotrac.geolocate(location)
+                        locations = [ { 'geolat': lat,
+                                        'geolon': lon,
+                                        }
+                                      ]
+                    except GeolocationException:
+                        pass
+                    
+            data['locations'] = locations
         return template, data, content_type
 
     def pre_process_request(self, req, handler):
