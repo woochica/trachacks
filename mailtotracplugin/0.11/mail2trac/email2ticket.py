@@ -1,3 +1,5 @@
+import base64
+
 from mail2trac.email2trac import EmailException
 from mail2trac.interface import IEmailHandler
 from mail2trac.utils import emailaddr2user
@@ -60,6 +62,8 @@ class EmailToTicket(Component):
             attachment.author = ticket['reporter']
             attachment.description = ticket['summary']
             payload = msg.get_payload()
+            if msg.get('Content-Transfer-Encoding') == 'base64':
+                payload = base64.b64decode(payload)
             size = len(payload)
             filename = msg.get_filename()
             buffer = StringIO()
