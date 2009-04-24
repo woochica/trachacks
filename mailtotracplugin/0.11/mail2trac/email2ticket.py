@@ -19,7 +19,6 @@ class EmailToTicket(Component):
     def invoke(self, message):
         """make a new ticket on receiving email"""
 
-
         user = emailaddr2user(self.env, message['from'])
         
         # check permissions
@@ -31,7 +30,10 @@ class EmailToTicket(Component):
         ticket = Ticket(self.env)
         reporter = user or message['from']
 
-        fields = self.fields(message, reporter=reporter)
+
+        description, attachments = self.get_description_and_attachments(message)
+
+        fields = self.fields(message, reporter=reporter, description=description)
 
         # inset items from email
         for key, value in fields.items():
@@ -49,6 +51,9 @@ class EmailToTicket(Component):
         # create the ticket
         ticket.insert()
 
+        # add attachments to the ticket
+        # TODO
+
         # ticket notification
         tn = TicketNotifyEmail(self.env)
         tn.notify(ticket)
@@ -59,11 +64,31 @@ class EmailToTicket(Component):
 
     ### internal methods
 
+    def get_description_and_attachments(self, message, description=None, attachments=None):
+        if attachments is None:
+            attachments = []
+        payload = message.get_payload()
+        if isinstance(payload, basestring): # XXX could instead use .is_multipart
+            if description is None:
+                if message.get_content_maintype() == 'text':
+                    if message.get_content_subtype() == 'html':
+                        # markup html email
+                        description = '{{{\n#!html' + payload + '}}}'
+                    else:
+                        description = payload
+            else:
+                attachments.append(message)
+        else:
+            for _message in payload:
+                description, _attachments = self.get_description_and_attachments(_message, description, attachments)
+
+        return description, attachments
+            
+
     def fields(self, message, **fields):
 
         # effectively the interface for email -> ticket
         fields.update(dict(summary=message['subject'],
-                           description=message.get_payload(),
                            status='new',
                            resolution=None))
         return fields
