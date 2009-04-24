@@ -1,10 +1,12 @@
 from mail2trac.email2trac import EmailException
 from mail2trac.interface import IEmailHandler
 from mail2trac.utils import emailaddr2user
+from trac.attachment import Attachment
 from trac.core import *
 from trac.perm import PermissionSystem
 from trac.ticket import Ticket
 from trac.ticket.notification import TicketNotifyEmail
+from StringIO import StringIO
 
 class EmailToTicket(Component):
     """create a ticket from an email"""
@@ -53,6 +55,18 @@ class EmailToTicket(Component):
 
         # add attachments to the ticket
         # TODO
+        for msg in attachments:
+            attachment = Attachment(self.env, 'ticket', ticket.id)
+            attachment.author = ticket['reporter']
+            attachment.description = ticket['summary']
+            payload = msg.get_payload()
+            size = len(payload)
+            filename = msg.get_filename()
+            buffer = StringIO()
+            print >> buffer, payload
+            buffer.seek(0)
+            attachment.insert(filename, buffer, size)
+            
 
         # ticket notification
         tn = TicketNotifyEmail(self.env)
