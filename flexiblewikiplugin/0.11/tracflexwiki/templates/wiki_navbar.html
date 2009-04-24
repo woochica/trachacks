@@ -1,0 +1,17 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude" py:strip="">
+
+    <div id="navbar" class="navbar"><p class="path">
+        <py:for each="item in node.tree"><py:if test="not item.isroot"> / </py:if><a href="${item.href}">${item.title}</a></py:for>
+    </p></div><py:if test="node.title">
+
+    <py:if test="not node.isroot and is_not_edit">
+    <h1 id="nodetitle">${node.title}</h1>
+    </py:if>
+    </py:if>
+    
+</html>

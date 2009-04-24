@@ -1,0 +1,48 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  
+<head>
+<title py:if="title">$title</title>
+</head>
+
+<body>
+<div id="content" class="wiki">
+    <h1>${_('Create new page')}</h1>
+    <form id="edit" action="" method="get">
+    
+        <div id="changeinfo1">
+            <div class="field">
+              <label>${_('Page title')}<br />
+                <input id="title" type="text" name="title" size="60" value="" />
+              </label>
+            </div>
+            <br/>
+            <div class="field">
+              <label>${_('Page URL')}<br />
+                <input id="page" type="text" name="page" size="60" value="" />
+              </label>
+            </div>
+            <br/>
+            <div class="field">
+              <label>${_('Page parent')}<br />
+                <input id="parent-fake" type="text" name="parent-fake" size="60" value="${node.navpath}" disabled="1"/>
+                <input id="parent" type="hidden" name="parent" size="60" value="${node.navpath}" />
+              </label>
+            </div>
+          </div>
+          <div class="buttons">
+            <input type="submit" id="create" name="create" value="${_('Create page')}" />        
+          </div>
+    </form>
+</div>
+</body>
+
+
+
+</html>

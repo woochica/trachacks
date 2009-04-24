@@ -1,0 +1,16 @@
+Плагины:
+http://trac.edgewall.org/wiki/TracDev/PluginDevelopment
+http://trac-hacks.org/wiki/EggCookingTutorialTrac0.11
+
+API к базе данных:
+http://trac.edgewall.org/wiki/TracDev/DatabaseApi
+http://trac.edgewall.org/browser/trunk/trac/db
+
+Пример:
+http://trac-hacks.org/browser/tagsplugin/trunk/tractags/model.py
+
+Установка:
+ - скопировать плагин в 'plugins'
+ - в trac.ini, в [components] прописать:
+   tracstruct.* = enabled
+ - trac-admin /path/to/env upgrade
