@@ -56,7 +56,6 @@ class EmailToTicket(Component):
         ticket.insert()
 
         # add attachments to the ticket
-        # TODO
         for msg in attachments:
             attachment = Attachment(self.env, 'ticket', ticket.id)
             attachment.author = ticket['reporter']
@@ -91,7 +90,7 @@ class EmailToTicket(Component):
                 if message.get_content_maintype() == 'text':
                     if message.get_content_subtype() == 'html':
                         # markup html email
-                        description = '{{{\n#!html' + payload + '}}}'
+                        description = '{{{\n#!html\n' + payload + '}}}'
                     else:
                         description = payload
             else:
