@@ -22,6 +22,7 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_ctxtnav
 from trac.search.api import ISearchSource
 from trac.util.text import to_unicode
+from trac.util.datefmt import to_datetime
 from trac.wiki.api import WikiSystem, IWikiSyntaxProvider
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html
@@ -217,7 +218,7 @@ class DoxygenPlugin(Component):
                     for result in  self._search_in_documentation(doc, keywords):
                         result['url'] =  req.href.doxygen(doc) + '/' \
                           + result['url']
-                        yield result['url'], result['name'], creation, \
+                        yield result['url'], result['name'], to_datetime(creation), \
                           'doxygen', None
 
             # Search in common documentation directory
@@ -229,7 +230,7 @@ class DoxygenPlugin(Component):
                 for result in self._search_in_documentation('', keywords):
                     result['url'] =  req.href.doxygen() + '/' + \
                       result['url']
-                    yield result['url'], result['name'], creation, 'doxygen', \
+                    yield result['url'], result['name'], to_datetime(creation), 'doxygen', \
                       None
 
     # IWikiSyntaxProvider
