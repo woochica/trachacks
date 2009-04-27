@@ -1,0 +1,116 @@
+div.revtree div#legend {
+ text-align: right; 
+}
+div.revtree div#errormsg {
+ border: solid red 2px;
+ background-color: #fcc;
+ margin-left: 2ex;
+ margin-right: 2ex;
+}
+div.revtree p.message {
+ padding-left: 1ex;
+}
+div.revprops {
+ padding-left: 2ex;
+ padding-right: 2ex;
+ margin-left: 1ex;
+ white-space: nowrap;
+ float: left;
+ border-right: inset 1px #333;
+}
+div.revprops span.legend {
+ /* Seemms that legend tag cannot be selected, use span instead*/
+ font-weight: bold;
+}
+#treeoptions {
+ white-space: normal;
+ width: 13ex;
+ display: inline;
+}
+#treeoptions label {
+ margin-top: 0;
+ padding-left: 1ex;
+ text-align: right;
+}
+#treestyle {
+ border-right: none;
+}
+#treestyle div {
+ display: block;
+}
+#settings {
+ /* FIXME */
+ width: 100%;
+ margin-top: 0;
+ margin-left: 0;
+ margin-right: 0;
+ margin-bottom: 11em;
+}
+#prefs {
+ margin-top: 2em;
+ float: left;
+}
+.svg {
+ float: none;
+ padding-top: 1em;
+ margin-left: 4ex;
+}
+div#revtree {
+ overflow: hidden;  
+}
+#revtree dl { 
+ padding-top: 0;
+ margin-top: 0;
+ font-size: 90%;
+}
+#revtree dt { 
+ font-weight: bold;
+ margin-left: 0em;
+}
+#revtree dd { 
+ margin-left: 0.4em;
+ margin-top: 0;
+ margin-bottom: 0.3em;
+}
+
+/* jTip */
+#JT {
+ position: absolute;
+ z-index: 100;
+ border: 2px solid #CCCCCC;
+ background-color: #fff;
+}
+#JT_connect {
+ position: absolute;
+ z-index: 90;
+ width: 17px;
+}
+#JT_copy {
+ padding: 10px 10px 10px 10px;
+ color: #333333;
+}
+#JT_loader {
+ background-image: url(../images/loading.gif);
+ background-repeat: no-repeat;
+ background-position: left center;
+ width: 100%;
+ height: 18px;
+}
+#JT_loader #loading {
+ padding-left: 24px;
+}
+#JT_title {
+ text-align: left;
+ padding-left: 8px;
+ padding-bottom: 5px;
+ padding-top: 2px;
+ font-weight: bold;
+ font-size: 95%;
+}
+#JT_copy p {
+ margin:3px 0;
+}
+#JT_copy img {
+ padding: 1px;
+ border: 1px solid #CCCCCC;
+}

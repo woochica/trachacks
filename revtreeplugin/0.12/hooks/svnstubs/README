@@ -1,0 +1,5 @@
+The shell scripts in this directory should be copied as-is into each 'hooks'
+directory of the Subversion repository that are associated with Trac 
+environment.
+
+Do not forget to edit the 'hook.conf' file to match your environment.

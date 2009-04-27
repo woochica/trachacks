@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# PRE-REVPROP-CHANGE HOOK
+#
+#   [1] REPOS-PATH   (the path to this repository)
+#   [2] REVISION     (the revision being tweaked)
+#   [3] USER         (the username of the person tweaking the property)
+#   [4] PROPNAME     (the property being set on the revision)
+#
+#   [STDIN] PROPVAL  ** the new property value is passed via STDIN.
+
+REPOS="$1"
+REV="$2"
+USER="$3"
+PROPNAME="$4"
+ACTION="$5"
+
+SELF=`readlink -f $0`
+CONF=`dirname ${SELF}`/hook.conf
+if [ -f ${CONF} ]; then
+    . ${CONF}
+else
+    echo "Missing hook configuration file" >&2
+    exit -1
+fi
+
+export PYTHONPATH=$TRACPATH:$GENSHIPATH
+export PYTHON_EGG_CACHE
+export PYTHON=`which python2.5`
+echo "Revprop: $REV $PROPNAME action:$ACTION" >> $LOGFILE
+${PYTHON} ${HOOKPATH}/trac-revprop-hook -p "$TRAC_ENV" -u "$USER" \
+    -n "$PROPNAME" -d "$REPOS" -r "$REV" -a "$ACTION" pre 2>> "$LOGFILE"
+RC=$?
+echo "RESULT $RC" >>  $LOGFILE
+[ $RC == 0 ] || exit 1
+

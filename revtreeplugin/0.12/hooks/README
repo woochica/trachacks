@@ -1,0 +1,10 @@
+The python scripts in this directory should be copied into a new 'hooks' 
+directory that should be created in your Trac installation directory (not 
+the Trac environment directory), for example as in 
+/usr/lib/python2.x/site-packages/trac/hooks
+
+These scripts are called from the svn hooks stub scripts (see the README file
+in the 'svnstubs' directory).
+
+The Python scripts are currently being reworked. They run successfully on my
+servers, but your mileage may vary

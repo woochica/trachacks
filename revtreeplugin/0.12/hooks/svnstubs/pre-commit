@@ -1,0 +1,23 @@
+#!/bin/sh
+
+REPOS="$1"
+TXN="$2"
+
+SELF=`readlink -f $0`
+CONF=`dirname ${SELF}`/hook.conf
+if [ -f ${CONF} ]; then
+    . ${CONF}
+else
+    echo "Missing hook configuration file (${CONF})" >&2
+    exit -1
+fi
+
+export PYTHONPATH=$TRACPATH:$GENSHIPATH
+export PYTHON_EGG_CACHE
+export PYTHON=`which python2.5`
+echo "Transaction: $TXN" >> $LOGFILE
+${PYTHON} ${HOOKPATH}/trac-commit-hook -d "$REPOS" -t "$TXN" -p "$TRAC_ENV" 
+RC=$?
+echo "RESULT $RC" >>  $LOGFILE
+[ $RC == 0 ] || exit 1
+

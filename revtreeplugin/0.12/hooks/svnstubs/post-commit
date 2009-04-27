@@ -1,0 +1,27 @@
+#!/bin/sh
+
+REPOS="$1"
+REV="$2"
+
+SELF=`readlink -f $0`
+CONF=`dirname ${SELF}`/hook.conf
+if [ -f ${CONF} ]; then
+    . ${CONF}
+else
+    echo "Missing hook configuration file" >&2
+    exit -1
+fi
+
+export PYTHONPATH=$TRACPATH:$GENSHIPATH
+export PYTHON_EGG_CACHE
+export PYTHON=`which python2.5`
+date >> "$LOGFILE"
+echo "Revision: $REV" >> "$LOGFILE"
+${PYTHON} ${HOOKPATH}/trac-commit-hook -d "$REPOS" -r "$REV" -p "$TRAC_ENV" \
+     2>> "$LOGFILE"
+if [ $? -ne 0 ]; then
+    tail -5 "$LOGFILE" | \
+      cat
+      #mail admin -s "[${REPOSNAME}] Unable to post-commit revision ${REV}"
+fi
+
