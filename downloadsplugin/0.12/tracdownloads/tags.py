@@ -32,10 +32,10 @@ class DownloadsTags(Component):
 
     # IDownloadChangeListener methods.
 
-    def download_created(self, req, download):
+    def download_created(self, context, download):
         # Check proper permissions to modify tags.
-        if not req.perm.has_permission('TAGS_MODIFY'):
-           return
+        if not context.req.perm.has_permission('TAGS_MODIFY'):
+            return
 
         # Create temporary resource.
         resource = Resource()
@@ -44,16 +44,16 @@ class DownloadsTags(Component):
 
         # Delete tags of download with same ID for sure.
         tag_system = TagSystem(self.env)
-        tag_system.delete_tags(req, resource)
+        tag_system.delete_tags(context.req, resource)
 
         # Add tags of new download.
         new_tags = self._get_tags(download)
-        tag_system.add_tags(req, resource, new_tags)
+        tag_system.add_tags(context.req, resource, new_tags)
 
-    def download_changed(self, req, download, old_download):
+    def download_changed(self, context, download, old_download):
         # Check proper permissions to modify tags.
-        if not req.perm.has_permission('TAGS_MODIFY'):
-           return
+        if not context.req.perm.has_permission('TAGS_MODIFY'):
+            return
 
         # Update old download with new values.
         old_download.update(download)
@@ -63,23 +63,23 @@ class DownloadsTags(Component):
 
         # Delete old tags.
         tag_system = TagSystem(self.env)
-        tag_system.delete_tags(req, resource)
+        tag_system.delete_tags(context.req, resource)
 
         # Add new ones.
         new_tags = self._get_tags(old_download)
-        tag_system.add_tags(req, resource, new_tags)
+        tag_system.add_tags(context.req, resource, new_tags)
 
-    def download_deleted(self, req, download):
+    def download_deleted(self, context, download):
         # Check proper permissions to modify tags.
-        if not req.perm.has_permission('TAGS_MODIFY'):
-           return
+        if not context.req.perm.has_permission('TAGS_MODIFY'):
+            return
 
         # Create temporary resource.
         resource = Resource('downloads', download['id'])
 
         # Delete tags of download.
         tag_system = TagSystem(self.env)
-        tag_system.delete_tags(req, resource)
+        tag_system.delete_tags(context.req, resource)
 
     # Private methods
 
@@ -103,10 +103,10 @@ class DownloadsTags(Component):
             tags += download['tags'].split()
         return sorted(tags)
 
-    def _get_stored_tags(self, req, download_id):
+    def _get_stored_tags(self, context, download_id):
         tag_system = TagSystem(self.env)
         resource = Resource('downloads', download_id)
-        tags = tag_system.get_tags(req, resource)
+        tags = tag_system.get_tags(context.req, resource)
         return sorted(tags)
 
     def _resolve_ids(self, download):
@@ -120,7 +120,6 @@ class DownloadsTags(Component):
         architecture = api.get_architecture(context, download['architecture'])
         platform = api.get_platform(context, download['platform'])
         type = api.get_type(context, download['type'])
-        self.log.debug(architecture)
         download['architecture'] = architecture['name']
         download['platform'] = platform['name']
         download['type'] = type['name']

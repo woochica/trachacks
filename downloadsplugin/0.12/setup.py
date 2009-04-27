@@ -5,13 +5,14 @@ from setuptools import setup
 
 setup(
   name = 'TracDownloads',
-  version = '0.2',
+  version = '0.3',
   packages = ['tracdownloads', 'tracdownloads.db'],
   package_data = {'tracdownloads' : ['templates/*.html', 'htdocs/css/*.css']},
   entry_points = {'trac.plugins': ['TracDownloads.api = tracdownloads.api',
     'TracDownloads.core = tracdownloads.core',
     'TracDownloads.init = tracdownloads.init',
-    'TracDownloads.admin = tracdownloads.admin',
+    'TracDownloads.webadmin = tracdownloads.webadmin',
+    'TracDownloads.consoleadmin = tracdownloads.consoleadmin',
     'TracDownloads.wiki = tracdownloads.wiki',
     'TracDownloads.timeline = tracdownloads.timeline',
     'TracDownloads.tags = tracdownloads.tags [Tags]']},

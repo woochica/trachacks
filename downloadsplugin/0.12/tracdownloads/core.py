@@ -21,6 +21,7 @@ class DownloadsCore(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
       IPermissionRequestor)
 
+    # Configuration options.
     title = Option('downloads', 'title', 'Downloads',
       'Main navigation bar button title.')
 
