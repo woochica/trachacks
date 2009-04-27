@@ -58,7 +58,6 @@ ticketsidebarprovider.example.sampleticketsidebarprovider = disabled
 ticketsidebarprovider.ticketsidebar.ticketsidebarprovider = enabled
 trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
-tractags.* = enabled
 tractoc.macro.tocmacro = enabled
 
 [geo]
