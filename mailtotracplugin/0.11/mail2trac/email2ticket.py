@@ -5,6 +5,7 @@ from mail2trac.interface import IEmailHandler
 from mail2trac.utils import emailaddr2user
 from trac.attachment import Attachment
 from trac.core import *
+from trac.mimeview.api import KNOWN_MIME_TYPES
 from trac.perm import PermissionSystem
 from trac.ticket import Ticket
 from trac.ticket.notification import TicketNotifyEmail
@@ -34,7 +35,6 @@ class EmailToTicket(Component):
         ticket = Ticket(self.env)
         reporter = user or message['from']
 
-
         description, attachments = self.get_description_and_attachments(message)
         if description is None:
             description = ''
@@ -58,6 +58,7 @@ class EmailToTicket(Component):
         # create the ticket
         ticket.insert()
 
+        ctr = 1
         # add attachments to the ticket
         for msg in attachments:
             attachment = Attachment(self.env, 'ticket', ticket.id)
@@ -67,7 +68,13 @@ class EmailToTicket(Component):
             if msg.get('Content-Transfer-Encoding') == 'base64':
                 payload = base64.b64decode(payload)
             size = len(payload)
-            filename = msg.get_filename()
+            filename = msg.get_filename() or message.get('Subject')
+            if not filename:
+                filename = 'attachment-%d' % ctr
+                extensions = KNOWN_MIME_TYPES.get(message.get_content_type())
+                if extensions:
+                    filename += '.%s' % extensions[0]
+                ctr += 1
             buffer = StringIO()
             print >> buffer, payload
             buffer.seek(0)
@@ -91,13 +98,13 @@ class EmailToTicket(Component):
         if isinstance(payload, basestring): # XXX could instead use .is_multipart
             if description is None:
                 if message.get_content_maintype() == 'text':
+                    description = payload.strip()
                     if message.get_content_subtype() == 'html':
                         # markup html email
-                        description = '{{{\n#!html\n' + payload + '}}}'
-                    else:
-                        description = payload
+                        description = '{{{\n#!html\n' + description + '}}}'
             else:
-                attachments.append(message)
+                if payload.strip() != description:
+                    attachments.append(message)
         else:
             for _message in payload:
                 description, _attachments = self.get_description_and_attachments(_message, description, attachments)
