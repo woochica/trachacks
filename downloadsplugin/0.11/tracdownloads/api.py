@@ -734,7 +734,10 @@ class DownloadsApi(Component):
         if hasattr(file.file, 'fileno'):
             size = os.fstat(file.file.fileno())[6]
         else:
-            size = file.file.len
+            # Seek to end of file to get its size.
+            file.file.seek(0, 2)
+            size = file.file.tell()
+            file.file.seek(0)
         if size == 0:
             raise TracError('Can\'t upload empty file.')
 

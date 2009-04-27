@@ -4,7 +4,7 @@ import os, shutil, re, mimetypes, unicodedata
 from datetime import *
 
 from trac.core import *
-from trac.config import Option, BoolOption
+from trac.config import Option, BoolOption, ListOption
 from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
@@ -32,25 +32,22 @@ class IDownloadChangeListener(Interface):
 
 class DownloadsApi(Component):
 
-    # List of all field of downloads table.
-    all_fields = ['id', 'file', 'description', 'size', 'time', 'count', 'author',
-      'tags', 'component', 'version', 'architecture', 'platform', 'type']
-
     # Download change listeners.
     change_listeners = ExtensionPoint(IDownloadChangeListener)
 
     # Configuration options.
     title = Option('downloads', 'title', 'Downloads',
-      'Main navigation bar button title.')
+      doc = 'Main navigation bar button title.')
     path = Option('downloads', 'path', '/var/lib/trac/downloads',
-      'Directory to store uploaded downloads.')
-    ext = Option('downloads', 'ext', 'zip gz bz2 rar',
-      'List of file extensions allowed to upload.')
-    visible_fields = Option('downloads', 'visible_fields',
-      ' '.join(all_fields), 'List of downloads table fields that should'
-      ' be visible to users on Downloads section.')
+      doc = 'Directory to store uploaded downloads.')
+    ext = ListOption('downloads', 'ext', 'zip,gz,bz2,rar',
+      doc = 'List of file extensions allowed to upload.')
+    visible_fields = ListOption('downloads', 'visible_fields',
+      'id,file,description,size,time,count,author,tags,component,version,'
+      'architecture,platform,type', doc = 'List of downloads table fields that'
+      ' should be visible to users on Downloads section.')
     unique_filename = BoolOption('downloads', 'unique_filename', False,
-      'If enabled checks if uploaded file has unique name.')
+      doc = 'If enabled checks if uploaded file has unique name.')
 
     # Get list functions.
 
@@ -125,16 +122,6 @@ class DownloadsApi(Component):
     def get_types(self, context, order_by = 'id', desc = False):
         return self._get_items(context, 'download_type', ('id', 'name',
           'description'), order_by = order_by, desc = desc)
-
-    def get_visible_fields(self):
-        # Get list of enabled fields from config option.
-        visible_fields = self.visible_fields.split(' ')
-
-        # Construct dictionary of visible_fields.
-        fields = {}
-        for field in self.all_fields:
-            fields[field] = field in visible_fields
-        return fields
 
     # Get one item functions.
 
@@ -321,7 +308,7 @@ class DownloadsApi(Component):
 
         # Commit database changes and return template and data.
         db.commit()
-        self.env.log.debug(self.data)
+        self.env.log.debug('data: %s' % (self.data,))
         return modes[-1] + '.html', {'downloads' : self.data}
 
     def store_download(self, context, download, file):
@@ -342,7 +329,7 @@ class DownloadsApi(Component):
         result = reg.match(download['file'])
         self.log.debug('ext: %s' % (result.group(2)))
         if result:
-            if not result.group(2).lower() in self.ext.split(' '):
+            if not result.group(2).lower() in self.ext:
                 raise TracError('Unsupported uploaded file type.')
         else:
             raise TracError('Unsupported uploaded file type.')
@@ -447,6 +434,8 @@ class DownloadsApi(Component):
         elif context.resource.realm  == 'downloads-core':
             if action == 'get-file':
                 return ['get-file']
+            elif action == 'post-add':
+                return ['downloads-post-add', 'downloads-list']
             elif action == 'edit':
                 return ['description-edit', 'downloads-list']
             elif action == 'post-edit':
@@ -493,7 +482,6 @@ class DownloadsApi(Component):
                     db.commit()
 
                     # Return uploaded file to request.
-                    self.log.debug(download['file'])
                     context.req.send_header('Content-Disposition',
                       'attachment;filename=%s' % (download['file']))
                     context.req.send_header('Content-Description',
@@ -517,7 +505,17 @@ class DownloadsApi(Component):
                 self.data['description'] = self.get_description(context)
                 self.data['downloads'] = self.get_downloads(context, order,
                   desc)
-                self.data['visible_fields'] = self.get_visible_fields()
+                self.data['visible_fields'] = [visible_field for visible_field
+                  in self.visible_fields]
+
+                # Component, versions, etc. are needed only for new download
+                # add form.
+                if context.req.perm.has_permission('DOWNLOADS_ADD'):
+                    self.data['components'] = self.get_components(context)
+                    self.data['versions'] = self.get_versions(context)
+                    self.data['architectures'] = self.get_architectures(context)
+                    self.data['platforms'] = self.get_platforms(context)
+                    self.data['types'] = self.get_types(context)
 
             elif mode == 'admin-downloads-list':
                 context.req.perm.assert_permission('DOWNLOADS_ADMIN')
@@ -554,7 +552,7 @@ class DownloadsApi(Component):
                 self.edit_description(context, description)
 
             elif mode == 'downloads-post-add':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.assert_permission('DOWNLOADS_ADD')
 
                 # Get form values.
                 file, filename, file_size = self._get_file_from_req(context)
@@ -572,11 +570,10 @@ class DownloadsApi(Component):
                             'type' : context.req.args.get('type')}
 
                 # Upload file to DB and file storage.
-                try:
-                    self.store_download(context, download, file)
-                except Exception, error:
-                    file.close()
-                    raise error
+                self.store_download(context, download, file)
+
+                # Close input file.
+                file.close()
 
             elif mode == 'downloads-post-edit':
                 context.req.perm.assert_permission('DOWNLOADS_ADMIN')
@@ -611,7 +608,7 @@ class DownloadsApi(Component):
                 if selection:
                     for download_id in selection:
                         download = self.get_download(context, download_id)
-                        self.log.debug(download)
+                        self.log.debug('download: %s' % (download,))
                         self.remove_download(context, download)
 
             elif mode == 'admin-architectures-list':
@@ -773,7 +770,10 @@ class DownloadsApi(Component):
         if hasattr(file.file, 'fileno'):
             size = os.fstat(file.file.fileno())[6]
         else:
-            size = file.file.len
+            # Seek to end of file to get its size.
+            file.file.seek(0, 2)
+            size = file.file.tell()
+            file.file.seek(0)
         if size == 0:
             raise TracError('Can\'t upload empty file.')
 

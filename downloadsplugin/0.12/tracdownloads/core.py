@@ -23,12 +23,15 @@ class DownloadsCore(Component):
 
     # Configuration options.
     title = Option('downloads', 'title', 'Downloads',
-      'Main navigation bar button title.')
+      doc = 'Main navigation bar button title.')
 
     # IPermissionRequestor methods.
 
     def get_permission_actions(self):
-        return ['DOWNLOADS_VIEW', 'DOWNLOADS_ADMIN',]
+        view = 'DOWNLOADS_VIEW'
+        add = ('DOWNLOADS_ADD', ['DOWNLOADS_VIEW'])
+        admin = ('DOWNLOADS_ADMIN', ['DOWNLOADS_VIEW', 'DOWNLOADS_ADD'])
+        return [view, add, admin]
 
     # ITemplateProvider methods.
 
