@@ -14,7 +14,7 @@ from trac.ticket.api import ITicketManipulator
 class GeolocationException(Exception):
     """error for multiple and unfound locations"""
     
-    def __init__(self, location, locations=()):
+    def __init__(self, location='', locations=()):
         Exception.__init__(self, location, locations)
         self.location = location
         self.locations = locations
@@ -23,8 +23,10 @@ class GeolocationException(Exception):
         if self.locations:
             return "Multiple locations found: %s" % '; '.join([i[0] for i in self.locations])
         else:
-            return "%s could not be located" % self.location
-
+            if location.strip(): 
+                return "%s could not be located" % self.location
+            else:
+                return "No location"
 
 class GeoTrac(Component):
 
@@ -109,6 +111,17 @@ class GeoTrac(Component):
         else:
             raise GeolocationException(location, locations)
 
-    ### error handling
+    def locate_ticket(self, ticket):
+        if not ticket['location']:
+            raise GeolocationException
+
+        # XXX blindly assume UTF-8
+        try:
+            location = ticket['location'].encode('utf-8')
+        except UnicodeEncodeError:
+            raise
+        
+        return self.geolocate(location)
+
 
 
