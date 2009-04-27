@@ -36,6 +36,9 @@ class EmailToTicket(Component):
 
 
         description, attachments = self.get_description_and_attachments(message)
+        if description is None:
+            description = ''
+        description = description.strip()
 
         fields = self.fields(message, reporter=reporter, description=description)
 
