@@ -15,7 +15,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracRevtreePlugin'
-VERSION = '0.6.3'
+VERSION = '0.6.4'
 
 setup (
     name = PACKAGE,
@@ -26,7 +26,7 @@ setup (
     license='BSD', 
     url='http://trac-hacks.org/wiki/RevtreePlugin',
     keywords = "trac revision svg graphical tree browser visual",
-    install_requires = [ 'Trac>=0.11', 'Trac<0.12'],
+    install_requires = [ 'Trac>=0.12dev', 'Trac<0.13'],
     packages = find_packages(exclude=['ez_setup', '*.tests*', '*.enhancers.*']),
     package_data={
         'revtree': [
