@@ -148,8 +148,7 @@ name = MobileGeoTrac-sandbox
 url = 
 
 [query]
-default_anonymous_query = status!=closed&cc~=$USER
-default_query = status!=closed&owner=$USER
+default_anonymous_query = status!=closed
 items_per_page = 100
 ticketlink_query = ?status=!closed
 
