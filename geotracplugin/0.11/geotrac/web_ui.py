@@ -57,7 +57,7 @@ class IssueMap(Component):
         geotrac = self.env.components[GeoTrac]
 
         # filter for tickets
-        if filename == 'ticket.html' and self.has_location(req, data['ticket']):
+        if filename == 'ticket.html' and self.has_location(data['ticket'], req):
             stream |= Transformer('//head').append(tag.script('', src="http://www.openlayers.org/api/OpenLayers.js"))
             locations = [ {'geolat': req.environ['geolat'],
                            'geolon': req.environ['geolon'], }]
@@ -106,25 +106,23 @@ class IssueMap(Component):
             return False
         geotrac = self.env.components[GeoTrac]
 
-        if not ticket['location']:
-            return False
-
-        # get the latitude and longitude from the request environ
+        # try to get the latitude and longitude from the request environ
         if req is not None:            
             lat = req.environ.get('geolat')
             lon = req.environ.get('geolon')
-        else:
-            lat = lon = None
+            if lat is not None and lon is not None:
+                return True
 
-        if lat is None or lon is None: # lat or lon could be zero
 
-            # geolocate the issue
-            try:
-                address, (lat, lon) = geotrac.locate_ticket(ticket)
-            except GeolocationException:
-                return False
-            req.environ['geolat'] = lat
-            req.environ['geolon'] = lon
+        # geolocate the issue
+        try:
+            address, (lat, lon) = geotrac.locate_ticket(ticket)
+        except GeolocationException:
+            return False
+
+        # cache the location on the request
+        req.environ['geolat'] = lat
+        req.environ['geolon'] = lon
 
         return True
 
