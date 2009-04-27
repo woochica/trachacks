@@ -31,7 +31,7 @@ class IssueMap(Component):
     def enabled(self, req, ticket):
         if not self.inject_map:
             return False
-        return self.has_location(req, ticket)
+        return self.has_location(ticket, req)
 
     def content(self, req, ticket):
         return tag.div('', **dict(id="map", style="width: 600px; height: 300px"))
