@@ -42,6 +42,7 @@ customfieldadmin.customfieldadmin.customfieldadminpage = disabled
 customfieldprovider.customfieldprovider.customfieldprovider = enabled
 geotrac.mail.geomailtoticket = enabled
 geotrac.ticket.geotrac = enabled
+geotrac.web_ui.georequestfilter = enabled
 geotrac.web_ui.sidebarmap = enabled
 graphviz.graphviz.graphviz = enabled
 icalexporter.icalexporter.icalexporterplugin = enabled
@@ -61,7 +62,7 @@ tractags.* = enabled
 tractoc.macro.tocmacro = enabled
 
 [geo]
-mandatory_location = true
+mandatory_location = false
 
 [graphviz]
 cache_dir = gvcache
@@ -79,7 +80,7 @@ processor = dot
 rsvg_path = 
 
 [header_logo]
-alt = MobileGeoTrac 
+alt = MobileGeoTrac
 height = -1
 link = 
 src = 
@@ -202,6 +203,10 @@ closer =
 intertrac = False
 opener = 
 references-commands = addresses, re, references, refs, see
+
+[ticket-custom]
+location = text
+location.label = Location
 
 [ticket-workflow]
 accept = new -> assigned
