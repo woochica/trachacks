@@ -65,6 +65,9 @@ class TracBacksPlugin(Component):
     def ticket_changed(self, ticket, comment, author, old_values):
         
         pattern = re.compile(self.TICKET_REGEX, re.VERBOSE)
+
+        if not isinstance(comment, basestring):
+            return
         
         tickets_referenced = pattern.findall(comment)
         # convert from strings to ints and discard duplicates
