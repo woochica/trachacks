@@ -264,11 +264,7 @@ split_page_names = false
 
 [wiki-notification]
 attach_diff = False
-banned_addresses = []
 redirect_time = 5
-smtp_always_bcc = []
-smtp_always_cc = []
 smtp_from = trac+wiki@localhost
-subject_template = $prefix $page.name $action
 use_public_cc = False
 
