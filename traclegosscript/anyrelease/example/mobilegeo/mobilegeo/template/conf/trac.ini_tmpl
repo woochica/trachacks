@@ -98,6 +98,9 @@ log_file = trac.log
 log_level = DEBUG
 log_type = file
 
+[mainnav]
+tickets.href = /query
+
 [milestone]
 stats_provider = DefaultTicketGroupStatsProvider
 
