@@ -132,7 +132,6 @@ smtp_replyto = mobilegeo@blue.openplans.org
 smtp_server = localhost
 smtp_subject_prefix = [MobileGeoTrac-sandbox]
 smtp_user = 
-ticket_subject_template = $prefix #$ticket.id: $summary
 use_public_cc = true
 use_short_addr = false
 use_tls = false
