@@ -6,8 +6,10 @@
 # you should have received as part of this distribution.
 #
 
+from StringIO import StringIO
 from genshi.builder import tag
 from trac.wiki.api import IWikiMacroProvider, parse_args
+from trac.wiki.formatter import format_to_oneliner, extract_link
 from trac.wiki.macros import WikiMacroBase
 
 
@@ -50,7 +52,7 @@ class EmbedMacro(WikiMacroBase):
         elif 'vimeo' in params:
             return embed_vimeo(params['vimeo'], params)
         elif 'swf' in params:
-            return embed_swf(params['swf'], params)
+            return embed_swf(formatter, params)
             
         return '<!-- Unknown content type! -->'
 
@@ -85,14 +87,25 @@ allowscriptaccess="always" width="%(w)d" height="%(h)d"></embed>\
     return code
 
 
-def embed_swf(url, params):
+def embed_swf(formatter, params):
     """
     Produces embedding code for SWF by url.
     """
+    url = params['swf']
+    
+    # url for attachment
+    if url[0] != '/' and url[0:7] != 'http://' and url[0:8] != 'https://':
+        if url[:11] != 'attachment:':
+            url = 'attachment:%s' % url
+        url = extract_link(formatter.env, formatter.context, '[%s attachment]' % url)
+        url = '/raw-' + url.attrib.get('href')[1:]
+    
+    # embed code
     code = '<object width="%(w)s" height="%(h)s">\
 <param name="movie" value="%(url)s"></param>\
 <param name="allowFullScreen" value="false"></param><param name="allowscriptaccess" value="always"></param>\
 <embed src="%(url)s" type="application/x-shockwave-flash"\
 allowscriptaccess="always" allowfullscreen="false" width="%(w)s" height="%(h)s"></embed>\
 </object>' % {'url': url, 'w': params.get('w', '100%'), 'h': params.get('h', '100%')}
+
     return code

@@ -1,7 +1,7 @@
 from setuptools import setup
 
 PACKAGE = 'TracFlashEmbedMacro'
-VERSION = '0.9beta'
+VERSION = '0.95RC1'
 URL = 'http://trac-hacks.org/wiki/FlashEmbedMacro'
 
 setup(  name=PACKAGE,
