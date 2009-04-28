@@ -31,7 +31,6 @@ class EmailToTicket(Component):
         if not perm.check_permission('TICKET_CREATE', user): # None -> 'anoymous'
             raise EmailException("%s does not have TICKET_CREATE permissions" % (user or 'anonymous'))
 
-
         ticket = Ticket(self.env)
         reporter = user or message['from']
 
