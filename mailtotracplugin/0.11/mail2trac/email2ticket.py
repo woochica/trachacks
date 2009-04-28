@@ -80,7 +80,6 @@ class EmailToTicket(Component):
             buffer.seek(0)
             attachment.insert(filename, buffer, size)
             
-
         # ticket notification
         tn = TicketNotifyEmail(self.env)
         tn.notify(ticket)
@@ -95,13 +94,15 @@ class EmailToTicket(Component):
         if attachments is None:
             attachments = []
         payload = message.get_payload()
-        if isinstance(payload, basestring): # XXX could instead use .is_multipart
-            if description is None:
-                if message.get_content_maintype() == 'text':
-                    description = payload.strip()
-                    if message.get_content_subtype() == 'html':
-                        # markup html email
-                        description = '{{{\n#!html\n' + description + '}}}'
+        if isinstance(payload, basestring):
+
+            # XXX could instead use .is_multipart
+            if description is None and message.get('Content-Disposition', 'inline') == 'inline' and message.get_content_maintype() == 'text': 
+
+                description = payload.strip()
+                if message.get_content_subtype() == 'html':
+                    # markup html email
+                    description = '{{{\n#!html\n' + description + '}}}'
             else:
                 if payload.strip() != description:
                     attachments.append(message)
@@ -110,12 +111,12 @@ class EmailToTicket(Component):
                 description, _attachments = self.get_description_and_attachments(_message, description, attachments)
 
         return description, attachments
-            
+
 
     def fields(self, message, **fields):
 
         # effectively the interface for email -> ticket
         fields.update(dict(summary=message['subject'],
                            status='new',
-                           resolution=None))
+                           resolution=''))
         return fields
