@@ -25,7 +25,7 @@ class SidebarImage(Component):
         mimeview = Mimeview(self.env)
         for attachment in attachments:
             mimetype = mimeview.get_mimetype(attachment.filename)
-            if mimetype and mimetype.split('/',1)[0] != 'image':
+            if not mimetype or mimetype.split('/',1)[0] != 'image':
                 continue
             return attachment
 
