@@ -150,7 +150,7 @@ class ImageTrac(Component):
         mimeview = Mimeview(self.env)
         for attachment in attachments:
             mimetype = mimeview.get_mimetype(attachment.filename)
-            if mimetype.split('/',1)[0] != 'image':
+            if mimetype and mimetype.split('/',1)[0] != 'image':
                 continue
             images.append(attachment)
         return images
