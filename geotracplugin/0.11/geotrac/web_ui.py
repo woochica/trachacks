@@ -35,7 +35,7 @@ class IssueMap(Component):
                      'http://maps.opengeo.org/geoserver/gwc/service/wms',
                      "URL for the WMS")
     
-    inject_map = BoolOption('geo', 'sidebar', 'true',
+    inject_map = BoolOption('geo', 'inject_map', 'true',
                             "whether to inject the map into the HTML")
 
 
