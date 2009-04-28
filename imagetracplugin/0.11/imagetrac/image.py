@@ -125,7 +125,7 @@ class ImageTrac(Component):
             if ticket.exists:
                 images = []
                 for image in self.images(ticket):
-                    images.append(req.href('attachment', 'ticket', 'ticket.id', image.filename, format='raw'))
+                    images.append(req.href('attachment', 'ticket', ticket.id, image.filename, format='raw'))
             data['images'] = images
         return (template, data, content_type)
 
