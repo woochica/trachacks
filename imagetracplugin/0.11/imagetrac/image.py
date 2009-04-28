@@ -12,12 +12,11 @@ from trac.core import *
 from trac.mimeview import Mimeview
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
-from trac.env import IEnvironmentSetupParticipant
-
+from trac.web.api import IRequestFilter
 
 class ImageTrac(Component):
 
-    implements(ITicketManipulator, ITicketChangeListener, IEnvironmentSetupParticipant)
+    implements(ITicketManipulator, ITicketChangeListener, IRequestFilter)
 
     mandatory_image = BoolOption('ticket', 'mandatory_image', 'false', 
                                  "Enforce a mandatory image for created tickets")
@@ -97,34 +96,62 @@ class ImageTrac(Component):
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
-
-
-
-    ### methods for IEnvironmentSetupParticipant
-    ### needed?
-
-    """Extension point interface for components that need to participate in the
-    creation and upgrading of Trac environments, for example to create
-    additional database tables."""
-
-    def environment_created(self):
-        """Called when a new Trac environment is created."""
-        self.upgrade_environment(self)
-
-    def environment_needs_upgrade(self, db):
-        """Called when Trac checks whether the environment needs to be upgraded.
         
-        Should return `True` if this participant needs an upgrade to be
-        performed, `False` otherwise.
-        """
-        return False
 
-    def upgrade_environment(self, db):
-        """Actually perform an environment upgrade.
+    ### methods for IRequestFilter
+
+    """Extension point interface for components that want to filter HTTP
+    requests, before and/or after they are processed by the main handler."""
+
+    def post_process_request(self, req, template, data, content_type):
+        """Do any post-processing the request might need; typically adding
+        values to the template `data` dictionary, or changing template or
+        mime type.
         
-        Implementations of this method should not commit any database
-        transactions. This is done implicitly after all participants have
-        performed the upgrades they need without an error being raised.
+        `data` may be update in place.
+
+        Always returns a tuple of (template, data, content_type), even if
+        unchanged.
+
+        Note that `template`, `data`, `content_type` will be `None` if:
+         - called when processing an error page
+         - the default request handler did not return any result
+
+        (Since 0.11)
         """
 
+        if template == 'ticket.html':
+            ticket = data['ticket']
+            if ticket.exists():
+                images = []
+                for image in self.images(ticket):
+                    images.append(req.href('attachment', 'ticket', 'ticket.id', image.filename, format='raw'))
+            data['images'] = images
+        return (template, data, content_type)
 
+    def pre_process_request(self, req, handler):
+        """Called after initial handler selection, and can be used to change
+        the selected handler or redirect request.
+        
+        Always returns the request handler, even if unchanged.
+        """
+        return handler
+
+    
+
+    ### internal methods
+
+    def images(self, ticket):
+        """returns images for a ticket"""
+        
+        
+        attachments = list(Attachment.select(self.env, 'ticket', ticket.id))
+        images = []
+        mimeview = Mimeview(self.env)
+        for attachment in attachments:
+            mimetype = mimeview.get_mimetype(attachment.filename)
+            if mimetype.split('/',1)[0] != 'image':
+                continue
+            images.append(attachment)
+        return images
+        
