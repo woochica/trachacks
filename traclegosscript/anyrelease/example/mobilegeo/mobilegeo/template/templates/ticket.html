@@ -45,6 +45,8 @@
   </head>
 
   <body>
+    <img py:for="image in images" src="$image"/>
+    Location: ${locations}
     <h1 py:if="locations">${locations[0]['geolat']}, ${locations[0]['geolon']}</h1>
     <py:def function="commentref(prefix, cnum)">
       <a href="#comment:$cnum"><small>$prefix$cnum</small></a>
@@ -293,6 +295,8 @@ ${comment}</textarea></p>
                 </td>
               </tr>
             </py:if>
+
+
             <py:if test="'TICKET_EDIT_DESCRIPTION' in perm(ticket.resource) or not ticket.exists">
               <tr>
                 <th><label for="field-description">Description:</label></th>
@@ -303,6 +307,9 @@ ${comment}</textarea></p>
                 </td>
               </tr>
             </py:if>
+
+
+
             <tr py:for="row in group(fields, 2, lambda f: f.type != 'textarea' and f.name != 'owner')"
                 py:with="fullrow = len(row) == 1">
               <py:for each="idx, field in enumerate(row)"
@@ -356,6 +363,14 @@ ${comment}</textarea></p>
                             title="Space or comma delimited email addresses and usernames are accepted."
                             name="field_${field.name}" value="${value}" />
                         </span>
+
+                        <!--! Location -->
+                        <span py:when="field.name == 'location'">
+                          <input  type="text" id="field-${field.name}"
+                            title="Location"
+                            name="field_${field.name}" value="${value}" />
+                        </span>
+
                         <!--! All the other text input fields -->
                         <input py:otherwise="" type="text" id="field-${field.name}"
                           name="field_${field.name}" value="${value}" />
@@ -365,6 +380,9 @@ ${comment}</textarea></p>
                 </td>
               </py:for>
             </tr>
+
+
+
           </table>
 
         </fieldset>
