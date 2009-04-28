@@ -1,0 +1,465 @@
+/*
+_______________________________
+BASE */
+
+@import url(css/tripoli.base.css);
+
+/*
+_______________________________
+PLUGINS */
+
+@import url(css/tripoli.visual.css);
+@import url(css/tripoli.type.css);
+
+
+body {
+	margin : 0 !important;
+	padding : 0 !important;
+}
+
+html {
+background-color : #2692ab !important;
+}
+
+hr {
+display : none !important;
+}
+
+
+.content textarea,.content input[type='text'] {
+color : #666;
+}
+
+
+a:link {
+color : #0082b6;
+}
+
+a:hover {
+color : #2aaf00;
+}
+
+a:visited {
+color : #0082b6;
+}
+
+
+
+
+#header, 
+#main,
+#footer {
+width : 100%;
+float : left;
+}
+
+
+#page-heading {
+background : #fff url(./images/heading-bg.png) repeat-x;
+height : 159px;
+}
+
+#page-heading .content {
+background : transparent url(./images/heading.jpg) bottom no-repeat;
+height : 159px;
+}
+
+#page-heading .content, 
+#main .content, 
+#footer .content {
+width : 1000px;
+margin : 0 auto;
+}
+
+#page-heading h1, 
+#page-heading h1 a, 
+#page-heading h2, 
+#page-heading .nav li {
+margin : 0;
+float : left;
+}
+
+
+
+
+
+
+/* nav */
+
+#mainnav {
+	background : transparent;
+	border : none;
+	padding : 0;
+	margin : 0;
+	
+}
+
+
+
+
+
+#page-heading .nav li {
+list-style-type : none;
+margin-top : 13px;
+border : none;
+padding : 0;
+}
+
+
+#page-heading #metanav  ul,
+#page-heading #mainnav ul {
+float : right;
+clear : right;
+}
+
+#page-heading #metanav ul {
+height : 33px;
+margin-right : 2.5em;
+}
+
+#page-heading #metanav li {
+margin : .75em 0 0 0;
+color : #00527d;
+}
+
+#page-heading .nav li a {
+height : 11px;
+}
+
+#page-heading #metanav a {
+margin-left : 2em;
+}
+
+#page-heading #metanav a:link, 
+#page-heading #metanav a:visited  {
+color : #fff;
+text-decoration : none;
+font-size : 1em;
+border-bottom : none;
+}
+
+#page-heading #metanav a:hover {
+text-decoration : underline;
+border-bottom : none;
+background : transparent;
+color : #fff;
+}
+
+
+
+
+
+#page-heading #mainnav li, 
+#page-heading .nav li  {
+border : none;
+}
+
+#page-heading #mainnav li {
+margin-top : 37px;
+}
+
+#page-heading #mainnav li a {
+font : normal normal bold 1.2em/2em Lucida Grande, Helvetica, Sans-serif;
+text-decoration : none;
+margin-right : .75em;
+}
+
+
+#mainnav :link, 
+#mainnav :visited {
+background-image : none;	
+}
+
+#mainnav a:link, 
+#mainnav a:visited,
+#mainnav a:hover {
+border-width : 0;
+margin : 0;
+padding : .4em 1em;
+color : #0082b6;
+}
+
+
+#mainnav a:link:hover, 
+#mainnav a:visited:hover {
+border : none;
+background-color : #dddddd;
+-moz-border-radius : 5px;
+-webkit-border-radius : 5px;
+border-radius : 5px;
+}
+
+
+#mainnav .active a:link, 
+#mainnav .active a:visited, 
+#mainnav .active a:hover {
+border : none !important;
+background : #7bc52d;
+color : #fff;
+-moz-border-radius : 5px;
+-webkit-border-radius : 5px;
+border-radius : 5px;
+margin : 0;
+
+}
+
+#mainnav .active a:hover {
+background-color : #1f8100;
+}
+
+#mainnav .active :link:hover, 
+#mainnav .active :visited:hover {
+border-width : 0 !important;
+}
+
+
+
+/* ***** Tool Panel (search, new ticket) ***** */
+
+.toolpanel {
+z-index : 9;
+position : relative;
+float : left;
+width : 100%;
+clear : both;
+border-bottom : 1px solid #f4f4f4;
+}
+
+a#newticket {
+float : left;
+padding : .15em 1em .2em 1em;
+-moz-border-radius : 5px;
+-webkit-border-radius : 5px;
+border-radius : 5px;
+background : #ccc url(./images/body-bg.png) repeat-x 0 -30px;
+border-top : 1px solid #ccc;
+border-left : 1px solid #a7a7a7;
+border-right : 1px solid #ccc;
+border-bottom : 1px solid #a7a7a7;
+color : #27a300;
+font-weight : bold;
+clear : none;
+}
+
+#newticket:hover { 
+color : #0082b6;
+background-position : top;
+}
+
+#search {
+
+float : right;
+clear : none;
+}
+
+
+
+
+#ctxtnav {
+z-index : 9;
+position : relative;
+float : right;
+clear : both;
+width : 100%;
+margin : .5em 0 1.5em 0; 
+}
+
+
+
+
+#page-heading h1 a, 
+#page-heading h2 span, 
+#page-heading h2 a {
+text-indent : -9999em;
+overflow : hidden;
+float : left;
+}
+
+#page-heading h1 a {
+background : transparent url(./images/heading-logo.png) no-repeat;
+margin : 55px 0 0 20px;
+width : 382px;
+height : 81px;
+text-decoration : none;
+border : none;
+}
+
+#page-heading h1 a:hover {
+background-position : bottom;
+}
+
+
+
+
+
+
+
+
+
+#page-heading h3 {
+clear : both;
+font : normal normal normal 4.5em/.85em georgia, serif;
+margin : 0 0 0 .15em;
+padding : .5em 0 0 0;
+}
+
+
+
+
+
+
+
+
+/* ***** BODY ***** */
+
+#main {
+background : #fff url(./images/body-bg.png) repeat-x;
+}
+
+
+#main .content {
+margin : 0 auto;
+background-color : #fff;
+padding : 1em 25px 2em 25px;
+width : 942px;
+}
+
+
+#content h1 {
+margin-top : 0;
+}
+
+
+
+
+
+/* ***** FOOTER ***** */
+
+
+
+#footer {
+color : #daf8ff;
+background-color : #2692ab;
+padding-bottom : 5em;
+padding : 2em 0 4em 0;
+}
+
+#footer a, 
+#footer :link, 
+#footer :visited {
+color : #fff;
+padding : 0 .25em;
+border : none;
+text-decoration : underline;
+}
+
+
+#footer a:hover {
+background : #3ea4bb;
+-moz-border-radius : 5px;
+-webkit-border-radius : 5px;
+border-radius : 5px;
+text-decoration : none;
+}
+
+
+
+#footer p.left {
+border : none;
+}
+
+#footer #tracpowered, 
+#footer #tracpowered:hover {
+background : #fff;
+padding : .65em .4em .2em 0em;
+-moz-border-radius : 5px;
+-webkit-border-radius : 5px;
+border-radius : 5px;
+}
+
+#footer #tracpowered img {
+
+}
+
+
+/*
+_______________________________
+Wiki Styles */
+
+.wikipage {
+padding : 0;
+}
+
+.wiki-toc {
+margin-top : 1em;
+}
+
+.content .wiki-toc h4 {
+margin-top : .5em;
+}
+
+
+
+
+/*
+_______________________________
+New Ticket */
+
+
+.content th, 
+.content td, 
+.content table {
+border : none !important;
+}
+
+#properties table td { 
+vertical-align : top;
+padding : 0;
+}
+
+
+.content form .wikitoolbar {
+padding : 0;
+margin-left : 2px;
+}
+
+.content #properties textarea {
+padding : 0;
+
+}
+
+fieldset#properties {
+border : none;
+}
+
+fieldset#properties legend {
+padding : 0 0 1em 0;
+}
+
+
+/*
+_______________________________
+Trac Admin */
+
+
+#tabs {
+
+}
+
+#tabcontent {
+
+}
+
+#tabcontent h2 {
+margin-top : 0;
+}
+
+#tabcontent fieldset {
+border : none;
+padding : 0;
+}
+
+#tabcontent fieldset legend {
+padding : 0;
+}
+
