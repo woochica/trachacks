@@ -122,7 +122,7 @@ class ImageTrac(Component):
 
         if template == 'ticket.html':
             ticket = data['ticket']
-            if ticket.exists():
+            if ticket.exists:
                 images = []
                 for image in self.images(ticket):
                     images.append(req.href('attachment', 'ticket', 'ticket.id', image.filename, format='raw'))
