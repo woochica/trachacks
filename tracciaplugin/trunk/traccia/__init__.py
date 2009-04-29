@@ -197,9 +197,8 @@ class CiaNotificationComponent(Component):
             cursor.execute('SELECT count(*) FROM ticket_change WHERE ticket = %s and field = "comment"' % (ticket.id));
             r = cursor.fetchone()
             num_comments = int(r and r[0] or 0)
-            args['url'] = t_url
             if num_comments:
-                args['url'] += '#comment:%s' % (num_comments,)
+                t_url += '#comment:%s' % (num_comments,)
             log = ''
             if old.get('status', None):
                 if log: log += '; '
@@ -226,6 +225,7 @@ class CiaNotificationComponent(Component):
                 if log: log += '; '
                 log += "changed " + ', '.join(changes)
             log += ' (' + t_url + ')'
+            args['url'] = t_url
             args['log'] = esc(log)
         else:
             raise Exception('Unknown action type')
