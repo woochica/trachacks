@@ -18,7 +18,7 @@ body {
 }
 
 html {
-background-color : #2692ab !important;
+background-color : #2b5b97 !important;
 }
 
 hr {
@@ -60,9 +60,39 @@ height : 159px;
 }
 
 #page-heading .content {
-background : transparent url(./images/heading.jpg) bottom no-repeat;
 height : 159px;
 }
+
+
+
+#page-heading h1 a, 
+#page-heading h2 span, 
+#page-heading h2 a {
+text-indent : -9999em;
+overflow : hidden;
+float : left;
+}
+
+#page-heading h1 a {
+background : transparent url(./images/logo.png) no-repeat;
+margin : 35px 0 0 20px;
+width : 201px;
+height : 54px;
+text-decoration : none;
+border : none;
+}
+
+#page-heading h1 a:hover {
+background-position : bottom;
+}
+
+#page-heading h3 {
+clear : both;
+font : normal normal normal 4.5em/.85em georgia, serif;
+margin : 0 0 0 .15em;
+padding : .5em 0 0 0;
+}
+
 
 #page-heading .content, 
 #main .content, 
@@ -71,8 +101,7 @@ width : 1000px;
 margin : 0 auto;
 }
 
-#page-heading h1, 
-#page-heading h1 a, 
+#page-heading h1,  
 #page-heading h2, 
 #page-heading .nav li {
 margin : 0;
@@ -86,23 +115,50 @@ float : left;
 
 /* nav */
 
-#mainnav {
+#page-heading ul.nav {
 	background : transparent;
 	border : none;
 	padding : 0;
 	margin : 0;
-	
 }
 
 
 
 
+#nav-citations a {
+width : 82px;
+background : transparent url(./images/nav-citations.png) no-repeat;
+}
 
-#page-heading .nav li {
+#nav-reports a {
+width : 72px;
+background : transparent url(./images/nav-reports.png) no-repeat;
+}
+
+
+#nav-about a {
+width : 60px;
+background : transparent url(./images/nav-about.png) no-repeat;
+}
+
+
+#page-heading #main-nav li a {
+height : 27px;
+margin-top : 42px;
+text-indent : -999999em;
+overflow : hidden;
+float : left;
+border : 0;
 list-style-type : none;
-margin-top : 13px;
 border : none;
 padding : 0;
+float : left;
+margin-left : 65px;
+}
+
+
+#page-heading .nav li a:hover {
+background-position : bottom; 
 }
 
 
@@ -113,33 +169,40 @@ clear : right;
 }
 
 #page-heading #metanav ul {
-height : 33px;
-margin-right : 2.5em;
+margin : 4px 0 0 0;
+-moz-border-radius : 8px;
+-webkit-border-radius : 8px;
+border-radius : 8px;
+background-color : #2e5b93;
 }
 
 #page-heading #metanav li {
-margin : .75em 0 0 0;
-color : #00527d;
+color : #d7d7d7;
+height : 15px;
+line-height : 14px;
+font-size : 9px;
+padding : 2px 9px;
 }
 
-#page-heading .nav li a {
-height : 11px;
-}
 
 #page-heading #metanav a {
-margin-left : 2em;
+margin-left : .5em;
+text-transform : uppercase;
+}
+
+#page-heading #metanav.nav li a {
+text-indent : 0;
 }
 
 #page-heading #metanav a:link, 
 #page-heading #metanav a:visited  {
-color : #fff;
+color : #a2c2e9;
 text-decoration : none;
 font-size : 1em;
 border-bottom : none;
 }
 
 #page-heading #metanav a:hover {
-text-decoration : underline;
 border-bottom : none;
 background : transparent;
 color : #fff;
@@ -247,12 +310,61 @@ background-position : top;
 }
 
 #search {
-
 float : right;
 clear : none;
+height : auto;
+margin : 19px 0 0 0;
+}
+
+#search div {
+margin : 0;
+padding : 0;
 }
 
 
+#search label {
+background : transparent url(./images/search-label.png) no-repeat;
+float : left;
+text-indent : 99999em;
+overflow : hidden;
+width : 91px;
+height : 28px;
+display : block !important;
+}
+
+#search #proj-search {
+background : transparent url(./images/search-bg.png) repeat-x;
+border : 0;
+font-size : 12px;
+color : #fff;
+height : 16px; /* 28px after padding */
+padding : 6px 0;
+width : 150px;
+margin : 0;
+float : left;
+}
+
+#search input[type='text']:hover {
+border : 0;
+}
+
+#search input[type='text']:focus {
+outline : 0;
+border : 0;
+}
+
+
+#search .search-submit {
+background : transparent url(./images/search-edge.png) no-repeat;
+float : left;
+width : 14px;
+height : 28px;
+text-indent : -9999em;
+overflow : hidden;
+border : 0;
+margin : 0; 
+padding : 0;
+}
 
 
 #ctxtnav {
@@ -266,48 +378,57 @@ margin : .5em 0 1.5em 0;
 
 
 
-
-#page-heading h1 a, 
-#page-heading h2 span, 
-#page-heading h2 a {
-text-indent : -9999em;
-overflow : hidden;
+/* ***** Subhead ***** */
+#subhead {
+width : 100%;
 float : left;
 }
 
-#page-heading h1 a {
-background : transparent url(./images/heading-logo.png) no-repeat;
-margin : 55px 0 0 20px;
-width : 382px;
-height : 81px;
-text-decoration : none;
-border : none;
+.tagline {
+float : left;
+width : 314px;
+height : 18px;
+margin : 13px 0 0 20px;
+background : transparent url(./images/tagline.png) no-repeat;
+text-indent : -999em;
+overflow : hidden;
 }
 
-#page-heading h1 a:hover {
-background-position : bottom;
+.cite-button {
+float : left;
+margin-left : 360px;
+}
+
+.cite-button .know {
+float : left; 
+width : 154px;
+height : 16px;
+margin-top : 13px;
+background : transparent url(./images/know.png) no-repeat;
+text-indent : -999em;
+overflow : hidden;
+}
+
+.cite-button a {
+float : left; 
+width : 128px;
+height : 31px;
+
+margin : 4px 0 0 20px !important;
+background : transparent url(./images/cite-button.png) no-repeat;
+text-indent : -999em;
+overflow : hidden;
+border : 0;
 }
 
 
-
-
-
-
-
-
-
-#page-heading h3 {
-clear : both;
-font : normal normal normal 4.5em/.85em georgia, serif;
-margin : 0 0 0 .15em;
-padding : .5em 0 0 0;
+.cite-button a:hover {
+background-position : 0 -31px;
 }
 
-
-
-
-
-
+.cite-button a:active {
+background-position : 0 -62px;
+}
 
 
 /* ***** BODY ***** */
@@ -339,7 +460,7 @@ margin-top : 0;
 
 #footer {
 color : #daf8ff;
-background-color : #2692ab;
+background-color : #2b5b97;
 padding-bottom : 5em;
 padding : 2em 0 4em 0;
 }
