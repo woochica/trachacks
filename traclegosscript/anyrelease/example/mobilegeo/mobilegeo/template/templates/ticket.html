@@ -47,6 +47,10 @@
   <body>
     <img py:for="image in images" src="$image"/>
     Location: ${locations}
+
+	<div id="map" style="float : left; width : 400px; border : 1px solid black;height : 400px;"></div>
+
+
     <h1 py:if="locations">${locations[0]['geolat']}, ${locations[0]['geolon']}</h1>
     <py:def function="commentref(prefix, cnum)">
       <a href="#comment:$cnum"><small>$prefix$cnum</small></a>

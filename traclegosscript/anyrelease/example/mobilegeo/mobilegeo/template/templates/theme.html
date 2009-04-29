@@ -24,18 +24,29 @@
 	
 			<h1><a href="${chrome.logo.link or href.wiki('TracIni')+'#header_logo-section'}">${project.name}</a></h1>
 
-	        <a id="newticket" href="${req.href('query')}">Citations</a>
-	     	<a id="newticket" href="${req.href('report')}">Reports</a>
-	        <a id="newticket" href="${req.href('wiki')}">About</a>
-		
+			<ul class="nav" id="main-nav">
+		        <li id="nav-citations"><a href="${req.href('query')}">Citations</a>     </li>
+		     	<li id="nav-reports"><a href="${req.href('report')}">Reports</a>        </li>
+		        <li id="nav-about"><a href="${req.href('wiki')}">About</a>              </li>
+			</ul>		
+
+
 			<form id="search" action="${href.search()}" method="get">
 		      <div py:if="'SEARCH_VIEW' in perm">
 		        <label for="proj-search">Search:</label>
 		        <input type="text" id="proj-search" name="q" size="18" accesskey="f" value="" />
-		        <input type="submit" value="Search" />
+		        <input type="submit" value="Search" class="search-submit" />
 		      </div>
 		    </form>		
 		
+		
+			<div id="subhead">
+				<div class="tagline">Cite.it is a tool to track problems in your area</div>
+				<div class="cite-button">
+					<span class="know">Know of a problem?</span>
+					<a href="${req.href('newticket')}">Cite it!</a>
+				</div>
+			</div>
 		
     	</div>
 	</div>
@@ -47,10 +58,6 @@
 <div class="content">
 	
 	<div class="toolpanel">
-        <a id="newticket" href="${req.href('newticket')}">Cite it!</a>
-
-
-
 	
 	</div>
 	
