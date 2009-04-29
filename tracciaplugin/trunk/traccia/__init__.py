@@ -171,7 +171,10 @@ class CiaNotificationComponent(Component):
         is_new = status == 'new'
         t_url = get_resource_url(self.env, ticket.resource, self.env.abs_href)
 
-        author = kwargs.get('author', 'anonymous')
+        if action == 'created':
+            author = ticket.values.get('reporter', 'anonymous')
+        else:
+            author = kwargs.get('author', 'anonymous')
 
         args = self.make_args({
             'component': 'tickets/' + esc(ticket.values.get('component', '')),
