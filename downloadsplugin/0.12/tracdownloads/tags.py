@@ -17,7 +17,7 @@ class DownloadsTagProvider(DefaultTagProvider):
 
     def check_permission(self, perm, operation):
         # Permission table for download tags.
-        permissions = {'view' : 'WIKI_VIEW', 'modify' : 'WIKI_ADMIN'}
+        permissions = {'view' : 'DOWNLOADS_VIEW', 'modify' : 'DOWNLOADS_ADMIN'}
 
         # First check permissions in default provider then for downloads.
         return super(DownloadsTagProvider, self).check_permission(perm,
@@ -55,6 +55,10 @@ class DownloadsTags(Component):
         if not context.req.perm.has_permission('TAGS_MODIFY'):
             return
 
+        # Check if tags has to be updated.
+        if not self._has_tags_changed(download):
+           return
+
         # Update old download with new values.
         old_download.update(download)
 
@@ -82,6 +86,13 @@ class DownloadsTags(Component):
         tag_system.delete_tags(context.req, resource)
 
     # Private methods
+
+    def _has_tags_changed(self, download):
+        # Return True if there is any attribute that generate tags in download.
+        return download.has_key('author') or download.has_key('component') or \
+          download.has_key('version') or download.has_key('architecture') or \
+          download.has_key('platform') or download.has_key('type') or \
+          download.has_key('tags')
 
     def _get_tags(self, download):
         # Translate architecture, platform and type ID to its names.

@@ -508,7 +508,7 @@ class DownloadsApi(Component):
                 self.data['visible_fields'] = [visible_field for visible_field
                   in self.visible_fields]
 
-                # Component, versions, etc. are needed only for new download
+                # Component, versions, etc. are needed only for new download
                 # add form.
                 if context.req.perm.has_permission('DOWNLOADS_ADD'):
                     self.data['components'] = self.get_components(context)

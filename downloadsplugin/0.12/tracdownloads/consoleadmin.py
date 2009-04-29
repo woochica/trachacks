@@ -31,7 +31,7 @@ class DownloadsConsoleAdmin(Component):
     # Configuration options.
     path = Option('downloads', 'path', '/var/lib/trac/downloads',
       doc = 'Directory to store uploaded downloads.')
-    consoleadmin_user = Option('download', 'consoleadmin_user', 'anonymous',
+    consoleadmin_user = Option('downloads', 'consoleadmin_user', 'anonymous',
       doc = 'User whos permissons will be used to upload download. He/she'
         ' should have TAGS_MODIFY permissons.')
 
