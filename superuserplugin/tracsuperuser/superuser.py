@@ -4,6 +4,8 @@
 # 
 # [trac]
 # permission_store = SuperUserPlugin
+# 
+# [superuser]
 # superuser = admin
 # wrapped_permission_store = DefaultPermissionStore
 
