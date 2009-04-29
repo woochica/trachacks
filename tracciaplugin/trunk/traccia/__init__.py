@@ -170,13 +170,10 @@ class CiaNotificationComponent(Component):
         status = ticket.values.get('status')
         is_new = status == 'new'
         t_url = get_resource_url(self.env, ticket.resource, self.env.abs_href)
-        if is_new:
-            t_url += '/' + str(ticket.id)
 
         author = kwargs.get('author', 'anonymous')
 
         args = self.make_args({
-            'url': t_url,
             'component': 'tickets/' + esc(ticket.values.get('component', '')),
             'timestamp': '',
             'author': esc(author),
@@ -184,10 +181,12 @@ class CiaNotificationComponent(Component):
         })
         summary = ticket.values.get('summary', '')
         if action == 'deleted':
+            args['url'] = t_url
             args['log'] = esc('%shas been deleted' % (summary and ' (' + summary+ ') ' or ''))
         elif action == 'created':
+            args['url'] = t_url + '/' + str(ticket.id)
             args['log'] = 'Created ['+ticket['type']+']: ('+ticket['summary']+')' + (version and (' in ' + version) or '')
-            args['log'] += ' (' + t_url + ')'
+            args['log'] += ' (' + t_url + '/' + ticket.id + ')'
         elif action == 'changed':
             old = kwargs.get('old_values', {})
             db = self.env.get_db_cnx()
@@ -195,6 +194,7 @@ class CiaNotificationComponent(Component):
             cursor.execute('SELECT count(*) FROM ticket_change WHERE ticket = %s and field = "comment"' % (ticket.id));
             r = cursor.fetchone()
             num_comments = int(r and r[0] or 0)
+            args['url'] = t_url
             if num_comments:
                 args['url'] += '#comment:%s' % (num_comments,)
             log = ''
