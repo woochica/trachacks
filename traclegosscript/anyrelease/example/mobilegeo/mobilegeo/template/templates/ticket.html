@@ -45,10 +45,46 @@
   </head>
 
   <body>
-    <img py:for="image in images" src="$image"/>
-    Location: ${locations}
+	
+	
+	  <h1>
+        <py:choose>
+          <py:when test="ticket.exists">
+            <a py:strip="not version and version != 0" href="${href.ticket(ticket.id)}">
+              Ticket #${ticket.id}
+            </a>
+          </py:when>
+          <py:otherwise>
+            Create New Ticket <span py:if="preview_mode and ticket.type" class="status">(${ticket.type})</span>
+          </py:otherwise>
+        </py:choose>
 
-	<div id="map" style="float : left; width : 400px; border : 1px solid black;height : 400px;"></div>
+        <py:if test="ticket.exists">
+          <span class="status">(${ticket.status}<py:if
+              test="ticket.type"> ${ticket.type}</py:if><py:if
+              test="ticket.resolution">: ${ticket.resolution}</py:if>)</span>
+          <py:choose test="">
+            <py:when test="version is None" />
+            <py:when test="version == 0">
+              &mdash; at <a href="#comment:description">Initial Version</a>
+            </py:when>
+            <py:otherwise>
+              &mdash; at <a href="#comment:$version">Version $version</a>
+            </py:otherwise>
+          </py:choose>
+        </py:if>
+      </h1>
+	
+	
+	<div class="photos">
+    	<img class="ticket-photo" py:for="image in images" src="$image"/>
+	</div>
+	
+	<div class="location">
+	    <span>Location: ${locations}</span>
+		<div id="map" class="ticket-map"></div>
+	</div>
+
 
 
     <h1 py:if="locations">${locations[0]['geolat']}, ${locations[0]['geolon']}</h1>
@@ -83,33 +119,7 @@
     </py:def>
 
     <div id="content" class="ticket" py:with="preview_mode = 'preview' in req.args">
-      <h1>
-        <py:choose>
-          <py:when test="ticket.exists">
-            <a py:strip="not version and version != 0" href="${href.ticket(ticket.id)}">
-              Ticket #${ticket.id}
-            </a>
-          </py:when>
-          <py:otherwise>
-            Create New Ticket <span py:if="preview_mode and ticket.type" class="status">(${ticket.type})</span>
-          </py:otherwise>
-        </py:choose>
 
-        <py:if test="ticket.exists">
-          <span class="status">(${ticket.status}<py:if
-              test="ticket.type"> ${ticket.type}</py:if><py:if
-              test="ticket.resolution">: ${ticket.resolution}</py:if>)</span>
-          <py:choose test="">
-            <py:when test="version is None" />
-            <py:when test="version == 0">
-              &mdash; at <a href="#comment:description">Initial Version</a>
-            </py:when>
-            <py:otherwise>
-              &mdash; at <a href="#comment:$version">Version $version</a>
-            </py:otherwise>
-          </py:choose>
-        </py:if>
-      </h1>
 
       <!-- Do not show the ticket (pre)view when the user first comes to the "New Ticket" page.
            Wait until they hit preview. -->
