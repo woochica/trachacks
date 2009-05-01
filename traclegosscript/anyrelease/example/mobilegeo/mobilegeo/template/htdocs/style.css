@@ -524,6 +524,23 @@ margin-top : .5em;
 
 /*
 _______________________________
+Maps */
+
+.report-map {
+float : left;
+width : 100%;
+height : 500px;
+border : 1px solid #ccc;
+}
+
+
+
+
+
+
+
+/*
+_______________________________
 New Ticket */
 
 
@@ -556,6 +573,40 @@ border : none;
 fieldset#properties legend {
 padding : 0 0 1em 0;
 }
+
+
+.ticket-photo {
+max-width : 500px;
+border : 1px solid #666;
+}
+
+.ticket-map {
+float : left;
+width : 420px;
+height : 300px;
+border : 1px solid #ccc;
+}
+
+.photos {
+float : left;
+}
+
+.location {
+float : right;
+}
+
+
+.location span {
+float : left;
+clear : both;
+
+}
+
+.location .ticket-map {
+float : left;
+clear : both;
+}
+
 
 
 /*
