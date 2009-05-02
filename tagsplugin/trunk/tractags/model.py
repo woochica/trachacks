@@ -20,9 +20,9 @@ class TagModelProvider(Component):
         self._upgrade_db(self.env.get_db_cnx())
 
     def environment_needs_upgrade(self, db):
-        cursor = db.cursor()
         if self._need_migration(db):
             return True
+        cursor = db.cursor()
         try:
             cursor.execute("select count(*) from tags")
             cursor.fetchone()
