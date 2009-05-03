@@ -275,6 +275,31 @@ class DownloadsApi(Component):
         self._delete_item(context, 'download_type', id)
         self._delete_item_ref(context, 'download', 'type', id)
 
+    # Misc database access functions.
+
+    def _get_attribute(self, context, table, column, where = '', values = ()):
+        sql = 'SELECT ' + column + ' FROM ' + table + (where and (' WHERE ' +
+          where) or '')
+        self.log.debug(sql % values)
+        context.cursor.execute(sql, values)
+        for row in context.cursor:
+            return row[0]
+        return None
+
+    def get_download_id_from_file(self, context, file):
+        return self._get_attribute(context, 'download', 'file', 'id = %s',
+          (file,))
+
+    def get_number_of_downloads(self, context, download_ids = None):
+        sql = 'SELECT SUM(count) FROM download' + (download_ids and
+          (' WHERE id in (' + ', '.join([to_unicode(download_id) for download_id
+          in download_ids]) + ')') or '')
+        self.log.debug(sql)
+        context.cursor.execute(sql)
+        for row in context.cursor:
+            return row[0]
+        return None
+
     # Proces request functions.
 
     def process_downloads(self, context):

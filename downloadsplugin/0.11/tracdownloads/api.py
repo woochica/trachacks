@@ -6,7 +6,6 @@ from datetime import *
 from trac.core import *
 from trac.config import Option, BoolOption
 from trac.web.chrome import add_stylesheet, add_script
-from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
   format_datetime, pretty_timedelta
 from trac.util.text import to_unicode, unicode_unquote, unicode_quote, \

@@ -4,7 +4,7 @@ from trac.core import *
 from trac.mimeview import Context
 from trac.util.html import html
 
-from trac.wiki import IWikiSyntaxProvider
+from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 
 from tracdownloads.api import *
 
@@ -12,7 +12,7 @@ class DownloadsWiki(Component):
     """
         The wiki module implements macro for downloads referencing.
     """
-    implements(IWikiSyntaxProvider)
+    implements(IWikiSyntaxProvider, IWikiMacroProvider)
 
     # IWikiSyntaxProvider
     def get_link_resolvers(self):
@@ -20,6 +20,65 @@ class DownloadsWiki(Component):
 
     def get_wiki_syntax(self):
         return []
+
+    # IWikiMacroProvider
+
+    def get_macros(self):
+        yield 'DownloadsCount'
+
+    def get_macro_description(self, name):
+        if name == 'DownloadsCount':
+            return self.downloads_macro_doc
+
+    def expand_macro(self, formatter, name, content):
+        if name == 'DownloadsCount':
+            # Create request context.
+            context = Context.from_request(formatter.req)('downloads-wiki')
+
+            # Get database access.
+            db = self.env.get_db_cnx()
+            context.cursor = db.cursor()
+
+            # Get API component.
+            api = self.env[DownloadsApi]
+
+            # Check empty macro content.
+            download_ids = []
+            if content.strip() != '':
+                # Get download IDs or filenames from content.
+                items = [item.strip() for item in content.split(',')]
+
+                # Resolve filenames to IDs.
+                for item in items:
+                    try:
+                        # Try if it's download ID first.
+                        download_id = int(item)
+                        if download_id:
+                            download_ids.append(download_id)
+                        else:
+                            # Any zero ID means all downloads.
+                            download_ids = []
+                            break;
+                    except ValueError:
+                        # If it wasn't ID resolve filename.
+                        download_id = api.get_download_id_from_file(context,
+                          item)
+                        if download_id:
+                            download_ids.append(download_id)
+                        else:
+                            self.log.debug('Could not resolve download filename'
+                              ' to ID.')
+
+            # Empty list mean all.
+            if len(download_ids) == 0:
+                download_ids = None
+
+            # Ask for aggregated downloads count.
+            self.log.debug(download_ids)
+            count = api.get_number_of_downloads(context, download_ids)
+
+            # Return simple <span> with result.
+            return html.span(to_unicode(count), _class="downloads_count")
 
     # Internal functions
 

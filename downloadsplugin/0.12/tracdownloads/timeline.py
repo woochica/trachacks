@@ -5,6 +5,8 @@ from genshi.builder import tag
 from trac.core import *
 from trac.mimeview import Context
 from trac.util.text import pretty_size
+from trac.wiki.formatter import format_to_oneliner
+from trac.util.datefmt import to_timestamp
 
 from trac.timeline import ITimelineEventProvider
 
@@ -35,10 +37,9 @@ class DownloadsTimeline(Component):
             # Get API component.
             api = self.env[DownloadsApi]
 
-            self.log.debug(api.get_new_downloads(context, start, stop))
-
             # Get message events
-            for download in api.get_new_downloads(context, start, stop):
+            for download in api.get_new_downloads(context, to_timestamp(start),
+              to_timestamp(stop)):
                 yield ('newticket', download['time'], download['author'],
                   (download['id'], download['file'], download['description'],
                   download['size']))
@@ -53,4 +54,5 @@ class DownloadsTimeline(Component):
         elif field == 'title':
            return tag('New download ', tag.em(name), ' created')
         elif field == 'description':
-           return tag('(%s) %s' % (pretty_size(size), description))
+           return tag('(%s) ' % (pretty_size(size),), format_to_oneliner(
+             self.env, context, description))
