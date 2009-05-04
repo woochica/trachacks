@@ -15,15 +15,10 @@ from tracdownloads.api import *
 
 class DownloadsCore(Component):
     """
-        The core module implements plugin's main page and mainnav button,
-        provides permissions and templates.
+        The core module implements plugin's ability to download files, provides
+        permissions and templates.
     """
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider,
-      IPermissionRequestor)
-
-    # Configuration options.
-    title = Option('downloads', 'title', 'Downloads',
-      doc = 'Main navigation bar button title.')
+    implements(IRequestHandler, ITemplateProvider, IPermissionRequestor)
 
     # IPermissionRequestor methods.
 
@@ -43,6 +38,34 @@ class DownloadsCore(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
+    # IRequestHandler methods.
+
+    def match_request(self, req):
+        match = re.match(r'''^/downloads/(\d+)($|/$)''', req.path_info)
+        if match:
+            req.args['action'] = 'get-file'
+            req.args['id'] = match.group(1)
+            return True
+        return False
+
+    def process_request(self, req):
+        # Create request context.
+        context = Context.from_request(req)('downloads-core')
+
+        # Process request and return content.
+        api = self.env[DownloadsApi]
+        return api.process_downloads(context) + (None,)
+
+class DownloadsDownloads(Component):
+    """
+        The downloads module implements plugin's main page and mainnav button.
+    """
+    implements(INavigationContributor, IRequestHandler)
+
+    # Configuration options.
+    title = Option('downloads', 'title', 'Downloads',
+      doc = 'Main navigation bar button title.')
+
     # INavigationContributor methods.
     def get_active_navigation_item(self, req):
         return 'downloads'
@@ -58,11 +81,6 @@ class DownloadsCore(Component):
         match = re.match(r'''^/downloads($|/$)''', req.path_info)
         if match:
             return True
-        match = re.match(r'''^/downloads/(\d+)($|/$)''', req.path_info)
-        if match:
-            req.args['action'] = 'get-file'
-            req.args['id'] = match.group(1)
-            return True
         match = re.match(r'''^/downloads/([^/]+)($|/$)''', req.path_info)
         if match:
             req.args['action'] = 'get-file'
@@ -72,7 +90,7 @@ class DownloadsCore(Component):
 
     def process_request(self, req):
         # Create request context.
-        context = Context.from_request(req)('downloads-core')
+        context = Context.from_request(req)('downloads-downloads')
 
         # Process request and return content.
         api = self.env[DownloadsApi]

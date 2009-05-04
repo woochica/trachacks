@@ -3,6 +3,7 @@
 from trac.core import *
 from trac.mimeview import Context
 from trac.util.html import html
+from trac.web.chrome import Chrome
 
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 
@@ -13,6 +14,16 @@ class DownloadsWiki(Component):
         The wiki module implements macro for downloads referencing.
     """
     implements(IWikiSyntaxProvider, IWikiMacroProvider)
+
+    # Macros documentation.
+    downloads_count_macro_doc = """ """
+    list_downloads_macro_doc = """ """
+
+    # Configuration options
+    visible_fields = ListOption('downloads', 'visible_fields',
+      'id,file,description,size,time,count,author,tags,component,version,'
+      'architecture,platform,type', doc = 'List of downloads table fields that'
+      ' should be visible to users on Downloads section.')
 
     # IWikiSyntaxProvider
     def get_link_resolvers(self):
@@ -25,10 +36,13 @@ class DownloadsWiki(Component):
 
     def get_macros(self):
         yield 'DownloadsCount'
+        yield 'ListDownloads'
 
     def get_macro_description(self, name):
         if name == 'DownloadsCount':
-            return self.downloads_macro_doc
+            return self.downloads_count_macro_doc
+        if name == 'ListDownloads':
+            return self.list_downloads_macro_doc
 
     def expand_macro(self, formatter, name, content):
         if name == 'DownloadsCount':
@@ -78,7 +92,43 @@ class DownloadsWiki(Component):
             count = api.get_number_of_downloads(context, download_ids)
 
             # Return simple <span> with result.
-            return html.span(to_unicode(count), _class="downloads_count")
+            return html.span(to_unicode(count), class_ = "downloads_count")
+
+        elif name == 'ListDownloads':
+            self.log.debug("Rendering ListDownloads macro...")
+
+            # Determine wiki page name.
+            page_name = formatter.req.path_info[6:] or 'WikiStart'
+
+            # Create request context.
+            context = Context.from_request(formatter.req)('downloads-wiki')
+
+            # Get database access.
+            db = self.env.get_db_cnx()
+            context.cursor = db.cursor()
+
+            # Get API object.
+            api = self.env[DownloadsApi]
+
+            # Get form values.
+            order = context.req.args.get('order') or 'id'
+            desc = context.req.args.get('desc')
+
+            # Prepare template data.
+            data = {}
+            data['order'] = order
+            data['desc'] = desc
+            data['has_tags'] = self.env.is_component_enabled(
+              'tractags.api.TagEngine')
+            data['downloads'] = api.get_downloads(context, order, desc)
+            data['visible_fields'] = [visible_field for visible_field in
+              self.visible_fields]
+            data['page_name'] = page_name
+
+            # Return rendered template.
+            return to_unicode(Chrome(self.env).render_template(formatter.req,
+              'wiki-downloads-list.html', {'downloads' : data}, 'text/html',
+              True))
 
     # Internal functions
 

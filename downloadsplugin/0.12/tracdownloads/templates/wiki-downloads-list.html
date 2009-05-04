@@ -1,0 +1,13 @@
+<div xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/" class="discussion" py:strip="">
+  <xi:include href="downloads-macros.html"/>
+  <div id="downloads" class="downloads">
+    <py:choose>
+      <py:when test="'DOWNLOADS_VIEW' in perm">
+        ${display_downloads(downloads, href.wiki(downloads.page_name))}
+      </py:when>
+      <py:otherwise>
+        <span class="system-message">You have no rights to see list of downloads.</span>
+      </py:otherwise>
+    </py:choose>
+  </div>
+</div>

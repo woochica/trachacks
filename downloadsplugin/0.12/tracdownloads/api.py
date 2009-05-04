@@ -459,7 +459,8 @@ class DownloadsApi(Component):
         elif context.resource.realm  == 'downloads-core':
             if action == 'get-file':
                 return ['get-file']
-            elif action == 'post-add':
+        elif context.resource.realm == 'downloads-downloads':
+            if action == 'post-add':
                 return ['downloads-post-add', 'downloads-list']
             elif action == 'edit':
                 return ['description-edit', 'downloads-list']
