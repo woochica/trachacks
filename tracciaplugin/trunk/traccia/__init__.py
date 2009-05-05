@@ -81,6 +81,8 @@ class CiaNotificationComponent(Component):
         self.service_url = self.config.get('traccia', 'service_url') or SERVICE_URL
         self.project_name = self.config.get('traccia', 'project_name') or PROJECT_NAME
         self.dry_run = self.config.get('traccia', 'dry_run') or False
+        self.wiki_notifications = self.config.get('traccia', 'wiki_notifications') or True
+        self.tickets_notifications = self.config.get('traccia', 'tickets_notifications') or True
 
     def send_message(self, message):
         threading.Thread(args = (message,), target=self._send_message).start()
@@ -104,6 +106,9 @@ class CiaNotificationComponent(Component):
                                 comment = None,
                                 version = None,
                                 timestamp = None):
+        if not self.wiki_notifications:
+            return
+
         if action == 'added':
             page = WikiPage(self.env, page.name, 1)
             author = page.author
@@ -143,6 +148,9 @@ class CiaNotificationComponent(Component):
 
 
     def format_and_send_attachment_notification(self, attachment, action):
+        if not self.tickets_notifications:
+            return
+
         args = self.make_args({
             'component': esc(attachment.parent_realm),
             'timestamp': ''
@@ -165,6 +173,9 @@ class CiaNotificationComponent(Component):
         self.send_message(message_template % args)
 
     def format_and_send_ticket_notification(self, ticket, action, **kwargs):
+        if not self.tickets_notifications:
+            return
+
         version = ticket.values.get('version', '')
         milestone = ticket.values.get('milestone', '')
         status = ticket.values.get('status')
