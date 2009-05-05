@@ -22,7 +22,7 @@ setup(
         " can be used for permissions assignment in trac.",
     license = "gnu gpl v3",
     keywords = "trac group permission plugin",
-    #url = "http://www.froosh.net/projects/htgroups/",
+    url = "http://trac-hacks.org/wiki/TracSysgroupsPlugin",
 
     entry_points = {
         'trac.plugins': [
