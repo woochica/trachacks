@@ -27,6 +27,7 @@ Example:
 [[TicketBox({1}, summary=Titre)]]      ... specify field name of summary
 [[TicketBox({1}, ticket=ID)]]          ... specify sql field name of ticket num.
 [[TicketBox({1}, nosort)]]             ... display numbers without sort
+[[TicketBox({1}, inline_total)]]       ... inline text of total number /wo box.
 }}}
 
 [wiki:TracReports#AdvancedReports:DynamicVariables Dynamic Variables] 
@@ -185,6 +186,7 @@ def run0(req, env, db, content):
     summaries = {}
     inline = False
     nosort = False
+    inline_total = False
     title = "Tickets"
     styles = default_styles.copy()
     args_re = re.compile("^(?:" + string.join(args_pat, "|") + ")$")
@@ -211,6 +213,8 @@ def run0(req, env, db, content):
                 nosort = True
             elif kw == 'nowrap':
                 styles['white-space'] = 'nowrap'
+            elif kw == 'inline_total':
+                inline_total = True
             elif kw in styles and kwarg:
                 styles[kw] = kwarg
     # pick up ticket numbers and report numbers
@@ -301,6 +305,11 @@ def run0(req, env, db, content):
         items.sort()
     html = ''
 
+    if inline_total:
+        # return simple text of total count to be placed inline.
+        return '<span class="ticketbox"><span id="total">%s</span></span>' \
+            % len(items)
+    
     if ver < [0, 11]:
         fargs = dict(db=db)
     else:
@@ -333,6 +342,7 @@ def run0(req, env, db, content):
         return ''
 
 def run(req, env, content):
+    
     db = env.get_db_cnx()
     try:
         return run0(req, env, db, content)
@@ -374,6 +384,8 @@ try:
               Note that if there are ''no'' parenthesis (like in, e.g.
               [[HelloWorld]]), then `args` is `None`.
             """
+            if 'TICKET_VIEW' not in formatter.perm('ticket'):
+                return '' # no permission, no display
             return run(formatter.req, formatter.env, args)
 except ImportError:
     # trac 0.9
