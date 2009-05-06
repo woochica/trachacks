@@ -29,18 +29,22 @@ class SuperUserPlugin(Component):
 
     def get_user_permissions(self, username):
         if username == self.superuser:
-            return ['TRAC_ADMIN'] + self.store.get_user_permissions(username)
+            return list(set(['TRAC_ADMIN']) | set(self.store.get_user_permissions(username)))
         else:
             return self.store.get_user_permissions(username)
 
     def get_users_with_permissions(self, permissions):
-        return [self.superuser] +  self.store.get_users_with_permissions(permissions)
+        return list(set([self.superuser]) | set(self.store.get_users_with_permissions(permissions)))
             
     def get_all_permissions(self):
         return self.store.get_all_permissions() + [(self.superuser, 'TRAC_ADMIN')]
         
     def grant_permission(self, username, action):
+        if username == self.superuser:
+            assert False, "Superuser %s can't be given any permissions" % username
         return self.store.grant_permission(username, action)
         
     def revoke_permission(self, username, action):
+        if username == self.superuser:
+            assert False, "Superuser %s can't be revoked any permissions" % username
         return self.store.revoke_permission(username, action)
