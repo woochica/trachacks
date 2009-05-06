@@ -4,7 +4,14 @@ function move_item(from, to) {
     for (var i = 0; i < from_box.options.length; i++) {
        var opt = from_box.options[i];
        if (opt.selected) {
-           to_box.options.add(opt);
+           var newOpt = new Option( opt.text, opt.value );
+           try {
+               to_box.add(newOpt, null); // standards compliant
+           }
+           catch (ex) {
+               to_box.add(newOpt);       // MSIE
+           }
+           from_box.remove(i);
            i--;
        }
     }

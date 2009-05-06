@@ -4,10 +4,22 @@
     function move_item(from, to) {
         var from_box = document.getElementById(from+'pages_select');
         var to_box = document.getElementById(to+'pages_select');
-        to_box.options[to_box.length] = from_box.options[from_box.selectedIndex];
-        from_box.options[from_box.selectedIndex] = null;
+        for (var i = 0; i < from_box.options.length; i++) {
+           var opt = from_box.options[i];
+           if (opt.selected) {
+               var newOpt = new Option( opt.text, opt.value );
+               try {
+                   to_box.add(newOpt, null); // standards compliant
+               }
+               catch (ex) {
+                   to_box.add(newOpt);       // MSIE
+               }
+               from_box.remove(i);
+               i--;
+           }
+        }
     }
-    
+
     function reorder_item(from, dir) {
         var box = document.getElementById(from+'pages_select');
         var i = box.selectedIndex;
