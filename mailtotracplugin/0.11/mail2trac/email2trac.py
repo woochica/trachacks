@@ -41,7 +41,7 @@ def mail2project(project, message):
         cc = [email.Utils.parseaddr(i.strip())[1] 
               for i in cc.split(',') if i.strip()]
         accept.update(cc)
-    delivered_to = message.get('x-delivered-to', '').strip()
+    delivered_to = message.get('delivered-to', '').strip()
     if delivered_to:
         accept = set([email.Utils.parseaddr(delivered_to)[1]])
     
