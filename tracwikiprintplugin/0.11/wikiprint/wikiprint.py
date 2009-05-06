@@ -7,7 +7,7 @@ Modified by: Alvaro Iradier <alvaro.iradier@polartech.es>
 from trac.core import *
 from trac.util import escape, Markup
 from trac.mimeview.api import IContentConverter, Context
-from trac.wiki.formatter import format_to_html
+from trac.wiki.formatter import format_to_html, OutlineFormatter
 from trac.util.datefmt import format_datetime, to_datetime
 from trac.util.text import to_unicode
 from trac.wiki.model import WikiPage
@@ -290,10 +290,27 @@ class WikiToPDFPage(Component):
 
     def convert_content(self, req, input_type, text, output_type):
         codepage = self.env.config.get('trac', 'default_charset', 'utf-8') 
-        wikipage = WikiPage(self.env, req.args.get('page', 'WikiStart'))
-        page = wikipage_to_html(text, req.args.get('page', 'WikiStart'), self.env, req, replace_refs = True)
+        page_name = req.args.get('page', 'WikiStart')
+        wikipage = WikiPage(self.env, page_name)
+        page = wikipage_to_html(text, page_name, self.env, req, replace_refs = True)
+        
+        #Get page title from first header in outline
+        out = cStringIO.StringIO()
+        context = Context(Resource('wiki', page_name), req.abs_href, req.perm)
+        context.req = req
+
+        outline = OutlineFormatter(self.env, context)
+        outline.format(text, out, 1, 1)
+        
+        title = wikipage.name
+        for depth, anchor, text in outline.outline:
+            if depth == 1:
+                title = text
+                break
+        
         out = html_to_pdf(self.env, [page], codepage, book = (output_type == 'pdfbook'),
-            title=wikipage.name,
+            title=title,
+            subject="%s - %s" % (self.env.project_name, page_name),
             version=str(wikipage.version),
             date=format_datetime(to_datetime(None)))
         return (out, 'application/pdf')
