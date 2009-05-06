@@ -36,17 +36,18 @@ def mail2project(project, message):
     to = email.Utils.parseaddr(message['to'])[1]
     trac_address = env.config.get('notification', 'smtp_replyto')
     accept = set([to])
-    cc = message['cc'].strip()
+    cc = message.get('cc','').strip()
     if cc:
         cc = [email.Utils.parseaddr(i.strip())[1] 
               for i in cc.split(',') if i.strip()]
         accept.update(cc)
-    if trac_address in accept:
+    if trac_address not in accept:
         # XXX should be made more robust
         raise EmailException("Email does not match Trac address: %s" % trac_address)
 
     # handle the message
     handlers = ExtensionPoint(IEmailHandler).extensions(env)
+
     handlers.sort(key=lambda x: x.order(), reverse=True)
     for handler in handlers:
         try:
