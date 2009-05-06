@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name = 'TracWikiToPdf',
-    version = '2.0',
+    version = '2.1',
     packages = ['wikitopdf'],
     package_data={ 'wikitopdf' : [ 'templates/*.cs' ] },
     author = "Diorgenes Felipe Grzesiuk",
