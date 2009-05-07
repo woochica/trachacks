@@ -68,13 +68,14 @@ class LdapPermissionGroupProvider(Component):
         # max time to live for a cache entry
         self._cache_ttl = int(self.config.get('ldap', 'cache_ttl', str(15*60)))
         # max cache entries
-        self._cache_size = min(25, int(self.config.get('ldap', 'cache_size', '100')))
+        self._cache_size = min(25, int(self.config.get('ldap', 'cache_size', 
+                                                       '100')))
 
     # IPermissionProvider interface
 
     def get_permission_groups(self, username):
-        """Return a list of names of the groups that the user with the specified
-        name is a member of."""
+        """Return a list of names of the groups that the user with the 
+        specified name is a member of."""
 
         # anonymous and authenticated groups are set with the default provider
         groups = []
@@ -215,6 +216,18 @@ class LdapPermissionStore(Component):
         for action in actions: 
                 perms[action] = True
         return perms
+
+    def get_users_with_permissions(self, permissions):
+        """Retrieve a list of users that have any of the specified permissions.
+        """
+        users = set([u[0] for u in self.env.get_known_users()])
+        result = set()
+        for user in users:
+            userperms = self.get_user_permissions(user)
+            for group in permissions:
+                if group in userperms:
+                    result.add(user)
+        return list(result)
 
     def get_all_permissions(self):
         """Retrieve the permissions for all users from the LDAP directory"""
