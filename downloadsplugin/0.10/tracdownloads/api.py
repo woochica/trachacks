@@ -778,4 +778,4 @@ class DownloadsApi(Component):
         # Strip path from filename.
         filename = os.path.basename(file.filename)
 
-        return file.file, unicode_unquote(file.filename), size
+        return file.file, unicode_unquote(filename), size

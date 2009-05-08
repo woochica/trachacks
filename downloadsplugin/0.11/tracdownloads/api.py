@@ -480,11 +480,14 @@ class DownloadsApi(Component):
                 download = self.get_download_by_time(context, download['time'])
 
                 # Check correct file type.
-                reg = re.compile(r'^(.*)[.](.*)$')
+                reg = re.compile(r'^(.*)(?:[.](.*)$|$)')
                 result = reg.match(download['file'])
-                self.log.debug('ext: %s' % (result.group(2)))
                 if result:
-                    if not result.group(2).lower() in self.ext.split(' '):
+                    self.log.debug('file_ext: %s ext: %s' % (result.group(2),
+                      self.ext))
+                    ext = result.group(2) or 'none'
+                    if (not ext.lower() in self.ext) and (not 'all' in
+                      self.ext):
                         raise TracError('Unsupported uploaded file type.')
                 else:
                     raise TracError('Unsupported uploaded file type.')

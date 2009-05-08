@@ -67,7 +67,7 @@
                     <py:choose>
                       <td py:when="field == 'id'" class="id">
                         <div class="id">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.id}
                           </a>
                         </div>
@@ -75,7 +75,7 @@
 
                       <td py:when="field == 'file'" class="file">
                         <div class="file">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.file}
                           </a>
                         </div>
@@ -89,7 +89,7 @@
 
                       <td py:when="field == 'size'" class="size">
                         <div class="size">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${pretty_size(download.size)}
                           </a>
                         </div>
@@ -97,7 +97,7 @@
 
                       <td py:when="field == 'time'" class="time">
                         <div class="time">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${format_datetime(download.time)}<br/>(${pretty_timedelta(download.time)} ago)
                           </a>
                         </div>
@@ -105,7 +105,7 @@
 
                       <td py:when="field == 'count'" class="count">
                         <div class="count">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.count or '0'}
                           </a>
                         </div>
@@ -113,7 +113,7 @@
 
                       <td py:when="field == 'author'" class="author">
                         <div class="author">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.author}
                           </a>
                         </div>
@@ -121,7 +121,7 @@
 
                       <td py:when="field == 'tags' and downloads.has_tags" class="tags">
                         <div class="tags">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.tags}
                           </a>
                         </div>
@@ -129,7 +129,7 @@
 
                       <td py:when="field == 'component'" class="component">
                         <div class="component">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.component}
                           </a>
                         </div>
@@ -137,7 +137,7 @@
 
                       <td py:when="field == 'version'" class="version">
                         <div class="version">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.version}
                           </a>
                         </div>
@@ -145,7 +145,7 @@
 
                       <td py:when="field == 'architecture'" class="architecture">
                         <div class="architecture">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.architecture.name}
                           </a>
                         </div>
@@ -153,7 +153,7 @@
 
                       <td py:when="field == 'platform'" class="platform">
                         <div class="platform">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.platform.name}
                           </a>
                         </div>
@@ -161,7 +161,7 @@
 
                       <td py:when="field == 'type'" class="type">
                         <div class="type">
-                          <a href="${href.downloads(download.id)}">
+                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
                             ${download.type.name}
                           </a>
                         </div>

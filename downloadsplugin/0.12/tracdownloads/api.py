@@ -5,6 +5,7 @@ from datetime import *
 
 from trac.core import *
 from trac.config import Option, BoolOption, ListOption
+from trac.resource import Resource
 from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
@@ -95,13 +96,18 @@ class DownloadsApi(Component):
           'version', 'architecture', 'platform', 'type'), order_by = order_by,
           desc = desc)
 
-          # Replace field IDs with apropriate objects.
+        # Replace field IDs with apropriate objects.
         for download in downloads:
             download['architecture'] = self.get_architecture(context.cursor,
               download['architecture'])
             download['platform'] = self.get_platform(context.cursor,
               download['platform'])
             download['type'] = self.get_type(context.cursor, download['type'])
+
+            # Don't allow to download files without permission to do it.
+            if not context.req.perm.has_permission('DOWNLOADS_VIEW',
+              Resource('download', download['id'])):
+                download['list_only'] = True
         return downloads
 
     def get_new_downloads(self, context, start, stop, order_by = 'time',
@@ -350,11 +356,12 @@ class DownloadsApi(Component):
         download = self.get_download_by_time(context, download['time'])
 
         # Check correct file type.
-        reg = re.compile(r'^(.*)[.](.*)$')
+        reg = re.compile(r'^(.*)(?:[.](.*)$|$)')
         result = reg.match(download['file'])
-        self.log.debug('ext: %s' % (result.group(2)))
         if result:
-            if not result.group(2).lower() in self.ext:
+            self.log.debug('file_ext: %s ext: %s' % (result.group(2), self.ext))
+            ext = result.group(2) or 'none'
+            if (not ext.lower() in self.ext) and (not 'all' in self.ext):
                 raise TracError('Unsupported uploaded file type.')
         else:
             raise TracError('Unsupported uploaded file type.')
@@ -474,7 +481,7 @@ class DownloadsApi(Component):
     def _do_action(self, context, modes):
         for mode in modes:
             if mode == 'get-file':
-                context.req.perm.assert_permission('DOWNLOADS_VIEW')
+                context.req.perm.require('DOWNLOADS_VIEW')
 
                 # Get form values.
                 download_id = context.req.args.get('id') or 0
@@ -487,6 +494,11 @@ class DownloadsApi(Component):
                     download = self.get_download_by_file(context, download_file)
 
                 if download:
+                    # Check resource based permission
+                    context.req.perm.require('DOWNLOADS_VIEW',
+                      Resource('download', download['id']))
+
+                    # Get download file path.
                     path = os.path.join(self.path, to_unicode(download['id']),
                       download['file'])
                     path = os.path.normpath(path)
@@ -517,7 +529,7 @@ class DownloadsApi(Component):
                     raise TracError('File not found.')
 
             elif mode == 'downloads-list':
-                context.req.perm.assert_permission('DOWNLOADS_VIEW')
+                context.req.perm.require('DOWNLOADS_VIEW')
 
                 # Get form values.
                 order = context.req.args.get('order') or 'id'
@@ -544,7 +556,7 @@ class DownloadsApi(Component):
                     self.data['types'] = self.get_types(context)
 
             elif mode == 'admin-downloads-list':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values
                 order = context.req.args.get('order') or 'id'
@@ -566,10 +578,10 @@ class DownloadsApi(Component):
                 self.data['types'] = self.get_types(context)
 
             elif mode == 'description-edit':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
             elif mode == 'description-post-edit':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
                 description = context.req.args.get('description')
@@ -578,7 +590,7 @@ class DownloadsApi(Component):
                 self.edit_description(context, description)
 
             elif mode == 'downloads-post-add':
-                context.req.perm.assert_permission('DOWNLOADS_ADD')
+                context.req.perm.require('DOWNLOADS_ADD')
 
                 # Get form values.
                 file, filename, file_size = self._get_file_from_req(context)
@@ -602,7 +614,7 @@ class DownloadsApi(Component):
                 file.close()
 
             elif mode == 'downloads-post-edit':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
                 download_id = context.req.args.get('id')
@@ -623,7 +635,7 @@ class DownloadsApi(Component):
                     listener.download_changed(context, download, old_download)
 
             elif mode == 'downloads-delete':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get selected downloads.
                 selection = context.req.args.get('selection')
@@ -638,7 +650,7 @@ class DownloadsApi(Component):
                         self.remove_download(context, download)
 
             elif mode == 'admin-architectures-list':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values
                 order = context.req.args.get('order') or 'id'
@@ -654,7 +666,7 @@ class DownloadsApi(Component):
                   order, desc)
 
             elif mode == 'architectures-post-add':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
                 architecture = {'name' : context.req.args.get('name'),
@@ -664,7 +676,7 @@ class DownloadsApi(Component):
                 self.add_architecture(context, architecture)
 
             elif mode == 'architectures-post-edit':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
                 architecture_id = context.req.args.get('id')
@@ -675,7 +687,7 @@ class DownloadsApi(Component):
                 self.edit_architecture(context, architecture_id, architecture)
 
             elif mode == 'architectures-delete':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get selected architectures.
                 selection = context.req.args.get('selection')
@@ -688,7 +700,7 @@ class DownloadsApi(Component):
                         self.delete_architecture(context, architecture_id)
 
             elif mode == 'admin-platforms-list':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
                 order = context.req.args.get('order') or 'id'
@@ -704,7 +716,7 @@ class DownloadsApi(Component):
                   desc)
 
             elif mode == 'platforms-post-add':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
                 platform = {'name' : context.req.args.get('name'),
@@ -714,7 +726,7 @@ class DownloadsApi(Component):
                 self.add_platform(context, platform)
 
             elif mode == 'platforms-post-edit':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
                 platform_id = context.req.args.get('id')
@@ -725,7 +737,7 @@ class DownloadsApi(Component):
                 self.edit_platform(context, platform_id, platform)
 
             elif mode == 'platforms-delete':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get selected platforms.
                 selection = context.req.args.get('selection')
@@ -738,7 +750,7 @@ class DownloadsApi(Component):
                         self.delete_platform(context, platform_id)
 
             elif mode == 'admin-types-list':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values
                 order = context.req.args.get('order') or 'id'
@@ -752,7 +764,7 @@ class DownloadsApi(Component):
                 self.data['types'] = self.get_types(context, order, desc)
 
             elif mode == 'types-post-add':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
                 type = {'name' : context.req.args.get('name'),
@@ -762,7 +774,7 @@ class DownloadsApi(Component):
                 self.add_type(context, type)
 
             elif mode == 'types-post-edit':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
                 type_id = context.req.args.get('id')
@@ -773,7 +785,7 @@ class DownloadsApi(Component):
                 self.edit_type(context, type_id, type)
 
             elif mode == 'types-delete':
-                context.req.perm.assert_permission('DOWNLOADS_ADMIN')
+                context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get selected types.
                 selection = context.req.args.get('selection')
