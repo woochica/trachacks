@@ -1,0 +1,16 @@
+div.rssembed {
+    padding:10px;
+}
+
+div.rssHeader {
+    padding-bottom:10px;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+div.rssDetail {
+    background-color:  #FFFE98;
+    border: 2px solid #FFEE28 ;
+    padding:5px;
+    margin:5px;
+}

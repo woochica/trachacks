@@ -1,0 +1,22 @@
+Notes
+=====
+A simple to embed an RSS feed. Particularly useful for embeding the output from
+a trac report from another trac instance in a wiki page.
+
+
+Configuration
+=============
+
+To enable the plugin::
+
+  [components]
+  rssembed.* = enabled
+
+Styling can be changed in rssembed.css
+
+Example
+=======
+An example usage::
+
+  [[RssEmbed(http://example.com/trac/report/1?format=rss&USER=anonymous]]
+
