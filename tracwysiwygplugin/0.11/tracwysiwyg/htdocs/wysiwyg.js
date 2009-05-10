@@ -49,19 +49,24 @@ var TracWysiwyg = function(textarea) {
         if (wikitextToolbar) {
             TracWysiwyg.setStyle(wikitextToolbar, styleStatic);
         }
-        TracWysiwyg.setStyle(frame, styleAbsolute);
+        TracWysiwyg.setStyle(frame, { position: "absolute",
+            left: "-9999px", top: TracWysiwyg.elementPosition(frame).top + "px" });
         TracWysiwyg.setStyle(this.wysiwygToolbar, styleAbsolute);
         TracWysiwyg.setStyle(this.autolinkButton.parentNode, { display: "none" });
+        textarea.setAttribute("tabIndex", "");
+        frame.setAttribute("tabIndex", "-1");
         break;
     case "wysiwyg":
-        TracWysiwyg.setStyle(textarea, { position: "absolute", left: "-9999px" });
-        TracWysiwyg.setStyle(textarea, { top: TracWysiwyg.elementPosition(textarea).top + "px" });
+        TracWysiwyg.setStyle(textarea, { position: "absolute",
+            left: "-9999px", top: TracWysiwyg.elementPosition(textarea).top + "px" });
         if (wikitextToolbar) {
             TracWysiwyg.setStyle(wikitextToolbar, styleAbsolute);
         }
         TracWysiwyg.setStyle(frame, styleStatic);
         TracWysiwyg.setStyle(this.wysiwygToolbar, styleStatic);
         TracWysiwyg.setStyle(this.autolinkButton.parentNode, { display: "" });
+        textarea.setAttribute("tabIndex", "-1");
+        frame.setAttribute("tabIndex", "");
         break;
     }
 
@@ -150,10 +155,12 @@ TracWysiwyg.prototype.listenerToggleEditor = function(type) {
                 self.hideAllMenus();
                 self.loadTracWikiText();
                 self.textarea.style.position = "static";
+                self.textarea.setAttribute("tabIndex", "");
                 if (self.wikitextToolbar) {
                     self.wikitextToolbar.style.position = "static";
                 }
                 self.frame.style.position = self.wysiwygToolbar.style.position = "absolute";
+                self.frame.setAttribute("tabIndex", "-1");
                 self.autolinkButton.parentNode.style.display = "none";
                 TracWysiwyg.setEditorMode(type);
             }
@@ -171,10 +178,12 @@ TracWysiwyg.prototype.listenerToggleEditor = function(type) {
                     throw e;
                 }
                 self.textarea.style.position = "absolute";
+                self.textarea.setAttribute("tabIndex", "-1");
                 if (self.wikitextToolbar) {
                     self.wikitextToolbar.style.position = "absolute";
                 }
                 self.frame.style.position = self.wysiwygToolbar.style.position = "static";
+                self.frame.setAttribute("tabIndex", "");
                 self.autolinkButton.parentNode.style.display = "";
                 TracWysiwyg.setEditorMode(type);
             }
@@ -238,7 +247,7 @@ TracWysiwyg.prototype.createWysiwygToolbar = function(d) {
         '</ul>' ];
     var div = d.createElement("div");
     div.className = "wysiwyg-toolbar";
-    div.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="400">');
+    div.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="-1">');
     return div;
 };
 
@@ -256,7 +265,7 @@ TracWysiwyg.prototype.createStyleMenu = function(d) {
     var menu = d.createElement("div");
     menu.className = "wysiwyg-menu";
     TracWysiwyg.setStyle(menu, { position: "absolute", left: "-1000px", top: "-1000px", zIndex: 1000 });
-    menu.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="400">');
+    menu.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="-1">');
     return menu;
 };
 
@@ -270,7 +279,7 @@ TracWysiwyg.prototype.createDecorationMenu = function(d) {
     var menu = d.createElement("div");
     menu.className = "wysiwyg-menu";
     TracWysiwyg.setStyle(menu, { position: "absolute", left: "-1000px", top: "-1000px", zIndex: 1000 });
-    menu.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="400">');
+    menu.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="-1">');
     return menu;
 };
 
@@ -287,7 +296,7 @@ TracWysiwyg.prototype.createTableMenu = function(d) {
     var menu = d.createElement("div");
     menu.className = "wysiwyg-menu";
     TracWysiwyg.setStyle(menu, { position: "absolute", left: "-1000px", top: "-1000px", zIndex: 1000 });
-    menu.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="400">');
+    menu.innerHTML = html.join("").replace(/ href="#">/g, ' href="#" onmousedown="return false" tabindex="-1">');
     return menu;
 };
 
@@ -451,25 +460,31 @@ TracWysiwyg.prototype.setupEditorEvents = function() {
         switch (keyCode) {
         case 0x09:  // TAB
             var range = self.getSelectionRange();
+            var stop = false;
             var element = getSelfOrAncestor(range.startContainer, /^(?:li|pre|table)$/);
             if (element) {
                 switch (element.tagName.toLowerCase()) {
                 case "li":
                     self.execCommand(event.shiftKey ? "outdent" : "indent");
                     self.selectionChanged();
+                    stop = true;
                     break;
                 case "pre":
                     self.insertHTML("\t");
+                    stop = true;
                     break;
                 case "table":
                     if (getSelfOrAncestor(range.endContainer, "table") == element) {
                         self.moveFocusInTable(!event.shiftKey);
                         self.selectionChanged();
+                        stop = true;
                     }
                     break;
                 }
             }
-            TracWysiwyg.stopEvent(event);
+            if (stop) {
+                TracWysiwyg.stopEvent(event);
+            }
             return;
         case 0xe5:
             ime = true;
