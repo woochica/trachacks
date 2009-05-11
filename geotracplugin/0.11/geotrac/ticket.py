@@ -7,9 +7,18 @@ http://trac.edgewall.org
 import geopy
 
 from customfieldprovider import ICustomFieldProvider
+from geotrac.utils import create_table
+from geotrac.utils import execute_non_query
+from geotrac.utils import get_column
+from geotrac.utils import get_first_row
+from geotrac.utils import get_scalar
 from trac.config import Option, BoolOption
 from trac.core import *
+from trac.db import Table, Column, Index
+from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.api import ITicketManipulator
+from trac.ticket.model import Ticket
+
 
 class GeolocationException(Exception):
     """error for multiple and unfound locations"""
@@ -30,7 +39,7 @@ class GeolocationException(Exception):
 
 class GeoTrac(Component):
 
-    implements(ITicketManipulator, ICustomFieldProvider)
+    implements(ITicketManipulator, ICustomFieldProvider, IEnvironmentSetupParticipant)
 
     ### configuration options
     mandatory_location = BoolOption('geo', 'mandatory_location', 'false',
@@ -86,6 +95,58 @@ class GeoTrac(Component):
         return []
 
 
+    ### methods for IEnvironmentSetupParticipant
+
+    """Extension point interface for components that need to participate in the
+    creation and upgrading of Trac environments, for example to create
+    additional database tables."""
+
+    def environment_created(self):
+        """Called when a new Trac environment is created."""
+        if self.environment_needs_upgrade(None):
+            self.upgrade_environment(None)
+
+    def environment_needs_upgrade(self, db):
+        """Called when Trac checks whether the environment needs to be upgraded.
+        
+        Should return `True` if this participant needs an upgrade to be
+        performed, `False` otherwise.
+        """
+        return not self.version()
+
+    def upgrade_environment(self, db):
+        """Actually perform an environment upgrade.
+        
+        Implementations of this method should not commit any database
+        transactions. This is done implicitly after all participants have
+        performed the upgrades they need without an error being raised.
+        """
+        ticket_location_table = Table('ticket_location', key='ticket')[
+            Column('ticket', type='int'),
+            Column('latitude', type='float'),
+            Column('longitude', type='float'),
+            Index(['ticket'])]
+        create_table(self, ticket_location_table)
+        tickets = get_column(self, 'ticket', 'id')
+        tickets = [ Ticket(self.env, ticket) for ticket in tickets ]
+        for ticket in tickets:
+            try:
+                location, (lat, lon) = self.locate_ticket(ticket)
+                self.set_ticket_lat_lon(ticket.id, lat, lon)
+            except GeolocationException:
+                pass
+
+        execute_non_query(self, "insert into system (name, value) values ('geotrac.db_version', '1');")
+
+    def version(self):
+        """returns version of the database (an int)"""
+
+        version = get_scalar(self, "select value from system where name = 'geotrac.db_version';")
+        if version:
+            return int(version)
+        return 0
+
+
     ### geolocation
     
     def geolocate(self, location):
@@ -123,5 +184,17 @@ class GeoTrac(Component):
         
         return self.geolocate(location)
 
+    def set_ticket_lat_lon(self, ticket, lat, lon):
+        """
+        sets the ticket location in the db
+        * ticket: the ticket id (int)
+        * lat, lon: the lattitude and longtitude (degrees)
+        """
 
-
+        # determine if we need to insert or update the table
+        # (SQL is retarded)
+        if get_first_row(self, "select ticket from ticket_location where ticket='%s'" % ticket):
+            execute_non_query(self, "insert into ticket_location (ticket, lattitude, longitude) values (%s, %s, %s)", ticket, lat, lon)
+        else:
+            execute_non_query(self, "update ticket_location set ticket=%s, lattitude=%s, longitude=%s where ticket=%s", ticket, lat, lon, ticket)
+        
