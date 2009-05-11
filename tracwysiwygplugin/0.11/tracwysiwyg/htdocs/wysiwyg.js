@@ -50,7 +50,7 @@ var TracWysiwyg = function(textarea) {
             TracWysiwyg.setStyle(wikitextToolbar, styleStatic);
         }
         TracWysiwyg.setStyle(frame, { position: "absolute",
-            left: "-9999px", top: TracWysiwyg.elementPosition(frame).top + "px" });
+            left: "-9999px", top: TracWysiwyg.elementPosition(textarea).top + "px" });
         TracWysiwyg.setStyle(this.wysiwygToolbar, styleAbsolute);
         TracWysiwyg.setStyle(this.autolinkButton.parentNode, { display: "none" });
         textarea.setAttribute("tabIndex", "");
