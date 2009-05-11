@@ -8,7 +8,7 @@ from trac.core import *
 from trac.web.api import RequestDone
 from trac.wiki.model import WikiPage
 from api import IWikiPrintFormat
-from wikiprint import wikipage_to_html, html_to_pdf, html_to_printhtml
+from wikiprint import WikiPrint
 
 class WikiPrintOutput(Component):
     """Output wiki pages as a PDF using PISA (xhtml2pdf) or Printable HTML."""
@@ -22,15 +22,9 @@ class WikiPrintOutput(Component):
         
     def process_wikiprint(self, req, format, title, subject, pages, version, date, pdfname):
 
-        # Dump all pages to HTML
-        if format in ('pdfbook', 'pdfarticle'):
-            fix_links = True
-        else:
-            fix_links = False            
+        wikiprint = WikiPrint(self.env)
 
-        html_pages = [wikipage_to_html(WikiPage(self.env, p).text, p, self.env, req, fix_links) for p in pages]
-
-        codepage = self.env.config.get('trac', 'default_charset', 'utf-8')
+        html_pages = [wikiprint.wikipage_to_html(WikiPage(self.env, p).text, p, req) for p in pages]
 
         # Send the output
         req.send_response(200)
@@ -40,13 +34,13 @@ class WikiPrintOutput(Component):
             'printhtml':'text/html'}[format])
 
         if format == 'pdfbook':
-            out = html_to_pdf(self.env, html_pages, codepage, book=True, title=title, subject=subject, version=version, date=date)
+            out = wikiprint.html_to_pdf(req, html_pages, book=True, title=title, subject=subject, version=version, date=date)
             req.send_header('Content-Disposition', 'attachment; filename=' + pdfname + '.pdf')
         elif format == 'pdfarticle':
-            out = html_to_pdf(self.env, html_pages, codepage, book=False, title=title, subject=subject, version=version, date=date)
+            out = wikiprint.html_to_pdf(req, html_pages, book=False, title=title, subject=subject, version=version, date=date)
             req.send_header('Content-Disposition', 'attachment; filename=' + pdfname + '.pdf')
         elif format == 'printhtml':
-            out = html_to_printhtml(self.env, html_pages, codepage, title=title, subject=subject, version=version, date=date)
+            out = wikiprint.html_to_printhtml(html_pages, title=title, subject=subject, version=version, date=date)
         
         req.send_header('Content-Length', len(out))
         req.end_headers()
