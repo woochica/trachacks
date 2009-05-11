@@ -98,6 +98,12 @@ class HudsonTracPlugin(Component):
                 if entry.title.find('SUCCESS') >= 0:
                     message = 'Build finished successfully'
                     kind = 'build-successful'
+                elif entry.title.find('UNSTABLE') >= 0:
+                    message = 'Build unstable'
+                    kind = 'build-unstable'
+                elif entry.title.find('ABORTED') >= 0:
+                    message = 'Build aborted'
+                    kind = 'build-aborted'
                 else:
                     message = 'Build failed'
                     kind = 'build-failed'

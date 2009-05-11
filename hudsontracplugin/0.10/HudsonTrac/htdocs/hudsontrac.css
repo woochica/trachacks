@@ -1,2 +1,4 @@
-dt.build-successful, dt.build-successful a { background-image: url(success.gif) !important }
-dt.build-failed, dt.build-failed a { background-image: url(failed.gif) !important }
+dt.build-successful a { background-image: url(success.gif)  !important }
+dt.build-failed a     { background-image: url(failed.gif)   !important }
+dt.build-aborted a    { background-image: url(aborted.gif)  !important }
+dt.build-unstable a   { background-image: url(unstable.gif) !important }
