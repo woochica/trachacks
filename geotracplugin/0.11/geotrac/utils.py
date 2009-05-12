@@ -87,7 +87,7 @@ class SQLGetColumn(SQLHelper):
 get_column = SQLGetColumn()
 
 
-def create_table(comp, table):
+def create_table(env, table):
     """
     create a table given a component
     """
