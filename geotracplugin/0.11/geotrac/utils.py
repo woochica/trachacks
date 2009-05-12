@@ -82,7 +82,7 @@ class SQLGetColumn(SQLHelper):
         return kw.get('data')
     def __call__(self, env, table, column):
         sql = "select %s from %s" % (column, table)
-        return SQLHelper.__call__(self, sql)
+        return SQLHelper.__call__(self, env, sql)
 
 get_column = SQLGetColumn()
 
