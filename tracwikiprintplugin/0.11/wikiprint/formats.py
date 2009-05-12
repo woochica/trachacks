@@ -11,7 +11,7 @@ from api import IWikiPrintFormat
 from wikiprint import WikiPrint
 
 class WikiPrintOutput(Component):
-    """Output wiki pages as a PDF using PISA (xhtml2pdf) or Printable HTML."""
+    """Add output formats PDF using PISA (xhtml2pdf) or Printable HTML to the WikiPrint plugin."""
     
     implements(IWikiPrintFormat)
         

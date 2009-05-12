@@ -81,27 +81,24 @@ class linkLoader:
                     if new_suffix in (".css", ".gif", ".jpg", ".png"):
                         suffix = new_suffix
                 path = tempfile.mktemp(prefix="pisa-", suffix = suffix)          
-                #jar = cookielib.CookieJar()
-                #authcookie = cookielib.Cookie(None, 'pdfgenerator_cookie', self.auth_cookie, None, False, 'localhost', False, False, '/', False, False, None, False, None, None, None)
-                #jar.set_cookie(authcookie)                
-                #handler = urllib2.HTTPCookieProcessor(jar)
-                #opener = urllib2.build_opener(handler)
-                #urllib2.install_opener(opener)
                 
+                #Prepare the request with the auth cookie
                 request = urllib2.Request(url)
-                request.add_header("Cookie", "caca=hola; pdfgenerator_cookie=%s" % self.auth_cookie)
-                ufile = urllib2.urlopen(request)                     
+                request.add_header("Cookie", "pdfgenerator_cookie=%s" % self.auth_cookie)
+                ufile = urllib2.urlopen(request)
                 tfile = file(path, "wb")
+                size = 0
                 while True:
                     data = ufile.read(1024)
                     if not data:
                         break
                     # print data
+                    size = size + len(data)
                     tfile.write(data)
                 ufile.close()
                 tfile.close()
                 self.tfileList.append(path)
-                self.env.log.debug("WikiPrint.linkLoader => loading %s to %s", url, path)
+                self.env.log.debug("WikiPrint.linkLoader => loading %s to %s, %d bytes", url, path, size)
                 return path
             else:
                 self.env.log.debug('WikiPrint.linkLoader => Resolving local path: %s' % name)
@@ -112,7 +109,7 @@ class linkLoader:
 
 
 class WikiPrint(Component):
-    
+    """The core module where all conversion takes place. Enable it or the other modules won't work correctly"""    
     toc_title = Option('wikiprint', 'toc_title', 'Table of Contents')
     css_url = Option('wikiprint', 'css_url')
     book_css_url = Option('wikiprint', 'book_css_url')
@@ -305,9 +302,9 @@ class WikiPrint(Component):
         return Markup('<h1 style="-pdf-outline: false;">%s</h1><div><pdf:toc /></div><div><pdf:nextpage /></div>' % self.toc_title)
 
 
-class WikiToPDFPage(Component):
+class WikiToPDFPage(Component):    
+    """Add an option in wiki pages to export to PDF using PISA"""
     
-    """Convert Wiki pages to PDF using PISA"""
     implements(IContentConverter)
     
     # IContentConverter methods
@@ -346,7 +343,7 @@ class WikiToPDFPage(Component):
 
 
 class WikiToHtmlPage(WikiPrint):
-    """Convert Wiki pages to HTML"""
+    """Add an option in wiki pages to export to printable HTML"""
     implements(IContentConverter)
         
     # IContentConverter methods
