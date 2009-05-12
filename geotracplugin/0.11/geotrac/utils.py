@@ -18,6 +18,7 @@ class SQLHelper(object):
     def __call__(self, env, sql, *params):
         db = env.get_db_cnx()
         cur = db.cursor()
+        _data = {}
         try:
             cur.execute(sql, params)
             _data = self.actions(cur)
