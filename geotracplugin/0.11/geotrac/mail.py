@@ -16,6 +16,9 @@ try:
     class GeoMailToTicket(EmailToTicket):
         """create a ticket from an email with a location"""
 
+	def order(self):
+	   """Force this handler to run first."""
+	   return True
         
 
         def fields(self, message, **fields):
