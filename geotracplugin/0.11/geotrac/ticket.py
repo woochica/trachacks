@@ -69,14 +69,18 @@ class GeoTrac(Component):
         ticket. Therefore, a return value of `[]` means everything is OK."""
 
 
-        # TODO : compare ticket['location'] with stored version
-        # for existing tickets (e.g.):
-        # ticket['location'] == Ticket(self.env, ticket.id)['location']
+        # compare ticket['location'] with stored version for existing tickets
+        location_changed = True
+        if ticket.id:
+            location_changed = not ticket['location'] == Ticket(self.env, ticket.id)['location']
+
 
         location = ticket['location'].strip()
 
         # enforce the location field, if applicable
         if not location:
+            if location_changed and ticket.id:
+                self.delete_location(ticket.id)
             if self.mandatory_location:
                 return [('location', 'Please enter a location')]
             else:
@@ -89,6 +93,7 @@ class GeoTrac(Component):
             raise
         
         # geolocate the address
+        # XXX should check on location_changed
         try:
             ticket['location'], (lat, lon) = self.geolocate(location)
             if ticket.id:
@@ -97,6 +102,8 @@ class GeoTrac(Component):
             req.environ['geolat'] = lat
             req.environ['geolon'] = lon
         except GeolocationException, e:
+            if location_changed and ticket.id:
+                self.delete_location(ticket.id)
             if self.mandatory_location:
                 return [('location', str(e))]
 
@@ -127,8 +134,9 @@ class GeoTrac(Component):
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
-        # TODO: remove extraneous location data;
+        # remove extraneous location data;
         # a new ticket could be made with the same id
+        self.delete_location(ticket.id)
 
 
     ### methods for IEnvironmentSetupParticipant
@@ -230,7 +238,15 @@ class GeoTrac(Component):
         # determine if we need to insert or update the table
         # (SQL is retarded)
         if get_first_row(self, "select ticket from ticket_location where ticket='%s'" % ticket):
-            execute_non_query(self, "insert into ticket_location (ticket, lattitude, longitude) values (%s, %s, %s)", ticket, lat, lon)
+            execute_non_query(self, "update ticket_location set ticket=%s, latitude=%s, longitude=%s where ticket=%s", ticket, lat, lon, ticket)
         else:
-            execute_non_query(self, "update ticket_location set ticket=%s, lattitude=%s, longitude=%s where ticket=%s", ticket, lat, lon, ticket)
+            execute_non_query(self, "insert into ticket_location (ticket, latitude, longitude) values (%s, %s, %s)", ticket, lat, lon)
         
+    def delete_location(self, ticket):
+        """
+        deletes a ticket location in the db
+        * ticket: the ticket id (int)
+        """
+        
+        if get_first_row(self, "select ticket from ticket_location where ticket='%s'" % ticket):
+            execute_non_query(self, "delete from ticket_location where ticket='%s'" % ticket)
