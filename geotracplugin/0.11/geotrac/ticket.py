@@ -221,7 +221,7 @@ class GeoTrac(Component):
         if ticket.id:
             results = get_all_dict(self.env, "select latitude, longitude from ticket_location where ticket='18'")
             if results:
-                return location, (results[0]['latitude'], results[0]['longitude'])
+                return ticket['location'], (results[0]['latitude'], results[0]['longitude'])
 
         if not ticket['location'].strip():
             raise GeolocationException

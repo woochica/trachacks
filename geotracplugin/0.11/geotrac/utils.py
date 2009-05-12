@@ -78,7 +78,8 @@ def get_scalar(env, sql, col=0, *params):
 
 class SQLGetColumn(SQLHelper):
     def actions(self, cur):
-        return dict(data=[datam[0] for datum in cur.fetchall()])
+        data = cur.fetchall()
+        return dict(data=[datum[0] for datum in data])
     def return_values(self, **kw):
         return kw.get('data')
     def __call__(self, env, table, column):
