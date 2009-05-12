@@ -121,8 +121,8 @@ class GeoTrac(Component):
         # ITicketManipulator)
         try:
             location, (lat, lon) = self.locate_ticket(ticket)
-            self.set_location(self, ticket.id, lat, lon)
-        except GeolocationError:
+            self.set_location(ticket.id, lat, lon)
+        except GeolocationException:
             pass
 
     def ticket_deleted(self, ticket):
