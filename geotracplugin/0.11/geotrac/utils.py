@@ -95,4 +95,4 @@ def create_table(env, table):
     db_connector, _ = DatabaseManager(env)._get_connector()
     stmts = db_connector.to_sql(table)
     for stmt in stmts:
-        execute_non_query(comp, stmt)
+        execute_non_query(env, stmt)
