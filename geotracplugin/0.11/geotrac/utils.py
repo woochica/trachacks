@@ -1,87 +1,82 @@
 """
-utility functions
+DB utility functions
 """
 
 from trac.db import DatabaseManager
 
+class SQLHelper(object):
 
-def execute_non_query(com,  sql, *params):
-    """Executes the query on the given project DB"""
+    def actions(self, cur):
+        """do actions once you have execute the SQL"""
+        return {}
 
-    db = com.env.get_db_cnx()
-    cur = db.cursor()
-    try:
-        cur.execute(sql, params)
-        db.commit()
-    except Exception, e:
-        com.log.error('There was a problem executing sql:%s \nwith parameters:%s\nException:%s' % (sql, params, e))
-        db.rollback()
-    try:
-        db.close()
-    except:
-        pass
+    def return_values(self, **kw):
+        """return values from the SQL"""
+
+    def __call__(self, env, sql, *params):
+        db = env.get_db_cnx()
+        cur = db.cursor()
+        try:
+            cur.execute(sql, params)
+            _data = self.actions(cur)
+            db.commit()
+        except Exception, e:
+            env.log.error("""There was a problem executing sql:%s
+with parameters:%s
+Exception:%s""" %(sql, params, e))
+            db.rollback()
+        try:
+            db.close()
+        except:
+            pass
+        return self.return_values(**_data)
+
+execute_non_query = SQLHelper()
+
+class SQLGetAll(SQLHelper):
+    def actions(self, cur):
+        return dict(data=cur.fetchall(), desc=cur.description) 
+
+    def return_values(self, **kw):
+        return (kw.get('desc'), kw.get('data'))
+
+get_all = SQLGetAll()
 
 
-def get_first_row(com, sql, *params):
-    """ 
-    Returns the first row of the query results as a tuple of values (or None)
-    """
-    db = com.env.get_db_cnx()
-    cur = db.cursor()
-    data = None
-    try:
-        cur.execute(sql, params)
-        data = cur.fetchone()
-        db.commit()
-    except Exception, e:
-        com.log.error('There was a problem executing sql:%s \nwith parameters:%s\nException:%s'%(sql, params, e))
-        db.rollback()
-    try:
-        db.close()
-    except:
-        pass
-    return data
+class SQLGetFirstRow(SQLHelper):
+    def actions(self, cur):
+        return dict(data=cur.fetchone())
+    def return_values(self, **kw):
+        return kw.get('data')
 
-def get_column(com, table, column):
-    """
-    Return the column of name as a list
-    """
+get_first_row = SQLGetFirstRow()
 
-    db = com.env.get_db_cnx()
-    cur = db.cursor()
-    sql = "select %s from %s" % (column, table)
-    try:
-        cur.execute(sql)
-        data = cur.fetchall()
-    except Exception, e:
-        com.log.error('There was a problem executing sql:%s\nException:%s'%(sql, e))
-        db.rollback()
-    try:
-        db.close()
-    except:
-        pass
-    data = [datum[0] for datum in data]
-    return data
-
-def get_scalar(com, sql, col=0, *params):
+def get_scalar(env, sql, col=0, *params):
     """
     Gets a single value (in the specified column) 
     from the result set of the query
     """
-    data = get_first_row(com, sql, *params)
+    data = get_first_row(env, sql, *params)
     if data:
         return data[col]
-    else:
-        return None
 
+class SQLGetColumn(SQLHelper):
+    def actions(self, cur):
+        return dict(data=[datam[0] for datum in cur.fetchall()])
+    def return_values(self, **kw):
+        return kw.get('data')
+    def __call__(self, env, table, column):
+        sql = "select %s from %s" % (column, table)
+        return SQLHelper.__call__(self, sql)
+
+get_column = SQLGetColumn()
 
 def create_table(comp, table):
     """
     create a table given a component
     """
 
-    db_connector, _ = DatabaseManager(comp.env)._get_connector()
-    
+    db_connector, _ = DatabaseManager(comp.env)._get_connector()    
     stmts = db_connector.to_sql(table)
     for stmt in stmts:
         execute_non_query(comp, stmt)

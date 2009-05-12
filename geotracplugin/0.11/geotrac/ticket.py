@@ -9,6 +9,7 @@ import geopy
 from customfieldprovider import ICustomFieldProvider
 from geotrac.utils import create_table
 from geotrac.utils import execute_non_query
+from geotrac.utils import get_all
 from geotrac.utils import get_column
 from geotrac.utils import get_first_row
 from geotrac.utils import get_scalar
@@ -170,8 +171,8 @@ class GeoTrac(Component):
             Column('latitude', type='float'),
             Column('longitude', type='float'),
             Index(['ticket'])]
-        create_table(self, ticket_location_table)
-        tickets = get_column(self, 'ticket', 'id')
+        create_table(self.env, ticket_location_table)
+        tickets = get_column(self.env, 'ticket', 'id')
         tickets = [ Ticket(self.env, ticket) for ticket in tickets ]
         for ticket in tickets:
             try:
@@ -180,12 +181,12 @@ class GeoTrac(Component):
             except GeolocationException:
                 pass
 
-        execute_non_query(self, "insert into system (name, value) values ('geotrac.db_version', '1');")
+        execute_non_query(self.env, "insert into system (name, value) values ('geotrac.db_version', '1');")
 
     def version(self):
         """returns version of the database (an int)"""
 
-        version = get_scalar(self, "select value from system where name = 'geotrac.db_version';")
+        version = get_scalar(self.env, "select value from system where name = 'geotrac.db_version';")
         if version:
             return int(version)
         return 0
@@ -217,6 +218,9 @@ class GeoTrac(Component):
             raise GeolocationException(location, locations)
 
     def locate_ticket(self, ticket):
+        if ticket.id:
+            import pdb;  pdb.set_trace() 
+
         if not ticket['location'].strip():
             raise GeolocationException
 
@@ -225,8 +229,9 @@ class GeoTrac(Component):
             location = ticket['location'].encode('utf-8')
         except UnicodeEncodeError:
             raise
-        
-        return self.geolocate(location)
+
+        location, (lat, lon) = self.geolocate(location)
+        return location, (lat, lon)
 
     def set_location(self, ticket, lat, lon):
         """
@@ -237,10 +242,10 @@ class GeoTrac(Component):
 
         # determine if we need to insert or update the table
         # (SQL is retarded)
-        if get_first_row(self, "select ticket from ticket_location where ticket='%s'" % ticket):
-            execute_non_query(self, "update ticket_location set ticket=%s, latitude=%s, longitude=%s where ticket=%s", ticket, lat, lon, ticket)
+        if get_first_row(self.env, "select ticket from ticket_location where ticket='%s'" % ticket):
+            execute_non_query(self.env, "update ticket_location set ticket=%s, latitude=%s, longitude=%s where ticket=%s", ticket, lat, lon, ticket)
         else:
-            execute_non_query(self, "insert into ticket_location (ticket, latitude, longitude) values (%s, %s, %s)", ticket, lat, lon)
+            execute_non_query(self.env, "insert into ticket_location (ticket, latitude, longitude) values (%s, %s, %s)", ticket, lat, lon)
         
     def delete_location(self, ticket):
         """
@@ -248,5 +253,5 @@ class GeoTrac(Component):
         * ticket: the ticket id (int)
         """
         
-        if get_first_row(self, "select ticket from ticket_location where ticket='%s'" % ticket):
-            execute_non_query(self, "delete from ticket_location where ticket='%s'" % ticket)
+        if get_first_row(self.env, "select ticket from ticket_location where ticket='%s'" % ticket):
+            execute_non_query(self.env, "delete from ticket_location where ticket='%s'" % ticket)
