@@ -16,6 +16,7 @@ from trac.config import Option, BoolOption
 from trac.core import *
 from trac.db import Table, Column, Index
 from trac.env import IEnvironmentSetupParticipant
+from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
 
@@ -39,7 +40,7 @@ class GeolocationException(Exception):
 
 class GeoTrac(Component):
 
-    implements(ITicketManipulator, ICustomFieldProvider, IEnvironmentSetupParticipant)
+    implements(ICustomFieldProvider, ITicketManipulator, ITicketChangeListener, IEnvironmentSetupParticipant)
 
     ### configuration options
     mandatory_location = BoolOption('geo', 'mandatory_location', 'false',
@@ -68,6 +69,10 @@ class GeoTrac(Component):
         ticket. Therefore, a return value of `[]` means everything is OK."""
 
 
+        # TODO : compare ticket['location'] with stored version
+        # for existing tickets (e.g.):
+        # ticket['location'] == Ticket(self.env, ticket.id)['location']
+
         location = ticket['location'].strip()
 
         # enforce the location field, if applicable
@@ -86,6 +91,9 @@ class GeoTrac(Component):
         # geolocate the address
         try:
             ticket['location'], (lat, lon) = self.geolocate(location)
+            if ticket.id:
+                self.set_location(ticket.id, lat, lon)
+            
             req.environ['geolat'] = lat
             req.environ['geolon'] = lon
         except GeolocationException, e:
@@ -93,6 +101,34 @@ class GeoTrac(Component):
                 return [('location', str(e))]
 
         return []
+
+    ### methods for ITicketChangeListener
+
+    """Extension point interface for components that require notification
+    when tickets are created, modified, or deleted."""
+
+    def ticket_changed(self, ticket, comment, author, old_values):
+        """Called when a ticket is modified.
+        
+        `old_values` is a dictionary containing the previous values of the
+        fields that have changed.
+        """
+
+    def ticket_created(self, ticket):
+        """Called when a ticket is created."""
+        # TODO : could cache the geolocation in memory
+        # instead of geolocating twice (once here and once in
+        # ITicketManipulator)
+        try:
+            location, (lat, lon) = self.locate_ticket(ticket)
+            self.set_location(self, ticket.id, lat, lon)
+        except GeolocationError:
+            pass
+
+    def ticket_deleted(self, ticket):
+        """Called when a ticket is deleted."""
+        # TODO: remove extraneous location data;
+        # a new ticket could be made with the same id
 
 
     ### methods for IEnvironmentSetupParticipant
@@ -132,7 +168,7 @@ class GeoTrac(Component):
         for ticket in tickets:
             try:
                 location, (lat, lon) = self.locate_ticket(ticket)
-                self.set_ticket_lat_lon(ticket.id, lat, lon)
+                self.set_location(ticket.id, lat, lon)
             except GeolocationException:
                 pass
 
@@ -173,7 +209,7 @@ class GeoTrac(Component):
             raise GeolocationException(location, locations)
 
     def locate_ticket(self, ticket):
-        if not ticket['location']:
+        if not ticket['location'].strip():
             raise GeolocationException
 
         # XXX blindly assume UTF-8
@@ -184,7 +220,7 @@ class GeoTrac(Component):
         
         return self.geolocate(location)
 
-    def set_ticket_lat_lon(self, ticket, lat, lon):
+    def set_location(self, ticket, lat, lon):
         """
         sets the ticket location in the db
         * ticket: the ticket id (int)
