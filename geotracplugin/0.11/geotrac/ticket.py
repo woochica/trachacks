@@ -233,6 +233,8 @@ class GeoTrac(Component):
             raise
 
         location, (lat, lon) = self.geolocate(location)
+        if ticket.id:
+            self.set_location(ticket.id, lat, lon)
         return location, (lat, lon)
 
     def set_location(self, ticket, lat, lon):

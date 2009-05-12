@@ -197,11 +197,12 @@ class MapDashboard(Component):
 
         query = Query.from_string(self.env, 'location!=')
         results = query.execute(req)
-
         locations = []
         for result in results:
+            ticket = Ticket(self.env, result['id'])
             try:
-                address, (lat, lon) = geotrac.geolocate(result.get('location'))
+                
+                address, (lat, lon) = geotrac.locate_ticket(ticket)
                 locations.append({'geolat': lat,
                                   'geolon': lon})
             except GeolocationException:
