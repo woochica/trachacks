@@ -219,7 +219,7 @@ class GeoTrac(Component):
 
     def locate_ticket(self, ticket):
         if ticket.id:
-            results = get_all_dict(self.env, "select latitude, longitude from ticket_location where ticket='18'")
+            results = get_all_dict(self.env, "select latitude, longitude from ticket_location where ticket='%s'" % ticket.id)
             if results:
                 return ticket['location'], (results[0]['latitude'], results[0]['longitude'])
 
