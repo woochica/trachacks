@@ -44,7 +44,18 @@ class IssueMap(Component):
     def enabled(self, req, ticket):
         if not self.inject_map:
             return False
-        return self.has_location(ticket, req)
+
+        if not self.env.is_component_enabled(GeoTrac):
+            return False
+        geotrac = self.env.components[GeoTrac]
+
+        # geolocate the issue
+        try:
+            address, (lat, lon) = geotrac.locate_ticket(ticket)
+        except GeolocationException:
+            return False
+
+        return True
 
     def content(self, req, ticket):
         return tag.div('', **dict(id="map", style="width: 600px; height: 300px"))
@@ -70,10 +81,15 @@ class IssueMap(Component):
         geotrac = self.env.components[GeoTrac]
 
         # filter for tickets
-        if filename == 'ticket.html' and self.has_location(data['ticket'], req):
+        if filename == 'ticket.html':
+            try:
+                address, (geolat, geolon) = geotrac.locate_ticket(data['ticket'])
+            except GeolocationException:
+                return stream
             stream |= Transformer('//head').append(tag.script('', src="http://www.openlayers.org/api/OpenLayers.js"))
-            locations = [ {'geolat': req.environ['geolat'],
-                           'geolon': req.environ['geolon'], }]
+
+            locations = [ {'geolat': geolat,
+                           'geolon': geolon, }]
 
             _data = { 'locations': locations,
                      'wms_url': self.wms_url }
@@ -112,34 +128,6 @@ class IssueMap(Component):
         return stream
 
     ### internal methods
-
-    def has_location(self, ticket, req=None):
-        """should the map be shown?"""
-        
-        if not self.env.is_component_enabled(GeoTrac):
-            return False
-        geotrac = self.env.components[GeoTrac]
-
-        # try to get the latitude and longitude from the request environ
-        if req is not None:            
-            lat = req.environ.get('geolat')
-            lon = req.environ.get('geolon')
-            if lat is not None and lon is not None:
-                return True
-
-
-        # geolocate the issue
-        try:
-            address, (lat, lon) = geotrac.locate_ticket(ticket)
-        except GeolocationException:
-            return False
-
-        # cache the location on the request
-        req.environ['geolat'] = lat
-        req.environ['geolon'] = lon
-
-        return True
-
 
     def mapscript(self, **data):
         """JS map for issues"""

@@ -9,7 +9,7 @@ import geopy
 from customfieldprovider import ICustomFieldProvider
 from geotrac.utils import create_table
 from geotrac.utils import execute_non_query
-from geotrac.utils import get_all
+from geotrac.utils import get_all_dict
 from geotrac.utils import get_column
 from geotrac.utils import get_first_row
 from geotrac.utils import get_scalar
@@ -219,7 +219,9 @@ class GeoTrac(Component):
 
     def locate_ticket(self, ticket):
         if ticket.id:
-            import pdb;  pdb.set_trace() 
+            results = get_all_dict(self.env, "select latitude, longitude from ticket_location where ticket='18'")
+            if results:
+                return location, (results[0]['latitude'], results[0]['longitude'])
 
         if not ticket['location'].strip():
             raise GeolocationException

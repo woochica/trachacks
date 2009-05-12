@@ -2,6 +2,8 @@
 DB utility functions
 """
 
+# XXX this should be moved to its own module
+
 from trac.db import DatabaseManager
 
 class SQLHelper(object):
@@ -42,6 +44,19 @@ class SQLGetAll(SQLHelper):
 
 get_all = SQLGetAll()
 
+def get_all_dict(env, sql, *params):
+    """Executes the query and returns a Result Set"""
+    desc, rows = get_all(env, sql, *params);
+    if not desc:
+        return []
+
+    results = []
+    for row in rows:
+        row_dict = {}
+        for field, col in zip(row, desc):
+            row_dict[col[0]] = field
+        results.append(row_dict)
+    return results
 
 class SQLGetFirstRow(SQLHelper):
     def actions(self, cur):
@@ -70,6 +85,7 @@ class SQLGetColumn(SQLHelper):
         return SQLHelper.__call__(self, sql)
 
 get_column = SQLGetColumn()
+
 
 def create_table(comp, table):
     """
