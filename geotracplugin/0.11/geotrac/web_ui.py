@@ -29,7 +29,7 @@ loader = TemplateLoader(templates_dir,
 class IssueMap(Component):
     """add a map to the ticket locations"""
 
-    implements(ITicketSidebarProvider, ITemplateStreamFilter)
+    implements(ITicketSidebarProvider, IRequestFilter, ITemplateStreamFilter)
 
     wms_url = Option('geo', 'wms_url', 
                      'http://maps.opengeo.org/geoserver/gwc/service/wms',
@@ -60,6 +60,65 @@ class IssueMap(Component):
     def content(self, req, ticket):
         return tag.div('', **dict(id="map", style="width: 600px; height: 300px"))
 
+    ### methods for IRequestFilter
+
+    """Extension point interface for components that want to filter HTTP
+    requests, before and/or after they are processed by the main handler."""
+
+    def post_process_request(self, req, template, data, content_type):
+        """Do any post-processing the request might need; typically adding
+        values to the template `data` dictionary, or changing template or
+        mime type.
+        
+        `data` may be update in place.
+
+        Always returns a tuple of (template, data, content_type), even if
+        unchanged.
+
+        Note that `template`, `data`, `content_type` will be `None` if:
+         - called when processing an error page
+         - the default request handler did not return any result
+
+        (Since 0.11)
+        """
+        # get the GeoTrac component
+        if not self.env.is_component_enabled(GeoTrac):
+            return stream
+        geotrac = self.env.components[GeoTrac]
+
+        # filter for tickets
+        if template == 'ticket.html':
+            try:
+                address, (geolat, geolon) = geotrac.locate_ticket(data['ticket'])
+                data['locations'] = [ {'geolat': geolat,
+                                       'geolon': geolon, }]
+            except GeolocationException:
+                data['locations'] = []
+                
+        # filter for queries
+        if template == 'query.html':
+            locations = []
+            for _ticket in data['tickets']:
+                ticket = Ticket(self.env, _ticket['id'])
+                try:
+                    address, (lat, lon) = geotrac.locate_ticket(ticket)
+                    locations.append({'geolat': lat, 'geolon': lon})
+                except GeolocationException:
+                    pass
+                        
+            # add the located tickets to a map
+            data['locations'] = locations
+
+        return (template, data, content_type)
+
+    def pre_process_request(self, req, handler):
+        """Called after initial handler selection, and can be used to change
+        the selected handler or redirect request.
+        
+        Always returns the request handler, even if unchanged.
+        """
+        return handler
+
     ### method for ITemplateStreamFilter
     ### Filter a Genshi event stream prior to rendering.
 
@@ -81,50 +140,19 @@ class IssueMap(Component):
         geotrac = self.env.components[GeoTrac]
 
         # filter for tickets
-        if filename == 'ticket.html':
-            try:
-                address, (geolat, geolon) = geotrac.locate_ticket(data['ticket'])
-            except GeolocationException:
-                return stream
+        if filename == 'ticket.html' and data['locations']:
             stream |= Transformer('//head').append(tag.script('', src="http://www.openlayers.org/api/OpenLayers.js"))
-
-            locations = [ {'geolat': geolat,
-                           'geolon': geolon, }]
-
-            _data = { 'locations': locations,
-                     'wms_url': self.wms_url }
-            stream |= Transformer('//head').append(self.mapscript(**_data))
+            stream |= Transformer('//head').append(self.mapscript(wms_url=self.wms_url, locations=data['locations']))
             stream |= Transformer('//body').attr('onload', 'init()')
-            data.update(_data)
-            
-        # filter for queries
-        if filename == 'query.html':
-            
-            locations = []
-            for _ticket in data['tickets']:
 
-                # TODO : instead of loading the ticket object to get the
-                # location, could ensure that location is fetched with the query
-                # with, say an IRequestFilter
-                ticket = Ticket(self.env, _ticket['id'])
-                try:
-                    address, (lat, lon) = geotrac.locate_ticket(ticket)
-                    locations.append({'geolat': lat, 'geolon': lon})
-                except GeolocationException:
-                    pass
-                        
-            # add the located tickets to a map
-            if locations:
-                _data = { 'locations': locations,
-                          'wms_url': self.wms_url }
-                stream |= Transformer('//head').append(tag.script('', src="http://www.openlayers.org/api/OpenLayers.js"))
-                stream |= Transformer('//head').append(self.mapscript(**_data))
-                stream |= Transformer('//body').attr('onload', 'init()')
-                if self.inject_map:
-                    stream |= Transformer("//div[@id='content']").after(self.content(None, None))
-
-                data.update(_data)
-
+        # filter for queries - add the located tickets to a map
+        if filename == 'query.html' and data['locations']:
+            stream |= Transformer('//head').append(tag.script('', src="http://www.openlayers.org/api/OpenLayers.js"))
+            stream |= Transformer('//head').append(self.mapscript(wms_url=self.wms_url, locations=data['locations']))
+            stream |= Transformer('//body').attr('onload', 'init()')
+            if self.inject_map:
+                stream |= Transformer("//div[@id='content']").after(self.content(None, None))
+                
         return stream
 
     ### internal methods
