@@ -1,5 +1,5 @@
 """
-The TimelineCheckinFilter plugin changes the behaviour of the timeline and enables you to view changes to particular paths, or by particular users.
+The TimelineCheckinFilter plugin changes the behaviour of the timeline and enables you to view changes to particular paths.
 
 Based on BranchTimelinePlugin
 
@@ -21,7 +21,6 @@ Configuration:
    - The following configuration can be added to trac.ini:
 [timeline-checkin-filter]
 filter_paths = trunk:trunk, branch1:branches/branch1, proj2-trunk:project2/trunk, arbitrary-label:arbitrary/path
-filter_users = username1, username2
 
 """
 
@@ -34,7 +33,6 @@ from trac.versioncontrol.web_ui import ChangesetModule
 from trac.versioncontrol.web_ui.util import get_existing_node
 
 FILTER_PATH_NAME_PREFIX = 'path_filter_'
-FILTER_USER_NAME_PREFIX = 'user_filter_'
 
 python_version = tuple(sys.version_info[:2])
 # If Python version is prior to 2.5, implement any
@@ -51,13 +49,6 @@ def _get_filtered_paths(filters, path_lookup):
         if timeline_filter.startswith(FILTER_PATH_NAME_PREFIX):
             paths.append(path_lookup[timeline_filter[len(FILTER_PATH_NAME_PREFIX):]])
     return paths
-
-def _get_filtered_users(filters):
-    users = []
-    for timeline_filter in filters:
-        if timeline_filter.startswith(FILTER_USER_NAME_PREFIX):
-            users.append(timeline_filter[len(FILTER_USER_NAME_PREFIX):])
-    return users
 
 def _changeset_belongs_to_paths(changeset_object, paths):
     for change in changeset_object.get_changes():
@@ -80,7 +71,6 @@ def sort(s):
 class TimelineCheckinFilterModule(ChangesetModule):
     def __init__(self):
         self._filter_paths = {}
-        self._filter_users = []
         display = self.env.config.get('timeline-checkin-filter', 'filter_paths', '')
         display = display.strip()
         display = display.split(',')
@@ -92,11 +82,6 @@ class TimelineCheckinFilterModule(ChangesetModule):
             if path:
                 path = path.strip(os.sep)
             self._filter_paths[label] = path
-        users = self.env.config.get('timeline-checkin-filter', 'filter_users', '')
-        users = users.split(',')
-        for user in users:
-            user = user.strip()
-            self._filter_users.append(user)
 
     def get_timeline_filters(self, req):
         """Return a list of filters that this event provider supports.
@@ -116,11 +101,6 @@ class TimelineCheckinFilterModule(ChangesetModule):
         for path_name in sort(self._filter_paths.keys()):
             filter_name = "%s%s" % (FILTER_PATH_NAME_PREFIX, path_name)
             yield (filter_name, 'Checkins to %s' % (path_name, ), True)
-
-        # User filters
-        for user in self._filter_users:
-            filter_name = "%s%s" % (FILTER_USER_NAME_PREFIX, user)
-            yield (filter_name, 'Checkins by %s' % (user,), True)
 
     def get_timeline_events(self, req, start, stop, filters):
         """Return a list of events in the time range given by the `start` and
@@ -147,14 +127,11 @@ class TimelineCheckinFilterModule(ChangesetModule):
         # filtered_paths are the paths that we DO want to see...
         filtered_paths = _get_filtered_paths(filters, self._filter_paths)
 
-        filtered_users = _get_filtered_users(filters)
-
         changesets_iterator = super(TimelineCheckinFilterModule, self).get_timeline_events(req, start, stop, filters)
 
         # Go over each change in each changeset and check if it belongs to one of the paths
         for changeset in changesets_iterator:
             # Unfortunately, Trac isn't written so well, and so here we must use indices.
-            if (not filtered_users) or (changeset[2] and changeset[2] in filtered_users):
-                for changeset_object in changeset[3][0]:
-                    if (not filtered_paths) or _changeset_belongs_to_paths(changeset_object, filtered_paths):
-                        yield changeset
+            for changeset_object in changeset[3][0]:
+                if (not filtered_paths) or _changeset_belongs_to_paths(changeset_object, filtered_paths):
+                    yield changeset
