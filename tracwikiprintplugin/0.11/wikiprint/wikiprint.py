@@ -84,6 +84,7 @@ class linkLoader:
                 
                 #Prepare the request with the auth cookie
                 request = urllib2.Request(url)
+                self.env.log.debug("Adding cookie to HTTP request: pdfgenerator_cookie=%s", self.auth_cookie)
                 request.add_header("Cookie", "pdfgenerator_cookie=%s" % self.auth_cookie)
                 ufile = urllib2.urlopen(request)
                 tfile = file(path, "wb")
@@ -124,13 +125,17 @@ class WikiPrint(Component):
         self.cookies = {}
 
     def _get_name_for_cookie(self, cookie):
+        
         if self.cookies.has_key(cookie.value):
+            self.env.log.debug("Cookie user: %s", self.cookies[cookie.value])
             return self.cookies[cookie.value]
 
     # IAuthenticator methods
     def authenticate(self, req):
         authname = None
+        self.env.log.debug("Trying pdfgenerator_cookie authentication")
         if req.incookie.has_key('pdfgenerator_cookie'):
+            self.env.log.debug("Cookie found: %s", req.incookie['pdfgenerator_cookie'].value)
             authname = self._get_name_for_cookie(req.incookie['pdfgenerator_cookie'])
         
         return authname
@@ -193,6 +198,7 @@ class WikiPrint(Component):
         loader = linkLoader(self.env, auth_cookie)
 
         #Temporary authentication
+        self.env.log.debug("Storing temporary auth cookie %s for user %s", auth_cookie, req.authname)
         self.cookies[auth_cookie] = req.authname
         pdf = pisa.CreatePDF(page, pdf_file, show_errors_as_pdf = True, default_css = css_data, link_callback = loader.getFileName)
         out = pdf_file.getvalue()

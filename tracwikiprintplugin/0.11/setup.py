@@ -22,7 +22,7 @@ setup(
         'trac.plugins': [
             'wikiprint.formats   = wikiprint.formats',
             'wikiprint.web_ui    = wikiprint.web_ui',
-            'wikiprint.wikitopdf = wikiprint.wikitopdf',
+            'wikiprint.wikiprint = wikiprint.wikiprint',
         ],
     },
     
