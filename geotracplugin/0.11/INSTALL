@@ -1,0 +1,9 @@
+1. Assume/assert PostGIS is install
+
+== Setup the DB ==
+
+2. createlang plpgsql ${database}
+3. psql -d ${database} -f /usr/share/postgresql-8.3-postgis/lwpostgis.sql
+4. psql -d ${database} -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
+
+

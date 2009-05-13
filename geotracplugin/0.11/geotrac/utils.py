@@ -82,8 +82,10 @@ class SQLGetColumn(SQLHelper):
         return dict(data=[datum[0] for datum in data])
     def return_values(self, **kw):
         return kw.get('data')
-    def __call__(self, env, table, column):
+    def __call__(self, env, table, column, where=None):
         sql = "select %s from %s" % (column, table)
+        if where:
+            sql += " where %s" % where
         return SQLHelper.__call__(self, env, sql)
 
 get_column = SQLGetColumn()

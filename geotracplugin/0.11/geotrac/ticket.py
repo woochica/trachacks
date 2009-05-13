@@ -7,6 +7,7 @@ http://trac.edgewall.org
 import geopy
 
 from customfieldprovider import ICustomFieldProvider
+from genshi.builder import tag
 from geotrac.utils import create_table
 from geotrac.utils import execute_non_query
 from geotrac.utils import get_all_dict
@@ -21,6 +22,7 @@ from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
 
+# TODO: caching geolocation on the request
 
 class GeolocationException(Exception):
     """error for multiple and unfound locations"""
@@ -34,10 +36,15 @@ class GeolocationException(Exception):
         if self.locations:
             return "Multiple locations found: %s" % '; '.join([i[0] for i in self.locations])
         else:
-            if location.strip(): 
+            if self.location.strip(): 
                 return "%s could not be located" % self.location
             else:
                 return "No location"
+
+    def html(self):
+        if not self.locations:
+            return str(self)
+        return tag.b(str(self))
 
 class GeoTrac(Component):
 
@@ -75,7 +82,6 @@ class GeoTrac(Component):
         if ticket.id:
             location_changed = not ticket['location'] == Ticket(self.env, ticket.id)['location']
 
-
         location = ticket['location'].strip()
 
         # enforce the location field, if applicable
@@ -87,6 +93,10 @@ class GeoTrac(Component):
             else:
                 return []
 
+        # do nothing if the location isn't changed
+        if not location_changed: 
+            return []
+
         # XXX blindly assume UTF-8
         try:
             location = location.encode('utf-8')
@@ -94,7 +104,6 @@ class GeoTrac(Component):
             raise
         
         # geolocate the address
-        # XXX should check on location_changed
         try:
             ticket['location'], (lat, lon) = self.geolocate(location)
             if ticket.id:
@@ -172,6 +181,20 @@ class GeoTrac(Component):
             Column('longitude', type='float'),
             Index(['ticket'])]
         create_table(self.env, ticket_location_table)
+
+        # use PostGIS if available 
+        postgis = False
+        if self.env.config.get('trac', 'database').startswith('postgres://'):
+            # TODO : do this via SQL statements
+            import subprocess
+            retcode = subprocess.call(['createlang', 'plpgsql', 'mydb'])
+
+            postgis = True
+            
+    
+        # set if PostGIS is enabled or not
+
+
         tickets = get_column(self.env, 'ticket', 'id')
         tickets = [ Ticket(self.env, ticket) for ticket in tickets ]
         for ticket in tickets:
@@ -191,6 +214,14 @@ class GeoTrac(Component):
             return int(version)
         return 0
 
+    ### PostGIS
+
+    def postgis_enabled(self):
+        from trac.db.postgres_backend import PostgreSQLConnection
+        if not self.env.get_db_cnx().cnx.__class__ == PostgreSQLConnection:
+            return False
+        # TODO: more ensurance
+        return True
 
     ### geolocation
     
