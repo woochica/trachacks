@@ -24,6 +24,7 @@ import urllib2
 import cookielib
 import urlparse
 import tempfile
+import time
 
 import cStringIO
 import ho.pisa as pisa
@@ -121,14 +122,16 @@ class WikiPrint(Component):
     
     implements(IAuthenticator)
     
-    def __init__(self):
-        self.cookies = {}
 
     def _get_name_for_cookie(self, cookie):
-        
-        if self.cookies.has_key(cookie.value):
-            self.env.log.debug("Cookie user: %s", self.cookies[cookie.value])
-            return self.cookies[cookie.value]
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT name FROM auth_cookie WHERE cookie=%s", (cookie.value,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        self.env.log.debug("Cookie for user: %s", row[0]);
+        return row[0]
 
     # IAuthenticator methods
     def authenticate(self, req):
@@ -199,11 +202,18 @@ class WikiPrint(Component):
 
         #Temporary authentication
         self.env.log.debug("Storing temporary auth cookie %s for user %s", auth_cookie, req.authname)
-        self.cookies[auth_cookie] = req.authname
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("INSERT INTO auth_cookie (cookie,name,ipnr,time) "
+            "VALUES (%s, %s, %s, %s)", (auth_cookie, req.authname, '127.0.0.1', int(time.time())))
+        db.commit()        
+        
         pdf = pisa.CreatePDF(page, pdf_file, show_errors_as_pdf = True, default_css = css_data, link_callback = loader.getFileName)
         out = pdf_file.getvalue()
         pdf_file.close()
-        del self.cookies[auth_cookie]
+        
+        cursor.execute("DELETE FROM auth_cookie WHERE cookie=%s", (auth_cookie,))
+        db.commit()        
 
         self.env.log.debug('WikiPrint => Finish function html_to_pdf')
 
