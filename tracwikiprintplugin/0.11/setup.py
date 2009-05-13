@@ -26,6 +26,6 @@ setup(
         ],
     },
     
-    install_requires = [ 'Trac', 'pisa', 'PIL', 'html5lib', 'reportlab' ],
+    install_requires = [ 'Trac', 'pisa', 'PIL', 'html5lib', 'reportlab>=2.2' ],
     
 )
