@@ -841,6 +841,11 @@ display : none;
 #propertyform {
 margin : 0 0 0 17px;
 width : 960px;
+float : left;
+}
+
+.ticket #propertyform {
+float : none;
 }
 
 #changelog {
