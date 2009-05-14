@@ -18,10 +18,15 @@
         </py:otherwise>
       </py:choose>
     </title>
+
+
+	<script type="text/javascript" src="${href.chrome('site/js/folding.js')}"></script>
     <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
     <script type="text/javascript" py:choose="">
       jQuery(document).ready(function($) {
         $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+	      $("#changelog h2.foldable").enableFolding(true);
+	        $("#field-summary").focus();
       <py:when test="ticket.exists">
         $("#changelog h3.change").addAnchor("Link to this change");
 
