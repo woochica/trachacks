@@ -56,11 +56,11 @@ float : left;
 
 #page-heading {
 background : #fff url(./images/heading-bg.png) repeat-x;
-height : 159px;
+height : 128px;
 }
 
 #page-heading .content {
-height : 159px;
+height : 128px;
 }
 
 
@@ -75,7 +75,7 @@ float : left;
 
 #page-heading h1 a {
 background : transparent url(./images/logo.png) no-repeat;
-margin : 35px 0 0 20px;
+margin : 35px 0 0 0;
 width : 201px;
 height : 54px;
 text-decoration : none;
@@ -388,7 +388,7 @@ float : left;
 float : left;
 width : 314px;
 height : 18px;
-margin : 13px 0 0 20px;
+margin : 13px 0 0 0;
 background : transparent url(./images/tagline.png) no-repeat;
 text-indent : -999em;
 overflow : hidden;
@@ -396,7 +396,7 @@ overflow : hidden;
 
 .cite-button {
 float : left;
-margin-left : 360px;
+margin-left : 383px;
 }
 
 .cite-button .know {
@@ -434,15 +434,12 @@ background-position : 0 -62px;
 /* ***** BODY ***** */
 
 #main {
-background : #fff url(./images/body-bg.png) repeat-x;
+background : #f6f5f6 url(./images/main-bg.png) top repeat-x;
 }
 
 
 #main .content {
-margin : 0 auto;
 background-color : #fff;
-padding : 1em 25px 2em 25px;
-width : 942px;
 }
 
 
@@ -576,18 +573,19 @@ padding : 0 0 1em 0;
 
 
 .ticket-photo {
-max-width : 500px;
+max-width : 488px;
 border : 1px solid #666;
 }
 
 .ticket-map {
 float : left;
-width : 420px;
-height : 300px;
+width : 430px;
+height : 325px;
 border : 1px solid #ccc;
 }
 
 .photos {
+margin-bottom : 2em;
 float : left;
 }
 
@@ -600,11 +598,6 @@ float : right;
 float : left;
 clear : both;
 
-}
-
-.location .ticket-map {
-float : left;
-clear : both;
 }
 
 
@@ -635,3 +628,254 @@ padding : 0;
 padding : 0;
 }
 
+
+
+/*
+_______________________________
+ticket display edits */
+
+
+#main .content {
+border : 1px solid #e9e9e9;
+margin-top : 2em !important;
+}
+
+
+.ticket-properties {
+color : #a1a1a1;
+background : #f0f1f1 url(./images/ticket-properties-bg.png) bottom repeat-x !important;
+padding : 1em 0 .75em 0;
+float : left;
+width : 100%;
+}
+
+.ticket-properties a {
+color : #666;
+}
+
+.ticket-properties a:hover {
+color : #000;
+}
+
+.ticket-properties div {
+float : left;
+line-height : 1.75em;
+}
+
+
+.ticket-properties .summary-meta {
+color : #8a8a8a;
+margin : 0 15px;
+font-weight : bold;
+font-family : Myriad, Arial, sans-serif;
+font-size : 1.2em;
+}
+
+.ticket-properties .summary-meta .status {
+color : #a4a4a4;
+}
+
+.ticket-properties .authorship .searchable, 
+.edit-activity .date .created-date {
+padding-right : 12px;
+}
+
+
+.edit-activity {
+float : right !important;
+width : 430px;
+margin-right : 18px;
+padding : 0 !important;
+}
+
+.edit-activity .date {
+padding : 0;
+}
+
+.edit-activity a.ticket-edit {
+float : right;
+width : 61px;
+height : 23px;
+background : transparent url(./images/edit-button.png) no-repeat;
+text-indent : -999em;
+overflow : hidden;
+border : 0;
+}
+
+
+.edit-activity a.ticket-edit:hover {
+background-position : 0 -23px;
+}
+
+.edit-activity a.ticket-edit:active {
+background-position : 0 -46px;
+}
+
+
+
+
+.ticket-heading {
+float : left;
+padding : 2em 0 1em 0;
+}
+
+.ticket-heading .summary, 
+.ticket-heading .location {
+float : left;
+}
+
+
+.ticket-heading .summary { 
+width : 534px;
+margin : 0;
+}
+
+
+.ticket-heading label {
+display : block;
+}
+
+
+.ticket-heading, 
+.ticket-body {
+margin-left : 17px;
+}
+
+#propertyform .ticket-heading, 
+#propertyform .ticket-body {
+margin-left : 0;
+}
+
+
+.ticket-body {
+width : 100%;
+clear : both;
+float : left;
+margin-bottom : 5em;
+}
+
+
+.content-main {
+float : left;
+width : 534px;
+}
+
+
+
+.content-meta {
+float : left;
+width : 400px;
+}
+
+
+.content-meta .data {
+margin-top : 2.5em;
+float : left;
+clear : both;
+width : 430px;
+}
+
+.custom-fields {
+display : none;		
+}
+
+.ticket-map  {
+float : left;
+clear : both;
+}
+
+.description, 
+#field-description  {
+float : left;
+width : 488px;
+}
+
+
+
+
+.content .data  h4, 
+.content .attachments  h2  {
+font-weight : normal;
+font-size : .9em;
+border-bottom : 1px solid #ccc;
+color : #666;
+text-transform : uppercase;
+margin : 0 0 .5em 0;
+}
+
+.content .description  h4 .lastmod {
+color : #9b9b9b;
+padding-left : 1em;
+text-transform : none;
+}
+
+.content .description  h3 .lastmod a {
+border-bottom : none;
+color : #4c4c4c;
+}
+
+#attachments {
+border : 0;
+padding : 0;
+}
+
+#attachments dl, 
+#attachments dt, 
+#attachments dd { 
+font-weight : normal;
+margin : 0 !important;
+list-style-type : none;
+}
+
+#attachments dt {
+padding-bottom : 1em;
+
+}
+
+#attachments dd { 
+display : none;
+}
+
+
+#changelog, 
+#propertyform {
+margin : 0 0 0 17px;
+width : 960px;
+}
+
+#changelog {
+background-color : #fbfbfb;
+padding : 0;
+border-bottom : 1px solid #999 !important;
+border-right : 1px solid #999 !important;
+margin-bottom : 2em;
+}
+
+.content #changelog h2 {
+width : 948px;
+background-color : #f0f1f1;
+margin : 0;
+padding : .5em 0 .5em 12px;
+border-bottom : 1px solid #ccc;
+}
+
+#changelog .printableform {
+padding : 0 1em;
+margin : 0;
+}
+
+#changelog.collapsed form {
+display : none;
+}
+
+#changelog .printableform .change {
+padding : 0;
+}
+
+#propertyform .field {
+width : 950px;
+}
+
+#propertyform fieldset {
+padding : 0;
+}
