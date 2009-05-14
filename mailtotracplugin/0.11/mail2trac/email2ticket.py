@@ -1,4 +1,5 @@
 import base64
+import os
 
 from mail2trac.email2trac import EmailException
 from mail2trac.interface import IEmailHandler
@@ -78,7 +79,8 @@ class EmailToTicket(Component):
             print >> buffer, payload
             buffer.seek(0)
             attachment.insert(filename, buffer, size)
-            
+            os.chmod(attachment._get_path(), 0666)
+
         # ticket notification
         tn = TicketNotifyEmail(self.env)
         tn.notify(ticket)
