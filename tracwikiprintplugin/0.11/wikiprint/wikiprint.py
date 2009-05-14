@@ -26,7 +26,7 @@ import urlparse
 import tempfile
 import time
 
-import cStringIO
+import StringIO
 import ho.pisa as pisa
 import defaults
 
@@ -195,7 +195,7 @@ class WikiPrint(Component):
         page = page.encode(self.default_charset, 'replace')
         css_data = self.get_css()
 
-        pdf_file = cStringIO.StringIO()
+        pdf_file = StringIO.StringIO()
 
         auth_cookie = hex_entropy()
         loader = linkLoader(self.env, auth_cookie)
@@ -337,7 +337,7 @@ class WikiToPDFPage(Component):
         page = wikiprint.wikipage_to_html(text, page_name, req)
         
         #Get page title from first header in outline
-        out = cStringIO.StringIO()
+        out = StringIO.StringIO()
         context = Context(Resource('wiki', page_name), req.abs_href, req.perm)
         context.req = req
 
