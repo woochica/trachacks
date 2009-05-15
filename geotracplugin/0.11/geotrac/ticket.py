@@ -277,8 +277,8 @@ class GeoTrac(Component):
                 # XXX work around Google geocoder bug where multiple
                 # near identical addresses are returned
                 # TODO: check to ensure they are close together
-                if len(set([location[0] for location in locations])) == 1:
-                    latlon = zip(*[location[1] for location in locations])
+                if len(set([i[0] for i in locations])) == 1:
+                    latlon = zip(*[i[1] for i in locations])
                     latlon = tuple([sum(latlon[i])/len(locations) for i in (0,1)])
                     
                     return locations[0][0], latlon
