@@ -257,6 +257,8 @@ class GeoTrac(Component):
             try:
                 lat, lon = float(lat), float(lon)
                 if (-90. < lat < 90.) and (-180. < lon < 180.):
+                    
+                    # TODO : reverse geocoding
                     return [location, (lat, lon)]
             except ValueError:
                 pass
@@ -270,6 +272,17 @@ class GeoTrac(Component):
         if len(locations) == 1:
             return locations[0]
         else:
+            if len(locations) > 1:
+
+                # XXX work around Google geocoder bug where multiple
+                # near identical addresses are returned
+                # TODO: check to ensure they are close together
+                if len(set([location[0] for location in locations])) == 1:
+                    latlon = zip(*[location[1] for location in locations])
+                    latlon = tuple([sum(latlon[i])/len(locations) for i in (0,1)])
+                    
+                    return locations[0][0], latlon
+
             raise GeolocationException(location, locations)
 
     def locate_ticket(self, ticket):
