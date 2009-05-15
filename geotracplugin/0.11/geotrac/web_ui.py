@@ -30,7 +30,7 @@ loader = TemplateLoader(templates_dir,
 class GeoNotifications(Component):
     """TTW notifications for geolocation"""
 
-    implements(IRequestFilter)
+    implements(IRequestFilter, ITemplateProvider)
 
     ### methods for IRequestFilter
 
@@ -85,8 +85,7 @@ class GeoNotifications(Component):
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
-        path = resource_filename(__name__, 'htdocs')
-        return [('geotrac', path)]
+        return [('geotrac', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
         """Return a list of directories containing the provided template
