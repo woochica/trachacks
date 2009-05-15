@@ -32,6 +32,8 @@ class GeoNotifications(Component):
 
     implements(IRequestFilter)
 
+    ### methods for IRequestFilter
+
     def post_process_request(self, req, template, data, content_type):
         """Do any post-processing the request might need; typically adding
         values to the template `data` dictionary, or changing template or
@@ -55,6 +57,7 @@ class GeoNotifications(Component):
                 ticket = data['ticket']
                 message = req.session.pop('geolocation_error', None)
                 if message:
+                    add_script(req, 'geotrac/js/location_filler.js')
                     add_warning(req, Markup(message))
 
         return (template, data, content_type)
@@ -67,6 +70,29 @@ class GeoNotifications(Component):
         Always returns the request handler, even if unchanged.
         """
         return handler
+
+
+    ### methods for ITemplateProvider
+
+    def get_htdocs_dirs(self):
+        """Return a list of directories with static resources (such as style
+        sheets, images, etc.)
+
+        Each item in the list must be a `(prefix, abspath)` tuple. The
+        `prefix` part defines the path in the URL that requests to these
+        resources are prefixed with.
+        
+        The `abspath` is the absolute path to the directory containing the
+        resources on the local file system.
+        """
+        path = resource_filename(__name__, 'htdocs')
+        return [('geotrac', path)]
+
+    def get_templates_dirs(self):
+        """Return a list of directories containing the provided template
+        files.
+        """
+        return []
 
 
 class IssueMap(Component):

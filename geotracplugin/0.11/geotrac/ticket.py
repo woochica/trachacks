@@ -47,7 +47,9 @@ class GeolocationException(Exception):
         err = "Multiple locations found for %s:" % self.location
         locations = [i[0] for i in self.locations]
         if html:
-            err += '<ul><li>' + '</li><li>'.join(locations) + '</li></ul>'
+            locations = ['<a href="?%s">%s</a>' % (i,i)
+                         for i in locations ]
+            err += '<ul class="geolocation_error"><li>' + '</li><li>'.join(locations) + '</li></ul>'
         else:
             err += '; '.join(locations)
         return err
