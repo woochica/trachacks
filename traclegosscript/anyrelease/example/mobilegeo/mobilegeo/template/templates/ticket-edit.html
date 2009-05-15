@@ -5,7 +5,8 @@
 
 	<div class="summary-meta">
 		
-		<span py:if="ticket.exists">Editing Ticket #${ticket.id}</span>
+		<span py:if="ticket.exists">Editing Issue #${ticket.id}</span>
+		<span py:if="not ticket.exists">New Issue</span>
 
 	  <py:if test="ticket.exists">
 	    <span class="status">
@@ -34,7 +35,7 @@
 
 
 	<div class="authorship">
-		<span py:if="ticket.reporter" headers="h_reporter" class="searchable">Reported by ${authorinfo(ticket.reporter)}</span>
+		<span py:if="ticket.exists" headers="h_reporter" class="searchable">Reported by ${authorinfo(ticket.reporter)}</span>
 		<span py:if="ticket.owner" headers="h_owner">Owned by ${ticket.owner and authorinfo(ticket.owner) or ''}</span>
 	</div>
 
@@ -45,7 +46,7 @@
 	        <span class="modified-date" py:if="ticket.time_changed != ticket.time_created">Last modified ${dateinfo(ticket.time_changed)} ago</span>
     	</div>
 
-		<a py:if="ticket.exists" class="ticket-edit" href="./${ticket.id}">Cancel</a>
+		<a py:if="ticket.exists" class="ticket-edit cancel" href="./${ticket.id}">Cancel</a>
 
 	</div>
 
@@ -53,12 +54,11 @@
 
 <div class="ticket" py:with="preview_mode = 'preview' in req.args">
 
-
 <form py:if="not version and version != 0 and
              ('TICKET_APPEND' in perm(ticket.resource) or
               'TICKET_CHGPROP' in perm(ticket.resource) or
               ('TICKET_CREATE' in perm(ticket.resource) and not ticket.id))"
-      action="${ticket.exists and href.ticket(ticket.id) or href.newticket()}" method="post" id="propertyform">
+      action="${ticket.exists and href.ticket(ticket.id) or href.newticket()}" method="post" id="propertyform" enctype="multipart/form-data">
 
 
 
@@ -86,12 +86,19 @@
 
 			<div class="content-main">
 
-				<div class="photo-upload">
-					photo upload box here
-				</div>
+				<fieldset class="photo-upload">
+				
+					<div class="image-uploader">
+				
+						<p class="help">Upload a picture of the issue:</p>			  
+					    <input type="file" name="ticket_image" />
+				
+					 </div>
+					
+				</fieldset>
 
 	            <py:if test="'TICKET_EDIT_DESCRIPTION' in perm(ticket.resource) or not ticket.exists">
-	              <div class="form-row">
+	              <div class="description data">
 	                  <label for="field-description">Description:</label>             
 	                  <textarea id="field-description" name="field_description" class="wikitext" rows="10" cols="68" py:content="ticket.description">
 	                  </textarea>
@@ -324,5 +331,4 @@
     </form>
 
 </div>
-	
 </html>
