@@ -1,3 +1,4 @@
+
 /*
 _______________________________
 BASE */
@@ -75,9 +76,9 @@ float : left;
 
 #page-heading h1 a {
 background : transparent url(./images/logo.png) no-repeat;
-margin : 35px 0 0 0;
-width : 201px;
-height : 54px;
+margin : 31px 0 0 0;
+width : 294px;
+height : 72px;
 text-decoration : none;
 border : none;
 }
@@ -153,7 +154,7 @@ list-style-type : none;
 border : none;
 padding : 0;
 float : left;
-margin-left : 65px;
+margin-left : 45px;
 }
 
 
@@ -388,7 +389,6 @@ float : left;
 float : left;
 width : 314px;
 height : 18px;
-margin : 13px 0 0 0;
 background : transparent url(./images/tagline.png) no-repeat;
 text-indent : -999em;
 overflow : hidden;
@@ -403,7 +403,6 @@ margin-left : 383px;
 float : left; 
 width : 154px;
 height : 16px;
-margin-top : 13px;
 background : transparent url(./images/know.png) no-repeat;
 text-indent : -999em;
 overflow : hidden;
@@ -414,7 +413,7 @@ float : left;
 width : 128px;
 height : 31px;
 
-margin : 4px 0 0 20px !important;
+margin : -10px 0 0 20px !important;
 background : transparent url(./images/cite-button.png) no-repeat;
 text-indent : -999em;
 overflow : hidden;
@@ -584,6 +583,10 @@ height : 325px;
 border : 1px solid #ccc;
 }
 
+#map {
+margin-bottom : 2em !important;
+}
+
 .photos {
 margin-bottom : 2em;
 float : left;
@@ -702,6 +705,10 @@ overflow : hidden;
 border : 0;
 }
 
+.edit-activity a.cancel {
+background : transparent url(./images/cancel-button.png) no-repeat;
+width : 67px;
+}
 
 .edit-activity a.ticket-edit:hover {
 background-position : 0 -23px;
@@ -730,15 +737,45 @@ width : 534px;
 margin : 0;
 }
 
+.ticket-heading .summary input, 
+.ticket-heading .location input {
+width : 475px;
+font-size : 2em;
+}
 
-.ticket-heading label {
+.ticket-heading .summary input, 
+.ticket-heading .location input, 
+.content-meta .data input {
+color : #000;
+border : 1px solid #E6E6E6;
+border-bottom-color : #ccc;
+}
+
+
+.ticket-heading .location input {
+width : 409px;
+
+margin-right : 0;
+margin-left : 0;
+}
+
+
+.ticket-heading label, 
+.data label {
 display : block;
+color : #666;
+text-transform : uppercase;
+font-size : .85em;
 }
 
 
 .ticket-heading, 
 .ticket-body {
 margin-left : 17px;
+}
+
+.content #propertyform #map {
+padding-bottom : 0;
 }
 
 #propertyform .ticket-heading, 
@@ -762,6 +799,31 @@ width : 534px;
 
 
 
+
+
+fieldset.photo-upload {
+width : 489px;
+height : 326px;
+margin : 0 0 2em 0 !important;
+border : 1px solid #ccc;
+background : transparent url(./images/image-upload-bg.png);
+}
+
+fieldset.photo-upload legend {
+display : none;
+}
+
+
+.image-uploader {
+background : transparent url(./images/images-icon.png) center left no-repeat;
+width : 276px; /* 380px with padding */
+height : 100px;
+padding : 55px 0 0 104px;
+margin : 65px 0 0 70px !important; 
+color : #fff;
+}
+
+
 .content-meta {
 float : left;
 width : 400px;
@@ -773,6 +835,27 @@ margin-top : 2.5em;
 float : left;
 clear : both;
 width : 430px;
+}
+
+#propertyform .content-meta .data {
+margin-top : 1em !important;
+}
+
+.data label {
+display : block;
+}
+
+.content-meta .data input {
+width : 420px;
+font-size : 1.5em;
+}
+
+#attachfile input {
+width : auto;
+font-size : 1em;
+border-left : 1px solid #ccc;
+padding : .3em .4em;
+color : #666;
 }
 
 .custom-fields {
