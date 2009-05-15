@@ -20,6 +20,9 @@ try:
 	   """Force this handler to run first."""
 	   return True
         
+        def order(self):
+	    """Make ourselves show up first"""
+	    return True
 
         def fields(self, message, **fields):
 
