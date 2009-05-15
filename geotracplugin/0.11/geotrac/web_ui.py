@@ -3,6 +3,7 @@ import geopy
 from pkg_resources import resource_filename
 
 from genshi.builder import tag
+from genshi.builder import Markup
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
 from geotrac.ticket import GeolocationException
@@ -47,10 +48,14 @@ class GeoNotifications(Component):
 
         (Since 0.11)
         """
+
         if template == 'ticket.html':
             if self.env.is_component_enabled(GeoTrac):
                 geotrac = self.env.components[GeoTrac]
                 ticket = data['ticket']
+                message = req.session.pop('geolocation_error', None)
+                if message:
+                    add_warning(req, Markup(message))
 
         return (template, data, content_type)
 

@@ -22,11 +22,13 @@ from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
 
+
 # TODO: caching geolocation on the request
 
 class GeolocationException(Exception):
     """error for multiple and unfound locations"""
     
+
     def __init__(self, location='', locations=()):
         Exception.__init__(self, location, locations)
         self.location = location
@@ -34,21 +36,35 @@ class GeolocationException(Exception):
     
     def __str__(self):
         if self.locations:
-            return "Multiple locations found: %s" % '; '.join([i[0] for i in self.locations])
+            return self.multiple_locations()
         else:
             if self.location.strip(): 
                 return "%s could not be located" % self.location
             else:
                 return "No location"
 
+    def multiple_locations(self, html=False):
+        err = "Multiple locations found for %s:" % self.location
+        locations = [i[0] for i in self.locations]
+        if html:
+            err += '<ul><li>' + '</li><li>'.join(locations) + '</li></ul>'
+        else:
+            err += '; '.join(locations)
+        return err
+                                                 
+
     def html(self):
         if not self.locations:
             return str(self)
-        return tag.b(str(self))
+        return self.multiple_locations(html=True)
+
 
 class GeoTrac(Component):
 
-    implements(ICustomFieldProvider, ITicketManipulator, ITicketChangeListener, IEnvironmentSetupParticipant)
+    implements(ICustomFieldProvider, 
+               ITicketManipulator, 
+               ITicketChangeListener, 
+               IEnvironmentSetupParticipant)
 
     ### configuration options
     mandatory_location = BoolOption('geo', 'mandatory_location', 'false',
@@ -75,7 +91,6 @@ class GeoTrac(Component):
         Must return a list of `(field, message)` tuples, one for each problem
         detected. `field` can be `None` to indicate an overall problem with the
         ticket. Therefore, a return value of `[]` means everything is OK."""
-
 
         # compare ticket['location'] with stored version for existing tickets
         location_changed = True
@@ -117,7 +132,14 @@ class GeoTrac(Component):
             if self.mandatory_location:
                 return [('location', str(e))]
 
+            # store the error in a cookie as add_warning is clobbered
+            # in the post-POST redirect
+            req.session['geolocation_error'] = e.html()
+            req.session['test'] = 'a test'
+            req.session.save()
+
         return []
+
 
     ### methods for ITicketChangeListener
 
