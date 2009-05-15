@@ -4,6 +4,7 @@ from genshi.template import TemplateLoader
 from ticketsidebarprovider import ITicketSidebarProvider
 from trac.attachment import Attachment
 from trac.attachment import AttachmentModule
+from trac.config import Option
 from trac.core import *
 from trac.mimeview import Mimeview
 from trac.web.api import ITemplateStreamFilter
@@ -44,6 +45,8 @@ class ImageFormFilter(Component):
     """add image submission to the ticket form"""
 
     implements(ITemplateStreamFilter)
+    fieldset_id = Option('ticket-image', 'fieldset_id', 'properties', 
+                         'fieldset after which to insert the form')
         
     ### methods for ITemplateStreamFilter
 
@@ -68,7 +71,7 @@ class ImageFormFilter(Component):
                 self.loader = TemplateLoader(templates_dir,
                                              auto_reload=True)
             template = self.loader.load('image-upload.html')
-            stream |= Transformer("//fieldset[@id='properties']").after(template.generate())
+            stream |= Transformer("//fieldset[@id='%s']" % self.fieldset_id).after(template.generate())
             stream |= Transformer("//form[@id='propertyform']").attr('enctype', "multipart/form-data")
 
         return stream
