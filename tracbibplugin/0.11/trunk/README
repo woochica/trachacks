@@ -1,8 +1,16 @@
-Install:
+
+= Latest =
+	* Removed dependecy to python-bibtex, bibtexparser is now used
+
+== Requirements ==
+	* bibtexparser from http://www.geocities.com/fiolj/bibtexparse.html written by Vidar Bronken Gundersen and modified by Sara Sprenkle. The necessary files are included in the plugin, no additional source is necessary.
+
+= Version 0.1 =
+== Install: ==
    * Run "python setup.py bdist_egg"
    * Copy the created egg into the plugins folder of your project environment 
 
-Requirements:
+== Requirements: ==
    * This plugin needs the "python-bibtex" package:
       Gentoo: "emerge python-bibtex"
       Debian: "apt-get install python-bibtex"

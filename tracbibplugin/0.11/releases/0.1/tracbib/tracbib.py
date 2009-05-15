@@ -4,7 +4,7 @@ from trac.wiki.macros import WikiMacroBase
 from trac.attachment import Attachment
 from trac.env import Environment
 from genshi.builder import tag
-import bibtexparse
+import _bibtex
 
 BIBDB = 'bibtex - database'
 CITELIST = 'referenced elements'
@@ -20,7 +20,6 @@ BIBTEX_KEYS = [
     'journal',
     'volume',
     'number',
-	 'doi',
     'organization',
     'institution',
     'publisher',
@@ -58,11 +57,16 @@ class BibAddMacro(WikiMacroBase):
 		# load the file from the repository
 		if len(args) == 2:
 			rev = args[1]
+
 			repos = self.env.get_repository()
 			try:
 				bib = repos.get_node(file, rev)
 				file = bib.get_content()
-				strings = file.read().splitlines()
+				string = file.read()
+				bibfile = _bibtex.open_string('temporary archive',string,True)
+				entry = _bibtex.next(bibfile)
+				if entry == None :
+					raise TracError('No entries from bibfile loaded.')
 			finally:
 				repos.close()
 	
@@ -70,14 +74,23 @@ class BibAddMacro(WikiMacroBase):
 		elif len(args) == 1:
 			path_info = formatter.req.path_info.split('/',2)
 			bib = Attachment(self.env,'wiki',path_info[2],file)
-			try:
-				file = bib.open()
-				strings = file.readlines()
-			finally:
-				file.close()
+			file = bib.open()
+			string = file.read()
+			bibfile = _bibtex.open_string('temporary archive',string,True)
+			entry = _bibtex.next(bibfile)
+			if entry == None :
+				raise TracError('No entries from bibfile loaded.')
 
-		a,bibdb = bibtexparse.bibtexload(strings)
+		while entry != None:
+			contentdb = {}
+			items = entry[4]
+			key = entry[0]
+			for k in items.keys():
+				contentdb[k] = _bibtex.expand(bibfile, items[k],-1)[2]
 			
+			bibdb[key] = contentdb
+			entry = _bibtex.next(bibfile)
+	
 		setattr(formatter,BIBDB,bibdb)
 
 class BibCiteMacro(WikiMacroBase):
