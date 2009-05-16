@@ -2,6 +2,7 @@
 
 from trac.core import *
 from trac.mimeview import Context
+from trac.resource import Resource
 from trac.util.html import html
 from trac.web.chrome import Chrome
 
@@ -150,10 +151,17 @@ class DownloadsWiki(Component):
                     download = api.get_download_by_file(context, params)
 
                 if download:
-                    # Return link to existing file.
-                    return html.a(label, href = formatter.href.downloads(params),
-                      title = '%s (%s)' % (download['file'],
-                      pretty_size(download['size'])))
+                    if formatter.req.perm.has_permission('DOWNLOADS_VIEW',
+                      Resource('downloads', download['id'])):
+                        # Return link to existing file.
+                        return html.a(label, href = formatter.href.downloads(
+                          params), title = '%s (%s)' % (download['file'],
+                          pretty_size(download['size'])))
+                    else:
+                        # File exists but no permission to download it.
+                        html.a(label, href = '#', title = '%s (%s)' % (
+                          download['file'], pretty_size(download['size'])),
+                          class_ = 'missing')
                 else:
                     # Return link to non-existing file.
                     return html.a(label, href = '#', title = 'File not found.',

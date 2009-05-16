@@ -103,11 +103,6 @@ class DownloadsApi(Component):
             download['platform'] = self.get_platform(context.cursor,
               download['platform'])
             download['type'] = self.get_type(context.cursor, download['type'])
-
-            # Don't allow to download files without permission to do it.
-            if not context.req.perm.has_permission('DOWNLOADS_VIEW',
-              Resource('download', download['id'])):
-                download['list_only'] = True
         return downloads
 
     def get_new_downloads(self, context, start, stop, order_by = 'time',
@@ -356,12 +351,10 @@ class DownloadsApi(Component):
         download = self.get_download_by_time(context, download['time'])
 
         # Check correct file type.
-        reg = re.compile(r'^(.*)(?:[.](.*)$|$)')
-        result = reg.match(download['file'])
-        if result:
-            self.log.debug('file_ext: %s ext: %s' % (result.group(2), self.ext))
-            ext = result.group(2) or 'none'
-            if (not ext.lower() in self.ext) and (not 'all' in self.ext):
+        if not 'all' in self.ext:
+            name, ext = os.path.splitext(download['file'])
+            self.log.debug('file_ext: %s ext: %s' % (ext, self.ext))
+            if not ext[1:].lower() in self.ext:
                 raise TracError('Unsupported uploaded file type.')
         else:
             raise TracError('Unsupported uploaded file type.')
@@ -496,7 +489,7 @@ class DownloadsApi(Component):
                 if download:
                     # Check resource based permission
                     context.req.perm.require('DOWNLOADS_VIEW',
-                      Resource('download', download['id']))
+                      Resource('downloads', download['id']))
 
                     # Get download file path.
                     path = os.path.join(self.path, to_unicode(download['id']),

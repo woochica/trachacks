@@ -4,6 +4,8 @@ from genshi.builder import tag
 
 from trac.core import *
 from trac.mimeview import Context
+from trac.resource import Resource, get_resource_url, get_resource_name, \
+  get_resource_description
 from trac.util.text import pretty_size
 from trac.wiki.formatter import format_to_oneliner
 from trac.util.datefmt import to_timestamp
@@ -41,18 +43,21 @@ class DownloadsTimeline(Component):
             for download in api.get_new_downloads(context, to_timestamp(start),
               to_timestamp(stop)):
                 yield ('newticket', download['time'], download['author'],
-                  (download['id'], download['file'], download['description'],
-                  download['size']))
+                  download['id'])
 
     def render_timeline_event(self, context, field, event):
         # Decompose event data.
-        id, name, description, size = event[3]
+        id = event[3]
 
         # Return apropriate content.
+        resource = Resource('downloads', id)
         if field == 'url':
-           return context.req.href.downloads(id)
+           if context.req.perm.has_permission('DOWNLOADS_VIEW', resource):
+               return get_resource_url(self.env, resource, context.req.href)
+           else:
+               return '#'
         elif field == 'title':
-           return tag('New download ', tag.em(name), ' created')
+           return tag('New download ', tag.em(get_resource_name(self.env,
+             resource)), ' created')
         elif field == 'description':
-           return tag('(%s) ' % (pretty_size(size),), format_to_oneliner(
-             self.env, context, description))
+           return get_resource_description(self.env, resource, 'summary')

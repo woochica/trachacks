@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+  # -*- coding: utf-8 -*-
 
 import sets
 
 from tracdownloads.api import *
 from trac.core import *
-from trac.resource import *
+from trac.resource import Resource
 from trac.mimeview import Context
 
 from tractags.api import DefaultTagProvider, TagSystem
@@ -14,6 +14,8 @@ class DownloadsTagProvider(DefaultTagProvider):
       Tag provider for downloads.
     """
     realm = 'downloads'
+
+    # Other methods.
 
     def check_permission(self, perm, operation):
         # Permission table for download tags.
@@ -30,6 +32,8 @@ class DownloadsTags(Component):
     """
     implements(IDownloadChangeListener)
 
+    realm = 'downloads'
+
     # IDownloadChangeListener methods.
 
     def download_created(self, context, download):
@@ -38,9 +42,7 @@ class DownloadsTags(Component):
             return
 
         # Create temporary resource.
-        resource = Resource()
-        resource.realm = 'downloads'
-        resource.id = download['id']
+        resource = Resource(self.realm, download['id'])
 
         # Delete tags of download with same ID for sure.
         tag_system = TagSystem(self.env)
@@ -48,6 +50,7 @@ class DownloadsTags(Component):
 
         # Add tags of new download.
         new_tags = self._get_tags(download)
+        self.log.debug('tags: %s' % (new_tags,))
         tag_system.add_tags(context.req, resource, new_tags)
 
     def download_changed(self, context, download, old_download):
@@ -63,7 +66,7 @@ class DownloadsTags(Component):
         old_download.update(download)
 
         # Create temporary resource.
-        resource = Resource('downloads', old_download['id'])
+        resource = Resource(self.realm, old_download['id'])
 
         # Delete old tags.
         tag_system = TagSystem(self.env)
@@ -79,7 +82,7 @@ class DownloadsTags(Component):
             return
 
         # Create temporary resource.
-        resource = Resource('downloads', download['id'])
+        resource = Resource(self.realm, download['id'])
 
         # Delete tags of download.
         tag_system = TagSystem(self.env)
@@ -116,7 +119,7 @@ class DownloadsTags(Component):
 
     def _get_stored_tags(self, context, download_id):
         tag_system = TagSystem(self.env)
-        resource = Resource('downloads', download_id)
+        resource = Resource(self.realm, download_id)
         tags = tag_system.get_tags(context.req, resource)
         return sorted(tags)
 

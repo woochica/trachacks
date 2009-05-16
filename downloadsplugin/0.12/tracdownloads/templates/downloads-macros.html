@@ -1,5 +1,9 @@
 <html xmlns:py="http://genshi.edgewall.org/" py:strip="">
 
+  <?python
+    from trac.resource import Resource
+  ?>
+
   <py:def function="sortable_th(order, desc, Class, title, href)">
     <th class="${Class}${order == Class and (desc and ' desc' or ' asc') or ''}">
       <a title="Sort by ${Class}${order == Class and not desc and ' (descending)' or ''}" href="${href}?order=${Class}&amp;desc=${(Class == order and not desc and 1 or None)}">
@@ -65,107 +69,192 @@
                 <tr class="${line % 2 and 'even' or 'odd'}">
                   <py:for each="field in downloads.visible_fields">
                     <py:choose>
-                      <td py:when="field == 'id'" class="id">
-                        <div class="id">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.id}
-                          </a>
-                        </div>
-                      </td>
+                      <py:when test="perm.has_permission('DOWNLOADS_VIEW', Resource('downloads', download.id))">
+                        <py:choose>
+                          <td py:when="field == 'id'" class="id">
+                            <div class="id">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.id}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'file'" class="file">
-                        <div class="file">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.file}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'file'" class="file">
+                            <div class="file">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.file}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'description'" class="description">
-                        <div class="description">
-                          ${wiki_to_oneliner(context(parent), download.description)}
-                        </div>
-                      </td>
+                          <td py:when="field == 'description'" class="description">
+                            <div class="description">
+                              ${wiki_to_oneliner(context(parent), download.description)}
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'size'" class="size">
-                        <div class="size">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${pretty_size(download.size)}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'size'" class="size">
+                            <div class="size">
+                              <a href="${href.downloads(download.id)}">
+                                ${pretty_size(download.size)}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'time'" class="time">
-                        <div class="time">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${format_datetime(download.time)}<br/>(${pretty_timedelta(download.time)} ago)
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'time'" class="time">
+                            <div class="time">
+                              <a href="${href.downloads(download.id)}">
+                                ${format_datetime(download.time)}<br/>(${pretty_timedelta(download.time)} ago)
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'count'" class="count">
-                        <div class="count">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.count or '0'}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'count'" class="count">
+                            <div class="count">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.count or '0'}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'author'" class="author">
-                        <div class="author">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.author}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'author'" class="author">
+                            <div class="author">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.author}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'tags' and downloads.has_tags" class="tags">
-                        <div class="tags">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.tags}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'tags' and downloads.has_tags" class="tags">
+                            <div class="tags">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.tags}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'component'" class="component">
-                        <div class="component">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.component}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'component'" class="component">
+                            <div class="component">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.component}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'version'" class="version">
-                        <div class="version">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.version}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'version'" class="version">
+                            <div class="version">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.version}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'architecture'" class="architecture">
-                        <div class="architecture">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.architecture.name}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'architecture'" class="architecture">
+                            <div class="architecture">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.architecture.name}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'platform'" class="platform">
-                        <div class="platform">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.platform.name}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'platform'" class="platform">
+                            <div class="platform">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.platform.name}
+                              </a>
+                            </div>
+                          </td>
 
-                      <td py:when="field == 'type'" class="type">
-                        <div class="type">
-                          <a py:strip="download.list_only" href="${href.downloads(download.id)}">
-                            ${download.type.name}
-                          </a>
-                        </div>
-                      </td>
+                          <td py:when="field == 'type'" class="type">
+                            <div class="type">
+                              <a href="${href.downloads(download.id)}">
+                                ${download.type.name}
+                              </a>
+                            </div>
+                          </td>
+                        </py:choose>
+                      </py:when>
+                      <py:otherwise>
+                        <py:choose>
+                          <td py:when="field == 'id'" class="id">
+                            <div class="id">
+                              ${download.id}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'file'" class="file">
+                            <div class="file">
+                              ${download.file}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'description'" class="description">
+                            <div class="description">
+                              ${wiki_to_oneliner(context(parent), download.description)}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'size'" class="size">
+                            <div class="size">
+                              ${pretty_size(download.size)}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'time'" class="time">
+                            <div class="time">
+                              ${format_datetime(download.time)}<br/>(${pretty_timedelta(download.time)} ago)
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'count'" class="count">
+                            <div class="count">
+                              ${download.count or '0'}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'author'" class="author">
+                            <div class="author">
+                              ${download.author}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'tags' and downloads.has_tags" class="tags">
+                            <div class="tags">
+                              ${download.tags}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'component'" class="component">
+                            <div class="component">
+                              ${download.component}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'version'" class="version">
+                            <div class="version">
+                              ${download.version}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'architecture'" class="architecture">
+                            <div class="architecture">
+                              ${download.architecture.name}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'platform'" class="platform">
+                            <div class="platform">
+                              ${download.platform.name}
+                            </div>
+                          </td>
+
+                          <td py:when="field == 'type'" class="type">
+                            <div class="type">
+                              ${download.type.name}
+                            </div>
+                          </td>
+                        </py:choose>
+                      </py:otherwise>
                     </py:choose>
                   </py:for>
                 </tr>

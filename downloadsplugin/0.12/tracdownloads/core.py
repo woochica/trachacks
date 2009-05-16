@@ -4,8 +4,10 @@ import re
 
 from trac.core import *
 from trac.mimeview import Context
+from trac.resource import IResourceManager
 from trac.config import Option
 from trac.util.html import html
+from trac.util.text import pretty_size
 
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
@@ -18,7 +20,8 @@ class DownloadsCore(Component):
         The core module implements plugin's ability to download files, provides
         permissions and templates.
     """
-    implements(IRequestHandler, ITemplateProvider, IPermissionRequestor)
+    implements(IRequestHandler, ITemplateProvider, IPermissionRequestor,
+      IResourceManager)
 
     # IPermissionRequestor methods.
 
@@ -55,6 +58,32 @@ class DownloadsCore(Component):
         # Process request and return content.
         api = self.env[DownloadsApi]
         return api.process_downloads(context) + (None,)
+
+    # IResourceManager methods.
+
+    def get_resource_realms(self):
+        yield 'downloads'
+
+    def get_resource_url(self, resource, href, **kwargs):
+        return href.downloads(resource.id)
+
+    def get_resource_description(self, resource, format = 'default',
+      context = None, **kwargs):
+        # Create context.
+        context = Context('downloads-core')
+        db = self.env.get_db_cnx()
+        context.cursor = db.cursor()
+
+        # Get download from ID.
+        api = self.env[DownloadsApi]
+        download = api.get_download(context, resource.id)
+
+        if format == 'compact':
+            return download['file']
+        elif format == 'summary':
+            return '(%s) %s' % (pretty_size(download['size']),
+              download['description'])
+        return download['file']
 
 class DownloadsDownloads(Component):
     """
