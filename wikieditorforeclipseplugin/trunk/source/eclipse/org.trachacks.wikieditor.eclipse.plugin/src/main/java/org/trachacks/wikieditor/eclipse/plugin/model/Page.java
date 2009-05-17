@@ -20,7 +20,9 @@ public class Page extends AbstractBaseObject {
 
 	private String name;
 	private Server server;
-//	private WikiService wikiService;
+//	private WikiService wikiService
+	private boolean wasDeleted;
+	private boolean isEditedConcurrently;
 	
 	private PageVersion baseVersion = null;
 	
@@ -36,6 +38,7 @@ public class Page extends AbstractBaseObject {
 		if(getWikiService().isLocallyEdited(name)) {
 			this.baseVersion = getWikiService().loadPageVersion(name);
 		}
+		refresh();
 	}
 	
 	
@@ -75,6 +78,24 @@ public class Page extends AbstractBaseObject {
 		return version;
 	}
 	
+	/**
+	 * 
+	 */
+	public void refresh() {
+		try {
+			this.wasDeleted =  isEdited() && getLatestVersion() == null;
+		} catch (PageNotFoundException e) {
+			this.wasDeleted =  isEdited() && !isBrandNew();
+		}
+		
+		this.isEditedConcurrently =  isEdited()
+		&& !isBrandNew()
+		&& !wasDeleted
+		&& (int)getLatestVersion().getVersion() != (int)baseVersion.getVersion();
+
+		super.notifyChanged();
+	}
+	
 	public PageVersion getBaseVersion() {
 		return baseVersion;
 	}
@@ -93,18 +114,11 @@ public class Page extends AbstractBaseObject {
 	}
 	
 	public boolean isEditedConcurrently() {
-		return isEdited()
-			&& !isBrandNew()
-			&& !wasDeleted()
-			&& (int)getLatestVersion().getVersion() != (int)baseVersion.getVersion();
+		return isEditedConcurrently;
 	}
 	
 	public boolean wasDeleted() {
-		try {
-			return isEdited() && getLatestVersion() == null;
-		} catch (PageNotFoundException e) {
-			return isEdited() && !isBrandNew();
-		}
+		return wasDeleted;
 	}
 	
 	/**
@@ -216,5 +230,14 @@ public class Page extends AbstractBaseObject {
 	protected WikiService getWikiService() {
 		return server.getWikiService();
 	}
+
+
+	@Override
+	protected void notifyChanged() {
+		refresh();
+		super.notifyChanged();
+	}
+	
+	
 	
 }

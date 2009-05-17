@@ -16,6 +16,7 @@ import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.DeletePag
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.MarkAsMergedAction;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.MergePageAction;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.OpenPageEditorAction;
+import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.RefreshSelectionAction;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.ShowPageHistoryAction;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.ShowPagePropertiesAction;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.UneditPageAction;
@@ -30,6 +31,7 @@ public class PageActionsManager {
     private StructuredViewer viewer;
     
     private Action openEditor;
+    private Action refresh;
     private Action unedit;
     private Action commit;
     private Action merge;
@@ -43,6 +45,7 @@ public class PageActionsManager {
 		super();
 		this.viewer = viewer;
 		openEditor = new OpenPageEditorAction(viewer);
+		refresh = new RefreshSelectionAction(viewer);
 		unedit = new UneditPageAction(viewer);
 		commit = new CommitPageAction(viewer);
 		merge = new MergePageAction(viewer);
@@ -59,6 +62,7 @@ public class PageActionsManager {
 
 			
 			menu.add(openEditor);
+			menu.add(refresh);
 			menu.add(new Separator());
 			menu.add(commit);
 			commit.setEnabled(page.isEdited() && !page.isEditedConcurrently());
@@ -69,8 +73,8 @@ public class PageActionsManager {
 			menu.add(markAsMerged);
 			markAsMerged.setEnabled(page.isEditedConcurrently());
 			menu.add(new Separator());
-			menu.add(deleteVersion);
 			menu.add(delete);
+			menu.add(deleteVersion);
 			menu.add(new Separator());
 			menu.add(showHistory);
 			menu.add(showProperties);
