@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="org.trachacks.wikieditor.eclipse.feature"
-      label="TracWikiEditor4Eclipse Feature"
+      label="TracWikiEditor4Eclipse"
       version="0.0.1"
       provider-name="TracWikiEditor4Eclipse @ trac-hacks.org">
 
    <description url="http://trac-hacks.org/wiki/WikiEditorForEclipsePlugin">
-      [EnteA new plug-in providing Trac Wiki editing capabilities to Eclipse IDE
+      A new plug-in providing Trac Wiki editing capabilities to
+Eclipse IDE
    </description>
 
    <copyright>

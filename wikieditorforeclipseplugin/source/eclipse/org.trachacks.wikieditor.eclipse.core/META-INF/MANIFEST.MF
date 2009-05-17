@@ -23,3 +23,4 @@ Export-Package: org.apache.commons.lang,
  org.trachacks.wikieditor.rpc,
  org.trachacks.wikieditor.rpc.xmlrpc,
  org.trachacks.wikieditor.service
+Bundle-RequiredExecutionEnvironment: J2SE-1.5

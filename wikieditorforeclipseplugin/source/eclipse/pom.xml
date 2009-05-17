@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project>
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>wikieditor</artifactId>
+    <groupId>org.trachacks.wikieditor</groupId>
+    <version>0.0.1-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  
   <groupId>org.trachacks.wikieditor</groupId>
   <artifactId>wikieditor4eclipse</artifactId>
   <version>0.0.1-SNAPSHOT</version>

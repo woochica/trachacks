@@ -178,7 +178,9 @@ public class WikiRPCTest extends AbstractBaseTest{
 		for (int i = 0; i < changes.length; i++) {
 			Map<String, Object> pageInfo = (Map<String, Object>) changes[i];
 			for (Map.Entry<String, Object> property : pageInfo.entrySet()) {
-				System.out.println(property.getKey() + "=" + property.getValue());
+				//System.out.println(property.getKey() + "=" + property.getValue());
+				assertNotNull(property.getKey());
+				assertNotNull(property.getValue());
 			}			
 		}
 	}

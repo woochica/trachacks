@@ -15,6 +15,7 @@ Require-Bundle: org.trachacks.wikieditor.eclipse.core;bundle-version="0.0.1",
  org.eclipse.ui.workbench.texteditor,
  org.eclipse.ui.navigator,
  org.eclipse.ui.views,
- org.eclipse.compare
+ org.eclipse.compare,
+ org.eclipse.mylyn.wikitext.core;resolution:=optional
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
