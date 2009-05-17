@@ -41,6 +41,7 @@ public class ComparationFactory{
 			@Override
 			public void saveChanges(IProgressMonitor monitor) throws CoreException {
 				page.edit(left.getText());
+				super.saveChanges(monitor);
 
 				if(MessageDialog.openConfirm(
 						PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), 
@@ -52,8 +53,6 @@ public class ComparationFactory{
 					IEditorPart editor = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
 					PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().closeEditor(editor, true);
 				}
-				
-				super.saveChanges(monitor);
 			}
 			
 			
