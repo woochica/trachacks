@@ -15,14 +15,14 @@ public class WikiPartitionScanner extends RuleBasedPartitionScanner {
 	public WikiPartitionScanner() {
 		PatternRule[] rules = new PatternRule[7];
 
-		rules[0] = new SingleLineRule("======", "======\n", new Token(
+		rules[0] = new SingleLineRule("====== ", " ======\n", new Token(
 				SectionToken));
-		rules[1] = new SingleLineRule("=====", "=====\n", new Token(
+		rules[1] = new SingleLineRule("===== ", " =====\n", new Token(
 				SectionToken));
-		rules[2] = new SingleLineRule("====", "====\n", new Token(SectionToken));
-		rules[3] = new SingleLineRule("===", "===\n", new Token(SectionToken));
-		rules[4] = new SingleLineRule("==", "==\n", new Token(SectionToken));
-		rules[5] = new SingleLineRule("=", "=\n", new Token(SectionToken));
+		rules[2] = new SingleLineRule("==== ", " ====\n", new Token(SectionToken));
+		rules[3] = new SingleLineRule("=== ", " ===\n", new Token(SectionToken));
+		rules[4] = new SingleLineRule("== ", " ==\n", new Token(SectionToken));
+		rules[5] = new SingleLineRule("= ", " =\n", new Token(SectionToken));
 		rules[6] = new MultiLineRule("{{{", "}}}", new Token(SourceToken));
 
 		for (PatternRule rule : rules)

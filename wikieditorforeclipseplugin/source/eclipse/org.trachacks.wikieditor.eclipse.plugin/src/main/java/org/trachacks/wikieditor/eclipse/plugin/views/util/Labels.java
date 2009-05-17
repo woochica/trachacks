@@ -12,7 +12,8 @@ import java.util.ResourceBundle;
  */
 public class Labels {
 
-	private static ResourceBundle labels = ResourceBundle.getBundle(Labels.class.getName());
+	private static ResourceBundle labels = ResourceBundle
+		.getBundle(Labels.class.getPackage().getName() + ".LabelProperties");
 	
 	public static String getText(String key) {
 		try {
