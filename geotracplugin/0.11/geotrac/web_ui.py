@@ -132,11 +132,13 @@ class IssueMap(Component):
         # filter for tickets
         if filename == 'ticket.html' and data['locations']:
             stream |= Transformer('//head').append(self.load_map(data['locations']))
+            stream |= Transformer('//head').append(self.blur_map())
 
         # filter for queries - add the located tickets to a map
         if filename == 'query.html' and data['locations']:
 
             stream |= Transformer('//head').append(self.load_map(data['locations']))
+            stream |= Transformer('//head').append(self.blur_map())
             if self.inject_map:
                 stream |= Transformer("//div[@id='content']").after(self.content(None, None))
                 
@@ -156,6 +158,18 @@ class IssueMap(Component):
       })""" % (repr(locations), self.wms_url)
         return tag.script(script, **{'type': 'text/javascript'})
 
+
+    def blur_map(self):
+        script = """$(document).ready(function() {
+$("#field-location").blur(function() {
+// alert($(this).val());
+$.getJSON("%s?location=" + encode($(this).val()), function(data) {
+alert(data);
+});
+});
+});
+""" % self.env.href('location')
+        return tag.script(script, **{'type': 'text/javascript'})
 
 class MapDashboard(Component):
 
