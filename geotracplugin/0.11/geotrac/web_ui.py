@@ -161,14 +161,15 @@ class IssueMap(Component):
 
     def blur_map(self):
         script = """$(document).ready(function() {
-$("#field-location").blur(function() {
-// alert($(this).val());
-$.getJSON("%s?location=" + encode($(this).val()), function(data) {
+$("#field-location").change(function() {
+var url = "%s?location=" + escape($(this).val());
+// alert(url);
+$.getScript(url, function(data, textStatus) {
 alert(data);
 });
 });
 });
-""" % self.env.href('location')
+""" % self.env.abs_href('locate')
         return tag.script(script, **{'type': 'text/javascript'})
 
 class MapDashboard(Component):

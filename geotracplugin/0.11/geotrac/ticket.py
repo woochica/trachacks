@@ -5,6 +5,7 @@ http://trac.edgewall.org
 """
 
 import geopy
+import simplejson
 
 from customfieldprovider import ICustomFieldProvider
 from genshi.builder import tag
@@ -269,6 +270,7 @@ class GeoTrac(Component):
         simply send the response itself and not return anything.
         """
         location = req.args.get('location')
+        print 'location: %s' % location
         try:
             locations = [ self.geolocate(location) ]
         except GeolocationException, e:
@@ -281,7 +283,7 @@ class GeoTrac(Component):
         req.send_response(200)
         req.send_header('Content-type', 'application/json;charset=utf-8')
         req.end_headers()
-        req.write(repr(locations))
+        req.write(simplejson.dumps(locations))
 
     ### methods for ITemplateProvider
 

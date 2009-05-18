@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.2.2'
+version='0.4'
 
 setup(name='GeoTrac',
       version=version,
@@ -18,7 +18,8 @@ setup(name='GeoTrac',
         # -*- Extra requirements: -*-
         'geopy',
         'CustomFieldProvider',
-        'TicketSidebarProvider'
+        'TicketSidebarProvider',
+        'simplejson'
         ],
       extras_require={
         'mail2trac': [ 'mail2trac' ],
