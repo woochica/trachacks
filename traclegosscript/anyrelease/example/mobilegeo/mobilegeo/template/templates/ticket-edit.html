@@ -242,7 +242,10 @@
 			            <input type="hidden" name="replyto" value="${replyto}" />
 			            <input type="hidden" name="cnum" value="${cnum}" />
 			          </py:if>
+			
+			<py:if test="1==2"> <!-- temporarily commenting this out until fixed -->
 			          <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
+			</py:if>
 			          <input type="submit" name="submit" value="${ticket.exists and 'Submit changes' or 'Create ticket'}" />
 			        </div>
 
