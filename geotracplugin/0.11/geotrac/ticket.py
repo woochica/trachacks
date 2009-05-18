@@ -8,6 +8,7 @@ import geopy
 
 from customfieldprovider import ICustomFieldProvider
 from genshi.builder import tag
+from genshi.builder import Markup
 from geotrac.utils import create_table
 from geotrac.utils import execute_non_query
 from geotrac.utils import get_all_dict
@@ -131,13 +132,14 @@ class GeoTrac(Component):
         except GeolocationException, e:
             if location_changed and ticket.id:
                 self.delete_location(ticket.id)
+            if len(e.locations) > 1:
+                return [('location', str(e))]
             if self.mandatory_location:
                 return [('location', str(e))]
 
             # store the error in a cookie as add_warning is clobbered
             # in the post-POST redirect
             req.session['geolocation_error'] = e.html()
-            req.session['test'] = 'a test'
             req.session.save()
 
         return []
