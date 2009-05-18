@@ -30,7 +30,7 @@ loader = TemplateLoader(templates_dir,
 class GeoNotifications(Component):
     """TTW notifications for geolocation"""
 
-    implements(IRequestFilter, ITemplateProvider)
+    implements(IRequestFilter)
 
     ### methods for IRequestFilter
 
@@ -72,32 +72,10 @@ class GeoNotifications(Component):
         return handler
 
 
-    ### methods for ITemplateProvider
-
-    def get_htdocs_dirs(self):
-        """Return a list of directories with static resources (such as style
-        sheets, images, etc.)
-
-        Each item in the list must be a `(prefix, abspath)` tuple. The
-        `prefix` part defines the path in the URL that requests to these
-        resources are prefixed with.
-        
-        The `abspath` is the absolute path to the directory containing the
-        resources on the local file system.
-        """
-        return [('geotrac', resource_filename(__name__, 'htdocs'))]
-
-    def get_templates_dirs(self):
-        """Return a list of directories containing the provided template
-        files.
-        """
-        return []
-
-
 class IssueMap(Component):
     """add a map to the ticket locations"""
 
-    implements(ITicketSidebarProvider, IRequestFilter, ITemplateStreamFilter)
+    implements(ITicketSidebarProvider, ITemplateStreamFilter)
 
     wms_url = Option('geo', 'wms_url',
                      'http://maps.opengeo.org/geoserver/gwc/service/wms',
@@ -130,64 +108,6 @@ class IssueMap(Component):
     def content(self, req, ticket):
         return tag.div('', **dict(id="map", style="width: 600px; height: 300px"))
 
-    ### methods for IRequestFilter
-
-    """Extension point interface for components that want to filter HTTP
-    requests, before and/or after they are processed by the main handler."""
-
-    def post_process_request(self, req, template, data, content_type):
-        """Do any post-processing the request might need; typically adding
-        values to the template `data` dictionary, or changing template or
-        mime type.
-        
-        `data` may be update in place.
-
-        Always returns a tuple of (template, data, content_type), even if
-        unchanged.
-
-        Note that `template`, `data`, `content_type` will be `None` if:
-         - called when processing an error page
-         - the default request handler did not return any result
-
-        (Since 0.11)
-        """
-        # get the GeoTrac component
-        if not self.env.is_component_enabled(GeoTrac):
-            return stream
-        geotrac = self.env.components[GeoTrac]
-
-        # filter for tickets
-        if template == 'ticket.html':
-            try:
-                address, (geolat, geolon) = geotrac.locate_ticket(data['ticket'])
-                data['locations'] = [ {'geolat': geolat,
-                                       'geolon': geolon, }]
-            except GeolocationException:
-                data['locations'] = []
-                
-        # filter for queries
-        if template == 'query.html':
-            locations = []
-            for _ticket in data['tickets']:
-                ticket = Ticket(self.env, _ticket['id'])
-                try:
-                    address, (lat, lon) = geotrac.locate_ticket(ticket)
-                    locations.append({'geolat': lat, 'geolon': lon})
-                except GeolocationException:
-                    pass
-                        
-            # add the located tickets to a map
-            data['locations'] = locations
-
-        return (template, data, content_type)
-
-    def pre_process_request(self, req, handler):
-        """Called after initial handler selection, and can be used to change
-        the selected handler or redirect request.
-        
-        Always returns the request handler, even if unchanged.
-        """
-        return handler
 
     ### method for ITemplateStreamFilter
     ### Filter a Genshi event stream prior to rendering.
@@ -211,15 +131,12 @@ class IssueMap(Component):
 
         # filter for tickets
         if filename == 'ticket.html' and data['locations']:
-            stream |= Transformer('//head').append(tag.script('', src="http://www.openlayers.org/api/OpenLayers.js"))
-            stream |= Transformer('//head').append(self.mapscript(wms_url=self.wms_url, locations=data['locations']))
-            stream |= Transformer('//body').attr('onload', 'init()')
+            stream |= Transformer('//head').append(self.load_map(data['locations']))
 
         # filter for queries - add the located tickets to a map
         if filename == 'query.html' and data['locations']:
-            stream |= Transformer('//head').append(tag.script('', src="http://www.openlayers.org/api/OpenLayers.js"))
-            stream |= Transformer('//head').append(self.mapscript(wms_url=self.wms_url, locations=data['locations']))
-            stream |= Transformer('//body').attr('onload', 'init()')
+
+            stream |= Transformer('//head').append(self.load_map(data['locations']))
             if self.inject_map:
                 stream |= Transformer("//div[@id='content']").after(self.content(None, None))
                 
@@ -227,10 +144,17 @@ class IssueMap(Component):
 
     ### internal methods
 
-    def mapscript(self, **data):
+    def load_map(self, locations):
         """JS map for issues"""
-        template = loader.load('mapscript.html')
-        return template.generate(**data)
+
+        script = """$(document).ready(function() {
+      var locations = %s;
+      if (locations.length) {
+         map_locations(locations, '%s');
+      }
+      
+      })""" % (repr(locations), self.wms_url)
+        return tag.script(script, **{'type': 'text/javascript'})
 
 
 class MapDashboard(Component):

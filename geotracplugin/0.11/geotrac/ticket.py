@@ -15,6 +15,7 @@ from geotrac.utils import get_all_dict
 from geotrac.utils import get_column
 from geotrac.utils import get_first_row
 from geotrac.utils import get_scalar
+from pkg_resources import resource_filename
 from trac.config import Option, BoolOption
 from trac.core import *
 from trac.db import Table, Column, Index
@@ -22,9 +23,9 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
-
-
-# TODO: caching geolocation on the request
+from trac.web.api import IRequestFilter
+from trac.web.chrome import add_script
+from trac.web.chrome import ITemplateProvider
 
 class GeolocationException(Exception):
     """error for multiple and unfound locations"""
@@ -67,6 +68,8 @@ class GeoTrac(Component):
     implements(ICustomFieldProvider, 
                ITicketManipulator, 
                ITicketChangeListener, 
+               IRequestFilter,
+               ITemplateProvider,
                IEnvironmentSetupParticipant)
 
     ### configuration options
@@ -173,6 +176,94 @@ class GeoTrac(Component):
         # remove extraneous location data;
         # a new ticket could be made with the same id
         self.delete_location(ticket.id)
+
+
+    ### methods for IRequestFilter
+
+    """Extension point interface for components that want to filter HTTP
+    requests, before and/or after they are processed by the main handler."""
+
+    def post_process_request(self, req, template, data, content_type):
+        """Do any post-processing the request might need; typically adding
+        values to the template `data` dictionary, or changing template or
+        mime type.
+        
+        `data` may be update in place.
+
+        Always returns a tuple of (template, data, content_type), even if
+        unchanged.
+
+        Note that `template`, `data`, `content_type` will be `None` if:
+         - called when processing an error page
+         - the default request handler did not return any result
+
+        (Since 0.11)
+        """
+
+        # add necessary JS
+        if template == 'ticket.html' or template == 'query.html':
+
+            # add_script doesn't use URLs, so add OpenLayers script manually
+            scripts = req.chrome.setdefault('scripts', [])
+            scripts.append({'href': 'http://www.openlayers.org/api/OpenLayers.js', 
+                            'type': 'text/javascript'})
+            add_script(req, 'geotrac/js/mapscript.js')
+
+        # filter for tickets
+        if template == 'ticket.html':
+            try:
+                address, (geolat, geolon) = self.locate_ticket(data['ticket'])
+                data['locations'] = [ {'latitude': geolat,
+                                       'longitude': geolon, }]
+            except GeolocationException:
+                data['locations'] = []
+                
+        # filter for queries
+        if template == 'query.html':
+            locations = []
+            for _ticket in data['tickets']:
+                ticket = Ticket(self.env, _ticket['id'])
+                try:
+                    address, (lat, lon) = self.locate_ticket(ticket)
+                    locations.append({'latitude': lat, 'longitude': lon})
+                except GeolocationException:
+                    pass
+                        
+            # add the located tickets to a map
+            data['locations'] = locations
+
+        return (template, data, content_type)
+
+    def pre_process_request(self, req, handler):
+        """Called after initial handler selection, and can be used to change
+        the selected handler or redirect request.
+        
+        Always returns the request handler, even if unchanged.
+        """
+        return handler
+
+
+    ### methods for ITemplateProvider
+
+    def get_htdocs_dirs(self):
+        """Return a list of directories with static resources (such as style
+        sheets, images, etc.)
+
+        Each item in the list must be a `(prefix, abspath)` tuple. The
+        `prefix` part defines the path in the URL that requests to these
+        resources are prefixed with.
+        
+        The `abspath` is the absolute path to the directory containing the
+        resources on the local file system.
+        """
+        return [('geotrac', resource_filename(__name__, 'htdocs'))]
+
+    def get_templates_dirs(self):
+        """Return a list of directories containing the provided template
+        files.
+        """
+        return []
+
 
 
     ### methods for IEnvironmentSetupParticipant
