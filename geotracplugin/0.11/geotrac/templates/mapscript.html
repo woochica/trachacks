@@ -1,11 +1,10 @@
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:py="http://genshi.edgewall.org/">
-
-<script type="text/javascript">
-      
-  var map = null;
+  map = null;
   
-  function init(){
+  function map_locations(locations, wms_url){
+
+      if (map) {
+         map.destroy();
+      }  
 
       // this is the projection where lon, lat work
       var epsg4326 = new OpenLayers.Projection("EPSG:4326");
@@ -33,7 +32,7 @@
       // layer for the tiles
       var wms = new OpenLayers.Layer.WMS(
       "WMS Layer",
-      "${wms_url}",
+      wms_url,
       {layers: 'openstreetmap',
        format: 'image/png',} // use PNGs because they're cached
       );
@@ -47,16 +46,14 @@
       map.addLayers([wms, datalayer]);
 
       // add the point of interest to the data layer
-      <py:for each="location in locations">
-      point = new OpenLayers.Geometry.Point(${location['geolon']}, ${location['geolat']});
-      var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection));
-      datalayer.addFeatures([marker]);
-      </py:for>
+      
+      for (i in locations) {
+
+          var point = new OpenLayers.Geometry.Point(locations[i]['longitude'], locations[i]['latitude']);
+          var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection));
+          datalayer.addFeatures([marker]);
+      }
 
       // zoom in on the point of interest
       map.zoomToExtent(datalayer.getDataExtent());
-
       }
-</script>
-
-</html>
