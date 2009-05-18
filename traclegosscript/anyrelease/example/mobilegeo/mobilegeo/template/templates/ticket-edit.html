@@ -1,5 +1,6 @@
 <html xmlns:py="http://genshi.edgewall.org/" py:strip="True">
 
+<div class="edit">
 
 <div class="ticket-properties">
 
@@ -36,7 +37,7 @@
 
 	<div class="authorship">
 		<span py:if="ticket.exists" headers="h_reporter" class="searchable">Reported by ${authorinfo(ticket.reporter)}</span>
-		<span py:if="ticket.owner" headers="h_owner">Owned by ${ticket.owner and authorinfo(ticket.owner) or ''}</span>
+		<span py:if="ticket.exists" headers="h_owner">Owned by ${ticket.owner and authorinfo(ticket.owner) or ''}</span>
 	</div>
 
 	<div class="edit-activity">
@@ -329,6 +330,7 @@
  
 	
     </form>
+</div>
 
 </div>
 </html>
