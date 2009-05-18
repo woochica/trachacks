@@ -24,6 +24,7 @@ from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
+from trac.web.api import IRequestHandler
 from trac.web.chrome import add_script
 from trac.web.chrome import ITemplateProvider
 
@@ -69,6 +70,7 @@ class GeoTrac(Component):
                ITicketManipulator, 
                ITicketChangeListener, 
                IRequestFilter,
+               IRequestHandler,
                ITemplateProvider,
                IEnvironmentSetupParticipant)
 
@@ -243,6 +245,44 @@ class GeoTrac(Component):
         return handler
 
 
+    ### methods for IRequestHandler
+
+    """Extension point interface for request handlers."""
+
+    def match_request(self, req):
+        """Return whether the handler wants to process the given request."""
+        if req.path_info == '/locate':
+            return True
+
+    def process_request(self, req):
+        """Process the request. For ClearSilver, return a (template_name,
+        content_type) tuple, where `template` is the ClearSilver template to use
+        (either a `neo_cs.CS` object, or the file name of the template), and
+        `content_type` is the MIME type of the content. For Genshi, return a
+        (template_name, data, content_type) tuple, where `data` is a dictionary
+        of substitutions for the template.
+
+        For both templating systems, "text/html" is assumed if `content_type` is
+        `None`.
+
+        Note that if template processing should not occur, this method can
+        simply send the response itself and not return anything.
+        """
+        location = req.args.get('location')
+        try:
+            locations = [ self.geolocate(location) ]
+        except GeolocationException, e:
+            locations = e.locations
+        locations = [ { 'address': location[0],
+                        'latitude': location[1][0],
+                        'longitude': location[1][1] }
+                      for location in locations ]
+        content_type = 'application/json'
+        req.send_response(200)
+        req.send_header('Content-type', 'application/json;charset=utf-8')
+        req.end_headers()
+        req.write(repr(locations))
+
     ### methods for ITemplateProvider
 
     def get_htdocs_dirs(self):
@@ -264,6 +304,7 @@ class GeoTrac(Component):
         """
         return []
 
+    
 
 
     ### methods for IEnvironmentSetupParticipant
