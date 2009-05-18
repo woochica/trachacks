@@ -11,7 +11,6 @@ import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.IStorageEditorInput;
 import org.trachacks.wikieditor.eclipse.plugin.Images;
 import org.trachacks.wikieditor.eclipse.plugin.model.Page;
-import org.trachacks.wikieditor.model.PageVersion;
 
 /**
  * @author Matteo Merli

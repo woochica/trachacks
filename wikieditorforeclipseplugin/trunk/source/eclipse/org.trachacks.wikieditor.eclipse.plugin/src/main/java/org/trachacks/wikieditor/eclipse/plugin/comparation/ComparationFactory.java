@@ -40,8 +40,9 @@ public class ComparationFactory{
 			 */
 			@Override
 			public void saveChanges(IProgressMonitor monitor) throws CoreException {
-				page.edit(left.getText());
 				super.saveChanges(monitor);
+				String mergedContent = left.getText();
+				page.edit(mergedContent);
 
 				if(MessageDialog.openConfirm(
 						PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), 

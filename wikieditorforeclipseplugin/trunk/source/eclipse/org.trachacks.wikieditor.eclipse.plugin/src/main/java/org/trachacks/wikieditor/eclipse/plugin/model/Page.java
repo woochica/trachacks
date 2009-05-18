@@ -178,6 +178,7 @@ public class Page extends AbstractBaseObject {
 	 */
 	public void markAsMerged(int mergedVersionNumber) {
 		baseVersion.setVersion(mergedVersionNumber);
+		getWikiService().edit(baseVersion);
 		notifyChanged();
 	}
 
