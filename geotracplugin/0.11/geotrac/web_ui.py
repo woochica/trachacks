@@ -165,7 +165,10 @@ $("#field-location").change(function() {
 var url = "%s?location=" + escape($(this).val());
 // alert(url);
 $.getScript(url, function(data, textStatus) {
-alert(data);
+var locations = eval(data);
+for (location in locations) {
+alert(location);
+};
 });
 });
 });
