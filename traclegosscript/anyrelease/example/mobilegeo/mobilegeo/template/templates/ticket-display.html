@@ -224,9 +224,14 @@
 
 
 
-      <!--! Add a comment -->
+     
 
-
+<div py:if="1==2"> <!--! im just commenting this out until it's fixed -->
+	
+	
+	
+	<!--! Add a comment -->
+    
       <form py:if="not version and version != 0 and
                    ('TICKET_APPEND' in perm(ticket.resource) or
                     'TICKET_CHGPROP' in perm(ticket.resource) or
@@ -252,7 +257,7 @@
 	        </div>
 
 	   </form>
-
+</div>
 
 
 
