@@ -1,6 +1,5 @@
 import geopy
-
-from pkg_resources import resource_filename
+import simplejson
 
 from genshi.builder import tag
 from genshi.builder import Markup
@@ -8,6 +7,7 @@ from genshi.filters import Transformer
 from genshi.template import TemplateLoader
 from geotrac.ticket import GeolocationException
 from geotrac.ticket import GeoTrac
+from pkg_resources import resource_filename
 from ticketsidebarprovider import ITicketSidebarProvider
 from trac.config import BoolOption, Option
 from trac.core import *
@@ -132,13 +132,13 @@ class IssueMap(Component):
         # filter for tickets
         if filename == 'ticket.html' and data['locations']:
             stream |= Transformer('//head').append(self.load_map(data['locations']))
-            stream |= Transformer('//head').append(self.blur_map())
+#            stream |= Transformer('//head').append(self.blur_map())
 
         # filter for queries - add the located tickets to a map
         if filename == 'query.html' and data['locations']:
 
             stream |= Transformer('//head').append(self.load_map(data['locations']))
-            stream |= Transformer('//head').append(self.blur_map())
+#            stream |= Transformer('//head').append(self.blur_map())
             if self.inject_map:
                 stream |= Transformer("//div[@id='content']").after(self.content(None, None))
                 
@@ -155,7 +155,7 @@ class IssueMap(Component):
          map_locations(locations, '%s');
       }
       
-      })""" % (repr(locations), self.wms_url)
+      })""" % (simplejson.dumps(locations), self.wms_url)
         return tag.script(script, **{'type': 'text/javascript'})
 
 
@@ -243,17 +243,13 @@ class MapDashboard(Component):
             try:
                 
                 address, (lat, lon) = geotrac.locate_ticket(ticket)
-                locations.append({'geolat': lat,
-                                  'geolon': lon})
+                locations.append({'latitude': lat,
+                                  'longitude': lon})
             except GeolocationException:
                 continue
 
         add_script(req, 'common/js/query.js')
-        template = loader.load("mapscript.html")
-        mapscript = template.generate(wms_url=self.wms_url, locations=locations)
-
-        locations = []
-        return ('mapdashboard.html', dict(locations=locations, mapscript=mapscript), 
+        return ('mapdashboard.html', dict(locations=locations, dumps=simplejson.dumps, wms_url=self.wms_url), 
                                           'text/html')
 
     ### methods for INavigationContributor

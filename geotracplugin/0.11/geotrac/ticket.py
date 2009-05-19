@@ -208,7 +208,7 @@ class GeoTrac(Component):
 
             # add_script doesn't use URLs, so add OpenLayers script manually
             scripts = req.chrome.setdefault('scripts', [])
-            scripts.append({'href': 'http://www.openlayers.org/api/OpenLayers.js', 
+            scripts.append({'href': 'http://openlayers.org/api/2.8-rc2/OpenLayers.js', 
                             'type': 'text/javascript'})
             add_script(req, 'geotrac/js/mapscript.js')
 

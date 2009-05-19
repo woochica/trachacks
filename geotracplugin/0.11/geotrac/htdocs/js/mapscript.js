@@ -45,12 +45,38 @@ function map_locations(locations, wms_url){
     // add the layers to the map
     map.addLayers([wms, datalayer]);
 
+
+    // 
+    var selectfeature = new OpenLayers.Control.SelectFeature(datalayer);
+    map.addControl(selectfeature);
+    selectfeature.activate();
+
+    var onPopupClose = function() { selectfeature.unselectAll(); }
+	selectfeature.onSelect = function(feature){
+            var content = feature.attributes.content;
+            var popup = new OpenLayers.Popup.FramedCloud("chicken",
+                                                         feature.geometry.getBounds().getCenterLonLat(),
+            new OpenLayers.Size(100,100),
+            content,
+            null, true, onPopupClose);
+	    feature.popup = popup;
+        map.addPopup(popup);
+	};
+
+    selectfeature.onUnselect = function(feature){
+        if (feature.popup) {
+            map.removePopup(feature.popup);
+            feature.popup.destroy();
+            delete feature.popup;
+	}
+	};
+
     // add the point of interest to the data layer
       
     for (i in locations) {
 
         var point = new OpenLayers.Geometry.Point(locations[i]['longitude'], locations[i]['latitude']);
-        var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection));
+        var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection), {content: locations[i].content ? locations[i].content :  'Title'});
         datalayer.addFeatures([marker]);
     }
 
