@@ -162,9 +162,7 @@ class IssueMap(Component):
         script = """$(document).ready(function() {
 $("#field-location").change(function() {
 var url = "%s?location=" + escape($(this).val());
-// alert(url);
 $.getJSON(url, function(locations) {
-console.log(locations);
 if ( locations.length )
 {
  map_locations(locations, "%s");
