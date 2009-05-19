@@ -604,6 +604,11 @@ border : 1px solid #ccc;
 margin-bottom : 2em !important;
 }
 
+#propertyform #map {
+background : transparent url(./images/blank-map.jpg) !important;
+}
+
+
 .photos {
 margin-bottom : 2em;
 float : left;
