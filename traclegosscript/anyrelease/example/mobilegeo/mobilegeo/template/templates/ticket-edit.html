@@ -131,8 +131,8 @@
 	            </div>
 	
 			    <div class="attachment data" py:if="'ATTACHMENT_CREATE' in perm(ticket.resource.child('attachment'))">
-		            <input type="checkbox" name="attachment" checked="${'attachment' in req.args or None}" />
-		          	<label>Attach a File? <span class="explanation">(Upload on the next page)</span></label>
+		            <input id="attachment" type="checkbox" name="attachment" checked="${'attachment' in req.args or None}" />
+		          	<label for="attachment">Attach a File? <span class="explanation">(Upload on the next page)</span></label>
 		        </div>	
 		
 
