@@ -269,16 +269,22 @@ class GeoTrac(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
-        location = req.args.get('location')
+        location = req.args.get('location', '')
         print 'location: %s' % location
-        try:
-            locations = [ self.geolocate(location) ]
-        except GeolocationException, e:
-            locations = e.locations
-        locations = [ { 'address': location[0],
-                        'latitude': location[1][0],
-                        'longitude': location[1][1] }
-                      for location in locations ]
+        if location.strip():
+            try:
+                loc, (lat, lon) = self.geolocate(location)
+                locations = [ { 'address': loc,
+                                'latitude': lat,
+                                'longitude': lon, } ]
+            except GeolocationException, e:
+                locations = e.locations
+                locations = [ { 'address': location[0],
+                                'latitude': location[1][0],
+                                'longitude': location[1][1] }
+                              for location in locations ]
+        else:
+            locations = []
         content_type = 'application/json'
         req.send_response(200)
         req.send_header('Content-type', 'application/json;charset=utf-8')

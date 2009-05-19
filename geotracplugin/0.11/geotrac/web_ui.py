@@ -132,13 +132,13 @@ class IssueMap(Component):
         # filter for tickets
         if filename == 'ticket.html' and data['locations']:
             stream |= Transformer('//head').append(self.load_map(data['locations']))
-#            stream |= Transformer('//head').append(self.blur_map())
+            stream |= Transformer('//head').append(self.blur_map())
 
         # filter for queries - add the located tickets to a map
         if filename == 'query.html' and data['locations']:
 
             stream |= Transformer('//head').append(self.load_map(data['locations']))
-#            stream |= Transformer('//head').append(self.blur_map())
+            stream |= Transformer('//head').append(self.blur_map())
             if self.inject_map:
                 stream |= Transformer("//div[@id='content']").after(self.content(None, None))
                 
@@ -164,15 +164,16 @@ class IssueMap(Component):
 $("#field-location").change(function() {
 var url = "%s?location=" + escape($(this).val());
 // alert(url);
-$.getScript(url, function(data, textStatus) {
-var locations = eval(data);
-for (location in locations) {
-alert(location);
-};
+$.getJSON(url, function(locations) {
+console.log(locations);
+if ( locations.length )
+{
+ map_locations(locations, "%s");
+}
 });
 });
 });
-""" % self.env.abs_href('locate')
+""" % (self.env.abs_href('locate'), self.wms_url)
         return tag.script(script, **{'type': 'text/javascript'})
 
 class MapDashboard(Component):
