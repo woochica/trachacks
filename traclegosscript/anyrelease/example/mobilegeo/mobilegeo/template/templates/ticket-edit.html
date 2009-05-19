@@ -114,21 +114,27 @@
 				<div id="map" class="ticket-map"></div>
 
 				<div class="tags data">
-	              <label for="field-keywords">Keywords:</label>
+	              <label for="field-keywords">Tags: <span class="explanation">(Separate each tag with a comma)</span></label>
 	              <input type="text" name="field_keywords" id="field-keywords" value="${ticket.keywords}" />
 	            </div>
 
 	            <py:if test="'TICKET_ADMIN' in perm(ticket.resource)">
-	              <div class="reporter data" id="form-reporter">
+	              <div class="reporter data" id="form-reporter" style="display:none">
 	                <label for="field-reporter">Reporter:</label>
-	                <input type="text" id="field-reporter" name="field_reporter" value="${ticket.reporter}" />
+	                <input type="hidden" id="field-reporter" name="field_reporter" value="${ticket.reporter}" />
 	              </div>
 	            </py:if>
 
 				<div class="follower data">
-	              <label for="field-cc">Followers:</label>
+	              <label for="field-cc">Followers: <span class="explanation">(CC emails about this issue. Separate addresses with a comma)</span></label>
 	              <input type="text" name="field_cc" value="${ticket.cc}" title="Space or comma delimited email addresses and usernames are accepted." id="field-cc" autocomplete="off" class="ac_input"/>
 	            </div>
+	
+			    <div class="attachment data" py:if="'ATTACHMENT_CREATE' in perm(ticket.resource.child('attachment'))">
+		            <input type="checkbox" name="attachment" checked="${'attachment' in req.args or None}" />
+		          	<label>Attach a File? <span class="explanation">(Upload on the next page)</span></label>
+		        </div>	
+		
 
 			</div>
 
@@ -229,12 +235,7 @@
 			          </fieldset>
 			        </py:if>
 
-			        <p py:if="not ticket.exists and 'ATTACHMENT_CREATE' in perm(ticket.resource.child('attachment'))">
-			          <label>
-			            <input type="checkbox" name="attachment" checked="${'attachment' in req.args or None}" />
-			            I have files to attach to this ticket
-			          </label>
-			        </p>
+
 			        <div class="buttons">
 			          <input py:if="not ticket.exists" type="hidden" name="field_status" value="new" />
 			          <py:if test="ticket.exists">
@@ -246,7 +247,7 @@
 			<py:if test="1==2"> <!-- temporarily commenting this out until fixed -->
 			          <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
 			</py:if>
-			          <input type="submit" name="submit" value="${ticket.exists and 'Submit changes' or 'Create ticket'}" />
+			          <input type="submit" name="submit" value="${ticket.exists and 'Update Issue' or 'Report Issue'}" />
 			        </div>
 
 		

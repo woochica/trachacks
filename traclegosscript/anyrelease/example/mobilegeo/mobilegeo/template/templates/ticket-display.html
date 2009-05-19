@@ -47,7 +47,7 @@
 	        <span class="modified-date" py:if="ticket.time_changed != ticket.time_created">Last modified ${dateinfo(ticket.time_changed)} ago</span>
     	</div>
 
-		<a class="ticket-edit" href="?edit">Edit</a>
+		<a py:if="'TICKET_MODIFY' in req.perm" class="ticket-edit" href="?edit">Edit</a>
 
 	</div>
 
@@ -221,12 +221,48 @@
 
 
 
+	      <py:if test="ticket.exists">
+
+			<py:if test="ticket.exists and changes">
+	          <div id="changelog" class="collapsed">
+
+		          <h2 class="foldable"><a href="#no1">Comments</a></h2>
+
+	            <form py:for="change in changes" method="get" action="#comment" class="printableform">
+	              <div class="change" py:if="'attachment' not in change['fields'] and change['comment'].strip()">
+	                <h3 class="change" id="${'cnum' in change and 'comment:%d' % change.cnum or None}">
+	                  <span class="threading" py:if="replies and 'cnum' in change"
+	                        py:with="change_replies = replies.get(str(change.cnum), [])">
+	                    <py:if test="change_replies or 'replyto' in change">
+	                      <py:if test="'replyto' in change">
+	                        in reply to: ${commentref('&uarr;&nbsp;', change.replyto)}
+	                        <py:if test="change_replies">; </py:if>
+	                      </py:if>
+	                      <py:if test="change_replies">follow-up${len(change_replies) > 1 and 's' or ''}:
+	                        <py:for each="reply in change_replies">
+	                          ${commentref('&darr;&nbsp;', reply)}
+	                        </py:for></py:if>
+	                    </py:if>
+	                    &nbsp;
+	                  </span>
+	                  ${dateinfo(change.date)} ago by ${authorinfo(change.author)}
+	                </h3>
+	                 <div class="comment searchable">
+		             <p>${change['comment']}</p>
+					</div>
+	<!--                ${display_change(change)} -->
+	              </div>
+	            </form>
+	          </div>
+	        </py:if>
+	      </py:if>
+	      <!--! End of the section we don't show on initial new tickets -->
+
 
 
 
      
 
-<div py:if="1==2"> <!--! im just commenting this out until it's fixed -->
 	
 	
 	
@@ -252,49 +288,18 @@
 	            <input type="hidden" name="replyto" value="${replyto}" />
 	            <input type="hidden" name="cnum" value="${cnum}" />
 	          </py:if>
-	          <input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
-	          <input type="submit" name="submit" value="${ticket.exists and 'Submit changes' or 'Create ticket'}" />
+			  <input type="hidden" name="action" value="leave" />
+
+			<py:if test="False"> <!-- temporarily commenting this out until fixed -->
+				<input type="submit" name="preview" value="Preview" accesskey="r" />&nbsp;
+	        </py:if>
+	
+	  		<input type="submit" name="submit" value="Submit Comment" />
 	        </div>
 
 	   </form>
-</div>
 
 
-
-      <py:if test="ticket.exists">
-
-		<py:if test="ticket.exists and changes">
-          <div id="changelog" class="collapsed">
-
-	          <h2 class="foldable"><a href="#no1">Change History</a></h2>
-
-            <form py:for="change in changes" method="get" action="#comment" class="printableform">
-              <div class="change">
-                <h3 class="change" id="${'cnum' in change and 'comment:%d' % change.cnum or None}">
-                  <span class="threading" py:if="replies and 'cnum' in change"
-                        py:with="change_replies = replies.get(str(change.cnum), [])">
-                    <py:if test="change_replies or 'replyto' in change">
-                      <py:if test="'replyto' in change">
-                        in reply to: ${commentref('&uarr;&nbsp;', change.replyto)}
-                        <py:if test="change_replies">; </py:if>
-                      </py:if>
-                      <py:if test="change_replies">follow-up${len(change_replies) > 1 and 's' or ''}:
-                        <py:for each="reply in change_replies">
-                          ${commentref('&darr;&nbsp;', reply)}
-                        </py:for></py:if>
-                    </py:if>
-                    &nbsp;
-                  </span>
-                  Changed ${dateinfo(change.date)} ago by ${authorinfo(change.author)}
-                </h3>
-
-                ${display_change(change)}
-              </div>
-            </form>
-          </div>
-        </py:if>
-      </py:if>
-      <!--! End of the section we don't show on initial new tickets -->
 
 
 
