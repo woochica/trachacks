@@ -275,6 +275,10 @@
           </div>
         </py:if>
 
+
+
+		<py:if test="1==2"> <!-- temporarily commenting this out until fixed -->
+
         <!-- Ticket Box (ticket fields along with description) -->
         <div id="ticket" py:if="ticket.exists or preview_mode" class="${preview_mode and 'ticketdraft' or None}">
 
@@ -327,6 +331,12 @@
           </div>
 
         </div>
+
+		</py:if>
+
+
+
+
       </fieldset>
 
 
