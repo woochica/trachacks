@@ -40,11 +40,12 @@
 		    </form>		
 		
 		
-			<div id="subhead">
-				<div class="tagline">Cite.it is a tool to track problems in your area</div>
-				<div class="cite-button">
-					<span class="know">Know of a problem?</span>
-					<a href="${req.href('newticket')}">Cite it!</a>
+			<div id="subhead" class="enterprise-edition">
+				<div class="tagline">Public Space Issue Management</div><!-- was: Cite.it is a tool to track problems in your area -->
+				<div class="report-button"> <!-- was cite-button -->
+					
+					<!--<span class="know">Know of a problem?</span> -->
+					<a href="${req.href('newticket')}">Report it!</a>
 				</div>
 			</div>
 		
@@ -97,13 +98,9 @@
 
     <div id="footer" xml:lang="en">
 	<div class="content">
-      <a id="tracpowered" href="http://trac.edgewall.org/"><img
-        src="${chrome.htdocs_location}trac_logo_mini.png" height="30"
-        width="107" alt="Trac Powered"/></a>
-      <p class="left">
-        Powered by <a href="${href.about()}"><strong>Trac ${trac.version}</strong></a><br />
-        By <a href="http://www.edgewall.org/">Edgewall Software</a>.
-      </p>
+		<p>
+		${project.name} is produced by <a href="http://www.topplabs.org">TOPP Labs</a>. Powered by <a href="http://trac.edgewall.org/">Trac</a>. Maps displayed via <a href="http://opengeo.org/">OpenGeo</a>.
+		</p>
       <p class="right">${chrome.footer}</p>
 	</div>
     </div>
