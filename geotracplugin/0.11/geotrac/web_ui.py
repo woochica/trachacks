@@ -96,7 +96,6 @@ class IssueMap(Component):
             return False
         geotrac = self.env.components[GeoTrac]
 
-
         # geolocate the issue
         try:
             address, (lat, lon) = geotrac.locate_ticket(ticket)
@@ -130,15 +129,15 @@ class IssueMap(Component):
         geotrac = self.env.components[GeoTrac]
 
         # filter for tickets
-        if filename == 'ticket.html' and data['locations']:
-            stream |= Transformer('//head').append(self.load_map(data['locations']))
+        if filename == 'ticket.html':
+            if data['locations']:
+                stream |= Transformer('//head').append(self.load_map(data['locations']))
             stream |= Transformer('//head').append(self.blur_map())
 
         # filter for queries - add the located tickets to a map
         if filename == 'query.html' and data['locations']:
 
             stream |= Transformer('//head').append(self.load_map(data['locations']))
-            stream |= Transformer('//head').append(self.blur_map())
             if self.inject_map:
                 stream |= Transformer("//div[@id='content']").after(self.content(None, None))
                 
