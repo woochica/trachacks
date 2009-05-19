@@ -1,0 +1,4 @@
+# $Id$
+
+from precodebrowser import *
+
