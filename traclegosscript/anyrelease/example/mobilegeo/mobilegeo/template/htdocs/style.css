@@ -609,6 +609,10 @@ background : transparent url(./images/blank-map.jpg) !important;
 }
 
 
+#map_OpenLayers_ViewPort {
+padding : 0 !important;
+}
+
 .photos {
 margin-bottom : 2em;
 float : left;
@@ -810,7 +814,7 @@ margin-left : 0;
 width : 100%;
 clear : both;
 float : left;
-margin-bottom : 5em;
+margin-bottom : 2em;
 }
 
 
@@ -867,9 +871,24 @@ margin-top : 1em !important;
 display : block;
 }
 
+
+.content-meta .data label {
+color : #3D3A3D !important;
+}
+
+.data label .explanation {
+font-size : .8em;
+color : #959595;
+}
+
 .content-meta .data input {
 width : 420px;
 font-size : 1.5em;
+}
+
+.content-meta .attachment input {
+float : left;
+margin-right : .5em;
 }
 
 #attachfile input {
@@ -990,6 +1009,10 @@ width : 950px;
 padding : 0;
 }
 
+
+.buttons {
+text-align : right;
+}
 
 
 
