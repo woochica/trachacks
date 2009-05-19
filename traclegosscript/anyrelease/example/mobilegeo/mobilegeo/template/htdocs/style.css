@@ -688,6 +688,7 @@ color : #000;
 
 .ticket-properties div {
 float : left;
+margin-top : .2em;
 line-height : 1.75em;
 }
 
