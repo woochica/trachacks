@@ -26,6 +26,7 @@ from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
 from trac.web.api import IRequestHandler
+from trac.web.api import RequestDone
 from trac.web.chrome import add_script
 from trac.web.chrome import ITemplateProvider
 
@@ -273,26 +274,21 @@ class GeoTrac(Component):
         simply send the response itself and not return anything.
         """
         location = req.args.get('location', '')
-        print 'location: %s' % location
-        if location.strip():
-            try:
-                loc, (lat, lon) = self.geolocate(location)
-                locations = [ { 'address': loc,
-                                'latitude': lat,
-                                'longitude': lon, } ]
-            except GeolocationException, e:
-                locations = e.locations
-                locations = [ { 'address': location[0],
-                                'latitude': location[1][0],
-                                'longitude': location[1][1] }
-                              for location in locations ]
-        else:
-            locations = []
+
+        try:
+            loc, (lat, lon) = self.geolocate(location)
+            locations = {'locations': [ { 'address': loc,
+                                          'latitude': lat,
+                                          'longitude': lon, } ]}
+        except GeolocationException, e:
+            locations = e.locations
+            locations = {'locations': [ { 'address': location[0],
+                                          'latitude': location[1][0],
+                                          'longitude': location[1][1] }
+                                        for location in locations ],
+                         'error': e.html()}
         content_type = 'application/json'
-        req.send_response(200)
-        req.send_header('Content-type', 'application/json;charset=utf-8')
-        req.end_headers()
-        req.write(simplejson.dumps(locations))
+        req.send(simplejson.dumps(locations), content_type=content_type)
 
     ### methods for ITemplateProvider
 

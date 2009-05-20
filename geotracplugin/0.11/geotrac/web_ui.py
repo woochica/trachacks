@@ -88,24 +88,10 @@ class IssueMap(Component):
     ### methods for ITicketSidebarProvider
 
     def enabled(self, req, ticket):
-
-        if not self.inject_map:
-            return False
-
-        if not self.env.is_component_enabled(GeoTrac):
-            return False
-        geotrac = self.env.components[GeoTrac]
-
-        # geolocate the issue
-        try:
-            address, (lat, lon) = geotrac.locate_ticket(ticket)
-        except GeolocationException:
-            return False
-
-        return True
+        return self.inject_map
 
     def content(self, req, ticket):
-        return tag.div('', **dict(id="map", style="width: 600px; height: 300px"))
+        return tag.div(ticket['location'], **dict(id="map", style="width: 600px; height: 300px"))
 
 
     ### method for ITemplateStreamFilter
@@ -163,9 +149,9 @@ class IssueMap(Component):
 $("#field-location").change(function() {
 var url = "%s?location=" + escape($(this).val());
 $.getJSON(url, function(locations) {
-if ( locations.length )
+if ( ! locations.error )
 {
- map_locations(locations, "%s");
+ map_locations(locations.locations, "%s");
 }
 });
 });
