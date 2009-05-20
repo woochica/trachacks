@@ -570,8 +570,17 @@ padding : 0;
 
 
 .content form .wikitoolbar {
-padding : 0;
-margin-left : 2px;
+padding : 0 3px 0 0;
+width : 100%;
+background-color : #F2F2F2;
+}
+
+.iefix .wikitoolbar {
+padding-right : 9px !important;
+}
+
+.content form .wikitoolbar #img {
+border-right : 1px solid #ccc;
 }
 
 .content #properties textarea {
@@ -601,7 +610,7 @@ border : 1px solid #ccc;
 }
 
 #map {
-margin-bottom : 2em !important;
+margin-bottom : 2.5em !important;
 }
 
 #propertyform #map {
@@ -745,7 +754,14 @@ background-position : 0 -23px;
 background-position : 0 -46px;
 }
 
+fieldset .ticket-heading .summary, 
+fieldset .ticket-heading .location {
+margin-bottom : .5em;
+}
 
+fieldset .ticket-heading input {
+margin : 0;
+}
 
 
 .ticket-heading {
@@ -779,8 +795,9 @@ border-bottom-color : #ccc;
 }
 
 
-.ticket-heading .location input {
-width : 409px;
+.ticket-heading .location input, 
+.ticket-heading .location {
+width : 416px !important;
 
 margin-right : 0;
 margin-left : 0;
@@ -858,14 +875,18 @@ width : 400px;
 
 
 .content-meta .data {
-margin-top : 2.5em;
+margin-bottom : 2.5em !important ;
 float : left;
 clear : both;
 width : 430px;
 }
 
 #propertyform .content-meta .data {
-margin-top : 1em !important;
+margin-top : 0 !important;
+}
+
+.content form#propertyform div {
+padding-bottom : .001em;
 }
 
 .data label {
@@ -1023,4 +1044,13 @@ Content Pages */
 
 #content {
 padding : 17px;
+}
+
+
+/*
+_______________________________
+Query / report pages */
+
+h2.report-result {
+clear : both;
 }
