@@ -1,3 +1,5 @@
+// from http://groups.google.com/group/jquery-en/browse_thread/thread/c43ee339e0b3960f/527c5ab71c2e92bc
+
 jQuery.query = function(q) { 
          var r = {}; 
          q = q.replace(/^\?/,''); // remove the leading ? 
