@@ -590,6 +590,7 @@ padding : 0;
 
 fieldset#properties {
 border : none;
+float : left;
 }
 
 fieldset#properties legend {
@@ -889,6 +890,10 @@ margin-top : 0 !important;
 padding-bottom : .001em;
 }
 
+.content form#propertyform div.field {
+float : left;
+}
+
 .data label {
 display : block;
 }
@@ -1031,11 +1036,10 @@ width : 950px;
 padding : 0;
 }
 
-
 .buttons {
 text-align : right;
+clear : both;
 }
-
 
 
 /*
