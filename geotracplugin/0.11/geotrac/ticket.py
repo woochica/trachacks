@@ -228,7 +228,10 @@ class GeoTrac(Component):
                 ticket = Ticket(self.env, _ticket['id'])
                 try:
                     address, (lat, lon) = self.locate_ticket(ticket)
-                    locations.append({'latitude': lat, 'longitude': lon})
+                    content = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
+ #                   content = tag.a(ticket['summary'], href=req.href('ticket', ticket.id))
+
+                    locations.append({'latitude': lat, 'longitude': lon, 'content': content})
                 except GeolocationException:
                     pass
                         

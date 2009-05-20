@@ -54,13 +54,15 @@ function map_locations(locations, wms_url){
     var onPopupClose = function() { selectfeature.unselectAll(); }
 	selectfeature.onSelect = function(feature){
             var content = feature.attributes.content;
-            var popup = new OpenLayers.Popup.FramedCloud("chicken",
-                                                         feature.geometry.getBounds().getCenterLonLat(),
-            new OpenLayers.Size(100,100),
-            content,
-            null, true, onPopupClose);
-	    feature.popup = popup;
-        map.addPopup(popup);
+            if ( content ) {
+                var popup = new OpenLayers.Popup.FramedCloud("chicken",
+                                                             feature.geometry.getBounds().getCenterLonLat(),
+                                                             new OpenLayers.Size(100,100),
+                                                             content,
+                                                             null, true, onPopupClose);
+                feature.popup = popup;
+                map.addPopup(popup);
+            }
 	};
 
     selectfeature.onUnselect = function(feature){
@@ -76,7 +78,7 @@ function map_locations(locations, wms_url){
     for (i in locations) {
 
         var point = new OpenLayers.Geometry.Point(locations[i]['longitude'], locations[i]['latitude']);
-        var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection), {content: locations[i].content ? locations[i].content :  'Title'});
+        var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection), {content: locations[i].content});
         datalayer.addFeatures([marker]);
     }
 

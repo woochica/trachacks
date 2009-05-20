@@ -11,7 +11,7 @@
 <script src="${req.href('chrome/geotrac/js/mapscript.js')}"></script>
 <script type="text/javascript">
 $(document).ready(function() { 
-var locations = ${dumps(locations)};
+var locations = ${locations};
 map_locations(locations, "${wms_url}");
 });
 </script>

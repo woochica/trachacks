@@ -155,7 +155,7 @@ class IssueMap(Component):
       }
       
       })""" % (simplejson.dumps(locations), self.wms_url)
-        return tag.script(script, **{'type': 'text/javascript'})
+        return tag.script(Markup(script), **{'type': 'text/javascript'})
 
 
     def blur_map(self):
@@ -241,13 +241,15 @@ class MapDashboard(Component):
             try:
                 
                 address, (lat, lon) = geotrac.locate_ticket(ticket)
+                content = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
                 locations.append({'latitude': lat,
-                                  'longitude': lon})
+                                  'longitude': lon,
+                                  'content': Markup(content)})
             except GeolocationException:
                 continue
 
         add_script(req, 'common/js/query.js')
-        return ('mapdashboard.html', dict(locations=locations, dumps=simplejson.dumps, wms_url=self.wms_url), 
+        return ('mapdashboard.html', dict(locations=Markup(simplejson.dumps(locations)), wms_url=self.wms_url), 
                                           'text/html')
 
     ### methods for INavigationContributor
