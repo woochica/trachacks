@@ -125,6 +125,14 @@ class IssueMap(Component):
             stream |= Transformer('//head').append(self.load_map(data['locations']))
             if self.inject_map:
                 stream |= Transformer("//div[@id='content']").after(self.content(None, None))
+
+        # filter for queries - add the located tickets to a map
+        if (filename == 'query.html' or filename == 'report_view.html') and data['locations']:
+
+            stream |= Transformer('//head').append(self.load_map(data['locations']))
+            if self.inject_map:
+                stream |= Transformer("//div[@id='content']").after(self.content(None, None))
+
                 
         return stream
 

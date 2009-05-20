@@ -204,7 +204,8 @@ class GeoTrac(Component):
         """
 
         # add necessary JS
-        if template == 'ticket.html' or template == 'query.html':
+        # TODO : add only the JS necessary for the page viewed
+        if template in ['ticket.html', 'query.html', 'report_view.html']:
 
             # add_script doesn't use URLs, so add OpenLayers script manually
             scripts = req.chrome.setdefault('scripts', [])
@@ -225,20 +226,17 @@ class GeoTrac(Component):
                 
         # filter for queries
         if template == 'query.html':
-            locations = []
-            for _ticket in data['tickets']:
-                ticket = Ticket(self.env, _ticket['id'])
-                try:
-                    address, (lat, lon) = self.locate_ticket(ticket)
-                    content = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
- #                   content = tag.a(ticket['summary'], href=req.href('ticket', ticket.id))
-
-                    locations.append({'latitude': lat, 'longitude': lon, 'content': content})
-                except GeolocationException:
-                    pass
-                        
             # add the located tickets to a map
-            data['locations'] = locations
+            tickets = [ i['id'] for i in data['tickets'] ]
+            data['locations'] = self.locate_tickets(tickets, req)
+
+        if template == 'report_view.html':
+            tickets = set([])
+            for group in data['row_groups']:
+                for row in group[1]:
+                    if row.has_key('id'):
+                        tickets.add(row['id'])
+            data['locations'] = self.locate_tickets(tickets, req)
 
         return (template, data, content_type)
 
@@ -313,8 +311,6 @@ class GeoTrac(Component):
         return []
 
     
-
-
     ### methods for IEnvironmentSetupParticipant
 
     """Extension point interface for components that need to participate in the
@@ -446,6 +442,26 @@ class GeoTrac(Component):
         if ticket.id:
             self.set_location(ticket.id, lat, lon)
         return location, (lat, lon)
+
+    def locate_tickets(self, tickets, req=None):
+        locations = []
+        for ticket in tickets:
+            if isinstance(ticket, basestring):
+                try:
+                    ticket = int(ticket)
+                except ValueError:
+                    continue
+            if isinstance(ticket, int):
+                ticket = Ticket(self.env, ticket)
+            try:
+                address, (lat, lon) = self.locate_ticket(ticket)
+                location = {'latitude': lat, 'longitude': lon, }
+                if req:
+                    location['content'] = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
+                locations.append(location)
+            except GeolocationException:
+                pass
+        return locations
 
     def set_location(self, ticket, lat, lon):
         """
