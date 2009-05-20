@@ -91,7 +91,7 @@ class IssueMap(Component):
         return self.inject_map
 
     def content(self, req, ticket):
-        return tag.div(ticket['location'], **dict(id="map", style="width: 600px; height: 300px"))
+        return tag.div('', **dict(id="map", style="width: 600px; height: 300px"))
 
 
     ### method for ITemplateStreamFilter
@@ -146,10 +146,22 @@ class IssueMap(Component):
 
     def blur_map(self):
         script = """$(document).ready(function() {
+location_error = false;
 $("#field-location").change(function() {
 var url = "%s?location=" + escape($(this).val());
+
+if(location_error)
+{
+  $("#warning").remove();
+}
+
 $.getJSON(url, function(locations) {
-if ( ! locations.error )
+if ( locations.error )
+{
+  location_error = true;
+  $("#ctxtnav").after('<div id="warning" class="system-message"><strong>Warning: </strong> ' + locations.error + '</div>');
+}
+else
 {
  map_locations(locations.locations, "%s");
 }
@@ -157,7 +169,7 @@ if ( ! locations.error )
 });
 });
 """ % (self.env.abs_href('locate'), self.wms_url)
-        return tag.script(script, **{'type': 'text/javascript'})
+        return tag.script(Markup(script), **{'type': 'text/javascript'})
 
 class MapDashboard(Component):
 
