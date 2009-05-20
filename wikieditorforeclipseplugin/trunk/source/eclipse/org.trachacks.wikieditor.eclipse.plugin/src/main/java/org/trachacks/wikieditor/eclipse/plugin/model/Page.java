@@ -9,6 +9,7 @@ import org.trachacks.wikieditor.model.PageInfo;
 import org.trachacks.wikieditor.model.PageVersion;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
 import org.trachacks.wikieditor.model.exception.PageNotFoundException;
+import org.trachacks.wikieditor.model.exception.PageNotModifiedException;
 import org.trachacks.wikieditor.model.exception.PageVersionNotFoundException;
 import org.trachacks.wikieditor.service.WikiService;
 
@@ -142,7 +143,7 @@ public class Page extends AbstractBaseObject {
 	 * 
 	 * @see {@link #commit(String, boolean)} for isMinorEdit = false
 	 */
-	public void commit(String comment) throws ConcurrentEditException {
+	public void commit(String comment) throws ConcurrentEditException, PageNotModifiedException {
 		commit(comment, false);
 	}
 
@@ -153,7 +154,7 @@ public class Page extends AbstractBaseObject {
 	 * @throws ConcurrentEditException
 	 * @see org.trachacks.wikieditor.service.WikiService#commit(org.trachacks.wikieditor.model.PageVersion)
 	 */
-	public void commit(String comment, boolean isMinorEdit) throws ConcurrentEditException {
+	public void commit(String comment, boolean isMinorEdit) throws ConcurrentEditException, PageNotModifiedException {
 		baseVersion.setComment(comment);
 		this.baseVersion = getWikiService().commit(baseVersion, isMinorEdit);
 		notifyChanged();
@@ -164,7 +165,7 @@ public class Page extends AbstractBaseObject {
 	 * @return
 	 * @see org.trachacks.wikieditor.service.WikiService#forceCommit(org.trachacks.wikieditor.model.PageVersion)
 	 */
-	public void forceCommit(String comment) {
+	public void forceCommit(String comment) throws PageNotModifiedException {
 		baseVersion.setComment(comment);
 		getWikiService().forceCommit(baseVersion);
 		this.baseVersion = null;

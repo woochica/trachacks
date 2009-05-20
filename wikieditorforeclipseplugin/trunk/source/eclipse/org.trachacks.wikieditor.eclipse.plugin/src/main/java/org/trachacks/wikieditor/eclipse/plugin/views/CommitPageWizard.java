@@ -25,6 +25,7 @@ import org.trachacks.wikieditor.eclipse.plugin.views.util.LabelTextArea;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.LabelTextField;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.Labels;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
+import org.trachacks.wikieditor.model.exception.PageNotModifiedException;
 
 /**
  * @author ivan
@@ -60,8 +61,9 @@ public class CommitPageWizard  extends Wizard implements INewWizard{
 	public boolean performFinish() {
 		String comment = commitDetailsPage.comment.getValue();
 		boolean isMinorEdit = StringUtils.isBlank(comment);
+		Page page = commitDetailsPage.page; 
 		try {
-			commitDetailsPage.page.commit(comment, isMinorEdit);
+			page.commit(comment, isMinorEdit);
 		} catch (ConcurrentEditException e) {
 			Logger.getAnonymousLogger().log(Level.INFO, e.getMessage(), e);
 			MessageDialog.openError(getShell(), 
@@ -69,6 +71,11 @@ public class CommitPageWizard  extends Wizard implements INewWizard{
 					Labels.getText("commitPageWizard.concurrentEditError.message")); //$NON-NLS-1$
 			commitDetailsPage.setPageComplete(false);
 			return false;
+		} catch (PageNotModifiedException e) {
+			MessageDialog.openInformation(getShell(),
+					Labels.getText("commitPageWizard.pageNotModified.title"),  //$NON-NLS-1$
+					Labels.getText("commitPageWizard.pageNotModified.message")); //$NON-NLS-1$
+			page.unedit();
 		}
 		return true;
 	}

@@ -13,6 +13,7 @@ import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
 import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
 import org.trachacks.wikieditor.model.exception.PageNotFoundException;
+import org.trachacks.wikieditor.model.exception.PageNotModifiedException;
 import org.trachacks.wikieditor.model.exception.PageVersionNotFoundException;
 import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
@@ -32,10 +33,10 @@ public interface WikiService {
 	public boolean isLocallyEdited(String pageName);
 	public PageVersion loadPageVersion(String pageName) throws PageNotFoundException;
 	public PageVersion edit(PageVersion pageVersion);
-	public PageVersion commit(PageVersion pageVersion) throws ConcurrentEditException;
-	public PageVersion commit(PageVersion pageVersion, boolean isMinorEdit) throws ConcurrentEditException;
+	public PageVersion commit(PageVersion pageVersion) throws ConcurrentEditException, PageNotModifiedException;
+	public PageVersion commit(PageVersion pageVersion, boolean isMinorEdit) throws ConcurrentEditException, PageNotModifiedException;
 	public PageVersion unedit(PageVersion pageVersion);
-	public PageVersion forceCommit(PageVersion pageVersion);
+	public PageVersion forceCommit(PageVersion pageVersion) throws PageNotModifiedException;
 	public PageVersion getLatestVersion(String pageName) throws PageNotFoundException;
 	
 	public  boolean deletePage(String name) throws PageNotFoundException, PermissionDeniedException;

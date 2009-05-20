@@ -4,11 +4,11 @@
 package org.trachacks.wikieditor.rpc;
 
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.junit.After;
@@ -20,6 +20,7 @@ import org.trachacks.wikieditor.model.ServerDetails;
 import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
 import org.trachacks.wikieditor.model.exception.PageNotFoundException;
+import org.trachacks.wikieditor.model.exception.PageNotModifiedException;
 import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
 
@@ -140,6 +141,27 @@ public class WikiClientErrorsTest extends AbstractBaseTest{
 			fail("Exception");
 		} catch (Exception e) {
 			assertTrue("Caugth Exception: " + e.getClass(), e instanceof PermissionDeniedException);
+		}
+	}
+
+	/**
+	 * Test method for {@link org.trachacks.wikieditor.rpc.WikiClientImpl#savePageVersion(java.lang.String, java.lang.String, java.lang.String, int, boolean)}.
+	 */
+	@Test
+	public final void testPageNotModifiedException() throws Exception {
+		ServerDetails server = getTestServer();
+		WikiClient wikiClient = new WikiClientImpl(server);
+		String pageName = randomTestPageName + System.currentTimeMillis();
+		PageVersion pageVersion = wikiClient.savePageVersion(pageName, pageContent, "First Edit");
+		assertNotNull(pageVersion);
+		assertEquals("PageName", pageName, pageVersion.getName());
+		assertEquals("Contents", pageContent, pageVersion.getContent());
+		assertEquals("Version", (int)1, (int)pageVersion.getVersion());
+		try {
+			wikiClient.savePageVersion(pageName, pageContent, "Second Edit");
+			fail("PageNotModifiedException not thrown");
+		} catch (Exception e) {
+			assertTrue("PageNotModified Exception", e instanceof PageNotModifiedException);
 		}
 	}
 }

@@ -14,6 +14,7 @@ import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
 import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
 import org.trachacks.wikieditor.model.exception.PageNotFoundException;
+import org.trachacks.wikieditor.model.exception.PageNotModifiedException;
 import org.trachacks.wikieditor.model.exception.PageVersionNotFoundException;
 import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
@@ -41,8 +42,8 @@ public interface WikiClient {
 	
 	public PageVersion getPageVersion(String pageName) throws PageNotFoundException;
 	public PageVersion getPageVersion(String pageName, int version) throws PageNotFoundException, PageVersionNotFoundException;
-	public PageVersion savePageVersion(String name, String content, String comment, int baseVersion, boolean isMinorEdit) throws ConcurrentEditException;
-	public PageVersion savePageVersion(String name, String content, String comment);
+	public PageVersion savePageVersion(String name, String content, String comment, int baseVersion, boolean isMinorEdit) throws ConcurrentEditException, PageNotModifiedException;
+	public PageVersion savePageVersion(String name, String content, String comment) throws PageNotModifiedException;
 	
 	public  boolean deletePage(String name) throws PageNotFoundException, PermissionDeniedException;
 	public  boolean deletePageVersion(String name, int version) throws PageNotFoundException, PageVersionNotFoundException, PermissionDeniedException;

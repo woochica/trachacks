@@ -17,6 +17,7 @@ import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
 import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
 import org.trachacks.wikieditor.model.exception.PageNotFoundException;
+import org.trachacks.wikieditor.model.exception.PageNotModifiedException;
 import org.trachacks.wikieditor.model.exception.PageVersionNotFoundException;
 import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
@@ -95,7 +96,7 @@ public class WikiClientImpl implements WikiClient {
 	/**
 	 * 
 	 */
-	public PageVersion savePageVersion(String name, String content, String comment, int baseVersion, boolean isMinorEdit) throws ConcurrentEditException {
+	public PageVersion savePageVersion(String name, String content, String comment, int baseVersion, boolean isMinorEdit) throws ConcurrentEditException, PageNotModifiedException {
 		
 		
 		
@@ -114,7 +115,7 @@ public class WikiClientImpl implements WikiClient {
 		} catch (PageNotFoundException ignore) {
 		}
 		
-		getClient().putPage(name, content, properties);
+		wikiClientPutPage(name, content, properties);
 		
 		return getPageVersion(name);
 	}
@@ -122,11 +123,11 @@ public class WikiClientImpl implements WikiClient {
 	/**
 	 * 
 	 */
-	public PageVersion savePageVersion(String name, String content, String comment) {
+	public PageVersion savePageVersion(String name, String content, String comment) throws PageNotModifiedException{
 		Map<String, String> properties = new HashMap<String, String>();
 		properties.put("comment", comment);
 		
-		getClient().putPage(name, content, properties);
+		wikiClientPutPage(name, content, properties);
 		
 		return getPageVersion(name);
 	}
@@ -230,6 +231,23 @@ public class WikiClientImpl implements WikiClient {
 		pageVersion.setComment((String) pageInfo.get("comment"));
 		pageVersion.setContent(content);
 		return pageVersion;
+	}
+	
+	private void wikiClientPutPage(String name, String content, Map<String, String> attributes) throws PageNotModifiedException {
+		try {
+			getClient().putPage(name, content, attributes);
+		} catch (UndeclaredThrowableException e) {
+			Throwable cause = e.getUndeclaredThrowable();
+			if(cause  != null 
+					&& cause.getMessage() != null 
+					&& cause.getMessage().contains("Page not modified") ) 
+			{
+				throw new PageNotModifiedException();
+			}
+			else {
+				throw e;
+			}
+		}
 	}
 
 }

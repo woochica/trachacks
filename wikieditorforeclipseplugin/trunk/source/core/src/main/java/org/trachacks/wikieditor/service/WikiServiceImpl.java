@@ -20,6 +20,7 @@ import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
 import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
 import org.trachacks.wikieditor.model.exception.PageNotFoundException;
+import org.trachacks.wikieditor.model.exception.PageNotModifiedException;
 import org.trachacks.wikieditor.model.exception.PageVersionNotFoundException;
 import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
@@ -127,7 +128,7 @@ public class WikiServiceImpl implements WikiService{
 	 * @return
 	 * @throws ConcurrentEditException
 	 */
-	public PageVersion commit(PageVersion pageVersion) throws ConcurrentEditException {
+	public PageVersion commit(PageVersion pageVersion) throws ConcurrentEditException, PageNotModifiedException {
 		return commit(pageVersion, false);
 	}
 	
@@ -137,7 +138,7 @@ public class WikiServiceImpl implements WikiService{
 	 * @return
 	 * @throws ConcurrentEditException
 	 */
-	public PageVersion commit(PageVersion pageVersion, boolean isMinorEdit) throws ConcurrentEditException{
+	public PageVersion commit(PageVersion pageVersion, boolean isMinorEdit) throws ConcurrentEditException, PageNotModifiedException{
 		wikiClient.savePageVersion(pageVersion.getName(), pageVersion.getContent(), pageVersion.getComment(), pageVersion.getVersion(), isMinorEdit);
 		diskCache.remove(pageVersion.getServerId(), pageVersion.getName());
 		return wikiClient.getPageVersion(pageVersion.getName());
@@ -158,7 +159,7 @@ public class WikiServiceImpl implements WikiService{
 	 * @param pageVersion
 	 * @return
 	 */
-	public PageVersion forceCommit(PageVersion pageVersion){
+	public PageVersion forceCommit(PageVersion pageVersion) throws PageNotModifiedException{
 		wikiClient.savePageVersion(pageVersion.getName(), pageVersion.getContent(), pageVersion.getComment());
 		diskCache.remove(pageVersion.getServerId(),pageVersion.getName());
 		return wikiClient.getPageVersion(pageVersion.getName());
