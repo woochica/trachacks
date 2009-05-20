@@ -50,10 +50,9 @@ class GeolocationException(Exception):
 
     def multiple_locations(self, html=False):
         err = "Multiple locations found for %s:" % self.location
-        locations = [i[0] for i in self.locations]
         if html:
-            locations = ['<a href="?%s">%s</a>' % (i,i)
-                         for i in locations ]
+            locations = ['<a href="?location=%s&latitude=%s&longitude=%s">%s</a>' % (i[0],i[1][0], i[1][1], i[0])
+                         for i in self.locations ]
             err += '<ul class="geolocation_error"><li>' + '</li><li>'.join(locations) + '</li></ul>'
         else:
             err += '; '.join(locations)
@@ -211,7 +210,9 @@ class GeoTrac(Component):
             scripts = req.chrome.setdefault('scripts', [])
             scripts.append({'href': 'http://openlayers.org/api/2.8-rc2/OpenLayers.js', 
                             'type': 'text/javascript'})
+            add_script(req, 'geotrac/js/query.js')
             add_script(req, 'geotrac/js/mapscript.js')
+            add_script(req, 'geotrac/js/location_filler.js')
 
         # filter for tickets
         if template == 'ticket.html':

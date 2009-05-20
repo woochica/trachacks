@@ -12,7 +12,7 @@ function map_locations(locations, wms_url){
     // this is google's projection
     var googleprojection = new OpenLayers.Projection("EPSG:900913");
   
-    // bounds for google's projection
+    // bounds for google's projection == the whole world
     // units are in meters
     var bounds = new OpenLayers.Bounds(
                                        -2.003750834E7,-2.003750834E7,

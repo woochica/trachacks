@@ -57,7 +57,6 @@ class GeoNotifications(Component):
                 ticket = data['ticket']
                 message = req.session.pop('geolocation_error', None)
                 if message:
-                    add_script(req, 'geotrac/js/location_filler.js')
                     add_warning(req, Markup(message))
 
         return (template, data, content_type)
@@ -148,6 +147,7 @@ class IssueMap(Component):
         script = """$(document).ready(function() {
 location_error = false;
 $("#field-location").change(function() {
+
 var url = "%s?location=" + escape($(this).val());
 
 if(location_error)
@@ -160,6 +160,7 @@ if ( locations.error )
 {
   location_error = true;
   $("#ctxtnav").after('<div id="warning" class="system-message"><strong>Warning: </strong> ' + locations.error + '</div>');
+  location_filler();
 }
 else
 {
