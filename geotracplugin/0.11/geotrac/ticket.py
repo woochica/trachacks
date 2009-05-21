@@ -385,7 +385,7 @@ class GeoTrac(Component):
 
         # use PostGIS if available 
         postgis = False
-        if self.postgis_enabled()
+        if self.postgis_enabled():
             # TODO : do this via SQL statements
             import subprocess
 #            retcode = subprocess.call(['createlang', 'plpgsql', 'mydb'])
