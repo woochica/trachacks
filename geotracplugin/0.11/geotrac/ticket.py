@@ -63,7 +63,7 @@ class GeolocationException(Exception):
                          for i in self.locations ]
             err += '<ul class="geolocation_error"><li>' + '</li><li>'.join(locations) + '</li></ul>'
         else:
-            err += '; '.join(locations)
+            err += '; '.join([i[0] for i in self.locations])
         return err
                                                  
 
