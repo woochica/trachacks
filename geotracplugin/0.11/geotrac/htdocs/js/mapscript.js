@@ -69,7 +69,6 @@ function map_locations(locations){
 	};
 
     // add the point of interest to the data layer
-      
     for (i in locations) {
 
         var point = new OpenLayers.Geometry.Point(locations[i]['longitude'], locations[i]['latitude']);

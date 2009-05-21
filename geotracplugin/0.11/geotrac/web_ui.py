@@ -113,14 +113,7 @@ class IssueMap(Component):
         if filename == 'ticket.html':
             if data['locations']:
                 stream |= Transformer('//head').append(self.load_map(data['locations']))
-            stream |= Transformer('//head').append(self.blur_map())
 
-        # filter for queries - add the located tickets to a map
-        if filename == 'query.html' and data['locations']:
-
-            stream |= Transformer('//head').append(self.load_map(data['locations']))
-            if self.inject_map:
-                stream |= Transformer("//div[@id='content']").after(self.content(None, None))
 
         # filter for queries - add the located tickets to a map
         if (filename == 'query.html' or filename == 'report_view.html') and data['locations']:
@@ -146,36 +139,6 @@ class IssueMap(Component):
       })""" % (simplejson.dumps(locations))
         return tag.script(Markup(script), **{'type': 'text/javascript'})
 
-
-    def blur_map(self):
-        # XXX -> static file
-        script = """$(document).ready(function() {
-location_error = false;
-$("#field-location").change(function() {
-
-var url = geolocator_url + "?location=" + escape($(this).val());
-
-if(location_error)
-{
-  $("#warning").remove();
-}
-
-$.getJSON(url, function(locations) {
-if ( locations.error )
-{
-  location_error = true;
-  $("#ctxtnav").after('<div id="warning" class="system-message"><strong>Warning: </strong> ' + locations.error + '</div>');
-  location_filler();
-}
-else
-{
- map_locations(locations.locations);
-}
-});
-});
-});
-""" 
-        return tag.script(Markup(script), **{'type': 'text/javascript'})
 
 class MapDashboard(Component):
 

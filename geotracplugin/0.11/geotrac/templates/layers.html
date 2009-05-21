@@ -6,7 +6,7 @@
 
     // map layers
     function layers() {
-    layers = new Array();
+    var thelayers = new Array();
     // layer for the tiles
     var wms = new OpenLayers.Layer.WMS(
     "WMS Layer",
@@ -14,8 +14,8 @@
     {layers: 'openstreetmap',
     format: 'image/png',} // use PNGs because they're cached
     );
-    layers.push(wms);
-    return layers;
+    thelayers.push(wms);
+    return thelayers;
     };
   </script>
 </html>
