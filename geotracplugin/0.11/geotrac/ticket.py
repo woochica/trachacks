@@ -22,6 +22,7 @@ from pkg_resources import resource_filename
 from trac.config import Option, BoolOption
 from trac.core import *
 from trac.db import Table, Column, Index
+from trac.db.postgres_backend import PostgreSQLConnection
 from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
@@ -384,10 +385,10 @@ class GeoTrac(Component):
 
         # use PostGIS if available 
         postgis = False
-        if self.env.config.get('trac', 'database').startswith('postgres://'):
+        if self.postgis_enabled()
             # TODO : do this via SQL statements
             import subprocess
-            retcode = subprocess.call(['createlang', 'plpgsql', 'mydb'])
+#            retcode = subprocess.call(['createlang', 'plpgsql', 'mydb'])
 
             postgis = True
             
@@ -417,7 +418,6 @@ class GeoTrac(Component):
     ### PostGIS
 
     def postgis_enabled(self):
-        from trac.db.postgres_backend import PostgreSQLConnection
         if not self.env.get_db_cnx().cnx.__class__ == PostgreSQLConnection:
             return False
         # TODO: more ensurance
