@@ -1,5 +1,7 @@
 #!/bin/bash
 
+DATABASE=trac_geo
+
 ### Ensure psycop2 is install
 if ! python -c "import psycop2";
 then     
