@@ -245,12 +245,15 @@ class GeoTrac(Component):
             data['locations'] = self.locate_tickets(tickets, req)
 
         if template == 'report_view.html':
-            tickets = set([])
-            for group in data['row_groups']:
-                for row in group[1]:
-                    if row.has_key('id'):
-                        tickets.add(row['id'])
-            data['locations'] = self.locate_tickets(tickets, req)
+            if  req.path_info.strip('/') != 'report':
+                tickets = set([])
+                for group in data['row_groups']:
+                    for row in group[1]:
+                        if row.has_key('id'):
+                            tickets.add(row['id'])
+                data['locations'] = self.locate_tickets(tickets, req)
+            else:
+                data['locations'] = []
 
         return (template, data, content_type)
 
