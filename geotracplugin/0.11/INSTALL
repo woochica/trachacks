@@ -1,9 +1,20 @@
-1. Assume/assert PostGIS is install
+#!/bin/bash
 
-== Setup the DB ==
+### Ensure psycop2 is install
+if ! python -c "import psycop2";
+then     
+   easy_install psycop2
+fi
 
-2. createlang plpgsql ${database}
-3. psql -d ${database} -f /usr/share/postgresql-8.3-postgis/lwpostgis.sql
-4. psql -d ${database} -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
+### Create a PostgreSQL DB
+
+
+
+### Setup the DB with PostGIS
+
+ * Assume/assert PostGIS is install [TODO]
+ * createlang plpgsql ${database}
+ * psql -d ${database} -f /usr/share/postgresql-8.3-postgis/lwpostgis.
+ * psql -d ${database} -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
 
 

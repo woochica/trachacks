@@ -421,6 +421,7 @@ class GeoTrac(Component):
         if not self.env.get_db_cnx().cnx.__class__ == PostgreSQLConnection:
             return False
         # TODO: more ensurance
+        dbinfo = dict([i.split('=', 1) for i in foo.cnx.cnx.dsn.split()])
         return True
 
     ### geolocation
