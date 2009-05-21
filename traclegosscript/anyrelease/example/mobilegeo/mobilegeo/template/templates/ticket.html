@@ -50,8 +50,8 @@
   </head>
 
   <body>
-    
-    <py:choose test="not ticket.exists or 'edit' in req.args">
+
+    <py:choose test="not ticket.exists or 'edit' in req.args or 'preview' in req.args">
       <py:when test="True"><xi:include href="ticket-edit.html"/></py:when>
       <py:otherwise><xi:include href="ticket-display.html"/></py:otherwise>
     </py:choose>
