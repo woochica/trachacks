@@ -10,6 +10,8 @@ import simplejson
 from customfieldprovider import ICustomFieldProvider
 from genshi.builder import tag
 from genshi.builder import Markup
+from genshi.filters import Transformer
+from genshi.template import TemplateLoader
 from geotrac.utils import create_table
 from geotrac.utils import execute_non_query
 from geotrac.utils import get_all_dict
@@ -26,9 +28,15 @@ from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
 from trac.web.api import IRequestHandler
+from trac.web.api import ITemplateStreamFilter
 from trac.web.api import RequestDone
 from trac.web.chrome import add_script
 from trac.web.chrome import ITemplateProvider
+
+# template loader
+templates_dir = resource_filename(__name__, 'templates')
+loader = TemplateLoader(templates_dir,
+                        auto_reload=True)
 
 class GeolocationException(Exception):
     """error for multiple and unfound locations"""
@@ -73,6 +81,7 @@ class GeoTrac(Component):
                IRequestFilter,
                IRequestHandler,
                ITemplateProvider,
+               ITemplateStreamFilter,
                IEnvironmentSetupParticipant)
 
     ### configuration options
@@ -80,7 +89,12 @@ class GeoTrac(Component):
                                     "Enforce a mandatory and valid location field")
     google_api_key = Option('geo', 'google_api_key', '',
                             "Google maps API key, available at http://code.google.com/apis/maps/signup.html")
-
+    wms_url = Option('geo', 'wms_url',
+                     'http://maps.opengeo.org/geoserver/gwc/service/wms',
+                     "URL for the WMS")
+    openlayers_url = Option('geo', 'openlayers_url', 
+                            'http://openlayers.org/api/2.8-rc2/OpenLayers.js',
+                            "URL of OpenLayers JS to use")
 
     ### method for ICustomFieldProvider
 
@@ -209,7 +223,7 @@ class GeoTrac(Component):
 
             # add_script doesn't use URLs, so add OpenLayers script manually
             scripts = req.chrome.setdefault('scripts', [])
-            scripts.append({'href': 'http://openlayers.org/api/2.8-rc2/OpenLayers.js', 
+            scripts.append({'href': self.openlayers_url, 
                             'type': 'text/javascript'})
             add_script(req, 'geotrac/js/query.js')
             add_script(req, 'geotrac/js/mapscript.js')
@@ -308,7 +322,28 @@ class GeoTrac(Component):
         """Return a list of directories containing the provided template
         files.
         """
-        return []
+        return [templates_dir]
+
+    ### methods for ITemplateStreamFilter
+
+    """Filter a Genshi event stream prior to rendering."""
+
+    def filter_stream(self, req, method, filename, stream, data):
+        """Return a filtered Genshi event stream, or the original unfiltered
+        stream if no match.
+
+        `req` is the current request object, `method` is the Genshi render
+        method (xml, xhtml or text), `filename` is the filename of the template
+        to be rendered, `stream` is the event stream and `data` is the data for
+        the current template.
+
+        See the Genshi documentation for more information.
+        """
+        if filename in ['ticket.html', 'query.html', 'report_view.html', 'mapdashboard.html']:
+            template = loader.load('layers.html')
+            stream |= Transformer("//script[@src='%s']" % self.openlayers_url).after(template.generate(req=req, wms_url=self.wms_url))
+
+        return stream
 
     
     ### methods for IEnvironmentSetupParticipant

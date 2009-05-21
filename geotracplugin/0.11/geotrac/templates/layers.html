@@ -1,0 +1,21 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/">
+  <script type="text/javascript">
+    // global variables
+    geolocator_url = "${req.abs_href('locate')}";
+
+    // map layers
+    function layers() {
+    layers = new Array();
+    // layer for the tiles
+    var wms = new OpenLayers.Layer.WMS(
+    "WMS Layer",
+    "${wms_url}",
+    {layers: 'openstreetmap',
+    format: 'image/png',} // use PNGs because they're cached
+    );
+    layers.push(wms);
+    return layers;
+    };
+  </script>
+</html>

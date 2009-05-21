@@ -76,10 +76,6 @@ class IssueMap(Component):
 
     implements(ITicketSidebarProvider, ITemplateStreamFilter)
 
-    wms_url = Option('geo', 'wms_url',
-                     'http://maps.opengeo.org/geoserver/gwc/service/wms',
-                     "URL for the WMS")
-    
     inject_map = BoolOption('geo', 'inject_map', 'true',
                             "whether to inject the map into the HTML")
 
@@ -144,19 +140,20 @@ class IssueMap(Component):
         script = """$(document).ready(function() {
       var locations = %s;
       if (locations.length) {
-         map_locations(locations, '%s');
+         map_locations(locations);
       }
       
-      })""" % (simplejson.dumps(locations), self.wms_url)
+      })""" % (simplejson.dumps(locations))
         return tag.script(Markup(script), **{'type': 'text/javascript'})
 
 
     def blur_map(self):
+        # XXX -> static file
         script = """$(document).ready(function() {
 location_error = false;
 $("#field-location").change(function() {
 
-var url = "%s?location=" + escape($(this).val());
+var url = geolocator_url + "?location=" + escape($(this).val());
 
 if(location_error)
 {
@@ -172,46 +169,22 @@ if ( locations.error )
 }
 else
 {
- map_locations(locations.locations, "%s");
+ map_locations(locations.locations);
 }
 });
 });
 });
-""" % (self.env.abs_href('locate'), self.wms_url)
+""" 
         return tag.script(Markup(script), **{'type': 'text/javascript'})
 
 class MapDashboard(Component):
 
-    implements(ITemplateProvider, IRequestHandler, INavigationContributor)
+    implements(IRequestHandler, INavigationContributor)
 
-    wms_url = Option('geo', 'wms_url', 
-                     'http://maps.opengeo.org/geoserver/gwc/service/wms',
-                     "URL for the WMS")
+    openlayers_url = Option('geo', 'openlayers_url', 
+                            'http://openlayers.org/api/2.8-rc2/OpenLayers.js',
+                            "URL of OpenLayers JS to use")
 
-    ### methods for ITemplateProvider
-
-    """Extension point interface for components that provide their own
-    ClearSilver templates and accompanying static resources.
-    """
-
-    def get_htdocs_dirs(self):
-        """Return a list of directories with static resources (such as style
-        sheets, images, etc.)
-
-        Each item in the list must be a `(prefix, abspath)` tuple. The
-        `prefix` part defines the path in the URL that requests to these
-        resources are prefixed with.
-        
-        The `abspath` is the absolute path to the directory containing the
-        resources on the local file system.
-        """
-        return []
-
-    def get_templates_dirs(self):
-        """Return a list of directories containing the provided template
-        files.
-        """
-        return [templates_dir]
 
     ### methods for IRequestHandler
 
@@ -256,7 +229,8 @@ class MapDashboard(Component):
                 continue
 
         add_script(req, 'common/js/query.js')
-        return ('mapdashboard.html', dict(locations=Markup(simplejson.dumps(locations)), wms_url=self.wms_url), 
+        return ('mapdashboard.html', dict(locations=Markup(simplejson.dumps(locations)), 
+                                          openlayers_url=self.openlayers_url), 
                                           'text/html')
 
     ### methods for INavigationContributor

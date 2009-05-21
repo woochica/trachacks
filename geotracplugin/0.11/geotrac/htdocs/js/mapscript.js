@@ -1,6 +1,6 @@
 map = null;
 
-function map_locations(locations, wms_url){
+function map_locations(locations){
     
     if (map) {
         map.destroy();
@@ -29,21 +29,16 @@ function map_locations(locations, wms_url){
     // create a map opject with the options 
     map = new OpenLayers.Map('map', options);
 
-    // layer for the tiles
-    var wms = new OpenLayers.Layer.WMS(
-                                       "WMS Layer",
-                                       wms_url,
-                                       {layers: 'openstreetmap',
-                                        format: 'image/png',} // use PNGs because they're cached
-                                       );
-
+    map_layers = layers();
+    
     // layer for the marker point of interest
     var datalayer = new OpenLayers.Layer.Vector(
                                                 "Data Layer",
                                                 {});
+    map_layers.push(datalayer);
 
     // add the layers to the map
-    map.addLayers([wms, datalayer]);
+    map.addLayers(map_layers);
 
 
     // 
