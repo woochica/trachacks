@@ -20,7 +20,7 @@
         <span py:if="numrows and report.id != -1" class="numrows">($numrows matches)</span>
       </h1>
 
-	<div id="map" class="report-map"></div>
+	<div py:if="locations" id="map" class="report-map"></div>
 
 
       <div py:if="description" id="description" xml:space="preserve">
