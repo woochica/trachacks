@@ -1,6 +1,15 @@
 #!/bin/bash
 
+# in order to run geotrac with PostGIS, you must 
+# setup a PostgreSQL database and enable PostGIS
+# extensions on it.
+# This script is a guide of how to create a PostgreSQL
+# database and enable the PostGIS extensions on it
+
+### needed variables
 DATABASE=trac_geo
+LWPOSTGIS=$(locate lwpostgis.sql)
+SPATIAL_REF_SYS=$(locate spatial_ref_sys.sql)
 
 ### Ensure psycop2 is install
 if ! python -c "import psycop2";
@@ -9,14 +18,40 @@ then
 fi
 
 ### Create a PostgreSQL DB
+USERNAME=""
 
-
+# create the user if specified
+if [ -n "${USERNAME}"]
+then
+    createuser --username postgres --createdb --createrole ${USERNAME}
+    createdb --owner ${USERNAME} ${DATABASE}
+else
+    if ! creatdb ${DATABASE}
+    then
+        exit 1
+    fi
+fi
 
 ### Setup the DB with PostGIS
 
- * Assume/assert PostGIS is install [TODO]
- * createlang plpgsql ${database}
- * psql -d ${database} -f /usr/share/postgresql-8.3-postgis/lwpostgis.
- * psql -d ${database} -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
+# ensure the variables are properly set
+for variable in LWPOSTGIS SPATIAL_REF_SYS
+do
+    value=${!variable}
+    if [ -z "${value}" ]
+    then
+        echo "Variable $variable must be set"
+        exit 1
+    fi
+    if [ ! -e "${value}" ]
+    then
+        echo "$variable: Couldn't find $value"
+        exit 1
+    fi
+done
+
+createlang plpgsql ${DATABASE}
+psql -d ${DATABASE} -f ${LWPOSTGIS}
+psql -d ${DATABASE} -f ${SPATIAL_REF_SYS}
 
 
