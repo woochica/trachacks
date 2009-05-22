@@ -1,23 +1,2 @@
-dt.bamboo-successful a {
-	background-image: url(bamboo-successful.gif)  !important;
-	position: relative;
-}
+dt.bamboo-successful a { background-image: url(bamboo-successful.gif)  !important }
 dt.bamboo-failed a     { background-image: url(bamboo-failed.gif)   !important }
-
-dt.bamboo-successful span {
-	display: none;
-	position: absolute;
-	top: 20px;
-	left: 30px;
-	padding: 5px;
-	z-index: 100;
-	background: #417CB3;
-	color: #fff;
-	-moz-border-radius: 5px; /* this works only in camino/firefox */
-	-webkit-border-radius: 5px; /* this is just for Safari */
- 	-moz-opacity:0.9;
-}
-
-dt.bamboo-successful a:hover span{
-	display: block;
-}
