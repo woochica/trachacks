@@ -4,14 +4,12 @@
   <parent>
     <artifactId>wikieditor</artifactId>
     <groupId>org.trachacks.wikieditor</groupId>
-    <version>0.0.1-SNAPSHOT</version>
+	<version>0.0.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-	<groupId>org.trachacks.wikieditor</groupId>
 	<artifactId>wikieditor-core</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0-SNAPSHOT</version>
 	<name>Trac WikiEditor 4 Eclipse ~ Core</name>
     <url>http://trac-hacks.org/wiki/WikiEditorForEclipsePlugin</url>  
 	<build>
@@ -109,8 +107,10 @@
 			</activation>
 			<properties>
 				<server.url>http://localhost/trac/test</server.url>
-				<credentials.username>test</credentials.username>
-				<credentials.password>test</credentials.password>
+				<credentials.admin.username>admin</credentials.admin.username>
+				<credentials.admin.password>admin</credentials.admin.password>
+				<credentials.user.username>user</credentials.user.username>
+				<credentials.user.password>user</credentials.user.password>				
 			</properties>
 		</profile>	
 	</profiles>	

@@ -4,13 +4,11 @@
   <parent>
     <artifactId>wikieditor</artifactId>
     <groupId>org.trachacks.wikieditor</groupId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.2</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   
-  <groupId>org.trachacks.wikieditor</groupId>
   <artifactId>wikieditor4eclipse</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Trac WikiEditor 4 Eclipse ~ Eclipse Modules</name>  
   <modules>
