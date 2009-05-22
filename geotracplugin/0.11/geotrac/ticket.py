@@ -418,10 +418,12 @@ class GeoTrac(Component):
     ### PostGIS
 
     def postgis_enabled(self):
-        if not self.env.get_db_cnx().cnx.__class__ == PostgreSQLConnection:
+        cnx = self.env.get_db_cnx()
+        if not cnx.cnx.__class__ == PostgreSQLConnection:
             return False
         # TODO: more ensurance
-        dbinfo = dict([i.split('=', 1) for i in foo.cnx.cnx.dsn.split()])
+
+        dbinfo = dict([i.split('=', 1) for i in cnx.cnx.cnx.dsn.split()])
         return True
 
     ### geolocation
