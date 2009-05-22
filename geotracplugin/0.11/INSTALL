@@ -8,6 +8,7 @@
 
 ### needed variables
 DATABASE=trac_geo
+DB_ADMIN=postgres
 LWPOSTGIS=$(locate lwpostgis.sql)
 SPATIAL_REF_SYS=$(locate spatial_ref_sys.sql)
 
@@ -23,7 +24,7 @@ USERNAME=""
 # create the user if specified
 if [ -n "${USERNAME}"]
 then
-    createuser --username postgres --createdb --createrole ${USERNAME}
+    createuser --username ${DB_ADMIN} --superuser --createdb --createrole ${USERNAME}
     createdb --owner ${USERNAME} ${DATABASE}
 else
     if ! creatdb ${DATABASE}
@@ -45,13 +46,20 @@ do
     fi
     if [ ! -e "${value}" ]
     then
-        echo "$variable: Couldn't find $value"
+        echo "$variable: Couldn't find path: $value"
         exit 1
     fi
 done
 
-createlang plpgsql ${DATABASE}
-psql -d ${DATABASE} -f ${LWPOSTGIS}
-psql -d ${DATABASE} -f ${SPATIAL_REF_SYS}
-
+# add the PostGIS extensions
+if [ -z "${USERNAME}" ]
+then
+    createlang plpgsql ${DATABASE}
+    psql -d ${DATABASE} -f ${LWPOSTGIS}
+    psql -d ${DATABASE} -f ${SPATIAL_REF_SYS}
+else
+    createlang --username ${USERNAME} plpgsql ${DATABASE}
+    psql -d ${DATABASE} --username ${USERNAME} -f ${LWPOSTGIS}
+    psql -d ${DATABASE} --username ${USERNAME} -f ${SPATIAL_REF_SYS}
+fi
 
