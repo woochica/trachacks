@@ -96,6 +96,7 @@ padding : .5em 0 0 0;
 
 
 #page-heading .content, 
+#warning, 
 #main .content, 
 #footer .content {
 width : 1000px;
@@ -1046,7 +1047,7 @@ clear : both;
 _______________________________
 Content Pages */
 
-#content {
+.content #content {
 padding : 17px;
 }
 
@@ -1058,3 +1059,63 @@ Query / report pages */
 h2.report-result {
 clear : both;
 }
+
+
+#query fieldset {
+margin-bottom : 4em;
+background-color : #F2F2F2 !important;
+padding : .6em .6em .25em .6em;
+}
+
+
+#query fieldset.collapsed {
+background-color : #fff !important;
+}
+
+#query fieldset.collapsed legend.foldable a {
+margin-bottom : 1em !important;
+}
+
+#query fieldset legend.foldable {
+float : left;
+padding  :0;
+margin :0;
+}
+
+#query fieldset#filters legend.foldable a, 
+#query fieldset#columns legend.foldable a {
+float : left;
+padding : 0 0 0 1.5em;
+margin : -1.8em 0 0 -.6em;
+border-bottom : 1px solid #ccc;
+}
+
+#query fieldset.collapsed legend a {
+border : none !important;
+}
+
+
+
+
+/*
+_______________________________
+Warning messages
+*/
+
+#warning {
+border : 1px solid orange !important;
+width : 550px; /* 600px after padding */
+padding : 20px 25px;
+
+position : absolute;
+top : 130px; 
+left : 50%;
+margin-left : -275px;
+z-index : 10;
+-webkit-box-shadow: rgb(136, 136, 136) 7px 7px 7px;
+-mozilla-box-shadow: rgb(136, 136, 136) 7px 7px 7px;
+}
+
+ 
+
+
