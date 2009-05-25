@@ -13,9 +13,9 @@ LWPOSTGIS=$(locate lwpostgis.sql)
 SPATIAL_REF_SYS=$(locate spatial_ref_sys.sql)
 
 ### Ensure psycop2 is install
-if ! python -c "import psycop2";
+if ! python -c "import psycopg2";
 then     
-   easy_install psycop2
+   easy_install psycopg2
 fi
 
 ### Create a PostgreSQL DB
