@@ -2,9 +2,9 @@ from setuptools import find_packages, setup
 
 version='0.1'
 
-setup(name='MobileGeoTrac',
+setup(name='GeoTrac',
       version=version,
-      description="Mobile Geo Trac Project Template",
+      description="Geo Trac Project Template",
       author='Jeff Hammel',
       author_email='jhammel@openplans.org',
       url='http://trac-hacks.org/wiki/TracLegosScript',
@@ -25,7 +25,7 @@ setup(name='MobileGeoTrac',
                            'SVN_URLs',
                            'Tracbacks',
                            'LoomingClouds',
-                           'GeoTrac',
+                           'GeoTicket',
                            'ImageTrac',
                            'mail2trac',
                            ],
@@ -45,14 +45,14 @@ setup(name='MobileGeoTrac',
       "http://trac-hacks.org/svn/svnurlsplugin/0.11#egg=SVN_URLs",
       "http://trac-hacks.org/svn/tracbacksplugin/0.11#egg=Tracbacks",
       "http://trac-hacks.org/svn/loomingcloudsplugin/0.11#egg=LoomingClouds",
-      "http://trac-hacks.org/svn/geotracplugin/0.11#egg=GeoTrac",
+      "http://trac-hacks.org/svn/geoticketplugin/0.11#egg=GeoTicket",
       "http://trac-hacks.org/svn/imagetracplugin/0.11#egg=ImageTrac",
       "http://trac-hacks.org/svn/mailtotracplugin/0.11#egg=mail2trac",
       ],
       zip_safe=False,
       entry_points = """
       [paste.paster_create_template]
-      mobile_geo_project = mobilegeo.project:MobileGeoTracProject
+      geo_project = geotrac.project:GeoTracProject
       """,
       )
 
