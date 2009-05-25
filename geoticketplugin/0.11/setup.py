@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 version='0.5'
 
-setup(name='GeoTrac',
+setup(name='GeoTicket',
       version=version,
       description="add geolocations to Trac tickets",
       author='Jeff Hammel',
@@ -12,7 +12,7 @@ setup(name='GeoTrac',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
-      package_data={ 'geotrac': ['templates/*', 'htdocs/*'] },
+      package_data={ 'geoticket': ['templates/*', 'htdocs/*'] },
       zip_safe=False,
       install_requires=[
         # -*- Extra requirements: -*-
@@ -31,9 +31,9 @@ setup(name='GeoTrac',
         ],
       entry_points = """
       [trac.plugins]
-      geotrac = geotrac.ticket
-      mapsidebar = geotrac.web_ui
-      geotracmail = geotrac.mail [mail2trac]
+      geoticket = geoticket.ticket
+      mapsidebar = geoticket.web_ui
+      geoticketmail = geoticket.mail [mail2trac]
       """,
       )
 
