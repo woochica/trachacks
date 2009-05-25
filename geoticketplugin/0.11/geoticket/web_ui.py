@@ -5,8 +5,8 @@ from genshi.builder import tag
 from genshi.builder import Markup
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
-from geotrac.ticket import GeolocationException
-from geotrac.ticket import GeoTrac
+from geoticket.ticket import GeolocationException
+from geoticket.ticket import GeoTicket
 from pkg_resources import resource_filename
 from ticketsidebarprovider import ITicketSidebarProvider
 from trac.config import BoolOption, Option
@@ -52,8 +52,8 @@ class GeoNotifications(Component):
         """
 
         if template == 'ticket.html':
-            if self.env.is_component_enabled(GeoTrac):
-                geotrac = self.env.components[GeoTrac]
+            if self.env.is_component_enabled(GeoTicket):
+                geoticket = self.env.components[GeoTicket]
                 ticket = data['ticket']
                 message = req.session.pop('geolocation_error', None)
                 if message:
@@ -104,10 +104,10 @@ class IssueMap(Component):
         See the Genshi documentation for more information.
         """
 
-        # get the GeoTrac component
-        if not self.env.is_component_enabled(GeoTrac):
+        # get the GeoTicket component
+        if not self.env.is_component_enabled(GeoTicket):
             return stream
-        geotrac = self.env.components[GeoTrac]
+        geoticket = self.env.components[GeoTicket]
 
         # filter for tickets
         if filename == 'ticket.html':
@@ -172,9 +172,9 @@ class MapDashboard(Component):
         simply send the response itself and not return anything.
         """
 
-        # get the GeoTrac component
-        assert self.env.is_component_enabled(GeoTrac)
-        geotrac = self.env.components[GeoTrac]
+        # get the GeoTicket component
+        assert self.env.is_component_enabled(GeoTicket)
+        geoticket = self.env.components[GeoTicket]
 
         query = Query.from_string(self.env, 'location!=')
         results = query.execute(req)
@@ -183,7 +183,7 @@ class MapDashboard(Component):
             ticket = Ticket(self.env, result['id'])
             try:
                 
-                address, (lat, lon) = geotrac.locate_ticket(ticket)
+                address, (lat, lon) = geoticket.locate_ticket(ticket)
                 content = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
                 locations.append({'latitude': lat,
                                   'longitude': lon,

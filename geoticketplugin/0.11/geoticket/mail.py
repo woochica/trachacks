@@ -5,8 +5,8 @@ the location is denoted with a '@' in the subject line:
 Subject: loud music @ 349 W. 12 St., New York, NY
 """
 
-from geotrac.ticket import GeolocationException
-from geotrac.ticket import GeoTrac
+from geoticket.ticket import GeolocationException
+from geoticket.ticket import GeoTicket
 from trac.config import BoolOption
 
 try:
@@ -26,9 +26,9 @@ try:
 
         def fields(self, message, **fields):
 
-            # if you don't have GeoTrac enabled, why are you using this plugin?
-            assert GeoTrac in self.env.components 
-            geotrac = self.env.components[GeoTrac]
+            # if you don't have GeoTicket enabled, why are you using this plugin?
+            assert GeoTicket in self.env.components 
+            geoticket = self.env.components[GeoTicket]
 
             subject = message['subject']
             location = ''
@@ -48,16 +48,16 @@ try:
 
                 # geolocate the issue
                 try:
-                    fields['location'] = geotrac.geolocate(location)[0]
+                    fields['location'] = geoticket.geolocate(location)[0]
                 except GeolocationException, e:
                     # handle multiple and unfound locations
-                    if geotrac.mandatory_location:
+                    if geoticket.mandatory_location:
                         raise EmailException(str(e))
                     else:
                         fields['location'] = location
 
             else:
-                if geotrac.mandatory_location:
+                if geoticket.mandatory_location:
                     raise EmailException('Location required. Please email with "%s @ <location>" in your subject.' % subject)
 
             return EmailToTicket.fields(self, message, **fields)

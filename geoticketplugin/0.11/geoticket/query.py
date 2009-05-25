@@ -1,5 +1,5 @@
-from geotrac.ticket import GeoTrac
-from geotrac.utils import get_column
+from geoticket.ticket import GeoTicket
+from geoticket.utils import get_column
 from trac.core import *
 from trac.web.api import ITemplateStreamFilter
 trac.web.chrome import Chrome
@@ -29,13 +29,13 @@ class GeospatialQuery(Component):
         pass
         # XXX stub
 
-    def geotrac(self):
-        if not hasattr(self, '_geotrac'):
-            assert self.env.is_component_enabled(GeoTrac)
-            geotrac = self.env.components[GeoTrac]
-            assert geotrac.postgis_enabled()
-            self._geotrac = geotrac
-        return self._geotrac
+    def geoticket(self):
+        if not hasattr(self, '_geoticket'):
+            assert self.env.is_component_enabled(GeoTicket)
+            geoticket = self.env.components[GeoTicket]
+            assert geoticket.postgis_enabled()
+            self._geoticket = geoticket
+        return self._geoticket
         
     ### method for ITemplateStreamFilter:
     ### Filter a Genshi event stream prior to rendering.
@@ -51,7 +51,7 @@ class GeospatialQuery(Component):
 
         See the Genshi documentation for more information.
         """
-        self.geotrac()
+        self.geoticket()
 
         chrome = Chrome(self.env)
 #        chrome.load_template()

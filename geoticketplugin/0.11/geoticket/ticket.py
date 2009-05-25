@@ -1,5 +1,5 @@
 """
-GeoTrac:
+GeoTicket:
 a plugin for Trac to geolocate issues
 http://trac.edgewall.org
 """
@@ -12,12 +12,12 @@ from genshi.builder import tag
 from genshi.builder import Markup
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
-from geotrac.utils import create_table
-from geotrac.utils import execute_non_query
-from geotrac.utils import get_all_dict
-from geotrac.utils import get_column
-from geotrac.utils import get_first_row
-from geotrac.utils import get_scalar
+from geoticket.utils import create_table
+from geoticket.utils import execute_non_query
+from geoticket.utils import get_all_dict
+from geoticket.utils import get_column
+from geoticket.utils import get_first_row
+from geoticket.utils import get_scalar
 from pkg_resources import resource_filename
 from trac.config import Option, BoolOption
 from trac.core import *
@@ -74,7 +74,7 @@ class GeolocationException(Exception):
         return self.multiple_locations(html=True)
 
 
-class GeoTrac(Component):
+class GeoTicket(Component):
 
     implements(ICustomFieldProvider, 
                ITicketManipulator, 
@@ -226,9 +226,9 @@ class GeoTrac(Component):
             scripts = req.chrome.setdefault('scripts', [])
             scripts.append({'href': self.openlayers_url, 
                             'type': 'text/javascript'})
-            add_script(req, 'geotrac/js/query.js')
-            add_script(req, 'geotrac/js/mapscript.js')
-            add_script(req, 'geotrac/js/location_filler.js')
+            add_script(req, 'geoticket/js/query.js')
+            add_script(req, 'geoticket/js/mapscript.js')
+            add_script(req, 'geoticket/js/location_filler.js')
 
         # filter for tickets
         if template == 'ticket.html':
@@ -320,7 +320,7 @@ class GeoTrac(Component):
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
-        return [('geotrac', resource_filename(__name__, 'htdocs'))]
+        return [('geoticket', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
         """Return a list of directories containing the provided template
@@ -405,12 +405,12 @@ class GeoTrac(Component):
             except GeolocationException:
                 pass
 
-        execute_non_query(self.env, "insert into system (name, value) values ('geotrac.db_version', '1');")
+        execute_non_query(self.env, "insert into system (name, value) values ('geoticket.db_version', '1');")
 
     def version(self):
         """returns version of the database (an int)"""
 
-        version = get_scalar(self.env, "select value from system where name = 'geotrac.db_version';")
+        version = get_scalar(self.env, "select value from system where name = 'geoticket.db_version';")
         if version:
             return int(version)
         return 0
