@@ -40,10 +40,10 @@ autocompleteusers.* = enabled
 customfieldadmin.api.customfields = disabled
 customfieldadmin.customfieldadmin.customfieldadminpage = disabled
 customfieldprovider.customfieldprovider.customfieldprovider = enabled
-geotrac.mail.geomailtoticket = enabled
-geotrac.ticket.geotrac = enabled
-geotrac.web_ui.georequestfilter = enabled
-geotrac.web_ui.sidebarmap = enabled
+geoticket.mail.geomailtoticket = enabled
+geoticket.ticket.geoticket = enabled
+geoticket.web_ui.georequestfilter = enabled
+geoticket.web_ui.sidebarmap = enabled
 graphviz.graphviz.graphviz = enabled
 icalexporter.icalexporter.icalexporterplugin = enabled
 imagetrac.image.imagetrac = enabled
@@ -79,7 +79,7 @@ processor = dot
 rsvg_path = 
 
 [header_logo]
-alt = MobileGeoTrac
+alt = GeoTrac
 height = -1
 link = 
 src = 
