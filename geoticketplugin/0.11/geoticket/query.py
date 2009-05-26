@@ -1,11 +1,19 @@
+import sys
+import trac.ticket.query
+
 from genshi.filters import Transformer
 from geoticket.ticket import GeoTicket
 from geoticket.utils import get_column
 from trac.config import BoolOption
 from trac.core import *
+
+from trac.web.href import Href
 from trac.web.api import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import Chrome
+
+original_href_call = Href.__call__
+patched = False
 
 class GeospatialQuery(Component):
     """query based on geographic data"""
@@ -78,8 +86,30 @@ class GeospatialQuery(Component):
         
         Always returns the request handler, even if unchanged.
         """
-        return handler
+        # XXX monkey-patch and frame dark fancy magic:
+        # http://oss.openplans.org/MobileGeoTrac/ticket/54#comment:14
+        if not globals()['patched']:
+            def patched_href_call(self, *args, **kw):
+                frame = sys._getframe().f_back.f_back
+                code = frame.f_code
+                if code.co_name == 'get_href' and code.co_filename == trac.ticket.query.__file__.rstrip('c'):
+                    try:
+                        kw.update(self.geo_query_kw)
+                    except TypeError: # XXX even more scary!
+                        pass
+                return original_href_call(self, *args, **kw)
+            Href.__call__ = patched_href_call
+            globals()['patched'] = True
 
+        if req.path_info == '/query' and 'update' in req.args:
+            match = False
+            for i in 'center-location', 'radius':
+                if i in req.args:
+                    if not match:
+                        req.href.geo_query_kw = {}
+                    req.href.geo_query_kw[i] = req.args[i]
+
+        return handler
 
         
     ### method for ITemplateStreamFilter:
