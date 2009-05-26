@@ -1,13 +1,13 @@
 from setuptools import find_packages, setup
 
-version='0.5'
+version='0.5.1'
 
 setup(name='GeoTicket',
       version=version,
       description="add geolocations to Trac tickets",
       author='Jeff Hammel',
       author_email='jhammel@openplans.org',
-      url='http://oss.openplans.org/MobileGeoTrac',
+      url='',
       keywords='trac plugin',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
@@ -33,6 +33,7 @@ setup(name='GeoTicket',
       [trac.plugins]
       geoticket = geoticket.ticket
       mapsidebar = geoticket.web_ui
+      geoquery = geoticket.query 
       geoticketmail = geoticket.mail [mail2trac]
       """,
       )

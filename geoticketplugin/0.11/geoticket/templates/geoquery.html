@@ -1,7 +1,19 @@
 <fieldset id="geo">
   <legend class="foldable">Location</legend>
-  <input type="text" name="center-location" />
+  <script type="text/javascript">
+    $(document).ready(function() {
+    center_location_default = $("#center-location").val();
+    $("#center-location").click(function(){
+    var val = $("#center-location").val();
+    if ( val == center_location_default ) {
+    $("#center-location").val("");
+}
+})
+})
+  </script>
+  <input type="text" id="center-location" name="center-location" value="Enter address or Zip" />
   <select name="radius">
+    <option disabled="disabled" selected="selected">Within a radius of</option>
     <option value="5 blocks">5 blocks</option>
     <option value="10 blocks">10 blocks</option>
     <option value="20 blocks">20 blocks</option>
