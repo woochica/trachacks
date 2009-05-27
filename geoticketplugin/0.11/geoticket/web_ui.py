@@ -204,7 +204,7 @@ class MapDashboard(Component):
         data = dict(locations=Markup(simplejson.dumps(locations)), 
                     tickets=tickets,
                     n_tickets=n_tickets,
-                    query_string=query.get_href(req.href),
+                    query_href=query.get_href(req.href),
                     openlayers_url=self.openlayers_url)
         return ('mapdashboard.html', data, 'text/html')
 
