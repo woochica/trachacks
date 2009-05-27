@@ -9,7 +9,9 @@ from geoticket.ticket import GeolocationException
 from geoticket.ticket import GeoTicket
 from pkg_resources import resource_filename
 from ticketsidebarprovider import ITicketSidebarProvider
-from trac.config import BoolOption, Option
+from trac.config import BoolOption
+from trac.config import IntOption
+from trac.config import Option
 from trac.core import *
 from trac.ticket import Ticket
 from trac.ticket.query import Query
@@ -144,10 +146,12 @@ class MapDashboard(Component):
 
     implements(IRequestHandler, INavigationContributor)
 
+    ### configuration options
     openlayers_url = Option('geo', 'openlayers_url', 
                             'http://openlayers.org/api/2.8-rc2/OpenLayers.js',
                             "URL of OpenLayers JS to use")
-
+    dashboard_tickets = IntOption('geo', 'dashboard_tickets', '6',
+                                  "number of tickets to display on the dashboard map")
 
     ### methods for IRequestHandler
 
@@ -175,10 +179,11 @@ class MapDashboard(Component):
         # get the GeoTicket component
         assert self.env.is_component_enabled(GeoTicket)
         geoticket = self.env.components[GeoTicket]
-
-        query = Query.from_string(self.env, 'location!=')
+        query_string = 'location!=&status!=closed'
+        query = Query.from_string(self.env, query_string)
         results = query.execute(req)
         locations = []
+        tickets = []
         for result in results:
             ticket = Ticket(self.env, result['id'])
             try:
@@ -188,13 +193,20 @@ class MapDashboard(Component):
                 locations.append({'latitude': lat,
                                   'longitude': lon,
                                   'content': Markup(content)})
+                tickets.append(ticket)
             except GeolocationException:
                 continue
 
+        tickets.sort(key=lambda x: x.time_changed, reverse=True)
+        n_tickets = len(tickets)
+        tickets = tickets[:self.dashboard_tickets]
         add_script(req, 'common/js/query.js')
-        return ('mapdashboard.html', dict(locations=Markup(simplejson.dumps(locations)), 
-                                          openlayers_url=self.openlayers_url), 
-                                          'text/html')
+        data = dict(locations=Markup(simplejson.dumps(locations)), 
+                    tickets=tickets,
+                    n_tickets=n_tickets,
+                    query_string=query_string,
+                    openlayers_url=self.openlayers_url)
+        return ('mapdashboard.html', data, 'text/html')
 
     ### methods for INavigationContributor
 

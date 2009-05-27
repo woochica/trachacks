@@ -17,6 +17,25 @@ map_locations(locations, "${wms_url}");
 </script>
 </head>
 <body>
-  <div id="map" style="width: 600px; height: 300px"></div>
+
+  <div py:with="title='Active Issues'">
+
+    <h1>${title}</h1>
+    <div id="map" style="width: 600px; height: 300px"></div>
+    <div>
+      <table>
+        <tr py:for="ticket in tickets">
+          <td><a href="${req.href.ticket(ticket.id)}">${ticket['summary']}</a></td>
+
+          <!-- hack bc strftime("%B %-d") doesn't work on winblows -->
+          <td>${ticket.time_changed.strftime("%B") + " %s" % ticket.time_changed.day}</td>
+        </tr>
+        <tr>
+          <td>${n_tickets} ${title} in total</td>
+          <td><i><a href="${req.href('query') + '?' + query_string.lstrip('?')}">See Query View</a></i></td>
+        </tr>
+      </table>
+    </div>
+  </div>
 </body>
 </html>
