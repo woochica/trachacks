@@ -2,14 +2,15 @@ import sys
 import trac.ticket.query
 
 from genshi.filters import Transformer
+from geoticket.ticket import GeolocationException
 from geoticket.ticket import GeoTicket
 from geoticket.utils import get_column
 from trac.config import BoolOption
 from trac.core import *
-
 from trac.web.href import Href
 from trac.web.api import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import add_warning
 from trac.web.chrome import Chrome
 
 original_href_call = Href.__call__
@@ -22,6 +23,11 @@ class GeospatialQuery(Component):
 
     inject_query = BoolOption('geo', 'inject_query', 'true',
                               "whether to inject the geo query fieldset into the query.html template")
+
+    # conversion to meters
+    units = { 'blocks': 80.4672,
+              }
+
 
     def query_by_radius(self, lat, lon, radius):
         """
@@ -77,7 +83,29 @@ class GeospatialQuery(Component):
 
         (Since 0.11)
         """
-        
+
+        if req.path_info != '/query':        
+            return (template, data, content_type)
+        geoticket = self.geoticket()
+        location = req.args.get('center_location', '').strip()
+        lat = lon = None
+        if location:
+            try:
+                location, (lat, lon) = geoticket.geolocate(location)
+            except GeolocationException, e:
+                add_warning(req, str(e))
+        radius = req.args.get('radius', '').strip()
+        data['center_location'] = location
+        data['radius'] = radius
+        if radius:
+            distance, units = radius.split()
+            distance = float(distance)
+            if units in self.units:
+                distance *= self.units[units] # to meters
+            else:
+                distance = None
+                add_warning(req, "Unknown units: %s" % units)
+
         return (template, data, content_type)
 
     def pre_process_request(self, req, handler):
@@ -103,10 +131,11 @@ class GeospatialQuery(Component):
 
         if req.path_info == '/query' and 'update' in req.args:
             match = False
-            for i in 'center-location', 'radius':
+            for i in 'center_location', 'radius':
                 if i in req.args:
                     if not match:
                         req.href.geo_query_kw = {}
+                        match = True
                     req.href.geo_query_kw[i] = req.args[i]
 
         return handler
@@ -130,8 +159,10 @@ class GeospatialQuery(Component):
 
         if self.inject_query:
             chrome = Chrome(self.env)
+            variables = ('center_location', 'radius')
+            _data = dict([(i,data.get(i)) for i in variables])
             template = chrome.load_template('geoquery.html')
-            stream |= Transformer("//fieldset[@id='columns']").after(template.generate())
+            stream |= Transformer("//fieldset[@id='columns']").after(template.generate(**_data))
 
         return stream
 

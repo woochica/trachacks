@@ -1,21 +1,28 @@
-<fieldset id="geo">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="True">
+
+<fieldset id="geo" py:with="default_location_text='Enter address or Zip'">
   <legend class="foldable">Location</legend>
-  <script type="text/javascript">
+  <script py:if="not center_location" type="text/javascript">
     $(document).ready(function() {
-    center_location_default = $("#center-location").val();
     $("#center-location").click(function(){
     var val = $("#center-location").val();
-    if ( val == center_location_default ) {
+    if ( val == "${default_location_text}" ) {
     $("#center-location").val("");
 }
 })
 })
   </script>
-  <input type="text" id="center-location" name="center-location" value="Enter address or Zip" />
-  <select name="radius">
-    <option disabled="disabled" selected="selected">Within a radius of</option>
-    <option value="5 blocks">5 blocks</option>
-    <option value="10 blocks">10 blocks</option>
-    <option value="20 blocks">20 blocks</option>
+  <input type="text" id="center-location" name="center_location" value="${center_location or default_location_text}" />
+  <select name="radius" py:with="distance=['5 blocks', '10 blocks', '20 blocks']">
+    <option disabled="disabled" 
+            py:attrs="{'selected': radius not in distance and 'selected' or None}">Within a radius of</option>
+    <option py:for="d in distance" 
+            value="${d}" 
+            py:attrs="{'selected': radius == d and 'selected' or None}">$d</option>
+
   </select>
 </fieldset>
+
+</html>
