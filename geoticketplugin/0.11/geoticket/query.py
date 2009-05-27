@@ -1,6 +1,7 @@
 import sys
 import trac.ticket.query
 
+from genshi.builder import Markup
 from genshi.filters import Transformer
 from geoticket.ticket import GeolocationException
 from geoticket.ticket import GeoTicket
@@ -10,6 +11,7 @@ from trac.core import *
 from trac.web.href import Href
 from trac.web.api import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import add_script
 from trac.web.chrome import add_warning
 from trac.web.chrome import Chrome
 
@@ -94,7 +96,8 @@ class GeospatialQuery(Component):
             try:
                 location, (lat, lon) = geoticket.geolocate(location)
             except GeolocationException, e:
-                add_warning(req, str(e))
+                add_script(req, 'geoticket/js/query_location_filler.js')
+                add_warning(req, Markup(e.html()))
         radius = req.args.get('radius', '').strip()
         data['center_location'] = location
         data['radius'] = radius
@@ -108,7 +111,7 @@ class GeospatialQuery(Component):
                 add_warning(req, "Unknown units: %s" % units)
 
         # filter results by PostGIS query
-        if set([lat, lon, distance]) != set([None]):
+        if lat is not None and lon is not None and distance is not None:
             tickets_in_radius = self.query_by_radius(lat, lon, distance)
             data['tickets'] = [ ticket for ticket in data['tickets']
                                 if ticket['id'] in tickets_in_radius ]

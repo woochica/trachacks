@@ -228,6 +228,7 @@ class GeoTicket(Component):
                             'type': 'text/javascript'})
             add_script(req, 'geoticket/js/query.js')
             add_script(req, 'geoticket/js/mapscript.js')
+        if template == 'ticket.html':
             add_script(req, 'geoticket/js/location_filler.js')
 
         # filter for tickets
