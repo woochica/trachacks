@@ -198,7 +198,7 @@ class MapDashboard(Component):
                 continue
 
         tickets.sort(key=lambda x: x.time_changed, reverse=True)
-        n_tickets = len(tickets)
+        n_tickets = len(results)
         tickets = tickets[:self.dashboard_tickets]
         add_script(req, 'common/js/query.js')
         data = dict(locations=Markup(simplejson.dumps(locations)), 
