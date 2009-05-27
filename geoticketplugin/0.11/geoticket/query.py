@@ -46,9 +46,9 @@ class GeospatialQuery(Component):
         # * http://www.movable-type.co.uk/scripts/latlong.html#ellipsoid
         # * http://oss.openplans.org/MobileGeoTrac/ticket/54#comment:12
         
-        query_str = "ST_DISTANCE(st_pointfromtext('POINT(' || geo_lng || ' ' || geo_lat || ')'), ST_PointFromText('POINT(%s %s)')) < %s" % (lon, lat, radius)
+        query_str = "ST_DISTANCE_SPHERE(st_pointfromtext('POINT(' || longitude || ' ' || latitude || ')'), ST_PointFromText('POINT(%s %s)')) < %s" % (lon, lat, radius)
 
-        return get_column('ticket_location', 'ticket', where=query_str)
+        return get_column(self.env, 'ticket_location', 'ticket', where=query_str)
         
     def query_by_polyon(self, lat, lon, polygon_id):
         pass
@@ -86,6 +86,7 @@ class GeospatialQuery(Component):
 
         if req.path_info != '/query':        
             return (template, data, content_type)
+
         geoticket = self.geoticket()
         location = req.args.get('center_location', '').strip()
         lat = lon = None
@@ -97,15 +98,27 @@ class GeospatialQuery(Component):
         radius = req.args.get('radius', '').strip()
         data['center_location'] = location
         data['radius'] = radius
+        distance = None
         if radius:
             distance, units = radius.split()
             distance = float(distance)
             if units in self.units:
                 distance *= self.units[units] # to meters
             else:
-                distance = None
                 add_warning(req, "Unknown units: %s" % units)
 
+        # filter results by PostGIS query
+        if set([lat, lon, distance]) != set([None]):
+            tickets_in_radius = self.query_by_radius(lat, lon, distance)
+            data['tickets'] = [ ticket for ticket in data['tickets']
+                                if ticket['id'] in tickets_in_radius ]
+            data['groups'] = [ (group[0], [ ticket for ticket in group[1]
+                                            if ticket['id'] in tickets_in_radius ])
+                               for group in data['groups'] ]
+
+            # filter out empty groups
+            data['groups'] = [ group for group in data['groups'] 
+                               if group[1] ]
         return (template, data, content_type)
 
     def pre_process_request(self, req, handler):
