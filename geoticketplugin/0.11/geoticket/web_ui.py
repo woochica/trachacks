@@ -121,8 +121,7 @@ class IssueMap(Component):
 
         # filter for tickets
         if filename == 'ticket.html':
-            if data['locations']:
-                stream |= Transformer('//head').append(self.load_map(data['locations']))
+            stream |= Transformer('//head').append(self.load_map(data['locations']))
 
 
         # filter for queries - add the located tickets to a map
@@ -142,10 +141,7 @@ class IssueMap(Component):
 
         script = """$(document).ready(function() {
       var locations = %s;
-      if (locations.length) {
-         map_locations(locations);
-      }
-      
+      map_locations(locations);
       })""" % (simplejson.dumps(locations))
         return tag.script(Markup(script), **{'type': 'text/javascript'})
 

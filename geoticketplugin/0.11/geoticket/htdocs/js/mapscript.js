@@ -91,9 +91,14 @@ function map_locations(locations) {
     if (!locations || locations.length == 0) {
         // no data on the map, zoom to default view. 
         // TODO: add default Lon Lat to layers.html JS
-        var center = new OpenLayers.LonLat(0.0,0.0);
-        center.transform(epsg4326, googleprojection);
-        map.setCenter(center, 15);
+        var bounds = new OpenLayers.Bounds();
+        var min_lonlat = new OpenLayers.LonLat(min_lon,min_lat);
+        var max_lonlat = new OpenLayers.LonLat(max_lon,max_lat);
+        min_lonlat.transform(epsg4326, googleprojection);
+        max_lonlat.transform(epsg4326, googleprojection);
+        bounds.extend(min_lonlat);
+        bounds.extend(max_lonlat);
+        map.zoomToExtent(bounds);
 
     } else if ( zoom ) {
 

@@ -12,6 +12,7 @@ from genshi.builder import tag
 from genshi.builder import Markup
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
+from geoticket.options import FloatOption
 from geoticket.utils import create_table
 from geoticket.utils import execute_non_query
 from geoticket.utils import get_all_dict
@@ -32,12 +33,10 @@ from trac.web.api import IRequestHandler
 from trac.web.api import ITemplateStreamFilter
 from trac.web.api import RequestDone
 from trac.web.chrome import add_script
+from trac.web.chrome import Chrome
 from trac.web.chrome import ITemplateProvider
 
-# template loader
 templates_dir = resource_filename(__name__, 'templates')
-loader = TemplateLoader(templates_dir,
-                        auto_reload=True)
 
 class GeolocationException(Exception):
     """error for multiple and unfound locations"""
@@ -96,6 +95,16 @@ class GeoTicket(Component):
     openlayers_url = Option('geo', 'openlayers_url', 
                             'http://openlayers.org/api/2.8-rc2/OpenLayers.js',
                             "URL of OpenLayers JS to use")
+
+    min_lat = FloatOption('geo', 'min_lat', '-90.',
+                          "minimum latitude for default map display")
+    max_lat = FloatOption('geo', 'max_lat', '90.',
+                          "maximum latitude for default map display")
+    min_lon = FloatOption('geo', 'min_lon', '-180.',
+                          "minimum longitude for default map display")
+    max_lon = FloatOption('geo', 'max_lon', '180.',
+                          "maximum longitude for default map display")
+
 
     ### method for ICustomFieldProvider
 
@@ -345,8 +354,15 @@ class GeoTicket(Component):
         See the Genshi documentation for more information.
         """
         if filename in ['ticket.html', 'query.html', 'report_view.html', 'mapdashboard.html']:
-            template = loader.load('layers.html')
-            stream |= Transformer("//script[@src='%s']" % self.openlayers_url).after(template.generate(req=req, wms_url=self.wms_url))
+            chrome = Chrome(self.env)
+            _data = dict(req=req, 
+                         wms_url=self.wms_url,
+                         min_lat=self.min_lat,
+                         max_lat=self.max_lat,
+                         min_lon=self.min_lon,
+                         max_lon=self.max_lon)
+            template = chrome.load_template('layers.html')
+            stream |= Transformer("//script[@src='%s']" % self.openlayers_url).after(template.generate(**_data))
 
         return stream
 

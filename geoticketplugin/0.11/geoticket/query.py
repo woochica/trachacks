@@ -15,6 +15,7 @@ from trac.web.chrome import add_script
 from trac.web.chrome import add_warning
 from trac.web.chrome import Chrome
 
+# XXX for scary magic below
 original_href_call = Href.__call__
 patched = False
 
