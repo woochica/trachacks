@@ -20,7 +20,6 @@ function map_locations(locations) {
         maxExtent: bounds,
         maxResolution: 156543.03396025, // meters per pixel at maximum extent (world projection)
         projection: googleprojection,  // use google's projection
-        numZoomLevels: 20
     };
     
     var zoom = false;
