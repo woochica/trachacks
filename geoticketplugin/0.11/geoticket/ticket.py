@@ -283,7 +283,7 @@ class GeoTicket(Component):
 
     def match_request(self, req):
         """Return whether the handler wants to process the given request."""
-        if req.path_info == '/locate':
+        if req.path_info in ['/locate', '/reverse-locate']:
             return True
 
     def process_request(self, req):
@@ -300,22 +300,27 @@ class GeoTicket(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
-        location = req.args.get('location', '')
-
-        try:
-            loc, (lat, lon) = self.geolocate(location)
-            locations = {'locations': [ { 'address': loc,
-                                          'latitude': lat,
-                                          'longitude': lon, } ]}
-        except GeolocationException, e:
-            locations = e.locations
-            locations = {'locations': [ { 'address': location[0],
-                                          'latitude': location[1][0],
-                                          'longitude': location[1][1] }
-                                        for location in locations ],
-                         'error': e.html()}
         content_type = 'application/json'
-        req.send(simplejson.dumps(locations), content_type=content_type)
+        if req.path_info == '/locate':
+
+            location = req.args.get('location', '')
+
+            try:
+                loc, (lat, lon) = self.geolocate(location)
+                locations = {'locations': [ { 'address': loc,
+                                              'latitude': lat,
+                                              'longitude': lon, } ]}
+            except GeolocationException, e:
+                locations = e.locations
+                locations = {'locations': [ { 'address': location[0],
+                                              'latitude': location[1][0],
+                                              'longitude': location[1][1] }
+                                            for location in locations ],
+                             'error': e.html()}
+
+            req.send(simplejson.dumps(locations), content_type=content_type)
+
+                
 
     ### methods for ITemplateProvider
 

@@ -1,6 +1,17 @@
 map = null;
 
-function map_locations(locations) {
+function map_locations(locations, options) {
+
+    // set default options
+    if ( typeof(options) == 'undefined' ) {
+        options = {};
+    }
+    defaults = {'zoom': false }
+    for ( var i in defaults ) {
+        if ( typeof(options[i]) == 'undefined' ) {
+            options[i] = defaults[i];
+        }
+    }
 
     // this is the projection where lon, lat work
     var epsg4326 = new OpenLayers.Projection("EPSG:4326");
@@ -15,19 +26,17 @@ function map_locations(locations) {
                                        2.003750834E7,2.003750834E7);
 
     
-    var options = { 
+    var map_options = { 
         //      units: "dd",  // only works in EPSG:4326
         maxExtent: bounds,
         maxResolution: 156543.03396025, // meters per pixel at maximum extent (world projection)
         projection: googleprojection,  // use google's projection
     };
     
-    var zoom = false;
-
     // create a map opject with the options 
     if (!map) {
-        map = new OpenLayers.Map('map', options);
-        zoom = true;
+        map = new OpenLayers.Map('map', map_options);
+        options.zoom = true;
     }
     if (map.layers.length == 0) {
         map.addLayers(layers());
@@ -81,7 +90,7 @@ function map_locations(locations) {
     }
 
     // add the point of interest to the data layer
-    for (i in locations) {
+    for (var i in locations) {
 
         var point = new OpenLayers.Geometry.Point(locations[i]['longitude'], locations[i]['latitude']);
         var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection), {content: locations[i].content});
@@ -100,7 +109,7 @@ function map_locations(locations) {
         bounds.extend(max_lonlat);
         map.zoomToExtent(bounds);
 
-    } else if ( zoom ) {
+    } else if ( options.zoom ) {
 
         // zoom in on the points of interest
         map.zoomToExtent(datalayer.getDataExtent());

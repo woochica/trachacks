@@ -52,8 +52,6 @@ $(document).ready(function() {
                                             warning_string += '<li>' + warnings[warning] + '</li>';
                                         }
                                     $("#content").before(warning_string + '</ul></div>');
-                                    //                            for ( warning in warnings ) {
-                                    //                                $("#warning ul").append(warnings[warning]);
                                 }
                                 else {
                                     $("#content").before('<div id="warning" class="system-message"><strong>Warning: </strong> ' + locations.error + '</div>');
@@ -62,7 +60,7 @@ $(document).ready(function() {
                             }
                         else
                             {
-                                map_locations(locations.locations);
+                                map_locations(locations.locations, {zoom: true});
                             }
                     });
             });
