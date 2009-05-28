@@ -1,10 +1,6 @@
 map = null;
 
-function map_locations(locations){
-    
-    if (map) {
-        map.destroy();
-    }  
+function map_locations(locations) {
 
     // this is the projection where lon, lat work
     var epsg4326 = new OpenLayers.Projection("EPSG:4326");
@@ -23,30 +19,46 @@ function map_locations(locations){
         //      units: "dd",  // only works in EPSG:4326
         maxExtent: bounds,
         maxResolution: 156543.03396025, // meters per pixel at maximum extent (world projection)
-        projection: "EPSG:900913",  // use google's projection
+        projection: googleprojection,  // use google's projection
+        numZoomLevels: 20
     };
     
-    // create a map opject with the options 
-    map = new OpenLayers.Map('map', options);
+    var zoom = false;
 
-    map_layers = layers();
-    
-    // layer for the marker point of interest
-    var datalayer = new OpenLayers.Layer.Vector(
+    // create a map opject with the options 
+    if (!map) {
+        map = new OpenLayers.Map('map', options);
+        zoom = true;
+    }
+    if (map.layers.length == 0) {
+        map.addLayers(layers());
+    }    
+
+    // layer for the marker points of interest
+    var datalayer;
+    if (map.getLayersByName('Data Layer').length == 0) {
+        datalayer = new OpenLayers.Layer.Vector(
                                                 "Data Layer",
                                                 {});
-    map_layers.push(datalayer);
+        map.addLayer(datalayer);
+    } else {
+        datalayer = map.getLayersByName('Data Layer')[0];
+        datalayer.removeFeatures(datalayer.features);
+    }
 
-    // add the layers to the map
-    map.addLayers(map_layers);
+
+    // add the data layer to the map
+    map.addLayer(datalayer);
 
 
-    // 
-    var selectfeature = new OpenLayers.Control.SelectFeature(datalayer);
-    map.addControl(selectfeature);
-    selectfeature.activate();
+    // map controls
+    if (map.getControlsByClass(OpenLayers.Control.SelectFeature).length == 0) {
 
-    var onPopupClose = function() { selectfeature.unselectAll(); }
+        var selectfeature = new OpenLayers.Control.SelectFeature(datalayer);
+        map.addControl(selectfeature);
+        selectfeature.activate();
+
+        var onPopupClose = function() { selectfeature.unselectAll(); }
 	selectfeature.onSelect = function(feature){
             var content = feature.attributes.content;
             if ( content ) {
@@ -60,13 +72,14 @@ function map_locations(locations){
             }
 	};
 
-    selectfeature.onUnselect = function(feature){
-        if (feature.popup) {
-            map.removePopup(feature.popup);
-            feature.popup.destroy();
-            delete feature.popup;
-	}
+        selectfeature.onUnselect = function(feature){
+            if (feature.popup) {
+                map.removePopup(feature.popup);
+                feature.popup.destroy();
+                delete feature.popup;
+            }
 	};
+    }
 
     // add the point of interest to the data layer
     for (i in locations) {
@@ -76,6 +89,16 @@ function map_locations(locations){
         datalayer.addFeatures([marker]);
     }
 
-    // zoom in on the point of interest
-    map.zoomToExtent(datalayer.getDataExtent());
+    if (!locations || locations.length == 0) {
+        // no data on the map, zoom to default view. 
+        // TODO: add default Lon Lat to layers.html JS
+        var center = new OpenLayers.LonLat(0.0,0.0);
+        center.transform(epsg4326, googleprojection);
+        map.setCenter(center, 15);
+
+    } else if ( zoom ) {
+
+        // zoom in on the points of interest
+        map.zoomToExtent(datalayer.getDataExtent());
+    }
 }
