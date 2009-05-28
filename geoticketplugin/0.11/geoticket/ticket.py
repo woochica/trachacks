@@ -301,10 +301,10 @@ class GeoTicket(Component):
         simply send the response itself and not return anything.
         """
         content_type = 'application/json'
+
+        # geolocation
         if req.path_info == '/locate':
-
             location = req.args.get('location', '')
-
             try:
                 loc, (lat, lon) = self.geolocate(location)
                 locations = {'locations': [ { 'address': loc,
@@ -317,9 +317,20 @@ class GeoTicket(Component):
                                               'longitude': location[1][1] }
                                             for location in locations ],
                              'error': e.html()}
-
             req.send(simplejson.dumps(locations), content_type=content_type)
 
+        # reverse geolocation
+        if req.path_info == '/reverse-locate':
+            try:
+                lat, lon = req.args['latitude'], req.args['longitude']
+                lat, lon = float(lat), float(lon)
+                location, (lat, lon) = self.reverse_geolocate(lat, lon)
+                data = {'locations': [ { 'address': location,
+                                         'latitude': lat,
+                                         'longitude': lon } ] }
+            except (KeyError, ValueError), e:
+                data = {'error': str(e) }
+            req.send(simplejson.dumps(data), content_type=content_type)
                 
 
     ### methods for ITemplateProvider
@@ -449,6 +460,21 @@ class GeoTicket(Component):
         return True
 
     ### geolocation
+
+    def reverse_geolocate(self, lat, lon):
+
+        # get the geocoder
+        if self.google_api_key:
+            geocoder = geopy.geocoders.Google(self.google_api_key)
+        else:
+            geocoder = geopy.geocoders.Google()
+
+        try:
+            location, (lat, lon) = geocoder.reverse((lat, lon))
+        except:
+            # XXX dunno what to do
+            raise
+        return (location, (lat, lon))
     
     def geolocate(self, location):
 
