@@ -13,16 +13,24 @@ from trac.config import BoolOption
 from trac.config import IntOption
 from trac.config import Option
 from trac.core import *
+from trac.mimeview import Context
 from trac.ticket import Ticket
 from trac.ticket.query import Query
 from trac.web.api import IRequestFilter
 from trac.web.api import IRequestHandler
 from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import add_notice
 from trac.web.chrome import add_script
-from trac.web.chrome import add_warning, add_notice
+from trac.web.chrome import add_stylesheet
+from trac.web.chrome import add_warning 
 from trac.web.chrome import INavigationContributor
 from trac.web.chrome import ITemplateProvider
+from trac.wiki.formatter import Formatter
 
+try:
+    from tractags.macros import TagCloudMacro
+except ImportError:
+    TagCloudMacro = None
 
 # template loader
 templates_dir = resource_filename(__name__, 'templates')
@@ -152,6 +160,8 @@ class MapDashboard(Component):
                             "URL of OpenLayers JS to use")
     dashboard_tickets = IntOption('geo', 'dashboard_tickets', '6',
                                   "number of tickets to display on the dashboard map")
+    display_cloud = Option('geo', 'display_cloud', 'true',
+                           "whether to display the cloud on the map dashboard")
 
     ### methods for IRequestHandler
 
@@ -179,6 +189,8 @@ class MapDashboard(Component):
         # get the GeoTicket component
         assert self.env.is_component_enabled(GeoTicket)
         geoticket = self.env.components[GeoTicket]
+
+        # query the tickets
         query_string = 'location!=&status!=closed'
         query = Query.from_string(self.env, query_string)
         results = query.execute(req)
@@ -201,10 +213,24 @@ class MapDashboard(Component):
         n_tickets = len(results)
         tickets = tickets[:self.dashboard_tickets]
         add_script(req, 'common/js/query.js')
+
+        # add the tag cloud, if enabled
+        cloud = None
+        if self.display_cloud:
+            if TagCloudMacro is None:
+                self.log.warn("[geo] display_cloud is set but the TagsPlugin is not installed")
+            else:
+                formatter = Formatter(self.env, Context.from_request(req))
+                macro = TagCloudMacro(self.env)
+                cloud = macro.expand_macro(formatter, 'TagCloud', '')
+                add_stylesheet(req, 'tags/css/tractags.css')
+                add_stylesheet(req, 'tags/css/tagcloud.css')
+
         data = dict(locations=Markup(simplejson.dumps(locations)), 
                     tickets=tickets,
                     n_tickets=n_tickets,
                     query_href=query.get_href(req.href),
+                    cloud=cloud,
                     openlayers_url=self.openlayers_url)
         return ('mapdashboard.html', data, 'text/html')
 
