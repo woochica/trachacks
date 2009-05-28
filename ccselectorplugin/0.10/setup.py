@@ -11,7 +11,7 @@ setup(name=PACKAGE,
       author='Vladislav Naumov',
       author_email='vnaum@vnaum.com',
       packages=[PACKAGE],
-      package_data={PACKAGE : ['htdocs/*']},
+      package_data={PACKAGE : ['htdocs/*', 'templates/*']},
       entry_points={'trac.plugins': 'cc_selector = cc_selector'}
       )
 
