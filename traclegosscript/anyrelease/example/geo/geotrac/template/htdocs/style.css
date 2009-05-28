@@ -370,13 +370,15 @@ padding : 0;
 
 
 #ctxtnav {
-z-index : 9;
-position : relative;
-float : right;
 clear : both;
 width : 100%;
-margin : .5em 0 1.5em 0; 
+background-color : #F2F2F2;
+border-top : 1px solid #E9E9E9;
+padding : 1em 0 1.25em 0;
+margin-top : 2em;
 }
+
+
 
 
 
@@ -1048,9 +1050,14 @@ _______________________________
 Content Pages */
 
 .content #content {
-padding : 17px;
+padding : 17px 17px 0 17px;
+margin-bottom : 2em;
 }
 
+#content.content {
+padding-bottom : 0;
+margin-bottom : 2em;
+}
 
 /*
 _______________________________
@@ -1083,7 +1090,8 @@ margin :0;
 }
 
 #query fieldset#filters legend.foldable a, 
-#query fieldset#columns legend.foldable a {
+#query fieldset#columns legend.foldable a, 
+#query fieldset#geo legend.foldable a {
 float : left;
 padding : 0 0 0 1.5em;
 margin : -1.8em 0 0 -.6em;
@@ -1118,4 +1126,11 @@ z-index : 10;
 
  
 
+/*
+_______________________________
+Attachments page 
+*/
 
+table.code {
+width : auto;	
+}
