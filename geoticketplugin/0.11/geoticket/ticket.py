@@ -237,11 +237,11 @@ class GeoTicket(Component):
                             'type': 'text/javascript'})
             add_script(req, 'geoticket/js/query.js')
             add_script(req, 'geoticket/js/mapscript.js')
-        if template == 'ticket.html':
-            add_script(req, 'geoticket/js/location_filler.js')
 
         # filter for tickets
         if template == 'ticket.html':
+            add_script(req, 'geoticket/js/location_filler.js')
+            add_script(req, 'geoticket/js/reverse_geocode.js')
             try:
                 address, (geolat, geolon) = self.locate_ticket(data['ticket'])
                 data['locations'] = [ {'latitude': geolat,
@@ -325,9 +325,9 @@ class GeoTicket(Component):
                 lat, lon = req.args['latitude'], req.args['longitude']
                 lat, lon = float(lat), float(lon)
                 location, (lat, lon) = self.reverse_geolocate(lat, lon)
-                data = {'locations': [ { 'address': location,
-                                         'latitude': lat,
-                                         'longitude': lon } ] }
+                data = {'location': { 'address': location,
+                                      'latitude': lat,
+                                      'longitude': lon } }
             except (KeyError, ValueError), e:
                 data = {'error': str(e) }
             req.send(simplejson.dumps(data), content_type=content_type)
@@ -484,9 +484,11 @@ class GeoTicket(Component):
             try:
                 lat, lon = float(lat), float(lon)
                 if (-90. < lat < 90.) and (-180. < lon < 180.):
-                    
-                    # TODO : reverse geocoding
-                    return [location, (lat, lon)]
+                    # reverse geocoding
+                    try:
+                        return self.reverse_geolocate(lat, lon)
+                    except:
+                        raise # TODO better error handling
             except ValueError:
                 pass
 

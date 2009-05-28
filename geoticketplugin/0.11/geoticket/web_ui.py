@@ -121,7 +121,9 @@ class IssueMap(Component):
 
         # filter for tickets
         if filename == 'ticket.html':
-            stream |= Transformer('//head').append(self.load_map(data['locations']))
+#            stream |= Transformer("//head").append(self.load_map(data['locations']))
+ 
+            stream |= Transformer("//script[@src='%s']" % req.href.chrome('geoticket/js/reverse_geocode.js')).before(self.load_map(data['locations']))
 
 
         # filter for queries - add the located tickets to a map
