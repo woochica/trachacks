@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.5.2'
+version='0.6'
 
 setup(name='GeoTicket',
       version=version,
@@ -16,7 +16,7 @@ setup(name='GeoTicket',
       zip_safe=False,
       install_requires=[
         # -*- Extra requirements: -*-
-        'geopy',
+        'geopy>=0.93dev',
         'CustomFieldProvider',
         'TicketSidebarProvider',
         'simplejson'
@@ -25,6 +25,7 @@ setup(name='GeoTicket',
         'mail2trac': [ 'mail2trac' ],
         },
       dependency_links=[
+        "http://geopy.googlecode.com/svn/branches/reverse-geocode#egg=geopy-0.93dev",
         "http://trac-hacks.org/svn/customfieldproviderplugin/0.11#egg=CustomFieldProvider",
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
         "http://trac-hacks.org/svn/mailtotracplugin/0.11/#egg=mail2trac",
