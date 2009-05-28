@@ -1,16 +1,53 @@
+/*global document, window, event */
+
+/*
+@source: http://trac-hacks.org/wiki/CcSelectorPlugin
+
+@licstart  The following is the entire license notice for the
+JavaScript code in this page.
+
+Copyright (C) 2009 Vladislav Naumov
+
+The JavaScript code in this page is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+@licend  The above is the entire license notice
+for the JavaScript code in this page.
+*/
+
 // populate the list of default developers that should always be there
-// It probably must come from database, but I'm too lazy - vnaum
 function get_default_devs()
 {
-  var retval = new Object;
-  var devs = new Array (
-    'developer1',
-    'developer2',
-    'vladislav.naumov@gmail.com'
-  );
-  for (var i in devs)
+  var retval = {};
+  var devs = [];
+
+  var devs_list=document.getElementById("cc_developers");
+  for (var i=0; i<devs_list.childNodes.length; i++)
   {
-    retval[devs[i]] = false;  // start as unchecked
+    var d = devs_list.childNodes[i];
+    if (d.title)
+    {
+      devs.push(d.title);
+    }
+  }
+
+  for (i in devs)
+  {
+    if (devs.hasOwnProperty(i))
+    {
+      retval[devs[i]] = false;  // start as unchecked
+    }
   }
   return retval;
 }
@@ -18,21 +55,21 @@ function get_default_devs()
 // this function shows selection pop-up
 function show_selection(e)
 {
-  thisurl = document.location.href;
+  var thisurl = document.location.href;
   
-  nurl = thisurl.split('/');
-  if ( nurl.pop().indexOf('newticket') != 0)
+  var nurl = thisurl.split('/');
+  if ( nurl.pop().indexOf('newticket') !== 0)
   {
     // remove one more component, unless we're doing "new ticket"
     nurl.pop();
   }
   nurl = nurl.join('/');
-  nurl = nurl + "/chrome/cc_selector/cc_selector.html";
+  nurl = nurl + "/cc_selector";
 
   // MSIE crutch
   if ( ! e )
   {
-    e = event
+    e = event;
   }
 
   window.open(nurl,
@@ -44,56 +81,23 @@ function show_selection(e)
 
 function guess_cc_field()
 {
-  doc = document;
+  var doc = document;
 
   if (window.opener)
   {
-    // alert("QQ1: shifting to parent");
     doc = window.opener.document;
   }
 
-  cc_field = "cc";
+  var cc_field = "cc";
   if (doc.getElementById(cc_field))
+  {
     return cc_field;
+  }
 
   cc_field = "field-cc";
   if (doc.getElementById(cc_field))
+  {
     return cc_field;
-
-
-  // alert("QQ2: could not find cc field, giving up");
-}
-
-// onload function. Used in both ticket window and in pop-up.
-function afterLoad()
-{
-  
-  // guess fromid (possible values: cc, from-cc)
-  cc_field = guess_cc_field()
-
-  nurl = document.location.href.split('/');
-  if ( nurl.pop() == 'cc_selector.html')
-  {
-    // we're in pop-up window
-    // create checkboxes
-    split_into_checkboxes(cc_field, 'ccdiv')
-  }
-  else
-  {
-    // we're on ticket window
-    // create button
-    p = document.getElementById(cc_field);
-    p = p.parentNode;
-    
-    var ccb = document.createElement('input');
-    ccb.setAttribute("type", "button");
-    ccb.setAttribute("id", "ccbutton");
-    ccb.setAttribute("name", "ccbutton");
-    ccb.setAttribute("value", ">");
-    ccb.setAttribute("alt", "Extended CC selection");
-    // ccb.setAttribute("onClick", "show_selection()");
-    ccb.onclick = show_selection;
-    p.appendChild(ccb);
   }
 }
 
@@ -102,50 +106,51 @@ function split_field(fieldid)
 {
   var retval = get_default_devs();
 
-  f = document.getElementById(fieldid);
+  var f = document.getElementById(fieldid);
   if ( ! f )
   {
     // find parent window
     f = window.opener.document.getElementById(fieldid);
   }
-  str = f.value;
+  var str = f.value;
   str = str.replace(/,\s*/g, ' ');
   str = str.replace(/\s+/g, ' ');
   
   var arr = str.split(' ');
  
-  for (var w in arr) {
-    if (arr[w].length == 0)
+  for (var w in arr)
+  {
+    if (arr.hasOwnProperty(w))
     {
-      // skip emptys
-      continue;
+      if (arr[w].length === 0)
+      {
+        // skip emptys
+        continue;
+      }
+      retval[arr[w]] = true;
     }
-    retval[arr[w]] = true;
   }
   return retval;
 }
 
 // checkbox onclick reaction - set CC value
-function cc_toggle(name, field, ckbox) {
-  params = new Array (name, field, ckbox)
-  params[2] = ckbox.id;
-
-  name = ckbox.name;
-  checked = ckbox.checked;
-  devs = split_field(field);
+function cc_toggle(field, ckbox) {
+  var name = ckbox.name;
+  var checked = ckbox.checked;
+  var devs = split_field(field);
   
   devs[name] = checked;
   // generate new value
 
-  activedevs = new Array();
+  var activedevs = [];
   for (var d in devs) {
     if (devs[d]) {
-      activedevs.push(d)
+      activedevs.push(d);
     }
   }
-  newval = activedevs.join(', ');
+  var newval = activedevs.join(', ');
   
-  target = document.getElementById(field)
+  var target = document.getElementById(field);
   if ( ! target )
   {
     // find target in parent window
@@ -156,33 +161,73 @@ function cc_toggle(name, field, ckbox) {
 
 // Fill given div with CC field contents
 function split_into_checkboxes(fromid, toid) {
-  t = document.getElementById(toid);
+  var t = document.getElementById(toid);
   
-  devs = split_field(fromid);
+  var devs = split_field(fromid);
 
-  for (var w in devs) {
-    v = 'cc to ' + w;
-    t.appendChild(document.createElement('br'));
-    
-    var ck = document.createElement('input');
-    ck.setAttribute("type", "checkbox");
-    ck.setAttribute("id", "cc_" + w);
-    ck.setAttribute("name", w);
-    if (devs[w]) {
-      ck.setAttribute("checked", true );
-      ck.setAttribute("defaultChecked", true );
+  for (var w in devs)
+  {
+    if (devs.hasOwnProperty(w))
+    {
+      var v = 'cc to ' + w;
+      t.appendChild(document.createElement('br'));
+      
+      var ck = document.createElement('input');
+      ck.setAttribute("type", "checkbox");
+      ck.setAttribute("id", "cc_" + w);
+      ck.setAttribute("name", w);
+      if (devs[w]) {
+        ck.setAttribute("checked", true );
+        ck.setAttribute("defaultChecked", true );
+      }
+      
+      ck.onclick = function () { cc_toggle(fromid, this); };
+      
+      t.appendChild(ck);
+      
+      t.appendChild(document.createTextNode(v));
     }
+  }
+}
+
+// onload function. Used in both ticket window and in pop-up.
+function afterLoad()
+{
+  
+  // guess fromid (possible values: cc, from-cc)
+  var cc_field = guess_cc_field();
+
+  var nurl = document.location.href.split('/');
+  if ( document.getElementById('cc_developers') )
+  {
+    // we're in pop-up window
+    // create checkboxes
+    split_into_checkboxes(cc_field, 'ccdiv');
+  }
+  else
+  {
+    // we're on ticket window
+    // create button
+    var p = document.getElementById(cc_field);
+    if (p.type != "text")
+    {
+      // we only want to show button for text fields
+      // (there also is a checkbox variant)
+      return;
+    }
+
+    p = p.parentNode;
     
-    name = "'" + w + "'";
-    field = "'" + fromid + "'";
-    ckbox = "this";
-    params = new Array (name, field, ckbox)
-    // ck.setAttribute("onChange", "cc_toggle(" + params.join(', ') + ")");
-    ck.onclick = function(){ cc_toggle(w, fromid, this); };
-    
-    t.appendChild(ck);
-    
-    t.appendChild(document.createTextNode(v));
+    var ccb = document.createElement('input');
+    ccb.setAttribute("type", "button");
+    ccb.setAttribute("id", "ccbutton");
+    ccb.setAttribute("name", "ccbutton");
+    ccb.setAttribute("value", ">");
+    ccb.setAttribute("alt", "Extended CC selection");
+    ccb.setAttribute("title", "Extended CC selection");
+    // ccb.setAttribute("onClick", "show_selection()");
+    ccb.onclick = show_selection;
+    p.appendChild(ccb);
   }
 }
 
@@ -190,10 +235,16 @@ function split_into_checkboxes(fromid, toid) {
 function teAddEventListener(elem, evt, func, capture)
 {
    capture = capture || false;
-   if (elem.addEventListener) elem.addEventListener(evt, func, capture);
-   else elem.attachEvent('on'+evt, func);
+   if (elem.addEventListener)
+   {
+     elem.addEventListener(evt, func, capture);
+   }
+   else
+   {
+     elem.attachEvent('on'+evt, func);
+   }
    return func;
 }
 
 // automatically add button on load:
-teAddEventListener(window, 'load', afterLoad)
+teAddEventListener(window, 'load', afterLoad);
