@@ -14,6 +14,16 @@
 })
 })
   </script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+    $("#query").submit(function() {
+    var val = $("#center-location").val();
+    if ( val == "${default_location_text}" ) {
+    $("#center-location").val("");
+    }
+    })
+    })
+  </script>
   <input type="text" id="center-location" name="center_location" value="${center_location or default_location_text}" />
   <select name="radius" py:with="distance=['5 blocks', '10 blocks', '20 blocks']">
     <option disabled="disabled" 
