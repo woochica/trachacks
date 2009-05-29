@@ -1,4 +1,4 @@
-map = null;
+maps = {};
 
 function map_locations(locations, options) {
 
@@ -6,7 +6,8 @@ function map_locations(locations, options) {
     if ( typeof(options) == 'undefined' ) {
         options = {};
     }
-    defaults = {'zoom': false }
+    defaults = {'zoom': false, 
+                'id': 'map'}
     for ( var i in defaults ) {
         if ( typeof(options[i]) == 'undefined' ) {
             options[i] = defaults[i];
@@ -25,7 +26,6 @@ function map_locations(locations, options) {
                                        -2.003750834E7,-2.003750834E7,
                                        2.003750834E7,2.003750834E7);
 
-    
     var map_options = { 
         //      units: "dd",  // only works in EPSG:4326
         maxExtent: bounds,
@@ -33,9 +33,11 @@ function map_locations(locations, options) {
         projection: googleprojection,  // use google's projection
     };
     
-    // create a map opject with the options 
+    // create a map opject with the options
+    var map = maps[options.id];
     if (!map) {
         map = new OpenLayers.Map('map', map_options);
+        maps[options.id] = map;
         options.zoom = true;
     }
     if (map.layers.length == 0) {
