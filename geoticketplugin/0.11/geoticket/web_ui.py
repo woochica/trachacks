@@ -216,6 +216,7 @@ class MapDashboard(Component):
 
         # build the panels
         panels = []
+        located_tickets = geoticket.tickets_with_location()
         for panel in config:
 
             # query the tickets
@@ -229,6 +230,7 @@ class MapDashboard(Component):
                 date_to_display = 'time_changed'
             results = query.execute(req)
             n_tickets = len(results)
+            results = [ result for result in results if result['id'] in located_tickets ]
             locations = []
             tickets = []
             results = results[:self.dashboard_tickets]

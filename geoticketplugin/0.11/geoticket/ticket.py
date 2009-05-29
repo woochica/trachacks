@@ -556,6 +556,10 @@ class GeoTicket(Component):
                 pass
         return locations
 
+    def tickets_with_location(self):
+        """return ids of all located tickets"""
+        return set(get_column(self.env, 'ticket_location', 'ticket'))
+
     def set_location(self, ticket, lat, lon):
         """
         sets the ticket location in the db
