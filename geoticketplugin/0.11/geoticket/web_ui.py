@@ -167,7 +167,7 @@ class MapDashboard(Component):
     def panels(self):
         """return the panel configuration"""
         retval = []
-        for panel in self.dashboard:
+        for panel in self.env.config.getlist('geo', 'dashboard'):
             defaults = { 'label': panel,
                          'query':  'location!=' }
             config = {}

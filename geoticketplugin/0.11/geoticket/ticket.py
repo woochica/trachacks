@@ -105,9 +105,6 @@ class GeoTicket(Component):
     max_lon = FloatOption('geo', 'max_lon', '180.',
                           "maximum longitude for default map display")
 
-    dashboard = ListOption('geo', 'dashboard', 'activeissues',
-                           "which viewports to display on the dashboard")
-
 
     ### method for ICustomFieldProvider
 
@@ -440,9 +437,10 @@ class GeoTicket(Component):
 
     def default_dashboard(self):
         """add a default dashboard viewport"""
-        for panel in self.dashboard:
-            self.env.config.set('geo', '%s.label' % viewport, viewport)
-            self.env.config.set('geo', '%s.query' % viewport, 'location!=&status!=closed&order=time&desc=1')
+        # TODO
+#        for panel in self.dashboard:
+#             self.env.config.set('geo', '%s.label' % viewport, viewport)
+#             self.env.config.set('geo', '%s.query' % viewport, 'location!=&status!=closed&order=time&desc=1')
 
     def version(self):
         """returns version of the database (an int)"""
