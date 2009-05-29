@@ -188,8 +188,10 @@ class MapDashboard(Component):
         assert self.env.is_component_enabled(GeoTicket)
         geoticket = self.env.components[GeoTicket]
 
+        viewports = []
+
         # query the tickets
-        query_string = 'location!=&status!=closed'
+        query_string = 'location!=&status!=closed&order=time&desc=1'
         query = Query.from_string(self.env, query_string)
         results = query.execute(req)
         locations = []
@@ -207,10 +209,17 @@ class MapDashboard(Component):
             except GeolocationException:
                 continue
 
-        tickets.sort(key=lambda x: x.time_changed, reverse=True)
         n_tickets = len(results)
         tickets = tickets[:self.dashboard_tickets]
         add_script(req, 'common/js/query.js')
+
+        title = "Active Issues"
+        viewports.append({'title': title,
+                          'id': '_'.join(title.lower().split()),
+                          'locations': Markup(simplejson.dumps(locations)),
+                          'tickets': tickets,
+                          'n_tickets': n_tickets,
+                          'query_href': query.get_href(req.href)})
 
         # add the tag cloud, if enabled
         cloud = None
@@ -224,10 +233,8 @@ class MapDashboard(Component):
                 add_stylesheet(req, 'tags/css/tractags.css')
                 add_stylesheet(req, 'tags/css/tagcloud.css')
 
-        data = dict(locations=Markup(simplejson.dumps(locations)), 
-                    tickets=tickets,
-                    n_tickets=n_tickets,
-                    query_href=query.get_href(req.href),
+        # compile data for the genshi template
+        data = dict(viewports=viewports,
                     cloud=cloud,
                     openlayers_url=self.openlayers_url)
         return ('mapdashboard.html', data, 'text/html')
