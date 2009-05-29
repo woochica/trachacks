@@ -167,7 +167,11 @@ class MapDashboard(Component):
     def panels(self):
         """return the panel configuration"""
         retval = []
+
+        # XXX ugly hack because self.dashboard doesn't return
+        # a list for no apparent reason
         for panel in self.env.config.getlist('geo', 'dashboard'):
+
             defaults = { 'label': panel,
                          'query':  'location!=' }
             config = {}
@@ -217,9 +221,17 @@ class MapDashboard(Component):
             # query the tickets
             query_string = panel['query']
             query = Query.from_string(self.env, query_string)
+
+            # decide the date to sort by
+            if query.order == 'time':
+                date_to_display = 'time_created'
+            else:
+                date_to_display = 'time_changed'
             results = query.execute(req)
+            n_tickets = len(results)
             locations = []
             tickets = []
+            results = results[:self.dashboard_tickets]
             for result in results:
                 ticket = Ticket(self.env, result['id'])
                 try:
@@ -233,16 +245,13 @@ class MapDashboard(Component):
                 except GeolocationException:
                     continue
 
-                n_tickets = len(results)
-                tickets = tickets[:self.dashboard_tickets]
-
-
             title = panel['label']
             panels.append({'title': title,
                            'id': panel['id'],
                            'locations': Markup(simplejson.dumps(locations)),
                            'tickets': tickets,
                            'n_tickets': n_tickets,
+                           'date_to_display': date_to_display,
                            'query_href': query.get_href(req.href)})
 
         # add the tag cloud, if enabled

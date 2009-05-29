@@ -29,7 +29,7 @@ $(document).ready(function() {
           <td><a href="${req.href.ticket(ticket.id)}">${ticket['summary']}</a></td>
 
           <!-- hack bc strftime("%B %-d") doesn't work on winblows -->
-          <td>${ticket.time_changed.strftime("%B") + " %s" % ticket.time_changed.day}</td>
+          <td py:with="ticket_date = getattr(ticket, panel['date_to_display'])">${ticket_date.strftime("%B") + " %s" % ticket_date.day}</td>
         </tr>
         <tr>
           <td>${panel['n_tickets']} ${panel['title']} in total</td>
