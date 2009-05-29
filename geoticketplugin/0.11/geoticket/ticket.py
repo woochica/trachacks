@@ -20,7 +20,7 @@ from geoticket.utils import get_column
 from geoticket.utils import get_first_row
 from geoticket.utils import get_scalar
 from pkg_resources import resource_filename
-from trac.config import Option, BoolOption
+from trac.config import Option, BoolOption, ListOption
 from trac.core import *
 from trac.db import Table, Column, Index
 from trac.db.postgres_backend import PostgreSQLConnection
@@ -104,6 +104,9 @@ class GeoTicket(Component):
                           "minimum longitude for default map display")
     max_lon = FloatOption('geo', 'max_lon', '180.',
                           "maximum longitude for default map display")
+
+    dashboard = ListOption('geo', 'dashboard', 'activeissues',
+                           "which viewports to display on the dashboard")
 
 
     ### method for ICustomFieldProvider
@@ -409,26 +412,16 @@ class GeoTicket(Component):
         transactions. This is done implicitly after all participants have
         performed the upgrades they need without an error being raised.
         """
+
+        # create a table for ticket location
         ticket_location_table = Table('ticket_location', key='ticket')[
             Column('ticket', type='int'),
             Column('latitude', type='float'),
             Column('longitude', type='float'),
             Index(['ticket'])]
         create_table(self.env, ticket_location_table)
-
-        # use PostGIS if available 
-        postgis = False
-        if self.postgis_enabled():
-            # TODO : do this via SQL statements
-            import subprocess
-#            retcode = subprocess.call(['createlang', 'plpgsql', 'mydb'])
-
-            postgis = True
-            
     
-        # set if PostGIS is enabled or not
-
-
+        # update ticket locations
         tickets = get_column(self.env, 'ticket', 'id')
         tickets = [ Ticket(self.env, ticket) for ticket in tickets ]
         for ticket in tickets:
@@ -438,7 +431,18 @@ class GeoTicket(Component):
             except GeolocationException:
                 pass
 
+        # note the DB version
         execute_non_query(self.env, "insert into system (name, value) values ('geoticket.db_version', '1');")
+
+
+        # add a default dashboard panel
+        self.default_dashboard()
+
+    def default_dashboard(self):
+        """add a default dashboard viewport"""
+        for panel in self.dashboard:
+            self.env.config.set('geo', '%s.label' % viewport, viewport)
+            self.env.config.set('geo', '%s.query' % viewport, 'location!=&status!=closed&order=time&desc=1')
 
     def version(self):
         """returns version of the database (an int)"""

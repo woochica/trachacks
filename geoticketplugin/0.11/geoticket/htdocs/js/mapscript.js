@@ -36,7 +36,7 @@ function map_locations(locations, options) {
     // create a map opject with the options
     var map = maps[options.id];
     if (!map) {
-        map = new OpenLayers.Map('map', map_options);
+        map = new OpenLayers.Map(options.id, map_options);
         maps[options.id] = map;
         options.zoom = true;
     }

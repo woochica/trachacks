@@ -11,6 +11,7 @@ from pkg_resources import resource_filename
 from ticketsidebarprovider import ITicketSidebarProvider
 from trac.config import BoolOption
 from trac.config import IntOption
+from trac.config import ListOption
 from trac.config import Option
 from trac.core import *
 from trac.mimeview import Context
@@ -160,6 +161,21 @@ class MapDashboard(Component):
                                   "number of tickets to display on the dashboard map")
     display_cloud = Option('geo', 'display_cloud', 'true',
                            "whether to display the cloud on the map dashboard")
+    dashboard = ListOption('geo', 'dashboard', 'activeissues',
+                           "which viewports to display on the dashboard")
+
+    def panels(self):
+        """return the panel configuration"""
+        retval = []
+        for panel in self.dashboard:
+            defaults = { 'label': panel,
+                         'query':  'location!=' }
+            config = {}
+            for key, default in defaults.items():
+                config[key] = self.env.config.get('geo', '%s.%s' % (panel, key)) or default
+            config['id'] = panel
+            retval.append(config)
+        return retval
 
     ### methods for IRequestHandler
 
@@ -188,38 +204,46 @@ class MapDashboard(Component):
         assert self.env.is_component_enabled(GeoTicket)
         geoticket = self.env.components[GeoTicket]
 
-        viewports = []
-
-        # query the tickets
-        query_string = 'location!=&status!=closed&order=time&desc=1'
-        query = Query.from_string(self.env, query_string)
-        results = query.execute(req)
-        locations = []
-        tickets = []
-        for result in results:
-            ticket = Ticket(self.env, result['id'])
-            try:
-                
-                address, (lat, lon) = geoticket.locate_ticket(ticket)
-                content = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
-                locations.append({'latitude': lat,
-                                  'longitude': lon,
-                                  'content': Markup(content)})
-                tickets.append(ticket)
-            except GeolocationException:
-                continue
-
-        n_tickets = len(results)
-        tickets = tickets[:self.dashboard_tickets]
+        # add the query script
         add_script(req, 'common/js/query.js')
 
-        title = "Active Issues"
-        viewports.append({'title': title,
-                          'id': '_'.join(title.lower().split()),
-                          'locations': Markup(simplejson.dumps(locations)),
-                          'tickets': tickets,
-                          'n_tickets': n_tickets,
-                          'query_href': query.get_href(req.href)})
+        # get the panel configuration
+        config = self.panels()
+
+        # build the panels
+        panels = []
+        for panel in config:
+
+            # query the tickets
+            query_string = panel['query']
+            query = Query.from_string(self.env, query_string)
+            results = query.execute(req)
+            locations = []
+            tickets = []
+            for result in results:
+                ticket = Ticket(self.env, result['id'])
+                try:
+                
+                    address, (lat, lon) = geoticket.locate_ticket(ticket)
+                    content = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
+                    locations.append({'latitude': lat,
+                                      'longitude': lon,
+                                      'content': Markup(content)})
+                    tickets.append(ticket)
+                except GeolocationException:
+                    continue
+
+                n_tickets = len(results)
+                tickets = tickets[:self.dashboard_tickets]
+
+
+            title = panel['label']
+            panels.append({'title': title,
+                           'id': panel['id'],
+                           'locations': Markup(simplejson.dumps(locations)),
+                           'tickets': tickets,
+                           'n_tickets': n_tickets,
+                           'query_href': query.get_href(req.href)})
 
         # add the tag cloud, if enabled
         cloud = None
@@ -234,7 +258,7 @@ class MapDashboard(Component):
                 add_stylesheet(req, 'tags/css/tagcloud.css')
 
         # compile data for the genshi template
-        data = dict(viewports=viewports,
+        data = dict(panels=panels,
                     cloud=cloud,
                     openlayers_url=self.openlayers_url)
         return ('mapdashboard.html', data, 'text/html')

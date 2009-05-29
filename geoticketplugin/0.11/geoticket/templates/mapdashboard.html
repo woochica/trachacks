@@ -11,29 +11,29 @@
 <script src="${req.href('chrome/geoticket/js/mapscript.js')}"></script>
 <script type="text/javascript">
 $(document).ready(function() {
-<py:for each="viewport in viewports">
-  map_locations(${viewport['locations']});
+<py:for each="panel in panels">
+  map_locations(${panel['locations']}, {id: "${panel['id']}"});
 </py:for>
 });
 </script>
 </head>
 <body>
   
-  <div py:for="viewport in viewports">
+  <div py:for="panel in panels">
 
-    <h1>${viewport['title']}</h1>
-    <div id="map" style="width: 600px; height: 300px"></div>
+    <h1>${panel['title']}</h1>
+    <div id="${panel['id']}" style="width: 600px; height: 300px"></div>
     <div>
       <table>
-        <tr py:for="ticket in viewport['tickets']">
+        <tr py:for="ticket in panel['tickets']">
           <td><a href="${req.href.ticket(ticket.id)}">${ticket['summary']}</a></td>
 
           <!-- hack bc strftime("%B %-d") doesn't work on winblows -->
           <td>${ticket.time_changed.strftime("%B") + " %s" % ticket.time_changed.day}</td>
         </tr>
         <tr>
-          <td>${viewport['n_tickets']} ${viewport['title']} in total</td>
-          <td><i><a href="${viewport['query_href']}">See Query View</a></i></td>
+          <td>${panel['n_tickets']} ${panel['title']} in total</td>
+          <td><i><a href="${panel['query_href']}">See Query View</a></i></td>
         </tr>
       </table>
     </div>
