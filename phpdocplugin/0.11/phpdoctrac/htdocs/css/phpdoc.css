@@ -1,0 +1,81 @@
+div.tabs *
+{
+  display: inline;
+}
+
+div.tabs ul
+{
+  display: block;
+  margin: 0;
+  padding: 0.5em 0 0 0;
+  font-size: 10px;
+  list-style: none;
+  text-align: left;
+}
+
+div.tabs li
+{
+  border-right: 1px solid #d7d7d7;
+  padding: 0 0.75em;
+  white-space: nowrap;
+}
+
+div.tabs form
+{
+  float: right;
+}
+
+div.tabs label, div.tabs input
+{ 
+  padding: 0 0.75em;
+  font-size: 10px;
+}
+
+div#main div.nav
+{ 
+  margin: 0;
+  padding: 1em 0 0 0.75em;
+}
+
+h1
+{ 
+  margin: 1em;
+}
+div.phpdoc div table {
+	border-collapse: collapse;
+}
+td.header_top {
+	background-color: #9999CC;
+	color: #FFFFFF;
+	font-size: 16pt;
+	font-weight: bold;
+	padding: 10px;
+}
+td.header_line {
+	background-color: #333366;
+	color: #FFFFFF;
+	line-height: 0px;
+	font-size: 0px;
+}
+td.header_line img {
+	border: 0px;
+}
+td.header_menu {
+	background-color: #666699;
+	color: #FFFFFF;
+	font-size: 5pt;
+	padding: 2px 5px 2px 2px;
+	text-align: right;
+}
+td.menu {
+	padding: 2px 2px 2px 5px;
+	background-color: #e0e0e0;
+	border-right: 1px dotted #b0b0b0;
+}
+a.menu {
+	color: #FFFFFF;
+}
+a.menu;hover {
+	background-color: #FFFFFF;
+	color: #BB0000;
+}
