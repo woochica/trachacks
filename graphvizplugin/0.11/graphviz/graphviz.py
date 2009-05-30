@@ -29,7 +29,7 @@ from genshi.core import Markup
 
 from trac.config import BoolOption, IntOption, Option
 from trac.core import *
-from trac.mimeview.api import IHTMLPreviewRenderer, MIME_MAP
+from trac.mimeview.api import Context, IHTMLPreviewRenderer, MIME_MAP
 from trac.util import escape
 from trac.util.text import to_unicode
 from trac.util.translation import _
@@ -185,7 +185,7 @@ class Graphviz(Component):
         ext = filename.split('.')[1]
         name = ext == 'graphviz' and 'graphviz' or 'graphviz.%s' % ext
         text = hasattr(content, 'read') and content.read() or content
-        return self.render_macro(context, name, text)
+        return self.expand_macro(context, name, text)
 
 
     # IRequestHandler methods
@@ -234,12 +234,13 @@ class Graphviz(Component):
             return None
 
 
-    def expand_macro(self, formatter, name, content):
+    def expand_macro(self, formatter_or_context, name, content):
         """Return the HTML output of the macro.
 
-        formatter - ?
+        :param formatter_or_context: a Formatter when called as a macro,
+               a Context when called by `GraphvizPlugin.render`
 
-        name - Wiki macro command that resulted in this method being
+        :param name: Wiki macro command that resulted in this method being
                called. In this case, it should be 'graphviz', followed
                (or not) by the processor name, then by an output
                format, as following: graphviz.<processor>/<format>
@@ -257,10 +258,8 @@ class Graphviz(Component):
                          graphviz.circo     -> circo  png
                          graphviz/svg       -> dot    svg
 
-        content - The text the user entered for the macro to process.
+        :param content: The text the user entered for the macro to process.
         """
-        req = formatter.req
-
         # check and load the configuration
         errmsg = self._load_config()
         if errmsg:
@@ -327,7 +326,11 @@ class Graphviz(Component):
             self._clean_cache()
 
             if URL_in_graph: # translate wiki TracLinks in URL
-                content = self._expand_wiki_links(formatter, out_format, 
+                if isinstance(formatter_or_context, Context):
+                    context = formatter_or_context
+                else:
+                    context = formatter_or_context.context
+                content = self._expand_wiki_links(context, out_format, 
                                                   content)
                 encoded_content = content.encode(self.encoding)
 
@@ -372,7 +375,7 @@ class Graphviz(Component):
             return self._error_div(errmsg)
 
         # Generate HTML output
-        img_url = formatter.href.graphviz(img_name)
+        img_url = formatter_or_context.href.graphviz(img_name)
         # for SVG(z)
         if out_format in Graphviz.Vector_Formats:
             try: # try to get SVG dimensions
@@ -415,11 +418,11 @@ class Graphviz(Component):
 
     # Private methods
 
-    def _expand_wiki_links(self, formatter, out_format, content):
+    def _expand_wiki_links(self, context, out_format, content):
         """Expand TracLinks that follow all URL= patterns."""
         def expand(match):
             wiki_text = match.groups()[0] # TracLink ([1], source:file/, ...)
-            link = extract_link(self.env, formatter.context, wiki_text)
+            link = extract_link(self.env, context, wiki_text)
             if isinstance(link, Element):
                 href = link.attrib.get('href')
                 name = link.children
