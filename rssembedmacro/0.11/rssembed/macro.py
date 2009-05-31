@@ -60,7 +60,14 @@ class RssEmbedMacro(WikiMacroBase):
             return None
 
         #split args on comma
-        url, details = self.split_at(args, args.rfind(','))
+        if args.rfind(',') == -1:
+            url = args
+            details = "false"
+        elif args.rfind(',') == len(args)-1:
+            url = args.rstrip(',')
+            details = "false"
+        else:
+            url, details = self.split_at(args, args.rfind(','))
 
         httpReq = Request(url)
         req = formatter.req
