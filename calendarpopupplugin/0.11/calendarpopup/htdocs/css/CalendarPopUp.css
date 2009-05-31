@@ -1,0 +1,97 @@
+﻿.CPUcpYearNavigation,
+.CPUcpMonthNavigation
+   {
+   background-color:#6677DD;
+   text-align:center;
+   vertical-align:center;
+   text-decoration:none;
+   color:#FFFFFF;
+   font-weight:bold;
+   }
+.CPUcpDayColumnHeader,
+.CPUcpYearNavigation,
+.CPUcpMonthNavigation,
+.CPUcpCurrentMonthDate,
+.CPUcpCurrentMonthDateDisabled,
+.CPUcpOtherMonthDate,
+.CPUcpOtherMonthDateDisabled,
+.CPUcpCurrentDate,
+.CPUcpCurrentDateDisabled,
+.CPUcpTodayText,
+.CPUcpTodayTextDisabled,
+.CPUcpText
+   {
+   font-family:arial;
+   font-size:8pt;
+   }
+TD.CPUcpDayColumnHeader
+   {
+   text-align:right;
+   border:solid thin #6677DD;
+   border-width:0 0 1 0;
+   }
+.CPUcpCurrentMonthDate,
+.CPUcpOtherMonthDate,
+.CPUcpCurrentDate
+   {
+   text-align:right;
+   text-decoration:none;
+   }
+.CPUcpCurrentMonthDateDisabled,
+.CPUcpOtherMonthDateDisabled,
+.CPUcpCurrentDateDisabled
+   {
+   color:#D0D0D0;
+   text-align:right;
+   text-decoration:line-through;
+   }
+.CPUcpCurrentMonthDate
+   {
+   color:#6677DD;
+   font-weight:bold;
+   }
+.CPUcpCurrentDate
+   {
+   color: #FFFFFF;
+   font-weight:bold;
+   }
+.CPUcpOtherMonthDate
+   {
+   color:#808080;
+   }
+TD.CPUcpCurrentDate
+   {
+   color:#FFFFFF;
+   background-color: #6677DD;
+   border-width:1;
+   border:solid thin #000000;
+   }
+TD.CPUcpCurrentDateDisabled
+   {
+   border-width:1;
+   border:solid thin #FFAAAA;
+   }
+TD.CPUcpTodayText,
+TD.CPUcpTodayTextDisabled
+   {
+   border:solid thin #6677DD;
+   border-width:1 0 0 0;
+   }
+A.CPUcpTodayText,
+SPAN.CPUcpTodayTextDisabled
+   {
+   height:20px;
+   }
+A.CPUcpTodayText
+   {
+   color:#6677DD;
+   font-weight:bold;
+   }
+SPAN.CPUcpTodayTextDisabled
+   {
+   color:#D0D0D0;
+   }
+.CPUcpBorder
+   {
+   border:solid thin #6677DD;
+   }
