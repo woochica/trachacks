@@ -50,6 +50,11 @@
   </head>
 
   <body>
+    <script py:if="not locations" type="text/javascript">
+      $(document).ready(function(){
+      map_locations([]);
+      });
+    </script>
 
     <py:choose test="not ticket.exists or 'edit' in req.args or 'preview' in req.args">
       <py:when test="True"><xi:include href="ticket-edit.html"/></py:when>
