@@ -19,11 +19,14 @@ $(document).ready(function() {
 </head>
 <body>
   
-  <div py:for="panel in panels">
+<div id="mapdashboard">
+  <div class="panel" py:for="panel in panels" id="panel-${panel['id']}">
 
     <h1>${panel['title']}</h1>
-    <div id="${panel['id']}" style="width: 600px; height: 300px"></div>
-    <div>
+
+    <div class="panel-map" id="${panel['id']}" style="width: 467px; height: 245px"></div>
+
+    <div class="panel-data">
       <table>
         <tr py:for="ticket in panel['tickets']">
           <td><a href="${req.href.ticket(ticket.id)}">${ticket['summary']}</a></td>
@@ -31,7 +34,7 @@ $(document).ready(function() {
           <!-- hack bc strftime("%B %-d") doesn't work on winblows -->
           <td py:with="ticket_date = getattr(ticket, panel['date_to_display'])">${ticket_date.strftime("%B") + " %s" % ticket_date.day}</td>
         </tr>
-        <tr>
+        <tr class="table-footer">
           <td>${panel['n_tickets']} ${panel['title']} in total</td>
           <td><i><a href="${panel['query_href']}">See Query View</a></i></td>
         </tr>
@@ -39,9 +42,12 @@ $(document).ready(function() {
     </div>
   </div>
 
-  <div py:if="cloud">
+  <div py:if="cloud" id="panel-tagcloud" class="panel">
+	<h1>Issue Types</h1>
     ${cloud}
   </div>
+
+</div>
 
 </body>
 </html>
