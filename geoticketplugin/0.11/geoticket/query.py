@@ -123,6 +123,10 @@ class GeospatialQuery(Component):
             # filter out empty groups
             data['groups'] = [ group for group in data['groups'] 
                                if group[1] ]
+
+            # fix up number of matches
+            data['query'].num_items = len(data['tickets'])
+
         return (template, data, content_type)
 
     def pre_process_request(self, req, handler):
