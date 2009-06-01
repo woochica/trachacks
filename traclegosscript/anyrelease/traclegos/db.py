@@ -119,8 +119,8 @@ class PostgreSQL(DatabaseSetup):
                     default='trac'),
                 var('database_admin', 'name of database root user (admin)',
                     default='root'),
-                var('postgres_port', 'port where MySQL is served',
-                    default='5432')
+#                var('postgres_port', 'port where MySQL is served',
+#                    default='5432')
                 ]
 
     
@@ -146,7 +146,6 @@ class PostgreSQL(DatabaseSetup):
 
     def setup(self, **vars):
         """create a postgres db"""
-        raise NotImplementedError # XXX to finish
 
         # commands to create the database
         commands = [ ["createuser", "--username", vars['database_admin'], "--createdb", "--superuser", "--createrole", vars['database_user'],],
@@ -155,7 +154,7 @@ class PostgreSQL(DatabaseSetup):
                      ]
 
         # run the commands
-        for commands in command:
+        for command in commands:
             retval = subprocess.call(command)
             if retval:
                 raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(command))
