@@ -134,7 +134,7 @@ class PostgreSQL(DatabaseSetup):
 
         # ensure that the necessary commands are installed
         for command in ["createuser", "createdb"]:
-            if not subprocess.call([command, "--help"]):
+            if subprocess.call([command, "--help"], stdout=subprocess.PIPE):
                 return False
 
         return True
