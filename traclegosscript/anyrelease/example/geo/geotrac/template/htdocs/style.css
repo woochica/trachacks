@@ -19,7 +19,8 @@ body {
 }
 
 html {
-background-color : #2b5b97 !important;
+background-color : #F6F4F6;
+/*background-color : #2b5b97 !important;*/
 }
 
 hr {
@@ -372,13 +373,48 @@ padding : 0;
 #ctxtnav {
 clear : both;
 width : 100%;
-background-color : #F2F2F2;
+background-color : #F6F6F6;
 border-top : 1px solid #E9E9E9;
 padding : 1em 0 1.25em 0;
 margin-top : 2em;
 }
 
+.content #ctxtnav.nav ul {
+text-align : left;
+margin-left : 17px;
+}
 
+.content #ctxtnav.nav ul li.first { 
+padding-left : 0;
+}
+
+#altlinks {
+padding : 2.5em 0 1em 0;
+width : 100%; 
+float : left;
+margin-top : 1em;
+border-top : 1px solid #E9E9E9;
+background : #f0f1f1 url(./images/ticket-properties-bg-bottom.png) top repeat-x !important;
+}
+
+#altlinks h3,
+#altlinks ul, 
+#altlinks li  {
+float : left;
+line-height : 1em;
+padding : 0;
+margin : 0;
+}
+
+#altlinks h3 {
+margin-left : 17px;
+color : #666;
+}
+
+#altlinks li {
+margin-left : 1em;
+padding-right : 1em;
+}
 
 
 
@@ -476,27 +512,24 @@ margin-top : 0;
 
 
 #footer {
-color : #daf8ff;
-background-color : #2b5b97;
-padding-bottom : 5em;
+background-color : #F6F5F6;
+border-top-color : #F6F5F6;
 padding : 2em 0 4em 0;
+color : #ABABAB;
 }
 
 #footer a, 
 #footer :link, 
 #footer :visited {
-color : #fff;
+color : #828282;
 border : none;
 text-decoration : underline;
 }
 
 
 #footer a:hover {
-background : #3ea4bb;
--moz-border-radius : 5px;
--webkit-border-radius : 5px;
-border-radius : 5px;
 text-decoration : none;
+background-color : transparent;
 }
 
 
@@ -504,6 +537,11 @@ text-decoration : none;
 #footer p.left {
 border : none;
 }
+
+#footer p {
+text-align : center;
+}
+
 
 #footer #tracpowered, 
 #footer #tracpowered:hover {
@@ -631,12 +669,12 @@ margin-bottom : 2em;
 float : left;
 }
 
-.location {
+.ticket .location {
 float : right;
 }
 
 
-.location span {
+.ticket .location span {
 float : left;
 clear : both;
 
@@ -938,7 +976,7 @@ float : left;
 clear : both;
 }
 
-.description, 
+.ticket .description, 
 #field-description  {
 float : left;
 width : 488px;
@@ -957,13 +995,13 @@ text-transform : uppercase;
 margin : 0 0 .5em 0;
 }
 
-.content .description  h4 .lastmod {
+.content .ticket .description  h4 .lastmod {
 color : #9b9b9b;
 padding-left : 1em;
 text-transform : none;
 }
 
-.content .description  h3 .lastmod a {
+.content .ticket .description  h3 .lastmod a {
 border-bottom : none;
 color : #4c4c4c;
 }
@@ -1049,7 +1087,8 @@ clear : both;
 _______________________________
 Content Pages */
 
-.content #content {
+.content #content, 
+.content #mapdashboard {
 padding : 17px 17px 0 17px;
 margin-bottom : 2em;
 }
@@ -1095,14 +1134,178 @@ margin :0;
 float : left;
 padding : 0 0 0 1.5em;
 margin : -1.8em 0 0 -.6em;
-border-bottom : 1px solid #ccc;
+border-bottom : 1px solid #DDDDDD;
 }
+
+
+
+#query fieldset#geo #center-location, 
+#query fieldset#geo select {
+clear : none;
+float : left;
+}
+
+#query #filters table {
+margin-bottom : .5em;
+}
+
+.content #query #filters table {
+
+}
+
+.content #query #filters tbody tr,
+.content #query #filters tbody th, 
+.content #query #filters tbody td  {
+border-bottom : 1px solid #DDDDDD !important;
+padding : .5em 0;
+}
+
+#filters tbody tr {
+background-color : #F8F8F8;
+}
+
+
+#filters th label {
+width : 150px;
+float : left;
+margin-right : 1em;
+}
+
+#filters tbody tr.actions, 
+#filters tbody tr.submit {
+background-color : transparent;
+}
+
+.content #query #filters tbody tr.actions,
+.content #query #filters tbody tr.actions td, 
+.content #query #filters tbody tr.actions th, 
+.content #query #filters tbody tr.submit,
+.content #query #filters tbody tr.submit td, 
+.content #query #filters tbody tr.submit th  {
+border : 0 !important;
+}
+
 
 #query fieldset.collapsed legend a {
 border : none !important;
 }
 
 
+#query #display .option {
+margin-top : 0;
+}
+
+#query fieldset div {
+padding-bottom : .3em;
+}
+
+.query-submit {
+float : right;
+}
+
+
+
+
+
+
+/*
+_______________________________
+Frontpage
+*/
+
+#mapdashboard .panel {
+width : 467px;
+float : left;
+}
+
+#mapdashboard .panel h1 {
+font-size : 1.2em;
+padding : 8px 8px 5px 8px;
+width : 451px; /* 467px after padding */
+margin : 0;
+color : #212322;
+font-style : italic;
+font-family : Myriad, sans-serif;
+border : 1px solid #e5e5e5;
+background : #F0F1F1 url(./images/ticket-properties-bg.png) repeat-x scroll center bottom !important
+}
+
+#panel-activeissues {
+margin-left : 28px;
+}
+
+.panel-map {
+width : 467px;
+height : 245px;
+border : 1px solid #dcdbdc;
+}
+
+#panel-tagcloud {
+width : 966px !important;
+clear : both;
+}
+
+#mapdashboard #panel-tagcloud h1 {
+width : 947px !important;
+}
+
+
+#panel-tagcloud ul {
+margin : 0 0 1.5em 0;
+padding : 8px;
+background-color : #f6f5f6;
+border : 1px solid #ececec;
+border-width : 0 1px 1px 1px;
+width : 947px;
+float : left;
+}
+
+
+.content .panel-data table {
+width : 469px;
+display : block !important;
+margin-bottom : 4em;
+}
+
+.content .panel-data table td {
+background-color : #f4f4f4;
+color : #626262;
+width : 100%;
+padding : .5em .5em;
+border-bottom : 1px solid #dcdbdc !important;
+}
+
+.content .panel-data table td {
+width : 317px !important;
+}
+
+.content .panel-data table td + td {
+width : 150px !important;
+
+}
+
+.content #panel-newissues .panel-data table td a {
+color : #cb4a39;
+}
+
+.content #panel-activeissues .panel-data table td a {
+color : #d39227;
+}
+
+.content .panel-data table .table-footer td {
+color : #a2a2a2 !important;
+}
+
+.content .panel-data table .table-footer td, 
+.content .panel-data table .table-footer tr {
+background-color : #fff;
+border-bottom : 0 !important;
+}
+
+.content .panel-data table .table-footer td + td a {
+font-style : italic !important;
+color : #3a71b6 !important;
+}
 
 
 /*
