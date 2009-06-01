@@ -109,7 +109,7 @@ function map_locations(locations, options) {
         max_lonlat.transform(epsg4326, googleprojection);
         bounds.extend(min_lonlat);
         bounds.extend(max_lonlat);
-        map.zoomToExtent(bounds);
+        map.zoomToExtent(bounds, true);
 
     } else if ( options.zoom ) {
 
