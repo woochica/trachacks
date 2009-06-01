@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 
 [account-manager]
-account_changes_notify_addresses = 
-force_passwd_change = True
-generated_password_length = 8
 hash_method = HtDigestHashMethod
-password_file = /usr/local/topp/trac/trac.htpasswd
+password_file = ${basedir}/trac.htpasswd
 password_store = HtPasswdStore
 
 [attachment]
@@ -61,7 +58,20 @@ tracbacks.tracbacks.tracbacksplugin = enabled
 tractoc.macro.tocmacro = enabled
 
 [geo]
+activeissues.label = Active Issues
+activeissues.query = location!=&status!=closed&order=time&desc=1
+dashboard = activeissues,otherissues
+google_api_key = 
+inject_map = true
+inject_query = false
 mandatory_location = false
+max_lat = 45.0
+max_lon = 90.0
+min_lat = -45.0
+min_lon = -90.0
+otherissues.label = Other Issues
+otherissues.query = location!=&status!=closed&order=time
+wms_url = http://maps.opengeo.org/geoserver/gwc/service/wms
 
 [graphviz]
 cache_dir = gvcache
@@ -79,24 +89,18 @@ processor = dot
 rsvg_path = 
 
 [header_logo]
-alt = GeoTrac
+alt = ${description}
 height = -1
-link = 
-src = 
+link = ${url}
+src = ${logo}
 width = -1
-
-[inherit]
-plugins_dir = 
-templates_dir = 
 
 [iniadmin]
 excludes = iniadmin:excludes,iniadmin:passwords
 passwords = trac:database,notification:smtp_password
 
 [logging]
-log_file = trac.log
-log_level = DEBUG
-log_type = file
+log_type = none
 
 [mainnav]
 tickets.href = /query
@@ -124,15 +128,15 @@ ignore_domains =
 mime_encoding = base64
 smtp_always_bcc = 
 smtp_always_cc = 
-smtp_default_domain = openplans.org
+smtp_default_domain = ${domain}
 smtp_enabled = true
-smtp_from = mobilegeo@blue.openplans.org
+smtp_from = geotrac@${domain}
 smtp_from_name = 
 smtp_password = 
 smtp_port = 25
-smtp_replyto = mobilegeo@blue.openplans.org
+smtp_replyto = geotrac@${geotrac}
 smtp_server = localhost
-smtp_subject_prefix = [MobileGeoTrac-sandbox]
+smtp_subject_prefix = [GeoTrac]
 smtp_user = 
 use_public_cc = true
 use_short_addr = false
@@ -143,16 +147,16 @@ group_blacklist = anonymous, authenticated
 
 [project]
 admin = 
-descr = Trac - MobileGeoTrac sandbox instance
-footer = 
-icon = 
-name = MobileGeoTrac-sandbox
-url = 
+descr = Trac - ${description}
+footer = ${footer}
+icon = ${favicon}
+name = ${project}
+url = ${url}
 
 [query]
-default_anonymous_query = status!=closed
+default_anonymous_query = location!=&status!=closed
 items_per_page = 100
-ticketlink_query = ?status=!closed
+ticketlink_query = ?location=!&status=!closed
 
 [report]
 items_per_page = 100
@@ -173,8 +177,8 @@ svnlook = /usr/bin/svnlook
 tags = tags/*
 
 [tags]
-case-sensitive = True
-ignore_closed_tickets = True
+case-sensitive = false
+ignore_closed_tickets = true
 ticket_fields = keywords
 
 [ticket]
@@ -191,8 +195,8 @@ default_summary =
 default_type = defect
 default_version = 
 mandatory_image = false
-max_comment_size = 262144
-max_description_size = 262144
+max_comment_size = 16777216
+max_description_size = 16777216
 preserve_newlines = default
 restrict_owner = false
 workflow = ConfigurableTicketWorkflow
@@ -239,11 +243,11 @@ ticket_show_details = false
 authz_file = 
 authz_module_name = 
 auto_reload = True
-base_url = http://trac.openplans.org/MobileGeoTrac-sandbox
+base_url = http://${domain}/${project}
 check_auth_ip = false
-database = sqlite:db/trac.db
+database = postgres://${database_user}:${database_password}@/trac_${project}
 default_charset = iso-8859-15
-default_handler = WikiModule
+default_handler = MapDashboard
 default_timezone = 
 htdocs_location = 
 ignore_auth_case = false
@@ -267,6 +271,6 @@ split_page_names = false
 [wiki-notification]
 attach_diff = False
 redirect_time = 5
-smtp_from = trac+wiki@localhost
+smtp_from = geotrac@${domain}
 use_public_cc = False
 
