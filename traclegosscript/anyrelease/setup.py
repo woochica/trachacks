@@ -39,6 +39,7 @@ setup(name='TracLegos',
       [traclegos.database]
       SQLite = traclegos.db:SQLite
       MySQL = traclegos.db:MySQL
+      PostgreSQL = traclegos.db:PostgreSQL
 
       [traclegos.respository]
       None = traclegos.repository:NoRepository

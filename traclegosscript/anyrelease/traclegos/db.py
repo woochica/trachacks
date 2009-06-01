@@ -11,6 +11,9 @@ import subprocess
 
 from paste.script.templates import var
 
+class DatabaseCreationError(Exception):
+    """marker exception for errors on database creation"""
+
 class DatabaseSetup(object):
     """interface defining database setup using TracLegos"""
 
@@ -104,7 +107,49 @@ grant all privileges on %(database)s.* to %(database_user)s@localhost identified
         process.communicate(input=sql)
 
 
-# TODO: postgresql
+class PostgreSQL(DatabaseSetup):
+    """PostgreSQL database using psycopg2 bindings"""
+    # see:
+    # * http://trac.edgewall.org/wiki/DatabaseBackend#Postgresql
+    # * http://trac.edgewall.org/wiki/PostgresqlRecipe
+
+    # XXX unfinished
+    prefix = 'trac_' # prefix to prepend database names with
+    options = [ var('database_user', 'name of the database user',
+                    default='trac'),
+                var('database_password', 'user password for the database'),
+                var('database_admin', 'name of database root user (admin)',
+                    default='root'),
+                var('database_admin_password', 'password for the admin user'),
+
+                var('postgres_port', 'port where MySQL is served',
+                    default='5432')
+                ]
+
+    
+    def enabled(self):
+        try: 
+            import psycopg2
+        except ImportError:
+            return False
+        # TODO: test to see if you can connect to the db
+        return True
+                
+    def db_string(self):
+        return 'postgres://${database_user}:${database_password}@localhost:${postgres_port}/%s${project}?schema=schemaname' %  self.prefix
+
+    def setup(self, **vars):
+        """create a postgres db"""
+        raise NotImplementedError # XXX to finish
+
+        commands = [ ["createuser", "--username", vars['database_admin'], "--createdb", "--createrole", vars['database_user'],],
+                     
+                     ["createdb", "-E", "UTF8", self.prefix + vars['project']]
+                     ]
+        for commands in command:
+            retval = subprocess.call(command)
+            if retval:
+                raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(command))
 
 
 def available_databases():
