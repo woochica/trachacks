@@ -7,6 +7,7 @@ import os
 import pkg_resources
 import subprocess
 from paste.script import templates
+from traclegos.db import available_databases
 
 class TracProject(templates.Template):
     """a trac project"""
@@ -26,7 +27,10 @@ class TracProject(templates.Template):
     # methodologies is favored
 
     # PoachEggs requirements files for the template
-    requirements = [] 
+    requirements = []
+
+    # database to be used
+    db = None
 
     ### attrs for PasteScript Template
     
@@ -49,6 +53,13 @@ class TracProject(templates.Template):
             if os.path.exists(filename):
                 return filename
 
+    def database(self):
+        if db is None:
+            return db
+        if isinstance(db, basestring):
+            return available_databases[db]
+        return db
+            
 
 def projects():
     """return TracProject templates installed as eggs"""

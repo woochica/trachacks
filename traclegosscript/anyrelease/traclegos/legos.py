@@ -119,6 +119,19 @@ class TracLegos(object):
 
         # get templates
 
+        # XXX hack to get the specified DB out
+        if not database:
+            if isinstance(templates, ProjectTemplates):
+                pastescript_templates = templates.pastescript_templates
+            else:
+                pastescript_templates = [ template for template in templates + self.site_templates
+                                          if isinstance(template, TracProject) ]
+            databases = set([ template.database() for template in pastescript_templates
+                              if template.db is not None])
+            if databases:
+                assert len(databases) == 1
+                database = databases.pop()
+
         _templates = []
         if database:
             _templates.append(database.config())
