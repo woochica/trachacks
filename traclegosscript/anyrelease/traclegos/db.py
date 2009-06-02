@@ -147,17 +147,26 @@ class PostgreSQL(DatabaseSetup):
     def setup(self, **vars):
         """create a postgres db"""
 
-        # commands to create the database
-        commands = [ ["createuser", "--username", vars['database_admin'], "--createdb", "--superuser", "--createrole", vars['database_user'],],
-                     
-                     ["createdb", "-E", "UTF8", "--owner", vars['database_user'], self.prefix + vars['project']]
-                     ]
+        # commands to create the user and the database
+        createuser = ["createuser", "--username", vars['database_admin'], "--createdb", "--superuser", "--createrole", vars['database_user'],]
+        createdb = ["createdb", "-E", "UTF8", "--username", vars['database_admin'], "--owner", vars['database_user'], self.prefix + vars['project']]
 
-        # run the commands
-        for command in commands:
-            retval = subprocess.call(command)
+        # create the database user if they don't exist
+        process = subprocess.Popen(['psql', '--username', vars['database_admin'], '--command',
+                                    'SELECT rolname FROM pg_roles;'], stdout=subprocess.PIPE)
+        stdout, sterr = process.communicate()
+        roles = [ i.strip() for i in stdout.split('\n') if i.strip() ]
+        roles = set(roles[2:][:-1])
+        if vars['database_user'] not in roles:
+            retval = subprocess.call(createuser)
             if retval:
                 raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(command))
+
+        # create the database
+        retval = subprocess.call(createdb)
+        if retval:
+            raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(command))
+
 
 
 def available_databases():
