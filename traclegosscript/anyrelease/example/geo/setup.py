@@ -12,7 +12,8 @@ setup(name='GeoTrac',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
-      install_requires = [ 'PasteScript', 
+      install_requires = [ 'PasteScript',
+                           'psycopg2', 
                            'TracLegos',
                            'TracAccountManager',
                            'TracCustomFieldAdmin',
@@ -30,6 +31,13 @@ setup(name='GeoTrac',
                            'mail2trac',
                            ],
       dependency_links = [
+      # PIL - needed for ImageTrac
+      "http://dist.repoze.org/PIL-1.1.6.tar.gz",
+
+      # geopy - needed for GeoTicket
+      "http://geopy.googlecode.com/svn/branches/reverse-geocode#egg=geopy-0.93dev",
+
+      # Trac plugins
       "http://trac-hacks.org/svn/traclegosscript/anyrelease#egg=TracLegos",
       "http://trac-hacks.org/svn/accountmanagerplugin/trunk#egg=TracAccountManager",
       "http://trac-hacks.org/svn/customfieldadminplugin/0.11#egg=TracCustomFieldAdmin",
@@ -48,6 +56,9 @@ setup(name='GeoTrac',
       "http://trac-hacks.org/svn/geoticketplugin/0.11#egg=GeoTicket",
       "http://trac-hacks.org/svn/imagetracplugin/0.11#egg=ImageTrac",
       "http://trac-hacks.org/svn/mailtotracplugin/0.11#egg=mail2trac",
+      "http://trac-hacks.org/svn/customfieldproviderplugin/0.11#egg=CustomFieldProvider",
+      "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
+
       ],
       zip_safe=False,
       entry_points = """
