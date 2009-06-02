@@ -118,7 +118,7 @@ class PostgreSQL(DatabaseSetup):
     options = [ var('database_user', 'name of the database user',
                     default='trac'),
                 var('database_admin', 'name of database root user (admin)',
-                    default='root'),
+                    default='postgres'),
 #                var('postgres_port', 'port where MySQL is served',
 #                    default='5432')
                 ]
