@@ -112,8 +112,11 @@ class PostgreSQL(DatabaseSetup):
     # see:
     # * http://trac.edgewall.org/wiki/DatabaseBackend#Postgresql
     # * http://trac.edgewall.org/wiki/PostgresqlRecipe
+    # This currently only works with UNIX sockets databases
+    # using the trust authentication method for the database_user
+    # and the database_admin enabled in your pg_hba.conf file
+    # see http://www.postgresql.org/docs/8.3/static/auth-pg-hba-conf.html
 
-    # XXX unfinished
     prefix = 'trac_' # prefix to prepend database names with
     options = [ var('database_user', 'name of the database user',
                     default='trac'),
