@@ -12,7 +12,7 @@ setup(name='GeoTicket',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
-      package_data={ 'geoticket': ['templates/*', 'htdocs/*'] },
+      package_data={ 'geoticket': ['templates/*', 'htdocs/js/*'] },
       zip_safe=False,
       install_requires=[
         # -*- Extra requirements: -*-
