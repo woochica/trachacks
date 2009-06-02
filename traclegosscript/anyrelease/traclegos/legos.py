@@ -124,17 +124,17 @@ class TracLegos(object):
             if isinstance(templates, ProjectTemplates):
                 pastescript_templates = templates.pastescript_templates
             else:
-                pastescript_templates = [ template for template in templates + self.site_templates
-                                          if isinstance(template, TracProject) ]
+                pastescript_templates = ProjectTemplates(*(templates + self.site_templates)).pastescript_templates
             databases = set([ template.database() for template in pastescript_templates
                               if template.db is not None])
             if databases:
                 assert len(databases) == 1
                 database = databases.pop()
+        if not database:
+            database = SQLite()
 
         _templates = []
-        if database:
-            _templates.append(database.config())
+        _templates.append(database.config())
         if repository:
             _templates.append(repository.config())
 
@@ -300,7 +300,7 @@ def get_parser():
     parser.add_option("-t", dest="templates", action="append", default=[],
                       help="trac.ini templates to be applied in order")
     parser.add_option("--db", "--database",
-                      dest="database", default="SQLite",
+                      dest="database", default=None,
                       help="database type to use")
     
     parser.add_option("--list-templates", dest="listprojects",
@@ -363,10 +363,13 @@ def parse(parser, args=None):
         return
 
     # get the database
-    database = available_databases().get(options.database)
-    if not database:
-        print 'Error: database type "%s" not available\n' % options.database
-        options.listdatabases = True
+    if options.database:
+        database = available_databases().get(options.database)
+        if not database:
+            print 'Error: database type "%s" not available\n' % options.database
+            options.listdatabases = True
+    else:
+        database = None
 
     # list the available database setup agents
     if options.listdatabases:

@@ -54,11 +54,11 @@ class TracProject(templates.Template):
                 return filename
 
     def database(self):
-        if db is None:
-            return db
-        if isinstance(db, basestring):
-            return available_databases[db]
-        return db
+        if self.db is None:
+            return self.db
+        if isinstance(self.db, basestring):
+            return available_databases()[self.db]
+        return self.db
             
 
 def projects():
