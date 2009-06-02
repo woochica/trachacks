@@ -1,4 +1,5 @@
 import re
+from trac.config import ListOption
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import Markup
@@ -9,6 +10,11 @@ from trac.web.href import Href
 
 class tractab(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
+
+    tab_names_options = ListOption('tractab', 'names', '', doc='List of names that should create tabs (Whitespace Sensitive)')
+    tab_url_options = ListOption('tractab', 'urls', '', doc='List of urls that relate to tabs')
+    tab_url_options = ListOption('tractab', 'perms', '', doc='List of perm required to view')
+
 
     def init_config(self):
         names = self.config.get('tractab','names')
