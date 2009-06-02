@@ -1,11 +1,8 @@
 ﻿# -*- coding: utf-8 -*-
 from setuptools import setup
 
-version='0.0.1'
-
 setup(name='CalendarPopUp',
-      name = "CalendarPopUp",
-      version=version,
+      version='0.0.2',
       description="show selectable calendar pop-up where needed",
       author='Julian Dittrich',
       author_email='julian@nextwii.de',
