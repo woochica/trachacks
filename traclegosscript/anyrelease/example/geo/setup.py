@@ -63,7 +63,7 @@ setup(name='GeoTrac',
       zip_safe=False,
       entry_points = """
       [paste.paster_create_template]
-      geo_project = geotrac.project:GeoTracProject
+      geotrac = geotrac.project:GeoTracProject
       """,
       )
 

@@ -5,8 +5,8 @@ var = templates.var
 
 class GeoTracProject(TracProject):
     _template_dir = 'template'
-    summary = 'Geo Trac project template'
-
+    summary = 'GeoTrac project template'
+    db = 'PostgreSQL'
     vars = [ var('basedir', 'base directory for trac',
                  default='.'),
              var('domain', 'domain name where this project is to be served', 
