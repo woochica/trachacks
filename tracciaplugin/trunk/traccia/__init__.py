@@ -205,7 +205,7 @@ class CiaNotificationComponent(Component):
             old = kwargs.get('old_values', {})
             db = self.env.get_db_cnx()
             cursor = db.cursor()
-            cursor.execute('SELECT count(*) FROM ticket_change WHERE ticket = %s and field = "comment"' % (ticket.id));
+            cursor.execute("SELECT count(*) FROM ticket_change WHERE ticket = %s and field = 'comment'" % (ticket.id));
             r = cursor.fetchone()
             num_comments = int(r and r[0] or 0)
             if num_comments:
