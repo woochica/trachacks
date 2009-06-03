@@ -436,11 +436,19 @@ class GeoTicket(Component):
         self.default_dashboard()
 
     def default_dashboard(self):
-        """add a default dashboard viewport"""
-        # TODO
-#        for panel in self.dashboard:
-#             self.env.config.set('geo', '%s.label' % viewport, viewport)
-#             self.env.config.set('geo', '%s.query' % viewport, 'location!=&status!=closed&order=time&desc=1')
+        """
+        add a default dashboard viewport; 
+        'activeissues' comes from the `[geo] dashboard` default,
+        set in the MapDashboard component (from `web_ui.py`)
+        """
+
+        viewport = { 'activeissues.label': 'Active Issues',
+                     'activeissues.query': 'location!=&status!=closed&order=changetime&desc=1' }
+
+        if self.env.config.get('geo', 'dashboard') == 'activeissues' and sum([self.env.config.has_option('geo', key) for key in viewport]) == len(viewport):
+            for key, value in viewport.items():
+                self.env.config.set('geo', key, value)
+                self.env.config.set('geo', key, value)
 
     def version(self):
         """returns version of the database (an int)"""
@@ -453,13 +461,26 @@ class GeoTicket(Component):
     ### PostGIS
 
     def postgis_enabled(self):
+        """is PostGIS enabled on the database?"""
+
         cnx = self.env.get_db_cnx()
+
+        # test if connection type is PostgreSQL
         if not cnx.cnx.__class__ == PostgreSQLConnection:
             return False
-        # TODO: more ensurance
 
-        dbinfo = dict([i.split('=', 1) for i in cnx.cnx.cnx.dsn.split()])
-        return True
+        # test if PostGIS is enabled on the DB
+        # from http://mateusz.loskot.net/2009/04/09/making-postgis-database/
+        # psql -d trac_anothergeoproj -t -c "SELECT postgis_version();"
+        cur = cnx.cursor()
+        try:
+            cur.execute("SELECT postgis_version();")
+        except Exception, e: 
+            # XXX bare Exception used
+            # the actual error reached is psycopg2.ProgrammingError
+            # but this might be too specific
+            return False
+        return bool(cur.fetchall())
 
     ### geolocation
 
