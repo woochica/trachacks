@@ -4,7 +4,7 @@
   <parent>
     <artifactId>wikieditor</artifactId>
     <groupId>org.trachacks.wikieditor</groupId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   

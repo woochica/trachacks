@@ -2,7 +2,7 @@
 <feature
       id="org.trachacks.wikieditor.eclipse.feature"
       label="TracWikiEditor4Eclipse"
-      version="0.0.2"
+      version="0.0.3"
       provider-name="TracWikiEditor4Eclipse @ trac-hacks.org">
 
    <description url="http://trac-hacks.org/wiki/WikiEditorForEclipsePlugin">
@@ -46,13 +46,13 @@ limitations under the License.
          id="org.trachacks.wikieditor.eclipse.core"
          download-size="0"
          install-size="0"
-         version="0.0.2"/>
+         version="0.0.3"/>
 
    <plugin
          id="org.trachacks.wikieditor.eclipse.plugin"
          download-size="0"
          install-size="0"
-         version="0.0.2"
+         version="0.0.3"
          unpack="false"/>
 
 </feature>

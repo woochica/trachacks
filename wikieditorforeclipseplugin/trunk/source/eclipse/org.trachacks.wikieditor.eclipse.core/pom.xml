@@ -4,7 +4,7 @@
   <parent>
     <artifactId>wikieditor4eclipse</artifactId>
     <groupId>org.trachacks.wikieditor</groupId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -39,9 +39,9 @@
 	
 	<dependencies> <!-- These are ignored by tycho eclipse-plugin -->
         <dependency>
-            <groupId>${pom.parent.groupId}</groupId>
+            <groupId>${pom.groupId}</groupId>
             <artifactId>wikieditor-core</artifactId>
-            <version>0.0.2</version>
+            <version>${pom.version}</version>
         </dependency>
     </dependencies>	  
 </project>
