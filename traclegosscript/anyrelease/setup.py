@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.6.1'
+version = '0.7'
 
 setup(name='TracLegos',
       version=version,
@@ -24,7 +24,11 @@ setup(name='TracLegos',
         'Paste',
         'PasteScript',
         'WebOb',
+        'martINI',
       ],
+      dependency_links=[
+        'https://svn.openplans.org/svn/standalone/martINI#egg=martINI',
+        ],
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]

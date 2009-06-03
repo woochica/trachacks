@@ -8,6 +8,7 @@ import inspect
 import os
 import sys
 
+from martini.config import ConfigMunger
 from optparse import OptionParser
 from paste.script.templates import var
 from paste.script.templates import Template
@@ -15,7 +16,6 @@ from trac.admin.console import TracAdmin
 from trac.core import TracError
 from trac.env import Environment
 from traclegos.admin import TracLegosAdmin
-from traclegos.config import ConfigMunger
 from traclegos.db import available_databases
 from traclegos.db import SQLite
 from traclegos.pastescript.command import create_distro_command

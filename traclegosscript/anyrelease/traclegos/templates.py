@@ -4,8 +4,8 @@ collection of project templates
 
 import ConfigParser
 
+from martini.config import ConfigMunger
 from paste.script.templates import var
-from traclegos.config import ConfigMunger
 from traclegos.pastescript.string import PasteScriptStringTemplate
 from traclegos.pastescript.var import vars2dict, dict2vars
 from traclegos.project import project_dict

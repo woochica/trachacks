@@ -11,8 +11,8 @@ import time
 
 from genshi.core import Markup
 from genshi.template import TemplateLoader
+from martini.config import ConfigMunger
 from trac.web.main import dispatch_request
-from traclegos.config import ConfigMunger
 from traclegos.db import available_databases
 from traclegos.legos import site_configuration
 from traclegos.legos import traclegos_factory
