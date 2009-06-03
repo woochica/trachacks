@@ -62,7 +62,7 @@ tractoc.macro.tocmacro = enabled
 [geo]
 activeissues.label = Active Issues
 activeissues.query = location!=&status=assigned&order=changetime&desc=1
-dashboard = activeissues,otherissues
+dashboard = activeissues,newissues
 google_api_key = 
 inject_map = false
 inject_query = false
