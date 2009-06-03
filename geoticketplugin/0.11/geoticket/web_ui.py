@@ -173,12 +173,13 @@ class MapDashboard(Component):
         for panel in self.env.config.getlist('geo', 'dashboard'):
 
             defaults = { 'label': panel,
-                         'query':  'location!=' }
+                         'query':  None }
             config = {}
             for key, default in defaults.items():
                 config[key] = self.env.config.get('geo', '%s.%s' % (panel, key)) or default
-            config['id'] = panel
-            retval.append(config)
+            if config['query'] is not None:
+                config['id'] = panel
+                retval.append(config)
         return retval
 
     ### methods for IRequestHandler
