@@ -46,8 +46,8 @@ geoticket.web_ui.mapdashboard = enabled
 graphviz.graphviz.graphviz = enabled
 icalexporter.icalexporter.icalexporterplugin = enabled
 imagetrac.image.imagetrac = enabled
-imagetrac.web_ui.imageformfilter = enabled
-imagetrac.web_ui.sidebarimage = enabled
+imagetrac.web_ui.imageformfilter = disabled
+imagetrac.web_ui.sidebarimage = disabled
 includemacro.macros.includemacro = enabled
 iniadmin.iniadmin.iniadminplugin = enabled
 permredirect.filter.permredirectmodule = enabled
@@ -61,18 +61,18 @@ tractoc.macro.tocmacro = enabled
 
 [geo]
 activeissues.label = Active Issues
-activeissues.query = location!=&status!=closed&order=time&desc=1
+activeissues.query = location!=&status=assigned&order=changetime&desc=1
 dashboard = activeissues,otherissues
 google_api_key = 
-inject_map = true
+inject_map = false
 inject_query = false
 mandatory_location = false
 max_lat = 45.0
 max_lon = 90.0
 min_lat = -45.0
 min_lon = -90.0
-otherissues.label = Other Issues
-otherissues.query = location!=&status!=closed&order=time
+newissues.label = New Issues
+newissues.query = location!=&status=new&order=time&desc=1
 wms_url = http://maps.opengeo.org/geoserver/gwc/service/wms
 
 [graphviz]
