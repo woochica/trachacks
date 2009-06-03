@@ -1,0 +1,59 @@
+#!/usr/bin/perl 
+use strict; use warnings;
+use YAML::Syck qw (LoadFile DumpFile); use Getopt::Long;
+my $__logdir__="/var/log/jabberd2/logs"; # Where jabber logs are stored, there they must be in /yy/mm/dd/logfile format
+my $conffile="/etc/j2t.cfg"; # Where to store/get config, it must exist, even if its empty
+my $foldername="Talk"; # Where to store things in wiki, this way is in trac/talk/chatroom/date-logfile
+my $tracdir="/srv/trac"; # Where are tracs stored
+my $server="conference.warphq.com"; # Url of server
+my $botnick="warpibot"; # Nick of the bot (or whatever nick you want to not save on logs.
+
+my ($day,$month,$year) = (localtime)[3,4,5]; my $fullyear=$year+1900;
+my $wikidate = sprintf("%02d_%02d_%02d", substr($year + 1900, 2), $month + 1, $day);
+my $logdate = sprintf("%02d/%02d/%02d", $year + 1900, $month + 1, $day);
+my $conf=LoadFile($conffile);my ($talkpage,$roompage);
+
+GetOptions("c"=>\(my $mkcfg),"d"=>\(my $rmcfg));
+my $talk=$ARGV[0];
+my $ftalk="$talk\@$server" if $talk;
+my $trac=$tracdir."/".$ARGV[1];
+sub _create_room_page(){
+$roompage=`mktemp`;chomp($roompage);
+open R,">$roompage";
+printf R "= $_[0] =\n[[TOC($foldername/$_[0]/*,inline,heading=Talks)]]";
+close R;
+my $cmd="trac-admin $trac wiki import $foldername/$_[0] $roompage ";
+print $cmd."\n";
+system ($cmd);
+}
+sub _mod_logs(){
+local($^I, @ARGV) = ('',"$_[0]");
+	while (<>) {chomp;
+		if ($. == 1) {print " = $fullyear-$month-$day = \n";}	
+		if (!/<$botnick>/ and !/> !/){
+			if (!/^\|\|/){
+				if (/^\[/){s/\] </\]\|\| </;s/\] ---/\] \|\|\| ---/;$_="||$_||";} 
+				else {$_="||$_||";}
+			}
+			print;print "\n";
+		}
+	close ARGV if eof;
+	}
+}
+
+sub _trac_import(){
+	my $logname=$_[0]; my $wikipage=$_[1];my $logfile=$_[2]; my $trac=$_[3]; my $wikidate=$_[4];
+	if ( -f $logfile ){
+		if ( $conf->{$logname} ){
+			&_mod_logs($logfile);
+			print STDERR "[$0] : Reading from $logfile\n";
+			print STDERR "[$0] : Executing trac-admin $conf->{$logname} wiki import $wikipage $logfile";
+			system ("trac-admin $conf->{$logname} wiki import $wikipage $logfile");
+			unlink $logfile; # Delete log, as we've modified it and we do this once a day and so on...
+		}else{ print STDERR "[$0] : $logname not configured\n";}
+	}else { print STDERR "[$0] : $logname for $wikidate not existant. ($logfile)\n";}
+}
+
+if ($mkcfg){$conf->{$ftalk}=$trac; DumpFile($conffile,$conf); &_create_room_page( $talk );  }
+if ($rmcfg){delete $conf->{$ftalk};DumpFile($conffile,$conf);}
+if (!$mkcfg && !$rmcfg){for (`ls $__logdir__`) {chomp;&_trac_import($_,"$foldername/".(split("@",$_))[0]."/".$wikidate,$__logdir__."/$_/$logdate.txt",$trac,$wikidate);}}
