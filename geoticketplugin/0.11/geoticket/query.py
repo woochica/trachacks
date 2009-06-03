@@ -51,7 +51,9 @@ class GeospatialQuery(Component):
         
         query_str = "ST_DISTANCE_SPHERE(st_pointfromtext('POINT(' || longitude || ' ' || latitude || ')'), ST_PointFromText('POINT(%s %s)')) < %s" % (lon, lat, radius)
 
-        return get_column(self.env, 'ticket_location', 'ticket', where=query_str)
+        tickets =  get_column(self.env, 'ticket_location', 'ticket', where=query_str)
+        assert tickets is not None
+        return tickets
         
     def query_by_polyon(self, lat, lon, polygon_id):
         pass
@@ -61,7 +63,7 @@ class GeospatialQuery(Component):
         if not hasattr(self, '_geoticket'):
             assert self.env.is_component_enabled(GeoTicket)
             geoticket = self.env.components[GeoTicket]
-            assert geoticket.postgis_enabled()
+            assert geoticket.postgis_enabled(), "PostGIS is not enabled and must be for GeospatialQueries to work.  Enable PostGIS on the database or disable the GeospatialQuery component."
             self._geoticket = geoticket
         return self._geoticket
 
@@ -87,7 +89,7 @@ class GeospatialQuery(Component):
         (Since 0.11)
         """
 
-        if req.path_info != '/query':        
+        if template != 'query.html':        
             return (template, data, content_type)
 
         geoticket = self.geoticket()
@@ -150,7 +152,8 @@ class GeospatialQuery(Component):
             Href.__call__ = patched_href_call
             globals()['patched'] = True
 
-        if req.path_info == '/query' and 'update' in req.args:
+
+        if (req.path_info == '/query' or trac.ticket.query.QueryModule == handler.__class__) and 'update' in req.args:
             match = False
             for i in 'center_location', 'radius':
                 if i in req.args:
@@ -176,9 +179,8 @@ class GeospatialQuery(Component):
 
         See the Genshi documentation for more information.
         """
-        self.geoticket()
-
-        if self.inject_query:
+        if filename == 'query.html' and self.inject_query:
+            self.geoticket()
             chrome = Chrome(self.env)
             variables = ('center_location', 'radius')
             _data = dict([(i,data.get(i)) for i in variables])
