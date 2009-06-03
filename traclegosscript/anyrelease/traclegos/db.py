@@ -171,7 +171,6 @@ class PostgreSQL(DatabaseSetup):
             raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(command))
 
 
-
 def available_databases():
     """return installed and enabled database setup methods"""
     databases = []
