@@ -157,6 +157,7 @@ url = ${url}
 
 [query]
 default_anonymous_query = location!=&status!=closed
+default_query = location!=&status!=closed
 items_per_page = 100
 ticketlink_query = ?location=!&status=!closed
 
