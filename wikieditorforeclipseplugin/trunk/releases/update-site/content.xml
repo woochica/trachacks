@@ -3,84 +3,11 @@
 <repository name='Trac WikiEditor 4 Eclipse ~ org.trachacks.wikieditor.eclipse.site' type='org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository' version='1'>
   <properties size='2'>
     <property name='p2.compressed' value='false'/>
-    <property name='p2.timestamp' value='1243017171384'/>
+    <property name='p2.timestamp' value='1244043861251'/>
   </properties>
   <units size='6'>
-    <unit id='org.trachacks.wikieditor.eclipse.core' version='0.0.2' singleton='false'>
-      <update id='org.trachacks.wikieditor.eclipse.core' range='[0.0.0,0.0.2)' severity='0'/>
-      <properties size='2'>
-        <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse Core'/>
-        <property name='org.eclipse.equinox.p2.provider' value='TracWikiEditor4Eclipse @ trac-hacks.org'/>
-      </properties>
-      <provides size='14'>
-        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.core' version='0.0.2'/>
-        <provided namespace='osgi.bundle' name='org.trachacks.wikieditor.eclipse.core' version='0.0.2'/>
-        <provided namespace='java.package' name='org.apache.commons.lang' version='0.0.0'/>
-        <provided namespace='java.package' name='org.apache.commons.lang.builder' version='0.0.0'/>
-        <provided namespace='java.package' name='org.apache.commons.lang.exception' version='0.0.0'/>
-        <provided namespace='java.package' name='org.apache.commons.lang.math' version='0.0.0'/>
-        <provided namespace='java.package' name='org.trachacks.wikieditor.disk' version='0.0.0'/>
-        <provided namespace='java.package' name='org.trachacks.wikieditor.disk.impl' version='0.0.0'/>
-        <provided namespace='java.package' name='org.trachacks.wikieditor.model' version='0.0.0'/>
-        <provided namespace='java.package' name='org.trachacks.wikieditor.model.exception' version='0.0.0'/>
-        <provided namespace='java.package' name='org.trachacks.wikieditor.rpc' version='0.0.0'/>
-        <provided namespace='java.package' name='org.trachacks.wikieditor.rpc.xmlrpc' version='0.0.0'/>
-        <provided namespace='java.package' name='org.trachacks.wikieditor.service' version='0.0.0'/>
-        <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='bundle' version='1.0.0'/>
-      </provides>
-      <artifacts size='1'>
-        <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.core' version='0.0.2'/>
-      </artifacts>
-      <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
-      <touchpointData size='1'>
-        <instructions size='2'>
-          <instruction key='manifest'>
-            MavenArtifact-BaseVersion: 0.0.2&#xA;Built-By: ivan&#xA;Bundle-ManifestVersion: 2&#xA;Build-Jdk: 1.6.0_0&#xA;Created-By: Apache Maven&#xA;Manifest-Version: 1.0&#xA;Bundle-ClassPath: target/lib/commons-codec-1.2.jar,target/lib/commons-httpclient-3.1.jar,target/lib/commons-lang-2.3.jar,target/lib/commons-logging-1.0.4.jar,target/lib/wikieditor-core-0.0.2.jar,target/lib/ws-commons-util-1.0.1.jar,target/lib/xmlrpc-client-3.0.jar,target/lib/xmlrpc-common-3.0.jar&#xA;Bundle-Vendor: TracWikiEditor4Eclipse @ trac-hacks.org&#xA;Implementation-Title: org.trachacks.wikieditor.eclipse.core&#xA;Archiver-Version: Plexus Archiver&#xA;Bundle-Name: TracWikiEditor4Eclipse Core&#xA;MavenArtifact-GroupId: org.trachacks.wikieditor&#xA;Bundle-Version: 0.0.2&#xA;Bundle-RequiredExecutionEnvironment: J2SE-1.5&#xA;Export-Package: org.apache.commons.lang,org.apache.commons.lang.builder,org.apache.commons.lang.exception,org.apache.commons.lang.math,org.trachacks.wikieditor.disk,org.trachacks.wikieditor.disk.impl,org.trachacks.wikieditor.model,org.trachacks.wikieditor.model.exception,org.trachacks.wikieditor.rpc,org.trachacks.wikieditor.rpc.xmlrpc,org.trachacks.wikieditor.service&#xA;Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.core&#xA;Extension-Name: org.trachacks.wikieditor.eclipse.core&#xA;Implementation-Version: 0.0.2&#xA;
-          </instruction>
-          <instruction key='zipped'>
-            true
-          </instruction>
-        </instructions>
-      </touchpointData>
-    </unit>
-    <unit id='org.trachacks.wikieditor.eclipse.plugin' version='0.0.2'>
-      <update id='org.trachacks.wikieditor.eclipse.plugin' range='[0.0.0,0.0.2)' severity='0'/>
-      <properties size='2'>
-        <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse Plug-in'/>
-        <property name='org.eclipse.equinox.p2.provider' value='TracWikiEditor4Eclipse @ trachacks.org'/>
-      </properties>
-      <provides size='3'>
-        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.plugin' version='0.0.2'/>
-        <provided namespace='osgi.bundle' name='org.trachacks.wikieditor.eclipse.plugin' version='0.0.2'/>
-        <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='bundle' version='1.0.0'/>
-      </provides>
-      <requires size='11'>
-        <required namespace='osgi.bundle' name='org.trachacks.wikieditor.eclipse.core' range='0.0.2'/>
-        <required namespace='osgi.bundle' name='org.eclipse.ui' range='0.0.0'/>
-        <required namespace='osgi.bundle' name='org.eclipse.core.runtime' range='0.0.0'/>
-        <required namespace='osgi.bundle' name='org.eclipse.jface.text' range='0.0.0'/>
-        <required namespace='osgi.bundle' name='org.eclipse.core.resources' range='0.0.0'/>
-        <required namespace='osgi.bundle' name='org.eclipse.ui.ide' range='0.0.0'/>
-        <required namespace='osgi.bundle' name='org.eclipse.ui.editors' range='0.0.0'/>
-        <required namespace='osgi.bundle' name='org.eclipse.ui.workbench.texteditor' range='0.0.0'/>
-        <required namespace='osgi.bundle' name='org.eclipse.ui.navigator' range='0.0.0'/>
-        <required namespace='osgi.bundle' name='org.eclipse.ui.views' range='0.0.0'/>
-        <required namespace='osgi.bundle' name='org.eclipse.compare' range='0.0.0'/>
-      </requires>
-      <artifacts size='1'>
-        <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.plugin' version='0.0.2'/>
-      </artifacts>
-      <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
-      <touchpointData size='1'>
-        <instructions size='1'>
-          <instruction key='manifest'>
-            Bundle-Name: TracWikiEditor4Eclipse Plug-in&#xA;MavenArtifact-GroupId: org.trachacks.wikieditor&#xA;Build-Jdk: 1.6.0_0&#xA;MavenArtifact-BaseVersion: 0.0.2&#xA;Implementation-Version: 0.0.2&#xA;Created-By: Apache Maven&#xA;Bundle-ActivationPolicy: lazy&#xA;Bundle-Vendor: TracWikiEditor4Eclipse @ trachacks.org&#xA;Bundle-ManifestVersion: 2&#xA;Manifest-Version: 1.0&#xA;Bundle-Version: 0.0.2&#xA;Archiver-Version: Plexus Archiver&#xA;Require-Bundle: org.trachacks.wikieditor.eclipse.core;bundle-version=&quot;0.0.2&quot;,org.eclipse.ui,org.eclipse.core.runtime,org.eclipse.jface.text,org.eclipse.core.resources,org.eclipse.ui.ide,org.eclipse.ui.editors,org.eclipse.ui.workbench.texteditor,org.eclipse.ui.navigator,org.eclipse.ui.views,org.eclipse.compare&#xA;Implementation-Title: org.trachacks.wikieditor.eclipse.plugin&#xA;Built-By: ivan&#xA;Bundle-RequiredExecutionEnvironment: J2SE-1.5&#xA;Bundle-Activator: org.trachacks.wikieditor.eclipse.plugin.Activator&#xA;Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.plugin; singleton:=true&#xA;Extension-Name: org.trachacks.wikieditor.eclipse.plugin&#xA;
-          </instruction>
-        </instructions>
-      </touchpointData>
-    </unit>
-    <unit id='org.trachacks.wikieditor.eclipse.feature.feature.jar' version='0.0.2'>
-      <update id='org.trachacks.wikieditor.eclipse.feature.feature.jar' range='[0.0.0,0.0.2)' severity='0'/>
+    <unit id='org.trachacks.wikieditor.eclipse.feature.feature.jar' version='0.0.3'>
+      <update id='org.trachacks.wikieditor.eclipse.feature.feature.jar' range='[0.0.0,0.0.3)' severity='0'/>
       <properties size='4'>
         <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse'/>
         <property name='org.eclipse.equinox.p2.description' value='A new plug-in providing Trac Wiki editing capabilities to&#xA;Eclipse IDE'/>
@@ -88,15 +15,15 @@
         <property name='org.eclipse.equinox.p2.provider' value='TracWikiEditor4Eclipse @ trac-hacks.org'/>
       </properties>
       <provides size='3'>
-        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.jar' version='0.0.2'/>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.jar' version='0.0.3'/>
         <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='feature' version='1.0.0'/>
-        <provided namespace='org.eclipse.update.feature' name='org.trachacks.wikieditor.eclipse.feature' version='0.0.2'/>
+        <provided namespace='org.eclipse.update.feature' name='org.trachacks.wikieditor.eclipse.feature' version='0.0.3'/>
       </provides>
       <filter>
         (org.eclipse.update.install.features=true)
       </filter>
       <artifacts size='1'>
-        <artifact classifier='org.eclipse.update.feature' id='org.trachacks.wikieditor.eclipse.feature' version='0.0.2'/>
+        <artifact classifier='org.eclipse.update.feature' id='org.trachacks.wikieditor.eclipse.feature' version='0.0.3'/>
       </artifacts>
       <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
       <touchpointData size='1'>
@@ -115,8 +42,8 @@
         Copyright (c) 2007 - Iván García Sainz-Aja &lt;ivangsa@gmail.com&gt;
       </copyright>
     </unit>
-    <unit id='org.trachacks.wikieditor.eclipse.feature.feature.group' version='0.0.2' singleton='false'>
-      <update id='org.trachacks.wikieditor.eclipse.feature.feature.group' range='[0.0.0,0.0.2)' severity='0'/>
+    <unit id='org.trachacks.wikieditor.eclipse.feature.feature.group' version='0.0.3' singleton='false'>
+      <update id='org.trachacks.wikieditor.eclipse.feature.feature.group' range='[0.0.0,0.0.3)' severity='0'/>
       <properties size='5'>
         <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse'/>
         <property name='org.eclipse.equinox.p2.description' value='A new plug-in providing Trac Wiki editing capabilities to&#xA;Eclipse IDE'/>
@@ -125,22 +52,22 @@
         <property name='org.eclipse.equinox.p2.type.group' value='true'/>
       </properties>
       <provides size='1'>
-        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.group' version='0.0.2'/>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.group' version='0.0.3'/>
       </provides>
       <requires size='13'>
         <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui' range='0.0.0'/>
         <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.core.runtime' range='0.0.0'/>
         <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.jface.text' range='0.0.0'/>
         <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.core.resources' range='0.0.0'/>
-        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.ide' range='3.4.2'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.ide' range='0.0.0'/>
         <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.editors' range='0.0.0'/>
         <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.workbench.texteditor' range='0.0.0'/>
         <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.navigator' range='0.0.0'/>
         <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.views' range='0.0.0'/>
-        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.compare' range='[3.2.0,4.0.0)'/>
-        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.core' range='[0.0.2,0.0.2]'/>
-        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.plugin' range='[0.0.2,0.0.2]'/>
-        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.jar' range='[0.0.2,0.0.2]'>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.compare' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.core' range='[0.0.3,0.0.3]'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.plugin' range='[0.0.3,0.0.3]'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.jar' range='[0.0.3,0.0.3]'>
           <filter>
             (org.eclipse.update.install.features=true)
           </filter>
@@ -155,6 +82,42 @@
       <copyright>
         Copyright (c) 2007 - Iván García Sainz-Aja &lt;ivangsa@gmail.com&gt;
       </copyright>
+    </unit>
+    <unit id='org.trachacks.wikieditor.eclipse.plugin' version='0.0.3'>
+      <update id='org.trachacks.wikieditor.eclipse.plugin' range='[0.0.0,0.0.3)' severity='0'/>
+      <properties size='2'>
+        <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse Plug-in'/>
+        <property name='org.eclipse.equinox.p2.provider' value='TracWikiEditor4Eclipse @ trachacks.org'/>
+      </properties>
+      <provides size='3'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.plugin' version='0.0.3'/>
+        <provided namespace='osgi.bundle' name='org.trachacks.wikieditor.eclipse.plugin' version='0.0.3'/>
+        <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='bundle' version='1.0.0'/>
+      </provides>
+      <requires size='11'>
+        <required namespace='osgi.bundle' name='org.trachacks.wikieditor.eclipse.core' range='0.0.3'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.core.runtime' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.jface.text' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.core.resources' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.ide' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.editors' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.workbench.texteditor' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.navigator' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.views' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.compare' range='0.0.0'/>
+      </requires>
+      <artifacts size='1'>
+        <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.plugin' version='0.0.3'/>
+      </artifacts>
+      <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
+      <touchpointData size='1'>
+        <instructions size='1'>
+          <instruction key='manifest'>
+            Bundle-Name: TracWikiEditor4Eclipse Plug-in&#xA;MavenArtifact-GroupId: org.trachacks.wikieditor&#xA;Build-Jdk: 1.6.0_0&#xA;MavenArtifact-BaseVersion: 0.0.3&#xA;Implementation-Version: 0.0.3&#xA;Created-By: Apache Maven&#xA;Bundle-ActivationPolicy: lazy&#xA;Bundle-Vendor: TracWikiEditor4Eclipse @ trachacks.org&#xA;Bundle-ManifestVersion: 2&#xA;Manifest-Version: 1.0&#xA;Bundle-Version: 0.0.3&#xA;Archiver-Version: Plexus Archiver&#xA;Require-Bundle: org.trachacks.wikieditor.eclipse.core;bundle-version=&quot;0.0.3&quot;,org.eclipse.ui,org.eclipse.core.runtime,org.eclipse.jface.text,org.eclipse.core.resources,org.eclipse.ui.ide,org.eclipse.ui.editors,org.eclipse.ui.workbench.texteditor,org.eclipse.ui.navigator,org.eclipse.ui.views,org.eclipse.compare&#xA;Implementation-Title: org.trachacks.wikieditor.eclipse.plugin&#xA;Built-By: ivan&#xA;Bundle-RequiredExecutionEnvironment: J2SE-1.5&#xA;Bundle-Activator: org.trachacks.wikieditor.eclipse.plugin.Activator&#xA;Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.plugin; singleton:=true&#xA;Extension-Name: org.trachacks.wikieditor.eclipse.plugin&#xA;
+          </instruction>
+        </instructions>
+      </touchpointData>
     </unit>
     <unit id='config.a.jre' version='1.6.0' singleton='false'>
       <hostRequirements size='1'>
@@ -174,6 +137,39 @@
         <instructions size='1'>
           <instruction key='install'>
 
+          </instruction>
+        </instructions>
+      </touchpointData>
+    </unit>
+    <unit id='org.trachacks.wikieditor.eclipse.core' version='0.0.3' singleton='false'>
+      <update id='org.trachacks.wikieditor.eclipse.core' range='[0.0.0,0.0.3)' severity='0'/>
+      <properties size='2'>
+        <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse Core'/>
+        <property name='org.eclipse.equinox.p2.provider' value='TracWikiEditor4Eclipse @ trac-hacks.org'/>
+      </properties>
+      <provides size='10'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.core' version='0.0.3'/>
+        <provided namespace='osgi.bundle' name='org.trachacks.wikieditor.eclipse.core' version='0.0.3'/>
+        <provided namespace='java.package' name='org.apache.commons.lang' version='0.0.0'/>
+        <provided namespace='java.package' name='org.apache.commons.lang.builder' version='0.0.0'/>
+        <provided namespace='java.package' name='org.apache.commons.lang.exception' version='0.0.0'/>
+        <provided namespace='java.package' name='org.apache.commons.lang.math' version='0.0.0'/>
+        <provided namespace='java.package' name='org.trachacks.wikieditor.model' version='0.0.0'/>
+        <provided namespace='java.package' name='org.trachacks.wikieditor.model.exception' version='0.0.0'/>
+        <provided namespace='java.package' name='org.trachacks.wikieditor.service' version='0.0.0'/>
+        <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='bundle' version='1.0.0'/>
+      </provides>
+      <artifacts size='1'>
+        <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.core' version='0.0.3'/>
+      </artifacts>
+      <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
+      <touchpointData size='1'>
+        <instructions size='2'>
+          <instruction key='manifest'>
+            MavenArtifact-BaseVersion: 0.0.3&#xA;Built-By: ivan&#xA;Bundle-ManifestVersion: 2&#xA;Build-Jdk: 1.6.0_0&#xA;Created-By: Apache Maven&#xA;Manifest-Version: 1.0&#xA;Bundle-ClassPath: target/lib/commons-codec-1.2.jar,target/lib/commons-httpclient-3.1.jar,target/lib/commons-lang-2.3.jar,target/lib/commons-logging-1.0.4.jar,target/lib/wikieditor-core-0.0.3.jar,target/lib/ws-commons-util-1.0.1.jar,target/lib/xmlrpc-client-3.0.jar,target/lib/xmlrpc-common-3.0.jar&#xA;Bundle-Vendor: TracWikiEditor4Eclipse @ trac-hacks.org&#xA;Implementation-Title: org.trachacks.wikieditor.eclipse.core&#xA;Archiver-Version: Plexus Archiver&#xA;Bundle-Name: TracWikiEditor4Eclipse Core&#xA;MavenArtifact-GroupId: org.trachacks.wikieditor&#xA;Bundle-Version: 0.0.3&#xA;Bundle-RequiredExecutionEnvironment: J2SE-1.5&#xA;Export-Package: org.apache.commons.lang,org.apache.commons.lang.builder,org.apache.commons.lang.exception,org.apache.commons.lang.math,org.trachacks.wikieditor.model,org.trachacks.wikieditor.model.exception,org.trachacks.wikieditor.service&#xA;Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.core&#xA;Extension-Name: org.trachacks.wikieditor.eclipse.core&#xA;Implementation-Version: 0.0.3&#xA;
+          </instruction>
+          <instruction key='zipped'>
+            true
           </instruction>
         </instructions>
       </touchpointData>
