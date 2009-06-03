@@ -26,7 +26,7 @@ class GeoTracProject(TracProject):
 
         # needed .sql files
         postgis_files = { 'lwpostgis.sql': None, 
-                          'spatial_ref_sys.sql': None )
+                          'spatial_ref_sys.sql': None }
         
         # ensure `locate` is available
         if subprocess.call(['locate', '--help'], stdout=subproces.PIPE):
