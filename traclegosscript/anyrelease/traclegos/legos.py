@@ -119,7 +119,7 @@ class TracLegos(object):
 
         # get templates
 
-        # XXX hack to get the specified DB out
+        # XXX hack to get the specified DB out of pastescript templates
         if not database:
             if isinstance(templates, ProjectTemplates):
                 pastescript_templates = templates.pastescript_templates

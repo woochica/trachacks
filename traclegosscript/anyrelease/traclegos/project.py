@@ -58,7 +58,7 @@ class TracProject(templates.Template):
             return self.db
         if isinstance(self.db, basestring):
             return available_databases()[self.db]
-        return self.db
+        return self.db()
             
 
 def projects():
