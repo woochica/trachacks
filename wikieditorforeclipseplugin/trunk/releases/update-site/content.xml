@@ -3,9 +3,9 @@
 <repository name='Trac WikiEditor 4 Eclipse ~ org.trachacks.wikieditor.eclipse.site' type='org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository' version='1'>
   <properties size='2'>
     <property name='p2.compressed' value='false'/>
-    <property name='p2.timestamp' value='1244043861251'/>
+    <property name='p2.timestamp' value='1244053378383'/>
   </properties>
-  <units size='6'>
+  <units size='7'>
     <unit id='org.trachacks.wikieditor.eclipse.feature.feature.jar' version='0.0.3'>
       <update id='org.trachacks.wikieditor.eclipse.feature.feature.jar' range='[0.0.0,0.0.3)' severity='0'/>
       <properties size='4'>
@@ -173,6 +173,19 @@
           </instruction>
         </instructions>
       </touchpointData>
+    </unit>
+    <unit id='Trac Wiki Editor' version='0.0.0'>
+      <properties size='2'>
+        <property name='org.eclipse.equinox.p2.name' value='Trac Wiki Editor'/>
+        <property name='org.eclipse.equinox.p2.type.category' value='true'/>
+      </properties>
+      <provides size='1'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='Trac Wiki Editor' version='0.0.0'/>
+      </provides>
+      <requires size='1'>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.group' range='[0.0.3,0.0.3]'/>
+      </requires>
+      <touchpoint id='null' version='0.0.0'/>
     </unit>
     <unit id='a.jre' version='1.6.0' singleton='false'>
       <provides size='117'>

@@ -3,7 +3,7 @@
 <repository name='Trac WikiEditor 4 Eclipse ~ org.trachacks.wikieditor.eclipse.site Artifacts' type='org.eclipse.equinox.p2.artifact.repository.simpleRepository' version='1'>
   <properties size='2'>
     <property name='p2.compressed' value='false'/>
-    <property name='p2.timestamp' value='1244043861199'/>
+    <property name='p2.timestamp' value='1244053378321'/>
   </properties>
   <mappings size='3'>
     <rule filter='(&amp; (classifier=osgi.bundle))' output='${repoUrl}/plugins/${id}_${version}.jar'/>
@@ -11,24 +11,24 @@
     <rule filter='(&amp; (classifier=org.eclipse.update.feature))' output='${repoUrl}/features/${id}_${version}.jar'/>
   </mappings>
   <artifacts size='3'>
-    <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.plugin' version='0.0.3'>
-      <properties size='3'>
-        <property name='artifact.size' value='180035'/>
-        <property name='download.size' value='180035'/>
-        <property name='download.contentType' value='application/zip'/>
-      </properties>
-    </artifact>
     <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.core' version='0.0.3'>
       <properties size='3'>
-        <property name='artifact.size' value='755368'/>
-        <property name='download.size' value='755368'/>
+        <property name='artifact.size' value='755326'/>
+        <property name='download.size' value='755326'/>
         <property name='download.contentType' value='application/zip'/>
       </properties>
     </artifact>
     <artifact classifier='org.eclipse.update.feature' id='org.trachacks.wikieditor.eclipse.feature' version='0.0.3'>
       <properties size='2'>
-        <property name='artifact.size' value='3536'/>
-        <property name='download.size' value='3536'/>
+        <property name='artifact.size' value='3514'/>
+        <property name='download.size' value='3514'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.plugin' version='0.0.3'>
+      <properties size='3'>
+        <property name='artifact.size' value='180034'/>
+        <property name='download.size' value='180034'/>
+        <property name='download.contentType' value='application/zip'/>
       </properties>
     </artifact>
   </artifacts>
