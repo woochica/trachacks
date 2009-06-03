@@ -163,12 +163,12 @@ class PostgreSQL(DatabaseSetup):
         if vars['database_user'] not in roles:
             retval = subprocess.call(createuser)
             if retval:
-                raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(command))
+                raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(createuser))
 
         # create the database
         retval = subprocess.call(createdb)
         if retval:
-            raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(command))
+            raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(createdb))
 
 
 def available_databases():
