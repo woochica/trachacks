@@ -38,7 +38,7 @@ class SimpleThemeAdminModule(Component):
             },
         }
 
-        theme_name = self.system.theme_name or 'Default'
+        theme_name = self.system.theme_name or 'default'
         data['themeengine']['current'] = theme_name
         index = 0
         curtheme = None

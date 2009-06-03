@@ -55,6 +55,13 @@ class ThemeEngineModule(Component):
             add_stylesheet(req, 'theme/'+theme['css'])
         if theme and 'template' in theme:
             req.chrome['theme'] = os.path.basename(theme['template'])
+        if theme and theme.get('disable_trac_css'):
+            links = req.chrome.get('links')
+            if links and 'stylesheet' in links:
+                for i, link in enumerate(links['stylesheet']):
+                    if link.get('href','').endswith('common/css/trac.css'):
+                        del links['stylesheet'][i]
+                        break
         if self.custom_css:
             add_stylesheet(req, '/themeengine/theme.css')
         return template, data, content_type

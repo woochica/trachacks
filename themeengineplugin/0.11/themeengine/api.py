@@ -28,6 +28,8 @@ class IThemeProvider(Interface):
            The name of the theme template file. 
          css::
            The filename of the CSS file.
+         disable_trac_css::
+           A boolean indicating if the core Trac CSS should be diabled.
          htdocs::
            The folder containg the static content.
          screenshot::
@@ -41,7 +43,7 @@ class IThemeProvider(Interface):
 class ThemeEngineSystem(Component):
     """Central functionality for the theme system."""
     
-    theme_name = Option('theme', 'theme', default='Default',
+    theme_name = Option('theme', 'theme', default='default',
                    doc='The theme to use to style this Trac.')
     
     implements(IThemeProvider)
@@ -70,7 +72,7 @@ class ThemeEngineSystem(Component):
                 
     # IThemeProvider methods
     def get_theme_names(self):
-        yield 'Default'
+        yield 'default'
         
     def get_theme_info(self, name):
         return {
@@ -116,6 +118,7 @@ class ThemeBase(Component):
     
     # Defaults
     theme = css = htdocs = screenshot = False
+    colors = schemes = disable_trac_css = False
 
     # IThemeProviderMethods
     def get_theme_names(self):
@@ -132,6 +135,9 @@ class ThemeBase(Component):
         self._set_info(info, 'css', self.get_theme_names().next().lower()+'.css')
         self._set_info(info, 'htdocs', 'htdocs')
         self._set_info(info, 'screenshot', 'htdocs/screenshot.png')
+        self._set_info(info, 'colors', ())
+        self._set_info(info, 'schemes', ())
+        self._set_info(info, 'disable_trac_css', True)
         
         return info
             
@@ -144,7 +150,7 @@ class ThemeBase(Component):
         if val:
             if val is True:
                 info[attr] = default
-            else:
+            elif val is not False:
                 info[attr] = val
            
 

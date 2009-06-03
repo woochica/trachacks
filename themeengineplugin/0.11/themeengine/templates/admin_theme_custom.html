@@ -50,7 +50,7 @@
             elm.css('color', '#FFF');
           else
             elm.css('color', '#000');
-          console.log(v);
+          //console.log(v);
           
           var theme = theme_colors[name];
           theme.color = color;
@@ -67,7 +67,7 @@
                 newcss += t.prop + ':' + t.color + ';';
             }
             newcss += '}';
-            console.log(newcss);
+            //console.log(newcss);
             $.rule(newcss).appendTo('style');
           }
         };
