@@ -34,12 +34,12 @@ limitations under the License.
       <import plugin="org.eclipse.core.runtime"/>
       <import plugin="org.eclipse.jface.text"/>
       <import plugin="org.eclipse.core.resources"/>
-      <import plugin="org.eclipse.ui.ide" version="3.4.2" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.ui.ide" match="greaterOrEqual"/>
       <import plugin="org.eclipse.ui.editors"/>
       <import plugin="org.eclipse.ui.workbench.texteditor"/>
       <import plugin="org.eclipse.ui.navigator"/>
       <import plugin="org.eclipse.ui.views"/>
-      <import plugin="org.eclipse.compare" version="3.2" match="compatible"/>
+      <import plugin="org.eclipse.compare"/>
    </requires>
 
    <plugin
