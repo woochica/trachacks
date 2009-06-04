@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.trachacks.wikieditor.eclipse.feature_0.0.3.jar" id="org.trachacks.wikieditor.eclipse.feature" version="0.0.3">
+   <feature url="features/org.trachacks.wikieditor.eclipse.feature_0.0.4.jar" id="org.trachacks.wikieditor.eclipse.feature" version="0.0.4">
       <category name="Trac Wiki Editor"/>
    </feature>
    <category-def name="Trac Wiki Editor" label="Trac Wiki Editor"/>

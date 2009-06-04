@@ -2,10 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: TracWikiEditor4Eclipse Plug-in
 Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.plugin; singleton:=true
-Bundle-Version: 0.0.3
+Bundle-Version: 0.0.4
 Bundle-Activator: org.trachacks.wikieditor.eclipse.plugin.Activator
 Bundle-Vendor: TracWikiEditor4Eclipse @ trachacks.org
-Require-Bundle: org.trachacks.wikieditor.eclipse.core;bundle-version="0.0.3",
+Require-Bundle: org.trachacks.wikieditor.eclipse.core;bundle-version="0.0.4",
  org.eclipse.ui,
  org.eclipse.core.runtime,
  org.eclipse.jface.text,
