@@ -80,6 +80,7 @@ class EmailToTicket(Component):
             buffer.seek(0)
             attachment.insert(filename, buffer, size)
             os.chmod(attachment._get_path(), 0666)
+            # TODO : should probably chown too
 
         # ticket notification
         tn = TicketNotifyEmail(self.env)
