@@ -98,7 +98,8 @@ class TracLegos(object):
                  }
 
     def create_project(self, project, templates, vars=None,
-                       database=None, repository=None):
+                       database=None, repository=None,
+                       return_missing=False):
         """
         * project: path name of project
         * templates: templates to be applied on project creation
@@ -161,6 +162,8 @@ class TracLegos(object):
         # check for missing variables
         missing = templates.missing(vars)
         missing.update(set(optdict.keys()).difference(vars.keys()))
+        if return_missing:
+            return missing
         if missing:
 
             # use default repo fields if they are missing
@@ -312,6 +315,9 @@ def get_parser():
     parser.add_option("--list-databases", dest="listdatabases",
                       action="store_true", default=False,
                       help="list available database types available for setup by TracLegos")
+    parser.add_option("--print-missing", dest="printmissing",
+                      action="store_true", default=False,
+                      help="print variable names missing for a given configuration")
 
 # XXX as yet unused options
 #    parser.add_option("--list-variables", dest="listvariables",
@@ -376,9 +382,13 @@ def parse(parser, args=None):
         print 'Available databases:'
         for name, database in available_databases().items():
             print '%s: %s' % (name, database.description)
-        return
+        return        
 
-    if not projects: # print help if no projects given
+    if options.printmissing:
+        projects = ['foo']
+
+    # print help if no projects given
+    if not projects: 
         parser.print_help()
         return
 
@@ -386,10 +396,11 @@ def parse(parser, args=None):
     argspec = traclegos_factory(options.conf, options.__dict__, vars)
     # project creator
     legos = TracLegos(**argspec)
-    
+
     return legos, projects, { 'templates': options.templates, 
                               'repository': repository,
-                              'database': database }
+                              'database': database,
+                              'return_missing': options.printmissing}
 
 def main(args=None):
     """main command line entry point"""
@@ -402,6 +413,11 @@ def main(args=None):
     if parsed == None:
         return # exit condition
     legos, projects, arguments = parsed
+
+    # print missing options if told to do so
+    if arguments['return_missing']:
+        missing = legos.create_project('foo', **arguments)
+        import pdb; pdb.set_trace()
 
     # create the projects
     for project in projects:
