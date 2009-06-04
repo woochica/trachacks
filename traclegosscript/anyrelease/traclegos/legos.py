@@ -417,7 +417,8 @@ def main(args=None):
     # print missing options if told to do so
     if arguments['return_missing']:
         missing = legos.create_project('foo', **arguments)
-        import pdb; pdb.set_trace()
+        print '\n'.join(sorted(list(missing)))
+        return
 
     # create the projects
     for project in projects:
