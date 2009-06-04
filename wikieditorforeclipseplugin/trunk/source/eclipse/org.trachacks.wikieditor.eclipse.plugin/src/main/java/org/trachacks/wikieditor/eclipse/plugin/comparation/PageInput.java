@@ -3,6 +3,8 @@
  */
 package org.trachacks.wikieditor.eclipse.plugin.comparation;
 
+import java.io.UnsupportedEncodingException;
+
 import org.eclipse.compare.IEditableContent;
 import org.eclipse.compare.ITypedElement;
 import org.trachacks.wikieditor.model.PageVersion;
@@ -35,7 +37,12 @@ public class PageInput extends PageVersionInput implements IEditableContent  {
 	}
 	
 	public String getText() {
-		return new String(content);
+		try {
+			return new String(content, "utf-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return new String(content);
+		}
 	}
 
 }

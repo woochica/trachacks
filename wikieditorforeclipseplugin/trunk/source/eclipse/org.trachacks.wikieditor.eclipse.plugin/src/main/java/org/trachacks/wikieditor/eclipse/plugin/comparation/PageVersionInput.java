@@ -5,6 +5,7 @@ package org.trachacks.wikieditor.eclipse.plugin.comparation;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 
 import org.eclipse.compare.IEditableContent;
 import org.eclipse.compare.IStreamContentAccessor;
@@ -30,7 +31,12 @@ public class PageVersionInput implements ITypedElement,  IStreamContentAccessor 
 		if(pageVersion != null) {
 			name = pageVersion.getName();
 			if(pageVersion.getContent() != null) {
-				content = pageVersion.getContent().getBytes();
+				try {
+					content = pageVersion.getContent().getBytes("utf-8");
+				} catch (UnsupportedEncodingException e) {
+					e.printStackTrace();
+					content = pageVersion.getContent().getBytes();
+				}
 			}
 		}
 	}

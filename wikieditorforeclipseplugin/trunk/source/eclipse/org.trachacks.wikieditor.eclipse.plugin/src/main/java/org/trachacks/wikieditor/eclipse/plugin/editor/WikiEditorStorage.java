@@ -2,11 +2,13 @@ package org.trachacks.wikieditor.eclipse.plugin.editor;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.trachacks.wikieditor.eclipse.plugin.model.Page;
+import org.trachacks.wikieditor.model.exception.PageNotFoundException;
 
 public class WikiEditorStorage implements IStorage {
 	
@@ -34,7 +36,12 @@ public class WikiEditorStorage implements IStorage {
 	}
 
 	public InputStream getContents() throws CoreException {
-		return  new ByteArrayInputStream(page.load().getContent().getBytes());
+		try {
+			return  new ByteArrayInputStream(page.load().getContent().getBytes(Encoding));
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return  new ByteArrayInputStream(page.load().getContent().getBytes());
+		}
 	}
 
 	public IPath getFullPath() {
