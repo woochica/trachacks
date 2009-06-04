@@ -384,11 +384,8 @@ def parse(parser, args=None):
             print '%s: %s' % (name, database.description)
         return        
 
-    if options.printmissing:
-        projects = ['foo']
-
     # print help if no projects given
-    if not projects: 
+    if not projects and not options.printmissing: 
         parser.print_help()
         return
 
