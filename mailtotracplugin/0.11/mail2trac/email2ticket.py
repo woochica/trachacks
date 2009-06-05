@@ -7,6 +7,7 @@ from mail2trac.utils import emailaddr2user
 from trac.attachment import Attachment
 from trac.core import *
 from trac.mimeview.api import KNOWN_MIME_TYPES
+from trac.config import Option
 from trac.perm import PermissionSystem
 from trac.ticket import Ticket
 from trac.ticket.notification import TicketNotifyEmail
@@ -25,24 +26,20 @@ class EmailToTicket(Component):
     def invoke(self, message):
         """make a new ticket on receiving email"""
 
-        user = emailaddr2user(self.env, message['from'])
-        
-        # check permissions
-        perm = self.env[PermissionSystem]
-        if not perm.check_permission('TICKET_CREATE', user): # None -> 'anoymous'
-            raise EmailException("%s does not have TICKET_CREATE permissions" % (user or 'anonymous'))
+        # get the ticket reporter
+        reporter = self.reporter(message)
 
-        ticket = Ticket(self.env)
-        reporter = user or message['from']
-
+        # get the description and attachments
         description, attachments = self.get_description_and_attachments(message)
         if description is None:
             description = ''
         description = description.strip()
 
+        # get the ticket fields
         fields = self.fields(message, reporter=reporter, description=description)
 
         # inset items from email
+        ticket = Ticket(self.env)
         for key, value in fields.items():
             ticket.values[key] = value
 
@@ -92,6 +89,19 @@ class EmailToTicket(Component):
 
     ### internal methods
 
+    def reporter(self, message):
+        """return the ticket reporter"""
+        user = emailaddr2user(self.env, message['from'])
+        
+        # check permissions
+        perm = self.env[PermissionSystem]
+        if not perm.check_permission('TICKET_CREATE', user): # None -> 'anoymous'
+            raise EmailException("%s does not have TICKET_CREATE permissions" % (user or 'anonymous'))
+
+        reporter = user or message['from']
+        return reporter
+
+
     def get_description_and_attachments(self, message, description=None, attachments=None):
         if attachments is None:
             attachments = []
@@ -121,4 +131,28 @@ class EmailToTicket(Component):
         fields.update(dict(summary=message['subject'],
                            status='new',
                            resolution=''))
+        return fields
+
+
+class ContactEmailToTicket(EmailToTicket):
+    """
+    form of email to ticket to allow reporting as the inquiry handler user.
+    specifically, useful for contact-type tickets
+    """
+
+    trac_address = Option('mail', 'address',
+                          doc="email address to listen to")
+
+    def reporter(self, message):
+        trac_address = self.trac_address
+        if not trac_address:
+            trac_address = self.env.config.get('notification', 'smtp_replyto')
+        user = emailaddr2user(self.env, trac_address)
+        if user:
+            return user
+        return trac_address
+
+    def fields(self, message, **fields):
+        fields = EmailToTicket.fields(self, message, **fields)
+        fields['summary'] = 'From %s: %s' % ( message['from'], fields['summary'])
         return fields

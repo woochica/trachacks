@@ -27,23 +27,23 @@ def mail2project(env, message):
     message = email.message_from_string(message)
 
     # if the message is not to this project, ignore it
-    trac_address = env.config.get('mail', 'address')
-    if not trac_address:
-        trac_address = env.config.get('notification', 'smtp_replyto')
-    to = email.Utils.parseaddr(message['to'])[1]
-    accept = set([to])
-    cc = message.get('cc','').strip()
-    if cc:
-        cc = [email.Utils.parseaddr(i.strip())[1] 
-              for i in cc.split(',') if i.strip()]
-        accept.update(cc)
-    delivered_to = message.get('delivered-to', '').strip()
-    if delivered_to:
-        accept = set([email.Utils.parseaddr(delivered_to)[1]])
+    if not env.config.getbool('mail', 'accept_all'):
+        trac_address = env.config.get('mail', 'address')
+        if not trac_address:
+            trac_address = env.config.get('notification', 'smtp_replyto')
+        to = email.Utils.parseaddr(message['to'])[1]
+        accept = set([to])
+        cc = message.get('cc','').strip()
+        if cc:
+            cc = [email.Utils.parseaddr(i.strip())[1] 
+                  for i in cc.split(',') if i.strip()]
+            accept.update(cc)
+        delivered_to = message.get('delivered-to', '').strip()
+        if delivered_to:
+            accept = set([email.Utils.parseaddr(delivered_to)[1]])
     
-    if trac_address not in accept:
-        # XXX should be made more robust
-        raise EmailException("Email does not match Trac address: %s" % trac_address)
+        if trac_address not in accept:
+            raise EmailException("Email does not match Trac address: %s" % trac_address)
 
     # handle the message
     handlers = ExtensionPoint(IEmailHandler).extensions(env)
@@ -96,7 +96,11 @@ def main(args=sys.argv[1:]):
         
     for url in options.urls:
         # post the message
-        urllib2.urlopen(url, urllib.urlencode(dict(message=message)))
+        try:
+            urllib2.urlopen(url, urllib.urlencode(dict(message=message)))
+        except urllib2.HTTPError, e:
+            print e.read()
+            sys.exit(1)
 
 if __name__ == '__main__':
     main()

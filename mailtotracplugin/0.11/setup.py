@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.2'
+version='0.2.1'
 
 setup(name='mail2trac',
       version=version,
