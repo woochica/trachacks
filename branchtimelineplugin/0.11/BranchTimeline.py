@@ -217,12 +217,6 @@ class BranchesTimelineModule(ChangesetModule):
                 if _changeset_belongs_to_branches(changeset_object, filtered_branches):
                     yield changeset
 
-    def _branches_to_display(self, branches):
-        if self._filtered_branches:
-            return [branch for branch in branches
-                    if branch in self._filtered_branches]
-        return branches
-    
     def render_timeline_event(self, context, field, event):
         return_value = super(BranchesTimelineModule, self).render_timeline_event(context, field, event)
         
@@ -232,7 +226,6 @@ class BranchesTimelineModule(ChangesetModule):
         # Add the branches names to the title
         title = return_value
         branches = _get_changeset_event_branches(event, self._branches_path, self._trunk_path)
-        branches = self._branches_to_display(branches)
         
         branch_names = tag(' in %s' % (', '.join([_get_branch_name(branch, self._branches_path, self._trunk_path)
                                                 for branch in branches]))
