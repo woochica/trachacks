@@ -150,13 +150,29 @@ def _create_javascript_array(array_name, values, function = lambda x : repr(str(
     array_values = ", ".join([function(value) for value in values])
     return "var %s = new Array(%s)" % (array_name, array_values)
 
-def _create_query_object(env, query):
+def _create_query_object(env, query, required_columns = None):
+    """
+    Create a query obejct from a query string.
+    If query is None, the default Query is returned.
+    required_columns - Columns that must be included in the query.
+    """
     if query is None:
-        return Query(env)
-    return Query.from_string(env, query)
+        return Query(env, cols = required_columns)
 
-def _get_query_sql(env, query):
-    query_object = _create_query_object(env, query)
+    if required_columns is None:
+        required_columns = []
+        
+    query_object = Query.from_string(env, query)
+
+    # Add the required_columns
+    for column in required_columns:
+        if column not in query_object.cols:
+            query_object.cols.append(column)
+            
+    return query_object
+
+def _get_query_sql(env, query, required_columns = None):
+    query_object = _create_query_object(env, query, required_columns)
 
     sql_format_string, format_string_arguments = query_object.get_sql()
     return sql_format_string % tuple(format_string_arguments)
@@ -304,7 +320,7 @@ def _get_pie_graph_stats(env, db, factor, query = None):
      'milestone2' : 12,
     }
     """
-    sql = _get_query_sql(env, query)
+    sql = _get_query_sql(env, query, required_columns = [factor, ])
     cursor = db.cursor()
     cursor.execute(sql)
 
