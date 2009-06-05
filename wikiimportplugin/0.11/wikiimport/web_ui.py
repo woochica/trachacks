@@ -97,7 +97,7 @@ class WikiImportAdmin(Component):
 			local_page.text = source_page.text
 			local_page.save(
 				get_reporter_id(req, 'author'), 
-				'Importing pages from "%s" using [http://trac-hacks.org/wiki/WikiImport WikiImport plugin].' % source_instance_id, 
+				'Importing pages from "%s" using [http://trac-hacks.org/wiki/WikiImportPlugin WikiImport plugin].' % source_instance_id, 
 				req.remote_addr
 			)
 
