@@ -229,13 +229,13 @@ class MovieMacro(WikiMacroBase):
             add_script(formatter.req, 'movie/js/flashembed.min.js')
             add_script(formatter.req, 'movie/js/flow.embed.js')
             
-            script = '''
-                $(function() {
-                    $("a.flowplayer").flowembed("%s",  {initialScale:'scale'});		
-                });
-            ''' % get_absolute_url(formatter.href.base, 'htdocs://movie/swf/FlowPlayerDark.swf')
-            
-            tags.append(tag.script(script))
+        script = '''
+            $(function() {
+                $("a.flowplayer").flowembed("%s",  {initialScale:'scale'});		
+            });
+        ''' % get_absolute_url(formatter.href.base, 'htdocs://movie/swf/FlowPlayerDark.swf')
+        
+        tags.append(tag.script(script))
         
         width = kwargs.pop('width', style_dict.get('width', '320px'))
         height = kwargs.pop('height', style_dict.get('height', '320px'))
