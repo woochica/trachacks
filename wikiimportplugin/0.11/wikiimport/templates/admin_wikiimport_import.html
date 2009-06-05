@@ -1,0 +1,34 @@
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:py="http://genshi.edgewall.org/" 
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	py:strip=""> 
+
+<xi:include href="admin.html" />
+
+<head>
+	<title>Wiki Import - Import results</title>
+</head>
+
+<body>
+	<h2>Review changes</h2>
+	<table id="complist" class="listing">
+                <thead>
+                        <tr>
+                                <th>Page name</th>
+                                <th>Operation</th>
+                        </tr>
+                </thead>
+
+                <tbody>
+                        <py:for each="page, operation in operations.items()">
+                                <tr class="wikiimport-${operation}">
+                                        <td>${page}</td>
+                                        <td>${operation}</td>
+                                </tr>
+                        </py:for>
+                </tbody>
+        </table>
+
+</body>
+
+</html>

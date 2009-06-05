@@ -1,0 +1,45 @@
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:py="http://genshi.edgewall.org/" 
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	py:strip=""> 
+
+<xi:include href="admin.html" />
+
+<head>
+	<title>Wiki Import - Import preview</title>
+</head>
+
+<body>
+
+	<h2>Preview import</h2>
+
+	<p class="help">Pages marked for update will get a new version. Previous content will still be available in page's history.</p>
+
+	<table id="complist" class="listing">
+		<thead>
+			<tr>
+				<th>Page name</th>
+				<th>Operation</th>
+			</tr>
+		</thead>
+
+		<tbody>
+			<py:for each="page, operation in operations.items()">
+				<tr class="wikiimport-${operation}">
+					<td>${page}</td>
+					<td>${operation}</td>
+				</tr>
+			</py:for>
+		</tbody>
+	</table>
+
+	<form method="post">
+		<div class="buttons">
+			<input type="submit" name="wikiimport_action_import" value="Import pages" />
+			<input type="hidden" name="wikiimport_instance_id" value="${instance_id}" />
+		</div>
+
+	</form>
+</body>
+
+</html>

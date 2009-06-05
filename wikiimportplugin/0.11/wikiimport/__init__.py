@@ -1,0 +1,2 @@
+# 
+from wikiimport import *

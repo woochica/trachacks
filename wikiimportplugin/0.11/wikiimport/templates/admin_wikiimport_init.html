@@ -1,0 +1,44 @@
+<html xmlns="http://www.w3.org/1999/xhtml" 
+	xmlns:py="http://genshi.edgewall.org/" 
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	py:strip=""> 
+
+<xi:include href="admin.html" />
+
+<head>
+	<title>Wiki Import - Configuration</title>
+</head>
+
+<body>
+	<h2>Select instance to import pages from</h2>
+
+	<form method="post">
+
+		<fieldset>
+	
+			<legend>Configuration</legend>
+	
+			<div class="field">
+				<label>
+					Preconfigured instance<br />
+					<select name="wikiimport_instance_id">
+						<py:for each="instance_spec in instances">
+							<option value="${instance_spec['id']}">${instance_spec['name']}</option>
+						</py:for>
+					</select>
+				</label>
+				<p class="help">
+					More instances can be added in <code>trac.ini</code>
+					</p>
+			</div>
+
+			<div class="buttons">
+				<input type="submit" value="Preview import" name="wikiimport_action_preview" />
+			</div>
+
+		</fieldset>
+
+	</form>
+</body>
+
+</html>
