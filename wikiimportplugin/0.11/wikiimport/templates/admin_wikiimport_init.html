@@ -20,7 +20,7 @@
 			<legend>Configuration</legend>
 
 			<div class="field">
-				<label>
+				<label py:if="len(instances) > 0">
 					Preconfigured instance<br />
 					<select name="wikiimport_instance_id">
 						<py:for each="instance_spec in instances">
@@ -28,7 +28,16 @@
 						</py:for>
 					</select>
 				</label>
-				<p class="help">More instances can be added in <code>trac.ini</code>.</p>
+				<p py:if="len(instances) > 0" class="help">
+					More instances can be added in <code>trac.ini</code>.
+					Syntax documentation is available at : 
+					<a href="http://trac-hacks.org/wiki/WikiImportPlugin#Configuration">http://trac-hacks.org/wiki/WikiImportPlugin#Configuration</a>.
+				</p>
+				<p py:if="len(instances) &lt; 1" class="help">
+					You can define preconfigured instances by adding them in your project's <code>trac.ini</code>.
+					Syntax documentation is available at : 
+					<a href="http://trac-hacks.org/wiki/WikiImportPlugin#Configuration">http://trac-hacks.org/wiki/WikiImportPlugin#Configuration</a>.
+				</p>
 			</div>
 			
 			<br />	

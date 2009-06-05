@@ -55,10 +55,6 @@ class WikiImportAdmin(Component):
 		sorted_data_instances = sorted(data['instances'], key=itemgetter('name'))
 		data['instances'] = sorted_data_instances
 
-		# Raise a configuration exception if no instances are configured
-		if len(data['instances']) < 1:
-			raise ConfigurationError("Please first declare trac instances in your project's trac.ini")
-
 		return 'admin_wikiimport_init.html', data
 
 	def _controller_preview(self, req, cat, page, component):
