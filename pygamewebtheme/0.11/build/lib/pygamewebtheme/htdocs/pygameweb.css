@@ -1,0 +1,137 @@
+#userbox{
+    float: right;
+   }
+/* global styling */
+
+p, td, li, input, select, textarea {
+	font-family: Verdana, Tahoma, Arial, Helvetica, sans-serif;
+    margin: 0px;
+}
+
+img {
+	border: 0px;
+}
+
+/* page layout */
+
+html {min-height: 100%;    
+    margin-left: 50px;
+    margin-right: 50px;}
+
+body {
+	font-family: Verdana, Tahoma, Arial, Helvetica, sans-serif;
+	font-size: 16px;
+	color: #000000;
+	background-color: #325448;
+    background-image: url('http://pygameweb.no-ip.org/media/images/oldremix_bg.png'); 
+    background-repeat: repeat-x;
+    min-height: 100%;
+}
+
+a {
+    color: #4ccc00;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+#page {
+    max-width: 80em;
+    font-size: 81%;
+    margin: auto;
+    min-height: 100%;
+}
+
+/* elements */
+
+#header #logo img {
+    border-width: 0px;
+    margin: auto;
+}
+
+#menubar {
+    color: gray;
+    overflow: hidden;
+    background-color: #2e2e2e;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+#menubar a {
+    color: #ccff00;
+    font-size: 105%;
+    text-decoration: none;
+    border-bottom: 0;
+}  
+
+#menubar a:hover {
+    color: white;
+    background-color: transparent;
+}
+
+#menubar a.active {
+    background-color: #4ccc00;
+    padding: 5px;
+}
+
+#menu {
+    float: left;
+}
+
+#userbox {
+    float: right;
+    font-size: 90%;
+}
+
+#submenu {
+	background-color: #4ccc00;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+#submenu .nav {
+  vertical-align: middle;
+}
+
+#submenu, #submenu :link, #submenu :visited {
+    color: white;
+    border-bottom: 0;
+    font-weight: bold;
+}
+
+#submenu .active :link, #submenu .active :visited{
+    color: black;
+}
+
+#submenu a:hover {
+    color: #666;
+    background-color: transparent;
+    text-decoration: none;
+}
+
+#search {
+  float: right;
+  margin: 0;
+}
+
+#main {
+  background-color: white;
+  padding: 0 20px 0 20px;
+}
+
+#footer {
+    background-color: #2e2e2e;
+    color: white;
+    overflow: hidden;
+    padding-left: 30px;
+    padding-right: 30px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+

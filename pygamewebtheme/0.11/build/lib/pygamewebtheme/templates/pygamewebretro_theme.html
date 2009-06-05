@@ -1,0 +1,135 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+      
+<py:match path="body" once="true" buffer="false"><body>
+  <div id="header" py:choose="">
+    <a py:when="chrome.logo.src" id="logo" href="${chrome.logo.link or href.wiki('TracIni')+'#header_logo-section'}"><img
+      src="${chrome.logo.src}" alt="${chrome.logo.alt}"
+      height="${chrome.logo.height or None}" width="${chrome.logo.width or None}" /></a>
+    <h1 py:otherwise=""><a href="${chrome.logo.link}">${project.name}</a></h1>
+  </div>
+  
+
+  <!--! search -->
+  <form id="search" action="${href.search()}" method="get">
+    <div py:if="'SEARCH_VIEW' in perm">
+      <label for="proj-search">Search:</label>
+      <input type="text" id="proj-search" name="q" size="18" accesskey="f" value="" />
+      <input type="submit" value="${_('Search')}" />
+    </div>
+  </form>
+
+  
+  <div id="ctxtnav" class="nav">
+    <h2>Context Navigation</h2>
+      <ul py:if="chrome.ctxtnav">
+          <li py:for="i, elm in enumerate(chrome.ctxtnav)"
+              class="${classes(first_last(i, chrome.ctxtnav))}">$elm</li>
+      </ul>
+    <hr />
+  </div>
+
+  <!-- layout -->
+  <table border="0" cellpadding="0" cellspacing="0" width='100%'>
+    <tr>
+      <td valign="top">
+
+        <!-- nav -->
+        <table class='sidenav'>
+          <tr><th>pygame</th></tr>
+          <tr><td>
+            <a class='linky'  href='http://pygame.org/news.html' >News</a><br />
+            <a class='linky2'  href='/wiki/about' >About</a><br />
+            <a class='linky'  href='http://pygame.org/screenshots.html' >Screenshots</a><br />
+            <a class='linky2'  href='http://pygame.org/download.shtml' >Downloads</a><br/>
+            <a class='linky'  href='http://www.pygame.org/docs/' >Documentation</a><br />
+            <a class='linky2'  href='/wiki/tutorials' >Tutorials</a><br />
+            <a class='linky'  href='http://www.pygame.org/wiki/FrequentlyAskedQuestions' >Pygame&nbsp;FAQ</a><br />
+            <a class='linky2'  href='/wiki/info' >Help&nbsp;(irc,&nbsp;lists)</a><br />
+            <a class='linky'  href='/wiki/patchesandbugs' >Bugs&nbsp;&amp;&nbsp;Patches</a><br />
+            <a class='linky2'  href='/wiki/cvs' >Subversion</a><br />
+            <a class='linky'  href='/wiki/links' >Links</a><br />
+            <a class='linky2'  href='/wiki/resources' >Resources</a><br />
+            <a class='linky'  href='http://pygame.org/whatsnew.shtml' >What's&nbsp;New</a><br />
+            <a class='linky2'  href='/wiki/' >Wiki</a><br />
+            <a class='linky'  href='http://www.pygame.org/wiki/CookBook' >Cookbook</a><br />
+            <a class='linky2'  href='http://www.pygame.org/wiki/rsslinks' >RSS&nbsp;Feeds</a><br />
+          </td></tr>
+          <tr><td class='spacer'>&nbsp;</td></tr>
+          <tr><th>projects</th></tr>
+          <tr><td>
+            <a href='http://pygame.org/tags/arcade'>arcade</a> (342)<br />
+            <a href='http://pygame.org/tags/pygame'>pygame</a> (198)<br />
+            <a href='http://pygame.org/tags/2d'>2d</a> (149)<br />
+            <a href='http://pygame.org/tags/puzzle'>puzzle</a> (107)<br />
+            <a href='http://pygame.org/tags/libraries'>libraries</a> (94)<br />
+            <a href='http://pygame.org/tags/other'>other</a> (89)<br />
+            <a href='http://pygame.org/tags/strategy'>strategy</a> (89)<br />
+            <a href='http://pygame.org/tags/applications'>applications</a> (65)<br />
+            <a href='http://pygame.org/tags/shooter'>shooter</a> (58)<br />
+            <a href='http://pygame.org/tags/geometrian'>geometrian</a> (46)<br />
+            <a href='http://pygame.org/tags/pyweek'>pyweek</a> (43)<br />
+            <a href='http://pygame.org/tags/space'>space</a> (38)<br />
+            <a href='http://pygame.org/tags/'>... <b>more</b> tags!</a>
+          </td></tr>
+          <tr><td class='spacer'>&nbsp;</td></tr>
+          <tr><th>members</th></tr>
+          <tr><td>
+            <form method='post' action='http://pygame.org/login/login.php'>
+              User Name:<br />
+              <input type="text" name="name" size="10" /><br />
+              Password:<br />
+              <input type="password" name="passwd" size="10" /><br />
+              <input type='submit' value='Sign In' />
+            </form>
+            New members:<br />
+            <a href='http://pygame.org/login/new.php'>Sign Up</a><br />
+          </td></tr>
+        </table>
+
+      </td>
+
+      <!-- layout -->
+      <td valign="top" width="100%">
+
+        <!-- main content -->
+        <div id="main" style='padding-left: 16px; padding-right: 16px;'>
+           <div id="warning" py:if="chrome.warnings" class="system-message">
+             <py:choose test="len(chrome.warnings)">
+               <strong>Warning:</strong>
+               <py:when test="1">${chrome.warnings[0]}</py:when>
+               <py:otherwise><ul><li py:for="warning in chrome.warnings">$warning</li></ul></py:otherwise>
+             </py:choose>
+           </div>
+           <div id="notice" py:if="chrome.notices" class="system-message">
+             <py:choose test="len(chrome.notices)">
+               <py:when test="1">${chrome.notices[0]}</py:when>
+               <py:otherwise><ul><li py:for="notice in chrome.notices">$notice</li></ul></py:otherwise>
+             </py:choose>
+           </div>
+
+           ${select('*|text()')}
+        </div>
+      </td>
+
+       
+
+    <!-- layout -->
+    </tr>
+  </table>
+
+  <!--! footer -->
+  <div id="footer" xml:lang="en"><hr/>
+    <p class="left">
+      Powered by <a href="${href.about()}"><strong>Trac ${trac.version}</strong></a><br />
+      By <a href="http://www.edgewall.org/">Edgewall Software</a>.
+    </p>
+    <p class="right">${chrome.footer}</p>
+  </div>
+</body></py:match>
+</html>
