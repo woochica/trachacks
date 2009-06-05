@@ -2,7 +2,7 @@
 
 """
 email2trac:
-a email handler plugin for Trac
+a pluggable email handler plugin for Trac
 http://trac.edgewall.org
 """
 
@@ -27,8 +27,10 @@ def mail2project(env, message):
     message = email.message_from_string(message)
 
     # if the message is not to this project, ignore it
+    trac_address = env.config.get('mail', 'address')
+    if not trac_address:
+        trac_address = env.config.get('notification', 'smtp_replyto')
     to = email.Utils.parseaddr(message['to'])[1]
-    trac_address = env.config.get('notification', 'smtp_replyto')
     accept = set([to])
     cc = message.get('cc','').strip()
     if cc:
