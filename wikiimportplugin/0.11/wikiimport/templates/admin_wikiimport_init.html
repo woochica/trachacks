@@ -14,10 +14,11 @@
 
 	<form method="post">
 
+		<p class="help">You can import pages either from a preconfigured instance or specify the path to any existing instance.</p>
+
 		<fieldset>
-	
 			<legend>Configuration</legend>
-	
+
 			<div class="field">
 				<label>
 					Preconfigured instance<br />
@@ -27,9 +28,17 @@
 						</py:for>
 					</select>
 				</label>
-				<p class="help">
-					More instances can be added in <code>trac.ini</code>
-					</p>
+				<p class="help">More instances can be added in <code>trac.ini</code>.</p>
+			</div>
+			
+			<br />	
+
+			<div class="field">
+				<label>
+					Path to trac environment<br />
+					<input type="text" name="wikiimport_instance_path" size="40" />
+				</label>
+				<p class="help">Environment must reside on the same filesystem and be readable by whoever runs the web server.</p>
 			</div>
 
 			<div class="buttons">

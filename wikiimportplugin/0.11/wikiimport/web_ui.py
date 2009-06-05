@@ -65,17 +65,27 @@ class WikiImportAdmin(Component):
 		""" Compares source and destination wiki pages to let the user know which contents may be overriden during the import. """
 
 		# Data to be passed to view
-		data = {}
-		data['instance_id'] = req.args.get('wikiimport_instance_id')
+		data = {'instance_id': '', 'instance_path': ''}
+
+		# Choose between preconfigured and raw instance
+		if req.args.get('wikiimport_instance_path'):
+			data['instance_path'] = req.args.get('wikiimport_instance_path')
+			source_env = Environment(data['instance_path'])
+		else:
+			data['instance_id'] = req.args.get('wikiimport_instance_id')
+			source_env = self._get_instance_env(data['instance_id'])
 
 		# Get operations to be performed
-		data['operations'] = self._get_page_operations(req.args.get('wikiimport_instance_id'))
+		data['operations'] = self._get_page_operations(source_env, self.env)
 
 		# Add stylesheet to view
 		add_stylesheet(req, 'wikiimport/css/wikiimport.css');
 
 		# Render view
-		return 'admin_wikiimport_preview.html', data
+		if len(data['operations'].items()):
+			return 'admin_wikiimport_preview.html', data
+		else:
+			return 'admin_wikiimport_preview_noops.html', data
 
 	def _controller_import(self, req, cat, page, component):
 		""" Performs import. """
@@ -83,21 +93,27 @@ class WikiImportAdmin(Component):
 		# Data to be passed to view
 		data = {}
 
-		# For simplicity's sake
-		source_instance_id = req.args.get('wikiimport_instance_id')
+		# Choose between preconfigured and raw instance
+		if req.args.get('wikiimport_instance_path'):
+			data['instance_path'] = req.args.get('wikiimport_instance_path')
+			source_env = Environment(data['instance_path'])
+			instance_identifier = data['instance_path']
+		else:
+			data['instance_id'] = req.args.get('wikiimport_instance_id')
+			source_env = self._get_instance_env(data['instance_id'])
+			instance_identifier = data['instance_id']
 
 		# Get operations to be performed
-		data['operations'] = self._get_page_operations(source_instance_id)
+		data['operations'] = self._get_page_operations(source_env, self.env)
 
 		# Update local wiki
-		source_env = self._get_instance_env(source_instance_id)
 		for page, operation in data['operations'].items():
 			source_page = WikiPage(source_env, page)
 			local_page = WikiPage(self.env, page)
 			local_page.text = source_page.text
 			local_page.save(
 				get_reporter_id(req, 'author'), 
-				'Importing pages from "%s" using [http://trac-hacks.org/wiki/WikiImportPlugin WikiImport plugin].' % source_instance_id, 
+				'Importing pages from "%s" using [http://trac-hacks.org/wiki/WikiImportPlugin WikiImport plugin].' % instance_identifier,
 				req.remote_addr
 			)
 
@@ -107,14 +123,13 @@ class WikiImportAdmin(Component):
 		return 'admin_wikiimport_import.html', data
 
 	# Helpers
-	def _get_page_operations(self, source_instance_id):
+	def _get_page_operations(self, source_env, local_env):
 
 		operations = {}
 
 		# Open source and destination wikis
-		source_env = self._get_instance_env(source_instance_id)
 		source_wiki_system = WikiSystem(source_env)
-		dest_wiki_system = WikiSystem(self.env)
+		dest_wiki_system = WikiSystem(local_env)
 
 		# Extract wiki pages from both wikis 
 		local_pages = []
