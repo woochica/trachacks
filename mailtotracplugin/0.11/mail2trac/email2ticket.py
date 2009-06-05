@@ -81,9 +81,7 @@ class EmailToTicket(Component):
             os.chmod(attachment._get_path(), 0666)
             # TODO : should probably chown too
 
-        # ticket notification
-        tn = TicketNotifyEmail(self.env)
-        tn.notify(ticket)
+        self.post_process(ticket)
 
     def order(self):
         return None
@@ -135,6 +133,13 @@ class EmailToTicket(Component):
                            resolution=''))
         return fields
 
+    def post_process(self, ticket):
+        """actions to perform after the ticket is created"""
+
+        # ticket notification
+        tn = TicketNotifyEmail(self.env)
+        tn.notify(ticket)
+    
 
 class ContactEmailToTicket(EmailToTicket):
     """
@@ -156,5 +161,11 @@ class ContactEmailToTicket(EmailToTicket):
 
     def fields(self, message, **fields):
         fields = EmailToTicket.fields(self, message, **fields)
-        fields['summary'] = 'From %s: %s' % ( message['from'], fields['summary'])
+        if message['from']:
+            fields['summary'] = 'From %s: %s' % ( message['from'], fields['summary'])
         return fields
+
+    def post_process(self, ticket):
+        """
+        don't send notification emails as they wil result in a feedback loop
+        """
