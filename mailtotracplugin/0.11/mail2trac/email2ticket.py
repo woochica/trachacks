@@ -44,11 +44,13 @@ class EmailToTicket(Component):
             ticket.values[key] = value
 
         # fill in default values
-        ### unused for now -- needed?
         for field in ticket.fields:
             name = field['name']
             if name not in fields:
-                value = ticket.get_value_or_default(name) or ''
+                try:
+                    value = ticket.get_value_or_default(name) or ''
+                except AttributeError: # BBB
+                    value = ''
                 if value is not None:
                     ticket.values[name] = value
 
