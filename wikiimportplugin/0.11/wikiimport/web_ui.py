@@ -67,12 +67,18 @@ class WikiImportAdmin(Component):
 		if req.args.get('wikiimport_instance_path'):
 			data['instance_path'] = req.args.get('wikiimport_instance_path')
 			source_env = Environment(data['instance_path'])
-		else:
+		elif req.args.get('wikiimport_instance_id'):
 			data['instance_id'] = req.args.get('wikiimport_instance_id')
 			source_env = self._get_instance_env(data['instance_id'])
+		else:
+			raise TracError('Please specify a path to a Trac environment.')
 
 		# Get operations to be performed
 		data['operations'] = self._get_page_operations(source_env, self.env)
+
+		# This is required in order to display pages list alphabetically
+		data['sorted_pages'] = data['operations'].keys()
+		data['sorted_pages'].sort()
 
 		# Add stylesheet to view
 		add_stylesheet(req, 'wikiimport/css/wikiimport.css');
@@ -101,6 +107,10 @@ class WikiImportAdmin(Component):
 
 		# Get operations to be performed
 		data['operations'] = self._get_page_operations(source_env, self.env)
+
+		# This is required in order to display pages list alphabetically
+		data['sorted_pages'] = data['operations'].keys()
+		data['sorted_pages'].sort()
 
 		# Update local wiki
 		for page, operation in data['operations'].items():

@@ -24,10 +24,10 @@
 		</thead>
 
 		<tbody>
-			<py:for each="page, operation in operations.items()">
-				<tr class="wikiimport-${operation}">
+			<py:for each="page in sorted_pages">
+				<tr class="wikiimport-${operations[page]}">
 					<td>${page}</td>
-					<td>${operation}</td>
+					<td>${operations[page]}</td>
 				</tr>
 			</py:for>
 		</tbody>
