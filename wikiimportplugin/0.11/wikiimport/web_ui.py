@@ -93,35 +93,46 @@ class WikiImportAdmin(Component):
 		""" Performs import. """
 
 		# Data to be passed to view
-		data = {}
+		data = {'operations': {}}
 
-		# Choose between preconfigured and raw instance
-		if req.args.get('wikiimport_instance_path'):
-			data['instance_path'] = req.args.get('wikiimport_instance_path')
-			source_env = Environment(data['instance_path'])
-			instance_identifier = data['instance_path']
-		else:
-			data['instance_id'] = req.args.get('wikiimport_instance_id')
-			source_env = self._get_instance_env(data['instance_id'])
-			instance_identifier = data['instance_id']
+		# User selected pages
+		selected_pages = req.args.get('wikiimport_selected_pages')
 
-		# Get operations to be performed
-		data['operations'] = self._get_page_operations(source_env, self.env)
+		# User has selected some pages
+		if selected_pages:
 
-		# This is required in order to display pages list alphabetically
-		data['sorted_pages'] = data['operations'].keys()
-		data['sorted_pages'].sort()
+			# Choose between preconfigured and raw instance
+			if req.args.get('wikiimport_instance_path'):
+				data['instance_path'] = req.args.get('wikiimport_instance_path')
+				source_env = Environment(data['instance_path'])
+				instance_identifier = data['instance_path']
+			else:
+				data['instance_id'] = req.args.get('wikiimport_instance_id')
+				source_env = self._get_instance_env(data['instance_id'])
+				instance_identifier = data['instance_id']
 
-		# Update local wiki
-		for page, operation in data['operations'].items():
-			source_page = WikiPage(source_env, page)
-			local_page = WikiPage(self.env, page)
-			local_page.text = source_page.text
-			local_page.save(
-				get_reporter_id(req, 'author'), 
-				'Importing pages from "%s" using [http://trac-hacks.org/wiki/WikiImportPlugin WikiImport plugin].' % instance_identifier,
-				req.remote_addr
-			)
+			# Get operations to be performed
+			data['operations'] = self._get_page_operations(source_env, self.env)
+
+			# This is required in order to display pages list alphabetically
+			data['sorted_pages'] = data['operations'].keys()
+			data['sorted_pages'].sort()
+
+			# Discard operation for pages that were unchecked on the preview page
+			for page in data['sorted_pages']:
+				if page not in selected_pages: 
+					del data['operations'][page]
+
+			# Update local wiki
+			for page, operation in data['operations'].items():
+				source_page = WikiPage(source_env, page)
+				local_page = WikiPage(self.env, page)
+				local_page.text = source_page.text
+				local_page.save(
+					get_reporter_id(req, 'author'), 
+					'Importing pages from "%s" using [http://trac-hacks.org/wiki/WikiImportPlugin WikiImport plugin].' % instance_identifier,
+					req.remote_addr
+				)
 
 		# Add stylesheet to view
 		add_stylesheet(req, 'wikiimport/css/wikiimport.css');

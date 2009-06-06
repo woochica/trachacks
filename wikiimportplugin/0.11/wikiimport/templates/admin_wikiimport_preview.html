@@ -15,9 +15,11 @@
 
 	<p class="help">Pages marked for update will get a new version. Previous content will still be available in page's history.</p>
 
+	<form method="post">
 	<table id="complist" class="listing">
 		<thead>
 			<tr>
+				<th class="wikiimport-check">Perform operation ?</th>
 				<th>Page name</th>
 				<th>Operation</th>
 			</tr>
@@ -26,6 +28,7 @@
 		<tbody>
 			<py:for each="page in sorted_pages">
 				<tr class="wikiimport-${operations[page]}">
+					<td class="wikiimport-check"><input type="checkbox" name="wikiimport_selected_pages" value="${page}" checked="true" /></td>
 					<td><a href="${href.wiki(page)}" title="View page in wiki">${page}</a></td>
 					<td>${operations[page]}</td>
 				</tr>
@@ -33,7 +36,6 @@
 		</tbody>
 	</table>
 
-	<form method="post">
 		<div class="buttons">
 			<input type="submit" name="wikiimport_action_import" value="Import pages" />
 			<input type="hidden" name="wikiimport_instance_id" value="${instance_id}" />

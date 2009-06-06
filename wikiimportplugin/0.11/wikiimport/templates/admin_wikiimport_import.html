@@ -21,7 +21,7 @@
 
                 <tbody>
                         <py:for each="page in sorted_pages">
-                                <tr class="wikiimport-${operations[page]}">
+                                <tr py:if="operations[page]" class="wikiimport-${operations[page]}">
                                         <td><a href="${href.wiki(page)}" title="View page in wiki">${page}</a></td>
                                         <td>${operations[page]}</td>
                                 </tr>

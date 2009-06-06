@@ -5,3 +5,11 @@ tr.wikiimport-create {
 tr.wikiimport-update {
 	background-color: lightGoldenRodYellow;
 }
+
+th.wikiimport-check, td.wikiimport-check {
+	width: 10%;
+}
+
+td.wikiimport-check {
+	text-align: center;
+}
