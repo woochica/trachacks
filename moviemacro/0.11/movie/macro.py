@@ -11,6 +11,7 @@ from trac.wiki.macros import WikiMacroBase
 
 
 EMBED_COUNT = '_moviemacro_embed_count'
+FLOWPLAYER_EMBEDDED = '_moviemacro_flowplayer_embedded'
 
 def get_absolute_url(base, url):
     """ Generate an absolute url from the url with the special schemes
@@ -115,6 +116,8 @@ class MovieMacro(WikiMacroBase):
         embed_count = getattr(formatter, EMBED_COUNT, 0)
         embed_count += 1
         setattr(formatter, EMBED_COUNT, embed_count)
+        
+        flowplayer_embedded = getattr(formatter, FLOWPLAYER_EMBEDDED, False)
         
         url = get_absolute_url(formatter.href.base, url)
         src = get_absolute_url(formatter.href.base, 'htdocs://movie/img/black.jpg')
@@ -225,17 +228,19 @@ class MovieMacro(WikiMacroBase):
         # Local movies.
         tags = []
         
-        if embed_count == 1:
+        if not flowplayer_embedded:
             add_script(formatter.req, 'movie/js/flashembed.min.js')
             add_script(formatter.req, 'movie/js/flow.embed.js')
             
-        script = '''
-            $(function() {
-                $("a.flowplayer").flowembed("%s",  {initialScale:'scale'});		
-            });
-        ''' % get_absolute_url(formatter.href.base, 'htdocs://movie/swf/FlowPlayerDark.swf')
-        
-        tags.append(tag.script(script))
+            script = '''
+                $(function() {
+                    $("a.flowplayer").flowembed("%s",  {initialScale:'scale'});
+                });
+            ''' % get_absolute_url(formatter.href.base, 'htdocs://movie/swf/FlowPlayerDark.swf')
+            
+            tags.append(tag.script(script))
+            
+            setattr(formatter, FLOWPLAYER_EMBEDDED, True)
         
         width = kwargs.pop('width', style_dict.get('width', '320px'))
         height = kwargs.pop('height', style_dict.get('height', '320px'))
