@@ -74,7 +74,7 @@ min_lat = -45.0
 min_lon = -90.0
 newissues.label = New Issues
 newissues.query = location!=&status=new&order=time&desc=1
-wms_url = http://maps.opengeo.org/geoserver/gwc/service/wms
+wms_url = http://maps.opengeo.org/geowebcache/service/wms
 
 [graphviz]
 cache_dir = gvcache
