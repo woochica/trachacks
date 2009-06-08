@@ -31,7 +31,6 @@ from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
 from trac.web.api import IRequestHandler
 from trac.web.api import ITemplateStreamFilter
-from trac.web.api import RequestDone
 from trac.web.chrome import add_script
 from trac.web.chrome import Chrome
 from trac.web.chrome import ITemplateProvider
@@ -90,7 +89,7 @@ class GeoTicket(Component):
     google_api_key = Option('geo', 'google_api_key', '',
                             "Google maps API key, available at http://code.google.com/apis/maps/signup.html")
     wms_url = Option('geo', 'wms_url',
-                     'http://maps.opengeo.org/geoserver/gwc/service/wms',
+                     'http://maps.opengeo.org/geowebcache/service/wms',
                      "URL for the WMS")
     openlayers_url = Option('geo', 'openlayers_url', 
                             'http://openlayers.org/api/2.8-rc2/OpenLayers.js',
