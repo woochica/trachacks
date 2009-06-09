@@ -1,0 +1,15 @@
+= Graphviz Examples =
+
+== Just the basics ==
+
+Invoking [wiki:GraphvizExamples/InvokingDot dot], [wiki:GraphvizExamples/InvokingNeato neato], [wiki:GraphvizExamples/InvokingTwopi twopi], [wiki:GraphvizExamples/InvokingCirco circo] and [wiki:GraphvizExamples/InvokingFdp fdp] with the same graph description.
+
+== Output Formats ==
+
+Setting the output format to [wiki:GraphvizExamples/OutputPng png], [wiki:GraphvizExamples/OutputJpg jpg], [wiki:GraphvizExamples/OutputGif gif] and [wiki:GraphvizExamples/OutputSvg svg].
+
+== Image Maps ==
+
+Using client side image maps to [wiki:GraphvizExamples/MapWhole map whole image], [wiki:GraphvizExamples/MapNodesPng map nodes (png)], [wiki:GraphvizExamples/MapNodesSvg map nodes (svg)], [wiki:GraphvizExamples/WikiLinksPng wiki links (png)], and [wiki:GraphvizExamples/WikiLinksSvg wiki links (svg)].
+
+

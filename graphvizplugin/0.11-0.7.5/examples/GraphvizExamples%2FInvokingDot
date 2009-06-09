@@ -1,0 +1,10 @@
+= Graphviz Example Invoking Dot =
+{{{
+#!graphviz.dot
+digraph G {
+    Hello->World
+    Hello->Goodbye
+    World->Graphviz
+    Graphviz->Rules
+}
+}}}
