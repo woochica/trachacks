@@ -303,15 +303,14 @@ class TracTicket(object):
         if settings.get('debug', 0):
             print "update Trac %d  %s" % (id, ticket)
         if settings.get('dry_run', 0) == 0:
-            tkt.save_changes(ticket['User'], comment, when)
-
+            saved = tkt.save_changes(ticket['User'], comment, when)
             try:
-                self.env.abs_href = Href(self.get_config('project', 'url'))
-                self.env.href = Href(self.get_config('project', 'url'))
-                print self.env.href
-                tn = TicketNotifyEmail(self.env)
-                tn.notify(tkt, False, when)
-
+                if saved:
+                    self.env.abs_href = Href(self.get_config('project', 'url'))
+                    self.env.href = Href(self.get_config('project', 'url'))
+                    print self.env.href
+                    tn = TicketNotifyEmail(self.env)
+                    tn.notify(tkt, False, when)
             except Exception, e:
                 print 'TD: Failure sending notification on creation of ticket #%s: %s' %(id, e)
 
