@@ -56,7 +56,10 @@ try:
                     else:
                         warnings.append(str(e))
                         fields['location'] = location
-
+                        if fields.get('keywords'):
+                            fields['keywords'] = fields['keywords'] + ' unlocated'
+                        else:
+                            fields['keywords'] = 'unlocated'
             else:
                 if geoticket.mandatory_location:
                     raise EmailException('Location required. Please email with "%s @ <location>" in your subject.' % subject)
