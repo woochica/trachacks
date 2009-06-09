@@ -159,7 +159,7 @@ class MapDashboard(Component):
                             "URL of OpenLayers JS to use")
     dashboard_tickets = IntOption('geo', 'dashboard_tickets', '6',
                                   "number of tickets to display on the dashboard map")
-    display_cloud = Option('geo', 'display_cloud', 'true',
+    display_cloud = BoolOption('geo', 'display_cloud', 'true',
                            "whether to display the cloud on the map dashboard")
     dashboard = ListOption('geo', 'dashboard', 'activeissues',
                            "which viewports to display on the dashboard")

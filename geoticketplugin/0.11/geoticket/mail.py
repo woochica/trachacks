@@ -24,7 +24,7 @@ try:
 	    """Make ourselves show up first"""
 	    return True
 
-        def fields(self, message, **fields):
+        def fields(self, message, warnings, **fields):
 
             # if you don't have GeoTicket enabled, why are you using this plugin?
             assert GeoTicket in self.env.components 
@@ -54,13 +54,14 @@ try:
                     if geoticket.mandatory_location:
                         raise EmailException(str(e))
                     else:
+                        warnings.append(str(e))
                         fields['location'] = location
 
             else:
                 if geoticket.mandatory_location:
                     raise EmailException('Location required. Please email with "%s @ <location>" in your subject.' % subject)
 
-            return EmailToTicket.fields(self, message, **fields)
+            return EmailToTicket.fields(self, message, warnings, **fields)
 
 
 except ImportError:
