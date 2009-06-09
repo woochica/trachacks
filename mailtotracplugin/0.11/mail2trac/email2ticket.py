@@ -26,6 +26,9 @@ class EmailToTicket(Component):
     def invoke(self, message, warnings):
         """make a new ticket on receiving email"""
 
+        # local warnings
+        _warnings = []
+
         # get the ticket reporter
         reporter = self.reporter(message)
 
@@ -36,7 +39,7 @@ class EmailToTicket(Component):
         description = description.strip()
 
         # get the ticket fields
-        fields = self.fields(message, warnings, reporter=reporter, description=description)
+        fields = self.fields(message, _warnings, reporter=reporter, description=description)
 
         # inset items from email
         ticket = Ticket(self.env)
@@ -81,11 +84,16 @@ class EmailToTicket(Component):
             os.chmod(attachment._get_path(), 0666)
             # TODO : should probably chown too
 
+        # do whatever post-processing is necessary
         self.post_process(ticket)
+
+        # add local warnings
+        if _warnings:
+            warning = """A ticket has been created but there is a problem:\n\n%s\n\nPlease edit your ticket by going here: %s""" % ('\n\n'.join([' - %s' % warning for warning in _warnings]), self.env.abs_href('ticket', ticket.id))
+            warnings.append(warning)
 
     def order(self):
         return None
-
 
     ### internal methods
 
