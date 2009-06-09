@@ -23,7 +23,7 @@ class EmailToTicket(Component):
     def match(self, message):
         return True
 
-    def invoke(self, message):
+    def invoke(self, message, warnings):
         """make a new ticket on receiving email"""
 
         # get the ticket reporter
@@ -36,7 +36,7 @@ class EmailToTicket(Component):
         description = description.strip()
 
         # get the ticket fields
-        fields = self.fields(message, reporter=reporter, description=description)
+        fields = self.fields(message, warnings, reporter=reporter, description=description)
 
         # inset items from email
         ticket = Ticket(self.env)
@@ -125,7 +125,7 @@ class EmailToTicket(Component):
         return description, attachments
 
 
-    def fields(self, message, **fields):
+    def fields(self, message, warnings, **fields):
 
         # effectively the interface for email -> ticket
         fields.update(dict(summary=message['subject'],
@@ -159,7 +159,7 @@ class ContactEmailToTicket(EmailToTicket):
             return user
         return trac_address
 
-    def fields(self, message, **fields):
+    def fields(self, message, warnings, **fields):
         fields = EmailToTicket.fields(self, message, **fields)
         if message['from']:
             fields['summary'] = 'From %s: %s' % ( message['from'], fields['summary'])
