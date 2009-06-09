@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.trachacks.wikieditor</groupId>
+  <artifactId>wikieditor</artifactId>
+  <version>0.0.4</version>
+  <packaging>pom</packaging>
+  <name>Trac WikiEditor 4 Eclipse</name>
+  <url>http://trac-hacks.org/wiki/WikiEditorForEclipsePlugin</url>  
+  <modules>
+    <module>core</module>
+    <module>eclipse</module>
+  </modules>
+</project>
