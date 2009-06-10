@@ -37,7 +37,14 @@ class HudsonTracPlugin(Component):
     disp_tab = BoolOption('hudson', 'display_in_new_tab', 'false',
                           'Open hudson page in new tab/window')
     alt_succ = BoolOption('hudson', 'alternate_success_icon', 'false',
-                          'Use an alternate success icon (green ball instead of blue)')
+                          'Use an alternate success icon (green ball instead ' +
+                          'of blue)')
+    use_desc = BoolOption('hudson', 'display_build_descriptions', 'true',
+                          'Wether to display the build descriptions for each ' +
+                          'build instead of the canned "Build finished ' +
+                          'successfully" etc messages. You may want to ' + 
+                          'disable this if it slows things down too much or ' +
+                          'if you run into issues with hudson.')
 
     def __init__(self):
         pwdMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -113,14 +120,15 @@ class HudsonTracPlugin(Component):
                 href = entry.link
                 title = entry.title
 
-                url = href + '/api/json'
-                line = self.url_opener.open(url).readline()
-                json = eval(line.replace('false', 'False').replace('true','True').replace('null', 'None'))
+                if self.use_desc:
+                    url = href + '/api/json'
+                    line = self.url_opener.open(url).readline()
+                    json = eval(line.replace('false', 'False').replace('true','True').replace('null', 'None'))
 
-                if json['description'] == None:
-                    comment = message + ' at ' + format_datetime(completed)
-                else:
-                    comment = unicode(json['description'], 'utf-8') + ' at ' + format_datetime(completed)
+                    if json['description']:
+                        message = unicode(json['description'], 'utf-8')
+
+                comment = message + ' at ' + format_datetime(completed)
 
                 yield kind, href, title, completed, None, comment
 
