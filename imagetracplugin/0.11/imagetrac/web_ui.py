@@ -36,7 +36,14 @@ class SidebarImage(Component):
 
     def enabled(self, req, ticket):
         """should the image be shown?"""
-        return bool(self.image(ticket))
+        imagetrac = self.env.components.get(ImageTrac)
+        if imagetrac:
+            images = imagetrac.images(ticket, req.href)
+            for image in images.values():
+                if 'default' in image:
+                    return True
+        else:
+            return bool(self.image(ticket))
 
     def content(self, req, ticket):
         imagetrac = self.env.components.get(ImageTrac)
@@ -45,9 +52,11 @@ class SidebarImage(Component):
             for image in images.values():
                 if 'default' in image:
                     img = tag.img(None, src=image['default'])
-
+                    link = image['default']
+                    break
         else:
-            img = tag.img(None, src=req.href('attachment', 'ticket', ticket.id, image, format='raw'), alt=image.description)
+            link = req.href('attachment', 'ticket', ticket.id, image, format='raw')
+            img = tag.img(None, src=link, alt=image.description)
         return tag.center(img)
 
 
