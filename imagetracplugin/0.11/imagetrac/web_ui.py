@@ -1,6 +1,7 @@
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
+from imagetrac.image import ImageTrac
 from ticketsidebarprovider import ITicketSidebarProvider
 from trac.attachment import Attachment
 from trac.attachment import AttachmentModule
@@ -22,13 +23,14 @@ class SidebarImage(Component):
         return the first image attachment
         or None if there aren't any
         """
+
         attachments = list(Attachment.select(self.env, 'ticket', ticket.id))
         mimeview = Mimeview(self.env)
         for attachment in attachments:
             mimetype = mimeview.get_mimetype(attachment.filename)
             if not mimetype or mimetype.split('/',1)[0] != 'image':
                 continue
-            return attachment
+            return attachment.filename
 
     ### methods for ITicketSidebarProvider
 
@@ -37,8 +39,16 @@ class SidebarImage(Component):
         return bool(self.image(ticket))
 
     def content(self, req, ticket):
-        image = self.image(ticket)
-        return tag.img(None, src=req.href('attachment', 'ticket', ticket.id, image.filename, format='raw'), alt=image.description)
+        imagetrac = self.env.components.get(ImageTrac)
+        if imagetrac:
+            images = imagetrac.images(ticket, req.href)
+            for image in images.values():
+                if 'default' in image:
+                    img = tag.img(None, src=image['default'])
+
+        else:
+            img = tag.img(None, src=req.href('attachment', 'ticket', ticket.id, image, format='raw'), alt=image.description)
+        return tag.center(img)
 
 
 class ImageFormFilter(Component):

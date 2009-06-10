@@ -110,10 +110,9 @@ class ImageTrac(Component):
         # add the specified sizes as attachments
         sizes = self.sizes()
         for name, size in sizes.items():
-
             # crop the image
             i = image.copy()
-            i = crop_resize(i, size['width'], size['height'])
+            i = crop_resize(i, size)
             buffer = StringIO()
             i.save(buffer, image.format)
             buffer.seek(0,2) # seek to end of file
@@ -122,7 +121,7 @@ class ImageTrac(Component):
             a = Attachment(self.env, 'ticket', ticket.id)
             a.author = ticket['reporter']
             a.description = ticket['summary']
-            f = ('.%sx%s.' % (size['width'] or '', size['height'] or '')).join(filename.rsplit('.', 1)) # XXX assumes the file has an extension
+            f = ('.%sx%s.' % (size[0] or '', size[1] or '')).join(filename.rsplit('.', 1)) # XXX assumes the file has an extension
             a.insert(f, buffer, filesize)
             
 
@@ -156,8 +155,10 @@ class ImageTrac(Component):
             ticket = data['ticket']
             images = []
             if ticket.exists:
-                for image in self.images(ticket):
-                    images.append(req.href('attachment', 'ticket', ticket.id, image.filename, format='raw'))
+                for name, value in self.images(ticket).items():
+                    for key in value:
+                        # mark up values as links
+                        value[key] = req.href('attachment', 'ticket', ticket.id, value[key], format='raw')
             data['images'] = images
         return (template, data, content_type)
 
@@ -173,18 +174,38 @@ class ImageTrac(Component):
 
     ### internal methods
 
-    def images(self, ticket):
+    def images(self, ticket, href=None):
         """returns images for a ticket"""
         
         
         attachments = list(Attachment.select(self.env, 'ticket', ticket.id))
-        images = []
+        images = {}
+        reverse_sizes = dict([(value, key) for key, value in self.sizes().items()])
         mimeview = Mimeview(self.env)
         for attachment in attachments:
             mimetype = mimeview.get_mimetype(attachment.filename)
             if mimetype and mimetype.split('/',1)[0] != 'image':
                 continue
-            images.append(attachment)
+            filename = attachment.filename
+            size = Image.open(attachment.path).size
+            if size in reverse_sizes:
+                parts = filename.rsplit('.', 2)
+                if len(parts) == 3:
+                    try:
+                        width, height = [ int(i) for i in parts[-2].split('x') ]
+                        filename = '%s.%s' % (parts[0], parts[-1])
+                    except ValueError:
+                        pass
+
+                images.setdefault(filename, {})[reverse_sizes[size]] = attachment.filename
+            else:
+                images[filename] = { 'original': filename }
+
+        if href is not None:
+            # turn the keys into links
+            for values in images.values():
+                for key, value in values.items():
+                    values[key] = href('attachment', 'ticket', ticket.id, value, format='raw')
         return images
         
     def sizes(self):
@@ -197,16 +218,9 @@ class ImageTrac(Component):
 
         for size in sizes:
             try:
-                width, height = [ i.strip() for i in sizes[size].split('x') ]
+                dimension = [ i.strip() and int(i) or None for i in sizes[size].split('x') ]
             except ValueError:
                 sizes.pop(size)
                 continue
-            dimension = {}
-            for d in 'width', 'height':
-                try:
-                    dimension[d] = locals()[d] and int(locals()[d]) or None
-                except ValueError:
-                    sizes.pop(size)
-                    continue
-            sizes[size] = dimension
+            sizes[size] = tuple(dimension)
         return sizes
