@@ -3,6 +3,13 @@
 def crop_resize(image, width, height):
     """crop out the proportional middle of the image and set to the desired size"""
     assert width or height
+
+    if width > image.size[0]:
+        raise NotImplementedError
+    if height > image.size[1]:
+        raise NotImplementedError
+
+
     image_ar = image.size[0]/float(image.size[1])
     if not height:
         height = int(image.size[1]*width/float(image.size[0]) )

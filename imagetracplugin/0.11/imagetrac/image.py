@@ -4,22 +4,30 @@ a plugin for Trac to add images to tickets upon creaton
 http://trac.edgewall.org
 """
 
-from PIL import Image
-
+from cStringIO import StringIO
+from imagetrac.utils import crop_resize
 from trac.attachment import Attachment
 from trac.config import BoolOption
+from trac.config import ListOption
+from trac.config import Option
 from trac.core import *
 from trac.mimeview import Mimeview
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
 from trac.web.api import IRequestFilter
+from PIL import Image
 
 class ImageTrac(Component):
 
     implements(ITicketManipulator, ITicketChangeListener, IRequestFilter)
 
-    mandatory_image = BoolOption('ticket', 'mandatory_image', 'false', 
+    mandatory_image = BoolOption('ticket-image', 'mandatory_image', 'false', 
                                  "Enforce a mandatory image for created tickets")
+    thumbnail = Option('ticket-image', 'size.thumbnail', '64x64',
+                       "size of the ticket thumbnail image")
+    default_size = Option('ticket-image', 'size.default', '375x',
+                          "size of the ticket default image")
+
 
     ### methods for ITicketManipulator
 
@@ -86,13 +94,37 @@ class ImageTrac(Component):
         if image is None:
             # XXX should check if the image is mandatory
             return 
+
+        # add the original image as an attachment
         attachment = Attachment(self.env, 'ticket', ticket.id)
         attachment.author = ticket['reporter']
         attachment.description = ticket['summary']
         image.file.seek(0,2) # seek to end of file
         size = image.file.tell()
+        filename = image.filename
         image.file.seek(0)
-        attachment.insert(image.filename, image.file, size)
+        attachment.insert(filename, image.file, size)
+
+        image = Image.open(attachment.open())
+
+        # add the specified sizes as attachments
+        sizes = self.sizes()
+        for name, size in sizes.items():
+
+            # crop the image
+            i = image.copy()
+            i = crop_resize(i, size['width'], size['height'])
+            buffer = StringIO()
+            i.save(buffer, image.format)
+            buffer.seek(0,2) # seek to end of file
+            filesize = buffer.tell()
+            buffer.seek(0)
+            a = Attachment(self.env, 'ticket', ticket.id)
+            a.author = ticket['reporter']
+            a.description = ticket['summary']
+            f = ('.%sx%s.' % (size['width'] or '', size['height'] or '')).join(filename.rsplit('.', 1)) # XXX assumes the file has an extension
+            a.insert(f, buffer, filesize)
+            
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
@@ -155,3 +187,26 @@ class ImageTrac(Component):
             images.append(attachment)
         return images
         
+    def sizes(self):
+        """return image sizes"""
+        sizes = { 'default': self.default_size,
+                  'thumbnail': self.thumbnail }
+        for option, value in self.env.config.options('ticket-image'):
+            if option.startswith('size.'):
+                sizes[option.split('.', 1)[-1]] = value
+
+        for size in sizes:
+            try:
+                width, height = [ i.strip() for i in sizes[size].split('x') ]
+            except ValueError:
+                sizes.pop(size)
+                continue
+            dimension = {}
+            for d in 'width', 'height':
+                try:
+                    dimension[d] = locals()[d] and int(locals()[d]) or None
+                except ValueError:
+                    sizes.pop(size)
+                    continue
+            sizes[size] = dimension
+        return sizes
