@@ -36,6 +36,8 @@ class HudsonTracPlugin(Component):
                       'the nav bar. This may be a relative url.')
     disp_tab = BoolOption('hudson', 'display_in_new_tab', 'false',
                           'Open hudson page in new tab/window')
+    alt_succ = BoolOption('hudson', 'alternate-success-icon', 'false',
+                          'Use an alternate success icon (green ball instead of blue)')
 
     def __init__(self):
         pwdMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -97,7 +99,7 @@ class HudsonTracPlugin(Component):
                 # create timeline entry
                 if entry.title.find('SUCCESS') >= 0:
                     message = 'Build finished successfully'
-                    kind = 'build-successful'
+                    kind = self.alt_succ and 'build-successful-alt' or 'build-successful'
                 elif entry.title.find('UNSTABLE') >= 0:
                     message = 'Build unstable'
                     kind = 'build-unstable'
