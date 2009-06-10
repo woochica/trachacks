@@ -36,7 +36,7 @@ class HudsonTracPlugin(Component):
                       'the nav bar. This may be a relative url.')
     disp_tab = BoolOption('hudson', 'display_in_new_tab', 'false',
                           'Open hudson page in new tab/window')
-    alt_succ = BoolOption('hudson', 'alternate-success-icon', 'false',
+    alt_succ = BoolOption('hudson', 'alternate_success_icon', 'false',
                           'Use an alternate success icon (green ball instead of blue)')
 
     def __init__(self):
