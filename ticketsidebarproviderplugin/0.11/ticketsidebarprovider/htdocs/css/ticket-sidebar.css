@@ -8,7 +8,7 @@ overflow: hidden;
 }
 
 .sidebar img {
-width: 100%;
+max-width: 100%;
 }
 
 /* overrides of default ticket.css styles */
