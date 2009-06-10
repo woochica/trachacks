@@ -40,8 +40,8 @@ class HudsonTracPlugin(Component):
                           'Use an alternate success icon (green ball instead ' +
                           'of blue)')
     use_desc = BoolOption('hudson', 'display_build_descriptions', 'true',
-                          'Wether to display the build descriptions for each ' +
-                          'build instead of the canned "Build finished ' +
+                          'Whether to display the build descriptions for ' +
+                          'each build instead of the canned "Build finished ' +
                           'successfully" etc messages. You may want to ' + 
                           'disable this if it slows things down too much or ' +
                           'if you run into issues with hudson.')
