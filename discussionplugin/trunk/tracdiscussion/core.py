@@ -77,9 +77,10 @@ class DiscussionCore(Component):
 
         if context.redirect_url:
             # Redirect if needed.
-            self.log.debug("Redirecting to %s" % (context.redirect_url))
+            href = req.href(context.redirect_url[0]) + context.redirect_url[1]
+            self.log.debug("Redirecting to %s" % (href))
             req.redirect(req.href('discussion', 'redirect', redirect_url =
-              req.href(context.redirect_url)))
+              href))
         else:
             # Return template and its data.
             return template, data, None

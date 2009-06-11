@@ -79,10 +79,25 @@ class DiscussionWiki(Component):
             data['discussion']['mode'] = 'message-list'
             data['discussion']['page_name'] = page_name
             if context.redirect_url:
-                formatter.req.args['redirect_url'] = formatter.href(
-                  context.redirect_url)
-            return to_unicode(Chrome(self.env).render_template(formatter.req,
-              template, data, 'text/html', True))
+                href = context.req.href(context.redirect_url[0]) + \
+                  context.redirect_url[1]
+                return html.div(html.strong('Redirect: '),
+                  ' This page redirects to ', html.a(href, href = href),
+                  html.script("window.location = '" + context.req.href(
+                  'discussion', 'redirect', redirect_url = href) + "'",
+                  language = "JavaScript"), class_ = "system-message")
+
+            #<div class="system-message">
+              #<strong>Redirect: </strong> This page redirects to <a href="${req.args.redirect_url}">${req.args.redirect_url}</a>
+            #</div>
+            #<script language="JavaScript">
+              #window.location = '${req.href('discussion', 'redirect', redirect_url = req.args.redirect_url)}';
+            #</script>
+
+
+            else:
+                return to_unicode(Chrome(self.env).render_template(
+                  formatter.req, template, data, 'text/html', True))
         else:
             raise TracError('Not implemented macro %s' % (name))
 

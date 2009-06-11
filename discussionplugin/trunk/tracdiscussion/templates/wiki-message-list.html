@@ -3,21 +3,9 @@
   <div id="${discussion.mode}" class="${discussion.mode}">
     <py:choose>
       <py:when test="'DISCUSSION_VIEW' in perm and discussion.topic">
-        <py:choose>
-          <py:when test="req.args.redirect_url">
-            <div class="system-message">
-              <strong>Redirect: </strong> This page redirects to <a href="${req.args.redirect_url}">${req.args.redirect_url}</a>
-            </div>
-            <script language="JavaScript">
-              window.location = '${req.href('discussion', 'redirect', redirect_url = req.args.redirect_url)}';
-            </script>
-          </py:when>
-          <py:otherwise>
-            <xi:include href="wiki-discussion-header.html"/>
-            ${display_discussion(discussion, href.wiki(discussion.page_name))}
-            <xi:include href="wiki-discussion-footer.html"/>
-          </py:otherwise>
-        </py:choose>
+        <xi:include href="wiki-discussion-header.html"/>
+        ${display_discussion(discussion, href.wiki(discussion.page_name))}
+        <xi:include href="wiki-discussion-footer.html"/>
       </py:when>
       <py:when test="'DISCUSSION_VIEW' in perm and not discussion.topic">
         <xi:include href="wiki-discussion-header.html"/>

@@ -714,7 +714,8 @@ class DiscussionApi(Component):
                     listener.message_created(context.message)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '#message%s' % (
+                  context.message['id'],))
 
             elif action == 'message-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -742,7 +743,8 @@ class DiscussionApi(Component):
                     listener.message_changed(message, message.topic)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '#message%s' % (
+                  context.message['id'],))
 
             elif action == 'message-delete':
                 context.req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -757,7 +759,8 @@ class DiscussionApi(Component):
                     listener.message_deleted(context.message)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '#message%s' % (
+                  context.message['replyto'],))
 
             elif action == 'message-set-display':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
