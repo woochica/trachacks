@@ -108,7 +108,7 @@ class TracDocBookPlugin(Component):
         style.freeStylesheet()
         doc.freeDoc()
         result.freeDoc()
-        return "CAZZO DI BUDDA internal_render 5"
+        #return "CAZZO DI BUDDA internal_render 5"
         return html[html.find('<body>')+6:html.find('</body>')].strip();
 
     def expand_macro(self, formatter, name, content):
