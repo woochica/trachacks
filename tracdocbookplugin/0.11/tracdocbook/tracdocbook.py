@@ -97,12 +97,12 @@ class TracDocBookPlugin(Component):
         style = libxslt.parseStylesheetDoc(libxml2.parseFile(self.stylesheet))
         doc = libxml2.parseDoc(content)
         result = style.applyStylesheet(doc, None)
-        html = style.saveResultToString(result).encode("utf-8")
+        html = style.saveResultToString(result)
         
         style.freeStylesheet()
         doc.freeDoc()
         result.freeDoc()
-        return html[html.find('<body>')+6:html.find('</body>')].strip()
+        return html[html.find('<body>')+6:html.find('</body>')].strip().to_unicode();
 
     def expand_macro(self, formatter, name, content):
         return self.internal_render(formatter.req, name, content)
