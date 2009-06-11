@@ -101,7 +101,7 @@ class TracDocBookPlugin(Component):
         doc = libxml2.parseDoc(content.encode('UTF-8'))
         #return "CAZZO DI BUDDA internal_render 2"        
         result = style.applyStylesheet(doc, None)
-        return "CAZZO DI BUDDA internal_render 3"        
+        #return "CAZZO DI BUDDA internal_render 3"        
         html = style.saveResultToString(result)
         return "CAZZO DI BUDDA internal_render 4"
         
