@@ -103,7 +103,7 @@ class TracDocBookPlugin(Component):
         result = style.applyStylesheet(doc, None)
         #return "CAZZO DI BUDDA internal_render 3"        
         html = style.saveResultToString(result)
-        return "CAZZO DI BUDDA internal_render 4"
+        #return "CAZZO DI BUDDA internal_render 4"
         
         style.freeStylesheet()
         doc.freeDoc()
