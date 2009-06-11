@@ -97,11 +97,7 @@ class TracDocBookPlugin(Component):
         style = libxslt.parseStylesheetDoc(libxml2.parseFile(self.stylesheet))
         doc = libxml2.parseDoc(content)
         result = style.applyStylesheet(doc, None)
-        html = style.saveResultToString(result)
-        
-        # try to properly include UTF-8 support
-        tempUTF8 = to_unicode(html)
-        html = tempUTF8
+        html = style.saveResultToString(result).encode("utf-8")
         
         style.freeStylesheet()
         doc.freeDoc()
