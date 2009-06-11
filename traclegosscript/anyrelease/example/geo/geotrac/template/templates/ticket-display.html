@@ -70,9 +70,10 @@
 	<div class="content-main">
 	
 		<div class="photos">
-	    	<img class="ticket-photo" py:for="image in images" src="$image"/>
-		</div>
-	
+                  <py:for each="image in images.values()">
+                    <img py:if="'default' in image" class="ticket-photo" src="${image['default']}"/>
+                  </py:for>
+		</div>	
 	
 	
 	    <div class="description data">
