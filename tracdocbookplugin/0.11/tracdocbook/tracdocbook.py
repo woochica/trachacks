@@ -97,7 +97,7 @@ class TracDocBookPlugin(Component):
             return 'Unknown macro %s' % (name)
 
         style = libxslt.parseStylesheetDoc(libxml2.parseFile(self.stylesheet))
-        return "CAZZO DI BUDDA internal_render 1"        
+        #return "CAZZO DI BUDDA internal_render 1"        
         doc = libxml2.parseDoc(content)
         return "CAZZO DI BUDDA internal_render 2"        
         result = style.applyStylesheet(doc, None)
