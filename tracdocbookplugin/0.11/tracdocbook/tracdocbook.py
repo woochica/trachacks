@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-""" TracMath - A trac plugin that renders latex formulas within a wiki page.
+""" TracDocBook - A trac plugin that renders DocBook code within a wiki page.
 
 This has currently been tested only on trac 0.10.4 and 0.11.
 """
@@ -77,21 +77,17 @@ class TracDocBookPlugin(Component):
     def get_macro_description(self, name):
         if name == 'docbook':
             return """
-            This plugin allows embedded equations in Trac markup.
-            Basically a port of http://www.amk.ca/python/code/mt-math to Trac.
+            This plugin allows DocBook syntax in Trac markup.
 
             Simply use
             {{{
               {{{
-              #!latex
-              [latex code]
+              #!docbook
+              [DocBook code]
               }}}
             }}}
-            for a block of LaTeX code.
+            for a block of Docbook code.
 
-            If `use_dollars` is enabled in `trac.ini`, then you can also use
-            `$[latex formula]$` for inline math or `$$[latex formula]$$` for
-            display math.
             """
 
     def internal_render(self, req, name, content):
@@ -102,6 +98,11 @@ class TracDocBookPlugin(Component):
         doc = libxml2.parseDoc(content)
         result = style.applyStylesheet(doc, None)
         html = style.saveResultToString(result)
+        
+        # try to properly include UTF-8 support
+        tempUTF8 = unicode(html, "utf-8")
+        html = tempUTF8.encode( "utf-8" )      
+        
         style.freeStylesheet()
         doc.freeDoc()
         result.freeDoc()
