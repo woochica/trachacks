@@ -9,25 +9,27 @@ def crop_resize(image, size):
     size = list(size)
 
     if size[0] > image.size[0]:
-        raise NotImplementedError
+        return image
     if size[1] > image.size[1]:
-        raise NotImplementedError
+        return image
 
     image_ar = image.size[0]/float(image.size[1])
+    crop = not size[0] or not size[1]
     if not size[1]:
         size[1] = int(image.size[1]*size[0]/float(image.size[0]) )
     if not size[0]:
         size[0] = int(image.size[0]*size[1]/float(image.size[1]) )
     size_ar = size[0]/float(size[1])
                 
-    if image_ar > size_ar:
-        # trim the width
-        xoffset = int(0.5*(image.size[0] - size_ar*image.size[1]))
-        image = image.crop((xoffset, 0, image.size[0]-xoffset, image.size[1]))
-    elif image_ar < size_ar:
-        # trim the height
-        yoffset = int(0.5*(image.size[1] - image.size[0]/size_ar))
-        image = image.crop((0, yoffset, image.size[0], image.size[1] - yoffset))
+    if crop:
+        if image_ar > size_ar:
+            # trim the width
+            xoffset = int(0.5*(image.size[0] - size_ar*image.size[1]))
+            image = image.crop((xoffset, 0, image.size[0]-xoffset, image.size[1]))
+        elif image_ar < size_ar:
+            # trim the height
+            yoffset = int(0.5*(image.size[1] - image.size[0]/size_ar))
+            image = image.crop((0, yoffset, image.size[0], image.size[1] - yoffset))
 
     return image.resize(size, Image.ANTIALIAS)
 

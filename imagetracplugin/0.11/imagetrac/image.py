@@ -199,18 +199,21 @@ class ImageTrac(Component):
                 continue
             filename = attachment.filename
             size = Image.open(attachment.path).size
-            if size in reverse_sizes:
-                parts = filename.rsplit('.', 2)
-                if len(parts) == 3:
-                    try:
-                        width, height = [ int(i) for i in parts[-2].split('x') ]
-                        filename = '%s.%s' % (parts[0], parts[-1])
-                    except ValueError:
-                        pass
-
-                images.setdefault(filename, {})[reverse_sizes[size]] = attachment.filename
+            for _size in size, (size[0], None), (None, size[1]):
+                
+                category = reverse_sizes.get(_size)
+                if category:
+                    parts = filename.rsplit('.', 2)
+                    if len(parts) == 3:
+                        dimension = '%sx%s' % (_size[0] or '', _size[1] or '')
+                        if parts[-2] == dimension:
+                            filename = '%s.%s' % (parts[0], parts[-1])
+                    break
             else:
-                images.setdefault(filename, {})['original'] = filename
+                category = 'original'
+
+            images.setdefault(filename, {})[category] = attachment.filename
+
         if href is not None:
             # turn the keys into links
             for values in images.values():
