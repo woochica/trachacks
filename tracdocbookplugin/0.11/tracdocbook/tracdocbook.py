@@ -58,8 +58,10 @@ class TracDocBookPlugin(Component):
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
         def format(formatter, ns, match):
-            return self.internal_render(formatter.req,'latex',match.group(0))
-        yield (r"\$[^$]+\$", format)
+            return "CAZZO DI BUDDA get_wiki_syntax 1"
+            #return self.internal_render(formatter.req,'docbook',match.group(0))
+        yield "CAZZO DI BUDDA get_wiki_syntax 2"
+        #yield (r"\$[^$]+\$", format)
 
     def get_link_resolvers(self):
         return []
@@ -105,11 +107,13 @@ class TracDocBookPlugin(Component):
         return html[html.find('<body>')+6:html.find('</body>')].strip();
 
     def expand_macro(self, formatter, name, content):
-        return self.internal_render(formatter.req, name, content)
+        return "CAZZO DI BUDDA expand_macro"
+        #return self.internal_render(formatter.req, name, content)
 
     # needed for Trac 0.10.4
     def render_macro(self, req, name, content):
-        return self.internal_render(req, name, content)
+        return "CAZZO DI BUDDA render_macro"
+        #return self.internal_render(req, name, content)
 
     # IHTMLPreviewRenderer methods
     def get_quality_ratio(self, mimetype):
@@ -119,6 +123,6 @@ class TracDocBookPlugin(Component):
 
     def render(self, req, mimetype, content, filename=None, url=None):
         text = hasattr(content, 'read') and content.read() or content
-        return "CAZZO DI BUDDA"
+        return "CAZZO DI BUDDA render"
         #return self.internal_render(req, name, text)
 
