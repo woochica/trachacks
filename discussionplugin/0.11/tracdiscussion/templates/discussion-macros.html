@@ -1,51 +1,57 @@
 <html xmlns:py="http://genshi.edgewall.org/" py:strip="">
 
-  <py:def function="sortable_th(order, direction, Class, title, href)">
-    <th class="${Class} ${order == Class and direction or ''}">
-      <a title="Sort by ${Class}${order == Class and direction == 'asc' and ' (descending)' or ''}" href="${href}?order=${Class}&amp;direction=${(Class == order and direction == 'desc' and 'asc' or 'desc')}">
+  <?python
+    from trac.wiki.formatter import format_to_oneliner, format_to_html
+    from trac.util.datefmt import format_datetime, pretty_timedelta
+  ?>
+
+  <py:def function="sortable_th(order, desc, Class, title, href)">
+    <th class="${Class}${order == Class and (desc and ' desc' or ' asc') or ''}">
+      <a title="Sort by ${Class}${order == Class and not desc and ' (descending)' or ''}" href="${href}?order=${Class}&amp;desc=${(Class == order and not desc and 1 or None)}">
         $title
       </a>
     </th>
   </py:def>
 
   <py:def function="display_discussion(discussion, href)">
-    <py:with vars="is_topic_edit = not discussion.message.id and (req.args.discussion_action in ('edit', 'post-edit')) and not req.args.submit;">
-      <div class="topic ${discussion.topic.new and 'new' or None}">
-        <a name="-1"></a>
-
+    <py:with vars="is_topic_edit = not req.args.message and (req.args.discussion_action in ('edit', 'post-edit')) and not req.args.submit;
+                   is_topic_add = not req.args.message and (req.args.discussion_action in ('add', 'quote', 'post-add')) and not req.args.submit">
+      <div class="topic ${(discussion.topic.time > discussion.visit_time) and 'new' or None}">
+        <a name="topic"></a>
         <div class="header" py:choose="">
           <py:when test="is_topic_edit">
+            <a name="preview"></a>
             <div class="subject">
-              ${discussion.subject or '&nbsp;'}
+              ${format_to_oneliner(discussion.env, context, req.args.subject) or '&nbsp;'}
             </div>
             <div class="body">
-              ${discussion.body or '&nbsp;'}
+              ${format_to_html(discussion.env, context, req.args.body) or '&nbsp;'}
             </div>
           </py:when>
           <py:otherwise>
             <div class="subject">
-              ${discussion.topic.subject or '&nbsp;'}
+              ${format_to_oneliner(discussion.env, context, discussion.topic.subject) or '&nbsp;'}
             </div>
             <div class="body">
-              ${discussion.topic.body or '&nbsp;'}
+              ${format_to_html(discussion.env, context, discussion.topic.body) or '&nbsp;'}
             </div>
           </py:otherwise>
         </div>
 
         <div class="controls">
           <py:if test="'DISCUSSION_APPEND' in perm">
-            <a href="${href}?discussion_action=add;message=-1;#reply">Reply</a>
-            <a href="${href}?discussion_action=quote;message=-1;#reply">Quote</a>
-            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.is_moderator) or ((discussion.authname == discussion.topic.author) and (discussion.authname != 'anonymous'))" href="${href}?discussion_action=edit;#reply">Edit</a>
+            <a href="${href}?discussion_action=add;#topic">Reply</a>
+            <a href="${href}?discussion_action=quote;#topic">Quote</a>
+            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.moderator) or ((discussion.authname == discussion.topic.author) and (discussion.authname != 'anonymous'))" href="${href}?discussion_action=edit;#topic">Edit</a>
           </py:if>
         </div>
 
         <div class="footer">
           <div class="author">
-            ${discussion.topic.author}
+            ${format_to_oneliner(discussion.env, context, discussion.topic.author)}
           </div>
           <div class="time">
-            ${discussion.topic.time}
+            ${format_datetime(discussion.topic.time)} (${pretty_timedelta(discussion.topic.time)} ago)
           </div>
         </div>
 
@@ -54,7 +60,7 @@
         </py:if>
       </div>
 
-      <div py:if="len(discussion.messages) or str(req.args.message) == '-1'" class="replies ${discussion.topic.new and 'new' or None}">
+      <div py:if="len(discussion.messages) or is_topic_add" class="replies ${(discussion.topic.time > discussion.visit_time) and 'new' or None}">
 
         ${display_set_display(href)}
 
@@ -63,7 +69,7 @@
             ${display_messages(href, discussion.messages)}
           </py:if>
 
-          <py:if test="(str(req.args.message) == '-1') and (req.args.discussion_action in ('add', 'quote', 'post-add')) and (not req.args.submit)">
+          <py:if test="is_topic_add">
             ${display_preview()}
             <li>
               ${display_form(href, 'Reply:', 'add_form', 'post-add')}
@@ -80,9 +86,8 @@
   </py:def>
 
   <py:def function="display_form(href, title, Class, action)">
-    <form class="${Class}" method="post" action="${href}#preview">
+    <form class="${Class}" method="post" action="${href}#${discussion.message.id and ('message' + unicode(discussion.message.id)) or 'topic'}">
       <fieldset>
-        <a name="reply"></a>
         <legend>
           ${title}
         </legend>
@@ -90,12 +95,12 @@
         <div class="field">
           <label for="author">Author:</label><br/>
           <py:choose>
-            <input py:when="discussion.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or 'anonymous'}"/>
-            <input py:otherwise="" type="text" id="author" name="author" value="${discussion.authname}" readonly="readonly"/>
+            <input py:when="req.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or req.authname}"/>
+            <input py:otherwise="" type="text" id="author" name="author" value="${req.authname}" readonly="readonly"/>
           </py:choose><br/>
         </div>
 
-        <div py:if="not req.args.message" class="field">
+        <div py:if="is_topic_edit" class="field">
           <label for="subject">Subject:</label><br/>
           <py:choose>
             <input py:when="discussion.realm == 'discussion-wiki'" type="text" id="subject" name="subject" value="${req.args.subject}" readonly="readonly"/>
@@ -114,7 +119,7 @@
           <input type="button" name="cancel" value="Cancel" onclick="location.replace('${href}')"/>
         </div>
 
-        <input type="hidden" name="message" value="${req.args.message}"/>
+        <input py:if="req.args.message" type="hidden" name="message" value="${req.args.message}"/>
         <input type="hidden" name="discussion_action" value="${action}"/>
       </fieldset>
     </form>
@@ -122,19 +127,18 @@
 
   <py:def function="display_preview()">
     <li py:if="req.args.preview" class="preview">
-      <a name="preview"></a>
       <div class="id">
-          Message #??
+        Message #??
       </div>
       <div class="body">
-        ${discussion.body or Markup('&lt;p&gt;&nbsp;&lt;/p&gt;')}
+        ${format_to_html(discussion.env, context, req.args.body or '&nbsp;')}
       </div>
       <div class="footer">
         <div class="author">
-          ${discussion.author}
+          ${req.authname}
         </div>
         <div class="time">
-          ${discussion.time}
+          ${format_datetime(discussion.time)} (${pretty_timedelta(discussion.time)} ago)
         </div>
       </div>
     </li>
@@ -142,37 +146,37 @@
 
   <py:def function="display_set_display(href)">
     <div class="set-display">
-      <a href="${href}?discussion_action=set-display;display=tree">Tree View</a>
-      <a href="${href}?discussion_action=set-display;display=flat-desc">Flat View (newer first)</a>
-      <a href="${href}?discussion_action=set-display;display=flat-asc">Flat View (older first)</a>
+      <a href="${href}?discussion_action=set-display;display=tree#topic">Tree View</a>
+      <a href="${href}?discussion_action=set-display;display=flat-desc#topic">Flat View (newer first)</a>
+      <a href="${href}?discussion_action=set-display;display=flat-asc#topic">Flat View (older first)</a>
     </div>
   </py:def>
 
   <py:def function="display_messages(href, messages)">
-    <li py:for="message in messages" class="${message.new and 'new' or None}">
-      <a name="${message.id}"></a>
-
+    <li py:for="message in messages" class="${(message.time > discussion.visit_time) and 'new' or None}">
       <py:with vars="is_message_edit = (str(req.args.message) == str(message.id)) and (req.args.discussion_action in ('edit', 'post-edit')) and not req.args.submit;">
+        <a name="message${message.id}"></a>
         <div class="id">
           Message #${message.id}
         </div>
 
+        <a py:if="is_message_edit" name="preview"></a>
         <div class="body" py:choose="">
           <py:when test="is_message_edit">
-            ${discussion.body or Markup('&lt;p&gt;&nbsp;&lt;/p&gt;')}
+            ${format_to_html(discussion.env, context, req.args.body or '&nbsp;')}
           </py:when>
           <py:otherwise>
-            ${message.body or Markup('&lt;p&gt;&nbsp;&lt;/p&gt;')}
+            ${format_to_html(discussion.env, context, message.body or '&nbsp;')}
           </py:otherwise>
         </div>
 
         <div class="controls">
           <py:if test="'DISCUSSION_APPEND' in perm">
-            <a href="${href}?discussion_action=add;message=${message.id}#reply">Reply</a>
-            <a href="${href}?discussion_action=quote;message=${message.id}#reply">Quote</a>
-            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.is_moderator) or ((discussion.authname == message.author) and (discussion.authname != 'anonymous'))" href="${href}?discussion_action=edit;message=${message.id}#reply">Edit</a>
+            <a href="${href}?discussion_action=add;message=${message.id}#message${message.id}">Reply</a>
+            <a href="${href}?discussion_action=quote;message=${message.id}#message${message.id}">Quote</a>
+            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.moderator) or ((discussion.authname == message.author) and (discussion.authname != 'anonymous'))" href="${href}?discussion_action=edit;message=${message.id}#message${message.id}">Edit</a>
           </py:if>
-          <a py:if="'DISCUSSION_MODERATE' in perm and discussion.is_moderator" href="${href}?discussion_action=delete;message=${message.id}" onclick="return confirm('Do you realy want to delete this reply and all its descendants?')">Delete</a>
+          <a py:if="'DISCUSSION_MODERATE' in perm and discussion.moderator" href="${href}?discussion_action=delete;message=${message.id}#${message.replyto == -1 and 'topic' or ('message' + unicode(message.replyto))}" onclick="return confirm('Do you realy want to delete this reply and all its descendants?')">Delete</a>
         </div>
 
         <div class="footer">
@@ -180,7 +184,7 @@
             ${is_message_edit and discussion.author or message.author}
           </div>
           <div class="time">
-            ${is_message_edit and discussion.time or message.time}
+            ${is_message_edit and format_datetime(discussion.time) or format_datetime(message.time)} (${is_message_edit and pretty_timedelta(discussion.time) or pretty_timedelta(message.time)} ago)
           </div>
         </div>
       </py:with>

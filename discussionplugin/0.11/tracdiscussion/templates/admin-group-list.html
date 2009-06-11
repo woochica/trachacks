@@ -6,6 +6,10 @@
     <title>Discussion Forums</title>
   </head>
 
+  <?python
+    from tracdiscussion.api import format_to_oneliner_no_links
+  ?>
+
   <py:with vars="is_edit = discussion.group.id and not req.args.submit">
     <body>
       <h2>Forum Groups</h2>
@@ -18,17 +22,17 @@
 
           <div class="field">
             <label for="name">Name:</label><br/>
-            <input type="text" id="name" name="name" value="${is_edit and discussion.name or None}"/><br/>
+            <input type="text" id="name" name="name" value="${is_edit and discussion.group.name or None}"/><br/>
           </div>
 
           <div class="field">
             <label for="description">Description:</label><br/>
-            <input type="text" id="description" name="description" value="${is_edit and discussion.description or None}"/><br/>
+            <input type="text" id="description" name="description" value="${is_edit and discussion.group.description or None}"/><br/>
           </div>
 
           <div class="buttons">
             <input type="submit" name="submit" value="${is_edit and 'Edit' or 'Add'}"/>
-            <input py:if="is_edit" type="button" name="cancel" value="Cancel" onclick="${panel_href()}"/>
+            <input py:if="is_edit" type="button" name="cancel" value="Cancel" onclick="location.href = '${panel_href()}'"/>
             <input py:if="is_edit" type="hidden" name="group" value="${discussion.group.id}"/>
             <input type="hidden" name="discussion_action" value="${is_edit and 'post-edit' or 'post-add'}"/>
           </div>
@@ -41,9 +45,9 @@
             <thead>
               <tr>
                 <th class="sel">&nbsp;</th>
-                ${sortable_th(discussion.order, discussion.direction, 'id', 'ID', panel_href())}
-                ${sortable_th(discussion.order, discussion.direction, 'name', 'Name', panel_href())}
-                ${sortable_th(discussion.order, discussion.direction, 'description', 'Description', panel_href())}
+                ${sortable_th(discussion.order, discussion.desc, 'id', 'ID', panel_href())}
+                ${sortable_th(discussion.order, discussion.desc, 'name', 'Name', panel_href())}
+                ${sortable_th(discussion.order, discussion.desc, 'description', 'Description', panel_href())}
               </tr>
             </thead>
             <tbody>
@@ -62,14 +66,14 @@
                   <td class="name">
                     <div class="name">
                       <a href="${panel_href(group.id)}">
-                        <span>${group.name or '&nbsp;'}</span>
+                        <span>${format_to_oneliner_no_links(discussion.env, context, group.name) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td class="description">
                     <div class="description">
                       <a href="${panel_href(group.id)}">
-                        <span>${group.description or '&nbsp;'}</span>
+                        <span>${format_to_oneliner_no_links(discussion.env, context, group.description) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>

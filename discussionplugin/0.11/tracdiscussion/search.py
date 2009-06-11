@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from trac.core import *
 from trac.mimeview import Context
@@ -42,7 +42,7 @@ class DiscussionSearch(Component):
         for row in cursor:
             row = dict(zip(columns, row))
             row['time'] = to_datetime(row['time'], utc)
-            yield (req.href.discussion(row['forum'], row['id']) + '#-1',
+            yield (req.href.discussion('topic', row['id']) + '#-1',
               "topic: %d: %s" % (row['id'], shorten_line(row['subject'])),
               row['time'], row['author'], shorten_result(row['body'], [query]))
 
@@ -58,7 +58,7 @@ class DiscussionSearch(Component):
         for row in cursor:
             row = dict(zip(columns, row))
             row['time'] = to_datetime(row['time'], utc)
-            yield (req.href.discussion(row['forum'], row['topic'], row['id'])
-              + '#%s' % (row['id']), "message: %d: %s" % (row['id'],
-              shorten_line(row['subject'])), row['time'], row['author'],
-              shorten_result(row['body'], [query]))
+            yield (req.href.discussion('message', row['id']) + '#%s' % (
+              row['id']), "message: %d: %s" % (row['id'], shorten_line(
+              row['subject'])), row['time'], row['author'], shorten_result(
+              row['body'], [query]))

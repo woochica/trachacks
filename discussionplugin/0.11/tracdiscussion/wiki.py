@@ -1,15 +1,19 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from tracdiscussion.api import *
 from tracdiscussion.core import *
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
-from trac.web.main import IRequestHandler, IRequestFilter
+from trac.wiki.web_ui import WikiModule
+from trac.wiki.formatter import format_to_oneliner
+from trac.web.main import IRequestFilter
 from trac.web.chrome import Chrome, add_stylesheet
 from trac.util import format_datetime
 from trac.util.html import html
 from trac.util.text import to_unicode
 import time, re
+
+from trac.web.href import Href
 
 view_topic_doc = """Displays content of discussion topic. If no argument passed
 tries to find topic with same name as name of current wiki page. If topic name
@@ -66,24 +70,38 @@ class DiscussionWiki(Component):
 
             # Prepare request object.
             if topic:
-                formatter.req.args['forum'] = topic['forum']
-                formatter.req.args['topic'] = topic['id']
+                context.req.args['topic'] = topic['id']
 
             # Process discussion request.
             template, data = api.process_discussion(context)
 
-            if context.req.args.get('body') == '':
-               context.req.args['body'] = ' '
-
             # Return rendered template.
             data['discussion']['mode'] = 'message-list'
             data['discussion']['page_name'] = page_name
-            return to_unicode(Chrome(self.env).render_template(formatter.req,
-              template, data, 'text/html', True))
+            if context.redirect_url:
+                href = context.req.href(context.redirect_url[0]) + \
+                  context.redirect_url[1]
+                return html.div(html.strong('Redirect: '),
+                  ' This page redirects to ', html.a(href, href = href),
+                  html.script("window.location = '" + context.req.href(
+                  'discussion', 'redirect', redirect_url = href) + "'",
+                  language = "JavaScript"), class_ = "system-message")
+
+            #<div class="system-message">
+              #<strong>Redirect: </strong> This page redirects to <a href="${req.args.redirect_url}">${req.args.redirect_url}</a>
+            #</div>
+            #<script language="JavaScript">
+              #window.location = '${req.href('discussion', 'redirect', redirect_url = req.args.redirect_url)}';
+            #</script>
+
+
+            else:
+                return to_unicode(Chrome(self.env).render_template(
+                  formatter.req, template, data, 'text/html', True))
         else:
             raise TracError('Not implemented macro %s' % (name))
 
-    # IRequestFilter methods
+    # IRequestFilter methods.
     def pre_process_request(self, req, handler):
         # Change method from POST to GET.
         match = re.match(r'^/wiki(?:/(.*))?', req.path_info)
@@ -94,10 +112,10 @@ class DiscussionWiki(Component):
         # Continue processing request.
         return handler
 
-    def post_process_request(self, req, template, content_type):
-        return (template, content_type)
+    def post_process_request(self, req, template, data, content_type):
+        return (template, data, content_type)
 
-    # Core code methods
+    # Core code methods.
     def _discussion_link(self, formatter, ns, params, label):
         id = params
 
@@ -110,39 +128,26 @@ class DiscussionWiki(Component):
             sql = "SELECT f.subject FROM forum f WHERE f.id = %s"
             self.log.debug(sql % (id,))
             cursor.execute(sql, (id,))
-
-            # Return link to forum.
             for row in cursor:
                 row = dict(zip(columns, row))
-                href = formatter.href.discussion(id)
-                title = row['subject'].replace('"', '')
-                return html.a(label, href = href, title = title)
-
-            # No such forum exists.
-            href = formatter.href.discussion(id)
-            title = label.replace('"', '')
-            return html.a(label, href = href, title = title, class_ = 'missing')
-
+                return html.a(label, href = formatter.href.discussion('forum',
+                  id), title = row['subject'].replace('"', ''))
+            return html.a(label, href = formatter.href.discussion('forum', id),
+              title = label, class_ = 'missing')
         elif ns == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
             sql = "SELECT t.forum, f.subject, t.subject FROM topic t LEFT" \
               " JOIN forum f ON t.forum = f.id WHERE t.id = %s"
             self.log.debug(sql % (id,))
             cursor.execute(sql, (id,))
-
-            # Return link to topic.
             for row in cursor:
                 row = dict(zip(columns, row))
-                href = '%s#-1' % (formatter.href.discussion(row['forum'], id))
-                title = ('%s: %s' % (row['forum_subject'], row['subject'])) \
-                  .replace('"', '')
-                return html.a(label, href = href, title = title)
-
-            # No such topic exits.
-            href = formatter.href.discussion(id)
-            title = label.replace('"', '')
-            return html.a(label, href = href, title = title, class_ = 'missing')
-
+                return html.a(label, href = '%s#-1' % \
+                  (formatter.href.discussion('topic', id),), title =
+                  ('%s: %s' % (row['forum_subject'], row['subject']))
+                  .replace('"', ''))
+            return html.a(label, href = formatter.href.discussion('topic', id),
+              title = label.replace('"', ''), class_ = 'missing')
         elif ns == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
             sql = "SELECT m.forum, m.topic, f.subject, t.subject FROM" \
@@ -151,23 +156,14 @@ class DiscussionWiki(Component):
               " m.forum = f.id AND m.topic = t.id AND m.id = %s"
             self.log.debug(sql % (id,))
             cursor.execute(sql, (id,))
-
-            # Return link to message.
             for row in cursor:
                 row = dict(zip(columns, row))
-                href = '%s#%s' % (formatter.href.discussion(row['forum'],
-                  row['topic'], id), id)
-                title = ('%s: %s' % (row['forum_subject'], row['subject'])) \
-                  .replace('"', '')
-                return html.a(label, href = href, title = title)
-
-            # No such message exits.
-            href = formatter.href.discussion(id)
-            title = label.replace('"', '')
-            return html.a(label, href = href, title = title, class_ = 'missing')
-
+                return html.a(label, href = '%s#%s' % \
+                  (formatter.href.discussion('message', id), id), title = (
+                  '%s: %s' % (row['forum_subject'], row['subject'])).replace(
+                  '"', ''))
+            return html.a(label, href = formatter.href.discussion('message', id),
+              title = label.replace('"', ''), class_ = 'missing')
         else:
-            # Unknown namespace.
-            href = formatter.href.discussion(id)
-            title = label.replace('"', '')
-            return html.a(label, href = href, title = title, class_ = 'missing')
+            return html.a(label, href = formatter.href.discussion('message', id),
+              title = label.replace('"', ''), class_ = 'missing')
