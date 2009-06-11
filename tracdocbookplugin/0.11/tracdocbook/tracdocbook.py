@@ -119,5 +119,6 @@ class TracDocBookPlugin(Component):
 
     def render(self, req, mimetype, content, filename=None, url=None):
         text = hasattr(content, 'read') and content.read() or content
-        return self.internal_render(req, name, text)
+        return "CAZZO DI BUDDA"
+        #return self.internal_render(req, name, text)
 
