@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
 	name='TracDocBook',
-	version='0.2',
+	version='0.2.1',
 	author = 'William Ghelfi',
 	author_email = 'trumbitta@gmail.com',
 	url = 'http://trac-hacks.org/wiki/TracDocBookPlugin',
