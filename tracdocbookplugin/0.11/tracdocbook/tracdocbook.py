@@ -100,8 +100,8 @@ class TracDocBookPlugin(Component):
         html = style.saveResultToString(result)
         
         # try to properly include UTF-8 support
-        tempUTF8 = unicode(html, "utf-8")
-        html = tempUTF8.encode( "utf-8" )      
+        tempUTF8 = to_unicode(html)
+        html = tempUTF8
         
         style.freeStylesheet()
         doc.freeDoc()
