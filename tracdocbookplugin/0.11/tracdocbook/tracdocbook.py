@@ -97,18 +97,23 @@ class TracDocBookPlugin(Component):
             return 'Unknown macro %s' % (name)
 
         style = libxslt.parseStylesheetDoc(libxml2.parseFile(self.stylesheet))
+        return "CAZZO DI BUDDA internal_render 1"        
         doc = libxml2.parseDoc(content)
+        return "CAZZO DI BUDDA internal_render 2"        
         result = style.applyStylesheet(doc, None)
+        return "CAZZO DI BUDDA internal_render 3"        
         html = style.saveResultToString(result)
+        return "CAZZO DI BUDDA internal_render 4"
         
         style.freeStylesheet()
         doc.freeDoc()
         result.freeDoc()
+        return "CAZZO DI BUDDA internal_render 5"
         return html[html.find('<body>')+6:html.find('</body>')].strip();
 
     def expand_macro(self, formatter, name, content):
-        return "CAZZO DI BUDDA expand_macro"
-        #return self.internal_render(formatter.req, name, content)
+        #return "CAZZO DI BUDDA expand_macro"
+        return self.internal_render(formatter.req, name, content)
 
     # needed for Trac 0.10.4
     def render_macro(self, req, name, content):
