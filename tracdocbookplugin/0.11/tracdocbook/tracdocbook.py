@@ -99,7 +99,7 @@ class TracDocBookPlugin(Component):
         style = libxslt.parseStylesheetDoc(libxml2.parseFile(self.stylesheet))
         #return "CAZZO DI BUDDA internal_render 1"        
         doc = libxml2.parseDoc(content.encode('UTF-8'))
-        return "CAZZO DI BUDDA internal_render 2"        
+        #return "CAZZO DI BUDDA internal_render 2"        
         result = style.applyStylesheet(doc, None)
         return "CAZZO DI BUDDA internal_render 3"        
         html = style.saveResultToString(result)
