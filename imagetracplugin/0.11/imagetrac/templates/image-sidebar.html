@@ -1,0 +1,21 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="True">
+  <ul class="gallery">
+    <py:for each="image in images.values()">
+      <li py:if="display in image" py:choose="'thumbnail' in image">
+
+        <!-- image with thumbnails -->
+        <a py:when="True" href="${image[display]}"><img src="${image['thumbnail']}"/></a>
+
+        <!-- image without thumbnails -->
+        <img py:when="False" href="${image[display]}"/>
+        
+      </li>
+    </py:for>
+  </ul>
+  
+</html>

@@ -43,13 +43,9 @@ class ImageTrac(Component):
         Must return a list of `(field, message)` tuples, one for each problem
         detected. `field` can be `None` to indicate an overall problem with the
         ticket. Therefore, a return value of `[]` means everything is OK."""
-        if not ticket.exists:
-            image = req.args.get('ticket_image')
-            if not hasattr(image, 'fp'):
-                if self.mandatory_image:
-                    return [('ticket_image', 'Images required for tickets. Please upload an image.')]
-                else:
-                    return []
+        image = req.args.get('ticket_image')
+
+        if hasattr(image, 'fp'):
             mimeview = Mimeview(self.env)
             mimetype = mimeview.get_mimetype(image.filename)
             if mimetype is None:
@@ -62,13 +58,17 @@ class ImageTrac(Component):
             except IOError, e:
                 return[('ticket_image', str(e))]
 
-        else:
-            return []
+            # store the image temporarily for new tickets
+            if ticket.exists:
+                self.create_sizes(ticket, image)
+            else:
+                if not hasattr(self, 'image'):
+                    self.image = {}
+                self.image[ticket['summary']] = req.args['ticket_image']
 
-        # store the image temporarily
-        if not hasattr(self, 'image'):
-            self.image = {}
-        self.image[ticket['summary']] = req.args['ticket_image']
+        else:
+            if not ticket.exists and self.mandatory_image:
+                return [('ticket_image', 'Images required for tickets. Please upload an image.')]
 
 
         return []
@@ -84,6 +84,15 @@ class ImageTrac(Component):
         `old_values` is a dictionary containing the previous values of the
         fields that have changed.
         """
+#        if not hasattr(self, 'image'):
+#            return 
+#        image = self.image.pop(ticket['summary'], None)
+#        if image is None:
+#            # XXX should check if the image is mandatory
+#            return 
+#
+#        self.create_sizes(ticket, image)            
+        
 
     def ticket_created(self, ticket):
         """Called when a ticket is created."""
@@ -95,35 +104,7 @@ class ImageTrac(Component):
             # XXX should check if the image is mandatory
             return 
 
-        # add the original image as an attachment
-        attachment = Attachment(self.env, 'ticket', ticket.id)
-        attachment.author = ticket['reporter']
-        attachment.description = ticket['summary']
-        image.file.seek(0,2) # seek to end of file
-        size = image.file.tell()
-        filename = image.filename
-        image.file.seek(0)
-        attachment.insert(filename, image.file, size)
-
-        image = Image.open(attachment.open())
-
-        # add the specified sizes as attachments
-        sizes = self.sizes()
-        for name, size in sizes.items():
-            # crop the image
-            i = image.copy()
-            i = crop_resize(i, size)
-            buffer = StringIO()
-            i.save(buffer, image.format)
-            buffer.seek(0,2) # seek to end of file
-            filesize = buffer.tell()
-            buffer.seek(0)
-            a = Attachment(self.env, 'ticket', ticket.id)
-            a.author = ticket['reporter']
-            a.description = ticket['summary']
-            f = ('.%sx%s.' % (size[0] or '', size[1] or '')).join(filename.rsplit('.', 1)) # XXX assumes the file has an extension
-            a.insert(f, buffer, filesize)
-            
+        self.create_sizes(ticket, image)            
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
@@ -153,13 +134,8 @@ class ImageTrac(Component):
 
         if template == 'ticket.html':
             ticket = data['ticket']
-            images = []
-            if ticket.exists:
-                for name, value in self.images(ticket).items():
-                    for key in value:
-                        # mark up values as links
-                        value[key] = req.href('attachment', 'ticket', ticket.id, value[key], format='raw')
-            data['images'] = images
+            data['images'] = self.images(ticket, req.href)
+                        
         return (template, data, content_type)
 
     def pre_process_request(self, req, handler):
@@ -174,9 +150,44 @@ class ImageTrac(Component):
 
     ### internal methods
 
+    def create_sizes(self, ticket, image):
+        """create the sizes for a ticket image"""
+
+        # add the original image as an attachment
+        attachment = Attachment(self.env, 'ticket', ticket.id)
+        attachment.author = ticket['reporter']
+        attachment.description = ticket['summary']
+        image.file.seek(0,2) # seek to end of file
+        size = image.file.tell()
+        filename = image.filename
+        image.file.seek(0)
+        attachment.insert(filename, image.file, size)
+
+        image = Image.open(attachment.open())
+
+        # add the specified sizes as attachments
+        sizes = self.sizes()
+        for name, size in sizes.items():
+            # crop the image
+            i = image.copy()
+            i = crop_resize(i, size)
+            buffer = StringIO()
+            i.save(buffer, image.format)
+            buffer.seek(0,2) # seek to end of file
+            filesize = buffer.tell()
+            buffer.seek(0)
+            a = Attachment(self.env, 'ticket', ticket.id)
+            a.author = ticket['reporter']
+            a.description = ticket['summary']
+            f = ('.%sx%s.' % (size[0] or '', size[1] or '')).join(filename.rsplit('.', 1)) # XXX assumes the file has an extension
+            a.insert(f, buffer, filesize)
+
+
     def images(self, ticket, href=None):
         """returns images for a ticket"""
-        
+
+        if not ticket.exists:
+            return {}
         
         attachments = list(Attachment.select(self.env, 'ticket', ticket.id))
         images = {}
@@ -199,8 +210,7 @@ class ImageTrac(Component):
 
                 images.setdefault(filename, {})[reverse_sizes[size]] = attachment.filename
             else:
-                images[filename] = { 'original': filename }
-
+                images.setdefault(filename, {})['original'] = filename
         if href is not None:
             # turn the keys into links
             for values in images.values():
