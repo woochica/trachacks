@@ -23,9 +23,9 @@ class ImageTrac(Component):
 
     mandatory_image = BoolOption('ticket-image', 'mandatory_image', 'false', 
                                  "Enforce a mandatory image for created tickets")
-    thumbnail = Option('ticket-image', 'size.thumbnail', '64x64',
+    thumbnail = Option('ticket-image', 'size.thumbnail', '32x32',
                        "size of the ticket thumbnail image")
-    default_size = Option('ticket-image', 'size.default', '375x',
+    default_size = Option('ticket-image', 'size.default', '488x',
                           "size of the ticket default image")
 
 
