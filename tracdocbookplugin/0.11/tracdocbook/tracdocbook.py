@@ -107,8 +107,7 @@ class TracDocBookPlugin(Component):
         return html[html.find('<body>')+6:html.find('</body>')].strip();
 
     def expand_macro(self, formatter, name, content):
-        return "CAZZO DI BUDDA expand_macro"
-        #return self.internal_render(formatter.req, name, content)
+        return self.internal_render(formatter.req, name, content)
 
     # needed for Trac 0.10.4
     def render_macro(self, req, name, content):
