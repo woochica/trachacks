@@ -28,6 +28,7 @@ from fnmatch import fnmatch
 class SearchAllPlugin(Component):
     """ Search the source repository. """
     implements(ISearchSource)
+    implements(IPermissionRequestor)
 
     def get_project_list(self, req):
         # get search path and base_url
@@ -64,6 +65,9 @@ class SearchAllPlugin(Component):
     # ISearchSource methods
     def get_search_filters(self, req):
         
+        if not req.perm.has_permission('SEARCHALL_VIEW') and not req.perm.has_permission('TRAC_ADMIN'):
+            return
+                
         if hasattr(req, 'is_searchall_recursive'):
             return
             
@@ -96,6 +100,9 @@ class SearchAllPlugin(Component):
     def get_search_results(self, req, query, filters):
         #return if search all is not active
         if 'searchall' not in filters:
+            return
+            
+        if not req.perm.has_permission('SEARCHALL_VIEW') and not req.perm.has_permission('TRAC_ADMIN'):
             return
 
         # remove 'searchall' from filters
@@ -137,3 +144,6 @@ class SearchAllPlugin(Component):
                 Markup('%s<br/> %s' % (env.project_name, result[1])))\
                 + result[2:]
             
+    #IPermissionRequestor Methods
+    def get_permission_actions(self):
+        return ['SEARCHALL_VIEW']

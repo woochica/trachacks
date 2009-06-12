@@ -1,7 +1,7 @@
 from setuptools import setup
 
 PACKAGE = 'tracsearchall'
-VERSION = '0.5'
+VERSION = '0.6'
 
 setup(name=PACKAGE,
     version=VERSION,
