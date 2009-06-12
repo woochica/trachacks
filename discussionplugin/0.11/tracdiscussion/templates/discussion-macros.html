@@ -1,5 +1,4 @@
 <html xmlns:py="http://genshi.edgewall.org/" py:strip="">
-
   <?python
     from trac.wiki.formatter import format_to_oneliner, format_to_html
     from trac.util.datefmt import format_datetime, pretty_timedelta
@@ -78,8 +77,12 @@
           <li></li>
         </ul>
 
-
         ${display_set_display(href)}
+
+        <div class="attachments">
+          ${list_of_attachments(discussion.attachments, compact = True)}
+          ${attach_file_form(discussion.attachments)}
+        </div>
 
       </div>
     </py:with>
@@ -146,9 +149,9 @@
 
   <py:def function="display_set_display(href)">
     <div class="set-display">
-      <a href="${href}?discussion_action=set-display;display=tree#topic">Tree View</a>
-      <a href="${href}?discussion_action=set-display;display=flat-desc#topic">Flat View (newer first)</a>
-      <a href="${href}?discussion_action=set-display;display=flat-asc#topic">Flat View (older first)</a>
+      <a py:strip="discussion.display == 'tree'" href="${href}?discussion_action=set-display;display=tree#topic">Tree View</a>
+      <a py:strip="discussion.display == 'flat-desc'" href="${href}?discussion_action=set-display;display=flat-desc#topic">Flat View (newer first)</a>
+      <a py:strip="discussion.display == 'flat-asc'" href="${href}?discussion_action=set-display;display=flat-asc#topic">Flat View (older first)</a>
     </div>
   </py:def>
 

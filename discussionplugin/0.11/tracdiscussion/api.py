@@ -7,13 +7,20 @@ from datetime import *
 from trac.core import *
 from trac.mimeview import Context
 from trac.perm import PermissionError
+from trac.resource import get_resource_url
 from trac.web.chrome import add_stylesheet, add_script, add_ctxtnav
 from trac.web.href import Href
 from trac.wiki.formatter import format_to_html, format_to_oneliner
+from trac.attachment import AttachmentModule
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
   format_datetime, pretty_timedelta
 from trac.util.html import html
 from trac.util.text import to_unicode
+
+# Trac interfaces inlcudes
+from trac.resource import IResourceManager
+from trac.perm import IPermissionRequestor
+from trac.attachment import ILegacyAttachmentPolicyDelegate
 
 # Genshi includes.
 from genshi.input import HTML
@@ -73,12 +80,84 @@ class IMessageChangeListener(Interface):
 
 class DiscussionApi(Component):
 
+    implements(IResourceManager, ILegacyAttachmentPolicyDelegate,
+      IPermissionRequestor)
+
     # Extension points.
     topic_change_listeners = ExtensionPoint(ITopicChangeListener)
     message_change_listeners = ExtensionPoint(IMessageChangeListener)
     discussion_filters = ExtensionPoint(IDiscussionFilter)
 
+    # IPermissionRequestor methods.
+
+    def get_permission_actions(self):
+        view = 'DISCUSSION_VIEW'
+        append = ('DISCUSSION_APPEND', ['DISCUSSION_VIEW'])
+        attach = ('DISCUSSION_ATTACH', ['DISCUSSION_APPEND', 'DISCUSSION_VIEW'])
+        moderate = ('DISCUSSION_MODERATE', ['DISCUSSION_VIEW',
+          'DISCUSSION_ATTACH'])
+        admin = ('DISCUSSION_ADMIN', ['DISCUSSION_VIEW', 'DISCUSSION_APPEND',
+          'DISCUSSION_ATTACH', 'DISCUSSION_MODERATE'])
+        return [view, append, attach, moderate, admin]
+
+    # ILegacyAttachmentPolicyDelegate methods.
+
+    def check_attachment_permission(self, action, username, resource, perm):
+        return perm.has_permission('DISCUSSION_ATTACH')
+
+    # IResourceManager methods.
+
+    def get_resource_realms(self):
+        yield 'discussion'
+
+    def get_resource_url(self, resource, href, **kwargs):
+        if resource.id:
+            return href(resource.realm, resource.id, **kwargs)
+        else:
+            return href(resource.realm, **kwargs)
+
+    def get_resource_description(self, resource, format = None, **kwargs):
+        # Create context.
+        context = Context('discussion-core')
+
+        # Get database access.
+        db = self.env.get_db_cnx()
+        context.cursor = db.cursor()
+
+        type, id = resource.id.split('/')
+
+        # Generate description for forums.
+        if type == 'forum':
+            forum = self.get_forum(context, id)
+            if format == 'compact':
+                return '#%s' % (forum['id'],)
+            elif format == 'summary':
+                return 'Forum %s - %s' % (forum['name'], forum['subject'])
+            else:
+                return 'Forum %s' % (forum['name'],)
+
+        # Generate description for topics.
+        elif type == 'topic':
+            topic = self.get_topic(context, id)
+            if format == 'compact':
+                return '#%s' % (topic['id'],)
+            elif format == 'summary':
+                return 'Topic #%s (%s)' % (topic['id'], topic['subject'])
+            else:
+                return 'Topic #%s' % (topic['id'],)
+
+        # Generate description for messages.
+        elif type == 'message':
+            message = self.get_message(context, id)
+            if format == 'compact':
+                return '#%s' % (message['id'],)
+            elif format == 'summary':
+                return 'Message #%s' % (message['id'],)
+            else:
+                return 'Message #%s' % (message['id'],)
+
     # Main request processing function.
+
     def process_discussion(self, context):
         # Get database access.
         db = self.env.get_db_cnx()
@@ -110,7 +189,7 @@ class DiscussionApi(Component):
         context.data['message'] = context.message
         context.data['mode'] = actions[-1]
         context.data['time'] = datetime.now(utc)
-        context.data['realm'] = context.resource.realm
+        context.data['realm'] = context.realm
         context.data['env'] = self.env
 
         # Commit database changes.
@@ -138,7 +217,7 @@ class DiscussionApi(Component):
         add_script(context.req, 'common/js/wikitoolbar.js')
 
         # Return request template and data.
-        self.env.log.debug(context.data)
+        self.env.log.debug('data: %s' % (context.data,))
         return actions[-1] + '.html', {'discussion' : context.data}
 
     def _prepare_context(self, context):
@@ -206,13 +285,13 @@ class DiscussionApi(Component):
         preview = context.req.args.has_key('preview');
         submit = context.req.args.has_key('submit');
         self.log.debug('realm: %s, action: %s, preview: %s, submit: %s' % (
-          context.resource.realm, action, preview, submit))
+          context.realm, action, preview, submit))
 
         # Determine mode.
         if context.message:
-            if context.resource.realm == 'discussion-admin':
+            if context.realm == 'discussion-admin':
                 pass
-            elif context.resource.realm == 'discussion-wiki':
+            elif context.realm == 'discussion-wiki':
                 if action == 'add':
                     return ['message-add', 'wiki-message-list']
                 elif action == 'quote':
@@ -259,9 +338,9 @@ class DiscussionApi(Component):
                 else:
                     return ['message-list']
         if context.topic:
-            if context.resource.realm == 'discussion-admin':
+            if context.realm == 'discussion-admin':
                 pass
-            elif context.resource.realm == 'discussion-wiki':
+            elif context.realm == 'discussion-wiki':
                 if action == 'add':
                     return ['message-add', 'wiki-message-list']
                 elif action == 'quote':
@@ -310,12 +389,12 @@ class DiscussionApi(Component):
                 else:
                     return ['message-list']
         elif context.forum:
-            if context.resource.realm == 'discussion-admin':
+            if context.realm == 'discussion-admin':
                 if action == 'post-edit':
                     return ['forum-post-edit']
                 else:
                     return ['admin-forum-list']
-            elif context.resource.realm == 'discussion-wiki':
+            elif context.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
                 if action == 'add':
@@ -330,7 +409,7 @@ class DiscussionApi(Component):
                 else:
                     return ['topic-list']
         elif context.group:
-            if context.resource.realm == 'discussion-admin':
+            if context.realm == 'discussion-admin':
                 if action == 'post-add':
                     return ['forum-post-add']
                 elif action == 'post-edit':
@@ -342,7 +421,7 @@ class DiscussionApi(Component):
                         return ['admin-group-list']
                     else:
                         return ['admin-forum-list']
-            elif context.resource.realm == 'discussion-wiki':
+            elif context.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
                 if action == 'post-add':
@@ -350,14 +429,14 @@ class DiscussionApi(Component):
                 else:
                     return ['forum-list']
         else:
-            if context.resource.realm == 'discussion-admin':
+            if context.realm == 'discussion-admin':
                 if action == 'post-add':
                     return ['group-post-add']
                 elif action == 'delete':
                     return ['groups-delete']
                 else:
                     return ['admin-group-list']
-            elif context.resource.realm == 'discussion-wiki':
+            elif context.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
                 if action == 'add':
@@ -401,7 +480,7 @@ class DiscussionApi(Component):
                 self.add_group(context, group)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'group-post-edit':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -414,13 +493,13 @@ class DiscussionApi(Component):
                 self.edit_group(context, context.group['id'], group)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'group-delete':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'groups-delete':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -436,7 +515,7 @@ class DiscussionApi(Component):
                         self.delete_group(context, int(group_id))
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'forum-list':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
@@ -494,7 +573,7 @@ class DiscussionApi(Component):
                 self.add_forum(context, forum)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'forum-post-edit':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -516,7 +595,7 @@ class DiscussionApi(Component):
                 self.edit_forum(context, context.forum['id'], forum)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'forum-delete':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -525,7 +604,7 @@ class DiscussionApi(Component):
                 self.delete_forum(context, context.forum['id'])
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'forums-delete':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -541,7 +620,7 @@ class DiscussionApi(Component):
                         self.delete_forum(context, int(forum_id))
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'topic-list':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
@@ -593,11 +672,12 @@ class DiscussionApi(Component):
                     listener.topic_created(context.topic)
 
                 # Redirect request to prevent re-submit.
-                if context.resource.realm != 'discussion-wiki':
+                if context.realm != 'discussion-wiki':
                     href = Href('discussion')
-                    context.redirect_url = href('topic', context.topic['id'])
+                    context.redirect_url = (href('topic', context.topic['id']),
+                      '#topic')
                 else:
-                    context.redirect_url = context.req.path_info
+                    context.redirect_url = (context.req.path_info, '#topic')
 
             elif action == 'topic-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -627,7 +707,7 @@ class DiscussionApi(Component):
                     listener.topic_changed(topic, context.topic)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'topic-move':
                 context.req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -649,7 +729,7 @@ class DiscussionApi(Component):
                 self.set_forum(context, context.topic['id'], forum_id)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = context.req.path_info
+                context.redirect_url = (context.req.path_info, '')
 
             elif action == 'topic-delete':
                 context.req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -664,11 +744,12 @@ class DiscussionApi(Component):
                     listener.topic_deleted(context.topic)
 
                 # Redirect request to prevent re-submit.
-                if context.resource.realm != 'discussion-wiki':
+                if context.realm != 'discussion-wiki':
                     href = Href('discussion')
-                    context.redirect_url = href('forum', context.topic['forum'])
+                    context.redirect_url = (href('forum',
+                      context.topic['forum']), '')
                 else:
-                    context.redirect_url = req.path_info
+                    context.redirect_url = (context.req.path_info, '')
 
             elif action == 'message-list':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
@@ -783,7 +864,7 @@ class DiscussionApi(Component):
         context.visited_topics[topic['id']] = to_timestamp(datetime.now(utc))
 
         # Get topic messages.
-        display = context.req.session.get('message-list-display')
+        display = context.req.session.get('message-list-display') or 'tree'
         if display == 'flat-asc':
              messages = self.get_flat_messages(context, topic['id'])
         elif display == 'flat-desc':
@@ -796,6 +877,8 @@ class DiscussionApi(Component):
         context.data['visit_time'] = visit_time
         context.data['display'] = display
         context.data['messages'] = messages
+        context.data['attachments'] = AttachmentModule(self.env) \
+          .attachment_data(context)
 
     # Get one item functions.
 

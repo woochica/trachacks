@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import time
 
@@ -37,7 +37,8 @@ class DiscussionWebAdmin(Component):
                 req.args['group'] = path_info
 
         # Create request context.
-        context = Context.from_request(req)('discussion-admin')
+        context = Context.from_request(req)
+        context.realm = 'discussion-admin'
 
         # Process request.
         api = self.env[DiscussionApi]
@@ -45,9 +46,10 @@ class DiscussionWebAdmin(Component):
 
         if context.redirect_url:
             # Redirect request if needed.
-            self.log.debug("Redirecting to %s" % (context.redirect_url))
+            href = req.href(context.redirect_url[0]) + context.redirect_url[1]
+            self.log.debug("Redirecting to %s" % (href))
             req.redirect(req.href('discussion', 'redirect', redirect_url =
-              req.href(context.redirect_url)))
+              href))
         else:
             # Return template and data.
             return template, data

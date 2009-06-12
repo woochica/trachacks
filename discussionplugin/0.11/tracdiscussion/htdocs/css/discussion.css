@@ -211,3 +211,8 @@
 {
   margin-left: 0em;
 }
+
+.message-list div.attachments
+{
+  padding: 1em;
+}

@@ -31,7 +31,8 @@ class DiscussionTimeline(Component):
           filters))
         if ('discussion' in filters) and 'DISCUSSION_VIEW' in req.perm:
             # Create context.
-            context = Context.from_request(req)('discussion')
+            context = Context.from_request(req)
+            context.realm = 'discussion-core'
 
             # Get database access.
             db = self.env.get_db_cnx()

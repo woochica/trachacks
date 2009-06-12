@@ -16,7 +16,8 @@ class DiscussionSearch(Component):
     title = Option('discussion', 'title', 'Discussion',
       'Main navigation bar button title.')
 
-    #ISearchSource
+    # ISearchSource methods.
+
     def get_search_filters(self, req):
         if 'DISCUSSION_VIEW' in req.perm:
             yield ('discussion', self.title)
@@ -26,7 +27,8 @@ class DiscussionSearch(Component):
             return
 
         # Create context.
-        context = Context.from_request(req)('discussion')
+        context = Context.from_request(req)
+        context.realm = 'discussion-core'
 
         # Get database access.
         db = self.env.get_db_cnx()
@@ -43,7 +45,7 @@ class DiscussionSearch(Component):
             row = dict(zip(columns, row))
             row['time'] = to_datetime(row['time'], utc)
             yield (req.href.discussion('topic', row['id']) + '#-1',
-              "topic: %d: %s" % (row['id'], shorten_line(row['subject'])),
+              "Topic #%d: %s" % (row['id'], shorten_line(row['subject'])),
               row['time'], row['author'], shorten_result(row['body'], [query]))
 
         # Search in messages
@@ -59,6 +61,6 @@ class DiscussionSearch(Component):
             row = dict(zip(columns, row))
             row['time'] = to_datetime(row['time'], utc)
             yield (req.href.discussion('message', row['id']) + '#%s' % (
-              row['id']), "message: %d: %s" % (row['id'], shorten_line(
+              row['id']), "Message  #%d: %s" % (row['id'], shorten_line(
               row['subject'])), row['time'], row['author'], shorten_result(
               row['body'], [query]))

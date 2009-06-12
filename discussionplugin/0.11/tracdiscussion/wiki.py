@@ -54,7 +54,8 @@ class DiscussionWiki(Component):
             subject = content or page_name
 
             # Create request context.
-            context = Context.from_request(formatter.req)('discussion-wiki')
+            context = Context.from_request(formatter.req)
+            context.realm = 'discussion-wiki'
 
             # Get database access.
             db = self.env.get_db_cnx()
@@ -68,9 +69,11 @@ class DiscussionWiki(Component):
             self.log.debug('subject: %s' % (subject,))
             self.log.debug('topic: %s' % (topic,))
 
-            # Prepare request object.
+            # Prepare request and resource object.
             if topic:
                 context.req.args['topic'] = topic['id']
+                context.resource = Resource('discussion', 'topic/%s' % (
+                  topic['id'],))
 
             # Process discussion request.
             template, data = api.process_discussion(context)
@@ -79,23 +82,17 @@ class DiscussionWiki(Component):
             data['discussion']['mode'] = 'message-list'
             data['discussion']['page_name'] = page_name
             if context.redirect_url:
+                # Generate HTML elements for redirection.
                 href = context.req.href(context.redirect_url[0]) + \
                   context.redirect_url[1]
+                self.log.debug("Redirecting to %s" % (href))
                 return html.div(html.strong('Redirect: '),
                   ' This page redirects to ', html.a(href, href = href),
                   html.script("window.location = '" + context.req.href(
                   'discussion', 'redirect', redirect_url = href) + "'",
                   language = "JavaScript"), class_ = "system-message")
-
-            #<div class="system-message">
-              #<strong>Redirect: </strong> This page redirects to <a href="${req.args.redirect_url}">${req.args.redirect_url}</a>
-            #</div>
-            #<script language="JavaScript">
-              #window.location = '${req.href('discussion', 'redirect', redirect_url = req.args.redirect_url)}';
-            #</script>
-
-
             else:
+                # Render template.
                 return to_unicode(Chrome(self.env).render_template(
                   formatter.req, template, data, 'text/html', True))
         else:

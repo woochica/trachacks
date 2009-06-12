@@ -6,10 +6,10 @@ from trac.core import *
 from trac.mimeview import Context
 from trac.config import Option
 from trac.util.html import html
+from trac.resource import Resource
 
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
-from trac.perm import IPermissionRequestor
 
 from tracdiscussion.api import *
 
@@ -18,18 +18,13 @@ class DiscussionCore(Component):
         The core module implements a message board, including wiki links to
         discussions, topics and messages.
     """
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider,
-      IPermissionRequestor)
+    implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
     title = Option('discussion', 'title', 'Discussion',
       'Main navigation bar button title.')
 
-    # IPermissionRequestor methods
-    def get_permission_actions(self):
-        return ['DISCUSSION_VIEW', 'DISCUSSION_APPEND', 'DISCUSSION_MODERATE',
-          'DISCUSSION_ADMIN']
+    # ITemplateProvider methods.
 
-    # ITemplateProvider methods
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('discussion', resource_filename(__name__, 'htdocs'))]
@@ -38,7 +33,8 @@ class DiscussionCore(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
-    # INavigationContributor methods
+    # INavigationContributor methods.
+
     def get_active_navigation_item(self, req):
         return 'discussion'
 
@@ -47,7 +43,8 @@ class DiscussionCore(Component):
             yield 'mainnav', 'discussion', html.a(self.title,
               href = req.href.discussion())
 
-    # IRequestHandler methods
+    # IRequestHandler methods.
+
     def match_request(self, req):
         if req.path_info == '/discussion/redirect':
             # Proces redirection request.
@@ -69,7 +66,17 @@ class DiscussionCore(Component):
 
     def process_request(self, req):
         # Create request context.
-        context = Context.from_request(req)('discussion-core')
+        context = Context.from_request(req)
+        context.realm = 'discussion-core'
+        if req.args.has_key('forum'):
+            context.resource = Resource('discussion', 'forum/%s' % (
+              req.args['forum'],))
+        if req.args.has_key('topic'):
+            context.resource = Resource('discussion', 'topic/%s' % (
+              req.args['topic'],))
+        if req.args.has_key('message'):
+            context.resource = Resource('discussion', 'message/%s' % (
+              req.args['message'],))
 
         # Process request and return content.
         api = self.env[DiscussionApi]
