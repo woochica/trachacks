@@ -50,12 +50,16 @@ class EmailToTicket(Component):
         for field in ticket.fields:
             name = field['name']
             if name not in fields:
-                try:
-                    value = ticket.get_value_or_default(name) or ''
-                except AttributeError: # BBB
-                    value = ''
-                if value is not None:
-                    ticket.values[name] = value
+                option = 'ticket_field.%s' % name
+                if self.env.config.has_option('mail', option):
+                    ticket.values[name] = self.env.config.get('mail', option)
+                else:
+                    try:
+                        value = ticket.get_value_or_default(name) or ''
+                    except AttributeError: # BBB
+                        value = ''
+                    if value is not None:
+                        ticket.values[name] = value
 
         # create the ticket
         ticket.insert()
