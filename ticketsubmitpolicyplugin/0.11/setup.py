@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.7'
+version='0.8'
 
 setup(name='TicketSubmitPolicy',
       version=version,
@@ -21,6 +21,7 @@ function according to the value of other ticket fields.
       packages=['ticketsubmitpolicy'],
       package_data={'ticketsubmitpolicy' : ['templates/*.html']},
       zip_safe=False,
+      install_requires=['simplejson'],
       entry_points = """
       [trac.plugins]
       ticketsubmitpolicy = ticketsubmitpolicy

@@ -1,5 +1,7 @@
 """policies for ITicketSubmitPolicy"""
 
+import simplejson
+
 from genshi.filters import Transformer
 from interface import ITicketSubmitPolicy
 from trac.core import *
@@ -12,49 +14,7 @@ class TicketRequires(Component):
         return 'requires'
 
     def javascript(self):
-        return """
-function requires(policy, requiredfields)
-{
-
-var missing = new Array();
-
-if (condition(policy))
-{
-
-for ( var i=0; i != requiredfields.length; i++ )
-{
-
-var field=getValue("field-" + requiredfields[i]);
-
-if (!field)
-{
-missing.push(requiredfields[i]);
-}
-
-}
-
-if (missing.length != 0)
-{
-
-if (missing.length == 1)
-{
-prestring = missing[0] + " is a required field ";
-poststring = "Please provide this value.";
-}
-else
-{
-prestring = missing.join(", ") + " are required fields ";
-poststring = "Please provide these values.";
-}
-
-return prestring + "for tickets where " + policytostring(policy) + ".\\n" + poststring;
-}
-
-}
-
-return true;
-}
-""" 
+        return 'ticketsubmitpolicy/js/requires.js'
 
     def onload(self, policy, condition, *args):
         return
@@ -68,7 +28,6 @@ return true;
         return stream
 
 
-
 ### 
 
 class TicketExcludes(Component):
@@ -79,45 +38,7 @@ class TicketExcludes(Component):
         return 'excludes'
 
     def javascript(self):
-        return """function exclude(policy, excludedfields)
-{
-
-if (condition(policy))
-{
-display="none";
-}
-else
-{
-display="";
-}
-
-for (var i=0; i != excludedfields.length; i++)
-{
-var excludedfield = excludedfields[i];
-var element=document.getElementById("field-" + excludedfield);
-element.style.display=display;
-}
-
-}
-
-function excludeSubmit(policy, excludedfields)
-{
-
-if (condition(policy))
-{
-
-for (var i=0; i != excludedfields.length; i++)
-{
-var element=document.getElementById("field-" + excludedfields[i]);
-element.value = "";
-}
-
-}
-
-return true;
-}
-
-"""
+        return 'ticketsubmitpolicy/js/exclude.js'
 
     def onload(self, policy, condition, *excludedfields):
         fields = repr([ str(i) for i in excludedfields ])

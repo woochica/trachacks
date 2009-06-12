@@ -11,11 +11,13 @@ from genshi.core import Markup
 from genshi.filters import Transformer
 
 from interface import ITicketSubmitPolicy
+from pkg_resources import resource_filename
 
 from trac.admin.api import IAdminPanelProvider
 from trac.core import *
 from trac.ticket import Ticket
 from trac.web import ITemplateStreamFilter
+from trac.web.chrome import add_script
 from trac.web.chrome import ITemplateProvider
 
 
@@ -154,10 +156,11 @@ class TicketSubmitPolicyPlugin(Component):
 
             # add JS functions to the head block
             for policy in self.policies:
-
                 policy_javascript = policy.javascript()
+                
                 if policy_javascript:
-                    javascript.append(policy_javascript)
+                    add_script(req, policy_javascript)
+#                    javascript.append(policy_javascript)
 
             policies = self.parse()
             
@@ -202,7 +205,7 @@ class TicketSubmitPolicyPlugin(Component):
             # insert onload, onsubmit hooks if supplied
             if onload:
                 javascript.append(self.onload(onload))
-                stream |= Transformer("body").attr('onload', 'load()')
+
             if onsubmit:
                 javascript.append(self.onsubmit(onsubmit))
                 stream |= Transformer("//form[@id='propertyform']").attr('onsubmit', 'return onsubmit')
@@ -217,13 +220,13 @@ class TicketSubmitPolicyPlugin(Component):
         return stream
 
     ### methods returning JS
+    ### TODO: convert these all to templates
 
     def onload(self, items):
         return """
-function load()
-{
+$(document).ready(function () {
 %s
-}
+});
 """ % '\n'.join(items)
 
 
@@ -347,7 +350,7 @@ function policytostring(policy)
         The items returned by this function must be tuples of the form
         `(category, category_label, page, page_label)`.
         """
-        if req.perm.has_permission('TRAC_ADMIN'): # XXX needed?
+        if req.perm.has_permission('TRAC_ADMIN'): 
             yield ('ticket', 'Ticket System', 'policy', 'Submit Policy')
 
     def render_admin_panel(self, req, category, page, path_info):
@@ -455,11 +458,10 @@ function policytostring(policy)
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
-        return []
+        return [('ticketsubmitpolicy', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
         """Return a list of directories containing the provided template
         files.
         """
-        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
