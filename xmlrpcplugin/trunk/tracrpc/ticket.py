@@ -258,7 +258,7 @@ class TicketRPC(Component):
 
 class StatusRPC(Component):
     """ An interface to Trac ticket status objects.
-    Note: Status is defined workflows, and all methods except getAll()
+    Note: Status is defined by workflow, and all methods except `getAll()`
     are deprecated no-op methods - these will be removed later. """
 
     implements(IXMLRPCHandler)
