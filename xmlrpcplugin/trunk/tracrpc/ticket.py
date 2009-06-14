@@ -1,21 +1,20 @@
 from trac.attachment import Attachment
 from trac.core import *
 from trac.perm import PermissionCache
-from tracrpc.api import IXMLRPCHandler, expose_rpc
-from tracrpc.util import to_datetime
 import trac.ticket.model as model
 import trac.ticket.query as query
 from trac.ticket.api import TicketSystem
 from trac.ticket.notification import TicketNotifyEmail
 from trac.ticket.web_ui import TicketModule
-from trac.util.datefmt import to_timestamp, utc
+from trac.util.datefmt import to_datetime, to_timestamp, utc
 
 import genshi
 
-from datetime import datetime
 import inspect
 import xmlrpclib
 from StringIO import StringIO
+
+from tracrpc.api import IXMLRPCHandler, expose_rpc
 
 class TicketRPC(Component):
     """ An interface to Trac's ticketing system. """
@@ -116,15 +115,14 @@ class TicketRPC(Component):
     def get(self, req, id):
         """ Fetch a ticket. Returns [id, time_created, time_changed, attributes]. """
         t = model.Ticket(self.env, id)
-        return (t.id, to_datetime(t.time_created), 
-                to_datetime(t.time_changed), t.values)
+        return (t.id, t.time_created, t.time_changed, t.values)
 
     def create(self, req, summary, description, attributes = {}, notify=False):
         """ Create a new ticket, returning the ticket ID. """
         t = model.Ticket(self.env)
         t['summary'] = summary
         t['description'] = description
-        t['reporter'] = req.authname or 'anonymous'
+        t['reporter'] = req.authname
         for k, v in attributes.iteritems():
             t[k] = v
         t['status'] = 'new'
@@ -146,7 +144,7 @@ class TicketRPC(Component):
     def update(self, req, id, comment, attributes = {}, notify=False):
         """ Update a ticket, returning the new ticket in the same form as
         getTicket(). Requires a valid 'action' in attributes to support workflow. """
-        now = datetime.now(utc)
+        now = to_datetime(None, utc)
         t = model.Ticket(self.env, id)
         if not 'action' in attributes:
             # FIXME: Old, non-restricted update - remove soon!
@@ -211,7 +209,7 @@ class TicketRPC(Component):
     def changeLog(self, req, id, when=0):
         t = model.Ticket(self.env, id)
         for date, author, field, old, new, permanent in t.get_changelog(when):
-            yield (to_datetime(date), author, field, old, new, permanent)
+            yield (date, author, field, old, new, permanent)
     # Use existing documentation from Ticket model
     changeLog.__doc__ = inspect.getdoc(model.Ticket.get_changelog)
 
@@ -219,8 +217,8 @@ class TicketRPC(Component):
         """ Lists attachments for a given ticket. Returns (filename,
         description, size, time, author) for each attachment."""
         for t in Attachment.select(self.env, 'ticket', ticket):
-            yield (t.filename, t.description or '', t.size, 
-                   to_datetime(t.date), t.author)
+            yield (t.filename, t.description, t.size, 
+                   t.date, t.author)
 
     def getAttachment(self, req, ticket, filename):
         """ returns the content of an attachment. """
@@ -239,7 +237,7 @@ class TicketRPC(Component):
             except TracError:
                 pass
         attachment = Attachment(self.env, 'ticket', ticket)
-        attachment.author = req.authname or 'anonymous'
+        attachment.author = req.authname
         attachment.description = description
         attachment.insert(filename, StringIO(data.data), len(data.data))
         return attachment.filename

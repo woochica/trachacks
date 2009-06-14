@@ -1,5 +1,6 @@
 import re
 import xmlrpclib
+import datetime
 from pkg_resources import resource_filename
 
 from trac.core import *
@@ -8,7 +9,7 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.formatter import wiki_to_oneliner
 
 from tracrpc.api import IXMLRPCHandler, XMLRPCSystem
-from tracrpc.util import from_xmlrpc_datetime
+from tracrpc.util import from_xmlrpc_datetime, to_xmlrpc_datetime
 
 class XMLRPCWeb(Component):
     """ Handle XML-RPC calls from HTTP clients, as well as presenting a list of
@@ -64,6 +65,8 @@ class XMLRPCWeb(Component):
         args = self._normalize_input(args)
         try:
             result = XMLRPCSystem(self.env).get_method(method)(req, args)
+            self.env.log.debug("RPC(xml) '%s' result: %s" % (method, repr(result)))
+            result = tuple(self._normalize_output(result))
             self._send_response(req, xmlrpclib.dumps(result, methodresponse=True), content_type)
         except xmlrpclib.Fault, e:
             self.log.error(e)
@@ -98,6 +101,27 @@ class XMLRPCWeb(Component):
             else:
                 new_args.append(arg)
         return new_args
+
+    def _normalize_output(self, result):
+        """ Normalizes and converts output (traversing it):
+        1. None => ''
+        2. datetime => xmlrpclib.DateTime
+        """
+        new_result = []
+        for res in result:
+            if isinstance(res, datetime.datetime):
+                new_result.append(to_xmlrpc_datetime(res))
+            elif res == None:
+                new_result.append('')
+            elif isinstance(res, dict):
+                for key in res.keys():
+                    res[key] = self._normalize_output([res[key]])[0]
+                new_result.append(res)
+            elif isinstance(res, list) or isinstance(res, tuple):
+                new_result.append(self._normalize_output(res))
+            else:
+                new_result.append(res)
+        return new_result
 
     # ITemplateProvider
     def get_htdocs_dirs(self):

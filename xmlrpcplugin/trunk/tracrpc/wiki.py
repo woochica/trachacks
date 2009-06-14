@@ -4,18 +4,16 @@ except ImportError:
     from StringIO import StringIO
 import xmlrpclib
 import posixpath
-import time
 
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.util.datefmt import to_timestamp
+from trac.util.datefmt import to_timestamp, to_datetime, utc
 from trac.wiki.api import WikiSystem
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html
 from trac.attachment import Attachment
 
 from tracrpc.api import IXMLRPCHandler, expose_rpc
-from tracrpc.util import to_datetime
 
 class WikiRPC(Component):
     """Superset of the
@@ -51,9 +49,9 @@ class WikiRPC(Component):
         yield ('WIKI_VIEW', ((list, str),), self.listLinks)
         yield ('WIKI_VIEW', ((str, str),), self.wikiToHtml)
 
-    def _page_info(self, name, time, author, version, comment):
-        return dict(name=name, lastModified=xmlrpclib.DateTime(int(time)),
-                    author=author, version=int(version), comment=comment or '')
+    def _page_info(self, name, when, author, version, comment):
+        return dict(name=name, lastModified=to_datetime(when, utc),
+                    author=author, version=int(version), comment=comment)
 
     def getRecentChanges(self, req, since):
         """ Get list of changed pages since timestamp """
@@ -63,8 +61,8 @@ class WikiRPC(Component):
         cursor.execute('SELECT name, max(time), author, version, comment FROM wiki'
                        ' WHERE time >= %s GROUP BY name ORDER BY max(time) DESC', (since,))
         result = []
-        for name, time, author, version, comment in cursor:
-            result.append(self._page_info(name, time, author, version, comment))
+        for name, when, author, version, comment in cursor:
+            result.append(self._page_info(name, when, author, version, comment))
         return result
 
     def getRPCVersionSupported(self, req):
@@ -97,8 +95,7 @@ class WikiRPC(Component):
         page = WikiPage(self.env, pagename, version)
         if page.exists:
             last_update = page.get_history().next()
-            return self._page_info(page.name,
-                                   time.mktime(last_update[1].utctimetuple()),
+            return self._page_info(page.name, last_update[1],
                                    last_update[2], page.version, page.comment)
 
     def putPage(self, req, pagename, content, attributes):
@@ -164,7 +161,7 @@ class WikiRPC(Component):
             except TracError:
                 pass
         attachment = Attachment(self.env, 'wiki', pagename)
-        attachment.author = req.authname or 'anonymous'
+        attachment.author = req.authname
         attachment.description = description
         attachment.insert(filename, StringIO(data.data), len(data.data))
         return attachment.filename

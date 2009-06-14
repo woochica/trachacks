@@ -1,6 +1,5 @@
 from trac.core import *
 from tracrpc.api import IXMLRPCHandler
-from tracrpc.util import to_datetime
 from trac.search.api import ISearchSource
 from trac.search.web_ui import SearchModule
 
@@ -50,10 +49,8 @@ class SearchRPC(Component):
         self.env.log.debug("Searching with %s" % filters)
 
         results = []
-        converters = [unicode, unicode, to_datetime, unicode, unicode]         	
         for source in self.search_sources:
             for result in source.get_search_results(req, query, filters):
-                result = [f(v) for f,v in zip(converters, result)]
                 results.append(['/'.join(req.base_url.split('/')[0:3])
                                 + result[0]] + list(result[1:]))
         return results

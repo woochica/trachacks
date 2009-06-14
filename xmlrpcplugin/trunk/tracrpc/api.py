@@ -4,7 +4,7 @@ import inspect
 import types
 import xmlrpclib
 import datetime
-from tracrpc.util import to_datetime
+
 try:
     set = set
 except:
@@ -87,10 +87,7 @@ class Method(object):
         if result is None:
             result = 0
         elif isinstance(result, dict):
-            for key,val in result.iteritems():
-                if isinstance(val, datetime.datetime):
-                    result[key] = to_datetime(val)
-            #pass
+            pass
         elif not isinstance(result, basestring):
             # Try and convert result to a list
             try:
