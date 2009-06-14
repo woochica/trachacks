@@ -20,6 +20,7 @@ class DiscussionCore(Component):
     """
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
+    # Configuration options.
     title = Option('discussion', 'title', 'Discussion',
       'Main navigation bar button title.')
 

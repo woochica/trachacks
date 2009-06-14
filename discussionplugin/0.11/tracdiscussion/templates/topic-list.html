@@ -98,6 +98,8 @@
           <p py:otherwise="" class="help">There are no topics created in this forum.</p>
         </py:choose>
 
+        <xi:include py:with="paginator = discussion.paginator" href="page_index.html" />
+
         <div class="buttons">
           <form py:if="'DISCUSSION_APPEND' in perm" method="post" action="${href.discussion('forum', discussion.forum.id)}">
             <div>

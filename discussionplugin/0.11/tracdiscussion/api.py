@@ -5,10 +5,11 @@ from datetime import *
 
 # Trac includes.
 from trac.core import *
+from trac.config import IntOption
 from trac.mimeview import Context
 from trac.perm import PermissionError
 from trac.resource import get_resource_url
-from trac.web.chrome import add_stylesheet, add_script, add_ctxtnav
+from trac.web.chrome import add_link, add_stylesheet, add_script, add_ctxtnav
 from trac.web.href import Href
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.attachment import AttachmentModule
@@ -16,6 +17,7 @@ from trac.util.datefmt import to_timestamp, to_datetime, utc, \
   format_datetime, pretty_timedelta
 from trac.util.html import html
 from trac.util.text import to_unicode
+from trac.util.presentation import Paginator
 
 # Trac interfaces inlcudes
 from trac.resource import IResourceManager
@@ -79,9 +81,18 @@ class IMessageChangeListener(Interface):
         with values of attributes of just deleted message."""
 
 class DiscussionApi(Component):
-
+    """
+        The API component implements most of functionality of the plugin,
+        especially database access and request handling.
+    """
     implements(IResourceManager, ILegacyAttachmentPolicyDelegate,
       IPermissionRequestor)
+
+    # Configuration options.
+    topics_per_page = IntOption('discussion', 'topics_per_page', 30,
+      'Number of topics per page in topic list.')
+    messages_per_page = IntOption('discussion', 'messages_per_page', 50,
+      'Number of messages per page in message list.')
 
     # Extension points.
     topic_change_listeners = ExtensionPoint(ITopicChangeListener)
@@ -219,6 +230,8 @@ class DiscussionApi(Component):
         # Return request template and data.
         self.env.log.debug('data: %s' % (context.data,))
         return actions[-1] + '.html', {'discussion' : context.data}
+
+    # Internal methods.
 
     def _prepare_context(self, context):
         # Prepare template data.
@@ -632,12 +645,20 @@ class DiscussionApi(Component):
                 # Get form values
                 order = context.req.args.get('order') or 'id'
                 desc = context.req.args.get('desc')
+                page = int(context.req.args.get('page') or '1') - 1
+
+                # Get topics of current page.
+                topics_count = self.get_topics_count(context,
+                  context.forum['id'])
+                topics = self.get_topics(context, context.forum['id'], order,
+                  desc, self.topics_per_page, page * self.topics_per_page)
+                paginator = self._get_paginator(context, page, topics_count)
 
                 # Display topics.
                 context.data['order'] = order
                 context.data['desc'] = desc
-                context.data['topics'] = self.get_topics(context,
-                  context.forum['id'], order, desc)
+                context.data['topics'] = topics
+                context.data['paginator'] = paginator
 
             elif action == 'topic-add':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -880,6 +901,33 @@ class DiscussionApi(Component):
         context.data['attachments'] = AttachmentModule(self.env) \
           .attachment_data(context)
 
+    def _get_paginator(self, context, page, items_count):
+        # Create paginator object.
+        paginator = Paginator([], page, self.topics_per_page, items_count)
+
+        # Initialize pages.
+        page_data = []
+        shown_pages = paginator.get_shown_pages(21)
+        for shown_page in shown_pages:
+            page_data.append([context.req.href(context.req.path_info, page =
+              shown_page), None, to_unicode(shown_page), 'page %s' % (
+              shown_page,)])
+        fields = ['href', 'class', 'string', 'title']
+        paginator.shown_pages = [dict(zip(fields, p)) for p in page_data]
+
+        paginator.current_page = {'href' : None, 'class' : 'current', 'string':
+          str(page + 1), 'title' : None}
+
+        # Prepare links to next or previous page.
+        if paginator.has_next_page:
+            add_link(context.req, 'next', context.req.href(
+              context.req.path_info, page = paginator.page + 2), 'Next Page')
+        if paginator.has_previous_page:
+            add_link(context.req, 'prev', context.req.href(
+              context.req.path_info, page = paginator.page), 'Previous Page')
+
+        return paginator
+
     # Get one item functions.
 
     def _get_item(self, context, table, columns, where = '', values = ()):
@@ -933,6 +981,21 @@ class DiscussionApi(Component):
         return self._get_item(context, 'forum_group', ('id', 'name',
           'description'), 'id = %s', (id,)) or {'id' : 0, 'name': 'None',
           'description': 'No Group'}
+
+    # Get items count functions.
+
+    def _get_items_count(self, context, table, where = '', values = ()):
+        sql = 'SELECT COUNT(id) FROM ' + table + (where and (' WHERE ' +
+          where) or '')
+        self.log.debug(sql % values)
+        context.cursor.execute(sql, values)
+        for row in context.cursor:
+            return row[0]
+        return 0
+
+    def get_topics_count(self, context, forum_id):
+        return self._get_items_count(context, 'topic', 'forum = %s', (
+          forum_id,))
 
     # Get list functions.
 
@@ -1042,7 +1105,8 @@ class DiscussionApi(Component):
 
         return forums
 
-    def get_topics(self, context, forum_id, order_by = 'time', desc = False):
+    def get_topics(self, context, forum_id, order_by = 'time', desc = False,
+      limit = 0, offset = 0):
 
         def _get_new_replies_count(context, topic_id):
             time = int(context.visited_topics.has_key(topic_id) and
@@ -1063,7 +1127,9 @@ class DiscussionApi(Component):
           " m.replies, m.lastreply FROM topic t LEFT JOIN (SELECT COUNT(id)" \
           " AS replies, MAX(time) AS lastreply, topic FROM message GROUP BY" \
           " topic) m ON t.id = m.topic WHERE t.forum = %s ORDER BY " \
-          + order_by + (" ASC", " DESC")[bool(desc)]
+          + order_by + (" ASC", " DESC")[bool(desc)] + (limit and (' LIMIT ' +
+          to_unicode(limit)) or '') + (offset and (' OFFSET ' + to_unicode(
+          offset)) or '')
         self.env.log.debug(sql % (to_unicode(forum_id),))
         context.cursor.execute(sql, (to_unicode(forum_id),))
 
