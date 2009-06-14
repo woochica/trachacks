@@ -80,12 +80,15 @@ class XMLRPCWeb(Component):
     def _normalize_input(self, args):
         """ Normalizes arguments (at any level - traversing dicts and lists):
         1. xmlrpc.DateTime is converted to Python datetime
+        2. String line-endings same as from web (`\n` => `\r\n`)
         """
         new_args = []
         for arg in args:
             # self.env.log.debug("arg %s, type %s" % (arg, type(arg)))
             if isinstance(arg, xmlrpclib.DateTime):
                 new_args.append(from_xmlrpc_datetime(arg))
+            elif isinstance(arg, basestring):
+                new_args.append(arg.replace("\n", "\r\n"))
             elif isinstance(arg, dict):
                 for key in arg.keys():
                     arg[key] = self._normalize_input([arg[key]])[0]
