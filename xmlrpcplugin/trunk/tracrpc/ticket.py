@@ -7,7 +7,10 @@ import trac.ticket.model as model
 import trac.ticket.query as query
 from trac.ticket.api import TicketSystem
 from trac.ticket.notification import TicketNotifyEmail
+from trac.ticket.web_ui import TicketModule
 from trac.util.datefmt import utc
+
+import genshi
 
 from datetime import datetime
 import inspect
@@ -27,9 +30,10 @@ class TicketRPC(Component):
         yield ('TICKET_VIEW', ((list,), (list, str)), self.query)
         yield ('TICKET_VIEW', ((list, xmlrpclib.DateTime),), self.getRecentChanges)
         yield ('TICKET_VIEW', ((list, int),), self.getAvailableActions)
+        yield ('TICKET_VIEW', ((list, int),), self.getActions)
         yield ('TICKET_VIEW', ((list, int),), self.get)
         yield ('TICKET_CREATE', ((int, str, str), (int, str, str, dict), (int, str, str, dict, bool)), self.create)
-        yield ('TICKET_ADMIN', ((list, int, str), (list, int, str, dict), (list, int, str, dict, bool)), self.update)
+        yield ('TICKET_VIEW', ((list, int, str), (list, int, str, dict), (list, int, str, dict, bool)), self.update)
         yield ('TICKET_ADMIN', ((None, int),), self.delete)
         yield ('TICKET_VIEW', ((dict, int), (dict, int, int)), self.changeLog)
         yield ('TICKET_VIEW', ((list, int),), self.listAttachments)
@@ -63,10 +67,51 @@ class TicketRPC(Component):
         return result
 
     def getAvailableActions(self, req, id):
-        """Returns the actions that can be performed on the ticket."""
-        ticketSystem = TicketSystem(self.env)
+        """ Deprecated - will be removed. Replaced by `getActions()`. """
+        self.log.warning("Rpc ticket.getAvailableActions is deprecated")
+        return [action for action, inputs in self.getActions(req, id)]
+
+    def getActions(self, req, id):
+        """Returns the actions that can be performed on the ticket as a list of
+        `[action, label, hints, [input_fields]]` elements, where `input_fields` is
+        a list of `[name, value, [options]]` for any required action inputs."""
+        ts = TicketSystem(self.env)
         t = model.Ticket(self.env, id)
-        return ticketSystem.get_available_actions(req, t)
+        actions = []
+        for action in ts.get_available_actions(req, t):
+            fragment = hints = genshi.builder.Fragment()
+            hints = []
+            first_label = None
+            for controller in ts.action_controllers:
+                if action in controller.actions.keys():
+                    label, widget, hint = \
+                        controller.render_ticket_action_control(req, t, action)
+                    fragment += widget
+                    hints.append(hint)
+                    first_label = first_label == None and label or first_label
+            controls = []
+            for elem in fragment.children:
+                if not isinstance(elem, genshi.builder.Element):
+                    continue
+                if elem.tag == 'input':
+                    controls.append((elem.attrib.get('name'),
+                                    elem.attrib.get('value'), []))
+                elif elem.tag == 'select':
+                    value = ''
+                    options = []
+                    for opt in elem.children:
+                        if not (opt.tag == 'option' and opt.children):
+                            continue
+                        option = opt.children[0]
+                        options.append(option)
+                        if opt.attrib.get('selected'):
+                            value = option
+                    controls.append((elem.attrib.get('name'),
+                                    value, options))
+            actions.append((action, first_label, ". ".join(hints) + '.', controls))
+        self.log.debug('Rpc ticket.getActions for ticket %d, user %s: %s' % (
+                    id, req.authname, repr(actions)))
+        return actions
 
     def get(self, req, id):
         """ Fetch a ticket. Returns [id, time_created, time_changed, attributes]. """
@@ -77,14 +122,18 @@ class TicketRPC(Component):
     def create(self, req, summary, description, attributes = {}, notify=False):
         """ Create a new ticket, returning the ticket ID. """
         t = model.Ticket(self.env)
-        t['status'] = 'new'
         t['summary'] = summary
         t['description'] = description
         t['reporter'] = req.authname or 'anonymous'
         for k, v in attributes.iteritems():
             t[k] = v
+        t['status'] = 'new'
+        t['resolution'] = ''
         t.insert()
-
+        # Call ticket change listeners
+        ts = TicketSystem(self.env)
+        for listener in ts.change_listeners:
+            listener.ticket_created(t)
         if notify:
             try:
                 tn = TicketNotifyEmail(self.env)
@@ -92,18 +141,55 @@ class TicketRPC(Component):
             except Exception, e:
                 self.log.exception("Failure sending notification on creation "
                                    "of ticket #%s: %s" % (t.id, e))
-		
         return t.id
 
     def update(self, req, id, comment, attributes = {}, notify=False):
-        """ Update a ticket, returning the new ticket in the same form as getTicket(). """
+        """ Update a ticket, returning the new ticket in the same form as
+        getTicket(). Requires a valid 'action' in attributes to support workflow. """
         now = datetime.now(utc)
-
         t = model.Ticket(self.env, id)
-        for k, v in attributes.iteritems():
-            t[k] = v
-        t.save_changes(req.authname or 'anonymous', comment)
-
+        if not 'action' in attributes:
+            # FIXME: Old, non-restricted update - remove soon!
+            self.log.warning("Rpc ticket.update for ticket %d by user %s " \
+                    "has no workflow 'action'." % (id, req.authname))
+            for k, v in attributes.iteritems():
+                t[k] = v
+            t.save_changes(req.authname, comment)
+        else:
+            ts = TicketSystem(self.env)
+            tm = TicketModule(self.env)
+            action = attributes.get('action')
+            avail_actions = ts.get_available_actions(req, t)
+            if not action in avail_actions:
+                raise TracError("Rpc: Ticket %d by %s " \
+                        "invalid action '%s'" % (id, req.authname, action))
+            controllers = list(tm._get_action_controllers(req, t, action))
+            all_fields = [field['name'] for field in ts.get_ticket_fields()]
+            for k, v in attributes.iteritems():
+                if k in all_fields and k != 'status':
+                    t[k] = v
+            # TicketModule reads req.args - need to move things there...
+            req.args.update(attributes)
+            req.args['comment'] = comment
+            req.args['ts'] = str(t.time_changed) # collision hack...
+            changes, problems = tm.get_ticket_changes(req, t, action)
+            for warning in problems:
+                req.add_warning("Rpc ticket.update: %(warning)s",
+                                    warning=warning)
+            valid = problems and False or tm._validate_ticket(req, t)
+            if not valid:
+                raise TracError(
+                    " ".join([warning for warning in req.chrome['warnings']]))
+            else:
+                tm._apply_ticket_changes(t, changes)
+                self.log.debug("Rpc ticket.update save: %s" % repr(t.values))
+                t.save_changes(req.authname, comment)
+                # Apply workflow side-effects
+                for controller in controllers:
+                    controller.apply_action_side_effects(req, t, action)
+                # Call ticket change listeners
+                for listener in ts.change_listeners:
+                    listener.ticket_changed(t, comment, req.authname, t._old)
         if notify:
             try:
                 tn = TicketNotifyEmail(self.env)
@@ -111,13 +197,16 @@ class TicketRPC(Component):
             except Exception, e:
                 self.log.exception("Failure sending notification on change of "
                                    "ticket #%s: %s" % (t.id, e))
-
         return self.get(req, t.id)
 
     def delete(self, req, id):
         """ Delete ticket with the given id. """
         t = model.Ticket(self.env, id)
         t.delete()
+        ts = TicketSystem(self.env)
+        # Call ticket change listeners
+        for listener in ts.change_listeners:
+            listener.ticket_deleted(t)
 
     def changeLog(self, req, id, when=0):
         t = model.Ticket(self.env, id)
@@ -167,6 +256,47 @@ class TicketRPC(Component):
         """ Return a list of all ticket fields fields. """
         return TicketSystem(self.env).get_ticket_fields()
 
+class StatusRPC(Component):
+    """ An interface to Trac ticket status objects.
+    Note: Status is defined workflows, and all methods except getAll()
+    are deprecated no-op methods - these will be removed later. """
+
+    implements(IXMLRPCHandler)
+
+    # IXMLRPCHandler methods
+    def xmlrpc_namespace(self):
+        return 'ticket.status'
+
+    def xmlrpc_methods(self):
+        yield ('TICKET_VIEW', ((list,),), self.getAll)
+        yield ('TICKET_VIEW', ((dict, str),), self.get)
+        yield ('TICKET_ADMIN', ((None, str,),), self.delete)
+        yield ('TICKET_ADMIN', ((None, str, dict),), self.create)
+        yield ('TICKET_ADMIN', ((None, str, dict),), self.update)
+
+    def getAll(self, req):
+        """ Returns all ticket states described by active workflow. """
+        return TicketSystem(self.env).get_all_status()
+    
+    def get(self, req, name):
+        """ Deprecated no-op method. Do not use. """
+        # FIXME: Remove
+        return '0'
+
+    def delete(self, req, name):
+        """ Deprecated no-op method. Do not use. """
+        # FIXME: Remove
+        return 0
+
+    def create(self, req, name, attributes):
+        """ Deprecated no-op method. Do not use. """
+        # FIXME: Remove
+        return 0
+
+    def update(self, req, name, attributes):
+        """ Deprecated no-op method. Do not use. """
+        # FIXME: Remove
+        return 0
 
 def ticketModelFactory(cls, cls_attributes):
     """ Return a class which exports an interface to trac.ticket.model.<cls>. """
@@ -283,7 +413,6 @@ ticketModelFactory(model.Version, {'name': '', 'time': 0, 'description': ''})
 ticketModelFactory(model.Milestone, {'name': '', 'due': 0, 'completed': 0, 'description': ''})
 
 ticketEnumFactory(model.Type)
-ticketEnumFactory(model.Status)
 ticketEnumFactory(model.Resolution)
 ticketEnumFactory(model.Priority)
 ticketEnumFactory(model.Severity)
