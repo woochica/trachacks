@@ -69,7 +69,7 @@ class TicketRPC(Component):
     def getAvailableActions(self, req, id):
         """ Deprecated - will be removed. Replaced by `getActions()`. """
         self.log.warning("Rpc ticket.getAvailableActions is deprecated")
-        return [action for action, inputs in self.getActions(req, id)]
+        return [action[0] for action in self.getActions(req, id)]
 
     def getActions(self, req, id):
         """Returns the actions that can be performed on the ticket as a list of
