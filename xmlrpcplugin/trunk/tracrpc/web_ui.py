@@ -1,11 +1,14 @@
 import re
 import xmlrpclib
 from pkg_resources import resource_filename
+
 from trac.core import *
 from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet
-from tracrpc.api import IXMLRPCHandler, XMLRPCSystem
 from trac.wiki.formatter import wiki_to_oneliner
+
+from tracrpc.api import IXMLRPCHandler, XMLRPCSystem
+from tracrpc.util import from_xmlrpc_datetime
 
 class XMLRPCWeb(Component):
     """ Handle XML-RPC calls from HTTP clients, as well as presenting a list of
@@ -56,6 +59,9 @@ class XMLRPCWeb(Component):
 
         # Handle XML-RPC call
         args, method = xmlrpclib.loads(req.read(int(req.get_header('Content-Length'))))
+        self.env.log.debug("RPC(xml) call by '%s', method '%s' with args: %s" \
+                                    % (req.authname, method, repr(args)))
+        args = self._normalize_input(args)
         try:
             result = XMLRPCSystem(self.env).get_method(method)(req, args)
             self._send_response(req, xmlrpclib.dumps(result, methodresponse=True), content_type)
@@ -70,6 +76,25 @@ class XMLRPCWeb(Component):
             traceback.print_exc(file = out)
             self.log.error(out.getvalue())
             self._send_response(req, xmlrpclib.dumps(xmlrpclib.Fault(2, "'%s' while executing '%s()'" % (str(e), method))))
+
+    def _normalize_input(self, args):
+        """ Normalizes arguments (at any level - traversing dicts and lists):
+        1. xmlrpc.DateTime is converted to Python datetime
+        """
+        new_args = []
+        for arg in args:
+            # self.env.log.debug("arg %s, type %s" % (arg, type(arg)))
+            if isinstance(arg, xmlrpclib.DateTime):
+                new_args.append(from_xmlrpc_datetime(arg))
+            elif isinstance(arg, dict):
+                for key in arg.keys():
+                    arg[key] = self._normalize_input([arg[key]])[0]
+                new_args.append(arg)
+            elif isinstance(arg, list) or isinstance(arg, tuple):
+                new_args.append(self._normalize_input(arg))
+            else:
+                new_args.append(arg)
+        return new_args
 
     # ITemplateProvider
     def get_htdocs_dirs(self):

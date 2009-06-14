@@ -2,13 +2,13 @@ from trac.attachment import Attachment
 from trac.core import *
 from trac.perm import PermissionCache
 from tracrpc.api import IXMLRPCHandler, expose_rpc
-from tracrpc.util import to_timestamp, to_datetime
+from tracrpc.util import to_datetime
 import trac.ticket.model as model
 import trac.ticket.query as query
 from trac.ticket.api import TicketSystem
 from trac.ticket.notification import TicketNotifyEmail
 from trac.ticket.web_ui import TicketModule
-from trac.util.datefmt import utc
+from trac.util.datefmt import to_timestamp, utc
 
 import genshi
 

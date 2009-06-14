@@ -8,12 +8,14 @@ import time
 
 from trac.core import *
 from trac.perm import IPermissionRequestor
+from trac.util.datefmt import to_timestamp
 from trac.wiki.api import WikiSystem
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html
 from trac.attachment import Attachment
+
 from tracrpc.api import IXMLRPCHandler, expose_rpc
-from tracrpc.util import to_timestamp, to_datetime
+from tracrpc.util import to_datetime
 
 class WikiRPC(Component):
     """Superset of the
