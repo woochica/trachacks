@@ -19,13 +19,11 @@ from urllib import urlencode
 class PyCoSign(object):
     """A class for working with a CoSign server."""
 
-    def __init__(self, url, **kwords):
-        self.url = url
+    def __init__(self, **kwords):
         self.paths = {
-            'hostname': 'https://weblogin.localdomain',
-            'service': '',
-            'login_path': '/cgi-bin/login',
-            'logout_path': '/cgi-bin/login',
+            'service': 'trac',
+            'login_uri': 'https://weblogin.localdomain/cgi-bin/login',
+            'logout_uri': 'https://weblogin.localdomain/cgi-bin/login',
         }
         self.paths.update(kwords)
         if self.paths['service'] and not self.paths['service'].startswith('cosign-'):
@@ -45,8 +43,7 @@ class PyCoSign(object):
             back_url += "?" + urlencode({'referer':referer})
         service = self.paths['service'].encode('utf-8')
         hash = self.random_hash(125)
-        dest_url = self.paths['hostname'].rstrip('/')
-        dest_url += self.paths['login_path']
+        dest_url = self.paths['login_uri']
         dest_url += '?' + self.paths['service'] + "=" + hash
         dest_url += ';&' + back_url
         req.outcookie[service] = hash
@@ -58,8 +55,7 @@ class PyCoSign(object):
         back_url= req.abs_href.logout()
         if referer:
             back_url += "?" + urlencode({'referer':referer})
-        dest_url = self.paths['hostname'].rstrip('/')
-        dest_url += self.paths['logout_path']
+        dest_url = self.paths['logout_uri']
         dest_url += '?' + back_url
         service = self.paths['service'].encode('utf-8') or req.environ['COSIGN_SERVICE']
         if service:
