@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name = 'TracCosign',
-    version = '0.1.2',
+    version = '0.1.2.2',
     packages = ['traccosign'],
 
     author = 'Jiang Xin',

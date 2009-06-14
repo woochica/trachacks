@@ -1,3 +1,10 @@
+trac-cosign (0.1.2-1.6048) unstable; urgency=low
+
+  * Change name of options in trac.ini, to make the config file easily
+    parsed by package maintenance scripts.
+
+ -- Jiang Xin <worldhello.net@gmail.com>  Sun, 14 Jun 2009 15:37:33 +0800
+
 trac-cosign (0.1.2-1.5327) unstable; urgency=low
 
   * Fixed #4722: do not change content_type of return value from 

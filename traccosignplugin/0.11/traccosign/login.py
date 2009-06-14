@@ -31,12 +31,12 @@ class CoSignLoginModule(LoginModule):
      * IRequestHandler
     """
     
-    server = Option('cosign', 'server', doc='Base URL for the CoSign server')
-    login_path = Option('cosign', 'login_path', default='/login', 
+    hostname = Option('cosign', 'cosign_hostname', doc='Base URL for the CoSign server')
+    login_path = Option('cosign', 'cosign_login_path', default='/login', 
                         doc='Path component for the login system')
-    logout_path = Option('cosign', 'logout_path', default='/logout', 
+    logout_path = Option('cosign', 'cosign_logout_path', default='/logout', 
                         doc='Path component for the logout system')
-    service = Option('cosign', 'service', default='',
+    service = Option('cosign', 'cosign_service', default='',
                         doc='CoSign service name for trac. If login redirect is handled by CoSign filter, do not define this.')
 
     # IRequestHandler methods
@@ -87,10 +87,10 @@ class CoSignLoginModule(LoginModule):
     
     def cosign(self):
         paths = {
-            'server': self.server,
+            'hostname': self.hostname,
             'service': self.service,
             'login_path': self.login_path,
             'logout_path': self.logout_path,
         }
-        return PyCoSign(self.server, **paths)
+        return PyCoSign(self.hostname, **paths)
     cosign = property(cosign)

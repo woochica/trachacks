@@ -36,7 +36,7 @@ class AccountLDAP(Component):
             self.userFilter = self.config.get('ldap', 'user_filter')
         for i in range(self.attempts):
             try:
-                self.ldap = ldap.open(self.config.get('ldap', 'host'))
+                self.ldap = ldap.initialize(self.config.get('ldap', 'ldap_uri'))
                 self.ldap.simple_bind_s(self.config.get('ldap', 'bind_user'),  
                                       self.config.get('ldap', 'bind_passwd'))
                 break
