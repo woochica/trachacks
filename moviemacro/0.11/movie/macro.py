@@ -250,6 +250,9 @@ class MovieMacro(WikiMacroBase):
             'height': height,
         })
         
+        if kwargs.pop('clear', None) == 'none':
+            style.pop('clear')
+        
         kwargs = {'style': xform_style(style)}
         
         tags.append(tag.a(tag.img(src=src, **kwargs), class_='flowplayer', href=url, **kwargs))
