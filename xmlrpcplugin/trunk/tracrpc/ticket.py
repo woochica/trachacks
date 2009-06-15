@@ -152,7 +152,7 @@ class TicketRPC(Component):
                     "has no workflow 'action'." % (id, req.authname))
             for k, v in attributes.iteritems():
                 t[k] = v
-            t.save_changes(req.authname, comment)
+            t.save_changes(req.authname, comment, when=now)
         else:
             ts = TicketSystem(self.env)
             tm = TicketModule(self.env)
@@ -181,7 +181,7 @@ class TicketRPC(Component):
             else:
                 tm._apply_ticket_changes(t, changes)
                 self.log.debug("Rpc ticket.update save: %s" % repr(t.values))
-                t.save_changes(req.authname, comment)
+                t.save_changes(req.authname, comment, when=now)
                 # Apply workflow side-effects
                 for controller in controllers:
                     controller.apply_action_side_effects(req, t, action)
