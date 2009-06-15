@@ -3,7 +3,10 @@ import xmlrpclib
 import datetime
 from pkg_resources import resource_filename
 
+import genshi
+
 from trac.core import *
+from trac.util.text import to_unicode
 from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.formatter import wiki_to_oneliner
@@ -106,6 +109,7 @@ class XMLRPCWeb(Component):
         """ Normalizes and converts output (traversing it):
         1. None => ''
         2. datetime => xmlrpclib.DateTime
+        3. genshi.builder.Fragment|genshi.core.Markup => unicode
         """
         new_result = []
         for res in result:
@@ -113,6 +117,9 @@ class XMLRPCWeb(Component):
                 new_result.append(to_xmlrpc_datetime(res))
             elif res == None:
                 new_result.append('')
+            elif isinstance(res, genshi.builder.Fragment) \
+                        or isinstance(res, genshi.core.Markup):
+                new_result.append(to_unicode(res))
             elif isinstance(res, dict):
                 for key in res.keys():
                     res[key] = self._normalize_output([res[key]])[0]
