@@ -5,7 +5,7 @@ from datetime import *
 
 # Trac includes.
 from trac.core import *
-from trac.config import IntOption
+from trac.config import Option, IntOption
 from trac.mimeview import Context
 from trac.perm import PermissionError
 from trac.resource import get_resource_url
@@ -89,6 +89,18 @@ class DiscussionApi(Component):
       IPermissionRequestor)
 
     # Configuration options.
+    default_display = Option('discussion', 'default_display', 'tree',
+      'Default display mode of topic message list.')
+    forum_sort = Option('discussion', 'forum_sort', 'lasttopic', 'Column by which' +
+      ' will be sorted forum lists. Possible values are: id group name'
+      ' subject time moderators description topics replies lasttopic lastreply')
+    forum_sort_direction = Option('discussion', 'forum_sort_direction', 'asc',
+      'Direction of forum lists sorting. Possible values are: asc desc.')
+    topic_sort = Option('discussion', 'topic_sort', 'lastreply', 'Column by which' +
+      ' will be sorted topic lists. Possible values are: id forum subject' +
+      ' time author body replies lastreply.')
+    topic_sort_direction = Option('discussion', 'topic_sort_direction', 'asc',
+      'Direction of topic lists sorting. Possible values are: asc desc.')
     topics_per_page = IntOption('discussion', 'topics_per_page', 30,
       'Number of topics per page in topic list.')
     messages_per_page = IntOption('discussion', 'messages_per_page', 50,
@@ -534,8 +546,8 @@ class DiscussionApi(Component):
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
 
                 # Get form values.
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.forum_sort
+                desc = context.req.args.get('desc') or self.forum_sort_direction
 
                 # Display forums.
                 context.data['order'] = order
@@ -547,8 +559,8 @@ class DiscussionApi(Component):
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Get ordering arguments values.
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.forum_sort
+                desc = context.req.args.get('desc') or self.forum_sort_direction
 
                 # Display forums.
                 context.data['order'] = order
@@ -643,16 +655,18 @@ class DiscussionApi(Component):
                   datetime.now(utc))
 
                 # Get form values
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
-                page = int(context.req.args.get('page') or '1') - 1
+                order = context.req.args.get('order') or self.topic_sort
+                desc = context.req.args.get('desc') or self.topic_sort_direction
+                page = int(context.req.args.get('discussion_page') or '1') - 1
 
                 # Get topics of current page.
                 topics_count = self.get_topics_count(context,
                   context.forum['id'])
                 topics = self.get_topics(context, context.forum['id'], order,
-                  desc, self.topics_per_page, page * self.topics_per_page)
-                paginator = self._get_paginator(context, page, topics_count)
+                  desc, self.topics_per_page, page * self.topics_per_page,
+                  False)
+                paginator = self._get_paginator(context, page,
+                  self.topics_per_page, topics_count)
 
                 # Display topics.
                 context.data['order'] = order
@@ -881,37 +895,56 @@ class DiscussionApi(Component):
         visit_time = int(context.visited_topics.has_key(topic['id']) and
           (context.visited_topics[topic['id']] or 0))
 
+        # Get form values
+        page = int(context.req.args.get('discussion_page') or '1') - 1
+
         # Update this topic visit time.
         context.visited_topics[topic['id']] = to_timestamp(datetime.now(utc))
 
-        # Get topic messages.
-        display = context.req.session.get('message-list-display') or 'tree'
+        # Get topic messages for the current page.
+        display = context.req.session.get('message-list-display') or \
+          self.default_display
         if display == 'flat-asc':
-             messages = self.get_flat_messages(context, topic['id'])
-        elif display == 'flat-desc':
-             messages = self.get_flat_messages(context, topic['id'], desc =
-               True)
+            messages_count = self.get_messages_count(context, topic['id'])
+            self.log.debug(messages_count)
+            messages = self.get_flat_messages(context, topic['id'], desc =
+              False, limit = self.messages_per_page, offset = page *
+              self.messages_per_page)
+        elif display in ('flat-desc', 'flat'):
+            messages_count = self.get_messages_count(context, topic['id'])
+            self.log.debug(messages_count)
+            messages = self.get_flat_messages(context, topic['id'], desc =
+              True, limit = self.messages_per_page, offset = page *
+              self.messages_per_page)
+        elif display in ('tree', ''):
+            messages_count = 0
+            messages = self.get_messages(context, topic['id'])
         else:
-             messages = self.get_messages(context, topic['id'])
+            raise TracError('Unsupported display mode: %s' % (display))
+
+        # Create paginator.
+        paginator = self._get_paginator(context, page, self.messages_per_page,
+          messages_count)
 
         # Prepare display of messages.
         context.data['visit_time'] = visit_time
         context.data['display'] = display
         context.data['messages'] = messages
+        context.data['paginator'] = paginator
         context.data['attachments'] = AttachmentModule(self.env) \
           .attachment_data(context)
 
-    def _get_paginator(self, context, page, items_count):
+    def _get_paginator(self, context, page, items_limit, items_count):
         # Create paginator object.
-        paginator = Paginator([], page, self.topics_per_page, items_count)
+        paginator = Paginator([], page, items_limit, items_count)
 
         # Initialize pages.
         page_data = []
         shown_pages = paginator.get_shown_pages(21)
         for shown_page in shown_pages:
-            page_data.append([context.req.href(context.req.path_info, page =
-              shown_page), None, to_unicode(shown_page), 'page %s' % (
-              shown_page,)])
+            page_data.append([context.req.href(context.req.path_info,
+              disscussion_page = shown_page), None, to_unicode(shown_page),
+              'page %s' % (shown_page,)])
         fields = ['href', 'class', 'string', 'title']
         paginator.shown_pages = [dict(zip(fields, p)) for p in page_data]
 
@@ -921,10 +954,12 @@ class DiscussionApi(Component):
         # Prepare links to next or previous page.
         if paginator.has_next_page:
             add_link(context.req, 'next', context.req.href(
-              context.req.path_info, page = paginator.page + 2), 'Next Page')
+              context.req.path_info, discussion_page = paginator.page + 2),
+              'Next Page')
         if paginator.has_previous_page:
             add_link(context.req, 'prev', context.req.href(
-              context.req.path_info, page = paginator.page), 'Previous Page')
+              context.req.path_info, discussion_page = paginator.page),
+              'Previous Page')
 
         return paginator
 
@@ -997,13 +1032,19 @@ class DiscussionApi(Component):
         return self._get_items_count(context, 'topic', 'forum = %s', (
           forum_id,))
 
+    def get_messages_count(self, context, topic_id):
+        return self._get_items_count(context, 'message', 'topic = %s', (
+          topic_id,))
+
     # Get list functions.
 
     def _get_items(self, context, table, columns, where = '', values = (),
-      order_by = '', desc = False):
+      order_by = '', desc = False, limit = 0, offset = 0):
         sql = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + (where
           and (' WHERE ' + where) or '') + (order_by and (' ORDER BY ' +
-          order_by + (' ASC', ' DESC')[bool(desc)]) or '')
+          order_by + (' ASC', ' DESC')[bool(desc)]) or '') + (limit and (
+          ' LIMIT ' + to_unicode(limit)) or '') + (offset and (' OFFSET ' +
+          to_unicode(offset)) or '')
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
         items = []
@@ -1106,7 +1147,7 @@ class DiscussionApi(Component):
         return forums
 
     def get_topics(self, context, forum_id, order_by = 'time', desc = False,
-      limit = 0, offset = 0):
+      limit = 0, offset = 0, with_body = True):
 
         def _get_new_replies_count(context, topic_id):
             time = int(context.visited_topics.has_key(topic_id) and
@@ -1121,15 +1162,19 @@ class DiscussionApi(Component):
 
         if not order_by in ('replies', 'lastreply',):
             order_by = 't.' + order_by
-        columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
-          'replies', 'lastreply')
-        sql = "SELECT t.id, t.forum, t.time, t.subject, t.body, t.author," \
-          " m.replies, m.lastreply FROM topic t LEFT JOIN (SELECT COUNT(id)" \
-          " AS replies, MAX(time) AS lastreply, topic FROM message GROUP BY" \
-          " topic) m ON t.id = m.topic WHERE t.forum = %s ORDER BY " \
-          + order_by + (" ASC", " DESC")[bool(desc)] + (limit and (' LIMIT ' +
-          to_unicode(limit)) or '') + (offset and (' OFFSET ' + to_unicode(
-          offset)) or '')
+        if with_body:
+            columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
+              'replies', 'lastreply')
+        else:
+            columns = ('id', 'forum', 'time', 'subject', 'author', 'replies',
+              'lastreply')
+        sql = "SELECT t.id, t.forum, t.time, t.subject, " + (with_body and
+          "t.body, " or "") + "t.author, m.replies, m.lastreply FROM topic t" \
+          " LEFT JOIN (SELECT COUNT(id) AS replies, MAX(time) AS lastreply," \
+          " topic FROM message GROUP BY topic) m ON t.id = m.topic WHERE" \
+          " t.forum = %s ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)] \
+          + (limit and (' LIMIT ' + to_unicode(limit)) or '') + (offset and (
+          ' OFFSET ' + to_unicode(offset)) or '')
         self.env.log.debug(sql % (to_unicode(forum_id),))
         context.cursor.execute(sql, (to_unicode(forum_id),))
 
@@ -1172,16 +1217,16 @@ class DiscussionApi(Component):
                     parent['replies'] = [message]
         return messages;
 
-    def get_flat_messages(self, context, id, order_by = 'time', desc = False):
+    def get_flat_messages(self, context, id, order_by = 'time', desc = False,
+      limit = 0, offset = 0):
         # Return messages of specified topic.
         return self._get_items(context, 'message', ('id', 'replyto', 'time',
-          'author', 'body'), 'topic = %s', (id,), order_by, desc)
+          'author', 'body'), 'topic = %s', (id,), order_by, desc, limit, offset)
 
     def get_replies(self, context, id, order_by = 'time', desc = False):
         # Return replies of specified message.
         return self._get_items(context, 'message', ('id', 'replyto', 'time',
-          'author', 'body'), where = 'replyto = %s', values = (id,), order_by
-          = order_by, desc = desc)
+          'author', 'body'), 'replyto = %s',(id,), order_by, desc)
 
     def get_users(self, context):
         # Return users that Trac knows.

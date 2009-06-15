@@ -1,4 +1,4 @@
-<html xmlns:py="http://genshi.edgewall.org/" py:strip="">
+<html xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/" py:strip="">
   <?python
     from trac.wiki.formatter import format_to_oneliner, format_to_html
     from trac.util.datefmt import format_datetime, pretty_timedelta
@@ -78,6 +78,7 @@
         </ul>
 
         ${display_set_display(href)}
+        <xi:include py:with="paginator = discussion.paginator" href="page_index.html" />
 
         <div class="attachments">
           ${list_of_attachments(discussion.attachments, compact = True)}
