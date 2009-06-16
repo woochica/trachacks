@@ -82,7 +82,7 @@ class TicketRPC(Component):
             hints = []
             first_label = None
             for controller in ts.action_controllers:
-                if action in controller.actions.keys():
+                if action in controller.get_ticket_actions(req, t):
                     label, widget, hint = \
                         controller.render_ticket_action_control(req, t, action)
                     fragment += widget
