@@ -89,8 +89,10 @@ class DiscussionApi(Component):
       IPermissionRequestor)
 
     # Configuration options.
-    default_display = Option('discussion', 'default_display', 'tree',
-      'Default display mode of topic message list.')
+    default_topic_display = Option('discussion', 'default_topic_display',
+      'classic', 'Default display mode for forum topics list.')
+    default_message_display = Option('discussion', 'default_message_display',
+      'tree', 'Default display mode for topic messages list.')
     forum_sort = Option('discussion', 'forum_sort', 'lasttopic', 'Column by which' +
       ' will be sorted forum lists. Possible values are: id group name'
       ' subject time moderators description topics replies lasttopic lastreply')
@@ -431,6 +433,8 @@ class DiscussionApi(Component):
                         return ['topic-post-add']
                 elif action == 'delete':
                     return ['forum-delete']
+                elif action == 'set-display':
+                    return ['topic-set-display', 'topic-list']
                 else:
                     return ['topic-list']
         elif context.group:
@@ -659,6 +663,10 @@ class DiscussionApi(Component):
                 desc = context.req.args.get('desc') or self.topic_sort_direction
                 page = int(context.req.args.get('discussion_page') or '1') - 1
 
+                # Get topic list display type from session.
+                display = context.req.session.get('topic-list-display') or \
+                  self.default_topic_display
+
                 # Get topics of current page.
                 topics_count = self.get_topics_count(context,
                   context.forum['id'])
@@ -671,6 +679,7 @@ class DiscussionApi(Component):
                 # Display topics.
                 context.data['order'] = order
                 context.data['desc'] = desc
+                context.data['display'] = display
                 context.data['topics'] = topics
                 context.data['paginator'] = paginator
 
@@ -785,6 +794,15 @@ class DiscussionApi(Component):
                       context.topic['forum']), '')
                 else:
                     context.redirect_url = (context.req.path_info, '')
+
+            elif action == 'topic-set-display':
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                # Get form values.
+                display = context.req.args.get('display')
+
+                # Set message list display mode to session.
+                context.req.session['topic-list-display'] = display
 
             elif action == 'message-list':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
@@ -903,7 +921,7 @@ class DiscussionApi(Component):
 
         # Get topic messages for the current page.
         display = context.req.session.get('message-list-display') or \
-          self.default_display
+          self.default_message_display
         if display == 'flat-asc':
             messages_count = self.get_messages_count(context, topic['id'])
             self.log.debug(messages_count)
@@ -924,7 +942,7 @@ class DiscussionApi(Component):
 
         # Create paginator.
         paginator = self._get_paginator(context, page, self.messages_per_page,
-          messages_count)
+          messages_count, anchor = '#topic')
 
         # Prepare display of messages.
         context.data['visit_time'] = visit_time
@@ -934,7 +952,8 @@ class DiscussionApi(Component):
         context.data['attachments'] = AttachmentModule(self.env) \
           .attachment_data(context)
 
-    def _get_paginator(self, context, page, items_limit, items_count):
+    def _get_paginator(self, context, page, items_limit, items_count,
+      anchor = ''):
         # Create paginator object.
         paginator = Paginator([], page, items_limit, items_count)
 
@@ -943,7 +962,7 @@ class DiscussionApi(Component):
         shown_pages = paginator.get_shown_pages(21)
         for shown_page in shown_pages:
             page_data.append([context.req.href(context.req.path_info,
-              disscussion_page = shown_page), None, to_unicode(shown_page),
+              discussion_page = shown_page) + anchor, None, to_unicode(shown_page),
               'page %s' % (shown_page,)])
         fields = ['href', 'class', 'string', 'title']
         paginator.shown_pages = [dict(zip(fields, p)) for p in page_data]
@@ -954,11 +973,11 @@ class DiscussionApi(Component):
         # Prepare links to next or previous page.
         if paginator.has_next_page:
             add_link(context.req, 'next', context.req.href(
-              context.req.path_info, discussion_page = paginator.page + 2),
-              'Next Page')
+              context.req.path_info, discussion_page = paginator.page + 2) +
+              anchor, 'Next Page')
         if paginator.has_previous_page:
             add_link(context.req, 'prev', context.req.href(
-              context.req.path_info, discussion_page = paginator.page),
+              context.req.path_info, discussion_page = paginator.page) + anchor,
               'Previous Page')
 
         return paginator

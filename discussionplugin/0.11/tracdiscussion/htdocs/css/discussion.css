@@ -177,13 +177,13 @@
   border: 2px solid #b00;
 }
 
-.message-list div.set-display
+.message-list div.set-display, .topic-list div.set-display
 {
   text-align: center;
   margin: 1em;
 }
 
-.message-list div.set-display a
+.message-list div.set-display a, .topic-list div.set-display a
 {
   margin: 0.5em;
 }
