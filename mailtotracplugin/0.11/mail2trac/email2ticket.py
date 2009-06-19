@@ -172,7 +172,7 @@ class ContactEmailToTicket(EmailToTicket):
         return trac_address
 
     def fields(self, message, warnings, **fields):
-        fields = EmailToTicket.fields(self, message, **fields)
+        fields = EmailToTicket.fields(self, message, warnings, **fields)
         if message['from']:
             fields['summary'] = 'From %s: %s' % ( message['from'], fields['summary'])
         return fields
