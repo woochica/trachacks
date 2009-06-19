@@ -4,7 +4,9 @@ from trac.wiki.macros import WikiMacroBase
 from trac.attachment import Attachment
 from trac.env import Environment
 from genshi.builder import tag
-import bibtexparse
+
+import re
+import _bibtex
 
 BIBDB = 'bibtex - database'
 CITELIST = 'referenced elements'
@@ -20,7 +22,6 @@ BIBTEX_KEYS = [
     'journal',
     'volume',
     'number',
-	 'doi',
     'organization',
     'institution',
     'publisher',
@@ -46,38 +47,82 @@ class BibAddMacro(WikiMacroBase):
 
 		args, kwargs = parse_args(content, strict=False)
 
-		if len(args) > 2 or len(args) <1:
-			raise TracError('[[Usage: TracBib(file,revision) or TracBib(file)]] ')
+		if len(args) != 1:
+			raise TracError('[[Usage: TracBib(source:file@rev) or TracBib(attachment:wikipage/file) or TracBib(attachment:file)]] ')
+			
 		
-		file = args[0]
+		whom = re.compile(":|@").split(args[0])
+		file = None
 		rev = None
+		pos = None
+		path = None
 		entry = None
 		
 		bibdb = getattr(formatter, BIBDB,{})
 
 		# load the file from the repository
-		if len(args) == 2:
-			rev = args[1]
+		if whom[0] == 'source':
+			if len(whom) < 2:
+				raise TracError('[[Missing argument(s) for citing from source: TracBib(source:file@rev)]]')
+			elif len(whom) == 2:
+				rev = 'latest'
+			else:
+				rev = whom[2]
+
+			file = whom[1]
+
 			repos = self.env.get_repository()
 			try:
 				bib = repos.get_node(file, rev)
 				file = bib.get_content()
-				strings = file.read().splitlines()
+				string = file.read()
+				bibfile = _bibtex.open_string('temporary archive',string,True)
+				entry = _bibtex.next(bibfile)
+				if entry == None :
+					raise TracError('No entries from bibfile loaded.')
 			finally:
 				repos.close()
 	
 		# load the file from the wiki attachments
-		elif len(args) == 1:
-			path_info = formatter.req.path_info.split('/',2)
-			bib = Attachment(self.env,'wiki',path_info[2],file)
-			try:
-				file = bib.open()
-				strings = file.readlines()
-			finally:
-				file.close()
+		elif whom[0] == 'attachment':
+			if (len(whom) != 2):
+				raise TracError('[[Unknown Format.]]')
 
-		a,bibdb = bibtexparse.bibtexload(strings)
+			pos = 'wiki'
+			page = None
+			file = whom[1]
+			path_info = whom[1].split('/',1)
+			if len(path_info) == 2:
+				page = path_info[0]
+				file = path_info[1]
+			else:
+				path_info = formatter.req.path_info.split('/',2)
+				page = path_info[2]
+
+			bib = Attachment(self.env,pos,page,file)
+			file = bib.open()
+			string = file.read()
+			bibfile = _bibtex.open_string('temporary archive',string,True)
+			entry = _bibtex.next(bibfile)
+			if entry == None :
+				raise TracError('No entries from bibfile loaded.')
+
+		elif whom[0] == 'wiki':
+			raise TracError('[[This release does not support loading bibtex entries directly from a wiki page.]]')
+
+		else:
+			raise TracError('[[Unknown location.]]')
+
+		while entry != None:
+			contentdb = {}
+			items = entry[4]
+			key = entry[0]
+			for k in items.keys():
+				contentdb[k] = _bibtex.expand(bibfile, items[k],-1)[2]
 			
+			bibdb[key] = contentdb
+			entry = _bibtex.next(bibfile)
+	
 		setattr(formatter,BIBDB,bibdb)
 
 class BibCiteMacro(WikiMacroBase):
