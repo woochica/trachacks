@@ -37,6 +37,10 @@ try:
                                 (parts[0], parts[1], self.port)
             self.url_admin = '%s://admin:admin@%s:%s/login/xmlrpc' % \
                                 (parts[0], parts[1], self.port)
+            self.url_anon_json = '%s://%s:%s/jsonrpc' % (parts[0], parts[1],
+                                self.port)
+            self.url_auth_json = '%s://%s:%s/login/jsonrpc' % (parts[0],
+                                parts[1], self.port)
             print "Starting web server: %s:%s\n" % (self.url, self.port)
             self.restart()
             SvnFunctionalTestEnvironment.post_create(self, env)
@@ -52,6 +56,8 @@ try:
 
     def suite():
         suite = unittest.TestSuite()
+        import tracrpc.tests.json
+        suite.addTest(tracrpc.tests.json.suite())
         import tracrpc.tests.ticket
         suite.addTest(tracrpc.tests.ticket.suite())
         return suite

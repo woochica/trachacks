@@ -140,7 +140,7 @@ class Method(object):
 
 
 class XMLRPCSystem(Component):
-    """ Core of the XML-RPC system. """
+    """ Core of the RPC system. """
     implements(IPermissionRequestor, IXMLRPCHandler)
 
     method_handlers = ExtensionPoint(IXMLRPCHandler)
@@ -172,21 +172,21 @@ class XMLRPCSystem(Component):
                 p = Method(provider, *candidate)
                 if p.name == method:
                     return p
-        raise xmlrpclib.Fault(1, 'XML-RPC method "%s" not found' % method)
+        raise xmlrpclib.Fault(1, 'RPC method "%s" not found' % method)
         
     # Exported methods
     def all_methods(self, req):
-        """ List all methods exposed via XML-RPC. Returns a list of Method objects. """
+        """ List all methods exposed via RPC. Returns a list of Method objects. """
         for provider in self.method_handlers:
             for candidate in provider.xmlrpc_methods():
                 # Expand all fields of method description
                 yield Method(provider, *candidate)
 
     def multicall(self, req, signatures):
-        """ Takes an array of XML-RPC calls encoded as structs of the form (in
-        a Pythonish notation here):
-
-        {'methodName': string, 'params': array}
+        """ Takes an array of RPC calls encoded as structs of the form (in
+        a Pythonish notation here): `{'methodName': string, 'params': array}`.
+        For JSON-RPC multicall, signatures is an array of regular method call
+        structs, and result is an array of return structures.
         """
         for signature in signatures:
             try:
@@ -198,13 +198,13 @@ class XMLRPCSystem(Component):
 
     def listMethods(self, req):
         """ This method returns a list of strings, one for each (non-system)
-        method supported by the XML-RPC server. """
+        method supported by the RPC server. """
         for method in self.all_methods(req):
             yield method.name
 
     def methodHelp(self, req, method):
         """ This method takes one parameter, the name of a method implemented
-        by the XML-RPC server. It returns a documentation string describing the
+        by the RPC server. It returns a documentation string describing the
         use of that method. If no such string is available, an empty string is
         returned. The documentation string may contain HTML markup. """
         p = self.get_method(method)
@@ -212,7 +212,7 @@ class XMLRPCSystem(Component):
 
     def methodSignature(self, req, method):
         """ This method takes one parameter, the name of a method implemented
-        by the XML-RPC server.
+        by the RPC server.
 
         It returns an array of possible signatures for this method. A signature
         is an array of types. The first of these types is the return type of

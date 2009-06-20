@@ -12,11 +12,18 @@
   <body>
 
     <div id="content" class="wiki">
+      <h1>Remote Procedure Call (RPC) Interface</h1>
+      <dl>
+        <dt>API Status:</dt>
+          <dd>XML-RPC is <strong>available</strong></dd>
+          <dd>JSON-RPC is <strong>
+            ${xmlrpc.json and 'available' or 'not available'}</strong></dd>
+      </dl>
 
-      <h2>XML-RPC exported functions</h2>
+      <h2>RPC exported functions</h2>
 
       <div id="searchable">
-        <dl py:for="key in xmlrpc.functions" py:with="namespace = xmlrpc.functions[key]">
+        <dl py:for="key in sorted(xmlrpc.functions)" py:with="namespace = xmlrpc.functions[key]">
           <dt>
             <h3 id="${'xmlrpc.' + to_unicode(namespace.namespace)}">
               ${namespace.namespace} - ${namespace.description}
@@ -42,11 +49,64 @@
           </dd>
         </dl>
       </div>
-
+      
+      <h2>Calling Methods</h2>
+      <p>XML and JSON libraries for remote procedure calls and parsing exists
+        for all major languages and platforms - use a tested, standard library
+        for consistent results.</p>
+      <p>The following are examples for illustration only, and shows raw
+        access to RPC using <tt>curl</tt> (with Content-Type and Body for POST request):</p>
+      <div class="help">
+        <h4>XML-RPC example</h4>
+        <pre>
+user: ~ &gt; cat body.xml
+&lt;?xml version="1.0"?&gt;
+&lt;methodCall&gt;
+&lt;methodName&gt;wiki.getPage&lt;/methodName&gt;
+&lt;params&gt;
+&lt;param&gt;&lt;string&gt;WikiStart&lt;/string&gt;&lt;/param&gt;
+&lt;/params&gt;
+&lt;/methodCall&gt;
+user: ~ &gt; curl -H "Content-Type: application/xml" --data @body.xml ${req.abs_href.xmlrpc()}
+&lt;?xml version='1.0'?&gt;
+&lt;methodResponse&gt;
+&lt;params&gt;
+&lt;param&gt;
+&lt;value&gt;&lt;string&gt;= Welcome to....
+      </pre>
+      <ul>
+        <li>Use <tt>${req.abs_href.login('xmlrpc')}</tt> with basic
+            authentication for user context.</li>
+      </ul>
+      </div>
+      <div>
+        <h4>JSON-RPC example</h4>
+        <pre>
+user: ~ &gt; cat body.json
+{"params": ["WikiStart"], "method": "wiki.getPage", "id": 123}
+user: ~ &gt; curl -H "Content-Type: application/json" --data @body.json ${req.abs_href.jsonrpc()}
+{"id": 123, "error": null, "result": "= Welcome to....
+        </pre>
+        <ul>
+          <li>JSON-RPC has no formalized type system, so a class-hint system is used
+              for input and output of non-standard types:
+            <ul>
+              <li><tt>{"__jsonclass__": ["datetime", "YYYY-MM-DDTHH:MM:SS"]}</tt>
+                  = DateTime (UTC)</li>
+              <li><tt>{"__jsonclass__": ["binary", "&lt;base64-encoded&gt;"]}</tt>
+                  = Binary</li>
+            </ul>
+          </li>
+          <li><tt>"id"</tt> is optional, and any marker value received with a
+            request is returned with the response.</li>
+          <li>Use <tt>${req.abs_href.login('jsonrpc')}</tt> with basic
+            authentication for user context.</li>
+        </ul>
+      </div>
+      
       <script type="text/javascript">
         addHeadingLinks(document.getElementById("searchable"));
       </script>
     </div>
-
   </body>
 </html>

@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='TracXMLRPC',
-    version='1.0.3',
+    version='1.0.5',
     license='BSD',
     author='Alec Thomas',
     author_email='alec@swapoff.org',
