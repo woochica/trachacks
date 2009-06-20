@@ -1,0 +1,85 @@
+= Trac RPC plugin =
+
+Remote Procedure Call interface for Trac.
+
+Protocols:
+ * XML-RPC
+ * JSON-RPC
+ 
+API support:
+ * search
+ * system
+ * ticket
+ * ticket.component
+ * ticket.milestone
+ * ticket.priority
+ * ticket.resolution
+ * ticket.severity
+ * ticket.status
+ * ticket.type
+ * ticket.version
+ * wiki
+
+== Installing and Using ==
+
+See http://trac-hacks.org/wiki/XmlRpcPlugin for details on how to install, how
+get help, and how to report issues.
+
+== API Documentation ==
+
+The API documentation is available at `<project_url>/xmlrpc` and
+`<project_url/jsonrpc` for projects that have the plugin installed and enabled.
+It can be accessed by all users that have been granted `XML_RPC` permission.
+
+== Developing ==
+
+The Trac RPC plugin has interfaces that make it possible to extend the set of
+methods available for remote procedure calls. See source for documentation.
+
+The source code can be obtained from: http://trac-hacks.org/svn/xmlrpcplugin/
+
+For work on the plugin itself (for submitting patches and more), please verify
+patches by running unittests (requires Trac source code on path):
+{{{
+python setup.py test
+}}}
+
+== Thanks ==
+
+Thanks to all those that use the plugin, and contribute with error reports,
+and patches for bugs and enhancements. Special thanks to:
+ * Matt Good
+ * Steffen Pingel
+
+== License ==
+
+{{{
+Copyright (c) 2005-2008, Alec Thomas (alec@swapoff.org)
+Copyright (c) 2009, CodeResort.com/BV Network AS (simon-code@bvnetwork.no)
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+    this list of conditions and the following disclaimer.
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+    this list of conditions and the following disclaimer in the documentation
+    and/or other materials provided with the distribution.
+ 3. Neither the name of the copyright holder(s) nor the names of its
+    contributors may be used to endorse or promote products derived from this
+    software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.
+}}}

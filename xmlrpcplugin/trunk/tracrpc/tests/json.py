@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+License: BSD
+
+(c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+"""
+
 import unittest
 import os
 import shutil

@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+License: BSD
+
+(c) 2005-2008 ::: Alec Thomas (alec@swapoff.org)
+(c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+"""
+
 try:
     from cStringIO import StringIO
 except ImportError:
