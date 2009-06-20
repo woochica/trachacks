@@ -26,16 +26,16 @@
             <table class="listing tickets">
               <thead>
                 <tr>
-                  <th>Function</th>
-                  <th>Description</th>
-                  <th><nobr>Permission required</nobr></th>
+                  <th style="width:40%">Function</th>
+                  <th style="width:45%">Description</th>
+                  <th style="width:15%">Permission required</th>
                 </tr>
               </thead>
               <tbody py:for="idx, function in enumerate(namespace.methods)">
                 <tr class="${'color3-' + (idx % 2 == 0 and 'even' or 'odd')}">
-                  <td><nobr>${function[0]}</nobr></td>
+                  <td style="padding-left:4em;text-indent:-4em">${function[0]}</td>
                   <td>${function[1]}</td>
-                  <td>${function[2]}</td>
+                  <td>${function[2] or "By resource"}</td>
                 </tr>
               </tbody>
             </table>

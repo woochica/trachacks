@@ -81,7 +81,8 @@ class Method(object):
         self.namespace_description = inspect.getdoc(provider)
 
     def __call__(self, req, args):
-        req.perm.assert_permission(self.permission)
+        if self.permission:
+            req.perm.assert_permission(self.permission)
         result = self.callable(req, *args)
         # If result is null, return a zero
         if result is None:
@@ -179,9 +180,7 @@ class XMLRPCSystem(Component):
         for provider in self.method_handlers:
             for candidate in provider.xmlrpc_methods():
                 # Expand all fields of method description
-                c = Method(provider, *candidate)
-                if req.perm.has_permission(c.permission):
-                    yield c
+                yield Method(provider, *candidate)
 
     def multicall(self, req, signatures):
         """ Takes an array of XML-RPC calls encoded as structs of the form (in
@@ -209,7 +208,6 @@ class XMLRPCSystem(Component):
         use of that method. If no such string is available, an empty string is
         returned. The documentation string may contain HTML markup. """
         p = self.get_method(method)
-        req.perm.assert_permission(p.permission)
         return '\n'.join((p.signature, '', p.description))
 
     def methodSignature(self, req, method):
@@ -220,7 +218,6 @@ class XMLRPCSystem(Component):
         is an array of types. The first of these types is the return type of
         the method, the rest are parameters. """
         p = self.get_method(method)
-        req.perm.assert_permission(p.permission)
         return [','.join([RPC_TYPES[x] for x in sig]) for sig in p.xmlrpc_signatures()]
 
     def getAPIVersion(self, req):

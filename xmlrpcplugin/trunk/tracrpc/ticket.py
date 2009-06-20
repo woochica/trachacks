@@ -1,6 +1,7 @@
 from trac.attachment import Attachment
 from trac.core import *
-from trac.perm import PermissionCache
+from trac.perm import PermissionError
+from trac.resource import Resource
 import trac.ticket.model as model
 import trac.ticket.query as query
 from trac.ticket.api import TicketSystem
@@ -26,31 +27,34 @@ class TicketRPC(Component):
         return 'ticket'
 
     def xmlrpc_methods(self):
-        yield ('TICKET_VIEW', ((list,), (list, str)), self.query)
-        yield ('TICKET_VIEW', ((list, xmlrpclib.DateTime),), self.getRecentChanges)
-        yield ('TICKET_VIEW', ((list, int),), self.getAvailableActions)
-        yield ('TICKET_VIEW', ((list, int),), self.getActions)
-        yield ('TICKET_VIEW', ((list, int),), self.get)
+        yield (None, ((list,), (list, str)), self.query)
+        yield (None, ((list, xmlrpclib.DateTime),), self.getRecentChanges)
+        yield (None, ((list, int),), self.getAvailableActions)
+        yield (None, ((list, int),), self.getActions)
+        yield (None, ((list, int),), self.get)
         yield ('TICKET_CREATE', ((int, str, str), (int, str, str, dict), (int, str, str, dict, bool)), self.create)
-        yield ('TICKET_VIEW', ((list, int, str), (list, int, str, dict), (list, int, str, dict, bool)), self.update)
-        yield ('TICKET_ADMIN', ((None, int),), self.delete)
-        yield ('TICKET_VIEW', ((dict, int), (dict, int, int)), self.changeLog)
-        yield ('TICKET_VIEW', ((list, int),), self.listAttachments)
-        yield ('TICKET_VIEW', ((xmlrpclib.Binary, int, str),), self.getAttachment)
-        yield ('TICKET_APPEND',
+        yield (None, ((list, int, str), (list, int, str, dict), (list, int, str, dict, bool)), self.update)
+        yield (None, ((None, int),), self.delete)
+        yield (None, ((dict, int), (dict, int, int)), self.changeLog)
+        yield (None, ((list, int),), self.listAttachments)
+        yield (None, ((xmlrpclib.Binary, int, str),), self.getAttachment)
+        yield (None,
                ((str, int, str, str, xmlrpclib.Binary, bool),
                 (str, int, str, str, xmlrpclib.Binary)),
                self.putAttachment)
-        yield ('TICKET_ADMIN', ((bool, int, str),), self.deleteAttachment)
+        yield (None, ((bool, int, str),), self.deleteAttachment)
         yield ('TICKET_VIEW', ((list,),), self.getTicketFields)
 
     # Exported methods
     def query(self, req, qstr='status!=closed'):
         """ Perform a ticket query, returning a list of ticket ID's. """
         q = query.Query.from_string(self.env, qstr)
+        ticket_realm = Resource('ticket')
         out = []
         for t in q.execute(req):
-            out.append(t['id'])
+            tid = t['id']
+            if 'TICKET_VIEW' in req.perm(ticket_realm(id=tid)):
+                out.append(tid)
         return out
 
     def getRecentChanges(self, req, since):
@@ -61,8 +65,11 @@ class TicketRPC(Component):
         cursor.execute('SELECT id FROM ticket'
                        ' WHERE changetime >= %s', (since,))
         result = []
+        ticket_realm = Resource('ticket')
         for row in cursor:
-            result.append(int(row[0]))
+            tid = int(row[0])
+            if 'TICKET_VIEW' in req.perm(ticket_realm(id=tid)):
+                result.append(tid)
         return result
 
     def getAvailableActions(self, req, id):
@@ -108,13 +115,12 @@ class TicketRPC(Component):
                     controls.append((elem.attrib.get('name'),
                                     value, options))
             actions.append((action, first_label, ". ".join(hints) + '.', controls))
-        self.log.debug('Rpc ticket.getActions for ticket %d, user %s: %s' % (
-                    id, req.authname, repr(actions)))
         return actions
 
     def get(self, req, id):
         """ Fetch a ticket. Returns [id, time_created, time_changed, attributes]. """
         t = model.Ticket(self.env, id)
+        req.perm(t.resource).require('TICKET_VIEW')
         return (t.id, t.time_created, t.time_changed, t.values)
 
     def create(self, req, summary, description, attributes = {}, notify=False):
@@ -150,6 +156,7 @@ class TicketRPC(Component):
             # FIXME: Old, non-restricted update - remove soon!
             self.log.warning("Rpc ticket.update for ticket %d by user %s " \
                     "has no workflow 'action'." % (id, req.authname))
+            req.perm(t.resource).require('TICKET_MODIFY')
             for k, v in attributes.iteritems():
                 t[k] = v
             t.save_changes(req.authname, comment, when=now)
@@ -200,6 +207,7 @@ class TicketRPC(Component):
     def delete(self, req, id):
         """ Delete ticket with the given id. """
         t = model.Ticket(self.env, id)
+        req.perm(t.resource).require('TICKET_ADMIN')
         t.delete()
         ts = TicketSystem(self.env)
         # Call ticket change listeners
@@ -208,6 +216,7 @@ class TicketRPC(Component):
 
     def changeLog(self, req, id, when=0):
         t = model.Ticket(self.env, id)
+        req.perm(t.resource).require('TICKET_VIEW')
         for date, author, field, old, new, permanent in t.get_changelog(when):
             yield (date, author, field, old, new, permanent)
     # Use existing documentation from Ticket model
@@ -216,27 +225,31 @@ class TicketRPC(Component):
     def listAttachments(self, req, ticket):
         """ Lists attachments for a given ticket. Returns (filename,
         description, size, time, author) for each attachment."""
-        for t in Attachment.select(self.env, 'ticket', ticket):
-            yield (t.filename, t.description, t.size, 
-                   t.date, t.author)
+        attachments = []
+        for a in Attachment.select(self.env, 'ticket', ticket):
+            if 'ATTACHMENT_VIEW' in req.perm(a.resource):
+                yield (a.filename, a.description, a.size, a.date, a.author)
 
     def getAttachment(self, req, ticket, filename):
         """ returns the content of an attachment. """
         attachment = Attachment(self.env, 'ticket', ticket, filename)
+        req.perm(attachment.resource).require('ATTACHMENT_VIEW')
         return xmlrpclib.Binary(attachment.open().read())
 
     def putAttachment(self, req, ticket, filename, description, data, replace=True):
         """ Add an attachment, optionally (and defaulting to) overwriting an
         existing one. Returns filename."""
         if not model.Ticket(self.env, ticket).exists:
-            raise TracError, 'Ticket "%s" does not exist' % ticket
+            raise TracError('Ticket "%s" does not exist' % ticket)
         if replace:
             try:
                 attachment = Attachment(self.env, 'ticket', ticket, filename)
+                req.perm(attachment.resource).require('ATTACHMENT_DELETE')
                 attachment.delete()
             except TracError:
                 pass
         attachment = Attachment(self.env, 'ticket', ticket)
+        req.perm(attachment.resource).require('ATTACHMENT_CREATE')
         attachment.author = req.authname
         attachment.description = description
         attachment.insert(filename, StringIO(data.data), len(data.data))
@@ -247,6 +260,7 @@ class TicketRPC(Component):
         if not model.Ticket(self.env, ticket).exists:
             raise TracError('Ticket "%s" does not exists' % ticket)
         attachment = Attachment(self.env, 'ticket', ticket, filename)
+        req.perm(attachment.resource).require('ATTACHMENT_DELETE')
         attachment.delete()
         return True
 
