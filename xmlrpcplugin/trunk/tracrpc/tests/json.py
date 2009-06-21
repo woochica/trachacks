@@ -107,6 +107,41 @@ if json:
                     result['result']['__jsonclass__'][1].decode("base64"))
             self.assertEquals(image_in.getvalue(), image_out.getvalue())
 
+        def test_xmlrpc_permission(self):
+            # Test returned response if not XML_RPC permission
+            rpc_testenv._tracadmin('permission', 'remove', 'anonymous',
+                                    'XML_RPC')
+            try:
+                result = self._anon_req({'method': 'system.listMethods',
+                                         'id': 'no-perm'})
+                self.assertEquals(None, result['result'])
+                self.assertEquals('no-perm', result['id'])
+                self.assertEquals(-32600, result['error']['code'])
+                self.assertTrue('XML_RPC' in result['error']['message'])
+            finally:
+                # Add back the default permission for further tests
+                rpc_testenv._tracadmin('permission', 'add', 'anonymous',
+                                            'XML_RPC')
+
+        def test_method_not_found(self):
+            result = self._anon_req({'method': 'system.doesNotExist',
+                                     'id': 'no-method'})
+            self.assertTrue(result['error'])
+            self.assertEquals(result['id'], 'no-method')
+            self.assertEquals(None, result['result'])
+            self.assertEquals(-32603, result['error']['code'])
+            self.assertTrue('not found' in result['error']['message'])
+
+        def test_wrong_argspec(self):
+            result = self._anon_req({'method': 'system.listMethods',
+                            'params': ['hello'], 'id': 'wrong-args'})
+            self.assertTrue(result['error'])
+            self.assertEquals(result['id'], 'wrong-args')
+            self.assertEquals(None, result['result'])
+            self.assertEquals(-32603, result['error']['code'])
+            self.assertTrue('listMethods() takes exactly 2 arguments' \
+                                in result['error']['message'])
+
     def suite():
         return unittest.makeSuite(JsonTestCase)
 else:

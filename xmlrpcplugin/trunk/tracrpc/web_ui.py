@@ -16,6 +16,7 @@ from pkg_resources import resource_filename
 import genshi
 
 from trac.core import *
+from trac.perm import PermissionError
 from trac.util.datefmt import utc
 from trac.util.text import to_unicode, exception_to_unicode
 from trac.web.main import IRequestHandler
@@ -121,12 +122,11 @@ class XMLRPCWeb(Component):
         req.write(response)
 
     def process_request(self, req):
-        # Need at least XML_RPC
-        req.perm.assert_permission('XML_RPC')
 
-        # Dump RPC functions
         content_type = req.get_header('Content-Type') or 'text/html'
         if not self.content_type_re.match(content_type):
+            # Dump RPC functions
+            req.perm.require('XML_RPC') # Need at least XML_RPC
             namespaces = {}
             for method in XMLRPCSystem(self.env).all_methods(req):
                 namespace = method.namespace.replace('.', '_')
@@ -166,10 +166,14 @@ class XMLRPCWeb(Component):
                                     % (req.authname, method, repr(args)))
         args = self._normalize_xml_input(args)
         try:
+            req.perm.require('XML_RPC') # Need at least XML_RPC
             result = XMLRPCSystem(self.env).get_method(method)(req, args)
             self.env.log.debug("RPC(xml) '%s' result: %s" % (method, repr(result)))
             result = tuple(self._normalize_xml_output(result))
             self._send_response(req, xmlrpclib.dumps(result, methodresponse=True), content_type)
+        except PermissionError, e:
+            self._send_response(req, xmlrpclib.dumps(xmlrpclib.Fault(1, to_unicode(e))),
+                                    content_type)
         except xmlrpclib.Fault, e:
             self.log.error(e)
             self._send_response(req, xmlrpclib.dumps(e), content_type)
@@ -184,55 +188,58 @@ class XMLRPCWeb(Component):
 
     def process_json_request(self, req, content_type):
         """ Handles JSON-RPC requests """
-        try: # Catch-all safety
-            try:
-                data = json.load(req, cls=TracRpcJSONDecoder)
-            except Exception, e:
-                # Abort with exception - no data can be read
-                self.log.error("RPC(json) decode error %s" % \
-                        exception_to_unicode(e, traceback=True))
-                response = json.dumps({'result': None, 'id': None,
-                    'error': self._json_error(e, -32700)},
-                    cls=TracRpcJSONEncoder)
-                self._send_response(req, response + '\n', content_type)
-                return
-            self.log.debug("RPC(json) call by '%s': %s" % (req.authname, data))
-            args = data.get('params') or []
-            r_id = data.get('id', None)
-            method = data.get('method', '')
+        try:
+            data = json.load(req, cls=TracRpcJSONDecoder)
+        except Exception, e:
+            # Abort with exception - no data can be read
+            self.log.error("RPC(json) decode error %s" % \
+                    exception_to_unicode(e, traceback=True))
+            response = json.dumps(self._json_error(e, -32700),
+                                    cls=TracRpcJSONEncoder)
+            self._send_response(req, response + '\n', content_type)
+            return
+        self.log.debug("RPC(json) call by '%s': %s" % (req.authname, data))
+        args = data.get('params') or []
+        r_id = data.get('id', None)
+        method = data.get('method', '')
+        try:
+            req.perm.require('XML_RPC') # Need at least XML_RPC
             if method == 'system.multicall': # Custom multicall
-                result = []
+                results = []
                 for mc in args:
-                    result.append(self._json_call(req, mc.get('method', ''),
+                    results.append(self._json_call(req, mc.get('method', ''),
                         mc.get('params') or [], mc.get('id') or r_id))
-                response = {'result': result, 'error': None, 'id': r_id}
+                response = {'result': results, 'error': None, 'id': r_id}
             else:
                 response = self._json_call(req, method, args, r_id)
             try: # JSON encoding
                 self.log.debug("RPC(json) result: %s" % repr(response))
                 response = json.dumps(response, cls=TracRpcJSONEncoder)
             except Exception, e:
-                response = json.dumps({'result': None, 'id': r_id,
-                    'error': self._json_error(e)}, cls=TracRpcJSONEncoder)
+                response = json.dumps(self._json_error(e, r_id=r_id),
+                                        cls=TracRpcJSONEncoder)
+        except PermissionError, e:
+            response = json.dumps(self._json_error(e, -32600, r_id=r_id),
+                cls=TracRpcJSONEncoder)
         except Exception, e:
             self.log.error("RPC(json) error %s" % exception_to_unicode(e,
                                                     traceback=True))
-            response = json.dumps({'result': None, 'id': None,
-                    'error': self._json_error(e)}, cls=TracRpcJSONEncoder)
+            response = json.dumps(self._json_error(e), cls=TracRpcJSONEncoder)
         self.log.debug("RPC(json) encoded result: %s" % response)
         self._send_response(req, response + '\n', content_type)
 
     def _json_call(self, req, method, args, r_id=None):
-        """ Create response dictionary 'result', 'error' and 'id' keys. """
+        """ Call method and create response dictionary. """
         try:
             result = (XMLRPCSystem(self.env).get_method(method)(req, args))[0]
             return {'result': result, 'error': None, 'id': r_id}
         except Exception, e:
-            error = self._json_error(e)
-            return {'result': None, 'error': error, 'id': r_id}
+            return self._json_error(e, r_id=r_id)
 
-    def _json_error(self, msg, c=-32603):
-        return {'name': 'JSONRPCError', 'code': c, 'message': to_unicode(msg)}
+    def _json_error(self, e, c=-32603, r_id=None):
+        """ Makes a response dictionary that is an error. """
+        return {'result': None, 'id': r_id, 'error': {
+                'name': 'JSONRPCError', 'code': c, 'message': to_unicode(e)}}
 
     def _normalize_xml_input(self, args):
         """ Normalizes arguments (at any level - traversing dicts and lists):

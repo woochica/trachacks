@@ -57,12 +57,19 @@ try:
             # Add a delay to make sure server comes up...
             time.sleep(1)
 
+        def _tracadmin(self, *args, **kwargs):
+            SvnFunctionalTestEnvironment._tracadmin(self, *args, **kwargs)
+            # Delay to make sure command executes and cache resets
+            time.sleep(5)
+
     rpc_testenv = RpcTestEnvironment(os.path.realpath(os.path.join(
                 os.path.realpath(__file__), '..', '..', '..', 'rpctestenv')),
                 '8765', 'http://127.0.0.1')
 
     def suite():
         suite = unittest.TestSuite()
+        import tracrpc.tests.xml
+        suite.addTest(tracrpc.tests.xml.suite())
         import tracrpc.tests.json
         suite.addTest(tracrpc.tests.json.suite())
         import tracrpc.tests.ticket
