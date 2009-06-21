@@ -12,7 +12,8 @@ from tracrpc.ticket import *
 from tracrpc.wiki import *
 from tracrpc.search import *
 
-__author__ = 'Odd Simon Simonsen (maintainer) <simon-code@bvnetwork.no>'
+__author__ = ['Alec Thomas <alec@swapoff.org>',
+              'Odd Simon Simonsen <simon-code@bvnetwork.no>']
 __license__ = 'BSD'
 
 try:
