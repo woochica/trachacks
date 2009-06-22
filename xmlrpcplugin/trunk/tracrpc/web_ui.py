@@ -115,9 +115,10 @@ class XMLRPCWeb(Component):
             return True
 
     def _send_response(self, req, response, content_type='application/xml'):
+        response = to_unicode(response).encode("utf-8")
         req.send_response(200)
         req.send_header('Content-Type', content_type)
-        req.send_header('Content-Length', len(response.encode("utf-8")))
+        req.send_header('Content-Length', len(response))
         req.end_headers()
         req.write(response)
 
