@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = 'TracNoticeManager',
-    version = '0.1.0',
+    version = '0.1.1',
     author = 'Carsten Tittel',
     author_email = 'carsten.tittel@fokus.fraunhofer.de',
     url = 'https://trac-hacks.org/wiki/NoticeManagerPlugin',
@@ -14,10 +14,6 @@ setup(
     zip_safe=True,
     packages=['notice_mgr'],
     package_data={'notice_mgr': ['templates/*.cs']},
-
-    install_requires = [
-	'LdapPlugin'
-    ],
 
     entry_points = {
         'trac.plugins': [

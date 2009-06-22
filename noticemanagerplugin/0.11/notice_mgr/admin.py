@@ -25,7 +25,6 @@
 
 import inspect
 import sys
-import ldap
 import os
 
 from trac.core import *
@@ -35,7 +34,6 @@ from trac.util import sorted
 from trac.util.datefmt import format_datetime
 from trac.web.chrome import ITemplateProvider
 from trac.admin import IAdminPanelProvider
-from ldapplugin.api import LDAP_DIRECTORY_PARAMS,LdapUtil,LdapConnection,GROUP_PREFIX
 
 def _getoptions(cls):
     if isinstance(cls, Component):
@@ -49,12 +47,21 @@ class NoticeManagerAdminPage(Component):
 
 
     def __init__(self):
+	try:
+		import ldap
+		from ldapplugin.api import LDAP_DIRECTORY_PARAMS,LdapUtil,LdapConnection,GROUP_PREFIX
+		self._ldap_import = 1
+	except ImportError:
+		self._ldap_import = 0
+		global GROUP_PREFIX
+		GROUP_PREFIX='*'
 	self._ldap = 0
 	self._ldapcfg = {}
 	self.error_message = ""
-	for name,value in self.config.options('ldap'):
-	    if name in LDAP_DIRECTORY_PARAMS:
-		self._ldapcfg[name] = value
+	if self._ldap_import == 1:	
+	    for name,value in self.config.options('ldap'):
+	        if name in LDAP_DIRECTORY_PARAMS:
+		    self._ldapcfg[name] = value
 
     # IAdminPageProvider
     def get_admin_panels(self, req):
@@ -123,9 +130,10 @@ class NoticeManagerAdminPage(Component):
 	return [userinfos,groupinfos]
 
     def _ldap_open(self):
-	if not self._ldap:
-	    bind = self.config.getbool('ldap','group_bind')
-	    self._ldap = LdapConnection(self.env.log, bind, **self._ldapcfg)
+	if self._ldap_import == 1:
+	    if not self._ldap:
+	        bind = self.config.getbool('ldap','group_bind')
+	        self._ldap = LdapConnection(self.env.log, bind, **self._ldapcfg)
 
     def _ldap_search_group(self, groupname):
 	name = ""
@@ -419,6 +427,7 @@ class NoticeManagerAdminPage(Component):
 
 	req.hdf['admin.userinfos'] = userinfos
 	req.hdf['admin.groupinfos'] = groupinfos
+	req.hdf['admin.ldap_import'] = self._ldap_import
 	req.hdf['admin.options'] = self.options
 	if self.error_message:
         	req.hdf['admin.error_message'] = self.error_message

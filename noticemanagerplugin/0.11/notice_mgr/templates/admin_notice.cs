@@ -4,11 +4,13 @@
  <fieldset>
   <legend>Information Gathering</legend>
   <table>
-    <tr>
-     <td><input type="checkbox" name="use_ldap" value="use_ldap" 
-	<?cs if:admin.options.use_ldap ?>checked="checked"<?cs /if?>/></td>
-     <td><label>... from LDAP</label></td>
-    </tr>
+    <?cs if:admin.ldap_import ?>
+      <tr>
+        <td><input type="checkbox" name="use_ldap" value="use_ldap" 
+	  <?cs if:admin.options.use_ldap ?>checked="checked"<?cs /if?>/></td>
+        <td><label>... from LDAP</label></td>
+      </tr>
+    <?cs /if?>
     <tr> 
      <td><input type="checkbox" name="use_file" value="use_file"
 	<?cs if:admin.options.use_file ?>checked="checked"<?cs /if?>/></td>
