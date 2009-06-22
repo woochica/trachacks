@@ -49,7 +49,6 @@ setup(
     ''',
     license = 'BSL1.0',
     keywords = 'trac macro permissions turkanis',
-    url = '',
     classifiers = ['Framework :: Trac',
                    'Development Status :: 3 - Alpha',
                    'Environment :: Web Environment',
