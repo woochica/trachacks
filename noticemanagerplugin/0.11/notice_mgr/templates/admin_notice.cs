@@ -55,10 +55,12 @@
 
 <form id="form" method="post">
  <table class="listing" id="list">
-  <thead>
-   <tr><th colspan="4">Groups</th></tr>
-   <tr><th class="sel">&nbsp;</th><th>Id</th><th>Name</th><th>E-Mail</th></tr>
-  </thead><tbody><?cs
+  <?cs if:admin.ldap_import ?>
+    <thead>
+     <tr><th colspan="4">Groups</th></tr>
+     <tr><th class="sel">&nbsp;</th><th>Id</th><th>Name</th><th>E-Mail</th></tr>
+    </thead>
+   <tbody><?cs
   each:group = admin.groupinfos ?>
    <tr>
     <td><input type="checkbox" name="sel" value="<?cs var:group.id ?>" /></td>
@@ -67,8 +69,10 @@
     <td><?cs var:group.email ?></td>
    </tr><?cs
   /each ?></tbody>
+  <?cs /if?>
   <thead>
     <tr><th colspan="4">Users</th></tr>
+    <tr><th class="sel">&nbsp;</th><th>Id</th><th>Name</th><th>E-Mail</th></tr>
   </thead>
   <tbody><?cs
   each:user = admin.userinfos ?>
@@ -84,7 +88,9 @@
   <input type="submit" name="rminfo" value="Remove informations" />
   <input type="submit" name="rmuser" value="Remove user" />
   <input type="submit" name="rmall" value="Remove all" />
-  <input type="submit" name="extract" value="Extract groups" />
+  <?cs if:admin.ldap_import ?>
+   <input type="submit" name="extract" value="Extract groups" />
+  <?cs /if?>
  </div>
 </form>
 

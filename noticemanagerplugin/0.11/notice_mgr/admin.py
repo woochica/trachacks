@@ -35,6 +35,7 @@ from trac.util.datefmt import format_datetime
 from trac.web.chrome import ITemplateProvider
 from trac.admin import IAdminPanelProvider
 
+global GROUP_PREFIX
 global ldap_import
 try:
 	import ldap
@@ -42,7 +43,6 @@ try:
 	ldap_import = 1
 except ImportError:
 	ldap_import = 0
-	global GROUP_PREFIX
 	GROUP_PREFIX='*'
 
 def _getoptions(cls):
