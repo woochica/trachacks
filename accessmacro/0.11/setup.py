@@ -19,6 +19,7 @@ setup(
     package_data = {"access":[]},
     author = 'Jonathan Turkanis',
     author_email = 'turkanis@coderage.com',
+    url='http://trac-hacks.org/wiki/AccessMacro',
     description = "A Trac macro to display or hide parts of wiki pages based on permissions",
     long_description = '''The Trac Access macro allows parts of wiki pages to be displayed or 
         hidden depending on the permissions of the current user. It has two 
