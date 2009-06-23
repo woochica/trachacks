@@ -28,7 +28,7 @@ public abstract class AbstractBaseAction extends Action {
 	protected abstract void runInternal() throws Exception; 
 	
 	@Override
-	public final void run() {
+	public void run() {
 		try {
 			runInternal();
 		} catch (Throwable e) {

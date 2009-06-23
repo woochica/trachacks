@@ -3,6 +3,7 @@
  */
 package org.trachacks.wikieditor.eclipse.plugin.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.trachacks.wikieditor.model.PageInfo;
@@ -21,8 +22,13 @@ public class Page extends AbstractBaseObject {
 
 	private String name;
 	private Server server;
-//	private WikiService wikiService
+
+	private String shortName;
+	private Page parent;
+	private List<Page> children = new ArrayList<Page>();
+	
 	private boolean wasDeleted;
+	private boolean isFolder = true;
 	private boolean isEditedConcurrently;
 	
 	private PageVersion baseVersion = null;
@@ -34,6 +40,7 @@ public class Page extends AbstractBaseObject {
 		super();
 		this.name = name;
 		this.server = server;
+		this.shortName = name.substring(name.lastIndexOf('/') +1);
 //		this.wikiService = ServiceFactory.getWikiService(server.getServerDetails());
 		
 		if(getWikiService().isLocallyEdited(name)) {
@@ -42,7 +49,28 @@ public class Page extends AbstractBaseObject {
 		refresh();
 	}
 	
-	
+	public String getShortName() {
+		return shortName;
+	}
+
+	public Page getParent() {
+		return parent;
+	}
+
+	public List<Page> getChildren() {
+		return children;
+	}
+
+	public List<Page> addChild(Page child) {
+		children.add(child);
+		child.parent = this;
+		return children;
+	}
+
+//	public void setServer(Server server) {
+//		this.server = server;
+//	}
+
 	/**
 	 * @return the name
 	 */
@@ -122,12 +150,21 @@ public class Page extends AbstractBaseObject {
 		return wasDeleted;
 	}
 	
+	public void setIsFolder(boolean isFolder) {
+		this.isFolder = isFolder;
+	}
+	
+	public boolean isFolder() {
+		return isFolder;
+	}
+	
 	/**
 	 * @param arg0
 	 * @return
 	 * @see org.trachacks.wikieditor.service.WikiService#edit(org.trachacks.wikieditor.model.PageVersion)
 	 */
 	public PageVersion edit(String content) {
+		isFolder = false;
 		baseVersion.setContent(content);
 		baseVersion.setEdited(true);
 		baseVersion = getWikiService().edit(baseVersion);

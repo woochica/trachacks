@@ -57,14 +57,18 @@ public class TreeContentProvider implements IStructuredContentProvider, ITreeCon
 				for (Page page : pages) {
 					page.addListener(modelChangeListener);
 				}
-				return pages.toArray(new Page[0]);
+				return pages.toArray(new Page[pages.size()]);
 			}
 			else {
 				return null;
 			}
 		}
 		else if(obj instanceof Page) {
-			return null;
+			List<Page> pages = ((Page)obj).getChildren();
+			for (Page page : pages) {
+				page.addListener(modelChangeListener);
+			}
+			return ((Page) obj).getChildren().toArray(new Page[pages.size()]);
 		}
 		return null;
 	}
@@ -77,7 +81,12 @@ public class TreeContentProvider implements IStructuredContentProvider, ITreeCon
 			return ServerList.getInstance();
 		}
 		else if(obj instanceof Page) {
-			return ((Page) obj).getServer();
+			Page page = (Page) obj;
+			if(page.getParent() != null) {
+				return page.getParent();
+			}else {
+				return ((Page) obj).getServer();
+			}
 		}
 		return null;
 	}
@@ -90,7 +99,7 @@ public class TreeContentProvider implements IStructuredContentProvider, ITreeCon
 			return ((Server) obj).isConnected() && !((Server) obj).getPages().isEmpty();
 		}
 		else if(obj instanceof Page) {
-			return false;
+			return !((Page) obj).getChildren().isEmpty();
 		}
 		return getChildren(obj) != null;
 	}

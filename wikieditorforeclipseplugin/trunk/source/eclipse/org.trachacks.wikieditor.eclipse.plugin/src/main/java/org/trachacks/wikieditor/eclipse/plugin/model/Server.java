@@ -4,6 +4,7 @@
 package org.trachacks.wikieditor.eclipse.plugin.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -62,10 +63,40 @@ public class Server extends AbstractBaseObject {
 	public List<Page> getPages() {
 		List<Page> pages = new ArrayList<Page>();
 		String[] pageNames = getWikiService().getPageNames();
+
+		Arrays.sort(pageNames);
 		for (int i = 0; i < pageNames.length; i++) {
-			String pageName = pageNames[i];
-			pages.add(new Page(this, pageName));
+			String fullname = pageNames[i].toString();
+			String[] tokens = fullname.split("/");
+			Page parent = null;
+			for (int j = 0; j < tokens.length; j++) {
+				String nodeName = tokens[j];
+				Page currentNode = null;
+				Iterable<Page> sibilings = parent != null? parent.getChildren() : pages; 
+				for (Page existingNode : sibilings) {
+					if(nodeName.equals(existingNode.getShortName())) {
+						currentNode = existingNode;
+					}
+				}
+				if(currentNode == null) {
+					String nodePath = nodeName;
+					if(parent != null) {
+						nodePath = parent.getName() + "/" + nodeName;
+					}
+					currentNode = new Page(this, nodePath);
+					if(parent != null) {
+						parent.addChild(currentNode);
+					}else {
+						pages.add(currentNode);
+					}
+				}
+				if(j == tokens.length -1) {
+					currentNode.setIsFolder(false);
+				}
+				parent = currentNode;
+			}
 		}
+
 		return pages;
 	}
 

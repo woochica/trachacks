@@ -6,6 +6,8 @@ package org.trachacks.wikieditor.disk.impl;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -127,8 +129,8 @@ public class DiskCacheImpl implements DiskCache {
 		File[] files = getCacheFiles(serverId);
 		for (int i = 0; i < files.length; i++) {
 			Element rootElement= SerializationUtils.loadRootElement(files[i]);
-			if("pageVersion".equals(rootElement.getNodeName())) {
-				pageNames.add(files[i].getName());
+			if("pageVersion".equals(rootElement.getNodeName())) {  //$NON-NLS-1$
+				pageNames.add(rootElement.getAttribute("name"));  //$NON-NLS-1$
 			}
 		}
 		return pageNames.toArray(new String[pageNames.size()]);
@@ -145,7 +147,7 @@ public class DiskCacheImpl implements DiskCache {
 			if("pageVersion".equals(rootElement.getNodeName())) {  //$NON-NLS-1$
 				pageVersion = new PageVersion();
 				pageVersion.setServerId(serverId);
-				pageVersion.setName(pageName);
+				pageVersion.setName(rootElement.getAttribute("name"));  //$NON-NLS-1$
 				pageVersion.setContent(rootElement.getTextContent());
 				pageVersion.setComment(rootElement.getAttribute("comment"));  //$NON-NLS-1$
 				pageVersion.setAuthor(rootElement.getAttribute("author"));  //$NON-NLS-1$
@@ -212,7 +214,15 @@ public class DiskCacheImpl implements DiskCache {
 	}
 	
 	private File getPageCacheFile(Long serverId, String  pageName) {
-		return new File(getServerFolder(serverId).getAbsolutePath(), pageName);
+		String filename = null;
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-1");
+			md.update(pageName.getBytes());
+			filename = encode(md.digest());
+		} catch (NoSuchAlgorithmException e) {
+			filename = pageName.replaceAll("/", "!"); // XXX
+		}
+		return new File(getServerFolder(serverId).getAbsolutePath(), filename);
 	}
 	
 	private File getServerFolder(Long serverId) {
@@ -221,5 +231,46 @@ public class DiskCacheImpl implements DiskCache {
 			folder.mkdirs();
 		}
 		return folder;
+	}
+	
+	private static final String baseTable = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-";
+
+	private static String encode(byte[] bytes) {
+		StringBuffer tmp = new StringBuffer();
+		int i = 0;
+		byte pos;
+		for (i = 0; i < bytes.length - bytes.length % 3; i += 3) {
+			pos = (byte) (bytes[i] >> 2 & 63);
+			tmp.append(baseTable.charAt(pos));
+			pos = (byte) (((bytes[i] & 3) << 4) + (bytes[i + 1] >> 4 & 15));
+			tmp.append(baseTable.charAt(pos));
+			pos = (byte) (((bytes[i + 1] & 15) << 2) + (bytes[i + 2] >> 6 & 3));
+			tmp.append(baseTable.charAt(pos));
+			pos = (byte) (bytes[i + 2] & 63);
+			tmp.append(baseTable.charAt(pos));
+			// Add a new line for each 76 chars.
+			// 76*3/4 = 57
+			if ((i + 2) % 56 == 0) {
+				tmp.append("\r\n");
+			}
+		}
+		if (bytes.length % 3 != 0) {
+			if (bytes.length % 3 == 2) {
+				pos = (byte) (bytes[i] >> 2 & 63);
+				tmp.append(baseTable.charAt(pos));
+				pos = (byte) (((bytes[i] & 3) << 4) + (bytes[i + 1] >> 4 & 15));
+				tmp.append(baseTable.charAt(pos));
+				pos = (byte) ((bytes[i + 1] & 15) << 2);
+				tmp.append(baseTable.charAt(pos));
+				tmp.append("=");
+			} else if (bytes.length % 3 == 1) {
+				pos = (byte) (bytes[i] >> 2 & 63);
+				tmp.append(baseTable.charAt(pos));
+				pos = (byte) ((bytes[i] & 3) << 4);
+				tmp.append(baseTable.charAt(pos));
+				tmp.append("==");
+			}
+		}
+		return tmp.toString();
 	}
 }

@@ -7,13 +7,13 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.swt.SWT;
 import org.trachacks.wikieditor.eclipse.plugin.Images;
 import org.trachacks.wikieditor.eclipse.plugin.model.Server;
-import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.AbstractBaseAction;
+import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.AbstractLongRunningBaseAction;
 
 /**
  * @author ivan
  *
  */
-public class RefreshSelectionAction extends AbstractBaseAction {
+public class RefreshSelectionAction extends AbstractLongRunningBaseAction {
 
 	private StructuredViewer viewer;
 	/**

@@ -106,9 +106,9 @@
 				<property><name>!maven.test.skip</name></property>
 			</activation>
 			<properties>
-				<server.url>http://localhost/trac/test</server.url>
-				<credentials.admin.username>admin</credentials.admin.username>
-				<credentials.admin.password>admin</credentials.admin.password>
+				<server.url>http://trac-hacks.org</server.url>
+				<credentials.admin.username>ivangsa</credentials.admin.username>
+				<credentials.admin.password>trachackspa55</credentials.admin.password>
 				<credentials.user.username>user</credentials.user.username>
 				<credentials.user.password>user</credentials.user.password>				
 			</properties>

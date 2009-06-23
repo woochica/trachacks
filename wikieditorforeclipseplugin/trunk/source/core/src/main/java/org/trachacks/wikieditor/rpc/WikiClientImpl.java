@@ -76,7 +76,13 @@ public class WikiClientImpl implements WikiClient {
 	 */
 	public PageVersion getPageVersion(String pageName) throws PageNotFoundException {
 		Map<String, Object> pageInfo = getPageInfo(pageName);
-		String content = getClient().getPage(pageName);
+		String content = null;
+		try {
+			content = getClient().getPage(pageName);
+		} catch (RuntimeException e) {
+			e.printStackTrace();
+			throw e;
+		}
 
 		//FIXME comment property is missing
 		return pageInfo2PageVersion(pageInfo, content);

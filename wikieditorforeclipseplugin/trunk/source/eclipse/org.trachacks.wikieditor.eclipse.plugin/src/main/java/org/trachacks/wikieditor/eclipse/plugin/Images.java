@@ -9,6 +9,7 @@ public enum Images {
     
     ERROR("error.gif"), 
     REFRESH("refresh.gif"),
+    FOLDER("folder.gif"),
     LINK_WITH_EDITOR("link_with_editor.gif"),
     
     ADD_NEW_SERVER("add_server.png"),

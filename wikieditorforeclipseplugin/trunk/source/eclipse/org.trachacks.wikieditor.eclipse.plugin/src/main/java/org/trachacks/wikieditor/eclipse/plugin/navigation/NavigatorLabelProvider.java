@@ -29,7 +29,11 @@ public class NavigatorLabelProvider extends LabelProvider {
             		Images.SERVER_CONNECTED : Images.SERVER_DISCONNECTED);
         }
         else if ( element instanceof Page ) {
-            return Images.get(Images.TEMPLATE);
+        	if(((Page) element).isFolder()) {
+        		return Images.get(Images.FOLDER);
+        	} else {
+        		return Images.get(Images.TEMPLATE);
+        	}
         }
         
 		return PlatformUI.getWorkbench().getSharedImages()
@@ -48,7 +52,7 @@ public class NavigatorLabelProvider extends LabelProvider {
 			return ((Server) element).getServerDetails().getName();
 		}
 		else if(element instanceof Page) {
-			return ((Page) element).getName();
+			return ((Page) element).getShortName();
 		}
 		
 		return super.getText(element);

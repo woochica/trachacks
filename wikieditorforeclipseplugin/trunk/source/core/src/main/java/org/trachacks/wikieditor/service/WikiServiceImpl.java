@@ -103,6 +103,7 @@ public class WikiServiceImpl implements WikiService{
 				// create new page
 				pageVersion = new PageVersion();
 				pageVersion.setName(pageName);
+				pageVersion.setContent("");
 				pageVersion.setServerId(server.getId());
 				pageVersion.setAuthor(server.getUsername());
 			}

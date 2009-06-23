@@ -5,7 +5,6 @@ package org.trachacks.wikieditor.eclipse.plugin.navigation.actions.server;
 
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -13,20 +12,16 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.trachacks.wikieditor.eclipse.plugin.Images;
 import org.trachacks.wikieditor.eclipse.plugin.model.Server;
-import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.AbstractBaseAction;
+import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.AbstractLongRunningBaseAction;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.LabelPasswordField;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.LabelTextField;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.Labels;
-import org.trachacks.wikieditor.model.exception.BadCredentialsException;
-import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
-import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
-import org.trachacks.wikieditor.model.exception.UnknownServerException;
 
 /**
  * @author ivan
  *
  */
-public class ConnectServerAction extends AbstractBaseAction {
+public class ConnectServerAction extends AbstractLongRunningBaseAction {
 
     private StructuredViewer viewer;
     
