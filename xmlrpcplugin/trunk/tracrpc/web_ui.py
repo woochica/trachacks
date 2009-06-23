@@ -18,13 +18,14 @@ import genshi
 from trac.core import *
 from trac.perm import PermissionError
 from trac.util.datefmt import utc
-from trac.util.text import to_unicode, exception_to_unicode
+from trac.util.text import to_unicode
 from trac.web.main import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.formatter import wiki_to_oneliner
 
 from tracrpc.api import IXMLRPCHandler, XMLRPCSystem
 from tracrpc.util import from_xmlrpc_datetime, to_xmlrpc_datetime
+from tracrpc.util import exception_to_unicode
 
 try:
     try:
