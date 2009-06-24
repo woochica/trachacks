@@ -4,8 +4,6 @@
 package org.trachacks.wikieditor.eclipse.plugin.navigation.actions;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -13,6 +11,7 @@ import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+import org.trachacks.wikieditor.eclipse.plugin.Logger;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.Labels;
 
 /**
@@ -35,7 +34,7 @@ public abstract class AbstractLongRunningBaseAction extends AbstractBaseAction {
 						AbstractLongRunningBaseAction.this.runInternal();
 						
 					} catch (Throwable e) {
-						Logger.getAnonymousLogger().log(Level.WARNING, e.getMessage(), e);
+						Logger.error(e.getMessage(), e);
 						MessageDialog.openError(shell, 
 								"Error performing action \"" + getText() + "\"", 
 								Labels.getText(e.getClass().getName()));
@@ -46,9 +45,9 @@ public abstract class AbstractLongRunningBaseAction extends AbstractBaseAction {
 			});
 			
 		} catch (InvocationTargetException e) {
-			e.printStackTrace();
+			Logger.error(e.getMessage(), e);
 		} catch (InterruptedException e) {
-			e.printStackTrace();
+			Logger.error(e.getMessage(), e);
 		}
 	}
 

@@ -3,9 +3,6 @@
  */
 package org.trachacks.wikieditor.eclipse.plugin.navigation.actions;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -15,6 +12,7 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.trachacks.wikieditor.eclipse.plugin.Logger;
 import org.trachacks.wikieditor.eclipse.plugin.editor.WikiEditorInput;
 import org.trachacks.wikieditor.eclipse.plugin.model.Page;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.Labels;
@@ -32,7 +30,7 @@ public abstract class AbstractBaseAction extends Action {
 		try {
 			runInternal();
 		} catch (Throwable e) {
-			Logger.getAnonymousLogger().log(Level.WARNING, e.getMessage(), e);
+			Logger.error(e.getMessage(), e);
 			MessageDialog.openError(new Shell(), 
 					"Error performing action \"" + getText() + "\"", 
 					Labels.getText(e.getClass().getName()));
