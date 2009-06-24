@@ -38,13 +38,21 @@ public class NewPageWizard  extends Wizard implements INewWizard {
 
 	private Server server;
 	private NewPageWizardPage newPageWizardPage;
+	
 	/**
 	 * @param server
 	 */
 	public NewPageWizard(Server server) {
+		this(server, null);
+	}
+	
+	/**
+	 * @param server
+	 */
+	public NewPageWizard(Server server, String parentFolder) {
 		super();
 		this.server = server;
-		this.newPageWizardPage = new NewPageWizardPage(server.getPageNames());
+		this.newPageWizardPage = new NewPageWizardPage(server.getPageNames(), parentFolder);
 	}
 	
 	@Override
@@ -66,12 +74,16 @@ public class NewPageWizard  extends Wizard implements INewWizard {
 }
 class  NewPageWizardPage extends WizardPage implements ModifyListener{
 
+	private String parentFolder;
 	private List<String> pageNames;
 	private LabelTextField pageNameField;
 	
-	protected NewPageWizardPage(String[] pageNames) {
+	protected NewPageWizardPage(String[] pageNames, String parentFolder) {
 		super("NewPageWizardPage"); //$NON-NLS-1$
 		this.pageNames = Arrays.asList(pageNames);
+		if(parentFolder != null) {
+			this.parentFolder = parentFolder + "/";
+		}
         setImageDescriptor(Images.getDescriptor(Images.TRAC_48));
         setTitle(Labels.getText("newPageWizard.pageName.title")); //$NON-NLS-1$
         setDescription(Labels.getText("newPageWizard.pageName.message")); //$NON-NLS-1$
@@ -112,8 +124,9 @@ class  NewPageWizardPage extends WizardPage implements ModifyListener{
         layout.numColumns = 2;
         layout.verticalSpacing = 9;
         
-        pageNameField = new LabelTextField(container,  null, "newPageWizard.pageName", true); //$NON-NLS-1$
+        pageNameField = new LabelTextField(container,  parentFolder, "newPageWizard.pageName", true); //$NON-NLS-1$
         pageNameField.getText().addModifyListener(this);
+        pageNameField.getText().selectAll();
         
         setControl(container);
 	}

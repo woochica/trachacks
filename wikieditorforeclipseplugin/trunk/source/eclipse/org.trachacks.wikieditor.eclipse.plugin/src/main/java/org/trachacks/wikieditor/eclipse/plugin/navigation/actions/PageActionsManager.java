@@ -10,6 +10,7 @@ import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.trachacks.wikieditor.eclipse.plugin.model.Page;
+import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.AddSubPageAction;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.CommitPageAction;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.DeletePageAction;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page.DeletePageVersionAction;
@@ -32,6 +33,7 @@ public class PageActionsManager {
     
     private Action openEditor;
     private Action refresh;
+    private Action addSubPage;
     private Action unedit;
     private Action commit;
     private Action merge;
@@ -46,6 +48,7 @@ public class PageActionsManager {
 		this.viewer = viewer;
 		openEditor = new OpenPageEditorAction(viewer);
 		refresh = new RefreshSelectionAction(viewer);
+		addSubPage = new AddSubPageAction(viewer);
 		unedit = new UneditPageAction(viewer);
 		commit = new CommitPageAction(viewer);
 		merge = new MergePageAction(viewer);
@@ -63,6 +66,8 @@ public class PageActionsManager {
 			
 			menu.add(openEditor);
 			menu.add(refresh);
+			menu.add(new Separator());
+			menu.add(addSubPage);
 			menu.add(new Separator());
 			menu.add(commit);
 			commit.setEnabled(page.isEdited() && !page.isEditedConcurrently());

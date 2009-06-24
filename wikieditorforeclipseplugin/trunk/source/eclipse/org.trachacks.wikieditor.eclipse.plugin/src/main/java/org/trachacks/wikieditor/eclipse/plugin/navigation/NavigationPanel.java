@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.IDecoratorManager;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.navigator.CommonViewer;
+import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.IShowInSource;
 import org.eclipse.ui.part.IShowInTarget;
 import org.eclipse.ui.part.ShowInContext;
@@ -39,6 +40,7 @@ import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.server.AddServ
 public class NavigationPanel extends ViewPart implements IModelChangeListener, IDoubleClickListener, IShowInTarget, IShowInSource {
 
     private CommonViewer viewer;
+    private DrillDownAdapter drillDownAdapter;
 	private ServerActionsManager serverActionsManager;
 	private PageActionsManager pageActionsManager;
 	
@@ -47,10 +49,11 @@ public class NavigationPanel extends ViewPart implements IModelChangeListener, I
 	 */
 	@Override
     public void createPartControl(Composite parent) {
-		viewer = new CommonViewer(this.getClass().getName(), parent, SWT.MULTI
-				| SWT.H_SCROLL | SWT.V_SCROLL);
+		viewer = new CommonViewer(this.getClass().getName(), parent, 
+				SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		viewer.setContentProvider(new TreeContentProvider(this));
-
+		drillDownAdapter = new DrillDownAdapter(viewer);
+		
 		NavigatorLabelProvider labelProvider = new NavigatorLabelProvider();
 		IDecoratorManager manager = Activator.getDefault().getWorkbench().getDecoratorManager();
 		viewer.setLabelProvider(new DecoratingLabelProvider(labelProvider,manager));
@@ -70,6 +73,9 @@ public class NavigationPanel extends ViewPart implements IModelChangeListener, I
         
         serverActionsManager.fillToolBar(toolBarManager);
         pageActionsManager.fillToolBar(toolBarManager);
+        toolBarManager.add(new Separator());
+        drillDownAdapter.addNavigationActions(toolBarManager);
+        
         
         MenuManager menuMgr = new MenuManager( "#PopupMenu" ); //$NON-NLS-1$
         menuMgr.setRemoveAllWhenShown( true );
