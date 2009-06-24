@@ -26,6 +26,7 @@ import org.trachacks.wikieditor.service.WikiService;
  */
 public class Server extends AbstractBaseObject {
 
+	private List<Page> pages;
 	private ServerDetails serverDetails;
 	private WikiService wikiService;
 	private boolean connected = false;
@@ -57,10 +58,18 @@ public class Server extends AbstractBaseObject {
 	}
 
 	/**
+	 * 
+	 * @return
+	 */
+	public List<Page> getPages() {
+		return pages;
+	}
+	
+	/**
 	 * @return
 	 * @see org.trachacks.wikieditor.service.WikiService#loadPages()
 	 */
-	public List<Page> getPages() {
+	private void buildTree() {
 		List<Page> pages = new ArrayList<Page>();
 		String[] pageNames = getWikiService().getPageNames();
 
@@ -97,7 +106,7 @@ public class Server extends AbstractBaseObject {
 			}
 		}
 
-		return pages;
+		this.pages = pages;
 	}
 
 	
@@ -128,6 +137,7 @@ public class Server extends AbstractBaseObject {
 		testConnection(serverDetails);
 		this.wikiService = ServiceFactory.getWikiService(serverDetails);
 		connected = true;
+		buildTree();
 		notifyChanged();
 	}
 	
@@ -142,6 +152,7 @@ public class Server extends AbstractBaseObject {
 	}
 	
 	public void refresh() {
+		buildTree();
 		notifyChanged();
 	}
 
