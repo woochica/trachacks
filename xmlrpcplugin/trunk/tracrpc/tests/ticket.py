@@ -20,6 +20,21 @@ class RpcTicketTestCase(unittest.TestCase):
         self.user = xmlrpclib.ServerProxy(rpc_testenv.url_user)
         self.admin = xmlrpclib.ServerProxy(rpc_testenv.url_admin)
 
+    def test_getActions(self):
+        tid = self.admin.ticket.create("ticket_getActions", "kjsald", {})
+        actions = self.admin.ticket.getActions(tid)
+        default = [['leave', 'leave', '.', []], ['resolve', 'resolve',
+                    "The resolution will be set. Next status will be 'closed'.",
+                   [['action_resolve_resolve_resolution', 'fixed',
+                  ['fixed', 'invalid', 'wontfix', 'duplicate', 'worksforme']]]],
+                  ['reassign', 'reassign',
+                  "The owner will change from (none). Next status will be 'assigned'.",
+                  [['action_reassign_reassign_owner', 'admin', []]]],
+                  ['accept', 'accept',
+                  "The owner will change from (none) to admin. Next status will be 'accepted'.", []]]
+        self.assertEquals(default, actions)
+        self.admin.ticket.delete(tid)
+
     def test_getAvailableActions_DeleteTicket(self):
         # http://trac-hacks.org/ticket/5387
         tid = self.admin.ticket.create('abc', 'def', {})
