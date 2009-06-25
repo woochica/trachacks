@@ -171,7 +171,7 @@ public class Server extends AbstractBaseObject {
 		/* edit */
 		getWikiService().edit(pageVersion);
 		
-		notifyChanged();
+		refresh();
 		return getPage(name);
 	}
 	
