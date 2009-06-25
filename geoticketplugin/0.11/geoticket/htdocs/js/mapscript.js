@@ -30,7 +30,7 @@ function map_locations(locations, options) {
         //      units: "dd",  // only works in EPSG:4326
         maxExtent: bounds,
         maxResolution: 156543.03396025, // meters per pixel at maximum extent (world projection)
-        projection: googleprojection,  // use google's projection
+        projection: googleprojection  // use google's projection
     };
     
     // create a map opject with the options
@@ -91,7 +91,7 @@ function map_locations(locations, options) {
 	};
     }
 
-    // add the point of interest to the data layer
+    // add the points of interest to the data layer
     for (var i in locations) {
 
         var point = new OpenLayers.Geometry.Point(locations[i]['longitude'], locations[i]['latitude']);
@@ -101,7 +101,6 @@ function map_locations(locations, options) {
 
     if (!locations || locations.length == 0) {
         // no data on the map, zoom to default view. 
-        // TODO: add default Lon Lat to layers.html JS
         var bounds = new OpenLayers.Bounds();
         var min_lonlat = new OpenLayers.LonLat(min_lon,min_lat);
         var max_lonlat = new OpenLayers.LonLat(max_lon,max_lat);
