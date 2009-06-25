@@ -33,7 +33,7 @@ public class AddSubPageAction extends AbstractBaseAction {
 			Server server = page.getServer();
 			if(server != null && server.isConnected()) {
 				String parentFolder = null;
-				if(!page.getChildren().isEmpty()) {
+				if(page.getParent() != null || !page.getChildren().isEmpty()) {
 					parentFolder =  page.getName();
 				}
 				

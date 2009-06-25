@@ -46,7 +46,7 @@ public class Page extends AbstractBaseObject {
 		if(getWikiService().isLocallyEdited(name)) {
 			this.baseVersion = getWikiService().loadPageVersion(name);
 		}
-		refresh();
+		refreshAttributes();
 	}
 	
 	public String getShortName() {
@@ -107,10 +107,16 @@ public class Page extends AbstractBaseObject {
 		return version;
 	}
 	
+	public void refresh() {
+		refreshAttributes();
+		refreshTree();
+		super.notifyChanged();
+	}
+	
 	/**
 	 * 
 	 */
-	public void refresh() {
+	public void refreshAttributes() {
 		try {
 			this.wasDeleted =  isEdited() && getLatestVersion() == null;
 		} catch (PageNotFoundException e) {
@@ -122,7 +128,10 @@ public class Page extends AbstractBaseObject {
 		&& !wasDeleted
 		&& (int)getLatestVersion().getVersion() != (int)baseVersion.getVersion();
 
-		super.notifyChanged();
+	}
+	
+	public void refreshTree() {
+		// TODO
 	}
 	
 	public PageVersion getBaseVersion() {
