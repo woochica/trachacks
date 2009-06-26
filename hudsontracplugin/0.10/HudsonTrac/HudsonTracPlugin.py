@@ -138,7 +138,10 @@ class HudsonTracPlugin(Component):
 
             if self.use_desc:
                 url = href + '/api/json'
-                line = self.url_opener.open(url).readline()
+                try:
+                    line = self.url_opener.open(url).readline()
+                finally:
+                    self.url_opener.close()
                 json = eval(line.replace('false', 'False').replace('true','True').replace('null', 'None'))
 
                 if json['description']:
