@@ -27,7 +27,7 @@ from jira2trac.util import DisplayProgress
 
 __all__ = ['JiraDecoder', 'TracEncoder']
 
-__version__ = (0, 1)
+__version__ = (0, 2)
 
 version = '.'.join(map(lambda x: str(x), __version__))
 

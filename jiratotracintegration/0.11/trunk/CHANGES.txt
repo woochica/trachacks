@@ -1,0 +1,20 @@
+Jira2Trac Changelog
+===================
+
+This file contains information about the changes between the different
+versions of Jira2Trac.
+
+.. contents::
+
+0.2 (unreleased)
+----------------
+
+
+0.1 (2009-06-26)
+----------------
+ - Jira backup XML file parser
+ - Send imported Jira data and attachments to Trac using XmlRpcPlugin 1.0 for Trac
+ - Generates a htpasswd file containing the imported Jira users and their SHA-512 base64 encoded passwords
+ - Using a patched version of the AccountManagerPlugin allows you then to authenticate Jira users in Trac
+ - Supports migration of Resolutions, Priorities, Components, Issue Types, Statuses, Tickets, Attachments, Users
+ - Compatible with Atlassian Jira Enterprise 3.6.5 (build 161)
