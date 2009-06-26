@@ -17,6 +17,10 @@ class Open311(Component):
 
     implements(IRequestHandler)
 
+    # custom ticket field for AID
+    # see: http://api.dc.gov/geocoding/v1
+    aid = Option('ticket-custom', 'aid', 'text')
+    aid_label = Option('ticket-custom', 'aid.label', 'AID')
 
     ### methods for IRequestHandler
 
@@ -108,9 +112,15 @@ class Open311(Component):
             return None
         ticket = Ticket(self.env, int(ticket_id))
         fields = []
+
+        # mapping -- not yet complete
         fields.append({'servicerequestid': ticket.id})
         fields.append({"servicepriority": ticket['priority']})
-        # TODO - the rest of the fields
+        fields.append({'serviceorderdate': str(ticket.time_created)})
+        fields.append({"serviceorderstatus": ticket['status']})
+        fields.append({'resolution': ticket['resolution']})
+        fields.append({"aid": ticket['aid']})
+
         return { 'servicerequest': fields }
 
     def submit(self, req):

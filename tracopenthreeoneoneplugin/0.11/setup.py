@@ -14,6 +14,10 @@ setup(name='TracOpen311',
       include_package_data=True,
       package_data={ 'tracopen311': ['templates/*', 'htdocs/*'] },
       zip_safe=False,
+      install_requires=[
+        # -*- Extra requirements: -*-
+        'simplejson',
+        ],
       entry_points = """
       [trac.plugins]
       tracopen311 = tracopen311
