@@ -85,9 +85,9 @@ class HudsonTracPlugin(Component):
             return
 
         if isinstance(start, datetime): # Trac>=0.11
-                from trac.util.datefmt import to_timestamp
-                start = to_timestamp(start)
-                stop = to_timestamp(stop)
+            from trac.util.datefmt import to_timestamp
+            start = to_timestamp(start)
+            stop = to_timestamp(stop)
 
         add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
 
