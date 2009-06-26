@@ -81,54 +81,56 @@ class HudsonTracPlugin(Component):
             yield ('build', 'Hudson Builds')
 
     def get_timeline_events(self, req, start, stop, filters):
+        if not 'build' in filters:
+            return
+
         if isinstance(start, datetime): # Trac>=0.11
                 from trac.util.datefmt import to_timestamp
                 start = to_timestamp(start)
                 stop = to_timestamp(stop)
 
-        if 'build' in filters:
-            add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
+        add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
 
-            feed = feedparser.parse(self.feed_url, handlers=[self.bAuth, self.dAuth])
+        feed = feedparser.parse(self.feed_url, handlers=[self.bAuth, self.dAuth])
 
-            for entry in feed.entries:
-                # Only look at top-level entries
-                if not self.disp_sub and entry.title.find(u'»') >= 0:
-                    continue
+        for entry in feed.entries:
+            # Only look at top-level entries
+            if not self.disp_sub and entry.title.find(u'»') >= 0:
+                continue
 
-                # check time range
-                completed = calendar.timegm(entry.updated_parsed)
-                if completed > stop:
-                    continue
-                if completed < start:
-                    break
+            # check time range
+            completed = calendar.timegm(entry.updated_parsed)
+            if completed > stop:
+                continue
+            if completed < start:
+                break
 
-                # create timeline entry
-                if entry.title.find('SUCCESS') >= 0:
-                    message = 'Build finished successfully'
-                    kind = self.alt_succ and 'build-successful-alt' or 'build-successful'
-                elif entry.title.find('UNSTABLE') >= 0:
-                    message = 'Build unstable'
-                    kind = 'build-unstable'
-                elif entry.title.find('ABORTED') >= 0:
-                    message = 'Build aborted'
-                    kind = 'build-aborted'
-                else:
-                    message = 'Build failed'
-                    kind = 'build-failed'
+            # create timeline entry
+            if entry.title.find('SUCCESS') >= 0:
+                message = 'Build finished successfully'
+                kind = self.alt_succ and 'build-successful-alt' or 'build-successful'
+            elif entry.title.find('UNSTABLE') >= 0:
+                message = 'Build unstable'
+                kind = 'build-unstable'
+            elif entry.title.find('ABORTED') >= 0:
+                message = 'Build aborted'
+                kind = 'build-aborted'
+            else:
+                message = 'Build failed'
+                kind = 'build-failed'
 
-                href = entry.link
-                title = entry.title
+            href = entry.link
+            title = entry.title
 
-                if self.use_desc:
-                    url = href + '/api/json'
-                    line = self.url_opener.open(url).readline()
-                    json = eval(line.replace('false', 'False').replace('true','True').replace('null', 'None'))
+            if self.use_desc:
+                url = href + '/api/json'
+                line = self.url_opener.open(url).readline()
+                json = eval(line.replace('false', 'False').replace('true','True').replace('null', 'None'))
 
-                    if json['description']:
-                        message = unicode(json['description'], 'utf-8')
+                if json['description']:
+                    message = unicode(json['description'], 'utf-8')
 
-                comment = message + ' at ' + format_datetime(completed)
+            comment = message + ' at ' + format_datetime(completed)
 
-                yield kind, href, title, completed, None, comment
+            yield kind, href, title, completed, None, comment
 
