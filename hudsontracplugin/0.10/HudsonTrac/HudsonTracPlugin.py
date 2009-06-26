@@ -92,6 +92,10 @@ class HudsonTracPlugin(Component):
         add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
 
         feed = feedparser.parse(self.feed_url, handlers=[self.bAuth, self.dAuth])
+        if getattr(feed, 'status', 0) >= 400:
+            raise IOError, "Error getting feed '%s': http-status=%d" % (self.feed_url, feed.status)
+        if feed.bozo:
+            raise IOError, "Error getting feed '%s': %s" % (self.feed_url, feed.bozo_exception)
 
         for entry in feed.entries:
             # Only look at top-level entries
