@@ -44,7 +44,11 @@ class Open311(Component):
             if not (method in self.methods and format in self.formats):
                 return False
             if req.method in self.methods[method]:
+                if req.method == 'POST':
+                    # XXX fix up the nonce so that anonymous POSTs are allowed
+                    req.args['__FORM_TOKEN'] = req.form_token
                 return True
+            
         return False
 
 
@@ -124,7 +128,28 @@ class Open311(Component):
         return { 'servicerequest': fields }
 
     def submit(self, req):
-        raise NotImplementedError
+        ticket = Ticket(self.env)
+
+        # required fields
+        ticket['aid'] = req.args['aid']
+        description = req.args['description']
+        ticket['description'] = description
+        ticket['summary'] = req.args.get('summary', description)
+        
+        # other fields
+        excluded = ['aid', 'description', 'summary']
+        fields = [ field['name'] for field in ticket.fields
+                   if field['name'] not in excluded ]
+        for field in fields:
+            arg = req.args.get(field)
+            if arg is not None:
+                ticket[field] = arg
+
+        # create the ticket
+        _id = ticket.insert()
+
+        # yield the ticket ID
+        return {"servicerequestid": _id}
 
     def getFromToken(self, req):
         # XXX for now return the same token as the request (no temporaries)
