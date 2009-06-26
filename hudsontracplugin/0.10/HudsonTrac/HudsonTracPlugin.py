@@ -47,13 +47,19 @@ class HudsonTracPlugin(Component):
                           'if you run into issues with hudson.')
 
     def __init__(self):
+        url_parts = urlparse.urlsplit(self.feed_url)
+        base_url  = url_parts.scheme + '://' + url_parts.netloc + '/'
+
         pwdMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        pwdMgr.add_password(None, urlparse.urlsplit(self.feed_url)[1], self.username, self.password)
+        pwdMgr.add_password(None, base_url, self.username, self.password)
 
-        self.bAuth = urllib2.HTTPBasicAuthHandler(pwdMgr)
-        self.dAuth = urllib2.HTTPDigestAuthHandler(pwdMgr)
+        bAuth = urllib2.HTTPBasicAuthHandler(pwdMgr)
+        dAuth = urllib2.HTTPDigestAuthHandler(pwdMgr)
 
-        self.url_opener = urllib2.build_opener(self.bAuth, self.dAuth)
+        self.url_opener = urllib2.build_opener(bAuth, dAuth)
+
+        self.env.log.debug("registered auth-handler for '%s', username='%s'" %
+                           (base_url, self.username))
 
     # INavigationContributor methods
 
@@ -91,7 +97,11 @@ class HudsonTracPlugin(Component):
 
         add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
 
-        feed = feedparser.parse(self.feed_url, handlers=[self.bAuth, self.dAuth])
+        try:
+            feed = feedparser.parse(self.url_opener.open(self.feed_url))
+        finally:
+            self.url_opener.close()
+
         if getattr(feed, 'status', 0) >= 400:
             raise IOError, "Error getting feed '%s': http-status=%d" % (self.feed_url, feed.status)
         if feed.bozo:
