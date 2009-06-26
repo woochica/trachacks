@@ -74,6 +74,8 @@ try:
         suite.addTest(tracrpc.tests.json.suite())
         import tracrpc.tests.ticket
         suite.addTest(tracrpc.tests.ticket.suite())
+        import tracrpc.tests.wiki
+        suite.addTest(tracrpc.tests.wiki.suite())
         return suite
 
 except Exception, e:

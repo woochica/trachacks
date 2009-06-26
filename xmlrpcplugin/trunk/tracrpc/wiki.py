@@ -11,7 +11,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 import xmlrpclib
-import posixpath
+import os
 
 from trac.core import *
 from trac.resource import Resource
@@ -153,7 +153,7 @@ class WikiRPC(Component):
 
     def getAttachment(self, req, path):
         """ returns the content of an attachment. """
-        pagename, filename = posixpath.split(path)
+        pagename, filename = os.path.split(path)
         attachment = Attachment(self.env, 'wiki', pagename, filename)
         req.perm(attachment.resource).require('ATTACHMENT_VIEW')
         return xmlrpclib.Binary(attachment.open().read())
@@ -163,7 +163,7 @@ class WikiRPC(Component):
         
         This method is compatible with WikiRPC.  `putAttachmentEx` has a more
         extensive set of (Trac-specific) features. """
-        pagename, filename = posixpath.split(path)
+        pagename, filename = os.path.split(path)
         self.putAttachmentEx(req, pagename, filename, None, data)
         return True
 
@@ -190,7 +190,7 @@ class WikiRPC(Component):
 
     def deleteAttachment(self, req, path):
         """ Delete an attachment. """
-        pagename, filename = posixpath.split(path)
+        pagename, filename = os.path.split(path)
         if not WikiPage(self.env, pagename).exists:
             raise TracError, 'Wiki page "%s" does not exist' % pagename
         attachment = Attachment(self.env, 'wiki', pagename, filename)
