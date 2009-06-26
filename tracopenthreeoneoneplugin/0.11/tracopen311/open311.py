@@ -127,4 +127,6 @@ class Open311(Component):
         raise NotImplementedError
 
     def getFromToken(self, req):
-        raise NotImplementedError
+        # XXX for now return the same token as the request (no temporaries)
+        token = req.args['token']
+        return {"servicerequestid": token}
