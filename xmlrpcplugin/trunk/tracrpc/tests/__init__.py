@@ -15,7 +15,7 @@ try:
 
     if not hasattr(SvnFunctionalTestEnvironment, 'init'):
         raise Exception("\nTrac version is out of date. " \
-            "Tests require minimum Trac 0.11.x rXXXX to run.")
+            "Tests require minimum Trac 0.11.5dev r8303 to run.")
 
     class RpcTestEnvironment(SvnFunctionalTestEnvironment):
 
