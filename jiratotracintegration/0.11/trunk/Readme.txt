@@ -19,5 +19,6 @@ Run ./jira2trac --help for more info.
 
 
 -----------------------
-Author: Thijs Triemstra
 Date: 2009-05-20
+Author: Thijs Triemstra
+Web: http://trac-hacks.org/wiki/JiraToTracIntegration
