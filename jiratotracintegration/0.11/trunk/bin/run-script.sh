@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BACKUP=../../data/backup.xml
-ATTACHMENTS=../../data/attachments
+BACKUP=../data/backup.xml
+ATTACHMENTS=../data/attachments
 HTPASSWD=../test/.htpasswd
 
 USERNAME=admin

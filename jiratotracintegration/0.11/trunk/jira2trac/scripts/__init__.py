@@ -11,6 +11,7 @@ The jira2trac daemon.
 import logging as log
 
 from time import time
+from decimal import Decimal
 from optparse import OptionParser
 
 from jira2trac import version

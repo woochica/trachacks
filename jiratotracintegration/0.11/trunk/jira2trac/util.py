@@ -11,10 +11,11 @@ import logging as log
 from hashlib import sha512
 from base64 import b64encode
 
+
 __all__ = ['DisplayProgress', 'ProgressBar', 'create_hash']
 
 
-def create_hash(self, password):
+def create_hash(password):
     """
     Turns strings into base64 encoded SHA-512 hashes.
     
