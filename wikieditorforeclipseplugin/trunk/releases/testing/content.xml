@@ -3,7 +3,7 @@
 <repository name='Trac WikiEditor 4 Eclipse ~ org.trachacks.wikieditor.eclipse.site' type='org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository' version='1'>
   <properties size='2'>
     <property name='p2.compressed' value='false'/>
-    <property name='p2.timestamp' value='1245949762003'/>
+    <property name='p2.timestamp' value='1246298747970'/>
   </properties>
   <units size='7'>
     <unit id='org.trachacks.wikieditor.eclipse.feature.feature.jar' version='0.0.5'>

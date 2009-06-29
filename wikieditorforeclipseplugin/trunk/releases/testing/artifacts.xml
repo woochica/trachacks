@@ -3,7 +3,7 @@
 <repository name='Trac WikiEditor 4 Eclipse ~ org.trachacks.wikieditor.eclipse.site Artifacts' type='org.eclipse.equinox.p2.artifact.repository.simpleRepository' version='1'>
   <properties size='2'>
     <property name='p2.compressed' value='false'/>
-    <property name='p2.timestamp' value='1245949761972'/>
+    <property name='p2.timestamp' value='1246298747912'/>
   </properties>
   <mappings size='3'>
     <rule filter='(&amp; (classifier=osgi.bundle))' output='${repoUrl}/plugins/${id}_${version}.jar'/>
@@ -13,8 +13,15 @@
   <artifacts size='3'>
     <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.plugin' version='0.0.5'>
       <properties size='3'>
-        <property name='artifact.size' value='187758'/>
-        <property name='download.size' value='187758'/>
+        <property name='artifact.size' value='188857'/>
+        <property name='download.size' value='188857'/>
+        <property name='download.contentType' value='application/zip'/>
+      </properties>
+    </artifact>
+    <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.core' version='0.0.5'>
+      <properties size='3'>
+        <property name='artifact.size' value='756243'/>
+        <property name='download.size' value='756243'/>
         <property name='download.contentType' value='application/zip'/>
       </properties>
     </artifact>
@@ -22,13 +29,6 @@
       <properties size='2'>
         <property name='artifact.size' value='3515'/>
         <property name='download.size' value='3515'/>
-      </properties>
-    </artifact>
-    <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.core' version='0.0.5'>
-      <properties size='3'>
-        <property name='artifact.size' value='756228'/>
-        <property name='download.size' value='756228'/>
-        <property name='download.contentType' value='application/zip'/>
       </properties>
     </artifact>
   </artifacts>
