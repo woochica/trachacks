@@ -35,9 +35,7 @@ public abstract class AbstractLongRunningBaseAction extends AbstractBaseAction {
 						
 					} catch (Throwable e) {
 						Logger.error(e.getMessage(), e);
-						MessageDialog.openError(shell, 
-								"Error performing action \"" + getText() + "\"", 
-								Labels.getText(e.getClass().getName()));
+						showErrorMessage(e);
 					}finally {
 						monitor.done();
 					}
