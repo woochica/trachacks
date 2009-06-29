@@ -63,6 +63,7 @@ public class PageActionsManager {
 		if (selection.size() == 1 && selection.getFirstElement() instanceof Page) {
 			Page page = (Page) selection.getFirstElement();
 
+			boolean hasRemotePage = !page.isBrandNew() && ! page.isFolder(); 
 			
 			menu.add(openEditor);
 			menu.add(refresh);
@@ -78,9 +79,11 @@ public class PageActionsManager {
 			menu.add(markAsMerged);
 			markAsMerged.setEnabled(page.isEditedConcurrently());
 			menu.add(new Separator());
-			menu.add(delete);
-			menu.add(deleteVersion);
-			menu.add(new Separator());
+			if(hasRemotePage) {
+				menu.add(delete);
+				menu.add(deleteVersion);
+				menu.add(new Separator());
+			}
 			menu.add(showHistory);
 			menu.add(showProperties);
 		}
