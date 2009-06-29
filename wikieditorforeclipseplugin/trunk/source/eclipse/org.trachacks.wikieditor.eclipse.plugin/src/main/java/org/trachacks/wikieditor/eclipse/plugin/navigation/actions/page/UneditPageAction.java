@@ -3,6 +3,9 @@
  */
 package org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.trachacks.wikieditor.eclipse.plugin.Images;
@@ -37,6 +40,12 @@ public class UneditPageAction extends AbstractBaseAction {
 						Labels.getText("uneditPageVersion.confirm.message"))) 
 		{
 			page.unedit();
+			
+			try {
+				closeOpenEditor(page);
+			}catch (Exception e) {
+				Logger.getLogger(getClass().getName()).log(Level.SEVERE, "Error closing editor", e);
+			}
 		}
 	}
 	
