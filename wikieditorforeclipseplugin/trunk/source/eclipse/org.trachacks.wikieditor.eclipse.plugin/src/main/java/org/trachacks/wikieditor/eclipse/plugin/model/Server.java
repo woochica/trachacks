@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.swing.text.html.StyleSheet.ListPainter;
+
 import org.trachacks.wikieditor.model.PageVersion;
 import org.trachacks.wikieditor.model.ServerDetails;
 import org.trachacks.wikieditor.model.exception.BadCredentialsException;
@@ -70,10 +72,16 @@ public class Server extends AbstractBaseObject {
 	 * @see org.trachacks.wikieditor.service.WikiService#loadPages()
 	 */
 	private void buildTree() {
-		List<Page> pages = new ArrayList<Page>();
 		String[] pageNames = getWikiService().getPageNames();
-
+		
+		this.pages = buildTree(pageNames);
+		
+	}
+	
+	private List<Page> buildTree(String[] pageNames) {
 		Arrays.sort(pageNames);
+
+		List<Page> treePages = new ArrayList<Page>();
 		for (int i = 0; i < pageNames.length; i++) {
 			String fullname = pageNames[i].toString();
 			String[] tokens = fullname.split("/");
@@ -81,7 +89,7 @@ public class Server extends AbstractBaseObject {
 			for (int j = 0; j < tokens.length; j++) {
 				String nodeName = tokens[j];
 				Page currentNode = null;
-				Iterable<Page> sibilings = parent != null? parent.getChildren() : pages; 
+				Iterable<Page> sibilings = parent != null? parent.getChildren() : treePages; 
 				for (Page existingNode : sibilings) {
 					if(nodeName.equals(existingNode.getShortName())) {
 						currentNode = existingNode;
@@ -96,7 +104,7 @@ public class Server extends AbstractBaseObject {
 					if(parent != null) {
 						parent.addChild(currentNode);
 					}else {
-						pages.add(currentNode);
+						treePages.add(currentNode);
 					}
 				}
 				if(j == tokens.length -1) {
@@ -105,11 +113,38 @@ public class Server extends AbstractBaseObject {
 				parent = currentNode;
 			}
 		}
-
-		this.pages = pages;
+		
+		return treePages;
 	}
 
-	
+	/**
+	 * 
+	 * @param pageName
+	 * @return Returns the list o page children
+	 */
+	List<Page> getPageChildren(String pageName) {
+		if(!pageName.endsWith("/")) {
+			pageName = pageName + "/";
+		}
+		String[] pageNames = getWikiService().getPageNames();
+		List<String> childrenPageNames = new ArrayList<String>();
+		for (int i = 0; i < pageNames.length; i++) {
+			String aPageName = pageNames[i];
+			if(aPageName.startsWith(pageName) && !aPageName.equals(pageName)) {
+				childrenPageNames.add(aPageName);
+			}
+		}
+		
+		List<Page> tree = buildTree(childrenPageNames.toArray(new String[childrenPageNames.size()]));
+		String[] tokens = pageName.split("/");
+		for (int i = 0; i < tokens.length; i++) {
+			if(tree != null && !tree.isEmpty()) {
+				tree = tree.get(0).getChildren();
+			}
+		}
+		
+		return tree;
+	}
 
 
 	/**
@@ -188,7 +223,9 @@ public class Server extends AbstractBaseObject {
 
 	public void deletePage(Page page) throws PermissionDeniedException{
 		getWikiService().deletePage(page.getName());
-		page.notifyChanged();
+		if(page.getParent() != null) {
+			page.getParent().refresh();
+		}
 		notifyChanged();
 	}
 

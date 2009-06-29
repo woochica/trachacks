@@ -131,7 +131,7 @@ public class Page extends AbstractBaseObject {
 	}
 	
 	public void refreshTree() {
-		// TODO
+		children = server.getPageChildren(name);
 	}
 	
 	public PageVersion getBaseVersion() {
@@ -235,12 +235,20 @@ public class Page extends AbstractBaseObject {
 	 * @see org.trachacks.wikieditor.service.WikiService#unedit(org.trachacks.wikieditor.model.PageVersion)
 	 */
 	public void unedit() {
+		boolean isBrandNew = isBrandNew();
 		try {
 			getWikiService().unedit(baseVersion);
 		} catch (PageNotFoundException e) {
 			this.server.notifyChanged(); // unedit a deleted page
 		}
 		this.baseVersion = null;
+		if(isBrandNew) {
+			if(parent != null) {
+				parent.refresh();
+			} else {
+				server.refresh();
+			}
+		}
 		notifyChanged();
 	}
 
