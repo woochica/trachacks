@@ -26,6 +26,7 @@
 import inspect
 import sys
 import os
+import re
 
 from trac.core import *
 from trac.config import Option
@@ -251,7 +252,12 @@ class NoticeManagerAdminPage(Component):
 		return
 	f = open(filename)
 	for line in f:
-	    (id,name,email) = line.split(':')
+	    if re.match('\s*#',line):
+		continue
+	    try:
+	        (id,name,email) = line.split(':')
+	    except ValueError:
+		continue	
 	    id = id.strip()
 	    name = name.strip()
 	    email = email.strip()
