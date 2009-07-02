@@ -12,6 +12,7 @@ import datetime
 import base64
 from StringIO import StringIO
 from pkg_resources import resource_filename
+from types import GeneratorType
 
 import genshi
 
@@ -234,6 +235,8 @@ class XMLRPCWeb(Component):
         """ Call method and create response dictionary. """
         try:
             result = (XMLRPCSystem(self.env).get_method(method)(req, args))[0]
+            if isinstance(result, GeneratorType):
+                result = list(result)
             return {'result': result, 'error': None, 'id': r_id}
         except Exception, e:
             return self._json_error(e, r_id=r_id)

@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='TracXMLRPC',
-    version='1.0.5',
+    version='1.0.6',
     license='BSD',
     author='Alec Thomas',
     author_email='alec@swapoff.org',
