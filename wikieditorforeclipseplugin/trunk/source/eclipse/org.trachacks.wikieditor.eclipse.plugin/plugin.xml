@@ -46,7 +46,6 @@
          point="org.eclipse.ui.editors">
       <editor
             class="org.trachacks.wikieditor.eclipse.plugin.editor.WikiEditor"
-            contributorClass="org.trachacks.wikieditor.eclipse.plugin.editor.WikiEditorContributor"
             icon="icons/trac_16.png"
             id="org.trachacks.wikieditor.eclipse.plugin.editor.WikiEditor"
             name="Wiki Editor">
