@@ -198,7 +198,10 @@ class ImageTrac(Component):
             if mimetype and mimetype.split('/',1)[0] != 'image':
                 continue
             filename = attachment.filename
-            size = Image.open(attachment.path).size
+            try:
+                size = Image.open(attachment.path).size
+            except IOError:
+                continue
             for _size in size, (size[0], None), (None, size[1]):
                 
                 category = reverse_sizes.get(_size)
