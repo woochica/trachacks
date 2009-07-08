@@ -45,30 +45,25 @@ class JiraDecoder(object):
             self.comments = []
             self.issues = []
             self.data = dict()
-            self.data['versions'] = []
-            self.data['resolutions'] = []
-            self.data['projects'] = []
-            self.data['priorities'] = []
-            self.data['users'] = []
-            self.data['issues'] = []
-            self.data['components'] = []
-            self.data['customFieldValues'] = []
-            self.data['eventTypes'] = []
-            self.data['attachments'] = []
-            self.data['issueTypes'] = []
-            self.data['groups'] = []
-            self.data['memberships'] = []
-            self.data['statuses'] = []
-            self.data['actions'] = []
+            self.categories = ['versions', 'resolutions', 'projects', 'priorities',
+                               'components', 'issueTypes', 'statuses', 'groups',
+                               'issues', 'attachments', 'users', 'actions',
+                               'currentSteps', 'historySteps', 'historyStepPrev']
+
+            for c in self.categories:
+                self.data[c] = []
         else:
-            raise BaseException("Please specify the 'input' option")
+            raise BaseException("Please specify a valid 'input' or 'config' option")
 
     def parseBackupFile(self):
         """
         Load Jira backup file.
         """
-        self.size = Decimal(str(os.stat(self.input)[ST_SIZE]/(1024*1024))
-                            ).quantize(Decimal('.01'))
+        if os.path.exists(self.input):
+            self.size = Decimal(str(os.stat(self.input)[ST_SIZE]/(1024*1024))
+                                ).quantize(Decimal('.01'))
+        else:
+            raise BaseException("Jira backup file not found: %s" % self.input)
 
         log.info('Loading Jira backup file: %s (%s MB)' % (self.input, self.size))
         log.info('Processing data...')
@@ -82,31 +77,37 @@ class JiraDecoder(object):
 
     def showResults(self):
         """
-        Display the parse results.
+        Display the parsed result.
         """       
-        categories = ['versions', 'resolutions', 'projects', 'priorities',
-                      'components', 'issueTypes', 'statuses', 'groups',
-                      'issues', 'attachments', 'users', 'actions']
 
-        for category in categories:
+        for category in self.categories:
             name = category.title()
+            total = len(self.data[category])
+            msg = '  %d %s...'
 
             if category == 'issueTypes':
                 name = 'Issue Types'
 
-            log.info('  %d %s...' % (len(self.data[category]), name))
+            elif category == 'currentSteps' or category == 'historySteps' or \
+                 category == 'historyStepPrev':
+                name = 'History'
+                # print a parsed category
+                #for item in self.data[category]:
+                #    print(item)
+                #    print('%50s - %s - %s - %s' % (item['issue'], item['author'], item['type'],
+                #                          item['body']))
 
-        # print a parsed category
-        #for item in self.data['projects']:
-        #    print(item)
-        #    print('%50s - %s - %s - %s' % (item['issue'], item['author'], item['type'],
-        #                          item['body']))
-                    
+            log.info(msg % (total, name))
+
     def _addItem(self, category, data, type=None):
         if type == None:
             type = self.allItems
+        
+        try:
+            self.data[category].append(data)
+        except KeyError:
+            self.data[category] = [data]
 
-        self.data[category].append(data)
         type.append(data)
         self.category = category
 
@@ -187,6 +188,30 @@ class JiraDecoder(object):
                 self._addItem('users', user)
             except KeyError:
                 pass
+
+        elif name == 'OSCurrentStep':
+            current_step = {'status': attrs['status'], 'date': attrs['startDate'],
+                        'id': attrs['id'], 'entry_id': attrs['entryId'],
+                        'action_id': attrs['actionId'], 'step_id': attrs['stepId']}
+
+            current_step['date'] = self.to_datetime(current_step['date'])
+            
+            self._addItem('currentSteps', current_step)
+
+        elif name == 'OSHistoryStep':
+            hist_step = {'status': attrs['status'], 'start_date': attrs['startDate'],
+                        'end_date': attrs['finishDate'], 'id': attrs['id'],
+                        'entry_id': attrs['entryId'], 'caller': attrs['caller'],
+                        'action_id': attrs['actionId'], 'step_id': attrs['stepId']}
+        
+            hist_step['start_date'] = self.to_datetime(hist_step['start_date'])
+            hist_step['end_date'] = self.to_datetime(hist_step['end_date'])
+            
+            self._addItem('historySteps', hist_step)
+
+        elif name == 'OSHistoryStepPrev':
+            hist_step_prev = {'id': attrs['id'], 'prev_id': attrs['previousId']}           
+            self._addItem('historyStepPrev', hist_step_prev)
 
         elif name == 'Issue':
             issue = {'project': attrs['project'], 'id': attrs['id'],
@@ -281,14 +306,21 @@ class JiraDecoder(object):
             self.lastIssue['description'] = ''
 
         # Unused:
-        #  - OSCurrentStep
-        #  - OSCurrentStepPrev
-        #  - OSHistoryStep
-        #  - OSHistoryStepPrev
+        #  - OSCurrentStep id="10905" entryId="10009" stepId="6" actionId="0"
+        #                  startDate="2008-09-23 17:58:31.0" status="Closed"/>
+        #  - OSCurrentStepPrev id="10009" previousId="10006"/>
+        #  - OSHistoryStep id="10006" entryId="10006" stepId="1" actionId="5" startDate="2006-11-18 07:13:28.0"
+        #                   finishDate="2006-11-18 12:28:34.0" status="Finished" caller="john"/>
+        #  - OSHistoryStepPrev id="10574" previousId="10571"/>
+        #  - OSCurrentStepPrev id="10898" previousId="10897"/>
         #  - OSPropertyEntry
         #  - OSPropertyString
         #  - OSWorkflowEntry
+        #  - OSMembership id="10326" userName="user" groupName="jira-users"/> 
         #  - UserAssociation
+        #  - NodeAssociation
+        #  - Notification
+        #  - SchemePermissions
 
     def to_datetime(self, timestamp):
         """
@@ -380,8 +412,6 @@ class TracEncoder(object):
             log.error("Error while connecting: %s" % err)
             sys.exit()
 
-    
-    
     def _importVersions(self):
         # get existing versions from trac
         versions = self.proxy.ticket.version.getAll()

@@ -4,7 +4,11 @@
 # See LICENSE.txt for details.
 
 import os
+
 from setuptools import setup
+
+
+PACKAGE = 'jira2trac'
 
 
 def get_version():
@@ -35,20 +39,14 @@ def get_version():
 
 
 setup(
-    name = 'Jira2Trac',
+    name = PACKAGE,
     version = get_version(),
     author = 'Thijs Triemstra',
-    author_email = 'thijs@red5.org',
+    author_email = 'info@collab.nl',
     url = 'http://trac-hacks.org/wiki/JiraToTracIntegration',
     description = 'Tools to migrate from Jira to Trac',
     license = 'MIT License',
-    zip_safe=True,
-    packages=['jira2trac'],
-    package_data={'jira2trac': ['templates/*.html',
-                                'templates/*.cfg']},
-
-    install_requires = [
-        'trac>=0.11',
-    ],
-
+    classifiers = ['Framework :: Trac'],
+    zip_safe = True,
+    packages = [PACKAGE],
 )
