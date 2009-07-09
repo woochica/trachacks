@@ -56,7 +56,7 @@
 
 		<h2 class="summary searchable">$ticket.summary</h2>	
 		<div class="location">
-		    <span>${ticket['location'].strip() or 'Location not specified'}</span>
+		    <span>${ticket['location'] and ticket['location'].strip() or 'Location not specified'}</span>
 		</div>
 
 	</div>
@@ -104,7 +104,7 @@
 	
 	<div id="map" class="ticket-map" style="width: 430px; height: 325px"></div>
 		
-	<div class="tags data" py:if="ticket['keywords'].strip()">
+	<div class="tags data" py:if="ticket['keywords'] and ticket['keywords'].strip()">
 		<h4>Tags</h4>
 		<span py:with="keywords=[f for f in fields if f.name=='keywords'][0]">${keywords.rendered}</span>
 	</div>	
