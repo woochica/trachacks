@@ -65,7 +65,7 @@ class ImageTrac(Component):
 
             # store the image temporarily for new tickets
             if ticket.exists:
-                self.create_sizes(ticket, image)
+                self.attach(ticket, image)
             else:
                 if not hasattr(self, 'image'):
                     self.image = {}
@@ -109,7 +109,7 @@ class ImageTrac(Component):
             # XXX should check if the image is mandatory
             return 
 
-        self.create_sizes(ticket, image)            
+        self.attach(ticket, image)            
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
@@ -165,34 +165,30 @@ class ImageTrac(Component):
                 return
             if category == 'original':
                 ticket = Ticket(self.env, attachment.resource.parent.id)
-                self.create_sizes(ticket, attachment=attachment)
+                self.create_sizes(ticket, attachment)
 
     def attachment_deleted(self, attachment):
         """Called when an attachment is deleted."""
 
     
-
     ### internal methods
 
-    def create_sizes(self, ticket, image=None, attachment=None):
+    def attach(self, ticket, image):
+        attachment = Attachment(self.env, 'ticket', ticket.id)
+        attachment.author = ticket['reporter']
+        attachment.description = ticket['summary']
+        image.file.seek(0,2) # seek to end of file
+        size = image.file.tell()
+        filename = image.filename
+        image.file.seek(0)
+        attachment.insert(filename, image.file, size)
+        # create_sizes will be called as a function of
+        # IAttachmentChangeListener
+
+    def create_sizes(self, ticket, attachment):
         """create the sizes for a ticket image"""
 
-        assert image or attachment and not image and attachment
-
-        if image:
-            # add the original image as an attachment
-            attachment = Attachment(self.env, 'ticket', ticket.id)
-            attachment.author = ticket['reporter']
-            attachment.description = ticket['summary']
-            image.file.seek(0,2) # seek to end of file
-            size = image.file.tell()
-            filename = image.filename
-            image.file.seek(0)
-            attachment.insert(filename, image.file, size)
-
-        if attachment:
-            filename = attachment.filename
-
+        filename = attachment.filename
         image = Image.open(attachment.open())
 
         # add the specified sizes as attachments
