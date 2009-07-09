@@ -7,6 +7,7 @@ http://trac.edgewall.org
 from cStringIO import StringIO
 from imagetrac.utils import crop_resize
 from trac.attachment import Attachment
+from trac.attachment import IAttachmentChangeListener
 from trac.config import BoolOption
 from trac.config import ListOption
 from trac.config import Option
@@ -19,7 +20,10 @@ from PIL import Image
 
 class ImageTrac(Component):
 
-    implements(ITicketManipulator, ITicketChangeListener, IRequestFilter)
+    implements(ITicketManipulator, 
+               ITicketChangeListener, 
+               IRequestFilter, 
+               IAttachmentChangeListener)
 
     mandatory_image = BoolOption('ticket-image', 'mandatory_image', 'false', 
                                  "Enforce a mandatory image for created tickets")
@@ -146,22 +150,42 @@ class ImageTrac(Component):
         """
         return handler
 
+    ### methods for IAttachmentChangeListener
+
+    """Extension point interface for components that require notification when
+    attachments are created or deleted."""
+
+    def attachment_added(self, attachment):
+        """Called when an attachment is added."""
+        if attachment.resource.parent.realm == 'ticket':
+            try:
+                filename, category = self.image_category(attachment)
+            except TypeError:
+                return
+            if category == 'original':
+                ticket = Ticket(self.env, attachment.resource.parent.id)
+                self.create_sizes(ticket, Image.open(attachment.open()), add_original=False)
+
+    def attachment_deleted(self, attachment):
+        """Called when an attachment is deleted."""
+
     
 
     ### internal methods
 
-    def create_sizes(self, ticket, image):
+    def create_sizes(self, ticket, image, add_original=True):
         """create the sizes for a ticket image"""
 
-        # add the original image as an attachment
-        attachment = Attachment(self.env, 'ticket', ticket.id)
-        attachment.author = ticket['reporter']
-        attachment.description = ticket['summary']
-        image.file.seek(0,2) # seek to end of file
-        size = image.file.tell()
-        filename = image.filename
-        image.file.seek(0)
-        attachment.insert(filename, image.file, size)
+        if add_original:
+            # add the original image as an attachment
+            attachment = Attachment(self.env, 'ticket', ticket.id)
+            attachment.author = ticket['reporter']
+            attachment.description = ticket['summary']
+            image.file.seek(0,2) # seek to end of file
+            size = image.file.tell()
+            filename = image.filename
+            image.file.seek(0)
+            attachment.insert(filename, image.file, size)
 
         image = Image.open(attachment.open())
 
@@ -191,30 +215,11 @@ class ImageTrac(Component):
         
         attachments = list(Attachment.select(self.env, 'ticket', ticket.id))
         images = {}
-        reverse_sizes = dict([(value, key) for key, value in self.sizes().items()])
-        mimeview = Mimeview(self.env)
         for attachment in attachments:
-            mimetype = mimeview.get_mimetype(attachment.filename)
-            if mimetype and mimetype.split('/',1)[0] != 'image':
-                continue
-            filename = attachment.filename
             try:
-                size = Image.open(attachment.path).size
-            except IOError:
+                filename, category = self.image_category(attachment)
+            except TypeError:
                 continue
-            for _size in size, (size[0], None), (None, size[1]):
-                
-                category = reverse_sizes.get(_size)
-                if category:
-                    parts = filename.rsplit('.', 2)
-                    if len(parts) == 3:
-                        dimension = '%sx%s' % (_size[0] or '', _size[1] or '')
-                        if parts[-2] == dimension:
-                            filename = '%s.%s' % (parts[0], parts[-1])
-                    break
-            else:
-                category = 'original'
-
             images.setdefault(filename, {})[category] = attachment.filename
 
         if href is not None:
@@ -223,6 +228,28 @@ class ImageTrac(Component):
                 for key, value in values.items():
                     values[key] = href('attachment', 'ticket', ticket.id, value, format='raw')
         return images
+
+    def image_category(self, attachment):
+        reverse_sizes = dict([(value, key) for key, value in self.sizes().items()])
+        mimeview = Mimeview(self.env)
+        mimetype = mimeview.get_mimetype(attachment.filename)
+        if mimetype and mimetype.split('/',1)[0] != 'image':
+            return None
+        filename = attachment.filename
+        try:
+            size = Image.open(attachment.path).size
+        except IOError:
+            return None
+        for _size in reverse_sizes:
+            parts = filename.rsplit('.', 2)
+            if len(parts) == 3:
+                dimension = '%sx%s' % (_size[0] or '', _size[1] or '')
+                if parts[-2] == dimension:
+                    filename = '%s.%s' % (parts[0], parts[-1])
+                    return (filename, reverse_sizes[_size])
+
+        return (filename, 'original')
+
         
     def sizes(self):
         """return image sizes"""
