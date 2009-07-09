@@ -9,7 +9,7 @@ from genshi.filters import Transformer
 author = "pdoup"
 
 class TimelineComponentFilterPlugin(Component):
-    """Filters timeline events by component.
+    """Filters ticket timeline events by component(s).
     """
        
     implements(IRequestFilter, ITemplateStreamFilter)
@@ -26,18 +26,12 @@ class TimelineComponentFilterPlugin(Component):
                 tickettypes = ["newticket", "editedticket", "closedticket", "attachment", "reopenedticket"]
                 filtered_events = []
                 for event in data['events']:
-                    self.env.log.debug(event['kind'])
                     if event['kind'] in tickettypes:
                         resource = event['kind'] == "attachment" and event['data'][0].parent or event['data'][0]
                         if resource.realm == "ticket":
                             ticket = Ticket( self.env, resource.id )
                             if ticket.values['component'] in components:
                                 filtered_events.append(event)
-#                    elif event['kind'] == "attachment":
-#                        self.env.log.debug("realm : %s" % event['data'][0].realm)
-#                        self.env.log.debug("id    : %s" % event['data'][0].id)
-#                        self.env.log.debug("parent: %s" % event['data'][0].parent.id)
-#                        filtered_events.append(event)
                     else:
                         filtered_events.append(event)
                 data['events'] = filtered_events
