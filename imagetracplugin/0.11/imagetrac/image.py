@@ -13,6 +13,7 @@ from trac.config import ListOption
 from trac.config import Option
 from trac.core import *
 from trac.mimeview import Mimeview
+from trac.ticket import Ticket
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
 from trac.web.api import IRequestFilter
@@ -164,7 +165,7 @@ class ImageTrac(Component):
                 return
             if category == 'original':
                 ticket = Ticket(self.env, attachment.resource.parent.id)
-                self.create_sizes(ticket, Image.open(attachment.open()), add_original=False)
+                self.create_sizes(ticket, attachment=attachment)
 
     def attachment_deleted(self, attachment):
         """Called when an attachment is deleted."""
@@ -173,10 +174,12 @@ class ImageTrac(Component):
 
     ### internal methods
 
-    def create_sizes(self, ticket, image, add_original=True):
+    def create_sizes(self, ticket, image=None, attachment=None):
         """create the sizes for a ticket image"""
 
-        if add_original:
+        assert image or attachment and not image and attachment
+
+        if image:
             # add the original image as an attachment
             attachment = Attachment(self.env, 'ticket', ticket.id)
             attachment.author = ticket['reporter']
@@ -186,6 +189,9 @@ class ImageTrac(Component):
             filename = image.filename
             image.file.seek(0)
             attachment.insert(filename, image.file, size)
+
+        if attachment:
+            filename = attachment.filename
 
         image = Image.open(attachment.open())
 
