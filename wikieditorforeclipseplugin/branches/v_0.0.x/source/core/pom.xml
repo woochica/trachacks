@@ -4,11 +4,12 @@
   <parent>
     <artifactId>wikieditor</artifactId>
     <groupId>org.trachacks.wikieditor</groupId>
-	<version>0.0.5-SNAPSHOT</version>
+	<version>0.0.6-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
 	<artifactId>wikieditor-core</artifactId>
+	<version>0.0.6</version>
 	<packaging>jar</packaging>
 	<name>Trac WikiEditor 4 Eclipse ~ Core</name>
     <url>http://trac-hacks.org/wiki/WikiEditorForEclipsePlugin</url>  

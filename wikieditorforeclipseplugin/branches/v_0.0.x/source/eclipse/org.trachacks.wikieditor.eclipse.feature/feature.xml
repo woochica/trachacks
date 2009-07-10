@@ -2,7 +2,7 @@
 <feature
       id="org.trachacks.wikieditor.eclipse.feature"
       label="TracWikiEditor4Eclipse"
-      version="0.0.5.qualifier"
+      version="0.0.6.qualifier"
       provider-name="TracWikiEditor4Eclipse @ trac-hacks.org">
 
    <description url="http://trac-hacks.org/wiki/WikiEditorForEclipsePlugin">
