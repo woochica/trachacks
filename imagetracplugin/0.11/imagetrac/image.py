@@ -89,24 +89,13 @@ class ImageTrac(Component):
         `old_values` is a dictionary containing the previous values of the
         fields that have changed.
         """
-#        if not hasattr(self, 'image'):
-#            return 
-#        image = self.image.pop(ticket['summary'], None)
-#        if image is None:
-#            # XXX should check if the image is mandatory
-#            return 
-#
-#        self.create_sizes(ticket, image)            
-        
 
     def ticket_created(self, ticket):
         """Called when a ticket is created."""
         if not hasattr(self, 'image'):
-            # XXX should check if the image is mandatory
             return 
         image = self.image.pop(ticket['summary'], None)
         if image is None:
-            # XXX should check if the image is mandatory
             return 
 
         self.attach(ticket, image)            
