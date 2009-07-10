@@ -178,14 +178,13 @@ class ImageTrac(Component):
         """create the sizes for a ticket image"""
 
         filename = attachment.filename
-        image = Image.open(attachment.open())
 
         # add the specified sizes as attachments
         sizes = self.sizes()
         for name, size in sizes.items():
             # crop the image
-            i = image.copy()
-            i = crop_resize(i, size)
+            image = Image.open(attachment.path)
+            i = crop_resize(image, size)
             buffer = StringIO()
             i.save(buffer, image.format)
             buffer.seek(0,2) # seek to end of file
