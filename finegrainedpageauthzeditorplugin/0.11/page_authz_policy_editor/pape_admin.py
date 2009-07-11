@@ -60,8 +60,14 @@ class PageAuthzPolicyEditor(Component):
         if 'TRAC_ADMIN' in req.perm:
             yield ('accounts', _('Accounts'), 'pages', _('Page Permissions'))
 
+    def _get_filename(self, section, name):
+      file_name = self.config.get(section, name)
+      if not file_name.startswith(os.path.sep):
+	file_name = os.path.join(self.env.path, file_name)
+      return(file_name)
+
     def _get_users(self):
-        password_file_name = self.config.get('account-manager', 'password_file')
+        password_file_name = self._get_filename('account-manager', 'password_file')
         users_list = list()
         if os.path.exists(password_file_name):
             password_file = file(password_file_name)
@@ -80,7 +86,7 @@ class PageAuthzPolicyEditor(Component):
     # groups section of the authz file.  Need it as a dictionary of arrays so it be easily
     # iterated.
     def _get_groups_and_members(self):
-        group_file_name = self.config.get('account-manager', 'group_file')
+        group_file_name = self._get_filename('account-manager', 'group_file')
         groups_dict = dict()
         if os.path.exists(group_file_name):
             group_file = file(group_file_name)
@@ -101,7 +107,7 @@ class PageAuthzPolicyEditor(Component):
 
     def render_admin_panel(self, req, cat, page, path_info):
         req.perm.require('TRAC_ADMIN')
-        authz_policy_file_name = self.config.get('authz_policy', 'authz_file')
+        authz_policy_file_name = self._get_filename('authz_policy', 'authz_file')
         group_details = self._get_groups_and_members()
         # Handle the return data
         if req.method == 'POST':

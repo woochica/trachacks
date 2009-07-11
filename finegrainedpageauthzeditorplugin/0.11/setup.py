@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2007 Chris Liechti <cliechti@gmx.net>
 # All rights reserved.
@@ -11,7 +12,7 @@ from setuptools import setup
 
 setup(
     name = 'PageAuthzPolicyEditor',
-    version = '0.1',
+    version = '0.11',
     author = 'Robert Martin',
     author_email = 'robert.martin@arqiva.com',
     url = '',
