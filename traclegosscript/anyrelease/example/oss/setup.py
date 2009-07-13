@@ -23,6 +23,7 @@ setup(name='OSSTracProject',
 
                            # trac plugins
                            'graphviz',
+                           'AutoUpgrade',
                            'IniAdmin',
                            'TracAccountManager',
                            'TracCustomFieldAdmin',
@@ -59,6 +60,7 @@ setup(name='OSSTracProject',
       "http://trac-hacks.org/svn/ticketdeleteplugin/0.11#egg=TracTicketDelete",
 
       # plugins with TOPP authors
+      "http://trac-hacks.org/svn/autoupgradeplugin/0.11#egg=AutoUpgrade",
       "http://trac-hacks.org/svn/autocompleteusersplugin/0.11#egg=AutocompleteUsers",
       "http://trac-hacks.org/svn/icalexporterplugin/0.11#egg=icalexporter",
       "http://trac-hacks.org/svn/svnurlsplugin/0.11#egg=SVN_URLs",
