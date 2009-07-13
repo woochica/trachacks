@@ -9,6 +9,7 @@ import os
 import sys
 
 from martini.config import ConfigMunger
+from martini.utils import getlist
 from optparse import OptionParser
 from paste.script.templates import var
 from paste.script.templates import Template
@@ -45,7 +46,8 @@ class TracLegos(object):
     interactive = True
 
     def __init__(self, directory, master=None, inherit=None, 
-                 site_templates=None, vars=None, options=()):
+                 site_templates=None, vars=None, options=(),
+                 permissions=None):
         """
         * directory: directory for project creation
         * master: path to master trac instance
@@ -63,6 +65,7 @@ class TracLegos(object):
         self.master = master
         self.inherit = inherit or master or None
         self.options.extend(options)
+        self.permissions = permissions or {}
 
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
@@ -115,6 +118,8 @@ class TracLegos(object):
         vars = self.vars.copy()
         vars.update(_vars)
         vars['project'] = project        
+        permissions = dict([(key, value[:]) 
+                            for key, value in self.permissions.items()])
 
         ### munge configuration
 
@@ -213,6 +218,8 @@ class TracLegos(object):
         command.interactive = False
         for paste_template in templates.pastescript_templates:
             paste_template.run(command, dirname, vars)
+            for agent, perm in paste_template.permissions.items():
+                permissions.setdefault(agent, []).extend(perm)
 
         # write back munged configuration 
         munger = ConfigMunger(_conf, options)
@@ -238,13 +245,17 @@ class TracLegos(object):
         # TODO: add options for importing existing wiki pages
         admin.load_pages()
 
+        # add permissions
+        if permissions:
+            admin.add_permissions(permissions)
+
         # TODO:  addition of groups, milestones, versions, etc
         # via trac-admin
 
 
 ### site configuration
 
-sections = set(('site-configuration', 'variables', ))
+sections = set(('site-configuration', 'variables', 'permissions'))
 
 def site_configuration(*ini_files):
     """returns a dictionary of configuration from .ini files"""
@@ -280,6 +291,13 @@ def traclegos_factory(ini_files, configuration, variables):
     argspec['vars'] = argspec['vars'] or {}
     argspec['vars'].update(conf['variables'])
     argspec['vars'].update(variables)
+
+    # permissions:
+    if conf['permissions']:
+        conf['permissions'] = dict([(key, getlist(value))
+                                    for key, value in conf['permissions'].items()])
+    argspec['permissions'] = conf['permissions'] or None
+        
     return argspec
 
 ### functions for the command line front-end to TracLegos

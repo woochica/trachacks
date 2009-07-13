@@ -7,6 +7,7 @@ import pkg_resources
 
 from trac.admin.console import TracAdmin
 from trac.env import open_environment
+from trac.perm import PermissionSystem
 from trac.ticket import model
 
 class TracLegosAdmin(TracAdmin):
@@ -76,6 +77,13 @@ class TracLegosAdmin(TracAdmin):
 
         self._do_wiki_load(pages_dir, cursor) # should probably make this silent
         cnx.commit()
+
+    def add_permissions(self, permissions):
+        perm = PermissionSystem(self.env)
+        for agent, p in permissions.items():
+            for permission in p:
+                perm.grant_permission(agent, permission)
+
         
 if __name__ == '__main__':
     pass # TODO

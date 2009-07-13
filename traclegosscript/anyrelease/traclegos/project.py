@@ -27,7 +27,10 @@ class TracProject(templates.Template):
     # methodologies is favored
 
     # PoachEggs requirements files for the template
-    requirements = []
+    requirements = [] # XXX deprecated?
+
+    # Trac permissions for the template
+    permissions = {}
 
     # database to be used
     db = None
