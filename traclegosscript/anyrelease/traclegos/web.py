@@ -14,7 +14,6 @@ from genshi.template import TemplateLoader
 from martini.config import ConfigMunger
 from trac.web.main import dispatch_request
 from traclegos.db import available_databases
-from traclegos.legos import site_configuration
 from traclegos.legos import traclegos_factory
 from traclegos.legos import TracLegos
 from traclegos.pastescript.string import PasteScriptStringTemplate
