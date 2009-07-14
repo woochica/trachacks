@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.2'
+version='0.2.1'
 
 setup(name='ImageTrac',
       version=version,
@@ -16,7 +16,8 @@ setup(name='ImageTrac',
       zip_safe=False,
       install_requires=[
         'TicketSidebarProvider',
-        'PIL'
+        'PIL',
+        'cropresize'
         ],
       extras_require={
         'mail2trac': [ 'mailtrac' ],

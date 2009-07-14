@@ -5,7 +5,7 @@ http://trac.edgewall.org
 """
 
 from cStringIO import StringIO
-from imagetrac.utils import crop_resize
+from cropresize import crop_resize
 from trac.attachment import Attachment
 from trac.attachment import IAttachmentChangeListener
 from trac.config import BoolOption
