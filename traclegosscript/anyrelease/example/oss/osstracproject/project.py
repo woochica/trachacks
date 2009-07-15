@@ -1,3 +1,5 @@
+import os
+
 from traclegos.project import TracProject
 from paste.script import templates
 
@@ -21,3 +23,7 @@ class OSSTracProject(TracProject):
              var('repository_dir', 'directory of SVN repository', default='')
              ]
 
+
+    def pre(self, command, output_dir, vars):
+        TracProject.pre(self, command, output_dir, vars)
+        vars['basedir'] = os.path.realpath(vars['basedir'])

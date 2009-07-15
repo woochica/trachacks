@@ -186,7 +186,12 @@ class TracLegos(object):
                 paste_template = Template(project)
                 paste_template._read_vars = dict2vars(optdict) # XXX bad touch
                 paste_template.check_vars(vars, command)
-        
+
+        # run the pre method of the pastescript templates
+        # XXX should this be done here?
+        command.interactive = False
+        for paste_template in templates.pastescript_templates:
+            paste_template.pre(command, dirname, vars)
 
         ### create the database
         if database:
@@ -215,9 +220,10 @@ class TracLegos(object):
         fp.close()
 
         ### run pastescript templates
-        command.interactive = False
         for paste_template in templates.pastescript_templates:
-            paste_template.run(command, dirname, vars)
+#            paste_template.run(command, dirname, vars)
+            paste_template.write_files(command, dirname, vars)
+            paste_template.post(command, dirname, vars)
             for agent, perm in paste_template.permissions.items():
                 permissions.setdefault(agent, []).extend(perm)
 
