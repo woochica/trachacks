@@ -155,7 +155,7 @@ class TableMigration(object):
                                     ','.join(subs),
                                     ")",
                                  ])
-        
+
         scur.execute(sql_select, self.opts.wlist)
         sql_insert = "INSERT INTO wiki VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
         for row in scur:
