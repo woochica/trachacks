@@ -12,7 +12,9 @@ import time
 from genshi.core import Markup
 from genshi.template import TemplateLoader
 from martini.config import ConfigMunger
+from trac.env import open_environment
 from trac.web.main import dispatch_request
+from trac.web.main import RequestDispatcher
 from traclegos.db import available_databases
 from traclegos.legos import traclegos_factory
 from traclegos.legos import TracLegos
@@ -267,8 +269,6 @@ class View(object):
         self.legos = TracLegos(**argspec)
         self.legos.interactive = False
         self.directory = self.legos.directory # XXX needed?
-
-        # trac projects available
         self.available_templates = kw.get('available_templates') or project_dict().keys()
         assert self.available_templates
             
@@ -310,6 +310,17 @@ class View(object):
             for name in self.databases.keys():
                 if name not in self.available_databases:
                     del self.databases[name]
+
+    def trac_projects(self):
+        """returns existing Trac projects"""
+        proj = {}
+        for i in os.listdir(self.directory):
+            try:
+                env = open_environment(os.path.join(self.directory, i))
+            except:
+                continue
+            proj[i] = env
+        return proj
                     
     ### methods dealing with HTTP
     def __call__(self, environ, start_response):
