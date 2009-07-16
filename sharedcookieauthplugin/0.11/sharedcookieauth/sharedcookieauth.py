@@ -38,19 +38,8 @@ class SharedCookieAuth(Component):
             return req.remote_user
 
         if req.incookie.has_key('trac_auth'):
-            base_path, project = os.path.split(self.env.path)
-            _projects = [ i for i in os.listdir(base_path)
-                          if i != project ]
-            projects = []
-            for _project in _projects:
-                path = os.path.join(base_path, _project)
-                try:
-                    projects.append(open_environment(path))
-                except:
-                    continue
-            for project in projects:
-                rd = RequestDispatcher(project)
-                agent = rd.authenticate(req)
+            for dispatcher in self.dispatchers().values():
+                agent = dispatcher.authenticate(req)
                 if agent != 'anonymous':
                     return agent
         return None
@@ -86,3 +75,23 @@ class SharedCookieAuth(Component):
         """
 
     ### internal methods
+
+    def dispatchers(self):
+        if not hasattr(self, '_dispatchers'):
+
+            dispatchers = {}
+            base_path, project = os.path.split(self.env.path)
+            projects = [ i for i in os.listdir(base_path)
+                         if i != project ]
+
+            for project in projects:
+                path = os.path.join(base_path, project)
+                try:
+                    env = open_environment(path)
+                    rd = RequestDispatcher(env)
+                except:
+                    continue
+                dispatchers[project] = rd
+
+            self._dispatchers = dispatchers
+        return self._dispatchers
