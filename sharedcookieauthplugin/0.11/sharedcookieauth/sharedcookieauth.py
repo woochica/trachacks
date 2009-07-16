@@ -7,8 +7,8 @@ http://trac.edgewall.org
 import os
 
 from trac.core import *
-from trac.web.api import IAuthenticator
 from trac.web import auth
+from trac.web.api import IAuthenticator
 from trac.web.main import RequestDispatcher
 from trac.env import open_environment
 from trac.env import IEnvironmentSetupParticipant
@@ -31,7 +31,12 @@ class SharedCookieAuth(Component):
     implements(IAuthenticator, IEnvironmentSetupParticipant)
     patched = False
 
+    ### method for IAuthenticator
+
     def authenticate(self, req):
+        if req.remote_user:
+            return req.remote_user
+
         if req.incookie.has_key('trac_auth'):
             base_path, project = os.path.split(self.env.path)
             _projects = [ i for i in os.listdir(base_path)
@@ -49,15 +54,6 @@ class SharedCookieAuth(Component):
                 if agent != 'anonymous':
                     return agent
         return None
-
-    def _do_login(self, req):
-        if not req.remote_user:
-            req.redirect(self.env.abs_href())
-        base_path = req.base_path
-        req.base_path = '/'
-        retval = auth.LoginModule._do_login(self, req)
-        req.base_path = base_path
-        return retval
 
     ### methods for IEnvironmentSetupParticipant
 
@@ -89,4 +85,4 @@ class SharedCookieAuth(Component):
         performed the upgrades they need without an error being raised.
         """
 
-
+    ### internal methods
