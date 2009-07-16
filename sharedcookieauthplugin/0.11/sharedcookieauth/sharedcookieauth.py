@@ -6,6 +6,7 @@ http://trac.edgewall.org
 
 import os
 
+from trac.config import ListOption
 from trac.core import *
 from trac.web import auth
 from trac.web.api import IAuthenticator
@@ -28,7 +29,8 @@ def _do_login(self, req):
 
 class SharedCookieAuth(Component):
 
-    implements(IAuthenticator, IEnvironmentSetupParticipant)
+    ### class-level data
+    implements(IAuthenticator, IEnvironmentSetupParticipant)    
     patched = False
 
     ### method for IAuthenticator
