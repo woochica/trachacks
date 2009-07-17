@@ -120,7 +120,7 @@ class MovieMacro(WikiMacroBase):
         flowplayer_embedded = getattr(formatter, FLOWPLAYER_EMBEDDED, False)
         
         url = get_absolute_url(formatter.href.base, url)
-        src = get_absolute_url(formatter.href.base, 'htdocs://movie/img/black.jpg')
+        src = get_absolute_url(formatter.href.base, kwargs.pop('splash','htdocs://movie/img/black.jpg'))
         
         scheme, netloc, path, params, query, fragment = urlparse(url)
         
