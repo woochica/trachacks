@@ -19,19 +19,32 @@ class GenericObject(object):
         for key, item in kw.items():
             setattr(self, key, item)
 
+### attributes to take from the request for the monkey-patched methods
+req_attr = [ 'authname',
+             'href',
+             'incookie', 
+             'outcookie', 
+             'redirect',
+             'remote_addr', 
+             'remote_user', ]
+
 def _do_login(self, req):
-    kw = [ 'incookie', 'remote_user', 'authname', 
-           'remote_addr', 'outcookie' ]
-    kw = dict([ (i, getattr(req, i)) for i in kw ])
+    kw = dict([ (i, getattr(req, i)) for i in req_attr ])
     kw['base_path'] = '/'
     fake_req = GenericObject(**kw)
     auth_login_module_do_login(self, fake_req)
 
+def _do_logout(self, req):
+    kw = dict([ (i, getattr(req, i)) for i in req_attr ])
+    kw['base_path'] = '/'
+    fake_req = GenericObject(**kw)
+    auth_login_module_do_logout(self, fake_req)
+    
+
 class SharedCookieAuth(Component):
 
     ### class-level data
-    implements(IAuthenticator, IEnvironmentSetupParticipant)    
-    patched = False
+    implements(IAuthenticator, IEnvironmentSetupParticipant)
 
     ### method for IAuthenticator
 
@@ -61,10 +74,7 @@ class SharedCookieAuth(Component):
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
         """
-        if not self.patched:
-            globals()['auth_login_module_do_login'] = auth.LoginModule._do_login
-            auth.LoginModule._do_login = _do_login
-            self.patched = True
+        self.patch()
         return False
         
 
@@ -77,6 +87,14 @@ class SharedCookieAuth(Component):
         """
 
     ### internal methods
+
+    def patch(self):
+        if not globals().has_key('auth_login_module_do_login'):
+            globals()['auth_login_module_do_login'] = auth.LoginModule._do_login
+            auth.LoginModule._do_login = _do_login
+            globals()['auth_login_module_do_logout'] = auth.LoginModule._do_logout
+            auth.LoginModule._do_logout = _do_logout
+
 
     def dispatchers(self):
         if not hasattr(self, '_dispatchers'):
