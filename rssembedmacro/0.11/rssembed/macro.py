@@ -6,7 +6,7 @@ from pkg_resources import resource_filename
 from trac.wiki.api import parse_args
 import re
 import feedparser
-import urllib
+import urllib2
 
 __author__="simon"
 __date__ ="$12/04/2009 7:41:16 PM$"
@@ -34,9 +34,6 @@ class RssEmbedMacro(WikiMacroBase):
     def get_htdocs_dirs(self):
         yield 'rssembed', resource_filename(__name__, 'htdocs')
 
-    def split_at(self, a, index):
-        return (a[:index], a[index + 1:])
-
     def remove_extra_spaces(self, data):
         p = re.compile(r'\s+')
         return p.sub(' ', data)
@@ -61,29 +58,37 @@ class RssEmbedMacro(WikiMacroBase):
             return None
 
         largs, kwargs = parse_args(args)
-        
 
+        if not kwargs.has_key('url'):
+            return _usage()
         url = kwargs['url']
-        details=kwargs['details']
-        
 
-        httpReq = Request(url)
-        req = formatter.req
+        if kwargs.has_key('details'):
+            details=kwargs['details']
+        else:
+            details="false"
+
+        if kwargs.has_key('proxy'):
+            proxy=kwargs['proxy']
+        else:
+            proxy=None
+
         try:
-            response = urlopen(httpReq)
-            response.close()
+            if proxy != None:
+                proxyHandler = urllib2.ProxyHandler({"http":proxy})
+                feedData = feedparser.parse(url, handlers = [proxyHandler])
+            else:
+                response = urlopen(Request(url))
+                response.close()
+                feedData = feedparser.parse(url)
+            
         except HTTPError, e:
             outputText += "HTTP_ERROR("+str(e.code)+")"
         except URLError, e:
             outputText += "Check connectivity"
             
         if outputText != "":
-            return "Cannot contact server: "+outputText+"\n ("+url+")"
-
-        urllib.urlretrieve(url, "/tmp/feedData.xml");
-
-        #fetch RSS feed
-        feedData = feedparser.parse(url)
+            return "Cannot contact server: "+outputText+"\n ("+url+" "+ proxy + ")"
 
         if details != None and details.lower() == "true":
             feedData["showDetails"] = True
@@ -101,6 +106,6 @@ class RssEmbedMacro(WikiMacroBase):
                     shortEntry = shortEntry[:shortEntry.rfind(' ')]+"..."
                     entry.description = shortEntry
 
-        add_stylesheet(req, 'rssembed/css/rssembed.css')
-        return Chrome(self.env).render_template(req, 'rssFeed.html', feedData, fragment=True)
+        add_stylesheet(formatter.req, 'rssembed/css/rssembed.css')
+        return Chrome(self.env).render_template(formatter.req, 'rssFeed.html', feedData, fragment=True)
 
