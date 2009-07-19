@@ -1,37 +1,27 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-import os
+__author__="simon"
+__date__ ="$19/07/2009 9:25:38 PM$"
 
-from setuptools import setup
+from setuptools import setup,find_packages
 
-setup(
-    name = 'TracRssEmbed',
-    version = '0.0.1',
-    packages = ['rssembed'],
-    package_data = { 'rssembed' : ['templates/*.html', 'htdocs/css/*.css'] },
-    author = 'Simon Smithson',
-    author_email = 'smithsos@minchnims.net',
-    description = 'A Trac macro to embed a rss feed into a wiki page, useful for the output from another trac instance.',
-    long_description = open(os.path.join(os.path.dirname(__file__), 'README')).read(),
-    license = 'BSD',
-    keywords = 'trac plugin macro ',
-    url = 'http://minchnims.net/wiki/RssEmbedMacro',
-    classifiers = [
-        'Framework :: Trac',
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Web Environment',
-        'License :: OSI Approved :: BSD License',
-        'Natural Language :: English',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python',
-    ],
-    
-    install_requires = ['Trac'],
+setup (
+  name = 'RssEmbedMacro',
+  version = '0.1',
+  packages = find_packages(),
 
-    entry_points = {
-        'trac.plugins': [
-            'rssembed.macro = rssembed.macro',
-        ],
-    },
+  # Declare your packages' dependencies here, for eg:
+  install_requires=['foo>=3'],
 
+  # Fill in these to make your Egg ready for upload to
+  # PyPI
+  author = 'simon',
+  author_email = '',
+
+  summary = 'Just another Python package for the cheese shop',
+  url = '',
+  license = '',
+  long_description= 'Long description of the package',
+
+  # could also include long_description, download_url, classifiers, etc.
+
+  
 )
