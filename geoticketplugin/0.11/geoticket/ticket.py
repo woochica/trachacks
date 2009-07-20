@@ -375,12 +375,12 @@ class GeoTicket(Component):
 
             # XXX random E fix for minimum lattitude that somehow
             # works and I have no idea why
-            min_lat = max(-89.999999999, min_lat)
+            min_lat = max(-89.999999999, self.min_lat)
 
             chrome = Chrome(self.env)
             _data = dict(req=req, 
                          wms_url=self.wms_url,
-                         min_lat=self.min_lat,
+                         min_lat=min_lat,
                          max_lat=self.max_lat,
                          min_lon=self.min_lon,
                          max_lon=self.max_lon)
