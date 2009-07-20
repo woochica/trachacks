@@ -1,11 +1,14 @@
 from setuptools import setup
 
 setup(name='CustomSelectAdmin',
-      version='0.1',
+      version='0.3',
       packages=['CustomSelectAdmin'],
-      zip_safe=False,
+      package_data={'CustomSelectAdmin' : ['templates/*.html']},
       author='Jimmy Theis',
-      description='Modify custom select fields for tickets in an admin panel',
+      author_email='jet.he.is@gmail.com',
+      description='Modify custom select fields for tickets in an admin panel within Trac.',
+      long_description=open('README.txt').read(),
       url='http://www.sixfeetup.com',
-      entry_points={'trac.plugins': ['customselectadmin = CustomSelectAdmin']},
-      package_data={'CustomSelectAdmin' : ['templates/*.html']})
+      license='BSD',
+      entry_points={'trac.plugins': ['CustomSelectAdmin = CustomSelectAdmin']},
+)

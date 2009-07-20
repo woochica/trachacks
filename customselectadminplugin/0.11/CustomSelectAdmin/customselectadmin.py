@@ -50,7 +50,7 @@ class CustomSelectPanel(Component):
                 'label_plural': self._label[1]}
         optionstr = self.config.get('ticket-custom', fieldname + '.options')
         placeholder = optionstr.startswith('|')
-        fieldoptions = optionstr.replace(' ', '').split('|')
+        fieldoptions = optionstr.replace(' |', '|').replace('| ', '|').split('|')
         for option in fieldoptions:
             if option == '':
                 fieldoptions.remove(option)
@@ -65,12 +65,12 @@ class CustomSelectPanel(Component):
             if req.args.get('add') and req.args.get('name'):
                 fieldoptions.append(req.args.get('name'))
             elif req.args.get('add'):
-                raise TracError(_('No %s specified.' % data['label_singular'].lower()))
+                raise TracError(_("No %s specified."))
             # Remove enums
             elif req.args.get('remove'):
                 sel = req.args.get('sel')
                 if not sel:
-                    raise TracError(_('No %s selected' % data['label_plural'].lower()))
+                    raise TracError(_('No %s selected') % data['label_plural'].lower())
                 if not isinstance(sel, list):
                     sel = [sel]
                 for name in sel:
