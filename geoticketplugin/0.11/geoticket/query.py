@@ -5,7 +5,6 @@ from genshi.builder import Markup
 from genshi.filters import Transformer
 from geoticket.ticket import GeolocationException
 from geoticket.ticket import GeoTicket
-from geoticket.utils import get_column
 from trac.config import BoolOption
 from trac.core import *
 from trac.web.href import Href
@@ -14,6 +13,7 @@ from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import add_script
 from trac.web.chrome import add_warning
 from trac.web.chrome import Chrome
+from tracsqlhelper import get_column
 
 # XXX for scary magic below
 original_href_call = Href.__call__

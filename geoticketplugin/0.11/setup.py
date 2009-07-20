@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.7.2'
+version='0.7.3'
 
 setup(name='GeoTicket',
       version=version,
@@ -19,7 +19,8 @@ setup(name='GeoTicket',
         'geopy>=0.93dev',
         'CustomFieldProvider',
         'TicketSidebarProvider',
-        'simplejson'
+        'TracSQLHelper',
+        'simplejson',
         ],
       extras_require={
         'mail2trac': [ 'mail2trac' ],
@@ -29,6 +30,7 @@ setup(name='GeoTicket',
         "http://trac-hacks.org/svn/customfieldproviderplugin/0.11#egg=CustomFieldProvider",
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
         "http://trac-hacks.org/svn/mailtotracplugin/0.11/#egg=mail2trac",
+        "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
         ],
       entry_points = """
       [trac.plugins]

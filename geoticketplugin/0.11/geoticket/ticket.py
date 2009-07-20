@@ -13,12 +13,6 @@ from genshi.builder import Markup
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
 from geoticket.options import FloatOption
-from geoticket.utils import create_table
-from geoticket.utils import execute_non_query
-from geoticket.utils import get_all_dict
-from geoticket.utils import get_column
-from geoticket.utils import get_first_row
-from geoticket.utils import get_scalar
 from pkg_resources import resource_filename
 from trac.config import Option, BoolOption, ListOption
 from trac.core import *
@@ -34,6 +28,12 @@ from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import add_script
 from trac.web.chrome import Chrome
 from trac.web.chrome import ITemplateProvider
+from tracsqlhelper import create_table
+from tracsqlhelper import execute_non_query
+from tracsqlhelper import get_all_dict
+from tracsqlhelper import get_column
+from tracsqlhelper import get_first_row
+from tracsqlhelper import get_scalar
 
 templates_dir = resource_filename(__name__, 'templates')
 
@@ -129,7 +129,10 @@ class GeoTicket(Component):
         if ticket.id:
             location_changed = not ticket['location'] == Ticket(self.env, ticket.id)['location']
 
-        location = ticket['location'].strip()
+        location = ticket['location']
+        if location is None:
+            location = ''
+        location = location.strip()
 
         # enforce the location field, if applicable
         if not location:
@@ -542,7 +545,7 @@ class GeoTicket(Component):
             if results:
                 return ticket['location'], (results[0]['latitude'], results[0]['longitude'])
 
-        if not ticket['location'].strip():
+        if ticket['location'] is None or not ticket['location'].strip():
             raise GeolocationException
 
         # XXX blindly assume UTF-8
