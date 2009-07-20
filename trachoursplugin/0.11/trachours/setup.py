@@ -1,7 +1,7 @@
 """
 SetupTracHours:
-a plugin for Trac
-http://trac.edgewall.org
+plugin to enable the environment for TracHours.
+This plugin must be initialized prior to using TracHours
 """
 
 from api import custom_fields
