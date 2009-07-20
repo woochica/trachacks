@@ -51,11 +51,11 @@
                     <td py:when="name == 'seconds_worked'"><a href="${result['href'].replace('/ticket', '/hours')}" title="View hours">$result.seconds_worked</a></td>
                     <td py:otherwise="" class="$name" py:choose="">
                       <a py:when="name == 'summary'" href="$result.href" title="View ticket">$value</a>
-                      <py:when test="isinstance(value, datetime)">${dateinfo(value)}</py:when>
-                      <py:when test="name == 'reporter'">${authorinfo(value)}</py:when>
-                      <py:when test="name == 'cc'">${format_emails(ticket_context, value)}</py:when>
-                      <py:when test="name == 'owner' and value">${authorinfo(value)}</py:when>
-                      <py:otherwise>$value</py:otherwise>
+                      <py:when test="isinstance(value, datetime)">${to_unicode(dateinfo(value))}</py:when>
+                      <py:when test="name == 'reporter'">${to_unicode(authorinfo(value))}</py:when>
+                      <py:when test="name == 'cc'">${to_unicode(format_emails(ticket_context, value))}</py:when>
+                      <py:when test="name == 'owner' and value">${to_unicode(authorinfo(value))}</py:when>
+                      <py:otherwise>${to_unicode(value)}</py:otherwise>
                     </td>
                   </py:with>
                 </py:for>
