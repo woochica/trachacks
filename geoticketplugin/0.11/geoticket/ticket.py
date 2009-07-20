@@ -372,6 +372,11 @@ class GeoTicket(Component):
         See the Genshi documentation for more information.
         """
         if filename in ['ticket.html', 'query.html', 'report_view.html', 'mapdashboard.html']:
+
+            # XXX random E fix for minimum lattitude that somehow
+            # works and I have no idea why
+            min_lat = max(-89.999999999, min_lat)
+
             chrome = Chrome(self.env)
             _data = dict(req=req, 
                          wms_url=self.wms_url,
