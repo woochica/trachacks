@@ -49,14 +49,21 @@ class SharedCookieAuth(Component):
     ### method for IAuthenticator
 
     def authenticate(self, req):
+
         if req.remote_user:
             return req.remote_user
 
-        if req.incookie.has_key('trac_auth'):
-            for dispatcher in self.dispatchers().values():
-                agent = dispatcher.authenticate(req)
-                if agent != 'anonymous':
-                    return agent
+        if 'shared_cookie_auth' in req.environ:
+            return None
+        else:
+            req.environ['shared_cookie_auth'] = True
+            if req.incookie.has_key('trac_auth'):
+                for project, dispatcher in self.dispatchers().items():
+                    agent = dispatcher.authenticate(req)
+                    if agent != 'anonymous':
+                        req.authname = agent
+                        return agent
+
         return None
 
     ### methods for IEnvironmentSetupParticipant
