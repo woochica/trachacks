@@ -28,6 +28,7 @@ class SQLHelper(object):
 with parameters:%s
 Exception:%s""" %(sql, params, e))
             db.rollback()
+            raise
         try:
             db.close()
         except:
@@ -100,3 +101,13 @@ def create_table(env, table):
     stmts = db_connector.to_sql(table)
     for stmt in stmts:
         execute_non_query(env, stmt)
+
+def insert_row_from_dict(env, table, dictionary):
+    items = dictionary.items()
+    # XXX this might be slightly retarded
+    keys = [str(item[0]) for item in items]
+#    values = ["'%s'" % str(item[1]) for item in items]
+    values = [item[1] for item in items]
+    sql = "INSERT INTO %s (%s) VALUES (%s)"
+    sql = sql % ( table, ','.join(keys), ','.join(['%s' for v in values]))
+    execute_non_query(env, sql, *values)
