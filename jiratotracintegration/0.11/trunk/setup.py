@@ -49,4 +49,17 @@ setup(
     classifiers = ['Framework :: Trac'],
     zip_safe = True,
     packages = [PACKAGE],
+    entry_points = {
+        'trac.plugins': [
+            'acct_mgr.admin = acct_mgr.admin',
+            'acct_mgr.api = acct_mgr.api',
+            'acct_mgr.db = acct_mgr.db',
+            'acct_mgr.htfile = acct_mgr.htfile',
+            'acct_mgr.http = acct_mgr.http',
+            'acct_mgr.pwhash = acct_mgr.pwhash',
+            'acct_mgr.svnserve = acct_mgr.svnserve',
+            'acct_mgr.web_ui = acct_mgr.web_ui',
+            'acct_mgr.notification = acct_mgr.notification',
+        ]
+    },
 )
