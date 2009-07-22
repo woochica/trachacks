@@ -55,12 +55,16 @@
               <input py:otherwise="" type="hidden" id="group" name="group" value="0"/>
             </py:choose>
 
+            <div class="field">
+              <label for="subscribers">Subscribers:</label><br/>
+              <input type="text" id="subscribers" name="subscribers" value=""/><br/>
+            </div>
+
             <div class="buttons">
               <input type="submit" name="submit" value="Submit"/>
               <input type="button" name="cancel" value="Cancel" onclick="location.href = '${href.discussion()}'"/>
               <input type="hidden" name="discussion_action" value="post-add"/>
             </div>
-
           </fieldset>
         </form>
 

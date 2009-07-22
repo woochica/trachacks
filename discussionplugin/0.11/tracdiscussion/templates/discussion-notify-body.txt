@@ -1,13 +1,30 @@
-${discussion.title} #${discussion.id} - ${discussion.subject}
+#choose
+#when discussion.message.id
+Message #${discussion.message.id} - ${discussion.topic.subject}
 ----------------------------------------------------------------------------
-${discussion.author}
-${discussion.time}
-${discussion.moderators}
+Author:     ${discussion.message.author}
+Created:    ${format_datetime(discussion.message.time)}
+Moderators: ${discussion.forum.moderators}
 ----------------------------------------------------------------------------
 
-${discussion.body}
+${discussion.message.body}
 
 --
-${discussion.title} URL: <${discussion.link}>
-${discussion.project_name} <${discussion.project_url}>
-${discussion.project_description}
+Message URL: <${abs_href.discussion('message', discussion.message.id)}>
+#end
+#otherwise
+Topic #${discussion.topic.id} - ${discussion.topic.subject}
+----------------------------------------------------------------------------
+Author:     ${discussion.topic.author}
+Created:    ${format_datetime(discussion.topic.time)}
+Moderators: ${discussion.forum.moderators}
+----------------------------------------------------------------------------
+
+${discussion.topic.body}
+
+--
+Topic URL: <${abs_href.discussion('topic', discussion.topic.id)}>
+#end
+#end
+$project.name <${project.url or abs_href()}>
+$project.descr

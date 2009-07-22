@@ -1,11 +1,11 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from trac.core import *
 from trac.db import *
 from trac.env import IEnvironmentSetupParticipant
 
 # Last discussion database shcema version
-last_db_version = 2
+last_db_version = 3
 
 class DiscussionInit(Component):
     """ Initialise database and environment for discussion component """

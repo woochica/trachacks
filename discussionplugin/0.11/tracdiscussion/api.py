@@ -9,7 +9,8 @@ from trac.config import Option, IntOption
 from trac.mimeview import Context
 from trac.perm import PermissionError
 from trac.resource import get_resource_url
-from trac.web.chrome import add_link, add_stylesheet, add_script, add_ctxtnav
+from trac.web.chrome import Chrome, add_link, add_stylesheet, add_script, \
+  add_ctxtnav
 from trac.web.href import Href
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.attachment import AttachmentModule
@@ -19,7 +20,7 @@ from trac.util.html import html
 from trac.util.text import to_unicode
 from trac.util.presentation import Paginator
 
-# Trac interfaces inlcudes
+# Trac interfaces includes.
 from trac.resource import IResourceManager
 from trac.perm import IPermissionRequestor
 from trac.attachment import ILegacyAttachmentPolicyDelegate
@@ -33,13 +34,13 @@ class IDiscussionFilter(Interface):
     """Extension point interface for components that want to filter discussion
     topics and messages before their addition."""
 
-    def filter_topic(req, topic):
+    def filter_topic(context, topic):
         """ Called before new topic creation. May return tuple (False,
         <error_message>) or (True, <topic>) where <error_message> is a message
         that will be displayed when topic creation will be canceled and <topic>
         is modified topic that will be added."""
 
-    def filter_message(req, message):
+    def filter_message(context, message):
         """ Called before new message creation. May return tuple (False,
         <error_message>) or (True, <message>) where <error_message> is a
         message that will be displayed when message creation will be canceled
@@ -50,34 +51,34 @@ class ITopicChangeListener(Interface):
     """Extension point interface for components that require notification
     when new forum topics are created, modified or deleted."""
 
-    def topic_created(topic):
-        """Called when a topic is created. Only argument `topic` is
-        a dictionary with topic attributes."""
+    def topic_created(context, topic):
+        """Called when a topic is created. Argument `topic` is a dictionary with
+        topic attributes."""
 
-    def topic_changed(topic, old_topic):
+    def topic_changed(context, topic, old_topic):
         """Called when a topic is modified. `old_topic` is a dictionary
         containing the previous values of the topic attributes and `topic` is
         a dictionary with new values that has changed."""
 
-    def topic_deleted(topic):
-        """Called when a topic is deleted. `topic` argument is a dictionary
+    def topic_deleted(context, topic):
+        """Called when a topic is deleted. Argument `topic` is a dictionary
         with values of attributes of just deleted topic."""
 
 class IMessageChangeListener(Interface):
     """Extension point interface for components that require notification
     when new forum messages are created, modified or deleted."""
 
-    def message_created(message):
-        """Called when a message is created. Only argument `message` is
-        a dictionary with message attributes."""
+    def message_created(context, message):
+        """Called when a message is created. Argument `message` is a dictionary
+        with message attributes."""
 
-    def message_changed(message, old_message):
+    def message_changed(context, message, old_message):
         """Called when a message is modified. `old_message` is a dictionary
         containing the previous values of the message attributes and `message`
         is a dictionary with new values that has changed."""
 
-    def message_deleted(message):
-        """Called when a message is deleted. `message` argument is a dictionary
+    def message_deleted(context, message):
+        """Called when a message is deleted. Argument `message` is a dictionary
         with values of attributes of just deleted message."""
 
 class DiscussionApi(Component):
@@ -207,7 +208,9 @@ class DiscussionApi(Component):
         context.req.session['visited-forums'] = to_unicode(context.visited_forums)
 
         # Fill up template data structure.
+        context.data['authemail'] = context.authemail
         context.data['moderator'] = context.moderator
+        context.data['subscriber'] = context.subscriber
         context.data['group'] = context.group
         context.data['forum'] = context.forum
         context.data['topic'] = context.topic
@@ -242,7 +245,7 @@ class DiscussionApi(Component):
         add_script(context.req, 'common/js/wikitoolbar.js')
 
         # Return request template and data.
-        self.env.log.debug('data: %s' % (context.data,))
+        self.log.debug('data: %s' % (context.data,))
         return actions[-1] + '.html', {'discussion' : context.data}
 
     # Internal methods.
@@ -303,8 +306,14 @@ class DiscussionApi(Component):
 
         # Determine moderator rights.
         context.moderator = context.forum and (context.req.authname in
-          context.forum['moderators']) or context.req.perm.has_permission(
+        context.forum['moderators']) or context.req.perm.has_permission(
           'DISCUSSION_ADMIN')
+
+        # Determine if user is subscriber to topic.
+        context.authemail = context.req.session.get('email')
+        context.subscriber = (context.forum and (context.authemail in
+          context.forum['subscribers'])) or (context.topic and (
+          context.authemail in context.topic['subscribers']))
 
     def _get_actions(self, context):
         # Get action.
@@ -386,6 +395,14 @@ class DiscussionApi(Component):
                         return ['topic-post-edit']
                 elif action == 'set-display':
                     return ['message-set-display', 'wiki-message-list']
+                elif action == 'subscriptions-post-add':
+                    return ['topic-subscriptions-post-add']
+                elif action == 'subscriptions-post-edit':
+                    return ['topic-subscriptions-post-edit']
+                elif action == 'subscribe':
+                    return ['topic-subscribe']
+                elif action == 'unsubscribe':
+                    return ['topic-unsubscribe']
                 else:
                     return ['wiki-message-list']
             else:
@@ -413,6 +430,14 @@ class DiscussionApi(Component):
                     return ['topic-post-move']
                 elif action == 'set-display':
                     return ['message-set-display', 'message-list']
+                elif action == 'subscriptions-post-add':
+                    return ['topic-subscriptions-post-add']
+                elif action == 'subscriptions-post-edit':
+                    return ['topic-subscriptions-post-edit']
+                elif action == 'subscribe':
+                    return ['topic-subscribe']
+                elif action == 'unsubscribe':
+                    return ['topic-unsubscribe']
                 else:
                     return ['message-list']
         elif context.forum:
@@ -589,6 +614,8 @@ class DiscussionApi(Component):
                          'subject' : context.req.args.get('subject'),
                          'description' : context.req.args.get('description'),
                          'moderators' : context.req.args.get('moderators'),
+                         'subscribers' : [subscriber.strip() for subscriber in
+                           context.req.args.get('subscribers').split()],
                          'forum_group' : int(context.req.args.get('group') or 0),
                          'time': to_timestamp(datetime.now(utc))}
 
@@ -612,6 +639,8 @@ class DiscussionApi(Component):
                          'subject' : context.req.args.get('subject'),
                          'description' : context.req.args.get('description'),
                          'moderators' : context.req.args.get('moderators'),
+                         'subscribers' : [subscriber.strip() for subscriber in
+                           context.req.args.get('subscribers').split()],
                          'forum_group' : int(context.req.args.get('group') or 0)}
 
                 # Fix moderators attribute to be a list.
@@ -701,9 +730,16 @@ class DiscussionApi(Component):
                 # Get form values.
                 topic = {'forum' : context.forum['id'],
                          'subject' : context.req.args.get('subject'),
+                         'time': to_timestamp(datetime.now(utc)),
                          'author' : context.req.args.get('author'),
-                         'body' : context.req.args.get('body'),
-                         'time': to_timestamp(datetime.now(utc))}
+                         'subscribers' : [subscriber.strip() for subscriber in
+                            context.req.args.get('subscribers').split()],
+                         'body' : context.req.args.get('body')}
+
+                # Add user e-mail if subscription checked.
+                if context.req.args.get('subscribe') and context.authemail and \
+                  not (context.authemail in topic['subscribers']):
+                    topic['subscribers'].append(context.authemail)
 
                 # Add new topic.
                 self.add_topic(context, topic)
@@ -713,7 +749,7 @@ class DiscussionApi(Component):
 
                 # Notify change listeners.
                 for listener in self.topic_change_listeners:
-                    listener.topic_created(context.topic)
+                    listener.topic_created(context, context.topic)
 
                 # Redirect request to prevent re-submit.
                 if context.realm != 'discussion-wiki':
@@ -748,10 +784,10 @@ class DiscussionApi(Component):
 
                 # Notify change listeners.
                 for listener in self.topic_change_listeners:
-                    listener.topic_changed(topic, context.topic)
+                    listener.topic_changed(context, topic, context.topic)
 
                 # Redirect request to prevent re-submit.
-                context.redirect_url = (context.req.path_info, '')
+                context.redirect_url = (context.req.path_info, '#topic')
 
             elif action == 'topic-move':
                 context.req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -785,7 +821,7 @@ class DiscussionApi(Component):
 
                 # Notify change listeners.
                 for listener in self.topic_change_listeners:
-                    listener.topic_deleted(context.topic)
+                    listener.topic_deleted(context, context.topic)
 
                 # Redirect request to prevent re-submit.
                 if context.realm != 'discussion-wiki':
@@ -803,6 +839,84 @@ class DiscussionApi(Component):
 
                 # Set message list display mode to session.
                 context.req.session['topic-list-display'] = display
+
+            elif action == 'topic-subscriptions-post-edit':
+                context.req.perm.assert_permission('DISCUSSION_MODERATE')
+                if not context.moderator:
+                    raise PermissionError('Forum moderate')
+
+                # Get form values.
+                topic = {'subscribers' : [subscriber.strip() for subscriber in
+                  context.req.args.get('subscribers').split()]}
+
+                # Edit topic.
+                self.edit_topic(context, context.topic['id'], topic)
+
+                # Notify change listeners.
+                for listener in self.topic_change_listeners:
+                    listener.topic_changed(context, topic, context.topic)
+
+                # Redirect request to prevent re-submit.
+                context.redirect_url = (context.req.path_info, '#subscriptions')
+
+            elif action == 'topic-subscriptions-post-add':
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                # Get form values.
+                topic = {'subscribers' : context.topic['subscribers']}
+                for subscriber in context.req.args.get('subscribers').split():
+                    subscriber.strip()
+                    if not subscriber in topic['subscribers']:
+                        topic['subscribers'].append(subscriber)
+
+                # Edit topic.
+                self.edit_topic(context, context.topic['id'], topic)
+
+                # Notify change listeners.
+                for listener in self.topic_change_listeners:
+                    listener.topic_changed(context, topic, context.topic)
+
+                # Redirect request to prevent re-submit.
+                context.redirect_url = (context.req.path_info, '#subscriptions')
+
+            elif action == 'topic-subscribe':
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                if context.authemail and not (context.authemail in
+                  context.topic['subscribers']):
+                    # Prepare edited attributes of the topic.
+                    topic = {'subscribers' : context.topic['subscribers']}
+                    topic['subscribers'].append(context.authemail)
+
+                    # Edit topic.
+                    self.edit_topic(context, context.topic['id'], topic)
+
+                    # Notify change listeners.
+                    for listener in self.topic_change_listeners:
+                        listener.topic_changed(context, topic, context.topic)
+
+                # Redirect request to prevent re-submit.
+                context.redirect_url = (context.req.path_info, '#subscriptions')
+
+            elif action == 'topic-unsubscribe':
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                if context.authemail and (context.authemail in
+                  context.topic['subscribers']):
+
+                    # Prepare edited attributes of the topic.
+                    topic = {'subscribers' : context.topic['subscribers']}
+                    topic['subscribers'].remove(context.authemail)
+
+                    # Edit topic.
+                    self.edit_topic(context, context.topic['id'], topic)
+
+                    # Notify change listeners.
+                    for listener in self.topic_change_listeners:
+                        listener.topic_changed(context, topic, context.topic)
+
+                # Redirect request to prevent re-submit.
+                context.redirect_url = (context.req.path_info, '#subscriptions')
 
             elif action == 'message-list':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
@@ -845,7 +959,7 @@ class DiscussionApi(Component):
 
                 # Notify change listeners.
                 for listener in self.message_change_listeners:
-                    listener.message_created(context.message)
+                    listener.message_created(context, context.message)
 
                 # Redirect request to prevent re-submit.
                 context.redirect_url = (context.req.path_info, '#message%s' % (
@@ -874,7 +988,7 @@ class DiscussionApi(Component):
 
                 # Notify change listeners.
                 for listener in self.message_change_listeners:
-                    listener.message_changed(message, message.topic)
+                    listener.message_changed(context, message, context.message)
 
                 # Redirect request to prevent re-submit.
                 context.redirect_url = (context.req.path_info, '#message%s' % (
@@ -890,7 +1004,7 @@ class DiscussionApi(Component):
 
                 # Notify change listeners.
                 for listener in self.message_change_listeners:
-                    listener.message_deleted(context.message)
+                    listener.message_deleted(context, context.message)
 
                 # Redirect request to prevent re-submit.
                 context.redirect_url = (context.req.path_info, '#message%s' % (
@@ -924,13 +1038,11 @@ class DiscussionApi(Component):
           self.default_message_display
         if display == 'flat-asc':
             messages_count = self.get_messages_count(context, topic['id'])
-            self.log.debug(messages_count)
             messages = self.get_flat_messages(context, topic['id'], desc =
               False, limit = self.messages_per_page, offset = page *
               self.messages_per_page)
         elif display in ('flat-desc', 'flat'):
             messages_count = self.get_messages_count(context, topic['id'])
-            self.log.debug(messages_count)
             messages = self.get_flat_messages(context, topic['id'], desc =
               True, limit = self.messages_per_page, offset = page *
               self.messages_per_page)
@@ -1006,27 +1118,52 @@ class DiscussionApi(Component):
 
     def get_topic(self, context, id):
         # Get topic by ID.
-        return self._get_item(context, 'topic', ('id', 'forum', 'subject',
-          'time', 'author', 'body'), 'id = %s', (id,))
+        topic = self._get_item(context, 'topic', ('id', 'forum', 'subject',
+          'time', 'author', 'subscribers', 'body'), 'id = %s', (id,))
+
+        # Unpack list of subscribers.
+        if topic:
+            topic['subscribers'] = [subscriber.strip() for subscriber in
+              topic['subscribers'].split()]
+
+        return topic
 
     def get_topic_by_time(self, context, time):
         # Get topic by time of creation.
-        return self._get_item(context, 'topic', ('id', 'forum', 'subject',
-          'time', 'author', 'body'), 'time = %s', (time,))
+        topic = self._get_item(context, 'topic', ('id', 'forum', 'subject',
+          'time', 'author', 'subscribers', 'body'), 'time = %s', (time,))
+
+        # Unpack list of subscribers.
+        if topic:
+           topic['subscribers'] = [subscriber.strip() for subscriber in
+             topic['subscribers'].split()]
+
+        return topic
 
     def get_topic_by_subject(self, context, subject):
         # Get topic by subject.
-        return self._get_item(context, 'topic', ('id', 'forum', 'subject',
-          'time', 'author', 'body'), 'subject = %s', (subject,))
+        topic = self._get_item(context, 'topic', ('id', 'forum', 'subject',
+          'time', 'author', 'subscribers', 'body'), 'subject = %s', (subject,))
+
+        # Unpack list of subscribers.
+        if topic:
+           topic['subscribers'] = [subscriber.strip() for subscriber in
+             topic['subscribers'].split()]
+
+        return topic
 
     def get_forum(self, context, id):
         # Get forum by ID.
         forum = self._get_item(context, 'forum', ('id', 'forum_group', 'name',
-          'subject', 'time', 'moderators', 'description'), 'id = %s', (id,))
+          'subject', 'time', 'moderators', 'subscribers', 'description'),
+          'id = %s', (id,))
 
-        # Fix list of moderators.
+        # Unpack list of moderators and subscribers.
         if forum:
-           forum['moderators'] = forum['moderators'].split(' ')
+           forum['moderators'] = [moderator.strip() for moderator in
+             forum['moderators'].split()]
+           forum['subscribers'] = [subscriber.strip() for subscriber in
+             forum['subscribers'].split()]
 
         return forum
 
@@ -1137,18 +1274,18 @@ class DiscussionApi(Component):
 
         if not order_by in ('topics', 'replies', 'lasttopic', 'lastreply'):
             order_by = 'f.' + order_by
-        columns = ('id', 'name', 'author', 'time', 'moderators', 'forum_group',
-          'subject', 'description', 'topics', 'replies', 'lasttopic',
-          'lastreply')
+        columns = ('id', 'name', 'author', 'time', 'moderators', 'subscribers',
+          'forum_group', 'subject', 'description', 'topics', 'replies',
+          'lasttopic', 'lastreply')
         sql = "SELECT f.id, f.name, f.author, f.time, f.moderators, " \
-          "f.forum_group, f.subject, f.description, ta.topics, ta.replies, " \
-          "ta.lasttopic, ta.lastreply FROM forum f LEFT JOIN (SELECT " \
-          "COUNT(t.id) AS topics, MAX(t.time) AS lasttopic, SUM(ma.replies) " \
-          "AS replies, MAX(ma.lastreply) AS lastreply, t.forum AS forum FROM " \
-          " topic t LEFT JOIN (SELECT COUNT(m.id) AS replies, MAX(m.time) AS " \
-          "lastreply, m.topic AS topic FROM message m GROUP BY m.topic) ma ON " \
-          "t.id = ma.topic GROUP BY forum) ta ON f.id = ta.forum ORDER BY " + \
-          order_by + (" ASC", " DESC")[bool(desc)]
+          "f.subscribers, f.forum_group, f.subject, f.description, ta.topics, " \
+          "ta.replies, ta.lasttopic, ta.lastreply FROM forum f LEFT JOIN " \
+          "(SELECT COUNT(t.id) AS topics, MAX(t.time) AS lasttopic, " \
+          "SUM(ma.replies) AS replies, MAX(ma.lastreply) AS lastreply, t.forum " \
+          " AS forum FROM topic t LEFT JOIN (SELECT COUNT(m.id) AS replies, " \
+          "MAX(m.time) AS lastreply, m.topic AS topic FROM message m GROUP BY " \
+          "m.topic) ma ON t.id = ma.topic GROUP BY forum) ta ON f.id = ta.forum " \
+          " ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
         self.env.log.debug(sql)
         context.cursor.execute(sql)
 
@@ -1268,13 +1405,17 @@ class DiscussionApi(Component):
         self._add_item(context, 'forum_group', group)
 
     def add_forum(self, context, forum):
-        # Fix forum fields.
+        # Pack moderators and subscribers fields.
         forum['moderators'] = ' '.join(forum['moderators'])
+        forum['subscribers'] = ' '.join(forum['subscribers'])
 
         # Add forum.
         self._add_item(context, 'forum', forum)
 
     def add_topic(self, context, topic):
+        # Pack subscribers field.
+        topic['subscribers'] = ' '.join(topic['subscribers'])
+
         self._add_item(context, 'topic', topic)
 
     def add_message(self, context, message):
@@ -1284,7 +1425,7 @@ class DiscussionApi(Component):
 
     def _delete_item(self, context, table, where = '', values = ()):
         sql = 'DELETE FROM ' + table + (where and (' WHERE ' + where) or '')
-        self.env.log.debug(sql % values)
+        self.log.debug(sql % values)
         context.cursor.execute(sql, values)
 
     def delete_group(self, context, id):
@@ -1325,7 +1466,7 @@ class DiscussionApi(Component):
     def _set_item(self, context, table, field, value, where = '', values = ()):
         sql = 'UPDATE ' + table + ' SET ' + field + ' = "' + to_unicode(value) \
           + '"' + (where and (' WHERE ' + where) or '')
-        self.env.log.debug(sql % values)
+        self.log.debug(sql % values)
         context.cursor.execute(sql, values)
 
     def set_group(self, context, forum_id, group_id):
@@ -1355,13 +1496,20 @@ class DiscussionApi(Component):
         self._edit_item(context, 'forum_group', id, group)
 
     def edit_forum(self, context, id, forum):
-        # Fix forum fields.
-        forum['moderators'] = ' '.join(forum['moderators'])
+        # Pack moderators and subscribers fields.
+        if forum.has_key('moderators'):
+            forum['moderators'] = ' '.join(forum['moderators'])
+        if forum.has_key('subscribers'):
+            forum['subscribers'] = ' '.join(forum['subscribers'])
 
         # Edit forum.
         self._edit_item(context, 'forum', id, forum)
 
     def edit_topic(self, context, id, topic):
+        # Pack subscribers field.
+        if topic.has_key('subscribers'):
+            topic['subscribers'] = ' '.join(topic['subscribers'])
+
         # Edit topic.
         self._edit_item(context, 'topic', id, topic)
 

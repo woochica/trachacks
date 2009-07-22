@@ -212,7 +212,17 @@
   margin-left: 0em;
 }
 
+.message-list div.subscriptions
+{
+  padding-left: 1em;
+}
+
+.message-list div.subscriptions form
+{
+  display: inline-block;
+}
+
 .message-list div.attachments
 {
-  padding: 1em;
+  padding-left: 1em;
 }

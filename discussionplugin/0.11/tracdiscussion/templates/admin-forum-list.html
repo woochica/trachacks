@@ -22,17 +22,17 @@
 
           <div class="field">
             <label for="name">Name:</label><br/>
-            <input type="text" id="name" name="name" value="${is_edit and discussion.forum.name or None}"/><br/>
+            <input type="text" id="name" name="name" value="${is_edit and discussion.forum.name or ''}"/><br/>
           </div>
 
           <div class="field">
             <label for="subject">Subject:</label><br/>
-            <input type="text" id="subject" name="subject" value="${is_edit and discussion.forum.subject or None}"/><br/>
+            <input type="text" id="subject" name="subject" value="${is_edit and discussion.forum.subject or ''}"/><br/>
           </div>
 
           <div class="field">
             <label for="description">Description:</label><br/>
-            <input type="text" id="description" name="description" value="${is_edit and discussion.forum.description or None}"/><br/>
+            <input type="text" id="description" name="description" value="${is_edit and discussion.forum.description or ''}"/><br/>
           </div>
 
           <div class="field">
@@ -48,6 +48,11 @@
               </select>
               <input py:otherwise="" type="text" id="moderators" name="moderators" value="${discussion.forum.moderators}"/>
             </py:choose><br/>
+          </div>
+
+          <div class="field">
+            <label for="subscribers">Subscribers:</label><br/>
+            <input type="text" id="subscribers" name="subscribers" value="${is_edit and discussion.forum.subscribers or ''}"/><br/>
           </div>
 
           <py:choose>
@@ -85,6 +90,7 @@
                 ${sortable_th(discussion.order, discussion.desc, 'subject', 'Subject', panel_href())}
                 ${sortable_th(discussion.order, discussion.desc, 'description', 'Description', panel_href())}
                 ${sortable_th(discussion.order, discussion.desc, 'moderators', 'Moderators', panel_href())}
+                ${sortable_th(discussion.order, discussion.desc, 'subscribers', 'Subscribers', panel_href())}
                 <py:if test="len(discussion.groups) > 1">
                   ${sortable_th(discussion.order, discussion.desc, 'forum_group', 'Group', panel_href())}
                 </py:if>
@@ -128,6 +134,13 @@
                     <div class="moderators">
                       <a href="${panel_href(forum.id)}">
                         <span>${forum.moderators or '&nbsp;'}</span>
+                      </a>
+                    </div>
+                  </td>
+                  <td class="subscribers">
+                    <div class="subscribers">
+                      <a href="${panel_href(forum.id)}">
+                        <span>${forum.subscribers or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>

@@ -1,1 +1,8 @@
-${discussion.re}${discussion.prefix} ${discussion.title} #${discussion.id} - ${discussion.subject}
+#choose
+#when discussion.message
+Re: [${discussion.prefix}] Message #${discussion.message.id} - ${discussion.topic.subject}
+#end
+#otherwise
+[${discussion.prefix}] Topic #${discussion.topic.id} - ${discussion.topic.subject}
+#end
+#end

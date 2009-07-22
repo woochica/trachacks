@@ -59,11 +59,13 @@
         </py:if>
       </div>
 
-      <div py:if="len(discussion.messages) or is_topic_add" class="replies ${(discussion.topic.time > discussion.visit_time) and 'new' or None}">
+      <div class="replies ${(discussion.topic.time > discussion.visit_time) and 'new' or None}">
 
-        ${display_set_display(href)}
+        <py:if test="len(discussion.messages)">
+          ${display_set_display(href)}
+        </py:if>
 
-        <ul class="reply">
+        <ul py:if="len(discussion.messages) or is_topic_add" class="reply">
           <py:if test="len(discussion.messages)">
             ${display_messages(href, discussion.messages)}
           </py:if>
@@ -77,8 +79,42 @@
           <li></li>
         </ul>
 
-        ${display_set_display(href)}
+        <py:if test="len(discussion.messages)">
+          ${display_set_display(href)}
+        </py:if>
+
         <xi:include py:with="paginator = discussion.paginator" href="page_index.html" />
+
+        <a name="subscriptions"></a>
+        <div class="subscriptions">
+          <h3>Subscriptions</h3>
+          <form method="post" action="${href}">
+            <py:choose>
+              <py:when test="('DISCUSSION_MODERATE' in perm and discussion.moderator)">
+                <input type="text" name="subscribers" value="${' '.join(discussion.topic.subscribers)}"/>
+                <input type="submit" name="editsubscribers" value="Edit Subscribers"/>
+                <input type="hidden" name="discussion_action" value="subscriptions-post-edit"/>
+              </py:when>
+              <py:otherwise>
+                <input type="text" name="subscribers" value=""/>
+                <input type="submit" name="addsubscribers" value="Add Subscribers"/>
+                <input type="hidden" name="discussion_action" value="subscriptions-post-add"/>
+              </py:otherwise>
+            </py:choose>
+          </form>
+          <form py:if="discussion.authemail" method="post" action="${href}">
+            <py:choose>
+              <py:when test="discussion.subscriber">
+                <input type="submit" value="Unsubscribe"/>
+                <input type="hidden" name="discussion_action" value="unsubscribe"/>
+              </py:when>
+              <py:otherwise>
+                <input type="submit" value="Subscribe"/>
+                <input type="hidden" name="discussion_action" value="subscribe"/>
+              </py:otherwise>
+            </py:choose>
+          </form>
+        </div>
 
         <div class="attachments">
           ${list_of_attachments(discussion.attachments, compact = True)}

@@ -72,6 +72,16 @@
               </py:choose>
             </div>
 
+            <div class="subscribers">
+              <label for="subscribers">Subscribers:</label><br/>
+              <input type="text" id="subscribers" name="subscribers">${req.args.subscribers}</input><br/>
+            </div>
+
+            <div py:if="discussion.authemail" class="subscribe">
+              <input py:if="req.args.subscribe" type="checkbox" id="subscribe" name="subscribe" checked="yes" value="1">Subscribe to topic.</input>
+              <input py:if="not req.args.subscribe" type="checkbox" id="subscribe" name="subscribe" value="0">Subscribe to topic.</input><br/>
+            </div>
+
             <div class="buttons">
               <input type="submit" name="preview" value="Preview"/>
               <input type="submit" name="submit" value="Submit"/>
