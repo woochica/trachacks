@@ -6,6 +6,14 @@ import datetime
 def identity(x):
     return x;
 
+def convertfloat(x):
+    "some european countries use , as the decimal separator"
+    x = str(x).strip()
+    if len(x) > 0:
+        return float(x.replace(',','.'))
+    else: 
+        return 0.0
+
 try:
     import trac.util.datefmt
     to_timestamp = trac.util.datefmt.to_timestamp
@@ -89,8 +97,6 @@ class TimeTrackingTicketObserver(Component):
                     return tipe(val[2] or default)
                 return default
 
-        #some european countries use , as the decimal separator
-        convertfloat = lambda x: float(str(x).replace(',','.'))
         hours = readTicketValue("hours", convertfloat)
         totalHours = readTicketValue("totalhours", convertfloat)
 
@@ -181,8 +187,6 @@ class TimeTrackingTicketValidator(Component):
         detected. `field` can be `None` to indicate an overall problem with the
         ticket. Therefore, a return value of `[]` means everything is OK."""
         errors = []
-        #some european countries use , as the decimal separator
-        convertfloat = lambda x: float(str(x).replace(',','.'))
         try:
             convertfloat(ticket.values['hours'])
         except ValueError:
