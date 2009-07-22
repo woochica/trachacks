@@ -3,7 +3,7 @@ from trac.perm import IPermissionRequestor
 from trac.core import *
 from genshi.core import *
 from genshi.builder import tag
-from sets import Set as set
+
 from genshi.filters.transform import Transformer
 from blackmagic import *
 from trac.ticket.query import QueryModule
@@ -12,6 +12,10 @@ from StringIO import StringIO
 import csv
 from trac.mimeview.api import Context
 from trac.resource import Resource
+
+import sys 
+if sys.version_info < (2, 4, 0): 
+    from sets import Set as set
 
 ## MONKEY PATCH THE QUERY MODULE CSV EXPORT FN TO ENFORCE PERMISSIONS
 def new_csv_export(self, req, query, sep=',', mimetype='text/plain'):
