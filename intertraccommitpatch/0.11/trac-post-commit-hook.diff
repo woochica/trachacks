@@ -1,0 +1,84 @@
+115c115
+< ticket_prefix = '(?:#|(?:ticket|issue|bug)[: ]?)'
+---
+> ticket_prefix = '#'
+117,118c117
+< ticket_command =  (r'(?P<action>[A-Za-z]*).?'
+<                    '(?P<ticket>%s(?:(?:[, &]*|[ ]?and[ ]?)%s)*)' %
+---
+> ticket_command =  (r'(?P<action>[A-Za-z]*) (?P<prj>[A-Za-z0-9_]*:*)(?P<ticket>%s(?:(?:[, &]*|[ ]?and[ ]?)%s)*)' %
+142a142,144
+>         tracpath = project[0:str.rfind(project,'/')+1]
+>         tracproj = project[str.rfind(project,'/')+1:]
+>         
+155c157
+<         self.msg = "(In [%s]) %s" % (rev, chgset.message)
+---
+>         self.msg = "(In [%s:changeset:%s %s]) %s" % (tracproj, rev, rev, chgset.message)
+158c160
+<         cmd_groups = command_re.findall(self.msg)
+---
+>         cmd_groups = command_re.findall(chgset.message)
+161c163,164
+<         for cmd, tkts in cmd_groups:
+---
+>         for cmd, prj, tkts in cmd_groups:
+>             prj = prj[0:len(prj)-1]
+166c169,196
+<                     tickets.setdefault(tkt_id, []).append(func)
+---
+>                     try:
+>                         if prj == "":
+>                             env1 = self.env
+>                         else:
+>                             env1 = open_environment(tracpath + prj)
+> 
+>                         db = env1.get_db_cnx()
+>                         
+>                         ticket = Ticket(env1, int(tkt_id), db)
+>                         func(ticket)
+> 
+>                         # determine sequence number... 
+>                         cnum = 0
+>                         tm = TicketModule(env1)
+>                         for change in tm.grouped_changelog_entries(ticket, db):
+>                             if change['permanent']:
+>                                 cnum += 1
+>                         
+>                         ticket.save_changes(self.author, self.msg, self.now, db, cnum+1)
+>                         db.commit()
+>                         
+>                         tn = TicketNotifyEmail(env1)
+>                         tn.notify(ticket, newticket=0, modtime=self.now)
+>                     except Exception, e:
+>                         # import traceback
+>                         # traceback.print_exc(file=sys.stderr)
+>                         print>>sys.stderr, 'Unexpected error while processing ticket ' \
+>                                            'ID %s: %s' % (tkt_id, e)
+168,193d197
+<         for tkt_id, cmds in tickets.iteritems():
+<             try:
+<                 db = self.env.get_db_cnx()
+<                 
+<                 ticket = Ticket(self.env, int(tkt_id), db)
+<                 for cmd in cmds:
+<                     cmd(ticket)
+< 
+<                 # determine sequence number... 
+<                 cnum = 0
+<                 tm = TicketModule(self.env)
+<                 for change in tm.grouped_changelog_entries(ticket, db):
+<                     if change['permanent']:
+<                         cnum += 1
+<                 
+<                 ticket.save_changes(self.author, self.msg, self.now, db, cnum+1)
+<                 db.commit()
+<                 
+<                 tn = TicketNotifyEmail(self.env)
+<                 tn.notify(ticket, newticket=0, modtime=self.now)
+<             except Exception, e:
+<                 # import traceback
+<                 # traceback.print_exc(file=sys.stderr)
+<                 print>>sys.stderr, 'Unexpected error while processing ticket ' \
+<                                    'ID %s: %s' % (tkt_id, e)
+<             
