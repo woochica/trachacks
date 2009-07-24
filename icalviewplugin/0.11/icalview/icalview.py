@@ -47,8 +47,8 @@ class iCalViewPlugin(QueryModule):
         use `short_date_format` and `date_time_format` config values
         different formats can be defined separated by `;`
         """
-        date_format = self.config['icalendar'].get('short_date_format','%M/%d/%y')
-        date_time_format = self.config['icalendar'].get('date_time_format','%M/%d/%y %H:%M')
+        date_format = self.config['icalendar'].get('short_date_format','%m/%d/%Y')
+        date_time_format = self.config['icalendar'].get('date_time_format','%m/%d/%Y %H:%M')
         for fmt in date_format.split(";"):
             try:
                 ts = time.strptime(d, fmt)
@@ -99,6 +99,8 @@ class iCalViewPlugin(QueryModule):
             query.cols.append(dtstart_key)
         if duration_key not in query.cols:
             query.cols.append(duration_key)
+        if 'priority' not in query.cols:
+            query.cols.append('priority')
         if 'description' not in query.cols:
             query.cols.append('description')
         if 'changetime' not in query.cols:
@@ -119,6 +121,20 @@ class iCalViewPlugin(QueryModule):
                     "summary" : "SUMMARY",
                     "type" :  "CATEGORIES"
                    }
+        priority_map = {
+                    'blocker' :  1,
+                    'critical' :  2,
+                    'major' : 6,
+                    'minor' : 8,
+                    'trivial' : 9
+        			}
+
+        custom_priority_map = self.config['icalendar'].get('priority_map',None)
+        if custom_priority_map != None:
+            for m in custom_priority_map.split(","):
+                k = m.split(":")
+                if len(k) == 2:
+                    priority_map[k[0]] = int(k[1])
 
         for result in results:
             ticket = Resource('ticket', result['id'])
@@ -145,6 +161,10 @@ class iCalViewPlugin(QueryModule):
                 if "HTTPS" in os.getenv('SERVER_PROTOCOL') :
                     protocol = "https"
                 content.write("URL:%s://%s%s\r\n" % (protocol,os.getenv('SERVER_NAME'),get_resource_url(self.env,ticket,req.href)))
+                priority = priority_map[result['priority']]
+                if priority != None:
+                    content.write("PRIORITY;VALUE=%s:%d\r\n" % (result['priority'],priority))
+
                 for key in attr_map:
                    if key in cols:
                        content.write("%s:%s\r\n" % (attr_map[key], unicode(result[key]).encode('utf-8')))
