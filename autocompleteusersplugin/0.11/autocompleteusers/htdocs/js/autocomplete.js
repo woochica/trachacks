@@ -410,7 +410,7 @@ $.Autocompleter.defaults = {
 	multiple: false,
 	multipleSeparator: ", ",
 	highlight: function(value, term) {
-		return value.replace(new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + term.replace(/([\^\$\(\)\[\]\{\}\*\.\+\?\|\\])/gi, "\\$1") + ")(?![^<>]*>)(?![^&;]+;)", "gi"), "<strong>$1</strong>");
+		return value.replace(new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + term.replace(/([\^\$\(\)\[\]\{\}\*\.\+\?\|\\])/gi, "\\$1") + ")(?![^<>]*>)(?![^&;]+;)", "gi"), "<strong><u>$1</u></strong>");
 	},
     scroll: true,
     scrollHeight: 180
@@ -703,7 +703,7 @@ $.Autocompleter.Select = function (options, input, select, config) {
 		show: function() {
 			var offset = $(input).offset();
 			element.css({
-				width: typeof options.width == "string" || options.width > 0 ? options.width : $(input).width(),
+				width: typeof options.width == "string" || options.width > 0 ? options.width : '',
 				top: offset.top + input.offsetHeight,
 				left: offset.left
 			}).show();
