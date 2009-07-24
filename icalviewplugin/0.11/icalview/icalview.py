@@ -4,30 +4,25 @@ author : Xavier Pechoultes <x.pechoultres@clariprint.com>
 Licence: GPL
 """
 
-#import re
-
-#from ical import iCal
-
 import os
 import sys
-from trac.core import *
-from trac.util.translation import _
-from trac.web import IRequestFilter
-from trac.web import IRequestHandler
-from trac.web.chrome import add_link
-from trac.ticket.query import QueryModule
-from trac.mimeview.api import Mimeview, IContentConverter, Context
-from trac.web.chrome import add_ctxtnav, add_link, add_script, add_stylesheet, INavigationContributor, Chrome
-
-from cStringIO import StringIO
-from trac.resource import Resource, get_resource_url
-
+import re
 import datetime
 import time
+from trac.core import *
+from trac.util.translation import _
+from trac.web import IRequestHandler
+from trac.ticket.query import QueryModule
+from trac.mimeview.api import  IContentConverter
+from trac.web.chrome import INavigationContributor
+from cStringIO import StringIO
+from trac.resource import Resource, get_resource_url
 
 class iCalViewPlugin(QueryModule):
     implements(IRequestHandler, INavigationContributor, 
                IContentConverter)
+
+    """Plugin class """
 
     def match_request(self, req):
         return req.path_info == '/ical'
@@ -46,15 +41,64 @@ class iCalViewPlugin(QueryModule):
     def get_active_navigation_item(self, req):
         return 'icalendar'
 
+    def parse_date(self,d):
+        """
+        parse a user date by using standard or user config formats
+        use `short_date_format` and `date_time_format` config values
+        different formats can be defined separated by `;`
+        """
+        date_format = self.config['icalendar'].get('short_date_format','%M/%d/%y')
+        date_time_format = self.config['icalendar'].get('date_time_format','%M/%d/%y %H:%M')
+        for fmt in date_format.split(";"):
+            try:
+                ts = time.strptime(d, fmt)
+                return datetime.date(ts[0],ts[1],ts[2])
+            except:
+                self.env.log.debug(d + " not match " + fmt)
+        for fmt in date_time_format.split(";"):
+            try:
+                ts = time.strptime(d, date_time_format)
+                return datetime.datetime(*ts[:6])
+            except:
+                self.env.log.debug(d + " not match " + date_time_format)
+        return None
+
+    def parse_duration(self,d):
+        """
+        parse a user duration
+        if the duration begin by a 'P', we presume that it math RFC specification for duration
+        the user may set a number of x days (our hours) by ending the duration with a `d` (our `h`) : `2d` (`2h`)
+        we support also standar H:M definition.
+        """
+        if d[0] == "P" :
+             return d
+        val = re.match("([0-9]{1,})d",d)
+        if val :
+           n_days = int(val.groups()[0])
+           return datetime.timedelta(n_days+1)
+        val = re.match("([0-9]{1,})h",d)
+        if val :
+           n_hours = int(val.groups()[0])
+           return datetime.timedelta(0, 0,0,0, 0,n_hours)
+        val = re.match("([0-9]{1,}):([0-9]{2})",d)
+        if val :
+           n_hours = int(val.groups()[0])
+           n_minutes = int(val.groups()[1])
+           return datetime.timedelta(0, 0,0,0,n_minutes,n_hours)
+        return datetime.timedelta(1)
+    
     def export_ical(self, req, query):        
+        """
+        return the icalendar file
+        """
         dtstart_key = self.config['icalendar'].get('dtstart','date_start')
         duration_key = self.config['icalendar'].get('duration','duration')
         input_date_format = self.config['icalendar'].get('input_date_format','duration')
+
         if dtstart_key not in query.cols:
             query.cols.append(dtstart_key)
         if duration_key not in query.cols:
             query.cols.append(duration_key)
-
         if 'description' not in query.cols:
             query.cols.append('description')
         if 'changetime' not in query.cols:
@@ -80,20 +124,21 @@ class iCalViewPlugin(QueryModule):
             ticket = Resource('ticket', result['id'])
             if 'TICKET_VIEW' in req.perm(ticket):
                 kind = "VEVENT"
-                if result["date_start"] in ['--', '' ] :
+                dtstart = self.parse_date(result[dtstart_key])
+                if dtstart == None :
                     kind = "VTODO"
                 content.write("BEGIN:%s\r\n" % kind)
-                content.write("UID:</cgi-bin/trac.cgi/ticket/%d@trac.clariprint.com\r\n" % result["id"])
-                dtstart = result[dtstart_key]
-                if not dtstart in [ '--', '' ] :
-                    d = dtstart.split('.')
-                    if len(d) == 3:
-                        content.write("DTSTART;VALUE=DATE:%s%s%s\r\n" % (d[2],d[1],d[0]))
-                        n_days = 1
-                        if result[duration_key] != '--':
-                            n_days = int(result[duration_key])
-                        end_date = datetime.date(int(d[2]),int(d[1]),int(d[0]) + n_days)
-                        content.write("DTEND;VALUE=DATE:%s\r\n" % end_date.strftime("%Y%m%d"))
+                content.write("UID:<%s@%s>\r\n" % (get_resource_url(self.env,ticket,req.href),os.getenv('SERVER_NAME')))
+                if dtstart != None :
+                    if type(dtstart) == datetime.datetime :
+                        content.write("DTSTART:%s\r\n" % dtstart.strftime("%Y%m%dT%H%M%S"))
+                    else :
+                        content.write("DTSTART;VALUE=DATE:%s\r\n" % dtstart.strftime("%Y%m%d"))
+                    duration = self.parse_duration(result[duration_key])
+                    if type(duration) == datetime.timedelta :
+                        content.write("DURATION:P%dDT%dS\r\n" % (duration.days, duration.seconds))
+                    else :
+                        content.write("DURATION:%s\r\n" % duration)
                 content.write("CREATED:%s\r\n" % result["time"].strftime("%Y%m%dT%H%M%S"))
                 content.write("DTSTAMP:%s\r\n" % result["changetime"].strftime("%Y%m%dT%H%M%S"))
                 protocol = "http"
@@ -106,4 +151,3 @@ class iCalViewPlugin(QueryModule):
                 content.write("END:%s\r\n" % kind)
         content.write('END:VCALENDAR\r\n')
         return content.getvalue(), 'text/calendar;charset=utf-8'
-
