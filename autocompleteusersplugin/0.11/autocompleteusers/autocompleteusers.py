@@ -23,7 +23,7 @@ class AutocompleteUsers(Component):
     implements(IRequestHandler, IRequestFilter, ITemplateProvider, ITemplateStreamFilter)
     selectfields = ListOption('autocomplete', 'fields', default='',
                               doc='select fields to transform to autocomplete text boxes')
-    prefix = "common" # prefix for htdocs -- /chrome/prefix/...    
+    prefix = "autocompleteusers" # prefix for htdocs -- /chrome/prefix/...    
 
     ### methods for IRequestHandler
 
