@@ -11,13 +11,14 @@ import datetime
 import time
 from trac.core import *
 from trac.util.translation import _
+from trac.util.datefmt import format_datetime,localtz
 from trac.web import IRequestHandler
 from trac.ticket.query import QueryModule
+from trac.ticket import Milestone
 from trac.mimeview.api import  IContentConverter
 from trac.web.chrome import INavigationContributor
 from cStringIO import StringIO
 from trac.resource import Resource, get_resource_url
-
 class iCalViewPlugin(QueryModule):
     implements(IRequestHandler, INavigationContributor, 
                IContentConverter)
@@ -87,6 +88,12 @@ class iCalViewPlugin(QueryModule):
            return datetime.timedelta(0, 0,0,0,n_minutes,n_hours)
         return datetime.timedelta(1)
     
+    def format_date(self,content,propname,d):
+        if type(d) == datetime.datetime :
+            content.write("%s:%s%s\r\n" % (propname,d.strftime("%Y%m%dT%H%M%S")))
+        else:
+            content.write("%s;VALUE=DATE:%s\r\n" % (propname,d.strftime("%Y%m%d")))
+
     def export_ical(self, req, query):        
         """
         return the icalendar file
@@ -116,6 +123,7 @@ class iCalViewPlugin(QueryModule):
         content.write('PRODID:2.0:-//Edgewall Software//NONSGML Trac 0.11//EN\r\n')
         content.write('METHOD:PUBLISH\r\n')
         content.write('X-WR-CALNAME: test\r\n')
+        content.write('X-WR-TIMEZONE:%s\r\n' % localtz.tzname)
 
         attr_map = {
                     "summary" : "SUMMARY",
@@ -127,7 +135,7 @@ class iCalViewPlugin(QueryModule):
                     'major' : 6,
                     'minor' : 8,
                     'trivial' : 9
-        			}
+                    }
 
         custom_priority_map = self.config['icalendar'].get('priority_map',None)
         if custom_priority_map != None:
@@ -141,20 +149,27 @@ class iCalViewPlugin(QueryModule):
             if 'TICKET_VIEW' in req.perm(ticket):
                 kind = "VEVENT"
                 dtstart = self.parse_date(result[dtstart_key])
+                due = None
                 if dtstart == None :
                     kind = "VTODO"
+                    self.env.log.debug("is TODO")
+                    if result.has_key("milestone"):
+                        milestone_key = result["milestone"]
+                        self.env.log.debug("Milestone !" + milestone_key)
+                        milestone = Milestone(self.env,milestone_key)
+                        due = milestone.due
+                                
                 content.write("BEGIN:%s\r\n" % kind)
                 content.write("UID:<%s@%s>\r\n" % (get_resource_url(self.env,ticket,req.href),os.getenv('SERVER_NAME')))
                 if dtstart != None :
-                    if type(dtstart) == datetime.datetime :
-                        content.write("DTSTART:%s\r\n" % dtstart.strftime("%Y%m%dT%H%M%S"))
-                    else :
-                        content.write("DTSTART;VALUE=DATE:%s\r\n" % dtstart.strftime("%Y%m%d"))
+                    self.format_date(content,"DTSTART",dtstart)
                     duration = self.parse_duration(result[duration_key])
                     if type(duration) == datetime.timedelta :
                         content.write("DURATION:P%dDT%dS\r\n" % (duration.days, duration.seconds))
                     else :
                         content.write("DURATION:%s\r\n" % duration)
+                elif due != None:
+                    self.format_date(content,"DUE",due)
                 content.write("CREATED:%s\r\n" % result["time"].strftime("%Y%m%dT%H%M%S"))
                 content.write("DTSTAMP:%s\r\n" % result["changetime"].strftime("%Y%m%dT%H%M%S"))
                 protocol = "http"
