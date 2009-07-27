@@ -90,7 +90,7 @@ class iCalViewPlugin(QueryModule):
     
     def format_date(self,content,propname,d):
         if type(d) == datetime.datetime :
-            content.write("%s:%s%s\r\n" % (propname,d.strftime("%Y%m%dT%H%M%S")))
+            content.write("%s:%s\r\n" % (propname,d.strftime("%Y%m%dT%H%M%S")))
         else:
             content.write("%s;VALUE=DATE:%s\r\n" % (propname,d.strftime("%Y%m%d")))
 
