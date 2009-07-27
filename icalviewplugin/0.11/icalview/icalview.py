@@ -11,7 +11,7 @@ import datetime
 import time
 from trac.core import *
 from trac.util.translation import _
-from trac.util.datefmt import format_datetime,localtz
+from trac.util.datefmt import format_datetime,localtz,to_datetime
 from trac.web import IRequestHandler
 from trac.ticket.query import QueryModule
 from trac.ticket import Milestone
@@ -19,6 +19,7 @@ from trac.mimeview.api import  IContentConverter
 from trac.web.chrome import INavigationContributor
 from cStringIO import StringIO
 from trac.resource import Resource, get_resource_url
+
 class iCalViewPlugin(QueryModule):
     implements(IRequestHandler, INavigationContributor, 
                IContentConverter)
@@ -40,7 +41,7 @@ class iCalViewPlugin(QueryModule):
             return self.export_ical(req, query)
     
     def get_active_navigation_item(self, req):
-        return 'icalendar'
+        return 'iCalendar'
 
     def parse_date(self,d):
         """
@@ -59,7 +60,7 @@ class iCalViewPlugin(QueryModule):
         for fmt in date_time_format.split(";"):
             try:
                 ts = time.strptime(d, date_time_format)
-                return datetime.datetime(*ts[:6])
+                return datetime.datetime(ts[0],ts[1],ts[2],ts[3],ts[4],ts[5],0, localtz)
             except:
                 self.env.log.debug(d + " not match " + date_time_format)
         return None
@@ -88,9 +89,15 @@ class iCalViewPlugin(QueryModule):
            return datetime.timedelta(0, 0,0,0,n_minutes,n_hours)
         return datetime.timedelta(1)
     
-    def format_date(self,content,propname,d):
-        if type(d) == datetime.datetime :
-            content.write("%s:%s\r\n" % (propname,d.strftime("%Y%m%dT%H%M%S")))
+    def format_date(self,content,propname,d,force_date=False,tzinfo=None):
+        if type(d) == datetime.datetime and force_date == False:
+            tz = tzinfo or localtz
+            t = to_datetime(d, tzinfo).astimezone(tz)
+            content.write("%s:%s\r\n" % (propname,t.strftime("%Y%m%dT%H%M%S")))
+        elif type(d) == datetime.datetime and force_date == True:
+            tz = tzinfo or localtz
+            t = to_datetime(d, tzinfo).astimezone(tz)
+            content.write("%s;VALUE=DATE:%s\r\n" % (propname,t.strftime("%Y%m%d")))
         else:
             content.write("%s;VALUE=DATE:%s\r\n" % (propname,d.strftime("%Y%m%d")))
 
@@ -123,7 +130,6 @@ class iCalViewPlugin(QueryModule):
         content.write('PRODID:2.0:-//Edgewall Software//NONSGML Trac 0.11//EN\r\n')
         content.write('METHOD:PUBLISH\r\n')
         content.write('X-WR-CALNAME: test\r\n')
-        content.write('X-WR-TIMEZONE:%s\r\n' % localtz.tzname)
 
         attr_map = {
                     "summary" : "SUMMARY",
@@ -169,9 +175,9 @@ class iCalViewPlugin(QueryModule):
                     else :
                         content.write("DURATION:%s\r\n" % duration)
                 elif due != None:
-                    self.format_date(content,"DUE",due)
-                content.write("CREATED:%s\r\n" % result["time"].strftime("%Y%m%dT%H%M%S"))
-                content.write("DTSTAMP:%s\r\n" % result["changetime"].strftime("%Y%m%dT%H%M%S"))
+                    self.format_date(content,"DUE",due,False)
+                self.format_date(content,"CREATED",result["time"])
+                self.format_date(content,"DTSTAMP",result["changetime"])
                 protocol = "http"
                 if "HTTPS" in os.getenv('SERVER_PROTOCOL') :
                     protocol = "https"
@@ -186,3 +192,4 @@ class iCalViewPlugin(QueryModule):
                 content.write("END:%s\r\n" % kind)
         content.write('END:VCALENDAR\r\n')
         return content.getvalue(), 'text/calendar;charset=utf-8'
+
