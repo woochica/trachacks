@@ -105,14 +105,18 @@ class iCalViewPlugin(QueryModule):
         """
         return the icalendar file
         """
-        dtstart_key = self.config['icalendar'].get('dtstart','date_start')
-        duration_key = self.config['icalendar'].get('duration','duration')
-        input_date_format = self.config['icalendar'].get('input_date_format','duration')
+        dtstart_key = self.config['icalendar'].get('dtstart','')
+        duration_key = self.config['icalendar'].get('duration','')
+        self.env.log.debug("dtstart_key=%s" % dtstart_key)
+        self.env.log.debug("duration_key=%s" % duration_key)
 
-        if dtstart_key not in query.cols:
-            query.cols.append(dtstart_key)
-        if duration_key not in query.cols:
-            query.cols.append(duration_key)
+        if dtstart_key != '':
+            self.env.log.debug("use dtstart_key=%s" % dtstart_key)
+            if dtstart_key not in query.cols:
+                query.cols.append(dtstart_key)
+        if duration_key != '':
+            if duration_key not in query.cols:
+                query.cols.append(duration_key)
         if 'priority' not in query.cols:
             query.cols.append('priority')
         if 'description' not in query.cols:
@@ -154,26 +158,30 @@ class iCalViewPlugin(QueryModule):
             ticket = Resource('ticket', result['id'])
             if 'TICKET_VIEW' in req.perm(ticket):
                 kind = "VEVENT"
-                dtstart = self.parse_date(result[dtstart_key])
+                dtstart = None
+                if dtstart_key != '':
+                    dtstart = self.parse_date(result[dtstart_key])
                 due = None
                 if dtstart == None :
                     kind = "VTODO"
                     self.env.log.debug("is TODO")
                     if result.has_key("milestone"):
                         milestone_key = result["milestone"]
-                        self.env.log.debug("Milestone !" + milestone_key)
-                        milestone = Milestone(self.env,milestone_key)
-                        due = milestone.due
+                        if milestone_key != "--" and milestone_key != "":
+                            self.env.log.debug("Milestone !" + milestone_key)
+                            milestone = Milestone(self.env,milestone_key)
+                            due = milestone.due
                                 
                 content.write("BEGIN:%s\r\n" % kind)
                 content.write("UID:<%s@%s>\r\n" % (get_resource_url(self.env,ticket,req.href),os.getenv('SERVER_NAME')))
-                if dtstart != None :
+                if dtstart != None:
                     self.format_date(content,"DTSTART",dtstart)
-                    duration = self.parse_duration(result[duration_key])
-                    if type(duration) == datetime.timedelta :
-                        content.write("DURATION:P%dDT%dS\r\n" % (duration.days, duration.seconds))
-                    else :
-                        content.write("DURATION:%s\r\n" % duration)
+                    if duration_key != '':
+                        duration = self.parse_duration(result[duration_key])
+                        if type(duration) == datetime.timedelta :
+                            content.write("DURATION:P%dDT%dS\r\n" % (duration.days, duration.seconds))
+                        else :
+                            content.write("DURATION:%s\r\n" % duration)
                 elif due != None:
                     self.format_date(content,"DUE",due,False)
                 self.format_date(content,"CREATED",result["time"])
