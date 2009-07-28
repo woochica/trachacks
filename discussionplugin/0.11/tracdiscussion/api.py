@@ -873,6 +873,16 @@ class DiscussionApi(Component):
                   not (context.authemail in topic['subscribers']):
                     topic['subscribers'].append(context.authemail)
 
+                # Filter topic.
+                for discussion_filter in self.discussion_filters:
+                    self.log.debug('filtering topic: %s' % (topic,))
+                    accept, topic_or_error = discussion_filter.filter_topic(
+                      context, topic)
+                    if accept:
+                        topic = topic_or_error
+                    else:
+                        raise TracError(topic_or_error)
+
                 # Add new topic.
                 self.add_topic(context, topic)
 
@@ -1085,6 +1095,16 @@ class DiscussionApi(Component):
                            'author' : context.req.args.get('author'),
                            'body' : context.req.args.get('body'),
                            'time' : to_timestamp(datetime.now(utc))}
+
+                # Filter message.
+                for discussion_filter in self.discussion_filters:
+                    self.log.debug('filtering message: %s' % (message,))
+                    accept, message_or_error = discussion_filter.filter_message(
+                      context, message)
+                    if accept:
+                        message = message_or_error
+                    else:
+                        raise TracError(message_or_error)
 
                 # Add message.
                 self.add_message(context, message)

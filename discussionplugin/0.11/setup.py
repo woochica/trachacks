@@ -15,12 +15,14 @@ setup(
     'TracDiscussion.timeline = tracdiscussion.timeline',
     'TracDiscussion.admin = tracdiscussion.admin',
     'TracDiscussion.search = tracdiscussion.search',
-    'TracDiscussion.notification = tracdiscussion.notification']},
-  install_requires = [''],
-  keywords = 'trac discussion',
+    'TracDiscussion.notification = tracdiscussion.notification',
+    'TracDiscussion.spamfilter = tracdiscussion.spamfilter [SpamFilter]']},
+  install_requires = ['Trac'],
+  extras_require = {'SpamFilter' : ['TracSpamFilter']},
+  keywords = 'trac discussion e-mail',
   author = 'Radek Bartoň, Alec Thomas',
   author_email = 'blackhex@post.cz',
-  url = 'http://trac-hacks.swapoff.org/wiki/DiscussionPlugin',
+  url = 'http://trac-hacks.org/wiki/DiscussionPlugin',
   description = 'Discussion forum plugin for Trac',
   license = '''GPL'''
 )
