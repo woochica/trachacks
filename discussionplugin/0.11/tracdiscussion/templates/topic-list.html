@@ -27,12 +27,34 @@
           <xi:include py:when="discussion.display == 'compact'" href="topic-list-compact.html"/>
         </py:choose>
 
-        <div class="set-display">
+        <div py:if="len(discussion.topics)" class="set-display">
           <a py:strip="discussion.display == 'classic'" href="${href.discussion('forum', discussion.forum.id)}?discussion_action=set-display;display=classic">Classic View</a>
           <a py:strip="discussion.display == 'compact'" href="${href.discussion('forum', discussion.forum.id)}?discussion_action=set-display;display=compact">Compact View</a>
         </div>
 
         <xi:include py:with="paginator = discussion.paginator" href="page_index.html" />
+
+        <div py:if="discussion.moderator" class="subscriptions">
+          <a name="subscriptions"></a>
+          <h3>Subscriptions</h3>
+          <form method="post" action="${href.discussion('forum', discussion.forum.id)}">
+            <input type="text" name="subscribers" value="${' '.join(discussion.forum.subscribers)}"/>
+            <input type="submit" name="editsubscribers" value="Edit Subscribers"/>
+            <input type="hidden" name="discussion_action" value="subscriptions-post-edit"/>
+          </form>
+          <form py:if="discussion.authemail" method="post" action="${href.discussion('forum', discussion.forum.id)}">
+            <py:choose>
+              <py:when test="discussion.forum_subscriber">
+                <input type="submit" value="Unsubscribe"/>
+                <input type="hidden" name="discussion_action" value="unsubscribe"/>
+              </py:when>
+              <py:otherwise>
+                <input type="submit" value="Subscribe"/>
+                <input type="hidden" name="discussion_action" value="subscribe"/>
+              </py:otherwise>
+            </py:choose>
+          </form>
+        </div>
 
         <div class="buttons">
           <form py:if="'DISCUSSION_APPEND' in perm" method="post" action="${href.discussion('forum', discussion.forum.id)}">
@@ -49,8 +71,19 @@
               <input type="hidden" name="discussion_action" value="delete"/>
             </div>
           </form>
+          <form py:if="not discussion.moderator and discussion.authemail" method="post" action="${href.discussion('forum', discussion.forum.id)}">
+            <py:choose>
+              <py:when test="discussion.subscriber">
+                <input type="submit" value="Unsubscribe"/>
+                <input type="hidden" name="discussion_action" value="unsubscribe"/>
+              </py:when>
+              <py:otherwise>
+                <input type="submit" value="Subscribe"/>
+                <input type="hidden" name="discussion_action" value="subscribe"/>
+              </py:otherwise>
+            </py:choose>
+          </form>
         </div>
-
       </div>
     </div>
 

@@ -69,6 +69,11 @@
   margin: 1em;
 }
 
+.topic-list div.subscriptions form
+{
+  display: inline-block;
+}
+
 /* Message list */
 .message-list div.topic
 {

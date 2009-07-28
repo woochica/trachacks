@@ -1,0 +1,13 @@
+You have been subscribed to topic #${discussion.topic.id} - ${discussion.topic.subject}
+----------------------------------------------------------------------------
+Author:     ${discussion.topic.author}
+Created:    ${format_datetime(discussion.topic.time)}
+Moderators: ${discussion.forum.moderators}
+----------------------------------------------------------------------------
+
+${discussion.topic.body}
+
+--
+Forum URL: <${abs_href.discussion('topic', discussion.topic.id)}>
+$project.name <${project.url or abs_href()}>
+$project.descr

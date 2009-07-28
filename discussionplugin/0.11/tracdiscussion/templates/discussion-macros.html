@@ -6,7 +6,7 @@
 
   <py:def function="sortable_th(order, desc, Class, title, href)">
     <th class="${Class}${order == Class and (desc and ' desc' or ' asc') or ''}">
-      <a title="Sort by ${Class}${order == Class and not desc and ' (descending)' or ''}" href="${href}?order=${Class}&amp;desc=${(Class == order and not desc and 1 or None)}">
+      <a title="Sort by ${Class}${(order == Class and desc) and ' (descending)' or ''}" href="${href}?order=${Class}&amp;desc=${(Class == order and desc) and '0' or '1'}">
         $title
       </a>
     </th>
@@ -104,7 +104,7 @@
           </form>
           <form py:if="discussion.authemail" method="post" action="${href}">
             <py:choose>
-              <py:when test="discussion.subscriber">
+              <py:when test="discussion.topic_subscriber">
                 <input type="submit" value="Unsubscribe"/>
                 <input type="hidden" name="discussion_action" value="unsubscribe"/>
               </py:when>

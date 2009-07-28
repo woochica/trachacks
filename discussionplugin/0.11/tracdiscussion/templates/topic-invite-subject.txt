@@ -1,0 +1,1 @@
+[${discussion.prefix}] Subscription to topic #${discussion.topic.id} - ${discussion.topic.subject}

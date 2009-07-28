@@ -45,11 +45,13 @@ def do_upgrade(env, cursor):
     cursor.execute("INSERT INTO forum (id, name, time, forum_group, author," \
       " moderators, subject, description) SELECT * FROM forum_old")
     cursor.execute("UPDATE forum SET subscribers = ''")
+    cursor.execute("DROP TABLE forum_old")
 
     ## Copy old topics.
     cursor.execute("INSERT INTO topic (id, forum, time, author, subject, body" \
       ") SELECT * FROM topic_old")
     cursor.execute("UPDATE topic SET subscribers = ''")
+    cursor.execute("DROP TABLE topic_old")
 
     # Set database schema version.
     cursor.execute("UPDATE system SET value = '3' WHERE" \

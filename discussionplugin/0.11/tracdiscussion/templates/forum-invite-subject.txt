@@ -1,0 +1,1 @@
+[${discussion.prefix}] Subscription to forum #${discussion.forum.id} - ${discussion.forum.name} - ${discussion.forum.subject}

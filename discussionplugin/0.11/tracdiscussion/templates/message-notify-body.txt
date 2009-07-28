@@ -1,5 +1,3 @@
-#choose
-#when discussion.message.id
 Message #${discussion.message.id} - ${discussion.topic.subject}
 ----------------------------------------------------------------------------
 Author:     ${discussion.message.author}
@@ -11,20 +9,5 @@ ${discussion.message.body}
 
 --
 Message URL: <${abs_href.discussion('message', discussion.message.id)}>
-#end
-#otherwise
-Topic #${discussion.topic.id} - ${discussion.topic.subject}
-----------------------------------------------------------------------------
-Author:     ${discussion.topic.author}
-Created:    ${format_datetime(discussion.topic.time)}
-Moderators: ${discussion.forum.moderators}
-----------------------------------------------------------------------------
-
-${discussion.topic.body}
-
---
-Topic URL: <${abs_href.discussion('topic', discussion.topic.id)}>
-#end
-#end
 $project.name <${project.url or abs_href()}>
 $project.descr
