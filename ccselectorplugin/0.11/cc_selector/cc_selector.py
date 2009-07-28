@@ -12,12 +12,12 @@ class TicketWebUiAddon(Component):
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        if re.search('ticket', req.path_info):
-            add_script(req, 'cc_selector/cc_selector.js')
         return handler
     
-    def post_process_request(self, req, template, content_type):
-        return(template, content_type)
+    def post_process_request(self, req, template, data, content_type):
+        if re.search('ticket', req.path_info):
+            add_script(req, 'cc_selector/cc_selector.js')
+        return(template, data, content_type)
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
