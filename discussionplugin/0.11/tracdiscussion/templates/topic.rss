@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:py="http://genshi.edgewall.org/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="macros.rss" />
+  <channel>
+    <title>[${project.name}] Topic #${discussion.topic.id} - ${discussion.topic.subject}</title>
+    <link>${abs_href.discussion('topic', discussion.topic.id)}</link>
+    <description>${unicode(wiki_to_html(context, discussion.topic.subject))}</description>
+    <language>en-us</language>
+    <image py:if="chrome.logo.src_abs">
+      <title>${project.name}</title>
+      <url>${chrome.logo.src_abs}</url>
+      <link>${abs_href.discussion('topic', discussion.topic.id)}</link>
+    </image>
+    <generator>Trac $trac.version - DiscussionPlugin</generator>
+    <item>
+      ${author_or_creator(discussion.topic.author)}
+      <pubDate>${http_date(discussion.topic.time)}</pubDate>
+      <title>Topic #${discussion.topic.id} - ${discussion.topic.subject}</title>
+      <link>${abs_href.discussion('topic', discussion.topic.id)}#topic</link>
+      <guid isPermaLink="false">${abs_href.discussion('topic', discussion.topic.id)}#topic</guid>
+      <description>
+        ${unicode(wiki_to_html(context('discussion', 'topic/%s' % (discussion.topic.id)), discussion.topic.body))}
+      </description>
+      <category>Topic</category>
+    </item>
+    <item py:for="message in discussion.messages">
+      ${author_or_creator(message.author)}
+      <pubDate>${http_date(message.time)}</pubDate>
+      <title>Reply #${message.id} to topic #${discussion.topic.id} - ${discussion.topic.subject}</title>
+      <link>${abs_href.discussion('message', message.id)}#message${message.id}</link>
+      <guid isPermaLink="false">${abs_href.discussion('message', message.id)}#message${message.id}</guid>
+      <description>
+        ${unicode(wiki_to_html(context('discussion', 'message/%s' % (message.id)), message.body))}
+      </description>
+      <category>Message</category>
+    </item>
+ </channel>
+</rss>

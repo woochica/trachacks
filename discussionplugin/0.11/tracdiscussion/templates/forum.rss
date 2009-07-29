@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:py="http://genshi.edgewall.org/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="macros.rss" />
+  <channel>
+    <title>[${project.name}] Forum #${discussion.forum.id} - ${discussion.forum.name} - ${discussion.forum.subject}</title>
+    <link>${abs_href.discussion('forum', discussion.forum.id)}</link>
+    <description>${unicode(wiki_to_html(context, discussion.forum.description))}</description>
+    <language>en-us</language>
+    <image py:if="chrome.logo.src_abs">
+      <title>${project.name}</title>
+      <url>${chrome.logo.src_abs}</url>
+      <link>${abs_href.discussion('forum', discussion.forum.id)}</link>
+    </image>
+    <generator>Trac $trac.version - DiscussionPlugin</generator>
+    <item py:for="topic in discussion.topics">
+      ${author_or_creator(topic.author)}
+      <pubDate>${http_date(topic.time)}</pubDate>
+      <title>Topic #${topic.id} - ${topic.subject}</title>
+      <link>${abs_href.discussion('topic', topic.id)}#topic</link>
+      <guid isPermaLink="false">${abs_href.discussion('topic', topic.id)}#topic</guid>
+      <description>
+        ${unicode(wiki_to_html(context('discussion', 'topic/%s' % (topic.id)), topic.body))}
+      </description>
+      <category>Topic</category>
+    </item>
+    <item py:for="message in discussion.messages">
+      ${author_or_creator(message.author)}
+      <pubDate>${http_date(message.time)}</pubDate>
+      <title>Reply #${message.id} to topic #${message.topic} - ${discussion.topic_subjects[message.topic]}</title>
+      <link>${abs_href.discussion('message', message.id)}#message${message.id}</link>
+      <guid isPermaLink="false">${abs_href.discussion('message', message.id)}#message${message.id}</guid>
+      <description>
+        ${unicode(wiki_to_html(context('discussion', 'message/%s' % (message.id)), message.body))}
+      </description>
+      <category>Message</category>
+    </item>
+ </channel>
+</rss>

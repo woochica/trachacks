@@ -3,13 +3,15 @@
 import re
 
 from trac.core import *
-from trac.mimeview import Context
+from trac.mimeview.api import Mimeview, IContentConverter, Context
 from trac.config import Option
 from trac.util.html import html
+from trac.util.translation import _
 from trac.resource import Resource
 
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
+from trac.mimeview.api import IContentConverter
 
 from tracdiscussion.api import *
 
@@ -18,11 +20,12 @@ class DiscussionCore(Component):
         The core module implements a message board, including wiki links to
         discussions, topics and messages.
     """
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider)
+    implements(ITemplateProvider, INavigationContributor, IContentConverter,
+      IRequestHandler)
 
     # Configuration options.
-    title = Option('discussion', 'title', 'Discussion',
-      'Main navigation bar button title.')
+    title = Option('discussion', 'title', _('Discussion'),
+      _('Main navigation bar button title.'))
 
     # ITemplateProvider methods.
 
@@ -43,6 +46,18 @@ class DiscussionCore(Component):
         if req.perm.has_permission('DISCUSSION_VIEW'):
             yield 'mainnav', 'discussion', html.a(self.title,
               href = req.href.discussion())
+
+    # IContentConverter methods.
+
+    def get_supported_conversions(self):
+        yield ('rss', _('RSS Feed'), 'xml', 'tracdiscussion.topic',
+          'application/rss+xml', 8)
+        yield ('rss', _('RSS Feed'), 'xml', 'tracdiscussion.forum',
+          'application/rss+xml', 5)
+
+    def convert_content(self, req, mimetype, resource, key):
+        if key == 'rss':
+            return self._export_rss(req, resource)
 
     # IRequestHandler methods.
 
@@ -79,6 +94,15 @@ class DiscussionCore(Component):
             context.resource = Resource('discussion', 'message/%s' % (
               req.args['message'],))
 
+        # Redirect to content converter if requested.
+        if req.args.has_key('format'):
+            if req.args.has_key('topic'):
+                Mimeview(self.env).send_converted(req, 'tracdiscussion.topic',
+                  context.resource, req.args.get('format'), filename = None)
+            elif req.args.has_key('forum'):
+                Mimeview(self.env).send_converted(req, 'tracdiscussion.forum',
+                  context.resource, req.args.get('format'), filename = None)
+
         # Process request and return content.
         api = self.env[DiscussionApi]
         template, data = api.process_discussion(context)
@@ -86,9 +110,36 @@ class DiscussionCore(Component):
         if context.redirect_url:
             # Redirect if needed.
             href = req.href(context.redirect_url[0]) + context.redirect_url[1]
-            self.log.debug("Redirecting to %s" % (href))
+            self.log.debug(_("Redirecting to %s") % (href))
             req.redirect(req.href('discussion', 'redirect', redirect_url =
               href))
         else:
+            # Add links to other formats.
+            if context.forum or context.topic or context.message:
+                for conversion in Mimeview(self.env).get_supported_conversions(
+                  'tracdiscussion.topic'):
+                    format, name, extension, in_mimetype, out_mimetype, \
+                      quality, component = conversion
+                    conversion_href = get_resource_url(self.env,
+                      context.resource,  context.req.href, format = format)
+                    add_link(context.req, 'alternate', conversion_href, name,
+                      out_mimetype, format)
+
             # Return template and its data.
             return template, data, None
+
+    # Internal methods.
+    def _export_rss(self, req, resource):
+        # Create request context.
+        context = Context.from_request(req)
+        context.realm = 'discussion-core'
+        context.resource = resource
+
+        # Process request and get template and template data.
+        api = self.env[DiscussionApi]
+        template, data = api.process_discussion(context)
+
+        # Render template and return RSS feed.
+        output = Chrome(self.env).render_template(req, template, data,
+          'application/rss+xml')
+        return output, 'application/rss+xml'

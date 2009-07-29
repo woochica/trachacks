@@ -264,9 +264,13 @@ class DiscussionApi(Component):
         add_script(context.req, 'common/js/search.js')
         add_script(context.req, 'common/js/wikitoolbar.js')
 
+        # Determine template name.
+        self._get_template(context, actions)
+
         # Return request template and data.
-        self.log.debug('data: %s' % (context.data,))
-        return actions[-1] + '.html', {'discussion' : context.data}
+        self.log.debug('template: %s data: %s' % (context.template,
+          context.data,))
+        return context.template, {'discussion' : context.data}
 
     # Internal methods.
 
@@ -279,6 +283,7 @@ class DiscussionApi(Component):
         context.topic = None
         context.message = None
         context.redirect_url = None
+        context.format = context.req.args.get('format')
 
         # Populate active message.
         if context.req.args.has_key('message'):
@@ -344,8 +349,8 @@ class DiscussionApi(Component):
         action = context.req.args.get('discussion_action')
         preview = context.req.args.has_key('preview');
         submit = context.req.args.has_key('submit');
-        self.log.debug('realm: %s, action: %s, preview: %s, submit: %s' % (
-          context.realm, action, preview, submit))
+        self.log.debug('realm: %s, action: %s, format: %s preview: %s, submit:'
+          ' %s' % (context.realm, action, context.format, preview, submit))
 
         # Determine mode.
         if context.message:
@@ -375,6 +380,8 @@ class DiscussionApi(Component):
                 else:
                     return ['wiki-message-list']
             else:
+                if context.format == 'rss':
+                    return ['topic-rss']
                 if action == 'add':
                     return ['message-add', 'message-list']
                 elif action == 'quote':
@@ -430,6 +437,8 @@ class DiscussionApi(Component):
                 else:
                     return ['wiki-message-list']
             else:
+                if context.format == 'rss':
+                    return ['topic-rss']
                 if action == 'add':
                     return ['message-add', 'message-list']
                 elif action == 'quote':
@@ -473,6 +482,8 @@ class DiscussionApi(Component):
             elif context.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
+                if context.format == 'rss':
+                    return ['forum-rss']
                 if action == 'add':
                     return ['topic-add']
                 elif action == 'post-add':
@@ -529,6 +540,12 @@ class DiscussionApi(Component):
                     return ['forum-post-add']
                 else:
                     return ['forum-list']
+
+    def _get_template(self, context, actions):
+        if context.format == 'rss':
+            context.template = actions[-1].replace('-rss', '') + '.rss'
+        else:
+            context.template = actions[-1] + '.html'
 
     def _do_actions(self, context, actions):
         for action in actions:
@@ -633,6 +650,28 @@ class DiscussionApi(Component):
                 context.data['users'] = self.get_users(context)
                 context.data['groups'] = self.get_groups(context)
                 context.data['forums'] = self.get_forums(context, order, desc)
+
+            elif action == 'forum-rss':
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                # Get topics and messges.
+                messages =  self.get_flat_messages_by_forum(context,
+                  context.forum['id'], desc = True, limit =
+                  self.messages_per_page)
+                topics = self.get_topics(context, context.forum['id'],
+                  desc = True, limit = self.topics_per_page)
+
+                # Create map of topic subjects.
+                topic_subjects = {}
+                for message in messages:
+                    if not topic_subjects.has_key(message['topic']):
+                        topic_subjects[message['topic']] = \
+                          self.get_topic_subject(context, message['topic'])
+
+                # Prepare list of topics and messages of the forum.
+                context.data['topics'] = topics
+                context.data['messages'] = messages
+                context.data['topic_subjects'] = topic_subjects
 
             elif action == 'forum-add':
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
@@ -842,6 +881,14 @@ class DiscussionApi(Component):
                 context.data['display'] = display
                 context.data['topics'] = topics
                 context.data['paginator'] = paginator
+
+            elif action == 'topic-rss':
+                context.req.perm.assert_permission('DISCUSSION_VIEW')
+
+                # Display list of messages for topic.
+                context.data['messages'] = self.get_flat_messages(context,
+                  context.topic['id'], desc = True, limit =
+                  self.messages_per_page);
 
             elif action == 'topic-add':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
@@ -1330,6 +1377,13 @@ class DiscussionApi(Component):
           'description'), 'id = %s', (id,)) or {'id' : 0, 'name': 'None',
           'description': 'No Group'}
 
+    # Get attribute functions.
+
+    def get_topic_subject(self, context, id):
+        # Get subject of the topic.
+        topic = self._get_item(context, 'topic', ('subject',), 'id = %s', (id,))
+        return topic['subject']
+
     # Get items count functions.
 
     def _get_items_count(self, context, table, where = '', values = ()):
@@ -1536,6 +1590,13 @@ class DiscussionApi(Component):
         return self._get_items(context, 'message', ('id', 'replyto', 'time',
           'author', 'body'), 'topic = %s', (id,), order_by, desc, limit, offset)
 
+    def get_flat_messages_by_forum(self, context, id, order_by = 'time',
+      desc = False, limit = 0, offset = 0):
+        # Return messages of specified topic.
+        return self._get_items(context, 'message', ('id', 'replyto', 'topic',
+          'time', 'author', 'body'), 'forum = %s', (id,), order_by, desc, limit,
+          offset)
+
     def get_replies(self, context, id, order_by = 'time', desc = False):
         # Return replies of specified message.
         return self._get_items(context, 'message', ('id', 'replyto', 'time',
@@ -1624,8 +1685,8 @@ class DiscussionApi(Component):
 
     # Set item functions.
 
-    def _set_item(self, context, table, field, value, where = '', values = ()):
-        sql = 'UPDATE ' + table + ' SET ' + field + ' = "' + to_unicode(value) \
+    def _set_item(self, context, table, column, value, where = '', values = ()):
+        sql = 'UPDATE ' + table + ' SET ' + column + ' = "' + to_unicode(value) \
           + '"' + (where and (' WHERE ' + where) or '')
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
