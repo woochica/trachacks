@@ -12,7 +12,7 @@ setup(name='ImageTrac',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
-      package_data={ 'imagetrac': ['templates/*', 'htdocs/*'] },
+      package_data={ 'imagetrac': ['templates/*', 'htdocs/css/*', 'htdocs/js/*'] },
       zip_safe=False,
       install_requires=[
         'TicketSidebarProvider',
