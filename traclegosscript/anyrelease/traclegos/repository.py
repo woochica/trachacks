@@ -111,9 +111,9 @@ class SVNSync(RepositorySetup):
 
 
 class NewMercurialRepository(RepositorySetup):
-    """create a new Mercurial repository"""
+    """Create a new Mercurial repository"""
 
-    options = [ var('repository_dir', 'location to create Hg repository') ]
+    options = [ var('hg_repository_dir', 'location to create Hg repository') ]
 
     def enabled(self):
         try:
@@ -129,7 +129,7 @@ class NewMercurialRepository(RepositorySetup):
 
     def config(self):
         return { 'components': { 'tracext.hg': 'enabled' },
-                 'trac': { 'repository_dir': '${repository_dir}',
+                 'trac': { 'repository_dir': '${hg_repository_dir}',
                            'repository_type': 'hg' } } 
             
 

@@ -120,9 +120,13 @@ class ProjectDetails(Step):
     def data(self, project):
         """data needed for template rendering"""
         project_name = project['vars']['project']
+        repositories = [ self.view.repositories[name] for name in self.view.available_repositories ]
+        excluded_fields = dict((key, value.keys()) for key, value in self.view.legos.repository_fields(project_name).items())
+        for name in self.view.available_repositories:
+            excluded_fields.setdefault(name, []).extend(project['vars'].keys())
         data = {'project': project_name,
-                'repositories': [ self.view.repositories[name] for name in self.view.available_repositories ],
-                'excluded_fields': dict((key, value.keys()) for key, value in self.view.legos.repository_fields(project_name).items()),
+                'repositories': repositories,
+                'excluded_fields': excluded_fields,
                 'databases': [ self.view.databases[name] for name in self.view.available_databases ] } 
 
         # get the database strings
