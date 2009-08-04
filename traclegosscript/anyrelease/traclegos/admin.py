@@ -40,7 +40,6 @@ class TracLegosAdmin(TracAdmin):
         """
         list fields of a particular type
         """
-
         # XXX these fucntions are no longer in trunk
         list_functions = { 'component': self.get_component_list,
                            'milestone': self.get_milestone_list, 

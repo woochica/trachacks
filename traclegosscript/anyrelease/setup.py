@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.7.1'
+version = '0.7.2'
 
 setup(name='TracLegos',
       version=version,
@@ -50,5 +50,6 @@ setup(name='TracLegos',
       ExistingSVNRepository = traclegos.repository:ExistingSVN
       NewSVNRepository = traclegos.repository:NewSVN
       SyncSVNRepository = traclegos.repository:SVNSync
+      NewMercurialRepository = traclegos.repository:NewMercurialRepository
       """,
       )

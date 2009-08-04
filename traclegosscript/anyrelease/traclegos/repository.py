@@ -109,6 +109,30 @@ class SVNSync(RepositorySetup):
             raise RepositorySetupError("Missing options")
         raise NotImplementedError # TODO
 
+
+class NewMercurialRepository(RepositorySetup):
+    """create a new Mercurial repository"""
+
+    options = [ var('repository_dir', 'location to create Hg repository') ]
+
+    def enabled(self):
+        try:
+            import tracext.hg
+        except ImportError:
+            return False
+        try:
+            import subprocess
+            retval = subprocess.call(["hg"], stdout=subprocess.PIPE)
+            return not retval
+        except:
+            return False
+
+    def config(self):
+        return { 'components': { 'tracext.hg': 'enabled' },
+                 'trac': { 'repository_dir': '${repository_dir}',
+                           'repository_type': 'hg' } } 
+            
+
 def available_repositories():
     """return installed and enabled repository setup methods"""
     repositories = []
