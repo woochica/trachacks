@@ -187,8 +187,9 @@ class iCalViewPlugin(QueryModule):
                 self.format_date(content,"CREATED",result["time"])
                 self.format_date(content,"DTSTAMP",result["changetime"])
                 protocol = "http"
-                if "HTTPS" in os.getenv('SERVER_PROTOCOL') :
-                    protocol = "https"
+                if os.getenv('SERVER_PROTOCOL') != None :
+                    if "HTTPS" in os.getenv('SERVER_PROTOCOL') :
+                        protocol = "https"
                 content.write("URL:%s://%s%s\r\n" % (protocol,os.getenv('SERVER_NAME'),get_resource_url(self.env,ticket,req.href)))
                 priority = priority_map[result['priority']]
                 if priority != None:
