@@ -162,7 +162,7 @@ class DoxygenPlugin(Component):
 
         # security check
         path = os.path.abspath(path)
-        if not path.startswith(self.base_path):
+        if not path.startswith(os.path.normpath(self.base_path)):
             raise TracError("Can't access paths outside of " + self.base_path)
 
         # view
@@ -177,7 +177,7 @@ class DoxygenPlugin(Component):
                 content = Markup(to_unicode(file(path).read(), charset))
                 data = {'doxygen_content': content}
                 return 'doxygen.html', data, 'text/html'
-            except OSError, e:
+            except (IOError, OSError), e:
                 raise TracError("Can't read doxygen content: %s" % e)
         else:
             req.send_file(path, mimetype)            
