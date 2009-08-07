@@ -77,7 +77,6 @@ class SvnAuthzAdminPage(Component):
         elif path_info and path_info.startswith("editpath/"):
             editpath, d = self._edit_path(req, cat, page, path_info)
 	    data.update(d)
-	print data
 
         paths_disp = []
         for repository, path in [(p.get_repo(), p.get_path()) for p in self.authz.get_paths()]:
@@ -294,7 +293,6 @@ class SvnAuthzAdminPage(Component):
 	data = {}
         editgroup = url2pathname(path_info[path_info.index('/')+1:len(path_info)])            
         group = self.authz.find_group(editgroup)
-	print group
         if group != None:
             data['editgroup_name'] = editgroup
             data['editgroup_url'] = pathname2url(editgroup)
