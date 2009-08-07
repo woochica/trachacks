@@ -114,7 +114,7 @@ class AuthzFileParser:
             repo = None
             path = line.strip()
         self.current_path = Path(path, [], repo)
-        assert(m.find_path(self.current_path) == None)
+        assert(m.find_path(self.current_path) == [])
         m.add_path(self.current_path)
 
     def _parse_path_acl(self, m, line):

@@ -163,7 +163,7 @@ class AuthModel:
         for p in self.paths:
             if path == p.get_path() and repo == p.get_repo():
                 return p
-        return None
+        return []
     
     def add_path(self, p):
         if isinstance(p, Path):           
