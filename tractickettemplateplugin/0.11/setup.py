@@ -11,7 +11,7 @@ setup(
     maintainer = 'Richard Liao',
     maintainer_email = "richard.liao.i@gmail.com",
     description = "Ticket template plugin for Trac.",
-    license = "LGPLv2.1",
+    license = "BSD",
     keywords = "trac ticket template",
     url = "http://trac-hacks.org/wiki/TracTicketTemplatePlugin",
     classifiers = [
