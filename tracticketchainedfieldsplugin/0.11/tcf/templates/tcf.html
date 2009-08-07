@@ -1,0 +1,42 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="ticket.html" />
+
+
+<div class="list" id="content">
+
+  <py:for each="item in data.subdata">
+	<a>${item}</a>
+  </py:for>
+
+	<textarea id="description_default">${text}</textarea>
+</div>
+
+
+<div class="list" id="content" >
+	<h1>TCF List</h1>
+
+	<table class="listing" id="milelist">
+		<thead>
+		<tr><th>TCF</th>
+		</tr>
+		</thead>
+
+		<tbody>
+		  <py:for each="item in data.subdata">
+			<tr>
+			<td>${item}</td>
+			</tr>
+		  </py:for>
+		</tbody>
+	</table>
+
+</div>
+
+
+</html>

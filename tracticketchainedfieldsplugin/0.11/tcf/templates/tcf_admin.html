@@ -1,0 +1,93 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $("#toggle_example").click(function(){
+            $("#edit_tcf_define").toggle();
+            $("#tcf_define_example").toggle();
+            
+            if($("#tcf_define_example:visible").length){
+                $("#toggle_example").text("Close example");
+            } else {
+                $("#toggle_example").text("Show example");
+            }
+            
+            return false;
+        });
+    });
+</script>
+
+<title>Trac Ticket Chained Fields</title>
+</head>
+
+<body>
+
+<h2>Chained fields</h2>
+<div style="position: absolute; right: 10px; top: 20px;">
+    <ul>
+        <li>All fields must start with tcf_, and field type must be text</li>
+        <li>Use JSON</li>
+        <li>Use double quote as mark of string</li>
+        <li>Remove the last comma</li>
+        <li>It's case sensitive</li>
+        <li><a href="#" id="toggle_example">Show example</a></li>
+    </ul>
+</div>
+
+<div style="display: none" id="tcf_define_example">
+<div>Example</div>
+<textarea readonly="readonly" rows="30" cols="80">
+{
+    "tcf_brand": {
+        "Nokia": {
+            "tcf_phone":{
+                "5800": {
+                    "tcf_os":{
+                        "Symbian": {},
+                        "Android": {}
+                    }
+                }
+            }
+        },
+        "Apple": {
+            "tcf_phone":{
+                "iPhone": {
+                    "tcf_os":{
+                        "OS X": {},
+                        "OS": {}
+                    }
+                },
+                "iPhone 3G": {
+                    "tcf_os":{
+                        "OS X": {},
+                        "OS": {}
+                    }
+                }
+            }
+        }
+    }
+}
+</textarea>
+</div>
+
+
+<form id="edit_tcf_define" action="" method="post">
+
+    <textarea id="tcf_define" name="tcf_define" rows="30" cols="80">${tcf_define}</textarea>
+	<p />
+    <input type="submit" name="save" value="Save" accesskey="s" />
+
+</form>
+
+</body>
+
+</html>

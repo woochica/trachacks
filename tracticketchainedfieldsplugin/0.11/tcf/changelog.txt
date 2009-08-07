@@ -1,0 +1,2 @@
+Trac Ticket Chained Fields 0.1 (2009-07-22)
+ * First release
