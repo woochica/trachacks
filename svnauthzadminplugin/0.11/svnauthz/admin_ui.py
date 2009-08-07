@@ -27,6 +27,7 @@ class SvnAuthzAdminPage(Component):
     def __init__(self):
         self.authz_file = self.env.config.get("trac", "authz_file")
         self.authz_module = self.env.config.get("trac", "authz_module_name")
+        self.show_all_repos = self.env.config.getbool("svnauthzadmin", "show_all_repos")
         if self.authz_module != None and self.authz_module.strip() == "":
             self.authz_module = None
     
@@ -80,7 +81,7 @@ class SvnAuthzAdminPage(Component):
 
         paths_disp = []
         for repository, path in [(p.get_repo(), p.get_path()) for p in self.authz.get_paths()]:
-            if repository != self.authz_module:
+            if repository != self.authz_module and not self.show_all_repos:
                 # We ignore the paths from other modules from the display 
                 continue
             path_disp = self._get_disp_path_name(repository, path)
@@ -146,7 +147,7 @@ class SvnAuthzAdminPage(Component):
             for urlpath in paths_to_del:
                 validpath = self._get_valid_path(paths, url2pathname(urlpath))
                 if validpath:
-                    self.authz.del_path(validpath[1], self.authz_module)
+                    self.authz.del_path(validpath[1], validpath[0])
         except Exception, e:
             return {'delpath_error' : e }
 
@@ -154,8 +155,16 @@ class SvnAuthzAdminPage(Component):
     def _add_path(self, req):
         path = req.args.get('path')
         repository = None
+        tmppath = req.args.get('path') 
+ 	if ":" in tmppath: 
+ 	    repository, path = tmppath.split(":") 
+ 	    repository = repository.strip() 
+ 	    path = path.strip() 
+ 	else: 
+ 	    repository = self.authz_module 
+ 	    path = tmppath.strip() 
         try:
-            self.authz.add_path(Path(path, [], self.authz_module))
+            self.authz.add_path(Path(path, [], repository))
 	    return {}
         except Exception, e:
             return {'addpath_error' :  e}
@@ -182,8 +191,9 @@ class SvnAuthzAdminPage(Component):
         validpath = self._get_valid_path(paths, editpath)
         if not validpath:
             return {'changepathmember_error' : "Not a valid path: %s" % editpath}
-        path = validpath[1]        
-        path_members = self.authz.find_path(path, self.authz_module)
+        path = validpath[1]
+        repo = validpath[0]
+        path_members = self.authz.find_path(path, repo)
         
         read = False
         write = False     
@@ -234,9 +244,10 @@ class SvnAuthzAdminPage(Component):
         if not validpath:
             return {'changepathmember_error' : "Not a valid path: %s" % editpath }
         path = validpath[1]
+        repo = validpath[0] 
         members_to_del = req.args.get('selpathmember')
         member_acls = req.args.get('selpathmember_acl')
-        path_members = self.authz.find_path(path, self.authz_module)
+        path_members = self.authz.find_path(path, repo)
         
         if len(path_members) == 0:
             # Nothing to do
@@ -364,10 +375,16 @@ class SvnAuthzAdminPage(Component):
         for repository, pathname in pathlist:
             if "%s:%s" % (repository, pathname) == path:
                 return (repository, pathname)
-        return None
+        return (None, path)
     
     def _get_disp_path_name(self, repository, path):
-        return path
+        if self.show_all_repos: 
+ 	    if repository == None: 
+ 	        return "*:%s" % path 
+ 	    else: 
+ 	        return "%s:%s" % (repository, path) 
+ 	else: 
+ 	    return path 
 
     def _get_model(self):
        r = AuthzFileReader()
