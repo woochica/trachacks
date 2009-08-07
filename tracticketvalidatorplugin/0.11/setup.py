@@ -11,7 +11,7 @@ setup(
     maintainer = 'Richard Liao',
     maintainer_email = "richard.liao.i@gmail.com",
     description = "Ticket validator plugin for Trac.",
-    license = "LGPLv2.1",
+    license = "BSD",
     keywords = "trac ticket validator",
     url = "http://trac-hacks.org/wiki/TracTicketValidatorPlugin",
     classifiers = [
