@@ -72,6 +72,20 @@ def authorinfo(author):
 def esc(s):
     return saxutils.escape(s)
 
+def smart_truncate(content, length=100, suffix='...'):
+    """
+    Smart string truncate with ellipsis and whitespace collapsing.
+    """
+    content = ' '.join(content.split())
+    if len(content) <= length:
+        return content
+    else:
+        if ' ' in content[:length]:
+            # Find the last space (maybe right after cutoff point) and cut the string
+            return content[:content[:length+1].rindex(' ')] + suffix
+        else:
+            return content[:length]  + suffix
+
 class CiaNotificationComponent(Component):
     implements(IWikiChangeListener)
     implements(IAttachmentChangeListener)
@@ -135,7 +149,7 @@ class CiaNotificationComponent(Component):
             diff_url = self.env.abs_href('wiki', page.name, action='diff', version=str(version))
             args['log'] = esc(page.name + ' has been changed')
             if comment:
-                args['log'] += esc(': ' + comment)
+                args['log'] += esc(': ' + smart_truncate(comment, 150))
             args['log'] += ' (' + esc(diff_url) + ')'
             args['version'] = '<version>' + esc(str(version)) + '</version>'
         elif action == 'deleted':
@@ -236,6 +250,9 @@ class CiaNotificationComponent(Component):
                 if log: log += '; '
                 log += "changed " + ', '.join(changes)
             log += ' (' + t_url + ')'
+            comment = kwargs.get('comment', None)
+            if comment:
+                log += ': ' + esc(smart_truncate(comment, 150))
             args['url'] = t_url
             args['log'] = esc(log)
         else:
