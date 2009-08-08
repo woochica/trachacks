@@ -22,7 +22,7 @@ import xmlrpclib
 from xml.sax import saxutils
 from time import mktime
 
-PROJECT_NAME = 'ExampleProject'
+PROJECT_NAME = 'TestMyBotProject'
 SERVICE_URL = 'http://cia.vc'
 
 TICKET_FIELDS = [
