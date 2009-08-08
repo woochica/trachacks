@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 setup(
     name = 'TicketExtPlugin',
-    version = '0.3',
+    version = '0.3.1',
     description = "Ticket extensions for Trac",
     url = "http://trac-hacks.org/wiki/TicketExtPlugin",
     author = "Takanori Suzuki",

@@ -6,6 +6,7 @@ from trac.web.api import IRequestFilter, ITemplateStreamFilter, IRequestHandler
 from genshi.filters.transform import Transformer
 from genshi.template import MarkupTemplate
 from api import TicketTemplate
+from api import LocaleUtil
 
 _TRUE_VALUES = ('true', 'enabled', '1', 1, True)
 
@@ -36,6 +37,11 @@ class TicketTemplateModule(Component):
         if template == 'ticket.html':
             add_script(req, 'ticketext/ticketext.js')
             add_stylesheet(req, 'ticketext/ticketext.css')
+            
+            # localization
+            locale = LocaleUtil().get_locale(req)
+            if (locale == 'ja'):
+                add_script(req, 'ticketext/ticketext-locale-ja.js')
             
         return (template, data, content_type)
     
@@ -83,5 +89,5 @@ class TicketTypeChangeHandler(Component):
     
     # IRequestHandler method
     def process_request(self, req):
-        template_api = TicketTemplate(self.env)
-        template_api.process_tickettemplate(req, 'type')
+        template_api = TicketTemplate()
+        template_api.process_tickettemplate(self.env, req, 'type')

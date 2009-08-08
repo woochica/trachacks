@@ -8,7 +8,7 @@ from trac.web.api import ITemplateStreamFilter
 from genshi.filters.transform import Transformer
 from genshi.template import MarkupTemplate
 from api import TicketTemplate
-from api import TicketExtUtil
+from api import LocaleUtil
 from customfieldadmin.api import CustomFields
 
 class TicketTemplateAdmin(Component):
@@ -39,7 +39,7 @@ class TicketTemplateAdmin(Component):
     def get_admin_panels(self, req):
         if req.perm.has_permission('TRAC_ADMIN'):
             # localization
-            locale = TicketExtUtil(self.env).get_locale(req)
+            locale = LocaleUtil().get_locale(req)
             if locale in ['ja', 'ja-JP']:
                 yield ('ticket', u'チケットシステム', 'template_admin', u'チケットテンプレート')
             else:
@@ -49,26 +49,26 @@ class TicketTemplateAdmin(Component):
     def render_admin_panel(self, req, cat, page, path_info):
         req.perm.assert_permission('TRAC_ADMIN')
         
+        add_script(req, 'ticketext/ticketext.js')
+        add_stylesheet(req, 'ticketext/ticketext.css')
+        
+        # localization
+        locale = LocaleUtil().get_locale(req)
+        if (locale == 'ja'):
+            add_script(req, 'ticketext/ticketext-locale-ja.js')
+            page_template = 'template_admin_ja.html'
+        else:
+            page_template = 'template_admin.html'
+        
         if req.method == 'POST':
             self._process_update(req)
             
         page_param = {}
         self._process_read(req, page_param)
         
-        # localization
-        util = TicketExtUtil(self.env)
-        locale = util.get_locale(req)
-        if locale in ['ja', 'ja-JP']:
-            page_template = 'template_admin_ja.html'
-        else:
-            page_template = 'template_admin.html'
-
         return page_template, {'template': page_param}
     
     def _process_read(self, req, page_param):
-        add_script(req, 'ticketext/ticketext.js')
-        add_stylesheet(req, 'ticketext/ticketext.css')
-        
         ticket_type = req.args.get('type')
         
         ticket_types = [{
@@ -81,8 +81,8 @@ class TicketTemplateAdmin(Component):
         if ticket_type == None:
             ticket_type = (ticket_types[0])['name']
         
-        template_api = TicketTemplate(self.env)
-        ticket_template = template_api.get_template_field(ticket_type)
+        template_api = TicketTemplate()
+        ticket_template = template_api.get_template_field(self.env, ticket_type)
         
         # check enable customfield
         customfields_api = CustomFields(self.env)
@@ -118,5 +118,5 @@ class TicketTemplateAdmin(Component):
             'enablefields' : ticket_enablefields
         }
         
-        template_api = TicketTemplate(self.env)
-        template_api.update_template_field(template_field)
+        template_api = TicketTemplate()
+        template_api.update_template_field(self.env, template_field)

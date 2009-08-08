@@ -1,15 +1,15 @@
 input.te_exclude {
-	background : #eeeeee;
+  background: #eeeeee;
 }
 
 select.te_exclude {
-	background : #eeeeee;
+  background: #eeeeee;
 }
 
 textarea.te_exclude {
-	background : #eeeeee;
+  background: #eeeeee;
 }
 
 label.te_exclude {
-	color : #999999;
+  color: #999999;
 }
