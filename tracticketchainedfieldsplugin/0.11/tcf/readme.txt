@@ -24,7 +24,12 @@ cp dist/*.egg /srv/trac/env/plugins
   {{{
 [components]
 tcf.* = enabled
+
+[tcf]
+hide_empty_fields = false
 }}}
+
+"hide_empty_fields" is the option which enable "hide fields when there are no supplied options", default is false. 
 
 = Usage =
  * TBD
