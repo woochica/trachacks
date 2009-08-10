@@ -91,7 +91,6 @@ class SQLGetColumn(SQLHelper):
 
 get_column = SQLGetColumn()
 
-
 def create_table(env, table):
     """
     create a table given a component
@@ -111,3 +110,21 @@ def insert_row_from_dict(env, table, dictionary):
     sql = "INSERT INTO %s (%s) VALUES (%s)"
     sql = sql % ( table, ','.join(keys), ','.join(['%s' for v in values]))
     execute_non_query(env, sql, *values)
+
+def update_row_from_dict(env, table, key, value, dictionary):
+    items = dictionary.items()
+    # XXX this might be slightly retarded
+    sql = "UPDATE %s SET %s WHERE %s='%s'"
+    sql = sql % ( table, 
+                  ', '.join(["%s='%s'" (key, value) 
+                             for item in items]),
+                  key, 
+                  value)
+    execute_non_query(env, sql)
+    
+
+def insert_update(env, table, key, value, items):
+    if get_first_row(env, "SELECT * FROM %s WHERE %s=%s" % (table, key, value)):
+        insert_row_from_dict(env, table, items)
+    else:
+        update_row_from_dict(env, table, key, value, items)
