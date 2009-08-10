@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.2.1'
+version='0.3'
 
 setup(name='ImageTrac',
       version=version,
@@ -15,22 +15,22 @@ setup(name='ImageTrac',
       package_data={ 'imagetrac': ['templates/*', 'htdocs/css/*', 'htdocs/js/*'] },
       zip_safe=False,
       install_requires=[
+        'ComponentDependencyPlugin',
         'TicketSidebarProvider',
         'PIL',
-        'cropresize'
+        'cropresize',
+        'TracSQLHelper',
         ],
-      extras_require={
-        'mail2trac': [ 'mailtrac' ],
-        },
       dependency_links=[
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
-        "http://trac-hacks.org/svn/mailtotracplugin/0.11/#egg=mail2trac",
+        "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
+        "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
         "http://dist.repoze.org/PIL-1.1.6.tar.gz",
         ],
       entry_points = """
       [trac.plugins]
       imagetrac = imagetrac.image
       imagesidebar = imagetrac.web_ui
-      imagetracmail = imagetrac.mail [mail2trac]
+      defaultimage = imagetrac.setup
       """,
       )

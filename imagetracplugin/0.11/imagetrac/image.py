@@ -200,6 +200,10 @@ class ImageTrac(Component):
     def images(self, ticket, href=None):
         """returns images for a ticket"""
 
+        # construct a ticket from an id
+        if isinstance(ticket, int):
+            ticket = Ticket(self.env, ticket)
+
         if not ticket.exists:
             return {}
         
