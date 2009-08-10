@@ -144,10 +144,13 @@ class TracTicketChainedFieldsModule(Component):
 
 
     def process_request(self, req):
+        hide_empty_fields = self.config.getbool("tcf", "hide_empty_fields", False)
+        
         if req.path_info.startswith('/tcf/query_tcf_define'):
             # handle XMLHTTPRequest
             result = {}
             result["status"] = "1"
+            result["hide_empty_fields"] = hide_empty_fields
             
             tcf_define = TracTicketChainedFields_List.get_tcf_define(self.env)
             result["tcf_define"] = simplejson.loads(tcf_define)
@@ -160,6 +163,7 @@ class TracTicketChainedFieldsModule(Component):
         elif req.path_info.startswith('/tcf/query_field_change'):
             result = {}
             result["status"] = "1"
+            result["hide_empty_fields"] = hide_empty_fields
             
             trigger = req.args.get("trigger", "").lstrip("field-")
             if not trigger:
@@ -188,6 +192,7 @@ class TracTicketChainedFieldsModule(Component):
                         target_field = tcf_define_target.keys()[0]
                     break
                 else:
+                    
                     field = tcf_define_target.keys()[0]
                     field_value = req.args.get("field-" + field, "")
                     
@@ -198,7 +203,7 @@ class TracTicketChainedFieldsModule(Component):
                         
             if tcf_define_target:
                 target_field = tcf_define_target.keys()[0]
-                target_options = tcf_define_target.values()[0].keys()
+                target_options = [target_option for target_option in tcf_define_target.values()[0].keys() if target_option]
             
             target_options.sort()
             

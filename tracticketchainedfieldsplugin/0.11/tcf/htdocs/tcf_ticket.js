@@ -59,6 +59,18 @@ $(document).ready(function() {
             }
             $("#field-" + result.target_field).append("<option></option>");
             
+            
+            if (result.hide_empty_fields && 
+                (result.target_options.length == 0 && result.target_field || 
+                $(this).css("display") == "none")
+               ){
+                $("#field-"+result.target_field).parent().prev().find("label").hide();
+                $("#field-"+result.target_field).hide();
+            } else {
+                $("#field-"+result.target_field).parent().prev().find("label").show();
+                $("#field-"+result.target_field).show();
+            }
+            
             $("#field-" + result.target_field).change();
             
         });
