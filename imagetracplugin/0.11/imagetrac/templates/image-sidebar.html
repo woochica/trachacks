@@ -8,10 +8,10 @@
     <py:for each="image in images.values()">
       <li py:if="display in image" py:choose="'thumbnail' in image">
 
-        <!-- image with thumbnails -->
+        <!--! image with thumbnails -->
         <a py:when="True" href="${image[display]}"><img src="${image['thumbnail']}"/></a>
 
-        <!-- image without thumbnails -->
+        <!--! image without thumbnails -->
         <img py:when="False" href="${image[display]}"/>
         
       </li>
