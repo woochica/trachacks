@@ -124,7 +124,7 @@ def update_row_from_dict(env, table, key, value, dictionary):
     
 
 def insert_update(env, table, key, value, items):
-    import pdb; pdb.set_trace()
+    items[key] = value
     if get_first_row(env, "SELECT * FROM %s WHERE %s=%s" % (table, key, value)):
         update_row_from_dict(env, table, key, value, items)
     else:
