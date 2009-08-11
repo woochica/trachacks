@@ -73,11 +73,7 @@ currently a bug whereby this is not the case).
 
 The !SidebarImage component displays the images in an unordered list
 in the ticket sidebar using the
-[http://trac-hacks.org/wiki/TicketSidebarProviderPlugin
-TicketSidebarProviderPlugin].  
-(NOTE:  currently, thumbnails are displayed full size.  This is
-bad. See http://trac-hacks.org/ticket/5657)
-
+[http://trac-hacks.org/wiki/TicketSidebarProviderPlugin TicketSidebarProviderPlugin].
 
 === !TicketImageHandler ===
 
