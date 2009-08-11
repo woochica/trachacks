@@ -16,7 +16,7 @@ are included in the ImageTrac plugin:
  * [#TicketImageHandler TicketImageHandler]
 
 
-=== ImageTrac ===
+=== !ImageTrac ===
 
 !ImageTrac is the core of the ImageTracPlugin.  This plugin processes
  uploaded attachments and, if they are images, will create images of
@@ -46,7 +46,7 @@ front-end function packaged in
  template. 
 
 
-=== DefaultTicketImage ===
+=== !DefaultTicketImage ===
 
 The !DefaultTicketImage component allows the setting of a default
 image for a ticket.  It maintains a database table, `default_image`,
@@ -55,13 +55,13 @@ which stores which image is the default
 
 === Galleria ===
 
-The !Galleria component adds the 
+The Galleria component adds the 
 [http://devkick.com/lab/galleria/ galleria] javascript image gallery
 and accompanying CSS to allow the display of images in a gallery
 format.
 
 
-=== ImageFormFilter ===
+=== !ImageFormFilter ===
 
 The !ImageFormFilter component adds a form on the ticket page that
 allows uploading of an image on ticket creation or ticket editing.
@@ -69,7 +69,7 @@ Images so uploaded should become the default image (NOTE: there is
 currently a bug whereby this is not the case).
 
 
-=== SidebarImage ===
+=== !SidebarImage ===
 
 The !SidebarImage component displays the images in an unordered list
 in the ticket sidebar using the
@@ -79,7 +79,7 @@ TicketSidebarProviderPlugin].
 bad. See http://trac-hacks.org/ticket/5657)
 
 
-=== TicketImageHandler ===
+=== !TicketImageHandler ===
 
 The !TicketImageHandler component serves the images at
 `/ticket/<ticket id>/image/<size>`.  For example, the thumbnail of
