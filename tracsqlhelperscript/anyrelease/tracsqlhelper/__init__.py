@@ -120,7 +120,6 @@ def update_row_from_dict(env, table, key, value, dictionary):
                              for item in items]),
                   key, 
                   value)
-    import pdb; pdb.set_trace()
     execute_non_query(env, sql)
     
 
