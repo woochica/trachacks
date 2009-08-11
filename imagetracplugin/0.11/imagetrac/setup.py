@@ -10,7 +10,10 @@ from trac.core import *
 from trac.db import Table, Column, Index, DatabaseManager
 from trac.env import IEnvironmentSetupParticipant
 from tracsqlhelper import create_table
+from tracsqlhelper import execute_non_query
 from tracsqlhelper import get_scalar
+from tracsqlhelper import insert_update
+
 
 class DefaultTicketImage(Component):
 
@@ -69,11 +72,18 @@ class DefaultTicketImage(Component):
         image = get_scalar(self.env, "SELECT image FROM default_image WHERE ticket=%s" % ticket_id)
         imagetrac = ImageTrac(self.env)
         images = imagetrac.images(ticket_id)
-        if not image or (size and size not in images[image]):
-            for i in images:
-                if size:
-                    if size in images[i]:
-                        return i
-                else:
+        if image:
+            if size and size in images[image]:
+                return image # set default image
+
+        # find an image that works
+        for i in images:
+            if size:
+                if size in images[i]:
                     return i
-        return
+            else:
+                return i
+
+    def set_default(self, ticket_id, image):
+        insert_update(self.env, 'default_image', 'ticket', ticket_id, dict(image=image))
+

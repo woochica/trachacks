@@ -6,6 +6,7 @@ from imagetrac.image import ImageTrac
 from imagetrac.setup import DefaultTicketImage
 from pkg_resources import resource_filename
 from ticketsidebarprovider import ITicketSidebarProvider
+from ticketsidebarprovider import TicketSidebarProvider
 from trac.attachment import Attachment
 from trac.attachment import AttachmentModule
 from trac.config import Option
@@ -23,7 +24,7 @@ from trac.web.chrome import ITemplateProvider
 class SidebarImage(Component):
     """add an image to the ticket sidebar"""
 
-    implements(ITicketSidebarProvider, ITemplateProvider)
+    implements(ITicketSidebarProvider, ITemplateProvider, IRequireComponents)
 
     ### internal methods
 
@@ -40,6 +41,11 @@ class SidebarImage(Component):
             if not mimetype or mimetype.split('/',1)[0] != 'image':
                 continue
             return attachment.filename
+
+    ### method for IRequireComponents
+    
+    def requires(self):
+        return [ TicketSidebarProvider ]
 
     ### methods for ITicketSidebarProvider
 

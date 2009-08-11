@@ -171,6 +171,9 @@ class ImageTrac(Component):
         filename = image.filename
         image.file.seek(0)
         attachment.insert(filename, image.file, size)
+        from imagetrac.setup import DefaultTicketImage
+        if self.env.is_component_enabled(DefaultTicketImage):
+            DefaultTicketImage(self.env).set_default(ticket.id, filename)
         # create_sizes will be called as a function of
         # IAttachmentChangeListener
 
