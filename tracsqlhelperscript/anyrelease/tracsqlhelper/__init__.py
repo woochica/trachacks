@@ -116,16 +116,17 @@ def update_row_from_dict(env, table, key, value, dictionary):
     # XXX this might be slightly retarded
     sql = "UPDATE %s SET %s WHERE %s='%s'"
     sql = sql % ( table, 
-                  ', '.join(["%s='%s'" % (key, value) 
+                  ', '.join(["%s='%s'" % (item[0], item[1]) 
                              for item in items]),
                   key, 
                   value)
+    import pdb; pdb.set_trace()
     execute_non_query(env, sql)
     
 
 def insert_update(env, table, key, value, items):
-    items[key] = value
     if get_first_row(env, "SELECT * FROM %s WHERE %s=%s" % (table, key, value)):
         update_row_from_dict(env, table, key, value, items)
     else:
+        items[key] = value
         insert_row_from_dict(env, table, items)
