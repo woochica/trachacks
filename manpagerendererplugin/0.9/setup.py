@@ -8,7 +8,7 @@ VERSION = '0.1'
 setup(  name=PACKAGE, version=VERSION,
         author = "Piers O'Hanlon",
         author_email = 'p.ohanlon@gmail.com',
-        url = '',
+	url = 'http://trac-hacks.org/wiki/ManPageRendererPlugin',
         description = 'Renders Man pages to html',
         license='GPL',
 	packages=['manpagerenderer'],
