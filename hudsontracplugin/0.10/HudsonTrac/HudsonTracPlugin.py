@@ -48,7 +48,7 @@ class HudsonTracPlugin(Component):
 
     def __init__(self):
         url_parts = urlparse.urlsplit(self.feed_url)
-        base_url  = url_parts.scheme + '://' + url_parts.netloc + '/'
+        base_url  = url_parts[0] + '://' + url_parts[1] + '/'
 
         pwdMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
         pwdMgr.add_password(None, base_url, self.username, self.password)
