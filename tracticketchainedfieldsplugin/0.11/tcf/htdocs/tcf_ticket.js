@@ -78,7 +78,23 @@ $(document).ready(function() {
         for (var field in tcf_define) {
             $("#field-"+field).empty();
             
+            var root_options = [];
             for (var field_option in tcf_define[field]){
+                root_options.push(field_option);
+            }
+            
+            root_options.sort(function(x,y){ 
+                  var a = String(x).toUpperCase(); 
+                  var b = String(y).toUpperCase(); 
+                  if (a > b) 
+                     return 1 
+                  if (a < b) 
+                     return -1 
+                  return 0; 
+                }); 
+            
+            for (var i in root_options){
+                field_option = root_options[i];
                 $("#field-"+field).append("<option>"+field_option+"</option>");
             }
             
@@ -87,6 +103,7 @@ $(document).ready(function() {
             if (location.pathname.match(/newticket/g)){
                 $("#field-"+field).change();
             }
+            break;
         }
         
         

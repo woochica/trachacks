@@ -205,7 +205,7 @@ class TracTicketChainedFieldsModule(Component):
                 target_field = tcf_define_target.keys()[0]
                 target_options = [target_option for target_option in tcf_define_target.values()[0].keys() if target_option]
             
-            target_options.sort()
+            target_options.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
             
             result["target_field"] = target_field
             result["target_options"] = target_options
