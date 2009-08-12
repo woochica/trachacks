@@ -1,0 +1,71 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Manage Shapefiles</title>
+  </head>
+  <body>
+
+    <h2>Import Shapefiles</h2>
+    
+    <form method="post" enctype="multipart/form-data">
+      <fieldset>
+        <legend>Upload Shapefiles</legend>
+        <dl>
+          <dd>
+            Shapefile shape format (.shp)
+          </dd>
+          <dt>
+            <input type="file" name="shp"/> 
+          </dt>
+          <dd>
+            Shapefile shape index format (.shx)
+          </dd>
+          <dt>
+            <input type="file" name="shx"/> 
+          </dt>
+          <dd>
+            Shapefile attribute format (.dbf)
+          </dd>
+          <dt>
+            <input type="file" name="dbf"/> 
+          </dt>
+          <dd>
+            Shapefile projection format (.prj)
+          </dd>
+          <dt>
+            <input type="file" name="prj"/> 
+          </dt>
+        </dl>
+        <input type="submit" name="shapefile_upload" value="Submit"/>
+      </fieldset>
+    </form>
+
+    <form py:if="columns" method="post">
+      <fieldset>
+        <legend>Column to use</legend>
+        <p py:for="c in columns">
+          <input type="radio" name="column" value="${c}" checked="${c == column and 'checked' or None}"/>
+          ${c}
+        </p>
+
+        <p>
+          Label for column <i>(optional)</i>:
+          <input type="text" name="column_label" value="${column_label}"/>
+        </p>
+        <input type="submit" name="shapefile_label" value="Submit"/>
+      </fieldset>
+    </form>
+
+    <form py:if="columns" method="post">
+      <fieldset>
+        <legend>Delete regions from database</legend>
+        <input type="submit" name="shapefile_delete" value="Delete"/>
+      </fieldset>
+    </form>
+  </body>
+</html>

@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.7.3'
+version='0.8'
 
 setup(name='GeoTicket',
       version=version,
@@ -37,6 +37,7 @@ setup(name='GeoTicket',
       geoticket = geoticket.ticket
       mapsidebar = geoticket.web_ui
       geoquery = geoticket.query 
+      georegions = geoticket.regions
       geoticketmail = geoticket.mail [mail2trac]
       """,
       )
