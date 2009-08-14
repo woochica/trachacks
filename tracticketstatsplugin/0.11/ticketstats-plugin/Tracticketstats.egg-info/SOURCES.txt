@@ -1,16 +1,10 @@
 setup.py
-ticketstats-genshi.zip
-ticketstatus-genshi.patch
 Tracticketstats.egg-info/PKG-INFO
 Tracticketstats.egg-info/SOURCES.txt
 Tracticketstats.egg-info/dependency_links.txt
 Tracticketstats.egg-info/entry_points.txt
 Tracticketstats.egg-info/top_level.txt
 Tracticketstats.egg-info/trac_plugin.txt
-dist/Tracticketsats-1.0-py2.5.egg
-dist/Tracticketstats-1.1-py2.5.egg
-dist/Tracticketstats-2.0_testing-py2.5.egg
-externals/patches/ticketstatus-genshi.patch
 ticketstats/__init__.py
 ticketstats/ticketstats.py
 ticketstats/ticketstats.py.orig
