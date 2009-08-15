@@ -226,8 +226,8 @@ class BranchesTimelineModule(ChangesetModule):
         # Add the branches names to the title
         title = return_value
         branches = _get_changeset_event_branches(event, self._branches_path, self._trunk_path)
-        
-        branch_names = tag(' in %s' % (', '.join([_get_branch_name(branch, self._branches_path, self._trunk_path)
-                                                for branch in branches]))
+
+        branch_names = tag.cite(' in %s' % (', '.join(_get_branch_name(branch, self._branches_path, self._trunk_path)
+                                                      for branch in branches))
                           )
         return title + branch_names
