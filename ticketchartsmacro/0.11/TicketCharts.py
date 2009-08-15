@@ -178,7 +178,7 @@ def _get_query_sql(env, query, required_columns = None):
     return sql_format_string % tuple(format_string_arguments)
 
 def _get_stacked_bar_chart_stats(env, db, key, x_axis, query):
-    sql = _get_query_sql(env, query)
+    sql = _get_query_sql(env, query, required_columns = [key, x_axis])
     cursor = db.cursor()
     cursor.execute(sql)
 
