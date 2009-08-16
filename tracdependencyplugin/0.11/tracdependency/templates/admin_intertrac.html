@@ -1,0 +1,71 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Trac Dependency Admin</title>
+  </head>
+
+  <body>
+    <py:if test="custom_field">
+      <h2>Custom Field</h2>
+        <py:if test="not dependencies_enabled">
+          <form class="customfields" id="addcustomfields" method="post" action="">
+            <div class="buttons">
+              <input type="submit" name="dependencies_create" value="依存関係に関連するカスタムフィールドの作成"/>
+            </div>
+          </form>
+        </py:if>
+        <py:if test="not baseline_enabled">
+          <form class="baseline_customfields" id="基準計画に関連するカスタムフィールドの作成" method="post" action="">
+            <div class="buttons">
+              <input type="submit" name="baseline_create" value="Create baseline fields"/>
+            </div>
+          </form>
+        </py:if>
+    </py:if>
+    <py:if test="not custom_field">
+      <h2>Inter Trac</h2>
+        <form class="addnew" id="addcomponent" method="post" action="">
+          <fieldset>
+            <legend>Project:</legend>
+            <div class="field">
+              <label>プロジェクト名:<br /><input type="text" name="name" /></label>
+            </div>
+              <label>プロジェクト名詳細:<br /><input type="text" name="description" /></label><br />
+              <label>URL:<br /><input type="text" name="url" /></label><br />
+              <label>プロジェクトのパス:<br /><input type="text" name="path" /></label>
+            <div class="buttons">
+              <input type="submit" name="add" value="追加"/>
+            </div>
+          </fieldset>
+        </form>
+        <form id="project_table" method="post" action="">
+          <table class="listing" border="2">
+            <thead>
+              <th class="sel">&nbsp;</th>
+              <th>プロジェクト名</th>
+              <th>詳細</th>
+              <th>URL</th>
+              <th>Path</th>
+            </thead>
+            <tr py:for="m in intertracs">
+              <td class="sel"><input type="checkbox" name="sel" value="${m.get('name','')}" /></td>
+              <td class="name"><a href="${m.get('url','')}">${m.get('name','')}</a></td>
+              <td class="title">${m.get('title','')}</td>
+              <td class="url">${m.get('url','')}</td>
+              <td class="path">${m.get('path','')}</td>
+            </tr>
+          </table>
+          <div class="buttons">
+            <input type="submit" name="remove" value="選択したプロジェクトの関係を削除" />
+          </div>
+          <p class="help">
+          </p>
+        </form>
+    </py:if>
+  </body>
+</html>
