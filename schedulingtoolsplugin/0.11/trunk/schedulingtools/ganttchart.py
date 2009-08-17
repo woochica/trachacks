@@ -18,11 +18,12 @@ class GanttChart(WikiMacroBase):
         cursor = db.cursor()
         
         where = "t.STATUS<>'closed' AND t.STATUS<>'resolved'";
-        orderBy = "t.MILESTONE ASC,start.VALUE ASC";
+        orderBy = "m.due ASC,start.VALUE ASC";
         cursor.execute("SELECT t.ID,t.SUMMARY,t.STATUS,t.OWNER,t.MILESTONE,start.VALUE AS STARTDATE,due.VALUE AS DUEDATE "+
                        "FROM TICKET t "+
                        "JOIN TICKET_CUSTOM start ON start.TICKET=t.ID AND start.NAME='startdate' "+
                        "JOIN TICKET_CUSTOM due ON due.TICKET=t.ID AND due.NAME='duedate' "+
+                       "JOIN MILESTONE m ON m.NAME=t.MILESTONE "+
                        "WHERE "+where+" ORDER BY "+orderBy, None)
 
         width = 800

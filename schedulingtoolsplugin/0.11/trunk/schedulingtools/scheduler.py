@@ -44,10 +44,11 @@ class Scheduler:
         db = env.get_db_cnx()
         cursor = db.cursor()
         where = "t.STATUS<>'closed' AND t.STATUS<>'resolved'";
-        orderBy = "t.PRIORITY ASC, t.ID ASC";
+        orderBy = "m.due ASC, t.PRIORITY ASC, t.ID ASC";
         cursor.execute("SELECT t.ID,t.STATUS,t.OWNER,c.VALUE AS ESTIMATEDHOURS "+
                        "FROM TICKET t "+
                        "JOIN TICKET_CUSTOM c ON c.TICKET=t.ID AND c.NAME='estimatedhours' "+
+                       "JOIN MILESTONE m ON m.NAME=t.MILESTONE "+
                        "WHERE "+where+" ORDER BY "+orderBy, None)
         now = datetime.now()
         now = datetime(now.year, now.month, now.day, now.hour)
