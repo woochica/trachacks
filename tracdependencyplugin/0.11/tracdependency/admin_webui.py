@@ -99,8 +99,9 @@ class TracDependencyAdminWebUI(Component):
                 self.config.set(TICKET_CUSTOM,"baseline_finish.order", "53")
                 self.config.set(TICKET_CUSTOM,"baseline_finish.label", LABEL_BASELINE_FINISH)
                 # TODO:なにも確認せずに追加しているだけなのでもう少しちゃんとする必要がある．
-                calendar_fields = self.config.get( "decorator", "calendar_fields")
-                self.config.set("decorator", "calendar_fields", calendar_fields + ",baseline_start,baseline_finish")
+                # Trac-Hacksではここはコメントのほうがいい
+                # calendar_fields = self.config.get( "decorator", "calendar_fields")
+                # self.config.set("decorator", "calendar_fields", calendar_fields + ",baseline_start,baseline_finish")
                 self.config.save();
 
         dependencies_enabled = ( self.config.get( TICKET_CUSTOM, "summary_ticket") or \

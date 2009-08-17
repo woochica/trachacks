@@ -15,7 +15,7 @@ from trac.env import open_environment
 
 from intertrac import InterTrac
 
-LABEL_DEPEND_PAGE = u'依存'
+LABEL_DEPEND_PAGE = u'Dependencies'
 LABEL_SUMMARY = 'Summary: '
 LABEL_SUB = 'Sub: '
 LABEL_PRECEDING = 'Preceding: '
@@ -28,10 +28,6 @@ class TracDependency(Component):
         self.intertrac = InterTrac(self.config)
 
     def subsequentticket(self,ids):
-#        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
-#                    "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
-#                    "WHERE (c.value = '%s' or c.value like '%s[(,]' or "
-#                    "c.value like '%%, %s[(,]%%' or c.value like '%%, %s')" % (ids, ids, ids, ids))
         sql = ("SELECT id, type, summary, owner, description, status from ticket t "
                     "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
                     "WHERE (c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
@@ -96,13 +92,6 @@ class TracDependency(Component):
                     'dependencies': self.intertrac.linkify_ids(self.env, req, tkt['dependencies'],LABEL_PRECEDING ,LABEL_SUBSEQUENT , subsequentticket, self.log),
                 },
             }
-#        if (req.path_info.startswith('/report')) and data:
-#            href = req.href.dependency(req.path_info)
-#            add_ctxtnav(req, u'他のプロジェクト', href)
-#        if (req.path_info.startswith('/browser')) and data:
-#            # ブラウザの場合は他のプロジェクトへのリンクを作成します．
-#            href = req.href.dependency(req.path_info)
-#            add_ctxtnav(req, u'他のプロジェクト', href)
         return template, data, content_type
 
     FIELD_XPATH = 'div[@id="ticket"]/table[@class="properties"]/td[@headers="h_%s"]/text()'

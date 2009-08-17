@@ -7,36 +7,36 @@
   <xi:include href="layout.html" />
   <xi:include href="macros.html" />
   <head>
-    <title>プロジェクト間の依存関係</title>
+    <title>Ticket Dependencies</title>
   </head>
 
   <body>
     <py:if test="summary_ticket_enabled">
-      <h2>親チケット</h2>
+      <h2>Summary Ticket</h2>
       <form id="project_table" method="post" action="">
         <table class="listing" border="2">
           <thead>
-            <th>ID（リンク）</th>
-            <th>概要</th>
-            <th>状況</th>
+            <th>ID（Link）</th>
+            <th>Description</th>
+            <th>Status</th>
           </thead>
           <tr py:for="m in summary_ticket">
-            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">依存関係</a>)</td>
+            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">Dependencies</a>)</td>
             <td class="title">${m.get('title','')}</td>
             <td class="status">${m.get('status','')}</td>
           </tr>
         </table>
       </form>
-      <h2>子チケット</h2>
+      <h2>Sub Tickets</h2>
       <form id="project_table" method="post" action="">
         <table class="listing" border="2">
           <thead>
-            <th>ID（リンク）</th>
-            <th>概要</th>
-            <th>状況</th>
+            <th>ID（Link）</th>
+            <th>Description</th>
+            <th>Status</th>
           </thead>
           <tr py:for="m in sub_ticket">
-            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">依存関係</a>)</td>
+            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">Dependencies</a>)</td>
             <td class="title">${m.get('title','')}</td>
             <td class="status">${m.get('status','')}</td>
           </tr>
@@ -45,31 +45,31 @@
       </form>
     </py:if>
     <py:if test="dependencies_enabled">
-      <h2>先行するチケット</h2>
+      <h2>Preceding tickets</h2>
       <form id="project_table" method="post" action="">
         <table class="listing" border="2">
           <thead>
-            <th>ID（リンク）</th>
-            <th>概要</th>
-            <th>状況</th>
+            <th>ID（link）</th>
+            <th>Description</th>
+            <th>Status</th>
           </thead>
           <tr py:for="m in dependencies">
-            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">依存関係</a>)</td>
+            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">Dependencies</a>)</td>
             <td class="title">${m.get('title','')}</td>
             <td class="status">${m.get('status','')}</td>
           </tr>
         </table>
         </form>
-      <h2>後続のチケット</h2>
+      <h2>Subsequent Ticket</h2>
       <form id="project_table" method="post" action="">
         <table class="listing" border="2">
           <thead>
-            <th>ID（リンク）</th>
-            <th>概要</th>
-            <th>状況</th>
+            <th>ID（link）</th>
+            <th>Description</th>
+            <th>Status</th>
           </thead>
           <tr py:for="m in subsequentticket">
-            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">依存関係</a>)</td>
+            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">Dependencies</a>)</td>
             <td class="title">${m.get('title','')}</td>
             <td class="status">${m.get('status','')}</td>
           </tr>
@@ -78,12 +78,12 @@
       </form>
     </py:if>
     <py:if test="summary_ticket_enabled">
-      <h2>関連するプロジェクト</h2>
+      <h2>InterTrac Projects</h2>
       <form id="project_table" method="post" action="">
         <table class="listing" border="2">
           <thead>
-              <th>プロジェクト名</th>
-              <th>詳細</th>
+              <th>Projects</th>
+              <th>Description</th>
               <th>URL</th>
               <th>Path</th>
           </thead>

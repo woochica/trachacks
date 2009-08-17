@@ -15,12 +15,12 @@
         <py:if test="not dependencies_enabled">
           <form class="customfields" id="addcustomfields" method="post" action="">
             <div class="buttons">
-              <input type="submit" name="dependencies_create" value="依存関係に関連するカスタムフィールドの作成"/>
+              <input type="submit" name="dependencies_create" value="Create dependencies fields"/>
             </div>
           </form>
         </py:if>
         <py:if test="not baseline_enabled">
-          <form class="baseline_customfields" id="基準計画に関連するカスタムフィールドの作成" method="post" action="">
+          <form class="baseline_customfields" id="addbaselinefields" method="post" action="">
             <div class="buttons">
               <input type="submit" name="baseline_create" value="Create baseline fields"/>
             </div>
@@ -33,13 +33,13 @@
           <fieldset>
             <legend>Project:</legend>
             <div class="field">
-              <label>プロジェクト名:<br /><input type="text" name="name" /></label>
+              <label>Project name:<br /><input type="text" name="name" /></label>
             </div>
-              <label>プロジェクト名詳細:<br /><input type="text" name="description" /></label><br />
+              <label>Description:<br /><input type="text" name="description" /></label><br />
               <label>URL:<br /><input type="text" name="url" /></label><br />
-              <label>プロジェクトのパス:<br /><input type="text" name="path" /></label>
+              <label>Project pass:<br /><input type="text" name="path" /></label>
             <div class="buttons">
-              <input type="submit" name="add" value="追加"/>
+              <input type="submit" name="add" value="Add"/>
             </div>
           </fieldset>
         </form>
@@ -47,8 +47,8 @@
           <table class="listing" border="2">
             <thead>
               <th class="sel">&nbsp;</th>
-              <th>プロジェクト名</th>
-              <th>詳細</th>
+              <th>Project Name</th>
+              <th>Description</th>
               <th>URL</th>
               <th>Path</th>
             </thead>
@@ -61,7 +61,7 @@
             </tr>
           </table>
           <div class="buttons">
-            <input type="submit" name="remove" value="選択したプロジェクトの関係を削除" />
+            <input type="submit" name="remove" value="Remove selected projects" />
           </div>
           <p class="help">
           </p>
