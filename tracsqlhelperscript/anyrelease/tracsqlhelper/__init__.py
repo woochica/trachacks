@@ -129,3 +129,21 @@ def insert_update(env, table, key, value, items):
     else:
         items[key] = value
         insert_row_from_dict(env, table, items)
+
+def column_type(env, table, column):
+    """returns type of the column in the table"""
+    row = get_all_dict(env, "SELECT * FROM %s LIMIT 1" % table)
+    assert row
+    row = row[0]
+    assert column in row
+    return type(row[column])
+
+def column_repr(env, table, column, value):
+    """returns SQL repr for the column in a table"""
+    reprs = { unicode: "'%s'",
+              str: "'%s'",
+              }
+    _type = column_type(env, table, column)
+    repr = reprs.get(_type, "%s")
+    return repr % value
+    
