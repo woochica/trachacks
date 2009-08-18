@@ -1,6 +1,7 @@
 import geopy
 import simplejson
 
+from componentdependencies import IRequireComponents
 from genshi.builder import tag
 from genshi.builder import Markup
 from genshi.filters import Transformer
@@ -41,7 +42,13 @@ loader = TemplateLoader(templates_dir,
 class GeoNotifications(Component):
     """TTW notifications for geolocation"""
 
-    implements(IRequestFilter)
+    implements(IRequestFilter, IRequireComponents)
+
+    ### method for IRequireComponents
+
+    def requires(self):
+        return [ GeoTicket ]
+
 
     ### methods for IRequestFilter
 
@@ -63,12 +70,11 @@ class GeoNotifications(Component):
         """
 
         if template == 'ticket.html':
-            if self.env.is_component_enabled(GeoTicket):
-                geoticket = self.env.components[GeoTicket]
-                ticket = data['ticket']
-                message = req.session.pop('geolocation_error', None)
-                if message:
-                    add_warning(req, Markup(message))
+            geoticket = GeoTicket(self.env)
+            ticket = data['ticket']
+            message = req.session.pop('geolocation_error', None)
+            if message:
+                add_warning(req, Markup(message))
 
         return (template, data, content_type)
 

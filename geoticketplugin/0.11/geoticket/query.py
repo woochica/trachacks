@@ -3,6 +3,7 @@ import trac.ticket.query
 
 from genshi.builder import Markup
 from genshi.filters import Transformer
+from geoticket.regions import GeoRegions
 from geoticket.ticket import GeolocationException
 from geoticket.ticket import GeoTicket
 from trac.config import BoolOption
@@ -51,13 +52,13 @@ class GeospatialQuery(Component):
         
         query_str = "ST_DISTANCE_SPHERE(st_pointfromtext('POINT(' || longitude || ' ' || latitude || ')'), ST_PointFromText('POINT(%s %s)')) < %s" % (lon, lat, radius)
 
-        tickets =  get_column(self.env, 'ticket_location', 'ticket', where=query_str)
+        tickets = get_column(self.env, 'ticket_location', 'ticket', where=query_str)
         assert tickets is not None
         return tickets
         
-    def query_by_polyon(self, lat, lon, polygon_id):
-        pass
-        # XXX stub
+    def query_by_polygon(self, region):
+        georegions = GeoRegions(self.env)
+        return georegions.tickets_in_region(region)
 
     def geoticket(self):
         if not hasattr(self, '_geoticket'):
@@ -128,6 +129,9 @@ class GeospatialQuery(Component):
 
             # fix up number of matches
             data['query'].num_items = len(data['tickets'])
+        region = req.args.get('region')
+        if region:
+            tickets_in_region = self.query_by_polygon(region)
 
         return (template, data, content_type)
 
@@ -155,7 +159,7 @@ class GeospatialQuery(Component):
 
         if (req.path_info == '/query' or trac.ticket.query.QueryModule == handler.__class__) and 'update' in req.args:
             match = False
-            for i in 'center_location', 'radius':
+            for i in 'center_location', 'radius', 'region':
                 if i in req.args:
                     if not match:
                         req.href.geo_query_kw = {}
@@ -184,6 +188,19 @@ class GeospatialQuery(Component):
             chrome = Chrome(self.env)
             variables = ('center_location', 'radius')
             _data = dict([(i,data.get(i)) for i in variables])
+
+            # georegions
+            _data['geo_column_label'] = None
+            _data['regions'] = None
+            if self.env.is_component_enabled(GeoRegions):
+                georegions = GeoRegions(self.env)
+                if georegions.enabled():
+                    regions = georegions.regions()
+                    if regions:
+                        column, regions = regions
+                        _data['geo_column_label'] = column
+                        _data['regions'] = regions
+
             template = chrome.load_template('geoquery.html')
             stream |= Transformer("//fieldset[@id='columns']").after(template.generate(**_data))
 

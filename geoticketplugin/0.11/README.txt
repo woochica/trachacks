@@ -8,7 +8,6 @@
    geolocation. This is pegged to a branch for
    [http://code.google.com/p/geopy/wiki/ReverseGeocoding reverse geolocation]
  * [http://postgis.refractions.net/ PostGIS] for geospatial queries
- * [http://www.gdal.org/ GDAL] (maybe?)
 
 
 == Install ==

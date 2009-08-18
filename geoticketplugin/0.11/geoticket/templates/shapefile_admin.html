@@ -16,30 +16,35 @@
       <fieldset>
         <legend>Upload Shapefiles</legend>
         <dl>
+
           <dd>
             Shapefile shape format (.shp)
           </dd>
           <dt>
             <input type="file" name="shp"/> 
           </dt>
+
           <dd>
             Shapefile shape index format (.shx)
           </dd>
           <dt>
             <input type="file" name="shx"/> 
           </dt>
+
           <dd>
             Shapefile attribute format (.dbf)
           </dd>
           <dt>
             <input type="file" name="dbf"/> 
           </dt>
+
           <dd>
-            Shapefile projection format (.prj)
+            SRID
           </dd>
           <dt>
-            <input type="file" name="prj"/> 
+            <input type="text" name="srid"/>
           </dt>
+
         </dl>
         <input type="submit" name="shapefile_upload" value="Submit"/>
       </fieldset>
