@@ -10,7 +10,7 @@ from trac.core import * # core trac functionality
 ### interfaces:  
 ### (these are just samples; remove the ones you don't need, add ones you do)
 ### See http://trac.edgewall.org/wiki/TracDev/PluginDevelopment
-from trac.admin.api immport IAdminPanelProvider
+from trac.admin.api import IAdminPanelProvider
 from trac.versioncontrol.api import IRepositoryConnector
 from trac.web.api import IRequestFilter
 from trac.web.api import IRequestHandler
