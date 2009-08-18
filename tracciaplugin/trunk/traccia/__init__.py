@@ -212,9 +212,9 @@ class CiaNotificationComponent(Component):
             args['url'] = t_url
             args['log'] = esc('%shas been deleted' % (summary and ' (' + summary+ ') ' or ''))
         elif action == 'created':
-            args['url'] = t_url + '/' + str(ticket.id)
+            args['url'] = t_url
             args['log'] = 'Created ['+ticket['type']+']: ('+ticket['summary']+')' + (version and (' in ' + version) or '')
-            args['log'] += ' (' + t_url + '/' + str(ticket.id) + ')'
+            args['log'] += ' (' + t_url + ')'
         elif action == 'changed':
             old = kwargs.get('old_values', {})
             db = self.env.get_db_cnx()
