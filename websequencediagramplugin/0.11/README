@@ -1,0 +1,47 @@
+Notes
+=====
+A simple macro to include a sequence diagram from www.websequencediagrams.com.
+
+Installation via Source
+=======================
+
+The installation of the sequence diagram plugin from source is done by
+creating a Python egg distribution file and copying the .egg file to
+the Trac plugins directory. Detailed information on Python eggs can be
+found at: http://peak.telecommunity.com/DevCenter/PythonEggs. In
+addition, the Easy Install package is required to create Python
+eggs. See http://peak.telecommunity.com/DevCenter/EasyInstall for more
+information on using and installing Easy Install.
+
+Change to the download directory and run:
+
+    python setup.py bdist_egg
+
+This will generate a python egg in the dist directory. Copy the egg
+file into the trac/plugins directory and follow the Configuration
+steps outlined below.
+
+Configuration (trac.ini)
+========================
+
+To enable the plugin::
+
+  [components]
+  sequencediagram.* = enabled
+  
+Optionally you can specify a style for the sequence diagram by adding 
+a sequence diagram section to the trac.ini file:
+
+  [sequencediagram]
+  style = rose
+
+Example
+=======
+An example usage::
+
+  {{{
+  #!SequenceDiagram
+  Alice->Bob: Authentication Request
+  note right of Bob: Bob thinks about it.
+  Bob-->Alice: Authentication Response
+  }}}
