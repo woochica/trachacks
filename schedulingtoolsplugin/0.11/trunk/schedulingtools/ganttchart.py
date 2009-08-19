@@ -19,7 +19,7 @@ class GanttChart(WikiMacroBase):
         
         where = "t.STATUS<>'closed' AND t.STATUS<>'resolved'";
         orderBy = "m.due ASC,start.VALUE ASC";
-        cursor.execute("SELECT t.ID,t.SUMMARY,t.STATUS,t.OWNER,t.MILESTONE,start.VALUE AS STARTDATE,due.VALUE AS DUEDATE "+
+        cursor.execute("SELECT t.ID,t.SUMMARY,t.STATUS,t.OWNER,t.MILESTONE,start.VALUE AS STARTDATE,due.VALUE AS DUEDATE,m.DUE "+
                        "FROM TICKET t "+
                        "JOIN TICKET_CUSTOM start ON start.TICKET=t.ID AND start.NAME='startdate' "+
                        "JOIN TICKET_CUSTOM due ON due.TICKET=t.ID AND due.NAME='duedate' "+
@@ -30,8 +30,11 @@ class GanttChart(WikiMacroBase):
         tmin = self.timestamp("2010-01-01 00:00:00")
         tmax = self.timestamp("2000-01-01 00:00:00")
 
+        milestone = {'name':None}
+        milestones = []
         tickets = []
         for t in cursor:
+            
             ticket = {}
             ticket['id'] = t[0];
             ticket['summary'] = t[1];
@@ -40,7 +43,17 @@ class GanttChart(WikiMacroBase):
             ticket['milestone'] = t[4];
             ticket['start'] = self.timestamp(t[5])
             ticket['due'] = self.timestamp(t[6])
+
+            if milestone['name']!=ticket['milestone']:
+                milestone = {}
+                milestone['name'] = ticket['milestone']
+                milestone['due'] = t[7]
+                milestone['tmin'] = self.timestamp("2010-01-01 00:00:00")
+                milestone['tmax'] = self.timestamp("2000-01-01 00:00:00")
+                milestones.append(milestone)
             
+            milestone['tmin'] = min(milestone['tmin'],ticket['start'])
+            milestone['tmax'] = max(milestone['tmax'],ticket['due'])
             tmin = min(tmin,ticket['start'])
             tmax = max(tmax,ticket['due'])
             
@@ -73,11 +86,26 @@ class GanttChart(WikiMacroBase):
 
         line = "#EEEEEE"
 
+        milestone = {'name':None}
         for t in tickets:
 
-
-            # view += "<TR><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD><TD>%s</TD></TR>" % (id,summary,owner,milestone,startdate,duedate)
-            
+            if t['milestone']!=milestone['name']:
+                milestone = milestones.pop(0)
+                if line=="#FFFFFF":
+                    line = "#EEEEEE"
+                elif line=="#EEEEEE":
+                    line = "#FFFFFF"    
+                color = "black";
+                if milestone['due']<milestone['tmax']:
+                    color = "red"    
+                mmin = (milestone['tmin']-tmin)/(tmax-tmin)*100
+                mmax = (milestone['tmax']-tmin)/(tmax-tmin)*100
+                due = datetime.utcfromtimestamp(milestone['tmax']).strftime("%d.%m.")
+                view += "<TR><TD style='height: 17px; background-color:%s'>" % (line)
+                view += "<div style='position:relative;left:%s%%;width:%s%%;height:15px;background-color:%s'/>" % (mmin,mmax-mmin,color)
+                view += "<div style='position:relative;left:%s%%;height:15px;width:200px'>&nbsp;<a href='%s'>%s<a> %s </div>" % (100,req.href.milestone(milestone['name']),milestone['name'],due)
+                view += "</TD></TR>"
+                
             start = (t['start']-tmin)/(tmax-tmin)*100
             due = (t['due']-tmin)/(tmax-tmin)*100
 
