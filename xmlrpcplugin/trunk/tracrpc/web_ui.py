@@ -135,12 +135,18 @@ class XMLRPCWeb(Component):
                 namespace = method.namespace.replace('.', '_')
                 if namespace not in namespaces:
                     namespaces[namespace] = {
-                        'description' : wiki_to_oneliner(method.namespace_description, self.env),
+                        'description' : wiki_to_oneliner(
+                                            method.namespace_description,
+                                            self.env, req=req),
                         'methods' : [],
                         'namespace' : method.namespace,
                         }
                 try:
-                    namespaces[namespace]['methods'].append((method.signature, wiki_to_oneliner(method.description, self.env), method.permission))
+                    namespaces[namespace]['methods'].append(
+                                (method.signature,
+                                wiki_to_oneliner(
+                                    method.description, self.env, req=req),
+                                method.permission))
                 except Exception, e:
                     from StringIO import StringIO
                     import traceback
