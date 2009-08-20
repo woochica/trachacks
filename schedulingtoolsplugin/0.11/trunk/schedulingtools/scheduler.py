@@ -45,9 +45,11 @@ class Scheduler:
         cursor = db.cursor()
         where = "t.STATUS<>'closed' AND t.STATUS<>'resolved'";
         orderBy = "m.due ASC, t.PRIORITY ASC, t.ID ASC";
-        cursor.execute("SELECT t.ID,t.STATUS,t.OWNER,c.VALUE AS ESTIMATEDHOURS "+
+        cursor.execute("SELECT t.ID,t.STATUS,t.OWNER,c.VALUE AS ESTIMATEDHOURS,start.VALUE AS STARTDATE,due.VALUE AS DUEDATE "+
                        "FROM TICKET t "+
                        "JOIN TICKET_CUSTOM c ON c.TICKET=t.ID AND c.NAME='estimatedhours' "+
+                       "JOIN TICKET_CUSTOM start ON start.TICKET=t.ID AND start.NAME='startdate' "+
+                       "JOIN TICKET_CUSTOM due ON due.TICKET=t.ID AND due.NAME='duedate' "+
                        "JOIN MILESTONE m ON m.NAME=t.MILESTONE "+
                        "WHERE "+where+" ORDER BY "+orderBy, None)
         now = datetime.now()
@@ -63,6 +65,8 @@ class Scheduler:
             est = t[3]
             if not est:
                 continue
+            oldstart = datetime.strptime(t[4], "%Y-%m-%d %H:%M:%S")
+            olddue = datetime.strptime(t[5], "%Y-%m-%d %H:%M:%S")
             
             if owner in dates:
                 date = dates[owner]
@@ -70,10 +74,13 @@ class Scheduler:
                 date = now
 
             startdate,date = self.calcDue(owner, date, int(est))
-            dates[owner] = date
+            if oldstart > now:
+                self.update(db, id, "startdate", startdate)
+            
+            if olddue >= now:
+                dates[owner] = date
+                self.update(db, id, "duedate", date)
 
-            self.update(db, id, "startdate", startdate)
-            self.update(db, id, "duedate", date)
 
         db.commit()
 
