@@ -1,7 +1,7 @@
 from setuptools import setup
 
 PACKAGE = 'PageToDocbook'
-VERSION = '0.6.3b'
+VERSION = '0.6.3'
 
 setup(name=PACKAGE,
       version=VERSION,
