@@ -5,6 +5,7 @@ from trac.wiki.formatter import wiki_to_html
 import os
 import re
 from cStringIO import StringIO
+import urllib
 from tidy import parseString
 import libxml2
 import libxslt
@@ -32,14 +33,14 @@ class PageToDocbookPlugin(Component):
         datadir = resource_filename(__name__, 'data')
 
         html = wiki_to_html(source, self.env, req)
-	options = dict(output_xhtml=1, add_xml_decl=1, indent=1, tidy_mark=0, input_encoding='utf8', output_encoding='utf8', doctype='omit', wrap=0, char_encoding='utf8')
+	options = dict(output_xhtml=1, add_xml_decl=1, indent=1, tidy_mark=0, input_encoding='utf8', output_encoding='utf8', doctype='auto', wrap=0, char_encoding='utf8')
 	xhtml = parseString(html.encode("utf-8"), **options)
 
 	xhtml2dbXsl = u"""<?xml version="1.0"?>
 <xsl:stylesheet version="1.0" 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
-  <xsl:import href=\"""" + resource_filename(__name__, 'data/html2db/html2db.xsl') + """\" />
+  <xsl:import href=\"file:///""" + urllib.pathname2url(resource_filename(__name__, 'data/html2db/html2db.xsl')) + """\" />
   <xsl:output method="xml" indent="no" encoding="utf-8"/>
   <xsl:param name="document-root" select="'chapter'"/>
 </xsl:stylesheet>
@@ -49,7 +50,7 @@ class PageToDocbookPlugin(Component):
 <xsl:stylesheet version="1.0" 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 
-  <xsl:import href=\"""" + resource_filename(__name__, 'data/headingsNormalizer/headingsNormalizer.xsl') + """\" />
+  <xsl:import href=\"file:///""" + urllib.pathname2url(resource_filename(__name__, 'data/headingsNormalizer/headingsNormalizer.xsl')) + """\" />
   <xsl:output method="xml" indent="no" encoding="utf-8"/>
   <xsl:param name="defaultTopHeading" select="'""" + req.path_info[6:] + """'"/>
 </xsl:stylesheet>
