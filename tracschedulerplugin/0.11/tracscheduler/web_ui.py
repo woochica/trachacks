@@ -71,7 +71,6 @@ class TracSchedulerModule(Component):
 
     implements(
                ITemplateProvider,
-               IAdminPanelProvider,
                IPermissionRequestor,
                )
 
