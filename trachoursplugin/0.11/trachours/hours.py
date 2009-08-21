@@ -1106,7 +1106,7 @@ class TracHoursPlugin(Component):
             where = "ticket in (%s)" % ",".join(map(str, ticket_id)) #note the lack of args.  This is because there's no way to do a placeholder for a list that I can see.
 
         if from_date:
-            where += " and time_started > %s"
+            where += " and time_started >= %s"
             args.append(int(time.mktime(from_date.timetuple())))
 
         if to_date:
