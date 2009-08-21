@@ -55,7 +55,7 @@
         <legend>Column to use</legend>
         <p py:for="c in columns">
           <input type="radio" name="column" value="${c}" checked="${c == column and 'checked' or None}"/>
-          ${c}
+          ${c} <i>(E.g. ${row[c]})</i>
         </p>
 
         <p>

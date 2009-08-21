@@ -2,6 +2,11 @@
 GeoRegions:
 a plugin for Trac to locate tickets within given spatial regions
 http://trac.edgewall.org
+
+Links:
+
+ * http://www.paolocorti.net/2008/05/03/a-day-with-featureserver-2/
+
 """
 
 import os
@@ -17,6 +22,7 @@ from trac.core import *
 from trac.admin.api import IAdminPanelProvider
 from trac.web.chrome import add_warning
 from trac.web.chrome import ITemplateProvider
+from tracsqlhelper import column_repr
 from tracsqlhelper import get_all_dict
 from tracsqlhelper import get_column
 
@@ -75,8 +81,10 @@ class GeoRegions(Component):
 
         if table:
             data['columns'] = [ c for c in table[0].keys() if c != 'the_geom' ]
+            data['row'] = table[0]
         else:
             data['columns'] = None
+            data['row'] = None
 
         if not data['columns']:
             add_warning(req, "You have not successfully uploaded any shapefiles.  Please use the upload form.")
@@ -205,9 +213,19 @@ class GeoRegions(Component):
 
     def tickets_in_region(self, region):
         assert self.column
-        the_geom = "SELECT the_geom FROM georegions WHERE %s=%s" % (self.column, region)
+        srid = self.srid()
+        assert srid is not None
+        the_geom = "SELECT the_geom FROM georegions WHERE %s=%s" % (self.column, column_repr(self.env, 'georegions', self.column, region))
+        if srid != 4326:
+            the_geom = 'ST_TRANSFORM((%s), 4326)' % the_geom
         query_str = "ST_CONTAINS((%s), st_pointfromtext('POINT(' || longitude || ' ' || latitude || ')', 4326))" % the_geom
-        tickets = get_column(self.env, 'ticket_location', 'ticket',
-                             where=query_str)
+        tickets = get_column(self.env, 'ticket_location', 'ticket', where=query_str)
         assert tickets is not None
         return tickets
+
+    def srid(self):
+        """returns the SRID of the region"""
+        try:
+            return get_all_dict(self.env, "SELECT * FROM geometry_columns WHERE f_table_name='georegions'")[0]['srid']
+        except:
+            return None
