@@ -26,6 +26,11 @@ from tracsqlhelper import column_repr
 from tracsqlhelper import get_all_dict
 from tracsqlhelper import get_column
 
+try:
+    import ogr
+except ImportError:
+    ogr = None
+
 templates_dir = resource_filename(__name__, 'templates')
 
 class GeoRegions(Component):
@@ -50,7 +55,7 @@ class GeoRegions(Component):
         `(category, category_label, page, page_label)`.
         """
         if req.perm.has_permission('TRAC_ADMIN') and self.enabled():
-            return [ ('geo', 'Geo', 'shapefiles', 'Shapefiles') ]
+            return [ ('geo', 'Geo', 'regions', 'Regions') ]
         return []
 
     def render_admin_panel(self, req, category, page, path_info):
@@ -72,7 +77,8 @@ class GeoRegions(Component):
 
         # process data for display
         data = { 'column': self.column,
-                 'column_label': self.column_label
+                 'column_label': self.column_label,
+                 'drivers': self.drivers(),
                  }
         try:
             table = get_all_dict(self.env, "SELECT * FROM georegions LIMIT 1")
@@ -93,7 +99,7 @@ class GeoRegions(Component):
 
 
         # return the template and associated data
-        return 'shapefile_admin.html', data
+        return 'regions_admin.html', data
             
 
     ### methods for ITemplateProvider
@@ -197,14 +203,35 @@ class GeoRegions(Component):
 
     def enabled(self):
         """return whether this plugin is functional"""
+
+        # ensure PostGIS is enabled on the DB
+        geoticket = GeoTicket(self.env)
+        if not geoticket.postgis_enabled():
+            return False
+
+        # check for available drivers
+        drivers = self.drivers()
+        return bool(drivers)
+
+    def drivers(self):
+        """available regions drivers"""
+        
+        drivers = set([])
+        
+        # shapefile driver
         try:
             code = subprocess.call(["shp2pgsql"], stdout=subprocess.PIPE)
+            if not code:
+                drivers.add('shapefile')
         except OSError:
-            return False
-        if code:
-            return False
-        geoticket = GeoTicket(self.env)
-        return geoticket.postgis_enabled()
+            pass
+
+        # KML driver
+        if hasattr(self, 'kml'):
+            drivers.add('KML')
+
+        return drivers
+    
 
     def regions(self):
         if self.column:
@@ -229,3 +256,12 @@ class GeoRegions(Component):
             return get_all_dict(self.env, "SELECT * FROM geometry_columns WHERE f_table_name='georegions'")[0]['srid']
         except:
             return None
+
+    if ogr:
+        try:
+            kml = ogr.GetDriverByName('KML')
+            def kml2pgsql(self, kml):
+                """insert kml into the georegions db"""
+                pgdriver = ogr.GetDriverByName('PostgreSQL')
+        except ogr.OGRError:
+            pass

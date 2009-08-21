@@ -6,13 +6,13 @@
       xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="admin.html" />
   <head>
-    <title>Manage Shapefiles</title>
+    <title>Manage Regions</title>
   </head>
   <body>
 
-    <h2>Import Shapefiles</h2>
+    <h2>Import Regions</h2>
     
-    <form method="post" enctype="multipart/form-data">
+    <form py:if="'shapefile' in drivers" method="post" enctype="multipart/form-data">
       <fieldset>
         <legend>Upload Shapefiles</legend>
         <dl>
