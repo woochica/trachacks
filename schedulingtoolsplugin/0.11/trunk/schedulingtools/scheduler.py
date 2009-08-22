@@ -6,8 +6,7 @@ from trac.core import *
 from trac.ticket.api import ITicketChangeListener
 from trac.ticket.query import Query
 from trac.db import get_column_names
-
-from estimationtools.utils import parse_options, execute_query, get_estimation_field, get_closed_states
+from trac.config import Option
 
 
 class TicketChangeListener(Component):
@@ -27,24 +26,26 @@ class TicketChangeListener(Component):
         fields that have changed.
         """
         scheduler = Scheduler()
-        scheduler.schedule(self.env);
+        scheduler.schedule(self.env, self.config);
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
         scheduler = Scheduler()
-        scheduler.schedule(self.env);
+        scheduler.schedule(self.env, self.config);
 
 
 class Scheduler:
     """Ticket Scheduler"""
     
-    def schedule(self, env):
+    def schedule(self, env, config):
         """Schedules all tickets"""
 
         db = env.get_db_cnx()
         cursor = db.cursor()
-        where = "t.STATUS<>'closed' AND t.STATUS<>'resolved'";
-        orderBy = "m.due ASC, t.PRIORITY ASC, t.ID ASC";
+
+        where = config.get("scheduling-tools", "schedule-tickets", "t.STATUS<>'closed' AND t.STATUS<>'resolved'")
+        orderBy = config.get("scheduling-tools", "schedule-order", "m.due ASC, t.PRIORITY ASC, t.ID ASC")
+        
         cursor.execute("SELECT t.ID,t.STATUS,t.OWNER,c.VALUE AS ESTIMATEDHOURS,start.VALUE AS STARTDATE,due.VALUE AS DUEDATE "+
                        "FROM TICKET t "+
                        "JOIN TICKET_CUSTOM c ON c.TICKET=t.ID AND c.NAME='estimatedhours' "+
@@ -80,7 +81,8 @@ class Scheduler:
             if olddue >= now:
                 dates[owner] = date
                 self.update(db, id, "duedate", date)
-
+            else:
+                self.update(db, id, "duedate", now)
 
         db.commit()
 
