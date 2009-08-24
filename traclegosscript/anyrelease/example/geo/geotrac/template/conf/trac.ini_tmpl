@@ -68,10 +68,10 @@ google_api_key =
 inject_map = false
 inject_query = false
 mandatory_location = false
-max_lat = 45.0
-max_lon = 90.0
-min_lat = -45.0
-min_lon = -90.0
+max_lat = 90.0
+max_lon = 180.0
+min_lat = -90.0
+min_lon = -180.0
 newissues.label = New Issues
 newissues.query = location!=&status=new&order=time&desc=1
 wms_url = http://maps.opengeo.org/geowebcache/service/wms
