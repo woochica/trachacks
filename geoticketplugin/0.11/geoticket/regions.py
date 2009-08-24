@@ -15,6 +15,7 @@ import subprocess
 import tempfile
 
 from componentdependencies import IRequireComponents
+from genshi.builder import Markup
 from geoticket.ticket import GeoTicket
 from pkg_resources import resource_filename
 from trac.config import Option
@@ -24,8 +25,10 @@ from trac.web.api import IRequestHandler
 from trac.web.chrome import add_warning
 from trac.web.chrome import ITemplateProvider
 from tracsqlhelper import column_repr
+from tracsqlhelper import get_all
 from tracsqlhelper import get_all_dict
 from tracsqlhelper import get_column
+from tracsqlhelper import get_scalar
 
 try:
     import ogr
@@ -110,6 +113,10 @@ class GeoRegions(Component):
 
     def match_request(self, req):
         """Return whether the handler wants to process the given request."""
+        try:
+            get_scalar(self.env, "SELECT the_geom FROM georegions LIMIT 1")
+        except:
+            return False
         return req.path_info.strip('/') == 'region.kml'
 
     def process_request(self, req):
@@ -126,8 +133,10 @@ class GeoRegions(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
-        import pdb; pdb.set_trace()
+        regions = get_all(self.env, "SELECT ST_AsKML(the_geom) FROM georegions")[1]
+        regions = [ Markup(region[0]) for region in regions ]
         
+        return 'region.kml', dict(regions=regions), 'application/vnd.google-earth.kml+xml'
             
 
     ### methods for ITemplateProvider
