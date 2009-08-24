@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"
      xmlns:py="http://genshi.edgewall.org/">
-<py:for each="region in regions">
-${region}
-</py:for>
+<Placemark py:for="gid, region in regions.items()">
+<name>${gid}</name>
+${region['region']}
+</Placemark>
 </kml>

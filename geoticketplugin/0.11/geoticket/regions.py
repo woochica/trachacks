@@ -25,6 +25,7 @@ from trac.web.api import IRequestHandler
 from trac.web.chrome import add_warning
 from trac.web.chrome import ITemplateProvider
 from tracsqlhelper import column_repr
+from tracsqlhelper import columns
 from tracsqlhelper import get_all
 from tracsqlhelper import get_all_dict
 from tracsqlhelper import get_column
@@ -133,9 +134,16 @@ class GeoRegions(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
-        regions = get_all(self.env, "SELECT ST_AsKML(the_geom) FROM georegions")[1]
-        regions = [ Markup(region[0]) for region in regions ]
-        
+        gids = get_column(self.env, 'georegions', 'gid')
+        regions = {}
+        for gid in gids:
+            regions[gid] = {}
+            _columns = columns(self.env, 'georegions')
+            _columns = [ column for column in columns
+                         if column not in set(['gid', 'the_geom']) ]
+            for column in _columns:
+                regions[gid][column] = get_scalar(self.env, "SELECT %s FROM georegions WHERE gid=%s" % (column, gid))
+            regions[gid]['region'] = Markup(get_scalar(self.env, "SELECT ST_AsKML(the_geom) FROM georegions WHERE gid=%s" % gid))
         return 'region.kml', dict(regions=regions), 'application/vnd.google-earth.kml+xml'
             
 
