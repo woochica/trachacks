@@ -110,7 +110,7 @@ class GeoRegions(Component):
 
     def match_request(self, req):
         """Return whether the handler wants to process the given request."""
-        return req.path_info.strip('/') == 'region'
+        return req.path_info.strip('/') == 'region.kml'
 
     def process_request(self, req):
         """Process the request. For ClearSilver, return a (template_name,
@@ -127,6 +127,7 @@ class GeoRegions(Component):
         simply send the response itself and not return anything.
         """
         import pdb; pdb.set_trace()
+        
             
 
     ### methods for ITemplateProvider
@@ -153,13 +154,13 @@ class GeoRegions(Component):
         files.
         """
         return [ templates_dir ]
-
     
 
     ### method for IRequireComponents
 
     def requires(self):
         return [ GeoTicket ]
+
 
     ### POST method handlers
 
