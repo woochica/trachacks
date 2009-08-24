@@ -98,6 +98,8 @@ class GeoRegions(Component):
             data['columns'] = None
             data['row'] = None
 
+        data['srid'] = self.srid()
+
         if not data['columns']:
             add_warning(req, "You have not successfully uploaded any shapefiles.  Please use the upload form.")
         elif self.column not in data['columns']:
@@ -247,6 +249,7 @@ class GeoRegions(Component):
         cur = db.cursor()
         cur.execute("DROP TABLE georegions")
         db.commit()
+        
 
     
     ### internal methods
@@ -303,7 +306,7 @@ class GeoRegions(Component):
     def srid(self):
         """returns the SRID of the region"""
         try:
-            return get_all_dict(self.env, "SELECT * FROM geometry_columns WHERE f_table_name='georegions'")[0]['srid']
+            return get_scalar(self.env, "SELECT srid FROM geometry_columns WHERE f_table_name='georegions'")
         except:
             return None
 
