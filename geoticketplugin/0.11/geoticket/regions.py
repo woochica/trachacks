@@ -26,6 +26,7 @@ from trac.web.chrome import add_warning
 from trac.web.chrome import ITemplateProvider
 from tracsqlhelper import column_repr
 from tracsqlhelper import columns
+from tracsqlhelper import execute_non_query
 from tracsqlhelper import get_all
 from tracsqlhelper import get_all_dict
 from tracsqlhelper import get_column
@@ -245,11 +246,8 @@ class GeoRegions(Component):
 
     def shapefile_delete(self, req):
         """remove shapefile database"""
-        db = self.env.get_db_cnx()
-        cur = db.cursor()
-        cur.execute("DROP TABLE georegions")
-        db.commit()
-        
+        execute_non_query("DROP TABLE georegions")
+        execute_non_query("DELETE FROM geometry_columns WHERE f_table_name='georegions'")
 
     
     ### internal methods
