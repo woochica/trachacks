@@ -20,6 +20,7 @@ from pkg_resources import resource_filename
 from trac.config import Option
 from trac.core import *
 from trac.admin.api import IAdminPanelProvider
+from trac.web.api import IRequestHandler
 from trac.web.chrome import add_warning
 from trac.web.chrome import ITemplateProvider
 from tracsqlhelper import column_repr
@@ -35,12 +36,13 @@ templates_dir = resource_filename(__name__, 'templates')
 
 class GeoRegions(Component):
 
-    implements(IAdminPanelProvider, ITemplateProvider, IRequireComponents)
+    implements(IAdminPanelProvider, IRequestHandler, ITemplateProvider, IRequireComponents)
 
     column = Option('geo', 'region-column', '',
                     "Column to use from georegions database table")
     column_label = Option('geo', 'column-label', '',
                           "label for region column")
+
     ### methods for IAdminPanelProvider
 
     """
@@ -67,7 +69,7 @@ class GeoRegions(Component):
         """
 
         assert req.perm.has_permission('TRAC_ADMIN')
-        methods = [ 'shapefile_upload', 'shapefile_label', 'shapefile_delete' ]
+        methods = [ 'shapefile_upload', 'shapefile_label', 'shapefile_delete', 'kml_upload' ]
 
         # process posted data
         if req.method == 'POST':
@@ -100,6 +102,31 @@ class GeoRegions(Component):
 
         # return the template and associated data
         return 'regions_admin.html', data
+
+
+    ### methods for IRequestHandler
+
+    """Extension point interface for request handlers."""
+
+    def match_request(self, req):
+        """Return whether the handler wants to process the given request."""
+        return req.path_info.strip('/') == 'region'
+
+    def process_request(self, req):
+        """Process the request. For ClearSilver, return a (template_name,
+        content_type) tuple, where `template` is the ClearSilver template to use
+        (either a `neo_cs.CS` object, or the file name of the template), and
+        `content_type` is the MIME type of the content. For Genshi, return a
+        (template_name, data, content_type) tuple, where `data` is a dictionary
+        of substitutions for the template.
+
+        For both templating systems, "text/html" is assumed if `content_type` is
+        `None`.
+
+        Note that if template processing should not occur, this method can
+        simply send the response itself and not return anything.
+        """
+        import pdb; pdb.set_trace()
             
 
     ### methods for ITemplateProvider
@@ -127,12 +154,17 @@ class GeoRegions(Component):
         """
         return [ templates_dir ]
 
+    
+
     ### method for IRequireComponents
 
     def requires(self):
         return [ GeoTicket ]
 
     ### POST method handlers
+
+    def kml_upload(self, req):
+        import pdb; pdb.set_trace()
     
     def shapefile_upload(self, req):
         """process uploaded shapefiles"""

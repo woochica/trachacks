@@ -50,6 +50,18 @@
       </fieldset>
     </form>
 
+    <div py:if="len(drivers) == 2">
+      <b>-or-</b>
+    </div>
+
+    <form py:if="'KML' in drivers" method="post" enctype="multipart/form-data">
+      <fieldset>
+        <legend>Upload KML</legend>
+        <p><input type="file" name="kml"/></p>
+        <p><input type="submit" name="kml_upload" value="Submit"/></p>
+      </fieldset>
+    </form>
+
     <form py:if="columns" method="post">
       <fieldset>
         <legend>Column to use</legend>
