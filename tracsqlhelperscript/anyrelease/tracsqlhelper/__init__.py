@@ -130,6 +130,9 @@ def insert_update(env, table, key, value, items):
         items[key] = value
         insert_row_from_dict(env, table, items)
 
+def columns(env, table):
+    return get_all_dict(env, "SELECT * FROM %s LIMIT 1" % table)[0].keys()
+
 def column_type(env, table, column):
     """returns type of the column in the table"""
     row = get_all_dict(env, "SELECT * FROM %s LIMIT 1" % table)
