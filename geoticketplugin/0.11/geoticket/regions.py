@@ -139,7 +139,7 @@ class GeoRegions(Component):
         for gid in gids:
             regions[gid] = {}
             _columns = columns(self.env, 'georegions')
-            _columns = [ column for column in columns
+            _columns = [ column for column in _columns
                          if column not in set(['gid', 'the_geom']) ]
             for column in _columns:
                 regions[gid][column] = get_scalar(self.env, "SELECT %s FROM georegions WHERE gid=%s" % (column, gid))
