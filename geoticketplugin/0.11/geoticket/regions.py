@@ -246,8 +246,8 @@ class GeoRegions(Component):
 
     def shapefile_delete(self, req):
         """remove shapefile database"""
-        execute_non_query("DROP TABLE georegions")
-        execute_non_query("DELETE FROM geometry_columns WHERE f_table_name='georegions'")
+        execute_non_query(self.env, "DROP TABLE georegions")
+        execute_non_query(self.env, "DELETE FROM geometry_columns WHERE f_table_name='georegions'")
 
     
     ### internal methods
