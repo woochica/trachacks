@@ -7,6 +7,20 @@
   <xi:include href="admin.html" />
   <head>
     <title>Manage Regions</title>
+    
+    <!--! render a map if the shapefile is uploaded -->
+    <py:if test="columns">
+      <script src="${openlayers_url}"></script>
+      <script src="${req.href('chrome/geoticket/js/mapscript.js')}"></script>
+      <script type="text/javascript">
+$(document).ready(function() {
+map_locations([], {kml: ["${kml}"]});
+});
+      </script>
+
+    </py:if>
+
+
   </head>
   <body>
 
@@ -65,6 +79,7 @@
     <form py:if="columns" method="post">
       <fieldset>
         <legend>Column to use</legend>
+        <div id="map" style="width: 467px; height: 245px"></div>
         <p py:for="c in columns">
           <input type="radio" name="column" value="${c}" checked="${c == column and 'checked' or None}"/>
           ${c} <i>(E.g. ${row[c]})</i>

@@ -7,7 +7,9 @@ function map_locations(locations, options) {
         options = {};
     }
     defaults = {'zoom': false, 
-                'id': 'map'}
+                'id': 'map',
+                'kml': []
+    }
     for ( var i in defaults ) {
         if ( typeof(options[i]) == 'undefined' ) {
             options[i] = defaults[i];
@@ -44,6 +46,21 @@ function map_locations(locations, options) {
         map.addLayers(layers());
     }    
 
+    // add KML layers, if given
+    for (var k in options.kml) {
+        map.addLayer(new OpenLayers.Layer.GML("KML", options.kml[k], 
+               {
+                format: OpenLayers.Format.KML, 
+                formatOptions: {
+                  extractStyles: true, 
+                  extractAttributes: true,
+                  maxDepth: 2
+                }
+               }));
+        
+    }
+    
+
     // layer for the marker points of interest
     var datalayer;
     if (map.getLayersByName('Data Layer').length == 0) {
@@ -59,7 +76,6 @@ function map_locations(locations, options) {
 
     // add the data layer to the map
     map.addLayer(datalayer);
-
 
     // map controls
     if (map.getControlsByClass(OpenLayers.Control.SelectFeature).length == 0) {

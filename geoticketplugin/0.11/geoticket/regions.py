@@ -86,6 +86,7 @@ class GeoRegions(Component):
         data = { 'column': self.column,
                  'column_label': self.column_label,
                  'drivers': self.drivers(),
+                 'openlayers_url': self.env.config.get('geo', 'openlayers_url')
                  }
         try:
             table = get_all_dict(self.env, "SELECT * FROM georegions LIMIT 1")
@@ -100,6 +101,7 @@ class GeoRegions(Component):
             data['row'] = None
 
         data['srid'] = self.srid()
+        data['kml'] = req.href('regions.kml')
 
         if not data['columns']:
             add_warning(req, "You have not successfully uploaded any shapefiles.  Please use the upload form.")
