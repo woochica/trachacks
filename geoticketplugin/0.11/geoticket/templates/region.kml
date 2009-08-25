@@ -1,8 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2"
      xmlns:py="http://genshi.edgewall.org/">
-<Placemark py:for="gid, region in regions.items()">
-<name>${gid}</name>
-${region['region']}
-</Placemark>
+
+<Document>
+  <name>regions</name>
+
+  <Style id="polygon">
+    <PolyStyle>
+      <fill>0</fill>
+      <outline>1</outline>
+    </PolyStyle>
+  </Style>
+
+  <Placemark py:for="gid, region in regions.items()" id="${gid}">
+    <visibility>1</visibility>
+    <open>0</open>
+    <name>${gid}</name>
+    <description>
+          &lt;dl&gt;
+            <py:for each="key, value in region['data'].items()">
+              &lt;dd&gt;${key}&lt;/dd&gt;
+              &lt;dt&gt;${value}&lt;/dt&gt;
+            </py:for>
+          &lt;/dl&gt;
+    </description>
+    ${region['region']}
+    <styleUrl>#polygon</styleUrl>
+  </Placemark>
+
+</Document>
+
 </kml>
