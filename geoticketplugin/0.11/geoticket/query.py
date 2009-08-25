@@ -115,23 +115,27 @@ class GeospatialQuery(Component):
                 add_warning(req, "Unknown units: %s" % units)
 
         # filter results by PostGIS query
+        ticket_ids = [ ticket['id'] for ticket in data['tickets'] ]
         if lat is not None and lon is not None and distance is not None:
             tickets_in_radius = self.query_by_radius(lat, lon, distance)
-            data['tickets'] = [ ticket for ticket in data['tickets']
-                                if ticket['id'] in tickets_in_radius ]
-            data['groups'] = [ (group[0], [ ticket for ticket in group[1]
-                                            if ticket['id'] in tickets_in_radius ])
-                               for group in data['groups'] ]
-
-            # filter out empty groups
-            data['groups'] = [ group for group in data['groups'] 
-                               if group[1] ]
-
-            # fix up number of matches
-            data['query'].num_items = len(data['tickets'])
+            ticket_ids = [ i for i in ticket_ids if i in tickets_in_radius ]
         region = req.args.get('region')
         if region:
             tickets_in_region = self.query_by_polygon(region)
+            ticket_ids = [ i for i in ticket_ids if i in tickets_in_region ]
+
+        # fix up tickets
+        data['tickets'] = [ ticket for ticket in data['tickets'] 
+                                if ticket['id'] in ticket_ids ]
+
+
+        # fix up groups
+        data['groups'] = [ (group[0], [ ticket for ticket in group[1]
+                                        if ticket['id'] in ticket_ids ])
+                           for group in data['groups'] ]
+
+        # fix up number of matches
+        data['query'].num_items = len(data['tickets'])
 
         return (template, data, content_type)
 
@@ -184,7 +188,7 @@ class GeospatialQuery(Component):
         See the Genshi documentation for more information.
         """
         if filename == 'query.html' and self.inject_query:
-            self.geoticket()
+            self.geoticket() # sanity check
             chrome = Chrome(self.env)
             variables = ('center_location', 'radius')
             _data = dict([(i,data.get(i)) for i in variables])
@@ -200,6 +204,7 @@ class GeospatialQuery(Component):
                         column, regions = regions
                         _data['geo_column_label'] = column
                         _data['regions'] = regions
+                        _data['region'] = req.args.get('region')
 
             template = chrome.load_template('geoquery.html')
             stream |= Transformer("//fieldset[@id='columns']").after(template.generate(**_data))

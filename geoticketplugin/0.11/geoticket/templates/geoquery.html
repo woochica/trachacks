@@ -40,7 +40,11 @@
     ${geo_column_label}:
     <select name="region">
       <option value=""></option>
-      <option py:for="region in regions" value="${region}">$region</option>
+      <option py:for="_region in regions" 
+              value="${_region}"
+              py:attrs="{'selected': _region == region and 'selected' or None}">
+        ${_region}
+      </option>
     </select>
 
   </p>

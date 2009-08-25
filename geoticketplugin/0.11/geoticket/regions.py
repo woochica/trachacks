@@ -101,7 +101,7 @@ class GeoRegions(Component):
             data['row'] = None
 
         data['srid'] = self.srid()
-        data['kml'] = req.href('regions.kml')
+        data['kml'] = req.href('region.kml')
 
         if not data['columns']:
             add_warning(req, "You have not successfully uploaded any shapefiles.  Please use the upload form.")
