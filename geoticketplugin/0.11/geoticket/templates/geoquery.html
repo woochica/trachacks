@@ -42,7 +42,7 @@
       <option value=""></option>
       <option py:for="_region in regions" 
               value="${_region}"
-              py:attrs="{'selected': _region == region and 'selected' or None}">
+              py:attrs="{'selected': str(_region) == str(region) and 'selected' or None}">
         ${_region}
       </option>
     </select>
