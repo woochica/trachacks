@@ -17,6 +17,7 @@ from skimpyGimpy import skimpyAPI
 from trac.core import *
 from trac.web import IRequestFilter
 from trac.web import ITemplateStreamFilter
+from trac.web.chrome import add_warning 
 from trac.config import PathOption
 
 class CaptchaauthPlugin(Component):
@@ -25,8 +26,6 @@ class CaptchaauthPlugin(Component):
     dict_file = PathOption('captchaauth', 'dictionary_file',
                            default="http://java.sun.com/docs/books/tutorial/collections/interfaces/examples/dictionary.txt")
 
-    def __init__(self):
-        self.keys = {} # dictionary used to store captcha key/word pairs and timestamps
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
@@ -36,17 +35,18 @@ class CaptchaauthPlugin(Component):
         Always returns the request handler, even if unchanged.
         """
 
-        # remove old items from the keys dictionary
-        timeout = 600 # keys older than 10min get deleted
-        [self.keys.pop(k) for k, (word,timestamp) in self.keys.items() if time.time()-timestamp >= timeout]
+        if req.path_info.strip('/') == "register":
 
-        if req.path_info.startswith("/register") and req.method == "POST":
-                key = int(req.args['key'])
-                if not self.keys.has_key(key): # timeout
-                    return req.redirect(req.href.base + '/register')
-                correct_answer, timestamp = self.keys.pop(key)
+            if req.method == "POST":
+                correct_answer = req.session.pop('captcha', None)
                 if req.args['captcha'].lower() != correct_answer:
-                    raise TracError("You typed the wrong word. Please try again.")
+                    req.session['captchaauth_message'] = "You typed the wrong word. Please try again."
+                    req.session.save()
+                    req.redirect(req.href('register'))
+            if req.method == "GET":
+                message = req.session.pop('captchaauth_message', None)
+                if message:
+                    add_warning(req, message)
                                     
         return handler
 
@@ -104,11 +104,10 @@ class CaptchaauthPlugin(Component):
         if filename == "register.html":
             key = random.Random().randint(0, sys.maxint)
             word = self.random_word()
-            self.keys[key] = (word, time.time())
-            
+            req.session['captcha'] = word
+            req.session.save()
             content = "<p>%s</p>%s" % (msg, self.skimpy_captcha(word))
             content += "<label>Confirm: <input type='text' name='captcha' class='textwidget' size='20'></label>"
-            content += "<input type='hidden' name='key' value='%s' />" % key
             stream |= Transformer('//form[@id="%s"]/fieldset[1]' % form_id).append(tag.div(Markup(content)))
 
         return stream
