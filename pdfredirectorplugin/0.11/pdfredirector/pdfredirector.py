@@ -49,7 +49,9 @@ class PDFRedirector(Component):
         if not path[-1].lower().endswith('.pdf'):
             return handler
 
-        req.redirect('/'.join(['raw-attachment'] + path[1:])) 
+        filename = req.href(*(['raw-attachment'] + path[1:]))
+
+        req.redirect(filename) 
 
 
 
