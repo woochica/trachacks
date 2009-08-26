@@ -32,7 +32,8 @@ function map_locations(locations, options) {
         //      units: "dd",  // only works in EPSG:4326
         maxExtent: bounds,
         maxResolution: 156543.03396025, // meters per pixel at maximum extent (world projection)
-        projection: googleprojection  // use google's projection
+        projection: googleprojection,  // use google's projection
+        displayProjection: epsg4326 // ??
     };
     
     // create a map opject with the options
@@ -48,15 +49,20 @@ function map_locations(locations, options) {
 
     // add KML layers, if given
     for (var k in options.kml) {
-        map.addLayer(new OpenLayers.Layer.GML("KML", options.kml[k], 
-               {
-                format: OpenLayers.Format.KML, 
-                formatOptions: {
-                  extractStyles: true, 
-                  extractAttributes: true,
-                  maxDepth: 2
-                }
-               }));
+        
+        kml = new OpenLayers.Layer.Vector("KML", {
+                projection: "EPSG:4326",
+                strategies: [ new OpenLayers.Strategy.Fixed()],
+                protocol: new OpenLayers.Protocol.HTTP({
+                        url: options.kml[k], 
+                        format: new OpenLayers.Format.KML({
+                                extractAttributes: true,
+                                maxDepth: 2
+                            })
+                    })
+            });
+        map.addLayer(kml);
+        
         
     }
     
