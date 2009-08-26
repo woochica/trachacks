@@ -188,8 +188,30 @@ class GeoRegions(Component):
     ### POST method handlers
 
     def kml_upload(self, req):
-        import pdb; pdb.set_trace()
-    
+        """process uploaded KML files"""
+
+        # sanity check
+        if not hasattr(req.args['kml'], 'file'):
+            add_warning(req, "Please specify a KML file")
+            return
+
+        # generate PostGIS SQL from the KML
+        sql = self.kml2pgsql(req.args['kml'].file.read())
+
+        # remove old table if it exists
+        try:
+            table = get_all_dict(self.env, "SELECT * FROM georegions")
+        except:
+            table = None
+        if table:
+            self.shapefile_delete(req)
+
+        # load the SQL in the DB
+        db = self.env.get_db_cnx()
+        cur = db.cursor()
+        cur.execute(sql)
+        db.commit()
+        
     def shapefile_upload(self, req):
         """process uploaded shapefiles"""
 
@@ -316,6 +338,15 @@ class GeoRegions(Component):
             kml = ogr.GetDriverByName('KML')
             def kml2pgsql(self, kml):
                 """insert kml into the georegions db"""
+
+                # make a temporary file for no reason
+                handle, name = tempfile.mkstemp(suffix='.kml')
+                os.write(handle, kml)
+                os.close(handle)
+
+                import pdb; pdb.set_trace()                
+                
                 pgdriver = ogr.GetDriverByName('PostgreSQL')
+
         except ogr.OGRError:
             pass
