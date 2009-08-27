@@ -302,9 +302,9 @@ class GeoRegions(Component):
         except OSError:
             pass
 
-        # KML driver
-        if hasattr(self, 'kml'):
-            drivers.add('KML')
+        # KML driver -- disable for now
+#        if hasattr(self, 'kml'):
+#            drivers.add('KML')
 
         return drivers
     
