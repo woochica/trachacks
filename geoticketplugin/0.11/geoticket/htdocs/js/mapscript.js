@@ -62,6 +62,9 @@ function map_locations(locations, options) {
                     })
             });
         map.addLayer(kml);
+        kml.events.register('loadend', kml, function(){
+                this.map.zoomToExtent(this.getDataExtent());
+            });
     }
     
 
