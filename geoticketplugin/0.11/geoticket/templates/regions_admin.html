@@ -14,7 +14,8 @@
       <script src="${req.href('chrome/geoticket/js/mapscript.js')}"></script>
       <script type="text/javascript">
 $(document).ready(function() {
-map_locations([], {kml: ["${kml}"]});
+map_locations([],
+              {kml: ${bool(kml) and ('"%s"' % kml) or 'null'} });
 });
       </script>
 

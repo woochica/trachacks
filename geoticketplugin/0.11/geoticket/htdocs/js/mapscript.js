@@ -8,7 +8,7 @@ function map_locations(locations, options) {
     }
     defaults = {'zoom': false, 
                 'id': 'map',
-                'kml': []
+                'kml': null
     }
     for ( var i in defaults ) {
         if ( typeof(options[i]) == 'undefined' ) {
@@ -48,13 +48,13 @@ function map_locations(locations, options) {
     }    
 
     // add KML layers, if given
-    for (var k in options.kml) {
-        
+    kml = null;
+    if (options.kml != null) {
         kml = new OpenLayers.Layer.Vector("KML", {
                 projection: "EPSG:4326",
                 strategies: [ new OpenLayers.Strategy.Fixed()],
                 protocol: new OpenLayers.Protocol.HTTP({
-                        url: options.kml[k], 
+                        url: options.kml, 
                         format: new OpenLayers.Format.KML({
                                 extractAttributes: true,
                                 maxDepth: 2
@@ -62,8 +62,6 @@ function map_locations(locations, options) {
                     })
             });
         map.addLayer(kml);
-        
-        
     }
     
 
