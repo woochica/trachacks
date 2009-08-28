@@ -50,21 +50,31 @@ function map_locations(locations, options) {
     // add KML layers, if given
     kml = null;
     if (options.kml != null) {
-        kml = new OpenLayers.Layer.Vector("KML", {
+        var kml_format = new OpenLayers.Format.KML({
+                                extractAttributes: true,
+                                maxDepth: 2});
+        var kml = new OpenLayers.Layer.Vector("KML", {
                 projection: "EPSG:4326",
                 strategies: [ new OpenLayers.Strategy.Fixed()],
                 protocol: new OpenLayers.Protocol.HTTP({
                         url: options.kml, 
-                        format: new OpenLayers.Format.KML({
-                                extractAttributes: true,
-                                maxDepth: 2
-                            })
+                        format: kml_format
                     })
             });
         map.addLayer(kml);
         kml.events.register('loadend', kml, function(){
                 this.map.zoomToExtent(this.getDataExtent());
             });
+                                                     
+        var selectControl = new OpenLayers.Control.SelectFeature(kml);
+        map.addControl(selectControl);
+        selectControl.onSelect = function(feature){
+            alert("hi");
+        };
+        selectControl.onUnselect = function(feature) {
+            alert("bye");
+        };
+        selectControl.activate();
     }
     
 

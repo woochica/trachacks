@@ -140,16 +140,28 @@ class GeoRegions(Component):
         simply send the response itself and not return anything.
         """
         gids = get_column(self.env, 'georegions', 'gid')
+#        gids = [ gid for gid in gids 
+#                 if gid in [ int(i) for i in req.args.getlist('gid') ] 
+#                 ]
         regions = {}
+        georegions_columns = columns(self.env, 'georegions')
         for gid in gids:
             regions[gid] = {}
             regions[gid]['data'] = {}
-            _columns = columns(self.env, 'georegions')
-            _columns = [ column for column in _columns
+            _columns = [ column for column in georegions_columns
                          if column not in set(['gid', 'the_geom']) ]
             for column in _columns:
                 regions[gid]['data'][column] = get_scalar(self.env, "SELECT %s FROM georegions WHERE gid=%s" % (column, gid))
             regions[gid]['region'] = Markup(get_scalar(self.env, "SELECT ST_AsKML(the_geom) FROM georegions WHERE gid=%s" % gid))
+
+        # filter out non-matching results
+        # XXX this is hacky, but I'm not sure how to do this in SQL
+        filter = {}
+        for key, value in req.args.items():
+            if key in georegions_columns:
+                filter[key] = value
+        
+
         return 'region.kml', dict(regions=regions), 'application/vnd.google-earth.kml+xml'
             
 
