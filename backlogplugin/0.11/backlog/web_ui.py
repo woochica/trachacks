@@ -58,9 +58,10 @@ class BacklogModule(Component):
     def get_active_navigation_item(self, req):
         return 'backlog'
     
-    def get_navigation_items(self, req):
-        yield ('mainnav', 'backlog',
-               tag.a('Backlogs', href=req.href.backlog()))
+    def get_navigation_items(self, req): 
+        if('BACKLOGS_VIEW' in req.perm):       
+            yield ('mainnav', 'backlog',
+                   tag.a('Backlogs', href=req.href.backlog()))
     
     # IRequestHandler methods
     def match_request(self, req):
