@@ -1,3 +1,5 @@
+from trac.core import *
+from trac.env import IEnvironmentSetupParticipant
 import trac.ticket.notification as note
 
 
@@ -62,4 +64,14 @@ def get_recipients(self, tktid):
   self.env.log.debug('NeverNotifyUpdaterPlugin: tos , ccs = %s, %s' % (torecipients, ccrecipients))
   return (torecipients, ccrecipients)
 
-note.TicketNotifyEmail.get_recipients = get_recipients
+class NeverNotifyUpdaterSetupParticipant(Component):
+    """ This component monkey patches note.TicketNotifyEmail.get_recipients so that track will never 
+    notify the person who updated the ticket about their own update"""
+    implements(IEnvironmentSetupParticipant)
+    def __init__(self):
+      #only if we should be enabled do we monkey patch
+      if self.compmgr.enabled[self.__class__]:
+        note.TicketNotifyEmail.get_recipients = get_recipients
+
+
+
