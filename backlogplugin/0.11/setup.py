@@ -10,11 +10,11 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name='BacklogPlugin', 
-    version='0.1.12',
+    version='0.1.13',
     packages=['backlog'],
     author='Bart Ogryczak',
     author_email='bartlomiej.ogryczak@hyves.nl',
-    url='',   
+    url='http://trac-hacks.org/wiki/BacklogPlugin',   
     license='BSD',
     description="""Allows multiple backlogs """,
     zip_safe = True,
