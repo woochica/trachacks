@@ -49,8 +49,9 @@ class InternalTicketsPolicy(Component):
         """Return if this req is permitted access to the given ticket ID."""
         try:
             tkt = Ticket(self.env, res.id)
-        except TracError:
-            return None # Ticket doesn't exist
+        except Exception, e:
+            self.log.warning("Internal: TandE ticket_policy failed to find a ticket for %s : error: %s" %  (res, e))
+            return None # Ticket doesn't exist / ticket id was invalid
         private_tkt = tkt['internal'] == '1'
 
         if private_tkt:
