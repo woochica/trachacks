@@ -69,7 +69,10 @@
 
 .bottomlist { padding: 20px;}
 
-
+.backlog_description { font-size: 80%;
+					   font-style:italic; 
+					   color: rgb(50,50,50);
+                      }
 
 
 

@@ -12,7 +12,9 @@
 
 	    <div id="content" class="backlog">
 	    
-	      <h1>Backlog: <em>${backlogname}</em></h1>
+	      <h1>Backlog: <em>${backlog.name}</em></h1>
+	      <h3 py:if="backlog.owner">Owner: ${backlog.owner}</h3>
+		  <p py:if="backlog.description" class="backlog_description">${backlog.description}</p>
 		    <div class="toplistdiv">
 		     <form id="change_ticket_order" method="post" action="#"> 		     					
 				<input type="hidden" id="ticket_order" name="ticket_order" value="" ></input>

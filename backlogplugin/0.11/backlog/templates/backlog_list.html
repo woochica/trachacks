@@ -14,6 +14,8 @@
 	      <h1>Backlogs</h1>
 		  <div py:for="backlog in backlogs.values()">
 		  <a href="${href.backlog(backlog.id)}"><h2 style="border-bottom: solid 1px gray; background: rgb(230,230,230);">Backlog:  <em>${backlog.name}</em></h2></a>
+		  <h3 py:if="backlog.owner">Owner: ${backlog.owner}</h3>
+		  <p py:if="backlog.description" class="backlog_description">${backlog.description}</p>
 		  <py:choose>
 		  	<p py:when="backlog.total > 0">
 		  	<div class="progressbar"><div style="width: ${round(100*backlog.closed/float(backlog.total))}%" class="progressbar_closed">

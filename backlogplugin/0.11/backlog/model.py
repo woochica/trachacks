@@ -88,10 +88,10 @@ class Backlog(object):
         try:
             cursor = self.db.cursor()
             #get name
-            sql = "SELECT name FROM backlog WHERE id = %s"
+            sql = "SELECT name, owner, description FROM backlog WHERE id = %s"
             cursor.execute(sql, (self.id,))
            #print cursor.fetchone()
-            self.name = cursor.fetchone()[0]
+            self.name, self.owner, self.description = cursor.fetchone()
                              
         except:
             self.env.log.error(traceback.format_exc())

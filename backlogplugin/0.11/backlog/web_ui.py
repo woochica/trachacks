@@ -94,7 +94,7 @@ class BacklogModule(Component):
         backlog = Backlog(self.env, bklg_id) 
         rw = 'BACKLOG_MODIFY_%s'%backlog.name2perm() in req.perm                                                    
         data = {}
-        data['backlogname'] = backlog.name
+        data['backlog'] = backlog
         data['tickets'], data['tickets2'] = backlog.get_tickets()
         
         # jquery-ui stylesheet and JS
@@ -122,7 +122,7 @@ class BacklogModule(Component):
                                                     
         data = {}
                   
-        columns = ['id', 'name']
+        columns = ['id', 'name', 'owner', 'description']
 
         sql = """SELECT %s, 0 as total, 0 as active
                  FROM  backlog

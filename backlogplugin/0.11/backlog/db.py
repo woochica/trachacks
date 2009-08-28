@@ -17,8 +17,10 @@ db_version = 1
 schema = [
     # Backlogs
     Table('backlog', key=('id'))[
-        Column('id', type='int'),
-        Column('name',unique=True)],
+        Column('id', type='int', auto_increment=True),
+        Column('name',unique=True),
+        Column('owner'),
+        Column('description')],
     #Tickets in backlogs
     Table('backlog_ticket', key=('bklg_id', 'tkt_id'))[
         Column('bklg_id', type='int'),        
@@ -80,7 +82,7 @@ class BacklogSetup(Component):
         """Called when Trac checks whether the environment needs to be upgraded.
         Returns `True` if upgrade is needed, `False` otherwise."""
         cursor = db.cursor()
-        return self._get_version(cursor) != db_version
+        return self._get_version(cursor) < db_version
 
     def upgrade_environment(self, db):
         """Actually perform an environment upgrade, but don't commit as
