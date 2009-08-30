@@ -3,7 +3,7 @@
 """ Macro to show the translated pages list. """
 
 __author__ = 'Zhang Cong (ftofficer)'
-__version__ = '1.0'
+__version__ = '0.3'
 
 from genshi.builder import tag
 

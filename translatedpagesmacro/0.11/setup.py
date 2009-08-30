@@ -2,15 +2,16 @@
 
 from setuptools import setup
 
-PACKAGE = 'TranslatedPages'
-
 setup(
-    name=PACKAGE,
+    name='TranslatedPagesMacro',
     version='0.3',
+    maintainer='Mikhail Gusarov',
+    maintainer_email='dottedmag@dottedmag.net',
+    url='http://trac-hacks.org/wiki/TranslatedPagesMacro',
     packages=['translatedpages'],
     entry_points={
         'trac.plugins': [
-            '%s = translatedpages' % PACKAGE
+            'TranslatedPagesMacro = translatedpages'
         ],
     },
 )
