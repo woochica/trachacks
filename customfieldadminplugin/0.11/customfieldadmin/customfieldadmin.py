@@ -18,6 +18,10 @@ class CustomFieldAdminPage(Component):
     
     implements(ITemplateProvider, IAdminPanelProvider)
 
+    def __init__(self):
+        self.env.systeminfo.append(('CustomFieldAdmin',
+                __import__('customfieldadmin', ['__version__']).__version__))
+
     # IAdminPanelProvider methods
     
     def get_admin_panels(self, req):
