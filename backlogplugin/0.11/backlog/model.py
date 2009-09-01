@@ -202,7 +202,7 @@ class Backlog(object):
             self.db.commit()
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to reset priority for ticket(s) %s in backlog %s"%(tkt_id, self.name))          
+            raise BacklogException("Failed to reset priority for ticket(s) %s "%(tkt_id,))          
         
     def delete_ticket(self, tkt_id):
         """ 
