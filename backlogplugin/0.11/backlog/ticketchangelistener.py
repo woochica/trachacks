@@ -43,7 +43,8 @@ class BacklogTicketChangeListener(Component):
                 Backlog(self.env, name=backlog_name).add_ticket(ticket.id)
         
         # ticket reopened, but backlog not changed.                
-        if(old_values.get('status') == 'closed'):
+        if(old_values.get('status') == 'closed' and backlog_name != NO_BACKLOG):
+            
             Backlog(self.env, name=backlog_name).reset_priority(ticket.id, only_if_deleted = True)            
             
         

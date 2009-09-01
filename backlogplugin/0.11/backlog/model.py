@@ -29,6 +29,7 @@ class Backlog(object):
         self.env = env
         self.db = self.env.get_db_cnx()
         
+        if(name == NO_BACKLOG): name = None        
         if(id):
             self._fetch_backlog(id)
         elif(name):
