@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 import os
 import sys
@@ -82,10 +83,11 @@ class ClientMilestoneSummary(Component):
     sql = ("""\
       SELECT t.id, t.summary, t.description, t.status, t.milestone,
         m.due, m.completed, m.description AS mdesc,
-        tcust2.value AS estimatedhours
+        tcust2.value AS estimatedhours, tcust3.value AS totalhours
       FROM ticket_custom AS tcust
       INNER JOIN ticket AS t ON tcust.ticket=t.id
       LEFT JOIN ticket_custom AS tcust2 ON t.id=tcust2.ticket AND tcust2.name='estimatedhours'
+      LEFT JOIN ticket_custom AS tcust3 ON t.id=tcust2.ticket AND tcust2.name='totalhours'
       LEFT JOIN milestone m ON t.milestone=m.name
       WHERE tcust.name = 'client'
         AND tcust.value = %s
@@ -98,11 +100,12 @@ class ClientMilestoneSummary(Component):
           AND stcust.value = tcust.value
           AND st.status != 'closed'
           AND sm.due > 0)
+      ORDER BY m.due ASC
       """)
     cur2 = db.cursor()
     cur2.execute(sql, (client,))
     xsummary = etree.SubElement(xml, 'summary')
-    for tid, summary, description, status, milestone, due, completed, mdescription, estimatedhours in cur2:
+    for tid, summary, description, status, milestone, due, completed, mdescription, estimatedhours, totalhours in cur2:
       have_data = True
       if milestone:
         if not milestones.has_key(milestone):
@@ -134,6 +137,9 @@ class ClientMilestoneSummary(Component):
       etree.SubElement(ticket, 'due').text = myformat_date(due)
       if estimatedhours:
         etree.SubElement(ticket, 'estimatedhours').text = myformat_hours(estimatedhours)
+
+      if totalhours:
+        etree.SubElement(ticket, 'totalhours').text = myformat_hours(totalhours)
 
 
     # Put the total hours into the milestone info
