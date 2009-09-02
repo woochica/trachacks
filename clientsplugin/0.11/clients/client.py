@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from trac.core import *
 from trac.web.chrome import add_stylesheet, ITemplateProvider
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
@@ -19,8 +20,6 @@ class ClientModule(Component):
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        # Add Stylesheet here, so that the ticket page gets it too :)
-        add_stylesheet(req, "clients/clients.css")
         return handler
         
     def post_process_request(self, req, template, data, content_type):
@@ -52,6 +51,9 @@ class ClientModule(Component):
     
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
+        # Add Stylesheet here, so that the ticket page gets it too :)
+        add_stylesheet(req, "clients/clients.css")
+
         newticket = req.path_info.startswith('/newticket')
         if req.path_info.startswith('/ticket/') or newticket:
             setdefaultrate = ''
