@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='TracCustomFieldAdmin',
-      version='0.2.1',
+      version='0.2.2',
       packages=['customfieldadmin'],
       author='CodeResort.com & Optaros.com',
       description='Admin panel for managing Trac ticket custom fields.',

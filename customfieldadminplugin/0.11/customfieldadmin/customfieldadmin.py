@@ -8,6 +8,7 @@ License: BSD
 (c) 2007-2009 ::: www.Optaros.com (.....)
 """
 
+from trac.config import Option
 from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from trac.admin.api import IAdminPanelProvider
@@ -102,6 +103,8 @@ class CustomFieldAdminPage(Component):
             cf_list = []
             for item in cfapi.get_custom_fields(self.env):
                 item['href'] = req.href.admin(cat, page, item['name'])
+                item['registry'] = ('ticket-custom', 
+                                            item['name']) in Option.registry
                 cf_list.append(item)
             cfadmin['customfields'] = cf_list
             cfadmin['display'] = 'list'

@@ -143,7 +143,10 @@
           </thead>
           <tbody>
             <tr py:for="cf in cfadmin.customfields">
-              <td><input type="checkbox" name="sel" value="${cf.name}" /></td>
+              <td py:if="not cf.registry"><input type="checkbox" name="sel"
+                value="${cf.name}"/></td>
+              <td py:if="cf.registry"
+                title="Field cannot be deleted (declared in source code)"/>
               <td><a href="${cf.href}">${cf.name}</a></td>
               <td>${cf.type}</td>
               <td>${cf.label}</td>
