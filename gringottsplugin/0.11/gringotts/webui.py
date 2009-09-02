@@ -70,8 +70,6 @@ class GringottsPage(Component):
 
         # Do we want an edit page?
         if gringlet:
-            req.hdf['wiki.edit_rows'] = 20
-
             cursor.execute('SELECT MAX(version) FROM gringotts WHERE name=%s', (gringlet,))
             try:
                 version = int(cursor.fetchone()[0])
@@ -92,7 +90,7 @@ class GringottsPage(Component):
                         
                         data = {
                           'action': 'edit',
-                          'edit_rows': '16',
+                          'edit_rows': '20',
                           'messages': messages,
                           'gringlet': {
                             'name': gringlet,
@@ -140,7 +138,7 @@ class GringottsPage(Component):
                   action = 'view'
                 data = {
                   'action': action,
-                  'edit_rows': '16',
+                  'edit_rows': '20',
                   'messages': messages,
                   'gringlet': {
                     'name': gringlet,
@@ -169,9 +167,11 @@ class GringottsPage(Component):
             names.append({'name': name,
                           'permitted': validate_acl(req, acl)})
 
-        req.hdf['gringlets.list'] = names
-        req.hdf['gringotts_href'] = req.href.gringotts()
-        
-        return 'gringotts.cs', None
+        data = {
+          'gringlets' : {
+            'list': names
+          }
+        }
+        return 'gringotts.html', data, None
 
 

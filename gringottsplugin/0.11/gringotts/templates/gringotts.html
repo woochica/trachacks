@@ -1,0 +1,56 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>$title</title>
+  </head>
+
+  <body>
+
+<h2>Manage Gringlets</h2>
+
+<form method="post">
+  <table class="listing">
+    <thead>
+      <tr>
+        <th class="sel">&nbsp;</th>
+        <th>Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      <py:choose test="">
+      <py:when test="len(gringlets.list) > 0">
+        <py:for each="gringlet in gringlets.list">
+          <py:choose test="">
+            <py:when test="gringlet.permitted">
+              <tr>
+                <td class="sel">--</td>
+                <td><a href="${href.gringotts(gringlet.name)}">$gringlet.name</a></td>
+              </tr>
+            </py:when>
+            <py:otherwise>
+              <tr>
+                <td class="sel">&nbsp;</td>
+                <td><em>$gringlet.name</em></td>
+              </tr>
+            </py:otherwise>
+          </py:choose>
+        </py:for>
+      </py:when>
+      <py:otherwise>
+        <tr>
+          <td class="sel">&nbsp;</td>
+          <td>You do not have any Gringlets defined.</td>
+        </tr>
+      </py:otherwise>
+      </py:choose>
+    </tbody>
+  </table>
+</form>
+  </body>
+</html>

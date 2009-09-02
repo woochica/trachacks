@@ -17,7 +17,7 @@ setup(name=PACKAGE,
     I'll write this later!
     """,
     packages=[PACKAGE],
-    package_data={PACKAGE : ['templates/*.cs', 'templates/*.html', 'htdocs/*.css', 'htdocs/*.gif']},
+    package_data={PACKAGE : ['templates/*.html', 'htdocs/*.css', 'htdocs/*.gif']},
     entry_points = {
         'trac.plugins': [
             'gringotts.api = gringotts.api',
