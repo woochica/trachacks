@@ -44,7 +44,7 @@ class ClientMilestoneSummary(Component):
       if dte:
         return format_date(dte, '%e %b %Y')
       return 'No date set'
-    def myformat_hours(hrs):
+    def myformat_hours(hrs, fallback='No estimate available'):
       from math import floor
       if hrs:
         hrs = float(hrs)
@@ -62,7 +62,7 @@ class ClientMilestoneSummary(Component):
           if mins:
             str = "%s %sm" % (str, int(mins))
           return str;
-      return 'No estimate available'
+      return fallback
 
     client = self.client
     xml = etree.Element('clientsplugin')
@@ -139,7 +139,7 @@ class ClientMilestoneSummary(Component):
         etree.SubElement(ticket, 'estimatedhours').text = myformat_hours(estimatedhours)
 
       if totalhours:
-        etree.SubElement(ticket, 'totalhours').text = myformat_hours(totalhours)
+        etree.SubElement(ticket, 'totalhours').text = myformat_hours(totalhours, 'None')
 
 
     # Put the total hours into the milestone info
