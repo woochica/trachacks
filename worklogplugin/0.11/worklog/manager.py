@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from time import time
 from datetime import tzinfo, timedelta, datetime
 from util import pretty_timedelta
@@ -175,38 +176,49 @@ class WorkLogManager:
                        (stoptime, stoptime, comment, self.authname, active['lastchange']))
         db.commit()
 
+        plugtne = self.config.getbool('worklog', 'timingandestimation') and self.config.get('ticket-custom', 'hours')
+        plughrs = self.config.getbool('worklog', 'trachoursplugin') and self.config.get('ticket-custom', 'totalhours')
+
         message = ''
+        hours = '0.0'
+
         # Leave a comment if the user has configured this or if they have entered
         # a work log comment.
-        if self.config.getbool('worklog', 'comment') or comment:
+        if plugtne or plughrs:
+            round_delta = float(self.config.getint('worklog', 'roundup') or 1)
+
+            # Get the delta in minutes
+            delta = float(int(stoptime) - int(active['starttime'])) / float(60)
+
+            # Round up if needed
+            delta = int(round((delta / round_delta) + float(0.5))) * int(round_delta)
+
+            # This hideous hack is here because I don't yet know how to do variable-DP rounding in python - sorry!
+            # It's meant to round to 2 DP, so please replace it if you know how.  Many thanks, MK.
+            hours = str(float(int(100 * float(delta) / 60) / 100.0))
+
+        if plughrs:
+            message = 'Hours recorded automatically by the worklog plugin. %s hours' % hours
+        elif self.config.getbool('worklog', 'comment') or comment:
             started = datetime.fromtimestamp(active['starttime'])
             finished = datetime.fromtimestamp(stoptime)
             message = '%s worked on this ticket for %s between %s %s and %s %s.' % \
                       (self.authname, pretty_timedelta(started, finished), \
                        format_date(active['starttime']), format_time(active['starttime']), \
                        format_date(stoptime), format_time(stoptime))
-            if comment:
-                message += "\n[[BR]]\n" + comment
-            
-        if self.config.getbool('worklog', 'timingandestimation') and \
-               self.config.get('ticket-custom', 'hours'):
+        if comment:
+            message += "\n[[BR]]\n" + comment
+
+
+        if plugtne or plughrs:
             if not message:
                 message = 'Hours recorded automatically by the worklog plugin.'
 
-            round_delta = float(self.config.getint('worklog', 'roundup') or 1)
-            
-            # Get the delta in minutes
-            delta = float(int(stoptime) - int(active['starttime'])) / float(60)
-            
-            # Round up if needed
-            delta = int(round((delta / round_delta) + float(0.5))) * int(round_delta)
-            
             db = self.env.get_db_cnx()
             tckt = Ticket(self.env, active['ticket'], db)
-            
-            # This hideous hack is here because I don't yet know how to do variable-DP rounding in python - sorry!
-            # It's meant to round to 2 DP, so please replace it if you know how.  Many thanks, MK.
-            tckt['hours'] = str(float(int(100 * float(delta) / 60) / 100.0))
+
+            if plugtne:
+                tckt['hours'] = hours
             self.save_ticket(tckt, db, message)
             message = ''
 
@@ -214,7 +226,7 @@ class WorkLogManager:
             db = self.env.get_db_cnx()
             tckt = Ticket(self.env, active['ticket'], db)
             self.save_ticket(tckt, db, message)
-        
+
         return True
 
 

@@ -21,6 +21,10 @@
             <label for="timingandestimation">Record time via <a href="http://www.trac-hacks.org/wiki/TimingAndEstimationPlugin">Timing and Estimation Plugin</a>?</label>
           </div>
           <div class="field">
+            <input type="checkbox" id="trachoursplugin" name="trachoursplugin" value="1" checked="${trachoursplugin or None}" />
+            <label for="trachoursplugin">Record time via <a href="http://www.trac-hacks.org/wiki/TracHoursPlugin">Trac Hours Plugin</a>?</label>
+          </div>
+          <div class="field">
             <input type="checkbox" id="comment" name="comment" value="1" checked="${comment or None}" />
             <label for="comment">Automatically add a comment when you stop work on a ticket?</label><br />
             <small>Please note that if you leave a comment when you stop work, then a comment is always added to the ticket to ensure all information is present on the ticket.</small>
@@ -45,7 +49,9 @@
             <label for="roundup">Round up to nearest minute</label>&nbsp;
             <input type="text" id="roundup" name="roundup" size="4" value="${roundup}" /><br />
             <small>This only applies when integrating with the 
-                  <a href="http://www.trac-hacks.org/wiki/TimingAndEstimationPlugin">Timing and Estimation Plugin</a></small>
+                  <a href="http://www.trac-hacks.org/wiki/TimingAndEstimationPlugin">Timing and Estimation</a> or
+                  <a href="http://www.trac-hacks.org/wiki/TracHoursPlugin">Trac Hours</a> plugins.
+            </small>
           </div>
         </fieldset>
       

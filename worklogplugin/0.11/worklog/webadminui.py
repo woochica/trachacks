@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import time
 
 from trac import ticket
@@ -15,7 +16,7 @@ class WorklogAdminPanel(TicketAdminPanel):
     def _render_admin_panel(self, req, cat, page, component):
         req.perm.require('TICKET_ADMIN') and req.perm.require('WORK_ADMIN') 
 
-        bools = [ "timingandestimation", "comment",
+        bools = [ "timingandestimation", "trachoursplugin", "comment",
                   "autostop", "autostopstart", "autoreassignaccept" ]
         
         if req.method == 'POST' and req.args.has_key('update'):
