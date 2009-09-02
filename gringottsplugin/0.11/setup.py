@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from setuptools import setup
 
@@ -16,7 +17,7 @@ setup(name=PACKAGE,
     I'll write this later!
     """,
     packages=[PACKAGE],
-    package_data={PACKAGE : ['templates/*.cs', 'htdocs/*.css', 'htdocs/*.gif']},
+    package_data={PACKAGE : ['templates/*.cs', 'templates/*.html', 'htdocs/*.css', 'htdocs/*.gif']},
     entry_points = {
         'trac.plugins': [
             'gringotts.api = gringotts.api',

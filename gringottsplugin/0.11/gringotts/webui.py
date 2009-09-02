@@ -78,24 +78,32 @@ class GringottsPage(Component):
             except:
                 version = 0
 
+            messages = []
+            action = 'edit'
             if req.method == 'POST' and req.args.has_key('save'):
                 if int(req.args['version']) != version:
                     # Collision
-                    req.hdf['messages'] = [ 'Someone else has editted this Gringlet and your changes have been lost!' ]
+                    messages.append('Someone else has editted this Gringlet and your changes have been lost!')
                 else:
 
                     if not validate_acl(req, req.args['acl']):
-                        messages = []
                         messages.append('Your change to the ACL would have locked you out.')
                         messages.append('Please change it accordingly and try again.')
                         
-                        req.hdf['messages'] = messages
-                        req.hdf['gringlet.version'] = version
-                        req.hdf['gringlet.source'] = req.args['text']
-                        req.hdf['gringlet.acl'] = req.args['acl']
-                        
+                        data = {
+                          'action': 'edit',
+                          'edit_rows': '16',
+                          'messages': messages,
+                          'gringlet': {
+                            'name': gringlet,
+                            'version': version,
+                            'source': req.args['text'],
+                            'acl': req.args['acl']
+                          }
+                        }
+
                         add_stylesheet(req, 'common/css/wiki.css')
-                        return 'gringlet.cs', None
+                        return 'gringlet.html', data, None
 
                     # Save the update
                     key = str(self.config.get('gringotts', 'key'))
@@ -108,7 +116,8 @@ class GringottsPage(Component):
                     db.commit()
                     version += 1
                     
-                    req.hdf['messages'] = [ 'Gringlet saved successfully.' ]
+                    messages.append('Gringlet saved successfully.')
+                    action = 'view'
 
 
             if version > 0:
@@ -127,13 +136,28 @@ class GringottsPage(Component):
 
             # If we are allowed, then show the edit page, otherwise just show the listing
             if validate_acl(req, acl):
-            
-                req.hdf['gringlet.version'] = version
-                req.hdf['gringlet.source'] = source
-                req.hdf['gringlet.acl'] = acl
+                if not req.args.has_key('action') or req.args['action'] != 'edit':
+                  action = 'view'
+                data = {
+                  'action': action,
+                  'edit_rows': '16',
+                  'messages': messages,
+                  'gringlet': {
+                    'name': gringlet,
+                    'version': version,
+                    'source': source,
+                    'acl': acl
+                  }
+                }
+            else:
+                messages.append("You do not have the necessary permission to see this Gringlett")
+                data = {
+                  'action': 'view',
+                  'messages': messages
+                }
 
-                add_stylesheet(req, 'common/css/wiki.css')
-                return 'gringlet.cs', None
+            add_stylesheet(req, 'common/css/wiki.css')
+            return 'gringlet.html', data, None
 
         # Listing page
         cursor.execute('SELECT name,acl FROM gringotts g1 WHERE version='

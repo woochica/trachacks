@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 
 from trac.wiki.formatter import wiki_to_html
@@ -50,7 +51,7 @@ class GringottMacro(WikiMacroBase):
     
     control = None
     if edit:
-      control = tag.div(tag.a(edit, href=(formatter.href.gringotts() + "/" + content)), class_="gringottcontrol")
+      control = tag.div(tag.a(edit, href=(formatter.href.gringotts() + "/" + content + "?action=edit")), class_="gringottcontrol")
     
     
     # Use eight divs for flexible frame styling

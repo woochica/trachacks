@@ -1,0 +1,78 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>$title</title>
+    <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+    <script type="text/javascript">
+      jQuery(document).ready(function($) {
+        $("#text").blur(function() {
+          $("#scroll_bar_pos").val(this.scrollTop);
+        }).get(0).scrollTop = $("#scroll_bar_pos").val();
+        $("#editrows").change(function() {
+          resizeTextArea("text", this.options[this.selectedIndex].value);
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+
+    <div py:if="len(messages) > 0" class="system-message">
+      <py:for each="message in messages">
+        <p>$message</p>
+      </py:for>
+    </div>
+
+    <div py:if="gringlet" id="content" class="wiki">
+      <py:choose test="action">
+        <py:when test="'edit'">
+
+      <form id="edit" action="${href.gringotts(gringlet.name)}" method="post">
+        <fieldset class="iefix">
+          <input type="hidden" name="action" value="edit" />
+          <input type="hidden" name="version" value="$gringlet.version" />
+          <input type="hidden" id="scroll_bar_pos" name="scroll_bar_pos"
+                 value="$scroll_bar_pos" />
+          <div id="rows">
+            <label for="editrows">Adjust edit area height:</label>
+            <select size="1" name="editrows" id="editrows" tabindex="43">
+              <option py:for="rows in range(8, 42, 4)" value="$rows"
+                      selected="${str(rows) == edit_rows or None}">
+                $rows
+              </option>
+            </select>
+          </div>
+          <p><textarea id="text" class="wikitext" name="text" cols="80" rows="$edit_rows">
+$gringlet.source</textarea>
+          </p>
+        </fieldset>
+        <div id="help">
+          <b>Note:</b> See <a href="${href.wiki('WikiFormatting')}">WikiFormatting</a> and
+          <a href="${href.wiki('TracWiki')}">TracWiki</a> for help on editing wiki content.
+        </div>
+        <fieldset>
+          <legend>Access Control List</legend>
+          <input type="text" id="acl" name="acl" size="80" value="$gringlet.acl"/>
+        </fieldset>
+        <div class="buttons">
+         <input type="submit" name="save" value="Save Gringlet" />&nbsp;
+         <!-- <input type="submit" name="cancel" value="Cancel" /> -->
+        </div>
+      </form>
+
+        </py:when>
+        <py:when>
+          <div class="wikipage searchable" xml:space="preserve">
+            ${wiki_to_html(context, "[[Gringott(" + gringlet.name + ")]]")}
+          </div>
+        </py:when>
+      </py:choose>
+    </div>
+  </body>
+</html>
