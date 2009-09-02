@@ -31,7 +31,10 @@ from tracrpc.util import exception_to_unicode
 try:
     try:
         import json
-    except:
+        if not (hasattr(json, 'JSONEncoder') \
+                and hasattr(json, 'JSONDecoder')):
+            raise AttributeError("Incorrect JSON library found.")
+    except (ImportError, AttributeError):
         import simplejson as json
 
     class TracRpcJSONEncoder(json.JSONEncoder):
