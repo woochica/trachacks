@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 import time
 from usermanual import *
@@ -39,10 +40,13 @@ class WorkLogSetupParticipant(Component):
             self.db_installed_version = int(cursor.fetchone()[0])
         except:
             self.db_installed_version = 0
-            cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)",
-                           (self.db_version_key, self.db_installed_version))
-            db.commit()
-            db.close()
+            try:
+                cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)",
+                               (self.db_version_key, self.db_installed_version))
+                db.commit()
+            except Exception, e:
+                db.rollback()
+                raise e
 
     
     def environment_created(self):
@@ -52,23 +56,20 @@ class WorkLogSetupParticipant(Component):
             
     def system_needs_upgrade(self):
         return self.db_installed_version < self.db_version
-        
+
     def do_db_upgrade(self):
         # Legacy support hack (supports upgrades from revisions r2495 or before)
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
         if self.db_installed_version == 0:
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
             try:
                 cursor.execute('SELECT * FROM work_log LIMIT 1')
+                db.commit()
                 # We've succeeded so we actually have version 1
                 self.db_installed_version = 1
             except:
-                pass
-            db.close()
+                db.rollback()
         # End Legacy support hack
-
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
 
         # Do the staged updates
         try:
@@ -122,10 +123,10 @@ class WorkLogSetupParticipant(Component):
             cursor.execute("UPDATE system SET value=%s WHERE name=%s", 
                            (self.db_version, self.db_version_key))
             db.commit()
-            db.close()
         except Exception, e:
             self.log.error("WorklogPlugin Exception: %s" % (e,));
             db.rollback()
+            raise e
 
 
     
@@ -134,10 +135,11 @@ class WorkLogSetupParticipant(Component):
         cursor = db.cursor()
         try:
             cursor.execute('SELECT MAX(version) FROM wiki WHERE name=%s', (user_manual_wiki_title,))
+            db.commit()
             maxversion = int(cursor.fetchone()[0])
         except:
+            db.rollback()
             maxversion = 0
-        db.close()
 
         return maxversion < user_manual_version
 
@@ -145,13 +147,16 @@ class WorkLogSetupParticipant(Component):
         when = int(time.time())
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly) '
-                       'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
-                       (user_manual_wiki_title, user_manual_version, when,
-                        'WorkLog Plugin', '127.0.0.1', user_manual_content,
-                        '', 0))
-        db.commit()
-        db.close()
+        try:
+            cursor.execute('INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly) '
+                           'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
+                           (user_manual_wiki_title, user_manual_version, when,
+                            'WorkLog Plugin', '127.0.0.1', user_manual_content,
+                            '', 0))
+            db.commit()
+        except Exception, e:
+            db.rollback()
+            self.log.error("WorklogPlugin Exception: %s" % (e,));
         
     def environment_needs_upgrade(self, db):
         """Called when Trac checks whether the environment needs to be upgraded.
