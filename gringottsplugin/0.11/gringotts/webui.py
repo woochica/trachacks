@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 import re
 from time import time
 from trac.log import logger_factory
 from trac.core import *
-from trac.web import IRequestHandler, IRequestFilter
+from trac.web import IRequestHandler, ITemplateStreamFilter
 from trac.util.datefmt import format_date, format_time
 from trac.util import Markup
 from trac.ticket import Ticket
@@ -13,7 +14,7 @@ from util import validate_acl
 import ezPyCrypto
 
 class GringottsPage(Component):
-    implements(INavigationContributor, ITemplateProvider, IRequestHandler, IRequestFilter)
+    implements(INavigationContributor, ITemplateStreamFilter, ITemplateProvider, IRequestHandler)
 
     def __init__(self):
         pass
@@ -47,16 +48,12 @@ class GringottsPage(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
-    # IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        # Add Stylesheet here, so that macro's will get it
+    # ITemplateStreamFilter methods
+    def filter_stream(self, req, method, filename, stream, data):
+        # Add Stylesheet here, so that the ticket page gets it too :)
         add_stylesheet(req, 'gringotts/gringotts.css')
-        return handler
-    
-    # Noop
-    def post_process_request(self, req, template, data, content_type):
-        return template, data, content_type
-    
+        return stream
+
     # IRequestHandler methods
     def match_request(self, req):
         match = re.match(r'^/gringotts(?:/([a-zA-Z0-9]+))?$', req.path_info)
