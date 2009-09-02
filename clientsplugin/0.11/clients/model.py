@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 import sys
 import time
@@ -77,7 +78,7 @@ class Client(object):
                        " default_rate, currency) "
                        "VALUES (%s,%s, %s,%s)",
                        (self.name, self.description,
-                        self.default_rate, self.currency))
+                        (self.default_rate or None), self.currency))
 
         if handle_ta:
             db.commit()
@@ -98,7 +99,7 @@ class Client(object):
                        " default_rate=%s, currency=%s "
                        "WHERE name=%s",
                        (self.name, self.description,
-                        self.default_rate, self.currency,
+                        (self.default_rate or None), self.currency,
                         self._old_name))
         if self.name != self._old_name:
             # Update tickets

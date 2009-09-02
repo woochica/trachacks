@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import time
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
@@ -85,20 +86,21 @@ class ClientsSetupParticipant(Component):
 
             if self.db_installed_version < 5:
                 print 'Updating clients table (v5)'
-                cursor.execute('INSERT INTO client_events '
-                               'SELECT "Weekly Summary", "Milestone Summary", "Send Email", MAX(summary_lastupdate) '
-                               'FROM client')
-                cursor.execute('INSERT INTO client_event_action_options '
-                               'SELECT "Weekly Summary", name, "Email Addresses", summary_list '
-                               'FROM client '
-                               'WHERE summary_list!=""')
-                cursor.execute('INSERT INTO client_events '
-                               'SELECT "Ticket Changes", "Ticket Change Summary", "Send Email", MAX(changes_lastupdate) '
-                               'FROM client')
-                cursor.execute('INSERT INTO client_event_action_options '
-                               'SELECT "Ticket Changes", name, "Email Addresses", changes_list '
-                               'FROM client '
-                               'WHERE changes_list!=""')
+                # NB: Use single quotes for literals for better compat
+                cursor.execute("INSERT INTO client_events "
+                               "SELECT 'Weekly Summary', 'Milestone Summary', 'Send Email', MAX(summary_lastupdate) "
+                               "FROM client")
+                cursor.execute("INSERT INTO client_event_action_options "
+                               "SELECT 'Weekly Summary', name, 'Email Addresses', summary_list "
+                               "FROM client "
+                               "WHERE summary_list != ''")
+                cursor.execute("INSERT INTO client_events "
+                               "SELECT 'Ticket Changes', 'Ticket Change Summary', 'Send Email', MAX(changes_lastupdate) "
+                               "FROM client")
+                cursor.execute("INSERT INTO client_event_action_options "
+                               "SELECT 'Ticket Changes', name, 'Email Addresses', changes_list "
+                               "FROM client "
+                               "WHERE changes_list != ''")
                 cursor.execute('CREATE TEMPORARY TABLE client_tmp ('
                                'name               TEXT,'
                                'description        TEXT,'

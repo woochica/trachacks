@@ -8,47 +8,64 @@ billing_reports = [{
     'uuid':        'cd175fb0-0c74-48e4-816f-d72b4ba98fc1',
     'title':       'Client Work Summary',
     'description': '',
-    'version':     1,
+    'version':     2,
     'sql':         """
 SELECT 
-  __group__, __style__,  ticket, summary, newvalue as Work_added,
-  time, _ord
+  __group__, __style__,
+  ticket, summary, hours, rate, cost,
+  _time, _ord
 FROM(
-  SELECT '' as __style__, t.id as ticket,
-    SUM(CAST(newvalue as DECIMAL)) as newvalue, t.summary as summary,
-    MAX(ticket_change.time) as time, client.value as __group__, 0 as _ord
+  SELECT 
+    '' as __style__, 
+    t.id as ticket,
+    t.summary as summary,
+    SUM(CAST(newvalue as DECIMAL)) as hours,
+    CAST(clientrate.value AS DECIMAL) as rate,
+    SUM(CAST(newvalue as DECIMAL) * CAST(clientrate.value AS DECIMAL)) as cost,
+    client.value as __group__,
+    MAX(ticket_change.time) as _time,
+    0 as _ord
   FROM ticket_change
   JOIN ticket t on t.id = ticket_change.ticket
-  LEFT JOIN ticket_custom as billable on billable.ticket = t.id 
-    and billable.name = 'billable'
+  LEFT JOIN ticket_custom as billable on billable.ticket = t.id
+    AND billable.name = 'billable'
   LEFT JOIN ticket_custom as client on client.ticket = t.id
-    and client.name = 'client'
+    AND client.name = 'client'
+  LEFT JOIN ticket_custom as clientrate on clientrate.ticket = t.id
+    AND clientrate.name = 'clientrate'
   WHERE field = 'hours' and
-    t.status IN ($NEW, $ASSIGNED, $REOPENED, $CLOSED) 
-      AND billable.value in ($BILLABLE, $UNBILLABLE)
+    billable.value IN ($BILLABLE, $UNBILLABLE)
       AND ticket_change.time >= $STARTDATE
       AND ticket_change.time < $ENDDATE
   GROUP BY client.value, t.id, t.summary
   
   UNION 
   
-  SELECT 'background-color:#DFE;' as __style__, NULL as ticket,
-    sum(CAST(newvalue as DECIMAL)) as newvalue, 'Total work done' as summary,
-    NULL as time, client.value as __group__, 1 as _ord
+  SELECT 
+    'background-color:#DFE;' as __style__,
+    '' as ticket,
+    'Total work done' as summary,
+    SUM(CAST(newvalue as DECIMAL)) as hours,
+    '-' as rate,
+    SUM(CAST(newvalue as DECIMAL) * CAST(clientrate.value AS DECIMAL)) as cost,
+    client.value as __group__,
+    MAX(ticket_change.time) as _time,
+    1 as _ord
   FROM ticket_change
   JOIN ticket t on t.id = ticket_change.ticket
-  LEFT JOIN ticket_custom as billable on billable.ticket = t.id 
-    and billable.name = 'billable'
+  LEFT JOIN ticket_custom as billable on billable.ticket = t.id
+    AND billable.name = 'billable'
   LEFT JOIN ticket_custom as client on client.ticket = t.id
-    and client.name = 'client'
+    AND client.name = 'client'
+  LEFT JOIN ticket_custom as clientrate on clientrate.ticket = t.id
+    AND clientrate.name = 'clientrate'
   WHERE field = 'hours' and
-    t.status IN ($NEW, $ASSIGNED, $REOPENED, $CLOSED) 
-      AND billable.value in ($BILLABLE, $UNBILLABLE)
+    billable.value IN ($BILLABLE, $UNBILLABLE)
       AND ticket_change.time >= $STARTDATE
       AND ticket_change.time < $ENDDATE
   GROUP By client.value
 )  as tbl
-ORDER BY __group__,  _ord ASC, ticket, time
+ORDER BY __group__,  _ord ASC, ticket, _time
     """
     }]
 
