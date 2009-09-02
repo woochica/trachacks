@@ -87,7 +87,7 @@ class ClientMilestoneSummary(Component):
       FROM ticket_custom AS tcust
       INNER JOIN ticket AS t ON tcust.ticket=t.id
       LEFT JOIN ticket_custom AS tcust2 ON t.id=tcust2.ticket AND tcust2.name='estimatedhours'
-      LEFT JOIN ticket_custom AS tcust3 ON t.id=tcust2.ticket AND tcust2.name='totalhours'
+      LEFT JOIN ticket_custom AS tcust3 ON t.id=tcust3.ticket AND tcust3.name='totalhours'
       LEFT JOIN milestone m ON t.milestone=m.name
       WHERE tcust.name = 'client'
         AND tcust.value = %s
