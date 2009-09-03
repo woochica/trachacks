@@ -200,8 +200,8 @@ class WatchlinkPlugin(Component):
                                 strng += tag(" ", tag.em(', '.join(removed)), " removed")
                             return strng
                         elif field == 'description':
-                            return fieldtag + tag(" modified (", tag.a("diff", 
-                               href=href('ticket',id,action='diff',version=commentnum)), ")")
+                            return fieldtag + tag(" modified (", tag.a("diff",
+                               href=href('ticket',id,action='diff',version=self.commentnum)), ")")
                         elif field == 'comment':
                             self.commentnum = oldvalue
                             self.comment    = newvalue
