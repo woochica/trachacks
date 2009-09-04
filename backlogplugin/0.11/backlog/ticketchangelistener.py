@@ -37,7 +37,7 @@ class BacklogTicketChangeListener(Component):
         # backlog has been changed        
         if('backlog' in old_values.keys()):
             if(backlog_name == NO_BACKLOG):
-                if(old_values['backlog'] != NO_BACKLOG):
+                if(old_values['backlog'] and (old_values['backlog'] != NO_BACKLOG)):
                     Backlog(self.env, name=old_values['backlog']).delete_ticket(ticket.id)
             else:
                 Backlog(self.env, name=backlog_name).add_ticket(ticket.id)

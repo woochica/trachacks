@@ -210,13 +210,16 @@ class Backlog(object):
         removes ticket from this backlog
         @param tkt_id: ID of ticket
         """
+        if(not self.getattr('id')): 
+            self.env.log.warn('trying to delete ticket from uninitialized backlog')
+            return
         try:
             cursor = self.db.cursor()            
             cursor.execute('DELETE FROM backlog_ticket WHERE bklg_id = %s AND tkt_id = %s', (self.id, tkt_id))       
             self.db.commit()
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to delete ticket %s from backlog %s"%(tkt_id, self.name))          
+            raise BacklogException("Failed to delete ticket %s from backlog"%(tkt_id,))          
 
         
     def remove_closed_tickets(self):
