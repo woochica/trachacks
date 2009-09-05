@@ -29,7 +29,8 @@ from pkg_resources import resource_filename
 __all__ = ['SiteuploadAdminPage']
 
 class SiteuploadAdminPage(Component):
-    """ Allows for administatrators to upload files to the trac environment's htdocs dir
+    """ Allows for administatrators to upload files to the trac environment's
+    htdocs dir
 
     Also allows admins to manage files in said dir.
 
@@ -39,19 +40,25 @@ class SiteuploadAdminPage(Component):
 
     # IPermissionRequestor
     def get_permission_actions(self):
-        return ['SITEUPLOAD_MANAGE', 'SITEUPLOAD_UPLOAD', ('SITEUPLOAD_ADMIN', ['SITEUPLOAD_MANAGE', 'SITEUPLOAD_UPLOAD'])]
+        return ['SITEUPLOAD_MANAGE', 'SITEUPLOAD_UPLOAD', 
+               ('SITEUPLOAD_ADMIN', 
+                    ['SITEUPLOAD_MANAGE', 'SITEUPLOAD_UPLOAD'])]
 
     # IAdminPanelPageProvider methods
     def get_admin_panels(self, req):
-        if req.perm.has_permission('SITEUPLOAD_MANAGE') or req.perm.has_permission('SITEUPLOAD_UPLOAD'):
+        if req.perm.has_permission('SITEUPLOAD_MANAGE') or \
+           req.perm.has_permission('SITEUPLOAD_UPLOAD'):
             yield ('siteupload', 'Site Files', 'files', 'Files')
 
     def render_admin_panel(self, req, cat, page, path_info):
-        if not req.perm.has_permission('SITEUPLOAD_MANAGE') and not req.perm.has_permission('SITEUPLOAD_UPLOAD'):
+        if not req.perm.has_permission('SITEUPLOAD_MANAGE') and \
+           not req.perm.has_permission('SITEUPLOAD_UPLOAD'):
             raise PermissionError('SITEUPLOAD_MANAGE or SITEUPLOAD_UPLOAD')
         target_path = os.path.join(self.env.path, 'htdocs')
         readonly = False
-        if not (os.path.exists(target_path) and os.path.isdir(target_path) and os.access(target_path, os.F_OK + os.W_OK)):
+        if not (os.path.exists(target_path) and \
+           os.path.isdir(target_path) and \
+           os.access(target_path, os.F_OK + os.W_OK)):
             readonly = True
         if req.method == 'POST':
             if req.args.has_key('delete'):
@@ -137,23 +144,8 @@ class SiteuploadAdminPage(Component):
 
     # INavigationContributor
     def get_templates_dirs(self):
-        """
-            Return the absolute path of the directory containing the provided
-            templates
-        """
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        """
-        Return a list of directories with static resources (such as style
-        sheets, images, etc.)
-
-        Each item in the list must be a `(prefix, abspath)` tuple. The
-        `prefix` part defines the path in the URL that requests to these
-        resources are prefixed with.
-        
-        The `abspath` is the absolute path to the directory containing the
-        resources on the local file system.
-        """
         return []
 
