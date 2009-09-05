@@ -29,7 +29,6 @@ from trac.util import get_reporter_id
 
 from dateutil.parser import parse
 
-#__all__ = ['FieldSetupModule', 'DateDueHandler']
 __all__ = ['DateDueHandler']
 
 # The thought here being to have the plugin verify that the date_due
