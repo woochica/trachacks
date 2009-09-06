@@ -12,7 +12,7 @@ from setuptools import setup
 
 setup(
     name = 'PageAuthzPolicyEditor',
-    version = '0.11',
+    version = '0.12',
     author = 'Robert Martin',
     author_email = 'robert.martin@arqiva.com',
     url = '',
@@ -22,17 +22,11 @@ setup(
     zip_safe=True,
     packages=['page_authz_policy_editor'],
     package_data={'page_authz_policy_editor': ['templates/*.html']},
-
-    install_requires = [
-        #'trac>=0.11',
-    ],
-
     entry_points = {
         'trac.plugins': [
             'page_authz_policy_editor.admin = page_authz_policy_editor.pape_admin',
         ]
     },
-
-    #~ test_suite = 'htgroups_edit.tests.suite',
+     install_requires = ['Trac >=0.11', 'configobj'],
 )
 

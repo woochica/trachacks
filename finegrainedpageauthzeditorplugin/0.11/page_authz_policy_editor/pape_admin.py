@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2008 Arqiva
+# Copyright (C) 2008, 2009 Arqiva
 # Copyright (C) 2005-2006 Edgewall Software
 # Copyright (C) 2005 Jonas Borgström <jonas@edgewall.com>
 # All rights reserved.
@@ -16,49 +16,35 @@
 # Based on work by Author: Jonas Borgström <jonas@edgewall.com>
 # Author: Robert Martin <robert.martin@arqiva.com>
 
+
 import os
-import pkg_resources
+from pkg_resources import resource_filename
 from configobj import ConfigObj
 from StringIO import StringIO
 
-from genshi import HTML
-from genshi.builder import tag
-
-from trac import __version__ as TRAC_VERSION
 from trac.admin.api import IAdminPanelProvider
+from trac.web.chrome import ITemplateProvider
+
 from trac.core import *
-from trac.perm import PermissionSystem, IPermissionRequestor
-from trac.util.translation import _
-from trac.web import HTTPNotFound, IRequestHandler
-from trac.web.chrome import add_script, add_stylesheet, add_warning, Chrome, \
-                            INavigationContributor, ITemplateProvider
+from trac.util import translation
 
-
-try:
-    from webadmin import IAdminPageProvider
-except ImportError:
-    IAdminPageProvider = None
+from acct_mgr.api import AccountManager
 
 
 class PageAuthzPolicyEditor(Component):
-
     implements(IAdminPanelProvider, ITemplateProvider)
 
+    def __init__(self):
+        self.account_manager = AccountManager(self.env)
 
     # ITemplateProvider methods
-
-    def get_htdocs_dirs(self):
-        return []
-
     def get_templates_dirs(self):
-        return [pkg_resources.resource_filename('page_authz_policy_editor.pape_admin', 'templates')]
-
+        return [resource_filename(__name__, 'templates')]
 
     # IAdminPanelProvider methods
-
     def get_admin_panels(self, req):
         if 'TRAC_ADMIN' in req.perm:
-            yield ('accounts', _('Accounts'), 'pages', _('Page Permissions'))
+            yield ('accounts', translation._('Accounts'), 'pages', translation._('Page Permissions'))
 
     def _get_filename(self, section, name):
       file_name = self.config.get(section, name)
@@ -67,43 +53,48 @@ class PageAuthzPolicyEditor(Component):
       return(file_name)
 
     def _get_users(self):
-        password_file_name = self._get_filename('account-manager', 'password_file')
-        users_list = list()
-        if os.path.exists(password_file_name):
-            password_file = file(password_file_name)
-            try:
-                for user_line in password_file:
-                    # Ignore blank lines and lines starting with #
-                    if user_line and not user_line.startswith('#'):
-                        user_name = user_line.split(':', 1)[0]
-                        users_list.append(user_name.strip())
-            finally:
-                password_file.close()
-        users = ', '.join(sorted(users_list))
-        return users
+        return(self.account_manager.get_users())
+    
+    def _group_filename(self):
+        group_file_name = self._get_filename('account-manager', 'group_file')
+        if not group_file_name:
+            group_file_name = self._get_filename('htgroups', 'group_file')
+        if not group_file_name:
+            raise TracError('Group filename not found in the config file. In neither sections\
+                                "account-manager" nor "htgroups" under the name "group_file".')
+        if not os.path.exists(group_file_name):
+            raise TracError('Group filename not found: %s.' % group_file_name)
+        return(group_file_name)
 
     # Get the groups and their members so they can easily be included in the
     # groups section of the authz file.  Need it as a dictionary of arrays so it be easily
-    # iterated.
+    # iterated.    
     def _get_groups_and_members(self):
-        group_file_name = self._get_filename('account-manager', 'group_file')
+        """
+        Get the groups and their members as a dictionary of
+        lists.
+        """
+        # could be in one of two places, depending if the 
+        # account-manager is installed or not
+        group_file_name = self._group_filename()
         groups_dict = dict()
-        if os.path.exists(group_file_name):
-            group_file = file(group_file_name)
-            try:
-                for group_line in group_file:
-                    group = group_line.strip()
-                    # Ignore blank lines and lines starting with #
-                    if group_line and not group_line.startswith('#'):
-                        group_name = group_line.split(':', 1)[0]
-                        group_members = group_line.split(':', 2)[1].split(' ')
-                        groups_dict[group_name] = [ x for x in [member.strip() for member in group_members] if x ]
-            finally:
-                group_file.close()
+        group_file = file(group_file_name)
+        try:
+            for group_line in group_file:
+                # Ignore blank lines and lines starting with #
+                group_line = group_line.strip()
+                if group_line and not group_line.startswith('#'):
+                    group_name = group_line.split(':', 1)[0]
+                    group_members = group_line.split(':', 2)[1].split(' ')
+                    groups_dict[group_name] = [ x for x in [member.strip() for member in group_members] if x ]
+        finally:
+            group_file.close()
         if len(groups_dict):
             return groups_dict
         else:
             return None
+
+
 
     def render_admin_panel(self, req, cat, page, path_info):
         req.perm.require('TRAC_ADMIN')
