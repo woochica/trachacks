@@ -167,7 +167,7 @@ class CaptchaauthPlugin(Component):
             if self.dict_file.startswith("http://"):
                 f = urllib.urlopen(self.dict_file)
             else:
-                f = open(dict_file, "r")
+                f = open(self.dict_file, "r")
             _dict = f.read()
             f.close()
             _dict = _dict.lower().split()
