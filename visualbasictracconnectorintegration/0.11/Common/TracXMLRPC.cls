@@ -127,7 +127,7 @@ Private Sub getStructArray_Sub(ByRef d As Collection, typeName As String, method
     For i = 0 To Members.Length - 1
         name = Members.Item(i).ChildNodes(0).text
         Dim c As Collection
-        Debug.Print "s--" & name & "(" & typeName & ")"
+'        Debug.Print "s--" & name & "(" & typeName & ")"
         Set c = getStruct("ticket." & typeName & ".get", name, "string") 'Ç»Ç…Ç‡ìæÇÁÇÍÇ»Ç©Ç¡ÇΩèÍçáÇÕnameÇ™ÇªÇÃÇ‹Ç‹ñﬂÇ¡ÇƒÇ≠ÇÈ
         If c Is Nothing Then
             d.Add name, name
@@ -205,6 +205,7 @@ End Sub
 'XMLRPCÇ≈ÇÃstructÇVBÇÃCollectionÇ©ÇÁçÏê¨ÇµÇ‹Ç∑ÅD
 Public Function createStruct(arrayMember As Collection) As String
     Dim structString As String
+    Dim name As Variant
     If arrayMember Is Nothing Then
         Exit Function
     End If
@@ -227,7 +228,7 @@ Public Function createStruct(arrayMember As Collection) As String
     Else
         structString = structString + "</struct>"
     End If
-    Debug.Print structString
+'    Debug.Print structString
     createStruct = structString
 End Function
 
@@ -246,7 +247,7 @@ Public Function createTicket(summary As String, description As String, attribute
                 createStruct(attributes) & vbCrLf & _
             "</value></param>" & vbCrLf & _
             "<param><value><boolean>" & CStr(Abs(CInt(notify))) & "</boolean></value></param>"
-        Debug.Print params
+'        Debug.Print params
         Set Members = getMember(funcName, params, dataType)
         For i = 0 To Members.Length - 1
             Set oNodeList = Members.Item(i).ChildNodes
@@ -269,7 +270,7 @@ Public Function updateTicket(id As Long, comment As String, attributes As Collec
                 createStruct(attributes) & vbCrLf & _
             "</value></param>" & vbCrLf & _
             "<param><value><boolean>" & CStr(Abs(CInt(notify))) & "</boolean></value></param>"
-    Debug.Print params
+'    Debug.Print params
     Set updateTicket = getStruct_sub(funcName, params)
 End Function
 
@@ -441,6 +442,9 @@ End Property
 
 Public Property Get URL() As String
     URL = m_URL & "/" & m_projectName
+End Property
+Public Property Get projectName() As String
+    projectName = m_projectName
 End Property
 
 Public Property Get initialized() As Boolean
