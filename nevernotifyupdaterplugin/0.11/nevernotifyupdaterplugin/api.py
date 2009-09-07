@@ -73,5 +73,28 @@ class NeverNotifyUpdaterSetupParticipant(Component):
       if self.compmgr.enabled[self.__class__]:
         note.TicketNotifyEmail.get_recipients = get_recipients
 
+    def environment_created(self):
+      """Called when a new Trac environment is created."""
+      pass
+
+    def environment_needs_upgrade(self, db):
+      """Called when Trac checks whether the environment needs to be upgraded.
+      
+      Should return `True` if this participant needs an upgrade to be
+      performed, `False` otherwise.
+      
+      """
+      pass
+
+    def upgrade_environment(self, db):
+      """Actually perform an environment upgrade.
+
+      Implementations of this method should not commit any database
+      transactions. This is done implicitly after all participants have
+      performed the upgrades they need without an error being raised.
+      """
+      pass
+
+
 
 
