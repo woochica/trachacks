@@ -1,0 +1,100 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Team Availability</title>
+  </head>
+
+  <body>
+    <h2>Team Availability</h2>
+
+    <py:choose test="view">
+      <form py:when="'detail'" class="mod" method="post" id="availability">
+      	<input type="hidden" name="oldName" value="$availability.name" />
+        <fieldset>
+          <legend>Availability:</legend>
+          <div class="field">
+            <label>Name:<br /> <input type="text" name="name" value="$availability.name" /></label>
+          </div>
+          <div class="field">
+            <label>Valid from:
+              <input type="text" id="from" name="validFrom"
+                     size="${len(date_hint)}"
+                     value="${availability.validFrom}"
+                     title="Format: $date_hint" />
+              <em>Format: $date_hint</em>
+            </label>
+          </div>
+          <div class="field">
+            <label>Valid until:
+              <input type="text" id="until" name="validUntil"
+                     size="${len(date_hint)}"
+                     value="${availability.validUntil}"
+                     title="Format: $date_hint" />
+              <em>Format: $date_hint</em>
+            </label>
+          </div>
+          <div class="field">
+            <label>Resources:<br /> <input type="text" name="resources" value="$availability.resources" /></label>
+          </div>
+          <div class="field">
+            <label>Valid days:<br /> 
+            	<span py:for="day in availability.weekdaysCtrl">
+            	${Markup(day['control'])} ${day['title']} <br/>
+            	</span>
+            </label>
+          </div>
+          <div class="field">
+            <label>Daily worktime:<br /> 
+            	<input type="text" name="workFrom" size="2" value="$availability.workFrom" />
+            	-
+            	<input type="text" name="workUntil" size="2" value="$availability.workUntil" />
+            	<em>Format: HH-HH</em>
+            </label>
+          </div>
+	    <div class="buttons">
+	      <input type="submit" name="action" value="Save" />
+	      <input type="submit" name="action" value="Cancel" />
+	    </div>
+        </fieldset>
+      </form>
+
+      <py:otherwise>
+	    <form class="mod" id="modbasic" method="post">
+		    <table class="listing" id="millist">
+		      <thead>
+		        <tr>
+		          <ht>&nbsp;</ht><th>Name</th><th>Description</th><th>Actions</th>
+		        </tr>
+		      </thead>
+		      <tbody><tr py:for="availability in availabilities">
+		        <td>
+		          $availability.name
+		        </td>
+		        <td>
+		          $availability.description
+		        </td>
+		        <td>
+		          <a href="$availability.hrefEdit">Edit</a>
+		          &nbsp;
+		          <a href="$availability.hrefDelete">Delete</a>
+		        </td>
+		      </tr></tbody>
+		    </table>
+		    <div class="buttons">
+		      <input type="submit" name="action" value="Add new" />
+		      <input type="submit" name="action" value="Reset" />
+		    </div>
+		    <p class="hint">
+		    	Resources empty=whole team, weekdays empty=all days
+		    </p>
+		  </form>
+		</py:otherwise>
+	</py:choose>
+  </body>
+
+</html>

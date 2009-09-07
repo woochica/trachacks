@@ -11,7 +11,7 @@ setup(
     version = '0.1',
     license='BSD',
     packages=['schedulingtools'],
-    package_data = {  },
+    package_data = { 'schedulingtools': ['templates/*.html'] },
     entry_points = {
         'trac.plugins': [
             'schedulingtools = schedulingtools'

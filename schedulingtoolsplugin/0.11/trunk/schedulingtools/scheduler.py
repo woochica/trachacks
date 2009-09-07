@@ -8,6 +8,8 @@ from trac.ticket.query import Query
 from trac.db import get_column_names
 from trac.config import Option
 
+from model import Availability, Availabilities
+
 
 class TicketChangeListener(Component):
     """Ticket change listener triggering re-scheduling."""
@@ -41,6 +43,9 @@ class Scheduler:
         """Schedules all tickets"""
 
         db = env.get_db_cnx()
+
+        self.availabilities =  Availabilities.get(db)        
+        
         cursor = db.cursor()
 
         where = config.get("scheduling-tools", "schedule-tickets", "t.STATUS<>'closed' AND t.STATUS<>'resolved'")
@@ -106,9 +111,21 @@ class Scheduler:
                 return start, e+timedelta(hours=hours)
 
     def workingTime(self, date, owner):
-        if date.weekday()==5 or date.weekday()==6:
+        found = None
+        for av in self.availabilities:
+            if av.resources!="" and av.resources.find(owner)==-1:
+                continue
+            if av.weekdays.find(str(date.weekday()))==-1:
+                continue
+            if av.validFrom!="" and datetime.strptime(av.validFrom, "%Y-%m-%d").date() > date:
+                continue
+            if av.validUntil!="" and datetime.strptime(av.validUntil, "%Y-%m-%d").date() < date:
+                continue
+            found = av
+
+        if found is None:
             return datetime(date.year, date.month, date.day, 0), datetime(date.year, date.month, date.day, 0)
-        return datetime(date.year, date.month, date.day, 8), datetime(date.year, date.month, date.day, 16)
+        return datetime(date.year, date.month, date.day, int(found.workFrom)), datetime(date.year, date.month, date.day, int(found.workUntil))
             
         
     def update(self, db, id, field, value):
