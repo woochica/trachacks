@@ -55,13 +55,17 @@ Public Sub init(arrayTrac As Collection, importMode As Integer, _
     m_addDepeVer = dependVersion
     m_addDependancyTicket = dependTicket
     
-    m_parent = "summary_ticket"
-    m_planStart = "baseline_start"
-    m_planEnd = "baseline_end"
+    Call setFieldNames("summary_ticket", "baseline_start", "baseline_end")
+    
     m_depencencies = "depencencies"
     
 End Sub
 
+Public Sub setFieldNames(parent As String, planStart As String, planEnd As String)
+    m_parent = parent
+    m_planStart = planStart
+    m_planEnd = planEnd
+End Sub
 ' ここでは親タスクを取り込む
 Sub import()
     'ループを回って今あるタスクすべてを削除します。
@@ -76,15 +80,15 @@ Sub import()
     Loop
     
     If m_addDepeMs = True Then 'マイルストーンを取り込む場合
-        addMilestones 1, SUMMARY_MS, m_aTrac.Item(1).milestone, m_aTrac.Item(1).URL & "/milestone/", ""
+        addMilestones 1, SUMMARY_MS, m_aTrac.item(1).milestone, m_aTrac.item(1).URL & "/milestone/", ""
     End If
     If m_addDepeVer = True Then 'バージョンを取り込む場合
-        addMilestones 1, SUMMARY_VER, m_aTrac.Item(1).version, "", ""
+        addMilestones 1, SUMMARY_VER, m_aTrac.item(1).version, "", ""
     End If
     If hasChildren() Then '親のカスタムフィールドがある場合
-        addTickets 1, "<string>" & m_parent & "=</string>", m_aTrac.Item(1)
+        addTickets 1, "<string>" & m_parent & "=</string>", m_aTrac.item(1)
     Else
-        addTickets 1, "<string>id!=0</string>", m_aTrac.Item(1)
+        addTickets 1, "<string>id!=0</string>", m_aTrac.item(1)
     End If
     
     makeDependencies
@@ -114,7 +118,7 @@ Public Sub addTickets(ByVal outlineLevel As Integer, query As String, trac As Tr
 End Sub
 
 Public Sub addTicket(ticket As Collection, level As Integer, trac As TracXMLRPC)
-    m_pj.Tasks.Add name:=ticket.Item("summary")
+    m_pj.Tasks.Add name:=ticket.item("summary")
     Dim tasknum As Long
     tasknum = m_pj.Tasks.count    'すべてのタスク数を得る
     Dim dWork As Date
@@ -126,7 +130,7 @@ Public Sub addTicket(ticket As Collection, level As Integer, trac As TracXMLRPC)
 '    m_tickets.Add ticket, ticket.Item("id") '
     '依存関係追加するときに検索するための情報を追加します
     ticket.Add trac.projectName, "projectName"
-    m_tickets.Add ticket, trac.projectName & ":#" & ticket.Item("id")
+    m_tickets.Add ticket, trac.projectName & ":#" & ticket.item("id")
     
     Dim due_assign As String, due_close As String, completed As String, _
         PLAN_START As String, PLAN_END As String, version As String, _
@@ -134,17 +138,17 @@ Public Sub addTicket(ticket As Collection, level As Integer, trac As TracXMLRPC)
         parent As String, complete As String, owner As String, _
         estimatedhours As String, totalhours As String, status As String
     On Error Resume Next
-    due_assign = ticket.Item("due_assign")
-    due_close = ticket.Item("due_close")
-    complete = ticket.Item("complete")
-    PLAN_START = ticket.Item(m_planStart)
-    PLAN_END = ticket.Item(m_planEnd)
-    owner = ticket.Item("owner")
-    version = ticket.Item("version")
-    milestone = ticket.Item("milestone")
-    parent = ticket.Item(m_parent)
-    blocking = ticket.Item("blocking")
-    blockedby = ticket.Item("blockedby")
+    due_assign = ticket.item("due_assign")
+    due_close = ticket.item("due_close")
+    complete = ticket.item("complete")
+    PLAN_START = ticket.item(m_planStart)
+    PLAN_END = ticket.item(m_planEnd)
+    owner = ticket.item("owner")
+    version = ticket.item("version")
+    milestone = ticket.item("milestone")
+    parent = ticket.item(m_parent)
+    blocking = ticket.item("blocking")
+    blockedby = ticket.item("blockedby")
     estimatedhours = ticket("estimatedhours")
     totalhours = ticket("totalhours")
     status = ticket("status")
@@ -203,16 +207,16 @@ Public Sub addTicket(ticket As Collection, level As Integer, trac As TracXMLRPC)
     On Error GoTo 0
     
     'TODO:必要ならここで子タスクを追加する
-    addTickets level + 1, "<string>" & m_parent & "=" & ticket.Item("id") & "</string>", trac
+    addTickets level + 1, "<string>" & m_parent & "=" & ticket.item("id") & "</string>", trac
     '#がある場合にも対応する
-    addTickets level + 1, "<string>" & m_parent & "=#" & ticket.Item("id") & "</string>", trac
+    addTickets level + 1, "<string>" & m_parent & "=#" & ticket.item("id") & "</string>", trac
     'InterTracリンク形式のものに対応
     'TODO:ループにする
     Dim tSub As Variant
     For Each tSub In m_aTrac
         Dim tWork As TracXMLRPC
         Set tWork = tSub
-        addTickets level + 1, "<string>" & m_parent & "=" & trac.projectName & ":#" & ticket.Item("id") & "</string>", tWork
+        addTickets level + 1, "<string>" & m_parent & "=" & trac.projectName & ":#" & ticket.item("id") & "</string>", tWork
     Next
     
     '子タスクがない場合は
@@ -222,7 +226,7 @@ Public Sub addTicket(ticket As Collection, level As Integer, trac As TracXMLRPC)
     
     Exit Sub
 addticketerror:
-    MsgBox "Ticket(" & ticket.Item("id") & ") has any error - " & err.description & "(" & err.Number & ")"
+    MsgBox "Ticket(" & ticket.item("id") & ") has any error - " & err.description & "(" & err.Number & ")"
 End Sub
 
 Public Sub addMilestones(ByVal outlineLevel As Integer, summary As String, c As Collection, href As String, query As String)
@@ -238,7 +242,7 @@ Public Sub addMilestones(ByVal outlineLevel As Integer, summary As String, c As 
         Dim milestone As Collection
         Set milestone = m
         '抽出文字列になにかが入っているなら名前をついかする
-        If query <> "" Then msQuery = "<string>" & query & milestone.Item("name") & "</string>"
+        If query <> "" Then msQuery = "<string>" & query & milestone.item("name") & "</string>"
         addMilestone milestone, outlineLevel, href, msQuery
         DoEvents
     Next
@@ -251,16 +255,16 @@ Public Sub addMilestone(m As Collection, ByVal level As Integer, href As String,
     Dim count As Long
     Dim memo As String
     On Error GoTo catcherror
-    name = m.Item("name")
-    description = m.Item("description")
+    name = m.item("name")
+    description = m.item("description")
     
-    due = m.Item("due")
-    due = m.Item("time")
-    completed = m.Item("completed")
+    due = m.item("due")
+    due = m.item("time")
+    completed = m.item("completed")
     
     memo = memo + "description:" + description + vbCrLf
     memo = memo + "予定:" + due + vbCrLf
-    owner = m.Item("owner") 'コンポーネントのオーナは取得しておくが設定しない
+    owner = m.item("owner") 'コンポーネントのオーナは取得しておくが設定しない
     
     On Error GoTo addtaskerror
     
@@ -317,25 +321,25 @@ Private Sub makeDependencies()
     Dim i As Integer
     For Each ticket In m_tickets
         On Error GoTo dependerr
-        projectName = ticket.Item("projectName")
-        Set task1 = ticket.Item("task")
+        projectName = ticket.item("projectName")
+        Set task1 = ticket.item("task")
         If m_addDependancyTicket = True Then
             blocking = ""
             On Error Resume Next
             'MasterTickets
-            blocking = ticket.Item("blocking")
+            blocking = ticket.item("blocking")
             If blocking <> "" Then
                 blockingTickets = Split(blocking, ",")
                 Dim id As Variant
                 For Each id In blockingTickets
-                    Set blockingTicket = m_tickets.Item(projectName & ":#" & Trim(id))
-                    Set blockingTask = blockingTicket.Item("task")
+                    Set blockingTicket = m_tickets.item(projectName & ":#" & Trim(id))
+                    Set blockingTask = blockingTicket.item("task")
                     blockingTask.TaskDependencies.Add task1, pjFinishToFinish
                 Next
             End If
             'MasterTickets
             blocking = ""
-            blocking = ticket.Item("dependencies")
+            blocking = ticket.item("dependencies")
             If blocking <> "" Then
                 blockingTickets = Split(blocking, ",")
                 Dim depType As Long
@@ -370,8 +374,8 @@ Private Sub makeDependencies()
                         id = projectName & ":" & id
                     End If
 '                    Debug.Print "id = " & id & " (" & depType & ")"
-                    Set blockingTicket = m_tickets.Item(id)
-                    Set blockingTask = blockingTicket.Item("task")
+                    Set blockingTicket = m_tickets.item(id)
+                    Set blockingTask = blockingTicket.item("task")
                     task1.TaskDependencies.Add blockingTask, depType
                 Next
             End If
@@ -380,14 +384,14 @@ Private Sub makeDependencies()
         milestone = ""
         version = ""
         On Error Resume Next
-        milestone = ticket.Item("milestone")
-        version = ticket.Item("version")
+        milestone = ticket.item("milestone")
+        version = ticket.item("version")
         On Error GoTo 0
         If m_addDepeMs = True And milestone <> "" Then 'マイルストーンに依存を追加します
-            checkParentAndAddDep task1, m_aTrac.Item(1).milestone.Item(milestone).Item("task")
+            checkParentAndAddDep task1, m_aTrac.item(1).milestone.item(milestone).item("task")
         End If
         If m_addDepeVer = True And version <> "" Then 'バージョンに依存を追加します
-            checkParentAndAddDep task1, m_aTrac.Item(1).version.Item(version).Item("task")
+            checkParentAndAddDep task1, m_aTrac.item(1).version.item(version).item("task")
         End If
     Next
     Exit Sub
@@ -427,7 +431,7 @@ Public Function hasChildren() As Boolean
     Dim parent As Variant
     Set parent = Nothing
     On Error Resume Next
-    Set parent = m_aTrac.Item(1).field.Item(m_parent)
+    Set parent = m_aTrac.item(1).field.item(m_parent)
     On Error GoTo 0
     hasChildren = Not parent Is Nothing
 End Function

@@ -39,25 +39,25 @@ Public Sub addNotes(t As Task, ticket As Collection, planStart As String, planEn
     Dim memo As String
     On Error Resume Next
     
-    memo = memo + "Project Name:" + ticket.Item("projectName") + ":#" + ticket.Item("id") + vbCr
-    memo = memo + "" + ticket.Item("due_assign") + "-" + ticket.Item("due_close")
-    memo = memo + "(" + ticket.Item("complete") + "%)"
+    memo = memo + "Project Name:" + ticket.item("projectName") + ":#" + ticket.item("id") + vbCr
+    memo = memo + "" + ticket.item("due_assign") + "-" + ticket.item("due_close")
+    memo = memo + "(" + ticket.item("complete") + "%)"
     memo = memo + vbCr
-    memo = memo + "Beseline:" + ticket.Item(planStart) + "-" + ticket.Item(planEnd) + vbCr
-    memo = memo + "summary ticket:" + ticket.Item(parent) + vbCr
-    memo = memo + "description:" + ticket.Item("description") + vbCr
-    memo = memo + "status:" + ticket.Item("status") + vbCr
-    memo = memo + "reporter:" + ticket.Item("reporter") + vbCr
-    memo = memo + "cc:" + ticket.Item("cc") + vbCr
-    memo = memo + "component:" + ticket.Item("component") + vbCr
-    memo = memo + "priority:" + ticket.Item("priority") + vbCr
-    memo = memo + "keyword:" + ticket.Item("keyword") + vbCr
-    memo = memo + "version:" + ticket.Item("version") + vbCr
-    memo = memo + "milestone:" + ticket.Item("milestone") + vbCr
-    memo = memo + "owner:" + ticket.Item("owner") + vbCr
-    memo = memo + "type:" + ticket.Item("type") + vbCr
-    memo = memo + "blocking:" + ticket.Item("blocking") + vbCr
-    memo = memo + "blockedby:" + ticket.Item("blockedby") + vbCr
+    memo = memo + "Beseline:" + ticket.item(planStart) + "-" + ticket.item(planEnd) + vbCr
+    memo = memo + "summary ticket:" + ticket.item(parent) + vbCr
+    memo = memo + "description:" + ticket.item("description") + vbCr
+    memo = memo + "status:" + ticket.item("status") + vbCr
+    memo = memo + "reporter:" + ticket.item("reporter") + vbCr
+    memo = memo + "cc:" + ticket.item("cc") + vbCr
+    memo = memo + "component:" + ticket.item("component") + vbCr
+    memo = memo + "priority:" + ticket.item("priority") + vbCr
+    memo = memo + "keyword:" + ticket.item("keyword") + vbCr
+    memo = memo + "version:" + ticket.item("version") + vbCr
+    memo = memo + "milestone:" + ticket.item("milestone") + vbCr
+    memo = memo + "owner:" + ticket.item("owner") + vbCr
+    memo = memo + "type:" + ticket.item("type") + vbCr
+    memo = memo + "blocking:" + ticket.item("blocking") + vbCr
+    memo = memo + "blockedby:" + ticket.item("blockedby") + vbCr
     
     On Error GoTo 0
     t.Notes = memo

@@ -44,7 +44,10 @@ Dim m_fieldN As Collection
 Dim m_fieldL As Collection
 Dim m_initialized As Boolean
 
+Dim m_timeDifference As Double
+
 Private Sub Class_Initialize()
+    m_timeDifference = 9#
     m_initialized = False
 End Sub
 
@@ -391,16 +394,16 @@ Private Function convertDate(text As String) As String
     If Len(text) <> 17 Then
         '正規表現を使うのはめんどくさいので長さだけを見る
         convertDate = ""
-        err.Raise vbObjectError + 515, , "日付のフォーマットの異常です(" & text & ")Tracのレスポンスを調べてください．"
+        err.Raise vbObjectError + 515, , "Error: Date format is wrong (" & text & "). Check the XMLRPC responses．"
         Exit Function
     End If
     d = DateSerial(Mid$(text, 1, 4), Mid$(text, 5, 2), Mid$(text, 7, 2))
     d = DateAdd("h", Int(Mid$(text, 10, 2)), d)
-    d = DateAdd("h", 9, d) ''時差の分を追加
-    '環境に合わせて変更
-    '手で入力したものについても出力時に標準時になっている
     d = DateAdd("n", Int(Mid$(text, 13, 2)), d)
     d = DateAdd("s", Int(Mid$(text, 16, 2)), d)
+    
+    d = DateAdd("h", m_timeDifference, d)
+    
     convertDate = Format(d, "yyyy/mm/dd")
 End Function
 

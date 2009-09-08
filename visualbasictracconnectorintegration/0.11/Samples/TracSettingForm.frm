@@ -73,7 +73,7 @@ Private Function hasMilestone() As Boolean
     Set trac = Nothing
     If m_aTrac Is Nothing Then Exit Function
     
-    Set trac = m_aTrac.Item(1)
+    Set trac = m_aTrac.item(1)
     If Not trac.milestone Is Nothing Then
         On Error GoTo err1
         If trac.milestone.count <> 0 Then
@@ -90,7 +90,7 @@ Private Function hasVersion() As Boolean
     Set trac = Nothing
     If m_aTrac Is Nothing Then Exit Function
     
-    Set trac = m_aTrac.Item(1)
+    Set trac = m_aTrac.item(1)
     If Not trac.version Is Nothing Then
         On Error GoTo err1
         If trac.version.count <> 0 Then
@@ -107,7 +107,7 @@ Private Function hasComponent() As Boolean
     Set trac = Nothing
     If m_aTrac Is Nothing Then Exit Function
     
-    Set trac = m_aTrac.Item(1)
+    Set trac = m_aTrac.item(1)
     If Not trac.component Is Nothing Then
         On Error GoTo err1
         If trac.component.count <> 0 Then
@@ -116,6 +116,25 @@ Private Function hasComponent() As Boolean
         On Error GoTo 0
     End If
 err1: 'item取得時に失敗した場合はfalse
+End Function
+
+Private Function hasSummaryTicket() As Boolean
+    hasSummaryTicket = False
+    
+    Dim trac As TracXMLRPC
+    Dim item As Variant
+    Set trac = Nothing
+    If m_aTrac Is Nothing Then Exit Function
+    
+    Set trac = m_aTrac.item(1)
+    If Not trac.field Is Nothing Then
+        For Each item In trac.field
+            If item.item("name") = "summary_ticket" Or item.item("name") = "parent" Then
+                hasSummaryTicket = True
+                Exit Function
+            End If
+        Next
+    End If
 End Function
 
 Private Function createConnection(URL As String, projectName As String, user As String, pw As String) As Boolean
@@ -149,9 +168,8 @@ Private Sub CommandButton1_Click()
     Next
     CommandButton1.Enabled = False
     CommandButton2.Enabled = True
+    
     NextButton.Enabled = True
-'二番目のページを割くじょしたことにより変更します　始め
-'追加
     CheckBox5.Enabled = True
     CheckBox6.Enabled = True
     TextBox4.Enabled = False
@@ -164,6 +182,8 @@ Private Sub CommandButton2_Click()
     Dim pc As ProjectConnecter
     Set pc = New ProjectConnecter
     pc.init m_aTrac, m_listIndex, CheckBox5.value, CheckBox6.value, CheckBox7.value, 8
+'    setFieldNames "summary_ticket", "baseline_start", "baseline_end"
+    pc.setFieldNames "parent", "plan_start", "plan_end"
     pc.import
     CommandButton3_Click
 End Sub
@@ -222,7 +242,7 @@ Private Sub changeActivePage(page As Integer)
         If m_aTrac Is Nothing Then
             NextButton.Enabled = False
         Else
-            NextButton.Enabled = m_aTrac.Item(1).initialized
+            NextButton.Enabled = m_aTrac.item(1).initialized
         End If
     Case 2
 '        TracFrame.Visible = False
@@ -230,6 +250,12 @@ Private Sub changeActivePage(page As Integer)
 '        PrevButton.Enabled = True
 '        NextButton.Enabled = True
 '    Case 3
+        CheckBox5.value = hasMilestone()
+        CheckBox5.Enabled = hasMilestone()
+        CheckBox6.value = hasVersion()
+        CheckBox6.Enabled = hasVersion()
+        CheckBox7.value = hasSummaryTicket()
+        CheckBox7.Enabled = hasSummaryTicket()
         TracFrame.Visible = False
         DetailFrame.Visible = True
         PrevButton.Enabled = True
