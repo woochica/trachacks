@@ -98,12 +98,11 @@ class ClientMilestoneSummary(Component):
           INNER JOIN milestone AS sm ON st.milestone=sm.name
           WHERE stcust.name = tcust.name
           AND stcust.value = tcust.value
-          AND st.status != 'closed'
-          AND sm.due > 0)
+          AND (sm.due > %s OR sm.completed > %s)
       ORDER BY m.due ASC
       """)
     cur2 = db.cursor()
-    cur2.execute(sql, (client,))
+    cur2.execute(sql, (client, int(time.time()), (int(time.time()) - (24*60*60*7))))
     xsummary = etree.SubElement(xml, 'summary')
     for tid, summary, description, status, milestone, due, completed, mdescription, estimatedhours, totalhours in cur2:
       have_data = True
