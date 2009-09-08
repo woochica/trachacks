@@ -98,7 +98,7 @@ class ClientMilestoneSummary(Component):
           INNER JOIN milestone AS sm ON st.milestone=sm.name
           WHERE stcust.name = tcust.name
           AND stcust.value = tcust.value
-          AND (sm.due > %s OR sm.completed > %s)
+          AND (sm.due > %s OR sm.completed > %s))
       ORDER BY m.due ASC
       """)
     cur2 = db.cursor()
