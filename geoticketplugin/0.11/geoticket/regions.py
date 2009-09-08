@@ -160,7 +160,11 @@ class GeoRegions(Component):
         for key, value in req.args.items():
             if key in georegions_columns:
                 filter[key] = value
-        
+        for key in regions.keys():
+            for _key, _value in filter.items():
+                if str(regions[key]['data'][_key]) != _value:
+                    del regions[key]
+                    break
 
         return 'region.kml', dict(regions=regions), 'application/vnd.google-earth.kml+xml'
             
