@@ -65,16 +65,18 @@ function map_locations(locations, options) {
         kml.events.register('loadend', kml, function(){
                 this.map.zoomToExtent(this.getDataExtent());
             });
-                                                     
+                                 
+        // add popups to the KML [TBD]
         var selectControl = new OpenLayers.Control.SelectFeature(kml);
         map.addControl(selectControl);
+        selectControl.activate();
         selectControl.onSelect = function(feature){
             alert("hi");
         };
         selectControl.onUnselect = function(feature) {
             alert("bye");
         };
-        selectControl.activate();
+
     }
     
 
