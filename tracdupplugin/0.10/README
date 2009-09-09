@@ -4,7 +4,7 @@ Ticket Duplication Plug-in
 ABOUT
 -----
 This plug-in adds the capability of duplicating tickets to other tickets
-using three custom fields: dup_f, dups, and dup_count.
+using three custom fields: dup_of, dups, and dup_count.
 Changes in the master ticket are reflected to the slave tickets and vice
 versa.
 
