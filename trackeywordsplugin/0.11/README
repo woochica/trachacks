@@ -13,18 +13,18 @@ trackeywords.* = enabled
 - adapt your templates/ticket.cs template, or copy the default one there and
   adapt it, adding the line:
 
-<?cs include "keywords.cs" ?>
+        <xi:include href="keywords.html" />
 
     which will insert a field set.
 
-The recommended place to put this is right after the "Change Properties" field
-set.
+The recommended place to put this is right after the 'properties' fieldset.
 
 - configure the list of keywords you want to use by adding
   a [keywords] section in the trac configuration file.  Syntax is:
 
         keyword = description
 
+  Keywords are displayed in the order they are defined in the config.
 
 Notes
 -----

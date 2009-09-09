@@ -1,3 +1,16 @@
+2009-09-09  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* setup.py:
+	  Bump version to 0.2 for 0.11 port
+	* README:
+	  Update notes on how to use it.
+	* trackeywords/web_ui.py:
+	  keywords fieldset was renamed to field-keywords
+	* trackeywords/templates/keywords.cs (deleted):
+	  Remove clearsilver template.
+	* trackeywords/templates/keywords.html (added):
+	  Replace with Genshi template.
+
 2007-09-11  Thomas Vander Stichele  <thomas at apestaart dot org>
 
 	* README:

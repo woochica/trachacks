@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='TracKeywordsPlugin',
-    version=0.1,
+    version=0.2,
     description="Allows adding and removing keywords on a ticket from a list",
     author="Thomas Vander Stichele",
     author_email="thomas at apestaart dot org",
@@ -14,7 +14,7 @@ setup(
     packages=find_packages(exclude=['*.tests*']),
     package_data={
         'trackeywords': [
-            'templates/*.cs',
+            'templates/*.html',
             'README', 'TODO', 'ChangeLog'
         ]
     },
