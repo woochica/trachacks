@@ -1,0 +1,38 @@
+Ticket Keywords Plug-in
+-----------------------
+
+This plug-in allows you to add keywords to a ticket from a configured list
+of keywords.
+
+To use it:
+- enable the component in trac's configuration by editing trac.ini and,
+  in the [components] section, add
+
+trackeywords.* = enabled
+
+- adapt your templates/ticket.cs template, or copy the default one there and
+  adapt it, adding the line:
+
+<?cs include "keywords.cs" ?>
+
+    which will insert a field set.
+
+The recommended place to put this is right after the "Change Properties" field
+set.
+
+- configure the list of keywords you want to use by adding
+  a [keywords] section in the trac configuration file.  Syntax is:
+
+        keyword = description
+
+
+Notes
+-----
+I chose to make it a seperate field set, instead of putting it in the
+Change Properties field set, because there it conflicted with the
+condfields plugin, which was hiding our Add Keywords line
+
+THANKS
+------
+Tim Hatch, for giving me the sample HTML/javascript code to implement this.
+Christopher Lenz for IRC help during development.

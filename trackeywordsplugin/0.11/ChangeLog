@@ -1,0 +1,15 @@
+2007-09-11  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* README:
+	* setup.py:
+	* trackeywords/web_ui.py:
+	  Cleanup before moving it
+
+2007-09-11  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* README:
+	* trackeywords/templates/keywords.cs (addTag):
+	* trackeywords/web_ui.py (TracKeywordsComponent):
+	  Make keywords.cs insert its own field set, so it doesn't conflict
+	  with the condfields plugin.
+
