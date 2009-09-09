@@ -26,9 +26,6 @@ setup(name='TracLegos',
         'WebOb',
         'martINI',
       ],
-      dependency_links=[
-        'https://svn.openplans.org/svn/standalone/martINI#egg=martINI',
-        ],
       entry_points="""
       # -*- Entry points: -*-
       [console_scripts]
