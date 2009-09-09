@@ -1,0 +1,14 @@
+Ticket Duplication Plug-in
+--------------------------
+
+ABOUT
+-----
+This plug-in adds the capability of duplicating tickets to other tickets
+using three custom fields: dup_of, dups, and dup_count.
+Changes in the master ticket are reflected to the slave tickets and vice
+versa.
+
+NOTE
+----
+The 0.11 version works on 0.10 as well, at least up to revision 6520 and
+version 0.1.1, so please check in the 0.11 directory instead.
