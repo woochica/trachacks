@@ -1,0 +1,7 @@
+- how to disallow editing of dups and dup_count field ?
+- how to show dup_of and dups as a trac link (with #) everywhere ?
+- how to avoid the nasty time.sleep(1) hack ?
+- how to integrate trac's logging with unittest logging correctly ?
+- how to make report sort by dup_count numerically instead of alphabetically ?
+- should my strings be unicode or not ?
+- how to add an action on the ticket web page to resolve as a duplicate of ...

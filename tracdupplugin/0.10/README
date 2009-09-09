@@ -1,0 +1,169 @@
+Ticket Duplication Plug-in
+--------------------------
+
+ABOUT
+-----
+This plug-in adds the capability of duplicating tickets to other tickets
+using three custom fields: dup_f, dups, and dup_count.
+Changes in the master ticket are reflected to the slave tickets and vice
+versa.
+
+SETUP
+-----
+- Install the plugin
+- If necessary, enable it in trac.ini:
+
+[components]
+tracdup.* = enabled
+
+- Set up the following custom fields in trac.ini:
+
+[ticket-custom]
+dup_of = text
+dup_of.label = Duplicate of #
+dups = text
+dups.label = Duplicates
+dup_count = text
+dup_count.label = # of duplicates
+
+
+- start trac and verify it's available either in the log or from Admin>Plugins
+
+USE
+---
+
+A non-closed ticket can be marked as a duplicate of another ticket:
+- by changing the duplicate_of value
+- and (optionally) closing as duplicate
+
+A duplicated ticket can be unduplicated:
+- by removing the duplicate_of value on the duplicate
+- by reopening the ticket on the duplicate
+
+A closed non-duplicated ticket can be duplicated:
+- by first reopening, then dupping
+- by setting dup_of without reopening
+
+When a ticket gets changed, it first gets validated:
+ - cannot dup already closed tickets.
+ - cannot dup to non-existing tickets or self.
+ - cannot directly change duplicates or # of duplicates on master
+
+After validation, if duplicate_of was changed:
+ - the target gets a comment if none existed yet
+ - the duplicate tickets gets closed, with a comment what it's being dupped to
+
+Example report
+--------------
+This report shows all master tickets, with their dup count.
+
+SELECT 
+   id AS ticket, summary, component, version, t.type AS type, severity, 
+   (CASE status WHEN 'assigned' THEN owner||' *' ELSE owner END) AS owner,
+   time AS created,
+   changetime AS _changetime, description AS _description,
+   reporter AS _reporter,
+   c.value AS dups,
+   IFNULL(d.value, '') AS _dup_of  /* sql can have it stored as '' or NULL */
+  FROM ticket t
+  LEFT OUTER JOIN ticket_custom c ON (t.id = c.ticket AND c.name = 'dup_count')
+  LEFT OUTER JOIN ticket_custom d ON (t.id = d.ticket AND d.name = 'dup_of')
+  WHERE dups > 0 and _dup_of='' /* show masters that aren't dups themselves */
+  ORDER BY dups DESC /* higher dup count first */, severity, time
+
+
+Notes to self
+-------------
+- to set up develop mode:
+  - python setup.py develop --multi-version --install-dir /path/to/trac/plugins
+  - python setup.py egg_info
+
+- coderanger says that a Ticket object can be created with a ticket id
+  that can be anything with a __str__ method, so don't assume it's int
+
+- to quickly try trac tests against an existing trac installation:
+from trac.env import Environment
+e = Environment('/path/to/trac')
+from trac.ticket.model import Ticket
+t = Ticket(e, 1)
+
+- sqlite3 affinity causes dup_count column to be text, thus compared as text.
+  Workarounds:
+  - cast(column as int) for sqlite >= 3.2
+  - column + 0
+  - column * 1
+ 
+Design notes
+------------
+- every ticket is duplicate_of zero one other tickets
+- duplicate_of is the "master" field from which other fields are sync'd
+- a ticket can have duplicates and be a duplicate_of another ticket
+  -> this allows for duplication trees that can be reordered
+- duplicate_count counts how many other tickets than this one are a duplicate
+  of this ticket; taking the tree into account
+- Adding a duplicate link:
+  - sets duplicate_of on the duplicate
+  - adds comment to duplicate if not there yet
+  - recursively updates master ticket and its masters
+  - does so by recalculating ?
+- Removing a duplicate link
+
+- Example:
+  4 and 3 are a dup of 2.  2 is a dup of 1.
+  4 and 3:
+    duplicate_of 2
+    duplicates
+    duplicate_count 0
+
+  2:
+    duplicate_of 1
+    duplicates 3, 4
+    duplicate_count 2
+
+  1:
+    duplicate_of
+    duplicates 2
+    duplicate_count 3
+
+
+Tests
+-----
+
+Positive tests
+--------------
+- Duplicate a ticket:
+  - Create ticket 1 called 'master'.
+  - Create ticket 2 called 'slave'.
+  - On ticket 2, fill in duplicate of # '1' and click 'Submit changes'.
+  - Verify:
+    - on ticket 2:
+      - penultimate change is:
+        - dup_of set to 1
+      - last change is:
+        - status changed from new to closed
+        - resolution set to duplicate
+        - Comment reads Duplicate of #1
+    - on ticket 1:
+      - change is:
+        - dup_count set to 1
+        - dups set to 2
+        - comment says 'Ticket #2 has been closed as a duplicate of ticket #1.' 
+
+- Unduplicate a ticket by reopening:
+  - On ticket 2, Choose 'Reopen ticket'
+  - Verify:
+    - on ticket 2:
+      - third to last change is:
+        - status changed from closed to reopened
+        - resolution duplicate deleted
+      - penultimate change is:
+        - dup_of 1 deleted
+        - comment says 'Removing dup_of value.'
+      - last change is:
+        - comment: Not a duplicate of ticket #1.
+    - on ticket 1:
+      - last change is:
+        - dup_count  1 deleted
+        - dups 2 deleted
+        - comment: Ticket #2 has been removed as a duplicate of ticket #1.
+

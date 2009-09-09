@@ -1,0 +1,130 @@
+2009-09-09  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* setup.py:
+	  bump version
+	* README:
+	  Add two test cases.
+	* tracdup/ticket.py:
+	  Also handle the case where someone tries to delete dups or dup_count
+	  on the master ticket; difference between 'if dups' and 'if dups is
+	  None'
+
+2007-09-09  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* tracdup/tests/ticket.py:
+	* tracdup/ticket.py:
+	  As an addition to the previous fix, allow dup_of on a ticket
+	  that was reopened before.
+
+2007-09-09  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* tracdup/tests/ticket.py:
+	* tracdup/ticket.py:
+	  Fix a bug where reopening and setting dup_of at the same time
+	  Causes three comments, last of which claims it is in fact
+	  not a duplicate of.  Oops.
+
+2007-09-09  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* tracdup/tests/ticket.py:
+	* tracdup/ticket.py:
+	  Fix a bug where:
+	  - a ticket was closed
+	  - its summary gets updated after dup_of was added as a custom field
+	  - ticket gets reopened, with comment
+	    Not a duplicate of ticket #None.
+	  Add test for it.
+
+2007-09-09  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* TODO:
+	* tracdup/tests/ticket.py:
+	* tracdup/ticket.py:
+	  Allow changing tickets that have dups and dup_count set already
+	  as long as those fields remain untouched.
+
+2007-09-09  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* tracdup/tests/ticket.py:
+	* tracdup/ticket.py:
+	  Add a test where a bug gets reopened and dupped to self,
+	  and it should fail validation.
+	  Make it fail validation in that case.
+	  Fixes a bug run into in production.
+
+2007-09-09  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* README:
+	* tracdup/tests/ticket.py (TracDupTestCase.test_validate_ok,
+	  TracDupTestCase.test_validate_no_ticket):
+	* tracdup/ticket.py (TracDupPlugin._add_master,
+	  TracDupPlugin._remove_master, TracDupPlugin._update_master,
+	  TracDupPlugin._recalculate_ticket, TracDupPlugin._get_dups,
+	  TracDupPlugin._get_dups_recursively, TracDupPlugin._add_dup,
+	  TracDupPlugin._remove_dup, TracDupPlugin.ticket_changed,
+	  TracDupPlugin.validate_ticket):
+	  According to coderanger, a Ticket.id can be anything with
+	  a __str__ method.  Adapt code to handle this.
+
+2007-09-08  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* README:
+	  Add report example.
+	* tracdup/ticket.py (TracDupPlugin._add_master,
+	  TracDupPlugin._remove_master, TracDupPlugin._update_master,
+	  TracDupPlugin._add_dup, TracDupPlugin._remove_dup,
+	  TracDupPlugin.ticket_changed, TracDupPlugin.validate_ticket):
+	  Cleanups.
+	  Allow reopening tickets and trigger reset of dup_of and friends.
+	  Don't allow changing dups and dup_count fields.
+
+2007-09-08  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* tracdup/tests/ticket.py:
+	* tracdup/ticket.py:
+	  Shorten duplicate to dup everywhere but the comments.
+
+2007-09-08  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* tracdup/tests/ticket.py:
+	* tracdup/ticket.py:
+	  Also implement unduplicating by unsetting the duplicate_of field.
+
+2007-09-08  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* tracdup/tests/ticket.py:
+	* tracdup/ticket.py:
+	  Implement setting of duplicates and duplicates_count on
+	  master ticket.  Recurse up as well.
+
+2007-09-07  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* README:
+	* tracdup/test/__init__.py:
+	* tracdup/test/test_ticket.py:
+	* tracdup/ticket.py:
+	  Add unit tests. And add functionality because of it.  Yay!
+
+2007-09-07  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* tracdup/ticket.py (TracDupPlugin, TracDupPlugin.ticket_changed,
+	  TracDupPlugin.validate_ticket):
+	  Instead of parsing the duplicate_of field, which would then leave
+	  the field itself inconsistent, validate it before changes happen.
+
+2007-09-07  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* README:
+	* tracdup/ticket.py (TracDupPlugin, TracDupPlugin._parse_ticket_id,
+	  TracDupPlugin.ticket_changed, TracDupPlugin.validate_ticket):
+	  factor out a method to parse ticket strings, so we also allow
+	  #id to be set.
+
+2007-09-07  Thomas Vander Stichele  <thomas at apestaart dot org>
+
+	* tracdup/__init__.py:
+	* tracdup/ticket.py (TracDupPlugin, TracDupPlugin.ticket_created,
+	  TracDupPlugin.ticket_changed, TracDupPlugin.ticket_deleted,
+	  TracDupPlugin.prepare_ticket, TracDupPlugin.validate_ticket):
+	  Initial commit.
+
