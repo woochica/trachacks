@@ -46,11 +46,14 @@ class CodeExample(Component):
     implements(ITemplateProvider, IWikiMacroProvider)
 
     styles = {
-        'CodeExample': {'title': u'EXAMPLE', 'css_class': 'example'},
+        'CodeExample': {'title': u'EXAMPLE', 'css_class': 'example',
+                'description': 'Render the code block as a plain example.'},
         'BadCodeExample': {'title': u'INCORRECT EXAMPLE',
-                           'css_class': 'bad_example'},
+                           'css_class': 'bad_example',
+                'description': 'Render the code block as a bad example.'},
         'GoodCodeExample': {'title': u'CORRECT EXAMPLE',
-                            'css_class': 'good_example'}}
+                            'css_class': 'good_example',
+                'description': 'Render the code block as a good example.'}}
 
     default_style = Option('mimeviewer', 'pygments_default_style', 'trac',
         """The default style to use for Pygments syntax highlighting.""")
@@ -64,6 +67,10 @@ class CodeExample(Component):
         """Yield the name of the macro based on the class name."""
         for key in sorted(self.styles.keys()):
             yield key
+
+    def get_macro_description(self, name):
+        """Returns the required macro description."""
+        return self.styles[name]['description']
 
     def render_as_lang(self, lang, content):
         """ Try to render 'content' as 'lang' code. """

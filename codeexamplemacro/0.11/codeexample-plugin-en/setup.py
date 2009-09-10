@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 setup(
     name = 'CodeExample',
-    version = '0.3.1',
+    version = '0.3.2',
     author = 'Alexander Slesarev',
     author_email = 'nuald@codedgers.com',
     description = 'The Trac plugin for code examples colouring.',

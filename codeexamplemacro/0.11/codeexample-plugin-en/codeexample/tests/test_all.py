@@ -32,6 +32,13 @@ class CodeExampleTestCase(unittest.TestCase):
             self.assertEqual(macros, expected_result[index])
             index += 1
 
+    def test_get_macro_description(self):
+        """ Testing the get_macro_description method. """
+        processor = CodeExample(self.env)
+        description = processor.get_macro_description('CodeExample')
+        self.assertEqual(description,
+                         'Render the code block as a plain example.')
+
     def test_expand_macro_with_unicode(self):
         """ Testing the expand_macro method with unicode symbols. """
         processor = CodeExample(self.env)
