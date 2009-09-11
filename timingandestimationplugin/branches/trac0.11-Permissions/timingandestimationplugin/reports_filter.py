@@ -2,7 +2,11 @@ from trac.web.api import ITemplateStreamFilter
 from trac.core import *
 from genshi.core import *
 from genshi.builder import tag
-from sets import Set as set
+try: 
+    set 
+except NameError: 
+    from sets import Set as set     # Python 2.3 fallback 
+
 from genshi.filters.transform import Transformer
 import re
 
