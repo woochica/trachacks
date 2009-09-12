@@ -16,11 +16,15 @@ class GanttChart(WikiMacroBase):
         
         return Markup(self.view)
 
-    def init(self):
+    def init(self, req):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
         where = "t.STATUS<>'closed' AND t.STATUS<>'resolved'";
+        if "owner" in req.args:
+            where += " AND t.OWNER='%s'"%(req.args['owner'])
+        if "milestone" in req.args:
+            where += " AND t.MILESTONE='%s'"%(req.args['milestone'])
         orderBy = "m.due ASC,start.VALUE ASC";
         cursor.execute("SELECT t.ID,t.SUMMARY,t.STATUS,t.OWNER,t.MILESTONE,start.VALUE AS STARTDATE,due.VALUE AS DUEDATE,m.DUE "+
                        "FROM TICKET t "+
@@ -65,9 +69,13 @@ class GanttChart(WikiMacroBase):
         self.line = "#EEEEEE"
 
     def render(self, req):
-        self.init()
+        self.init(req)
 
-        self.view = "<TABLE cellspacing='0' cellpadding='0' WIDTH='100%' style='position:relative;padding:0px;border:1px solid black'>"
+        self.view = ""
+        if self.tmin>=self.tmax:
+            return self.view
+
+        self.view += "<TABLE cellspacing='0' cellpadding='0' WIDTH='100%' style='position:relative;padding:0px;border:1px solid black'>"
 
         self.renderScale()
 
@@ -92,22 +100,30 @@ class GanttChart(WikiMacroBase):
         days = int(self.tmax-self.tmin)/(60*60*24)
         incr = timedelta(days=1)
         format = "%d"
+        weekend = 0.1*100/days
+        offset = 0
+        mark = datetime.utcfromtimestamp((int(self.tmin)/(60*60*24))*60*60*24)
+
         if days>14:
             incr = timedelta(days=7)
             format = "%d.%m."
+            weekend = 2*100/days
+            offset = 6-mark.weekday()
+            if offset<0: 
+                offset += 7
             
-        mark = datetime.utcfromtimestamp((int(self.tmin)/(60*60*24))*60*60*24)
+        mark += timedelta(days=offset)
         mark += incr
-        percent = 0;
+        percent = self.percent(time.mktime(mark.timetuple()))
         self.view += "<TR><td style='height: 15px; background-color:#DDDDDD'>"
         while percent<100:
-            percent = self.percent(time.mktime(mark.timetuple()))
-            self.view += "<div style='position:absolute;left:%s%%;width:1px;height:100%%;top:0px;background-color:black'></div>\n" % (percent)
+            self.view += "<div style='position:absolute;left:%s%%;width:%s%%;height:100%%;top:0px;background-color:#DDDDEE'></div>\n" % (percent,weekend)
             self.view += "<div style='position:absolute;left:%s%%;top:0px'> %s</div>\n" % (percent, mark.strftime(format))
             mark += incr;
+            percent = self.percent(time.mktime(mark.timetuple()))
 
         percent = self.percent(time.mktime(datetime.now().timetuple()))
-        self.view += "<div style='position:absolute;left:%s%%;width:1px;height:100%%;top:0px;background-color:red'></div>\n" % (percent)
+        self.view += "<div style='position:absolute;left:%s%%;width:3px;height:100%%;top:0px;background-color:green'></div>\n" % (percent)
         self.view += "</td></TR>"
     
     def percent(self, timestamp):

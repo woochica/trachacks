@@ -6,6 +6,7 @@ from trac.core import *
 from trac.web.chrome import ITemplateProvider
 
 from model import Availability, Availabilities
+from scheduler import Scheduler
 
 
 class AdminModule(Component):
@@ -68,6 +69,8 @@ class AdminModule(Component):
     def delete(self, name):
         av = Availability.find(self.env.get_db_cnx(), name)
         av.delete(self.env.get_db_cnx())
+        scheduler = Scheduler()
+        scheduler.schedule(self.env, self.config);
         return 'admin_availability.html', {"availabilities" : self.availabilities(), "view": "list"}
 
     def save(self, args):
@@ -92,6 +95,8 @@ class AdminModule(Component):
         av.workFrom = args["workFrom"]
         av.workUntil = args["workUntil"]
         av.save(self.env.get_db_cnx(), key)
+        scheduler = Scheduler()
+        scheduler.schedule(self.env, self.config);
         return 'admin_availability.html', {"availabilities" : self.availabilities(), "view": "list"}
 
     def reset(self):

@@ -36,7 +36,7 @@ class TicketChangeListener(Component):
         scheduler.schedule(self.env, self.config);
 
 
-class Scheduler:
+class Scheduler(object):
     """Ticket Scheduler"""
     
     def schedule(self, env, config):
