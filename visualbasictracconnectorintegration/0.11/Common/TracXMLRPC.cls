@@ -90,7 +90,7 @@ Private Function getStruct_sub(method As String, params As String) As Collection
     Set d = New Collection
     Dim n As String, v As String
     For i = 0 To Members.Length - 1
-        Set oNodeList = Members.Item(i).ChildNodes
+        Set oNodeList = Members.item(i).ChildNodes
         If oNodeList.Length = 2 Then
             n = oNodeList(0).text '名
             v = oNodeList(1).text '値
@@ -128,7 +128,7 @@ Private Sub getStructArray_Sub(ByRef d As Collection, typeName As String, method
         Exit Sub
     End If
     For i = 0 To Members.Length - 1
-        name = Members.Item(i).ChildNodes(0).text
+        name = Members.item(i).ChildNodes(0).text
         Dim c As Collection
 '        Debug.Print "s--" & name & "(" & typeName & ")"
         Set c = getStruct("ticket." & typeName & ".get", name, "string") 'なにも得られなかった場合はnameがそのまま戻ってくる
@@ -159,8 +159,8 @@ Private Sub getStringArray_Sub(ByRef d As Collection, typeName As String, method
         Exit Sub
     End If
     For i = 0 To Members.Length - 1
-        Set Item = Members.Item(i)
-        name = Item.text
+        Set item = Members.item(i)
+        name = item.text
         d.Add name
 '        Debug.Print "-" & name & "(" & typeName & ")"
         yield
@@ -186,10 +186,10 @@ Private Sub getTicketFields(ByRef d As Collection, ByRef e As Collection, typeNa
         Dim n As String, v As String
         
         Set c = New Collection
-        Set oNodeList = Members.Item(i).ChildNodes 'member
+        Set oNodeList = Members.item(i).ChildNodes 'member
         
         For j = 0 To oNodeList.Length - 1
-            Set oNodeList2 = oNodeList.Item(j).ChildNodes
+            Set oNodeList2 = oNodeList.item(j).ChildNodes
             If oNodeList2.Length = 2 Then
                 n = oNodeList2(0).text '名
                 v = oNodeList2(1).text '値
@@ -199,8 +199,8 @@ Private Sub getTicketFields(ByRef d As Collection, ByRef e As Collection, typeNa
             yield
         Next
 '        Debug.Print "=== name=" & c.Item("name") & " label=" & c.Item("label")
-        d.Add c, c.Item("name")
-        e.Add c, c.Item("label")
+        d.Add c, c.item("name")
+        e.Add c, c.item("label")
         yield
     Next
 End Sub
@@ -217,12 +217,12 @@ Public Function createStruct(arrayMember As Collection) As String
     On Error Resume Next
     For Each name In m_fieldN
         Dim fieldName As String, value As String
-        fieldName = name.Item("name")
+        fieldName = name.item("name")
 '        If fieldName <> "id" Then
             structString = structString + _
                 "<member>" + _
                     "<name>" + fieldName + "</name>" + _
-                    "<value>" + arrayMember.Item(fieldName) + "</value>" + _
+                    "<value>" + arrayMember.item(fieldName) + "</value>" + _
                 "</member>" + vbCrLf
 '        End If
     Next
@@ -253,7 +253,7 @@ Public Function createTicket(summary As String, description As String, attribute
 '        Debug.Print params
         Set Members = getMember(funcName, params, dataType)
         For i = 0 To Members.Length - 1
-            Set oNodeList = Members.Item(i).ChildNodes
+            Set oNodeList = Members.item(i).ChildNodes
             createTicket = CLng(oNodeList(0).text)
             yield
         Next
@@ -295,7 +295,7 @@ Public Function queryTicket(query As String) As Collection
         End If
         Set Members = getMember(funcName, queryString, dataType)
         For i = 0 To Members.Length - 1
-            Set oNodeList = Members.Item(i).ChildNodes
+            Set oNodeList = Members.item(i).ChildNodes
             ticketId = oNodeList(0).text
             Set ti = getTicket(ticketId)
             queryTicket.Add ti, ticketId
@@ -366,12 +366,12 @@ Private Function checkError(xmlSv As Variant) As Boolean
         'faultがあった場合エラーメッセージをまとめます
         Set Members = xmlSv.responseXML.getElementsByTagName("member")
         For i = 0 To Members.Length - 1
-            Set oNodeList = Members.Item(i).ChildNodes
-            If oNodeList.Item(0).text = "faultCode" Then
-                errorMessage = errorMessage & "Code=" & oNodeList.Item(1).text
+            Set oNodeList = Members.item(i).ChildNodes
+            If oNodeList.item(0).text = "faultCode" Then
+                errorMessage = errorMessage & "Code=" & oNodeList.item(1).text
             End If
-            If oNodeList.Item(0).text = "faultString" Then
-                errorMessage = errorMessage & ":" & oNodeList.Item(1).text
+            If oNodeList.item(0).text = "faultString" Then
+                errorMessage = errorMessage & ":" & oNodeList.item(1).text
             End If
             yield
         Next

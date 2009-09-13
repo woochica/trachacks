@@ -182,8 +182,8 @@ Private Sub CommandButton2_Click()
     Dim pc As ProjectConnecter
     Set pc = New ProjectConnecter
     pc.init m_aTrac, m_listIndex, CheckBox5.value, CheckBox6.value, CheckBox7.value, 8
-'    setFieldNames "summary_ticket", "baseline_start", "baseline_end"
-    pc.setFieldNames "parent", "plan_start", "plan_end"
+    pc.setFieldNames "summary_ticket", "baseline_start", "baseline_end"
+'    pc.setFieldNames "parent", "plan_start", "plan_end"
     pc.import
     CommandButton3_Click
 End Sub
