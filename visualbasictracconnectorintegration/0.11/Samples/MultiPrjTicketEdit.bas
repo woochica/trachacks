@@ -46,6 +46,7 @@ Sub import()
             te.import ("")
         End If
     Next
+    MsgBox "Complete"
     Exit Sub
 notExistSheet:
     MsgBox projectName & " sheet does not exist."
@@ -74,6 +75,7 @@ Sub check()
         te.init URL, projectName, user, pw, projectName
         te.check
     Next
+    MsgBox "Complete"
     Exit Sub
 notExistSheet:
     MsgBox projectName & " sheet does not exist."
@@ -102,6 +104,7 @@ Sub update()
         te.init URL, projectName, user, pw, projectName
         te.update
     Next
+    MsgBox "Complete"
     Exit Sub
 notExistSheet:
     MsgBox projectName & " sheet does not exist."
