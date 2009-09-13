@@ -32,7 +32,8 @@ class TracDependency(Component):
                     "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
                     "WHERE (c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
                     " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
-                    " c.value like '%%, %s' )" % (ids, ids, ids, ids, ids, ids))
+                    " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
+                    " c.value like '%%, %s' or c.value like '%%,%s')" % (ids, ids, ids, ids, ids, ids, ids, ids, ids))
         return sql
         
     def subticket(self, ids):
