@@ -39,7 +39,8 @@ setup(name='OSSTracProject',
                            'icalexporter',
                            'SVN_URLs',
                            'Tracbacks',
-                           'svnsyncplugin'],
+                           'svnsyncplugin',
+                           'CaptchaAuth'],
       dependency_links = [
       "http://trac-hacks.org/svn/traclegosscript/anyrelease#egg=TracLegos",
 
@@ -67,7 +68,8 @@ setup(name='OSSTracProject',
       "http://trac-hacks.org/svn/icalexporterplugin/0.11#egg=icalexporter",
       "http://trac-hacks.org/svn/svnurlsplugin/0.11#egg=SVN_URLs",
       "http://trac-hacks.org/svn/tracbacksplugin/0.11#egg=Tracbacks",
-      "http://trac-hacks.org/svn/svnsyncplugin/0.11#egg=svnsyncplugin"
+      "http://trac-hacks.org/svn/svnsyncplugin/0.11#egg=svnsyncplugin",
+      "http://trac-hacks.org/svn/captchaauthplugin/0.11#egg=CaptchaAuth",
       ],
       zip_safe=False,
       entry_points = """

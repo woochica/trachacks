@@ -29,6 +29,7 @@ setup(name='GeoTrac',
                            'GeoTicket',
                            'ImageTrac',
                            'mail2trac',
+                           'CaptchaAuth',
                            ],
       dependency_links = [
       # PIL - needed for ImageTrac
@@ -58,6 +59,7 @@ setup(name='GeoTrac',
       "http://trac-hacks.org/svn/mailtotracplugin/0.11#egg=mail2trac",
       "http://trac-hacks.org/svn/customfieldproviderplugin/0.11#egg=CustomFieldProvider",
       "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
+      "http://trac-hacks.org/svn/captchaauthplugin/0.11#egg=CaptchaAuth",
 
       ],
       zip_safe=False,
