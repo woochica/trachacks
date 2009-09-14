@@ -210,7 +210,7 @@ class Backlog(object):
         removes ticket from this backlog
         @param tkt_id: ID of ticket
         """
-        if(not self.getattr('id')): 
+        if(not getattr(self,'id')): 
             self.env.log.warn('trying to delete ticket from uninitialized backlog')
             return
         try:
