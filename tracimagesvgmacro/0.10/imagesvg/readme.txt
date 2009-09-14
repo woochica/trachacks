@@ -2,6 +2,9 @@
  * Trac Image SVG macro is a Trac plugin/macro.
 
 = Install =
+You need 2 steps:
+
+== Install imagesvg==
  You can install this software as normal Trac plugin.
 
  1. Uninstall Trac Image SVG macro if you have installed before.
@@ -24,7 +27,8 @@ cp dist/*.egg /srv/trac/env/plugins
 imagesvg.* = enabled
 }}}
 
- 6. copy ImageSvg.py to trac environment wiki-macros directory
+== Install ImageSvg macro==
+ 1. copy ImageSvg.py to trac environment wiki-macros directory
 
 = Usage =
  1. Upload svg files to wiki or ticket, eg: example.svg

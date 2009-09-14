@@ -24,8 +24,6 @@ cp dist/*.egg /srv/trac/env/plugins
 imagesvg.* = enabled
 }}}
 
- 6. copy ImageSvg.py to trac environment wiki-macros directory
-
 = Usage =
  1. Upload svg files to wiki or ticket, eg: example.svg
  1. Display svg image inwiki page !TopPage/SubPage
