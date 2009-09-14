@@ -140,9 +140,6 @@ class GeoRegions(Component):
         simply send the response itself and not return anything.
         """
         gids = get_column(self.env, 'georegions', 'gid')
-#        gids = [ gid for gid in gids 
-#                 if gid in [ int(i) for i in req.args.getlist('gid') ] 
-#                 ]
         regions = {}
         georegions_columns = columns(self.env, 'georegions')
         for gid in gids:
