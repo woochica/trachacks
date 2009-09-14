@@ -68,14 +68,19 @@ class ImageSvg(Component):
         elif len(parts) == 1:               # attachment
             file = filespec
             parts = formatter.req.path_info.split("/")
-            if len(parts) == 3:
-                non, module, id = parts
+            if len(parts) >= 3:
+                module = parts[1]
+                id =''
+                for p in parts[2:]:
+                    if len(id) > 0:
+                        id = id + "/"
+                    id = id + p
             elif len(parts) == 0:
                 module = "wiki"
                 id = "WikiStart"
             else:
                 # limit of use
-                raise Exception('Cannot use this macro in this module.')
+                raise Exception("Cannot use this macro in this module (len(parts)=%d, file=%s, path_info=%s, parts=%s)" % (len(parts), file, formatter.req.path_info, parts))
 
         else:
             raise Exception( 'No filespec given' )
