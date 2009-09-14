@@ -22,7 +22,7 @@ from trac.web.chrome import add_warning
 from trac.config import Option
 from trac.config import PathOption
 
-class CaptchaauthPlugin(Component):
+class RegistrationCaptcha(Component):
 
     ### class data
     implements(IRequestFilter, ITemplateStreamFilter, IRequestHandler)
@@ -115,6 +115,7 @@ class CaptchaauthPlugin(Component):
         simply send the response itself and not return anything.
         """
         img = skimpyAPI.Png(req.session['captcha']).data()
+#        img = skimpyAPI.Png(req.session['captcha'], scale=2.7).data()
         req.send(img, 'image/png')
 
 
