@@ -26,7 +26,7 @@ class RegistrationCaptcha(Component):
 
     ### class data
     implements(IRequestFilter, ITemplateStreamFilter, IRequestHandler)
-    dict_file = PathOption('captchaauth', 'dictionary_file',
+    dict_file = Option('captchaauth', 'dictionary_file',
                            default="http://java.sun.com/docs/books/tutorial/collections/interfaces/examples/dictionary.txt")
     captcha_type = Option('captchaauth', 'type',
                           default="png")
