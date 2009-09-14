@@ -133,8 +133,7 @@ class IssueMap(Component):
 
         # filter for queries - add the located tickets to a map
         if (filename == 'query.html' or filename == 'report_view.html') and data['locations']:
-
-            stream |= Transformer('//head').append(self.load_map(data['locations']))
+            stream |= Transformer('//head').append(self.load_map(data['locations'], req.environ.get('kml')))
             if self.inject_map:
                 stream |= Transformer("//div[@id='content']").after(self.content(None, None))
 
@@ -143,13 +142,13 @@ class IssueMap(Component):
 
     ### internal methods
 
-    def load_map(self, locations):
+    def load_map(self, locations, kml=None):
         """JS map for issues"""
-
+        options = '{kml: %s}' % (kml and '"%s"' % kml or 'null')
         script = """$(document).ready(function() {
       var locations = %s;
-      map_locations(locations);
-      })""" % (simplejson.dumps(locations))
+      map_locations(locations, %s);
+      })""" % (simplejson.dumps(locations), options)
         return tag.script(Markup(script), **{'type': 'text/javascript'})
 
 

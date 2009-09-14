@@ -32,6 +32,7 @@ class GeospatialQuery(Component):
     units = { 'blocks': 80.4672,
               }
 
+    ### internal methods
 
     def query_by_radius(self, lat, lon, radius):
         """
@@ -123,6 +124,8 @@ class GeospatialQuery(Component):
         if region:
             tickets_in_region = self.query_by_polygon(region)
             ticket_ids = [ i for i in ticket_ids if i in tickets_in_region ]
+            column = self.env.config.get('geo', 'region-column')
+            req.environ['kml'] = req.href('region.kml') + '?%s=%s' % (str(column), str(region))
 
         # fix up tickets
         data['tickets'] = [ ticket for ticket in data['tickets'] 
