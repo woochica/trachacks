@@ -18,9 +18,12 @@ from trac.web import IRequestFilter
 from trac.web import ITemplateStreamFilter
 from trac.web.api import IAuthenticator
 from trac.web.chrome import add_warning 
+from trac.web.chrome import Chrome
 from trac.web.chrome import ITemplateProvider
 from trac.config import ListOption
 from trac.config import Option
+
+from utils import random_word
 
 class AuthCaptcha(Component):
 
@@ -46,19 +49,6 @@ class AuthCaptcha(Component):
         
         Always returns the request handler, even if unchanged.
         """
-
-        if req.method != 'GET':
-            # TODO more here?
-            return handler
-
-        if req.perm.username != 'anonymous':
-            return handler
-
-        path = req.path_info.strip('/').split('/')
-        if path:
-            if path[0] in self.realms:
-                pass
-
         return handler
 
     # for ClearSilver templates
@@ -110,9 +100,31 @@ class AuthCaptcha(Component):
 
         See the Genshi documentation for more information.
         """
+        import pdb; pdb.set_trace()
+
+        path = req.path_info.strip('/').split('/')
+        if path:
+            if path[0] not in self.realms:
+                return stream
+            # TODO: check authenticated permissions for 
+        else:
+            # TODO: default handler
+            return stream 
+
         if filename in self.xpath:
+            word = random_word(self.dict_file)
+            req.session['captcha'] = word
+            req.session.save()
+
+            chrome = Chrome(self.env)
+            template = chrome.load_template('captcha.html')
+            _data = {}
+            # TODO: img captchas
+            _data['captcha'] = Markup(skimpyAPI.Pre(word).data())
+            _data['email'] = req.session.get('email', '')
+            _data['name'] = req.session.get('name', '')
             xpath = self.xpath[filename]
-#            stream |= Transformer(xpath).before(# XXX template)
+            stream |= Transformer(xpath).before(template.generate(**_data))
 
         return stream
 
@@ -141,7 +153,7 @@ class AuthCaptcha(Component):
         """
         return [resource_filename(__name__, 'templates')]
 
-    ### methods for IAuthenticator
+    ### method for IAuthenticator
 
     """Extension point interface for components that can provide the name
     of the remote user."""
@@ -149,5 +161,44 @@ class AuthCaptcha(Component):
     def authenticate(self, req):
         """Return the name of the remote user, or `None` if the identity of the
         user is unknown."""
-        return None
-        return 'foo' # XXX stub
+
+        if 'captchaauth' in req.args and 'captcha' in req.session:
+
+            # ensure CAPTCHA identification
+            captcha = req.session.pop('captcha')
+            if req.args['captchaauth'] != captcha:
+                add_warning(req, "You typed the wrong word. Please try again.")
+                return
+
+            # ensure sane identity
+            if self.identify(req):
+                req.session['captchaauth'] = dict([(i, req.session[i])
+                                                for i in 'name', 'email'])
+                req.session.save()
+
+        if 'captchaauth' in req.session:
+            return req.session['captchaauth']['name']
+
+
+    ### internal methods
+
+    def identify(self, req):
+        """
+        identify the user, ensuring uniqueness (TODO);
+        returns list of errors on failure
+        """
+        name = req.args.get('name') or req.session.get('name')
+
+        if name:
+            req.session['name'] = name
+            req.session.save()
+        else:
+            add_warning(req, 'Please provide your name')
+            return False
+
+        if 'email' in req.args:
+            req.session['email'] = req.args['email']
+            req.session.save()
+
+        return True
+        

@@ -112,8 +112,7 @@ class RegistrationCaptcha(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
-        img = skimpyAPI.Png(req.session['captcha']).data()
-#        img = skimpyAPI.Png(req.session['captcha'], scale=2.7).data()
+        img = skimpyAPI.Png(req.session['captcha'], scale=2.2).data()
         req.send(img, 'image/png')
 
 
@@ -143,7 +142,7 @@ class RegistrationCaptcha(Component):
             else:
                 captcha = self.skimpy_pre_captcha(word)
             content = "<p>%s</p><p>%s</p>" % (msg, captcha)
-            content += "<label>Confirm: <input type='text' name='captcha' class='textwidget' size='20'></label>"
+            content += '<label>Confirm: <input type="text" name="captcha" class="textwidget" size="20"/></label>'
             stream |= Transformer('//form[@id="%s"]/fieldset[1]' % form_id).append(tag.div(Markup(content)))
 
         return stream

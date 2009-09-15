@@ -1,23 +1,43 @@
-<fieldset>
-  
-  <legend>Optional</legend>
-  <div>
-    <label>Name:
-      <input type="text" name="name" class="textwidget" size="20" />
-    </label>
-  </div>
-  <div>
-    <label>Email:
-      <input type="text" name="email" class="textwidget" size="20" />
-    </label>
-  </div>
-  <div>
-    <p>
-      Please enter the text below to prove you're not a machine.
-    </p>
-    <p>
-      ${captcha}
-    </p>
-  </div>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="True">
+  <fieldset>
+    
+    <div>
+      <label>Name:
+        <py:choose test="bool(name)">
+          <py:when test="True">
+            ${name}
+          </py:when>
+          <py:otherwise>
+            <input type="text" name="name" class="textwidget" size="20" />
+          </py:otherwise>
+        </py:choose>
+      </label>
+    </div>
 
-</fieldset>
+    <div>
+      <label>Email:
+        <py:choose test="bool(email)">
+          <py:when test="True">
+            ${email}
+          </py:when>
+          <py:otherwise>
+            <input type="text" name="email" class="textwidget" size="20" />
+          </py:otherwise>
+        </py:choose>
+      </label>
+    </div>
+
+    <div>
+      <p>
+        Please enter the text below to prove you're not a machine.
+      </p>
+      <p>
+        ${captcha}
+      </p>
+      <label>Confirm: <input type="text" name="captchaauth" class="textwidget" size="20"/></label>
+    </div>
+
+  </fieldset>
+</html>
