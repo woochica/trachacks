@@ -47,10 +47,13 @@ class PageAuthzPolicyEditor(Component):
             yield ('accounts', translation._('Accounts'), 'pages', translation._('Page Permissions'))
 
     def _get_filename(self, section, name):
-      file_name = self.config.get(section, name)
-      if file_name and (not file_name.startswith(os.path.sep)) and (not file_name[1] == (':')):
-	file_name = os.path.join(self.env.path, file_name)
-      return(file_name)
+        file_name = self.config.get(section, name)
+        if len(file_name):
+            if (not file_name.startswith(os.path.sep)) and (not file_name[1] == (':')):
+                file_name = os.path.join(self.env.path, file_name)
+            return(file_name)
+        else:
+            return(None)
 
     def _get_users(self):
         return(self.account_manager.get_users())
