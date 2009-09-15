@@ -48,7 +48,7 @@ class PageAuthzPolicyEditor(Component):
 
     def _get_filename(self, section, name):
       file_name = self.config.get(section, name)
-      if (not file_name.startswith(os.path.sep)) and (not file_name[1] == (':')):
+      if file_name and (not file_name.startswith(os.path.sep)) and (not file_name[1] == (':')):
 	file_name = os.path.join(self.env.path, file_name)
       return(file_name)
 
