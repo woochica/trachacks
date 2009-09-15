@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.4'
+version='0.4.1'
 
 setup(name='CaptchaAuth',
       version=version,
@@ -19,6 +19,7 @@ setup(name='CaptchaAuth',
       entry_points = """
       [trac.plugins]
       registration_captcha = captchaauth.register
+      auth_captcha = captchaauth.auth
       """,
       )
 

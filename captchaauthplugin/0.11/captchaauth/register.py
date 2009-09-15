@@ -3,10 +3,7 @@ A quick and dirty captcha for use with AccountManagerPlugin
 """
 # Plugin for trac 0.11
 
-import random
 import sys
-import time
-import urllib
 
 from genshi.builder import Markup
 from genshi.builder import tag
@@ -16,11 +13,12 @@ from skimpyGimpy import skimpyAPI
 
 from trac.core import *
 from trac.web import IRequestFilter
-from trac.web.api import IRequestHandler
 from trac.web import ITemplateStreamFilter
+from trac.web.api import IRequestHandler
 from trac.web.chrome import add_warning 
 from trac.config import Option
-from trac.config import PathOption
+
+from utils import random_word
 
 class RegistrationCaptcha(Component):
 
@@ -137,7 +135,7 @@ class RegistrationCaptcha(Component):
         msg = "Please enter the text below to prove you're not a machine."
 
         if filename == "register.html":
-            word = self.random_word()
+            word = random_word(self.dict_file)
             req.session['captcha'] = word
             req.session.save()
             if self.captcha_type == 'png':
@@ -159,20 +157,3 @@ class RegistrationCaptcha(Component):
                                        
     def skimpy_png_captcha(self, passphrase):
         pass
-
-    def random_word(self):
-        """ Return a random word for use with the captcha """
-        min_len =  5
-        
-        if not globals().has_key('captcha_dict'):
-            if self.dict_file.startswith("http://"):
-                f = urllib.urlopen(self.dict_file)
-            else:
-                f = open(self.dict_file, "r")
-            _dict = f.read()
-            f.close()
-            _dict = _dict.lower().split()
-            _dict = [word for word in _dict if word.isalpha() and len(word) > min_len]
-            globals()['captcha_dict'] = _dict
-
-        return random.Random().choice(captcha_dict)
