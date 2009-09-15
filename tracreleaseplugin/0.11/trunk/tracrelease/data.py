@@ -6,10 +6,11 @@ import pprint
 import calendar
 
 def _now():
+    """Returns the current date and time"""
     return datefmt.to_timestamp(datefmt.to_datetime(None))
 
 def get_all(com, sql, *params):
-    """Executes the query and returns the (description, data)"""
+    """Executes the sql command and returns the (description, data)"""
     db = com.env.get_db_cnx()
     cur = db.cursor()
     desc  = None
@@ -22,6 +23,7 @@ def get_all(com, sql, *params):
     except Exception, e:
         com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback();
+        
     try:
         db.close()
     except:
@@ -65,6 +67,7 @@ def get_all_dict(com, sql, *params):
     return results
 
 def execute_sql(com, sql, *params):
+    """Executes the SQL command and commit the transaction"""
     db = com.env.get_db_cnx()
     cur = db.cursor()
 
@@ -79,25 +82,18 @@ def execute_sql(com, sql, *params):
     except:
         pass
     
-
-    
 def findAvailableVersions(com):
     """Find all registered versions"""
     sql = "SELECT name, time, description FROM version ORDER BY time DESC"
     return get_all_dict(com, sql)
-
-
 
 def signRelease(com, releaseId, userName):
     """Marks a Release as signed by the indicated user"""
     sql = "UPDATE release_signatures SET sign_date = %s WHERE release_id = %s AND signature = %s"
     execute_sql(com, sql, _now(), releaseId, userName)
     
-    
-    
-    
-    
 def createRelease(com, name, description, author, planned, tickets, signatures, install_procedures):
+    """Creates a new Release"""
     sql = """INSERT INTO releases (version, description, author, creation_date, planned_date) VALUES (%s, %s, %s, %s, %s)"""
     sqlTickets = """INSERT INTO release_tickets (release_id, ticket_id) VALUES (%s, %s)"""
     sqlSignatures = """INSERT INTO release_signatures (release_id, signature) VALUES (%s, %s)"""
@@ -122,35 +118,38 @@ def createRelease(com, name, description, author, planned, tickets, signatures, 
     if flag:
         relId = db.get_last_id(cur, 'releases')
         if relId:
+            ## Saves all release to ticket relationships
             for ticket in tickets:
-                ticket = ticket.ticket_id
+                ticketId = ticket.ticket_id
                 try:
-                    ticket = int(ticket)
+                    ticketId = int(ticket)
                 except:
-                    ticket = 0
+                    ticketId = 0
                     
-                if ticket:
+                if ticketId:
                     try:                
-                        cur.execute(sqlTickets, (relId, ticket))
+                        cur.execute(sqlTickets, (relId, ticketId))
                     except Exception, e:
                         flag = False
-                        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sqlTickets, (relId, ticket), e));
+                        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sqlTickets, (relId, ticketId), e));
                         db.rollback()
                         break
                     
         if relId and flag:
+            ## Saves all release to signature relationships
             for sign in signatures:
-                sign = sign.signature
+                signUser = sign.signature
                 if sign:
                     try:    
-                        cur.execute(sqlSignatures, (relId, sign))
+                        cur.execute(sqlSignatures, (relId, signUser))
                     except Exception, e:
                         flag = False
-                        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sqlSignatures, (relId, sign), e));
+                        com.log.error('There was a problem executing sql:%s \n with parameters:%s\nException:%s'%(sqlSignatures, (relId, signUser), e));
                         db.rollback()
                         break
         
         if relId and flag:
+            ## Saves all release to install procedures relationships
             for inst in install_procedures:
                 ## inst is an instance of ReleaseInstallProcedure
                 if inst:
@@ -165,7 +164,7 @@ def createRelease(com, name, description, author, planned, tickets, signatures, 
                             cnt = 1
                             sqlCommand = sqlInstallFiles
                             for arq in inst.install_files:
-                                com.log.debug("\tArquivo: %s" % arq)
+                                com.log.debug("\tFile: %s" % arq)
                                 sqlParams = "%s" % ([relId, inst.install_procedure.id, cnt, arq])
                                 cur.execute(sqlInstallFiles, (relId, inst.install_procedure.id, cnt, arq))
                                 cnt += 1
@@ -178,6 +177,7 @@ def createRelease(com, name, description, author, planned, tickets, signatures, 
 
 
         if flag:
+            ## Everything is OK
             com.log.debug("Included... Trying to commit...")
             db.commit();
     try:
@@ -193,6 +193,7 @@ def createRelease(com, name, description, author, planned, tickets, signatures, 
 
 
 def loadDateField(fieldValue):
+    """Converts <fieldValue>"""
     return (fieldValue and datefmt.to_datetime(fieldValue) or None)
 
     
@@ -204,6 +205,7 @@ def loadListFromDatabase(com, sql, f, *params):
     result = []
     db = com.env.get_db_cnx()
     cur = db.cursor()
+    ret = None
     try:
         cur.execute(sql, params)
         ret = cur.fetchall()
@@ -258,9 +260,6 @@ def loadFromDatabase(com, sql, f, *params):
         pass
 
     return result
-
-
-   
     
 def findAvailableReleases(com):
     """Find all created releases, closed and open"""
@@ -272,10 +271,6 @@ def findAvailableReleases(com):
     result = loadListFromDatabase(com, sql, f)
 
     return result
-    
-
-
-
 
 def getTicket(com, ticketId):
     """Load some data from the indicated ticket"""
@@ -284,9 +279,6 @@ def getTicket(com, ticketId):
     result = loadFromDatabase(com, sql, f, ticketId)
     
     return result
-
-
-
 
 def getVersionTickets(com, version):
     """Load all tickets that are associated to the indicated version"""
@@ -408,8 +400,8 @@ def saveInstallProc(com, installProc):
         else:
             sql = """INSERT INTO install_procedures (name, description, contain_files) VALUES (%s, %s, %s)"""
             cur.execute(sql, (installProc.name, installProc.description, installProc.contain_files))
-
-        installProc.id = db.get_last_id(cur, 'install_procedures')
+            installProc.id = db.get_last_id(cur, 'install_procedures')
+        
         db.commit()
         com.log.info("Saved InstallProc %d" % installProc.id)
         flag = installProc.id
