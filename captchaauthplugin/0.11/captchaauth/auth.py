@@ -30,6 +30,7 @@ from tracsqlhelper import create_table
 from tracsqlhelper import execute_non_query
 from tracsqlhelper import get_scalar
 from tracsqlhelper import get_table
+from tracsqlhelper import insert_update
 
 from utils import random_word
 
@@ -144,9 +145,8 @@ class AuthCaptcha(Component):
         if filename in self.xpath:
             word = random_word(self.dict_file)
 
-            # TODO: -> DB storage
-            # req.session['captcha'] = word
-            # req.session.save()
+            # store CAPTCHA in DB
+            insert_update(self.env, 'captcha', 'id', req.session.sid, dict(word=word))
 
             chrome = Chrome(self.env)
             template = chrome.load_template('captcha.html')
