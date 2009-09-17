@@ -5,27 +5,13 @@
     
     <div>
       <label>Name:
-        <py:choose test="bool(name)">
-          <py:when test="True">
-            ${name}
-          </py:when>
-          <py:otherwise>
-            <input type="text" name="name" class="textwidget" size="20" />
-          </py:otherwise>
-        </py:choose>
+        <input type="text" name="name" class="textwidget" size="20" value="${name}"/>
       </label>
     </div>
 
     <div>
       <label>Email:
-        <py:choose test="bool(email)">
-          <py:when test="True">
-            ${email}
-          </py:when>
-          <py:otherwise>
-            <input type="text" name="email" class="textwidget" size="20" />
-          </py:otherwise>
-        </py:choose>
+        <input type="text" name="email" class="textwidget" size="20" value="${email}"/>
       </label>
     </div>
 

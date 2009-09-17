@@ -28,6 +28,7 @@ from trac.config import Option
 
 from tracsqlhelper import create_table
 from tracsqlhelper import execute_non_query
+from tracsqlhelper import get_scalar
 from tracsqlhelper import get_table
 
 from utils import random_word
@@ -65,6 +66,17 @@ class AuthCaptcha(Component):
             
             # redirect anonymous user posts that are not CAPTCHA-identified
             if req.authname == 'anonymous' and self.realm(req) in self.realms:
+                
+                if 'captchaauth' in req.args and 'captchaid' in req.args:
+                    # add warnings from CAPTCHA authentication
+                    captcha = self.captcha(req)
+                    if req.args['captchaauth'] != captcha:
+                        add_warning(req, "You typed the wrong word. Please try again.")
+                    name, email = self.identify(req)
+                    if not name:
+                        add_warning(req, 'Please provide your name')
+                
+
                 req.redirect(req.get_header('referer') or '/')
 
         return handler
@@ -193,27 +205,27 @@ class AuthCaptcha(Component):
         if 'captchaauth' in req.args and 'captchaid' in req.args:
 
             # ensure CAPTCHA identification
-            captcha = get_scalar(trac.env, "SELECT word FROM captcha WHERE id=%s", 1, req.args['captchaid'])
-            execute_non_query(trac.env, "DELETE FROM captcha WHERE id=%s", req.args['captchaid'])
+            captcha = self.captcha(req)
 
-            if req.args['captchaauth'] != captcha:
-                add_warning(req, "You typed the wrong word. Please try again.")
-                return
+# TODO:
+#            try:
+#                # delete used CAPTCHA
+#                execute_non_query(self.env, "DELETE FROM captcha WHERE id=%s", req.args['captchaid'])
+#            except:
+#                pass
+
 
             # ensure sane identity
-            identify = self.identify(req)
-            if identify is None:
+            name, email = self.identify(req)
+            if name is None:
                 return
-            name, email = identify
-            
+     
             # log the user in
             import pdb; pdb.set_trace()
             req.remote_user = name
             login_module._do_login(req)
 
-#            req.session['captchaauth'] = dict([(i, req.session[i])
-#                                               for i in 'name', 'email'])
-#            req.session.save()
+
 
     ### methods for IEnvironmentSetupParticipant
 
@@ -260,11 +272,8 @@ class AuthCaptcha(Component):
         identify the user, ensuring uniqueness (TODO);
         returns a tuple of (name, email) or success or None
         """
-        name = req.args.get('name') or req.session.get('name')
-        if not name:
-            add_warning(req, 'Please provide your name')
-            return 
-        email = req.args.get('email', None)
+        name = req.args.get('name', None).strip()
+        email = req.args.get('email', None).strip()
         return name, email
         
 
@@ -277,3 +286,6 @@ class AuthCaptcha(Component):
             return
         # TODO: default handler ('/')
         return path[0]
+
+    def captcha(self, req):
+        return get_scalar(self.env, "SELECT word FROM captcha WHERE id=%s", 1, req.args['captchaid'])
