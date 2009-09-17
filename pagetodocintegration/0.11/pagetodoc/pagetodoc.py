@@ -92,9 +92,11 @@ class PageToDocPlugin(Component):
         # images
         # replace href with absolute path and if existing, base auth login
         try:
-            login = base64.b64decode(req.environ['HTTP_AUTHORIZATION'][6:]) + '@'      
+            # this will work if the authentication type is basic (and not over SSL?)
+            login = base64.b64decode(req.environ['HTTP_AUTHORIZATION'][6:]) + '@'                  
         except (KeyError, TypeError):
             login = ''
+                   
         html = re.sub('<img src="(?!\w+://)', '<img src="%s://%s%s:%d' % (req.scheme, login, req.server_name, req.server_port), html)
 
         # save images to disk
@@ -132,7 +134,7 @@ class PageToDocPlugin(Component):
         if xsltproc_error:
             raise_dependency_issue(xsltproc_error, req, self.env)
 
-        cmd = '%s %s -o %s %s %s' % (
+        cmd = '%s %s -o --html %s %s %s' % (
             xsltprocpath, verb, wordfilepath, xsltfilepath, htmlfilepath)
         self.execute_external_program(cmd)
 
