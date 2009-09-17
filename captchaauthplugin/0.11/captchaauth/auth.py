@@ -206,8 +206,10 @@ class AuthCaptcha(Component):
 
             # ensure CAPTCHA identification
             captcha = self.captcha(req)
-
+            if captcha != req.args['captchaauth']:
+                return
 # TODO:
+# XXX move to pre_process b/c i'll need this for the warning
 #            try:
 #                # delete used CAPTCHA
 #                execute_non_query(self.env, "DELETE FROM captcha WHERE id=%s", req.args['captchaid'])
@@ -221,11 +223,8 @@ class AuthCaptcha(Component):
                 return
      
             # log the user in
-            import pdb; pdb.set_trace()
-            req.remote_user = name
+            req.environ['REMOTE_USER'] = name
             login_module._do_login(req)
-
-
 
     ### methods for IEnvironmentSetupParticipant
 
