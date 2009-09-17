@@ -19,14 +19,16 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.web import IRequestFilter
 from trac.web import ITemplateStreamFilter
 from trac.web.api import IAuthenticator
+from trac.web.auth import LoginModule
 from trac.web.chrome import add_warning 
 from trac.web.chrome import Chrome
 from trac.web.chrome import ITemplateProvider
 from trac.config import ListOption
 from trac.config import Option
 
-from tracsqlhelper import columns
 from tracsqlhelper import create_table
+from tracsqlhelper import execute_non_query
+from tracsqlhelper import get_table
 
 from utils import random_word
 
@@ -54,9 +56,16 @@ class AuthCaptcha(Component):
         Always returns the request handler, even if unchanged.
         """
 
-        # redirect anonymous user posts that are not CAPTCHA-identified
-        if req.method == 'POST' and req.authname == 'anonymous' and self.realm(req) in self.realms:
-            req.redirect(req.get_header('referer') or '/')
+        if req.method == 'POST':
+            
+            # set the session data for name and email if CAPTCHA-authenticated
+            if 'captchaauth' in req.args:
+                pass
+#                import pdb; pdb.set_trace()
+            
+            # redirect anonymous user posts that are not CAPTCHA-identified
+            if req.authname == 'anonymous' and self.realm(req) in self.realms:
+                req.redirect(req.get_header('referer') or '/')
 
         return handler
 
@@ -134,6 +143,7 @@ class AuthCaptcha(Component):
             _data['captcha'] = Markup(skimpyAPI.Pre(word).data())
             _data['email'] = req.session.get('email', '')
             _data['name'] = req.session.get('name', '')
+            _data['captchaid'] = req.session.sid
             xpath = self.xpath[filename]
             stream |= Transformer(xpath).before(template.generate(**_data))
 
@@ -173,12 +183,19 @@ class AuthCaptcha(Component):
         """Return the name of the remote user, or `None` if the identity of the
         user is unknown."""
 
-        # XXX disabled pending migration to the DB
-        # req.session and req.perm are not available!!!
-        if False and 'captchaauth' in req.args and 'captcha' in req.session:
+        # check for an authenticated user
+        login_module = LoginModule(self.env)
+        remote_user = login_module.authenticate(req)
+        if remote_user:
+            return remote_user
+
+        # authenticate via a CAPTCHA
+        if 'captchaauth' in req.args and 'captchaid' in req.args:
 
             # ensure CAPTCHA identification
-            captcha = req.session.pop('captcha')
+            captcha = get_scalar(trac.env, "SELECT word FROM captcha WHERE id=%s", 1, req.args['captchaid'])
+            execute_non_query(trac.env, "DELETE FROM captcha WHERE id=%s", req.args['captchaid'])
+
             if req.args['captchaauth'] != captcha:
                 add_warning(req, "You typed the wrong word. Please try again.")
                 return
@@ -187,9 +204,16 @@ class AuthCaptcha(Component):
             identify = self.identify(req)
             if identify is None:
                 return
-            req.session['captchaauth'] = dict([(i, req.session[i])
-                                               for i in 'name', 'email'])
-            req.session.save()
+            name, email = identify
+            
+            # log the user in
+            import pdb; pdb.set_trace()
+            req.remote_user = name
+            login_module._do_login(req)
+
+#            req.session['captchaauth'] = dict([(i, req.session[i])
+#                                               for i in 'name', 'email'])
+#            req.session.save()
 
     ### methods for IEnvironmentSetupParticipant
 
@@ -208,11 +232,11 @@ class AuthCaptcha(Component):
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
         """
-        return False # XXX disabled 
         try:
-            columns(self.env, 'captcha')
+            get_table(self.env, 'captcha')
         except:
             return True
+        return False
 
     def upgrade_environment(self, db):
         """Actually perform an environment upgrade.
