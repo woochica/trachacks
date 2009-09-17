@@ -15,6 +15,10 @@ setup(name='CaptchaAuth',
       zip_safe=False,
       install_requires=[
         'skimpygimpy',
+        'TracSQLHelper'
+        ],
+      dependency_links=[
+        "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
         ],
       entry_points = """
       [trac.plugins]

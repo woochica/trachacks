@@ -14,6 +14,8 @@ from pkg_resources import resource_filename
 from skimpyGimpy import skimpyAPI
 
 from trac.core import *
+from trac.db import Table, Column
+from trac.env import IEnvironmentSetupParticipant
 from trac.web import IRequestFilter
 from trac.web import ITemplateStreamFilter
 from trac.web.api import IAuthenticator
@@ -23,19 +25,21 @@ from trac.web.chrome import ITemplateProvider
 from trac.config import ListOption
 from trac.config import Option
 
+from tracsqlhelper import columns
+from tracsqlhelper import create_table
+
 from utils import random_word
 
 class AuthCaptcha(Component):
 
     ### class data
-    implements(IRequestFilter, ITemplateStreamFilter, IAuthenticator, ITemplateProvider)
+    implements(IRequestFilter, ITemplateStreamFilter, ITemplateProvider, IAuthenticator, IEnvironmentSetupParticipant)
     dict_file = Option('captchaauth', 'dictionary_file',
                            default="http://java.sun.com/docs/books/tutorial/collections/interfaces/examples/dictionary.txt")
     captcha_type = Option('captchaauth', 'type',
                           default="png")
     realms = ListOption('captchaauth', 'realms',
                         default="wiki, newticket")
-
     permissions = { 'wiki': [ 'WIKI_CREATE', 'WIKI_MODIFY' ],
                     'newticket': [ 'TICKET_CREATE' ] }
 
@@ -49,6 +53,11 @@ class AuthCaptcha(Component):
         
         Always returns the request handler, even if unchanged.
         """
+
+        # redirect anonymous user posts that are not CAPTCHA-identified
+        if req.method == 'POST' and req.authname == 'anonymous' and self.realm(req) in self.realms:
+            req.redirect(req.get_header('referer') or '/')
+
         return handler
 
     # for ClearSilver templates
@@ -100,21 +109,23 @@ class AuthCaptcha(Component):
 
         See the Genshi documentation for more information.
         """
-        import pdb; pdb.set_trace()
 
-        path = req.path_info.strip('/').split('/')
-        if path:
-            if path[0] not in self.realms:
-                return stream
-            # TODO: check authenticated permissions for 
-        else:
-            # TODO: default handler
-            return stream 
+        # only show CAPTCHAs for anonymous users
+        if req.authname != 'anonymous':
+            return stream
 
+        # only put CAPTCHAs in the realms specified
+        realm = self.realm(req)
+        if realm not in self.realms:
+            return stream
+
+        # add the CAPTCHA to the stream
         if filename in self.xpath:
             word = random_word(self.dict_file)
-            req.session['captcha'] = word
-            req.session.save()
+
+            # TODO: -> DB storage
+            # req.session['captcha'] = word
+            # req.session.save()
 
             chrome = Chrome(self.env)
             template = chrome.load_template('captcha.html')
@@ -162,7 +173,9 @@ class AuthCaptcha(Component):
         """Return the name of the remote user, or `None` if the identity of the
         user is unknown."""
 
-        if 'captchaauth' in req.args and 'captcha' in req.session:
+        # XXX disabled pending migration to the DB
+        # req.session and req.perm are not available!!!
+        if False and 'captchaauth' in req.args and 'captcha' in req.session:
 
             # ensure CAPTCHA identification
             captcha = req.session.pop('captcha')
@@ -171,13 +184,49 @@ class AuthCaptcha(Component):
                 return
 
             # ensure sane identity
-            if self.identify(req):
-                req.session['captchaauth'] = dict([(i, req.session[i])
-                                                for i in 'name', 'email'])
-                req.session.save()
+            identify = self.identify(req)
+            if identify is None:
+                return
+            req.session['captchaauth'] = dict([(i, req.session[i])
+                                               for i in 'name', 'email'])
+            req.session.save()
 
-        if 'captchaauth' in req.session:
-            return req.session['captchaauth']['name']
+    ### methods for IEnvironmentSetupParticipant
+
+    """Extension point interface for components that need to participate in the
+    creation and upgrading of Trac environments, for example to create
+    additional database tables."""
+
+    def environment_created(self):
+        """Called when a new Trac environment is created."""
+        if self.environment_needs_upgrade(None):
+            self.upgrade_environment(None)
+
+    def environment_needs_upgrade(self, db):
+        """Called when Trac checks whether the environment needs to be upgraded.
+        
+        Should return `True` if this participant needs an upgrade to be
+        performed, `False` otherwise.
+        """
+        return False # XXX disabled 
+        try:
+            columns(self.env, 'captcha')
+        except:
+            return True
+
+    def upgrade_environment(self, db):
+        """Actually perform an environment upgrade.
+        
+        Implementations of this method should not commit any database
+        transactions. This is done implicitly after all participants have
+        performed the upgrades they need without an error being raised.
+        """
+
+        # table of CAPTCHAs
+        captcha_table = Table('captcha', key='key')[
+            Column('id'),
+            Column('word')]
+        create_table(self.env, captcha_table)
 
 
     ### internal methods
@@ -185,20 +234,22 @@ class AuthCaptcha(Component):
     def identify(self, req):
         """
         identify the user, ensuring uniqueness (TODO);
-        returns list of errors on failure
+        returns a tuple of (name, email) or success or None
         """
         name = req.args.get('name') or req.session.get('name')
-
-        if name:
-            req.session['name'] = name
-            req.session.save()
-        else:
+        if not name:
             add_warning(req, 'Please provide your name')
-            return False
-
-        if 'email' in req.args:
-            req.session['email'] = req.args['email']
-            req.session.save()
-
-        return True
+            return 
+        email = req.args.get('email', None)
+        return name, email
         
+
+    def realm(self, req):
+        """
+        returns the realm according to the request
+        """
+        path = req.path_info.strip('/').split('/')
+        if not path:
+            return
+        # TODO: default handler ('/')
+        return path[0]
