@@ -131,7 +131,9 @@ def insert_update(env, table, key, value, items):
         insert_row_from_dict(env, table, items)
 
 def columns(env, table):
-    return get_all_dict(env, "SELECT * FROM %s LIMIT 1" % table)[0].keys()
+    all = get_all_dict(env, "SELECT * FROM %s LIMIT 1" % table)
+    assert all, 'NEED AT LEAST ONE ROW!  IF I KNEW SQL BETTER THEN I COULD PROBABLY GET AROUND THIS!'
+    return all[0].keys()
 
 def column_type(env, table, column):
     """returns type of the column in the table"""
@@ -145,6 +147,7 @@ def column_repr(env, table, column, value):
     """returns SQL repr for the column in a table"""
     reprs = { unicode: "'%s'",
               str: "'%s'",
+              int: "%d"
               }
     _type = column_type(env, table, column)
     repr = reprs.get(_type, "%s")
