@@ -34,6 +34,11 @@ from tracsqlhelper import insert_update
 
 from utils import random_word
 
+try: 
+    from acct_mgr.api import AccountManager
+except:
+    AccountManager = None
+
 class AuthCaptcha(Component):
 
     ### class data
@@ -62,11 +67,15 @@ class AuthCaptcha(Component):
             
             # set the session data for name and email if CAPTCHA-authenticated
             if 'captchaauth' in req.args:
-                pass
-#                import pdb; pdb.set_trace()
+                for field in 'name', 'email':
+                    value = req.args[field].strip()
+                    if value:
+                        req.session[field] = value
+                req.session.save()
             
             # redirect anonymous user posts that are not CAPTCHA-identified
-            if req.authname == 'anonymous' and self.realm(req) in self.realms:
+            realm = self.realm(req)
+            if req.authname == 'anonymous' and realm in self.realms:
                 
                 if 'captchaauth' in req.args and 'captchaid' in req.args:
                     # add warnings from CAPTCHA authentication
@@ -82,9 +91,20 @@ class AuthCaptcha(Component):
                     name, email = self.identify(req)
                     if not name:
                         add_warning(req, 'Please provide your name')
-                
+                    if AccountManager and name in AccountManager(self.env).get_users():
+                        add_warning(req, '%s is already taken as by a registered user.  Please login or use a different name' % name)
 
-                req.redirect(req.get_header('referer') or '/')
+                
+                location = req.get_header('referer')
+                if location:
+                    if realm == 'newticket':
+                        args = [(key.split('field_',1)[-1], value)
+                                for key, value in req.args.items()
+                                if key.startswith('field_')]
+                        location += '?%s' % urllib.urlencode(args)
+                else:
+                    location =  req.href()
+                req.redirect(location)
 
         return handler
 
@@ -231,7 +251,9 @@ class AuthCaptcha(Component):
             name, email = self.identify(req)
             if name is None:
                 return
-     
+            if AccountManager and name in AccountManager(self.env).get_users():
+                return
+
             # log the user in
             req.environ['REMOTE_USER'] = name
             login_module._do_login(req)
