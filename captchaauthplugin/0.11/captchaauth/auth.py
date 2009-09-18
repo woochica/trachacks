@@ -97,6 +97,8 @@ class AuthCaptcha(Component):
                 
                 location = req.get_header('referer')
                 if location:
+                    location, query = urllib.splitquery(location)
+                    
                     if realm == 'newticket':
                         args = [(key.split('field_',1)[-1], value)
                                 for key, value in req.args.items()
@@ -233,19 +235,8 @@ class AuthCaptcha(Component):
 
             # ensure CAPTCHA identification
             captcha = self.captcha(req)
-            if captcha == req.args['captchaauth']:
-
-# TODO:
-# XXX move to pre_process b/c i'll need this for the warning
-                try:
-                    # delete used CAPTCHA
-                    execute_non_query(self.env, "DELETE FROM captcha WHERE id=%s", req.args['captchaid'])
-                except:
-                    pass
-
-            else:
-                return
-
+            if captcha != req.args['captchaauth']:
+                return 
 
             # ensure sane identity
             name, email = self.identify(req)
@@ -253,6 +244,12 @@ class AuthCaptcha(Component):
                 return
             if AccountManager and name in AccountManager(self.env).get_users():
                 return
+
+            # delete used CAPTCHA on success
+            try:
+                execute_non_query(self.env, "DELETE FROM captcha WHERE id=%s", req.args['captchaid'])
+            except:
+                pass
 
             # log the user in
             req.environ['REMOTE_USER'] = name
