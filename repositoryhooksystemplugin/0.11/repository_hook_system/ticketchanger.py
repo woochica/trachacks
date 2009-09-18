@@ -113,7 +113,6 @@ class TicketChanger(Component):
                 # validate the ticket
                 # TODO
 
-
                 # fake a request
                 # XXX cargo-culted environ from 
                 # http://trac.edgewall.org/browser/trunk/trac/web/tests/api.py
@@ -129,19 +128,20 @@ class TicketChanger(Component):
                 req = Request(environ, None)
                 req.args['comment'] = msg
                 req.authname = chgset.author
+                req.perm = PermissionCache(self.env, req.authname)
                 for manipulator in tm.ticket_manipulators:
                     manipulator.validate_ticket(req, ticket)
                 msg = req.args['comment']
-
                 ticket.save_changes(chgset.author, msg, now, db, cnum+1)
                 db.commit()
-                
+
                 tn = TicketNotifyEmail(self.env)
                 tn.notify(ticket, newticket=0, modtime=now)
 
             except Exception, e:
-                print>>sys.stderr, 'Unexpected error while processing ticket ' \
-                                   'ID %s: %s' % (tkt_id, repr(e))
+                message = 'Unexpected error while processing ticket ID %s: %s' % (tkt_id, repr(e))
+                print>>sys.stderr, message
+                self.env.log.error('TicketChanger: ' + message)
             
 
     def _cmdClose(self, ticket):
