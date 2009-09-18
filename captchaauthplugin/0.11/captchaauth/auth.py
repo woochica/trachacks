@@ -73,6 +73,12 @@ class AuthCaptcha(Component):
                     captcha = self.captcha(req)
                     if req.args['captchaauth'] != captcha:
                         add_warning(req, "You typed the wrong word. Please try again.")
+                        try:
+                            # delete used CAPTCHA
+                            execute_non_query(self.env, "DELETE FROM captcha WHERE id=%s", req.args['captchaid'])
+                        except:
+                            pass
+
                     name, email = self.identify(req)
                     if not name:
                         add_warning(req, 'Please provide your name')
@@ -143,11 +149,12 @@ class AuthCaptcha(Component):
 
         # add the CAPTCHA to the stream
         if filename in self.xpath:
-            word = random_word(self.dict_file)
 
             # store CAPTCHA in DB
+            word = random_word(self.dict_file)
             insert_update(self.env, 'captcha', 'id', req.session.sid, dict(word=word))
 
+            # render the template
             chrome = Chrome(self.env)
             template = chrome.load_template('captcha.html')
             _data = {}
@@ -206,15 +213,18 @@ class AuthCaptcha(Component):
 
             # ensure CAPTCHA identification
             captcha = self.captcha(req)
-            if captcha != req.args['captchaauth']:
-                return
+            if captcha == req.args['captchaauth']:
+
 # TODO:
 # XXX move to pre_process b/c i'll need this for the warning
-#            try:
-#                # delete used CAPTCHA
-#                execute_non_query(self.env, "DELETE FROM captcha WHERE id=%s", req.args['captchaid'])
-#            except:
-#                pass
+                try:
+                    # delete used CAPTCHA
+                    execute_non_query(self.env, "DELETE FROM captcha WHERE id=%s", req.args['captchaid'])
+                except:
+                    pass
+
+            else:
+                return
 
 
             # ensure sane identity
@@ -287,4 +297,4 @@ class AuthCaptcha(Component):
         return path[0]
 
     def captcha(self, req):
-        return get_scalar(self.env, "SELECT word FROM captcha WHERE id=%s", 1, req.args['captchaid'])
+        return get_scalar(self.env, "SELECT word FROM captcha WHERE id=%s", 0, req.args['captchaid'])
