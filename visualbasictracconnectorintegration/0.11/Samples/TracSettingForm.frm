@@ -280,6 +280,7 @@ Private Sub UserForm_Initialize()
     changeActivePage 1
     
     Set properties = Application.ActiveProject.CustomDocumentProperties
+    On Error Resume Next
     TextBox1.text = properties(PROP_NAME_URL).value
     TextBox2.text = properties(PROP_NAME_PROJ).value
     TextBox3.text = properties(PROP_NAME_USER).value
