@@ -90,7 +90,7 @@ Private Function getStruct_sub(method As String, params As String) As Collection
     Set d = New Collection
     Dim n As String, v As String
     For i = 0 To Members.Length - 1
-        Set oNodeList = Members.item(i).ChildNodes
+        Set oNodeList = Members.Item(i).ChildNodes
         If oNodeList.Length = 2 Then
             n = oNodeList(0).text '名
             v = oNodeList(1).text '値
@@ -128,7 +128,7 @@ Private Sub getStructArray_Sub(ByRef d As Collection, typeName As String, method
         Exit Sub
     End If
     For i = 0 To Members.Length - 1
-        name = Members.item(i).ChildNodes(0).text
+        name = Members.Item(i).ChildNodes(0).text
         Dim c As Collection
 '        Debug.Print "s--" & name & "(" & typeName & ")"
         Set c = getStruct("ticket." & typeName & ".get", name, "string") 'なにも得られなかった場合はnameがそのまま戻ってくる
@@ -159,8 +159,8 @@ Private Sub getStringArray_Sub(ByRef d As Collection, typeName As String, method
         Exit Sub
     End If
     For i = 0 To Members.Length - 1
-        Set item = Members.item(i)
-        name = item.text
+        Set Item = Members.Item(i)
+        name = Item.text
         d.Add name
 '        Debug.Print "-" & name & "(" & typeName & ")"
         yield
@@ -186,10 +186,10 @@ Private Sub getTicketFields(ByRef d As Collection, ByRef e As Collection, typeNa
         Dim n As String, v As String
         
         Set c = New Collection
-        Set oNodeList = Members.item(i).ChildNodes 'member
+        Set oNodeList = Members.Item(i).ChildNodes 'member
         
         For j = 0 To oNodeList.Length - 1
-            Set oNodeList2 = oNodeList.item(j).ChildNodes
+            Set oNodeList2 = oNodeList.Item(j).ChildNodes
             If oNodeList2.Length = 2 Then
                 n = oNodeList2(0).text '名
                 v = oNodeList2(1).text '値
@@ -199,8 +199,8 @@ Private Sub getTicketFields(ByRef d As Collection, ByRef e As Collection, typeNa
             yield
         Next
 '        Debug.Print "=== name=" & c.Item("name") & " label=" & c.Item("label")
-        d.Add c, c.item("name")
-        e.Add c, c.item("label")
+        d.Add c, c.Item("name")
+        e.Add c, c.Item("label")
         yield
     Next
 End Sub
@@ -217,12 +217,12 @@ Public Function createStruct(arrayMember As Collection) As String
     On Error Resume Next
     For Each name In m_fieldN
         Dim fieldName As String, value As String
-        fieldName = name.item("name")
+        fieldName = name.Item("name")
 '        If fieldName <> "id" Then
             structString = structString + _
                 "<member>" + _
                     "<name>" + fieldName + "</name>" + _
-                    "<value>" + arrayMember.item(fieldName) + "</value>" + _
+                    "<value>" + arrayMember.Item(fieldName) + "</value>" + _
                 "</member>" + vbCrLf
 '        End If
     Next
@@ -253,7 +253,7 @@ Public Function createTicket(summary As String, description As String, attribute
 '        Debug.Print params
         Set Members = getMember(funcName, params, dataType)
         For i = 0 To Members.Length - 1
-            Set oNodeList = Members.item(i).ChildNodes
+            Set oNodeList = Members.Item(i).ChildNodes
             createTicket = CLng(oNodeList(0).text)
             yield
         Next
@@ -295,7 +295,7 @@ Public Function queryTicket(query As String) As Collection
         End If
         Set Members = getMember(funcName, queryString, dataType)
         For i = 0 To Members.Length - 1
-            Set oNodeList = Members.item(i).ChildNodes
+            Set oNodeList = Members.Item(i).ChildNodes
             ticketId = oNodeList(0).text
             Set ti = getTicket(ticketId)
             queryTicket.Add ti, ticketId
@@ -340,7 +340,7 @@ Private Function getMember(method As String, params As String, tag As String) As
     Set getMember = xmlSv.responseXML.getElementsByTagName(tag)
     Exit Function
 conerr:
-    err.Raise vbObjectError + 516, , "サーバに接続できませんでした"
+    err.Raise vbObjectError + 516, , "Con not connect server"
 End Function
 
 'Responseがエラーかどうかを判断します。
@@ -353,7 +353,7 @@ Private Function checkError(xmlSv As Variant) As Boolean
     checkError = False
     If xmlSv.status <= 100 Or xmlSv.status > 200 Then
         '認証に失敗したとかHTTPにアクセスするときまでの問題の処理
-        err.Raise vbObjectError + 513, , "サーバから次のエラーが返されました．" & _
+        err.Raise vbObjectError + 513, , "Error:" & _
             xmlSv.statusText & "(" & xmlSv.status & ")"
     ElseIf Members.Length = 0 Then
         'faultが無かった場合はちゃんとXMLでレスポンスがあったか確認します．
@@ -361,17 +361,17 @@ Private Function checkError(xmlSv As Variant) As Boolean
             checkError = True
             Exit Function
         End If
-        err.Raise vbObjectError + 514, , "XMLでの応答がありませんでした"
+        err.Raise vbObjectError + 514, , "Not an XML response."
     Else
         'faultがあった場合エラーメッセージをまとめます
         Set Members = xmlSv.responseXML.getElementsByTagName("member")
         For i = 0 To Members.Length - 1
-            Set oNodeList = Members.item(i).ChildNodes
-            If oNodeList.item(0).text = "faultCode" Then
-                errorMessage = errorMessage & "Code=" & oNodeList.item(1).text
+            Set oNodeList = Members.Item(i).ChildNodes
+            If oNodeList.Item(0).text = "faultCode" Then
+                errorMessage = errorMessage & "Code=" & oNodeList.Item(1).text
             End If
-            If oNodeList.item(0).text = "faultString" Then
-                errorMessage = errorMessage & ":" & oNodeList.item(1).text
+            If oNodeList.Item(0).text = "faultString" Then
+                errorMessage = errorMessage & ":" & oNodeList.Item(1).text
             End If
             yield
         Next

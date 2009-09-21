@@ -74,6 +74,12 @@ Sub import()
     
     '平準化を無効にする．
     Application.AutoLevel = False
+    
+    If m_pj.Tasks.count > 0 Then
+        If MsgBox("Do you remove tasks?", vbYesNo) <> vbYes Then
+            Exit Sub
+        End If
+    End If
     '現在あるすべてのタスクを削除
     Do Until m_pj.Tasks.count = 0
         m_pj.Tasks(1).Delete
