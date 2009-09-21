@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = 'TracBib',
-    version = '0.1',
+    version = '0.2',
     packages = ['tracbib'],
     author = 'Roman Fenkhuber',
     author_email = 'a0401241@unet.univie.ac.at',
