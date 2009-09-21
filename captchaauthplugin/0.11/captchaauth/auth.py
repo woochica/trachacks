@@ -53,6 +53,7 @@ class AuthCaptcha(Component):
                     'newticket': [ 'TICKET_CREATE' ] }
 
     xpath = { 'ticket.html': "//div[@class='buttons']" }
+    delete = { 'ticket.html': "//div[@class='field']" }
 
     ### IRequestFilter methods
 
@@ -64,17 +65,23 @@ class AuthCaptcha(Component):
         """
 
         if req.method == 'POST':
-            
+
+            realm = self.realm(req)            
+
             # set the session data for name and email if CAPTCHA-authenticated
             if 'captchaauth' in req.args:
+                name, email = self.identify(req)
                 for field in 'name', 'email':
-                    value = req.args[field].strip()
+                    value = locals()[field]
                     if value:
                         req.session[field] = value
                 req.session.save()
-            
+                if req.authname != 'anonymous' and realm == 'newticket':
+                    req.args['author'] = name
+                    if email:
+                        req.args['author'] += ' <%s>' % email
+
             # redirect anonymous user posts that are not CAPTCHA-identified
-            realm = self.realm(req)
             if req.authname == 'anonymous' and realm in self.realms:
                 
                 if 'captchaauth' in req.args and 'captchaid' in req.args:
@@ -94,7 +101,7 @@ class AuthCaptcha(Component):
                     if AccountManager and name in AccountManager(self.env).get_users():
                         add_warning(req, '%s is already taken as by a registered user.  Please login or use a different name' % name)
 
-                
+                # redirect to previous location
                 location = req.get_header('referer')
                 if location:
                     location, query = urllib.splitquery(location)
@@ -187,6 +194,8 @@ class AuthCaptcha(Component):
             _data['captchaid'] = req.session.sid
             xpath = self.xpath[filename]
             stream |= Transformer(xpath).before(template.generate(**_data))
+            if filename in self.delete:
+                stream |= Transformer(self.delete[filename]).remove()
 
         return stream
 
