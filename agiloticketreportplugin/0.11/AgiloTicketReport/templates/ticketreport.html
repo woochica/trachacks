@@ -1,0 +1,93 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head><title>Tragilo Ticket Report</title></head>
+<body>
+<h2>${report_title} Ticket Report Result:</h2>
+<form id="genrate_ticket_report" class="addnew" action="AgiloTicketReport" method="post">
+	<fieldset>
+	<legend>Ticket Report:</legend>
+	  <div class="field">
+		<label>Start Date:(date format: '2009/8/11 9:00:00')<br />
+		<input type="text" name="start_date" />
+        </label>
+      </div>
+      <div class="field">
+        <label>End Date:(date format: '2009/8/19 18:00:00')<br />
+        <input type="text" name="end_date" />
+        </label>
+      </div>
+      
+      <div class="field">
+        <label>Sprint List</label>
+         <py:choose>
+            <li class="inlinebuttons">
+                <select id = "sprint" name="sprint" >
+                    <optgroup py:for="optgroup in sprint_backlong_list"
+                                      py:if="optgroup.options"
+                                              label="${optgroup.label}">
+                        <option py:for="option in optgroup.options"
+                                      py:content="option">
+                        </option>
+                    </optgroup>
+                </select>
+            </li>
+         </py:choose>
+       </div>     
+       <br />
+        
+       <div class="field">
+            <input type="submit" name="generate_data" value="Generate Report" />
+       </div>
+       <div class="field">
+          <input type="submit" name="generate_excel"  value="Generate Excel and Download" />
+       </div>
+            
+        <font color="#666">note: if "Start Date" and "End Date" is empty 
+                  then use selected Sprint as query condition</font>
+	</fieldset>
+</form>
+
+<form id="ticketreport" action="ticketreport" method="post">
+  <table class="listing" id="reportslist" >
+   <thead>
+    <tr>
+	 <th> Ticket ID </th>
+	 <th> Summary </th>
+	 <th> Owner </th>
+	 <th> Estimated Hours </th>
+	 <th> Real Working Hours </th>
+	</tr>
+   </thead> 
+   <py:for each="tobj in ticket_obj_list">
+    <tr>
+     <td class="name"> <a href="${href.ticket(tobj.id)}">${tobj.id}</a></td>
+     <td class="name"> ${tobj.summary} </td>
+     <td class="name"> ${tobj.owner} </td>
+     <td class="name"> ${tobj.esti_hours} </td>
+     <td class="name"> ${tobj.cost_hours} </td>
+    </tr>
+   </py:for>
+    </table>
+    
+   
+</form>
+
+
+<!-- <div id="content" class="report">
+    <h1>Backlogs list</h1>
+    <ul>
+        <xi:include href="sprint_backlog_list.html" />
+    </ul>
+</div>
+ -->
+
+
+</body>
+    </html>

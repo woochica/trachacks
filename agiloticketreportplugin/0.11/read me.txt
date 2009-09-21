@@ -1,0 +1,31 @@
+Agilo Ticket Report Plugin
+
+Install
+
+1. Download latest pyExcelerator lib and install it.
+     --- pyExcelerator is open source python excel library
+http://sourceforge.net/projects/pyexcelerator/
+
+2. Configure
+
+TicketReport\AgiloTicketReport\ticketreport.py
+line 35
+
+if you use single project
+# just left PROJECT_NAME_PREFIX empty
+  PROJECT_NAME_PREFIX = ""
+else # use multiple projects
+ for example:
+# http://[ip]:[port]/projects/[PROJECT_NAME]
+  PROJECT_NAME_PREFIX = "projects"
+
+It should find a way work around this ugly configuration, I'll try to fix it later. :)
+
+
+3. working time time set up (optional)
+TicketReport\AgiloTicketReport\gethours.py
+line 12
+start time and end time of working day, and holiday configuration
+
+
+
