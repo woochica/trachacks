@@ -7,13 +7,13 @@ setup(
     package_data = { 'AgiloTicketReport': ['templates/*.*'] },
 
     author = "Tod Jiang",
-    author_email = 'tod@cherrymind.com',
+    author_email = 'junjie.jiang@hp.com',
     maintainer = 'Tod',
-    maintainer_email = "tod@cherrymind.com",
+    maintainer_email = "junjie.jiang@hp.com",
     description = "Ticket Working Hours Report plugin for Trac with Aglio plugin.",
     license = "BSD",
     keywords = "trac agilo ticket report",
-    url = "",
+    url = "http://trac-hacks.org/wiki/AgiloTicketReportPlugin",
 	
     install_requires = ['trac >= 0.11',
 						],

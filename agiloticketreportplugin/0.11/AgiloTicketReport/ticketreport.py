@@ -31,7 +31,7 @@ if your environment is just single project like:
     http://[ip]:[port]/[PROJECT_NAME]
 PROJECT_NAME_PREFIX="" # left it empty
 '''
-PROJECT_NAME_PREFIX= "/"
+PROJECT_NAME_PREFIX= "/projects"
 __all__ = ['AgiloTicketReport']
 
 class TicketObj:
@@ -88,12 +88,15 @@ class TicketReportModule(Component):
     def render_admin_panel(self, req, cat, page, path_info):
         req.perm.assert_permission('AGILO_TICKET_REPORT')
         data = {}
-        data['sprint_backlong_list'] = self.get_backlog_list()
+        data['sprint_list'] = self.get_sprint_list()
+        data['milestone_list'] = self.get_milestone_list()
         
         if req.args.get('generate_data'):
             start_date = req.args.get("start_date")
             end_date = req.args.get("end_date")
             sprint = req.args.get("sprint")
+            milestone = req.args.get("milestone")
+            
             if start_date != "" and end_date != "":
                ##date format '2009/8/11 9:30:00' / '2009/08/30 18:00:00'
                 start_date = time.strptime(start_date, '%Y/%m/%d %H:%M:%S')
@@ -102,15 +105,20 @@ class TicketReportModule(Component):
                 t2 = time.mktime(end_date)	
                 ticket_obj_list = self.query_by_date(t1.__str__(),t2.__str__())     
                 data['report_title'] = self.format_date(t1)+ " - " +self.format_date(t2)  
-            else:
+            elif sprint != "":  
                 ticket_obj_list = self.query_by_sprint(sprint)
                 data['report_title'] = sprint
+            else:
+                ticket_obj_list = self.query_by_milestone(milestone)
+                data['report_title'] = milestone
             data['ticket_obj_list'] = ticket_obj_list
             
         if req.args.get('generate_excel'):
             start_date = req.args.get("start_date")
             end_date = req.args.get("end_date")
             sprint = req.args.get("sprint")
+            milestone = req.args.get("milestone")
+            
             if start_date != "" and end_date != "":
               ##date format '2009/8/11 9:30:00' / '2009/08/30 18:00:00'
                 start_date = time.strptime(start_date, '%Y/%m/%d %H:%M:%S')
@@ -120,15 +128,19 @@ class TicketReportModule(Component):
                 ticket_obj_list = self.query_by_date(t1.__str__(),t2.__str__())  
                 file_name = 'ticket_report_' + self.Format_date(t1) \
                 +"-"+self.Format_date(t2) + '.xls'
-            else:
+            elif sprint != "":
                 ticket_obj_list = self.query_by_sprint(sprint)
                 file_name = sprint + ".xls"
-                self.writeExcelReport(ticket_obj_list,file_name)
-    
-                # get project name path
-                # handler both windows path and linux path, windows path split tag: "\\", linux : "/"
-                project_name_path = PROJECT_NAME_PREFIX+"/"+ self.env.path.replace('\\','/').split('/')[-1]  #/           
-                req.redirect(project_name_path + "/raw-attachment/report/ticket_report/" + file_name)
+            else:
+                ticket_obj_list = self.query_by_milestone(milestone)
+                file_name = milestone + ".xls"
+                
+            file_name = file_name.replace(" ","_")
+            self.writeExcelReport(ticket_obj_list, file_name)
+            # get project name path
+            # handler both windows path and linux path, windows path split tag: "\\", linux : "/"
+            project_name_path = PROJECT_NAME_PREFIX+"/"+ self.env.path.replace('\\','/').split('/')[-1]  #/           
+            req.redirect(project_name_path + "/raw-attachment/report/ticket_report/" + file_name)
                 
         return 'ticketreport.html', data
     
@@ -137,39 +149,57 @@ class TicketReportModule(Component):
         return time.localtime(float(_date))[0].__str__()+"." \
     +time.localtime(float(_date))[1].__str__()+"."+time.localtime(float(_date))[2].__str__()
 
-    def get_backlog_list(self, db=None):
+    def get_backlog_list(self, sql, db=None):
         if not db:
             db = self.env.get_db_cnx()
         cursor = db.cursor()
-        getSprintBacklogListSQL = "select name,start,sprint_end from agilo_sprint order by sprint_end"
-        cursor.execute(getSprintBacklogListSQL)
-        closed_sprints = list()
-        running_sprints = list()
-        to_start_sprints = list()
+        cursor.execute(sql)
+        closed_backlogs = list()
+        running_backlogs = list()
         t = datetime.datetime.now()
         now = time.mktime(t.timetuple())
         
         for row in cursor.fetchall():
-            sprint_name, sprint_start, sprint_end = row
-            if now > sprint_end:
-                closed_sprints.append(sprint_name)
-            elif now >= sprint_start and now <= sprint_end:
-                running_sprints.append(sprint_name)
+            _name, _start, _end = row
+            if now > _end:
+                #handler milestone
+                if _end == 0:
+                    running_backlogs.append(_name)
+                closed_backlogs.append(_name)
+            elif now >= _start and now <= _end:
+                running_backlogs.append(_name)
             else:
-                to_start_sprints.append(sprint_name)
+                pass
+            
+        cursor.close()
                 
-        MAX_ITEMS = 5
-        sprint_list = [
+        MAX_ITEMS = 10
+        backlog_list = [
             {'label': _('Running (by Start Date)'),
-             'options': running_sprints},
-            {'label': _('To Start (by Start Date)'),
-             'options': to_start_sprints[:MAX_ITEMS]},
+             'options': running_backlogs},
             {'label': _('Closed (by End Date)'),
-             'options': closed_sprints[-MAX_ITEMS:]},
+             'options': closed_backlogs[-MAX_ITEMS:]},
         ]
-        return sprint_list
+        return backlog_list
     
-    def query_by_sprint(self, _sprint, db=None):
+    def get_milestone_list(self):
+        return self.get_backlog_list("select name,due,completed from milestone order by completed")
+    def get_sprint_list(self):
+        return self.get_backlog_list("select name,start,sprint_end from agilo_sprint order by sprint_end")
+    
+    def query_by_milestone(self, _milestone):
+        getEstimateHourSQL = "select t1.ticket, t1.oldvalue from ticket_change t1 \
+        left join ticket t on t.id =t1.ticket \
+        where t1.field = 'remaining_time' and t1.time = (select min(t2.time) \
+        from ticket_change t2 where t2.field = 'remaining_time' and t2.ticket=t1.ticket \
+        and t2.oldvalue is not null) and t.milestone='%s'" % (_milestone)
+        getStatusChangedSQL = "select tc.ticket,tc.newvalue,tc.time as time,t.owner, \
+        t.time as ctime,t.summary from ticket_change tc left join ticket t \
+        on tc.ticket=t.id where t.type='task' and tc.field = 'status' and \
+        t.milestone='%s'" % (_milestone)
+        return self.query_logic(getEstimateHourSQL, getStatusChangedSQL)
+    
+    def query_by_sprint(self, _sprint):
         getEstimateHourSQL = "select t1.ticket, t1.oldvalue from ticket_change t1 \
         where t1.field = 'remaining_time' and t1.time = (select min(t2.time) \
         from ticket_change t2 where t2.field = 'remaining_time' and t2.ticket=t1.ticket \
@@ -180,11 +210,9 @@ class TicketReportModule(Component):
         on tc.ticket=t.id where t.type='task' and tc.field = 'status' and \
         tc.ticket in (select tcm.ticket from ticket_custom tcm where tcm.value='%s') \
          order by tc.ticket,tc.time desc" % (_sprint)
-
         return self.query_logic(getEstimateHourSQL, getStatusChangedSQL)
     
     def query_by_date(self, _start_date, _end_date, db=None):
-
         getEstimateHourSQL = "select t1.ticket, t1.oldvalue from ticket_change t1 \
         where t1.field = 'remaining_time' and t1.time = (select min(t2.time) \
         from ticket_change t2 where t2.field = 'remaining_time' and t2.ticket=t1.ticket \
@@ -193,7 +221,6 @@ class TicketReportModule(Component):
         t.time as ctime,t.summary from ticket_change tc left join ticket t \
         on tc.ticket=t.id where t.type='task' and tc.field = 'status' and \
         tc.time > %s and tc.time < %s order by tc.ticket,tc.time desc" % (_start_date, _end_date)
-
         return self.query_logic(getEstimateHourSQL, getStatusChangedSQL)
 
     def query_logic(self, _est_sql, _stc_sql, db=None):
@@ -255,12 +282,6 @@ class TicketReportModule(Component):
         list.sort(lambda x,y:cmp(x.owner,y.owner))
         
         return list
-        
-
-    def reOrderList(list):
-        list.sort(lambda x,y:cmp(x.owner,y.owner))
-        return list
-    
     
     def writeExcelReport(self,list,file_name,db=None):
         if not db:

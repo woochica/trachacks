@@ -29,7 +29,8 @@
          <py:choose>
             <li class="inlinebuttons">
                 <select id = "sprint" name="sprint" >
-                    <optgroup py:for="optgroup in sprint_backlong_list"
+                    <option></option>
+                    <optgroup py:for="optgroup in sprint_list"
                                       py:if="optgroup.options"
                                               label="${optgroup.label}">
                         <option py:for="option in optgroup.options"
@@ -41,6 +42,25 @@
          </py:choose>
        </div>     
        <br />
+    
+        <div class="field">
+          <label>Milestone List</label>
+           <py:choose>
+              <li class="inlinebuttons">
+                  <select id = "milestone" name="milestone" >
+                      <option></option>
+                      <optgroup py:for="optgroup in milestone_list"
+                                        py:if="optgroup.options"
+                                                label="${optgroup.label}">
+                          <option py:for="option in optgroup.options"
+                                        py:content="option">
+                          </option>
+                      </optgroup>
+                  </select>
+              </li>
+           </py:choose>
+         </div>     
+         <br />
         
        <div class="field">
             <input type="submit" name="generate_data" value="Generate Report" />
