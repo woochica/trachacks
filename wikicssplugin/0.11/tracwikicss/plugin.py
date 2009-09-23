@@ -49,7 +49,7 @@ class WikiCssPlugin (Component):
             content = cursor.fetchone()
             if not content:
                 raise Exception("WikiCss: Configured wiki page '%s' doesn't exits." % self.wikipage)
-            if isinstance(content,tuple):
+            while isinstance(content,tuple) or isinstance(content,list):
                 content = content[0]
             req.send(to_unicode(content), content_type='text/css', status=200)
         except RequestDone:
