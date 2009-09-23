@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.4.1'
+version='0.5'
 
 setup(name='CaptchaAuth',
       version=version,
@@ -15,15 +15,19 @@ setup(name='CaptchaAuth',
       zip_safe=False,
       install_requires=[
         'skimpygimpy',
-        'TracSQLHelper'
+        'TracAccountManager',
+        'TracSQLHelper',
+        'ComponentDependencyPlugin',
         ],
       dependency_links=[
         "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
+        "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
         ],
       entry_points = """
       [trac.plugins]
       registration_captcha = captchaauth.register
       auth_captcha = captchaauth.auth
+      image_captcha = captchaauth.web_ui
       """,
       )
 

@@ -1,9 +1,11 @@
 """
-A quick and dirty captcha for use with AccountManagerPlugin
+A quick and dirty captcha for use with AccountManagerPlugin registration
 """
 # Plugin for trac 0.11
 
-import sys
+from acct_mgr.web_ui import RegistrationModule
+
+from componentdependencies import IRequireComponents
 
 from genshi.builder import Markup
 from genshi.builder import tag
@@ -11,19 +13,20 @@ from genshi.filters.transform import Transformer
 
 from skimpyGimpy import skimpyAPI
 
+from trac.config import Option
 from trac.core import *
 from trac.web import IRequestFilter
 from trac.web import ITemplateStreamFilter
 from trac.web.api import IRequestHandler
 from trac.web.chrome import add_warning 
-from trac.config import Option
 
 from utils import random_word
+from web_ui import ImageCaptcha
 
 class RegistrationCaptcha(Component):
 
     ### class data
-    implements(IRequestFilter, ITemplateStreamFilter, IRequestHandler)
+    implements(IRequestFilter, ITemplateStreamFilter, IRequireComponents)
     dict_file = Option('captchaauth', 'dictionary_file',
                            default="http://java.sun.com/docs/books/tutorial/collections/interfaces/examples/dictionary.txt")
     captcha_type = Option('captchaauth', 'type',
@@ -89,32 +92,6 @@ class RegistrationCaptcha(Component):
         """
         return (template, data, content_type)
 
-    
-    ### methods for IRequestHandler
-
-    def match_request(self, req):
-        """Return whether the handler wants to process the given request."""
-        if self.captcha_type == 'png' and req.path_info.strip('/') == 'captcha.png' and 'captcha' in req.session:
-            return True
-
-
-    def process_request(self, req):
-        """Process the request. For ClearSilver, return a (template_name,
-        content_type) tuple, where `template` is the ClearSilver template to use
-        (either a `neo_cs.CS` object, or the file name of the template), and
-        `content_type` is the MIME type of the content. For Genshi, return a
-        (template_name, data, content_type) tuple, where `data` is a dictionary
-        of substitutions for the template.
-
-        For both templating systems, "text/html" is assumed if `content_type` is
-        `None`.
-
-        Note that if template processing should not occur, this method can
-        simply send the response itself and not return anything.
-        """
-        img = skimpyAPI.Png(req.session['captcha'], scale=2.2).data()
-        req.send(img, 'image/png')
-
 
     ### ITemplateStreamFilter method
 
@@ -140,19 +117,15 @@ class RegistrationCaptcha(Component):
             if self.captcha_type == 'png':
                 captcha = '<img src="%s"/>' % req.href('captcha.png')
             else:
-                captcha = self.skimpy_pre_captcha(word)
+                captcha = skimpyAPI.Pre(word).data()
             content = "<p>%s</p><p>%s</p>" % (msg, captcha)
             content += '<label>Confirm: <input type="text" name="captcha" class="textwidget" size="20"/></label>'
             stream |= Transformer('//form[@id="%s"]/fieldset[1]' % form_id).append(tag.div(Markup(content)))
 
         return stream
 
+    ### method for IRequireComponents
 
-    ### internal methods
-
-    def skimpy_pre_captcha(self, passphrase):
-        """ Return HTML content of captcha as string """
-        return skimpyAPI.Pre(passphrase).data()
-                                       
-    def skimpy_png_captcha(self, passphrase):
-        pass
+    def requires(self):
+        """list of component classes that this component depends on"""
+        return [ImageCaptcha, RegistrationModule]

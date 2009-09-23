@@ -1,9 +1,16 @@
+"""
+plugin for Trac to give anonymous users authenticated access
+using a CAPTCHA
+"""
+
 # Plugin for trac 0.11
 
 import random
 import sys
 import time
 import urllib
+
+from componentdependencies import IRequireComponents
 
 from genshi.builder import Markup
 from genshi.builder import tag
@@ -33,6 +40,7 @@ from tracsqlhelper import get_table
 from tracsqlhelper import insert_update
 
 from utils import random_word
+from web_ui import ImageCaptcha
 
 try: 
     from acct_mgr.api import AccountManager
@@ -42,7 +50,7 @@ except:
 class AuthCaptcha(Component):
 
     ### class data
-    implements(IRequestFilter, ITemplateStreamFilter, ITemplateProvider, IAuthenticator, IEnvironmentSetupParticipant)
+    implements(IRequestFilter, ITemplateStreamFilter, ITemplateProvider, IAuthenticator, IEnvironmentSetupParticipant, IRequireComponents)
     dict_file = Option('captchaauth', 'dictionary_file',
                            default="http://java.sun.com/docs/books/tutorial/collections/interfaces/examples/dictionary.txt")
     captcha_type = Option('captchaauth', 'type',
@@ -179,9 +187,11 @@ class AuthCaptcha(Component):
         # add the CAPTCHA to the stream
         if filename in self.xpath:
 
-            # store CAPTCHA in DB
+            # store CAPTCHA in DB and session
             word = random_word(self.dict_file)
             insert_update(self.env, 'captcha', 'id', req.session.sid, dict(word=word))
+            req.session['captcha'] = word
+            req.session.save()
 
             # render the template
             chrome = Chrome(self.env)
@@ -300,6 +310,12 @@ class AuthCaptcha(Component):
             Column('id'),
             Column('word')]
         create_table(self.env, captcha_table)
+
+    ### method for IRequireComponents
+        
+    def requires(self):
+        """list of component classes that this component depends on"""
+        return [ImageCaptcha]
 
 
     ### internal methods
