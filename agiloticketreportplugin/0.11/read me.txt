@@ -21,8 +21,13 @@ else # use multiple projects
 
 It should find a way work around this ugly configuration, I'll try to fix it later. :)
 
+3. trac.ini
+[ticket-workflow]
++ pending = new,assigned,accepted,reopened -> pending
++ pending.permissions = TICKET_MODIFY
 
-3. working time time set up (optional)
+
+4. working time time set up (optional)
 TicketReport\AgiloTicketReport\gethours.py
 line 12
 start time and end time of working day, and holiday configuration

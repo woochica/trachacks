@@ -173,12 +173,11 @@ class TicketReportModule(Component):
             
         cursor.close()
                 
-        MAX_ITEMS = 10
         backlog_list = [
             {'label': _('Running (by Start Date)'),
              'options': running_backlogs},
             {'label': _('Closed (by End Date)'),
-             'options': closed_backlogs[-MAX_ITEMS:]},
+             'options': closed_backlogs},
         ]
         return backlog_list
     
@@ -236,7 +235,6 @@ class TicketReportModule(Component):
 
         ticket = TicketObj(0,'','',0,0, False)
         instance = gethours.GetWorkingHours()
-        temp_flag = True
         temp_closed_time = 0
         temp_ctime = 0
         list = []
@@ -251,8 +249,13 @@ class TicketReportModule(Component):
                 ticket.summary = s_summary
                 if s_newvalue == 'accepted':
                     ticket.cost_hours += instance.getTotalWorkingHours(s_time, temp_closed_time)
-                    temp_flag = False
-                elif temp_flag and (s_newvalue == 'reopened' or s_newvalue == 'assigned'):
+                    temp_closed_time = 0
+                elif s_newvalue == 'pending':
+                    if temp_closed_time != 0:
+                        ticket.cost_hours += instance.getTotalWorkingHours(s_time, temp_closed_time)
+                    else:
+                        temp_closed_time = s_time
+                elif temp_closed_time != 0 and (s_newvalue == 'reopened' or s_newvalue == 'assigned'):
                     ticket.cost_hours += instance.getTotalWorkingHours(s_time, temp_closed_time)
                 else:
                     temp_closed_time = s_time
@@ -270,7 +273,6 @@ class TicketReportModule(Component):
                         
                     ticket.cost_hours = 0
                     temp_closed_time=0
-                    temp_flag = True
                 
                 ticket.id = s_ticket
                 if s_newvalue == 'closed':
