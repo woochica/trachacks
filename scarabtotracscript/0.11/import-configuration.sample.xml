@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <common>
+        <trac-xmlrpc-url>http://user:password@trac-host/projects/trac-project/login/xmlrpc</trac-xmlrpc-url>
+        <scarab-attachments-path>/srv/scarab/attch_scarab</scarab-attachments-path>
+    </common>
+
+    <users-map>
+        <user id-scarab="scarab-user-A" id-trac="trac-userA" />
+        <user id-scarab="scarab-user-A" id-trac="trac-userB" />
+    </users-map>
+
+    <global-attributes-map>
+        <attribute id-scarab="Para" id-trac="owner" />
+        <attribute id-scarab="CC" id-trac="cc" />
+        <attribute id-scarab="Fix version" id-trac="version" />
+        <attribute id-scarab="Caso de Test" id-trac="summary">
+            <transformation>$ticket.summary [Issue Scarab $ticket.id]</transformation>
+        </attribute>
+    </global-attributes-map>
+
+    <scarab-artifact type="Reporte Error QA" ticket-type="Defecto">
+        <attributes-map>
+        </attributes-map>
+
+        <additional-attributes>
+            <attribute id="milestone">importado</attribute>
+            <attribute id="description">
+                Ticket importado desde Scarab, ID = ${ticket.id}
+                {% if "descripcion_scarab" in ticket %}${ticket.descripcion_scarab}{% end %}
+                {% if "log" in ticket %}Log:
+                   ${ticket.log}
+                {% end %}
+                {% if "observaciones_comentarios_mejoras" in ticket %}Observaciones, comentarios y mejoras:
+                   $ticket.observaciones_comentarios_mejoras
+                {% end %}
+            </attribute>
+        </additional-attributes>
+    </scarab-artifact>
+
+    <scarab-artifact type="Tarea" ticket-type="Tarea">
+        <attributes-map>
+        </attributes-map>
+
+        <additional-attributes>
+            <attribute id="milestone">importado</attribute>
+            <attribute id="description">
+                Ticket importado desde Scarab: 
+                   $ticket.id
+                {% if "descripcion_scarab" in ticket %}${ticket.descripcion_scarab}{% end %}
+            </attribute>
+        </additional-attributes>
+    </scarab-artifact>
+
+    <status-map>
+        <status id-scarab="Abierto" id-trac="new" />
+        <status id-scarab='Resuelto' id-trac='closed' />
+        <status id-scarab='Asignado' id-trac='assigned' />
+        <status id-scarab='Nuevo' id-trac='new' />
+    </status-map>
+</configuration>
