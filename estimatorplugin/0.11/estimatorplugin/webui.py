@@ -49,6 +49,15 @@ def convertfloat(x):
         pass
     return 0.0
 
+def isint(t):
+    try:
+        int(t)
+        return True
+    except:
+        return False
+
+def intlist( x ):
+    return [int(t.strip()) for t in x.split(',') if isint(t.strip())]
 
 class EstimationsPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
@@ -130,7 +139,7 @@ class EstimationsPage(Component):
             estimate_rs = getEstimateResultSet(self.env, id)
             tickets = estimate_rs.value('tickets', 0)
             old_text = estimate_rs.value('diffcomment', 0)
-            tickets = [int(t.strip()) for t in tickets.split(',')]
+            tickets = intlist(tickets)
             self.log.debug('About to render the diffs for tickets: %s ' % (tickets, ))
             comment = """{{{
 #!html
@@ -154,7 +163,7 @@ class EstimationsPage(Component):
     def notify_new_tickets(self, req, id, tickets, addMessage):
         try:
             tag = "[[Estimate(%s)]]" % id
-            tickets = [int(t.strip()) for t in tickets.split(',')]
+            tickets = intlist(tickets)
             for t in tickets:
                 ticket = Ticket (self.env, t)
                 if ticket['description'].find (tag) == -1:
