@@ -39,6 +39,16 @@ from trac.web.api import ITemplateStreamFilter
 #         return stream
 
 
+def convertfloat(x):
+    "some european countries use , as the decimal separator, never return not a float (0 will be returned if its a bad value)"
+    x = str(x).strip()
+    try:
+        if len(x) > 0:
+            return float(x.replace(',','.'))
+    except:
+        pass
+    return 0.0
+
 
 class EstimationsPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
@@ -189,6 +199,7 @@ class EstimationsPage(Component):
             lineItems = self.line_item_hash_from_args(args).items()
             lineItems.sort()
             for item in lineItems:
+                desc, low, high = (item[1]['description'], convertfloat(item[1]['low']), convertfloat(item[1]['high']))
                 itemId = item[0]
                 if int(itemId) < 400000000:# new ids on the HTML are this number and above
                     ids.append(str(itemId))
@@ -197,11 +208,7 @@ class EstimationsPage(Component):
                     itemId = newLineItemId
                     newLineItemId += 1
                     sql = lineItemInsert
-                itemargs = [id,
-                            item[1]['description'],
-                            item[1]['low'],
-                            item[1]['high'],
-                            itemId]
+                itemargs = [id, desc, low, high, itemId]
                 saveLineItems.append((sql, itemargs))
 
             sql = removeLineItemsNotInListSql % ','.join(ids)
