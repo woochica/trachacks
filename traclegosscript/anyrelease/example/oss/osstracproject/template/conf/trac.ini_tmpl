@@ -99,7 +99,7 @@ group_blacklist = anonymous, authenticated
 
 [project]
 admin = 
-descr = Trac - ${description}
+descr = ${description}
 footer = ${footer}
 icon = ${favicon}
 name = ${project}
