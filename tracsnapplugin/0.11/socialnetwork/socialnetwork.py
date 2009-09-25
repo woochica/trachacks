@@ -192,7 +192,7 @@ class SocialNetworkPlugin(Component):
 			determine_relations(self, repo)
 
 			# Make a social recommendation
-			rec = make_recommendation_box(self, req)
+			rec = make_recommendation_box(self, req.authname, req.basepath)
 
 			# Get the files recently edited by this user
 			recent = get_recent_files(self, req.authname, req.base_path)

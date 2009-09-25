@@ -139,8 +139,10 @@ def determine_relations(self, repo):
 	for person1, person2 in cursor:
 
 		# Keep the people in alphabetical order
-		people = (person1, person2)
-		people.sort()
+		if person1 < person2:
+			people = (person1, person2)
+		else:
+			people = (person2, person1)
 		
 		if people not in social_dict:
 			social_dict[people] = 1	
@@ -163,8 +165,10 @@ def determine_relations(self, repo):
 	for person1, person2 in cursor:
 
 		# Keep the people in alphabetical order
-		people = (person1, person2)
-		people.sort()		
+		if person1 < person2:
+			people = (person1, person2)
+		else:
+			people = (person2, person1)	
 		
 		if people not in social_dict:
 			social_dict[people] = 1	

@@ -1,22 +1,26 @@
 # Sarah Strong.  sarah.e.strong@gmail.com
 
 from genshi import HTML
+from operator import itemgetter
+from heapq import nlargest
 
-def make_recommendation_box(self, req):
+def make_recommendation_box(self, username, basepath):
 
 	html = ""
 
-	contact = get_suggested_contact(self,req)
-	
-	username = req.authname
+	contact = get_suggested_contact(self, username)
+
 	if username == "anonymous":
 		html +=	"<h2>Please log in to view suggested contacts</h2>"
 
 	elif contact is None:
 		html += "<h2>You have no suggested contacts.</h2><br />Try committing changes to the repository to see suggestions."
 	else:
-	# Right now this is a pile of absurdity. We really need to find out if
-	# trac and vc logins are typically linked to email addresses so we can identify people
+	 	# Right now this is a pile of absurdity. We really need to find out if
+	 	# trac and vc logins are typically linked to email addresses so we can identify people
+		contactlink = '<a href="' + basepath + \
+				'/sn_linkto?linkto=' + contact.name + \
+			 	'">' + contact.name + "</a>"
 		html += '''<h2>Have you spoken to...</h2>
 			<div style="padding:10px">
 				<h3>%s?</h3>
@@ -24,9 +28,10 @@ def make_recommendation_box(self, req):
 				<h4>Why?</h4>
 				<p>%s is an expert on these files you've been working on:</p>
 				<ul>
-			''' % (contact.name, contact.name, contact.name, contact.name)
+			''' % (contactlink, contact.name, contact.name, contact.name)
 		for file in contact.get_top_common_files(4):
-			html += '<li>' + file + '</li>'
+			html += '<li><a href="' + basepath + '/browser/' + file + '">' + \
+				file + '</a></li>'
 		html += '''
 				</ul>
 			</div>
@@ -37,7 +42,7 @@ def make_recommendation_box(self, req):
 
 
 
-def get_suggested_contact(self, req):
+def get_suggested_contact(self, username):
 	'''
 	Chooses the recommended colleague to display in the social networking tab
 	First pass logic: Recommend colleague with most expertise in the files you committed last.
@@ -47,7 +52,7 @@ def get_suggested_contact(self, req):
 
 
 	# We only give suggestions to logged in users
-	username = req.authname
+
 	if username == 'anonymous':
 		suggested_contact = None
 
@@ -103,7 +108,6 @@ class Author():
 		self.total_strength += strength
 
 	def get_top_common_files(self, num=1):
-		# max_files = list of (file, strength) tuples sort in non-increasing order
-		max_files = sorted(self.files.items(), key=lambda (k,v): (v,k), reverse=True)
-		#return max_files[0:num]
-		return self.files
+		records = nlargest(num, self.files.iteritems(), itemgetter(1))
+		return map(itemgetter(0), records)
+			
