@@ -15,6 +15,7 @@ import trac.ticket.query as query
 from trac.ticket.api import TicketSystem
 from trac.ticket.notification import TicketNotifyEmail
 from trac.ticket.web_ui import TicketModule
+from trac.web.chrome import add_warning
 from trac.util.datefmt import to_datetime, to_timestamp, utc
 
 import genshi
@@ -188,8 +189,7 @@ class TicketRPC(Component):
             req.args['ts'] = str(t.time_changed) # collision hack...
             changes, problems = tm.get_ticket_changes(req, t, action)
             for warning in problems:
-                req.add_warning("Rpc ticket.update: %(warning)s",
-                                    warning=warning)
+                add_warning(req, "Rpc ticket.update: %s" % warning)
             valid = problems and False or tm._validate_ticket(req, t)
             if not valid:
                 raise TracError(
