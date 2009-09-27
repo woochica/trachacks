@@ -59,7 +59,7 @@ Public Function importClosedTickets(row As Integer, pre As String, dStart As Str
             row = row + 1
             work = ""
             work = t.Item("description")
-            work = Replace(work, "[[BR]]", vbCrLf)
+            work = replace(work, "[[BR]]", vbCrLf)
             s.Cells(row, 3).value = work
             row = row + 1
             no = no + 1
@@ -92,7 +92,7 @@ Public Function importWorkingTickets(row As Integer, pre As String, dReport As S
             row = row + 1
             work = ""
             work = t.Item("description")
-            work = Replace(work, "[[BR]]", vbCrLf)
+            work = replace(work, "[[BR]]", vbCrLf)
             s.Cells(row, 3).value = work
             row = row + 1
             no = no + 1
@@ -125,7 +125,7 @@ Public Function importDueAssignTickets(row As Integer, pre As String, dReport As
             row = row + 1
             work = ""
             work = t.Item("description")
-            work = Replace(work, "[[BR]]", vbCrLf)
+            work = replace(work, "[[BR]]", vbCrLf)
             s.Cells(row, 3).value = work
             row = row + 1
             no = no + 1

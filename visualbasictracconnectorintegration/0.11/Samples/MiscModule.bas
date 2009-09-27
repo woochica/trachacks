@@ -47,8 +47,8 @@ End Sub
 Sub setValidationString(r As Range, v As String)
     Dim work As String
     work = v
-    work = Replace(work, ",", "ÅC")
-    work = Replace(work, " ", ",")
+    work = replace(work, ",", "ÅC")
+    work = replace(work, " ", ",")
     With r.Validation
         .Delete
         .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _

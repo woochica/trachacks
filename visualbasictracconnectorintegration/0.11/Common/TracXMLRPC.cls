@@ -457,3 +457,91 @@ End Property
 Private Sub yield()
     DoEvents
 End Sub
+
+Public Function putAttachment(id As Long, path As String, fileName As String, description As String) As String
+    Dim n As Long, base64 As String, fileSize As Long
+    n = FreeFile
+    fileSize = FileLen(path)
+    Dim buf() As Byte
+    ReDim buf(Int((fileSize + 2) / 3) * 3)
+    Open path For Binary As #n
+        Get #n, , buf
+    Close #n
+    
+    putAttachment = putAttachment_sub(id, fileName, description, encodeBase64(buf, fileSize))
+End Function
+
+Public Function putAttachment_sub(id As Long, fileName As String, description As String, data As String) As String
+    Dim funcName As String, params As String, dataType As String
+    Dim ret As Collection
+    funcName = "ticket.update"
+    params = _
+            "<param><value><i4>" & id & "</i4></value></param>" & vbCrLf & _
+            "<param><value><string>" & fileName & "</string></value></param>" & vbCrLf & _
+            "<param><value><string>" & description & "</string></value></param>" & vbCrLf & _
+            "<param><value><base64>" & data & "</base64></value></param>" & vbCrLf & _
+            "<param><value><boolean>1</boolean></value></param>"
+'    Debug.Print params
+    Set Members = getMember("ticket.putAttachment", params, "string")
+    If Members Is Nothing Then
+        Exit Function
+    End If
+    If Members.Length = 0 Then
+        Exit Function
+    End If
+    For i = 0 To Members.Length - 1
+        Set Item = Members.Item(i)
+        putAttachment_sub = Item.text
+'        d.Add name
+'        Debug.Print "-" & name & "(" & typeName & ")"
+        yield
+    Next
+End Function
+
+Private Function encodeBase64Byte(d As Long) As Long
+    If d < 26 Then
+        encodeBase64Byte = Asc("A") + d
+    ElseIf d < 52 Then
+        encodeBase64Byte = Asc("a") + (d - 26)
+    ElseIf d < 62 Then
+        encodeBase64Byte = Asc("0") + (d - 52)
+    ElseIf d < 63 Then
+        encodeBase64Byte = Asc("+")
+    ElseIf d < 64 Then
+        encodeBase64Byte = Asc("/")
+    Else
+        Debug.Print "Error"
+    End If
+End Function
+
+Private Function encodeBase64(ByRef buf() As Byte, fileSize As Long) As String
+    Debug.Print UBound(buf)
+    encodeBase64 = ""
+    Dim pos As Long
+    For pos = 0 To UBound(buf) - 1 Step 3
+        Dim l As Long, l2 As Long
+        Dim d(4) As Long
+        Dim e(4) As Long
+        l = (buf(pos)) * (2 ^ 16) + (buf(pos + 1)) * (2 ^ 8) + (buf(pos + 2))
+        d(1) = CLng((l And (63 * 2 ^ 18)) / (2 ^ 18))
+        d(2) = CLng((l And (63 * 2 ^ 12)) / (2 ^ 12))
+        d(3) = CLng((l And (63 * 2 ^ 6)) / (2 ^ 6))
+        d(4) = CLng((l And 63) And 63)
+        e(1) = encodeBase64Byte(d(1))
+        e(2) = encodeBase64Byte(d(2))
+        e(3) = encodeBase64Byte(d(3))
+        e(4) = encodeBase64Byte(d(4))
+'        l2 = d(1) * (2 ^ 18) + d(2) * (2 ^ 12) + d(3) * (2 ^ 6) + d(4)
+'        Debug.Print Hex(buf(pos)) + Hex(buf(pos + 1)) + Hex(buf(pos + 2)) + " = " + Hex(l) + "=" + Hex(buf(pos)) + Hex(buf(pos + 1)) + Hex(buf(pos + 2)) + " = " + Hex(l2)
+'        Debug.Print Hex(d(1)) + Hex(d(2)) + Hex(d(3)) + Hex(d(4))
+        If fileSize - pos = 2 Then
+            e(4) = Asc("=")
+        ElseIf fileSize - pos = 3 Then
+            e(3) = Asc("=")
+            e(4) = Asc("=")
+        End If
+        encodeBase64 = encodeBase64 + Chr(CByte(e(1))) + Chr(CByte(e(2))) + Chr(CByte(e(3))) + Chr(CByte(e(4)))
+    Next
+End Function
+
+
