@@ -77,7 +77,7 @@ class TracDependency(Component):
          
     def post_process_request(self, req, template, data, content_type):
         # ページのアドレスは/dependency/ticket/1
-        if (req.path_info.startswith('/ticket')) and data:
+        if (req.path_info.startswith('/ticket/')) and data:
             # チケット表示ページの場合の処理
             # 依存ページへのリンクを作成し，このページで処理するには時間がかかるものは次のページで表示します
             href = req.href.dependency(req.path_info)
@@ -106,6 +106,13 @@ class TracDependency(Component):
         return stream
 
     #ITemplateProvider
+    def get_htdocs_dirs(self):
+        """Return the absolute path of a directory containing additional
+        static resources (such as images, style sheets, etc).
+        """
+        from pkg_resources import resource_filename
+        return [('static', resource_filename('tracdependency', 'htdocs'))]
+
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename('tracdependency', 'templates')]
