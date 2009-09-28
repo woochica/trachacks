@@ -29,6 +29,7 @@ from trac.web.api import IAuthenticator
 from trac.web.auth import LoginModule
 from trac.web.chrome import add_warning 
 from trac.web.chrome import Chrome
+from trac.web.chrome import INavigationContributor
 from trac.web.chrome import ITemplateProvider
 from trac.config import ListOption
 from trac.config import Option
@@ -57,6 +58,7 @@ class AuthCaptcha(Component):
                IAuthenticator, 
                IEnvironmentSetupParticipant, 
                IRequireComponents, 
+               INavigationContributor
                )
 
     dict_file = Option('captchaauth', 'dictionary_file',
@@ -294,6 +296,32 @@ class AuthCaptcha(Component):
             # log the user in
             req.environ['REMOTE_USER'] = name
             login_module._do_login(req)
+
+    ### methods for INavigationContributor
+
+    """Extension point interface for components that contribute items to the
+    navigation.
+    """
+
+    def get_active_navigation_item(self, req):
+        """This method is only called for the `IRequestHandler` processing the
+        request.
+        
+        It should return the name of the navigation item that should be
+        highlighted as active/current.
+        """
+        return None
+
+    def get_navigation_items(self, req):
+        """Should return an iterable object over the list of navigation items to
+        add, each being a tuple in the form (category, name, text).
+        """
+        if req.authname != 'anonymous' and 'captcha' in req.session:
+            return [('metanav', '_login', tag.a("Login", 
+                                               href=req.href.login())),
+                    ('metanav', '_register', tag.a("Register",
+                                                  href=req.href.register()))]
+        return []
 
     ### methods for IEnvironmentSetupParticipant
 
