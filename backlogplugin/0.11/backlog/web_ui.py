@@ -98,6 +98,13 @@ class BacklogModule(Component):
         data['backlog'] = backlog
         data['tickets'], data['tickets2'] = backlog.get_tickets()
         
+        for ticket in data['tickets'] + data['tickets2']:
+            ticket['sumdesc'] = ticket['summary']
+            if(ticket.get('description')): 
+                ticket['sumdesc'] += '\n' +  ticket['description']
+                if(len(ticket['sumdesc'])) > 250:
+                    ticket['sumdesc'] = ticket['sumdesc'][:250] + '...'
+        
         # jquery-ui stylesheet and JS
         add_stylesheet(req, 'bl/css/jquery-ui-1.7.2.custom.css')
         add_javascript(req, 'bl/js/jquery-ui-1.7.2.custom.min.js')
