@@ -197,8 +197,14 @@ class AuthCaptcha(Component):
             chrome = Chrome(self.env)
             template = chrome.load_template('captcha.html')
             _data = {}
-            # TODO: img captchas
-            _data['captcha'] = Markup(skimpyAPI.Pre(word).data())
+
+            # CAPTCHA type
+            if self.captcha_type == 'png':
+                captcha = tag.img(None, src=req.href('captcha.png'))
+            else:
+                captcha = Markup(skimpyAPI.Pre(word).data())
+
+            _data['captcha'] = captcha
             _data['email'] = req.session.get('email', '')
             _data['name'] = req.session.get('name', '')
             _data['captchaid'] = req.session.sid
