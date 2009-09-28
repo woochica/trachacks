@@ -44,13 +44,21 @@ from web_ui import ImageCaptcha
 
 try: 
     from acct_mgr.api import AccountManager
+    from acct_mgr.web_ui import RegistrationModule
 except:
     AccountManager = None
 
 class AuthCaptcha(Component):
 
     ### class data
-    implements(IRequestFilter, ITemplateStreamFilter, ITemplateProvider, IAuthenticator, IEnvironmentSetupParticipant, IRequireComponents)
+    implements(IRequestFilter, 
+               ITemplateStreamFilter, 
+               ITemplateProvider, 
+               IAuthenticator, 
+               IEnvironmentSetupParticipant, 
+               IRequireComponents, 
+               )
+
     dict_file = Option('captchaauth', 'dictionary_file',
                            default="http://java.sun.com/docs/books/tutorial/collections/interfaces/examples/dictionary.txt")
     captcha_type = Option('captchaauth', 'type',
@@ -72,9 +80,16 @@ class AuthCaptcha(Component):
         Always returns the request handler, even if unchanged.
         """
 
+        if req.method == 'GET':
+            if req.path_info.strip('/') in ['register', 'login'] and req.authname != 'anonymous':
+                login_module = LoginModule(self.env)
+                login_module._do_logout(req)
+                req.redirect(req.href(req.path_info))
+
+
         if req.method == 'POST':
 
-            realm = self.realm(req)            
+            realm = self.realm(req)
 
             # set the session data for name and email if CAPTCHA-authenticated
             if 'captchaauth' in req.args:

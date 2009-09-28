@@ -46,6 +46,7 @@ class RegistrationCaptcha(Component):
 
             if req.method == "POST":
                 correct_answer = req.session.pop('captcha', None)
+                req.session.save()
                 if req.args['captcha'].lower() != correct_answer:
                     req.session['captchaauth_message'] = "You typed the wrong word. Please try again."
                     req.session.save()
