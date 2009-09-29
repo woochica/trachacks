@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 from traclegos.db import PostgreSQL
