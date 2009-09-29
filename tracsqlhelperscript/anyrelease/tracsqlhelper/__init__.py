@@ -92,7 +92,7 @@ class SQLGetColumn(SQLHelper):
 get_column = SQLGetColumn()
 
 def get_table(env, table):
-    return get_all_dict(env, "SELECT * FROM %s", table)
+    return get_all_dict(env, "SELECT * FROM %s" % table)
 
 def create_table(env, table):
     """
