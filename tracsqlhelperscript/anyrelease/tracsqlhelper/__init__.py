@@ -126,8 +126,10 @@ def update_row_from_dict(env, table, key, value, dictionary):
     execute_non_query(env, sql)
     
 
-def insert_update(env, table, key, value, items):
-    if get_first_row(env, "SELECT * FROM %s WHERE %s=%s" % (table, key, value)):
+def insert_update(env, table, key, value, items=None):
+    if items is None:
+        items = {}
+    if get_first_row(env, "SELECT * FROM %s WHERE %s=%s" % (table, key, '%s'), value):
         update_row_from_dict(env, table, key, value, items)
     else:
         items[key] = value
