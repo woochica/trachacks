@@ -15,6 +15,8 @@ class GeoTracProject(TracProject):
              var('domain', 'domain name where this project is to be served', 
                  default='localhost'),
              ]
+    permissions = { 'anonymous': ['TAGS_VIEW'],
+                    'authenticated': ['TAGS_VIEW'], }
 
     def post(self, command, output_dir, vars):
         """
