@@ -18,6 +18,13 @@ class GeoTracProject(TracProject):
     permissions = { 'anonymous': ['TAGS_VIEW'],
                     'authenticated': ['TAGS_VIEW'], }
 
+    def pre(self, command, output_dir, vars):
+        # from OSSTracProject template
+        # TODO: figure out a way of munging this functionality
+        TracProject.pre(self, command, output_dir, vars)
+        vars['basedir'] = os.path.realpath(vars['basedir'])
+
+
     def post(self, command, output_dir, vars):
         """
         install PostGIS on the PostgreSQL db;
