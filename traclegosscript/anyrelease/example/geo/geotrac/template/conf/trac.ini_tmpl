@@ -58,6 +58,7 @@ redirect.redirect.tracredirect = disabled
 ticketdelete.web_ui.ticketdeleteplugin = enabled
 ticketsidebarprovider.example.sampleticketsidebarprovider = disabled
 ticketsidebarprovider.ticketsidebar.ticketsidebarprovider = enabled
+tractags.* = enabled
 trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
 tractoc.macro.tocmacro = enabled
