@@ -15,7 +15,9 @@ setup(
     packages = ['gridmod'],
     package_data={
         'gridmod': [
-            'htdocs/*.js'
+            'htdocs/*.js',
+            'htdocs/*.png',
+            'htdocs/*.gif'
         ]
     },
     entry_points = {
