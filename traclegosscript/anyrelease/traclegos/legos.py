@@ -221,7 +221,7 @@ class TracLegos(object):
 
         ### run pastescript templates
         for paste_template in templates.pastescript_templates:
-#            paste_template.run(command, dirname, vars)
+#            paste_template.run(command, dirname, vars) # XXX
             paste_template.write_files(command, dirname, vars)
             paste_template.post(command, dirname, vars)
             for agent, perm in paste_template.permissions.items():
