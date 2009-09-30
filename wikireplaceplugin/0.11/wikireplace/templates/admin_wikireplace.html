@@ -1,0 +1,35 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Wiki Replace</title>
+  </head>
+
+  <body>
+    <h2>Wiki Search and Replace</h2>
+
+    <form class="mod" id="modwikireplace" action="${href.admin('general','wikireplace')}" method="post">
+      <fieldset>
+        <legend>Wiki replace</legend>
+        <div class="field">
+          <label>Find:<br />
+            <input type="text" name="find" value="${find}" />
+          </label>
+        </div>
+        <div class="field">
+          <label>Replace with:<br />
+            <input type="text" name="replace" value="${replace}" />
+          </label>
+        </div>
+      </fieldset>
+      <div class="buttons">
+        <input type="hidden" name="redirect" value="${redir and '1' or '0'}" />
+        <input type="submit" name="submit" value="Apply" />
+      </div>
+    </form> 
+  </body>
+</html>

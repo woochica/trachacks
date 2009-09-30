@@ -1,0 +1,33 @@
+Notes
+=====
+
+This plugin allows you to search and replace text in wiki pages.
+
+It is based on the wikirename plugin: http://trac-hacks.org/wiki/WikiRenamePlugin.
+
+After renaming a new version of the wiki page is created with a log of the changes.
+
+You can access the page search & replace form through the Admin system. 
+
+Script
+======
+
+A script named ``trac-wikireplace`` will automatically be installed.
+
+To use it::
+
+    trac-wikireplace old-text new-text /path/to/trac/env
+
+Permissions
+===========
+
+A ``WIKI_REPLACE`` permission is available, though anyone with 
+``WIKI_ADMIN`` will also be allowed to replace in pages.
+
+Configuration
+=============
+
+To enable the plugin::
+
+    [components]
+    wikireplace.* = enabled
