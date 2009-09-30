@@ -29,8 +29,8 @@ for the JavaScript code in this page.
 // populate the list of default developers that should always be there
 function get_default_devs()
 {
-  var retval = {};
-  var devs = [];
+  var retval = new Array();
+  var devs = new Array();
 
   var devs_list=document.getElementById("cc_developers");
   for (var i=0; i<devs_list.childNodes.length; i++)
@@ -38,7 +38,12 @@ function get_default_devs()
     var d = devs_list.childNodes[i];
     if (d.title)
     {
-      devs.push(d.title);
+      var dev = new Array()
+      dev.title = d.title
+      dev.name = d.getAttribute("name")
+      dev.email = d.getAttribute("email")
+
+      devs.push(dev);
     }
   }
 
@@ -46,9 +51,11 @@ function get_default_devs()
   {
     if (devs.hasOwnProperty(i))
     {
-      retval[devs[i]] = false;  // start as unchecked
+      devs[i].selected = false;  // start as unchecked
+      retval[devs[i].title] = devs[i]
     }
   }
+
   return retval;
 }
 
@@ -56,7 +63,7 @@ function get_default_devs()
 function show_selection(e)
 {
   var thisurl = document.location.href;
-  
+
   var nurl = thisurl.split('/');
   if ( nurl.pop().indexOf('newticket') !== 0)
   {
@@ -115,21 +122,19 @@ function split_field(fieldid)
   var str = f.value;
   str = str.replace(/,\s*/g, ' ');
   str = str.replace(/\s+/g, ' ');
-  
+
   var arr = str.split(' ');
- 
+
   for (var w in arr)
   {
-    if (arr.hasOwnProperty(w))
+    if (arr.hasOwnProperty(w) && arr[w].length )
     {
-      if (arr[w].length === 0)
-      {
-        // skip emptys
-        continue;
-      }
-      retval[arr[w]] = true;
+      retval[arr[w]] = new Object();
+      retval[arr[w]].selected = true;
+      retval[arr[w]].title = arr[w];
     }
   }
+
   return retval;
 }
 
@@ -138,18 +143,28 @@ function cc_toggle(field, ckbox) {
   var name = ckbox.name;
   var checked = ckbox.checked;
   var devs = split_field(field);
-  
-  devs[name] = checked;
+
+  // we now need to create object if it doesn't exist (was removed from line manually?)
+  if (devs.hasOwnProperty(name))
+  {
+    devs[name].selected = checked;
+  }
+  else
+  {
+    devs[name] = new Object();
+    devs[name].selected = checked;
+    devs[name].title = name;
+  }
   // generate new value
 
   var activedevs = [];
   for (var d in devs) {
-    if (devs[d]) {
-      activedevs.push(d);
+    if (devs[d].selected) {
+      activedevs.push(devs[d].title);
     }
   }
   var newval = activedevs.join(', ');
-  
+
   var target = document.getElementById(field);
   if ( ! target )
   {
@@ -162,38 +177,68 @@ function cc_toggle(field, ckbox) {
 // Fill given div with CC field contents
 function split_into_checkboxes(fromid, toid) {
   var t = document.getElementById(toid);
-  
+
   var devs = split_field(fromid);
 
   for (var w in devs)
   {
-    if (devs.hasOwnProperty(w))
+    if (! devs.hasOwnProperty(w))
     {
-      var v = 'cc to ' + w;
-      t.appendChild(document.createElement('br'));
-      
-      var ck = document.createElement('input');
-      ck.setAttribute("type", "checkbox");
-      ck.setAttribute("id", "cc_" + w);
-      ck.setAttribute("name", w);
-      if (devs[w]) {
-        ck.setAttribute("checked", true );
-        ck.setAttribute("defaultChecked", true );
-      }
-      
-      ck.onclick = function () { cc_toggle(fromid, this); };
-      
-      t.appendChild(ck);
-      
-      t.appendChild(document.createTextNode(v));
+      continue;
     }
+    
+    var dev = devs[w];
+
+    var id_ck = "cc_" + w
+    var ck = document.createElement('input')
+    var lb = document.createElement('label')
+
+    ck.setAttribute("type", "checkbox");
+    ck.setAttribute("id", id_ck);
+    ck.setAttribute("name", w);
+    ck.onclick = function () { cc_toggle(fromid, this); };
+    if (dev.selected) {
+        ck.setAttribute('checked', true );
+        ck.setAttribute('defaultChecked', true );
+    }
+
+    lb.setAttribute("for", id_ck);
+    
+    // make title / mailto: link / pop-up text
+    lb.appendChild(document.createTextNode(' cc to '));
+   
+    var link;
+    if (dev.email)
+    {
+      // got email? make href
+      link = document.createElement('A');
+      link.setAttribute('href', 'mailto:' + dev.email);
+    }
+    else
+    {
+      // otherwise, plain span
+      link = document.createElement('SPAN');
+    }
+    
+    if (dev.name)
+    {
+      // if also have a name, show it on mouse-over
+      link.setAttribute("title", dev.name);
+    }
+    link.appendChild(document.createTextNode(dev.title));
+    
+    lb.appendChild(link);
+
+    t.appendChild(document.createElement('br'));
+    t.appendChild(ck);
+    t.appendChild(lb);
   }
 }
 
 // onload function. Used in both ticket window and in pop-up.
 function afterLoad()
 {
-  
+
   // guess fromid (possible values: cc, from-cc)
   var cc_field = guess_cc_field();
 
@@ -217,7 +262,7 @@ function afterLoad()
     }
 
     p = p.parentNode;
-    
+
     var ccb = document.createElement('input');
     ccb.setAttribute("type", "button");
     ccb.setAttribute("id", "ccbutton");

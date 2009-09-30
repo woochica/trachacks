@@ -14,14 +14,14 @@
   
   <body>
     <p>Select CC, then <a href="javascript:window.close();">close</a> this window.</p>
-    
+
     <div id="ccdiv">
       <!-- checkboxes will be inserted here -->
     </div>
-    
+
     <div id="cc_developers" >
       <!-- developer names will be taken from here  -->
-      <var class="cc_dev" title="$d" py:for="d in cc_developers"></var>
+      <var class="cc_dev" title="${d[0]}" name="${d[1]}" email="${d[2]}" py:for="d in cc_developers"></var>
     </div>
   </body>
 </html>

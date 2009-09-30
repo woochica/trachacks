@@ -13,7 +13,7 @@ class TicketWebUiAddon(Component):
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
-    
+
     def post_process_request(self, req, template, data, content_type):
         if re.search('ticket', req.path_info):
             add_script(req, 'cc_selector/cc_selector.js')
@@ -41,6 +41,11 @@ class TicketWebUiAddon(Component):
 
     def process_request(self, req):
         add_script(req, 'cc_selector/cc_selector.js')
-        cc_developers = PermissionSystem(self.env).get_users_with_permission('TICKET_VIEW')
+
+        cc_developer_names = PermissionSystem(self.env).get_users_with_permission('TICKET_VIEW')
+
+        all_users = self.env.get_known_users()
+        cc_developers = filter(lambda u: u[0] in cc_developer_names, all_users)
+
         data = {'cc_developers': cc_developers}
         return 'cc_selector.html', data, None
