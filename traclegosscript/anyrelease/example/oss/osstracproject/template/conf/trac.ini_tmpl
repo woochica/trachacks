@@ -47,6 +47,7 @@ trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
 tractags.* = enabled
 tractoc.macro.tocmacro = enabled
+wikirename.* = enabled
 
 [header_logo]
 alt = ${description}

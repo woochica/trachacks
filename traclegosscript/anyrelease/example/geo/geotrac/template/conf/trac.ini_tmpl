@@ -62,6 +62,7 @@ tractags.* = enabled
 trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
 tractoc.macro.tocmacro = enabled
+wikirename.* = enabled
 
 [geo]
 activeissues.label = Active Issues

@@ -33,6 +33,7 @@ setup(name='OSSTracProject',
                            'TracPermRedirect',
                            'TracTags',
                            'TracTicketDelete',
+                           'TracWikiRename',
 
                            # plugins with TOPP authors
                            'AutocompleteUsers',
@@ -61,6 +62,7 @@ setup(name='OSSTracProject',
       "http://trac-hacks.org/svn/permredirectplugin/0.11#egg=TracPermRedirect",
       "http://trac-hacks.org/svn/tagsplugin/tags/0.6#egg=TracTags",
       "http://trac-hacks.org/svn/ticketdeleteplugin/0.11#egg=TracTicketDelete",
+      "http://trac-hacks.org/svn/wikirenameplugin/0.11/#egg=TracWikiRename",
 
       # plugins with TOPP authors
       "http://trac-hacks.org/svn/autoupgradeplugin/0.11#egg=AutoUpgrade",
