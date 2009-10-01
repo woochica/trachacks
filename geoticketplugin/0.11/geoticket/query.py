@@ -14,6 +14,8 @@ from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import add_script
 from trac.web.chrome import add_warning
 from trac.web.chrome import Chrome
+from trac.wiki.api import parse_args
+from trac.wiki.macros import WikiMacroBase
 from tracsqlhelper import get_column
 
 # XXX for scary magic below
@@ -215,3 +217,33 @@ class GeospatialQuery(Component):
         return stream
 
     
+class MapTicketsMacro(WikiMacroBase):
+    """
+    TicketQuery macro but with maps
+    """
+
+    def expand_macro(self, formatter, name, content):
+        req = formatter.req
+        query_string = ''
+        argv, kwargs = parse_args(content, strict=False)
+
+        if 'order' not in kwargs:
+            kwargs['order'] = 'id'
+        if 'max' not in kwargs:
+            kwargs['max'] = '0' # unlimited by default
+
+        query_string = '&'.join(['%s=%s' % item
+                                 for item in kwargs.iteritems()])
+        query = Query.from_string(self.env, query_string)
+
+        if format == 'count':
+            cnt = query.count(req)
+            return tag.span(cnt, title='%d tickets for which %s' %
+                            (cnt, query_string), class_='query_count')
+        
+        tickets = query.execute(req)
+        tickets = [t for t in tickets 
+                   if 'TICKET_VIEW' in req.perm('ticket', t['id'])]
+        return 'foo'
+        return Chrome(self.env).render_template(
+            req, '', data, None, fragment=True)
