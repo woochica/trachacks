@@ -40,6 +40,7 @@ customfieldadmin.customfieldadmin.customfieldadminpage = disabled
 customfieldprovider.customfieldprovider.customfieldprovider = enabled
 geoticket.mail.geomailtoticket = enabled
 geoticket.query.geospatialquery = enabled
+geoticket.query.mapticketsmacro = enabled
 geoticket.regions.georegions = enabled
 geoticket.ticket.geoticket = enabled
 geoticket.web_ui.geonotifications = enabled
