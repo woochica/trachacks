@@ -3,6 +3,7 @@ import sys
 import trac.ticket.query
 
 from componentdependencies import IRequireComponents
+from genshi.builder import tag
 from genshi.builder import Markup
 from genshi.filters import Transformer
 from geoticket.regions import GeoRegions
@@ -248,9 +249,18 @@ class MapTicketsMacro(WikiMacroBase):
         geoticket = GeoTicket(self.env)
         locations = geoticket.locate_tickets(ticket_ids, req)
 
+
         if not locations:
-            return tag.div("No locations found for %s" % query_string)
-        data = dict(locations=Markup(simplejson.dumps(locations)))
+            return tag.div(tag.b('MapTickets: '), "No locations found for ", tag.i(content))
+
+        data = dict(locations=Markup(simplejson.dumps(locations)),
+                    query_href=query.get_href(req),
+                    query_string=content)
         
+        # set an id for the map
+        map_id = req.environ.setdefault('MapTicketsId', 0) + 1
+        req.environ['MapTicketsId'] = map_id
+        data['map_id'] = 'tickets-map-%d' % map_id
+
         return Chrome(self.env).render_template(
             req, 'map_tickets.html', data, None, fragment=True)
