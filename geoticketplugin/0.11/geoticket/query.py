@@ -1,6 +1,8 @@
+import simplejson
 import sys
 import trac.ticket.query
 
+from componentdependencies import IRequireComponents
 from genshi.builder import Markup
 from genshi.filters import Transformer
 from geoticket.regions import GeoRegions
@@ -8,6 +10,7 @@ from geoticket.ticket import GeolocationException
 from geoticket.ticket import GeoTicket
 from trac.config import BoolOption
 from trac.core import *
+from trac.ticket.query import Query
 from trac.web.href import Href
 from trac.web.api import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
@@ -236,14 +239,18 @@ class MapTicketsMacro(WikiMacroBase):
                                  for item in kwargs.iteritems()])
         query = Query.from_string(self.env, query_string)
 
-        if format == 'count':
-            cnt = query.count(req)
-            return tag.span(cnt, title='%d tickets for which %s' %
-                            (cnt, query_string), class_='query_count')
-        
         tickets = query.execute(req)
         tickets = [t for t in tickets 
                    if 'TICKET_VIEW' in req.perm('ticket', t['id'])]
-        return 'foo'
+        ticket_ids = [ t['id'] for t in tickets ]
+
+        # locate the tickets
+        geoticket = GeoTicket(self.env)
+        locations = geoticket.locate_tickets(ticket_ids, req)
+
+        if not locations:
+            return tag.div("No locations found for %s" % query_string)
+        data = dict(locations=Markup(simplejson.dumps(locations)))
+        
         return Chrome(self.env).render_template(
-            req, '', data, None, fragment=True)
+            req, 'map_tickets.html', data, None, fragment=True)

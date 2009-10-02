@@ -231,7 +231,7 @@ class GeoTicket(Component):
 
         # add necessary JS
         # TODO : add only the JS necessary for the page viewed
-        if template in ['ticket.html', 'query.html', 'report_view.html']:
+        if template in ['ticket.html', 'query.html', 'report_view.html', 'wiki_view.html']:
 
             # add_script doesn't use URLs, so add OpenLayers script manually
             scripts = req.chrome.setdefault('scripts', [])
@@ -371,7 +371,7 @@ class GeoTicket(Component):
 
         See the Genshi documentation for more information.
         """
-        if filename in ['ticket.html', 'query.html', 'report_view.html', 'mapdashboard.html', 'regions_admin.html']:
+        if filename in ['ticket.html', 'query.html', 'report_view.html', 'mapdashboard.html', 'regions_admin.html', 'wiki_view.html']:
 
             # XXX random E fix for minimum lattitude that somehow
             # works and I have no idea why
