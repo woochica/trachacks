@@ -1,4 +1,3 @@
-import geopy
 import simplejson
 
 from componentdependencies import IRequireComponents
