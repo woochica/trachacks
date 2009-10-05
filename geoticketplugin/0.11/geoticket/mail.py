@@ -16,14 +16,6 @@ try:
     class GeoMailToTicket(EmailToTicket):
         """create a ticket from an email with a location"""
 
-	def order(self):
-	   """Force this handler to run first."""
-	   return True
-        
-        def order(self):
-	    """Make ourselves show up first"""
-	    return True
-
         def fields(self, message, warnings, **fields):
 
             # if you don't have GeoTicket enabled, why are you using this plugin?
