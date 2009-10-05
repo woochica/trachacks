@@ -53,6 +53,7 @@ imagetrac.web_ui.imageformfilter = disabled
 imagetrac.web_ui.sidebarimage = disabled
 includemacro.macros.includemacro = enabled
 iniadmin.iniadmin.iniadminplugin = enabled
+mail2trac.ticket.replytoticket = enabled
 mail2trac.web.emailposthandler = enabled
 permredirect.filter.permredirectmodule = enabled
 redirect.redirect.tracredirect = disabled
@@ -109,6 +110,9 @@ passwords = trac:database,notification:smtp_password
 
 [logging]
 log_type = none
+
+[mail] 
+handlers = ReplyToTicket, GeoMailToTicket
 
 [mainnav]
 tickets.href = /query
