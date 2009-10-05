@@ -55,12 +55,12 @@ def mail2project(env, message):
     # get the handlers
     handlers = ExtensionPoint(IEmailHandler).extensions(env)
     _handlers = env.config.getlist('mail', 'handlers')
-    # if `[mail] handlers` not specified, use all of them unordered
-    if _handlers:
-        handler_dict = dict([(h.__class__.__name__, h)
+    if not _handlers: # default value
+        _handlers = [ 'ReplyToTicket', 'EmailToTicket' ]
+    handler_dict = dict([(h.__class__.__name__, h)
                              for h in handlers])
-        handlers = [handler_dict[h] for h in _handlers
-                    if h in handler_dict ]
+    handlers = [handler_dict[h] for h in _handlers
+                if h in handler_dict ]
 
     # handle the message
     warnings = []

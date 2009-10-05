@@ -1,17 +1,25 @@
-import base64
+"""
+Trac email handlers having to do with tickets
+"""
+
 import os
+import re
 
 from mail2trac.email2trac import EmailException
 from mail2trac.interface import IEmailHandler
 from mail2trac.utils import emailaddr2user
-from trac.attachment import Attachment
 from trac.core import *
 from trac.mimeview.api import KNOWN_MIME_TYPES
 from trac.config import Option
 from trac.perm import PermissionSystem
 from trac.ticket import Ticket
 from trac.ticket.notification import TicketNotifyEmail
-from StringIO import StringIO
+from utils import add_attachments
+from utils import get_description_and_attachments
+from utils import strip_res
+
+
+### email handlers
 
 class EmailToTicket(Component):
     """create a ticket from an email"""
@@ -33,7 +41,7 @@ class EmailToTicket(Component):
         reporter = self.reporter(message)
 
         # get the description and attachments
-        description, attachments = self.get_description_and_attachments(message)
+        description, attachments = get_description_and_attachments(message)
         if description is None:
             description = ''
         description = description.strip()
@@ -64,29 +72,8 @@ class EmailToTicket(Component):
         # create the ticket
         ticket.insert()
 
-        ctr = 1
         # add attachments to the ticket
-        for msg in attachments:
-            attachment = Attachment(self.env, 'ticket', ticket.id)
-            attachment.author = ticket['reporter']
-            attachment.description = ticket['summary']
-            payload = msg.get_payload()
-            if msg.get('Content-Transfer-Encoding') == 'base64':
-                payload = base64.b64decode(payload)
-            size = len(payload)
-            filename = msg.get_filename() or message.get('Subject')
-            if not filename:
-                filename = 'attachment-%d' % ctr
-                extensions = KNOWN_MIME_TYPES.get(message.get_content_type())
-                if extensions:
-                    filename += '.%s' % extensions[0]
-                ctr += 1
-            buffer = StringIO()
-            print >> buffer, payload
-            buffer.seek(0)
-            attachment.insert(filename, buffer, size)
-            os.chmod(attachment._get_path(), 0666)
-            # TODO : should probably chown too
+        add_attachments(self.env, ticket, attachments)
 
         # do whatever post-processing is necessary
         self.post_process(ticket)
@@ -99,40 +86,16 @@ class EmailToTicket(Component):
     ### internal methods
 
     def reporter(self, message):
-        """return the ticket reporter"""
+        """return the ticket reporter or updater"""
         user = emailaddr2user(self.env, message['from'])
         
         # check permissions
-        perm = self.env[PermissionSystem]
+        perm = PermissionSystem(self.env)
         if not perm.check_permission('TICKET_CREATE', user): # None -> 'anoymous'
             raise EmailException("%s does not have TICKET_CREATE permissions" % (user or 'anonymous'))
-
+    
         reporter = user or message['from']
         return reporter
-
-
-    def get_description_and_attachments(self, message, description=None, attachments=None):
-        if attachments is None:
-            attachments = []
-        payload = message.get_payload()
-        if isinstance(payload, basestring):
-
-            # XXX could instead use .is_multipart
-            if description is None and message.get('Content-Disposition', 'inline') == 'inline' and message.get_content_maintype() == 'text': 
-
-                description = payload.strip()
-                if message.get_content_subtype() == 'html':
-                    # markup html email
-                    description = '{{{\n#!html\n' + description + '}}}'
-            else:
-                if payload.strip() != description:
-                    attachments.append(message)
-        else:
-            for _message in payload:
-                description, _attachments = self.get_description_and_attachments(_message, description, attachments)
-
-        return description, attachments
-
 
     def fields(self, message, warnings, **fields):
 
@@ -179,11 +142,85 @@ class ContactEmailToTicket(EmailToTicket):
         don't send notification emails as they wil result in a feedback loop
         """
 
+
 class ReplyToTicket(Component):
     
+    implements(IEmailHandler)
+
     def match(self, message):
-        return False # Not implemented!
-        import pdb; pdb.set_trace()
+        return bool(self.ticket(message))
 
     def invoke(self, message, warnings):
         """reply to a ticket"""
+        ticket = self.ticket(message)
+        reporter = self.reporter(message)
+
+        # get the description and attachments
+        description, attachments = get_description_and_attachments(message)
+        if description is None:
+            description = ''
+        description = description.strip()
+        
+        # strip quotes
+        body = []
+        on_regex = re.compile('On .*, .* wrote:')
+        for line in description.splitlines():
+            line = line.strip()
+            if line.strip().startswith('>'):
+                continue
+            if on_regex.match(line):
+                continue
+            body.append(line)
+        body = '\n'.join(body)
+        body = body.strip()
+
+        # save changes to the ticket
+        ticket.save_changes(reporter, body)
+
+
+    ### internal methods
+
+    def ticket(self, message):
+        """
+        return a ticket associated with a message subject,
+        or None if not available
+        """
+
+        # get and format the subject template
+        subject_template = self.env.config.get('notification', 'ticket_subject_template')
+        prefix = self.env.config.get('notification', 'smtp_subject_prefix')
+        subject_template = subject_template.replace('$prefix', prefix).replace('$summary', 'summary').replace('$ticket.id', 'ticketid')
+        subject_template_escaped = re.escape(subject_template)
+
+        # build the regex
+        subject_re = subject_template_escaped.replace('summary', '.*').replace('ticketid', '([0-9]+)')
+
+        # get the real subject
+        subject = strip_res(message['subject'])
+        
+        # see if it matches the regex
+        match = re.match(subject_re, subject)
+        if not match:
+            return None
+
+        # get the ticket
+        ticket_id = int(match.groups()[0])
+        try:
+            ticket = Ticket(self.env, ticket_id)
+        except:
+            return None
+
+        return ticket
+
+    def reporter(self, message):
+        """return the ticket updater"""
+        user = emailaddr2user(self.env, message['from'])
+
+        # check permissions
+        perm = PermissionSystem(self.env)
+        if not perm.check_permission('TICKET_APPEND', user): # None -> 'anoymous'
+            raise EmailException("%s does not have TICKET_APPEND permissions" % (user or 'anonymous'))
+    
+        reporter = user or message['from']
+        return reporter
+
