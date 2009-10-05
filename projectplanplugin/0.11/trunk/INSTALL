@@ -1,0 +1,15 @@
+Single Project Installation (recommended):
+
+1. change into the directory where setup.py is located
+   "cd <path to setup.py>"
+2. run "python setup.py bdist_egg"
+3. copy the egg file into your projects plugin path
+   "cp dist/ProjectPlan-<ver>-<pythonver>.egg <path to the project>/plugins/"
+4. cleanup "rm -rf ProjectPlan.egg-info build"
+
+Trac Installation (for all Projects, not recommended at the moment):
+
+1. change into the directory where setup.py is located
+"cd <path to setup.py>"
+2. run "python setup.py install" with sufficent rights
+3. cleanup "rm -rf ProjectPlan.egg-info build"

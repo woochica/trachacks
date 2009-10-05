@@ -1,0 +1,25 @@
+
+/*
+  <tag class="project..."><div class="cbox0"></div>...
+ */
+
+.project_image div.version{ position:absolute; z-index:9000 }
+.project_image div.milestone{ position:absolute; z-index:9050 }
+.project_image div.ticket{ position:absolute; z-index:9100 }
+.project_image div.ticket_inner{ position:absolute; z-index:9150 }
+
+.project_image div.ticket_connect{ position:absolute; z-index:9150 }
+.project_image div.ticket_state{ position:absolute; z-index:9150 }
+.project_image div.ticket_priority{ position:absolute; z-index:9150 }
+.project_image div.ticket_owner{ position:absolute; z-index:9150 }
+
+.project_image div a {
+        position: absolute;
+        text-decoration:none;
+        border:0;
+}
+
+.project_image div a:hover {
+        border:1px solid #00F;
+        background-color:transparent;
+}

@@ -1,0 +1,48 @@
+# -*- coding: utf-8 -*-
+
+import os
+
+# http://docs.python.org/distutils/apiref.html
+from setuptools import find_packages, setup
+
+# define some names/files/pathes
+pppackagedir = u'projectplan'
+pppackage = 'projectplan'
+templatesdir = u'templates'
+htdocsdir = u'htdocs'
+htdocsubdirmapping = { u'css': u'*.css',
+		       u'images': u'*',
+		       u'js': u'*.js' }
+pptemplatesglob = [ os.path.join( templatesdir, u'*.html' ) ]
+pphtdocsglob = [ os.path.join( htdocsdir, subdir, globmap )
+		 for subdir, globmap in htdocsubdirmapping.items() ]
+pppackagedataglobs = pphtdocsglob + pptemplatesglob
+
+# create setup instance - done
+setup(
+  name = u'ProjectPlan',
+  version = u'0.60a',
+  description = u'ProjectPlanPlugin for Trac 0.11',
+  long_description = u"""
+    ProjectPlan Plugin basicaly adds the possibility for fast and
+    easy integration of different Projectmananagement visualizations
+    (those working on the Tickets and generating output like reports,
+     charts and so on).
+    The output generation does work in 3 steps:
+      1. collect the Tickets neede for the output - can be controlled by user arguments, if its allowed by the output/plugin
+      2. calculate - controlled by output, some calculations can be enabled/disabled with user arguments, depending on the output
+      3. render - generate the output, controlled by user arguments, additional arguments are output dependend
+    Additional information can be found at the Trac-Hacks Projectpage for this Plugin.
+  """,
+  author = u'makadev',
+  author_email = u'makadev at googlemail dot com',
+  url = u'http://trac-hacks.org/wiki/ProjectPlanPlugin',
+  download_url = u'http://trac-hacks.org/svn/projectplanplugin',
+  packages = [ pppackage ],
+  license = u'GPL2',
+  keywords = u'project plan visualization',
+  package_dir={ pppackage: pppackagedir },
+  package_data = { pppackage: pppackagedataglobs },
+  install_requires = ( u'Trac >=0.11, <0.12' ),
+  entry_points = { u'trac.plugins': u'projectplan = projectplan.projectplan' }
+)
