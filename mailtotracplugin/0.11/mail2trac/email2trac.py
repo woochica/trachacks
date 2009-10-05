@@ -60,7 +60,7 @@ def mail2project(env, message):
         handler_dict = dict([(h.__class__.__name__, h)
                              for h in handlers])
         handlers = [handler_dict[h] for h in _handlers
-                    if handler in handler_dict ]
+                    if h in handler_dict ]
 
     # handle the message
     warnings = []
