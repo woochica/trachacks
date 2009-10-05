@@ -20,10 +20,3 @@ class IEmailHandler(Interface):
         if the message is consumed
         warnings is a list of warnings to append to
         """
-
-    def order():
-        """
-        what order to process the IEmailHandler in.
-        higher order == higher precedence;
-        None = no precedence
-        """

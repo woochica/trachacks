@@ -52,11 +52,21 @@ def mail2project(env, message):
             raise EmailException("Email does not match Trac address: %s" % trac_address)
 
     
-    # handle the message
+    # get the handlers
     handlers = ExtensionPoint(IEmailHandler).extensions(env)
-    handlers.sort(key=lambda x: x.order(), reverse=True)
+    _handlers = env.config.getlist('mail', 'handlers')
+    # if `[mail] handlers` not specified, use all of them unordered
+    if _handlers:
+        handler_dict = dict([(h.__class__.__name__, h)
+                             for h in handlers])
+        handlers = [handler_dict[h] for h in _handlers
+                    if handler in handler_dict ]
+
+    # handle the message
     warnings = []
     for handler in handlers:
+        if not handler.match(message):
+            continue
         try:
             message = handler.invoke(message, warnings)
         except EmailException, e:

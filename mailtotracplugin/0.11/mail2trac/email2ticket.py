@@ -96,9 +96,6 @@ class EmailToTicket(Component):
             warning = """A ticket has been created but there is a problem:\n\n%s\n\nPlease edit your ticket by going here: %s""" % ('\n\n'.join([' - %s' % warning for warning in _warnings]), self.env.abs_href('ticket', ticket.id))
             warnings.append(warning)
 
-    def order(self):
-        return None
-
     ### internal methods
 
     def reporter(self, message):
