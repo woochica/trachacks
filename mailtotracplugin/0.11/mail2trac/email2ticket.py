@@ -178,3 +178,12 @@ class ContactEmailToTicket(EmailToTicket):
         """
         don't send notification emails as they wil result in a feedback loop
         """
+
+class ReplyToTicket(Component):
+    
+    def match(self, message):
+        return False # Not implemented!
+        import pdb; pdb.set_trace()
+
+    def invoke(self, message, warnings):
+        """reply to a ticket"""
