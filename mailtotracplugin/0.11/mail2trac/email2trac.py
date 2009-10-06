@@ -47,7 +47,7 @@ def mail2project(env, message):
         delivered_to = message.get('delivered-to', '').strip()
         if delivered_to:
             accept.update([email.Utils.parseaddr(delivered_to)[1]])
-        original_to = message.get('x-original-to', None).strip()
+        original_to = message.get('x-original-to', '').strip()
         if original_to:
             accept.update([original_to])
 
