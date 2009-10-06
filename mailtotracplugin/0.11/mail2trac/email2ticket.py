@@ -179,7 +179,7 @@ class ReplyToTicket(Component):
 
 
         # ticket notification
-        tn = TicketNotifyEmail(self.env)
+        tn = TicketNotifyEmail(self.env, newticket=0, ticket.time_changed)
         tn.notify(ticket)
 
 
