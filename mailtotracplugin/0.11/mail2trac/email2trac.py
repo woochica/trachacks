@@ -46,8 +46,11 @@ def mail2project(env, message):
             accept.update(cc)
         delivered_to = message.get('delivered-to', '').strip()
         if delivered_to:
-            accept = set([email.Utils.parseaddr(delivered_to)[1]])
-    
+            accept.update([email.Utils.parseaddr(delivered_to)[1]])
+        original_to = message.get('x-original-to', None).strip()
+        if original_to:
+            accept.update([original_to])
+
         if trac_address not in accept:
             raise EmailException("Email does not match Trac address: %s" % trac_address)
 
