@@ -178,6 +178,11 @@ class ReplyToTicket(Component):
         ticket.save_changes(reporter, body)
 
 
+        # ticket notification
+        tn = TicketNotifyEmail(self.env)
+        tn.notify(ticket)
+
+
     ### internal methods
 
     def ticket(self, message):
