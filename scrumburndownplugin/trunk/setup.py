@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracBurndown'
-VERSION = '1.9.1'
+VERSION = '1.9.2'
 
 setup(name=PACKAGE,
       description='Plugin to provide a dynamic burndown chart in Trac.',
