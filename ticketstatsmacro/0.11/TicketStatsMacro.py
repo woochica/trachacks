@@ -102,6 +102,7 @@ _time_intervals = dict(
 )
 _TIME_START_RE = re.compile(r'(this|last)\s*'
                             r'(second|minute|hour|day|week|month|year)$')
+_ISO_DATE_RE = re.compile(r'\d{4}-(0[1-9]|1[0-2])-([012][0-9]|3[01])')
 _time_starts = dict(
     second=lambda now: now.replace(microsecond=0),
     minute=lambda now: now.replace(microsecond=0, second=0),
@@ -141,6 +142,9 @@ def _parse_relative_time(text, tzinfo):
             else:
                 dt -= _time_intervals[start](1)
         return dt
+    match = _ISO_DATE_RE.match(text)
+    if match:
+        return datetime(int(text[:4]), int(text[5:7]), int(text[8:10]), tzinfo=tzinfo)
     return None
 # END - Stolen from trac/util/datefmt.py@8546 on trunk
 
