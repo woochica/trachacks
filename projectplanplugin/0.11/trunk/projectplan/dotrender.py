@@ -51,7 +51,7 @@ class GVCMapXGen():
 
     # build the image link
     self.imglink = env.tracreq.href( ppenv.PPConstant.cache_content_suffix,
-                                     env.cache.relCacheFile( self.imgfile ) )
+                                     env.cache.urlCacheFile( self.imgfile ) )
 
     # create cache entries
     if not self.cached:
@@ -101,14 +101,15 @@ class GVCMapXGen():
                   shell = False,
                   stdout = logfobj,
                   stderr = subprocess.STDOUT )
-        pid, exitstatus = os.waitpid( gvctx.pid, 0 )
+        exitstatus = gvctx.wait()
+        #pid, exitstatus = os.waitpid( gvctx.pid, 0 )
         if exitstatus != 0:
           # simply raise an exception with link to the logfile
           # the logfile may be still accessible as long as the cache entry is
           # not rewritten
           raise Exception( '''dot execution failed,
             logfile _may_ be still accessible at %s ''' %
-            self.env.cache.relCacheFile( self.genoefile ) )
+            self.env.cache.urlCacheFile( self.genoefile ) )
       except Exception:
         # just in case.. close logfile
         logfobj.close()

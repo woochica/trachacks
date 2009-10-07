@@ -252,6 +252,16 @@ class ppFSFileCache:
     self.dictlevel = dictlvl
     self.__createNonExisting( self.rootdir )
 
+  def urlCacheFile( self, absname, subroot=False ):
+    '''
+	  Return relative Cache File (see relCacheFile), and
+	  replace every '\' with '/'
+	'''
+    rel = self.relCacheFile( absname, subroot )
+    if rel!=None:
+      rel = rel.replace( '\\', '/' )
+    return rel
+
   def relCacheFile( self, absname, subroot=False ):
     '''
       Return the normalized, relative Path for a Path in the Cache.
