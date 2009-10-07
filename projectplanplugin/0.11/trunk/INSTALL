@@ -13,3 +13,41 @@ Trac Installation (for all Projects, not recommended at the moment):
 "cd <path to setup.py>"
 2. run "python setup.py install" with sufficent rights
 3. cleanup "rm -rf ProjectPlan.egg-info build"
+
+First Configuration:
+
+1. Setup Ticket-Custom fields
+  Add the following Ticket-Custom fields
+
+-- start --
+[ticket-custom]
+dependencies = text
+dependencies.label = Dependencies
+due_assign = text
+due_assign.label = Due to assign
+due_assign.value = DD/MM/YYYY
+due_close = text
+due_close.label = Due to close
+due_close.value = DD/MM/YYYY
+-- end --
+
+2. Basic GraphViz Configuration (needed for Networks):
+ * with WebAdmin
+   * login with administrative Rights, navigate to Admin (WebAdmin)
+   * Select the Panel ProjectPlan -> General Settings (on the left)
+   * Verify the Settings for cachepath and dot_executable
+ * or set the following options in the projects trac.ini
+-- start --
+[pp_options]
+cachepath = <full path to the cache directory>
+dot_executable = <path to graphviz binaries>\dot.exe
+-- end --
+   * restart your webserver for configuration reload
+ * Verify access and execution rights for the webserver User
+ ! cachepath should be a separate directory for each project,
+   this reduces possible cache collisions
+
+3. Color Setup:
+  * login with administrative Rights, navigate to Admin (WebAdmin)
+  * Select the Panel ProjectPlan -> Color Settings (on the left)
+  * Set HTML Color codes and apply Settings
