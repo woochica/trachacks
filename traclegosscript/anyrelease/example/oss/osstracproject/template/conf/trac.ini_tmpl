@@ -41,6 +41,7 @@ iniadmin.iniadmin.iniadminplugin = enabled
 mastertickets.* = enabled
 permredirect.filter.permredirectmodule = enabled
 redirect.redirect.tracredirect = enabled
+rssembed.* = enabled
 svnurls.svnurls.svnurls = enabled
 ticketdelete.web_ui.ticketdeleteplugin = enabled
 trac.web.auth.loginmodule = disabled

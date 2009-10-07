@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.2.1'
+version='0.2.2'
 
 setup(name='OSSTracProject',
       version=version,
@@ -14,11 +14,13 @@ setup(name='OSSTracProject',
       include_package_data=True,
       install_requires = [ 'PasteScript', 
                            'TracLegos',
+                           'feedparser', # for the RSS embed macro, http://trac-hacks.org/ticket/5943
 
                            # trac wiki macros
                            'TracIncludeMacro',
                            'TracProgressMeterMacro',
                            'TracRedirect',
+                           'TracRssEmbed',
                            'TracTocMacro',
 
                            # trac plugins
@@ -48,7 +50,8 @@ setup(name='OSSTracProject',
       # wiki macros
       "http://trac-hacks.org/svn/includemacro/0.11#egg=TracIncludeMacro",
       "http://trac-hacks.org/svn/progressmetermacro/0.11#egg=TracProgressMeterMacro",
-      "http://svn.ipd.uka.de/repos/javaparty/JP/trac/plugins/redirect-0.11#egg=TracRedirect",
+      "http://svn.ipd.uka.de/repos/javaparty/JP/trac/plugins/redirect-0.11#egg=TracRedirect", # weird place for it
+      "http://trac-hacks.org/svn/rssembedmacro/0.11#egg=TracRssEmbed",
       "http://trac-hacks.org/svn/tocmacro/0.11#egg=TracTocMacro",
 
       # plugins
