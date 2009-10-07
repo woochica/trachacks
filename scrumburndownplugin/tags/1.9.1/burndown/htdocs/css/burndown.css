@@ -1,0 +1,25 @@
+
+.burndown td, .burndown td.active { padding: 0.2em 0; }
+
+.burndown td a { width: 100%; display: block; border: 0; }
+
+.burndown a.color1 { background: #fdc; color: #a22;
+	border: 1px solid #e88;  border-bottom: 5px solid #e88; }
+.burndown a.color2 { background: #ffb; color: #880;
+	border: 1px solid #eea;  border-bottom: 5px solid #eea; }
+.burndown a.color3 { background: #fbfbfb; color: #444; 
+	border: 1px solid #ddd;  border-bottom: 5px solid #ddd; }
+.burndown a.color4 { background: #e7ffff; color: #099;
+	border: 1px solid #cee;  border-bottom: 5px solid #cee; }
+.burndown a.color5 { background: #e7eeff; color: #469;
+	border: 1px solid #cde;  border-bottom: 5px solid #cde; }
+.burndown a.color6 { background: #f0f0f0; color: #888;
+	border: 1px solid #ddd;  border-bottom: 5px solid #ddd; }
+
+.burndown a.color1:hover { background: #fdc; color: #a22 }
+.burndown a.color2:hover { background: #ffb; color: #880 }
+.burndown a.color3:hover { background: #fbfbfb; color: #444 }
+.burndown a.color4:hover { background: #e7ffff; color: #099 }
+.burndown a.color5:hover { background: #e7eeff; color: #469 }
+.burndown a.color6:hover { background: #f0f0f0; color: #888 }
+
