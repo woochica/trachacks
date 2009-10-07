@@ -266,16 +266,15 @@ class PPListOfImageSelOptions( PPListOfHTDPathSelOptions ):
   '''
   pass
 
-class PPDateFormatOption(PPSingleConOption):
+class PPDateFormatOption(PPSingleSelOption):
   '''
-    Constrained DateFormat Option
-    TODO: (should be selectable instead!)
+    Selectable DateFormat Option
   '''
-  def verifyvalue( self, value ):
+  def selectable( self ):
     '''
       Check wether the value is in the List of possible Values
     '''
-    return ( value in [ 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD.MM.YYYY' ] )
+    return [ 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD.MM.YYYY' ]
 
 class PPHTMLColorOption(PPSingleConOption):
   '''
