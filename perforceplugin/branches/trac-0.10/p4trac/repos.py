@@ -699,12 +699,15 @@ class Node(object):
             # Report the most recent change for the file
             fileInfo = self._repo._getFileInfo(self._nodePath)
             assert fileInfo is not None
-            assert fileInfo.change is not None
+            #assert fileInfo.change is not None
             return fileInfo.change
 
         else:
             # Report the most recent change for any files under the directory
             dirInfo = self._repo._getDirInfo(self._nodePath, create=True)
+            if self._nodePath.path == u'//':
+                self._repo._log.debug('   _get_change getDirInfo %d' % (self._nodePath.change))
+                return self._nodePath.change
             if dirInfo is None or dirInfo.change is None:
                 self._repo._runChanges(self._nodePath,
                                        maxChanges=1,
@@ -867,7 +870,7 @@ class P4Repository(object):
     retrieved more than once.
     """
 
-    def __init__(self, connection):
+    def __init__(self, connection, log):
         """Create a new Perforce repository object.
 
         Associated with a Perforce server via a connection that it uses to
@@ -876,6 +879,7 @@ class P4Repository(object):
         The connection must already be connected.
         """
         
+        self._log = log
         self._connection = connection
         assert self._connection.connected
 

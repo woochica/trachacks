@@ -177,7 +177,7 @@ class PerforceRepository(Repository):
         Repository.__init__(self, name, None, log)
         # The Repository object that we query for Perforce info
         from p4trac.repos import P4Repository
-        self._repos = P4Repository(connection)
+        self._repos = P4Repository(connection, log)
 
     def __del__(self):
         self.close()
@@ -513,7 +513,7 @@ class PerforceNode(Node):
     """A Perforce repository node (depot, directory or file)"""
 
     def __init__(self, nodePath, repos, log):
-        log.debug('Created PerforceNode for %r' % nodePath)
+        log.debug('Created PerforceNode for %s' % nodePath.path)
         self._log = log
         self._repos = repos
         self._nodePath = nodePath
@@ -522,7 +522,7 @@ class PerforceNode(Node):
         self.created_rev = self._node.change
         self.created_path = normalisePath(self._nodePath.path)
         self.rev = self.created_rev
-        Node.__init__(self, normalisePath(self._nodePath.path), self.rev, node_type)
+        Node.__init__(self, self.created_path, self.rev, node_type)
 
     def _get_kind(self):
         if self._node.isDirectory:
@@ -549,7 +549,7 @@ class PerforceNode(Node):
                 yield PerforceNode(node.nodePath, self._repos, self._log)
 
     def get_history(self, limit=None):
-        self._log.debug('PerforceNode.get_history(%r)' % limit)
+        self._log.debug('PerforceNode.get_history(%r %s)' % (limit, self._nodePath.fullPath))
         if self._node.isFile:
 
             # Force population of the filelog history for efficiency
@@ -650,9 +650,9 @@ class PerforceNode(Node):
             output = _P4ChangesOutputConsumer(self._repos)
 
             if self._nodePath.isRoot:
-                queryPath = '//...%s' % self._nodePath.rev
+                queryPath = '@<=%s' % self._nodePath.rev[1:]
             else:
-                queryPath = '%s/...%s' % (self._nodePath.path, self._nodePath.rev)
+                queryPath = '%s/...@<=%s' % (self._nodePath.path, self._nodePath.rev[1:])
 
             if limit is None:
                 self._repos._connection.run(
