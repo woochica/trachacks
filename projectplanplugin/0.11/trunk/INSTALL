@@ -6,24 +6,32 @@ Single Project Installation (recommended):
 3. copy the egg file into your projects plugin path
    (unix ) "cp dist/ProjectPlan-<ver>-<pythonver>.egg <path to the project>/plugins/"
    (windows) "copy dist\ProjectPlan-<ver>-<pythonver>.egg <path to the project>\plugins"
-4. cleanup build files 
+4. cleanup build files
   (unix) "rm -rf dist build ProjectPlan.egg-info"
-  (windows) "del /F /S /Q dist build ProjectPlan.egg-info" 
+  (windows) "del /F /S /Q dist build ProjectPlan.egg-info"
 
 Trac Installation (for all Projects, not recommended at the moment):
 
 1. change into the directory where setup.py is located
 "cd <path to setup.py>"
 2. run "python setup.py install" with sufficent rights
-3. cleanup build files 
+3. cleanup build files
   (unix) "rm -rf dist build ProjectPlan.egg-info"
-  (windows) "del /F /S /Q dist build ProjectPlan.egg-info" 
+  (windows) "del /F /S /Q dist build ProjectPlan.egg-info"
 
 First Configuration:
 
 1. Setup Ticket-Custom fields
-  Add the following Ticket-Custom fields
-
+  * If you arleady have Dependency, Assign/Close Date Ticket-Custom Fields
+   * you can reuse them with
+-- start --
+[pp_options]
+custom_dependency_field = <your dependency fieldname>
+custom_due_assign_field = <your assign Date fieldname>
+custom_due_close_field = <your close Date fieldname>
+-- end --
+    * this lets projectplanplugin use these configured fields
+  * If you dont have those Fields, add the following Ticket-Custom fields
 -- start --
 [ticket-custom]
 dependencies = text

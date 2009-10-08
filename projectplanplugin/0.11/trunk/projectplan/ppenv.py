@@ -537,6 +537,17 @@ class PPConfiguration():
     '''
       Initialize the Options and List of Options and load the Values (or Defaults)
     '''
+    # Ticket-Custom Field Mappings (no catid/grpid -> not for panel)
+    self.flatconf[ 'custom_dependency_field' ] = PPSingleValOption(
+      self.env, 'custom_dependency_field', u'dependencies' )
+
+    self.flatconf[ 'custom_due_assign_field' ] = PPSingleValOption(
+      self.env, 'custom_due_assign_field', u'due_assign' )
+
+    self.flatconf[ 'custom_due_close_field' ] = PPSingleValOption(
+      self.env, 'custom_due_close_field', u'due_close' )
+
+    # Basic Options
     self.flatconf[ 'cachepath' ] = PPSingleValOption(
       self.env, 'cachepath', u'/tmp/ppcache', catid='General', groupid='Cache', doc="""
       Path for File based Caching (mainly used for Image/HTML Rendering speedup).\n
@@ -544,6 +555,7 @@ class PPConfiguration():
       ! the cache root directory must be a real directory, not a link\n
       ! after changing this option you need to manualy delete the old cache
       """ )
+
     self.flatconf[ 'cachedirsize' ] = PPIntegerOption(
       self.env, 'cachedirsize', u'1', catid='General', groupid='Cache', doc="""
       Cache lookup Directory Size\n
@@ -556,19 +568,25 @@ class PPConfiguration():
       \n
       ! after changing this option you need to manualy delete the old cache
       """ )
+
     self.flatconf[ 'dotpath' ] = PPSingleValOption(
       self.env, 'dot_executable', u'/usr/bin/dot', catid='General', groupid='Renderer', doc="""
       Executable Path for the Graphiz dot Program
       """ )
+
+    # Ticket Custom Options
     self.flatconf[ 'ticketassignedf' ] = PPDateFormatOption(
-      self.env, 'due_assign.value', u'DD/MM/YYYY', section='ticket-custom', catid='General', groupid='Tickets', doc="""
+      self.env, '%s.value' % self.get( 'custom_due_assign_field' ),
+      u'DD/MM/YYYY', section='ticket-custom', catid='General', groupid='Tickets', doc="""
       DateTime Format which will be used for Calculating the Assign Date
       """ )
     self.flatconf[ 'ticketclosedf' ] = PPDateFormatOption(
-      self.env, 'due_close.value', u'DD/MM/YYYY', section='ticket-custom', catid='General', groupid='Tickets', doc="""
+      self.env, '%s.value' % self.get( 'custom_due_close_field' ),
+      u'DD/MM/YYYY', section='ticket-custom', catid='General', groupid='Tickets', doc="""
       DateTime Format which will be used for Calculating the Closing Date
       """ )
 
+    # Color/Image Options
     self.flatconf[ 'version_fillcolor' ] = PPHTMLColorOption(
       self.env, 'version_fillcolor', u'#FFFFE0', catid='Color', groupid='Non Ticket Elements', doc="""
       Version Cluster Fillcolor
@@ -602,50 +620,42 @@ class PPConfiguration():
     self.flatconf[ 'ticket_ontime_color' ] = PPHTMLColorOption(
       self.env, 'ticket_ontime_color', u'#FFFF00', catid='Color', groupid='Tickets', doc="""
         Color for: Ticket is on Time
-      """
-    )
+      """ )
 
     self.flatconf[ 'ticket_overdue_color' ] = PPHTMLColorOption(
       self.env, 'ticket_overdue_color', u'#FF0000', catid='Color', groupid='Tickets', doc="""
         Color for: Ticket is Over Due
-      """
-    )
+      """ )
 
     self.flatconf[ 'ticket_notowned_color' ] = PPHTMLColorOption(
       self.env, 'ticket_notowned_color', u'#6666FF', catid='Color', groupid='Tickets', doc="""
         Color for: Ticket is not Owned by current User
-      """
-    )
+      """ )
 
     self.flatconf[ 'ticket_owned_color' ] = PPHTMLColorOption(
       self.env, 'ticket_owned_color', u'#FF0000', catid='Color', groupid='Tickets', doc="""
         Color for: Ticket is Owned by current User
-      """
-    )
+      """ )
 
     self.flatconf[ 'ticket_ontime_image' ] = PPImageSelOption(
       self.env, 'ticket_ontime_image', u'none', catid='Image', groupid='Tickets', doc="""
         Symbol for: Ticket is on Time
-      """
-    )
+      """ )
 
     self.flatconf[ 'ticket_overdue_image' ] = PPImageSelOption(
       self.env, 'ticket_overdue_image', u'none', catid='Image', groupid='Tickets', doc="""
         Symbol for: Ticket is Over Due
-      """
-    )
+      """ )
 
     self.flatconf[ 'ticket_notowned_image' ] = PPImageSelOption(
       self.env, 'ticket_notowned_image', u'none', catid='Image', groupid='Tickets', doc="""
         Symbol for: Ticket is not Owned by current User
-      """
-    )
+      """ )
 
     self.flatconf[ 'ticket_owned_image' ] = PPImageSelOption(
       self.env, 'ticket_owned_image', u'none', catid='Image', groupid='Tickets', doc="""
         Symbol for: Ticket is Owned by current User
-      """
-    )
+      """ )
 
     self.flatconf[ 'ColorForStatusNE' ] = PPHTMLColorOption(
       self.env, 'color_for_ne_status', u'#C0C0C0', catid='Color', groupid='Status', doc="""
@@ -665,7 +675,7 @@ class PPConfiguration():
     self.listconf[ 'ColorForPriority' ] = PPPriorityColorOption(
       self.env, 'colorforpriority', self.get( 'ColorForPriorityNE' ), catid='Color', groupid='Priority', doc="""
       HTML Color for rendering Priority "%s"
-      """  )
+      """ )
 
     self.listconf[ 'ImageForStatus' ] = PPStatusImageOption(
       self.env, 'image_for_status_', u'none', catid='Image', groupid='Status', doc="""
@@ -693,19 +703,25 @@ class PPEnv():
     '''
       Initialize the Envoironment
     '''
+    # parse passed macro arguments
     args, kw = parse_args( content )
     self.macroid = str( kw.get('macroid') ) or '1';
     self.macroargs = args
     self.macrokw = kw
+    # set constants
+    self.const = PPConstant
+    # set trac environment, request
     self.tracenv = env
     self.tracreq = req
+    # load configuration items
     self.conf = PPConfiguration(env)
+    # create cache
     self.cache = ppFSFileCache( self.conf.get( 'cachepath' ),
                                 datetime.date.today().isoformat(),
                                 int(self.conf.get( 'cachedirsize' )) )
+    # initialize the cache hash value with environment settings
     self.mhash = self.cache.newHashObject()
     self.mhash.update( content )
     self.mhash.update( self.macroid )
     self.mhash.update( self.tracreq.authname )
     self.mhash.update( str( datetime.date.today() ) )
-    self.const = PPConstant

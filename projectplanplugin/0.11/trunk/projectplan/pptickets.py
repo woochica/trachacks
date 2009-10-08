@@ -251,6 +251,7 @@ class ppTSDependencies( ppTicketSetExtension ):
   '''
 
   def __init__(self,ticketset,ticketsetdata):
+    self.__tso = ticketset
     self.__ts = ticketsetdata
     self.__depmatchpattern = re.compile('[0-9]+')
 
@@ -260,10 +261,12 @@ class ppTSDependencies( ppTicketSetExtension ):
       and the field all_dependencies which holds all given Ticket IDs, written
       in the dependency field for the current Ticket.
     '''
+    depfield = self.__tso.macroenv.conf.get( 'custom_dependency_field' )
+
     for k in self.__ts:
       v = self.__ts[ k ]
       intset = set()
-      for strv in self.__depmatchpattern.findall( v.getfielddef( 'dependencies', '' ) ):
+      for strv in self.__depmatchpattern.findall( v.getfielddef( depfield, '' ) ):
         intset.add(int(strv))
       v._setextension( 'all_dependencies', intset )
       depset = set()
@@ -370,6 +373,8 @@ class ppTSDueTimes( ppTicketSetExtension ):
       no time is calculated, when both assign and close time are not given.
       (there is no dependency usage in the time calculation)
     '''
+    adatefield = self.__tso.macroenv.conf.get( 'custom_due_assign_field' )
+    cdatefield = self.__tso.macroenv.conf.get( 'custom_due_close_field' )
     adateformat = self.__tso.macroenv.conf.get( 'ticketassignedf' )
     cdateformat = self.__tso.macroenv.conf.get( 'ticketclosedf' )
     dateNow = datetime.datetime.today()
@@ -377,8 +382,8 @@ class ppTSDueTimes( ppTicketSetExtension ):
     for k in self.__ts:
       v = self.__ts[ k ]
       # set datetime values for assign/close - those can be None!
-      adateTicket = self.fieldtodatetime( v, 'due_assign', adateformat )
-      cdateTicket = self.fieldtodatetime( v, 'due_close', cdateformat )
+      adateTicket = self.fieldtodatetime( v, adatefield, adateformat )
+      cdateTicket = self.fieldtodatetime( v, cdatefield, cdateformat )
       # defaultvalue -> conf
       defworktime = 1
       if adateTicket:
@@ -529,9 +534,9 @@ class ppTSCriticalPathSimple( ppTicketSetExtension ):
     for k in self.__ts:
       v = self.__ts[ k ]
       if (not v.hasextension( 'startdate' )) or (not v.hasextension( 'finishdate' )):
-        return False
         if betickets:
           self._cleanup_start_end()
+        return False
     # pass 2. get the first nodes for topological run
     queue = []
     for k in self.__ts:
