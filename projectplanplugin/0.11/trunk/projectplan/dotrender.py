@@ -12,7 +12,7 @@ class GVCMapXGen():
        - Image for the Background
        - Client-Side Map for Image Overlay Elements
        - a log File that keeps the GV error output
-    
+
     GVCMapXGen uses the pp Filesystem Cache for caching. Check obj.cached before
     trying to write the DOT file. A cached working set still provides file and
     linknames, but theres no fileobj and no filegeneration generation.
@@ -91,8 +91,11 @@ class GVCMapXGen():
       try:
         logfobj = open( self.genoefile, 'w' )
         # execute: dot -v -Tcmapx -o fn.map -Tpng -o fn.png fn.dot >fn.log 2>&1
+        dotexec = self.config.get( 'dotpath' )
+        if os.path.isabs( dotexec ) and ( not os.path.isfile( dotexec ) ):
+          raise Exception( "DOT Executable not found" );
         gvctx = subprocess.Popen(
-                  executable = self.config.get( 'dotpath' ),
+                  executable = dotexec,
                   args = [ "-v",
                           "-Tcmapx",
                           "-o" + self.cmapxfile,
