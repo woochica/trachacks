@@ -5,6 +5,7 @@ package org.trachacks.wikieditor.service;
 
 import java.io.File;
 
+import org.trachacks.wikieditor.model.ProxySettings;
 import org.trachacks.wikieditor.model.ServerDetails;
 
 /**
@@ -29,6 +30,10 @@ public class ServiceFactory {
 	
 	public static synchronized WikiService getWikiService(ServerDetails server) {
 		return new WikiServiceImpl(server, cacheFolder);
+	}
+	
+	public static synchronized WikiService getWikiService(ServerDetails server, ProxySettings proxySettings) {
+		return new WikiServiceImpl(server, cacheFolder, proxySettings);
 	}
 }
 

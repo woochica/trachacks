@@ -15,14 +15,17 @@ import org.trachacks.wikieditor.disk.DiskCache;
 import org.trachacks.wikieditor.disk.impl.DiskCacheImpl;
 import org.trachacks.wikieditor.model.PageInfo;
 import org.trachacks.wikieditor.model.PageVersion;
+import org.trachacks.wikieditor.model.ProxySettings;
 import org.trachacks.wikieditor.model.ServerDetails;
 import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
 import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
+import org.trachacks.wikieditor.model.exception.GatewayTimeoutException;
 import org.trachacks.wikieditor.model.exception.PageNotFoundException;
 import org.trachacks.wikieditor.model.exception.PageNotModifiedException;
 import org.trachacks.wikieditor.model.exception.PageVersionNotFoundException;
 import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
+import org.trachacks.wikieditor.model.exception.ProxyAuthenticationRequiredException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
 import org.trachacks.wikieditor.rpc.WikiClient;
 import org.trachacks.wikieditor.rpc.WikiClientImpl;
@@ -44,8 +47,26 @@ public class WikiServiceImpl implements WikiService{
 		this.diskCache =new DiskCacheImpl(cacheFolder);
 	}
 	
+	public WikiServiceImpl(ServerDetails server, File cacheFolder, ProxySettings proxySettings) {
+		this.server = server;
+		this.wikiClient = new WikiClientImpl(server, proxySettings);
+		this.diskCache =new DiskCacheImpl(cacheFolder);
+	}
+	
+	/**
+	 * 
+	 */
 	public boolean testConnection(ServerDetails server) throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException {
-		return wikiClient.testConnection(server);
+		return testConnection(server, null);
+	}
+	
+	/**
+	 * 
+	 */
+	public boolean testConnection(ServerDetails server, ProxySettings proxySettings)	throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException, 
+														GatewayTimeoutException, ProxyAuthenticationRequiredException
+	{
+		return wikiClient.testConnection(server, proxySettings);
 	}
 
 

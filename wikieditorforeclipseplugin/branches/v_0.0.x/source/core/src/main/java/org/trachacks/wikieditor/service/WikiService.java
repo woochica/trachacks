@@ -8,15 +8,20 @@ import java.util.List;
 
 import org.trachacks.wikieditor.model.PageInfo;
 import org.trachacks.wikieditor.model.PageVersion;
+import org.trachacks.wikieditor.model.ProxySettings;
 import org.trachacks.wikieditor.model.ServerDetails;
 import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
 import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
+import org.trachacks.wikieditor.model.exception.GatewayTimeoutException;
 import org.trachacks.wikieditor.model.exception.PageNotFoundException;
 import org.trachacks.wikieditor.model.exception.PageNotModifiedException;
 import org.trachacks.wikieditor.model.exception.PageVersionNotFoundException;
 import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
+import org.trachacks.wikieditor.model.exception.ProxyAuthenticationRequiredException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
+
+import com.sun.jmx.remote.internal.ProxyRef;
 
 /**
  * @author ivan
@@ -25,6 +30,8 @@ import org.trachacks.wikieditor.model.exception.UnknownServerException;
 public interface WikiService {
 
 	public boolean testConnection(ServerDetails server) throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException ;
+	public boolean testConnection(ServerDetails server, ProxySettings proxySettings)	throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException, 
+														GatewayTimeoutException, ProxyAuthenticationRequiredException ;
 	
 	public String[] getPageNames();
 	@Deprecated

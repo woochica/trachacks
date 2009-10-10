@@ -10,14 +10,23 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.swing.text.html.StyleSheet.ListPainter;
 
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IPreferencesService;
+import org.osgi.service.prefs.BackingStoreException;
+import org.trachacks.wikieditor.eclipse.plugin.Activator;
 import org.trachacks.wikieditor.model.PageVersion;
+import org.trachacks.wikieditor.model.ProxySettings;
 import org.trachacks.wikieditor.model.ServerDetails;
 import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
+import org.trachacks.wikieditor.model.exception.GatewayTimeoutException;
 import org.trachacks.wikieditor.model.exception.PageNotFoundException;
 import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
+import org.trachacks.wikieditor.model.exception.ProxyAuthenticationRequiredException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
 import org.trachacks.wikieditor.service.ServiceFactory;
 import org.trachacks.wikieditor.service.WikiService;
@@ -39,7 +48,8 @@ public class Server extends AbstractBaseObject {
 	Server(ServerDetails serverDetails) {
 		super();
 		this.serverDetails = serverDetails;
-		this.wikiService = ServiceFactory.getWikiService(serverDetails);
+		ProxySettings proxySettings = getProxySettings(serverDetails);
+		this.wikiService = ServiceFactory.getWikiService(serverDetails, proxySettings);
 	}
 
 	
@@ -75,7 +85,6 @@ public class Server extends AbstractBaseObject {
 		String[] pageNames = getWikiService().getPageNames();
 		
 		this.pages = buildTree(pageNames);
-		
 	}
 	
 	private List<Page> buildTree(String[] pageNames) {
@@ -256,9 +265,24 @@ public class Server extends AbstractBaseObject {
 	 * @throws PermissionDeniedException
 	 * @see org.trachacks.wikieditor.service.WikiService#testConnection(ServerDetails)
 	 */
-	public static boolean testConnection(ServerDetails serverDetails) throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException {
-		return ServiceFactory.getWikiService(serverDetails).testConnection(serverDetails);
+	public static boolean testConnection(ServerDetails serverDetails) 
+		throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException,
+			GatewayTimeoutException, ProxyAuthenticationRequiredException
+	{
+		ProxySettings proxySettings = getProxySettings(serverDetails);
+		return ServiceFactory.getWikiService(serverDetails).testConnection(serverDetails, proxySettings);
 	}
 
-
+	
+	private static ProxySettings getProxySettings(ServerDetails serverDetails) {
+		IProxyService proxyService = Activator.getDefault().getProxyService();
+		IProxyData[] proxyData = proxyService.getProxyDataForHost(serverDetails.getUrl().getHost());
+		if(proxyData != null && proxyData.length > 0) {
+			return new ProxySettings(proxyData[0].getHost(), proxyData[0].getPort(), 
+					proxyData[0].getUserId(), proxyData[0].getPassword());
+		}
+		else {
+			return null;
+		}
+	}
 }

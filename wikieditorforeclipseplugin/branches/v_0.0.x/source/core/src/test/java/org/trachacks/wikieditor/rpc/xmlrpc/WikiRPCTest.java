@@ -41,7 +41,7 @@ public class WikiRPCTest extends AbstractBaseTest{
 		server.setUsername(getSetting("credentials.username"));
 		server.setPassword(getSetting("credentials.password"));
 		
-		client = WikiRPCClientFactory.getWikiRPCClientInstance(server);
+		client = WikiRPCClientFactory.getWikiRPCClientInstance(server, proxySettings);
 	}
 
 	/**

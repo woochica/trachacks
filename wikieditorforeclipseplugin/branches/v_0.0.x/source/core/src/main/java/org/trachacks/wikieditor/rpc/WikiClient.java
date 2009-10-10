@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.trachacks.wikieditor.model.PageInfo;
 import org.trachacks.wikieditor.model.PageVersion;
+import org.trachacks.wikieditor.model.ProxySettings;
 import org.trachacks.wikieditor.model.ServerDetails;
 import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
@@ -36,7 +37,7 @@ public interface WikiClient {
 	 * @throws BadCredentialsException
 	 * @throws PermissionDeniedException
 	 */
-	public boolean testConnection(ServerDetails server) throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException;
+	public boolean testConnection(ServerDetails server, ProxySettings proxySettings) throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException;
 	
 	public String[] getPageNames();
 	

@@ -2,9 +2,11 @@ package org.trachacks.wikieditor.eclipse.plugin;
 
 import java.io.File;
 
+import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
+import org.osgi.util.tracker.ServiceTracker;
 import org.trachacks.wikieditor.service.ServiceFactory;
 
 /**
@@ -17,6 +19,8 @@ public class Activator extends AbstractUIPlugin {
 
 	// The shared instance
 	private static Activator plugin;
+	
+	private ServiceTracker tracker;
 	
 	/**
 	 * The constructor
@@ -31,9 +35,13 @@ public class Activator extends AbstractUIPlugin {
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		plugin = this;
-		 File cacheFolder = getStateLocation().append("wiki-cache") .toFile(); //$NON-NLS-1$
-		 cacheFolder.mkdirs();
-		 ServiceFactory.setCacheFolder(cacheFolder);
+		
+        tracker = new ServiceTracker(getBundle().getBundleContext(), IProxyService.class.getName(), null);
+        tracker.open();
+
+		File cacheFolder = getStateLocation().append("wiki-cache") .toFile(); //$NON-NLS-1$
+		cacheFolder.mkdirs();
+		ServiceFactory.setCacheFolder(cacheFolder);
 	}
 
 	/*
@@ -42,8 +50,9 @@ public class Activator extends AbstractUIPlugin {
 	 */
 	public void stop(BundleContext context) throws Exception {
 		plugin = null;
-		super.stop(context);
+		tracker.close();
 		ServiceFactory.setCacheFolder(null);
+		super.stop(context);
 	}
 
 	/**
@@ -65,4 +74,9 @@ public class Activator extends AbstractUIPlugin {
 	public static ImageDescriptor getImageDescriptor(String path) {
 		return imageDescriptorFromPlugin(PLUGIN_ID, path);
 	}
+	
+    public IProxyService getProxyService() {
+		return (IProxyService) tracker.getService();
+	}
+
 }

@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.trachacks.wikieditor.model.PageInfo;
 import org.trachacks.wikieditor.model.PageVersion;
+import org.trachacks.wikieditor.model.ProxySettings;
 import org.trachacks.wikieditor.model.ServerDetails;
 import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConcurrentEditException;
@@ -41,14 +42,24 @@ public class WikiClientImpl implements WikiClient {
 	 */
 	public WikiClientImpl(ServerDetails server) {
 		super();
-		this.client = WikiRPCClientFactory.getWikiRPCClientInstance(server);
+		this.client = WikiRPCClientFactory.getWikiRPCClientInstance(server, null);
+	}
+	
+	/**
+	 * 
+	 * @param server
+	 * @param proxySettings
+	 */
+	public WikiClientImpl(ServerDetails server, ProxySettings proxySettings) {
+		super();
+		this.client = WikiRPCClientFactory.getWikiRPCClientInstance(server, proxySettings);
 	}
 
 	/**
 	 * 
 	 */
-	public boolean testConnection(ServerDetails server) throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException {
-		return WikiRPCClientFactory.testConnection(server);
+	public boolean testConnection(ServerDetails server, ProxySettings proxySettings) throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException {
+		return WikiRPCClientFactory.testConnection(server, proxySettings);
 	}
 	
 	/**
