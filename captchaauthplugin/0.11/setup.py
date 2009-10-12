@@ -12,6 +12,7 @@ setup(name='CaptchaAuth',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
+      package_data={ 'captchaauth': ['templates/*', ] },
       zip_safe=False,
       install_requires=[
         'skimpygimpy',
