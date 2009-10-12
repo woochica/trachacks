@@ -72,7 +72,7 @@ class ProtectedMacro(Component):
     "PROTECTED_VIEW", "PROTECTED_RED_VIEW", "PROTECTED_BLUE_VIEW", or
     "PROTECTED_GREEN_VIEW", respectively.
     """
-    implements(IPermissionRequestor, IWikiMacroProvider)
+    implements(IPermissionRequestor, IWikiMacroProvider, IRequestFilter)
 
     # IWikiMacroProvider
     def get_macros(self):
@@ -105,9 +105,6 @@ class ProtectedMacro(Component):
     def get_permission_actions(self):
         return [level["action"] for level in LEVELS.values()]
     
-class ProtectedFilter(Component):
-    implements(IRequestFilter)
-
     # IRequestFilter
     def pre_process_request(self, req, handler):
         action = req.args.get("action", "view")
