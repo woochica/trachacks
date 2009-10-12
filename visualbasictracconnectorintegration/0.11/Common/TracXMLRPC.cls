@@ -97,7 +97,7 @@ Private Function getStruct_sub(method As String, params As String) As Collection
             nn = oNodeList(1).ChildNodes(0).nodeName 'ノード名
             If nn = "dateTime.iso8601" Then
                 '日付でも値が入ってない場合はここに入ってこないうえに値に０が入ってる
-                v = convertDate(v) '日付を修正
+                v = convertDateStr(v) '日付を修正
             End If
             d.Add v, n 'コレクションに値を追加
 '            Debug.Print "    " & n & "=" & v
@@ -117,13 +117,13 @@ End Function
 'milestone等の情報を取得します.指定できるのは次のものです．
 '"resolution","milestone","version","component","priority","severity"
 Private Sub getStructArray(ByRef d As Collection, typeName As String)
-    getStructArray_Sub d, typeName, "ticket." & typeName & ".getAll"
+    getStructArray_Sub d, typeName, "ticket." & typeName & ".getAll", ""
 End Sub
 
-Private Sub getStructArray_Sub(ByRef d As Collection, typeName As String, method As String)
+Private Sub getStructArray_Sub(ByRef d As Collection, typeName As String, method As String, params As String)
     Dim name As String
     Set d = New Collection
-    Set Members = getMember(method, "", "string")
+    Set Members = getMember(method, params, "string")
     If Members Is Nothing Or Members.Length = 0 Then
         Exit Sub
     End If
@@ -332,7 +332,6 @@ Private Function getMember(method As String, params As String, tag As String) As
         '"fault"
     End If
     On Error GoTo 0
-'    Debug.Print xmlSv.responseText
     If checkError(xmlSv) = False Then
         Set getMember = Nothing
         Exit Function
@@ -384,7 +383,32 @@ End Function
 
 '時間を文字列の時間に変換します
 'TODO:時差は9時間を固定で入れているのでシステムの設定からとる
-Private Function convertDate(text As String) As String
+Private Function convertDateStr(text As String) As String
+'20090317T16:10:12  なので+9Hしないとだめ
+    Dim d As Date
+    If text = "0" Then '終了日が入っていない場合はなぜか０がくる
+        convertDateStr = ""
+        Exit Function
+    End If
+    If Len(text) <> 17 Then
+        '正規表現を使うのはめんどくさいので長さだけを見る
+        convertDateStr = ""
+        err.Raise vbObjectError + 515, , "Error: Date format is wrong (" & text & "). Check the XMLRPC responses．"
+        Exit Function
+    End If
+    d = DateSerial(Mid$(text, 1, 4), Mid$(text, 5, 2), Mid$(text, 7, 2))
+    d = DateAdd("h", Int(Mid$(text, 10, 2)), d)
+    d = DateAdd("n", Int(Mid$(text, 13, 2)), d)
+    d = DateAdd("s", Int(Mid$(text, 16, 2)), d)
+    
+    d = DateAdd("h", m_timeDifference, d)
+    
+    convertDateStr = Format(d, "yyyy/mm/dd h:m:s")
+End Function
+
+'時間を文字列の時間に変換します
+'TODO:時差は9時間を固定で入れているのでシステムの設定からとる
+Private Function convertDate(text As String) As Date
 '20090317T16:10:12  なので+9Hしないとだめ
     Dim d As Date
     If text = "0" Then '終了日が入っていない場合はなぜか０がくる
@@ -404,7 +428,7 @@ Private Function convertDate(text As String) As String
     
     d = DateAdd("h", m_timeDifference, d)
     
-    convertDate = Format(d, "yyyy/mm/dd")
+    convertDate = d
 End Function
 
 Public Property Get milestone() As Collection
@@ -474,7 +498,7 @@ End Function
 Public Function putAttachment_sub(id As Long, fileName As String, description As String, data As String) As String
     Dim funcName As String, params As String, dataType As String
     Dim ret As Collection
-    funcName = "ticket.update"
+    funcName = "ticket.putAttachment"
     params = _
             "<param><value><i4>" & id & "</i4></value></param>" & vbCrLf & _
             "<param><value><string>" & fileName & "</string></value></param>" & vbCrLf & _
@@ -482,7 +506,7 @@ Public Function putAttachment_sub(id As Long, fileName As String, description As
             "<param><value><base64>" & data & "</base64></value></param>" & vbCrLf & _
             "<param><value><boolean>1</boolean></value></param>"
 '    Debug.Print params
-    Set Members = getMember("ticket.putAttachment", params, "string")
+    Set Members = getMember(funcName, params, "string")
     If Members Is Nothing Then
         Exit Function
     End If
@@ -515,7 +539,6 @@ Private Function encodeBase64Byte(d As Long) As Long
 End Function
 
 Private Function encodeBase64(ByRef buf() As Byte, fileSize As Long) As String
-    Debug.Print UBound(buf)
     encodeBase64 = ""
     Dim pos As Long
     For pos = 0 To UBound(buf) - 1 Step 3
@@ -531,9 +554,6 @@ Private Function encodeBase64(ByRef buf() As Byte, fileSize As Long) As String
         e(2) = encodeBase64Byte(d(2))
         e(3) = encodeBase64Byte(d(3))
         e(4) = encodeBase64Byte(d(4))
-'        l2 = d(1) * (2 ^ 18) + d(2) * (2 ^ 12) + d(3) * (2 ^ 6) + d(4)
-'        Debug.Print Hex(buf(pos)) + Hex(buf(pos + 1)) + Hex(buf(pos + 2)) + " = " + Hex(l) + "=" + Hex(buf(pos)) + Hex(buf(pos + 1)) + Hex(buf(pos + 2)) + " = " + Hex(l2)
-'        Debug.Print Hex(d(1)) + Hex(d(2)) + Hex(d(3)) + Hex(d(4))
         If fileSize - pos = 2 Then
             e(4) = Asc("=")
         ElseIf fileSize - pos = 3 Then
@@ -541,6 +561,56 @@ Private Function encodeBase64(ByRef buf() As Byte, fileSize As Long) As String
             e(4) = Asc("=")
         End If
         encodeBase64 = encodeBase64 + Chr(CByte(e(1))) + Chr(CByte(e(2))) + Chr(CByte(e(3))) + Chr(CByte(e(4)))
+    Next
+End Function
+
+Public Function getWorkHours(id As Integer) As Collection
+    Dim funcName As String, params As String
+    funcName = "dependency.getWorkHours"
+    params = "<param><value><int>" & id & "</int></value></param>"
+    Set getWorkHours = getStructArray2(funcName, params)
+End Function
+
+Public Function executeQuery(query As String, sort As String) As Collection
+    Dim funcName As String, params As String
+    funcName = "dependency.executeQuery"
+    params = "<param><value><string>" & query & "</string></value></param>" & _
+            "<param><value><string>" & sort & "</string></value></param>"
+    Set executeQuery = getStructArray2(funcName, params)
+End Function
+
+Public Function getStructArray2(funcName As String, params As String) As Collection
+    Dim dataType As String
+    Dim ret As Collection
+    Dim t As Date
+    Set Members = getMember(funcName, params, "struct")
+    If Members Is Nothing Then
+        Exit Function
+    End If
+    If Members.Length = 0 Then
+        Exit Function
+    End If
+    Set getStructArray2 = New Collection
+    For i = 0 To Members.Length - 1
+        Dim d As Collection
+        Set oNodeList = Members.Item(i).ChildNodes
+        Set d = New Collection
+        For j = 0 To oNodeList.Length - 1
+            Set oValList = oNodeList(j).ChildNodes
+            n = oValList(0).text '値
+            v = oValList(1).text '値
+            nn = oValList(1).ChildNodes(0).nodeName 'ノード名
+            If nn = "dateTime.iso8601" Then
+                Dim s As String
+                s = v
+                v = convertDate(s) '日付を修正
+            End If
+            d.Add v, n 'コレクションに値を追加
+'            Debug.Print "    " & n & "=" & v
+        Next
+        If oNodeList.Length <> 0 Then
+            getStructArray2.Add d
+        End If
     Next
 End Function
 

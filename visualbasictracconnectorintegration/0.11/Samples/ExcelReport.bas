@@ -170,3 +170,94 @@ Sub createReport()
 End Sub
 
 
+Function createBurndown(trac As TracXMLRPC, bd As Worksheet, id As Integer, row As Integer) As Integer
+    Dim ticket As Collection
+    Set ticket = trac.getTicket("" & id)
+    '先頭の数行の情報を設定します．グラフを作るためには使用していません．
+    bd.Cells(row, 1).value = ticket.Item("ID")
+    bd.Cells(row + 1, 1).value = "計画"
+    bd.Cells(row + 1, 2).value = ticket.Item("baseline_start")
+    bd.Cells(row + 1, 3).value = ticket.Item("baseline_finish")
+    bd.Cells(row + 2, 1).value = "予定"
+    bd.Cells(row + 2, 2).value = ticket.Item("due_assign")
+    bd.Cells(row + 2, 3).value = ticket.Item("due_close")
+    bd.Cells(row + 0, 5).value = "説明"
+    bd.Cells(row + 0, 6).value = ticket.Item("summary")
+    bd.Cells(row + 1, 5).value = "見積時間"
+    bd.Cells(row + 1, 6).value = ticket.Item("estimatedhours")
+    bd.Cells(row + 2, 5).value = "基準時間"
+    bd.Cells(row + 2, 6).value = ticket.Item("baseline_cost")
+    
+    bd.Cells(row + 3, 2).value = "残"
+    bd.Cells(row + 3, 3).value = "合計"
+    bd.Cells(row + 3, 4).value = "時間"
+    bd.Cells(row + 3, 5).value = "計画"
+    bd.Cells(row + 3, 6).value = "予定"
+    bd.Cells(row + 3, 7).value = "基準"
+
+    bd.Cells(row + 4, 1).NumberFormatLocal = "m/d;@"
+    bd.Cells(row + 4, 1).value = ticket.Item("baseline_start")
+    bd.Cells(row + 4, 5).value = ticket.Item("baseline_cost")
+    bd.Cells(row + 5, 1).NumberFormatLocal = "m/d;@"
+    bd.Cells(row + 5, 1).value = ticket.Item("baseline_finish")
+    bd.Cells(row + 5, 5).value = 0
+    
+    bd.Cells(row + 6, 1).NumberFormatLocal = "m/d;@"
+    bd.Cells(row + 6, 1).value = ticket.Item("due_assign")
+    bd.Cells(row + 6, 6).value = 0
+    bd.Cells(row + 7, 1).NumberFormatLocal = "m/d;@"
+    bd.Cells(row + 7, 1).value = ticket.Item("due_assign")
+    bd.Cells(row + 7, 6).value = ticket.Item("estimatedhours")
+    
+    bd.Cells(row + 8, 1).NumberFormatLocal = "m/d;@"
+    bd.Cells(row + 8, 1).value = ticket.Item("due_close")
+    bd.Cells(row + 8, 6).value = 0
+    bd.Cells(row + 9, 1).NumberFormatLocal = "m/d;@"
+    bd.Cells(row + 9, 1).value = ticket.Item("due_close")
+    bd.Cells(row + 9, 6).value = ticket.Item("estimatedhours")
+    Dim estimatedhours As Integer
+    estimatedhours = ticket.Item("estimatedhours")
+    row = row + 10
+    Dim t As Collection
+    Set t = trac.getWorkHours(id)
+    If t.Count = 0 Then
+        Exit Function
+    End If
+    Dim date1 As Date
+    date1 = "1900/01/01"
+    bd.Cells(row, 1).FormulaR1C1 = "=R[1]C-1"
+    bd.Cells(row, 2).FormulaR1C1 = "=RC[1]"
+    bd.Cells(row, 3).FormulaR1C1 = "=R[1]C"
+    bd.Cells(row, 4).value = estimatedhours
+    bd.Cells(row, 8).value = 0
+    bd.Cells(row, 7).value = "=R[1]C"
+    row = row + 1
+    For i = 1 To t.Count
+        Dim ct As Collection
+        Set ct = t.Item(i)
+        Debug.Print ct.Item("time_iso")
+        If ct.Item("time_iso") - date1 >= 2# And i > 1 Then
+            Debug.Print "二日以上の空きがあるので"
+            date1 = ct.Item("time_iso") - 1#
+            bd.Cells(row, 1).NumberFormatLocal = "m/d;@"
+            bd.Cells(row, 1).value = date1
+            bd.Cells(row, 3).FormulaR1C1 = "=R[-1]C"
+            bd.Cells(row, 4).FormulaR1C1 = "=R[-1]C"
+            bd.Cells(row, 8).FormulaR1C1 = "=R[-1]C"
+            bd.Cells(row, 8).FormulaR1C1 = "=R[-1]C"
+            bd.Cells(row, 7).FormulaR1C1 = "=R[-1]C"
+            row = row + 1
+        End If
+        date1 = ct.Item("time_iso")
+        bd.Cells(row, 1).NumberFormatLocal = "m/d;@"
+        bd.Cells(row, 1).value = ct.Item("time_iso")
+        bd.Cells(row, 2).value = ct.Item("estimatedhours") - ct.Item("totalhours")
+        bd.Cells(row, 3).value = ct.Item("estimatedhours")
+        bd.Cells(row, 7).value = ct.Item("baseline_cost")
+        bd.Cells(row, 4).value = estimatedhours - ct.Item("totalhours")
+        bd.Cells(row, 8).value = ct.Item("totalhours")
+        row = row + 1
+    Next
+    createBurndown = row
+End Function
+
