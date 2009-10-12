@@ -24,6 +24,7 @@ LABEL_SUMMARY_TICKET = "Summary Ticket"
 LABEL_DEPENDENCIES = "Dependencies"
 LABEL_BASELINE_START = "Baseline start"
 LABEL_BASELINE_FINISH = "Baseline finish"
+LABEL_BASELINE_COST = "Baseline cost"
 
 class TracDependencyAdminWebUI(Component):
     implements(IAdminPanelProvider, ITemplateProvider)
@@ -35,7 +36,8 @@ class TracDependencyAdminWebUI(Component):
         dependencies_enabled = ( self.config.get( TICKET_CUSTOM, "summary_ticket") or \
                      self.config.get( TICKET_CUSTOM, "dependencies"))
         baseline_enabled = ( self.config.get( TICKET_CUSTOM, "baseline_start") or \
-                     self.config.get( TICKET_CUSTOM, "baseline_finish"))
+                     self.config.get( TICKET_CUSTOM, "baseline_finish") or \
+                     self.config.get( TICKET_CUSTOM, "baseline_cost"))
         return not(dependencies_enabled and baseline_enabled)
 
     # IAdminPanelProvider
@@ -98,6 +100,9 @@ class TracDependencyAdminWebUI(Component):
                 self.config.set(TICKET_CUSTOM,"baseline_finish", "text")
                 self.config.set(TICKET_CUSTOM,"baseline_finish.order", "53")
                 self.config.set(TICKET_CUSTOM,"baseline_finish.label", LABEL_BASELINE_FINISH)
+                self.config.set(TICKET_CUSTOM,"baseline_cost", "text")
+                self.config.set(TICKET_CUSTOM,"baseline_cost.order", "54")
+                self.config.set(TICKET_CUSTOM,"baseline_cost.label", LABEL_BASELINE_COST)
                 # TODO:なにも確認せずに追加しているだけなのでもう少しちゃんとする必要がある．
                 # Trac-Hacksではここはコメントのほうがいい
                 # calendar_fields = self.config.get( "decorator", "calendar_fields")
