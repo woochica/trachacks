@@ -1,18 +1,22 @@
+import re
+
 from genshi.builder import tag
 from trac.attachment import Attachment
 from trac.core import *
 from trac.perm import IPermissionRequestor, IPermissionPolicy
+from trac.web.api import IRequestFilter
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import format_to_html
+from trac.wiki.model import WikiPage
 
 LEVELS = {"protected":{"action":"PROTECTED_VIEW", "style":"border-left:2px solid red; padding-left:3px"},
           "protected-red":{"action":"PROTECTED_RED_VIEW", "style":"border-left:2px solid red; padding-left:3px"},
           "protected-blue":{"action":"PROTECTED_BLUE_VIEW", "style":"border-left:2px solid blue; padding-left:3px"},
           "protected-green":{"action":"PROTECTED_GREEN_VIEW", "style":"border-left:2px solid green; padding-left:3px"}}
 
-#def LOG(*args):
+# def LOG(*args):
 #    """Output debug information"""
-#    f = open("/tmp/trac-temp", "w+")
+#    f = open("/tmp/trac-temp", "a+")
 #    for arg in args:
 #        f.write(str(arg))
 #        f.write("\n\n")
@@ -101,3 +105,38 @@ class ProtectedMacro(Component):
     def get_permission_actions(self):
         return [level["action"] for level in LEVELS.values()]
     
+class ProtectedFilter(Component):
+    implements(IRequestFilter)
+
+    # IRequestFilter
+    def pre_process_request(self, req, handler):
+        action = req.args.get("action", "view")
+
+        if not action == "view":
+            # this security filter applies to all non-VIEW
+            # actions. Other actions, such as DELETE, EDIT, and DIFF
+            # either give access to the protected parts, or allow
+            # modification (removal in case of DELETE) of those parts
+            
+            pagename = req.args.get("page", "WikiStart")
+            page = WikiPage(self.env, pagename)
+
+            if pagename.endswith("/"):
+                req.redirect(req.href.wiki(pagename.strip("/")))
+
+            for name, level in LEVELS.iteritems():
+                if re.search("^\s*#!%s\s*$" % name, page.text, re.MULTILINE):
+                    # this page contains a ^#!protected$
+                    # pattern. therefore: require the PROTECTED
+                    # permission
+                    req.perm(page.resource).require(level["action"])
+
+        return handler
+
+    # IRequestFilter
+    def post_process_request(self, req, template, content_type):
+        return (template, content_type)
+
+    # IRequestFilter
+    def post_process_request(self, req, template, data, content_type):
+        return (template, data, content_type)

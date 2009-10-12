@@ -11,13 +11,13 @@ from setuptools import setup
 
 setup(
     name = 'TracProtected',
-    version = '2.0.0',
+    version = '2.1.0',
     packages = ['protected'],
     package_data = {"protected":[]},
     author = 'Boudewijn Schoon',
     author_email = 'p.b.schoon@frayja.com',
     description = 'A Trac macro to limit access to parts of a trac page and attachments.',
-    long_description = '''With the TracProtected macro it is possible to limit access to parts of a wiki page.
+    long_description = """With the TracProtected macro it is possible to limit access to parts of a wiki page.
 
     A protected part has the following syntax:
     {{{
@@ -46,7 +46,7 @@ setup(
     permission_policies:
     [trac]
     permission_policies = ProtectedAttachmentPolicy, DefaultPermissionPolicy    
-    ''',
+    """,
     license = 'BSD',
     keywords = 'trac macro authentication protected access',
     url = '',
