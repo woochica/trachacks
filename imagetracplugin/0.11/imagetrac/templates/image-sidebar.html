@@ -27,7 +27,7 @@
 
               <!-- set default image -->
               <py:if test="'TICKET_ADMIN' in req.perm">
-                <input type="radio" py:attrs="{'checked': name == default and 'selected' or None}"/>
+                <input type="radio" name="default" value="${name}" py:attrs="{'checked': name == default and 'selected' or None}"/>
               </py:if>
 
             </li>

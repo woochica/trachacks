@@ -282,7 +282,7 @@ class TicketImageHandler(Component):
                 return False
 
         # set default image
-        if req.method == 'POST' and 'TICKET_ADMIN' in req.perm:
+        if req.method == 'POST' and 'TICKET_ADMIN' in req.perm and 'default' in req.args:
             path = req.path_info.strip('/').split('/')
             if len(path) != 3:
                 return False
@@ -313,7 +313,7 @@ class TicketImageHandler(Component):
         # handle image setting
         if req.method == 'POST':
             self.set_default_image(req)
-            req.redirect(req.path_info)
+            req.redirect(req.href(req.path_info))
 
         # GET default image
         ticket_id, size = self.ticket_id_and_size(req.path_info)
@@ -349,5 +349,7 @@ class TicketImageHandler(Component):
         return (ticket_id, path[3])
         
     def set_default_image(self, req):
+        ticket_id, size = self.ticket_id_and_size(req.path_info)
         default_ticket_image = DefaultTicketImage(self.env)
+        default_ticket_image.set_default(ticket_id, req.args['default'])
 
