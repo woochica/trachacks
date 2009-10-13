@@ -78,11 +78,11 @@ $(document).ready(function() {
 			dataValues.each(function(i) {
 				var xmlEntry = $(this);
 				
-				var url = xmlEntry.find('value:eq(0) string')[0].textContent;
-				var summaryRaw = xmlEntry.find('value:eq(1) string')[0].textContent;
-				var date = xmlEntry.find('value:eq(2) dateTime\\.iso8601')[0].textContent;
-				var owner = xmlEntry.find('value:eq(3) string')[0].textContent;
-				var descr = xmlEntry.find('value:eq(4) string')[0].textContent;
+				var url = xmlEntry.find('value:eq(0) string').text();
+				var summaryRaw = xmlEntry.find('value:eq(1) string').text();
+				var date = xmlEntry.find('value:eq(2) dateTime\\.iso8601').text();
+				var owner = xmlEntry.find('value:eq(3) string').text();
+				var descr = xmlEntry.find('value:eq(4) string').text();
 				
 				// filter for attachments
 				if (url.indexOf('attachment/ticket') == -1) {
