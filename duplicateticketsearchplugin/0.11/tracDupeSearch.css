@@ -1,0 +1,12 @@
+div#dupeticketlist {
+	max-height:10em;
+	overflow:auto;
+	white-space:normal;
+}
+div#dupeticketlist ul {
+	margin:0;
+	padding-left:20px;
+}
+div#dupeticketlist h5 {
+	margin:0;
+}
