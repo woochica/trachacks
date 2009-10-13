@@ -9,6 +9,7 @@ from xml.dom import minidom
 from datetime import datetime
 from trac.core import *
 from trac.config import Option, BoolOption
+from trac.perm import IPermissionRequestor
 from trac.util import Markup, format_datetime, pretty_timedelta
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 try:
@@ -17,7 +18,8 @@ except ImportError:
     from trac.Timeline import ITimelineEventProvider
 
 class HudsonTracPlugin(Component):
-    implements(INavigationContributor, ITimelineEventProvider, ITemplateProvider)
+    implements(INavigationContributor, ITimelineEventProvider, ITemplateProvider,
+               IPermissionRequestor)
 
     disp_mod = BoolOption('hudson', 'display_modules', 'false',
                           'Display status of modules in the timeline too. ' +
@@ -81,13 +83,18 @@ class HudsonTracPlugin(Component):
 
         self.env.log.debug("Build-info url: '%s'" % self.info_url)
 
+    # IPermissionRequestor methods  
+
+    def get_permission_actions(self):
+        return ['BUILD_VIEW']
+
     # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
         return 'builds'
 
     def get_navigation_items(self, req):
-        if self.nav_url:
+        if self.nav_url and 'BUILD_VIEW' in req.perm:
             yield 'mainnav', 'builds', Markup('<a href="%s"%s>Builds</a>' % \
                         (self.nav_url, self.disp_tab and ' target="hudson"' or ''))
 
@@ -103,11 +110,11 @@ class HudsonTracPlugin(Component):
     # ITimelineEventProvider methods
 
     def get_timeline_filters(self, req):
-        if req.perm.has_permission('CHANGESET_VIEW'):
+        if 'BUILD_VIEW' in req.perm:
             yield ('build', 'Hudson Builds')
 
     def get_timeline_events(self, req, start, stop, filters):
-        if not 'build' in filters:
+        if 'build' not in filters or 'BUILD_VIEW' not in req.perm:
             return
 
         # xml parsing helpers
