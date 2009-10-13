@@ -4,14 +4,12 @@ A plugin to display hudson results in the timeline and provide a nav-link
 """
 
 import time
-import calendar
-import feedparser
-import urlparse
 import urllib2
+from xml.dom import minidom
 from datetime import datetime
 from trac.core import *
 from trac.config import Option, BoolOption
-from trac.util import Markup, format_datetime
+from trac.util import Markup, format_datetime, pretty_timedelta
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet
 try:
     from trac.timeline.api import ITimelineEventProvider
@@ -21,15 +19,20 @@ except ImportError:
 class HudsonTracPlugin(Component):
     implements(INavigationContributor, ITimelineEventProvider, ITemplateProvider)
 
-    disp_sub = BoolOption('hudson', 'display_subprojects', 'false',
-                          'Display status of subprojects in timeline too')
-    feed_url = Option('hudson', 'feed_url', 'http://localhost/hudson/rssAll',
-                      'The url of the hudson rss feed containing the build ' +
-                      'statuses. This must be an absolute url.')
+    disp_mod = BoolOption('hudson', 'display_modules', 'false',
+                          'Display status of modules in the timeline too. ' +
+                          'Note: enabling this may slow down the timeline ' +
+                          'retrieval significantly')
+    job_url  = Option('hudson', 'job_url', 'http://localhost/hudson/',
+                      'The url of the top-level hudson page if you want to ' +
+                      'display all jobs, or a job or module url (such as ' +
+                      'http://localhost/hudson/job/build_foo/) if you want ' +
+                      'only display builds from a single job or module. ' +
+                      'This must be an absolute url.')
     username = Option('hudson', 'username', '',
-                      'The username to use to access hudson (feed and details)')
+                      'The username to use to access hudson')
     password = Option('hudson', 'password', '',
-                      'The password to use to access hudson (feed and details)')
+                      'The password to use to access hudson')
     nav_url  = Option('hudson', 'main_page', '/hudson/',
                       'The url of the hudson main page to which the trac nav ' +
                       'entry should link; if empty, no entry is created in ' +
@@ -42,16 +45,16 @@ class HudsonTracPlugin(Component):
     use_desc = BoolOption('hudson', 'display_build_descriptions', 'true',
                           'Whether to display the build descriptions for ' +
                           'each build instead of the canned "Build finished ' +
-                          'successfully" etc messages. You may want to ' + 
-                          'disable this if it slows things down too much or ' +
-                          'if you run into issues with hudson.')
+                          'successfully" etc messages.')
 
     def __init__(self):
-        url_parts = urlparse.urlsplit(self.feed_url)
-        base_url  = url_parts[0] + '://' + url_parts[1] + '/'
+        api_url = self.job_url
+        if api_url[-1] != '/':
+            api_url += '/'
+        api_url += 'api/xml'
 
         pwdMgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        pwdMgr.add_password(None, base_url, self.username, self.password)
+        pwdMgr.add_password(None, api_url, self.username, self.password)
 
         bAuth = urllib2.HTTPBasicAuthHandler(pwdMgr)
         dAuth = urllib2.HTTPDigestAuthHandler(pwdMgr)
@@ -59,7 +62,24 @@ class HudsonTracPlugin(Component):
         self.url_opener = urllib2.build_opener(bAuth, dAuth)
 
         self.env.log.debug("registered auth-handler for '%s', username='%s'" %
-                           (base_url, self.username))
+                           (api_url, self.username))
+
+        if '/job/' in api_url:
+            path = '/*/build[timestamp>=%(start)s][timestamp<=%(stop)s]'
+            depth = 1
+            if self.disp_mod:
+                path  += '|/*/module/build[timestamp>=%(start)s][timestamp<=%(stop)s]'
+                depth += 1
+        else:
+            path = '/*/job/build[timestamp>=%(start)s][timestamp<=%(stop)s]'
+            depth = 2
+            if self.disp_mod:
+                path  += '|/*/job/module/build[timestamp>=%(start)s][timestamp<=%(stop)s]'
+                depth += 1
+
+        self.info_url = '%s?xpath=%s&depth=%s&exclude=//action|//artifact|//changeSet|//culprit&wrapper=builds' % (api_url, path, depth)
+
+        self.env.log.debug("Build-info url: '%s'" % self.info_url)
 
     # INavigationContributor methods
 
@@ -90,6 +110,23 @@ class HudsonTracPlugin(Component):
         if not 'build' in filters:
             return
 
+        # xml parsing helpers
+        def get_text(node):
+            rc = ""
+            for node in node.childNodes:
+                if node.nodeType == node.TEXT_NODE:
+                    rc += node.data
+            return rc
+
+        def get_string(parent, child):
+            nodes = parent.getElementsByTagName(child)
+            return nodes and get_text(nodes[0]).strip() or ''
+
+        def get_number(parent, child):
+            num = get_string(parent, child)
+            return num and int(num) or 0
+
+        # Support both Trac 0.10 and 0.11
         if isinstance(start, datetime): # Trac>=0.11
             from trac.util.datefmt import to_timestamp
             start = to_timestamp(start)
@@ -97,57 +134,61 @@ class HudsonTracPlugin(Component):
 
         add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
 
+        # get and parse the build-info
+        url = self.info_url % {'start': start*1000, 'stop': stop*1000}
         try:
-            feed = feedparser.parse(self.url_opener.open(self.feed_url))
+            try:
+                info = minidom.parse(self.url_opener.open(url))
+            except Exception:
+                import sys
+                self.env.log.exception("Error getting build info from '%s'" % url)
+                raise IOError, \
+                    "Error getting build info from '%s': %s: %s. This most " \
+                    "likely means you configured a wrong job_url." % \
+                    (url, sys.exc_info()[0].__name__, str(sys.exc_info()[1]))
         finally:
             self.url_opener.close()
 
-        if getattr(feed, 'status', 0) >= 400:
-            raise IOError, "Error getting feed '%s': http-status=%d" % (self.feed_url, feed.status)
-        if feed.bozo:
-            raise IOError, "Error getting feed '%s': %s" % (self.feed_url, feed.bozo_exception)
+        if info.documentElement.nodeName != 'builds':
+            raise IOError, \
+                "Error getting build info from '%s': returned document has " \
+                "unexpected node '%s'. This most likely means you configured " \
+                "a wrong job_url" % (info_url, info.documentElement.nodeName)
 
-        for entry in feed.entries:
-            # Only look at top-level entries
-            if not self.disp_sub and entry.title.find(u'»') >= 0:
+        # extract all build entries
+        for entry in info.documentElement.getElementsByTagName("build"):
+            # ignore builds that are still running
+            if get_string(entry, 'building') == 'true':
                 continue
-
-            # check time range
-            completed = calendar.timegm(entry.updated_parsed)
-            if completed > stop:
-                continue
-            if completed < start:
-                break
 
             # create timeline entry
-            if entry.title.find('SUCCESS') >= 0:
+            started   = get_number(entry, 'timestamp')
+            completed = started + get_number(entry, 'duration')
+            started   /= 1000
+            completed /= 1000
+
+            result = get_string(entry, 'result')
+            if result == 'SUCCESS':
                 message = 'Build finished successfully'
                 kind = self.alt_succ and 'build-successful-alt' or 'build-successful'
-            elif entry.title.find('UNSTABLE') >= 0:
+            elif result == 'UNSTABLE':
                 message = 'Build unstable'
                 kind = 'build-unstable'
-            elif entry.title.find('ABORTED') >= 0:
+            elif result == 'ABORTED':
                 message = 'Build aborted'
                 kind = 'build-aborted'
             else:
                 message = 'Build failed'
                 kind = 'build-failed'
 
-            href = entry.link
-            title = entry.title
-
             if self.use_desc:
-                url = href + '/api/json'
-                try:
-                    line = self.url_opener.open(url).readline()
-                finally:
-                    self.url_opener.close()
-                json = eval(line.replace('false', 'False').replace('true','True').replace('null', 'None'))
+                message = get_string(entry, 'description') or message
 
-                if json['description']:
-                    message = unicode(json['description'], 'utf-8')
+            comment = message + ' at ' + format_datetime(completed) + \
+                      ', duration ' + pretty_timedelta(started, completed)
 
-            comment = message + ' at ' + format_datetime(completed)
+            href  = get_string(entry, 'url')
+            title = 'Build "%s" (%s)' % (get_string(entry, 'fullDisplayName'), result.lower())
 
             yield kind, href, title, completed, None, comment
 
