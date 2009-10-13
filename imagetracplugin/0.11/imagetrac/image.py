@@ -158,7 +158,8 @@ class ImageTrac(Component):
 
     def attachment_deleted(self, attachment):
         """Called when an attachment is deleted."""
-
+        # XXX should delete the default from the DB 
+        # if the attachment deleted is the default
     
     ### internal methods
 
@@ -171,6 +172,9 @@ class ImageTrac(Component):
         filename = image.filename
         image.file.seek(0)
         attachment.insert(filename, image.file, size)
+
+        # XXX shouldn't this only be called for, like, the
+        # first image or whenever you really want to set the default?
         from imagetrac.default_image import DefaultTicketImage
         if self.env.is_component_enabled(DefaultTicketImage):
             DefaultTicketImage(self.env).set_default(ticket.id, filename)

@@ -8,20 +8,35 @@
     
     <!-- multiple images -->
     <py:when test="True">
-      <ul class="gallery">
-        <py:for each="image in images.values()">
-          <li py:if="display in image" py:choose="'thumbnail' in image">
-            
-            <!--! image with thumbnails -->
-            <a py:when="True" href="${image[display]}"><img src="${image['thumbnail']}"/></a>
+      <form action="${req.href('ticket', ticket.id, 'image')}"
+            method="post">
 
-            <!--! image without thumbnails -->
-            <!--! TODO: something better than this -->
-            <img py:when="False" src="${image[display]}"/>
-        
-          </li>
-        </py:for>
-      </ul>
+        <ul class="gallery">
+          <py:for each="name, image in images.items()">
+            <li py:if="display in image" 
+                py:choose="'thumbnail' in image"
+                py:attrs="{'class': name == default and 'active' or None}">
+              
+              <!--! image with thumbnails -->
+              <a py:when="True" href="${image[display]}"><img src="${image['thumbnail']}"/></a>
+              
+              <!--! image without thumbnails -->
+              <!--! TODO: something better than this! -->
+              <img py:when="False" src="${image[display]}"/>
+              
+
+              <!-- set default image -->
+              <py:if test="'TICKET_ADMIN' in req.perm">
+                <input type="radio" py:attrs="{'checked': name == default and 'selected' or None}"/>
+              </py:if>
+
+            </li>
+          </py:for>
+        </ul>
+
+        <input type="submit" value="Set Default Image"/>
+      </form>
+
     </py:when>
       
     <!-- single image -->

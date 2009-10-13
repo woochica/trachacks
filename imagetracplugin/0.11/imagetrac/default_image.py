@@ -16,6 +16,9 @@ from tracsqlhelper import insert_update
 
 
 class DefaultTicketImage(Component):
+    """
+    store the default ticket image in a database
+    """
 
     implements(IEnvironmentSetupParticipant, IRequireComponents)
 

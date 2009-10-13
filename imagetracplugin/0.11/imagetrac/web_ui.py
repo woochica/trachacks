@@ -72,7 +72,18 @@ class SidebarImage(Component):
             link = req.href('attachment', 'ticket', ticket.id, image, format='raw')
             images = dict(image=dict(original=link))
             display = 'original'
-        return template.generate(display=display, images=images)
+
+        # default ticket image
+        default = None
+        if self.env.is_component_enabled(DefaultTicketImage):
+            default = DefaultTicketImage(self.env).default_image(ticket.id)
+
+        # generate the template
+        return template.generate(display=display, 
+                                 images=images,
+                                 req=req,
+                                 default=default,
+                                 ticket=ticket)
 
 
     ### methods for ITemplateProvider
@@ -262,11 +273,27 @@ class TicketImageHandler(Component):
 
     def match_request(self, req):
         """Return whether the handler wants to process the given request."""
-        try:
-            ticket_id, size = self.ticket_id_and_size(req.path_info)
+        if req.method == 'GET':
+            
+            try:
+                ticket_id, size = self.ticket_id_and_size(req.path_info)
+                return True
+            except:
+                return False
+
+        # set default image
+        if req.method == 'POST' and 'TICKET_ADMIN' in req.perm:
+            path = req.path_info.strip('/').split('/')
+            if len(path) != 3:
+                return False
+            if path[0] != 'ticket' or path[2] != 'image':
+                return False
+            try:
+                ticket_id = int(path[1])
+            except ValueError:
+                return False
             return True
-        except:
-            return False
+            
 
     def process_request(self, req):
         """Process the request. For ClearSilver, return a (template_name,
@@ -282,6 +309,13 @@ class TicketImageHandler(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
+
+        # handle image setting
+        if req.method == 'POST':
+            self.set_default_image(req)
+            req.redirect(req.path_info)
+
+        # GET default image
         ticket_id, size = self.ticket_id_and_size(req.path_info)
         image = DefaultTicketImage(self.env).default_image(ticket_id, size)
         assert image is not None # TODO better
@@ -298,6 +332,8 @@ class TicketImageHandler(Component):
         imagetrac = ImageTrac(self.env)
         sizes = imagetrac.sizes().keys()
         path = path_info.strip('/').split('/')
+        if len(path) == 3:
+            path.append('default')
         if len(path) != 4:
             return None
         if path[0] != 'ticket':
@@ -312,4 +348,6 @@ class TicketImageHandler(Component):
             return None
         return (ticket_id, path[3])
         
-            
+    def set_default_image(self, req):
+        default_ticket_image = DefaultTicketImage(self.env)
+
