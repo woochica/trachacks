@@ -44,16 +44,18 @@ Dim m_depencencies As String
 Dim m_addDepeMs As Boolean
 Dim m_addDepeVer As Boolean
 Dim m_addDependancyTicket As Boolean
+Dim m_query As String
 
 Public Sub init(arrayTrac As Collection, importMode As Integer, _
                 dependMilestone As Boolean, dependVersion As Boolean, dependTicket As Boolean, _
-                hours As Integer)
+                hours As Integer, query As String)
     Set m_aTrac = arrayTrac
     m_hours = hours
     m_importMode = importMode
     m_addDepeMs = dependMilestone
     m_addDepeVer = dependVersion
     m_addDependancyTicket = dependTicket
+    m_query = query
     
     Call setFieldNames("summary_ticket", "baseline_start", "baseline_end")
     
@@ -92,9 +94,17 @@ Sub import()
         addMilestones 1, SUMMARY_VER, m_aTrac.item(1).version, "", ""
     End If
     If hasChildren() Then '親のカスタムフィールドがある場合
-        addTickets 1, "<string>" & m_parent & "=</string>", m_aTrac.item(1)
+        If m_query = "" Then
+            addTickets 1, "<string>" & m_parent & "=</string>", m_aTrac.item(1)
+        Else
+            addTickets 1, "<string>" & m_parent & "=&amp;" & m_query & "</string>", m_aTrac.item(1)
+        End If
     Else
-        addTickets 1, "<string>id!=0</string>", m_aTrac.item(1)
+        If m_query = "" Then
+            addTickets 1, "<string>id!=0</string>", m_aTrac.item(1)
+        Else
+            addTickets 1, "<string>" & m_query & "</string>", m_aTrac.item(1)
+        End If
     End If
     
     makeDependencies

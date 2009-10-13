@@ -60,6 +60,7 @@ Const IMPORT_MODE_STR_ANOTHER_PRJ = "InterTrac parent(perent)"
 Const PROP_NAME_URL = "TracURL"
 Const PROP_NAME_PROJ = "ProjectName"
 Const PROP_NAME_USER = "User"
+Const PROP_NAME_QUERY = "Query"
 
 Public Property Get URL() As String
     URL = m_URL & "/" & m_projectName
@@ -172,7 +173,7 @@ Private Sub CommandButton1_Click()
     NextButton.Enabled = True
     CheckBox5.Enabled = True
     CheckBox6.Enabled = True
-    TextBox4.Enabled = False
+    TextBox4.Enabled = True
     Label5.Enabled = True
     
     NextButton_Click
@@ -181,7 +182,7 @@ End Sub
 Private Sub CommandButton2_Click()
     Dim pc As ProjectConnecter
     Set pc = New ProjectConnecter
-    pc.init m_aTrac, m_listIndex, CheckBox5.value, CheckBox6.value, CheckBox7.value, 8
+    pc.init m_aTrac, m_listIndex, CheckBox5.value, CheckBox6.value, CheckBox7.value, 8, TextBox4.text
     pc.setFieldNames "summary_ticket", "baseline_start", "baseline_end"
 '    pc.setFieldNames "parent", "plan_start", "plan_end"
     pc.import
