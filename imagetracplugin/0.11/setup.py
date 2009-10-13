@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.3.2'
+version='0.3.3'
 
 setup(name='ImageTrac',
       version=version,
@@ -31,6 +31,6 @@ setup(name='ImageTrac',
       [trac.plugins]
       imagetrac = imagetrac.image
       imagesidebar = imagetrac.web_ui
-      defaultimage = imagetrac.setup
+      defaultimage = imagetrac.default_image
       """,
       )
