@@ -7,6 +7,11 @@ function getAddress(lonlat) {
     
     $.getJSON(url, function(data){
             $('#field-location').val(data.location.address);
+            $('#latitude').remove();
+            $('#longitude').remove();
+            $('#propertyform').append('<input name="latitude" id="latitude" type="hidden" value="' + lat + '"/>');
+            $('#propertyform').append('<input name="longitude" id="longitude" type="hidden" value="' + lon + '"/>');
+            
         });
 }
 

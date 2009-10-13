@@ -95,9 +95,9 @@ class GeoTicket(Component):
                             'http://openlayers.org/api/2.8-rc2/OpenLayers.js',
                             "URL of OpenLayers JS to use")
 
-    min_lat = FloatOption('geo', 'min_lat', '-90.',
+    min_lat = FloatOption('geo', 'min_lat', '-85.',
                           "minimum latitude for default map display")
-    max_lat = FloatOption('geo', 'max_lat', '90.',
+    max_lat = FloatOption('geo', 'max_lat', '85.',
                           "maximum latitude for default map display")
     min_lon = FloatOption('geo', 'min_lon', '-180.',
                           "minimum longitude for default map display")
@@ -108,6 +108,7 @@ class GeoTicket(Component):
     ### method for ICustomFieldProvider
 
     # TODO : ensure CustomFieldProvider is enabled
+    # XXX or, should CustomFieldProvider be used at all?
     def fields(self):
         return { 'location': None }
 
@@ -124,11 +125,20 @@ class GeoTicket(Component):
         detected. `field` can be `None` to indicate an overall problem with the
         ticket. Therefore, a return value of `[]` means everything is OK."""
 
-        # compare ticket['location'] with stored version for existing tickets
         location_changed = True
-        if ticket.id:
-            location_changed = not ticket['location'] == Ticket(self.env, ticket.id)['location']
 
+        # check for latitude and longitude in the request
+        if 'latitude' in req.args and 'longitude' in req.args:
+            lat = float(req.args['latitude'])
+            lon = float(req.args['longitude'])
+        else:
+            lat = lon = None
+            # compare ticket['location'] with stored version for existing tickets
+            if ticket.id:
+                location_changed = not ticket['location'] == Ticket(self.env, ticket.id)['location']
+
+        
+        # get location string
         location = ticket['location']
         if location is None:
             location = ''
@@ -154,25 +164,30 @@ class GeoTicket(Component):
             raise
         
         # geolocate the address
-        try:
-            ticket['location'], (lat, lon) = self.geolocate(location)
+        if lat is not None and lon is not None:
             if ticket.id:
                 self.set_location(ticket.id, lat, lon)
-            
-            req.environ['geolat'] = lat
-            req.environ['geolon'] = lon
-        except GeolocationException, e:
-            if location_changed and ticket.id:
-                self.delete_location(ticket.id)
-            if len(e.locations) > 1:
-                return [('location', str(e))]
-            if self.mandatory_location:
-                return [('location', str(e))]
+            else:
+                # XXX what if not ticket.id ?
+                ticket.latitude = lat
+                ticket.longitude = lon
+        else:
+            try:
+                ticket['location'], (lat, lon) = self.geolocate(location)
+                if ticket.id:
+                    self.set_location(ticket.id, lat, lon)
+            except GeolocationException, e:
+                if location_changed and ticket.id:
+                    self.delete_location(ticket.id)
+                if len(e.locations) > 1:
+                    return [('location', str(e))]
+                if self.mandatory_location:
+                    return [('location', str(e))]
 
-            # store the error in a cookie as add_warning is clobbered
-            # in the post-POST redirect
-            req.session['geolocation_error'] = e.html()
-            req.session.save()
+                # store the error in a cookie as add_warning is clobbered
+                # in the post-POST redirect
+                req.session['geolocation_error'] = e.html()
+                req.session.save()
 
         return []
 
@@ -194,11 +209,15 @@ class GeoTicket(Component):
         # TODO : could cache the geolocation in memory
         # instead of geolocating twice (once here and once in
         # ITicketManipulator)
-        try:
-            location, (lat, lon) = self.locate_ticket(ticket)
-            self.set_location(ticket.id, lat, lon)
-        except GeolocationException:
-            pass
+        if hasattr(ticket, 'latitude') and hasattr(ticket, 'longitude'):
+            self.set_location(ticket.id, ticket.latitude, ticket.longitude)
+        else:
+
+            try:
+                location, (lat, lon) = self.locate_ticket(ticket)
+                self.set_location(ticket.id, lat, lon)
+            except GeolocationException:
+                pass
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
@@ -230,7 +249,6 @@ class GeoTicket(Component):
         """
 
         # add necessary JS
-        # TODO : add only the JS necessary for the page viewed
         if template in ['ticket.html', 'query.html', 'report_view.html', 'wiki_view.html']:
 
             # add_script doesn't use URLs, so add OpenLayers script manually
@@ -245,9 +263,9 @@ class GeoTicket(Component):
             add_script(req, 'geoticket/js/location_filler.js')
             add_script(req, 'geoticket/js/reverse_geocode.js')
             try:
-                address, (geolat, geolon) = self.locate_ticket(data['ticket'])
-                data['locations'] = [ {'latitude': geolat,
-                                       'longitude': geolon, }]
+                address, (latitude, longitude) = self.locate_ticket(data['ticket'])
+                data['locations'] = [ {'latitude': latitude,
+                                       'longitude': longitude, }]
             except GeolocationException:
                 data['locations'] = []
                 

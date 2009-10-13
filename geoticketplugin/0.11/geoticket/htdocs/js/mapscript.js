@@ -70,6 +70,9 @@ function map_locations(locations, options) {
         var selectControl = new OpenLayers.Control.SelectFeature(kml);
         map.addControl(selectControl);
         selectControl.activate();
+
+        // XXX this doesn't work! at least not on FF/linux
+        // or it doesn't seem to, anyway
         selectControl.onSelect = function(feature){
             alert("hi");
         };
