@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.3.1'
+version='0.3.2'
 
 setup(name='ImageTrac',
       version=version,

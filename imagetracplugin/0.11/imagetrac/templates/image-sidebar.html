@@ -4,18 +4,30 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:py="http://genshi.edgewall.org/"
       py:strip="True">
-  <ul class="gallery">
-    <py:for each="image in images.values()">
-      <li py:if="display in image" py:choose="'thumbnail' in image">
+  <py:choose test="len(images) &gt; 1">
+    
+    <!-- multiple images -->
+    <py:when test="True">
+      <ul class="gallery">
+        <py:for each="image in images.values()">
+          <li py:if="display in image" py:choose="'thumbnail' in image">
+            
+            <!--! image with thumbnails -->
+            <a py:when="True" href="${image[display]}"><img src="${image['thumbnail']}"/></a>
 
-        <!--! image with thumbnails -->
-        <a py:when="True" href="${image[display]}"><img src="${image['thumbnail']}"/></a>
-
-        <!--! image without thumbnails -->
-        <img py:when="False" href="${image[display]}"/>
+            <!--! image without thumbnails -->
+            <!--! TODO: something better than this -->
+            <img py:when="False" src="${image[display]}"/>
         
-      </li>
-    </py:for>
-  </ul>
-  
+          </li>
+        </py:for>
+      </ul>
+    </py:when>
+      
+    <!-- single image -->
+    <py:otherwise>
+      <img src="${images.values()[0][display]}"/>
+    </py:otherwise>
+    
+  </py:choose>
 </html>

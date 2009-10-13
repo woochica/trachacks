@@ -63,7 +63,7 @@ class SidebarImage(Component):
     def content(self, req, ticket):
         chrome = Chrome(self.env)
         template = chrome.load_template('image-sidebar.html')
-        imagetrac = self.env.components.get(ImageTrac)
+        imagetrac = ImageTrac(self.env)
         if imagetrac:
             images = imagetrac.images(ticket, req.href)
             display = 'default'
@@ -163,8 +163,13 @@ class ImageFormFilter(Component):
 
 
 class Galleria(Component):
+    """
+    adds Galleria for Trac
+    see: http://devkick.com/lab/galleria/
+    """
 
-    implements(ITemplateProvider, IRequestFilter)
+
+    implements(ITemplateProvider, IRequestFilter, IRequireComponents)
 
     ### methods for ITemplateProvider
 
@@ -213,9 +218,14 @@ class Galleria(Component):
         (Since 0.11)
         """
         if template == 'ticket.html':
-            add_stylesheet(req, 'imagetrac/css/galleria.css')
-            add_script(req, 'imagetrac/js/jquery.galleria.js')
-            add_script(req, 'imagetrac/js/init_galleria.js')
+            if not 'images' in data:
+                ImageTrac(self.env).post_process_request(req, template, data, content_type)
+
+            # add galleria if more than one image
+            if len(data['images']) > 1:
+                add_stylesheet(req, 'imagetrac/css/galleria.css')
+                add_script(req, 'imagetrac/js/jquery.galleria.js')
+                add_script(req, 'imagetrac/js/init_galleria.js')
             
         return (template, data, content_type)
 
@@ -226,6 +236,12 @@ class Galleria(Component):
         Always returns the request handler, even if unchanged.
         """
         return handler
+
+    ### method for IRequireComponents
+
+    def requires(self):
+        return [ ImageTrac ]
+
 
 class TicketImageHandler(Component):
     """
