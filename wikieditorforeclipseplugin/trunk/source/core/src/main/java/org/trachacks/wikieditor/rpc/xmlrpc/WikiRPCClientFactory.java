@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.ProxyHost;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -21,10 +22,13 @@ import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 import org.apache.xmlrpc.common.TypeConverter;
 import org.apache.xmlrpc.common.TypeConverterFactory;
 import org.apache.xmlrpc.common.TypeConverterFactoryImpl;
+import org.trachacks.wikieditor.model.ProxySettings;
 import org.trachacks.wikieditor.model.ServerDetails;
 import org.trachacks.wikieditor.model.exception.BadCredentialsException;
 import org.trachacks.wikieditor.model.exception.ConnectionRefusedException;
+import org.trachacks.wikieditor.model.exception.GatewayTimeoutException;
 import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
+import org.trachacks.wikieditor.model.exception.ProxyAuthenticationRequiredException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
 
 /**
@@ -43,8 +47,8 @@ public class WikiRPCClientFactory{
 	 * @param credentials
 	 * @return
 	 */
-	public static WikiRPC getWikiRPCClientInstance(ServerDetails server) {
-		return newInstance(WikiRPC.class, server);
+	public static WikiRPC getWikiRPCClientInstance(ServerDetails server, ProxySettings proxySettings) {
+		return newInstance(WikiRPC.class, server, proxySettings);
 	}
 
 	/**
@@ -80,13 +84,18 @@ public class WikiRPCClientFactory{
 	 * client.
 	 */
 	@SuppressWarnings("unchecked")
-	protected static <T> T newInstance(final Class<T> clazz, ServerDetails server) {
+	protected static <T> T newInstance(final Class<T> clazz, ServerDetails server, ProxySettings proxySettings) {
 		
 		XmlRpcClientConfigImpl config = buildConfiguration(server);
 		
 		final XmlRpcClient client = new XmlRpcClient();
         client.setConfig(config);
-        client.setTransportFactory(new XmlRpcCommonsTransportFactory(client));
+        XmlRpcCommonsTransportFactory transportFactory = new XmlRpcCommonsTransportFactory(client);
+        if(proxySettings != null) {
+        	transportFactory.setHttpClient(getHttpClient(proxySettings));
+        }
+        //httpClient.getHostConfiguration().setHost(server.getUrl());
+        client.setTransportFactory(transportFactory);
 		
 		/* create the proxy */
 		return (T) Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(), new Class[] { clazz },
@@ -115,9 +124,9 @@ public class WikiRPCClientFactory{
 	 * @throws BadCredentialsException
 	 * @throws PermissionDeniedException
 	 */
-	public static boolean testConnection(ServerDetails server) throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException {
+	public static boolean testConnection(ServerDetails server, ProxySettings proxySettings) throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException {
 		try {
- 			WikiRPC client = WikiRPCClientFactory.getWikiRPCClientInstance(server);
+ 			WikiRPC client = WikiRPCClientFactory.getWikiRPCClientInstance(server, proxySettings);
 			return client.getRPCVersionSupported() >= WikiRPC.RPC_API_VERSION;
 		} catch (UndeclaredThrowableException e) {
 			XmlRpcException xmlRpcException = (XmlRpcException) e.getCause();
@@ -133,7 +142,7 @@ public class WikiRPCClientFactory{
 					URL authenticatedURL = server.appendURL(WikiRPC.authenitcatedPath);
 					URL anonymousURL = server.appendURL(WikiRPC.anonymousPath);
 					
-					HttpClient client =  new HttpClient();;
+					HttpClient client =  getHttpClient(proxySettings);
 					GetMethod get = null;
 					int resultCode = 0;
 					
@@ -158,11 +167,39 @@ public class WikiRPCClientFactory{
 					if (resultCode == 403) {/* PermissionDenied */
 						throw new PermissionDeniedException();
 					}
+					if (proxySettings != null ) {
+						if( resultCode == 504) { /* Gateway Timeout */
+							throw new GatewayTimeoutException();
+						}
+						if(resultCode == 407) {
+							throw new ProxyAuthenticationRequiredException();
+						}
+					}
 				} catch (MalformedURLException ignored) {}
 			}
 			
 			return false;
 		}
+	}
+	
+	/**
+	 * 
+	 * @param proxySettings
+	 * @return
+	 */
+	private static HttpClient getHttpClient(ProxySettings proxySettings) {
+    	HttpClient httpClient = new HttpClient();
+    	if(proxySettings != null) {
+    		httpClient.getHostConfiguration().setProxy(proxySettings.getProxyHost(), proxySettings.getProxyPort());
+
+    		if(proxySettings.isAuthenticationRequired()) {
+    			httpClient.getState().setProxyCredentials(
+    					new AuthScope(proxySettings.getProxyHost(), proxySettings.getProxyPort(), AuthScope.ANY_REALM),
+    					new UsernamePasswordCredentials(proxySettings.getProxyUsername(), proxySettings.getProxyPassword())
+    			);
+    		}
+    	}
+    	return httpClient;
 	}
 
 }

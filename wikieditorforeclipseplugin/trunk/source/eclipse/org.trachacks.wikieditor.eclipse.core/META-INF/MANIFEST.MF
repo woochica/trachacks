@@ -8,9 +8,9 @@ Bundle-ClassPath: target/lib/commons-codec-1.2.jar,
  target/lib/commons-lang-2.3.jar,
  target/lib/commons-logging-1.0.4.jar,
  target/lib/wikieditor-core-0.1.0-SNAPSHOT.jar,
- target/lib/ws-commons-util-1.0.1.jar,
- target/lib/xmlrpc-client-3.0.jar,
- target/lib/xmlrpc-common-3.0.jar
+ target/lib/ws-commons-util-1.0.2.jar,
+ target/lib/xmlrpc-client-3.1.2.jar,
+ target/lib/xmlrpc-common-3.1.2.jar
 Bundle-Vendor: TracWikiEditor4Eclipse @ trac-hacks.org
 Export-Package: org.apache.commons.lang,
  org.apache.commons.lang.builder,

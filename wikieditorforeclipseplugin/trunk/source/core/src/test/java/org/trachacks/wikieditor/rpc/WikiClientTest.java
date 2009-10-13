@@ -13,6 +13,7 @@ import java.net.URL;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +30,7 @@ import org.trachacks.wikieditor.model.exception.PageNotFoundException;
  */
 public class WikiClientTest extends AbstractBaseTest{
 
-	private static String randomTestPageName = "" + System.currentTimeMillis();
+	private static String randomTestPageName = RandomStringUtils.randomAlphabetic(10);
 	private static String pageContent = "== Title ==\n & % $ á ö / \n 123\n.\n < >\n";
 	private WikiClient wikiClient;
 	
@@ -44,7 +45,7 @@ public class WikiClientTest extends AbstractBaseTest{
 		server.setUsername(getSetting("credentials.username"));
 		server.setPassword(getSetting("credentials.password"));
 		
-		wikiClient = new WikiClientImpl(server);
+		wikiClient = new WikiClientImpl(server, proxySettings);
 	}
 
 	/**

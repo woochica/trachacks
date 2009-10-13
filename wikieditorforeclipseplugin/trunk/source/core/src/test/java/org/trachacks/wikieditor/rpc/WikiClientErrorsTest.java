@@ -11,6 +11,8 @@ import static org.junit.Assert.fail;
 
 import java.net.URL;
 
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang.math.RandomUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,7 +32,7 @@ import org.trachacks.wikieditor.model.exception.UnknownServerException;
  */
 public class WikiClientErrorsTest extends AbstractBaseTest{
 
-	private static String randomTestPageName = "" + System.currentTimeMillis();
+	private static String randomTestPageName = RandomStringUtils.randomAlphabetic(10);
 	private static String pageContent = "== Title ==\n & % $ á ö / \n 123\n.\n < >\n";
 	
 	/**
@@ -55,7 +57,7 @@ public class WikiClientErrorsTest extends AbstractBaseTest{
 	@Test
 	public final void testPageNotFound() throws Exception {
 		ServerDetails server = getTestServer();
-		WikiClient wikiClient = new WikiClientImpl(server);		
+		WikiClient wikiClient = new WikiClientImpl(server, proxySettings);		
 
 		PageVersion pageVersion = null;
 		try {
@@ -67,13 +69,13 @@ public class WikiClientErrorsTest extends AbstractBaseTest{
 	}
 	
 	@Test
-	public final void testUnknownServer() throws Exception {
+	public void testUnknownServer() throws Exception {
 		ServerDetails server = getTestServer();
 		server.setUrl(new URL(getSetting("serverUnknown.url")));
-		WikiClient wikiClient = new WikiClientImpl(server);		
+		WikiClient wikiClient = new WikiClientImpl(server, proxySettings);		
 
 		try {
-			wikiClient.testConnection(server);
+			wikiClient.testConnection(server, proxySettings);
 			fail("Exception");
 		} catch (Exception e) {
 			assertTrue("Caugth Exception: " + e.getClass(), e instanceof UnknownServerException);
@@ -82,13 +84,13 @@ public class WikiClientErrorsTest extends AbstractBaseTest{
 	}
 	
 	@Test
-	public final void testConnectionRefused() throws Exception {
+	public void testConnectionRefused() throws Exception {
 		ServerDetails server = getTestServer();
 		server.setUrl(new URL(getSetting("connectionRefused.url")));
-		WikiClient wikiClient = new WikiClientImpl(server);		
+		WikiClient wikiClient = new WikiClientImpl(server, proxySettings);		
 
 		try {
-			wikiClient.testConnection(server);
+			wikiClient.testConnection(server, proxySettings);
 			fail("Exception");
 		} catch (Exception e) {
 			assertTrue("Caugth Exception: " + e.getClass(), e instanceof ConnectionRefusedException);
@@ -102,10 +104,10 @@ public class WikiClientErrorsTest extends AbstractBaseTest{
 		server.setUrl(new URL(getSetting("badCredentials.url")));
 		server.setUsername(getSetting("badCredentials.username"));
 		server.setPassword(getSetting("badCredentials.password"));
-		WikiClient wikiClient = new WikiClientImpl(server);		
+		WikiClient wikiClient = new WikiClientImpl(server, proxySettings);		
 
 		try {
-			wikiClient.testConnection(server);
+			wikiClient.testConnection(server, proxySettings);
 			fail("Exception");
 		} catch (Exception e) {
 			assertTrue("Caugth Exception: " + e.getClass(), e instanceof BadCredentialsException);
@@ -118,10 +120,10 @@ public class WikiClientErrorsTest extends AbstractBaseTest{
 		server.setUrl(new URL(getSetting("permissionDenied.url")));
 		server.setUsername(getSetting("permissionDenied.username"));
 		server.setPassword(getSetting("permissionDenied.password"));
-		WikiClient wikiClient = new WikiClientImpl(server);		
+		WikiClient wikiClient = new WikiClientImpl(server, proxySettings);		
 
 		try {
-			wikiClient.testConnection(server);
+			wikiClient.testConnection(server, proxySettings);
 			fail("Exception");
 		} catch (Exception e) {
 			assertTrue("Caugth Exception: " + e.getClass(), e instanceof PermissionDeniedException);
@@ -133,11 +135,12 @@ public class WikiClientErrorsTest extends AbstractBaseTest{
 		ServerDetails server = getTestServer();
 		server.setUsername(getSetting("wiki_delete.permissionDenied.username"));
 		server.setPassword(getSetting("wiki_delete.permissionDenied.password"));
-		WikiClient wikiClient = new WikiClientImpl(server);	
-		
+		WikiClient wikiClient = new WikiClientImpl(server, proxySettings);	
+		String pageToDeleteName = randomTestPageName + RandomStringUtils.randomAlphabetic(10);
+		String pageContent = this.pageContent  + System.currentTimeMillis();
 		try {
-			wikiClient.savePageVersion(randomTestPageName, pageContent, "comment");
-			wikiClient.deletePage(randomTestPageName);
+			wikiClient.savePageVersion(pageToDeleteName, pageContent, "comment");
+			wikiClient.deletePage(pageToDeleteName);
 			fail("Exception");
 		} catch (Exception e) {
 			assertTrue("Caugth Exception: " + e.getClass(), e instanceof PermissionDeniedException);
@@ -150,15 +153,16 @@ public class WikiClientErrorsTest extends AbstractBaseTest{
 	@Test
 	public final void testPageNotModifiedException() throws Exception {
 		ServerDetails server = getTestServer();
-		WikiClient wikiClient = new WikiClientImpl(server);
-		String pageName = randomTestPageName + System.currentTimeMillis();
-		PageVersion pageVersion = wikiClient.savePageVersion(pageName, pageContent, "First Edit");
+		WikiClient wikiClient = new WikiClientImpl(server, proxySettings);
+		String pageName = randomTestPageName + RandomStringUtils.randomAlphabetic(10);
+		String editedContent = pageContent + RandomStringUtils.randomAlphabetic(10);
+		PageVersion pageVersion = wikiClient.savePageVersion(pageName, editedContent, "First Edit");
 		assertNotNull(pageVersion);
 		assertEquals("PageName", pageName, pageVersion.getName());
-		assertEquals("Contents", pageContent, pageVersion.getContent());
+		assertEquals("Contents", editedContent, pageVersion.getContent());
 		assertEquals("Version", (int)1, (int)pageVersion.getVersion());
 		try {
-			wikiClient.savePageVersion(pageName, pageContent, "Second Edit");
+			wikiClient.savePageVersion(pageName, editedContent, "Second Edit");
 			fail("PageNotModifiedException not thrown");
 		} catch (Exception e) {
 			assertTrue("PageNotModified Exception", e instanceof PageNotModifiedException);

@@ -94,7 +94,7 @@
 	
 	<properties>
 		<commons.lang.version>2.3</commons.lang.version>
-		<xmlrpc-client.version>3.0</xmlrpc-client.version>
+		<xmlrpc-client.version>3.1.2</xmlrpc-client.version>
 		<commons-httpclient.version>3.1</commons-httpclient.version>
 		<junit.version>4.4</junit.version>
 	</properties>
@@ -110,7 +110,11 @@
 				<credentials.admin.username>ivangsa</credentials.admin.username>
 				<credentials.admin.password>trachackspa55</credentials.admin.password>
 				<credentials.user.username>user</credentials.user.username>
-				<credentials.user.password>user</credentials.user.password>				
+				<credentials.user.password>user</credentials.user.password>
+				<proxy.host>localhost</proxy.host>
+				<proxy.port>9666</proxy.port>							
+				<proxy.username>wikieditor</proxy.username>
+				<proxy.password>wikieditor</proxy.password>							
 			</properties>
 		</profile>	
 	</profiles>	

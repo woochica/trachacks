@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import org.trachacks.wikieditor.model.ProxySettings;
 import org.trachacks.wikieditor.model.ServerDetails;
 
 /**
@@ -20,11 +21,8 @@ public abstract class AbstractBaseTest {
 		.getBundle(AbstractBaseTest.class.getPackage().getName() + ".base");;
 	private ResourceBundle bundle = null;
 	
-	{
-		try {
-			bundle = ResourceBundle.getBundle(getClass().getName());
-		}catch(MissingResourceException ignore) {}
-	}
+	
+	protected ProxySettings proxySettings;
 	
 	/**
 	 * 
@@ -50,4 +48,13 @@ public abstract class AbstractBaseTest {
 		
 		return server;
 	}
+	
+	protected final void loadProxySettings() {
+		String host = getSetting("proxy.host");
+		String port = getSetting("proxy.port");
+		String username = getSetting("proxy.username");
+		String password = getSetting("proxy.password");
+		proxySettings = new ProxySettings(host, Integer.parseInt(port), username, password);
+	}
+
 }
