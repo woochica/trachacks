@@ -76,8 +76,10 @@ class DefaultTicketImage(Component):
         imagetrac = ImageTrac(self.env)
         images = imagetrac.images(ticket_id)
         if image:
-            if size and size in images[image]:
-                return image # set default image
+            if not size:
+                size = 'default'
+            if size in images[image]:
+                return image 
 
         # find an image that works
         for i in images:
