@@ -6,6 +6,11 @@ function location_filler() {
     $("ul.geolocation_error a").click(function() {
             locationnode.val($(this).text());
             var href = $.query($(this).attr('href'));
+            $('#latitude').remove();
+            $('#longitude').remove();
+            $('#propertyform').append('<input name="latitude" id="latitude" type="hidden" value="' + href.latitude + '"/>');
+            $('#propertyform').append('<input name="longitude" id="longitude" type="hidden" value="' + href.longitude + '"/>');
+            
             map_locations([href], {zoom: true});
             if ( location_error ) {
                 $("#warning").remove();
