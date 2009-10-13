@@ -36,12 +36,13 @@ $(document).ready(function() {
         $("#field-location").change(function() {
                 
                 var url = geolocator_url + "?location=" + escape($(this).val());
-                
                 if(location_error) {
                     $("#warning").remove();
                 }
 
                 $.getJSON(url, function(locations) {
+                        $('#latitude').remove();
+                        $('#longitude').remove();
                         if ( locations.error )
                             {
                                 location_error = true;
@@ -60,6 +61,10 @@ $(document).ready(function() {
                             }
                         else
                             {
+                                
+                                $('#propertyform').append('<input name="latitude" id="latitude" type="hidden" value="' + locations.locations[0].latitude + '"/>');
+                                $('#propertyform').append('<input name="longitude" id="longitude" type="hidden" value="' + locations.locations[0].longitude + '"/>');
+                                $('#field-location').val(locations.locations[0].address);
                                 map_locations(locations.locations, {zoom: true});
                             }
                     });
