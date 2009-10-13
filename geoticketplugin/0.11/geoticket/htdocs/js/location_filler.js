@@ -6,7 +6,7 @@ function location_filler() {
     $("ul.geolocation_error a").click(function() {
             locationnode.val($(this).text());
             var href = $.query($(this).attr('href'));
-            map_locations([href]);
+            map_locations([href], {zoom: true});
             if ( location_error ) {
                 $("#warning").remove();
                 if ( warnings.length )
