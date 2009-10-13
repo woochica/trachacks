@@ -3,7 +3,7 @@ from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
 from imagetrac.image import ImageTrac
-from imagetrac.setup import DefaultTicketImage
+from imagetrac.default_image import DefaultTicketImage
 from pkg_resources import resource_filename
 from ticketsidebarprovider import ITicketSidebarProvider
 from ticketsidebarprovider import TicketSidebarProvider
