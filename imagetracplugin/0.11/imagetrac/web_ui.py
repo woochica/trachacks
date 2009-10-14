@@ -313,7 +313,7 @@ class TicketImageHandler(Component):
         # handle image setting
         if req.method == 'POST':
             self.set_default_image(req)
-            req.redirect(req.href(req.path_info))
+            req.redirect(req.get_header('referer') or req.href(req.path_info))
 
         # GET default image
         ticket_id, size = self.ticket_id_and_size(req.path_info)
