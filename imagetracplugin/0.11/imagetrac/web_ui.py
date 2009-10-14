@@ -282,7 +282,7 @@ class TicketImageHandler(Component):
                 return False
 
         # set default image
-        if req.method == 'POST' and 'TICKET_ADMIN' in req.perm and 'default' in req.args:
+        if req.method == 'POST' and 'TICKET_MODIFY' in req.perm and 'default' in req.args:
             path = req.path_info.strip('/').split('/')
             if len(path) != 3:
                 return False

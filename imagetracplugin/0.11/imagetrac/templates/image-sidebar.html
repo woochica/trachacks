@@ -8,6 +8,7 @@
     
     <!-- multiple images -->
     <py:when test="True">
+
       <form action="${req.href('ticket', ticket.id, 'image')}"
             method="post">
 
@@ -26,7 +27,7 @@
               
 
               <!-- set default image -->
-              <py:if test="'TICKET_ADMIN' in req.perm">
+              <py:if test="default and 'TICKET_MODIFY' in req.perm">
                 <input type="radio" name="default" value="${name}" py:attrs="{'checked': name == default and 'selected' or None}"/>
               </py:if>
 
@@ -34,7 +35,8 @@
           </py:for>
         </ul>
 
-        <input type="submit" value="Set Default Image"/>
+        <input py:if test="default and 'TICKET_MODIFY' in req.perm" 
+               type="submit" value="Set Default Image"/>
       </form>
 
     </py:when>
