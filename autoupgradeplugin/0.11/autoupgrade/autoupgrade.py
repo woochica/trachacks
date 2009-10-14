@@ -98,7 +98,7 @@ def open_environment(env_path=None, use_cache=False):
                           exception_to_unicode(e, traceback=True))
         if needs_upgrade:
 
-            if AutoUpgrade in env.components:
+            if env.is_component_enabled(AutoUpgrade):
                 try:
                     env.upgrade(backup=True)
                 except TracError, e:
