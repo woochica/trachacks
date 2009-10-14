@@ -273,6 +273,7 @@ class TicketImageHandler(Component):
 
     def match_request(self, req):
         """Return whether the handler wants to process the given request."""
+
         if req.method == 'GET':
             
             try:

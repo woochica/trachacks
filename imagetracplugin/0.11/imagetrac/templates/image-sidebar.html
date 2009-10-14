@@ -9,17 +9,50 @@
     <!-- multiple images -->
     <py:when test="True">
 
-      <form action="${req.href('ticket', ticket.id, 'image')}"
-            method="post">
+      <script py:if="default" type="text/javascript">
+        original_default_image = '${default}';
+
+        $(document).ready(function(){
+        
+        // remove the radio buttons
+        $('#default-image-form input[name="default"]').remove();
+
+
+        // make the submit button do an AJAX post when JS is enabled
+        $('#default-image-form').submit(function() {
+        var element = $('#default-image-form li.active');
+        var id = element.attr('id');
+        var image_name = id.substring(13);
+        if (image_name != original_default_image) {
+        var form_token = $('#default-image-form input[name="__FORM_TOKEN"]').attr('value');
+        $.post("${req.href('ticket', ticket.id, 'image')}",
+       {default: image_name,
+        __FORM_TOKEN: form_token});
+        original_default_image = image_name;
+        }
+
+        return false;
+        });
+        
+
+        });
+      </script>
+
+      <form id="default-image-form"
+         action="${req.href('ticket', ticket.id, 'image')}"
+         method="post">
 
         <ul class="gallery">
           <py:for each="name, image in images.items()">
-            <li py:if="display in image" 
+            <li id="ticket-image-${name}"
+                py:if="display in image" 
                 py:choose="'thumbnail' in image"
                 py:attrs="{'class': name == default and 'active' or None}">
               
               <!--! image with thumbnails -->
-              <a py:when="True" href="${image[display]}"><img src="${image['thumbnail']}"/></a>
+              <a py:when="True" title="${name}" href="${image[display]}">
+                <img src="${image['thumbnail']}" alt="${name}"/>
+              </a>
               
               <!--! image without thumbnails -->
               <!--! TODO: something better than this! -->
@@ -28,7 +61,10 @@
 
               <!-- set default image -->
               <py:if test="default and 'TICKET_MODIFY' in req.perm">
-                <input type="radio" name="default" value="${name}" py:attrs="{'checked': name == default and 'selected' or None}"/>
+                <input type="radio" 
+                       name="default" 
+                       value="${name}" 
+                       py:attrs="{'checked': name == default and 'selected' or None}"/>
               </py:if>
 
             </li>
