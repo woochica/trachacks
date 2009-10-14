@@ -15,22 +15,27 @@ setup(name='GeoTrac',
       install_requires = [ 'PasteScript',
                            'psycopg2', 
                            'TracLegos',
+
+                           # general Trac plugins
+                           'IniAdmin',
                            'TracAccountManager',
                            'TracCustomFieldAdmin',
                            'TracDateField',
                            'TracIncludeMacro',
-                           'IniAdmin',
                            'TracPermRedirect',
                            'TracTags',
+                           'TracVote',
                            'TracWikiRename',
+
+                           # TOPP-authored Trac plugins
                            'AutocompleteUsers',
-                           'SVN_URLs',
-                           'Tracbacks',
-                           'LoomingClouds',
+                           'CaptchaAuth',
                            'GeoTicket',
                            'ImageTrac',
+                           'LoomingClouds',
                            'mail2trac',
-                           'CaptchaAuth',
+                           'SVN_URLs',
+                           'Tracbacks',
                            ],
       dependency_links = [
       # PIL - needed for ImageTrac
@@ -48,6 +53,7 @@ setup(name='GeoTrac',
       "http://trac-hacks.org/svn/iniadminplugin/0.11#egg=IniAdmin",
       "http://trac-hacks.org/svn/permredirectplugin/0.11#egg=TracPermRedirect",
       "http://trac-hacks.org/svn/tagsplugin/tags/0.6#egg=TracTags",
+      "http://trac-hacks.org/svn/voteplugin/0.11#egg=TracVote",
       "http://trac-hacks.org/svn/wikirenameplugin/0.11/#egg=TracWikiRename",
 
       # plugins with TOPP authors

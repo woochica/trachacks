@@ -64,6 +64,7 @@ tractags.* = enabled
 trac.web.auth.loginmodule = disabled
 tracbacks.tracbacks.tracbacksplugin = enabled
 tractoc.macro.tocmacro = enabled
+tracvote.votesystem = enabled
 wikirename.* = enabled
 
 [geo]
