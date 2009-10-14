@@ -73,9 +73,9 @@ $(document).ready(function() {
 		var summaryRegex = /#(\d+)<\/span>:\s*([a-z0-9\-\_\ ]+):\s*(.*)\s*\(([a-z0-9\-\_\ ]+)(?:\: ([a-z0-9\-\_\ ]+))?\)$/i;
 		
 		//console.log('.each ', $('params > param > value > array > data > value', xmlData));
-		var dataValues = $('params > param > value > array > data > value', xmlData);
+		var dataValues = $('params > param > value > array > data', xmlData);
 		if (dataValues.length > 0) {
-			dataValues.each(function(i) {
+			$('> value',dataValues).each(function(i) {
 				var xmlEntry = $(this);
 				
 				var url = xmlEntry.find('value:eq(0) string').text();
