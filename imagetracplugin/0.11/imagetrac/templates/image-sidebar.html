@@ -35,7 +35,7 @@
           </py:for>
         </ul>
 
-        <input py:if test="default and 'TICKET_MODIFY' in req.perm" 
+        <input py:if="default and 'TICKET_MODIFY' in req.perm" 
                type="submit" value="Set Default Image"/>
       </form>
 
