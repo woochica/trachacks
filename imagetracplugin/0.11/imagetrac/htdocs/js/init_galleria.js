@@ -1,1 +1,3 @@
-jQuery(function($) { $('ul.gallery').galleria(); }); 
+jQuery(function($) { $('ul.gallery').galleria({
+                history: false
+            }); }); 
