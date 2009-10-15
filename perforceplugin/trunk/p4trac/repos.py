@@ -712,6 +712,9 @@ class _P4Node(object):
         else:
             # Report the most recent change for any files under the directory
             dirInfo = self._repo._getDirInfo(self._nodePath, create=True)
+            if self._nodePath.path == u'//':
+                self._repo._log.debug('   _get_change getDirInfo %d' % (self._nodePath.change))
+                return self._nodePath.change
             if dirInfo is None or dirInfo.change is None:
                 self._repo._runChanges(self._nodePath,
                                        maxChanges=1,

@@ -287,12 +287,12 @@ class PerforceRepository(Repository):
         return PerforceNode(nodePath, self._repos, self.log)
 
     def get_oldest_rev(self):
-        return self.next_rev(0)
+        return self.next_rev(0, '')
 
     def get_youngest_rev(self):
         return self._repos.getLatestChange()
 
-    def previous_rev(self, rev):
+    def previous_rev(self, rev, path):
         self.log.debug('previous_rev(%r)' % rev)
         if not isinstance(rev, int):
             rev = self.short_rev(rev)
@@ -327,6 +327,7 @@ class PerforceRepository(Repository):
         else:
             path = P4NodePath.normalisePath(path)
         node = self._repos.getNode(P4NodePath(path, rev))
+        self.log.debug(u'node : %i %i %s' % (node.isDirectory, node.nodePath.isRoot, node.nodePath.path))
 
         if node.isDirectory:
             if node.nodePath.isRoot:
@@ -547,7 +548,7 @@ class PerforceNode(Node):
     """A Perforce repository node (depot, directory or file)"""
 
     def __init__(self, nodePath, repos, log):
-        log.debug('Created PerforceNode for %r' % nodePath)
+        log.debug('Creation of PerforceNode for %r' % nodePath)
         self._log = log
         self._nodePath = nodePath
         self._repos = repos
@@ -655,9 +656,9 @@ class PerforceNode(Node):
             output = P4ChangesOutputConsumer(self._repos)
 
             if self._nodePath.isRoot:
-                queryPath = '%s%s' % (rootPath(self._repos._connection), self._nodePath.rev)
+                queryPath = '@<=%s' % self._nodePath.rev[1:]
             else:
-                queryPath = '%s/...%s' % (self._nodePath.path, self._nodePath.rev)
+                queryPath = '%s/...@<=%s' % (self._nodePath.path, self._nodePath.rev[1:])
 
             if limit is None:
                 self._repos._connection.run('changes', '-l', '-s', 'submitted',
