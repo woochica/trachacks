@@ -43,7 +43,7 @@ clear: both;
       <h1>$title <span class="numrows">(${ngettext('%(num)s match', '%(num)s matches', query.num_items)})</span></h1>
 
  
-<div id="map" class="report-map"></div>
+      <div py:if="query.num_items" id="map" class="report-map"></div>
 
       <div py:if="description" id="description" xml:space="preserve">
         ${wiki_to_html(context(report_resource), description)}
