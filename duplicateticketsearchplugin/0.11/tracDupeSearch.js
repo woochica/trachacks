@@ -1,8 +1,12 @@
 $(document).ready(function() {
+	var tracBase = getTracBaseUrl();
+	//console.log('tracBase = ', tracBase);
+		
+	var xmlHref = tracBase.url + 'xmlrpc';
+	
 	$('div#content.ticket input#field-summary').blur(function() {
 		var text = $('div#content.ticket input#field-summary').val();
 		if (text.length > 0) {
-			var xmlHref = location.href + '/../xmlrpc';
 			
 			var html = '<h5 class="loading">Loading related tickets..</h5>';
 			var dupeticketlistDiv = $('div#content.ticket input#field-summary + div#dupeticketlist');
@@ -25,9 +29,9 @@ $(document).ready(function() {
 				type:'POST', 
 				contentType:'text/xml',
 				success: function(data, status) {
-					var tickets = parseTracResponse(data);
-					var ticketBaseHref = location.href + '/../ticket/';
-					var searchBaseHref = location.href + '/../search?ticket=on&q=';
+					var tickets = parseTracResponse(data, tracBase.ticket);
+					var ticketBaseHref = tracBase.url + 'ticket/';
+					var searchBaseHref = tracBase.url + 'search?ticket=on&q=';
 					var maxTickets = 15;
 					
 					var html = '';
@@ -70,7 +74,24 @@ $(document).ready(function() {
 		return $('<div/>').text(text).html().replace(/"/g, '&quot;');
 	}
 	
-	function parseTracResponse(xmlData) {
+	function getTracBaseUrl() {
+		// returns the base URL to trac, based on guesses. This would be better with trac templating 
+		var returnVal = { url:null, ticket:null };
+		var urlRegex = /^.+?(?=\/newticket.*|\/ticket\/(\d+).*|\/ticket.*)/i;
+		var match = urlRegex.exec(location.href);
+		if (match) {
+			if (match[1]) { 
+				// also have a ticket number 
+				returnVal.ticket = match[1];
+			}
+			returnVal.url = match[0] + (match[0].match('/$') ? '' : '/');
+		} else {
+			returnVal.url = location.href + (location.href.match('/$') ? '' : '/') + '../';
+		}
+		return returnVal;
+	}
+	
+	function parseTracResponse(xmlData, currentTicketId) {
 		var returnData = new Array();
 		var returnIdx = 0;
 		
@@ -93,18 +114,21 @@ $(document).ready(function() {
 					
 					var summaryMatches = summaryRegex.exec(summaryRaw);
 					
-					returnData[returnIdx++] = {
-						url: url,
-						summaryRaw: summaryRaw,
-						date: date,
-						owner: owner,
-						description: descr,
-						ticket: summaryMatches[1],
-						type: summaryMatches[2],
-						summary: summaryMatches[3],
-						status: summaryMatches[4],
-						resolution: summaryMatches[5]
-					};
+					// skip current ticket
+					if (summaryMatches[1] != currentTicketId) {
+						returnData[returnIdx++] = {
+							url: url,
+							summaryRaw: summaryRaw,
+							date: date,
+							owner: owner,
+							description: descr,
+							ticket: summaryMatches[1],
+							type: summaryMatches[2],
+							summary: summaryMatches[3],
+							status: summaryMatches[4],
+							resolution: summaryMatches[5]
+						};
+					}
 				}
 				
 			});
