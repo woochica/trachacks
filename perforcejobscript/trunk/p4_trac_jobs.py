@@ -2,7 +2,7 @@
 """
   p4_trac_jobs.py -- Perforce jobs to/from Trac tickets.
   A simple Synchroniser to update Trac tickets or Perforce jobs.
-  Copyright 2006, Thomas Tressieres <thomas.tressieres@calyon.com>
+  Copyright 2006-2009, Thomas Tressieres <thomas.tressieres@calyon.com>
 
   How to use
   ----------
@@ -34,6 +34,7 @@ import getopt
 import re
 import traceback
 import time
+from datetime import datetime, tzinfo, timedelta
 
 from trac.core import TracError
 from trac.env import Environment
@@ -98,6 +99,30 @@ def readConfig(file):
         print dict
     return dict
 
+
+class FixedOffset(tzinfo):
+    """Fixed offset in minutes east from UTC."""
+
+    def __init__(self, offset, name):
+        self._offset = timedelta(minutes=offset)
+        self.zone = name
+
+    def __str__(self):
+        return self.zone
+
+    def __repr__(self):
+        return '<FixedOffset "%s" %s>' % (self.zone, self._offset)
+
+    def utcoffset(self, dt):
+        return self._offset
+
+    def tzname(self, dt):
+        return self.zone
+
+    def dst(self, dt):
+        return timedelta(0)
+
+utc = FixedOffset(0, 'UTC')
 
 class PerforceJob(object):
     """A Perforce job implementation
@@ -217,7 +242,6 @@ class TracTicket(object):
     def __init__(self, env, parameters):
         self.env = env
         self.db = None
-        self.get_config = self.env.config.get
 
     def searchTickets(self, nbsec):
         """search tickets updated since nbsec, if nbsec is -1, it checks all jobs
@@ -298,7 +322,7 @@ class TracTicket(object):
         if settings.get('debug', 0) > 1:
             print "Trac ticket comment %s" % (comment)
 
-        when = ticket['Date']
+        when = datetime.fromtimestamp(ticket['Date'], utc)
 
         if settings.get('debug', 0):
             print "update Trac %d  %s" % (id, ticket)
@@ -306,15 +330,14 @@ class TracTicket(object):
             saved = tkt.save_changes(ticket['User'], comment, when)
             try:
                 if saved:
-                    self.env.abs_href = Href(self.get_config('project', 'url'))
-                    self.env.href = Href(self.get_config('project', 'url'))
-                    print self.env.href
+                    self.env._abs_href = Href(self.env.config.get('project', 'url'))
+                    #self.env._href = Href(self.env.config.get('project', 'url'))
                     tn = TicketNotifyEmail(self.env)
                     tn.notify(tkt, False, when)
             except Exception, e:
                 print 'TD: Failure sending notification on creation of ticket #%s: %s' %(id, e)
 
-      
+
 class TicketSynchronizer:
     """
     Main class, its job is to check Perforce jobs and Trac tickets at
