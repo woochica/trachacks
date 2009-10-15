@@ -43,8 +43,8 @@ $(document).ready(function() {
 						
 						for (var i = 0; i < tickets.length && i < maxTickets; i++) {
 							var ticket = tickets[i];
-							html += '<li title="' + ticket.description + '"><a href="' + ticketBaseHref + ticket.ticket + '"><span class="' + ticket.status + '">#' + ticket.ticket + '</span></a>: ' +
-							        ticket.type + ': ' + ticket.summary + '(' + ticket.status + (ticket.resolution ? ': ' + ticket.resolution : '') + ')' +
+							html += '<li title="' + htmlencode(ticket.description) + '"><a href="' + ticketBaseHref + ticket.ticket + '"><span class="' + htmlencode(ticket.status) + '">#' + ticket.ticket + '</span></a>: ' +
+							        htmlencode(ticket.type) + ': ' + htmlencode(ticket.summary) + '(' + htmlencode(ticket.status) + (ticket.resolution ? ': ' + htmlencode(ticket.resolution) : '') + ')' +
 							        '</li>'
 						}
 						html += '</ul>';
@@ -65,6 +65,10 @@ $(document).ready(function() {
 			});
 		}
 	});
+	
+	function htmlencode(text) {
+		return $('<div/>').text(text).html().replace(/"/g, '&quot;');
+	}
 	
 	function parseTracResponse(xmlData) {
 		var returnData = new Array();
