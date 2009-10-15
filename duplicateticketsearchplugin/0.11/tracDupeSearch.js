@@ -71,7 +71,7 @@ $(document).ready(function() {
 	});
 	
 	function htmlencode(text) {
-		return $('<div/>').text(text).html().replace(/"/g, '&quot;');
+		return $('<div/>').text(text).html().replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 	}
 	
 	function getTracBaseUrl() {
