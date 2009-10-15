@@ -36,7 +36,7 @@ $(document).ready(function() {
 						dupeticketlistDiv.html('<h5 class="error">Error loading tickets.</h5>');
 					} else if (tickets.length <= 0) {
 						// no dupe tickets
-						dupeticketlistDiv.hide();
+						dupeticketlistDiv.slideUp();
 					} else {
 						html = '<h5>Possible related tickets:</h5><ul style="display:none;">'
 						tickets = tickets.reverse();
