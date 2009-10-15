@@ -1,0 +1,6 @@
+<site>
+  <feature id="org.trachacks.wikieditor.eclipse.feature" url="features/org.trachacks.wikieditor.eclipse.feature_0.0.6.200910151952.jar" version="0.0.6.200910151952">
+    <category name="Trac Wiki Editor"/>
+  </feature>
+  <category-def name="Trac Wiki Editor" label="Trac Wiki Editor"/>
+</site>
