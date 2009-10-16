@@ -49,6 +49,10 @@ class ImageSvg(Component):
         args = content.split(',')
         if len(args) == 0:
            raise Exception("No argument.")
+        if len(args) == 3:
+           targetSize = "width='%(w)s'height='%(h)s'" % {'w': args[1].strip(), 'h': args[2].strip()}
+        else:
+           targetSize = None
         filespec = args[0]
         # parse filespec argument to get module and id if contained.
         parts = filespec.split(':')
@@ -89,10 +93,13 @@ class ImageSvg(Component):
             attachment = Attachment(self.env, module, id, file)
             org_path = attachment.path
             try:
-                f = open(org_path, 'r')
-                svg = f.readlines()
-                f.close()
-                svg = "".join(svg).replace('\n', '')
+                if targetSize is None:
+                    f = open(org_path, 'r')
+                    svg = f.readlines()
+                    f.close()
+                    svg = "".join(svg).replace('\n', '')
+                else:
+                    svg = targetSize
                 w = re.search('''width=["']([0-9]+)(.*?)["']''', svg)
                 h = re.search('''height=["']([0-9]+)(.*?)["']''', svg)
                 (w_val, w_unit) = w.group(1,2)
