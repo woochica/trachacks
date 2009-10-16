@@ -7,7 +7,7 @@ var = templates.var
 
 class OSSTracProject(TracProject):
     _template_dir = 'template'
-    summary = 'Open Source Software project trac template'
+    summary = 'Open Source Software Trac project template'
 
     vars = [ var('basedir', 'base directory for trac',
                  default='.'),
