@@ -26,9 +26,6 @@ class TracProject(templates.Template):
     # practicalities going forward should determine which of these 
     # methodologies is favored
 
-    # PoachEggs requirements files for the template
-    requirements = [] # XXX deprecated?
-
     # Trac permissions for the template
     permissions = {}
 
