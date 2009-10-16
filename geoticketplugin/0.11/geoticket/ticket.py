@@ -103,7 +103,8 @@ class GeoTicket(Component):
                           "minimum longitude for default map display")
     max_lon = FloatOption('geo', 'max_lon', '180.',
                           "maximum longitude for default map display")
-
+    feature_popup = Option('geo', 'feature_popup', '',
+                           "template for map feature popup")
 
     ### method for ICustomFieldProvider
 
@@ -596,7 +597,14 @@ class GeoTicket(Component):
                 address, (lat, lon) = self.locate_ticket(ticket)
                 location = {'latitude': lat, 'longitude': lon, }
                 if req:
-                    location['content'] = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
+                    if self.feature_popup:
+                        chrome = Chrome(self.env)
+                        _data = dict(req=req, 
+                                     ticket=ticket)
+                        template = chrome.load_template(self.feature_popup)
+                        location['content'] = template.generate(**_data).render()
+                    else:
+                        location['content'] = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
                 locations.append(location)
             except GeolocationException:
                 pass
