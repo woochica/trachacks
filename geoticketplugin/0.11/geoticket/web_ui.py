@@ -209,7 +209,7 @@ class MapDashboard(Component):
 
         # get the GeoTicket component
         assert self.env.is_component_enabled(GeoTicket)
-        geoticket = self.env.components[GeoTicket]
+        geoticket = GeoTicket(self.env)
 
         # add the query script
         add_script(req, 'common/js/query.js')
