@@ -221,9 +221,10 @@ class TracLegos(object):
 
         ### run pastescript templates
         for paste_template in templates.pastescript_templates:
-#            paste_template.run(command, dirname, vars) # XXX
             paste_template.write_files(command, dirname, vars)
             paste_template.post(command, dirname, vars)
+
+            # read permissions
             for agent, perm in paste_template.permissions.items():
                 permissions.setdefault(agent, []).extend(perm)
 
@@ -329,7 +330,8 @@ def get_parser():
     parser.add_option("--db", "--database",
                       dest="database", default=None,
                       help="database type to use")
-    
+
+    # options to yield information
     parser.add_option("--list-templates", dest="listprojects",
                       action="store_true", default=False,
                       help="list available TracProject PasteScript templates")
@@ -339,16 +341,9 @@ def get_parser():
     parser.add_option("--list-databases", dest="listdatabases",
                       action="store_true", default=False,
                       help="list available database types available for setup by TracLegos")
-    parser.add_option("--print-missing", dest="printmissing",
+    parser.add_option("--list-variables", dest="printmissing",
                       action="store_true", default=False,
                       help="print variable names missing for a given configuration")
-
-# XXX as yet unused options
-#    parser.add_option("--list-variables", dest="listvariables",
-#                      help="list variables for a [someday: list of] templates") # TODO
-#     parser.add_option("-r", "--requires", # XXX not used yet
-#                       dest="requirements", action="append", default=[],
-#                       help="requirements files for plugins") #
 
     parser.set_usage("%prog [options] project <project2> <...> var1=1 var2=2 ...")
     parser.set_description("assemble a trac project from components")
