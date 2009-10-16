@@ -242,7 +242,7 @@ class MapDashboard(Component):
                 try:
                 
                     address, (lat, lon) = geoticket.locate_ticket(ticket)
-                    content = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
+                    content = geoticket.feature_content(req, ticket)
                     locations.append({'latitude': lat,
                                       'longitude': lon,
                                       'content': Markup(content)})

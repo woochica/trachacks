@@ -597,14 +597,7 @@ class GeoTicket(Component):
                 address, (lat, lon) = self.locate_ticket(ticket)
                 location = {'latitude': lat, 'longitude': lon, }
                 if req:
-                    if self.feature_popup:
-                        chrome = Chrome(self.env)
-                        _data = dict(req=req, 
-                                     ticket=ticket)
-                        template = chrome.load_template(self.feature_popup)
-                        location['content'] = template.generate(**_data).render()
-                    else:
-                        location['content'] = '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
+                    location['content'] = self.feature_content(req, ticket)
                 locations.append(location)
             except GeolocationException:
                 pass
@@ -636,3 +629,17 @@ class GeoTicket(Component):
         
         if get_first_row(self.env, "select ticket from ticket_location where ticket='%s'" % ticket):
             execute_non_query(self.env, "delete from ticket_location where ticket='%s'" % ticket)
+
+
+    def feature_content(self, req, ticket):
+        """
+        returns content of a feature popup window
+        """
+        if self.feature_popup:
+            chrome = Chrome(self.env)
+            _data = dict(req=req, 
+                         ticket=ticket)
+            template = chrome.load_template(self.feature_popup)
+            return template.generate(**_data).render()
+        else:
+            return '<a href="%s">%s</a>' % (req.href('ticket', ticket.id), ticket['summary'])
