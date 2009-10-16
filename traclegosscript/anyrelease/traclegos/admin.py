@@ -68,12 +68,13 @@ class TracLegosAdmin(TracAdmin):
             for value in self.list(field):
                 self.remove(field, value)
 
-    def load_pages(self):
+    def load_pages(self, pages_dir=None):
+        if pages_dir is None:
+            # default Trac wiki pages
+            pages_dir = pkg_resources.resource_filename('trac.wiki', 
+                                                        'default-pages') 
         cnx = self.env.get_db_cnx()
         cursor = cnx.cursor()
-        pages_dir = pkg_resources.resource_filename('trac.wiki', 
-                                                    'default-pages') 
-
         self._do_wiki_load(pages_dir, cursor) # should probably make this silent
         cnx.commit()
 
@@ -83,6 +84,3 @@ class TracLegosAdmin(TracAdmin):
             for permission in p:
                 perm.grant_permission(agent, permission)
 
-        
-if __name__ == '__main__':
-    pass # TODO
