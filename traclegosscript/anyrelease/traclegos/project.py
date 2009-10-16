@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-definition of a trac project
+definition of a TracLegos project template
 """
 
 import os
