@@ -371,7 +371,7 @@ def parse(parser, args=None):
 
     # list the packaged pastescript TracProject templates
     if options.listprojects:
-        print 'Available projects:'
+        print 'Available project types:'
         for name, template in project_dict().items():
             print '%s: %s' % (name, template.summary)
         return
