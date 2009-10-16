@@ -47,7 +47,7 @@ class TracLegos(object):
 
     def __init__(self, directory, master=None, inherit=None, 
                  site_templates=None, vars=None, options=(),
-                 permissions=None):
+                 permissions=None, wiki=None):
         """
         * directory: directory for project creation
         * master: path to master trac instance
@@ -66,6 +66,7 @@ class TracLegos(object):
         self.inherit = inherit or master or None
         self.options.extend(options)
         self.permissions = permissions or {}
+        self.wiki = wiki or []
 
         if not os.path.exists(self.directory):
             os.mkdir(self.directory)
@@ -120,6 +121,7 @@ class TracLegos(object):
         vars['project'] = project        
         permissions = dict([(key, value[:]) 
                             for key, value in self.permissions.items()])
+        wiki = self.wiki[:]
 
         ### munge configuration
 
@@ -228,6 +230,11 @@ class TracLegos(object):
             for agent, perm in paste_template.permissions.items():
                 permissions.setdefault(agent, []).extend(perm)
 
+            # read wiki directories
+            wiki_dir = paste_template.wiki_dir()
+            if wiki_dir is not None:
+                wiki.append(wiki_dir)
+
         # write back munged configuration 
         munger = ConfigMunger(_conf, options)
         fp = file(_conf_file, 'w')
@@ -248,9 +255,10 @@ class TracLegos(object):
         # remove the default items
         admin.delete_all()
 
-        # get the default wiki pages
-        # TODO: add options for importing existing wiki pages
-        admin.load_pages()
+        # load wiki pages
+        admin.load_pages() # default wiki pages
+        for page_dir in wiki:
+            admin.load_pages(page_dir)
 
         # add permissions
         if permissions:
@@ -293,6 +301,10 @@ def traclegos_factory(ini_files, configuration, variables):
     """
     # XXX could instead return a constructed TracLegos instance
     conf = site_configuration(*ini_files)
+    site_wiki = conf['site-configuration'].pop('wiki', None)
+    if site_wiki:
+        configuration['wiki'] = [ site_wiki ] + configuration['wiki']
+        
     argspec = traclegos_argspec(conf['site-configuration'],
                                 configuration)
     argspec['vars'] = argspec['vars'] or {}
@@ -330,6 +342,9 @@ def get_parser():
     parser.add_option("--db", "--database",
                       dest="database", default=None,
                       help="database type to use")
+    parser.add_option("-w", "--wiki", dest="wiki",
+                      action="append", default=[],
+                      help="directories containing Trac wiki pages to import")
 
     # options to yield information
     parser.add_option("--list-templates", dest="listprojects",

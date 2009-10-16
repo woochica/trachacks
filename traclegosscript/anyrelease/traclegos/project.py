@@ -26,11 +26,16 @@ class TracProject(templates.Template):
     # practicalities going forward should determine which of these 
     # methodologies is favored
 
+    ### class defaults
+
     # Trac permissions for the template
     permissions = {}
 
     # database to be used
     db = None
+
+    # wiki directory to import from
+    _wiki_dir = None
 
     ### attrs for PasteScript Template
     
@@ -59,6 +64,11 @@ class TracProject(templates.Template):
         if isinstance(self.db, basestring):
             return available_databases()[self.db]
         return self.db()
+
+    def wiki_dir(self):
+        if self._wiki_dir is None:
+            return None
+        return os.path.join(self.module_dir(), self._wiki_dir)
             
 
 def projects():
