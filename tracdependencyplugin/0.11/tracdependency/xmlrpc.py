@@ -20,10 +20,10 @@ class WorkHoursRPC(Component):
 
     def xmlrpc_methods(self):
         yield ('TICKET_VIEW', ((list, str, str),), self.executeQuery)
-        yield ('TICKET_VIEW', ((list, str),), self.getWorkHourChangeTimes)
-        yield ('TICKET_VIEW', ((list, str),), self.getWorkHourChanges)
+        #yield ('TICKET_VIEW', ((list, str),), self.getWorkHourChangeTimes)
+        #yield ('TICKET_VIEW', ((list, str),), self.getWorkHourChanges)
         yield ('TICKET_VIEW', ((list, int),), self.getWorkHours)
-        yield ('TICKET_VIEW', ((list, int),), self.getWorkHoursPriod)
+        #yield ('TICKET_VIEW', ((list, int),), self.getWorkHoursPriod)
 
     def executeQuery(self, req, query, sort):
         """Returns results of query"""
@@ -73,7 +73,7 @@ class WorkHoursRPC(Component):
         sql = sql + "LEFT JOIN ticket_custom baseline_cost ON baseline_cost.ticket = t.id AND baseline_cost.name='baseline_cost' "
         sql = sql + "LEFT JOIN ticket_custom blocking ON blocking.ticket = t.id AND blocking.name='blocking' "
         sql = sql + "WHERE " + query
-        sql = sql + " GROUP BY " + sort
+        sql = sql + " ORDER BY " + sort
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute(sql)
