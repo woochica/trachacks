@@ -30,7 +30,7 @@ class TracDependencyAdminWebUI(Component):
     implements(IAdminPanelProvider, ITemplateProvider)
 
     def __init__(self):
-        self.intertrac = InterTrac(self.config)
+        self.intertrac = InterTrac(self.config, self.env)
 
     def customfield_panel_enable(self):
         dependencies_enabled = ( self.config.get( TICKET_CUSTOM, "summary_ticket") or \

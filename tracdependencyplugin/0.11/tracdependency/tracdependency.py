@@ -25,7 +25,7 @@ class TracDependency(Component):
     implements(IRequestHandler, IRequestFilter, ITemplateProvider, ITemplateStreamFilter)
 
     def __init__(self):
-        self.intertrac = InterTrac(self.config)
+        self.intertrac = InterTrac(self.config, self.env)
 
     def subsequentticket(self,ids):
         sql = ("SELECT id, type, summary, owner, description, status from ticket t "
@@ -36,10 +36,30 @@ class TracDependency(Component):
                     " c.value like '%%, %s' or c.value like '%%,%s')" % (ids, ids, ids, ids, ids, ids, ids, ids, ids))
         return sql
         
+    def subsequentticket_i(self,ids):
+        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
+                    "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
+                    "WHERE "
+                    "(c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
+                    " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
+                    " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
+                    " c.value like '%%, %s' or c.value like '%%,%s' or "
+                    " c.value = '#%s' or c.value like '#%s(%%' or c.value like '#%s,%%' or "
+                    " c.value like '%%, #%s(%%' or c.value like '%%, #%s,%%' or "
+                    " c.value like '%%,#%s(%%' or c.value like '%%,#%s,%%' or "
+                    " c.value like '%%, #%s' or c.value like '%%,#%s')" % (ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids))
+        return sql
+        
     def subticket(self, ids):
         sql = ("SELECT id, type, summary, owner, description, status from ticket t "
                     "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
                     "WHERE a.value = '%s'" % ids)
+        return sql
+
+    def subticket_i(self, ids):
+        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
+                    "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
+                    "WHERE a.value = '#%s' or  a.value = '%s'" % (ids, ids))
         return sql
 
     # IRequestHandler methods
@@ -58,8 +78,8 @@ class TracDependency(Component):
         dependencies = self.intertrac.get_link(tkt['dependencies'])
         # このチケットを指定している，intertracで設定されているすべてのプロジェクトからチケットを検索しリンクを作る
         tkt_id_l = self.env.project_name + ':#' + tkt_id
-        sub_ticket = self.intertrac.create_links(self.subticket(tkt_id_l), self.log) 
-        subsequentticket = self.intertrac.create_links(self.subsequentticket(tkt_id_l), self.log) 
+        sub_ticket = self.intertrac.create_links(self.subticket(tkt_id_l), self.subticket_i(tkt_id), self.log) 
+        subsequentticket = self.intertrac.create_links(self.subsequentticket(tkt_id_l), self.subsequentticket_i(tkt_id), self.log) 
 
         summary_ticket_enabled = not not ( self.config.get( ticket_custom, "summary_ticket" ))
         dependencies_enabled = not not ( self.config.get( ticket_custom, "dependencies"))
@@ -85,8 +105,8 @@ class TracDependency(Component):
             # このページのデータを置き換えるためのでデータを作成します．
             tkt = data['ticket']
             tkt_id_l = self.env.project_name + ':#' + str(tkt.id)
-            sub_ticket = self.intertrac.create_links(self.subticket(tkt_id_l), self.log)
-            subsequentticket = self.intertrac.create_links(self.subsequentticket(tkt_id_l), self.log) 
+            sub_ticket = self.intertrac.create_links(self.subticket(tkt_id_l), self.subticket_i(str(tkt.id)), self.log)
+            subsequentticket = self.intertrac.create_links(self.subsequentticket(tkt_id_l), self.subsequentticket_i(str(tkt.id)), self.log) 
             data['tracdependency'] = {
                 'field_values': {
                     'summary_ticket': self.intertrac.linkify_ids(self.env, req, tkt['summary_ticket'],LABEL_SUMMARY ,LABEL_SUB ,sub_ticket, self.log),

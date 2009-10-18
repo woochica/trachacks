@@ -14,9 +14,10 @@ from trac.env import open_environment
 
 class InterTrac:
 
-    def __init__(self, config):
+    def __init__(self, config, env):
         # interTracの設定を取得します．
         self.intertracs0 = {}
+        self.env = env
         for key, value in config.options('intertrac'):
             # オプションの数のループを回り，左辺値の.を探します．
             idx = key.rfind('.')  
@@ -56,37 +57,39 @@ class InterTrac:
     def project_information(self):
         return self.intertracs
 
-    def create_links(self, sql, log):
+    def create_links(self, sql, sql_i, log):
         # 後続チケットまたは，子チケットへのリンクを作ります．
         links = []
-        log.debug("create_links 000")
         intertracs0 = self.get_projects()
-        log.debug("create_links 001")
         for prefix in intertracs0:
-            log.debug("create_links prefix = %s" % prefix)
             intertrac = intertracs0[prefix]
             path = intertrac.get('path', '')
-            log.debug("create_links path = %s" % path)
             try:
                 project = open_environment(path, use_cache=True)
                 db = project.get_db_cnx()
                 cursor = db.cursor();
                 cursor.execute(sql)
-                tickets=[]
-                log.debug("create_links 002")
                 for id, type, summary, owner, description, status in cursor:
-                    log.debug("create_links 003")
                     url = intertrac.get('url', '') + '/ticket/' + str(id)
-                    log.debug("create_links url ^ %s" % url)
                     dep_url = intertrac.get('url', '') + '/dependency/ticket/' + str(id)
-                    log.debug("create_links dep_url ^ %s" % dep_url)
                     ticket = intertrac['name'] + ':#' + str(id)
-                    log.debug("create_links ticket ^ %s" % ticket)
-                    link = links.append({'ticket':ticket, 'title':summary, 'url':url, 'dep_url':dep_url, 'status':status})
+                    links.append({'ticket':ticket, 'title':summary, 'url':url, 'dep_url':dep_url, 'status':status})
                 
             except Exception, e:
                 pass
             # オープンできない場合もあるのでエラー処理が必要
+        try:
+            db = self.env.get_db_cnx()
+            cursor = db.cursor();
+            cursor.execute(sql_i)
+            intertrac = intertracs0[self.env.project_name.lower()]
+            for id, type, summary, owner, description, status in cursor:
+                url = intertrac.get('url', '') + '/ticket/' + str(id)
+                dep_url = intertrac.get('url', '') + '/dependency/ticket/' + str(id)
+                ticket = self.env.project_name + ':#' + str(id)
+                links.append({'ticket':ticket, 'title':summary, 'url':url, 'dep_url':dep_url, 'status':status})
+        except Exception, e:
+            pass
         return links
 
     def linkify_ids_b(self, env, req, ids, label1, log):
@@ -102,11 +105,23 @@ class InterTrac:
             ticket = ticket.strip() # 前後の空白を削除します
             log.debug("id = %s" % ticket)
             if len(ticket) > 0:
-                log.debug("id = %s" % ticket)
-                idx = ticket.rfind(':#') # プロジェクト名とチケット番号に分割します
-                log.debug("idx = %s" % str(idx))
-                if idx > 0: # 存在した場合
-                    project_name, id = ticket[:idx], ticket[idx+2:]
+                try:
+                    log.debug("id = %s" % ticket)
+                    idx = ticket.rfind(':#') # プロジェクト名とチケット番号に分割します
+                    log.debug("idx = %s" % str(idx))
+                    log.debug("linkify_ids_b 0001%s" % idx)
+                    if idx > 0: # 存在した場合
+                        project_name, id = ticket[:idx], ticket[idx+2:]
+                        log.debug("linkify_ids_b 0005 %s" % id)
+                    else: # 存在しない場合
+                        project_name = self.env.project_name
+                        if ticket.rfind('#') == 0:
+                            id = ticket[1:]
+                            log.debug("linkify_ids_b 0003 %s" % id)
+                        else:
+                            id = ticket
+                            log.debug("linkify_ids_b 0004 %s" % id)
+                    log.debug("linkify_ids_b 0002 %s" % project_name)
                     # 依存関係を指定しているか確認する 例:(FF)
                     idx = id.rfind('(')
                     if idx > 0:
@@ -122,28 +137,22 @@ class InterTrac:
                     if not url:
                         url = req.href.ticket(tkt.id)
                     data.append(tag.a('%s'%ticket, href=url, class_='%s ticket'%tkt['status'], title=tkt['summary']))
-                else: # 存在しない場合
-                    log.debug("idx = %s" % str(idx))
-                    data.append('%s'%ticket)
                     # 複数ある場合は", "を追加する
-                data.append(', ')
+                    data.append(', ')
+                except Exception, e:
+                    pass
         if data:
             # 最後のカンマを削除する．
             del data[-1]
         data.append(tag.br())
-        log.debug("???????")
         return data
 
     def linkify_ids(self, env, req, ids, label1, label2, tickets2, log):
         # チケットの表示のページでinterTracリンクの表示するための元を作る
         intertracs0 = self.intertracs0
-        log.debug("linkify_ids 001")
         data = self.linkify_ids_b(env, req, ids, label1, log)
-        log.debug("linkify_ids 002")
         data.append(label2)
-        log.debug("linkify_ids 003")
         for ticket in tickets2:
-            log.debug("linkify_ids 004")
             tkt = ticket['ticket']
             url = ticket['url']
             log.debug("linkify_ids url = %s" % url)
@@ -153,11 +162,9 @@ class InterTrac:
             log.debug("linkify_ids title1 = %s" % title1)
             data.append(tag.a('%s'%tkt, href=url, class_='%s ticket'%status, title=title1))
             data.append(', ')
-            log.debug("linkify_ids 005")
         if data:
             # リストになにもない場合はラベル，ある場合は最後のカンマを削除する．
             del data[-1]
-        log.debug("linkify_ids 006")
         return tag.span(*data)
 
     def get_link(self, ids):
@@ -172,20 +179,30 @@ class InterTrac:
             idx = ticket.rfind(':#') # プロジェクト名とチケット番号に分割します
             if idx > 0: # 存在した場合
                 project_name, id = ticket[:idx], ticket[idx+2:]
-                # 依存関係を指定しているか確認する 例:(FF)
-                idx = id.rfind('(')
-                if idx > 0:
-                    # 指定されていたならそれはidに含まない
-                    id = id[:idx]
-                # InterTracの設定のキーは小文字
-                intertrac = intertracs0[project_name.lower()]
-                path = intertrac.get('path', '')
-                # TODO:　オープンできない場合もあるのでエラー処理が必要
-                project = open_environment(path, use_cache=True)
-                url = intertrac.get('url', '') + '/ticket/' + id
-                dep_url = intertrac.get('url', '') + '/dependency/ticket/' + id
-                tkt = Ticket(project, id)
-                status = tkt['status']
-                title = tkt['summary']
-                link = links.append({'ticket':ticket, 'title':title, 'url':url, 'dep_url':dep_url, 'status':status})
+            else: # 存在しない場合
+                project_name = self.env.project_name
+                if ticket.rfind('#') == 0:
+                    id = ticket[1:]
+                else:
+                    id = ticket
+            if ticket != "":
+                try:
+                    # 依存関係を指定しているか確認する 例:(FF)
+                    idx = id.rfind('(')
+                    if idx > 0:
+                        # 指定されていたならそれはidに含まない
+                        id = id[:idx]
+                    # InterTracの設定のキーは小文字
+                    intertrac = intertracs0[project_name.lower()]
+                    path = intertrac.get('path', '')
+                    # TODO:　オープンできない場合もあるのでエラー処理が必要
+                    project = open_environment(path, use_cache=True)
+                    url = intertrac.get('url', '') + '/ticket/' + id
+                    dep_url = intertrac.get('url', '') + '/dependency/ticket/' + id
+                    tkt = Ticket(project, id)
+                    status = tkt['status']
+                    title = tkt['summary']
+                    link = links.append({'ticket':ticket, 'title':title, 'url':url, 'dep_url':dep_url, 'status':status})
+                except Exception, e:
+                    pass
         return links
