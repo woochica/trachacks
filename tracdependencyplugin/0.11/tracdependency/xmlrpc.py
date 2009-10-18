@@ -24,6 +24,7 @@ class WorkHoursRPC(Component):
         #yield ('TICKET_VIEW', ((list, str),), self.getWorkHourChanges)
         yield ('TICKET_VIEW', ((list, int),), self.getWorkHours)
         #yield ('TICKET_VIEW', ((list, int),), self.getWorkHoursPriod)
+        yield ('TICKET_VIEW', ((list, ),), self.getUsers)
 
     def executeQuery(self, req, query, sort):
         """Returns results of query"""
@@ -208,5 +209,16 @@ class WorkHoursRPC(Component):
                 result.append(d)
         return result
 
-
+    def getUsers(self, req):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        sql = "SELECT s.sid, sa.value FROM session s left outer join session_attribute sa ON s.sid = sa.sid AND sa.name = 'name' WHERE s.authenticated = 1"
+        cursor.execute(sql)
+        result = []
+        for sid, value in cursor:
+            d={}
+            d['id']=sid
+            d['name']=value
+            result.append(d);
+        return result
 
