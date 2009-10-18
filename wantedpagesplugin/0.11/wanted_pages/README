@@ -1,0 +1,79 @@
+== Install ==
+You must have setuptools installed. 
+
+Run the following commands in the source directory:
+{{{
+  python setup.py bdist_egg
+  cp dist/*.egg /path/to/projenv/plugins
+}}}
+
+== Syntax ==
+[[WantedPages]] or [[WantedPages(show_referrers)]]
+
+Will yield a list of wanted wiki pages or a list of wanted wiki pages with
+a list of pages where the wanted wiki page link was found, respectively.
+
+== Running the Tests ==
+
+To run the tests, you must have trac installed and its python files
+must be accessible to python.
+
+To run the tests, run `python tests.py` in the wanted_pages subdirectory of the
+root of the WantedPages source distribution. The tests parse this file and then
+checks the positive and negative test cases listed below.
+
+== Positive Test Cases ==
+
+ TimLowe 
+ [wiki:TimLowe5]
+ [wiki:TimLowe6 Click here for more info]
+ TimLeo#Bio
+NoSpaces
+
+== Negative Test Cases ==
+
+!TimLewo 
+{{{Timlow}}}
+`TimLee`
+3TimLoo
+[[MyMacro]]
+ParentWiki/SubWiki
+[http://external external link]
+http://ExternalLink
+http://ExternalTrac/wiki/TomFool
+{{{
+<IfModule mod_fastcgi.c>
+   AddHandler fastcgi-script .fcgi
+   FastCgiIpcDir /var/lib/apache2/fastcgi 
+</IfModule>
+}}}
+{{{
+  if (MyClass)  { return null };
+}}}
+[wiki:WikiProcessors WikiProcessor] (don't pickup the display  name even though it is camel case)
+{{{
+  PythonPath "sys.path + ['/path/to/trac']"
+}}}
+{{{
+{{{
+}}}
+NestedBlocks
+}}}
+http://c2.com/cgi/wiki?WikiHistory
+
+== TODO ==
+
+* The macro currently incorrectly identifies the following as a !MyPage link:
+  !attachment:wiki:MyPage:the_file.txt creates a link to the attachment the_file.txt of the !MyPage wiki page
+
+== 0.3 Changelog ==
+ * Added support to show the referrers for each wanted page
+
+== 0.2 Changelog ==
+
+ * Improved link detection, fixing many bugs not even reported 
+ * Fixed [wiki:link] not being picked up
+ * No longer need spaces around a wiki link for it to show up
+ * Fixed {{{ CodeSegments }}} being picked up
+ 
+EndOfFile
