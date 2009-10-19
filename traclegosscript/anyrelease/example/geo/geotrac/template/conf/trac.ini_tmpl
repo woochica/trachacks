@@ -39,6 +39,7 @@ customfieldadmin.api.customfields = disabled
 customfieldadmin.customfieldadmin.customfieldadminpage = disabled
 customfieldprovider.customfieldprovider.customfieldprovider = enabled
 geoticket.mail.geomailtoticket = enabled
+geoticket.marker.constantsizemarker = enabled
 geoticket.query.geospatialquery = enabled
 geoticket.query.mapticketsmacro = enabled
 geoticket.regions.georegions = enabled
