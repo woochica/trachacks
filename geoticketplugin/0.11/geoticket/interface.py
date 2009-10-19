@@ -4,7 +4,7 @@ interfaces for the GeoTicket plugin
 
 from trac.core import Interface
 
-### interfaces for map marker customization
+### interface for map marker customization
 
 class IMapMarkerStyle(Interface):
 

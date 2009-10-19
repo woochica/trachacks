@@ -112,8 +112,9 @@ class GeoTicket(Component):
     # options for customizing map display
     feature_popup = Option('geo', 'feature_popup', '',
                            "template for map feature popup")
-    marker_style = OrderedExtensionsOption('geo', 'marker_style', IMapMarkerStyle, 'ConstantSizeMarker',
-                                  "components to use to set feature style")
+    marker_style = OrderedExtensionsOption('geo', 'marker_style', IMapMarkerStyle, '',
+                                           include_missing=False,
+                                           doc="components to use to set feature style")
 
     ### method for ICustomFieldProvider
 

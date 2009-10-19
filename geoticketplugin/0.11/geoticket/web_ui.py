@@ -167,8 +167,9 @@ class MapDashboard(Component):
                            "whether to display the cloud on the map dashboard")
     dashboard = ListOption('geo', 'dashboard', 'activeissues',
                            "which viewports to display on the dashboard")
-    marker_style = OrderedExtensionsOption('geo', 'marker_style', IMapMarkerStyle, 'ConstantSizeMarker',
-                                           "component to use to set feature style")
+    marker_style = OrderedExtensionsOption('geo', 'marker_style', IMapMarkerStyle, '',
+                                           include_missing=False,
+                                           doc="component to use to set feature style")
 
 
     def panels(self):
@@ -251,6 +252,8 @@ class MapDashboard(Component):
                     style = {}
                     for extension in self.marker_style:
                         style.update(extension.style(ticket))
+                    import pdb; pdb.set_trace()
+                    style = style or None
                     locations.append({'latitude': lat,
                                       'longitude': lon,
                                       'style': style,
