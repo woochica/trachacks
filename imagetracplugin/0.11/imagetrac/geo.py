@@ -7,7 +7,7 @@ from web_ui import TicketImageHandler
 try:
     from geoticket.interface import IMapMarkerStyle
 
-    class ImageMarker(Component):
+    class Marker(Component):
         """image map marker"""
         
         implements(IMapMarkerStyle, IRequiresComponents)
@@ -27,3 +27,5 @@ try:
             return [ TicketImageHandler ]
         
         
+except ImportError:
+    pass
