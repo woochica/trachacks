@@ -426,6 +426,7 @@ class GeoTicket(Component):
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
         """
+        db.commit() # XXX if I don't have this line, get InteralError: current transaction aborted
         return not self.version()
 
     def upgrade_environment(self, db):
@@ -478,7 +479,6 @@ class GeoTicket(Component):
 
     def version(self):
         """returns version of the database (an int)"""
-
         version = get_scalar(self.env, "select value from system where name = 'geoticket.db_version';")
         if version:
             return int(version)
