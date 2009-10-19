@@ -252,7 +252,6 @@ class MapDashboard(Component):
                     style = {}
                     for extension in self.marker_style:
                         style.update(extension.style(ticket))
-                    import pdb; pdb.set_trace()
                     style = style or None
                     locations.append({'latitude': lat,
                                       'longitude': lon,
