@@ -22,8 +22,10 @@ tickets.  This is done in response to
    editing previously entered hours (amount, date, description) and
    deleting previously alloted hours
 
-   - the view at `/hours/<ticket number>` by default only allows adding/editing
-   of one's own hours on the ticket;  however, if you are a
+   - the view at `/hours/<ticket number>` by default will only display
+   the hours on the ticket.  If you have the TICKET_ADD_HOURS
+   permission, this view allows adding/editing
+   of one's own hours on the ticket If you are a
    TRAC_ADMIN, you should be able to add/edit/delete others' hours as well
 
    - the default query period is the last seven days
