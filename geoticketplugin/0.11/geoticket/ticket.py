@@ -12,13 +12,13 @@ from genshi.builder import tag
 from genshi.builder import Markup
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
-from geoticket.interface import IMapMarkerSize
+from geoticket.interface import IMapMarkerStyle
 from geoticket.options import FloatOption
 from pkg_resources import resource_filename
 from trac.config import BoolOption
-from trac.config import ExtensionOption
 from trac.config import ListOption
 from trac.config import Option
+from trac.config import OrderedExtensionsOption
 from trac.core import *
 from trac.db import Table, Column, Index
 from trac.db.postgres_backend import PostgreSQLConnection
@@ -112,8 +112,8 @@ class GeoTicket(Component):
     # options for customizing map display
     feature_popup = Option('geo', 'feature_popup', '',
                            "template for map feature popup")
-    marker_size = ExtensionOption('geo', 'marker_size', IMapMarkerSize, 'ConstantSizeMarker',
-                                  "component to use to set feature size")
+    marker_style = OrderedExtensionsOption('geo', 'marker_style', IMapMarkerStyle, 'ConstantSizeMarker',
+                                  "components to use to set feature style")
 
     ### method for ICustomFieldProvider
 

@@ -5,16 +5,16 @@ from genshi.builder import tag
 from genshi.builder import Markup
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
-from geoticket.interface import IMapMarkerSize
+from geoticket.interface import IMapMarkerStyle
 from geoticket.ticket import GeolocationException
 from geoticket.ticket import GeoTicket
 from pkg_resources import resource_filename
 from ticketsidebarprovider import ITicketSidebarProvider
 from trac.config import BoolOption
-from trac.config import ExtensionOption
 from trac.config import IntOption
 from trac.config import ListOption
 from trac.config import Option
+from trac.config import OrderedExtensionsOption
 from trac.core import *
 from trac.mimeview import Context
 from trac.ticket import Ticket
@@ -167,8 +167,8 @@ class MapDashboard(Component):
                            "whether to display the cloud on the map dashboard")
     dashboard = ListOption('geo', 'dashboard', 'activeissues',
                            "which viewports to display on the dashboard")
-    marker_size = ExtensionOption('geo', 'marker_size', IMapMarkerSize, 'ConstantSizeMarker',
-                                  "component to use to set feature size")
+    marker_style = OrderedExtensionsOption('geo', 'marker_style', IMapMarkerStyle, 'ConstantSizeMarker',
+                                           "component to use to set feature style")
 
 
     def panels(self):
@@ -248,9 +248,12 @@ class MapDashboard(Component):
                 
                     address, (lat, lon) = geoticket.locate_ticket(ticket)
                     content = geoticket.feature_content(req, ticket)
+                    style = {}
+                    for extension in self.marker_style:
+                        style.update(extension.style(ticket))
                     locations.append({'latitude': lat,
                                       'longitude': lon,
-                                      'size': str(self.marker_size.size(ticket)),
+                                      'style': style,
                                       'content': Markup(content)})
                     tickets.append(ticket)
                 except GeolocationException:

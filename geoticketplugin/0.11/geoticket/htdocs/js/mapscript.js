@@ -133,13 +133,10 @@ function map_locations(locations, options) {
     for (var i in locations) {
 
         var point = new OpenLayers.Geometry.Point(locations[i]['longitude'], locations[i]['latitude']);
-        var size = '6';
-        if ( typeof(locations[i].size) != 'undefined') {
-                size = locations[i].size;
-            }
         var marker = new OpenLayers.Feature.Vector(point.transform(epsg4326, googleprojection), 
                                                    {content: locations[i].content},
-                                                   {pointRadius: size});
+                                                   locations[i].style
+                                                   );
         datalayer.addFeatures([marker]);
     }
 
