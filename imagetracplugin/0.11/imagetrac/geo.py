@@ -10,7 +10,7 @@ try:
     class Marker(Component):
         """image map marker"""
         
-        implements(IMapMarkerStyle, IRequiresComponents)
+        implements(IMapMarkerStyle, IRequireComponents)
 
         image_size = Option('geo', 'marker_image_size', 'thumbnail',
                             "size of images for markers")
