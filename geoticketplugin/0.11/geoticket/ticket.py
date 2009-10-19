@@ -12,6 +12,7 @@ from genshi.builder import tag
 from genshi.builder import Markup
 from genshi.filters import Transformer
 from genshi.template import TemplateLoader
+from geoticket.interface import IMapMarkerSize
 from geoticket.options import FloatOption
 from pkg_resources import resource_filename
 from trac.config import BoolOption
@@ -98,6 +99,7 @@ class GeoTicket(Component):
                             'http://openlayers.org/api/2.8-rc2/OpenLayers.js',
                             "URL of OpenLayers JS to use")
 
+    # default viewing frame lat/lon
     min_lat = FloatOption('geo', 'min_lat', '-85.',
                           "minimum latitude for default map display")
     max_lat = FloatOption('geo', 'max_lat', '85.',
@@ -106,8 +108,12 @@ class GeoTicket(Component):
                           "minimum longitude for default map display")
     max_lon = FloatOption('geo', 'max_lon', '180.',
                           "maximum longitude for default map display")
+
+    # options for customizing map display
     feature_popup = Option('geo', 'feature_popup', '',
                            "template for map feature popup")
+    marker_size = ExtensionOption('geo', 'marker_size', IMapMarkerSize, 'ConstantSizeMarker',
+                                  "component to use to set feature size")
 
     ### method for ICustomFieldProvider
 
