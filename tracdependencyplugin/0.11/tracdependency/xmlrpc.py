@@ -218,6 +218,8 @@ class WorkHoursRPC(Component):
         for sid, value in cursor:
             d={}
             d['id']=sid
+            if value == None:
+                value = ""
             d['name']=value
             result.append(d);
         return result
