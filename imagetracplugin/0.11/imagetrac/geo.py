@@ -19,7 +19,8 @@ try:
         def style(self, ticket):
             default_ticket_image = DefaultTicketImage(self.env)
             # TODO : stub
-
+            if default_ticket_image.default_image(ticket.id, self.image_size):
+                return { 'externalGraphic': self.env.href('ticket', ticket.id, 'image', self.image_size) }
             return {}
 
         # method for IRequireComponents
