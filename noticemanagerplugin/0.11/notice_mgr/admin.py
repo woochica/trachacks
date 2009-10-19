@@ -432,7 +432,14 @@ class NoticeManagerAdminPage(Component):
 	    if req.args.get('extract'):
 		self._extract_groups(req,userinfos,groupinfos)
 
-	req.hdf['admin.userinfos'] = userinfos
+	# need a new index for clearsilver to understand names including '.'
+	newuserinfos = {}
+	cnt=0
+	for ui in userinfos:
+                auser = userinfos.get(ui)
+		newuserinfos[cnt] = auser
+		cnt+=1
+	req.hdf['admin.userinfos'] = newuserinfos
 	req.hdf['admin.groupinfos'] = groupinfos
 	req.hdf['admin.ldap_import'] = ldap_import
 	req.hdf['admin.options'] = self.options
