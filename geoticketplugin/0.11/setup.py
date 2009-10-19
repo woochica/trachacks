@@ -38,6 +38,7 @@ setup(name='GeoTicket',
       [trac.plugins]
       geoticket = geoticket.ticket
       mapsidebar = geoticket.web_ui
+      mapmarkers = geoticket.marker
       geoquery = geoticket.query 
       georegions = geoticket.regions
       geoticketmail = geoticket.mail [mail2trac]

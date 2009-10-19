@@ -14,7 +14,10 @@ from genshi.filters import Transformer
 from genshi.template import TemplateLoader
 from geoticket.options import FloatOption
 from pkg_resources import resource_filename
-from trac.config import Option, BoolOption, ListOption
+from trac.config import BoolOption
+from trac.config import ExtensionOption
+from trac.config import ListOption
+from trac.config import Option
 from trac.core import *
 from trac.db import Table, Column, Index
 from trac.db.postgres_backend import PostgreSQLConnection
