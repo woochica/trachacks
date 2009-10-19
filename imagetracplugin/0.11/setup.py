@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.3.3'
+version='0.4'
 
 setup(name='ImageTrac',
       version=version,
@@ -21,6 +21,7 @@ setup(name='ImageTrac',
         'cropresize',
         'TracSQLHelper',
         ],
+      extras_require={ 'geo': [ 'GeoTicket' ] },
       dependency_links=[
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
         "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
@@ -32,5 +33,6 @@ setup(name='ImageTrac',
       imagetrac = imagetrac.image
       imagesidebar = imagetrac.web_ui
       defaultimage = imagetrac.default_image
+      mapimagemarker = imagetrac.geo [geo]
       """,
       )
