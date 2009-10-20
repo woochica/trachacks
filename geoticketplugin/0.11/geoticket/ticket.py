@@ -608,6 +608,13 @@ class GeoTicket(Component):
                 location = {'latitude': lat, 'longitude': lon, }
                 if req:
                     location['content'] = self.feature_content(req, ticket)
+                    # style for the markers
+                    style = {}
+                    for extension in self.marker_style:
+                        style.update(extension.style(ticket, **style))
+                    style = style or None
+                    location['style'] = style
+
                 locations.append(location)
             except GeolocationException:
                 pass

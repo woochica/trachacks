@@ -249,10 +249,13 @@ class MapDashboard(Component):
                 
                     address, (lat, lon) = geoticket.locate_ticket(ticket)
                     content = geoticket.feature_content(req, ticket)
+
+                    # style for the markers
                     style = {}
                     for extension in self.marker_style:
                         style.update(extension.style(ticket, **style))
                     style = style or None
+
                     locations.append({'latitude': lat,
                                       'longitude': lon,
                                       'style': style,
