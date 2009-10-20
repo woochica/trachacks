@@ -11,5 +11,5 @@ class ConstantSizeMarker(Component):
     marker_size = IntOption("geo", "constant_marker_size", "6",
                             "constant map marker size")
 
-    def style(self, ticket):
+    def style(self, ticket, **style):
         return {'pointRadius': str(self.marker_size)}

@@ -251,7 +251,7 @@ class MapDashboard(Component):
                     content = geoticket.feature_content(req, ticket)
                     style = {}
                     for extension in self.marker_style:
-                        style.update(extension.style(ticket))
+                        style.update(extension.style(ticket, **style))
                     style = style or None
                     locations.append({'latitude': lat,
                                       'longitude': lon,

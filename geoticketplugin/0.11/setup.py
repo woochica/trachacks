@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.10'
+version='0.11'
 
 setup(name='GeoTicket',
       version=version,

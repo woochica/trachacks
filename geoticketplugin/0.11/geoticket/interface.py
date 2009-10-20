@@ -8,5 +8,5 @@ from trac.core import Interface
 
 class IMapMarkerStyle(Interface):
 
-    def style(ticket):
+    def style(ticket, **style):
         """returns a dictionary to apply to marker style dictionary"""
