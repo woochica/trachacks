@@ -15,6 +15,7 @@ Sandia National Labs.  See http://trac-hacks.org/wiki/TicketModeratorPlugin
 Author: Rob McMullen <robm@users.sourceforge.net>
 License: Same as Trac itself
 """
+import re
 import random
 import sys
 import time
@@ -24,7 +25,7 @@ from trac.core import *
 from trac.db.schema import Table, Column, Index
 from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.api import ITicketManipulator
-from trac.web.api import ITemplateStreamFilter
+from trac.web.api import ITemplateStreamFilter, IRequestHandler
 from trac.wiki.api import IWikiPageManipulator
 
 from genshi.builder import tag
@@ -42,9 +43,11 @@ schema = [
         Column('right_operand', type='int'), # right operand
         Column('solution', type='int'),    # solution
         Column('incorrect_solution'),      # incorrect guess
-        Column('incorrect_author'),        # author of incorrect guess
-        Column('incorrect_summary'),       # description included with failed guess
-        Column('incorrect_text'),          # combined field including any other text typed by the spambot
+        Column('author'),                  # author of incorrect guess
+        Column('summary'),                 # description included with failed guess
+        Column('text'),                    # combined field including any other text typed by the spambot
+        Column('href'),                    # url used in captcha
+        Column('solved', type='boolean'),  # whether or not it was successfully solved
         ],
 ]
 
@@ -58,7 +61,7 @@ def to_sql(env, table):
 
 class MathCaptchaPlugin(Component):
     implements(ITicketManipulator, ITemplateStreamFilter, IWikiPageManipulator,
-               IEnvironmentSetupParticipant)
+               IEnvironmentSetupParticipant, IRequestHandler)
     
     timeout = 600 # limit of 10 minutes to process the page
 
@@ -68,7 +71,7 @@ class MathCaptchaPlugin(Component):
 
     # Database setup from http://trac-hacks.org/wiki/TicketModeratorPlugin
     # The current version for our portion of the database
-    db_version = 1
+    db_version = 2
     
     # Offset value for database id.  This is a large integer that is used to
     # modify the database row id so that the real database id is not stored
@@ -76,6 +79,9 @@ class MathCaptchaPlugin(Component):
     # want the spam harvesters to simply copy fields from this hidden item
     # into the solution.
     id_offset = 5830285
+    
+    # Number of invalid captchas before the IP is blocked
+    ban_after_failed_attempts = 4
 
 
     # IEnvironmentSetupParticipant methods
@@ -98,16 +104,61 @@ class MathCaptchaPlugin(Component):
         is done by the common upgrade procedure when all plugins are done."""
         cursor = db.cursor()
         ver = self._get_version(cursor)
+        if ver == self.db_version:
+            return
+        
         if ver == 0:
             self._create_tables(cursor, self.env)
             cursor.execute( "INSERT INTO system VALUES " + \
                             "('mathcaptcha_version', '%s')"
                             % (self.db_version,) )
-            db.commit()
+            # When the database is created in this manner, it will always be
+            # the current schema so we can return here without going through
+            # the upgrade process
             return
-
+        
         # do database schema upgrades here...
-
+        
+        if ver == 1:
+            # Version 1 of the schema used a prefix called 'incorrect_' on
+            # author, summary, and text.  But version 2 of the schema stores
+            # every attempt in the schema so the prefix is misleading.  The
+            # prefix is therefore removed in version 2.
+            table_v2 = Table('mathcaptcha_history', key='id')[
+                Column('id', auto_increment=True), # captcha ID
+                Column('ip'),                      # submitter IP address
+                Column('submitted', type='int'),   # original submission time
+                Column('left_operand', type='int'), # left operand
+                Column('operator'),                # operator (text string, "+", "-", etc)
+                Column('right_operand', type='int'), # right operand
+                Column('solution', type='int'),    # solution
+                Column('incorrect_solution'),      # incorrect guess
+                Column('author'),                  # author of incorrect guess
+                Column('summary'),                 # description included with failed guess
+                Column('text'),                    # combined field including any other text typed by the spambot
+                Column('href'),                    # url used in captcha
+                Column('solved', type='boolean'),  # whether or not it was successfully solved
+                ]
+            cursor.execute("ALTER TABLE mathcaptcha_history RENAME TO " + \
+                           "mathcaptcha_history_OLD")
+            for stmt in to_sql(self.env, table_v2):
+                cursor.execute(stmt)
+            old_fields = ", ".join(['ip', 'submitted', 'left_operand', 'operator',
+                     'right_operand', 'solution', 'incorrect_solution',
+                     'incorrect_author', 'incorrect_summary', 'incorrect_text'])
+            new_fields = ", ".join(['ip', 'submitted', 'left_operand', 'operator',
+                     'right_operand', 'solution', 'incorrect_solution',
+                     'author', 'summary', 'text'])
+            cursor.execute("INSERT INTO mathcaptcha_history (%s) SELECT %s FROM mathcaptcha_history_OLD" % (new_fields, old_fields))
+            cursor.execute("DROP TABLE mathcaptcha_history_OLD")
+            ver += 1
+        
+        # Record the current version of the db environment
+        cursor.execute( "UPDATE system SET value=%s WHERE "
+                        "name='mathcaptcha_version'" % (ver,) )
+        if ver != self.db_version:
+            raise TracError("MathCaptcha failed to upgrade environment.")
+    
     def _get_version(self, cursor):
         try:
             sql = "SELECT value FROM system WHERE name=" + \
@@ -150,6 +201,10 @@ class MathCaptchaPlugin(Component):
         values['ip'] = req.remote_addr
         values['submitted'] = int(time.time())
         math_problem_text = self.create_math_problem(values)
+        values['author'] = req.args.get('author')
+        values['summary'] = req.args.get('field_summary')
+        values['text'] = self.get_failed_attempt_text(req)
+        values['href'] = req.path_info
         
         # Save the problem so that the post request of the web server knows
         # which request to process.  This is required on FCGI and mod_python
@@ -184,6 +239,16 @@ class MathCaptchaPlugin(Component):
         be modified for local purposes.
         """
         return req.authname == "anonymous"
+    
+    def is_banned(self, req):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT id, solved FROM mathcaptcha_history WHERE ip=%s", (req.remote_addr,) )
+        failed = 0
+        for row in cursor:
+            if row[1] is not None and not row[1]:
+                failed += 1
+        return failed > self.ban_after_failed_attempts
 
     def validate_mathcaptcha(self, req):
         """Validates the user (or spammer) input
@@ -194,6 +259,13 @@ class MathCaptchaPlugin(Component):
         # The database key is named 'url' as described in get_content
         id = int(req.args.get('url')) - self.id_offset
         
+        # Ban IP addresses after repeated failures
+        if self.is_banned(req):
+            self.env.log.error("%s %s %s%s: Banned after %d failed attempts" % (req.remote_addr, req.remote_user, req.base_path, req.path_info, self.ban_after_failed_attempts))
+            self.store_failed_attempt(req, id, "IP IS NOW BANNED!")
+            raise RuntimeError("Too many failed attempts")
+        
+        # Look up previously stored data to compare the solution
         db = self.env.get_db_cnx()
         fields = ['ip', 'submitted', 'left_operand', 'operator', 'right_operand', 'solution']
         cursor = db.cursor()
@@ -224,6 +296,8 @@ class MathCaptchaPlugin(Component):
             # should be quick, and it's not important that the history be
             # cleaned out exactly on time.
             self.clean_history()
+        else:
+            self.store_successful_attempt(req, id)
         
         return error
 
@@ -245,10 +319,13 @@ class MathCaptchaPlugin(Component):
     def store_failed_attempt(self, req, id, user_solution):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("UPDATE mathcaptcha_history SET incorrect_solution='%s', incorrect_author='%s', incorrect_summary='%s', incorrect_text='%s' "
-                       "WHERE id=%s" % (user_solution, req.args.get('author'),
-                                       req.args.get('field_summary'),
-                                       self.get_failed_attempt_text(req), id))
+        cursor.execute("UPDATE mathcaptcha_history SET incorrect_solution=%s, author=%s, summary=%s, text=%s, solved=%s WHERE id=%s", (user_solution, req.args.get('author'), req.args.get('field_summary'), self.get_failed_attempt_text(req), False, id))
+        db.commit()
+    
+    def store_successful_attempt(self, req, id):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("UPDATE mathcaptcha_history SET solved=%s WHERE id=%s", (True, id))
         db.commit()
     
     def get_failed_attempt_text(self, req):
@@ -261,9 +338,11 @@ class MathCaptchaPlugin(Component):
             text += field
         return text
 
-    def clean_history(self):
+    def clean_history(self, days=None):
         # History after a certain number of days is cleared out
-        older_than = time.time() - (self.clearout_days * 24 * 60 * 60)
+        if days is None:
+            days = self.clearout_days
+        older_than = time.time() - (days * 24 * 60 * 60)
         
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -271,6 +350,8 @@ class MathCaptchaPlugin(Component):
                        "WHERE submitted<%s", (older_than,))
         db.commit()
 
+    def show_banned(self, req):
+        raise RuntimeError("Too many failed attempts")
 
     # ITemplateStreamFilter interface
 
@@ -287,7 +368,25 @@ class MathCaptchaPlugin(Component):
         """
 
         #self.env.log.info(filename)
-        if filename in ["ticket.html", "wiki_edit.html"] and data['authname'] == 'anonymous':
+        add_captcha = False
+        if data['authname'] == 'anonymous':
+            if self.is_banned(req):
+                self.env.log.debug("%s %s %s%s: IP banned as spammer" % (req.remote_addr, req.remote_user, req.base_path, req.path_info))
+                stream = tag.label("System offline.")
+                return stream
+                
+            href = req.path_info
+            self.env.log.debug(href)
+            self.env.log.debug(filename)
+            if filename == "ticket.html":
+                if "newticket" in href:
+                    add_captcha = 'TICKET_CREATE' in req.perm
+                elif "ticket" in href:
+                    add_captcha = 'TICKET_MODIFY' in req.perm or 'TICKET_APPEND' in req.perm
+            elif filename == "wiki_edit.html":
+                add_captcha = 'WIKI_MODIFY' in req.perm
+        
+        if add_captcha:
             # Insert the math question right before the submit buttons
             stream = stream | Transformer('//div[@class="buttons"]').before(self.get_content(req))
         return stream
@@ -316,3 +415,62 @@ class MathCaptchaPlugin(Component):
         if self.is_validation_needed(req):
             return self.validate_mathcaptcha(req)
         return []
+    
+    # IRequestHandler methods
+    
+    def match_request(self, req):
+        return re.match(r'/mathcaptcha-(attempts|clear|successful)(?:_trac)?(?:/.*)?$', req.path_info)
+    
+    def process_request(self, req):
+        req.perm.assert_permission('TRAC_ADMIN')
+        
+        matches = re.match(r'/mathcaptcha-clear(?:_trac)?(?:/.*)?$', req.path_info)
+        if matches:
+            self.process_clear(req)
+        else:
+            matches = re.match(r'/mathcaptcha-successful(?:_trac)?(?:/.*)?$', req.path_info)
+            if matches:
+                self.process_successful(req)
+                return
+        self.process_attempts(req)
+    
+    def process_clear(self, req):
+        self.clean_history(0)
+    
+    def process_attempts(self, req):
+        req.send_response(200)
+        req.send_header('Content-Type', 'text/html')
+        req.end_headers()
+        
+        db = self.env.get_db_cnx()
+        fields = ['ip', 'submitted', 'href', 'incorrect_solution', 'author', 'summary', 'text', 'solved']
+        cursor = db.cursor()
+        cursor.execute("SELECT %s FROM mathcaptcha_history ORDER BY submitted" %
+                       ','.join(fields))
+        html = "<table border><tr><th>%s</th></tr>\n" % "</th><th>".join(fields)
+        lines = []
+        for row in cursor:
+            if row[-1] is not None and not row[-1]:
+                lines.append("<tr><td>%s</td></tr>\n" % "</td><td>".join([str(i) for i in row]))
+        html += "\n".join(lines) + "</table>"
+        req.write(html)
+    
+    def process_successful(self, req):
+        req.send_response(200)
+        req.send_header('Content-Type', 'text/html')
+        req.end_headers()
+        
+        db = self.env.get_db_cnx()
+        fields = ['ip', 'submitted', 'href', 'solution', 'author', 'summary', 'text', 'solved']
+        cursor = db.cursor()
+        cursor.execute("SELECT %s FROM mathcaptcha_history ORDER BY submitted" %
+                       ','.join(fields))
+        html = "<table border><tr><th>%s</th></tr>\n" % "</th><th>".join(fields[:-1])
+        lines = []
+        for row in cursor:
+            if row[-1]:
+                values = list(row[:-1])
+                values[1] = time.asctime(time.localtime(values[1]))
+                lines.append("<tr><td>%s</td></tr>\n" % "</td><td>".join([str(i) for i in values]))
+        html += "\n".join(lines) + "</table>"
+        req.write(html)

@@ -30,7 +30,7 @@
 from setuptools import setup
 
 PACKAGE = 'mathcaptcha'
-VERSION = '2.0'
+VERSION = '3.0a1'
 
 setup(
     name = PACKAGE,
