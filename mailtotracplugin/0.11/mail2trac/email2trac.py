@@ -53,7 +53,6 @@ def mail2project(env, message):
 
         if trac_address not in accept:
             raise EmailException("Email does not match Trac address: %s" % trac_address)
-
     
     # get the handlers
     handlers = ExtensionPoint(IEmailHandler).extensions(env)

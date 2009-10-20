@@ -177,10 +177,9 @@ class ReplyToTicket(Component):
         # save changes to the ticket
         ticket.save_changes(reporter, body)
 
-
         # ticket notification
-        tn = TicketNotifyEmail(self.env, newticket=0, modtime=ticket.time_changed)
-        tn.notify(ticket)
+        tn = TicketNotifyEmail(self.env)
+        tn.notify(ticket, newticket=0, modtime=ticket.time_changed)
 
 
     ### internal methods
