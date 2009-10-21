@@ -276,13 +276,15 @@ public class Server extends AbstractBaseObject {
 	
 	private static ProxySettings getProxySettings(ServerDetails serverDetails) {
 		IProxyService proxyService = Activator.getDefault().getProxyService();
-		IProxyData[] proxyData = proxyService.getProxyDataForHost(serverDetails.getUrl().getHost());
-		if(proxyData != null && proxyData.length > 0) {
-			return new ProxySettings(proxyData[0].getHost(), proxyData[0].getPort(), 
-					proxyData[0].getUserId(), proxyData[0].getPassword());
+		
+		if(proxyService.isProxiesEnabled()) {
+			IProxyData[] proxyData = proxyService.getProxyDataForHost(serverDetails.getUrl().getHost());
+			if(proxyData != null && proxyData.length > 0) {
+				return new ProxySettings(proxyData[0].getHost(), proxyData[0].getPort(), 
+						proxyData[0].getUserId(), proxyData[0].getPassword());
+			}
 		}
-		else {
-			return null;
-		}
+
+		return null;
 	}
 }
