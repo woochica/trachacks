@@ -148,9 +148,12 @@ class ServerSideRedirectPlugin(WikiMacroBase):
 
     def _check_redirect(self, req):
         """Checks if the request should be redirected."""
-        if not req.path_info.startswith('/wiki/'):
-            return False
-        wiki = req.path_info[6:]
+        if req.path_info == '/wiki':
+          wiki = 'WikiStart';
+        elif not req.path_info.startswith('/wiki/'):
+          return False
+        else:
+          wiki = req.path_info[6:]
 
         # Extract Wiki page
         db = self.env.get_db_cnx()
