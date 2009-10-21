@@ -55,6 +55,7 @@ class DefaultTicketImage(Component):
         transactions. This is done implicitly after all participants have
         performed the upgrades they need without an error being raised.
         """
+        db.commit()
         self.create_db()
 
     ### method for IRequireComponents
