@@ -39,6 +39,7 @@ class DefaultTicketImage(Component):
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
         """
+        db.commit()
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         try:
