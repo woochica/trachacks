@@ -253,7 +253,7 @@ class MapDashboard(Component):
                     # style for the markers
                     style = {}
                     for extension in self.marker_style:
-                        style.update(extension.style(ticket, **style))
+                        style.update(extension.style(ticket, req, **style))
                     style = style or None
 
                     locations.append({'latitude': lat,
