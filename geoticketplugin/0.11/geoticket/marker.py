@@ -13,7 +13,7 @@ class StyleMarkers(Component):
     implements(IMapMarkerStyle)
 
     styles = ListOption('geo', 'static_marker_style', '',
-                        "static styles to apply to markers")
+                        doc="static styles to apply to markers")
 
     def style(self, ticket, req, **style):
         retval = {}
