@@ -15,6 +15,45 @@ from trac.util.datefmt import format_datetime, format_time
 import csv
 from trac.web.api import RequestDone
 
+
+# This can go away once they fix http://genshi.edgewall.org/ticket/136
+# At that point we should use Transformer.filter
+# THIS IS STILL SOLVING PROBLEMS WELL AFTER THAT TICKET HAS BEEN CLOSED
+# Without this (using the default filter) I was getting omitted closing tags for some tags (Based on whitespace afaict)
+class FilterTransformation(object):
+    """Apply a normal stream filter to the selection. The filter is called once
+    for each contiguous block of marked events."""
+
+    def __init__(self, filter):
+        """Create the transform.
+
+        :param filter: The stream filter to apply.
+        """
+        self.filter = filter
+
+    def __call__(self, stream):
+        """Apply the transform filter to the marked stream.
+
+        :param stream: The marked event stream to filter
+        """
+        def flush(queue):
+            if queue:
+                for event in self.filter(queue):
+                    yield event
+                del queue[:]
+
+        queue = []
+        for mark, event in stream:
+            if mark:
+                queue.append(event)
+            else:
+                for e in flush(queue):
+                    yield None,e
+                yield None,event
+        for event in flush(queue):
+            yield None,event
+
+
 billing_report_regex = re.compile("\{(?P<reportid>\d*)\}")
 def report_id_from_text(text):
     m = billing_report_regex.match(text)
@@ -61,7 +100,7 @@ class ReportsFilter(Component):
         self.log.debug("Applying Reports Filter to remove T&E reports")
         return stream | Transformer(
             '//table[@class="listing reports"]/tbody/tr'
-            ).filter(RowFilter(self))
+            ).apply(FilterTransformation(RowFilter(self)))
 
 class ReportScreenFilter(Component):
     """Hides TandE reports even when you just go to the url"""
@@ -79,7 +118,7 @@ class ReportScreenFilter(Component):
             header = strm[0][1]
             if not reportid[0]:
                 self.log.debug("ReportScreenFilter: helper: %s %s %s"%(strm,header,report_id_from_text(header)))
-                reportid[0] = report_id_from_text(header) 
+                reportid[0] = report_id_from_text(header)
             for kind, data, pos in strm:
                 yield kind, data, pos       
                 
@@ -95,9 +134,9 @@ class ReportScreenFilter(Component):
                 for kind, data, pos in strm:
                     yield kind, data, pos
 
-        self.log.debug("ReportScreenFilter: About to prevent rendering of billing reports without permissions")
-        stream = stream | Transformer('//div[@id="content"]/h1/text()').filter(idhelper)
-        stream = stream | Transformer('//div[@id="content"]').filter(permhelper)
+        self.log.debug("ReportScreenFilter: About to begin filtering of billing reports without permissions")
+        stream = stream | Transformer('//div[@id="content"]/h1/text()').apply(FilterTransformation(idhelper))
+        stream = stream | Transformer('//div[@id="content"]').apply(FilterTransformation(permhelper))
         return stream
 
 ## ENFORCE PERMISSIONS ON report exports
