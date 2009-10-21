@@ -8,15 +8,7 @@ import java.util.logging.Logger;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.part.FileEditorInput;
-import org.trachacks.wikieditor.eclipse.plugin.Activator;
 import org.trachacks.wikieditor.eclipse.plugin.Images;
-import org.trachacks.wikieditor.eclipse.plugin.editor.WikiPageEditorInput;
 import org.trachacks.wikieditor.eclipse.plugin.model.Page;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.AbstractBaseAction;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.Labels;
