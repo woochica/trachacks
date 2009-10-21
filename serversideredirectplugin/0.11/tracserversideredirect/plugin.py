@@ -18,7 +18,7 @@ from tracextracturl import extract_url
 from trac.wiki.macros import WikiMacroBase
 import re
 
-MACRO = re.compile(r'^\s*\[\[redirect\((.*)\)\]\]', re.MULTILINE)
+MACRO = re.compile(r'.*\[\[redirect\((.*)\)\]\]')
 
 class ServerSideRedirectPlugin(WikiMacroBase):
     """ This Trac plug-in implements a server sided redirect functionality.
@@ -148,12 +148,13 @@ class ServerSideRedirectPlugin(WikiMacroBase):
 
     def _check_redirect(self, req):
         """Checks if the request should be redirected."""
-        if req.path_info == '/wiki':
-          wiki = 'WikiStart';
+        if req.path_info == '/wiki' or req.path_info == '/':
+          wiki = 'WikiStart'
         elif not req.path_info.startswith('/wiki/'):
           return False
         else:
           wiki = req.path_info[6:]
+        self.log.debug("SSR: wiki = " + wiki)
 
         # Extract Wiki page
         db = self.env.get_db_cnx()
@@ -162,15 +163,18 @@ class ServerSideRedirectPlugin(WikiMacroBase):
         text = cursor.fetchone();
         # If not exist or empty:
         if not text or not text[0]:
+	    self.log.debug("SSR: wiki does not exists or is empty")
             return False
         text = text[0]
 
         # Check for redirect "macro":
         m = MACRO.match(text)
         if not m:
+	    self.log.debug("SSR: wiki does not hold redirect macro" + text)
             return False
         wikitarget = m.groups()[0]
         self.redirect_target = extract_url(self.env, Context.from_request(req), wikitarget)
+        self.log.debug("SSR: Redirect Target = " + self.redirect_target)
         return True
 
 
@@ -185,18 +189,23 @@ class ServerSideRedirectPlugin(WikiMacroBase):
         Always returns the request handler, even if unchanged.
         """
         from trac.wiki.web_ui import WikiModule
-        self.log.info("method = " + req.method)
+        self.log.debug("SSR: method = " + req.method)
+        self.log.debug("SSR: path = " + req.path_info)
         args = req.args
 
         if isinstance(handler, WikiModule) \
-           and req.path_info.startswith('/wiki/') \
+           and \
+           ( req.path_info.startswith('/wiki/') \
+             or req.path_info == '/wiki' \
+             or req.path_info == '/' \
+           ) \
            and req.method == 'GET' \
            and not args.has_key('action') \
            and (not args.has_key('redirect') or args['redirect'].lower() != 'no') \
            and req.environ.get('HTTP_REFERER','').find('action=edit') == -1 \
            and self._check_redirect(req):
                 return self
-        self.log.info("Original handler")
+        self.log.debug("SSR: No redirect.")
         return handler
 
     def post_process_request(self, req, template, data, content_type):
