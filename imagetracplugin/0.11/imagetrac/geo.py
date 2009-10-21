@@ -17,7 +17,7 @@ try:
                             "size of images for markers")
 
         # method for IMapMarkerStyle
-        def style(self, ticket, **style):
+        def style(self, ticket, req, **style):
             default_ticket_image = DefaultTicketImage(self.env)
             if default_ticket_image.default_image(ticket.id, self.image_size):
                 retval = { 'externalGraphic': self.env.href('ticket', ticket.id, 'image', self.image_size) }
