@@ -56,8 +56,9 @@ class PageAuthzPolicyEditor(Component):
             return(None)
 
     def _get_users(self):
-        return(self.account_manager.get_users())
-    
+        user_list = ', '.join(self.account_manager.get_users())
+        return(user_list)
+
     def _group_filename(self):
         group_file_name = self._get_filename('account-manager', 'group_file')
         if not group_file_name:
