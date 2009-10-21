@@ -39,7 +39,9 @@ customfieldadmin.api.customfields = disabled
 customfieldadmin.customfieldadmin.customfieldadminpage = disabled
 customfieldprovider.customfieldprovider.customfieldprovider = enabled
 geoticket.mail.geomailtoticket = enabled
-geoticket.marker.constantsizemarker = enabled
+geoticket.marker.colormarkers = enabled
+geoticket.marker.stylemarkers = enabled
+geoticket.marker.voteproportionalmarkers = enabled
 geoticket.query.geospatialquery = enabled
 geoticket.query.mapticketsmacro = enabled
 geoticket.regions.georegions = enabled
@@ -50,6 +52,7 @@ geoticket.web_ui.mapdashboard = enabled
 graphviz.graphviz.graphviz = enabled
 icalexporter.icalexporter.icalexporterplugin = enabled
 imagetrac.default_image.defaultticketimage = enabled
+imagetrac.geo.markerimage = enabled
 imagetrac.image.imagetrac = enabled
 imagetrac.web_ui.imageformfilter = disabled
 imagetrac.web_ui.sidebarimage = disabled
@@ -78,12 +81,16 @@ google_api_key =
 inject_map = false
 inject_query = false
 mandatory_location = false
+marker_style = VoteProportionalMarkers, ColorMarkers, MarkerImage, StyleMarkers
 max_lat = 90.0
 max_lon = 180.0
+max_marker_size = 16
 min_lat = -90.0
 min_lon = -180.0
+min_marker_size = 3
 newissues.label = New Issues
 newissues.query = location!=&status=new&order=time&desc=1
+static_marker_style = fillOpacity: 0.4, graphicOpacity: 0.7, strokeOpacity: 0.4
 wms_url = http://maps.opengeo.org/geowebcache/service/wms
 
 [graphviz]
