@@ -146,7 +146,7 @@ def main(args=sys.argv[1:]):
     for url in options.urls:
         # post the message
         try:
-            urllib2.urlopen(url, urllib.urlencode(dict(message=message)))
+            urllib2.urlopen(url, urllib.urlencode(dict(message=unicode(message, 'utf-8', 'ignore'))))
         except urllib2.HTTPError, e:
             print e.read()
             sys.exit(1)
