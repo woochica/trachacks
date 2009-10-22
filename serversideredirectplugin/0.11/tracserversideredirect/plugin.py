@@ -70,13 +70,14 @@ class ServerSideRedirectPlugin(Component):
         from genshi.builder import tag
         from trac.wiki.formatter import format_to_oneliner
 
-        if content and content[0] == '/':
-          pass
-        elif content.find(':') == -1:
-          content = 'wiki:' + content
+        href = formatter.context.req.href
+
+        target = extract_url(self.env, formatter.context, content)
+        if not target:
+          target = href.wiki(content)
 
         return tag.div( tag.strong('This page redirects to: '),
-                    format_to_oneliner(self.env, formatter.context, content),
+                    tag.a(content,href=target),
                     class_ = 'system-message', id = 'notice' )
 
     def get_macros(self):
