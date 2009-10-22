@@ -159,7 +159,10 @@ class ServerSideRedirectPlugin(WikiMacroBase):
         # Extract Wiki page
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT text,MAX(version) FROM wiki WHERE name=%s;" , (wiki,))
+        if req.args.has_key('version'):
+          cursor.execute("SELECT text FROM wiki WHERE name=%s and version=%s;" , (wiki,req.args['version']))
+        else:
+          cursor.execute("SELECT text,MAX(version) FROM wiki WHERE name=%s;" , (wiki,))
         text = cursor.fetchone();
         # If not exist or empty:
         if not text or not text[0]:
