@@ -5,7 +5,7 @@ from tracserversideredirect.plugin import __revision as revision
 
 setup(
     name         = 'TracServerSideRedirectPlugin',
-    version      = '0.2.' + revision,
+    version      = '0.3.' + revision,
     packages     = ['tracserversideredirect'],
     author       = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
