@@ -69,6 +69,10 @@ class ServerSideRedirectPlugin(WikiMacroBase):
         """Print redirect notice after edit."""
         from genshi.builder import tag
         from trac.wiki.formatter import format_to_oneliner
+
+        if content.find(':') == -1:
+          content = 'wiki:' + content
+
         return tag.div( tag.strong('This page redirects to: '),
                     format_to_oneliner(self.env, formatter.context, content),
                     class_ = 'system-message', id = 'notice' )
