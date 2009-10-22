@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name         = 'TracServerSideRedirectPlugin',
-    version      = '0.1',
+    version      = '0.2',
     packages     = ['tracserversideredirect'],
     author       = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
