@@ -9,13 +9,14 @@ After renaming a new version of the wiki page is created with a log of the chang
 
 You can access the page search & replace form through the Admin system > Wiki Replace.
 
-Find: 
-   text to find
-Replace: 
-   text to replace with
-Wiki Pages: 
-   a list of wiki pages, each page should be on a separate line; you may use * and ? wildcards
-   examples: *, Trac*, Category/*/Index, Calendar/2009_??_02
+Find:: 
+  text to find
+Replace:: 
+  text to replace with
+Wiki Pages:: 
+  a list of wiki pages, each page should be on a separate line; you may use * and ? wildcards
+
+  examples: \*, Trac\*, Category/\*/Index, Calendar/2009\_??\_02
 
 Script
 ======
