@@ -68,6 +68,7 @@
                       At','datetime'], ['By','author'],
                       ['Version', 'version'], ['Diff','diff'],
                       ['History','history'], ['Unwatch','unwatch'],
+                      ['Notify','notify'],
                       ['Comment','comment'])"
                       class="${head[1]}">${head[0]}</th>
               </tr>
@@ -86,6 +87,14 @@
                   <td class="history"><a py:if="not page.deleted"
                           href="${href('wiki',page.name,action='history')}">History</a></td>
                   <td class="unwatch"><a href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">Unwatch</a></td>
+                  <td class="notify">
+                    <a class="notifyon" py:if="page.notify" 
+                      href="${href.watchlist(action='notifyoff',realm='wiki',resid=page.name)}">On 
+                      (turn off)</a>
+                    <a class="notifyoff" py:if="not page.notify" 
+                      href="${href.watchlist(action='notifyon',realm='wiki',resid=page.name)}">Off 
+                      (turn on)</a>
+                </td>
                   <td class="comment">$page.comment</td>
               </tr>
           </tbody>

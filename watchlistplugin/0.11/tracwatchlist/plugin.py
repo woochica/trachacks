@@ -33,10 +33,6 @@ class WatchlistError(TracError):
     show_traceback = False
     title = 'Watchlist Error'
 
-    def __init__(self, message):
-        Exception.__init__(self, tag.div(message, class_='system-message') )
-
-
 
 class WatchlinkPlugin(Component):
 
@@ -76,7 +72,7 @@ class WatchlinkPlugin(Component):
         else:
             action = 'view'
 
-        if action in ('watch','unwatch'):
+        if action in ('watch','unwatch','notifyon','notifyoff'):
             try:
                 realm = to_unicode( args['realm'] )
                 resid = to_unicode( args['resid'] )
@@ -127,6 +123,22 @@ class WatchlinkPlugin(Component):
                     "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
                 db.commit()
             action = "view"
+        elif action == 'notifyoff':
+            lst = (user, realm, resid)
+            if realm_perm and is_watching:
+                cursor.execute(
+                    "UPDATE watchlist SET notify='0' "
+                    "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
+                db.commit()
+            action = "view"
+        elif action == 'notifyon':
+            lst = (user, realm, resid)
+            if realm_perm and is_watching:
+                cursor.execute(
+                    "UPDATE watchlist SET notify='1' "
+                    "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
+                db.commit()
+            action = "view"
 
         if action == "view":
             timeline = href('timeline', precision='seconds') + "&from="
@@ -137,14 +149,15 @@ class WatchlinkPlugin(Component):
             if wiki_perm:
                 # Watched wikis which got deleted:
                 cursor.execute(
-                    "SELECT resid FROM watchlist WHERE realm='wiki' AND wluser=%s "
+                    "SELECT resid,notify FROM watchlist WHERE realm='wiki' AND wluser=%s "
                     "AND resid NOT IN (SELECT DISTINCT name FROM wiki);", (user,) )
-                for (name,) in cursor.fetchall():
+                for (name,notify) in cursor.fetchall():
                     wikilist.append({
                         'name' : name,
                         'author' : '?',
                         'datetime' : '?',
                         'comment' : tag.strong("DELETED!", class_='deleted'),
+                        'notify'  : notify,
                         'deleted' : True,
                     })
                 # Existing watched wikis:
@@ -152,7 +165,12 @@ class WatchlinkPlugin(Component):
                     "SELECT name,author,time,MAX(version),comment FROM wiki WHERE name IN "
                     "(SELECT resid FROM watchlist WHERE wluser=%s AND realm='wiki') "
                     "GROUP BY name ORDER BY time DESC;", (user,) )
-                for name,author,time,version,comment in cursor.fetchall():
+                wikis = cursor.fetchall()
+                for name,author,time,version,comment in wikis:
+                    cursor.execute(
+                      "SELECT notify FROM watchlist WHERE wluser=%s AND "
+                      "realm='wiki' AND resid=%s", (user,name) )
+                    (notify,) = cursor.fetchone()
                     wikilist.append({
                         'name' : name,
                         'author' : author,
@@ -161,6 +179,7 @@ class WatchlinkPlugin(Component):
                         'timedelta' : pretty_timedelta( time ),
                         'timeline_link' : timeline_link( time ),
                         'comment' : comment,
+                        'notify'  : notify,
                     })
                 wldict['wikilist'] = wikilist
 
@@ -325,7 +344,9 @@ class WatchlinkPlugin(Component):
         table = Table('watchlist')[
                     Column('wluser'),
                     Column('realm'),
-                    Column('resid') ]
+                    Column('resid'),
+                    Column('notify', 'boolean'),
+                ]
 
         for statement in db_connector.to_sql(table):
             cursor.execute(statement)
@@ -333,30 +354,38 @@ class WatchlinkPlugin(Component):
         # Set database schema version.
         try:
             cursor.execute("INSERT INTO system (name, value) VALUES"
-              " ('watchlist_version', '1')")
+              " ('watchlist_version', '2')")
         except:
             pass
         return
 
 
-    def _update_db_table(self, db=None):
+    def _update_db_table(self, db=None, version=1):
         """ Update DB table. """
-        self.env.log.debug("Updating DB table.")
+        self.log.debug("Updating DB table to version " + str(version))
 
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
-        try:
-            cursor.execute(
-                "ALTER TABLE watchlist RENAME COLUMN user TO wluser;")
-            cursor.execute(
-                "ALTER TABLE watchlist RENAME COLUMN id   TO resid;")
-        except Exception, e:
-            raise TracError("Couldn't rename DB table columns: " + to_unicode(e))
-        try:
-            cursor.execute("INSERT INTO system (name, value) VALUES"
-              " ('watchlist_version', '1')")
-        except:
-            pass
+        if version == 1:
+          try:
+              cursor.execute(
+                  "ALTER TABLE watchlist RENAME COLUMN user TO wluser;")
+              cursor.execute(
+                  "ALTER TABLE watchlist RENAME COLUMN id   TO resid;")
+          except Exception, e:
+              raise TracError("Couldn't rename DB table columns: " + to_unicode(e))
+          try:
+              cursor.execute("INSERT INTO system (name, value) VALUES"
+                " ('watchlist_version', '1')")
+          except:
+              pass
+        elif version == 2:
+          try:
+              cursor.execute("ALTER TABLE watchlist ADD notify boolean")
+              cursor.execute("UPDATE watchlist SET notify='0'")
+              cursor.execute("UPDATE system SET value='2' WHERE name='watchlist_version'")
+          except Exception, e:
+              raise TracError("Couldn't update DB: " + to_unicode(e))
         return
 
     def environment_created(self):
@@ -366,13 +395,13 @@ class WatchlinkPlugin(Component):
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
         try:
-            cursor.execute("SELECT count(wluser),count(resid),count(realm) FROM watchlist;")
+            cursor.execute("SELECT count(wluser),count(resid),count(realm),count(notify) FROM watchlist;")
             count = cursor.fetchone()
             if count is None:
                 return True
             cursor.execute("SELECT value FROM system WHERE name='watchlist_version';")
             (version,) = cursor.fetchone()
-            if not version or int(version) < 1:
+            if not version or int(version) < 2:
                 return True
         except:
             return True
@@ -386,10 +415,16 @@ class WatchlinkPlugin(Component):
             self._create_db_table(db)
         else:
             try:
-                cursor.execute("SELECT count(user),count(id),count(realm) FROM watchlist;")
+                cursor.execute("SELECT count(user),count(id),count(realm) FROM watchlist")
             except:
                 pass
             else:
-                self._update_db_table(db)
+                self._update_db_table(db, version=1)
+
+            try:
+                cursor.execute("SELECT count(notify) FROM watchlist")
+            except:
+                self._update_db_table(db, version=2)
+        raise TracError("updated DB ")
         return
 

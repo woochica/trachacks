@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = 'TracWatchlistPlugin',
-    version = '0.2',
+    version = '0.2.1',
     packages = ['tracwatchlist'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
