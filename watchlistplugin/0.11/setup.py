@@ -16,5 +16,7 @@ setup(
     license = 'GPLv3',
     keywords = 'trac watchlist wiki plugin',
     classifiers = ['Framework :: Trac'],
-    entry_points = {'trac.plugins': ['tracwatchlist.plugin = tracwatchlist.plugin']}
+    entry_points = {'trac.plugins':
+      ['tracwatchlist.plugin = tracwatchlist.plugin',
+       'tracwatchlist.notify = tracwatchlist.notify']}
 )
