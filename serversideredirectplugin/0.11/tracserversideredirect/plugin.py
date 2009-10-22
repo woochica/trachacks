@@ -204,6 +204,7 @@ class ServerSideRedirectPlugin(WikiMacroBase):
            ) \
            and req.method == 'GET' \
            and not args.has_key('action') \
+           and not args.has_key('version') \
            and (not args.has_key('redirect') or args['redirect'].lower() != 'no') \
            and req.environ.get('HTTP_REFERER','').find('action=edit') == -1 \
            and self._check_redirect(req):
