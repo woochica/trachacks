@@ -117,9 +117,10 @@ class ServerSideRedirectPlugin(WikiMacroBase):
                 raise RequestDone
 
             # Check for redirect pair, i.e. A->B, B->A
-            if target == req.args.get('redirectedfrom',''):
+            if target == req.base_path + '/wiki/' + req.args.get('redirectedfrom',''):
                 message = tag.div('Please change the redirect target from either ',
-                     tag.a( "this page", href = req.path_info + "?action=edit" ),
+                     tag.a( "this page", href = req.base_path + '/' + \
+                                                req.path_info + "?action=edit" ),
                      ' or ',
                      tag.a( "the redirecting page", href = target + "?action=edit" ),
                      '.',
@@ -133,7 +134,7 @@ class ServerSideRedirectPlugin(WikiMacroBase):
 
             # Add back link information for internal links:
             if target[0] == '/':
-                redirectfrom =  "redirectedfrom=" + req.path_info
+                redirectfrom =  "redirectedfrom=" + req.path_info[6:]
                 # anchor should be the last in url
                 # according to http://trac.edgewall.org/ticket/8072
                 tgt, query, anchor= self.split_link(target)
