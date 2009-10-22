@@ -5,7 +5,7 @@ This plugin allows you to search and replace text in wiki pages.
 
 It is based on the wikirename plugin: http://trac-hacks.org/wiki/WikiRenamePlugin.
 
-After renaming a new version of the wiki page is created with a log of the changes.
+After replacing a new version of the wiki page is created with a log of the changes.
 
 You can access the page search & replace form through the Admin system > Wiki Replace.
 
