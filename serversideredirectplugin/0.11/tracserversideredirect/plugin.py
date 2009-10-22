@@ -104,7 +104,7 @@ class ServerSideRedirectPlugin(WikiMacroBase):
             #self.log.debug("target = " + target)
 
             # Check for self-redirect:
-            if target and target == req.base_path + req.path_info:
+            if target and target == req.href(req.path_info):
                 message = tag.div('Please ',
                      tag.a( "change the redirect target",
                             href = target + "?action=edit" ),
@@ -118,10 +118,9 @@ class ServerSideRedirectPlugin(WikiMacroBase):
                 raise RequestDone
 
             # Check for redirect pair, i.e. A->B, B->A
-            if target and target == req.base_path + '/wiki/' + req.args.get('redirectedfrom',''):
+            if target and target == req.href.wiki(req.args.get('redirectedfrom','')):
                 message = tag.div('Please change the redirect target from either ',
-                     tag.a( "this page", href = req.base_path + \
-                                                req.path_info + "?action=edit" ),
+                     tag.a( "this page", href = req.href(req.path_info, action="edit" ),
                      ' or ',
                      tag.a( "the redirecting page", href = target + "?action=edit" ),
                      '.',
