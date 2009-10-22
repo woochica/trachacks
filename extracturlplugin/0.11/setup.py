@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name         = 'TracExtractUrl',
-    version      = '0.1',
+    version      = '0.2',
     packages     = ['tracextracturl'],
     author       = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
