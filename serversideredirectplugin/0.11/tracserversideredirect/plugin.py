@@ -20,7 +20,7 @@ import re
 
 MACRO = re.compile(r'.*\[\[redirect\((.*)\)\]\]')
 
-class ServerSideRedirectPlugin(WikiMacroBase):
+class ServerSideRedirectPlugin(Component):
     """ This Trac plug-in implements a server sided redirect functionality.
 
     == Description ==
@@ -70,7 +70,9 @@ class ServerSideRedirectPlugin(WikiMacroBase):
         from genshi.builder import tag
         from trac.wiki.formatter import format_to_oneliner
 
-        if content.find(':') == -1:
+        if content and content[0] == '/':
+          pass
+        elif content.find(':') == -1:
           content = 'wiki:' + content
 
         return tag.div( tag.strong('This page redirects to: '),
