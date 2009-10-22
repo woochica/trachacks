@@ -107,7 +107,7 @@ class ServerSideRedirectPlugin(Component):
         from genshi.builder import tag
         if self.redirect_target or self._check_redirect(req):
             target = self.redirect_target
-            #self.log.debug("target = " + target)
+            self.env.log.debug("target = " + target)
 
             # Check for self-redirect:
             if target and target == req.href(req.path_info):
@@ -155,13 +155,13 @@ class ServerSideRedirectPlugin(Component):
 
     def _check_redirect(self, req):
         """Checks if the request should be redirected."""
-        if req.path_info == '/wiki' or req.path_info == '/':
+        if req.path_info == '/wiki':
           wiki = 'WikiStart'
         elif not req.path_info.startswith('/wiki/'):
           return False
         else:
           wiki = req.path_info[6:]
-        self.log.debug("SSR: wiki = " + wiki)
+        self.env.log.debug("SSR: wiki = " + wiki)
 
         # Extract Wiki page
         db = self.env.get_db_cnx()
@@ -173,20 +173,21 @@ class ServerSideRedirectPlugin(Component):
         text = cursor.fetchone();
         # If not exist or empty:
         if not text or not text[0]:
-	    self.log.debug("SSR: wiki does not exists or is empty")
+            self.env.log.debug("SSR: wiki does not exists or is empty")
             return False
         text = text[0]
 
         # Check for redirect "macro":
         m = MACRO.match(text)
         if not m:
-	    self.log.debug("SSR: wiki does not hold redirect macro" + text)
+            self.env.log.debug("SSR: wiki does not hold redirect macro" + text)
             return False
         wikitarget = m.groups()[0]
+        self.env.log.debug("SSR: Wiki Target = " + wikitarget)
         self.redirect_target = extract_url(self.env, Context.from_request(req), wikitarget)
         if not self.redirect_target:
           self.redirect_target = req.href.wiki(wikitarget)
-        self.log.debug("SSR: Redirect Target = " + self.redirect_target)
+        self.env.log.debug("SSR: Redirect Target = " + self.redirect_target)
         return True
 
 
@@ -201,15 +202,14 @@ class ServerSideRedirectPlugin(Component):
         Always returns the request handler, even if unchanged.
         """
         from trac.wiki.web_ui import WikiModule
-        self.log.debug("SSR: method = " + req.method)
-        self.log.debug("SSR: path = " + req.path_info)
+        self.env.log.debug("SSR: method = " + req.method)
+        self.env.log.debug("SSR: path = " + req.path_info)
         args = req.args
 
         if isinstance(handler, WikiModule) \
            and \
            ( req.path_info.startswith('/wiki/') \
              or req.path_info == '/wiki' \
-             or req.path_info == '/' \
            ) \
            and req.method == 'GET' \
            and not args.has_key('action') \
@@ -218,7 +218,7 @@ class ServerSideRedirectPlugin(Component):
            and req.environ.get('HTTP_REFERER','').find('action=edit') == -1 \
            and self._check_redirect(req):
                 return self
-        self.log.debug("SSR: No redirect.")
+        self.env.log.debug("SSR: No redirect.")
         return handler
 
     def post_process_request(self, req, template, data, content_type):
