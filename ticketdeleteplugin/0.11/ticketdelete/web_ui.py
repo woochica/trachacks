@@ -6,7 +6,12 @@ from trac.admin.api import IAdminPanelProvider
 from trac.core import *
 from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
-from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
+from trac.web.chrome import add_notice
+from trac.web.chrome import add_script
+from trac.web.chrome import add_stylesheet
+from trac.web.chrome import add_warning
+from trac.web.chrome import ITemplateProvider
+from trac.ticket.web_ui import TicketModule 
 from trac.util import sorted
 from trac.util.datefmt import to_datetime, utc, to_timestamp
 
@@ -23,17 +28,20 @@ class TicketDeletePlugin(Component):
     
     implements(ITemplateProvider, IAdminPanelProvider, IRequestFilter)
 
-    # IRequestFilter methods
+    ### IRequestFilter methods
+
     def pre_process_request(self, req, handler):
+        if isinstance(handler, TicketModule) and 'TICKET_ADMIN' in req.perm: 
+            add_script(req, 'ticketdelete/ticketdelete.js') 
+            add_stylesheet(req, 'ticketdelete/ticketdelete.css') 
         return handler
 
-    def post_process_request(self, req, template, content_type):
-        if template == 'ticket.html' and 'TICKET_ADMIN' in req.perm:
-            add_script(req, 'ticketdelete/ticketdelete.js')
-            add_stylesheet(req, 'ticketdelete/ticketdelete.css')
-        return template, content_type
+    def post_process_request(self, req, template, data, content_type):
+        return template, data, content_type
  
-    # IAdminPanelProvider methods
+
+    ### IAdminPanelProvider methods
+
     def get_admin_panels(self, req):
         if 'TICKET_ADMIN' in req.perm:
             yield ('ticket', 'Ticket System', 'delete', 'Delete')
@@ -52,15 +60,12 @@ class TicketDeletePlugin(Component):
 
         if req.method == 'POST':
             if page == 'delete':
-                if 'ticketid' in req.args and 'ticketid2' in req.args:
-                    if req.args.get('ticketid') == req.args.get('ticketid2'):
-                        t = self._validate(req, req.args.get('ticketid'))
-                        if t:
-                            self._delete_ticket(t.id)
-                            data['message'] = "Ticket #%s has been deleted." % t.id
-                            
-                    else:
-                        data['message'] = "The two IDs did not match. Please try again."
+                if 'ticketid' in req.args:
+                    t = self._validate(req, req.args.get('ticketid'))
+                    if t:
+                        self._delete_ticket(t.id)
+                        add_notice(req, "Ticket #%s has been deleted." % t.id)
+                        req.redirect(req.href('admin', cat, 'delete'))
             elif page == 'comments':
                 if 'ticketid' in req.args:
                     req.redirect(req.href.admin(cat, page, req.args.get('ticketid')))
@@ -82,7 +87,7 @@ class TicketDeletePlugin(Component):
                                 if ts != '':
                                     self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'%(t.id,ts,field))
                                     self._delete_change(t.id, ts, field)
-                                    data['message'] = "Change to ticket #%s at %s has been modified" % (t.id, ts)
+                                    add_notice(req, "Change to ticket #%s at %s has been modified" % (t.id, ts))
                                     data['redir'] = 0
                     
                 
@@ -114,7 +119,9 @@ class TicketDeletePlugin(Component):
  
         return 'ticketdelete_admin.html', {'ticketdelete': data}
 
-    # ITemplateProvider methods
+
+    ### ITemplateProvider methods
+
     def get_templates_dirs(self):
         """
         Return the absolute path of the directory containing the provided
@@ -138,7 +145,9 @@ class TicketDeletePlugin(Component):
         from pkg_resources import resource_filename
         return [('ticketdelete', resource_filename(__name__, 'htdocs'))]
 
-    # Internal methods
+
+    ### Internal methods
+
     def _get_trac_version(self):
         md = re.match('(\d+)\.(\d+)',TRAC_VERSION)
         if md:
@@ -153,9 +162,9 @@ class TicketDeletePlugin(Component):
             t = Ticket(self.env, id)
             return t
         except TracError:
-            data['message'] = "Ticket #%s not found. Please try again." % id
+            add_warning(req, "Ticket #%s not found. Please try again." % id)
         except ValueError:
-            data['message'] = "Ticket ID '%s' is not valid. Please try again." % arg
+            add_warning(req, "Ticket ID '%s' is not valid. Please try again." % arg)
         return False
                                                                                                                 
     

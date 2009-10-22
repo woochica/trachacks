@@ -16,22 +16,18 @@
     <h2>Delete Ticket${ticketdelete.page=='comments' and ' Changes' or None}</h2>
 
   <py:choose>
-    <py:when test="ticketdelete.message and ticketdelete.redir">
-      <b>${ticketdelete.message}</b><br />
-      <a href="${ticketdelete.href}">Back</a>
-    </py:when>
     <py:when test="ticketdelete.page == 'delete'">
       <p>
-        <b>Note: This is intended only for use in very odd circumstances.<br />
+        <b>Note: 
           It is usually a better idea to resolve a ticket as invalid, than to
           remove it from the database.</b>
       </p>
 
-      <form method="post" onsubmit="return confirm('Are you sure you want to do this?')">
+      <form method="post">
         Ticket ID: <input type="text" name="ticketid" value="${ticketdelete.id}"/><br />
-        Again: <input type="text" name="ticketid2" value="${ticketdelete.id}"/><br />
           <input type="submit" value="Delete" />
       </form>
+
     </py:when>
     <py:when test="ticketdelete.page == 'comments'">
       <py:choose>
