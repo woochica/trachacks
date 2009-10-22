@@ -18,7 +18,7 @@ def username():
         return os.getenv('USER')
 
 def main(*argv):
-    parser = optparse.OptionParser(usage='Usage: %prog old-text new-text trac-env', version='ReplaceInPage 1.0')
+    parser = optparse.OptionParser(usage='Usage: %prog old-text new-text wiki-page ... trac-env', version='ReplaceInPage 1.0')
     parser.add_option('-d','--debug',help='Activate debugging', action='store_true', default=False)
     (options, args) = parser.parse_args(list(argv[1:]))
     if len(args) < 3:
@@ -26,9 +26,10 @@ def main(*argv):
 
     oldname = args[0]
     newname = args[1]
-    envpath = args[2]
+    wikipages = args[2:len(args)-2]
+    envpath = args[len(args-1)]
     env = Environment(envpath)
-    wiki_text_replace(env, oldtext, newtext, username(), '127.0.0.1', debug=options.debug)
+    wiki_text_replace(env, oldtext, newtext, wikipages, username(), '127.0.0.1', debug=options.debug)
 
 def run():
     main(*sys.argv)

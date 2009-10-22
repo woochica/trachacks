@@ -7,7 +7,15 @@ It is based on the wikirename plugin: http://trac-hacks.org/wiki/WikiRenamePlugi
 
 After renaming a new version of the wiki page is created with a log of the changes.
 
-You can access the page search & replace form through the Admin system. 
+You can access the page search & replace form through the Admin system > Wiki Replace.
+
+Find: 
+   text to find
+Replace: 
+   text to replace with
+Wiki Pages: 
+   a list of wiki pages, each page should be on a separate line; you may use * and ? wildcards
+   examples: *, Trac*, Category/*/Index, Calendar/2009_??_02
 
 Script
 ======
@@ -16,7 +24,7 @@ A script named ``trac-wikireplace`` will automatically be installed.
 
 To use it::
 
-    trac-wikireplace old-text new-text /path/to/trac/env
+    trac-wikireplace old-text new-text wiki-page ... /path/to/trac/env
 
 Permissions
 ===========

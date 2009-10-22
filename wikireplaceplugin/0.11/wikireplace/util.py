@@ -23,8 +23,10 @@ def log_intercept(log):
         log('WikiReplacePlugin: '+s, *args)
     return out
 
-def wiki_text_replace(env, oldtext, newtext, user, ip, debug=False, db=None):
-    """Replace in all wiki pages oldtext with newtext, using env as the environment."""
+def wiki_text_replace(env, oldtext, newtext, wikipages, user, ip, debug=False, db=None):
+    """Replace oldtext with newtext in all wiki pages in wikipages list using env as the environment.
+       wikipages should be a list of wiki pages with optional * and ? wildcards (unix file globbing syntax)
+    """
     handle_commit = False
     if not db:
         db = env.get_db_cnx()
@@ -44,20 +46,22 @@ def wiki_text_replace(env, oldtext, newtext, user, ip, debug=False, db=None):
 
     # Get a list of all wiki pages containing text to be replaced
     debug("Searching all wiki pages containing text")
-    sql = 'SELECT w1.version,w1.name,w1.text' + sqlbase + 'AND w1.text like %s'
-    debug('Running query %r', sql)
+    
+    for wikipage in wikipages:
+        sql = 'SELECT w1.version,w1.name,w1.text' + sqlbase + 'AND w1.name glob %s AND w1.text like %s'
+        debug('Running query %r', sql)
 
-    cursor.execute(sql, ('%'+oldtext+'%',))
+        cursor.execute(sql, (wikipage, '%'+oldtext+'%'))
 
-    for row in list(cursor):
-        debug("Found a page with searched text in it: %s (v%s)", row[1], row[0])
-        newcontent = re.sub(oldtext,newtext,row[2])
+        for row in list(cursor):
+            debug("Found a page with searched text in it: %s (v%s)", row[1], row[0])
+            newcontent = re.sub(oldtext,newtext,row[2])
 
-        new_wiki_page = (row[1],row[0]+1,int(time.time()),user,ip,newcontent,'Replaced "%s" with "%s".'%(oldtext,newtext),0)
+            new_wiki_page = (row[1],row[0]+1,int(time.time()),user,ip,newcontent,'Replaced "%s" with "%s".'%(oldtext,newtext),0)
 
-        # Create a new page with the needed comment
-        debug('Inserting new page %r', new_wiki_page)
-        cursor.execute('INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)', new_wiki_page)
+            # Create a new page with the needed comment
+            debug('Inserting new page %r', new_wiki_page)
+            cursor.execute('INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)', new_wiki_page)
 
     if handle_commit:
         db.commit()

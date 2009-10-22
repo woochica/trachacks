@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# Created by Noah Kantrowitz
+# Created by Radu Gasler
+# Based on WikiRenamePlugin created by Noah Kantrowitz
 # Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
 import urllib
 
@@ -29,18 +30,23 @@ class WikiReplaceModule(Component):
             yield ('general', 'General', 'wikireplace', 'Wiki Replace')
             
     def render_admin_panel(self, req, cat, page, path_info):
+        wikipages = urllib.unquote_plus(req.args.get('wikipages',''));
+        parts = wikipages.split("\n");
+
         data = {
             'find': urllib.unquote_plus(req.args.get('find','')),
             'replace': urllib.unquote_plus(req.args.get('replace','')),
+            'wikipages': parts,
             'redir': req.args.get('redirect','') == '1',
         }
         
         if req.method == 'POST':
-            wiki_text_replace(self.env, data['find'], data['replace'], req.authname, req.remote_addr, debug=self.log.debug)
+            wiki_text_replace(self.env, data['find'], data['replace'], data['wikipages'], req.authname, req.remote_addr, debug=self.log.debug)
 
             # Reset for the next display
             data['find'] = ''
             data['replace'] = ''
+            data['wikipages'] = ''
 
         return 'admin_wikireplace.html', data
         

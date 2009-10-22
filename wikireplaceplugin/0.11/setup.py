@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 import os
 
 from setuptools import setup
 
 setup(
     name = 'TracWikiReplace',
-    version = '1.0.0',
+    version = '1.1.0',
     packages = ['wikireplace'],
     package_data = {'wikireplace': ['templates/*.html']},
 
