@@ -179,6 +179,8 @@ class ServerSideRedirectPlugin(WikiMacroBase):
             return False
         wikitarget = m.groups()[0]
         self.redirect_target = extract_url(self.env, Context.from_request(req), wikitarget)
+        if not self.redirect_target:
+          self.redirect_target = req.href.wiki(wikitarget)
         self.log.debug("SSR: Redirect Target = " + self.redirect_target)
         return True
 
