@@ -32,7 +32,10 @@ def extract_url (env, context, wikilink, raw=False):
     from genshi.builder import Element
     from trac.wiki.formatter import extract_link
 
-    link = extract_link(env, context, wikilink)
+    if not wikilink:
+        return ''
+
+    link = extract_link(env, context, '[' + wikilink + ']')
     if isinstance(link, Element):
         href = link.attrib.get('href') 
     else:
