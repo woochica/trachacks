@@ -29,7 +29,7 @@ def extract_url (env, context, wikilink, raw=False):
         which could be directly accessed by the browser inside some javascript 
         or flash HTML object code produced by the macro.
     """
-    from genshi.builder import Element
+    from genshi.builder import Element, Fragment
     from trac.wiki.formatter import extract_link
 
     if not wikilink:
@@ -37,7 +37,10 @@ def extract_url (env, context, wikilink, raw=False):
 
     link = extract_link(env, context, '[' + wikilink + ']')
     if isinstance(link, Element):
-        href = link.attrib.get('href') 
+        href = link.attrib.get('href')
+    elif isinstance(link, Fragment):
+        link = link.children[0]
+        href = link.attrib.get('href')
     else:
         href = None
 
