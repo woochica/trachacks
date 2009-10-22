@@ -120,7 +120,7 @@ class ServerSideRedirectPlugin(WikiMacroBase):
             # Check for redirect pair, i.e. A->B, B->A
             if target and target == req.href.wiki(req.args.get('redirectedfrom','')):
                 message = tag.div('Please change the redirect target from either ',
-                     tag.a( "this page", href = req.href(req.path_info, action="edit" ),
+                     tag.a( "this page", href = req.href(req.path_info, action="edit")),
                      ' or ',
                      tag.a( "the redirecting page", href = target + "?action=edit" ),
                      '.',
