@@ -91,3 +91,6 @@ class ExtractUrlMacro(Component):
         url = extract_url (self.env, formatter.context, wlink, raw)
         return "'%s' => <a href='%s'>'%s'</a><br />" % (wlink,url,url)
 
+    def get_macros(self):
+        yield 'ExtractUrl'
+
