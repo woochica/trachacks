@@ -101,9 +101,10 @@ class ServerSideRedirectPlugin(WikiMacroBase):
         from genshi.builder import tag
         if self.redirect_target or self._check_redirect(req):
             target = self.redirect_target
+            #self.log.debug("target = " + target)
 
             # Check for self-redirect:
-            if target == req.path_info:
+            if target and target == req.base_path + req.path_info:
                 message = tag.div('Please ',
                      tag.a( "change the redirect target",
                             href = target + "?action=edit" ),
@@ -117,9 +118,9 @@ class ServerSideRedirectPlugin(WikiMacroBase):
                 raise RequestDone
 
             # Check for redirect pair, i.e. A->B, B->A
-            if target == req.args.get('redirectedfrom',''):
+            if target and target == req.base_path + '/wiki/' + req.args.get('redirectedfrom',''):
                 message = tag.div('Please change the redirect target from either ',
-                     tag.a( "this page", href = req.base_path + '/' + \
+                     tag.a( "this page", href = req.base_path + \
                                                 req.path_info + "?action=edit" ),
                      ' or ',
                      tag.a( "the redirecting page", href = target + "?action=edit" ),
