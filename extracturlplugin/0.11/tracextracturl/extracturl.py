@@ -4,7 +4,7 @@
 """ 
 from trac.core import *
 from trac.wiki.api import parse_args
-from trac.wiki.macros import WikiMacroBase
+from trac.wiki.api  import IWikiMacroProvider
 
 def extract_url (env, context, wikilink, raw=False):
     """ Extracts an URL from an Wiki link, e.g. to used in macro produced HTML
@@ -76,8 +76,9 @@ def extract_url (env, context, wikilink, raw=False):
     return href
 
 
-class ExtractUrlMacro(WikiMacroBase):
+class ExtractUrlMacro(Component):
     """Provides test macro for extract_url."""
+    implements ( IWikiMacroProvider )
 
     def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args(content)
