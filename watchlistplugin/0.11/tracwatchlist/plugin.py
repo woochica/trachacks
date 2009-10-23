@@ -372,6 +372,7 @@ class WatchlinkPlugin(Component):
             if not version or int(version) < 2:
                 return True
         except:
+            cursor.connection.rollback()
             return True
         return False
 
