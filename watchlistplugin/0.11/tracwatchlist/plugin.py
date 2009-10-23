@@ -334,14 +334,14 @@ class WatchlinkPlugin(Component):
 
 
     # IEnvironmentSetupParticipant methods:
-    def _create_db_table(self, db=None):
+    def _create_db_table(self, db=None, name='watchlist'):
         """ Create DB table if it not exists. """
         from trac.db import Table, Column, Index, DatabaseManager
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         db_connector, _ = DatabaseManager(self.env)._get_connector()
 
-        table = Table('watchlist')[
+        table = Table(name)[
                     Column('wluser'),
                     Column('realm'),
                     Column('resid'),
@@ -352,40 +352,8 @@ class WatchlinkPlugin(Component):
             cursor.execute(statement)
 
         # Set database schema version.
-        try:
-            cursor.execute("INSERT INTO system (name, value) VALUES"
-              " ('watchlist_version', '2')")
-        except:
-            pass
-        return
-
-
-    def _update_db_table(self, db=None, version=1):
-        """ Update DB table. """
-        self.log.debug("Updating DB table to version " + str(version))
-
-        db = db or self.env.get_db_cnx()
-        cursor = db.cursor()
-        if version == 1:
-          try:
-              cursor.execute(
-                  "ALTER TABLE watchlist RENAME COLUMN user TO wluser;")
-              cursor.execute(
-                  "ALTER TABLE watchlist RENAME COLUMN id   TO resid;")
-          except Exception, e:
-              raise TracError("Couldn't rename DB table columns: " + to_unicode(e))
-          try:
-              cursor.execute("INSERT INTO system (name, value) VALUES"
-                " ('watchlist_version', '1')")
-          except:
-              pass
-        elif version == 2:
-          try:
-              cursor.execute("ALTER TABLE watchlist ADD notify boolean")
-              cursor.execute("UPDATE watchlist SET notify='0'")
-              cursor.execute("UPDATE system SET value='2' WHERE name='watchlist_version'")
-          except Exception, e:
-              raise TracError("Couldn't update DB: " + to_unicode(e))
+        if (name == 'watchlist'):
+          cursor.execute("UPDATE system SET value='2' WHERE name='watchlist_version'")
         return
 
     def environment_created(self):
@@ -395,11 +363,11 @@ class WatchlinkPlugin(Component):
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
         try:
-            cursor.execute("SELECT count(wluser),count(resid),count(realm),count(notify) FROM watchlist;")
+            cursor.execute("SELECT count(wluser),count(resid),count(realm),count(notify) FROM watchlist")
             count = cursor.fetchone()
             if count is None:
                 return True
-            cursor.execute("SELECT value FROM system WHERE name='watchlist_version';")
+            cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
             (version,) = cursor.fetchone()
             if not version or int(version) < 2:
                 return True
@@ -409,22 +377,39 @@ class WatchlinkPlugin(Component):
 
     def upgrade_environment(self, db):
         cursor = db.cursor()
+        # Ensure system entry exists:
         try:
-            cursor.execute("SELECT count(*) FROM watchlist;")
+          cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
+          version = cursor.fetchone()
+          if not version:
+            raise Exception("")
+        except:
+          cursor.execute("INSERT INTO system (name, value) VALUES ('watchlist_version', '0')")
+
+        try:
+            cursor.execute("SELECT count(*) FROM watchlist")
         except:
             self._create_db_table(db)
-        else:
-            try:
-                cursor.execute("SELECT count(user),count(id),count(realm) FROM watchlist")
-            except:
-                pass
-            else:
-                self._update_db_table(db, version=1)
+            return
 
+        try:
             try:
-                cursor.execute("SELECT count(notify) FROM watchlist")
+              cursor.execute("DROP TABLE watchlist_new")
             except:
-                self._update_db_table(db, version=2)
-        raise TracError("updated DB ")
+              pass
+            self._create_db_table(db, 'watchlist_new')
+            try: # from version 0
+              cursor.execute("INSERT INTO watchlist_new (wluser, realm, resid) "
+                             "SELECT user, realm, id FROM watchlist")
+            except: # from version 1
+              cursor.execute("INSERT INTO watchlist_new (wluser, realm, resid) "
+                             "SELECT wluser, realm, resid FROM watchlist")
+
+            cursor.execute("UPDATE watchlist_new SET notify='0'")
+            cursor.execute("DROP TABLE watchlist")
+            cursor.execute("ALTER TABLE watchlist_new RENAME TO watchlist")
+            cursor.execute("UPDATE system SET value='2' WHERE name='watchlist_version'")
+        except Exception, e:
+            raise TracError("Couldn't update DB: " + to_unicode(e))
         return
 
