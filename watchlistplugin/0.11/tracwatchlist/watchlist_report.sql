@@ -10,6 +10,6 @@ SELECT p.value AS __color__,
    reporter AS _reporter
   FROM ticket t
   LEFT JOIN enum p ON p.name = t.priority AND p.type = 'priority'
-  WHERE id IN (SELECT id FROM watchlist WHERE user = '$USER' AND realm = 'ticket')
+  WHERE id IN (SELECT resid FROM watchlist WHERE wluser = '$USER' AND realm = 'ticket')
   ORDER BY (status = 'accepted') DESC, CAST(p.value AS int), milestone, t.type, time
 
