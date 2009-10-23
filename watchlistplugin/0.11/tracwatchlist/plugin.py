@@ -94,6 +94,7 @@ class WatchlinkPlugin(Component):
         ticket_perm = 'TICKET_VIEW' in req.perm
         wldict['wiki_perm']   = wiki_perm
         wldict['ticket_perm'] = ticket_perm
+        wldict['notify'] = self.config.getbool("watchlist","notifications",False)
 
         # DB look-up
         db = self.env.get_db_cnx()
@@ -195,6 +196,12 @@ class WatchlinkPlugin(Component):
                 for id,type,time,changetime,summary,reporter in tickets:
                     self.commentnum = 0
                     self.comment    = ''
+
+                    cursor.execute(
+                      "SELECT notify FROM watchlist WHERE wluser=%s AND "
+                      "realm='ticket' AND resid=%s", (user,id) )
+                    (notify,) = cursor.fetchone()
+
                     cursor.execute(
                         "SELECT author,field,oldvalue,newvalue FROM ticket_change "
                         "WHERE ticket=%s and time=%s "
@@ -254,6 +261,7 @@ class WatchlinkPlugin(Component):
                         'timeline_link' : timeline_link( changetime ),
                         'changes' : changes,
                         'summary' : summary,
+                        'notify'  : notify,
                     })
                     wldict['ticketlist'] = ticketlist
             return ("watchlist.html", wldict, "text/html")

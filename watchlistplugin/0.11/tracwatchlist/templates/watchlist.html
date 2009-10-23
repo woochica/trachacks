@@ -67,9 +67,11 @@
                   <th py:for="head in (['Page','name'],['Last Changed
                       At','datetime'], ['By','author'],
                       ['Version', 'version'], ['Diff','diff'],
-                      ['History','history'], ['Unwatch','unwatch'],
-                      ['Notify','notify'],
-                      ['Comment','comment'])"
+                      ['History','history'], ['Unwatch','unwatch'])"
+                      class="${head[1]}">${head[0]}</th>
+                  <th py:if="notify"
+                      class="notify">Notify</th>
+                  <th py:for="head in (['Comment','comment'],)"
                       class="${head[1]}">${head[0]}</th>
               </tr>
           </thead>
@@ -87,14 +89,14 @@
                   <td class="history"><a py:if="not page.deleted"
                           href="${href('wiki',page.name,action='history')}">History</a></td>
                   <td class="unwatch"><a href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">Unwatch</a></td>
-                  <td class="notify">
+                  <td class="notify" py:if="notify">
                     <a class="notifyon" py:if="page.notify" 
                       href="${href.watchlist(action='notifyoff',realm='wiki',resid=page.name)}">On 
                       (turn off)</a>
                     <a class="notifyoff" py:if="not page.notify" 
                       href="${href.watchlist(action='notifyon',realm='wiki',resid=page.name)}">Off 
                       (turn on)</a>
-                </td>
+                  </td>
                   <td class="comment">$page.comment</td>
               </tr>
           </tbody>
@@ -113,8 +115,11 @@
           <thead>
               <tr>
                   <th py:for="head in (['Ticket','id'],['Last Changed At','datetime'],
-                      ['By','author'], ['Comment #','commentnum'], ['Unwatch','unwatch'],
-                      ['Changes','changes'], ['Comment','comment'])"
+                      ['By','author'], ['Comment #','commentnum'], ['Unwatch','unwatch'])"
+                      class="${head[1]}">${head[0]}</th>
+                  <th py:if="notify"
+                      class="notify">Notify</th>
+                  <th py:for="head in (['Changes','changes'], ['Comment','comment'])"
                       class="${head[1]}">${head[0]}</th>
               </tr>
           </thead>
@@ -130,6 +135,14 @@
                           + ticket.commentnum) or '')}">$ticket.commentnum</a></td>
                   <td class="unwatch"><a
                           href="${href.watchlist(action='unwatch',realm='ticket',resid=ticket.id)}">Unwatch</a></td>
+                  <td class="notify" py:if="notify">
+                    <a class="notifyon" py:if="ticket.notify" 
+                      href="${href.watchlist(action='notifyoff',realm='ticket',resid=ticket.id)}">On 
+                      (turn off)</a>
+                    <a class="notifyoff" py:if="not ticket.notify" 
+                      href="${href.watchlist(action='notifyon',realm='ticket',resid=ticket.id)}">Off 
+                      (turn on)</a>
+                  </td>
                   <td class="changes">$ticket.changes</td>
                   <td class="comment">$ticket.comment</td>
               </tr>
