@@ -18,7 +18,8 @@ from trac.web.api import RequestDone
 
 # This can go away once they fix http://genshi.edgewall.org/ticket/136
 # At that point we should use Transformer.filter
-# THIS IS STILL SOLVING PROBLEMS WELL AFTER THAT TICKET HAS BEEN CLOSED
+# THIS IS STILL SOLVING PROBLEMS WELL AFTER THAT TICKET HAS BEEN CLOSED - A new ticket #290 [1000] has fixed the bug, but is
+# not the trac default yet
 # Without this (using the default filter) I was getting omitted closing tags for some tags (Based on whitespace afaict)
 class FilterTransformation(object):
     """Apply a normal stream filter to the selection. The filter is called once
@@ -84,9 +85,14 @@ class RowFilter(object):
         events = list(row_stream)
         report_url = Stream(events) \
                         .select('td[@class="report"]/a/@href').render()
-        id = int(report_url.split('/')[-1])
+        try:
+            id = int(report_url.split('/')[-1])
 
-        if not id in self.billing_reports:
+            if not id in self.billing_reports:
+                for kind,data,pos in Stream(events):
+                    yield kind,data,pos
+        except Exception, e:
+            self.component.log.exception("Report row filter failed")
             for kind,data,pos in Stream(events):
                 yield kind,data,pos
 
