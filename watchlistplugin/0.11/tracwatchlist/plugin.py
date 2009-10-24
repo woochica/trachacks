@@ -29,6 +29,8 @@ from  genshi.builder   import  tag, Markup
 from  urllib           import  quote_plus
 from  trac.config      import  BoolOption
 
+__DB_VERSION__ = 3
+
 class WatchlistError(TracError):
     show_traceback = False
     title = 'Watchlist Error'
@@ -359,7 +361,6 @@ class WatchlinkPlugin(Component):
                     Column('wluser'),
                     Column('realm'),
                     Column('resid'),
-                    Column('notify', 'boolean'),
                 ]
 
         for statement in db_connector.to_sql(table):
@@ -367,7 +368,8 @@ class WatchlinkPlugin(Component):
 
         # Set database schema version.
         if (name == 'watchlist'):
-          cursor.execute("UPDATE system SET value='2' WHERE name='watchlist_version'")
+          cursor.execute("UPDATE system SET value=%s WHERE name='watchlist_version'",
+                (str(__DB_VERSION__),) )
         return
 
     def environment_created(self):
@@ -377,13 +379,13 @@ class WatchlinkPlugin(Component):
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
         try:
-            cursor.execute("SELECT count(wluser),count(resid),count(realm),count(notify) FROM watchlist")
+            cursor.execute("SELECT count(wluser),count(resid),count(realm) FROM watchlist")
             count = cursor.fetchone()
             if count is None:
                 return True
             cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
             (version,) = cursor.fetchone()
-            if not version or int(version) < 2:
+            if not version or int(version) < __DB_VERSION__:
                 return True
         except:
             cursor.connection.rollback()
@@ -420,10 +422,10 @@ class WatchlinkPlugin(Component):
               cursor.execute("INSERT INTO watchlist_new (wluser, realm, resid) "
                              "SELECT wluser, realm, resid FROM watchlist")
 
-            cursor.execute("UPDATE watchlist_new SET notify='0'")
             cursor.execute("DROP TABLE watchlist")
             cursor.execute("ALTER TABLE watchlist_new RENAME TO watchlist")
-            cursor.execute("UPDATE system SET value='2' WHERE name='watchlist_version'")
+            cursor.execute("UPDATE system SET value=%s WHERE "
+                           "name='watchlist_version'", (str(__DB_VERSION__),) )
         except Exception, e:
             raise TracError("Couldn't update DB: " + to_unicode(e))
         return
