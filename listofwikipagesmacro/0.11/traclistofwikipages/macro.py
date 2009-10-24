@@ -32,7 +32,7 @@ class StyleSheetProvider(Component):
 
 class MacroBase(WikiMacroBase):
     """ Provides Macro Base. """
-    long_format = True
+    long_format = False
 
     def formattime(self,time):
         """Return formatted time for ListOfWikiPages table."""
@@ -85,8 +85,13 @@ class ListOfWikiPagesMacro(MacroBase):
         get     = self.env.config.get
         section = 'listofwikipages'
 
+        long_format = self.env.config.get(section, 'default_format', 
+            'short').lower() == 'long'
+        if 'format' in kwargs:
+          long_format = kwargs['format'].lower() == 'long'
+        self.long_format = long_format
 
-        ignoreusers = getlist(section, 'ignore_users', ['trac'])
+        ignoreusers = self.env.config.getlist(section, 'ignore_users', ['trac'])
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -133,6 +138,13 @@ class LastChangesByMacro(MacroBase):
         self.formatter = formatter
         #self.base_path = formatter.req.base_path
         self.href      = formatter.req.href
+        section = 'listofwikipages'
+
+        long_format = self.env.config.get(section, 'default_format', 
+            'short').lower() == 'long'
+        if 'format' in kwargs:
+          long_format = kwargs['format'].lower() == 'long'
+        self.long_format = long_format
 
         author = len(largs) > 0 and largs[0] or formatter.req.authname
         count  = len(largs) > 1 and largs[1] or 5
