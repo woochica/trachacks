@@ -41,10 +41,10 @@ class MacroBase(WikiMacroBase):
                  tag.span(
                     " (", 
                     tag.a( pretty_timedelta ( time ),
-                           href = self.base_path
-                                  + '/timeline?precision=seconds&from='
-                                  + quote_plus( format_datetime ( time, 'iso8601' ) )
-                         ),
+                           href = self.href('timeline',
+                                  precision='seconds', from_=
+                                  quote_plus( format_datetime (time,'iso8601') )
+                           ) ),
                     " ago)"
                  )
                ]
@@ -78,7 +78,7 @@ class ListOfWikiPagesMacro(MacroBase):
         largs, kwargs = parse_args( content )
 
         self.formatter = formatter
-        self.base_path = formatter.req.base_path
+        #self.base_path = formatter.req.base_path
         self.href      = formatter.req.href
         getlist = self.env.config.getlist
         get     = self.env.config.get
@@ -130,7 +130,7 @@ class LastChangesByMacro(MacroBase):
         largs, kwargs = parse_args( content )
 
         self.formatter = formatter
-        self.base_path = formatter.req.base_path
+        #self.base_path = formatter.req.base_path
         self.href      = formatter.req.href
 
         author = len(largs) > 0 and largs[0] or formatter.req.authname
