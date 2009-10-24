@@ -35,12 +35,16 @@ def extract_url (env, context, wikilink, raw=False):
     if not wikilink:
         return ''
 
-    link = extract_link(env, context, '[' + wikilink + ']')
+    link = extract_link(env, context, '[' + wikilink + ' x]')
+    #env.log.debug("link = " + str(link.__class__) + ' ' + str(link))
+
     if isinstance(link, Element):
         href = link.attrib.get('href')
+        #env.log.debug("href1 = " + href)
     elif isinstance(link, Fragment):
         link = link.children[0]
         href = link.attrib.get('href')
+        #env.log.debug("href2 = " + href)
     else:
         href = None
 
