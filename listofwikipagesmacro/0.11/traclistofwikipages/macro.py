@@ -49,7 +49,7 @@ class MacroBase(WikiMacroBase):
                  )
                ]
 
-    def formatrow(self, n, name, time, author='', version='', comment=''):
+    def formatrow(self, n, name, time, version='', comment='', author=''):
         name = to_unicode(name)
         namelink = tag.a( name, href = self.href.wiki( name ) )
         cols = [ tag.td( namelink ), tag.td( self.formattime( time )) ]
@@ -57,7 +57,8 @@ class MacroBase(WikiMacroBase):
             cols.append ( tag.td( author )  )
         if self.long_format:
             cols.extend ([
-              tag.td( version, class_='version' ),
+              tag.td( tag.a(version,
+                href=self.href.wiki( name, version=version)), class_='version'),
               tag.td( tag.a("Diff",
                 href=self.href.wiki( name, action='diff', version=version) ) ),
               tag.td( tag.a("History",
@@ -107,8 +108,8 @@ class ListOfWikiPagesMacro(MacroBase):
         cursor.execute(
             "SELECT name,time,author,MAX(version),comment FROM wiki WHERE author " \
             "NOT IN ('%s') "  % "','".join( ignoreusers ) + sql_wikis + \
-            "GROUP BY name ORDER BY time DESC;")
-        rows = [ self.formatrow(n,name,time,author,version,comment)
+            "GROUP BY name ORDER BY time DESC")
+        rows = [ self.formatrow(n,name,time,version,comment,author)
               for n,[name,time,author,version,comment] in enumerate(cursor) ]
 
         if self.long_format:
@@ -145,30 +146,36 @@ class LastChangesByMacro(MacroBase):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        sqlcommand = " SELECT name,MAX(time) " \
-                     " FROM wiki WHERE author == '%s' " \
-                     " GROUP BY name " \
-                     " ORDER BY time DESC " % (author)
-        cursor.execute ( sqlcommand )
+        cursor.execute ( """
+              SELECT name,time,MAX(version),comment
+              FROM wiki WHERE author = %s
+              GROUP BY name
+              ORDER BY time DESC
+          """, (author,) )
 
-        rows = [ self.formatrow(n,name,time) for n,[name,time]
-                    in enumerate(cursor) if n < count ]
+        rows = [ self.formatrow(n,name,time,version,comment) for
+              n,[name,time,version,comment] in enumerate(cursor) if n < count ]
         if count == 1:
             count = ''
             s = ''
         else:
             s = 's'
 
+        if self.long_format:
+          cols = ( "WikiPage", "Last Changed at",
+                   "Version", "Diff", "History", "Comment" )
+        else:
+          cols = ( "WikiPage", "Last Changed at" )
+
         headline = "Last %s Change%s By: " % (count,s)
         head = tag.thead (
                 tag.tr(
                     tag.th(headline, tag.strong(author),
-                    colspan = 2 )
+                    colspan = len(cols) )
                 ),
                 tag.tr(
-                tag.th("WikiPage"),
-                tag.th("Last Changed at")
-            ) )
+          map(lambda x: tag.th(x, class_=x.replace(" ", "").lower() ), cols)
+        ) )
         table = tag.table( head, rows, class_ = 'lastchangesby' )
         return table
 
