@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = 'TracWatchlistPlugin',
-    version = '0.2.1',
+    version = '0.3',
     packages = ['tracwatchlist'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
@@ -17,6 +17,5 @@ setup(
     keywords = 'trac watchlist wiki plugin',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins':
-      ['tracwatchlist.plugin = tracwatchlist.plugin',
-       'tracwatchlist.notify = tracwatchlist.notify']}
+      ['tracwatchlist.plugin = tracwatchlist.plugin'}
 )
