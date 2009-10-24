@@ -27,7 +27,7 @@ from  trac.web.href    import  Href
 from  trac.util.text   import  to_unicode
 from  genshi.builder   import  tag, Markup
 from  urllib           import  quote_plus
-
+from  trac.config      import  BoolOption
 
 class WatchlistError(TracError):
     show_traceback = False
@@ -38,6 +38,19 @@ class WatchlinkPlugin(Component):
 
     implements( INavigationContributor, IRequestHandler, IRequestFilter,
                 IEnvironmentSetupParticipant, ITemplateProvider )
+    gnotify = BoolOption('watchlist', 'notifications', False,
+                "Enables notification features")
+
+    if gnotify:
+      try:
+        # Import methods from WatchSubscriber from the AnnouncerPlugin
+        from  announcerplugin.subscribers.watchers  import  WatchSubscriber
+        is_notify    = WatchSubscriber.__dict__['is_watching']
+        set_notify   = WatchSubscriber.__dict__['set_watch']
+        unset_notify = WatchSubscriber.__dict__['set_unwatch']
+        set_unwatch  = unset_notify
+      except:
+        gnotify = False
 
     ### methods for INavigationContributor
     def get_active_navigation_item(self, req):
@@ -94,7 +107,8 @@ class WatchlinkPlugin(Component):
         ticket_perm = 'TICKET_VIEW' in req.perm
         wldict['wiki_perm']   = wiki_perm
         wldict['ticket_perm'] = ticket_perm
-        wldict['notify'] = self.config.getbool("watchlist","notifications",False)
+        gnotify = self.gnotify
+        wldict['notify'] = gnotify
 
         # DB look-up
         db = self.env.get_db_cnx()
@@ -124,21 +138,11 @@ class WatchlinkPlugin(Component):
                     "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
                 db.commit()
             action = "view"
-        elif action == 'notifyoff':
-            lst = (user, realm, resid)
-            if realm_perm and is_watching:
-                cursor.execute(
-                    "UPDATE watchlist SET notify='0' "
-                    "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
-                db.commit()
+        elif action == "notifyon":
+            self.set_notify(req.session.sid, True, realm, resid)
             action = "view"
-        elif action == 'notifyon':
-            lst = (user, realm, resid)
-            if realm_perm and is_watching:
-                cursor.execute(
-                    "UPDATE watchlist SET notify='1' "
-                    "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
-                db.commit()
+        elif action == "notifyoff":
+            self.unset_notify(req.session.sid, True, realm, resid)
             action = "view"
 
         if action == "view":
@@ -150,9 +154,13 @@ class WatchlinkPlugin(Component):
             if wiki_perm:
                 # Watched wikis which got deleted:
                 cursor.execute(
-                    "SELECT resid,notify FROM watchlist WHERE realm='wiki' AND wluser=%s "
+                    "SELECT resid FROM watchlist WHERE realm='wiki' AND wluser=%s "
                     "AND resid NOT IN (SELECT DISTINCT name FROM wiki);", (user,) )
-                for (name,notify) in cursor.fetchall():
+
+                for (name,) in cursor.fetchall():
+                    notify = False
+                    if gnotify:
+                      notify = self.is_notify(req.session.sid, True, 'wiki', name)
                     wikilist.append({
                         'name' : name,
                         'author' : '?',
@@ -168,10 +176,9 @@ class WatchlinkPlugin(Component):
                     "GROUP BY name ORDER BY time DESC;", (user,) )
                 wikis = cursor.fetchall()
                 for name,author,time,version,comment in wikis:
-                    cursor.execute(
-                      "SELECT notify FROM watchlist WHERE wluser=%s AND "
-                      "realm='wiki' AND resid=%s", (user,name) )
-                    (notify,) = cursor.fetchone()
+                    notify = False
+                    if gnotify:
+                      notify = self.is_notify(req.session.sid, True, 'wiki', name)
                     wikilist.append({
                         'name' : name,
                         'author' : author,
@@ -197,10 +204,9 @@ class WatchlinkPlugin(Component):
                     self.commentnum = 0
                     self.comment    = ''
 
-                    cursor.execute(
-                      "SELECT notify FROM watchlist WHERE wluser=%s AND "
-                      "realm='ticket' AND resid=%s", (user,id) )
-                    (notify,) = cursor.fetchone()
+                    notify = False
+                    if gnotify:
+                      notify = self.is_notify(req.session.sid, True, 'ticket', id)
 
                     cursor.execute(
                         "SELECT author,field,oldvalue,newvalue FROM ticket_change "
@@ -421,4 +427,5 @@ class WatchlinkPlugin(Component):
         except Exception, e:
             raise TracError("Couldn't update DB: " + to_unicode(e))
         return
+
 
