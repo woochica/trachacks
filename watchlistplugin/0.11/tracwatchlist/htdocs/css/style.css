@@ -24,3 +24,12 @@ td.comment, th.summary {
 td.version, td.commentnum, td.id {
     text-align: center;
 }
+
+span.notifyon {
+    color:green;
+}
+
+span.notifyoff {
+    color:red;
+}
+

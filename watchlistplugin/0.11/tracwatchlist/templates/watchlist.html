@@ -90,11 +90,13 @@
                           href="${href('wiki',page.name,action='history')}">History</a></td>
                   <td class="unwatch"><a href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">Unwatch</a></td>
                   <td class="notify" py:if="notify">
+                    <span class="notifyon" py:if="page.notify">On</span>
                     <a class="notifyon" py:if="page.notify" 
-                      href="${href.watchlist(action='notifyoff',realm='wiki',resid=page.name)}">On 
+                      href="${href.watchlist(action='notifyoff',realm='wiki',resid=page.name)}">
                       (turn off)</a>
+                    <span class="notifyoff" py:if="not page.notify">Off</span>
                     <a class="notifyoff" py:if="not page.notify" 
-                      href="${href.watchlist(action='notifyon',realm='wiki',resid=page.name)}">Off 
+                      href="${href.watchlist(action='notifyon',realm='wiki',resid=page.name)}">
                       (turn on)</a>
                   </td>
                   <td class="comment">$page.comment</td>
@@ -136,11 +138,13 @@
                   <td class="unwatch"><a
                           href="${href.watchlist(action='unwatch',realm='ticket',resid=ticket.id)}">Unwatch</a></td>
                   <td class="notify" py:if="notify">
+                    <span class="notifyon" py:if="ticket.notify">On</span>
                     <a class="notifyon" py:if="ticket.notify" 
-                      href="${href.watchlist(action='notifyoff',realm='ticket',resid=ticket.id)}">On 
+                      href="${href.watchlist(action='notifyoff',realm='ticket',resid=ticket.id)}">
                       (turn off)</a>
+                    <span class="notifyoff" py:if="not ticket.notify">Off</span>
                     <a class="notifyoff" py:if="not ticket.notify" 
-                      href="${href.watchlist(action='notifyon',realm='ticket',resid=ticket.id)}">Off 
+                      href="${href.watchlist(action='notifyon',realm='ticket',resid=ticket.id)}">
                       (turn on)</a>
                   </td>
                   <td class="changes">$ticket.changes</td>
