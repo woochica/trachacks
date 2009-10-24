@@ -25,4 +25,13 @@ table.lastchangesby thead tr th {
     border-bottom: thin solid;
     text-align: center;
 }
+table.listofwikipages thead tr th.comment,
+table.lastchangesby   thead tr th.comment {
+    text-align: left;
+}
+
+table.listofwikipages tbody tr td.version,
+table.lastchangesby   tbody tr td.version {
+    text-align: center;
+}
 
