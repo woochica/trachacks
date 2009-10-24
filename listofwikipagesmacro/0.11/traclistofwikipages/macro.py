@@ -118,10 +118,10 @@ class ListOfWikiPagesMacro(MacroBase):
               for n,[name,time,author,version,comment] in enumerate(cursor) ]
 
         if self.long_format:
-          cols = ( "WikiPage", "Last Changed at", "By",
+          cols = ( "WikiPage", "Last Changed At", "By",
                    "Version", "Diff", "History", "Comment" )
         else:
-          cols = ( "WikiPage", "Last Changed at", "By" )
+          cols = ( "WikiPage", "Last Changed At", "By" )
 
         head  = tag.thead ( tag.tr(
           map(lambda x: tag.th(x, class_=x.replace(" ", "").lower() ), cols) ) )
@@ -174,10 +174,10 @@ class LastChangesByMacro(MacroBase):
             s = 's'
 
         if self.long_format:
-          cols = ( "WikiPage", "Last Changed at",
+          cols = ( "WikiPage", "Last Changed At",
                    "Version", "Diff", "History", "Comment" )
         else:
-          cols = ( "WikiPage", "Last Changed at" )
+          cols = ( "WikiPage", "Last Changed At" )
 
         headline = "Last %s Change%s By: " % (count,s)
         head = tag.thead (
