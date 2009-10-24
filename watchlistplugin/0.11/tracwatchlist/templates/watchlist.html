@@ -105,8 +105,13 @@
           <tfoot>
           </tfoot>
       </table>
-      <span py:otherwise="">No wikis are currently watched.</span>
+      <div py:otherwise=""><span>No wikis are currently watched.</span></div>
       </py:choose>
+      <form method="get" action="">
+        Add Wiki: <input type="text" name="resid" />
+        <input type="hidden" name="realm" value="wiki" />
+        <input type="hidden" name="action" value="watch" />
+      </form>
       </py:choose>
 
       <h2 id="tickets">Tickets</h2>
@@ -154,8 +159,13 @@
           <tfoot>
           </tfoot>
       </table>
-      <span py:otherwise="">No tickets are currently watched.</span>
+      <div py:otherwise=""><span>No tickets are currently watched.</span></div>
       </py:choose>
+      <form method="get" action="">
+        Add Ticket : #<input type="text" name="resid" />
+        <input type="hidden" name="realm" value="ticket" />
+        <input type="hidden" name="action" value="watch" />
+      </form>
       </py:choose>
 
     </div>
