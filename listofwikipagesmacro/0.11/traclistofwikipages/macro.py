@@ -7,7 +7,7 @@ from trac.util import format_datetime, pretty_timedelta
 from urllib import quote_plus
 from trac.web.api import IRequestFilter
 from trac.web.chrome import add_stylesheet, ITemplateProvider
-
+from trac.util.text import to_unicode
 
 class StyleSheetProvider(Component):
     implements(IRequestFilter,ITemplateProvider)
@@ -32,6 +32,7 @@ class StyleSheetProvider(Component):
 
 class MacroBase(WikiMacroBase):
     """ Provides Macro Base. """
+    long_format = True
 
     def formattime(self,time):
         """Return formatted time for ListOfWikiPages table."""
@@ -48,11 +49,21 @@ class MacroBase(WikiMacroBase):
                  )
                ]
 
-    def formatrow(self, n, name, time, author=''):
-        name = tag.a( name, href = self.wiki_path + unicode(name) )
-        cols = [ tag.td( name ), tag.td( self.formattime( time )) ]
+    def formatrow(self, n, name, time, author='', version='', comment=''):
+        name = to_unicode(name)
+        namelink = tag.a( name, href = self.href.wiki( name ) )
+        cols = [ tag.td( namelink ), tag.td( self.formattime( time )) ]
         if author:
             cols.append ( tag.td( author )  )
+        if self.long_format:
+            cols.extend ([
+              tag.td( version, class_='version' ),
+              tag.td( tag.a("Diff",
+                href=self.href.wiki( name, action='diff', version=version) ) ),
+              tag.td( tag.a("History",
+                href=self.href.wiki( name, action='history') ) ),
+              tag.td( comment ),
+            ])
         return tag.tr(
                   cols,
                   class_ = ('even','odd')[ n % 2 ]
@@ -62,12 +73,13 @@ class MacroBase(WikiMacroBase):
 class ListOfWikiPagesMacro(MacroBase):
     """ Provides Macro ListOfWikiPages. """
 
+
     def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args( content )
 
         self.formatter = formatter
         self.base_path = formatter.req.base_path
-        self.wiki_path = formatter.req.href.wiki('/')
+        self.href      = formatter.req.href
         getlist = self.env.config.getlist
         get     = self.env.config.get
         section = 'listofwikipages'
@@ -91,15 +103,23 @@ class ListOfWikiPagesMacro(MacroBase):
                      + sql_wikis + \
                      " GROUP BY name "
         cursor.execute ( sqlcommand )
-        rows = [ self.formatrow(n,name,time,author) for n,[name,time,author] in
-                    enumerate(cursor) ]
 
-        head = tag.thead ( tag.tr(
-                tag.th("WikiPage"),
-                tag.th("Last Changed at"),
-                tag.th("By")
-            ) )
-        table = tag.table( head, rows, class_ = 'listofwikipages' )
+        cursor.execute(
+            "SELECT name,time,author,MAX(version),comment FROM wiki WHERE author " \
+            "NOT IN ('%s') "  % "','".join( ignoreusers ) + sql_wikis + \
+            "GROUP BY name ORDER BY time DESC;")
+        rows = [ self.formatrow(n,name,time,author,version,comment)
+              for n,[name,time,author,version,comment] in enumerate(cursor) ]
+
+        if self.long_format:
+          cols = ( "WikiPage", "Last Changed at", "By",
+                   "Version", "Diff", "History", "Comment" )
+        else:
+          cols = ( "WikiPage", "Last Changed at", "By" )
+
+        head  = tag.thead ( tag.tr(
+          map(lambda x: tag.th(x, class_=x.replace(" ", "").lower() ), cols) ) )
+        table = tag.table ( head, rows, class_ = 'listofwikipages' )
         return table
 
 
@@ -111,7 +131,7 @@ class LastChangesByMacro(MacroBase):
 
         self.formatter = formatter
         self.base_path = formatter.req.base_path
-        self.wiki_path = formatter.req.href.wiki('/')
+        self.href      = formatter.req.href
 
         author = len(largs) > 0 and largs[0] or formatter.req.authname
         count  = len(largs) > 1 and largs[1] or 5
