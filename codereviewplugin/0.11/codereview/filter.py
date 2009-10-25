@@ -1,5 +1,6 @@
 from trac.core import *
 from trac.web.api import ITemplateStreamFilter,IRequestFilter
+from trac.perm import IPermissionRequestor
 
 from model import Review
 
@@ -11,7 +12,7 @@ class ChangeSetReview(Component):
     Add change set review properties
     """
        
-    implements(ITemplateStreamFilter, IRequestFilter)
+    implements(ITemplateStreamFilter, IRequestFilter,IPermissionRequestor)
 
     # ITemplateStreamFilter methods
 
@@ -22,27 +23,41 @@ class ChangeSetReview(Component):
                 return stream | filter.after(self._review_attrs(req,changeset))
         return stream
 
-    def _review_attrs(self, req, changeset):
-        review = Review.get(self.env.get_db_cnx(),changeset.rev)
-        if review.status=="ACCEPTED":
-            checkbox = tag.input(type="checkbox", name="review_passed", checked="true")
+    def author(self, changeset):
+        if changeset.author == '':
+            return "anonymous"
         else:
-            checkbox = tag.input(type="checkbox", name="review_passed")
+            return changeset.author
+
+    def _review_attrs(self, req, changeset):
+        review = Review.get(self.env.get_db_cnx(),changeset.rev, self.author(changeset))
+        if req.perm.has_permission('CODE_REVIEW'):
+            comment = tag.textarea(review.comment, name="review_comment", rows=6, cols=100 )
+            if review.status=="ACCEPTED":
+                checkbox = tag.input(type="checkbox", name="review_passed", checked="true")
+            else:
+                checkbox = tag.input(type="checkbox", name="review_passed")
+            submit = tag.input(type="hidden", name="review_rev", value=changeset.rev)+ \
+                tag.input(type="hidden", name="review_author", value=self.author(changeset))+ \
+                tag.input(type="submit", name="review", value="Review")
+        else:
+            comment = tag.span(review.comment)
+            checkbox = tag.span(review.status)
+            submit = "";
         return tag.form(
                         tag.dt("Reviewer:",class_="property author"),
-                        tag.dd("viola",class_="author"),
+                        tag.dd( req.authname,class_="author"),
                         tag.dt("Comment:",class_="property author"),
-                        tag.dd( tag.textarea(review.comment, name="review_comment", rows=6, cols=100 )),       
+                        tag.dd( comment ),       
                         tag.dt("Passed:",class_="property author"),
-                        tag.dd(checkbox+
-                               tag.input(type="hidden", name="review_rev", value=changeset.rev)+
-                               tag.input(type="submit", name="review", value="Review"))
+                        tag.dd(checkbox+submit)
                         )       
 
     def pre_process_request(self, req, handler):
         if req.path_info.startswith('/changeset') and 'review' in req.args:
-            review = Review.get(self.env.get_db_cnx(),req.args['review_rev'])
-            review.reviewer = "viola"
+            review = Review.get(self.env.get_db_cnx(),req.args['review_rev'],req.args['review_author'])
+            review.author = req.args['review_author']
+            review.reviewer =  req.authname
             review.comment = req.args['review_comment']
             review.status = "REJECTED"
             if 'review_passed' in req.args:
@@ -53,3 +68,6 @@ class ChangeSetReview(Component):
     # for ClearSilver templates
     def post_process_request(self, req, template, content_type):
         return template, content_type;
+    
+    def get_permission_actions(self):
+        return ["CODE_REVIEW"]

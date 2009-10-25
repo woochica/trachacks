@@ -19,22 +19,24 @@ except ImportError:
 class Review(object):
     "blabla"
     
-    def get(cls, db, rev):
+    def get(cls, db, rev, author):
         cursor = db.cursor()
         try:
-            cursor.execute("SELECT reviewer,comment,status FROM CODEREVIEW WHERE rev='%s'" % (rev))
+            cursor.execute("SELECT author,reviewer,comment,status FROM CODEREVIEW WHERE rev='%s'" % (rev))
         except sqlite.OperationalError:
-            cursor.execute("CREATE TABLE CODEREVIEW(rev varchar(10),reviewer varchar(255),comment varchar(20000),status varchar(15))")
-            cursor.execute("SELECT reviewer,comment,status FROM CODEREVIEW WHERE rev='%s'" % (rev))
+            cursor.execute("CREATE TABLE CODEREVIEW(rev varchar(10),author varchar(255),reviewer varchar(255),comment varchar(20000),status varchar(15))")
+            cursor.execute("SELECT author,reviewer,comment,status FROM CODEREVIEW WHERE rev='%s'" % (rev))
         review = Review()
         review.rev = rev
-        review.reviewer = "viola"
+        review.reviewer = ""
+        review.author = author
         review.comment = ""
         review.status = "REJECTED"
         for row in cursor:
-            review.reviewer = row[0]
-            review.comment = row[1]
-            review.status = row[2]
+            review.author = row[0]
+            review.reviewer = row[1]
+            review.comment = row[2]
+            review.status = row[3]
         cursor.close()    
         return review;
     get = classmethod(get)
@@ -42,10 +44,10 @@ class Review(object):
     def save(self, db):
         ""
         cursor = db.cursor()
-        cursor.execute("UPDATE CODEREVIEW SET reviewer=%s,comment=%s,status=%s WHERE rev=%s",
-                       (self.reviewer, self.comment,self.status,self.rev))
+        cursor.execute("UPDATE CODEREVIEW SET author=%s,reviewer=%s,comment=%s,status=%s WHERE rev=%s",
+                       (self.author,self.reviewer, self.comment,self.status,self.rev))
         if cursor.rowcount==0:
-            cursor.execute("INSERT INTO CODEREVIEW (rev, reviewer, comment, status) VALUES (%s,%s,%s,%s)",
-                           (self.rev, self.reviewer, self.comment,self.status))
+            cursor.execute("INSERT INTO CODEREVIEW (rev, author, reviewer, comment, status) VALUES (%s,%s,%s,%s,%s)",
+                           (self.rev, self.author, self.reviewer, self.comment,self.status))
         cursor.close()
         db.commit()
