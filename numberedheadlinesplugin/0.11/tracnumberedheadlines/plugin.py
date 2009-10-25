@@ -21,6 +21,10 @@ from trac.wiki.formatter import format_to_oneliner
 from genshi.util import plaintext
 from trac.wiki.parser import WikiParser
 
+from weakref import WeakKeyDictionary
+import re
+
+
 class NumberedHeadlinesPlugin(Component):
     """ Trac Plug-in to provide Wiki Syntax and CSS file for numbered headlines.
     """
@@ -32,6 +36,9 @@ class NumberedHeadlinesPlugin(Component):
         r"(?P<nheading>^\s*(?P<nhdepth>#+)\s.*\s(?P=nhdepth)\s*" \
         r"(?P<nhanchor>=%s)?(?:\s|$))" % XML_NAME
 
+    outline_counters = WeakKeyDictionary()
+
+    # ITemplateProvider methods
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('numberedheadlines', resource_filename(__name__, 'htdocs'))]
@@ -40,6 +47,7 @@ class NumberedHeadlinesPlugin(Component):
         return []
 
 
+    # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
 
@@ -48,6 +56,7 @@ class NumberedHeadlinesPlugin(Component):
         return (template, data, content_type)
 
 
+    # IWikiSyntaxProvider methods
     def _parse_heading(self, formatter, match, fullmatch):
         shorten = False
         match = match.strip()
@@ -74,6 +83,34 @@ class NumberedHeadlinesPlugin(Component):
         if shorten:
             heading = format_to_oneliner(formatter.env, formatter.context, heading_text,
                                          True)
+
+        # Figure out headline numbering for outline
+        counters = self.outline_counters.get(formatter, [])
+
+        if formatter not in self.outline_counters:
+            self.outline_counters[formatter] = counters
+
+        if len(counters) < depth:
+            delta = depth - len(counters)
+            counters.extend([0] * (delta - 1))
+            counters.append(1)
+        else:
+            del counters[depth:]
+            counters[-1] += 1
+
+        # Strip out link tags
+        oheading = re.sub(r'</?a(?: .*?)?>', '', heading)
+        # Add in number
+        oheading = '.'.join(map(str, counters) + [" "]) + oheading
+
+        try:
+            # Add heading to outline
+            formatter.outline.append((depth, anchor, oheading))
+        except AttributeError:
+            # Probably a type of formatter that doesn't build an
+            # outline.
+            pass
+
         return tag.__getattr__('h' + str(depth))( heading,
                     class_='numbered',
                     id=anchor
