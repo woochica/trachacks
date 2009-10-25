@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# $Id$
+# $URL$
+
 from setuptools import setup
 
 setup(

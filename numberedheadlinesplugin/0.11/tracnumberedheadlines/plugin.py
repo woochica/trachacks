@@ -1,6 +1,6 @@
 """ Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
     $Id$
-    $HeadURL$
+    $URL$
 
     This is Free Software under the BSD license.
 

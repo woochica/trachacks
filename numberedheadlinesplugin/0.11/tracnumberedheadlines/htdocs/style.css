@@ -1,4 +1,7 @@
-/* Numbered headers */
+/* 
+ Numbered headers
+ $Id$
+*/
 
 div#content div.wikipage h1.numbered {
   counter-increment: h1;
