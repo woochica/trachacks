@@ -64,7 +64,7 @@ class NumberedHeadlinesPlugin(Component):
         shorten = False
         match = match.strip()
 
-        depth = min(len(fullmatch.group('nhdepth')), 5)
+        depth = min(len(fullmatch.group('nhdepth')), 6)
         anchor = fullmatch.group('nhanchor') or ''
         heading_text = match[depth+1:-depth-1-len(anchor)]
         heading = format_to_oneliner(formatter.env, formatter.context, heading_text,
