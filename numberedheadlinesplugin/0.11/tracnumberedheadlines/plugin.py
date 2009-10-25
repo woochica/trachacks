@@ -118,6 +118,9 @@ class NumberedHeadlinesPlugin(Component):
 
         # Add number directly if CSS is not used
         s = self.startatleveltwo and 1 or 0
+        #self.env.log.debug('NHL:' + str(counters))
+        while s < len(counters) and counters[s] == 0:
+          s = s + 1
         num_heading_text = '.'.join(map(str, counters[s:]) + [" "]) + heading_text
 
         if self.number_outline:
