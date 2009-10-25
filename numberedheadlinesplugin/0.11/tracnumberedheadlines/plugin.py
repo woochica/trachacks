@@ -23,6 +23,7 @@ from trac.wiki.api import IWikiSyntaxProvider
 from trac.wiki.formatter import format_to_oneliner
 from genshi.util import plaintext
 from trac.wiki.parser import WikiParser
+from trac.config import BoolOption
 
 from weakref import WeakKeyDictionary
 import re
@@ -32,6 +33,10 @@ class NumberedHeadlinesPlugin(Component):
     """ Trac Plug-in to provide Wiki Syntax and CSS file for numbered headlines.
     """
     implements(IRequestFilter,ITemplateProvider,IWikiSyntaxProvider)
+    number_outline = BoolOption('numberedheadlines','numbered_outline',True,
+        "Whether or not to number the headlines in an outline (e.g. TOC)")
+    use_css = BoolOption('numberedheadlines','use_css_for_numbering',True,
+        "Whether or not to number the headlines using CSS styles (e.g.  TOC)")
 
     XML_NAME = r"[\w:](?<!\d)[\w:.-]*?" # See http://www.w3.org/TR/REC-xml/#id 
 
@@ -55,7 +60,8 @@ class NumberedHeadlinesPlugin(Component):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        add_stylesheet (req, 'numberedheadlines/style.css')
+        if self.use_css:
+          add_stylesheet (req, 'numberedheadlines/style.css')
         return (template, data, content_type)
 
 
@@ -65,10 +71,30 @@ class NumberedHeadlinesPlugin(Component):
         match = match.strip()
 
         depth = min(len(fullmatch.group('nhdepth')), 6)
+
+        ## BEGIN of code provided by Joshua Hoke, see th:#4521.
+        # moved and modified by Martin
+
+        # Figure out headline numbering for outline
+        counters = self.outline_counters.get(formatter, [])
+
+        if formatter not in self.outline_counters:
+            self.outline_counters[formatter] = counters
+
+        if len(counters) < depth:
+            delta = depth - len(counters)
+            counters.extend([0] * (delta - 1))
+            counters.append(1)
+        else:
+            del counters[depth:]
+            counters[-1] += 1
+        ## END
+
         anchor = fullmatch.group('nhanchor') or ''
         heading_text = match[depth+1:-depth-1-len(anchor)]
-        heading = format_to_oneliner(formatter.env, formatter.context, heading_text,
-                                     False)
+        heading = format_to_oneliner(formatter.env, formatter.context, 
+            heading_text, False)
+
         if anchor:
             anchor = anchor[1:]
         else:
@@ -83,29 +109,28 @@ class NumberedHeadlinesPlugin(Component):
             anchor = anchor_base + str(i)
             i += 1
         formatter._anchors[anchor] = True
-        if shorten:
-            heading = format_to_oneliner(formatter.env, formatter.context, heading_text,
-                                         True)
+
+        # Add number directly if CSS is not used
+        num_heading_text = '.'.join(map(str, counters) + [" "]) + heading_text
+
+        if self.number_outline:
+          oheading_text = num_heading_text
+        else:
+          oheading_text = heading_text
+
+        if not self.use_css:
+          heading_text  = num_heading_text
+
+        heading = format_to_oneliner(formatter.env, formatter.context, 
+            heading_text, False)
+        oheading = format_to_oneliner(formatter.env, formatter.context, 
+            oheading_text, False)
 
         ## BEGIN of code provided by Joshua Hoke, see th:#4521.
-        # Figure out headline numbering for outline
-        counters = self.outline_counters.get(formatter, [])
-
-        if formatter not in self.outline_counters:
-            self.outline_counters[formatter] = counters
-
-        if len(counters) < depth:
-            delta = depth - len(counters)
-            counters.extend([0] * (delta - 1))
-            counters.append(1)
-        else:
-            del counters[depth:]
-            counters[-1] += 1
+        # modified by Martin
 
         # Strip out link tags
-        oheading = re.sub(r'</?a(?: .*?)?>', '', heading)
-        # Add in number
-        oheading = '.'.join(map(str, counters) + [" "]) + oheading
+        oheading = re.sub(r'</?a(?: .*?)?>', '', oheading)
 
         try:
             # Add heading to outline
@@ -116,10 +141,12 @@ class NumberedHeadlinesPlugin(Component):
             pass
         ## END of provided code
 
+        cssclass = self.use_css and 'numbered' or ''
+
         return tag.__getattr__('h' + str(depth))( heading,
-                    class_='numbered',
-                    id=anchor
-               );
+                    class_ = cssclass,
+                    id = anchor
+              )
 
     def get_wiki_syntax(self):
         yield ( self.NUM_HEADLINE , self._parse_heading )
