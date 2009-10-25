@@ -37,6 +37,9 @@ class NumberedHeadlinesPlugin(Component):
         "Whether or not to number the headlines in an outline (e.g. TOC)")
     use_css = BoolOption('numberedheadlines','use_css_for_numbering',True,
         "Whether or not to number the headlines using CSS styles (e.g.  TOC)")
+    startatleveltwo = BoolOption('numberedheadlines','numbering_starts_at_level_two',
+        False, """Whether or not to start the numbering at level two instead at 
+        level one.""")
 
     XML_NAME = r"[\w:](?<!\d)[\w:.-]*?" # See http://www.w3.org/TR/REC-xml/#id 
 
@@ -61,7 +64,10 @@ class NumberedHeadlinesPlugin(Component):
 
     def post_process_request(self, req, template, data, content_type):
         if self.use_css:
-          add_stylesheet (req, 'numberedheadlines/style.css')
+          if self.startatleveltwo:
+            add_stylesheet (req, 'numberedheadlines/style2.css')
+          else:
+            add_stylesheet (req, 'numberedheadlines/style.css')
         return (template, data, content_type)
 
 
@@ -111,7 +117,8 @@ class NumberedHeadlinesPlugin(Component):
         formatter._anchors[anchor] = True
 
         # Add number directly if CSS is not used
-        num_heading_text = '.'.join(map(str, counters) + [" "]) + heading_text
+        s = self.startatleveltwo and 1 or 0
+        num_heading_text = '.'.join(map(str, counters[s:]) + [" "]) + heading_text
 
         if self.number_outline:
           oheading_text = num_heading_text
