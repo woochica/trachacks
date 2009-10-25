@@ -119,9 +119,9 @@ class WorkHoursRPC(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         if id == 0:
-	        sql="SELECT DISTINCT time FROM ticket_change WHERE (field='totalhours' OR  field='estimatedhours' OR  field='baseline_cost') GROUP BY time"
+	        sql="SELECT DISTINCT time FROM ticket_change WHERE (field='totalhours' OR  field='estimatedhours' OR  field='baseline_cost') ORDER BY time"
         else:
-	        sql="SELECT DISTINCT time FROM ticket_change WHERE (field='totalhours' OR  field='estimatedhours' OR  field='baseline_cost') AND ticket='%s' GROUP BY time" % id
+	        sql="SELECT DISTINCT time FROM ticket_change WHERE (field='totalhours' OR  field='estimatedhours' OR  field='baseline_cost') AND ticket='%s' ORDER BY time" % id
         cursor.execute(sql)
         result = []
         for row in cursor:
@@ -135,9 +135,9 @@ class WorkHoursRPC(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         if id == 0:
-	        sql="SELECT * FROM ticket_change WHERE (field='totalhours' OR  field='estimatedhours' OR  field='baseline_cost') GROUP BY time"
+	        sql="SELECT * FROM ticket_change WHERE (field='totalhours' OR  field='estimatedhours' OR  field='baseline_cost') ORDER BY time"
         else:
-	        sql="SELECT * FROM ticket_change WHERE (field='totalhours' OR  field='estimatedhours' OR  field='baseline_cost') AND ticket='%s' GROUP BY time" % id
+	        sql="SELECT * FROM ticket_change WHERE (field='totalhours' OR  field='estimatedhours' OR  field='baseline_cost') AND ticket='%s' ORDER BY time" % id
         cursor.execute(sql)
         result = []
         for row in cursor:
@@ -171,21 +171,48 @@ class WorkHoursRPC(Component):
 
     def getWorkHours(self, req, id):
         """Returns a table of changetime records"""
-        # 
+        totalhours=""
+        estimatedhours=""
+        baseline_cost=""
+        
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+        
+        sql="SELECT oldvalue, newvalue FROM ticket_change WHERE field='baseline_cost' AND ticket='%s' ORDER BY time" % id
+        cursor.execute(sql)
+        for row in cursor:
+            baseline_cost=row[1]
+            if row[0] != 0 and row[0] != "":
+                baseline_cost=row[0]
+            break
+        if baseline_cost == "":
+            sql="SELECT value FROM ticket_custom WHERE name='baseline_cost' AND ticket='%s'" % id
+            cursor.execute(sql)
+            for row in cursor:
+                baseline_cost=row[0]
+        
+        sql="SELECT oldvalue, newvalue FROM ticket_change WHERE field='estimatedhours' AND ticket='%s' ORDER BY time" % id
+        cursor.execute(sql)
+        for row in cursor:
+            estimatedhours=row[1]
+            if row[0] != 0 and row[0] != "":
+                estimatedhours=row[0]
+            break
+        if estimatedhours == "":
+            sql="SELECT value FROM ticket_custom WHERE name='estimatedhours' AND ticket='%s'" % id
+            cursor.execute(sql)
+            for row in cursor:
+                estimatedhours=row[0]
+        
         sql="SELECT DISTINCT t.time, t1.newvalue, t2.newvalue, t3.newvalue FROM ticket_change t"
         sql = sql + " LEFT JOIN ticket_change t1 ON t1.time = t.time AND t1.field='totalhours'"
         sql = sql + " LEFT JOIN ticket_change t2 ON t2.time = t.time AND t2.field='estimatedhours'"
         sql = sql + " LEFT JOIN ticket_change t3 ON t3.time = t.time AND t3.field='baseline_cost'"
         sql = sql + " WHERE t.ticket='%s'" % id
         sql = sql + " AND (t.field='totalhours' OR  t.field='estimatedhours' OR  t.field='baseline_cost')"
-        #sql = sql + " GROUP BY t.time"
+        #sql = sql + " ORDER BY t.time"
         cursor.execute(sql)
         result = []
-        totalhours=""
-        estimatedhours=""
-        baseline_cost=""
         for row in cursor:
             d={}
             d['time']=row[0]
