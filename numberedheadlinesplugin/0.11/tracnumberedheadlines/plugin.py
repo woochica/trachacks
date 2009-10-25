@@ -4,6 +4,9 @@
 
     This is Free Software under the BSD license.
 
+    Contributors:
+    Joshua Hoke <joshua.hoke@sixnet.com>: Patch for PageOutline Support (th:#4521)
+
     The regexes XML_NAME (unchanged) and NUM_HEADLINE (added 'n'-prefix for all
     names) were taken from trac.wiki.parser and the base code of method
     `_parse_heading` was taken from trac.wiki.formatter which are:
@@ -84,6 +87,7 @@ class NumberedHeadlinesPlugin(Component):
             heading = format_to_oneliner(formatter.env, formatter.context, heading_text,
                                          True)
 
+        ## BEGIN of code provided by Joshua Hoke, see th:#4521.
         # Figure out headline numbering for outline
         counters = self.outline_counters.get(formatter, [])
 
@@ -110,6 +114,7 @@ class NumberedHeadlinesPlugin(Component):
             # Probably a type of formatter that doesn't build an
             # outline.
             pass
+        ## END of provided code
 
         return tag.__getattr__('h' + str(depth))( heading,
                     class_='numbered',
