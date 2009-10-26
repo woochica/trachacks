@@ -170,7 +170,13 @@ class ListOfWikiPagesMacro(WikiMacroBase):
         else:
           cols = ( "WikiPage", "Last Changed At", "By" )
 
-        head  = tag.thead ( tag.tr(
+        if 'headline' in kwargs:
+          headlinetag = tag.tr( tag.th( kwargs['headline'],
+            colspan = len(cols) ) )
+        else:
+          headlinetag = tag()
+
+        head  = tag.thead ( headlinetag, tag.tr(
           map(lambda x: tag.th(x, class_=x.replace(" ", "").lower() ), cols) ) )
         table = tag.table ( head, rows, class_ = 'listofwikipages' )
 
@@ -251,11 +257,16 @@ class LastChangesByMacro(ListOfWikiPagesMacro):
         else:
           timetag = ''
 
-        head = tag.thead (
-                tag.tr(
-                    tag.th(headline, tag.strong(author), timetag,
-                    colspan = len(cols) )
-                ),
+        if 'headline' in kwargs:
+          headlinetag = tag.tr(
+              tag.th(kwargs['headline'],
+              colspan = len(cols) ))
+        else:
+          headlinetag = tag.tr(
+              tag.th(headline, tag.strong(author), timetag,
+              colspan = len(cols) ))
+
+        head = tag.thead ( headlinetag,
                 tag.tr(
           map(lambda x: tag.th(x, class_=x.replace(" ", "").lower() ), cols)
         ) )
