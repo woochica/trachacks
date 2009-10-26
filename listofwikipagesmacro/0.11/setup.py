@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name = 'TracListOfWikiPagesMacro',
-    version = '0.2',
+    version = '0.3',
     packages = ['traclistofwikipages'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
