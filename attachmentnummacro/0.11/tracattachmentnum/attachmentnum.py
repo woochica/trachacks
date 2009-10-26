@@ -9,13 +9,26 @@ from trac.resource import *
 
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import format_to_oneliner
-from trac.wiki.macros import WikiMacroBase,parse_args
+from trac.wiki.macros import parse_args
+
+__url__      = r"$URL$"[6:-2]
+__author__   = r"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
 
 
-class AttachmentNumMacro(WikiMacroBase):
+class AttachmentNumMacro(Component):
     implements(IWikiMacroProvider)
 
     ### methods for IWikiMacroProvider
+    def get_macros(self):
+      yield 'AttachmentNum'
+
+    def get_macro_description(self, name):
+      return """ Allows to link to wiki attachment by number instead by name.
+                 Example: `[[AttachmentNum(1)]]`
+             """
+
     def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args(content)
         try:
