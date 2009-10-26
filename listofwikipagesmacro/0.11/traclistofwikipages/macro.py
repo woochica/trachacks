@@ -10,7 +10,7 @@ from trac.web.chrome import add_stylesheet, ITemplateProvider
 from trac.util.text import to_unicode
 from time import time as unixtime
 
-class StyleSheetProvider(Component):
+class ListOfWikiPagesStyleSheetProvider(Component):
     implements(IRequestFilter,ITemplateProvider)
 
    # IRequestFilter methods
@@ -31,9 +31,38 @@ class StyleSheetProvider(Component):
         return []
 
 
-class MacroBase(WikiMacroBase):
-    """ Provides Macro Base. """
+class ListOfWikiPagesMacro(WikiMacroBase):
+    """ Provides Macro ListOfWikiPages. """
+
     long_format = False
+
+    tunits = {
+        's': 1,
+        'm': 60,
+        'h': 60*60,
+        'd': 60*60*24,
+        'w': 60*60*24*7,
+        'o': 60*60*24*30,
+        'y': 60*60*24*365
+    }
+
+    def timeval(self, name, default):
+      if name in self.kwargs:
+        try:
+          val = self.kwargs[name]
+          try:
+            val = int(val)
+          except:
+            val = \
+              int( float(val[:-1]) * self.tunits[ val[-1].lower() ] )
+          val = int(unixtime()) - val
+        except:
+          raise TracError("Invalid value '%s' for argument '%s'!"
+              % (self.kwargs[name],name) )
+        return val
+      else:
+        return default
+
 
     def formattime(self,time):
         """Return formatted time for ListOfWikiPages table."""
@@ -71,36 +100,6 @@ class MacroBase(WikiMacroBase):
                   class_ = ('even','odd')[ n % 2 ]
                )
 
-
-class ListOfWikiPagesMacro(MacroBase):
-    """ Provides Macro ListOfWikiPages. """
-
-    tunits = {
-        's': 1,
-        'm': 60,
-        'h': 60*60,
-        'd': 60*60*24,
-        'w': 60*60*24*7,
-        'o': 60*60*24*30,
-        'y': 60*60*24*365
-    }
-
-    def timeval(self, name, default):
-      if name in self.kwargs:
-        try:
-          val = self.kwargs[name]
-          try:
-            val = int(val)
-          except:
-            val = \
-              int( float(val[:-1]) * self.tunits[ val[-1].lower() ] )
-          val = int(unixtime()) - val
-        except:
-          raise TracError("Invalid value '%s' for argument '%s'!"
-              % (self.kwargs[name],name) )
-        return val
-      else:
-        return default
 
     def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args( content )
@@ -164,7 +163,7 @@ class ListOfWikiPagesMacro(MacroBase):
         return table
 
 
-class LastChangesByMacro(MacroBase):
+class LastChangesByMacro(ListOfWikiPagesMacro):
     """ Provides Macro LastChangesBy. """
 
     def expand_macro(self, formatter, name, content):
@@ -180,6 +179,15 @@ class LastChangesByMacro(MacroBase):
           long_format = kwargs['format'].lower() == 'long'
         self.long_format = long_format
 
+        self.kwargs = kwargs
+        dfrom = self.timeval('from', 0)
+        dto   = self.timeval('to',   int(unixtime()))
+
+        if 'from' in kwargs or 'to' in kwargs:
+          sql_time = " AND time BETWEEN %d AND %d " % (dfrom,dto)
+        else:
+          sql_time = ''
+
         author = len(largs) > 0 and largs[0] or formatter.req.authname
         count  = len(largs) > 1 and largs[1] or 5
         try:
@@ -194,7 +202,7 @@ class LastChangesByMacro(MacroBase):
 
         cursor.execute ( """
               SELECT name,time,MAX(version),comment
-              FROM wiki WHERE author = %s
+              FROM wiki WHERE author = %s """ + sql_time + """
               GROUP BY name
               ORDER BY time DESC
           """, (author,) )
