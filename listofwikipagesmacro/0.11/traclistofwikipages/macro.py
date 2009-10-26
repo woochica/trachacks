@@ -10,29 +10,16 @@ from trac.web.chrome import add_stylesheet, ITemplateProvider
 from trac.util.text import to_unicode
 from time import time as unixtime
 
-class ListOfWikiPagesStyleSheetProvider(Component):
-    implements(IRequestFilter,ITemplateProvider)
+__URL__      = "$URL$"[6:-2]
+__author__   = "$Author$"[9:-2]
+__revision__ = "$Rev$"[6:-2]
+__date__     = "$Date$"[7:-2]
 
-   # IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        return handler
+class ListOfWikiPagesComponent(Component):
+    implements ( IWikiMacroProvider, IRequestFilter, ITemplateProvider )
 
-    def post_process_request(self, req, template, data, content_type):
-        add_stylesheet( req, 'listofwikipages/style.css')
-        return (template, data, content_type)
-
-
-   # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('listofwikipages', resource_filename(__name__, 'htdocs'))]
-
-    def get_templates_dirs(self):
-        return []
-
-
-class ListOfWikiPagesMacro(Component):
-    implements ( IWikiMacroProvider )
+    rev = __revision__
+    date = __date__
 
     long_format = False
 
@@ -55,8 +42,26 @@ class ListOfWikiPagesMacro(Component):
         'y': ' year'
     }
 
+   # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        add_stylesheet( req, 'listofwikipages/style.css')
+        return (template, data, content_type)
+
+
+   # ITemplateProvider methods
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('listofwikipages', resource_filename(__name__, 'htdocs'))]
+
+    def get_templates_dirs(self):
+        return []
+
     def get_macros(self):
       return ('ListOfWikiPages','LastChangesBy')
+
 
     def timeval(self, name, default):
       if name in self.kwargs:
