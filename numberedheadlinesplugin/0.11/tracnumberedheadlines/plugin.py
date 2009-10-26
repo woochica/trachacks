@@ -44,7 +44,8 @@ class NumberedHeadlinesPlugin(Component):
     XML_NAME = r"[\w:](?<!\d)[\w:.-]*?" # See http://www.w3.org/TR/REC-xml/#id 
 
     NUM_HEADLINE = \
-        r"(?P<nheading>^\s*(?P<nhdepth>#+)\s.*\s(?P=nhdepth)\s*" \
+        r"(?P<nheading>^\s*(?P<nhdepth>#+)\s" \
+        r"(?P<nheadnum>\s*[0-9.]+\s)?.*\s(?P=nhdepth)\s*" \
         r"(?P<nhanchor>=%s)?(?:\s|$))" % XML_NAME
 
     outline_counters = WeakKeyDictionary()
@@ -96,8 +97,20 @@ class NumberedHeadlinesPlugin(Component):
             counters[-1] += 1
         ## END
 
+        num = fullmatch.group('nheadnum') or ''
         anchor = fullmatch.group('nhanchor') or ''
-        heading_text = match[depth+1:-depth-1-len(anchor)]
+        heading_text = match[depth+1+len(num):-depth-1-len(anchor)].strip()
+
+        num = num.strip()
+        if num and num[-1] == '.':
+          num = num[:-1]
+        if num:
+          numbers = [n.strip().isdigit() and int(n) or 0 for n in num.split('.')]
+          counters[-1] = numbers[0]
+
+        if not heading_text:
+          return tag()
+
         heading = format_to_oneliner(formatter.env, formatter.context, 
             heading_text, False)
 
