@@ -8,6 +8,7 @@ from urllib import quote_plus
 from trac.web.api import IRequestFilter
 from trac.web.chrome import add_stylesheet, ITemplateProvider
 from trac.util.text import to_unicode
+from time import time as unixtime
 
 class StyleSheetProvider(Component):
     implements(IRequestFilter,ITemplateProvider)
@@ -103,6 +104,20 @@ class ListOfWikiPagesMacro(MacroBase):
         else:
             sql_wikis = ''
 
+        try:
+          dfrom = int(unixtime()) - int(kwargs['from'])
+        except:
+          dfrom = 0
+        try:
+          dto = int(unixtime()) - int(kwargs['to'])
+        except:
+          dto = int(unixtime())
+
+        if 'from' in kwargs or 'to' in kwargs:
+          sql_time = " time BETWEEN %d AND %d AND " % (dfrom,dto)
+        else:
+          sql_time = ''
+
         sqlcommand = " SELECT name,MAX(time),author " \
                      " FROM wiki WHERE author NOT IN ('%s') " \
                         % "','".join( ignoreusers ) \
@@ -111,8 +126,9 @@ class ListOfWikiPagesMacro(MacroBase):
         cursor.execute ( sqlcommand )
 
         cursor.execute(
-            "SELECT name,time,author,MAX(version),comment FROM wiki WHERE author " \
-            "NOT IN ('%s') "  % "','".join( ignoreusers ) + sql_wikis + \
+            "SELECT name,time,author,MAX(version),comment FROM wiki WHERE " \
+            + sql_time + \
+            "author NOT IN ('%s') "  % "','".join( ignoreusers ) + sql_wikis + \
             "GROUP BY name ORDER BY time DESC")
         rows = [ self.formatrow(n,name,time,version,comment,author)
               for n,[name,time,author,version,comment] in enumerate(cursor) ]
