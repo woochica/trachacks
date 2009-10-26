@@ -12,7 +12,7 @@ rev = str( max( coderev, __revision__ ) )
 
 setup(
     name = 'TracAttachmentNumMacro',
-    version = '0.5',
+    version = '0.5.' + rev,
     packages = ['tracattachmentnum'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
