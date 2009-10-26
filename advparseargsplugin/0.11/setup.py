@@ -12,7 +12,7 @@ rev = str( max( coderev, __revision__ ) )
 
 setup(
     name         = 'TracAdvParseArgsPlugin',
-    version      = '0.1.' + rev
+    version      = '0.1.' + rev,
     packages     = ['tracadvparseargs'],
     author       = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
