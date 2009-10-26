@@ -75,15 +75,37 @@ class MacroBase(WikiMacroBase):
 class ListOfWikiPagesMacro(MacroBase):
     """ Provides Macro ListOfWikiPages. """
 
+    tunits = {
+        's': 1,
+        'm': 60,
+        'h': 60*60,
+        'd': 60*60*24,
+        'w': 60*60*24*7,
+        'o': 60*60*24*30,
+        'y': 60*60*24*365
+    }
+
+    def timeval(self, name, default):
+      if name in self.kwargs:
+        try:
+          val = self.kwargs[name]
+          try:
+            val = int(val)
+          except:
+            val = \
+              int( float(val[:-1]) * self.tunits[ val[-1].lower() ] )
+          val = int(unixtime()) - val
+        except:
+          raise TracError("Invalid value '%s' for argument '%s'!"
+              % (self.kwargs[name],name) )
+        return val
+      else:
+        return default
 
     def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args( content )
 
-        self.formatter = formatter
-        #self.base_path = formatter.req.base_path
-        self.href      = formatter.req.href
-        getlist = self.env.config.getlist
-        get     = self.env.config.get
+        self.href = formatter.req.href
         section = 'listofwikipages'
 
         long_format = self.env.config.get(section, 'default_format', 
@@ -104,14 +126,9 @@ class ListOfWikiPagesMacro(MacroBase):
         else:
             sql_wikis = ''
 
-        try:
-          dfrom = int(unixtime()) - int(kwargs['from'])
-        except:
-          dfrom = 0
-        try:
-          dto = int(unixtime()) - int(kwargs['to'])
-        except:
-          dto = int(unixtime())
+        self.kwargs = kwargs
+        dfrom = self.timeval('from', 0)
+        dto   = self.timeval('to',   int(unixtime()))
 
         if 'from' in kwargs or 'to' in kwargs:
           sql_time = " time BETWEEN %d AND %d AND " % (dfrom,dto)
@@ -142,6 +159,8 @@ class ListOfWikiPagesMacro(MacroBase):
         head  = tag.thead ( tag.tr(
           map(lambda x: tag.th(x, class_=x.replace(" ", "").lower() ), cols) ) )
         table = tag.table ( head, rows, class_ = 'listofwikipages' )
+
+        self.href = None
         return table
 
 
@@ -151,9 +170,8 @@ class LastChangesByMacro(MacroBase):
     def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args( content )
 
-        self.formatter = formatter
         #self.base_path = formatter.req.base_path
-        self.href      = formatter.req.href
+        self.href = formatter.req.href
         section = 'listofwikipages'
 
         long_format = self.env.config.get(section, 'default_format', 
@@ -205,5 +223,7 @@ class LastChangesByMacro(MacroBase):
           map(lambda x: tag.th(x, class_=x.replace(" ", "").lower() ), cols)
         ) )
         table = tag.table( head, rows, class_ = 'lastchangesby' )
+
+        self.href = None
         return table
 
