@@ -8,7 +8,11 @@ from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.macros import WikiMacroBase
 __all__ = ['parse_args','EndQuoteError']
 
-__revision__ = r'$Rev$'[6:-2]
+__url__      = r"$URL$"[6:-2]
+__author__   = r"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
 
 def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0,
         quotechar = '"', escchar = '\\', delim = ',', delquotes = False):
@@ -153,4 +157,8 @@ class ParseArgsTestMacro(WikiMacroBase):
 
     def get_macros(self):
         yield 'ParseArgsTest'
+
+    def get_macro_description(self, name):
+      return """Test macro for parse_args function.
+        """ + parse_args.__doc__
 
