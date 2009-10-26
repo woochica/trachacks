@@ -15,6 +15,12 @@
 from trac.core import *
 from trac.wiki.api import IWikiSyntaxProvider
 
+__url__      = r"$URL$"[6:-2]
+__author__   = r"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
+
 class DashesSyntaxPlugin(Component):
     """ Trac Plug-in to provide Wiki Syntax for em and en dashes.
     """
