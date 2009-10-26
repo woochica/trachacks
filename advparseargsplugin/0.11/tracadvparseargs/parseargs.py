@@ -156,7 +156,7 @@ class ParseArgsTestMacro(WikiMacroBase):
         return unicode((largs, kwargs))
 
     def get_macros(self):
-        yield 'ParseArgsTest'
+        return ('ParseArgsTest',)
 
     def get_macro_description(self, name):
       return """Test macro for parse_args function.
