@@ -31,60 +31,8 @@ class ListOfWikiPagesStyleSheetProvider(Component):
         return []
 
 
-class ListOfWikiPagesMacro(WikiMacroBase):
-    """
-== Description ==
-
-The macro `ListOfWikiPages` prints a table of all (user generated, i.e. 
-non-trac-default) wiki pages with last changed date and author as requested in 
-Request-a-Hack th:#2427.
-Version 0.2 provides also a long format which also includes the newest version 
-number and links to the difference and the history as well as the last comment.  
-This was requested by th:#4717.
-
-The second macro provided by this package is `LastChangesBy` which prints the 
-last changes made by the given user or the logged-in user if no username is 
-given. 
-
-== Usage ==
-
-You can use the `ListOfWikiPages` macro like this:
-{{{
-[[ListOfWikiPages]]                     # default format as configured in the config file
-[[ListOfWikiPages(format=short)]]       # short format
-[[ListOfWikiPages(format=long)]]        # long format (new v0.2)
-}}}
-which prints a table of all wiki pages, or with a list of wiki pages:
-{{{
-[[ListOfWikiPages(ThatWikiPage,ThisWikiPage,AnotherWikiPage,format=...)]]
-}}}
-
-Since v0.3 the optional arguments `from` and `to` can be used to specify a 
-time/date range as requested by th:#5344.
-The values of this arguments are taken as negative offsets to the current time 
-(i.e. the time the wiki page is displayed).
-Allowed is a number followed by a unit which can be `s`,`m`,`h`,`d`,`w`,`o`,`y` 
-for seconds, minutes, hours, days, weeks, month and years.
-If the unit is missing seconds are assumed.
-
-{{{
-[[ListOfWikiPages(from=3d)]]            # displays all wiki pages changed in the last three days
-[[ListOfWikiPages(to=15m)]]             # displays all wiki pages was where changed longer than 15 minutes ago
-[[ListOfWikiPages(from=4.5w,to=15h)]]   # displays all wiki pages was where changed between 4 1/2 week and 15 hours ago
-}}}
-
-
-A headline can be given using a `headline` argument:
-{{{
-[[ListOfWikiPages(headline=Headline text without any comma)]]     # sets a table headline, may not contain '`,`'
-}}}
-
-== Further Information ==
-
-See th:wiki:ListOfWikiPagesMacro.
-
-    """
-
+class ListOfWikiPagesMacro(Component):
+    implements ( IWikiMacroProvider )
 
     long_format = False
 
@@ -106,6 +54,9 @@ See th:wiki:ListOfWikiPagesMacro.
         'o': ' month',
         'y': ' year'
     }
+
+    def get_macros(self):
+      return ('ListOfWikiPages','LastChangesBy')
 
     def timeval(self, name, default):
       if name in self.kwargs:
@@ -167,8 +118,76 @@ See th:wiki:ListOfWikiPagesMacro.
                   class_ = ('even','odd')[ n % 2 ]
                )
 
+    def get_macro_description(self,name):
+        if name == 'ListOfWikiPages':
+          return self.ListOfWikiPages.__doc__
+        elif name == 'LastChangesBy':
+          return self.LastChangesBy.__doc__
+        else:
+          return ''
+
 
     def expand_macro(self, formatter, name, content):
+        if name == 'ListOfWikiPages':
+          return self.ListOfWikiPages(formatter, content)
+        elif name == 'LastChangesBy':
+          return self.LastChangesBy(formatter, content)
+        else:
+          return tag()
+
+    def ListOfWikiPages(self, formatter, content):
+        """
+== Description ==
+
+The macro `ListOfWikiPages` prints a table of all (user generated, i.e. 
+non-trac-default) wiki pages with last changed date and author as requested in 
+Request-a-Hack th:#2427.
+Version 0.2 provides also a long format which also includes the newest version 
+number and links to the difference and the history as well as the last comment.  
+This was requested by th:#4717.
+
+The second macro provided by this package is `LastChangesBy` which prints the 
+last changes made by the given user or the logged-in user if no username is 
+given. 
+
+== Usage ==
+
+You can use the `ListOfWikiPages` macro like this:
+{{{
+[[ListOfWikiPages]]                     # default format as configured in the config file
+[[ListOfWikiPages(format=short)]]       # short format
+[[ListOfWikiPages(format=long)]]        # long format (new v0.2)
+}}}
+which prints a table of all wiki pages, or with a list of wiki pages:
+{{{
+[[ListOfWikiPages(ThatWikiPage,ThisWikiPage,AnotherWikiPage,format=...)]]
+}}}
+
+Since v0.3 the optional arguments `from` and `to` can be used to specify a 
+time/date range as requested by th:#5344.
+The values of this arguments are taken as negative offsets to the current time 
+(i.e. the time the wiki page is displayed).
+Allowed is a number followed by a unit which can be `s`,`m`,`h`,`d`,`w`,`o`,`y` 
+for seconds, minutes, hours, days, weeks, month and years.
+If the unit is missing seconds are assumed.
+
+{{{
+[[ListOfWikiPages(from=3d)]]            # displays all wiki pages changed in the last three days
+[[ListOfWikiPages(to=15m)]]             # displays all wiki pages was where changed longer than 15 minutes ago
+[[ListOfWikiPages(from=4.5w,to=15h)]]   # displays all wiki pages was where changed between 4 1/2 week and 15 hours ago
+}}}
+
+
+A headline can be given using a `headline` argument:
+{{{
+[[ListOfWikiPages(headline=Headline text without any comma)]]     # sets a table headline, may not contain '`,`'
+}}}
+
+== Further Information ==
+
+See th:wiki:ListOfWikiPagesMacro.
+
+        """
         largs, kwargs = parse_args( content )
 
         self.href = formatter.req.href
@@ -236,9 +255,9 @@ See th:wiki:ListOfWikiPagesMacro.
         return table
 
 
-class LastChangesByMacro(ListOfWikiPagesMacro):
-    """
-This macro prints a table similar to the ListOfWikiPages only with the ''By'' 
+    def LastChangesBy(self, formatter, content):
+        """
+This macro prints a table similar to the th:ListOfWikiPages only with the ''By'' 
 column missing and the author name in the table head.
 {{{
 [[LastChangesBy(martin_s)]]          # the last 5 changes by user `martin_s`
@@ -253,10 +272,8 @@ column missing and the author name in the table head.
 
 [[LastChangesBy(...,headline=...]]   # Overwrites headline, may not contain `','`
 }}}
-    """
+        """
 
-
-    def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args( content )
 
         #self.base_path = formatter.req.base_path
