@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from tracaddheaders.plugin import __revision__ as coderev
+from tracattachmentnum.attachmentnum import __revision__ as coderev
 
 __url__      = r"$URL$"[6:-2]
 __author__   = r"$Author$"[9:-2]
@@ -21,5 +21,5 @@ setup(
     license = 'GPLv3',
     keywords = 'trac attachment number macro',
     classifiers = ['Framework :: Trac'],
-    entry_points = {'trac.plugins': ['tracattachmentnum = tracattachmentnum']}
+    entry_points = {'trac.plugins': ['tracattachmentnum.attachmentnum = tracattachmentnum.attachmentnum']}
 )
