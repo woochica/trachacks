@@ -10,10 +10,10 @@ from trac.web.chrome import add_stylesheet, ITemplateProvider
 from trac.util.text import to_unicode
 from time import time as unixtime
 
-__URL__      = "$URL$"[6:-2]
-__author__   = "$Author$"[9:-2]
-__revision__ = "$Rev$"[6:-2]
-__date__     = "$Date$"[7:-2]
+__url__      = r"$URL$"[6:-2]
+__author__   = r"$Author$"[9:-2]
+__revision__ = r"$Rev$"[6:-2]
+__date__     = r"$Date$"[7:-2]
 
 class ListOfWikiPagesComponent(Component):
     implements ( IWikiMacroProvider, IRequestFilter, ITemplateProvider )
