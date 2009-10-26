@@ -71,6 +71,11 @@ class NumberedHeadlinesPlugin(Component):
             add_stylesheet (req, 'numberedheadlines/style.css')
         return (template, data, content_type)
 
+    def _int(self,s):
+      try:
+        return int(s)
+      except:
+        return -1
 
     # IWikiSyntaxProvider methods
     def _parse_heading(self, formatter, match, fullmatch):
@@ -97,7 +102,7 @@ class NumberedHeadlinesPlugin(Component):
             counters[-1] += 1
         ## END
 
-        num = fullmatch.group('nheadnum') or ''
+        num    = fullmatch.group('nheadnum') or ''
         anchor = fullmatch.group('nhanchor') or ''
         heading_text = match[depth+1+len(num):-depth-1-len(anchor)].strip()
 
@@ -105,8 +110,16 @@ class NumberedHeadlinesPlugin(Component):
         if num and num[-1] == '.':
           num = num[:-1]
         if num:
-          numbers = [n.strip().isdigit() and int(n) or 0 for n in num.split('.')]
-          counters[-1] = numbers[0]
+          numbers = [self._int(n) for n in num.split('.')]
+          if len(numbers) == 1:
+            counters[depth-1] = numbers[0]
+          else:
+            if len(numbers) > depth:
+              del numbers[depth:]
+            n = 0
+            while numbers[n] == -1:
+              n = n + 1
+            counters[depth-len(numbers[n:]):] = numbers[n:]
 
         if not heading_text:
           return tag()
