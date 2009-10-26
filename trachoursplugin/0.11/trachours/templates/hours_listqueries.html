@@ -34,7 +34,7 @@
       </tr>
 	    <tr py:for="query in queries">
         <td>${query.id}</td>
-        <td><a href="${req.href('hours') + '?query_id=%s' % query.id}">${query.title}</a></td>
+        <td><a href="${req.href('hours') + '?query_id=%s&amp;%s' % (query.id, query.query)}">${query.title}</a></td>
         <td>${query.description}</td>
       </tr>
     </table>
