@@ -4,11 +4,11 @@
     This is Free Software under the BSD or GPL v3 or later license.
     $Id$
 """
-__revision = r'$Rev$'[6:-2]
-__date     = r'$Date$'[7:-2]
-__author   = r'$Author$'[9:-2]
-__url      = r'$URL$'[6:-2]
 
+__url__      = r"$URL$"[6:-2]
+__author__   = r"$Author$"[9:-2]
+__revision__ = r"$Rev$"[6:-2]
+__date__     = r"$Date$"[7:-2]
 
 from trac.core      import  *
 from trac.web.api   import IRequestHandler,IRequestFilter,RequestDone
@@ -22,6 +22,7 @@ MACRO = re.compile(r'.*\[\[redirect\((.*)\)\]\]')
 
 class ServerSideRedirectPlugin(Component):
     """ This Trac plug-in implements a server sided redirect functionality.
+    The user interface is the wiki macro `redirect`.
 
     == Description ==
     This plug-in allow to place a redirect macro at the start of any wiki
@@ -86,6 +87,9 @@ class ServerSideRedirectPlugin(Component):
             yield ''
         else:
             yield 'redirect'
+
+    def get_macro_description(self,name):
+        return self.__doc__
 
     def match_request(self, req):
         """Only handle request when selected from `pre_process_request`."""

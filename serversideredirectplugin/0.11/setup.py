@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from tracserversideredirect.plugin import __revision as revision
+from tracserversideredirect.plugin import __revision__ as macrorev
+
+__url__      = r"$URL$"[6:-2]
+__author__   = r"$Author$"[9:-2]
+__revision__ = r"$Rev$"[6:-2]
+__date__     = r"$Date$"[7:-2]
+
+rev = max(macrorev, __revision__)
 
 setup(
     name         = 'TracServerSideRedirectPlugin',
-    version      = '0.3.' + revision,
+    version      = '0.3.' + rev,
     packages     = ['tracserversideredirect'],
     author       = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
