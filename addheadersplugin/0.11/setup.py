@@ -1,10 +1,18 @@
 #!/usr/bin/env python
 
 from setuptools import setup
+from tracaddheaders.plugin import __revision__ as coderev
+
+__url__      = r"$URL$"[6:-2]
+__author__   = r"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
+rev = str( max( coderev, __revision__ ) )
 
 setup(
     name = 'TracAddHeadersPlugin',
-    version = '0.1',
+    version = '0.1.' + rev,
     packages = ['tracaddheaders'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',

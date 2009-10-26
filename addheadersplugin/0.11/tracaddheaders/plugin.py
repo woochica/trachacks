@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 """ Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
-    $Id: googlemap.py 4664 2008-10-29 23:17:17Z martin_s $
-    $HeadURL: http://trac-hacks.org/svn/googlemapmacro/0.11/googlemap.py $
+    $Id$
+    $HeadURL$
 
     This is Free Software under the GPL v3!
 """ 
+
+__url__      = r"$URL$"[6:-2]
+__author__   = r"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
 from  trac.core        import  *
 from  trac.web.api     import  IRequestFilter
 from  trac.web.chrome  import  add_link,add_stylesheet,add_script
