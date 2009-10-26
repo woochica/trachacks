@@ -45,6 +45,15 @@ class ListOfWikiPagesMacro(WikiMacroBase):
         'o': 60*60*24*30,
         'y': 60*60*24*365
     }
+    tunits_name = {
+        's': ' second',
+        'm': ' minute',
+        'h': ' hour',
+        'd': ' day',
+        'w': ' week',
+        'o': ' month',
+        'y': ' year'
+    }
 
     def timeval(self, name, default):
       if name in self.kwargs:
@@ -52,14 +61,20 @@ class ListOfWikiPagesMacro(WikiMacroBase):
           val = self.kwargs[name]
           try:
             val = int(val)
+            text = \
+                str(val) + self.tunits_name['s'] + ['s',''][val == 1]
           except:
-            val = \
-              int( float(val[:-1]) * self.tunits[ val[-1].lower() ] )
+            unit = val[-1].lower()
+            val = float(val[:-1])
+            text = \
+                str(val).strip('.0') + self.tunits_name[unit] \
+                + ['s',''][val == 1]
+            val =  int( val * self.tunits[ unit ] )
           val = int(unixtime()) - val
         except:
-          raise TracError("Invalid value '%s' for argument '%s'!"
+          raise TracError("Invalid value '%s' for argument '%s'! "
               % (self.kwargs[name],name) )
-        return val
+        return (val,text)
       else:
         return default
 
@@ -126,8 +141,8 @@ class ListOfWikiPagesMacro(WikiMacroBase):
             sql_wikis = ''
 
         self.kwargs = kwargs
-        dfrom = self.timeval('from', 0)
-        dto   = self.timeval('to',   int(unixtime()))
+        dfrom, fromtext = self.timeval('from', (0,''))
+        dto, totext     = self.timeval('to',   (int(unixtime()),''))
 
         if 'from' in kwargs or 'to' in kwargs:
           sql_time = " time BETWEEN %d AND %d AND " % (dfrom,dto)
@@ -180,8 +195,8 @@ class LastChangesByMacro(ListOfWikiPagesMacro):
         self.long_format = long_format
 
         self.kwargs = kwargs
-        dfrom = self.timeval('from', 0)
-        dto   = self.timeval('to',   int(unixtime()))
+        dfrom, fromtext = self.timeval('from', (0,''))
+        dto, totext     = self.timeval('to',   (int(unixtime()),''))
 
         if 'from' in kwargs or 'to' in kwargs:
           sql_time = " AND time BETWEEN %d AND %d " % (dfrom,dto)
@@ -221,10 +236,24 @@ class LastChangesByMacro(ListOfWikiPagesMacro):
         else:
           cols = ( "WikiPage", "Last Changed At" )
 
-        headline = "Last %s Change%s By: " % (count,s)
+        headline = "Last %s change%s by  " % (count,s)
+        if sql_time:
+          if fromtext:
+            if totext:
+              timetag = " between %s and %s ago" % (fromtext,totext)
+            else:
+              timetag = " in the last %s" % fromtext
+          else:
+            if totext:
+              timetag = " before the last %s" % totext
+            else:
+              timetag = ""
+        else:
+          timetag = ''
+
         head = tag.thead (
                 tag.tr(
-                    tag.th(headline, tag.strong(author),
+                    tag.th(headline, tag.strong(author), timetag,
                     colspan = len(cols) )
                 ),
                 tag.tr(
