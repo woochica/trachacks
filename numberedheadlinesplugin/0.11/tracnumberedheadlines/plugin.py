@@ -32,12 +32,12 @@ import re
 class NumberedHeadlinesPlugin(Component):
     """ Trac Plug-in to provide Wiki Syntax and CSS file for numbered headlines.
     """
-    implements(IRequestFilter,ITemplateProvider,IWikiSyntaxProvider)
-    number_outline = BoolOption('numberedheadlines','numbered_outline',True,
+    implements(IWikiSyntaxProvider)
+
+    number_outline = BoolOption('numberedheadlines', 'numbered_outline', True,
         "Whether or not to number the headlines in an outline (e.g. TOC)")
-    use_css = BoolOption('numberedheadlines','use_css_for_numbering',True,
-        "Whether or not to number the headlines using CSS styles (e.g.  TOC)")
-    startatleveltwo = BoolOption('numberedheadlines','numbering_starts_at_level_two',
+    startatleveltwo = \
+      BoolOption('numberedheadlines', 'numbering_starts_at_level_two',
         False, """Whether or not to start the numbering at level two instead at 
         level one.""")
 
@@ -49,27 +49,6 @@ class NumberedHeadlinesPlugin(Component):
         r"(?P<nhanchor>=%s)?(?:\s|$))" % XML_NAME
 
     outline_counters = WeakKeyDictionary()
-
-    # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('numberedheadlines', resource_filename(__name__, 'htdocs'))]
-
-    def get_templates_dirs(self):
-        return []
-
-
-    # IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        return handler
-
-    def post_process_request(self, req, template, data, content_type):
-        if self.use_css:
-          if self.startatleveltwo:
-            add_stylesheet (req, 'numberedheadlines/style2.css')
-          else:
-            add_stylesheet (req, 'numberedheadlines/style.css')
-        return (template, data, content_type)
 
     def _int(self,s):
       try:
@@ -147,15 +126,12 @@ class NumberedHeadlinesPlugin(Component):
         #self.env.log.debug('NHL:' + str(counters))
         while s < len(counters) and counters[s] == 0:
           s = s + 1
-        num_heading_text = '.'.join(map(str, counters[s:]) + [" "]) + heading_text
+
+        oheading_text = heading_text
+        heading_text = '.'.join(map(str, counters[s:]) + [" "]) + heading_text
 
         if self.number_outline:
-          oheading_text = num_heading_text
-        else:
           oheading_text = heading_text
-
-        if not self.use_css:
-          heading_text  = num_heading_text
 
         heading = format_to_oneliner(formatter.env, formatter.context, 
             heading_text, False)
@@ -177,12 +153,8 @@ class NumberedHeadlinesPlugin(Component):
             pass
         ## END of provided code
 
-        cssclass = self.use_css and 'numbered' or ''
-
-        return tag.__getattr__('h' + str(depth))( heading,
-                    class_ = cssclass,
-                    id = anchor
-              )
+        return tag.__getattr__('h' + str(depth))(
+            heading, id = anchor)
 
     def get_wiki_syntax(self):
         yield ( self.NUM_HEADLINE , self._parse_heading )

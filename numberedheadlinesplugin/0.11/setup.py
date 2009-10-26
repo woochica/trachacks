@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name = 'TracNumberedHeadlinesPlugin',
-    version = '0.2',
+    version = '0.3',
     packages = ['tracnumberedheadlines'],
     author = 'Martin Scharrer',
     package_data = {
