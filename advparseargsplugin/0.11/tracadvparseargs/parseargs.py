@@ -16,15 +16,9 @@ __date__     = r"$Date$"[7:-2]
 
 def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0,
         quotechar = '"', escchar = '\\', delim = ',', delquotes = False):
-    """Parses a comma separated string were the values can include multiple quotes.
-
-Website: http://trac-hacks.org/wiki/AdvParseArgsPlugin
-
-$Id$
-
-= Advanced Argument Parser for WikiMacros =
-
+"""
 == Description ==
+Website: http://trac-hacks.org/wiki/AdvParseArgsPlugin
 
 This function is used in WikiMacros to parse the macro arguments. This enhanced 
 version is meant as a replacement of `trac.wiki.macros.parse_args` and supports 
@@ -33,6 +27,8 @@ is the support for quoting the delimiter, e.g.
 '`key1=val1,key2="some,text",key3=val3`' will correctly return '`some,text`' as 
 the value of `key2`. The original `parse_args` function would return '`"some`' 
 and handle '`text"`' as separate argument.
+
+`$Id$`
 
 == Documentation ==
 
