@@ -11,7 +11,9 @@ __date__     = r"$Date$"[7:-2]
 from trac.core import *
 
 def extract_url (env, context, wikilink, raw=False):
-    """Extracts an URL from an Wiki link, e.g. to used in macro produced HTML code.
+    """
+= Description for `extract_url()` =
+Extracts an URL from an Wiki link, e.g. to used in macro produced HTML code.
 
 Website: http://trac-hacks.org/wiki/ExtractUrlPlugin
 
