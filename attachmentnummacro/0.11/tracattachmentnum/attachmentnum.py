@@ -18,6 +18,18 @@ __date__     = r"$Date$"[7:-2]
 
 
 class AttachmentNumMacro(Component):
+    """
+Macro which allows to link to wiki attachment by number instead by name.
+
+Website: http://trac-hacks.org/wiki/AttachmentNumMacro
+
+Examples:
+{{{
+[[AttachmentNum(1)]]                # First attachment, result: "attachment:'first.doc'".
+[[AttachmentNum(1,raw=True)]]       # First attachment (raw link), result: "raw-attachment:'first.doc'".
+[[AttachmentNum(1,format=short)]]   # First attachment, hyper-linked filename is printed only, result: "first.doc".
+}}}
+    """
     implements(IWikiMacroProvider)
 
     ### methods for IWikiMacroProvider
@@ -25,9 +37,7 @@ class AttachmentNumMacro(Component):
       yield 'AttachmentNum'
 
     def get_macro_description(self, name):
-      return """ Allows to link to wiki attachment by number instead by name.
-                 Example: `[[AttachmentNum(1)]]`
-             """
+      return self.__doc__
 
     def expand_macro(self, formatter, name, content):
         largs, kwargs = parse_args(content)
