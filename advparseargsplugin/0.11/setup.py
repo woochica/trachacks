@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from tracadvparseargs.parseargs import __revision__ as coderev
+from tracadvparseargs.parseargs import __revision__ as pluginrev
+from tracadvparseargs.macro     import __revision__ as macrorev
 
 __url__      = r"$URL$"[6:-2]
 __author__   = r"$Author$"[9:-2]
 __revision__ = int(r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
-rev = str( max( coderev, __revision__ ) )
+rev = str( max( pluginrev, macrorev, __revision__ ) )
 
 setup(
     name         = 'TracAdvParseArgsPlugin',

@@ -140,25 +140,3 @@ class EndQuoteError(Exception):
     def __str__ (self):
         return self.message
 
-
-class ParseArgsTestMacro(WikiMacroBase):
-    implements(IWikiMacroProvider)
-
-    ### methods for IWikiMacroProvider
-    def expand_macro(self, formatter, name, content):
-        """Test macro for parse_args."""
-        args, rcontent = content.split('|||',2)
-        try:
-            ldummy, pa = parse_args (args)
-            largs, kwargs = parse_args (rcontent, **pa)
-        except EndQuoteError, e:
-            raise TracError( str(e) )
-        return unicode((largs, kwargs))
-
-    def get_macros(self):
-        return ('ParseArgsTest',)
-
-    def get_macro_description(self, name):
-      return """Test macro for parse_args function.
-        """ + parse_args.__doc__
-
