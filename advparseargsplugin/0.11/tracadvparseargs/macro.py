@@ -37,9 +37,15 @@ This macro is intended to be used by the developers of the above function to
 simplify the testing process and has no real value for normal Trac users.
 
 == Macro usage ==
-`[[ParseArgsTest(parser_options|||arguments_to_parse)]]` [[BR]]
-will call `parse_args(arguments_to_parse, **parser_options)` and will display 
-its return value.
+{{{
+[[ParseArgsTest(parser_options|||arguments_to_parse)]]
+}}}
+will call
+{{{
+#!python
+parse_args(arguments_to_parse, **parser_options)
+}}}
+and will display its return value. See below for the list of parser options.
 
 == Example ==
 `[[ParseArgsTest(strict=True,delquotes=True|||key1=val1,key2="val2a,val2b")]]`
