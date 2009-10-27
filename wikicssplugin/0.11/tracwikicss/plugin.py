@@ -5,10 +5,10 @@
     $Id$
 """
 
-__revision = r'$Rev$'[6:-2]
-__date     = r'$Date$'[7:-2]
-__author   = r'$Author$'[9:-2]
-__url      = r'$URL$'[6:-2]
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
 
 from  trac.core        import  *
 from  trac.web.chrome  import  add_stylesheet
