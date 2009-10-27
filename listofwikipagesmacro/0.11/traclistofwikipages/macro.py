@@ -149,6 +149,10 @@ class ListOfWikiPagesComponent(Component):
         """
 == Description ==
 
+Website: http://trac-hacks.org/wiki/ListOfWikiPagesMacro
+
+`$Id$`
+
 The macro `ListOfWikiPages` prints a table of all (user generated, i.e. 
 non-trac-default) wiki pages with last changed date and author as requested in 
 Request-a-Hack th:#2427.
@@ -192,10 +196,6 @@ A headline can be given using a `headline` argument:
 {{{
 [[ListOfWikiPages(headline=Headline text without any comma)]]     # sets a table headline, may not contain '`,`'
 }}}
-
-== Further Information ==
-
-See th:wiki:ListOfWikiPagesMacro.
 
         """
         largs, kwargs = parse_args( content )
@@ -267,8 +267,8 @@ See th:wiki:ListOfWikiPagesMacro.
 
     def LastChangesBy(self, formatter, content):
         """
-This macro prints a table similar to the th:ListOfWikiPages only with the ''By'' 
-column missing and the author name in the table head.
+This macro prints a table similar to the `[[ListOfWikiPages]]` only with the 
+''By'' column missing and the author name in the table head.
 {{{
 [[LastChangesBy(martin_s)]]          # the last 5 changes by user `martin_s`
 [[LastChangesBy(martin_s,10)]]       # the last 10 changes by user `martin_s`
