@@ -2,13 +2,13 @@
     v0.1 - Oct 2008
     This is Free Software under the GPL v3!
 """ 
-from trac.core import *
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
 __revision__ = int(r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
+from trac.core import *
 
 def extract_url (env, context, wikilink, raw=False):
     """Extracts an URL from an Wiki link, e.g. to used in macro produced HTML code.
@@ -26,6 +26,26 @@ which would be used in the resulting Wiki page.
 
 The raw links are also usable as online resouces, e.g. if the link target
 is to be used as input for a flash application etc.
+
+== Usage ==
+General:
+{{{
+from tracextracturl import extract_url
+# ...
+  url = extract_url (env, context, wikilink, raw=False)
+}}}
+
+Inside WikiMacros:
+{{{
+#!python
+from tracextracturl import extract_url
+
+def MyMacro(WikiMacroBase):
+  def expand_macro (self, formatter, name, content):
+     # e.g. wikilink = 'wiki:WikiStart' or 'attachment:file.ext'
+     url = extract_url(self.env, formatter.context, wikilink)
+     rawurl = extract_url(self.env, formatter.context, wikilink, True)
+}}}
 
 == Example ==
 Inside a Trac macro called from the wiki page 'ExamplePage' of project
