@@ -22,7 +22,65 @@ _allowed_args = ['center','zoom','size','format','maptype',
 _google_src = r"http://maps.google.com/staticmap?"
 
 class GoogleStaticMapMacro(WikiMacroBase):
-    """ Provides a static Google Map as HTML image
+    """ Provides a static Google Map as HTML image.
+
+Website: http://trac-hacks.org/wiki/GoogleStaticMapMacro
+`$Id$`
+
+== Description ==
+
+This macro uses the
+[http://code.google.com/apis/maps/documentation/staticmaps/ Google Map API] to
+include '''static''' images of maps.
+'''Static''' means that is is only a simple image without any user interaction 
+not the usual feature-rich dynamic map on http://maps.google.com/. The positive 
+side is that no javascript is needed to display the map image.
+
+For a dynamic Google map use
+[http://trac-hacks.org/wiki/GoogleMapMacro GoogleMapMacro].
+
+The maximum size supported by Google is 640x640 pixels. If a bigger width or 
+height is requested it will be reduced to 640px.
+
+'''Important:''' A different Google Map API key is needed for every web domain 
+which can be
+[http://code.google.com/apis/maps/signup.html get for free from Google].
+
+== Usage & Examples ==
+=== Parameters ===
+See http://code.google.com/apis/maps/documentation/staticmaps/#URL_Parameters 
+for all supported arguments.
+In addition the image title can be set using a `title` argument.
+
+The map location must be given in geographic coordinates, not as address.  
+Please note that the format `center=X:Y` must be used, not `center=X,Y` as 
+described in the above web site, due to the way trac parses the macro.
+
+For example:
+{{{
+[[GoogleStaticMap(center=50.805935:10.349121,zoom=5,size=400x400)]]
+}}}
+
+will result in the following map image:
+
+[[Image(http://maps.google.com/staticmap?center=50.805935%2C10.349121&zoom=5&size=400x400&key=ABQIAAAAMwTA9mkyZbDS6QMcxvwm2BQk7JAK84r7ycdvlw9atwcq_yt-SxQd58w7cbhU8Fvb5JRRi4sH8vpPEQ,nolink)]]
+
+
+=== Markers ===
+You can add markers to the static map using the '`markers`' argument. The format 
+is '`markers={latitude}:{longitude}:{size}{color}{alphanumeric-character}`', 
+e.g.: `markers=50.805935:10.349121:bluea`, creates a blue marker labeled with 
+'A' at 50.805935,10.349121.
+Multiple marker declarations are separated using the '`|`' letter.
+
+So,
+{{{
+[[GoogleStaticMap(center=50.805935:10.349121,zoom=5,size=400x400,markers=50.805935:10.349121:bluea|50.000000:10.000000:greenb|49.046195:12.117577:yellowc)]]
+}}}
+will result in the following map image:
+
+[[Image(http://maps.google.com/staticmap?center=50.805935%2C10.349121&zoom=5&size=400x400&markers=50.805935%2c10.349121%2cbluea|50.000000%2c10.000000%2cgreenb|49.046195%2c12.117577%2cyellowc&key=ABQIAAAAMwTA9mkyZbDS6QMcxvwm2BQk7JAK84r7ycdvlw9atwcq_yt-SxQd58w7cbhU8Fvb5JRRi4sH8vpPEQ,nolink)]]
+
     """
 
     def expand_macro(self, formatter, name, content):
