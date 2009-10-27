@@ -18,29 +18,64 @@ def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0
         quotechar = '"', escchar = '\\', delim = ',', delquotes = False):
     """Parses a comma separated string were the values can include multiple quotes.
 
-       Website: http://trac-hacks.org/wiki/AdvParseArgsPlugin
+Website: http://trac-hacks.org/wiki/AdvParseArgsPlugin
 
-       $Id$
+$Id$
 
-       Parameters:
-        args:: The argument string; 'content' in `expand_macro.
-        strict:: Enables strict checking of keys.
-        multi:: Enables folding of muliple given keys into list.
-                If set to `True` values of multiple given keys will be returned
-                as list, but single given keys will return a scalar.
-                If set to a list only the values of the listed keys will be
-                returned as list, but always as list even when there is only one
-                value.
-                If this list contains `'*'`, __all__ values are __always__ 
-                returned as list.
-        listonly:: If true only a list is returned, no directionary.
-        minlen:: Extend returned list to given minimum length. Only used when
-                 `listonly=True`.
-       Parser parameters:
-        quotechar:: The quote character to be used.
-        escchar:: The escape character to be used.
-        delim:: The delimiter character to be used.
-        delquotes:: Selects if quotes should be removed.
+= Advanced Argument Parser for WikiMacros =
+
+== Description ==
+
+This function is used in WikiMacros to parse the macro arguments. This enhanced 
+version is meant as a replacement of `trac.wiki.macros.parse_args` and supports 
+several advanced options (see section [#Parameters]). The most important feature 
+is the support for quoting the delimiter, e.g. 
+'`key1=val1,key2="some,text",key3=val3`' will correctly return '`some,text`' as 
+the value of `key2`. The original `parse_args` function would return '`"some`' 
+and handle '`text"`' as separate argument.
+
+== Documentation ==
+
+=== Definition ===
+{{{
+#!python
+def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0,
+        quotechar = '"', escchar = '\\', delim = ',', delquotes = False)
+}}}
+
+=== Usage Example ===
+
+{{{
+#!python
+# Instead of: from trac.wiki.macros import parse_args
+# Use:
+from tracadvparseargs import parse_args
+
+class SomeMacro(WikiMacroBase):
+    def expand_macro(self, formatter, name, args):
+        largs, kwargs = parse_args( args, <options> )
+}}}
+
+=== Parameters ===
+ `args`:: The argument string; 'content' in `expand_macro.
+ `strict`:: Enables strict checking of keys.
+ `multi`:: Enables folding of muliple given keys into list.[[BR]]
+           If set to `True`, values of multiple given keys will be returned
+           as list, but single given keys will return a scalar.[[BR]]
+           If set to a list, only the values of the listed keys will be
+           returned as list, but always as list even when there is only one
+           value.[[BR]]
+           If this list contains `'*'`, __all__ values are __always__ 
+           returned as list.
+ `listonly`:: If true only a list is returned, no directionary.
+ `minlen`:: Extend returned list to given minimum length. Only used when
+          `listonly=True`.
+'''Parser parameters'''
+ `quotechar`:: The quote character to be used.
+ `escchar`:: The escape character to be used.
+ `delim`:: The delimiter character to be used.
+ `delquotes`:: Selects if quotes should be removed.
+
     """
     largs  = []
     kwargs = {}
