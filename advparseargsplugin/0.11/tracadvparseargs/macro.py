@@ -48,8 +48,12 @@ parse_args(arguments_to_parse, **parser_options)
 and will display its return value. See below for the list of parser options.
 
 == Example ==
-`[[ParseArgsTest(strict=True,delquotes=True|||key1=val1,key2="val2a,val2b")]]`
-[[BR]] will call [[BR]]
-`parse_args('key1=val1,key2="val2a,val2b"', strict=True, delquotes=True)`
+{{{
+[[ParseArgsTest(strict=True,delquotes=True|||key1=val1,key2="val2a,val2b")]]
+}}}
+will call
+{{{
+parse_args('key1=val1,key2="val2a,val2b"', strict=True, delquotes=True)
+}}}
         """ + parse_args.__doc__
 
