@@ -18,6 +18,10 @@ def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0
         quotechar = '"', escchar = '\\', delim = ',', delquotes = False):
     """Parses a comma separated string were the values can include multiple quotes.
 
+       Website: http://trac-hacks.org/wiki/AdvParseArgsPlugin
+
+       $Id$
+
        Parameters:
         args:: The argument string; 'content' in `expand_macro.
         strict:: Enables strict checking of keys.

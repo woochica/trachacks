@@ -22,6 +22,9 @@ setup(
     license      = 'BSD',
     keywords     = 'trac plugin parse argument',
     classifiers  = ['Framework :: Trac'],
-    entry_points = {'trac.plugins': ['tracadvparseargs = tracadvparseargs']}
+    entry_points = {'trac.plugins': [
+          'tracadvparseargs.macro     = tracadvparseargs.macro',
+          'tracadvparseargs.parseargs = tracadvparseargs.parseargs',
+      ]}
 )
 
