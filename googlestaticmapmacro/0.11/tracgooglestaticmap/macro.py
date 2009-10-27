@@ -25,6 +25,7 @@ class GoogleStaticMapMacro(WikiMacroBase):
     """ Provides a static Google Map as HTML image.
 
 Website: http://trac-hacks.org/wiki/GoogleStaticMapMacro
+
 `$Id$`
 
 == Description ==
