@@ -16,7 +16,7 @@ __date__     = r"$Date$"[7:-2]
 
 def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0,
         quotechar = '"', escchar = '\\', delim = ',', delquotes = False):
-"""
+    """
 == Description ==
 Website: http://trac-hacks.org/wiki/AdvParseArgsPlugin
 
