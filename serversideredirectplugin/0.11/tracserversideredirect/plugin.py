@@ -22,45 +22,49 @@ MACRO = re.compile(r'.*\[\[redirect\((.*)\)\]\]')
 
 class ServerSideRedirectPlugin(Component):
     """ This Trac plug-in implements a server sided redirect functionality.
-    The user interface is the wiki macro `redirect`.
+The user interface is the wiki macro `redirect`.
 
-    == Description ==
-    This plug-in allow to place a redirect macro at the start of any wiki
-    page which will cause an server side redirect when the wiki page is
-    viewed.
+== Description ==
+Website: http://trac-hacks.org/wiki/ServerSideRedirectPlugin
 
-    This plug-in is compatible (i.e. can be used) with the client side
-    redirect macro TracRedirect but doesn't depend on it. Because the
-    redirect is caused by the server (using a HTTP redirect request to the
-    browser) it is much faster and less noticeable for the user. The
-    back-link feature of TracRedirect can also be used for server side
-    redirected pages because both generate the same URL attributes.
+`$Id$`
 
-    To edit a redirecting wiki page access its URL with `?action=edit`
-    appended. To view the page either use `?action=view`, which will print
-    the redirect target (if TracRedirect isn't active, which will redirect
-    the wiki using client side code), or `?redirect=no` which disables
-    redirection of both the ServerSideRedirectPlugin and TracRedirect
-    plug-in.
+This plug-in allow to place a redirect macro at the start of any wiki
+page which will cause an server side redirect when the wiki page is
+viewed.
 
-    Direct after the redirect target is added (or modified) Trac will
-    automatically reload it, as it does with all wiki pages. This plug-in
-    will detect this and not redirect but display the wiki page with the
-    redirect target URL printed to provide feedback about the successful
-    change. However, further visits will trigger the redirect.
+This plug-in is compatible (i.e. can be used) with the client side
+redirect macro TracRedirect but doesn't depend on it. Because the
+redirect is caused by the server (using a HTTP redirect request to the
+browser) it is much faster and less noticeable for the user. The
+back-link feature of TracRedirect can also be used for server side
+redirected pages because both generate the same URL attributes.
 
-    == Usage Examples ==
-    The following 'macro' at the begin of the wiki page will cause a
-    redirect to the ''!OtherWikiPage''.
-    {{{
-    [[redirect(OtherWikiPage)]]
-    }}}
-    Any other [TracLinks TracLink] can be used:
-    {{{
-    [[redirect(wiki:OtherWikiPage)]]
-    [[redirect(source:/trunk/file.py)]]
-    [[redirect(http://www.example.com/)]]
-    }}}
+To edit a redirecting wiki page access its URL with `?action=edit`
+appended. To view the page either use `?action=view`, which will print
+the redirect target (if TracRedirect isn't active, which will redirect
+the wiki using client side code), or `?redirect=no` which disables
+redirection of both the ServerSideRedirectPlugin and TracRedirect
+plug-in.
+
+Direct after the redirect target is added (or modified) Trac will
+automatically reload it, as it does with all wiki pages. This plug-in
+will detect this and not redirect but display the wiki page with the
+redirect target URL printed to provide feedback about the successful
+change. However, further visits will trigger the redirect.
+
+== Usage Examples ==
+The following 'macro' at the begin of the wiki page will cause a
+redirect to the ''!OtherWikiPage''.
+{{{
+[[redirect(OtherWikiPage)]]
+}}}
+Any other [TracLinks TracLink] can be used:
+{{{
+[[redirect(wiki:OtherWikiPage)]]
+[[redirect(source:/trunk/file.py)]]
+[[redirect(http://www.example.com/)]]
+}}}
     """
     implements ( IRequestHandler, IRequestFilter, IWikiMacroProvider )
 
