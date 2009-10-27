@@ -7,8 +7,8 @@ from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from parseargs import parse_args
 
-__url__      = r"$URL: http://trac-hacks.org/svn/advparseargsplugin/0.11/tracadvparseargs/parseargs.py $"[6:-2]
-__author__   = r"$Author: martin_s $"[9:-2]
+__url__      = ur"$URL: http://trac-hacks.org/svn/advparseargsplugin/0.11/tracadvparseargs/parseargs.py $"[6:-2]
+__author__   = ur"$Author: martin_s $"[9:-2]
 __revision__ = int(r"$Rev: 6877 $"[6:-2])
 __date__     = r"$Date: 2009-10-26 23:55:12 +0000 (Mon, 26 Oct 2009) $"[7:-2]
 

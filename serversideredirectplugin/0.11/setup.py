@@ -3,8 +3,8 @@
 from setuptools import setup
 from tracserversideredirect.plugin import __revision__ as macrorev
 
-__url__      = r"$URL$"[6:-2]
-__author__   = r"$Author$"[9:-2]
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
 __revision__ = r"$Rev$"[6:-2]
 __date__     = r"$Date$"[7:-2]
 
