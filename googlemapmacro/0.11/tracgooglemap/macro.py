@@ -81,7 +81,148 @@ TracGoogleMap( function (mapdiv,index) {
 """
 
 class GoogleMapMacro (WikiMacroBase):
-    """ Provides a macro to insert Google Maps(TM) in Wiki pages."""
+    """ Provides a macro to insert Google Maps(TM) in Wiki pages.
+
+== Description ==
+
+Website: http://trac-hacks.org/wiki/GoogleMapMacro
+
+`$Id$`
+
+This macro lets the user insert a full dynamic
+[http://maps.google.com/ Google Map]. Because a lot of javascript is used (by 
+Google) a
+[http://local.google.com/support/bin/answer.py?answer=16532&amp;topic=1499 Google Map compatible browser]
+is needed. Newer version of Firefox and MS Internet Explorer are compatible.
+
+For javascript-less static maps use the similar
+[http://trac-hacks.org/wiki/GoogleStaticMapMacro GoogleStaticMapMacro].
+
+Multiple Google Maps on the same wiki page are actively supported.
+
+== Dependencies ==
+The recent version (r480) of this macro needs the AdvParseArgsPlugin in revision 
+4795 or later.
+
+== Configuration ==
+
+A different [http://code.google.com/apis/maps/signup.html Google Map API key] is 
+needed for every web domain which can be get for free from Google.
+'''Please check if the Google Map API Terms of Use apply for your Trac 
+project.''' They do apply IMHO for non-pay open accessible Trac projects.
+
+== Usage ==
+The macro knows the following arguments, which can be used in the normal 
+`key1=value1,key2=value2,...` syntax. If a value includes one or more comma then 
+it must be set in double quotes (`" "`).
+If a key-less value is given it will be taken as `center` coordinates if it's in 
+the proper format otherwise it's taken as an `address`. Unknown (or misspelled) 
+keys or key-less values except the first are silently ignored.
+
+ `address`:: Sets the center of the map to the given address. The value must be
+             surrounded by quotes if it includes commas, e.g. `"Street, City, 
+             Country"`.
+             If an `address` but no `zoom` value was given an appropriate value 
+             will be guessed based on the address accuracy returned by Google.
+             At the moment this isn't very accurate but soon 
+             [http://groups.google.com/group/Google-Maps-API/browse_thread/thread/53c4525e8d01e75d Google might improve] this.
+ `center`:: Sets the center of the map to the given coordinates. The format is `{latitude}:{longitude}` or `"{latitude},{longitude}"`.
+ `zoom`:: Sets zoom factor. Allowed values are between 0 (whole world) and 19 (single house). Very high zoom values might not be supported by Google Maps for all parts of the world.
+ `size`:: The size either in the format `{width}x{height}` as numbers in pixel, e.g.: `300x400` means 300px wide and 400px high or
+          in the format `{width}{unit}:{height}{unit}` where unit can be any CSS unit (em, ex, px, in, cm, mm, pt, pc).
+ `types` (optional):: Sets the map types selectable by the user, separated by colons ('`:`'). If not given the standard types of Google Maps are used (Normal, Satellite, Hybrid). The following types are available (values are case-insensitive):
+   * `normal` Normal street-map
+   * `satellite` Satellite picture
+   * `hybrid` Satellite picture with streets as overlay
+   * `physical` Terrain map
+ `type` (optional):: Sets the initial map type. See the `types` argument for the available types. If this argument is not given the first listed type under `types` is used initially.
+ `controls` (optional):: Sets the used map controls. Multiple controls can be given, separated by colon ('`:`'). The value is case-insensitive. If not set the controls `MapType` and `LargeMap` are used. 
+ If set but empty no controls are displayed. The following controls are available (descriptions taken from the [http://code.google.com/apis/maps/documentation/reference.html#GControlImpl Google Map API page]):
+   * `LargeMap`: Control with buttons to pan in four directions, and zoom in and zoom out.
+   * `SmallMap`: Control with buttons to pan in four directions, and zoom in and zoom out, and a zoom slider.
+   * `SmallZoom`: Control with buttons to zoom in and zoom out.
+   * `Scale`: Control that displays the map scale.
+   * `MapType`: Standard map type control for selecting and switching between supported map types via buttons. 
+   * `HierarchicalMapType`: Drop-down map type control for switching between supported map types.
+   * `OverviewMap`: Collapsible overview mini-map in the corner of the main map for reference location and navigation (through dragging).
+ `marker`:: (New) Allows the user to set labeled markers on given location of the map. 
+    The format for a marker is `{latitude}:{longitude};{Letter};{TracLink};{Title}` or `"{Address}";{Letter};{TracLink};{Title}`.
+    If the string 'center' is used instead of an address the center of the map is marked.
+    The optional marker letter can be either A-Z or 'o', '.' or empty for a plain marker.
+    An optional [TracLinks TracLink] can be given which may be opened in a new window (see `target`) when clicked on the marker.
+    An optional marker title can be set which will get displayed when the mouse cursor is over the marker.
+    From revision [4801] on multiple markers can be given which replaces the `markers` argument.
+ `markers`:: (Old) Can be used to set multiple markers which are are separated using the '`|`' character.
+    Optional values can be kept empty, e.g.: `"{Address}";;;My Address` would display the address with the title 'My Address'.
+    Trailing semicolons can be skipped. Addresses, links and titles which include either '`,`', '`;`' or '`|`' must be enclosed in double quotes (`" "`).
+ `target`:: If set to '`new`' or '`newwindow`' all hyperlinks of the map markers will be opened in a new window (or tab, depending on the browser settings) or in the same window otherwise.
+ `from`,`to`:: Request driving directions '`from`'->'`to`'. Multiple `to` addresses are allowed. No `address` or `center` need to be given.
+
+== Examples ==
+
+=== Using geographic coordinates ===
+Please use a colon, not a comma, as separator for the coordinates.
+{{{
+[[GoogleMap(center=50.0:10.0,zoom=10,size=400x400)]]
+or
+[[GoogleMap("50.0:10.0",zoom=10,size=400x400)]]
+or
+[[GoogleMap(50.0:10.0,zoom=10,size=400x400)]]
+}}}
+=== Using an address ===
+Please use semicolons, not commas, as separators in the address.
+{{{
+[[GoogleMap(address="Street, City, Country",zoom=10,size=400x400)]]
+or
+[[GoogleMap("Street, City, Country",zoom=10,size=400x400)]]
+or, if you really want to:
+[[GoogleMap(Street; City; Country,zoom=10,size=400x400)]]
+}}}
+Please note that the address is converted into coordinates by user-side javascript every time the wiki page is loaded.
+If this fails no map will be shown, only an empty gray rectangle.
+
+=== Using both ===
+If both address and center coordinates are given, then the result depends on the [#config `geocoding` setting]:
+ `server`:: The address is resolved on the trac server and the coordinates are completely ignored.
+ `client`:: The map is first centered at the given coordinates and then moved to the given address after (and if) it was 
+            resolved by the client-side !JavaScript code.
+{{{
+[[GoogleMap(center=50.0:10.0,address="Street, City, Country",zoom=10,size=400x400)]]
+}}}
+
+=== Select Map Types ===
+To show a map with the standard map types where the satellite map is preselected:
+{{{
+[[GoogleMap("Street, City, Country",zoom=10,size=400x400,type=satellite)]]
+}}}
+
+To only show a satellite map (please note the added '`s`'):
+{{{
+[[GoogleMap("Street, City, Country",zoom=10,size=400x400,types=satellite)]]
+}}}
+
+To show a map with hybrid and satellite map types (in this order) where the satellite map is preselected:
+{{{
+[[GoogleMap("Street, City, Country",zoom=10,size=400x400,types=hybrid:satellite,type=satellite)]]
+}}}
+
+To show a map with hybrid and satellite map types (in this order) where the hybrid map is preselected:
+{{{
+[[GoogleMap("Street, City, Country",zoom=10,size=400x400,types=hybrid:satellite)]]
+or
+[[GoogleMap("Street, City, Country",zoom=10,size=400x400,types=hybrid:satellite,type=hybrid)]]
+}}}
+
+=== Markers ===
+To create three markers: one at the center of the map (A), one at the next street (B) and one at coordinates 10.243,23.343 (C):
+{{{
+[[GoogleMap("Street, City, Country",zoom=10,size=400x400,markers=center;A|"Next street, City, Country";B|10.243:23.343;C)]]
+}}}
+The same with hyperlinked markers:
+{{{
+[[GoogleMap("Street, City, Country",zoom=10,size=400x400,markers=center;A;wiki:MyWikiPage|"Next street, City, Country";B;ticket:1|10.243:23.343;C;http://www.example.com/)]]
+}}}
+    """
     implements(IRequestFilter,ITemplateProvider,IRequestFilter,IEnvironmentSetupParticipant)
 
     def __init__(self):
