@@ -3,31 +3,39 @@
     This is Free Software under the GPL v3!
 """ 
 from trac.core import *
-from trac.wiki.api import parse_args
-from trac.wiki.api  import IWikiMacroProvider
+
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
 
 def extract_url (env, context, wikilink, raw=False):
-    """ Extracts an URL from an Wiki link, e.g. to used in macro produced HTML
-    code.
+    """Extracts an URL from an Wiki link, e.g. to used in macro produced HTML code.
 
-    Returns an (possible relative) URL which can be used in HTML code.
+Website: http://trac-hacks.org/wiki/ExtractUrlPlugin
 
-    If `raw` is true the returned link will point to a downloadable
-    version of the linked resource otherwise the same link is returned
-    which would be used in the resulting Wiki page.
+`$Id$`
 
-    The raw links are also usable as online resouces, e.g. if the link target
-    is to be used as input for a flash application etc.
+== Description ==
+Returns an (possible relative) URL which can be used in HTML code.
 
-    Examples:
-      Inside a Trac macro called from the wiki page 'ExamplePage' of project
-      'project1' on a multi-project trac server:
+If `raw` is true the returned link will point to a downloadable
+version of the linked resource otherwise the same link is returned
+which would be used in the resulting Wiki page.
 
-        extract_url(self.env, formatter, 'attachment:file.js', True)
+The raw links are also usable as online resouces, e.g. if the link target
+is to be used as input for a flash application etc.
 
-        will return '/project1/raw-attachment/wiki/ExamplePage/file.js',
-        which could be directly accessed by the browser inside some javascript 
-        or flash HTML object code produced by the macro.
+== Example ==
+Inside a Trac macro called from the wiki page 'ExamplePage' of project
+'project1' on a multi-project trac server:
+{{{
+    extract_url(self.env, formatter, 'attachment:file.js', True)
+}}}
+will return `/project1/raw-attachment/wiki/ExamplePage/file.js`,
+which could be directly accessed by the browser inside some javascript 
+or flash HTML object code produced by the macro.
     """
     from genshi.builder import Element, Fragment
     from trac.wiki.formatter import extract_link
@@ -81,23 +89,4 @@ def extract_url (env, context, wikilink, raw=False):
         # All other link types should be already fine for file export (if
         # applicable)
     return href
-
-
-class ExtractUrlMacro(Component):
-    """Provides test macro for extract_url."""
-    implements ( IWikiMacroProvider )
-
-    def expand_macro(self, formatter, name, content):
-        largs, kwargs = parse_args(content)
-        largs.append('')
-        wlink = largs[0]
-        raw = True
-        if 'raw' in kwargs and str(kwargs['raw']).lower() == 'false':
-            raw = False
-
-        url = extract_url (self.env, formatter.context, wlink, raw)
-        return "'%s' => <a href='%s'>'%s'</a><br />" % (wlink,url,url)
-
-    def get_macros(self):
-        yield 'ExtractUrl'
 
