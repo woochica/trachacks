@@ -31,6 +31,6 @@ class ParseArgsTestMacro(Component):
         return ('ParseArgsTest',)
 
     def get_macro_description(self, name):
-      return """Test macro for parse_args function.
+      return """Test macro for `tracadvparseargs.parse_args` function.
         """ + parse_args.__doc__
 
