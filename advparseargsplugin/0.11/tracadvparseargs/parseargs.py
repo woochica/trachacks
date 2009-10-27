@@ -3,15 +3,15 @@
 #
 # $Id$
 #
-from trac.core import *
-from trac.wiki.api import IWikiMacroProvider
-from trac.wiki.macros import WikiMacroBase
-__all__ = ['parse_args','EndQuoteError']
-
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
 __revision__ = int(r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
+
+from trac.core import *
+from trac.wiki.api import IWikiMacroProvider
+from trac.wiki.macros import WikiMacroBase
+__all__ = ['parse_args','EndQuoteError']
 
 
 def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0,

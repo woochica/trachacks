@@ -3,15 +3,23 @@
     $HeadURL$
 
     This is Free Software under the GPL v3!
-""" 
+"""
+
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
 from trac.core import Component, implements
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 
-
 class ExtLinksNewWindowPlugin(Component):
-    implements(IRequestFilter,ITemplateProvider)
+    """Opens external links in new window
 
+       `$Id$`
+    """
+    implements(IRequestFilter,ITemplateProvider)
 
     # ITemplateProvider#get_htdocs_dirs
     def get_htdocs_dirs(self):

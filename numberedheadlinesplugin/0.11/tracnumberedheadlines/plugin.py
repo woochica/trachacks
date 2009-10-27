@@ -15,6 +15,12 @@
     See http://trac.edgewall.org/wiki/TracLicense for details.
 
 """
+
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
 from genshi.builder import tag
 from trac.core import *
 from trac.web.api import IRequestFilter
@@ -27,7 +33,6 @@ from trac.config import BoolOption
 
 from weakref import WeakKeyDictionary
 import re
-
 
 class NumberedHeadlinesPlugin(Component):
     """ Trac Plug-in to provide Wiki Syntax and CSS file for numbered headlines.

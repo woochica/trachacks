@@ -12,17 +12,19 @@
     See http://trac.edgewall.org/wiki/TracLicense for details.
 
 """
-from trac.core import *
-from trac.wiki.api import IWikiSyntaxProvider
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
 __revision__ = int(r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
+from trac.core import *
+from trac.wiki.api import IWikiSyntaxProvider
 
 class DashesSyntaxPlugin(Component):
     """ Trac Plug-in to provide Wiki Syntax for em and en dashes.
+
+        `$Id$`
     """
     implements(IWikiSyntaxProvider)
 

@@ -2,10 +2,18 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
+from tracextlinksnewwindow.plugin import __revision__ as coderev
+
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
+rev = str( max( coderev, __revision__ ) )
 
 setup(
     name = 'TracExtLinksNewWindow',
-    version = '0.2',
+    version = '0.2.' + rev,
     description = 'Trac Load External Links in New Window',
     license = 'GPLv3',
     url = 'http://trac-hacks.org/wiki/ExternalLinksNewWindow',

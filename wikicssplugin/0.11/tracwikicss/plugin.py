@@ -4,11 +4,11 @@
     This is Free Software under the BSD or GPL v3 or later license.
     $Id$
 """
+
 __revision = r'$Rev$'[6:-2]
 __date     = r'$Date$'[7:-2]
 __author   = r'$Author$'[9:-2]
 __url      = r'$URL$'[6:-2]
-
 
 from  trac.core        import  *
 from  trac.web.chrome  import  add_stylesheet

@@ -4,6 +4,11 @@ a plugin for Trac
 http://trac.edgewall.org
 """
 
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
 from trac.core import *
 from trac.resource import *
 
@@ -11,17 +16,13 @@ from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import format_to_oneliner
 from trac.wiki.macros import parse_args
 
-__url__      = ur"$URL$"[6:-2]
-__author__   = ur"$Author$"[9:-2]
-__revision__ = int(r"$Rev$"[6:-2])
-__date__     = r"$Date$"[7:-2]
-
-
 class AttachmentNumMacro(Component):
     """
 Macro which allows to link to wiki attachment by number instead by name.
 
 Website: http://trac-hacks.org/wiki/AttachmentNumMacro
+
+`$Id$`
 
 Examples:
 {{{

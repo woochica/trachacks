@@ -3,10 +3,15 @@
  Copyright (c) March 2009  Martin Scharrer <martin@scharrer-online.de>
  This is Free Software under the BSD license.
 """
+
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = int(r"$Rev$"[6:-2])
+__date__     = r"$Date$"[7:-2]
+
 from trac.core import *
 
 from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
-
 
 class GoogleWebmasterVerifyPlugin(Component):
     """Simply plugin to return verify webpages for Google Webmaster Service."""
