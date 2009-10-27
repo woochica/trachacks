@@ -45,7 +45,5 @@ its return value.
 `[[ParseArgsTest(strict=True,delquotes=True|||key1=val1,key2="val2a,val2b")]]`
 [[BR]] will call [[BR]]
 `parse_args('key1=val1,key2="val2a,val2b"', strict=True, delquotes=True)`
-
-= Documentation of `parse_args` =
         """ + parse_args.__doc__
 

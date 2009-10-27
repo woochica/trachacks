@@ -17,7 +17,7 @@ __all__ = ['parse_args','EndQuoteError']
 def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0,
         quotechar = '"', escchar = '\\', delim = ',', delquotes = False):
     """
-== Description ==
+= Description for `parse_args()` =
 Website: http://trac-hacks.org/wiki/AdvParseArgsPlugin
 
 This function is used in WikiMacros to parse the macro arguments. This enhanced 
