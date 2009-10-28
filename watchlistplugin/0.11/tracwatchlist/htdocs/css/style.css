@@ -28,8 +28,14 @@ table.ticketlist td.comment, table.ticketlist td.changes {
     white-space: normal;
 }
 
-td.version, td.commentnum, td.id, td.notify, td.unwatch {
+td.version, td.commentnum, td.id, td.notify, td.unwatch, td.diff, td.history {
     text-align: center;
+}
+
+th.version, th.datetime, th.author, th.commentnum, th.id, th.notify, th.unwatch, th.diff, th.history,
+td.version, td.datetime, td.author, td.commentnum, td.id, td.notify, td.unwatch, td.diff, td.history {
+   /* Hold width minimal */
+    width: 1%;
 }
 
 span.notifyon {
@@ -40,8 +46,13 @@ span.notifyoff {
     color:red;
 }
 
-.plainlink :link, .plainlink :visited,
-.plainlink :link:hover, .plainlink :visited:hover {
+td.unwatch img {
+  position: relative;
+  top: 2pt;
+}
+
+a.plainlink:link, a.plainlink:visited,
+a.plainlink:link:hover, a.plainlink:visited:hover {
   background-color: none;
   color: none;
   text-decoration: none;
