@@ -12,7 +12,7 @@ rev = str( max( coderev, __revision__ ) )
 
 setup(
     name = 'TracWatchlistPlugin',
-    version = '0.3.' + rev,
+    version = '0.4.' + rev,
     packages = ['tracwatchlist'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
