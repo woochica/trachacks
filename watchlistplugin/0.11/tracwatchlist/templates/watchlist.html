@@ -2,13 +2,20 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="layout.html"/>
   <head>
-    <link type="text/css" href="${href.chrome('watchlist/css/style.css')}" rel="stylesheet" />
+    <link type="text/css" href="${href.chrome('watchlist','css','style.css')}" rel="stylesheet" />
+    <link type="text/css" href="${href.chrome('watchlist','css','tablesorter.css')}" rel="stylesheet" />
     <title>Watchlist</title>
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
+    <script type="text/javascript" 
+      src="${href.chrome('watchlist','js','jquery.tablesorter.min.js')}"></script>
     <script type="text/javascript">
        // <![CDATA[
       jQuery(document).ready(function($) {
         $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+      jQuery(document).ready(function() {
+          $("#wikilist").tablesorter({ headers: { 4: { sorter: false }, 5: { sorter: false }, 6: { sorter: false } } });
+          $("#ticketlist").tablesorter({ headers: { 4: { sorter: false } } });
         });
        // ]]>
     </script>
@@ -20,12 +27,11 @@
   <body>
     <div id="content" class="watchlist">
         <py:def function="unwatchicon">
-          <img src="${href.chrome('watchlist/ico/unwatch.png')}" width="16px"
-          height="16px" title="Unwatch" alt="Unwatch" />
+          <img src="${href.chrome('watchlist/ico/unwatch.png')}" width="14px"
+          height="14px" title="Unwatch" alt="Unwatch" />
         </py:def>
         <py:def function="notifybox(realm,name,notifyon)">
-          <form action="" method="get" py:choose="">
-          <div>
+          <py:choose test="">
             <a class="notifyon plainlink" py:when="notifyon" 
               href="${href.watchlist(action='notifyoff',realm=realm,resid=name)}">
               <input checked="checked" type="checkbox" name="$name" />
@@ -34,8 +40,7 @@
               href="${href.watchlist(action='notifyon',realm=realm,resid=name)}">
               <input type="checkbox" name="$name" />
             </a>
-          </div>
-          </form>
+          </py:choose>
         </py:def>
 
         <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>
@@ -79,17 +84,17 @@
       <py:choose test="">
       <div class="system-message" py:when="not wiki_perm">You lack permission to view wikis.</div>
       <py:choose test="" py:otherwise="">
-      <table class="wikilist" py:when="wikilist">
+      <table class="wikilist" id="wikilist" py:when="wikilist">
           <thead>
               <tr>
-                  <th py:for="head in (['Page','name'],['Last Changed
-                      At','datetime'], ['By','author'],
-                      ['Version', 'version'], ['Diff','diff'],
+                  <th py:for="head in (['Page&nbsp;&nbsp;&nbsp;','name'],['Last Changed
+                      At','datetime'], ['By&nbsp;&nbsp;','author'],
+                      ['Version&nbsp;&nbsp;&nbsp;', 'version'], ['Diff','diff'],
                       ['History','history'], ['U','unwatch'])"
                       class="${head[1]}">${head[0]}</th>
                   <th py:if="notify"
-                      class="notify">Notify</th>
-                  <th py:for="head in (['Comment','comment'],)"
+                      class="notify">Notify&nbsp;&nbsp;&nbsp;</th>
+                  <th py:for="head in (['Comment&nbsp;&nbsp;&nbsp;','comment'],)"
                       class="${head[1]}">${head[0]}</th>
               </tr>
           </thead>
@@ -130,15 +135,15 @@
       <py:choose test="">
       <div class="system-message" py:when="not ticket_perm">You lack permission to view tickets.</div>
       <py:choose test="" py:otherwise="">
-      <table class="ticketlist" py:when="ticketlist">
+      <table class="ticketlist" id="ticketlist" py:when="ticketlist">
           <thead>
               <tr>
-                  <th py:for="head in (['Ticket','id'],['Last Changed At','datetime'],
-                      ['By','author'], ['Comment #','commentnum'], ['U','unwatch'])"
+                  <th py:for="head in (['Ticket&nbsp;&nbsp;&nbsp;','id'],['Last Changed At','datetime'],
+                      ['By&nbsp;&nbsp;','author'], ['Comment #&nbsp;&nbsp;&nbsp;','commentnum'], ['U','unwatch'])"
                       class="${head[1]}">${head[0]}</th>
                   <th py:if="notify"
-                      class="notify">Notify</th>
-                  <th py:for="head in (['Changes','changes'], ['Comment','comment'])"
+                      class="notify">Notify&nbsp;&nbsp;&nbsp;</th>
+                  <th py:for="head in (['Changes&nbsp;&nbsp;&nbsp;','changes'], ['Comment&nbsp;&nbsp;&nbsp;','comment'])"
                       class="${head[1]}">${head[0]}</th>
               </tr>
           </thead>

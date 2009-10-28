@@ -1,0 +1,24 @@
+/* tables */
+table.wikilist   thead tr .header,
+table.ticketlist thead tr .header
+{
+  background: url(../ico/bg.gif) no-repeat scroll right center;
+  cursor: pointer;
+}
+
+table.wikilist tbody td,
+table.ticketlist tbody td {
+  padding: 4px;
+  vertical-align: top;
+}
+
+table.wikilist thead tr .headerSortUp,
+table.ticketlist thead tr .headerSortUp {
+  background: url(../ico/asc.gif) no-repeat scroll right center;
+}
+
+table.wikilist thead tr .headerSortDown,
+table.ticketlist thead tr .headerSortDown {
+  background: url(../ico/desc.gif) no-repeat scroll right center;
+}
+

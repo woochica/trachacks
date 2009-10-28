@@ -17,7 +17,8 @@ setup(
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
     package_data = {
-        'tracwatchlist' : [ 'templates/*.html', 'htdocs/css/*.css', 'htdocs/ico/*'],
+        'tracwatchlist' : [ 'templates/*.html', 'htdocs/css/*.css', 
+          'htdocs/ico/*', 'htdocs/js/*.js'],
     },
     description = "Watchlist Plugin for Trac",
     url = 'http://www.trac-hacks.org/wiki/WatchlistPlugin',
