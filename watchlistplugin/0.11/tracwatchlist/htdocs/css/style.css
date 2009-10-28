@@ -28,7 +28,7 @@ table.ticketlist td.comment, table.ticketlist td.changes {
     white-space: normal;
 }
 
-td.version, td.commentnum, td.id {
+td.version, td.commentnum, td.id, td.notify, td.unwatch {
     text-align: center;
 }
 
@@ -38,5 +38,13 @@ span.notifyon {
 
 span.notifyoff {
     color:red;
+}
+
+.plainlink :link, .plainlink :visited,
+.plainlink :link:hover, .plainlink :visited:hover {
+  background-color: none;
+  color: none;
+  text-decoration: none;
+  border: none;
 }
 
