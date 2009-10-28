@@ -592,13 +592,13 @@ The same with hyperlinked markers:
         html = tag.div(
                 [
                     # Initialization script for this map
-                    tag.script ( _javascript_code % { 'id':id,
+                    tag.script ( Markup( _javascript_code % { 'id':id,
                         'center':center,
                         'zoom':zoom, 'address':address,
                         'type':type, 'width':width, 'height':height,
                         'types_str':types_str, 'controls_str':controls_str,
                         'markers_str':markers_str, 'directions':directions,
-                        },
+                        } ),
                         type = "text/javascript"),
                     mapnmore
                     ],
