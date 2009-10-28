@@ -19,6 +19,10 @@
 
   <body>
     <div id="content" class="watchlist">
+        <py:def function="unwatchicon">
+          <img src="${href.chrome('watchlist/ico/unwatch.png')}" width="16px"
+          height="16px" title="Unwatch" alt="Unwatch" />
+        </py:def>
 
         <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>
         <div py:if="action" py:choose="action" id="watchlist-${action}">
@@ -67,7 +71,7 @@
                   <th py:for="head in (['Page','name'],['Last Changed
                       At','datetime'], ['By','author'],
                       ['Version', 'version'], ['Diff','diff'],
-                      ['History','history'], ['Unwatch','unwatch'])"
+                      ['History','history'], ['U','unwatch'])"
                       class="${head[1]}">${head[0]}</th>
                   <th py:if="notify"
                       class="notify">Notify</th>
@@ -88,7 +92,9 @@
                           href="${href('wiki',page.name,action='diff',version=page.version)}">Diff</a></td>
                   <td class="history"><a py:if="not page.deleted"
                           href="${href('wiki',page.name,action='history')}">History</a></td>
-                  <td class="unwatch"><a href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">Unwatch</a></td>
+                  <td class="unwatch"><a 
+                      href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">
+                      ${unwatchicon()}</a></td>
                   <td class="notify" py:if="notify">
                     <span class="notifyon" py:if="page.notify">On</span>
                     <a class="notifyon" py:if="page.notify" 
@@ -122,7 +128,7 @@
           <thead>
               <tr>
                   <th py:for="head in (['Ticket','id'],['Last Changed At','datetime'],
-                      ['By','author'], ['Comment #','commentnum'], ['Unwatch','unwatch'])"
+                      ['By','author'], ['Comment #','commentnum'], ['U','unwatch'])"
                       class="${head[1]}">${head[0]}</th>
                   <th py:if="notify"
                       class="notify">Notify</th>
@@ -140,8 +146,9 @@
                   <td class="commentnum">
                       <a href="${href('ticket',ticket.id) + ((ticket.commentnum != '0') and ('#comment:'
                           + ticket.commentnum) or '')}">$ticket.commentnum</a></td>
-                  <td class="unwatch"><a
-                          href="${href.watchlist(action='unwatch',realm='ticket',resid=ticket.id)}">Unwatch</a></td>
+                  <td class="unwatch"><a 
+                      href="${href.watchlist(action='unwatch',realm='ticket',resid=ticket.id)}">
+                      ${unwatchicon()}</a></td>
                   <td class="notify" py:if="notify">
                     <span class="notifyon" py:if="ticket.notify">On</span>
                     <a class="notifyon" py:if="ticket.notify" 
