@@ -1,11 +1,13 @@
 table {
-    border-top: solid;
-    border-bottom: solid;
+    border-bottom: medium solid;
+    border-top: medium solid;
+    width: 100%;
+    table-layout: auto;
 }
 
 thead, th {
-    font-weight: bold;
     border-bottom: thin solid;
+    font-weight: bold;
 }
 
 th, td {
@@ -13,12 +15,17 @@ th, td {
     white-space: nowrap;
 }
 
-th.comment, th.summary, th.changes {
+th.comment, th.changes {
     text-align: left;
 }
 
-td.comment, th.summary {
+table.wikilist td.comment {
     width: 100%;
+    white-space: normal;
+}
+
+table.ticketlist td.comment, table.ticketlist td.changes {
+    white-space: normal;
 }
 
 td.version, td.commentnum, td.id {
