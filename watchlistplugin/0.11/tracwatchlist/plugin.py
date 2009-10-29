@@ -114,6 +114,7 @@ class WatchlinkPlugin(Component):
         wlhref = href("watchlist")
         add_ctxtnav(req, "Watched Wikis",   href=wlhref + '#wikis')
         add_ctxtnav(req, "Watched Tickets", href=wlhref + '#tickets')
+        #add_ctxtnav(req, "Settings", href=wlhref + '#settings')
 
         wiki_perm   = 'WIKI_VIEW'   in req.perm
         ticket_perm = 'TICKET_VIEW' in req.perm

@@ -35,8 +35,10 @@ jQuery(document).ready(function() {
 
   $("div#wlsettings").hide();
 
-  $("#wikis   span.showhide").text("(Hide)").disableTextSelect();
-  $("#tickets span.showhide").text("(Hide)").disableTextSelect();
+  $("#wikis    span.showhide").text("(Hide)").disableTextSelect();
+  $("#tickets  span.showhide").text("(Hide)").disableTextSelect();
+  $("#settings span.showhide").text("(Show)").disableTextSelect();
+  $("#settings form").hide();
 
   $("#wikis span.showhide").click(function() {
      wlshowhide(this, "#wikilist-parent");
@@ -47,6 +49,12 @@ jQuery(document).ready(function() {
      wlshowhide(this, "#ticketlist-parent");
      return true;
   });
+
+  $("#settings span.showhide").click(function() {
+     wlshowhide(this, "#settings form");
+     return true;
+  });
+
 
   $("#ackmsg").disableTextSelect().click(function() {
     $('#message-box').hide(5).remove();

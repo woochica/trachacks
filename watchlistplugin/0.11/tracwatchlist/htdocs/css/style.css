@@ -92,3 +92,10 @@ a#ackmsg {
   underline: none;
   border: none;
 }
+
+/* Disabled for the time being */
+#settings {
+  display: none;
+}
+
+
