@@ -48,6 +48,8 @@ class WatchlinkPlugin(Component):
                 IEnvironmentSetupParticipant, ITemplateProvider )
     gnotify = BoolOption('watchlist', 'notifications', False,
                 "Enables notification features")
+    gnotifybydefault = BoolOption('watchlist', 'notify_by_default', False,
+                "Enables notifications by default for all watchlist entries")
 
     if gnotify:
       try:
@@ -137,7 +139,10 @@ class WatchlinkPlugin(Component):
                     "INSERT INTO watchlist (wluser, realm, resid) "
                     "VALUES (%s,%s,%s);", lst )
                 db.commit()
-            action = "view"
+            if self.gnotifybydefault:
+              action = "notifyon"
+            else:
+              action = "view"
         elif action == "unwatch":
             lst = (user, realm, resid)
             if realm_perm and is_watching:
@@ -145,8 +150,12 @@ class WatchlinkPlugin(Component):
                     "DELETE FROM watchlist "
                     "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
                 db.commit()
-            action = "view"
-        elif action == "notifyon":
+            if self.gnotifybydefault:
+              action = "notifyoff"
+            else:
+              action = "view"
+
+        if action == "notifyon":
             self.set_notify(req.session.sid, True, realm, resid)
             action = "view"
         elif action == "notifyoff":
