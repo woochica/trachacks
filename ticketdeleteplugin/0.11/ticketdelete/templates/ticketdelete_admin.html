@@ -40,7 +40,7 @@
           <p><form method="post"><table class="listing">
             <thead><tr><th class="sel" /><th>Field</th><th>Old Value</th><th>New Value</th><th /></tr></thead>
             <tbody>
-              <py:for each="change in ticketdelete.changes">
+              <py:for each="change in sorted(ticketdelete.changes.keys())">
                 <tr>
                   <td><input type="checkbox" name="dontcare" value="dontcare" id="checkbox_${change}" checked="${change.checked or None}" /></td>
                   <td colspan="3"><b>Change at ${ticketdelete.changes[change].prettytime} by ${ticketdelete.changes[change].author}</b></td>
