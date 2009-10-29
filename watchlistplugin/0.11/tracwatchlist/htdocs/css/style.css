@@ -51,11 +51,19 @@ td.unwatch img {
   top: 2pt;
 }
 
-a.plainlink:link, a.plainlink:visited,
-a.plainlink:link:hover, a.plainlink:visited:hover {
+.watchlist a:link, .watchlist a:visited,
+.watchlist a:link:hover, .watchlist a:visited:hover {
   background-color: none;
   color: none;
   text-decoration: none;
   border: none;
+}
+
+form.addtowatch {
+  padding-top: 1ex;
+}
+
+div.watchlist h2 {
+  margin-top: 2em;
 }
 

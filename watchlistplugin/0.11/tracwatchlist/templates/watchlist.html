@@ -8,14 +8,16 @@
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
     <script type="text/javascript" 
       src="${href.chrome('watchlist','js','jquery.tablesorter.min.js')}"></script>
+    <script type="text/javascript" 
+      src="${href.chrome('watchlist','js','jquery.tablesorter.pager.js')}"></script>
     <script type="text/javascript">
        // <![CDATA[
       jQuery(document).ready(function($) {
         $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
         });
       jQuery(document).ready(function() {
-          $("#wikilist").tablesorter({ headers: { 4: { sorter: false }, 5: { sorter: false }, 6: { sorter: false } } });
-          $("#ticketlist").tablesorter({ headers: { 4: { sorter: false } } });
+          $("#wikilist").tablesorter({ widthFixed: true, headers: { 4: { sorter: false }, 5: { sorter: false }, 6: { sorter: false } } }).tablesorterPager({container: $("#wikipager")}); 
+          $("#ticketlist").tablesorter({ widthFixed: true, headers: { 4: { sorter: false } } }).tablesorterPager({container: $("#ticketpager")});
         });
        // ]]>
     </script>
@@ -41,6 +43,26 @@
               <input type="checkbox" name="$name" />
             </a>
           </py:choose>
+        </py:def>
+        <py:def function="tablepager(name)">
+          <div class="tablesorterPager" id="$name">
+            <form>
+              <img class="first" src="${href.chrome('watchlist/ico/first.png')}"/>
+              <img class="prev" src="${href.chrome('watchlist/ico/prev.png')}"/>
+              <input type="text" class="pagedisplay"/>
+              <img class="next" src="${href.chrome('watchlist/ico/next.png')}"/>
+              <img class="last" src="${href.chrome('watchlist/ico/last.png')}"/>
+              <select class="pagesize">
+                <option value="10" selected="selected">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="1000000">All</option>
+              </select>
+            </form>
+          </div>
         </py:def>
 
         <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>
@@ -84,6 +106,7 @@
       <py:choose test="">
       <div class="system-message" py:when="not wiki_perm">You lack permission to view wikis.</div>
       <py:choose test="" py:otherwise="">
+      ${tablepager("wikipager")}
       <table class="wikilist" id="wikilist" py:when="wikilist">
           <thead>
               <tr>
@@ -122,7 +145,7 @@
       </table>
       <div py:otherwise=""><span>No wikis are currently watched.</span></div>
       </py:choose>
-      <form method="get" action="">
+      <form method="get" action="" class="addtowatch">
         <div>
           Add Wiki: <input type="text" name="resid" />
           <input type="hidden" name="realm" value="wiki" />
@@ -135,6 +158,7 @@
       <py:choose test="">
       <div class="system-message" py:when="not ticket_perm">You lack permission to view tickets.</div>
       <py:choose test="" py:otherwise="">
+      ${tablepager("ticketpager")}
       <table class="ticketlist" id="ticketlist" py:when="ticketlist">
           <thead>
               <tr>
@@ -169,7 +193,7 @@
       </table>
       <div py:otherwise=""><span>No tickets are currently watched.</span></div>
       </py:choose>
-      <form method="get" action="">
+      <form method="get" action="" class="addtowatch">
         <div>
           Add Ticket : #<input type="text" name="resid" />
           <input type="hidden" name="realm" value="ticket" />
