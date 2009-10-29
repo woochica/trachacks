@@ -230,11 +230,17 @@ A headline can be given using a `headline` argument:
         else:
           sql_time = ''
 
+        if kwargs.get('order','normal') == 'reverse':
+          order = " "
+        else:
+          order = " DESC "
+
         cursor.execute(
             "SELECT name,time,author,version,comment FROM wiki AS w1 WHERE " \
             + sql_time + \
             "author NOT IN ('%s') "  % "','".join( ignoreusers ) + sql_wikis + \
-            "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY time DESC")
+            "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY time " + \
+            order)
         rows = [ self.formatrow(n,name,time,version,comment,author)
               for n,[name,time,author,version,comment] in enumerate(cursor) ]
 
