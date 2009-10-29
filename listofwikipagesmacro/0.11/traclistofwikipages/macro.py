@@ -322,7 +322,7 @@ This macro prints a table similar to the `[[ListOfWikiPages]]` only with the
           order = " DESC "
 
         cursor.execute ( """
-              SELECT name,time,MAX(version),comment
+              SELECT name,time,version,comment
               FROM wiki AS w1 WHERE author = %s """ + sql_time + """
               AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name)
               ORDER BY time
