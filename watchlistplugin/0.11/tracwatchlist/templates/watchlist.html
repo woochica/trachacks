@@ -46,12 +46,13 @@
         </py:def>
         <py:def function="tablepager(name)">
           <div class="tablesorterPager" id="$name">
-            <form>
-              <img class="first" src="${href.chrome('watchlist/ico/first.png')}"/>
-              <img class="prev" src="${href.chrome('watchlist/ico/prev.png')}"/>
+            <form action="" method="">
+              <div>
+              <img class="first" alt="|<" src="${href.chrome('watchlist/ico/first.png')}"/>
+              <img class="prev" alt="<" src="${href.chrome('watchlist/ico/prev.png')}"/>
               <input type="text" class="pagedisplay"/>
-              <img class="next" src="${href.chrome('watchlist/ico/next.png')}"/>
-              <img class="last" src="${href.chrome('watchlist/ico/last.png')}"/>
+              <img class="next" alt=">" src="${href.chrome('watchlist/ico/next.png')}"/>
+              <img class="last" alt=">|" src="${href.chrome('watchlist/ico/last.png')}"/>
               <select class="pagesize">
                 <option value="10" selected="selected">10</option>
                 <option value="20">20</option>
@@ -61,6 +62,7 @@
                 <option value="100">100</option>
                 <option value="1000000">All</option>
               </select>
+              </div>
             </form>
           </div>
         </py:def>
