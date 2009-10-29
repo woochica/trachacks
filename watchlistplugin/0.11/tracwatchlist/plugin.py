@@ -139,7 +139,7 @@ class WatchlinkPlugin(Component):
                     "INSERT INTO watchlist (wluser, realm, resid) "
                     "VALUES (%s,%s,%s);", lst )
                 db.commit()
-            if self.gnotifybydefault:
+            if self.gnotify and self.gnotifybydefault:
               action = "notifyon"
             else:
               action = "view"
@@ -150,16 +150,20 @@ class WatchlinkPlugin(Component):
                     "DELETE FROM watchlist "
                     "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
                 db.commit()
-            if self.gnotifybydefault:
+            if self.gnotify and self.gnotifybydefault:
               action = "notifyoff"
             else:
               action = "view"
 
         if action == "notifyon":
-            self.set_notify(req.session.sid, True, realm, resid)
+            if self.gnotify:
+              self.set_notify(req.session.sid, True, realm, resid)
+              db.commit()
             action = "view"
         elif action == "notifyoff":
-            self.unset_notify(req.session.sid, True, realm, resid)
+            if self.gnotify:
+              self.unset_notify(req.session.sid, True, realm, resid)
+              db.commit()
             action = "view"
 
         if action == "view":
