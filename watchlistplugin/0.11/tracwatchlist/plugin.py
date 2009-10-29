@@ -74,6 +74,9 @@ class WatchlinkPlugin(Component):
         if user and user != 'anonymous' and self.has_watchlist(user):
             yield ('mainnav', 'watchlist', tag.a( "Watchlist", href=href("watchlist") ) )
 
+    def _convert_pattern(self, pattern):
+        # needs more work, excape sequences, etc.
+        return pattern.replace('*','%').replace('?','_')
 
     ### methods for IRequestHandler
     def match_request(self, req):
@@ -90,10 +93,8 @@ class WatchlinkPlugin(Component):
 
         args = req.args
         wldict = args
-        if 'action' in args:
-            action = args['action']
-        else:
-            action = 'view'
+        action = args.get('action','view')
+        ispattern = False# Disabled for now, not implemented fully # args.get('ispattern','0')
 
         if action in ('watch','unwatch','notifyon','notifyoff'):
             try:
@@ -105,6 +106,8 @@ class WatchlinkPlugin(Component):
                 raise WatchlistError("Only wikis and tickets can be watched/unwatched!")
             is_watching = self.is_watching(realm, resid, user)
             realm_perm  = realm.upper() + '_VIEW' in req.perm
+            if ispattern:
+              pattern = self._convert_pattern(resid)
         else:
             is_watching = None
 
@@ -112,7 +115,6 @@ class WatchlinkPlugin(Component):
         add_ctxtnav(req, "Watched Wikis",   href=wlhref + '#wikis')
         add_ctxtnav(req, "Watched Tickets", href=wlhref + '#tickets')
 
-        wldict['is_watching'] = is_watching
         wiki_perm   = 'WIKI_VIEW'   in req.perm
         ticket_perm = 'TICKET_VIEW' in req.perm
         wldict['wiki_perm']   = wiki_perm
@@ -127,6 +129,27 @@ class WatchlinkPlugin(Component):
         if action == "watch":
             lst = (user, realm, resid)
             if realm_perm and not is_watching:
+              col =  realm == 'wiki' and 'name' or 'id'
+              if ispattern:
+                cursor.log = self.env.log
+                # Check if wiki/ticket exists:
+                cursor.execute(
+                    "SELECT count(*) FROM %s WHERE %s LIKE %%s" % (realm,col), (pattern,) )
+                    #("'"+pattern+"'",) )
+                count = cursor.fetchone()
+                self.env.log.debug("LOGGGG: " + str(count))
+                if not count or not count[0]:
+                    raise WatchlistError(
+                        "Selected pattern %s:%s (%s) doesn't match anything!" % (realm,resid,pattern) )
+                #cursor.execute(
+                #    "INSERT INTO watchlist (wluser, realm, resid) "
+                #    "SELECT '%s','%s',%s FROM %s WHERE %s LIKE %%s" % (user,realm,col,
+                #      realm,col), (resid,) )
+                cursor.execute(
+                    "INSERT INTO watchlist (wluser, realm, resid) " +
+                    "SELECT %s,%s,%s FROM %s WHERE %s LIKE %%s" % \
+                    ("'"+user+"'","'"+realm+"'", col, realm, col), (pattern,) )
+              else:
                 # Check if wiki/ticket exists:
                 cursor.execute(
                     "SELECT count(*) FROM %s WHERE %s=%%s;" %
@@ -138,14 +161,22 @@ class WatchlinkPlugin(Component):
                 cursor.execute(
                     "INSERT INTO watchlist (wluser, realm, resid) "
                     "VALUES (%s,%s,%s);", lst )
-                db.commit()
+              db.commit()
             if self.gnotify and self.gnotifybydefault:
               action = "notifyon"
             else:
               action = "view"
         elif action == "unwatch":
             lst = (user, realm, resid)
-            if realm_perm and is_watching:
+            if realm_perm:
+              if ispattern:
+                cursor.log = self.env.log
+                is_watching = True
+                cursor.execute(
+                    "DELETE FROM watchlist "
+                    "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
+                db.commit()
+              elif is_watching:
                 cursor.execute(
                     "DELETE FROM watchlist "
                     "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
@@ -166,6 +197,7 @@ class WatchlinkPlugin(Component):
               db.commit()
             action = "view"
 
+        wldict['is_watching'] = is_watching
         if action == "view":
             timeline = href('timeline', precision='seconds') + "&from="
             def timeline_link(time):
