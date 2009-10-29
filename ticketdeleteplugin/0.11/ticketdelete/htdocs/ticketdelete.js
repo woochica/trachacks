@@ -12,6 +12,9 @@ $(document).ready(function() {
             if (comment) {
                 comment = comment.value;
                 $(this).append('<a href="../admin/ticket/comments/'+ticket+'?cnum='+comment+'">Delete</a>');
+
+                // doesnt work, form tokens
+                //                $(this).append('<form method="post" action="../admin/ticket/comments/' + ticket + '"><input type="submit" name="delete_' + comment + '" value="Delete"/></form>');
             }
         });
     });
