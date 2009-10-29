@@ -72,13 +72,17 @@
                     <py:when test="is_watching">
                         <div class="system-message" id="warning">
                             <p class="system-message-title">Already watched</p>
-                            <p>Selected ${link(realm,resid)} is already watched.</p>
+                            <p>Selected ${link(realm,resid)} is already watched.
+                            (<a href="${href.watchlist(action='unwatch',realm=realm,resid=resid)}">Unwatch it?</a>)
+                            </p>
                         </div>
                     </py:when>
                     <py:otherwise>
                         <div class="system-message" id="notice">
                             <p class="system-message-title">Added to Watchlist</p>
-                            <p>The selected ${link(realm,resid)} was added to the watchlist.</p>
+                            <p>The selected ${link(realm,resid)} was added to the watchlist.
+                            (<a href="${href.watchlist(action='unwatch',realm=realm,resid=resid)}">Remove again</a>)
+                            </p>
                         </div>
                     </py:otherwise>
                 </py:choose>
@@ -88,13 +92,17 @@
                     <py:when test="True">
                         <div class="system-message" id="notice">
                             <p class="system-message-title">Removed from Watchlist</p>
-                            <p>The selected ${link(realm,resid)} was removed from watchlist.</p>
+                            <p>The selected ${link(realm,resid)} was removed from watchlist.
+                            (<a href="${href.watchlist(action='watch',realm=realm,resid=resid)}">Add again</a>)
+                            </p>
                         </div>
                     </py:when>
                     <py:otherwise>
                         <div class="system-message" id="warning">
                             <p class="system-message-title">Not watched</p>
-                            <p>Selected ${link(realm,resid)} couldn't be unwatched because it was not watched.</p>
+                            <p>Selected ${link(realm,resid)} couldn't be unwatched because it was not watched.
+                            (<a href="${href.watchlist(action='watch',realm=realm,resid=resid)}">Watch it?</a>)
+                            </p>
                         </div>
                     </py:otherwise>
                 </py:choose>
