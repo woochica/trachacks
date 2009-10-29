@@ -34,10 +34,6 @@ function wlshowhide(ref, tag) {
 jQuery(document).ready(function() {
 
   $("div#wlsettings").hide();
-  $("a").click(function () {
-    $(this).hide();
-    return true;
-  });
 
   $("#wikis   span.showhide").text("(Hide)").disableTextSelect();
   $("#tickets span.showhide").text("(Hide)").disableTextSelect();
@@ -52,6 +48,10 @@ jQuery(document).ready(function() {
      return true;
   });
 
+  $("#ackmsg").disableTextSelect().click(function() {
+    $('#message-box').hide(5).remove();
+    return false;
+  });
 
 });
 

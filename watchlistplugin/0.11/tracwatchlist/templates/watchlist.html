@@ -30,6 +30,9 @@
 
   <body>
     <div id="content" class="watchlist">
+        <py:def function="ackmsg">
+          <a id="ackmsg" href="${href.watchlist()}">[ Ok ]</a>
+        </py:def>
         <py:def function="unwatchicon">
           <img src="${href.chrome('watchlist/ico/unwatch.png')}" width="14px"
             height="14px" title="Unwatch" alt="Unwatch" />
@@ -70,7 +73,7 @@
         </py:def>
 
         <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>
-        <div py:if="action" py:choose="action" id="watchlist-${action}">
+        <div py:if="action" py:choose="action" id="message-box">
             <py:when test="'watch'">
                 <py:choose test="">
                     <py:when test="is_watching">
@@ -78,6 +81,7 @@
                             <p class="system-message-title">Already watched</p>
                             <p>Selected ${link(realm,resid)} is already watched.
                             (<a href="${href.watchlist(action='unwatch',realm=realm,resid=resid)}">Unwatch it?</a>)
+                            ${ackmsg()}
                             </p>
                         </div>
                     </py:when>
@@ -86,6 +90,7 @@
                             <p class="system-message-title">Added to Watchlist</p>
                             <p>The selected ${link(realm,resid)} was added to the watchlist.
                             (<a href="${href.watchlist(action='unwatch',realm=realm,resid=resid)}">Remove again</a>)
+                            ${ackmsg()}
                             </p>
                         </div>
                     </py:otherwise>
@@ -98,6 +103,7 @@
                             <p class="system-message-title">Removed from Watchlist</p>
                             <p>The selected ${link(realm,resid)} was removed from watchlist.
                             (<a href="${href.watchlist(action='watch',realm=realm,resid=resid)}">Add again</a>)
+                            ${ackmsg()}
                             </p>
                         </div>
                     </py:when>
@@ -107,6 +113,7 @@
                             <p>Selected ${link(realm,resid)} couldn't be unwatched because it was not watched.
                             (<a href="${href.watchlist(action='watch',realm=realm,resid=resid)}">Watch it?</a>)
                             </p>
+                            ${ackmsg()}
                         </div>
                     </py:otherwise>
                 </py:choose>

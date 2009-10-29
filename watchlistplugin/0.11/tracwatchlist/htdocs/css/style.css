@@ -83,3 +83,12 @@ span.showhide {
   font-size: small;
   color: gray;
 }
+
+a#ackmsg {
+  font-size: medium;
+  position: relative;
+  color: black;
+  left: 1em;
+  underline: none;
+  border: none;
+}
