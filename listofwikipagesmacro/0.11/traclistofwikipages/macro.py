@@ -230,18 +230,11 @@ A headline can be given using a `headline` argument:
         else:
           sql_time = ''
 
-        sqlcommand = " SELECT name,MAX(time),author " \
-                     " FROM wiki WHERE author NOT IN ('%s') " \
-                        % "','".join( ignoreusers ) \
-                     + sql_wikis + \
-                     " GROUP BY name "
-        cursor.execute ( sqlcommand )
-
         cursor.execute(
-            "SELECT name,time,author,MAX(version),comment FROM wiki WHERE " \
+            "SELECT name,time,author,version,comment FROM wiki AS w1 WHERE " \
             + sql_time + \
             "author NOT IN ('%s') "  % "','".join( ignoreusers ) + sql_wikis + \
-            "GROUP BY name ORDER BY time DESC")
+            "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY time DESC")
         rows = [ self.formatrow(n,name,time,version,comment,author)
               for n,[name,time,author,version,comment] in enumerate(cursor) ]
 
@@ -319,8 +312,8 @@ This macro prints a table similar to the `[[ListOfWikiPages]]` only with the
 
         cursor.execute ( """
               SELECT name,time,MAX(version),comment
-              FROM wiki WHERE author = %s """ + sql_time + """
-              GROUP BY name
+              FROM wiki AS w1 WHERE author = %s """ + sql_time + """
+              AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name)
               ORDER BY time DESC
           """, (author,) )
 
