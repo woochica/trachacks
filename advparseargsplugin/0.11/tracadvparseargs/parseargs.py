@@ -36,7 +36,7 @@ and handle '`text"`' as separate argument.
 {{{
 #!python
 def parse_args (args, strict = True, multi = False, listonly = False, minlen = 0,
-        quotechar = '"', escchar = '\\', delim = ',', delquotes = False)
+        quotechar = '"', escchar = '\\\\', delim = ',', delquotes = False)
 }}}
 
 === Usage Example ===
