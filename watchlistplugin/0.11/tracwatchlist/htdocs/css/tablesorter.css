@@ -33,6 +33,10 @@ div.tablesorterPager span {
   padding: 0 10px 0 10px;
 }
 
+div.tablesorterPager img {
+  vertical-align: middle;
+}
+
 div.tablesorterPager input.prev {
   width: auto;
   margin-right: 1em;

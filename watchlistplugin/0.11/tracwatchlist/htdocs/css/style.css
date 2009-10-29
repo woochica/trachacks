@@ -51,6 +51,16 @@ td.unwatch img {
   top: 2pt;
 }
 
+td.diff img {
+  position: relative;
+  top: 2pt;
+}
+
+td.history img {
+  position: relative;
+  top: 2pt;
+}
+
 .watchlist a:link, .watchlist a:visited,
 .watchlist a:link:hover, .watchlist a:visited:hover {
   background-color: none;

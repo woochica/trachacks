@@ -30,7 +30,7 @@
     <div id="content" class="watchlist">
         <py:def function="unwatchicon">
           <img src="${href.chrome('watchlist/ico/unwatch.png')}" width="14px"
-          height="14px" title="Unwatch" alt="Unwatch" />
+            height="14px" title="Unwatch" alt="Unwatch" />
         </py:def>
         <py:def function="notifybox(realm,name,notifyon)">
           <py:choose test="">
@@ -141,9 +141,15 @@
                   <td class="version"><a py:if="not page.deleted"
                           href="${href('wiki',page.name,version=page.version)}">$page.version</a></td>
                   <td class="diff"><a py:if="not page.deleted"
-                          href="${href('wiki',page.name,action='diff',version=page.version)}">Diff</a></td>
+                      href="${href('wiki',page.name,action='diff',version=page.version)}">
+                        <img src="${href.chrome('watchlist/ico/diff.png')}" width="16px"
+                          height="16px" title="Diff" alt="Diff" />
+                      </a></td>
                   <td class="history"><a py:if="not page.deleted"
-                          href="${href('wiki',page.name,action='history')}">History</a></td>
+                      href="${href('wiki',page.name,action='history')}">
+                        <img src="${href.chrome('watchlist/ico/history.png')}" width="16px"
+                          height="16px" title="History" alt="History" />
+                      </a></td>
                   <td class="unwatch"><a class="plainlink"
                       href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">
                       ${unwatchicon()}</a></td>
