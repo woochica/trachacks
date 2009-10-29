@@ -316,12 +316,17 @@ This macro prints a table similar to the `[[ListOfWikiPages]]` only with the
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
+        if kwargs.get('order','normal') == 'reverse':
+          order = " "
+        else:
+          order = " DESC "
+
         cursor.execute ( """
               SELECT name,time,MAX(version),comment
               FROM wiki AS w1 WHERE author = %s """ + sql_time + """
               AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name)
-              ORDER BY time DESC
-          """, (author,) )
+              ORDER BY time
+          """ + order, (author,) )
 
         rows = [ self.formatrow(n,name,time,version,comment) for
               n,[name,time,version,comment] in enumerate(cursor) if n < count ]
