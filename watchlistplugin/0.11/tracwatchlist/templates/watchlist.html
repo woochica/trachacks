@@ -10,6 +10,8 @@
       src="${href.chrome('watchlist','js','jquery.tablesorter.min.js')}"></script>
     <script type="text/javascript" 
       src="${href.chrome('watchlist','js','jquery.tablesorter.pager.js')}"></script>
+    <script type="text/javascript" 
+      src="${href.chrome('watchlist','js','watchlist.js')}"></script>
     <script type="text/javascript">
        // <![CDATA[
       jQuery(document).ready(function($) {
@@ -111,13 +113,18 @@
             </py:when>
         </div>
 
-
-      <h2 id="wikis">Wikis</h2>
+      <div id="wikis">
+        <div>
+          <span class="showhide"></span>
+          <h2>Wikis</h2>
+        </div>
       <py:choose test="">
       <div class="system-message" py:when="not wiki_perm">You lack permission to view wikis.</div>
+      <div id="wikilist-plusadd">
       <py:choose test="" py:otherwise="">
+      <div id="wikilist-parent" py:when="wikilist">
       ${tablepager("wikipager")}
-      <table class="wikilist" id="wikilist" py:when="wikilist">
+      <table class="wikilist" id="wikilist">
           <thead>
               <tr>
                   <th py:for="head in (['Page&nbsp;&nbsp;&nbsp;','name'],['Last Changed
@@ -159,6 +166,7 @@
               </tr>
           </tbody>
       </table>
+      </div>
       <div py:otherwise=""><span>No wikis are currently watched.</span></div>
       </py:choose>
       <form method="get" action="" class="addtowatch">
@@ -168,14 +176,22 @@
           <input type="hidden" name="action" value="watch" />
         </div>
       </form>
+      </div>
       </py:choose>
+      </div>
 
-      <h2 id="tickets">Tickets</h2>
+      <div id="tickets">
+        <div>
+          <span class="showhide"></span>
+          <h2>Tickets</h2>
+        </div>
       <py:choose test="">
       <div class="system-message" py:when="not ticket_perm">You lack permission to view tickets.</div>
+      <div id="ticketlist-plusadd">
       <py:choose test="" py:otherwise="">
+      <div id="ticketlist-parent" py:when="ticketlist">
       ${tablepager("ticketpager")}
-      <table class="ticketlist" id="ticketlist" py:when="ticketlist">
+      <table class="ticketlist" id="ticketlist">
           <thead>
               <tr>
                   <th py:for="head in (['Ticket&nbsp;&nbsp;&nbsp;','id'],['Last Changed At','datetime'],
@@ -207,6 +223,7 @@
               </tr>
           </tbody>
       </table>
+      </div>
       <div py:otherwise=""><span>No tickets are currently watched.</span></div>
       </py:choose>
       <form method="get" action="" class="addtowatch">
@@ -216,7 +233,9 @@
           <input type="hidden" name="action" value="watch" />
         </div>
       </form>
+      </div>
       </py:choose>
+      </div>
 
     </div>
   </body>
