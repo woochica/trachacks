@@ -114,6 +114,7 @@ class TicketDeletePlugin(Component):
                     if selected is not None and selected < len(time_list):
                         ticket_data[time_list[selected]]['checked'] = True
                     data['changes'] = ticket_data
+                    data['id'] = t.id
                 elif page == 'delete':
                     data['id'] = t.id
  

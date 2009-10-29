@@ -13,7 +13,12 @@
 
   <body>
 
-    <h2>Delete Ticket${ticketdelete.page=='comments' and ' Changes' or None}</h2>
+    <h2>
+      Delete Ticket${ticketdelete.page=='comments' and ' Changes' or None}
+      <a py:if="ticketdelete.id" href="${req.href('ticket', ticketdelete.id)}">
+        #${ticketdelete.id}
+      </a>
+    </h2>
 
   <py:choose>
     <py:when test="ticketdelete.page == 'delete'">
