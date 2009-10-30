@@ -270,9 +270,11 @@ class WatchlinkPlugin(Component):
                     })
                 # Existing watched wikis:
                 cursor.execute(
-                    "SELECT name,author,time,MAX(version),comment FROM wiki WHERE name IN "
+                    "SELECT name,author,time,version,comment FROM wiki AS w1 WHERE name IN "
                     "(SELECT resid FROM watchlist WHERE wluser=%s AND realm='wiki') "
-                    "GROUP BY name ORDER BY time DESC;", (user,) )
+                    "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) "
+                    "ORDER BY time DESC;", (user,) )
+
                 wikis = cursor.fetchall()
                 for name,author,time,version,comment in wikis:
                     notify = False
@@ -451,6 +453,7 @@ class WatchlinkPlugin(Component):
         """ Create DB table if it not exists. """
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
+        cursor.log = self.env.log
         db_connector, _ = DatabaseManager(self.env)._get_connector()
 
         table = Table(name)[
@@ -518,38 +521,45 @@ class WatchlinkPlugin(Component):
           if not version:
             raise Exception("")
         except:
+          cursor.connection.rollback()
           cursor.execute("INSERT INTO system (name, value) VALUES ('watchlist_version', '0')")
+          return
 
         try:
             cursor.execute("SELECT count(*) FROM watchlist")
         except:
+            cursor.connection.rollback()
             self._create_db_table(db)
             return
 
         try:
             cursor.execute("SELECT count(*) FROM watchlist_settings")
         except:
+            cursor.connection.rollback()
             self._create_db_table2(db)
-            return
 
+        # Upgrade existing database
         try:
             try:
               cursor.execute("DROP TABLE watchlist_new")
             except:
-              pass
+              cursor.connection.rollback()
             self._create_db_table(db, 'watchlist_new')
+            return
             try: # from version 0
               cursor.execute("INSERT INTO watchlist_new (wluser, realm, resid) "
                              "SELECT user, realm, id FROM watchlist")
             except: # from version 1
+              cursor.connection.rollback ()
               cursor.execute("INSERT INTO watchlist_new (wluser, realm, resid) "
-                             "SELECT wluser, realm, resid FROM watchlist")
+                              "SELECT wluser, realm, resid FROM watchlist")
 
             cursor.execute("DROP TABLE watchlist")
             cursor.execute("ALTER TABLE watchlist_new RENAME TO watchlist")
             cursor.execute("UPDATE system SET value=%s WHERE "
                            "name='watchlist_version'", (str(__DB_VERSION__),) )
         except Exception, e:
+            cursor.connection.rollback ()
             raise TracError("Couldn't update DB: " + to_unicode(e))
         return
 
