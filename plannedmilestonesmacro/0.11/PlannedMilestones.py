@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-revision = "$Rev: 102 $"
-url = "$URL: https://kunlun.shijinet.cn/svn/Trac/Macro/0.11/PlannedMilestonesMacro.py $"
-    
+
+import re    
 from trac.wiki.macros import WikiMacroBase
 from trac.util.datefmt import format_datetime, utc, to_timestamp
 from StringIO import StringIO
@@ -22,15 +21,22 @@ class PlannedMilestonesMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
 
 	length = None
+	pattern = ''
 
         if content:
             argv = [arg.strip() for arg in content.split(',')]
             if len(argv) > 0:
-                length = int(argv[0])
+		pattern = argv[0]
+		if len(argv) > 1:
+                    length = int(argv[1])
 	
         out = StringIO()
         out.write('<ul>\n')
-        milestones = Milestone.select(self.env, include_completed=False)
+	milestones = []
+	for milestone in Milestone.select(self.env, include_completed=False):
+	    if re.match(pattern, milestone.name):
+		milestones.append(milestone)
+
 	for milestone in milestones[0:length]:
             if to_timestamp(milestone.due) > 0:
                 date = format_datetime(milestone.due, '%Y-%m-%d')
