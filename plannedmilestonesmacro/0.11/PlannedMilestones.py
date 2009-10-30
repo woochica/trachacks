@@ -45,17 +45,14 @@ class PlannedMilestonesMacro(WikiMacroBase):
 
             if milestone.due:
                 tdelta = to_timestamp(milestone.due) - to_timestamp(datetime.now(utc))
+                if tdelta > 0:
+                    date = format_datetime(milestone.due, '%Y-%m-%d')
+                else:
+                    date = None
             else:
-                tdelta = 0
-
-            if tdelta > 0:
-                date = format_datetime(milestone.due, '%Y-%m-%d')
-            elif tdelta < 0:
-                date = None
-            else:
-                date = Markup('<i>(later)</i>')
-            
-            if date:
+                date = Markup('<i>(Unspecified)</i>')
+                
+            if date:        
                 out.write('<li>%s - <a href="%s">%s</a></li>\n' % (date, self.env.href.milestone(milestone.name), milestone.name))
             
         out.write('</ul>\n')
