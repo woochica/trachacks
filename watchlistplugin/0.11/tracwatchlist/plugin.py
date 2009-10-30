@@ -156,6 +156,7 @@ class WatchlinkPlugin(Component):
         ticket_perm = 'TICKET_VIEW' in req.perm
         wldict['wiki_perm']   = wiki_perm
         wldict['ticket_perm'] = ticket_perm
+        wldict['error'] = False
         gnotify = self.gnotify
         wldict['notify'] = gnotify
 
@@ -174,7 +175,6 @@ class WatchlinkPlugin(Component):
                     "SELECT count(*) FROM %s WHERE %s LIKE %%s" % (realm,col), (pattern,) )
                     #("'"+pattern+"'",) )
                 count = cursor.fetchone()
-                self.env.log.debug("LOGGGG: " + str(count))
                 if not count or not count[0]:
                     raise WatchlistError(
                         "Selected pattern %s:%s (%s) doesn't match anything!" % (realm,resid,pattern) )
@@ -193,11 +193,13 @@ class WatchlinkPlugin(Component):
                       (realm, realm == 'wiki' and 'name' or 'id'), (resid,) )
                 count = cursor.fetchone()
                 if not count or not count[0]:
-                    raise WatchlistError(
-                        "Selected resource %s:%s doesn't exists!" % (realm,resid) )
-                cursor.execute(
-                    "INSERT INTO watchlist (wluser, realm, resid) "
-                    "VALUES (%s,%s,%s);", lst )
+                    wldict['error'] = True
+                    #raise WatchlistError(
+                    #    "Selected resource %s:%s doesn't exists!" % (realm,resid) )
+                else:
+                    cursor.execute(
+                        "INSERT INTO watchlist (wluser, realm, resid) "
+                        "VALUES (%s,%s,%s);", lst )
               db.commit()
             if self.gnotify and self.gnotifybydefault:
               action = "notifyon"

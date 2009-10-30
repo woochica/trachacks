@@ -31,7 +31,7 @@
   <body>
     <div id="content" class="watchlist">
         <py:def function="ackmsg">
-          <a id="ackmsg" href="${href.watchlist()}">[ Ok ]</a>
+              <input id="ackmsg" type="button" value="Ok" />
         </py:def>
         <py:def function="unwatchicon">
           <img src="${href.chrome('watchlist/ico/unwatch.png')}" width="14px"
@@ -76,6 +76,14 @@
         <div py:if="action" py:choose="action" id="message-box">
             <py:when test="'watch'">
                 <py:choose test="">
+                    <py:when test="error">
+                        <div class="system-message" id="error">
+                            <p class="system-message-title">Does not exists</p>
+                            <p>Selected $realm:$resid does not exists and therefore can not be watched.
+                            ${ackmsg()}
+                            </p>
+                        </div>
+                    </py:when>
                     <py:when test="is_watching">
                         <div class="system-message" id="warning">
                             <p class="system-message-title">Already watched</p>
@@ -97,8 +105,8 @@
                 </py:choose>
             </py:when>
             <py:when test="'unwatch'">
-                <py:choose test="is_watching">
-                    <py:when test="True">
+                <py:choose test="">
+                    <py:when test="is_watching">
                         <div class="system-message" id="notice">
                             <p class="system-message-title">Removed from Watchlist</p>
                             <p>The selected ${link(realm,resid)} was removed from watchlist.
@@ -112,8 +120,8 @@
                             <p class="system-message-title">Not watched</p>
                             <p>Selected ${link(realm,resid)} couldn't be unwatched because it was not watched.
                             (<a href="${href.watchlist(action='watch',realm=realm,resid=resid)}">Watch it?</a>)
-                            </p>
                             ${ackmsg()}
+                            </p>
                         </div>
                     </py:otherwise>
                 </py:choose>

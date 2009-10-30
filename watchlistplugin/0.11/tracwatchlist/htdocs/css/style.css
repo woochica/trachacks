@@ -84,13 +84,10 @@ span.showhide {
   color: gray;
 }
 
-a#ackmsg {
+input#ackmsg {
   font-size: medium;
   position: relative;
-  color: black;
   left: 1em;
-  underline: none;
-  border: none;
 }
 
 /* Disabled for the time being */
