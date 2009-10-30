@@ -146,6 +146,21 @@ class ListOfWikiPagesComponent(Component):
         else:
           return tag()
 
+    def _get_sql_exclude(self, list):
+      import re
+      if not list:
+        return ''
+      star  = re.compile(r'(?<!\\)\*')
+      ques  = re.compile(r'(?<!\\)\?')
+      sql_exclude = ''
+      for pattern in list:
+        pattern = pattern.replace('%',r'\%').replace('_',r'\_')
+        pattern = star.sub('%', pattern)
+        pattern = ques.sub('_', pattern)
+        sql_exclude = sql_exclude + " AND name NOT LIKE '%s' " % pattern
+      #sql_exclude = sql_exclude + r" ESCAPE '\\' "
+      return sql_exclude
+
     def ListOfWikiPages(self, formatter, content):
         """
 == Description ==
@@ -224,18 +239,8 @@ A headline can be given using a `headline` argument:
             sql_wikis = ''
 
         sql_exclude = ''
-        self.env.log.debug('largs: ' + str(largs))
-        self.env.log.debug('kwargs: ' + str(kwargs))
         if 'exclude' in kwargs:
-          import re
-          star  = re.compile(r'(?<!\\)\*')
-          ques  = re.compile(r'(?<!\\)\?')
-          for pattern in kwargs['exclude']:
-            pattern = pattern.replace('%',r'\%').replace('_',r'\_')
-            pattern = star.sub('%', pattern)
-            pattern = ques.sub('_', pattern)
-            sql_exclude = sql_exclude + " AND name NOT LIKE '%s' " % pattern
-          sql_exclude = sql_exclude + r" ESCAPE '\\' "
+          sql_exclude = self._get_sql_exclude(kwargs['exclude'])
 
         self.kwargs = kwargs
         dfrom, fromtext = self.timeval('from', (0,''))
@@ -320,6 +325,10 @@ This macro prints a table similar to the `[[ListOfWikiPages]]` only with the
         else:
           sql_time = ''
 
+        sql_exclude = ''
+        if 'exclude' in kwargs:
+          sql_exclude = self._get_sql_exclude(kwargs['exclude'])
+
         author = len(largs) > 0 and largs[0] or formatter.req.authname
         count  = len(largs) > 1 and largs[1] or 5
         try:
@@ -339,7 +348,7 @@ This macro prints a table similar to the `[[ListOfWikiPages]]` only with the
 
         cursor.execute ( """
               SELECT name,time,version,comment
-              FROM wiki AS w1 WHERE author = %s """ + sql_time + """
+              FROM wiki AS w1 WHERE author = %s """ + sql_time + sql_exclude + """
               AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name)
               ORDER BY time
           """ + order + " LIMIT 0,%s ", (author, str(count)) )
