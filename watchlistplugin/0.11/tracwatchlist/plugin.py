@@ -28,7 +28,7 @@ from  trac.env         import  IEnvironmentSetupParticipant
 from  trac.util        import  format_datetime, pretty_timedelta
 from  trac.web.chrome  import  INavigationContributor
 from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
-from  trac.web.chrome  import  ITemplateProvider, add_ctxtnav, add_link, add_script
+from  trac.web.chrome  import  ITemplateProvider, add_ctxtnav, add_link, add_script, add_notice
 from  trac.web.href    import  Href
 from  trac.util.text   import  to_unicode
 from  genshi.builder   import  tag, Markup
@@ -46,6 +46,7 @@ class WatchlistError(TracError):
 
 
 class WatchlinkPlugin(Component):
+    """For documentation see http://trac-hacks.org/wiki/WatchlistPlugin"""
 
     implements( INavigationContributor, IRequestHandler, IRequestFilter,
                 IEnvironmentSetupParticipant, ITemplateProvider )
@@ -60,6 +61,13 @@ class WatchlinkPlugin(Component):
     gredirectback = BoolOption('watchlist', 'stay_at_resource', False,
                 "The user stays at the resource after a watch/unwatch operation "
                 "and the watchlist page is not displayed.")
+    gmsgrespage = BoolOption('watchlist', 'show_messages_on_resource_page', True, 
+                "Enables action messages on resource pages.")
+    gmsgwlpage  = BoolOption('watchlist', 'show_messages_on_watchlist_page', True, 
+                "Enables action messages when going to the watchlist page.")
+    gmsgwowlpage = BoolOption('watchlist', 'show_messages_while_on_watchlist_page', True, 
+                "Enables action messages while on watchlist page.")
+
 
     if gnotify:
       try:
@@ -178,6 +186,7 @@ class WatchlinkPlugin(Component):
         wldict['error'] = False
         gnotify = self.gnotify
         wldict['notify'] = gnotify and self.gnotifycolumn
+        msgrespage = self.gmsgrespage
 
         # DB look-up
         db = self.env.get_db_cnx()
@@ -217,6 +226,9 @@ class WatchlinkPlugin(Component):
                         "INSERT INTO watchlist (wluser, realm, resid) "
                         "VALUES (%s,%s,%s);", lst )
               db.commit()
+            if not onwatchlistpage and msgrespage:
+                  req.session['watchlist_message'] = (
+                    'This %s has been added to your watchlist.' % realm)
             if self.gnotify and self.gnotifybydefault:
               action = "notifyon"
             else:
@@ -245,6 +257,9 @@ class WatchlinkPlugin(Component):
                   raise WatchlistError(
                       "Selected resource %s:%s doesn't exists!" % (realm,resid) )
                 redirectback = False
+            if not onwatchlistpage and msgrespage:
+              req.session['watchlist_message'] = (
+                'This %s has been removed from your watchlist.' % realm)
             if self.gnotify and self.gnotifybydefault:
               action = "notifyoff"
             else:
@@ -258,6 +273,10 @@ class WatchlinkPlugin(Component):
               self.set_notify(req.session.sid, True, realm, resid)
               db.commit()
             if redirectback:
+              if msgrespage:
+                req.session['watchlist_notify_message'] = (
+                  'You are now receiving '
+                  'change notifications about this resource.')
               req.redirect(reslink)
               raise RequestDone
             action = "view"
@@ -266,6 +285,10 @@ class WatchlinkPlugin(Component):
               self.unset_notify(req.session.sid, True, realm, resid)
               db.commit()
             if redirectback:
+              if msgrespage:
+                req.session['watchlist_notify_message'] = (
+                  'You are no longer receiving '
+                  'change notifications about this resource.')
               req.redirect(reslink)
               raise RequestDone
             action = "view"
@@ -435,8 +458,6 @@ class WatchlinkPlugin(Component):
             res_exists = Ticket(self.env, resid).exists
           except:
             res_exists = False
-        self.env.log.debug("res    = " + realm + ":" + resid)
-        self.env.log.debug("exists = " + str(res_exists))
         return res_exists
 
     def is_watching(self, realm, resid, user):
@@ -455,6 +476,15 @@ class WatchlinkPlugin(Component):
 
     ### methods for IRequestFilter
     def post_process_request(self, req, template, data, content_type):
+        msg = req.session.get('watchlist_message',[])
+        if msg:
+          add_notice(req, msg)
+          del req.session['watchlist_message']
+        msg = req.session.get('watchlist_notify_message',[])
+        if msg:
+          add_notice(req, msg)
+          del req.session['watchlist_notify_message']
+
         # Extract realm and resid from path:
         parts = req.path_info[1:].split('/',1)
 
@@ -619,4 +649,11 @@ class WatchlinkPlugin(Component):
             raise TracError("Couldn't update DB: " + to_unicode(e))
         return
 
+    def _add_message(self, req, msg):
+        self.env.log.debug("MESSAGE: " + msg)
+        self.env.log.debug("SESSION: " + str(req.session))
+        msgs = req.session.get('watchlist_message',list())
+        if not msgs:
+          req.session['watchlist_message'] = msgs
+        msgs.append(msg)
 
