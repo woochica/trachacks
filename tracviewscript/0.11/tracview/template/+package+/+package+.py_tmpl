@@ -5,6 +5,7 @@ a view for Trac
 http://trac.edgewall.org
 """
 
+from genshi.builder import tag
 from pkg_resources import resource_filename
 
 from trac.core import *
@@ -86,6 +87,6 @@ class ContactInfo(Component):
         """Should return an iterable object over the list of navigation items to
         add, each being a tuple in the form (category, name, text).
         """
-        yield ('mainnav', ${repr(package)}, tag.a(repr(project), href=req.href(${repr(package)})))
+        yield ('mainnav', ${repr(package)}, tag.a(${repr(project)}, href=req.href(${repr(package)})))
         
 
