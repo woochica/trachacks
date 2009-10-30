@@ -295,7 +295,7 @@ class WatchlinkPlugin(Component):
                 ticketlist = []
                 cursor.execute(
                     "SELECT id,type,time,changetime,summary,reporter FROM ticket WHERE id IN "
-                    "(SELECT CAST(resid AS INTEGER) FROM watchlist WHERE wluser=%s AND realm='ticket') "
+                    "(SELECT CAST(resid AS decimal) FROM watchlist WHERE wluser=%s AND realm='ticket') "
                     "GROUP BY id,type,time,changetime,summary,reporter "
                     "ORDER BY changetime DESC;", (user,) )
                 tickets = cursor.fetchall()
@@ -310,7 +310,7 @@ class WatchlinkPlugin(Component):
                     cursor.execute(
                         "SELECT author,field,oldvalue,newvalue FROM ticket_change "
                         "WHERE ticket=%s and time=%s "
-                        "ORDER BY field=='comment' DESC;",
+                        "ORDER BY field DESC;",
                         (id, changetime )
                     )
 
