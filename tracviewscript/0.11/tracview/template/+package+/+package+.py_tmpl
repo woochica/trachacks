@@ -33,7 +33,7 @@ class ContactInfo(Component):
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
-        return [ (${repr(package)}, resource_filename(__name__, 'htdocs')]
+        return [ (${repr(package)}, resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
         """Return a list of directories containing the provided template
