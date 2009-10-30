@@ -45,7 +45,7 @@ class WatchlistError(TracError):
     title = 'Watchlist Error'
 
 
-class WatchlinkPlugin(Component):
+class WatchlistPlugin(Component):
     """For documentation see http://trac-hacks.org/wiki/WatchlistPlugin"""
 
     implements( INavigationContributor, IRequestHandler, IRequestFilter,
