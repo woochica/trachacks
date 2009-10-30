@@ -11,16 +11,27 @@ from genshi.builder import tag
 from trac.ticket import Milestone
 
 class PlannedMilestonesMacro(WikiMacroBase):
-    """List Planned Milestones
-    Usage:
+    """
+    List upcoming milestones.
+
     {{{
         [[PlannedMilestones()]]
+	[[PlannedMilestone(N)]]
     }}}    
     """       
-    def expand_macro(self, formatter, name, args):
+    def expand_macro(self, formatter, name, content):
+
+	length = None
+
+        if content:
+            argv = [arg.strip() for arg in content.split(',')]
+            if len(argv) > 0:
+                length = int(argv[0])
+	
         out = StringIO()
         out.write('<ul>\n')
-        for milestone in Milestone.select(self.env, include_completed=False):
+        milestones = Milestone.select(self.env, include_completed=False)
+	for milestone in milestones[0:length]:
             if to_timestamp(milestone.due) > 0:
                 date = format_datetime(milestone.due, '%Y-%m-%d')
             else:
