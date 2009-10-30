@@ -9,7 +9,7 @@ __date__     = r"$Date$"[7:-2]
 
 
 from trac.core import *
-from trac.wiki.api import IWikiMacroProvider, parse_args
+from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import format_to_oneliner
 from genshi.builder import tag
@@ -19,6 +19,7 @@ from trac.web.api import IRequestFilter
 from trac.web.chrome import add_stylesheet, ITemplateProvider
 from trac.util.text import to_unicode
 from time import time as unixtime
+from tracadvparseargs import parse_args
 
 class ListOfWikiPagesComponent(Component):
     implements ( IWikiMacroProvider, IRequestFilter, ITemplateProvider )
@@ -198,7 +199,7 @@ A headline can be given using a `headline` argument:
 }}}
 
         """
-        largs, kwargs = parse_args( content )
+        largs, kwargs = parse_args( content, multi = ['exclude'] )
 
         self.href = formatter.req.href
         section = 'listofwikipages'
@@ -213,6 +214,7 @@ A headline can be given using a `headline` argument:
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+        cursor.log = self.env.log
 
         if largs:
             sql_wikis = " AND name IN ('"    \
@@ -220,6 +222,20 @@ A headline can be given using a `headline` argument:
                         + "') "
         else:
             sql_wikis = ''
+
+        sql_exclude = ''
+        self.env.log.debug('largs: ' + str(largs))
+        self.env.log.debug('kwargs: ' + str(kwargs))
+        if 'exclude' in kwargs:
+          import re
+          star  = re.compile(r'(?<!\\)\*')
+          ques  = re.compile(r'(?<!\\)\?')
+          for pattern in kwargs['exclude']:
+            pattern = pattern.replace('%',r'\%').replace('_',r'\_')
+            pattern = star.sub('%', pattern)
+            pattern = ques.sub('_', pattern)
+            sql_exclude = sql_exclude + " AND name NOT LIKE '%s' " % pattern
+          sql_exclude = sql_exclude + r" ESCAPE '\\' "
 
         self.kwargs = kwargs
         dfrom, fromtext = self.timeval('from', (0,''))
@@ -238,7 +254,7 @@ A headline can be given using a `headline` argument:
         cursor.execute(
             "SELECT name,time,author,version,comment FROM wiki AS w1 WHERE " \
             + sql_time + \
-            "author NOT IN ('%s') "  % "','".join( ignoreusers ) + sql_wikis + \
+            "author NOT IN ('%s') "  % "','".join( ignoreusers ) + sql_wikis + sql_exclude + \
             "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY time " + \
             order)
         rows = [ self.formatrow(n,name,time,version,comment,author)
