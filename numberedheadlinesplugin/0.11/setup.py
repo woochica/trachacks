@@ -24,7 +24,8 @@ setup(
     author_email = 'martin@scharrer-online.de',
     description = "Trac Plug-in to add numbered headlines.",
     url = 'http://www.trac-hacks.org/wiki/NumberedHeadlinesPlugin',
-    license = 'BSD',
+    license      = 'GPLv3',
+    zip_safe     = False,
     keywords = 'trac numbered headlines plugin',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins': ['tracnumberedheadlines.plugin = tracnumberedheadlines.plugin']}

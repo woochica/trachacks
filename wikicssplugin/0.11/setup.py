@@ -18,7 +18,8 @@ setup(
     author_email = 'martin@scharrer-online.de',
     description  = "Wiki pages as CSS files Trac Plugin.",
     url          = 'http://www.trac-hacks.org/wiki/WikiCssPlugin',
-    license      = 'BSD',
+    license      = 'GPLv3',
+    zip_safe     = False,
     keywords     = 'trac plugin wiki css',
     classifiers  = ['Framework :: Trac'],
     entry_points = {'trac.plugins': ['tracwikicss.plugin = tracwikicss.plugin']}

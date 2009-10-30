@@ -18,7 +18,8 @@ setup(
     author_email = 'martin@scharrer-online.de',
     description = "GoogleWebmasterVerify Plugin for Trac",
     url = 'http://www.trac-hacks.org/wiki/GoogleWebmasterVerifyPlugin',
-    license = 'BSD',
+    license      = 'GPLv3',
+    zip_safe     = False,
     keywords = 'trac google webmaster verify wiki plugin',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins': ['tracgooglewebmasterverify.plugin = tracgooglewebmasterverify.plugin']}

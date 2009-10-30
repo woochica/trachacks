@@ -19,7 +19,8 @@ setup(
     author_email = 'martin@scharrer-online.de',
     description  = "Advanced argument parser for Trac macros.",
     url          = 'http://www.trac-hacks.org/wiki/AdvParseArgsPlugin',
-    license      = 'BSD',
+    license      = 'GPLv3',
+    zip_safe     = False,
     keywords     = 'trac plugin parse argument',
     classifiers  = ['Framework :: Trac'],
     entry_points = {'trac.plugins': [

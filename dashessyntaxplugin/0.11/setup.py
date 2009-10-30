@@ -18,7 +18,8 @@ setup(
     author_email = 'martin@scharrer-online.de',
     description = "Trac Plug-in to add Wiki syntax for em and en dashes.",
     url = 'http://www.trac-hacks.org/wiki/DashesSyntaxPlugin',
-    license = 'BSD',
+    license      = 'GPLv3',
+    zip_safe     = False,
     keywords = 'trac plugin wiki syntex dash em en',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins': ['tracdashessyntax.plugin = tracdashessyntax.plugin']}

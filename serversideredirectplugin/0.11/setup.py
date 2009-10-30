@@ -18,7 +18,8 @@ setup(
     author_email = 'martin@scharrer-online.de',
     description  = "Server side redirect plugin for Trac.",
     url          = 'http://www.trac-hacks.org/wiki/ServerSideRedirectPlugin',
-    license      = 'BSD',
+    license      = 'GPLv3',
+    zip_safe     = False,
     keywords     = 'trac plugin server redirect',
     classifiers  = ['Framework :: Trac'],
     entry_points = {'trac.plugins': ['tracserversideredirect.plugin = tracserversideredirect.plugin']}

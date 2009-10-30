@@ -22,7 +22,8 @@ setup(
     },
     description = "Watchlist Plugin for Trac",
     url = 'http://www.trac-hacks.org/wiki/WatchlistPlugin',
-    license = 'GPLv3',
+    license      = 'GPLv3',
+    zip_safe     = False,
     keywords = 'trac watchlist wiki plugin',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins':

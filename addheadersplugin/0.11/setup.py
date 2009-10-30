@@ -19,6 +19,7 @@ setup(
     description = 'AddHeaders Trac Plugin.',
     url = 'http://www.trac-hacks.org/wiki/AddHeadersPlugin',
     license = 'GPLv3',
+    zip_safe     = False,
     keywords = 'trac plugin addheaders',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins': ['tracaddheaders.plugin = tracaddheaders.plugin']}

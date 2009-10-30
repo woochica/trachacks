@@ -21,7 +21,8 @@ setup(
     author_email = 'martin@scharrer-online.de',
     description = "GoogleMap Trac Macro.",
     url = 'http://www.trac-hacks.org/wiki/GoogleMapMacro',
-    license = 'GPLv3',
+    license      = 'GPLv3',
+    zip_safe     = False,
     keywords = 'trac googlemap macro',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins': ['tracgooglemap.macro = tracgooglemap.macro']}

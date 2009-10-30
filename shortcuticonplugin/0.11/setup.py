@@ -18,7 +18,8 @@ setup(
     author_email = 'martin@scharrer-online.de',
     description = "Configurables shortcut icons for Trac.",
     url = 'http://www.trac-hacks.org/wiki/ShortcutIconPlugin',
-    license = 'GPLv3',
+    license      = 'GPLv3',
+    zip_safe     = False,
     keywords = 'trac plugin favicon shortcuticon',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins': ['tracshortcuticon.plugin = tracshortcuticon.plugin']}
