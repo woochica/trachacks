@@ -16,6 +16,8 @@ setup(name='TracPluginTemplate',
       license='GPL',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
+      package_data={'': 
+        [ 'template/+package+/*/*', 'template/+package+/*.py_tmpl', 'template/*.py_tmpl' ]},
       zip_safe=False,
       install_requires=[ 'PasteScript', ],
       entry_points="""
