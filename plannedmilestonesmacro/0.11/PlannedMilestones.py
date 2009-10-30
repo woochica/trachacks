@@ -2,6 +2,7 @@
 # http://www.trac-hacks.org/wiki/PlannedMilestonesMacro
 
 import re    
+from datetime import datetime, tzinfo
 from trac.wiki.macros import WikiMacroBase
 from trac.util.datefmt import format_datetime, utc, to_timestamp
 from StringIO import StringIO
@@ -41,11 +42,21 @@ class PlannedMilestonesMacro(WikiMacroBase):
                 milestones.append(milestone)
                 
         for milestone in milestones[0:length]:
-            if to_timestamp(milestone.due) > 0:
+
+            if milestone.due:
+                tdelta = to_timestamp(milestone.due) - to_timestamp(datetime.now(utc))
+            else:
+                tdelta = 0
+
+            if tdelta > 0:
                 date = format_datetime(milestone.due, '%Y-%m-%d')
+            elif tdelta < 0:
+                date = None
             else:
                 date = Markup('<i>(later)</i>')
-            out.write('<li>%s - <a href="%s">%s</a></li>\n' % (date, self.env.href.milestone(milestone.name), milestone.name))
+            
+            if date:
+                out.write('<li>%s - <a href="%s">%s</a></li>\n' % (date, self.env.href.milestone(milestone.name), milestone.name))
             
         out.write('</ul>\n')
         return Markup(out.getvalue())
