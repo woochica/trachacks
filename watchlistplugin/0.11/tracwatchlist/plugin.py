@@ -35,6 +35,8 @@ from  genshi.builder   import  tag, Markup
 from  urllib           import  quote_plus
 from  trac.config      import  BoolOption
 from  trac.db          import  Table, Column, Index, DatabaseManager
+from  trac.wiki.model  import  WikiPage
+from  trac.ticket.model import Ticket
 
 __DB_VERSION__ = 3
 
@@ -70,10 +72,9 @@ class WatchlinkPlugin(Component):
         return ''
 
     def get_navigation_items(self, req):
-        href = Href(req.base_path)
         user = req.authname
         if user and user != 'anonymous':
-            yield ('mainnav', 'watchlist', tag.a( "Watchlist", href=href("watchlist") ) )
+            yield ('mainnav', 'watchlist', tag.a( "Watchlist", href=req.href("watchlist") ) )
 
     def _convert_pattern(self, pattern):
         # needs more work, excape sequences, etc.
@@ -118,9 +119,11 @@ class WatchlinkPlugin(Component):
         except:
           return dict()
 
+    redirectback = False
+
 
     def process_request(self, req):
-        href = Href(req.base_path)
+        href = req.href
         user = to_unicode( req.authname )
         if not user or user == 'anonymous':
             raise WatchlistError(
@@ -130,7 +133,12 @@ class WatchlinkPlugin(Component):
         args = req.args
         wldict = args.copy()
         action = args.get('action','view')
+        redirectback = self.redirectback
         ispattern = False# Disabled for now, not implemented fully # args.get('ispattern','0')
+        onwatchlistpage = req.environ.get('HTTP_REFERER','').find(href.watchlist()) != -1
+
+        if ispattern or onwatchlistpage:
+          redirectback = False
 
         if action in ('watch','unwatch','notifyon','notifyoff'):
             try:
@@ -144,6 +152,9 @@ class WatchlinkPlugin(Component):
             realm_perm  = realm.upper() + '_VIEW' in req.perm
             if ispattern:
               pattern = self._convert_pattern(resid)
+            else:
+              reslink = href(realm,resid)
+              res_exists  = self.res_exists(realm, resid, user)
         else:
             is_watching = None
 
@@ -187,15 +198,12 @@ class WatchlinkPlugin(Component):
                     "SELECT %s,%s,%s FROM %s WHERE %s LIKE %%s" % \
                     ("'"+user+"'","'"+realm+"'", col, realm, col), (pattern,) )
               else:
-                # Check if wiki/ticket exists:
-                cursor.execute(
-                    "SELECT count(*) FROM %s WHERE %s=%%s;" %
-                      (realm, realm == 'wiki' and 'name' or 'id'), (resid,) )
-                count = cursor.fetchone()
-                if not count or not count[0]:
+                if not res_exists:
                     wldict['error'] = True
-                    #raise WatchlistError(
-                    #    "Selected resource %s:%s doesn't exists!" % (realm,resid) )
+                    if redirectback and not onwatchlistpage:
+                      raise WatchlistError(
+                          "Selected resource %s:%s doesn't exists!" % (realm,resid) )
+                    redirectback = False
                 else:
                     cursor.execute(
                         "INSERT INTO watchlist (wluser, realm, resid) "
@@ -204,6 +212,9 @@ class WatchlinkPlugin(Component):
             if self.gnotify and self.gnotifybydefault:
               action = "notifyon"
             else:
+              if redirectback:
+                req.redirect(reslink)
+                raise RequestDone
               action = "view"
         elif action == "unwatch":
             lst = (user, realm, resid)
@@ -220,20 +231,35 @@ class WatchlinkPlugin(Component):
                     "DELETE FROM watchlist "
                     "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
                 db.commit()
+              elif not res_exists:
+                wldict['error'] = True
+                if redirectback and not onwatchlistpage:
+                  raise WatchlistError(
+                      "Selected resource %s:%s doesn't exists!" % (realm,resid) )
+                redirectback = False
             if self.gnotify and self.gnotifybydefault:
               action = "notifyoff"
             else:
+              if redirectback:
+                req.redirect(reslink)
+                raise RequestDone
               action = "view"
 
         if action == "notifyon":
             if self.gnotify:
               self.set_notify(req.session.sid, True, realm, resid)
               db.commit()
+            if redirectback:
+              req.redirect(reslink)
+              raise RequestDone
             action = "view"
         elif action == "notifyoff":
             if self.gnotify:
               self.unset_notify(req.session.sid, True, realm, resid)
               db.commit()
+            if redirectback:
+              req.redirect(reslink)
+              raise RequestDone
             action = "view"
 
         if action == "settings":
@@ -391,6 +417,19 @@ class WatchlinkPlugin(Component):
             return False
         else:
             return True
+
+    def res_exists(self, realm, resid, user):
+        """Checks if resource exists """
+        if realm == 'wiki':
+          res_exists = WikiPage(self.env, resid).exists
+        else:
+          try:
+            res_exists = Ticket(self.env, resid).exists
+          except:
+            res_exists = False
+        self.env.log.debug("res    = " + realm + ":" + resid)
+        self.env.log.debug("exists = " + str(res_exists))
+        return res_exists
 
     def is_watching(self, realm, resid, user):
         """Checks if user watches the given element."""
