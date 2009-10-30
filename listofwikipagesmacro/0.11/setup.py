@@ -22,6 +22,7 @@ setup(
     description = "ListOfWikiPagesMacro Trac Macro.",
     url = 'http://www.trac-hacks.org/wiki/ListOfWikiPagesMacro',
     license = 'GPLv3',
+    install_requires = 'TracAdvParseArgsPlugin>=0.2',
     keywords = 'trac list wiki page macro',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins': ['traclistofwikipages.macro = traclistofwikipages.macro']}
