@@ -73,7 +73,7 @@
         </py:def>
 
         <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>
-        <div py:if="action" py:choose="action" id="message-box">
+        <div py:if="show_messages and action" py:choose="action" id="message-box">
             <py:when test="'watch'">
                 <py:choose test="">
                     <py:when test="error">

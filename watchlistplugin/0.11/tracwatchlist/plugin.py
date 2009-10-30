@@ -186,6 +186,10 @@ class WatchlinkPlugin(Component):
         wldict['error'] = False
         gnotify = self.gnotify
         wldict['notify'] = gnotify and self.gnotifycolumn
+        if onwatchlistpage:
+          wldict['show_messages'] = self.gmsgwowlpage
+        else:
+          wldict['show_messages'] = self.gmsgwlpage
         msgrespage = self.gmsgrespage
 
         # DB look-up
