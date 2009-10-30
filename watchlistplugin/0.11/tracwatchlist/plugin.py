@@ -226,7 +226,7 @@ class WatchlinkPlugin(Component):
                         "INSERT INTO watchlist (wluser, realm, resid) "
                         "VALUES (%s,%s,%s);", lst )
               db.commit()
-            if not onwatchlistpage and msgrespage:
+            if not onwatchlistpage and redirectback and msgrespage:
                   req.session['watchlist_message'] = (
                     'This %s has been added to your watchlist.' % realm)
             if self.gnotify and self.gnotifybydefault:
@@ -257,7 +257,7 @@ class WatchlinkPlugin(Component):
                   raise WatchlistError(
                       "Selected resource %s:%s doesn't exists!" % (realm,resid) )
                 redirectback = False
-            if not onwatchlistpage and msgrespage:
+            if not onwatchlistpage and redirectback and msgrespage:
               req.session['watchlist_message'] = (
                 'This %s has been removed from your watchlist.' % realm)
             if self.gnotify and self.gnotifybydefault:
@@ -648,12 +648,4 @@ class WatchlinkPlugin(Component):
             cursor.connection.rollback ()
             raise TracError("Couldn't update DB: " + to_unicode(e))
         return
-
-    def _add_message(self, req, msg):
-        self.env.log.debug("MESSAGE: " + msg)
-        self.env.log.debug("SESSION: " + str(req.session))
-        msgs = req.session.get('watchlist_message',list())
-        if not msgs:
-          req.session['watchlist_message'] = msgs
-        msgs.append(msg)
 
