@@ -207,10 +207,20 @@ If the unit is missing seconds are assumed.
 [[ListOfWikiPages(from=4.5w,to=15h)]]   # displays all wiki pages was where changed between 4 1/2 week and 15 hours ago
 }}}
 
-
 A headline can be given using a `headline` argument:
 {{{
 [[ListOfWikiPages(headline=Headline text without any comma)]]     # sets a table headline, may not contain '`,`'
+}}}
+
+The order can be reversed, i.e. list the oldest wikis first, using:
+{{{
+[[ListOfWikiPages(order=reverse)]]
+}}}
+
+Unwanted wiki ranges (e.g. `Trac*`) can be excluded by the `exclude=pattern` option which can be given multiple times.
+The wildcards '`*`' (matches everything) and '`?`' (matches a single character) can be used in the pattern. (Requested by #6074)
+{{{
+[[ListOfWikiPages(exclude=Trac*,exclude=abc?)]]
 }}}
 
         """
@@ -301,6 +311,10 @@ This macro prints a table similar to the `[[ListOfWikiPages]]` only with the
 [[LastChangesBy(...,from=..,to=..]]  # Selects `from` and `to` time/date range
 
 [[LastChangesBy(...,headline=...]]   # Overwrites headline, may not contain `','`
+
+[[LastChangesBy(...,order=reverse]]  # Lists the wikis in reverse order. Only really useful with few wikis or with `to`/`from`.
+
+[[LastChangesBy(..,exclude=pattern]] # Excludes wikis matching `pattern`. Wildcards `*` and `?` are supported.
 }}}
         """
 
