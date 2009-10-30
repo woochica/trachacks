@@ -53,6 +53,8 @@ class WatchlinkPlugin(Component):
                 "Enables notification features")
     gnotifyctxtnav = BoolOption('watchlist', 'display_notify_navitems', False,
                 "Enables notification navigation items")
+    gnotifycolumn = BoolOption('watchlist', 'display_notify_column', True,
+                "Enables notification column in watchlist tables")
     gnotifybydefault = BoolOption('watchlist', 'notify_by_default', False,
                 "Enables notifications by default for all watchlist entries")
     gredirectback = BoolOption('watchlist', 'stay_at_resource', False,
@@ -175,7 +177,7 @@ class WatchlinkPlugin(Component):
         wldict['ticket_perm'] = ticket_perm
         wldict['error'] = False
         gnotify = self.gnotify
-        wldict['notify'] = gnotify
+        wldict['notify'] = gnotify and self.gnotifycolumn
 
         # DB look-up
         db = self.env.get_db_cnx()
