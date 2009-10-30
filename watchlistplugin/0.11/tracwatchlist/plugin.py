@@ -112,8 +112,8 @@ class WatchlinkPlugin(Component):
             "SELECT settings FROM watchlist_settings WHERE wluser = %s",
             (user,) )
 
-        (settingsstr,) = cursor.fetchone()
         try:
+          (settingsstr,) = cursor.fetchone()
           return dict([ kv.split('=') for kv in settingsstr.split("&") ])
         except:
           return dict()
