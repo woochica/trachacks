@@ -14,19 +14,14 @@ from  trac.core        import  *
 from  trac.web.chrome  import  add_stylesheet
 from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
 from  trac.util.text   import  to_unicode
+from  trac.wiki.model  import  WikiPage
+from  trac.config      import  Option
 
 class WikiCssPlugin (Component):
     """ This Trac plug-in implements a way to use a wiki page as CSS file
     """
     implements ( IRequestHandler, IRequestFilter )
-
-
-   # Init
-    def __init__(self):
-        self.wikipage = self.env.config.get('wikicss', 'wikipage')
-        if not self.wikipage:
-            self.log.error("WikiCss: Wiki page not configured.")
-
+    wikipage = Option('wikicss', 'wikipage')
 
    # IRequestHandler methods
     def match_request(self, req):
@@ -41,17 +36,13 @@ class WikiCssPlugin (Component):
                 raise Exception ("Unsupported path requested!")
             if not self.wikipage:
                 raise Exception ("WikiCss: Wiki page not configured.")
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
-            cursor.execute( \
-                "SELECT text FROM wiki WHERE name=%s " \
-                "ORDER BY version DESC;", (self.wikipage,) )
-            content = cursor.fetchone()
-            if not content:
+
+            wiki = WikiPage(self.env, self.wikipage)
+
+            if not wiki.exists:
                 raise Exception("WikiCss: Configured wiki page '%s' doesn't exits." % self.wikipage)
-            while isinstance(content,tuple) or isinstance(content,list):
-                content = content[0]
-            req.send(to_unicode(content), content_type='text/css', status=200)
+
+            req.send( wiki.text, content_type='text/css', status=200)
         except RequestDone:
             pass
         except Exception, e:
