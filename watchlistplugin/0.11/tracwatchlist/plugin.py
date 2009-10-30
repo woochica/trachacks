@@ -72,7 +72,7 @@ class WatchlinkPlugin(Component):
     def get_navigation_items(self, req):
         href = Href(req.base_path)
         user = req.authname
-        if user and user != 'anonymous' and self.has_watchlist(user):
+        if user and user != 'anonymous':
             yield ('mainnav', 'watchlist', tag.a( "Watchlist", href=href("watchlist") ) )
 
     def _convert_pattern(self, pattern):
