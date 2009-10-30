@@ -64,7 +64,7 @@ class ContactInfo(Component):
         simply send the response itself and not return anything.
         """
         data = {}
-        data['project'] = ${repr(project)
+        data['project'] = ${repr(project)}
         return ("${package}.html", data, 'text/html')
 
     ### methods for INavigationContributor
