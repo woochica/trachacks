@@ -34,6 +34,7 @@ from  trac.util.text   import  to_unicode
 from  genshi.builder   import  tag, Markup
 from  urllib           import  quote_plus
 from  trac.config      import  BoolOption
+from  trac.db          import  Table, Column, Index, DatabaseManager
 
 __DB_VERSION__ = 3
 
@@ -82,6 +83,41 @@ class WatchlinkPlugin(Component):
     def match_request(self, req):
         return req.path_info.startswith("/watchlist")
 
+    def _save_user_settings(self, user, settings):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.log = self.env.log
+
+        settingsstr = "&".join([ "=".join(kv) for kv in settings.items()])
+
+        cursor.execute( """
+          SELECT count(*) FROM watchlist_settings WHERE wluser=%s LIMIT 0,1""", (user,) )
+        ex = cursor.fetchone()
+        if not ex or not int(ex[0]):
+          cursor.execute(
+              "INSERT INTO watchlist_settings VALUES (%s,%s)",
+              (user, settingsstr) )
+        else:
+          cursor.execute(
+              "UPDATE watchlist_settings SET settings=%s WHERE wluser=%s ",
+              (settingsstr, user) )
+
+        db.commit()
+        return True
+
+    def _get_user_settings(self, user):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute(
+            "SELECT settings FROM watchlist_settings WHERE wluser = %s",
+            (user,) )
+
+        (settingsstr,) = cursor.fetchone()
+        try:
+          return dict([ kv.split('=') for kv in settingsstr.split("&") ])
+        except:
+          return dict()
+
 
     def process_request(self, req):
         href = Href(req.base_path)
@@ -92,7 +128,7 @@ class WatchlinkPlugin(Component):
                         " to view or change your watchlist!" ) )
 
         args = req.args
-        wldict = args
+        wldict = args.copy()
         action = args.get('action','view')
         ispattern = False# Disabled for now, not implemented fully # args.get('ispattern','0')
 
@@ -197,6 +233,15 @@ class WatchlinkPlugin(Component):
               self.unset_notify(req.session.sid, True, realm, resid)
               db.commit()
             action = "view"
+
+        if action == "settings":
+          d = args.copy()
+          del d['action']
+          self._save_user_settings(user, d)
+          action = "view"
+          wldict['user_settings'] = d
+        else:
+          wldict['user_settings'] = self._get_user_settings(user)
 
         wldict['is_watching'] = is_watching
         if action == "view":
@@ -404,7 +449,6 @@ class WatchlinkPlugin(Component):
     # IEnvironmentSetupParticipant methods:
     def _create_db_table(self, db=None, name='watchlist'):
         """ Create DB table if it not exists. """
-        from trac.db import Table, Column, Index, DatabaseManager
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         db_connector, _ = DatabaseManager(self.env)._get_connector()
@@ -420,8 +464,25 @@ class WatchlinkPlugin(Component):
 
         # Set database schema version.
         if (name == 'watchlist'):
+          self._create_db_table2(db)
           cursor.execute("UPDATE system SET value=%s WHERE name='watchlist_version'",
                 (str(__DB_VERSION__),) )
+        return
+
+    def _create_db_table2(self, db=None):
+        """ Create settings DB table if it not exists. """
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        db_connector, _ = DatabaseManager(self.env)._get_connector()
+
+        table = Table('watchlist_settings')[
+                    Column('wluser', unique=True),
+                    Column('settings'),
+                ]
+
+        for statement in db_connector.to_sql(table):
+            cursor.execute(statement)
+
         return
 
     def environment_created(self):
@@ -432,6 +493,10 @@ class WatchlinkPlugin(Component):
         cursor = db.cursor()
         try:
             cursor.execute("SELECT count(wluser),count(resid),count(realm) FROM watchlist")
+            count = cursor.fetchone()
+            if count is None:
+                return True
+            cursor.execute("SELECT count(*) FROM watchlist_settings")
             count = cursor.fetchone()
             if count is None:
                 return True
@@ -459,6 +524,12 @@ class WatchlinkPlugin(Component):
             cursor.execute("SELECT count(*) FROM watchlist")
         except:
             self._create_db_table(db)
+            return
+
+        try:
+            cursor.execute("SELECT count(*) FROM watchlist_settings")
+        except:
+            self._create_db_table2(db)
             return
 
         try:
