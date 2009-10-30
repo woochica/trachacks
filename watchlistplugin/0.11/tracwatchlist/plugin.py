@@ -51,8 +51,13 @@ class WatchlinkPlugin(Component):
                 IEnvironmentSetupParticipant, ITemplateProvider )
     gnotify = BoolOption('watchlist', 'notifications', False,
                 "Enables notification features")
+    gnotifyctxtnav = BoolOption('watchlist', 'display_notify_navitems', False,
+                "Enables notification navigation items")
     gnotifybydefault = BoolOption('watchlist', 'notify_by_default', False,
                 "Enables notifications by default for all watchlist entries")
+    gredirectback = BoolOption('watchlist', 'stay_at_resource', False,
+                "The user stays at the resource after a watch/unwatch operation "
+                "and the watchlist page is not displayed.")
 
     if gnotify:
       try:
@@ -64,6 +69,9 @@ class WatchlinkPlugin(Component):
         set_unwatch  = unset_notify
       except:
         gnotify = False
+
+    # Per user setting # FTTB FIXME
+    notifyctxtnav = gnotifyctxtnav
 
     ### methods for INavigationContributor
     def get_active_navigation_item(self, req):
@@ -119,8 +127,6 @@ class WatchlinkPlugin(Component):
         except:
           return dict()
 
-    redirectback = False
-
 
     def process_request(self, req):
         href = req.href
@@ -133,7 +139,7 @@ class WatchlinkPlugin(Component):
         args = req.args
         wldict = args.copy()
         action = args.get('action','view')
-        redirectback = self.redirectback
+        redirectback = self.gredirectback
         ispattern = False# Disabled for now, not implemented fully # args.get('ispattern','0')
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(href.watchlist()) != -1
 
@@ -450,7 +456,6 @@ class WatchlinkPlugin(Component):
         # Extract realm and resid from path:
         parts = req.path_info[1:].split('/',1)
 
-
         # Handle special case for '/' and '/wiki'
         if len(parts) == 0 or not parts[0]:
             parts = ["wiki", "WikiStart"]
@@ -466,12 +471,20 @@ class WatchlinkPlugin(Component):
         href = Href(req.base_path)
         user = req.authname
         if user and user != "anonymous":
-            if not self.is_watching(realm, resid, user):
-                add_ctxtnav(req, "Watch", href=href('watchlist', action='watch',
-                    resid=resid, realm=realm), title="Add %s to watchlist" % realm)
-            else:
+            if self.is_watching(realm, resid, user):
                 add_ctxtnav(req, "Unwatch", href=href('watchlist', action='unwatch',
                     resid=resid, realm=realm), title="Remove %s from watchlist" % realm)
+            else:
+                add_ctxtnav(req, "Watch", href=href('watchlist', action='watch',
+                    resid=resid, realm=realm), title="Add %s to watchlist" % realm)
+            if self.gnotify and self.notifyctxtnav:
+              if self.is_notify(req.session.sid, True, realm, resid):
+                add_ctxtnav(req, "Do not Notify me", href=href('watchlist', action='notifyoff',
+                    resid=resid, realm=realm), title="No not notify me if %s changes" % realm)
+              else:
+                add_ctxtnav(req, "Notify me", href=href('watchlist', action='notifyon',
+                    resid=resid, realm=realm), title="Notify me if %s changes" % realm)
+
         return (template, data, content_type)
 
 
