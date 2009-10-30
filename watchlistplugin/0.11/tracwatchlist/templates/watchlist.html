@@ -212,7 +212,8 @@
           </thead>
           <tbody>
               <tr py:for="ticket in ticketlist">
-                  <td class="id">${link('ticket', ticket.id, text='#' + ticket.id)}</td>
+                  <td class="id">
+                    <a href="${href('ticket', ticket.id)}" title="${ticket.summary}">#${ticket.id}</a></td>
                   <td class="datetime">$ticket.datetime
                       <py:if test="ticket.timedelta"> (<a
                           href="$ticket.timeline_link">$ticket.timedelta</a> ago)</py:if></td>
