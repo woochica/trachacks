@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# http://www.trac-hacks.org/wiki/PlannedMilestonesMacro
 
 import re    
 from trac.wiki.macros import WikiMacroBase
@@ -19,25 +20,27 @@ class PlannedMilestonesMacro(WikiMacroBase):
     }}}    
     """       
     def expand_macro(self, formatter, name, content):
-
-	length = None
-	pattern = ''
-
+        
+        length = None
+        pattern = ''
+        
         if content:
             argv = [arg.strip() for arg in content.split(',')]
             if len(argv) > 0:
-		pattern = argv[0]
-		if len(argv) > 1:
-                    length = int(argv[1])
-	
+                pattern = argv[0]
+            if len(argv) > 1:
+                length = int(argv[1])
+                
         out = StringIO()
         out.write('<ul>\n')
-	milestones = []
-	for milestone in Milestone.select(self.env, include_completed=False):
-	    if re.match(pattern, milestone.name):
-		milestones.append(milestone)
-
-	for milestone in milestones[0:length]:
+        
+        milestones = []
+        
+        for milestone in Milestone.select(self.env, include_completed=False):
+            if re.match(pattern, milestone.name):
+                milestones.append(milestone)
+                
+        for milestone in milestones[0:length]:
             if to_timestamp(milestone.due) > 0:
                 date = format_datetime(milestone.due, '%Y-%m-%d')
             else:
