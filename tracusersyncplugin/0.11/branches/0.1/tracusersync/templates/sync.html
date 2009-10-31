@@ -1,0 +1,60 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+
+      <xi:include href="admin.html" />	
+  <head>
+    <title>User Sync</title>
+  </head>
+
+  <body>
+    <h2>Synchronize User Accounts</h2>
+        <div class="us_message" id="us_message" py:if="len(us_message)>0">
+           <div py:for="message in us_message">${message}</div>
+        </div>
+        <div class="us_error" id="us_error" py:if="len(us_error)>0">
+           <div py:for="message in us_error">${message}</div>
+        </div>
+	<div class="us_envs" py:if="tracenvs" id="us_form_data">
+		<form method="post" id="us_sync_form" class="us_form">
+        		<fieldset id="tracenvs" py:if="tracenvs">
+	        		<legend>Select Environments</legend>
+				<span py:for="option in tracenvs">
+					<input type="checkbox" name="tracenv" checked="checked"  value="${option}"/>
+					${option.capitalize()}
+				</span>
+        		</fieldset>
+                        <fieldset py:if="users or users_keep">
+                                <legend>User lists</legend>
+                                <table width="100%" border="0" class="optiontable" id="us_userlists">
+                                   <tr py:if="users"><th>Users from ${pwdfile}:</th>
+                                      <td><span py:for="user in users">
+                                          ${user}
+                                      </span></td></tr>
+                                   <tr py:if="users_keep"><th>Users to protect:</th>
+                                       <td><input type="text" name="users_keep" id="users_keep" value="${users_keep}"/></td></tr>
+                                </table>
+                        </fieldset>
+                        <fieldset>
+                                <legend>Actions</legend>
+                                <input type="checkbox" name="action_sync" id="action_sync" checked="checked" value="1"/> Synchronize users<br/>
+                                <div id="purge_checkbox" class="us_noalert"><input type="checkbox" name="action_purge" value="1" onclick="check_alert(this)"/> Purge non-existing users
+                                  <span class="info">This may cause danger - make sure you read the docs before using this!</span>
+                                </div>
+                        </fieldset>
+			<div class="us_env_actions">
+				<input type="submit" name="sync_envs" value="Perform actions"/>
+			</div>
+		</form>
+	</div>
+        <div class="us_log" id="us_log" py:if="len(us_log)>0">
+           <fieldset>
+              <legend>Log messages</legend>
+              <ul><li py:for="message in us_log">${message}</li></ul>
+           </fieldset>
+        </div>
+  </body>
+</html>

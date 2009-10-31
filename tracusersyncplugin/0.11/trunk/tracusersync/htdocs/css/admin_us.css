@@ -1,0 +1,29 @@
+/**
+ * Main Layout
+ */
+
+
+/**
+ *	Messages
+ */
+div.us_error {
+ background: #fdc;
+ border: 2px solid #d00;
+ color: #500;
+ padding: .5em;
+ margin: 1em 0;
+}
+
+div.us_message {
+ padding:3px;
+ border: 2px solid green;
+ background-color:#66CC99;
+ text-align:center;
+}
+
+div.us_log { color: #333; }
+
+.optiontable th { color: #444; padding: 0 .25em; font-size: 90%; font-weight: bold }
+.us_alert { background: #f22; text-decoration: blink }
+.us_alert .info { display: inline; font-weight: bold; }
+.us_noalert .info { display: none; color: transparent; }
