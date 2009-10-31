@@ -3,6 +3,7 @@ import fileinput
 from trac.core import *
 from trac.config import *
 from trac.env import Environment
+from trac.perm import PermissionSystem, PermissionError
 
 class UserSyncAdmin(Component):
   def get_envs(self, parentdir):
@@ -68,7 +69,7 @@ class UserSyncAdmin(Component):
         sids.append(row[0])
      return sids
 
-  def get_tracenv_userdata(self, path, userlist=''):
+  def get_tracenv_userdata(self, req, path, userlist=''):
      """Retrieve account data from the environment at the specified path
      @param path path to the environment
      @param userlist comma separated list of users to restrict the result to (e.g. the users from the password file), each user enclosed in single quotes (for SQL)
@@ -81,6 +82,9 @@ class UserSyncAdmin(Component):
      if self.env.config.get('account-manager','password_file') != env.config.get('account-manager','password_file'):
        self.env.log.info('Password files do not match, skipping environment %s' % (path,))
        return data
+     perm = PermissionSystem(env)
+     if not 'TRAC_ADMIN' in perm.get_user_permissions(req.perm.username):
+       raise PermissionError
      db = env.get_db_cnx()
      cursor = db.cursor()
      sync_fields = self.env.config.getlist('user_sync','sync_fields')
@@ -146,7 +150,7 @@ class UserSyncAdmin(Component):
             res[sid]['email_verification_sent_to'] = rec['email_verification_sent_to']
     return res, err
 
-  def update_tracenv_userdata(self, path, userdata):
+  def update_tracenv_userdata(self, req, path, userdata):
     """Update the userdata in the specified environment using the records passed
     by userdata.
     @param path     : path to the trac environment to update
@@ -168,6 +172,9 @@ class UserSyncAdmin(Component):
     except IOError:
       self.env.log.debug('Could not initialize environment at %s' % (path,))
       return False, 'Could not initialize environment at %s' % (path,)
+    perm = PermissionSystem(env)
+    if not 'TRAC_ADMIN' in perm.get_user_permissions(req.perm.username):
+      raise PermissionError
     db = env.get_db_cnx()
     cursor = db.cursor()
     if not dryrun: self.env.log.debug('Updating database for %s' % (tracenv,))

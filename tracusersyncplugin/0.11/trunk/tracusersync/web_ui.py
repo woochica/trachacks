@@ -10,6 +10,7 @@ from trac.util.html import html
 from trac.util.datefmt import format_datetime
 from trac.util.translation import _
 from trac.env import Environment
+from trac.perm import PermissionError
 
 from tracusersync.api import UserSyncAdmin
 
@@ -173,8 +174,13 @@ class UserSyncAdminPage(Component):
         rec_err = {}
         attr = "'name','email','email_verification_sent_to','email_verification_token'"
         for tracenv in tracenvs:
-           recs = self.api.get_tracenv_userdata(os.path.join(os.getenv('TRAC_ENV_PARENT_DIR'),tracenv),userlist)
-           # each env must at least have one user (the TRAC_ADMIN). No records returned here means an error (different password file)
+           try:
+             recs = self.api.get_tracenv_userdata(req,os.path.join(os.getenv('TRAC_ENV_PARENT_DIR'),tracenv),userlist)
+           except PermissionError:
+             self.data['log'].append('You do not have the required permissions in %s - excluding it from synchronization' % (tracenv,))
+             self.env.log.info('Sorry, but you do not have the required permissions in %s' % (tracenv,))
+             continue
+           # each env must at least have one user (the TRAC_ADMIN). No records returned here means an error (different password file or missing privs)
            if not recs:
              del tracenvs[tracenvs.index(tracenv)]
              self.data['log'].append('Environment %s uses a different password file - excluding it from synchronization' % (tracenv,))
@@ -201,7 +207,7 @@ class UserSyncAdminPage(Component):
         env_ok = 0
         env_err = 0
         for tracenv in tracenvs:
-          success, msg = self.api.update_tracenv_userdata(os.path.join(os.getenv('TRAC_ENV_PARENT_DIR'),tracenv), res)
+          success, msg = self.api.update_tracenv_userdata(req, os.path.join(os.getenv('TRAC_ENV_PARENT_DIR'),tracenv), res)
           if success:
             self.data['log'].append(msg)
             env_ok += 1
