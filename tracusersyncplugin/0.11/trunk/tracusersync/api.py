@@ -53,6 +53,7 @@ class UserSyncAdmin(Component):
      """Get array of users defined in the specified environment having data assigned
      @param path path to the environment
      @param userlist comma separated list of users to restrict the result to (e.g. the users from the password file), each user enclosed in single quotes (for SQL)
+     @return array [0..n] of string users
      """
      env = Environment(path)
      sids = []
@@ -68,11 +69,20 @@ class UserSyncAdmin(Component):
      return sids
 
   def get_tracenv_userdata(self, path, userlist=''):
+     """Retrieve account data from the environment at the specified path
+     @param path path to the environment
+     @param userlist comma separated list of users to restrict the result to (e.g. the users from the password file), each user enclosed in single quotes (for SQL)
+     @return array (empty array if the environment uses a different password file than the master env calling us)
+     """
      self.env.log.debug('Get user data from %s' % (path,))
+     data = {}
      env = Environment(path)
+     # if this environment uses a different password file, we return an empty dataset
+     if self.env.config.get('account-manager','password_file') != env.config.get('account-manager','password_file'):
+       self.env.log.info('Password files do not match, skipping environment %s' % (path,))
+       return data
      db = env.get_db_cnx()
      cursor = db.cursor()
-     data = {}
      sync_fields = self.env.config.getlist('user_sync','sync_fields')
      attr = "'"+"','".join(sync_fields)+"','email_verification_sent_to','email_verification_token'"
      self.env.log.debug('* Checking attributes: %s' % (attr,))

@@ -174,6 +174,11 @@ class UserSyncAdminPage(Component):
         attr = "'name','email','email_verification_sent_to','email_verification_token'"
         for tracenv in tracenvs:
            recs = self.api.get_tracenv_userdata(os.path.join(os.getenv('TRAC_ENV_PARENT_DIR'),tracenv),userlist)
+           # each env must at least have one user (the TRAC_ADMIN). No records returned here means an error (different password file)
+           if not recs:
+             del tracenvs[tracenvs.index(tracenv)]
+             self.data['log'].append('Environment %s uses a different password file - excluding it from synchronization' % (tracenv,))
+             continue
            ucnt = 0
            for sid in recs:
              if not sid in data: data[sid] = []
