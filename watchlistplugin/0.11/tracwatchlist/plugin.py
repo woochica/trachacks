@@ -613,7 +613,6 @@ class WatchlistPlugin(Component):
         except:
           cursor.connection.rollback()
           cursor.execute("INSERT INTO system (name, value) VALUES ('watchlist_version', '0')")
-          return
 
         try:
             cursor.execute("SELECT count(*) FROM watchlist")
