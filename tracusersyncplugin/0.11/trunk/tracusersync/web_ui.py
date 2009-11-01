@@ -51,7 +51,7 @@ class UserSyncAdminPage(Component):
     _dryrun = BoolOption('user_sync','dryrun','true',
       doc = 'Stay read-only (true) or really apply the changes (false). As long'
       ' as this plugin is in early-beta state, it defaults to "true" (read-only).')
-    _exclude_envs = ListOption('user_sync','exclude_envs','relman,orarep',
+    _exclude_envs = ListOption('user_sync','exclude_envs','',
       doc = 'Comma separated list of environments to exclude from synchronization'
       ' by default')
 
