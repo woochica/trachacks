@@ -47,6 +47,14 @@ HTML BODY {
 	font-variant: small-caps;
 }
 
+.USERPROMPT {
+	color: red;
+}
+
+.USERPROMPTHOST {
+	font-style: italic;
+}
+
 BODY DIV {
 	margin: 0;
 }

@@ -43,7 +43,10 @@ class TracFreeDoc(Component):
 
 
     def _cli_formatter(self, formatter, match, fullmatch):
-        return tag.tt(fullmatch.group('codeblock'), class_='USERPROMPT') + tag.br
+        host = fullmatch.group('host')
+        codeblock = fullmatch.group('codeblock')
+        return tag.tt(host, class_='USERPROMPTHOST') +\
+            tag.tt(codeblock, class_='USERPROMPT') + tag.br
 
     def _file_formatter(self, formatter, match, fullmatch):
         return tag.tt(fullmatch.group('filename'),class_='FILENAME')
@@ -70,7 +73,7 @@ class TracFreeDoc(Component):
 
     def get_wiki_syntax(self):
         # Command prompt
-        yield(r"(?P<cli>!?(?P<codeblock>[\$\#].*?)$)", self._cli_formatter )
+        yield(r"(?P<cli>!?(?P<host>\s*?[\$\#] )(?P<codeblock>.*?)$)", self._cli_formatter )
         # File name
         yield(r"(?P<file>!?(file|dir):(?P<filename>\S*))", self._file_formatter )
         # Info box
