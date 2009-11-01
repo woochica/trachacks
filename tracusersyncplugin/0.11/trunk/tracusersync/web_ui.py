@@ -179,6 +179,7 @@ class UserSyncAdminPage(Component):
            except PermissionError:
              self.data['log'].append('You do not have the required permissions in %s - excluding it from synchronization' % (tracenv,))
              self.env.log.info('Sorry, but you do not have the required permissions in %s' % (tracenv,))
+             del tracenvs[tracenvs.index(tracenv)]
              continue
            # each env must at least have one user (the TRAC_ADMIN). No records returned here means an error (different password file or missing privs)
            if not recs:
