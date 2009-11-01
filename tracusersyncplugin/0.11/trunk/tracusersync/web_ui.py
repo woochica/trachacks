@@ -147,7 +147,7 @@ class UserSyncAdminPage(Component):
         if req.args.get('action_sync'):
            syncok = self._do_sync(req,tracenvs)
         if req.args.get('action_purge'):
-           purgeok = self._do_purge()
+           purgeok = self._do_purge(req,tracenvs)
         return syncok and purgeok
 
     def _do_sync(self, req, tracenvs):
@@ -223,13 +223,22 @@ class UserSyncAdminPage(Component):
           self.data['msg'].append('Users successfully synchronized for %i environments. Please see the log below for details.' % (env_ok,))
           return True
 
-    def _do_purge(self):
+    def _do_purge(self,req,tracenvs):
       """Purge obsolete data - i.e. environment data (sessions, preferences,
       permissions) from users no longer existing. Wrapper to api.do_purge()
       """
-      self.data['log'].append('Purge was requested - but is not yet available, sorry.')
-      ok, msg = self.api.do_purge()
-      if ok: self.data['msg'].append(msg)
-      else: self.data['err'].append(msg)
-      return ok
+      self.data['log'].append('Purging environments')
+      purged = 0
+      for tracenv in tracenvs:
+        try:
+          ok, msg = self.api.do_purge(req,os.path.join(os.getenv('TRAC_ENV_PARENT_DIR'),tracenv),self.users)
+        except PermissionError:
+          self.data['log'].append('You do not have the required permissions in %s - skipped from purging' % (tracenv,))
+          self.env.log.info('Sorry, but you do not have the required permissions in %s' % (tracenv,))
+          del tracenvs[tracenvs.index(tracenv)]
+          continue
+        purged += 1
+        self.data['log'].append(msg)
+      self.data['msg'].append('Successfully purged %i environments. Please see the log below for details.' % (purged,))
+      return purged > 0
 

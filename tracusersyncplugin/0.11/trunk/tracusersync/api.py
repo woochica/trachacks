@@ -36,6 +36,7 @@ class UserSyncAdmin(Component):
   def get_perm_groups(self,path):
      """Get array of permission groups (e.g. anonymous,authenticated) defined in the given environment.
      These 'users' should e.g. never be purged on cleanup
+     @param path path to the trac env to investigate
      """
      users = []
      env = Environment(path)
@@ -153,6 +154,7 @@ class UserSyncAdmin(Component):
   def update_tracenv_userdata(self, req, path, userdata):
     """Update the userdata in the specified environment using the records passed
     by userdata.
+    @param req
     @param path     : path to the trac environment to update
     @param userdata : collection of userdata as returned from merge()
     @return success : boolean
@@ -218,9 +220,56 @@ class UserSyncAdmin(Component):
     self.env.log.debug('Done updating userdata in environment %s' % (path,))
     return True, msg
 
-  def do_purge(self):
+  def do_purge(self, req, path, users):
     """Purge obsolete data - i.e. environment data (sessions, preferences,
     permissions) from users no longer existing
+    @param req
+    @param path path to the trac env to purge
+    @param users users to keep
+    @return boolean success
+    @return msg info
     """
-    self.env.log.info('+ Purging obsolete data')
-    return True, 'The purging functionality is not yet implemented.'
+    self.env.log.debug('+ Purging obsolete data')
+    dryrun = self.env.config.getbool('user_sync','dryrun',True)
+    sql = []
+    envpath, tracenv = os.path.split(path)
+    try:
+      env = Environment(path)
+    except IOError:
+      self.env.log.debug('Could not initialize environment at %s' % (path,))
+      return False, 'Could not initialize environment at %s' % (path,)
+    perm = PermissionSystem(env)
+    if not 'TRAC_ADMIN' in perm.get_user_permissions(req.perm.username):
+      raise PermissionError
+    excludes = self.get_perm_groups(path)+users
+    protect = "'"+"','".join(excludes)+"'"
+    self.env.log.debug("Excluding from purge: %s" % (protect,))
+    db = env.get_db_cnx()
+    cursor = db.cursor()
+    if not dryrun:
+      self.env.log.debug('Updating database for %s' % (tracenv,))
+      cursor.execute('DELETE FROM auth_cookie WHERE name NOT IN (%s)' % (protect,))
+      cursor.execute('DELETE FROM session WHERE sid NOT IN (%s)' % (protect,))
+      cursor.execute('DELETE FROM session_attribute WHERE sid NOT IN (%s)' % (protect,))
+      cursor.execute('DELETE FROM permission WHERE username NOT IN (%s)' % (protect,))
+      db.commit()
+
+    sql_file_path = self.env.config.get('user_sync','sql_file_path') or os.path.join(self.env.path,'log')
+    if sql_file_path.lower() == 'none':
+      self.env.log.debug('SQLFile disabled (sql_file_path is "none")')
+    else:
+      sqlfile = '%s.sql' % (tracenv,)
+      sqlfile = os.path.join(sql_file_path,sqlfile)
+      self.env.log.debug('Writing SQL to %s' % (sqlfile,))
+      try:
+          f = open(sqlfile,'a')
+          f.write('\n--- SQL for purging Trac environment %s\n' % (tracenv,));
+          f.write('DELETE FROM auth_cookie WHERE name NOT IN (%s);\n' % (protect,))
+          f.write('DELETE FROM session WHERE sid NOT IN (%s);\n' % (protect,))
+          f.write('DELETE FROM session_attribute WHERE sid NOT IN (%s);\n' % (protect,))
+          f.write('DELETE FROM permission WHERE username NOT IN (%s);\n' % (protect,))
+      except IOError:
+          self.env.log.debug('Could not write SQL file %s!' % (sqlfile,))
+          return False, 'Could not write SQL file %s!' % (sqlfile,)
+
+    return True, 'Successfully purged environment %s' % (tracenv,)
