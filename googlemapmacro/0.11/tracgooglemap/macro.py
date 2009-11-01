@@ -13,6 +13,7 @@ __date__     = r"$Date$"[7:-2]
 from genshi.builder import Element,tag
 from StringIO import StringIO
 from trac.core import *
+from trac.util import md5
 from trac.util.html import escape,Markup
 from tracadvparseargs import parse_args
 from trac.wiki.formatter import extract_link
@@ -22,7 +23,6 @@ from trac.web.chrome import ITemplateProvider, add_link, add_script
 from trac.env import IEnvironmentSetupParticipant
 from genshi.builder import Element
 from urllib import urlopen,quote_plus
-import md5
 import re
 
 COUNT = '_googlemapmacro_count'
@@ -311,7 +311,7 @@ The same with hyperlinked markers:
 
 
     def _get_coords(self, address):
-        m = md5.new()
+        m = md5()
         m.update(address)
         hash = m.hexdigest()
 
