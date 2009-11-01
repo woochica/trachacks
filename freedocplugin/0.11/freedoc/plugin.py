@@ -73,7 +73,7 @@ class TracFreeDoc(Component):
 
     def get_wiki_syntax(self):
         # Command prompt
-        yield(r"(?P<cli>!?(?P<host>\s*?[\$\#] )(?P<codeblock>.*?)$)", self._cli_formatter )
+        yield(r"(?P<cli>!?(?P<host>\S*?[\$\#] )(?P<codeblock>.*?)$)", self._cli_formatter )
         # File name
         yield(r"(?P<file>!?(file|dir):(?P<filename>\S*))", self._file_formatter )
         # Info box
