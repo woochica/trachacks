@@ -3,6 +3,7 @@ import fileinput
 from trac.core import *
 from trac.config import *
 from trac.env import Environment
+from trac.perm import PermissionSystem, PermissionError
 
 class UserSyncAdmin(Component):
   def get_envs(self, parentdir):
@@ -53,6 +54,7 @@ class UserSyncAdmin(Component):
      """Get array of users defined in the specified environment having data assigned
      @param path path to the environment
      @param userlist comma separated list of users to restrict the result to (e.g. the users from the password file), each user enclosed in single quotes (for SQL)
+     @return array [0..n] of string users
      """
      env = Environment(path)
      sids = []
@@ -67,12 +69,24 @@ class UserSyncAdmin(Component):
         sids.append(row[0])
      return sids
 
-  def get_tracenv_userdata(self, path, userlist=''):
+  def get_tracenv_userdata(self, req, path, userlist=''):
+     """Retrieve account data from the environment at the specified path
+     @param path path to the environment
+     @param userlist comma separated list of users to restrict the result to (e.g. the users from the password file), each user enclosed in single quotes (for SQL)
+     @return array (empty array if the environment uses a different password file than the master env calling us)
+     """
      self.env.log.debug('Get user data from %s' % (path,))
+     data = {}
      env = Environment(path)
+     # if this environment uses a different password file, we return an empty dataset
+     if self.env.config.get('account-manager','password_file') != env.config.get('account-manager','password_file'):
+       self.env.log.info('Password files do not match, skipping environment %s' % (path,))
+       return data
+     perm = PermissionSystem(env)
+     if not 'TRAC_ADMIN' in perm.get_user_permissions(req.perm.username):
+       raise PermissionError
      db = env.get_db_cnx()
      cursor = db.cursor()
-     data = {}
      sync_fields = self.env.config.getlist('user_sync','sync_fields')
      attr = "'"+"','".join(sync_fields)+"','email_verification_sent_to','email_verification_token'"
      self.env.log.debug('* Checking attributes: %s' % (attr,))
@@ -136,7 +150,7 @@ class UserSyncAdmin(Component):
             res[sid]['email_verification_sent_to'] = rec['email_verification_sent_to']
     return res, err
 
-  def update_tracenv_userdata(self, path, userdata):
+  def update_tracenv_userdata(self, req, path, userdata):
     """Update the userdata in the specified environment using the records passed
     by userdata.
     @param path     : path to the trac environment to update
@@ -158,6 +172,9 @@ class UserSyncAdmin(Component):
     except IOError:
       self.env.log.debug('Could not initialize environment at %s' % (path,))
       return False, 'Could not initialize environment at %s' % (path,)
+    perm = PermissionSystem(env)
+    if not 'TRAC_ADMIN' in perm.get_user_permissions(req.perm.username):
+      raise PermissionError
     db = env.get_db_cnx()
     cursor = db.cursor()
     if not dryrun: self.env.log.debug('Updating database for %s' % (tracenv,))
