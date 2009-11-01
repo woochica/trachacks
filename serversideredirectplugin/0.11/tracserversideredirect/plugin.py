@@ -75,19 +75,23 @@ Any other [TracLinks TracLink] can be used:
     def expand_macro(self, formatter, name, content):
         """Print redirect notice after edit."""
 
-        href = formatter.context.req.href
-
         target = extract_url(self.env, formatter.context, content)
         if not target:
-          target = href.wiki(content)
+          target = formatter.context.req.href.wiki(content)
 
-        return tag.div( tag.strong('This page redirects to: '),
-                    tag.a(content,href=target),
-                    class_ = 'system-message', id = 'notice' )
+        return tag.div(
+                  tag.strong('This page redirects to: '),
+                  tag.a(content,href=target),
+                  class_ = 'system-message',
+                  id = 'notice'
+               )
 
     def get_macros(self):
         """Provide but do not redefine the 'redirect' macro."""
-        if self.env.config.get('components','redirect.*') == 'enabled':
+        get = self.env.config.get
+        if get('components','redirect.*') == 'enabled' or \
+           get('components','redirect.redirect.*') == 'enabled' or \
+           get('components','redirect.redirect.tracredirect') == 'enabled':
             yield ''
         else:
             yield 'redirect'
@@ -113,7 +117,6 @@ Any other [TracLinks TracLink] can be used:
    # IRequestHandler methods
     def process_request(self, req):
         """Redirect to pre-selected target."""
-        from genshi.builder import tag
         if self.redirect_target or self._check_redirect(req):
             target = self.redirect_target
 
