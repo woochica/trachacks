@@ -11,18 +11,27 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
-from os import access,R_OK
 import os.path
-from trac.core import *
-from trac.web.api import IRequestHandler,IRequestFilter,RequestDone
-from trac.web.chrome import add_link
+from  os               import  access,R_OK
+from  trac.core        import  *
+from  trac.web.api     import  IRequestHandler,IRequestFilter,RequestDone
+from  trac.web.chrome  import  add_link
+from  trac.config      import  Option, BoolOption
+try: # PathOption exists only since Trac 0.11.5
+  from  trac.config    import  PathOption
+except:
+  from  trac.config    import  Option  as  PathOption
 
 class ShortcutIconRequestPlugin(Component):
     """Implements the /favicon.ico handler."""
-    implements(IRequestHandler,IRequestFilter)
+    implements ( IRequestHandler, IRequestFilter )
+
+    iconpath  = PathOption('shortcuticon', 'iconpath', None, "Filesystem path of shortcut icon")
+    _mimetype =     Option('shortcuticon', 'mimetype', None, "Mimetype of shortcut icon")
+    ishandler = BoolOption('shortcuticon', 'handler', True, "Handler for '/favicon.ico'")
+    isfilter  = BoolOption('shortcuticon', 'linkheader', ishandler, "Add 'link' tags for icon into HTML pages")
 
     path    = r'/favicon.ico'
-    section = 'shortcuticon'
 
     exttypes = {
               '.ico' : 'image/x-icon',
@@ -32,26 +41,16 @@ class ShortcutIconRequestPlugin(Component):
             }
 
     def __init__(self):
-        config       = self.env.config
-        section      = self.section
-
-        iconpath = config.get(section, 'iconpath')
-        mimetype = config.get(section, 'mimetype')
-
-        if not mimetype:
-            try:
-                idx = iconpath.rindex('.', -4)
-                mimetype = self.exttypes[ iconpath[idx:] ]
-            except:
-                mimetype = 'image/x-icon'
-
-        ishandler = config.getbool(section, 'handler',    True)
-        isfilter  = config.getbool(section, 'linkheader', ishandler)
-
-        self.iconpath  = iconpath
-        self.mimetype  = mimetype
-        self.ishandler = ishandler
-        self.isfilter  = isfilter
+        if self._mimetype:
+          self.mimetype = self._mimetype
+        else:
+          try:
+            iconpath = self.iconpath
+            idx = iconpath.rindex('.', -4)
+            self.mimetype = self.exttypes[ iconpath[idx:] ]
+            self.mimetype = 'image/x-icon'
+          except:
+            self.mimetype = 'image/x-icon'
 
 
     # IRequestHandler methods
@@ -64,7 +63,7 @@ class ShortcutIconRequestPlugin(Component):
 
     def process_request(self, req):
         iconpath = self.iconpath
-        iconok = False
+        iconok   = False
         if iconpath:
             if os.path.isfile(iconpath) and os.access(iconpath,R_OK):
                 iconok = True
@@ -78,7 +77,6 @@ class ShortcutIconRequestPlugin(Component):
         else:
             req.send_response(404)
             req.end_headers()
-#           req.send('No shortcut icon in use.', content_type='text/plain', status=404)
         raise RequestDone
 
 
@@ -90,7 +88,7 @@ class ShortcutIconRequestPlugin(Component):
         if self.isfilter:
             path = req.base_path + self.path
             add_link(req, 'shortcut icon', path, None, self.mimetype)
-            add_link(req, 'icon', path, None, self.mimetype)
+            add_link(req, 'icon',          path, None, self.mimetype)
 
         return (template, data, content_type)
 
