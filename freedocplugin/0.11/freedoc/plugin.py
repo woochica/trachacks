@@ -74,7 +74,7 @@ class TracFreeDoc(Component):
         # File name
         yield(r"(?P<file>!?(file|dir):(?P<filename>\S*))", self._file_formatter )
         # Info box
-        yield(r"(?P<info>!?(?P<infotype>(?i)(note|important)):(?P<notes>.*?)$)", self._info_formatter)
+        yield(r"(?P<info>!?(?P<infotype>(?i)(note|important|tip)):(?P<notes>.*?)$)", self._info_formatter)
         # Man page entry
         yield(r"(?P<man>!?(?P<item>\S*?)\((?P<sektion>[0-9])\))", self._man_formatter)
         # Always include cariage return after ':' at end of line
