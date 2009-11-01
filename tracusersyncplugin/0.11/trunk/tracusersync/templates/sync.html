@@ -23,7 +23,7 @@
         		<fieldset id="tracenvs" py:if="tracenvs">
 	        		<legend>Select Environments</legend>
 				<span py:for="option in tracenvs">
-					<input type="checkbox" name="tracenv" checked="checked"  value="${option}"/>
+					<input type="checkbox" name="tracenv" checked="${tracenvs[option]==1 or None}" value="${option}"/>
 					${option.capitalize()}
 				</span>
         		</fieldset>

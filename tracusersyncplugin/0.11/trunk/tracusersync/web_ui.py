@@ -51,6 +51,9 @@ class UserSyncAdminPage(Component):
     _dryrun = BoolOption('user_sync','dryrun','true',
       doc = 'Stay read-only (true) or really apply the changes (false). As long'
       ' as this plugin is in early-beta state, it defaults to "true" (read-only).')
+    _exclude_envs = ListOption('user_sync','exclude_envs','relman,orarep',
+      doc = 'Comma separated list of environments to exclude from synchronization'
+      ' by default')
 
     # IAdminPageProvider methods
     def get_admin_panels(self, req):
@@ -96,7 +99,10 @@ class UserSyncAdminPage(Component):
 
         # Made it here - so we have all data to set up the WebIf:
         if len(self.data['err'])<1:
-           data['tracenvs'] = tracenvs
+           data['tracenvs'] = {}
+           for tracenv in tracenvs:
+             if tracenv in self.env.config.getlist('user_sync','exclude_envs'): data['tracenvs'][tracenv] = 0
+             else: data['tracenvs'][tracenv] = 1
            data['pwdfile']  = pwdfile
            # data['users'] is just for debug on display - can be dropped later
            data['users']    = self.users
@@ -155,7 +161,7 @@ class UserSyncAdminPage(Component):
         @param req      : the request
         @param tracenvs : trac environments as returned by _get_envs
         """
-        
+
         # Check whether we have all required information
         envs = req.args.getlist('tracenv')
         le = len(envs)
@@ -174,6 +180,9 @@ class UserSyncAdminPage(Component):
         rec_err = {}
         attr = "'name','email','email_verification_sent_to','email_verification_token'"
         for tracenv in tracenvs:
+           if not tracenv in envs:
+             self.env.log.debug('%s was not selected - skipping' % (tracenv,))
+             continue
            try:
              recs = self.api.get_tracenv_userdata(req,os.path.join(os.getenv('TRAC_ENV_PARENT_DIR'),tracenv),userlist)
            except PermissionError:
@@ -208,6 +217,9 @@ class UserSyncAdminPage(Component):
         env_ok = 0
         env_err = 0
         for tracenv in tracenvs:
+          if not tracenv in envs:
+            self.env.log.debug('%s was not selected - skipping' % (tracenv,))
+            continue
           success, msg = self.api.update_tracenv_userdata(req, os.path.join(os.getenv('TRAC_ENV_PARENT_DIR'),tracenv), res)
           if success:
             self.data['log'].append(msg)
@@ -229,7 +241,11 @@ class UserSyncAdminPage(Component):
       """
       self.data['log'].append('Purging environments')
       purged = 0
+      envs = req.args.getlist('tracenv')
       for tracenv in tracenvs:
+        if not tracenv in envs:
+          self.env.log.debug('%s was not selected - skipping' % (tracenv,))
+          continue
         try:
           ok, msg = self.api.do_purge(req,os.path.join(os.getenv('TRAC_ENV_PARENT_DIR'),tracenv),self.users)
         except PermissionError:
