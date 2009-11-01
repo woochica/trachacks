@@ -10,12 +10,14 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = r"$Rev$"[6:-2]
 __date__     = r"$Date$"[7:-2]
 
-from trac.core      import  *
-from trac.web.api   import IRequestHandler,IRequestFilter,RequestDone
-from trac.wiki.api  import IWikiMacroProvider
-from trac.mimeview.api import Context
-from tracextracturl import extract_url
-from trac.wiki.macros import WikiMacroBase
+from  trac.core          import  *
+from  trac.web.api       import  IRequestHandler,IRequestFilter,RequestDone
+from  trac.wiki.api      import  IWikiMacroProvider
+from  trac.mimeview.api  import  Context
+from  tracextracturl     import  extract_url
+from  trac.wiki.macros   import  WikiMacroBase
+from  trac.wiki.model    import  WikiPage
+from  genshi.builder     import  tag
 import re
 
 MACRO = re.compile(r'.*\[\[redirect\((.*)\)\]\]')
@@ -72,8 +74,6 @@ Any other [TracLinks TracLink] can be used:
 
     def expand_macro(self, formatter, name, content):
         """Print redirect notice after edit."""
-        from genshi.builder import tag
-        from trac.wiki.formatter import format_to_oneliner
 
         href = formatter.context.req.href
 
@@ -170,21 +170,13 @@ Any other [TracLinks TracLink] can be used:
         else:
           wiki = req.path_info[6:]
 
-        # Extract Wiki page
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        if req.args.has_key('version'):
-          cursor.execute("SELECT text FROM wiki WHERE name=%s and version=%s;" , (wiki,req.args['version']))
-        else:
-          cursor.execute("SELECT text,MAX(version) FROM wiki WHERE name=%s;" , (wiki,))
-        text = cursor.fetchone();
-        # If not exist or empty:
-        if not text or not text[0]:
+        wp = WikiPage(self.env, wiki, req.args.get('version'))
+
+        if not wp.exists:
             return False
-        text = text[0]
 
         # Check for redirect "macro":
-        m = MACRO.match(text)
+        m = MACRO.match(wp.text)
         if not m:
             return False
         wikitarget = m.groups()[0]
@@ -207,19 +199,30 @@ Any other [TracLinks TracLink] can be used:
         from trac.wiki.web_ui import WikiModule
         args = req.args
 
-        if isinstance(handler, WikiModule) \
-           and \
-           ( req.path_info.startswith('/wiki/') \
-             or req.path_info == '/wiki' \
-           ) \
-           and req.method == 'GET' \
-           and not args.has_key('action') \
-           and (not args.has_key('version') or \
-               (args.has_key('redirect') and args['redirect'].lower() == 'yes')) \
-           and (not args.has_key('redirect') or args['redirect'].lower() != 'no') \
-           and req.environ.get('HTTP_REFERER','').find('action=edit') == -1 \
-           and self._check_redirect(req):
-                return self
+        if not isinstance(handler, WikiModule):
+           return handler
+        if not req.path_info.startswith('/wiki/') and not req.path_info == '/wiki':
+           self.env.log.debug("SSR: no redirect: Path is not a wiki path")
+           return handler
+        if req.method != 'GET':
+           self.env.log.debug("SSR: no redirect: No GET request")
+           return handler
+        if 'action' in args:
+           self.env.log.debug("SSR: no redirect: action=" + args['action'])
+           return handler
+        if args.has_key('version'):
+           self.env.log.debug("SSR: no redirect: version=...")
+           return handler
+        if args.has_key('redirect') and args['redirect'].lower() == 'no':
+           self.env.log.debug("SSR: no redirect: redirect=no")
+           return handler
+        if req.environ.get('HTTP_REFERER','').find('action=edit') != -1:
+           self.env.log.debug("SSR: no redirect: HTTP_REFERER includes action=edit")
+           return handler
+        if self._check_redirect(req):
+           self.env.log.debug("SSR: redirect!")
+           return self
+        self.env.log.debug("SSR: no redirect: No redirect macro found.")
         return handler
 
     def post_process_request(self, req, template, data, content_type):
