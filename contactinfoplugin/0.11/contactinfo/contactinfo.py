@@ -111,7 +111,7 @@ class ContactInfo(Component):
             data['manager'] = None
 
         # email
-        data['email'] = self.env.config.get('notification', 'smtp_reply_to')
+        data['email'] = self.env.config.get('notification', 'smtp_replyto')
 
 
         return ("contactinfo.html", data, 'text/html')
