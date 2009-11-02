@@ -79,6 +79,9 @@ class TracpastePlugin(Component):
         add_stylesheet(req, 'pastebin/css/pastebin.css')
         add_stylesheet(req, 'common/css/code.css')
 
+        if (not req.args):
+            req.redirect(req.href.pastebin())
+        
         # new post
         if req.args['new_paste']:
             title = req.args.get('title', 'untitled')
