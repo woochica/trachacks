@@ -1,7 +1,9 @@
-/* Javsscript code for Trac Watchlist Plugin */
+/*! Javsscript code for Trac Watchlist Plugin 
+ * $Id$
+ * */
 
 
-/* From http://chris-barr.com/entry/disable_text_selection_with_jquery/  */
+/*! From http://chris-barr.com/entry/disable_text_selection_with_jquery/  */
 $(function(){
   $.extend($.fn.disableTextSelect = function() {
     return this.each(function(){
@@ -16,7 +18,7 @@ $(function(){
   });
   $('.noSelect').disableTextSelect();//No text selection on elements with a class of 'noSelect'
 });
-/*****************************************8*/
+/*! */
 
 
 function wlshowhide(ref, tag) {
