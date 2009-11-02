@@ -55,6 +55,24 @@ class FilterTransformation(object):
         for event in flush(queue):
             yield None,event
 
+def split_stream(stream):
+    """splits the stream based on toplevel START / END tags"""
+    cl = []
+    res = []
+    num_start=0
+    for kind, data, pos in stream:
+        cl.append((kind, data, pos))
+        if kind == Stream.START:
+            num_start = num_start+1
+        elif kind == Stream.END:
+            num_start = num_start-1
+            if num_start == 0:
+                res.append(Stream(cl))
+                cl=[]
+    if cl != []:
+        res.append(Stream(cl))
+    return res
+                
 
 billing_report_regex = re.compile("\{(?P<reportid>\d*)\}")
 def report_id_from_text(text):
@@ -69,6 +87,7 @@ def get_billing_reports(comp):
         billing_reports = set([x[0] for x in rows])
     return billing_reports
 
+
 class RowFilter(object):
     """A genshi filter that operates on table rows, completely hiding any that
     are in the billing_reports table."""
@@ -79,26 +98,35 @@ class RowFilter(object):
         self.component.log.debug('self.billing_reports= %r' % self.billing_reports)
 
     def __call__(self, row_stream):
-        events = list(row_stream)
-        report_url = Stream(events) \
-                        .select('td[@class="report"]/a/@href').render()
-        try:
-            id = int(report_url.split('/')[-1])
-
-            if not id in self.billing_reports:
-                for kind,data,pos in Stream(events):
+        #stream = Stream(list(row_stream))
+        def tryInt(v):
+            try:
+                return int(v)
+            except:
+                return None
+        streams = split_stream(row_stream)
+        #report_urls = [tryInt(i.get('href').split('/')[-1]) for i in stream.select('td[@class="report"]/a/@href')]
+        #self.component.log.debug("ReportRowFilter: #%s#,  %r" % (len(streams), list(report_urls)))
+        for stream in streams:
+            show_row = True
+            try:
+                report_url = stream.select('td[@class="report"]/a/@href').render()
+                id = tryInt(report_url.split('/')[-1])
+                self.component.log.debug("Report row filter: about to filter: %s not in %s : %s" % (id, self.billing_reports,  not id in self.billing_reports) )
+                show_row = not id in self.billing_reports 
+            except Exception, e:
+                self.component.log.exception("Report row filter failed")
+                show_row = True #Dont Hide Error Rows?
+            if show_row:
+                for kind,data,pos in stream:
                     yield kind,data,pos
-        except Exception, e:
-            self.component.log.exception("Report row filter failed")
-            for kind,data,pos in Stream(events):
-                yield kind,data,pos
 
 class ReportsFilter(Component):
     """Remove all billing reports from the reports list."""
     implements(ITemplateStreamFilter)
 
     def filter_stream(self, req, method, filename, stream, data):
-        if not filename == 'report_view.html':
+        if not filename in ('report_view.html', 'report_list.html'):
             return stream
         self.log.debug("Applying Reports Filter to remove T&E reports")
         return stream | Transformer(
@@ -113,7 +141,7 @@ class ReportScreenFilter(Component):
         self.log.debug('ReportScreenFilter: self.billing_reports= %r' % self.billing_reports)
 
     def filter_stream(self, req, method, filename, stream, data):
-        if not filename == 'report_view.html':
+        if not filename in ('report_view.html', 'report_list.html'):
             return stream
         reportid = [None]
 
