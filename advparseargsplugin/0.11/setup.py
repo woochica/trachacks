@@ -13,7 +13,7 @@ rev = str( max( pluginrev, macrorev, __revision__ ) )
 
 setup(
     name         = 'TracAdvParseArgsPlugin',
-    version      = '0.2.' + rev,
+    version      = '0.3.' + rev,
     packages     = ['tracadvparseargs'],
     author       = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
