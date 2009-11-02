@@ -101,7 +101,7 @@ use_tls = false
 group_blacklist = anonymous, authenticated
 
 [project]
-admin = 
+admin = ${manager}
 descr = ${description}
 footer = ${footer}
 icon = ${favicon}

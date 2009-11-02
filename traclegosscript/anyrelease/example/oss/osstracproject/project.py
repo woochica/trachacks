@@ -15,6 +15,7 @@ class OSSTracProject(TracProject):
                  default='localhost'),
              var('description', 'description of the trac project',
                  default=''),
+             var('manager', 'email address of the Trac manager', default=''),
              var('logo', '', default=''),
              var('url', 'url', default=''),
              var('footer', 'footer', default=''),
