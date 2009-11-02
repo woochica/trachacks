@@ -17,6 +17,7 @@ from trac.config import ListOption
 from trac.core import *
 from trac.util.text import CRLF
 from trac.versioncontrol import NoSuchChangeset
+from trac.web.chrome import add_warning
 from utils import iswritable
 
 class SVNHookSystem(FileSystemHooks):
@@ -64,10 +65,15 @@ class SVNHookSystem(FileSystemHooks):
         filename = self.filename(hookname)
         if not os.path.exists(filename):
             if not iswritable(filename):
-                return # XXX error handling?
-            os.mknod(self.mode)
+                add_warning(req, 'File "%s" not writable' % filename)
+                return
         f = file(filename, 'w')
         print >> f, contents
+        f.close()
+        try:
+            os.chmod(filename, self.mode)
+        except: # won't work on winblows
+            pass
 
     ### methods for IRepositoryChangeListener
 

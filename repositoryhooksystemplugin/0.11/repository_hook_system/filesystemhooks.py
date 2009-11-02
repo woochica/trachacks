@@ -77,7 +77,10 @@ class FileSystemHooks(Component):
         """create the stub for given hook and return the file object"""
         
         filename = self.filename(hookname)
-        os.mknod(filename, self.mode)
+        try:
+            os.mknod(filename, self.mode)
+        except: # won't work on windows
+            pass
         f = file(filename, 'w')
         print >> f, "#!/bin/bash"
         return f
