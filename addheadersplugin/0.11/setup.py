@@ -12,7 +12,7 @@ rev = str( max( coderev, __revision__ ) )
 
 setup(
     name = 'TracAddHeadersPlugin',
-    version = '0.1.' + rev,
+    version = '0.2.' + rev,
     packages = ['tracaddheaders'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
