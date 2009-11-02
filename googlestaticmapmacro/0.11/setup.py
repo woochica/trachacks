@@ -12,7 +12,7 @@ rev = str( max( coderev, __revision__ ) )
 
 setup(
     name = 'TracGoogleStaticMapMacro',
-    version = '0.2.' + rev,
+    version = '0.3.' + rev,
     packages = ['tracgooglestaticmap'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
