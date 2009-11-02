@@ -2,7 +2,7 @@
     $Id$
     $HeadURL$
 
-    This is Free Software under the BSD license.
+    This is Free Software under the GPLv3 license.
 
     The regexes XML_NAME (unchanged) and NUM_HEADLINE (added 'n'-prefix for all
     names) were taken from trac.wiki.parser and the base code of method
@@ -26,7 +26,7 @@ class DashesSyntaxPlugin(Component):
 
         `$Id$`
     """
-    implements(IWikiSyntaxProvider)
+    implements ( IWikiSyntaxProvider )
 
     RE_DASH  = r"(?P<endash>(?<!-)-{2,3}(?!-))"
     HTML_EN_DASH = "&#8211;"
