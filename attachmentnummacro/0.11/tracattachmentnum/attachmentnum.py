@@ -9,12 +9,11 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
-from trac.core import *
-from trac.resource import *
-
-from trac.wiki.api import IWikiMacroProvider
-from trac.wiki.formatter import format_to_oneliner
-from trac.wiki.macros import parse_args
+from  trac.core            import  *
+from  trac.wiki.api        import  IWikiMacroProvider
+from  trac.wiki.formatter  import  format_to_oneliner
+from  trac.wiki.macros     import  parse_args
+from  trac.config          import  Option, BoolOption
 
 class AttachmentNumMacro(Component):
     """
@@ -31,7 +30,10 @@ Examples:
 [[AttachmentNum(1,format=short)]]   # First attachment, hyper-linked filename is printed only, result: "first.doc".
 }}}
     """
-    implements(IWikiMacroProvider)
+    implements ( IWikiMacroProvider )
+
+    raw    = BoolOption('attachmentnum', 'raw', False, 'Default value for argument `raw`')
+    format =     Option('attachmentnum', 'format', None, 'Default value for argument `format`')
 
     ### methods for IWikiMacroProvider
     def get_macros(self):
@@ -44,19 +46,20 @@ Examples:
         largs, kwargs = parse_args(content)
         try:
             num = int(largs[0]) - 1
+            if num < 0:
+              raise Exception
         except:
-            raise TracError("Argument must be a positive integer!")
-        if num < 0:
             raise TracError("Argument must be a positive integer!")
 
         option = self.env.config.get
-        raw    = self.env.config.getbool('attachmentnum', 'raw', False)
         if 'raw' in kwargs:
-            vraw = str(kwargs['raw']).lower()
+            vraw = kwargs['raw'].lower()
             if vraw in ('yes','true','1','on'):
                 raw = True
             elif vraw in ('no','false','0','off'):
                 raw = False
+        else:
+            raw = self.raw
 
         res  = formatter.resource
         id   = res.id
@@ -64,8 +67,8 @@ Examples:
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute( "SELECT filename FROM attachment WHERE type='%s' " \
-                        "AND id='%s' ORDER BY time;" % (type,id) )
+        cursor.execute( "SELECT filename FROM attachment WHERE type=%s " \
+                        "AND id=%s ORDER BY time", (type,id) )
 
         attmnts = cursor.fetchall()
         if len(attmnts) < num + 1 or not attmnts[num] or not attmnts[num][0]:
@@ -75,8 +78,7 @@ Examples:
         wikilink = "attachment:'" + filename + "'"
         if raw:
             wikilink = "raw-" + wikilink
-        if kwargs.get('format', option('attachmentnum', 'format')) == 'short':
+        if kwargs.get('format', self.format) == 'short':
             wikilink = "[%s %s]" % (wikilink,filename)
         return format_to_oneliner(self.env, formatter.context, wikilink)
-
 
