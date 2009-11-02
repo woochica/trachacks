@@ -1,9 +1,7 @@
 import os
 import fileinput
+import re
 from trac.core import *
-from trac.config import *
-from trac.env import Environment
-from trac.perm import PermissionSystem, PermissionError
 
 class LogViewerApi(Component):
   def get_logfile_name(self):
@@ -40,12 +38,18 @@ class LogViewerApi(Component):
            log.append(logline)
          elif up:
            i = level
+           found = False
            while i > 0:
              if line.find(levels[i])!=-1:
                logline['level'] = classes[i]
                logline['line']  = line
                log.append(logline)
+               found = True
              i -= 1
+           if not found and re.search('^[^0-9]+',line):
+             logline['level'] = 'log_other'
+             logline['line']  = line
+             log.append(logline)
      except IOError:
        self.env.log.debug('Could not read from logfile!')
      self.env.log.info('%i lines shown' % (len(log),))

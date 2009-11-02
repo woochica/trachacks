@@ -2,14 +2,12 @@ import os
 from StringIO import StringIO
 
 from trac.core import *
-from trac.config import *
+#from trac.config import *
 from trac.admin.api import IAdminPanelProvider
 from trac.web.chrome import add_stylesheet, add_script, add_notice, add_warning, ITemplateProvider
 from trac.util.html import html
-from trac.util.datefmt import format_datetime
+#from trac.util.datefmt import format_datetime
 from trac.util.translation import _
-from trac.env import Environment
-from trac.perm import PermissionError
 
 from logviewer.api import LogViewerApi
 

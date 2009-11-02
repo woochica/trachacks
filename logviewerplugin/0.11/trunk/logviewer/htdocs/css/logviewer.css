@@ -31,7 +31,7 @@ div.us_log { color: #333; }
 /**
  * Log messages
  */
-div.log_crit, div_log_err, div.log_warn, div.log_info, div.log_debug { white-space: pre; }
+div.log_crit, div_log_err, div.log_warn, div.log_info, div.log_debug, div.log_other { white-space: pre; }
 div.log_crit { color: #f00; }
 div.log_err  { color: #f22; }
 div.log_warn { color: #f61; }
