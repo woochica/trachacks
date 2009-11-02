@@ -37,3 +37,4 @@ div.log_err  { color: #f22; }
 div.log_warn { color: #f61; }
 div.log_info { color: #000; }
 div.log_debug { color: #444; }
+div.log_other { background-color:rgba(255,0,0,0.05); }
