@@ -1,0 +1,39 @@
+/**
+ * Main Layout
+ */
+
+
+/**
+ *	Messages
+ */
+div.us_error {
+ background: #fdc;
+ border: 2px solid #d00;
+ color: #500;
+ padding: .5em;
+ margin: 1em 0;
+}
+
+div.us_message {
+ padding:3px;
+ border: 2px solid green;
+ background-color:#66CC99;
+ text-align:center;
+}
+
+div.us_log { color: #333; }
+
+.optiontable th { color: #444; padding: 0 .25em; font-size: 90%; font-weight: bold }
+.us_alert { background: #f22; text-decoration: blink }
+.us_alert .info { display: inline; font-weight: bold; }
+.us_noalert .info { display: none; color: transparent; }
+
+/**
+ * Log messages
+ */
+div.log_crit, div_log_err, div.log_warn, div.log_info, div.log_debug { white-space: pre; }
+div.log_crit { color: #f00; }
+div.log_err  { color: #f22; }
+div.log_warn { color: #f61; }
+div.log_info { color: #000; }
+div.log_debug { color: #444; }
