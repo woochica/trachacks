@@ -40,7 +40,7 @@ setup(name='OSSTracProject',
 
                            # plugins with TOPP authors
                            'AutocompleteUsers',
-                           'CaptchaAuth'
+                           'CaptchaAuth',
                            'ContactInfo',
                            'icalexporter',
                            'SVN_URLs',
