@@ -1,0 +1,58 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>Conact Information</title>
+  </head>
+  <body>
+    <h1>Contact Information</h1>
+
+    <div>
+      <h2>Manager</h2>
+      <py:choose test="manager is not None">
+        <py:when test="True">
+          <ul>
+            <li py:if="'username' in manager">
+              <b>Login:</b> ${manager['username']}
+            </li>
+            <li><b>Email:</b> <a href="mailto:${manager['email']}">${manager['email']}</a></li>
+            <li py:if="'name' in manager">
+              <b>Name:</b> ${manager['name']}
+            </li>
+          </ul>
+        </py:when>
+        <py:otherwise>
+          <p><i>
+            No administrator address has been set for this project 
+            in <tt>trac.ini</tt> [project] admin
+          </i></p>
+          <form py:if="'TRAC_ADMIN' in req.perm" method="post">
+            <input type="text" name="manager" value="${req.session.get('email', '')}"/>
+            <input type="submit" value="Submit"/>
+            <p>
+              Set Trac manager given a login or email address
+            </p>
+          </form>
+        </py:otherwise>
+      </py:choose>
+    </div>
+
+    <div>
+      <h2>Email</h2>
+      <py:choose test="bool(email)">
+        <py:when test="True">
+          <a href="mailto:${email}">${email}</a>
+        </py:when>
+        <py:otherwise>
+          No email address has been set for this project 
+          in <tt>trac.ini</tt> [notification] smtp_reply_to
+        </py:otherwise>
+      </py:choose>
+    </div>
+
+  </body>
+</html>
