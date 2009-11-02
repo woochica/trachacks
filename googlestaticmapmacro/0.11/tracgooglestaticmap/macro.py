@@ -10,18 +10,13 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
-from trac.core import *
-from trac.wiki.api import parse_args
-from trac.wiki.macros import WikiMacroBase
-from StringIO import StringIO
-from trac.util.html import escape,Markup
-from genshi.builder import tag
+from  trac.core         import  *
+from  trac.wiki.api     import  IWikiMacroProvider, parse_args
+from  trac.web.href     import  Href
+from  trac.config       import  Option
+from  genshi.builder    import  tag
 
-_allowed_args = ['center','zoom','size','format','maptype',
-        'markers','path','span','frame','hl','key']
-_google_src = r"http://maps.google.com/staticmap?"
-
-class GoogleStaticMapMacro(WikiMacroBase):
+class GoogleStaticMapMacro(Component):
     """ Provides a static Google Map as HTML image.
 
 Website: http://trac-hacks.org/wiki/GoogleStaticMapMacro
@@ -83,17 +78,33 @@ will result in the following map image:
 [[Image(http://maps.google.com/staticmap?center=50.805935%2C10.349121&zoom=5&size=400x400&markers=50.805935%2c10.349121%2cbluea|50.000000%2c10.000000%2cgreenb|49.046195%2c12.117577%2cyellowc&key=ABQIAAAAMwTA9mkyZbDS6QMcxvwm2BQk7JAK84r7ycdvlw9atwcq_yt-SxQd58w7cbhU8Fvb5JRRi4sH8vpPEQ,nolink)]]
 
     """
+    implements ( IWikiMacroProvider )
+
+    key  = Option('googlestaticmap', 'api_key', None, 'Google Maps API key')
+    size = Option('googlestaticmap', 'default_size', "300x300", 'Default size for map')
+    hl   = Option('googlestaticmap', 'default_language', 'Default language for map')
+
+    allowed_args = ['center','zoom','size','format','maptype',
+            'markers','path','span','frame','hl','key']
+
+    google_url = Href("http://maps.google.com/staticmap")
+
+    def get_macros(self):
+        yield 'GoogleStaticMap'
+
+    def get_macro_description(self, name):
+        return self.__doc__
 
     def expand_macro(self, formatter, name, content):
         args, kwargs = parse_args(content)
 
         # HTML arguments used in Google Maps URL
         hargs = {
-            'center' : "50.805935,10.349121",
-            'zoom'   : "6",
-            'key'    : self.env.config.get('googlestaticmap', 'api_key', None),
-            'size'   : self.env.config.get('googlestaticmap', 'default_size', "300x300"),
-            'hl'     : self.env.config.get('googlestaticmap', 'default_language', ""),
+              'center' : "50.805935,10.349121",
+              'zoom'   : "6",
+              'key'    : self.key,
+              'size'   : self.size,
+              'hl'     : self.hl,
             }
 
         # Delete default zoom if user provides 'span' argument:
@@ -102,8 +113,12 @@ will result in the following map image:
 
         # Copy given macro arguments to the HTML arguments
         for k,v in kwargs.iteritems():
-            if k in _allowed_args:
+            if k in self.allowed_args:
                 hargs[k] = v
+
+        # Check if API key exists
+        if not 'key' in hargs:
+            raise TracError("No Google Maps API key given!\n")
 
         # Get height and width
         (width,height) = hargs['size'].split('x')
@@ -125,10 +140,7 @@ will result in the following map image:
             hargs['markers'] = hargs['markers'].replace(':',',')
 
         # Build URL
-        src = _google_src + ('&'.join([ "%s=%s" % (escape(k),escape(v)) for k,v in hargs.iteritems() ]))
-
-        if not 'key' in hargs:
-            raise TracError("No Google Maps API key given!\n")
+        src = self.google_url(**hargs)
 
         title = alt = "Google Static Map at %s" % hargs['center']
         # TODO: provide sane alternative text and image title
@@ -139,8 +151,8 @@ will result in the following map image:
         return tag.img(
                     class_ = "googlestaticmap",
                     src    = src,
-                    title  = Markup.escape(title, quotes=True),
-                    alt    = Markup.escape(alt,   quotes=True),
+                    title  = title,
+                    alt    = alt,
                     height = height,
                     width  = width,
                )
