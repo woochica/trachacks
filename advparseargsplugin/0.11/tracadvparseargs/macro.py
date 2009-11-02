@@ -9,29 +9,14 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
-from trac.core import *
-from trac.wiki.api import IWikiMacroProvider
-from parseargs import parse_args
+from  trac.core       import  *
+from  trac.wiki.api   import  IWikiMacroProvider
+from  genshi.builder  import  tag
+
+from  parseargs       import  parse_args
 
 class ParseArgsTestMacro(Component):
-    implements(IWikiMacroProvider)
-
-    ### methods for IWikiMacroProvider
-    def expand_macro(self, formatter, name, content):
-        """Test macro for parse_args."""
-        args, rcontent = content.split('|||',2)
-        try:
-            ldummy, pa = parse_args (args)
-            largs, kwargs = parse_args (rcontent, **pa)
-        except EndQuoteError, e:
-            raise TracError( str(e) )
-        return unicode((largs, kwargs))
-
-    def get_macros(self):
-        return ('ParseArgsTest',)
-
-    def get_macro_description(self, name):
-      return """Test macro for `tracadvparseargs.parse_args` function.
+    """Test macro for `tracadvparseargs.parse_args` function.
 
 This macro is intended to be used by the developers of the above function to 
 simplify the testing process and has no real value for normal Trac users.
@@ -55,5 +40,26 @@ will call
 {{{
 parse_args('key1=val1,key2="val2a,val2b"', strict=True, delquotes=True)
 }}}
-        """ + parse_args.__doc__
+    """
+    implements ( IWikiMacroProvider )
+
+    ### methods for IWikiMacroProvider
+    def expand_macro(self, formatter, name, content):
+        args, rcontent = content.split('|||',2)
+        try:
+            ldummy, pa = parse_args (args)
+            largs, kwargs = parse_args (rcontent, **pa)
+        except EndQuoteError, e:
+            raise TracError( str(e) )
+        return tag.div(
+              tag.p("largs  = ", largs.__repr__()),
+              tag.p("kwargs = ", kwargs.__repr__()),
+              class_='advparseargs'
+            )
+
+    def get_macros(self):
+        yield 'ParseArgsTest'
+
+    def get_macro_description(self, name):
+        return self.__doc__ + parse_args.__doc__
 
