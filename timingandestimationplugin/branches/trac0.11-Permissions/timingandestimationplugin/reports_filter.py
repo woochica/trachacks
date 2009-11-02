@@ -9,6 +9,7 @@ except NameError:
 
 from genshi.filters.transform import Transformer
 import re
+import dbhelper
 
 from trac.ticket.report import ReportModule
 from trac.util.datefmt import format_datetime, format_time
@@ -62,15 +63,11 @@ def report_id_from_text(text):
         return int(m.groupdict()["reportid"])
 
 def get_billing_reports(comp):
-    cur = comp.env.get_db_cnx().cursor()
-    try:
-        cur.execute("SELECT id FROM custom_report")
-        return set([x[0] for x in cur.fetchall()])
-    except Exception, e:
-        # if we can't get the billing reports (e.g. the
-        # TimingAndEstimationPlugin isn't installed), silently continue
-        # without hiding anything.
-        return set()
+    billing_reports = set()
+    rows = dbhelper.get_all(comp, "SELECT id FROM custom_report")[1]
+    if rows:
+        billing_reports = set([x[0] for x in rows])
+    return billing_reports
 
 class RowFilter(object):
     """A genshi filter that operates on table rows, completely hiding any that
