@@ -12,15 +12,16 @@ __date__     = r"$Date$"[7:-2]
 rev = str( max( coderev, __revision__ ) )
 
 setup(
-    name = 'TracExtLinksNewWindow',
-    version = '0.2.' + rev,
-    description = 'Trac Load External Links in New Window',
+    name         = 'TracExtLinksNewWindow',
+    version      = '1.0',
+    description  = 'Trac Load External Links in New Window',
     license      = 'GPLv3',
     zip_safe     = False,
-    url = 'http://trac-hacks.org/wiki/ExternalLinksNewWindow',
-    author = 'Martin Scharrer',
+    url          = 'http://trac-hacks.org/wiki/ExternalLinksNewWindow',
+    download_url = 'http://trac-hacks.org/svn/externallinksnewwindowplugin/releases',
+    author       = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
-    packages = ['tracextlinksnewwindow'],
+    packages     = ['tracextlinksnewwindow'],
     package_data = {
         'tracextlinksnewwindow' : [ 'htdocs/*.js' ],
     },

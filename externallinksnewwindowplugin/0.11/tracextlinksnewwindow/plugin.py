@@ -1,6 +1,6 @@
-""" Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
+""" Copyright (c) 2008-2009 Martin Scharrer <martin@scharrer-online.de>
     $Id$
-    $HeadURL$
+    $URL$
 
     This is Free Software under the GPL v3!
 """
@@ -10,16 +10,16 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
-from trac.core import Component, implements
-from trac.web.api import IRequestFilter
-from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
+from  trac.core        import  Component, implements
+from  trac.web.api     import  IRequestFilter
+from  trac.web.chrome  import  ITemplateProvider, add_stylesheet, add_script
 
 class ExtLinksNewWindowPlugin(Component):
     """Opens external links in new window
 
        `$Id$`
     """
-    implements(IRequestFilter,ITemplateProvider)
+    implements ( IRequestFilter, ITemplateProvider )
 
     # ITemplateProvider#get_htdocs_dirs
     def get_htdocs_dirs(self):
@@ -39,5 +39,4 @@ class ExtLinksNewWindowPlugin(Component):
     def post_process_request(self, req, template, data, content_type):
         add_script(req, 'extlinksnewwindow/extlinks.js')
         return (template, data, content_type)
-
 
