@@ -31,12 +31,8 @@ class LogViewerApi(Component):
      log = []
      logline = {}
      level = int(level)
-     #self.env.log.info('Processing log for level %i' % (level,))
-     #if up: self.env.log.info('Higher prios also selected')
      try:
-       #f = open(logname,'r')
        for line in fileinput.input(logname):
-       #for line in f.readlines():
          logline = {}
          if line.find(levels[level])!=-1:
            logline['level'] = classes[level]
@@ -46,7 +42,6 @@ class LogViewerApi(Component):
            i = level
            while i > 0:
              if line.find(levels[i])!=-1:
-               #self.env.log.info('Found entry for "%s"' % (levels[i],))
                logline['level'] = classes[i]
                logline['line']  = line
                log.append(logline)
@@ -55,5 +50,4 @@ class LogViewerApi(Component):
        self.env.log.debug('Could not read from logfile!')
      self.env.log.info('%i lines shown' % (len(log),))
      fileinput.close()
-     #f.close()
      return log

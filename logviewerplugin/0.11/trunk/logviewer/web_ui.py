@@ -13,8 +13,6 @@ from trac.perm import PermissionError
 
 from logviewer.api import LogViewerApi
 
-#__all__=['IUserManagerPanelProvider']
-
 class LogViewerPage(Component):
 
     implements(IAdminPanelProvider, ITemplateProvider)
