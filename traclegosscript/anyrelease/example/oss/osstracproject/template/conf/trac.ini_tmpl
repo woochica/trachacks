@@ -32,6 +32,7 @@ acct_mgr.web_ui.registrationmodule = enabled
 autocompleteusers.* = enable
 autoupgrade.* = enabled
 captchaauth.register.registrationcaptcha = enabled
+contactinfo.contactinfo.contactinfo = enabled
 customfieldadmin.api.customfields = enabled
 customfieldadmin.customfieldadmin.customfieldadminpage = enabled
 graphviz.graphviz.graphviz = enabled
