@@ -13,55 +13,56 @@ __date__     = r"$Date$"[7:-2]
 
 from  trac.core        import  *
 from  trac.web.api     import  IRequestFilter
-from  trac.web.chrome  import  add_link,add_stylesheet,add_script
+from  trac.web.chrome  import  add_link, add_stylesheet, add_script
+from  trac.config      import  Option, ListOption
 
 class AddHeadersPlugin(Component):
-    implements(IRequestFilter)
     """ Provides a plugin to insert header tags into trac pages.
 
         This plugin is limited to the features of the methods
         add_link, add_stylesheet and add_script from trac.web.chrome,
         so not all valid (X)HTML attributes can be set.
     """
+    implements(IRequestFilter)
+
+    section = 'addheaders'
+
+    default_base        = Option(section, 'default_base', 'site/')
+    default_script_base = Option(section, 'default_script_base', default_base)
+    default_style_base  = Option(section, 'default_style_base',  default_base)
+
+    links         = ListOption(section, 'add_links')
+    stylesheets   = ListOption(section, 'add_styles')
+    scripts       = ListOption(section, 'add_scripts')
 
     def pre_process_request(self, req, handler):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        config        = self.env.config
-        section       = 'addheaders'
+        get = self.env.config.get
 
-        default_base        = config.get(section, 'default_base', 'site/')
-        default_script_base = config.get(section, 'default_script_base', default_base)
-        default_style_base  = config.get(section, 'default_style_base',  default_base)
-
-        links         = config.getlist(section, 'add_links')
-        stylesheets   = config.getlist(section, 'add_styles')
-        scripts       = config.getlist(section, 'add_scripts')
-
-
-        for link in links:
-            rel       = config.get(section, link       + '.rel'   )
-            href      = config.get(section, link       + '.href'  )
-            title     = config.get(section, link       + '.title' )
-            mimetype  = config.get(section, link       + '.type'  )
-            classname = config.get(section, link       + '.class' )
+        for link in self.links:
+            rel       = get(self.section, link + '.rel'   )
+            href      = get(self.section, link + '.href'  )
+            title     = get(self.section, link + '.title' )
+            mimetype  = get(self.section, link + '.type'  )
+            classname = get(self.section, link + '.class' )
 
             if rel and href:
                 add_link(req, rel, href, title or None, mimetype or None, classname or None)
 
 
-        for stylesheet in stylesheets:
-            filename  = config.get(section, stylesheet + '.filename', default_style_base + stylesheet + '.css' )
-            mimetype  = config.get(section, stylesheet + '.mimetype', 'text/css')
+        for stylesheet in self.stylesheets:
+            filename  = get(self.section, stylesheet + '.filename', self.default_style_base + stylesheet + '.css' )
+            mimetype  = get(self.section, stylesheet + '.mimetype', 'text/css')
 
             if filename:
                 add_stylesheet(req, filename, mimetype)
 
 
-        for script in scripts:
-            filename  = config.get(section, script     + '.filename', default_script_base + script + '.js' )
-            mimetype  = config.get(section, script     + '.mimetype', 'text/javascript')
+        for script in self.scripts:
+            filename  = get(self.section, script     + '.filename', self.default_script_base + script + '.js' )
+            mimetype  = get(self.section, script     + '.mimetype', 'text/javascript')
 
             if filename:
                 add_script(req, filename, mimetype)
