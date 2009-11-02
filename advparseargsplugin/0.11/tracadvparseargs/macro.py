@@ -13,7 +13,7 @@ from  trac.core       import  *
 from  trac.wiki.api   import  IWikiMacroProvider
 from  genshi.builder  import  tag
 
-from  parseargs       import  parse_args
+from  parseargs       import  *
 
 class ParseArgsTestMacro(Component):
     """Test macro for `tracadvparseargs.parse_args` function.
