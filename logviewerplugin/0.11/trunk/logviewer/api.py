@@ -14,16 +14,18 @@ class LogViewerApi(Component):
      fpath, fname = os.path.split(name)
      if not fpath: name = os.path.join(self.env.path,'log',name)
      if not os.path.exists(name): raise IOError
-     self.env.log.info('Logfile name: %s' % (name,))
+     self.env.log.debug('Logfile name: %s' % (name,))
      return name
 
-  def get_log(self, logname, level, up=True):
+  def get_log(self, logname, req):
      """Retrieve the logfile content
      @param logname     : name of the logfile
-     @param level       : log level to select
-     @param optional up : whether to retrieve higher prios as well (default: True)
+     @param req
      @return array [0..n] of {level,line}
      """
+     level = req.args.get('level')
+     up = req.args.get('up')
+     tfilter = req.args.get('filter')
      levels  = ['', 'CRITICAL:', 'ERROR:', 'WARNING:', 'INFO:', 'DEBUG:']
      classes = ['', 'log_crit', 'log_err', 'log_warn', 'log_info', 'log_debug']
      log = []
@@ -31,6 +33,7 @@ class LogViewerApi(Component):
      level = int(level)
      try:
        for line in fileinput.input(logname):
+         if tfilter and line.find(tfilter)==-1: continue
          logline = {}
          if line.find(levels[level])!=-1:
            logline['level'] = classes[level]
@@ -52,6 +55,5 @@ class LogViewerApi(Component):
              log.append(logline)
      except IOError:
        self.env.log.debug('Could not read from logfile!')
-     self.env.log.info('%i lines shown' % (len(log),))
      fileinput.close()
      return log

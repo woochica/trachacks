@@ -29,10 +29,10 @@ class LogViewerPage(Component):
         try:
           logfile = self.api.get_logfile_name()
           if not logfile:
-            self.env.log.info('No log file configured.')
+            self.env.log.debug('No log file configured.')
             self.data['err'].append('There is no log file configured for this environment.')
         except IOError:
-          self.env.log.info('Got IOError')
+          self.env.log.debug('Got IOError - configured log file does not exist!')
           self.data['err'].append('The configured log file does not exist.')
 
         self.data = {}
@@ -78,6 +78,6 @@ class LogViewerPage(Component):
         @param logfile : logfile name
         """
         self.env.log.debug('Processing form data')
-        log = self.api.get_log(logfile, req.args.get('level'), req.args.get('up') or False)
+        log = self.api.get_log(logfile, req)
         self.data['log'] = log
 
