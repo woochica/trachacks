@@ -47,7 +47,7 @@ def lookup(env, message):
     if logdir:
         datestamp = datetime.now().strftime('%Y%m%d%H%M%S')
         try:
-            f = file(os.path.join(log_dir, datestamp), 'w')
+            f = file(os.path.join(logdir, datestamp), 'w')
             print >> f, message
             f.close()
         except:
