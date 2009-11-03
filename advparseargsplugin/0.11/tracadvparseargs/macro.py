@@ -50,7 +50,7 @@ parse_args('key1=val1,key2="val2a,val2b"', strict=True, delquotes=True)
             ldummy, pa = parse_args (args)
             largs, kwargs = parse_args (rcontent, **pa)
         except EndQuoteError, e:
-            raise TracError( str(e) )
+            raise TracError( unicode(e) )
         return tag.div(
               tag.p("largs  = ", largs.__repr__()),
               tag.p("kwargs = ", kwargs.__repr__()),
