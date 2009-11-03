@@ -76,7 +76,7 @@ def mail2project(env, message):
     email_errors = env.config.getbool('mail', 'email_errors', True)
 
     # lookup the message
-    message = lookup(message)
+    message = lookup(env, message)
 
     # get the handlers
     handlers = ExtensionPoint(IEmailHandler).extensions(env)
@@ -134,7 +134,7 @@ def mail2project(env, message):
                    response
                    )
 
-### command line handle
+### command line handler
 
 def main(args=sys.argv[1:]):
 
@@ -155,7 +155,7 @@ def main(args=sys.argv[1:]):
     options, args = parser.parse_args(args)
 
     # print help if no options given
-    if not options.projects and not options.urls:
+    if not options.projects and not options.urls and not options.environment:
         parser.print_help()
         sys.exit()
 
@@ -187,7 +187,7 @@ def main(args=sys.argv[1:]):
         for project in os.listdir(options.environment):
             directory = os.path.join(options.environment, project)
             try:
-                env = open_environment(project)
+                env = open_environment(directory)
             except: # not a project
                 continue
             try:
