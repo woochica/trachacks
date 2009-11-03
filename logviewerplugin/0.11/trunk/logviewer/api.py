@@ -27,7 +27,7 @@ class LogViewerApi(Component):
      up = req.args.get('up')
      invert = req.args.get('invertsearch')
      regexp = req.args.get('regexp')
-     tail = int(req.args.get('tail')) or 0
+     tail = int(req.args.get('tail') or 0)
      tfilter = req.args.get('filter')
      levels  = ['', 'CRITICAL:', 'ERROR:', 'WARNING:', 'INFO:', 'DEBUG:']
      classes = ['', 'log_crit', 'log_err', 'log_warn', 'log_info', 'log_debug']
