@@ -19,6 +19,7 @@ setup(
     author_email = 'martin@scharrer-online.de',
     description  = 'Provides `extract_url` method to extract the URL from TracWiki links.',
     url          = 'http://www.trac-hacks.org/wiki/ExtractUrlPlugin',
+    download_url = 'http://trac-hacks.org/svn/extracturlplugin/releases/',
     license      = 'GPLv3',
     keywords     = 'trac plugin extract url',
     classifiers  = ['Framework :: Trac'],
