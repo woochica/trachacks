@@ -25,6 +25,9 @@ class LogViewerApi(Component):
      """
      level = req.args.get('level')
      up = req.args.get('up')
+     invert = req.args.get('invertsearch')
+     regexp = req.args.get('regexp')
+     tail = int(req.args.get('tail')) or 0
      tfilter = req.args.get('filter')
      levels  = ['', 'CRITICAL:', 'ERROR:', 'WARNING:', 'INFO:', 'DEBUG:']
      classes = ['', 'log_crit', 'log_err', 'log_warn', 'log_info', 'log_debug']
@@ -32,8 +35,21 @@ class LogViewerApi(Component):
      logline = {}
      level = int(level)
      try:
-       for line in fileinput.input(logname):
-         if tfilter and line.find(tfilter)==-1: continue
+       f = open(logname,'r')
+       lines = f.readlines()
+       f.close
+       linecount = len(lines)
+       if tail: start = linecount - tail
+       else: start = 0
+       for i in range(start,linecount):
+         line = lines[i]
+         if tfilter:
+           if regexp:
+             if not invert and not re.search(tfilter,line): continue
+             if invert and re.search(tfilter,line): continue
+           else:
+             if not invert and line.find(tfilter)==-1: continue
+             if invert and not line.find(tfilter)==-1: continue
          logline = {}
          if line.find(levels[level])!=-1:
            logline['level'] = classes[level]
@@ -55,5 +71,4 @@ class LogViewerApi(Component):
              log.append(logline)
      except IOError:
        self.env.log.debug('Could not read from logfile!')
-     fileinput.close()
      return log

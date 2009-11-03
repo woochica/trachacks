@@ -29,6 +29,31 @@ div.us_log { color: #333; }
 .us_noalert .info { display: none; color: transparent; }
 
 /**
+ * Selection fieldsets
+ */
+ul.fieldset {
+  margin-top:-5px;
+  padding-left:5px;
+}
+ul.fieldset li {
+  margin-top:0;
+}
+#li_levels, #li_search, #li_tail {
+  display:inline;
+  margin-bottom:0;
+  margin-left:0.5em;
+  margin-right:0.5em;
+}
+#li_levels { float:left; }
+#li_tail, #li_search { float:right; }
+ul.fieldset li fieldset {
+  margin-bottom:5px;
+  margin-top:5px;
+}
+fieldset#selection { padding:0; }
+
+
+/**
  * Log messages
  */
 div.log_crit, div_log_err, div.log_warn, div.log_info, div.log_debug, div.log_other { white-space: pre; }
