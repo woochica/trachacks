@@ -41,6 +41,18 @@ def lookup(env, message):
     matches a message with the environment and returns the message;
     on lookup error, raises AddressLookupException
     """
+
+    # logging
+    logdir = env.config.get('mail', 'log_dir')
+    if logdir:
+        datestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        try:
+            f = file(os.path.join(log_dir, datestamp), 'w')
+            print >> f, message
+            f.close()
+        except:
+            pass # XXX no logging for you!
+
     message = email.message_from_string(message)
 
     # if the message is not to this project, ignore it
@@ -75,17 +87,6 @@ def mail2project(env, message):
 
     # whether or not to email back on error
     email_errors = env.config.getbool('mail', 'email_errors', True)
-
-    # logging
-    logdir = env.config.get('mail', 'log_dir')
-    if logdir:
-        datestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        try:
-            f = file(os.path.join(log_dir, datestamp), 'w')
-            print >> f, message
-            f.close()
-        except:
-            pass # XXX no logging for you!
 
     # lookup the message
     message = lookup(env, message)
