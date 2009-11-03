@@ -38,9 +38,9 @@ $Id$
 
         url = extract_url (self.env, formatter.context, wlink, raw)
         return tag.p(
-                  tag.pre  ('%s' % wlink),
+                  tag.code ("'%s'" % wlink),
                   tag.span (' => '),
-                  tag.a    ('%s' % url, href=url),
+                  tag.a    ("'%s'" % url, href=url),
                   class_='extracturl',
                )
 
