@@ -8,6 +8,7 @@ http://trac.edgewall.org
 
 import email
 import email.Utils
+import os
 import sys
 import urllib
 import urllib2
@@ -19,18 +20,27 @@ from mail2trac.utils import send_email
 from trac.core import *
 from trac.env import open_environment
 
+# Meaningful exit-codes for a smtp-server
+EXIT_USAGE = 64
+EXIT_NOUSER = 67
+EXIT_NOPERM = 77
+EXIT_TEMPFAIL = 75
+
+# exception classes
 class EmailException(Exception):
     """error exception when processing email messages"""
 
-def mail2project(env, message):
-    """relays an email message to a project"""
+class AddressLookupException(Exception):
+    """exception when try to match the email address for a project"""
 
-    # read the email
-    original_message = email.message_from_string(message)
+### methods for email processing
+
+def lookup(env, message):
+    """
+    matches a message with the environment and returns the message;
+    on lookup error, raises AddressLookupException
+    """
     message = email.message_from_string(message)
-
-    # whether or not to email back on error
-    email_errors = env.config.getbool('mail', 'email_errors', True)
 
     # if the message is not to this project, ignore it
     trac_address = env.config.get('mail', 'address')
@@ -52,8 +62,22 @@ def mail2project(env, message):
             accept.update([original_to])
 
         if trac_address not in accept:
-            raise EmailException("Email does not match Trac address: %s" % trac_address)
-    
+            raise AddressLookupException("Email does not match Trac address: %s" % trac_address)
+
+    return message
+
+def mail2project(env, message):
+    """relays an email message to a project"""
+
+    # keep copy of original message for error handling
+    original_message = email.message_from_string(message)
+
+    # whether or not to email back on error
+    email_errors = env.config.getbool('mail', 'email_errors', True)
+
+    # lookup the message
+    message = lookup(message)
+
     # get the handlers
     handlers = ExtensionPoint(IEmailHandler).extensions(env)
     _handlers = env.config.getlist('mail', 'handlers')
@@ -110,6 +134,8 @@ def mail2project(env, message):
                    response
                    )
 
+### command line handle
+
 def main(args=sys.argv[1:]):
 
     # parse the options
@@ -124,6 +150,8 @@ def main(args=sys.argv[1:]):
     parser.add_option('-u', '--url', '--urls', 
                       dest='urls', action='append', default=[],
                       help='urls to post to')
+    parser.add_option('-e', '--parent-env', dest='environment', 
+                      help='Trac parent environment directory to dispatch TTW')
     options, args = parser.parse_args(args)
 
     # print help if no options given
@@ -139,11 +167,15 @@ def main(args=sys.argv[1:]):
     message = f.read()
 
     # relay the email
+    found = False
+
     for project in options.projects:
+        found = True
         env = open_environment(project)  # open the environment
         mail2project(env, message)  # process the message
         
     for url in options.urls:
+        found = True
         # post the message
         try:
             urllib2.urlopen(url, urllib.urlencode(dict(message=unicode(message, 'utf-8', 'ignore'))))
@@ -151,5 +183,30 @@ def main(args=sys.argv[1:]):
             print e.read()
             sys.exit(1)
 
+    if options.environment:
+        for project in os.listdir(options.environment):
+            directory = os.path.join(options.environment, project)
+            try:
+                env = open_environment(project)
+            except: # not a project
+                continue
+            try:
+                lookup(env, message)
+            except AddressLookupException:
+                continue
+            found = True
+            url = env.abs_href('mail2trac')
+            # post the message
+            try:
+                urllib2.urlopen(url, urllib.urlencode(dict(message=unicode(message, 'utf-8', 'ignore'))))
+            except urllib2.HTTPError, e:
+                print e.read()
+                sys.exit(1)
+
+    # send proper status code if email is not relayed
+    if not found:
+        sys.exit(EXIT_NOUSER)
+
+            
 if __name__ == '__main__':
     main()
