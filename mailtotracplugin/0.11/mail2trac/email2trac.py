@@ -187,34 +187,25 @@ def main(args=sys.argv[1:]):
         env = open_environment(project)  # open the environment
         mail2project(env, message)  # process the message
         
+    if options.environment:
+        assert len(options.urls) == 1
+        base_url = options.urls[0].rstrip('/')
+        projects = [ project for project in os.listdir(options.environment)
+                     if os.path.isdir(project) ]
+        options.urls = [ '%s/%s/mail2trac' % (base_url, project)
+                         for project in projects ]
+
     for url in options.urls:
-        found = True
         # post the message
         try:
             urllib2.urlopen(url, urllib.urlencode(dict(message=unicode(message, 'utf-8', 'ignore'))))
         except urllib2.HTTPError, e:
-            print e.read()
-            sys.exit(1)
-
-    if options.environment:
-        for project in os.listdir(options.environment):
-            directory = os.path.join(options.environment, project)
-            try:
-                env = open_environment(directory)
-            except: # not a project
+            if options.environment:
                 continue
-            try:
-                lookup(env, message)
-            except AddressLookupException:
-                continue
-            found = True
-            url = env.abs_href('mail2trac')
-            # post the message
-            try:
-                urllib2.urlopen(url, urllib.urlencode(dict(message=unicode(message, 'utf-8', 'ignore'))))
-            except urllib2.HTTPError, e:
+            else:
                 print e.read()
                 sys.exit(1)
+        found = True
 
     # send proper status code if email is not relayed
     if not found:
