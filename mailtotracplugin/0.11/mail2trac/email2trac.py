@@ -46,12 +46,9 @@ def lookup(env, message):
     logdir = env.config.get('mail', 'log_dir')
     if logdir:
         datestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        try:
-            f = file(os.path.join(logdir, datestamp), 'w')
-            print >> f, message
-            f.close()
-        except:
-            pass # XXX no logging for you!
+        f = file(os.path.join(logdir, datestamp), 'w')
+        print >> f, message
+        f.close()
 
     message = email.message_from_string(message)
 
