@@ -11,14 +11,14 @@ __revision__ = r"$Rev$"[6:-2]
 __date__     = r"$Date$"[7:-2]
 
 from  trac.core          import  *
-from  trac.web.api       import  IRequestHandler,IRequestFilter,RequestDone
+from  trac.web.api       import  IRequestHandler, IRequestFilter, RequestDone
 from  trac.wiki.api      import  IWikiMacroProvider
 from  trac.mimeview.api  import  Context
-from  tracextracturl     import  extract_url
-from  trac.wiki.macros   import  WikiMacroBase
 from  trac.wiki.model    import  WikiPage
 from  genshi.builder     import  tag
 import re
+
+from  tracextracturl     import  extract_url
 
 MACRO = re.compile(r'.*\[\[redirect\((.*)\)\]\]')
 
@@ -81,7 +81,7 @@ Any other [TracLinks TracLink] can be used:
 
         return tag.div(
                   tag.strong('This page redirects to: '),
-                  tag.a(content,href=target),
+                  tag.a(content, href=target),
                   class_ = 'system-message',
                   id = 'notice'
                )
