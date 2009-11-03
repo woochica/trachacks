@@ -13,6 +13,7 @@ import sys
 import urllib
 import urllib2
 
+from datetime import datetime
 from mail2trac.interface import IEmailHandler
 from mail2trac.utils import reply_body
 from mail2trac.utils import reply_subject
@@ -74,6 +75,17 @@ def mail2project(env, message):
 
     # whether or not to email back on error
     email_errors = env.config.getbool('mail', 'email_errors', True)
+
+    # logging
+    logdir = env.config.get('mail', 'log_dir')
+    if logdir:
+        datestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        try:
+            f = file(os.path.join(log_dir, datestamp), 'w')
+            print >> f, message
+            f.close()
+        except:
+            pass # XXX no logging for you!
 
     # lookup the message
     message = lookup(env, message)
