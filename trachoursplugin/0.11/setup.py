@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.3.1'
+version='0.3.2'
 
 setup(name='TracHoursPlugin',
       version=version,
@@ -14,7 +14,12 @@ setup(name='TracHoursPlugin',
       include_package_data=True,
       package_data={'trachours': ['templates/*']},
       zip_safe=False,
-      install_requires=['python-dateutil', 'FeedParser'],
+      install_requires=['python-dateutil', 
+                        'FeedParser',
+                        'ComponentDependencyPlugin'],
+      dependency_links=[
+              "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
+              ],
       extras_require=dict(lxml=['lxml']),
       entry_points = """
       [trac.plugins]

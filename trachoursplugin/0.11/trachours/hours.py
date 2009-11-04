@@ -14,6 +14,8 @@ import time
 from api import hours_format # local import
 from dbhelper import * # local import
 
+from componentdependencies.interface import IRequireComponents
+
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
@@ -44,6 +46,7 @@ from trac.web.chrome import Chrome
 from trac.web.chrome import INavigationContributor
 
 # local imports
+from setup import SetupTracHours
 from utils import get_all_users
 from utils import get_date
 from utils import truncate_to_month
@@ -90,7 +93,11 @@ class TracHoursPlugin(Component):
 
     implements(IRequestHandler, ITemplateStreamFilter, INavigationContributor, 
                ITemplateProvider, IPermissionRequestor, ITicketManipulator,
-               ITicketChangeListener)
+               ITicketChangeListener, IRequireComponents)
+
+    ### method for IRequireComponents
+    def requires(self):
+        return [SetupTracHours]
 
 
     ### methods for IPermissionRequestor
@@ -324,7 +331,7 @@ class TracHoursPlugin(Component):
 
     ###### internal methods
 
-    ### methods for date manipulation
+    ### methods for date format
 
     def format_hours(self, seconds):
         """returns a formatted string of the number of hours"""
