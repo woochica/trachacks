@@ -53,7 +53,7 @@ class AddHeadersPlugin(Component):
 
 
         for stylesheet in self.stylesheets:
-            filename  = get(self.section, stylesheet + '.filename', self.default_style_base + stylesheet + '.css' )
+            filename  = get(self.section, stylesheet + '.filename', unicode(self.default_style_base) + stylesheet + '.css' )
             mimetype  = get(self.section, stylesheet + '.mimetype', 'text/css')
 
             if filename:
@@ -61,7 +61,7 @@ class AddHeadersPlugin(Component):
 
 
         for script in self.scripts:
-            filename  = get(self.section, script     + '.filename', self.default_script_base + script + '.js' )
+            filename  = get(self.section, script     + '.filename', unicode(self.default_script_base) + script + '.js' )
             mimetype  = get(self.section, script     + '.mimetype', 'text/javascript')
 
             if filename:
