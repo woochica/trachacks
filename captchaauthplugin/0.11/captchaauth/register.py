@@ -48,13 +48,20 @@ class RegistrationCaptcha(Component):
                 correct_answer = req.session.pop('captcha', None)
                 req.session.save()
                 if req.args['captcha'].lower() != correct_answer:
-                    req.session['captchaauth_message'] = "You typed the wrong word. Please try again."
-                    req.session.save()
-                    req.redirect(req.href('register'))
+
+# XXX this bizaarely doesn't work
+#                    req.session['captchaauth_message'] = "You typed the wrong word. Please try again."
+
+#                    req.session.save()
+                    req.redirect(req.href('register', failed=''))
             if req.method == "GET":
-                message = req.session.pop('captchaauth_message', None)
-                if message:
-                    add_warning(req, message)
+                if 'failed' in req.args:
+                    add_warning(req, "You typed the wrong word. Please try again.")
+
+# XXX this bizaarely doesn't work
+#                message = req.session.pop('captchaauth_message', None)
+#                if message:
+#                    add_warning(req, message)
                                     
         return handler
 
@@ -72,6 +79,7 @@ class RegistrationCaptcha(Component):
 
         (for 0.10 compatibility; only used together with ClearSilver templates)
         """
+
         return (template, content_type)
 
     # for Genshi templates
