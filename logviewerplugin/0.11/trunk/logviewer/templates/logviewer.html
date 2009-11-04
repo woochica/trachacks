@@ -25,20 +25,20 @@
         		<li id="li_levels"><fieldset id="fieldset_levels">
 	        		<legend>Log Levels</legend>
 					<select name="level">
-						<option value="1">Critical</option>
-						<option value="2">Errors</option>
-						<option value="3">Warnings</option>
-						<option value="4">Info</option>
-						<option value="5">Debug</option>
+						<option value="1" py:attrs="{'selected': level==1 or None}">Critical</option>
+						<option value="2" py:attrs="{'selected': level==2 or None}">Errors</option>
+						<option value="3" py:attrs="{'selected': level==3 or None}">Warnings</option>
+						<option value="4" py:attrs="{'selected': level==4 or None}">Info</option>
+						<option value="5" py:attrs="{'selected': level==5 or None}">Debug</option>
 					</select>
-					<span title="include levels listed on top of the selected level"><input type="checkbox" name="up" value="1"/> and higher</span>
+					<span title="include levels listed on top of the selected level"><input type="checkbox" name="up" value="1" py:attrs="{'checked': up==1 or None}"/> and higher</span>
 				</fieldset></li><li id="li_search"><fieldset id="fieldset_search">
 					<legend>Search</legend>
-					<span title="show only lines (not) containing this search term">Lines (<input type="checkbox" name="invertsearch" value="1"/> not) including  <input type="text" name="filter"/></span>
-					<span title="search term is a regular expression"><input type="checkbox" name="regexp" value="1"/> RegExp</span>
+					<span title="show only lines (not) containing this search term">Lines (<input type="checkbox" name="invertsearch" value="1" py:attrs="{'checked': invert==1 or None}"/> not) including  <input type="text" name="filter" value="${filter}"/></span>
+					<span title="search term is a regular expression"><input type="checkbox" name="regexp" value="1" py:attrs="{'checked': regexp==1 or None}"/> RegExp</span>
 				</fieldset></li><li id="li_tail"><fieldset id="fieldset_tail">
 					<legend>Tail</legend>
-					<span title="Display only this many lines. Default: display all"><input type="text" name="tail" style="width:25px;"/> lines</span>
+					<span title="Display only this many lines. Default: display all"><input type="text" name="tail" style="width:25px;" value="${tail}"/> lines</span>
 				</fieldset></li></ul>
 			</fieldset>
 			<div class="actions">

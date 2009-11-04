@@ -50,6 +50,14 @@ class LogViewerPage(Component):
         data['us_error']   = self.data['err']
         data['us_log']     = self.data['log']
 
+        # pre-set form values
+        data['level'] = int(req.args.get('level') or 3)
+        data['up']    = int(req.args.get('up') or 0)
+        data['invert']= int(req.args.get('invertsearch') or 0)
+        data['regexp']= int(req.args.get('regexp') or 0)
+        data['filter']= req.args.get('filter') or ''
+        data['tail']  = req.args.get('tail') or ''
+
         # adding stylesheets
         add_stylesheet(req, 'logviewer/css/logviewer.css')
 

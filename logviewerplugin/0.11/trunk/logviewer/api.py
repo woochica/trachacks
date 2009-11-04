@@ -39,7 +39,7 @@ class LogViewerApi(Component):
        lines = f.readlines()
        f.close
        linecount = len(lines)
-       if tail: start = linecount - tail
+       if tail and linecount - tail > 0: start = linecount - tail
        else: start = 0
        for i in range(start,linecount):
          line = lines[i]
