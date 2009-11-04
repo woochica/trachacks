@@ -185,7 +185,7 @@ def main(args=sys.argv[1:]):
             assert len(options.urls) == 1
             base_url = options.urls[0].rstrip('/')
             projects = [ project for project in os.listdir(options.environment)
-                         if os.path.isdir(project) ]
+                         if os.path.isdir(os.path.join(options.environment, project)) ]
             options.urls = [ '%s/%s/mail2trac' % (base_url, project)
                              for project in projects ]
 
@@ -216,6 +216,7 @@ def main(args=sys.argv[1:]):
             print >> f, message
             f.close()
 
+        raise
             
 if __name__ == '__main__':
     main()
