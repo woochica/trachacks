@@ -49,9 +49,10 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       try:
-        cursor.execute('CREATE TEMPORARY TABLE mindmapcache (hash text PRIMARY KEY, content text)')
-      except:
+        cursor.execute('CREATE TABLE mindmapcache (hash text PRIMARY KEY, content text)')
+      except Exception, e:
         pass
+        #raise TracError(unicode(e))
       try:
         cursor.execute('INSERT INTO mindmapcache VALUES (%s,%s)', (hash,content))
       except:
@@ -68,7 +69,7 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
       except Exception, e:
         if default == None:
           raise e
-        return unicode()
+        return unicode(e)
 
     ### methods for IWikiMacroProvider
     def get_macros(self):
@@ -88,7 +89,11 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
             digest.update(unicode(content))
             hash = digest.hexdigest()
             mm = MindMap(content)
+            self.env.log.debug("Try to write cache entry")
             self._set_cache(hash, unicode(mm))
+            self.env.log.debug("Cache entry written")
+          except TracError, e:
+            raise TracError(u'MACRO: ' + unicode(e))
           except Exception, e:
             return str(e)
             largs, kwargs = parse_args( content )
@@ -136,17 +141,24 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
 
     def process_request(self, req):
         if req.path_info == '/mindmap/status':
-          content = tag.html(tag.body(tag.dd(
-              [ [tag.dt(tag.a(k,href=req.href.mindmap(k + '.mm'))),tag.dd(tag.pre(v))] for k,v in mindmaps.iteritems()]
-            ))).generate().render("xhtml")
+          db = self.env.get_db_cnx()
+          cursor = db.cursor()
+          try:
+              cursor.execute('SELECT hash,content FROM mindmapcache')
+              content = tag.html(tag.body(tag.dd(
+                  [ [tag.dt(tag.a(k,href=req.href.mindmap(k + '.mm'))),tag.dd(tag.pre(v))] for k,v in cursor.fetchall()]
+                )))
+          except Exception, e:
+              content = tag.html(tag.body(tag.strong("DB Error: " + unicode(e))))
+          html = content.generate().render("xhtml")
           req.send_response(200)
           req.send_header('Cache-control', 'must-revalidate')
           req.send_header('Content-Type', 'text/html;charset=utf-8')
-          req.send_header('Content-Length', len(content))
+          req.send_header('Content-Length', len(html))
           req.end_headers()
 
           if req.method != 'HEAD':
-             req.write(content)
+             req.write(html)
           raise RequestDone
 
         try:
