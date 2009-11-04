@@ -1131,21 +1131,8 @@ class TracHoursPlugin(Component):
         """return total SECONDS associated with ticket_id""" 
         return sum([hour['seconds_worked'] for hour in self.get_ticket_hours(int(ticket_id))])
 
-    ### internal methods for filtering genshi template streams
 
-    ticket_hours_form = MarkupTemplate("""<div style="float:right; border: 1px solid black; text-align: left">
-<form method="post" action="${action}">
-<center>
-<b>Add hours to ticket:</b>
-<p>
-<input type="text" name="hours"/>:<input type="text" name="minutes"/>
-</p>
-</center>
-<input type="hidden" name="worker" value="${worker}"/>
-<input type="submit" name="addhours" value="Add Hours"/>
-</form>
-</div>
-""")
+    ### internal methods for filtering genshi template streams
 
     def filter_ticket(self, req, stream, data):
         """filter the stream for tickets"""
@@ -1158,10 +1145,6 @@ class TracHoursPlugin(Component):
             hours = '%.1f' % (self.get_total_hours(ticket_id) / 3600.0)
             field = tag.a(hours, href=req.href('hours', data['ticket'].id), title="hours for ticket %s" % data['ticket'].id)
             totalhours['rendered'] = field
-            if req.perm.has_permission('TICKET_ADD_HOURS') and req.authname:
-                data = { 'worker': req.authname,
-                         'action': req.href('hours', ticket_id)}
-                stream |= Transformer("//div[@id='content']").before(self.ticket_hours_form.generate(**data))
         stream |= Transformer("//input[@id='field-totalhours']").replace(field)
 
         return stream
