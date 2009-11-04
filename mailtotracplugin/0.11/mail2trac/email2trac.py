@@ -42,14 +42,6 @@ def lookup(env, message):
     on lookup error, raises AddressLookupException
     """
 
-    # logging
-    logdir = env.config.get('mail', 'log_dir')
-    if logdir:
-        datestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        f = file(os.path.join(logdir, datestamp), 'w')
-        print >> f, message
-        f.close()
-
     message = email.message_from_string(message)
 
     # if the message is not to this project, ignore it
@@ -162,12 +154,15 @@ def main(args=sys.argv[1:]):
                       help='urls to post to')
     parser.add_option('-e', '--parent-env', dest='environment', 
                       help='Trac parent environment directory to dispatch TTW')
+    parser.add_option('-l', '--logdir', dest='logdir',
+                      help='directory to log emails that cause errors')
     options, args = parser.parse_args(args)
 
     # print help if no options given
     if not options.projects and not options.urls and not options.environment:
         parser.print_help()
         sys.exit()
+
 
     # read the message
     if options.file:
@@ -176,37 +171,50 @@ def main(args=sys.argv[1:]):
         f = sys.stdin
     message = f.read()
 
-    # relay the email
-    found = False
+    try:
 
-    for project in options.projects:
-        found = True
-        env = open_environment(project)  # open the environment
-        mail2project(env, message)  # process the message
+        # relay the email
+        found = False
+
+        for project in options.projects:
+            found = True
+            env = open_environment(project)  # open the environment
+            mail2project(env, message)  # process the message
         
-    if options.environment:
-        assert len(options.urls) == 1
-        base_url = options.urls[0].rstrip('/')
-        projects = [ project for project in os.listdir(options.environment)
-                     if os.path.isdir(project) ]
-        options.urls = [ '%s/%s/mail2trac' % (base_url, project)
-                         for project in projects ]
+        if options.environment:
+            assert len(options.urls) == 1
+            base_url = options.urls[0].rstrip('/')
+            projects = [ project for project in os.listdir(options.environment)
+                         if os.path.isdir(project) ]
+            options.urls = [ '%s/%s/mail2trac' % (base_url, project)
+                             for project in projects ]
 
-    for url in options.urls:
-        # post the message
-        try:
-            urllib2.urlopen(url, urllib.urlencode(dict(message=unicode(message, 'utf-8', 'ignore'))))
-        except urllib2.HTTPError, e:
-            if options.environment:
-                continue
-            else:
-                print e.read()
-                sys.exit(1)
-        found = True
+        for url in options.urls:
+            # post the message
+            try:
+                urllib2.urlopen(url, urllib.urlencode(dict(message=unicode(message, 'utf-8', 'ignore'))))
+            except urllib2.HTTPError, e:
+                if options.environment:
+                    continue
+                else:
+                    e.msg += '\n' + e.read()
+                    raise e
+            found = True
 
-    # send proper status code if email is not relayed
-    if not found:
-        sys.exit(EXIT_NOUSER)
+        # send proper status code if email is not relayed
+        if not found:
+            raise SystemExit(EXIT_NOUSER)
+
+    except Exception, e:
+
+        # logging
+        if options.logdir:
+            datestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            f = file(os.path.join(options.logdir, datestamp), 'w')
+            print >> f, str(e)
+            print >> f, '-' * 40 # separator
+            print >> f, message
+            f.close()
 
             
 if __name__ == '__main__':
