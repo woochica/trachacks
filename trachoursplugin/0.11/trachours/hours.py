@@ -2,9 +2,7 @@
 TracHoursPlugin:
 a time-tracking plugin for Trac (http://trac.edgewall.org)
 
-See: 
- * http://trac-hacks.org/wiki/TracHoursPlugin
- * http://trac-hacks.org/svn/trachoursplugin
+See: http://trac-hacks.org/wiki/TracHoursPlugin
 """
 
 import calendar
