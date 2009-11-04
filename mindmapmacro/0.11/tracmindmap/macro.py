@@ -15,8 +15,6 @@ from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
 from tracextracturl import *
 from trac.util import md5
 
-from  ast  import literal_eval
-
 mindmaps = dict()
 
 class MindMapMacro(Component):
@@ -47,6 +45,31 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           style="width:%(width)s; height:%(height)s" % data,
       )
 
+    def _set_cache(self, hash, content):
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      try:
+        cursor.execute('CREATE TEMPORARY TABLE mindmapcache (hash text PRIMARY KEY, content text)')
+      except:
+        pass
+      try:
+        cursor.execute('INSERT INTO mindmapcache VALUES (%s,%s)', (hash,content))
+      except:
+        #cursor.connection.rollback()
+        cursor.execute('UPDATE mindmapcache SET content=%s WHERE hash=%s', (content,hash))
+
+    def _get_cache(self, hash, default=None):
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      try:
+        cursor.execute('SELECT content FROM mindmapcache WHERE hash=%s LIMIT 1', (hash,))
+        (content,) = cursor.fetchone()
+        return content
+      except Exception, e:
+        if default == None:
+          raise e
+        return unicode()
+
     ### methods for IWikiMacroProvider
     def get_macros(self):
       yield 'MindMap'
@@ -65,7 +88,7 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
             digest.update(unicode(content))
             hash = digest.hexdigest()
             mm = MindMap(content)
-            mindmaps[hash] = mm
+            self._set_cache(hash, unicode(mm))
           except Exception, e:
             return str(e)
             largs, kwargs = parse_args( content )
@@ -80,11 +103,11 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
         #return  unicode(tag.pre(mm)) +
         return  """<div style="width: 85%%; height: 500px;"
         class="freemindmap"><object width="85%%" height="500px"
-        data="/sqlite/chrome/mindmap/visorFreemind.swf"
+        data="%s/visorFreemind.swf"
         type="application/x-shockwave-flash"><param value="high"
         name="quality"/><param value="#ffffff" name="bgcolor"/><param
         value="openUrl=_blank&amp;startCollapsedToLevel=3&amp;initLoadFile=%s"
-        name="flashvars"/></object></div>""" % formatter.req.href.mindmap(hash)
+        name="flashvars"/></object></div>""" % (formatter.req.href.chrome('mindmap'),formatter.req.href.mindmap(hash+'.mm'))
 
         return tag.div( 
             tag.pre ( "Args: " + unicode(args) ),
@@ -112,9 +135,23 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
         return req.path_info.startswith('/mindmap/')
 
     def process_request(self, req):
+        if req.path_info == '/mindmap/status':
+          content = tag.html(tag.body(tag.dd(
+              [ [tag.dt(tag.a(k,href=req.href.mindmap(k + '.mm'))),tag.dd(tag.pre(v))] for k,v in mindmaps.iteritems()]
+            ))).generate().render("xhtml")
+          req.send_response(200)
+          req.send_header('Cache-control', 'must-revalidate')
+          req.send_header('Content-Type', 'text/html;charset=utf-8')
+          req.send_header('Content-Length', len(content))
+          req.end_headers()
+
+          if req.method != 'HEAD':
+             req.write(content)
+          raise RequestDone
+
         try:
-            hash = req.path_info[9:]
-            req.send( unicode(mindmaps.pop(hash)), content_type='text/css', status=200)
+            hash = req.path_info[9:-3]
+            req.send( self._get_cache(hash), content_type='application/x-freemind', status=200)
         except RequestDone:
             pass
         except Exception, e:
