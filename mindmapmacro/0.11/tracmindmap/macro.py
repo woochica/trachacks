@@ -10,7 +10,7 @@ from genshi.builder import tag
 from genshi.core import Markup
 from trac.mimeview.api import IHTMLPreviewRenderer
 from trac.wiki.api import IWikiMacroProvider, parse_args
-from trac.web.chrome import ITemplateProvider
+from trac.web.chrome import ITemplateProvider, add_script
 from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
 from tracextracturl import *
 from trac.util import md5
@@ -25,7 +25,16 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
 
     """
     implements(IWikiMacroProvider, IHTMLPreviewRenderer, ITemplateProvider)
-    implements ( IRequestHandler)
+    implements ( IRequestHandler, IRequestFilter )
+
+
+   # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        add_script( req, 'mindmap/jquery.flash.js', mimetype='text/javascript' )
+        return (template, data, content_type)
 
 
     def _produce_html(self, data):
@@ -106,13 +115,30 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
         #href = extract_url (self.env, formatter.context, file, raw=True)
         #site = unicode( formatter.context.href.chrome('mindmap') )
         #return  unicode(tag.pre(mm)) +
+        return  """<div id="mm-%s" style="width: 85%%; height: 500px;"></div>
+                   <script type="text/javascript">
+                        $(document).ready(function(){
+                            $('#mm-%s').flash(
+                                { 
+                                  src: '%s/visorFreemind.swf',
+                                  width: 720,
+                                  height: 480,
+                                  flashvars: { initLoadFile: '%s' }
+                                },
+                                { version: 6 }
+                            );
+                        });
+                   </script>
+                """ % (hash,hash,
+            formatter.req.href.chrome('mindmap'),formatter.req.href.mindmap(hash+'.mm'))
+
         return  """<div style="width: 85%%; height: 500px;"
         class="freemindmap"><object width="85%%" height="500px"
         data="%s/visorFreemind.swf"
         type="application/x-shockwave-flash"><param value="high"
         name="quality"/><param value="#ffffff" name="bgcolor"/><param
         value="openUrl=_blank&amp;startCollapsedToLevel=3&amp;initLoadFile=%s"
-        name="flashvars"/></object></div>""" % (formatter.req.href.chrome('mindmap'),formatter.req.href.mindmap(hash+'.mm'))
+        name="flashvars"/></object></div>""" 
 
         return tag.div( 
             tag.pre ( "Args: " + unicode(args) ),
@@ -174,7 +200,7 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
 
 
 import re
-mmline = re.compile(r"^( *)\*(\([^\)]*\))?\s*(.*)$")
+mmline = re.compile(r"^( *)[*o+](\([^\)]*\))?\s+(.*)$")
 #mmline = re.compile(r"^( *)\*()(.*)")
 
 class MindMap:
@@ -186,7 +212,7 @@ class MindMap:
     if len(tree) != 2:
       raise TracError("Tree must only have one trunk!")
     (name,branch) = tree
-    self.xml = tag.map( self.node(name,branch), version="0.9.0")
+    self.xml = tag.map( self.node(name,branch), version="0.8.0")
 
   def __repr__(self):
     return self.xml.generate().render("xml")
@@ -200,7 +226,7 @@ class MindMap:
 
 
   def decode(self, code):
-    indent = 1
+    indent = -1
     lines = code.splitlines()
     rec = [lines.pop(0), []]
     while lines:
@@ -220,6 +246,8 @@ class MindMap:
     args = self._parse_args(argstr)
     ind = len(ind)
     text = text.strip()
+    if (indent == -1):
+        indent = ind
     if (ind == indent):
       lines.pop(0)
       ptr.append([text, [], args])

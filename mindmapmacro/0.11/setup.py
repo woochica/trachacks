@@ -15,7 +15,7 @@ setup(
     version = '0.1.' + rev,
     packages = ['tracmindmap'],
     package_data = {
-        'tracmindmap' : [ 'htdocs/*.swf' ],
+        'tracmindmap' : [ 'htdocs/*.swf', 'htdocs/*.js' ],
     },
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
