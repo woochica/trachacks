@@ -11,7 +11,9 @@ from genshi.core import Markup
 from trac.mimeview.api import IHTMLPreviewRenderer
 from trac.wiki.api import IWikiMacroProvider, parse_args
 from trac.web.chrome import ITemplateProvider, add_script
+from trac.env import IEnvironmentSetupParticipant
 from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
+from trac.db import Table, Column, DatabaseManager
 from tracextracturl import *
 from trac.util import md5
 
@@ -24,61 +26,96 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
 `$Id$`
 
     """
-    implements(IWikiMacroProvider, IHTMLPreviewRenderer, ITemplateProvider)
-    implements ( IRequestHandler, IRequestFilter )
+    implements ( IWikiMacroProvider, IHTMLPreviewRenderer, ITemplateProvider,
+                 IRequestHandler, IRequestFilter, IEnvironmentSetupParticipant )
 
+
+    SCHEMA = [
+        Table('mindmapcache', key='hash')[
+            Column('hash'),
+            Column('content'),
+        ]
+    ]
+
+    DB_VERSION = 0
+
+    def environment_created(self):
+        self._upgrade_db(self.env.get_db_cnx())
+
+    def environment_needs_upgrade(self, db):
+        cursor = db.cursor()
+        try:
+            cursor.execute("select count(*) from mindmapcache")
+            cursor.fetchone()
+            return False
+        except:
+            db.rollback()
+            return True
+
+    def upgrade_environment(self, db):
+        self._upgrade_db(db)
+
+    def _upgrade_db(self, db):
+        try:
+            db_backend, _ = DatabaseManager(self.env)._get_connector()
+            cursor = db.cursor()
+            for table in self.SCHEMA:
+                for stmt in db_backend.to_sql(table):
+                    self.log.debug(stmt)
+                    cursor.execute(stmt)
+        except Exception, e:
+            db.rollback()
+            self.log.error(e, exc_info=True)
+            raise TracError(unicode(e))
 
    # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        add_script( req, 'mindmap/jquery.flash.js', mimetype='text/javascript' )
+        add_script( req, 'mindmap/tools.flashembed-1.0.4.min.js', mimetype='text/javascript' )
+        add_script( req, 'mindmap/mindmap.js', mimetype='text/javascript' )
         return (template, data, content_type)
 
 
-    def _produce_html(self, data):
+    def _produce_html(self, attr, flashvars):
       """ Awaits data as dictionary and returns a genshi HTML tag. """
+
       return tag.div(
           tag.object(
               tag.param( name="quality", value="high" ),
               tag.param( name="bgcolor", value="#ffffff" ),
-              tag.param( name="flashvars", 
-                value="openUrl=_blank&initLoadFile=%(href)s&startCollapsedToLevel=5" % data ),
-              type="application/x-shockwave-flash",
-              data="%(site)s/visorFreemind.swf" % data,
-              width="%(width)s" % data,
-              height="%(height)s" % data,
+              tag.param( name="flashvars", value= "&".join([ "=".join([k,unicode(v)]) for k,v in flashvars.iteritems() ])  ),
+              type   = "application/x-shockwave-flash",
+              **attr
           ),
-          class_="freemindmap",
-          style="width:%(width)s; height:%(height)s" % data,
+          class_="mindmap"
       )
 
     def _set_cache(self, hash, content):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
-      try:
-        cursor.execute('CREATE TABLE mindmapcache (hash text PRIMARY KEY, content text)')
-      except Exception, e:
-        pass
-        #raise TracError(unicode(e))
-      try:
-        cursor.execute('INSERT INTO mindmapcache VALUES (%s,%s)', (hash,content))
-      except:
-        #cursor.connection.rollback()
-        cursor.execute('UPDATE mindmapcache SET content=%s WHERE hash=%s', (content,hash))
+      cursor.execute("INSERT INTO mindmapcache VALUES ('%s','%s')" % (hash,content) )
+      db.commit()
 
     def _get_cache(self, hash, default=None):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       try:
-        cursor.execute('SELECT content FROM mindmapcache WHERE hash=%s LIMIT 1', (hash,))
+        cursor.execute('SELECT content FROM mindmapcache WHERE hash=%s', (hash,))
         (content,) = cursor.fetchone()
         return content
       except Exception, e:
         if default == None:
           raise e
         return unicode(e)
+
+    def _check_cache(self, hash):
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      cursor.execute('SELECT count(content) FROM mindmapcache WHERE hash=%s', (hash,))
+      (content,) = cursor.fetchone()
+      return content
 
     ### methods for IWikiMacroProvider
     def get_macros(self):
@@ -93,14 +130,12 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           try:
             args, content = content.split("\n",1)
             largs, kwargs = parse_args( args )
-            #content = literal_eval ( content )
             digest = md5()
             digest.update(unicode(content))
             hash = digest.hexdigest()
-            mm = MindMap(content)
-            self.env.log.debug("Try to write cache entry")
-            self._set_cache(hash, unicode(mm))
-            self.env.log.debug("Cache entry written")
+            if not self._check_cache(hash):
+              mm = MindMap(content)
+              self._set_cache(hash, unicode(mm))
           except TracError, e:
             raise TracError(u'MACRO: ' + unicode(e))
           except Exception, e:
@@ -111,10 +146,20 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           largs, kwargs = [], args
 
         #return 'MM: ' + unicode(mm)
-
         #href = extract_url (self.env, formatter.context, file, raw=True)
-        #site = unicode( formatter.context.href.chrome('mindmap') )
-        #return  unicode(tag.pre(mm)) +
+
+        attr = dict()
+        attr['width']  = "100%"
+        attr['height'] = "600px"
+        attr['data']    = formatter.context.href.chrome('mindmap','visorFreemind.swf')
+        href   = formatter.req.href.mindmap(hash + '.mm')
+        flashvars = {
+              'openUrl'               : '_blank',
+              'initLoadFile'          : href,
+              'startCollapsedToLevel' : '5'
+            };
+        return self._produce_html( attr, flashvars )
+
         return  """<div id="mm-%s" style="width: 85%%; height: 500px;"></div>
                    <script type="text/javascript">
                         $(document).ready(function(){
@@ -132,14 +177,6 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
                 """ % (hash,hash,
             formatter.req.href.chrome('mindmap'),formatter.req.href.mindmap(hash+'.mm'))
 
-        return  """<div style="width: 85%%; height: 500px;"
-        class="freemindmap"><object width="85%%" height="500px"
-        data="%s/visorFreemind.swf"
-        type="application/x-shockwave-flash"><param value="high"
-        name="quality"/><param value="#ffffff" name="bgcolor"/><param
-        value="openUrl=_blank&amp;startCollapsedToLevel=3&amp;initLoadFile=%s"
-        name="flashvars"/></object></div>""" 
-
         return tag.div( 
             tag.pre ( "Args: " + unicode(args) ),
             tag.pre ( "Content: " + unicode(content) ),
@@ -148,9 +185,6 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
             tag.pre ( "MindMap: " + unicode(mindmaps)),
             tag.pre ( "MindMap: ", tag.a(hash, href=formatter.req.href.mindmap(hash) ) ),
           )
-
-        return self._produce_html( { 'width':width, 'height':height, 
-          'href':href, 'site':site } )
 
 
     # ITemplateProvider methods
@@ -200,7 +234,7 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
 
 
 import re
-mmline = re.compile(r"^( *)[*o+](\([^\)]*\))?\s+(.*)$")
+mmline = re.compile(r"^( *)([*o+-]|\d+\.)(\([^\)]*\))?\s+(.*)$")
 #mmline = re.compile(r"^( *)\*()(.*)")
 
 class MindMap:
@@ -222,7 +256,7 @@ class MindMap:
     if not content:
       return tag.node(TEXT=name,**args)
     else:
-      return tag.node( [ self.node(n,c,a) for n,c,a in content ], TEXT=name, **args)
+      return tag.node( [ self.node(n,c,a) for n,c,a in content ], TEXT=name, LINK=name, **args)
 
 
   def decode(self, code):
@@ -237,12 +271,13 @@ class MindMap:
     if not lines:
       return False
     if lines[0].strip() == '':
+      lines.pop(0)
       return True
     m = mmline.match(lines[0])
     if not m:
       lines.pop(0)
       return False
-    ind,argstr,text = m.groups()
+    ind,marker,argstr,text = m.groups()
     args = self._parse_args(argstr)
     ind = len(ind)
     text = text.strip()
