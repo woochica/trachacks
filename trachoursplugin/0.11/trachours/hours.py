@@ -380,7 +380,7 @@ class TracHoursPlugin(Component):
                 execute_non_query(self.env, sql, req.args['title'], 
                                   req.args['description'], req.args['query'])
                 #fixme: duplicate title?
-                id = get_scalar(self, "select id from ticket_time_query where title = %s", 0, req.args['title'])
+                id = get_scalar(self.env, "select id from ticket_time_query where title = %s", 0, req.args['title'])
 
             req.redirect(req.href('hours') + '?query_id=%s&%s' % (id, req.args['query']))
 
