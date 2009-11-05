@@ -78,8 +78,8 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
         return (template, data, content_type)
 
 
-    def _produce_html(self, attr, flashvars):
-      """ Awaits data as dictionary and returns a genshi HTML tag. """
+    def _produce_html(self, href, attr, flashvars):
+      flashvars['initLoadFile'] = href
 
       return tag.div(
           tag.object(
@@ -151,6 +151,7 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           pass
         else:
           attr['width'] += "px"
+
         return attr
 
         #return 'MM: ' + unicode(mm)
@@ -160,16 +161,20 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           raise TracError("File name missing!")
 
         attr = self._get_attr( kwargs )
-        attr['data']   = formatter.context.href.chrome('mindmap','visorFreemind.swf')
+        flashvars = {
+              'openUrl'               : '_blank',
+              'startCollapsedToLevel' : '5'
+            };
+        #flashvars.update( for kwargs.pop('flashvars', '').split('|') )
+        try:
+          flashvars.update([ [k,v] for k,v in [kv.split('=') for kv in kwargs['flashvars'].strip("\"'").split('|') ] ])
+        except:
+          pass
+        attr['data'] = formatter.context.href.chrome('mindmap','visorFreemind.swf')
 
         file = largs[0]
         href = extract_url (self.env, formatter.context, file, raw=True)
-        flashvars = {
-              'openUrl'               : '_blank',
-              'initLoadFile'          : href,
-              'startCollapsedToLevel' : '5'
-            };
-        return self._produce_html( attr, flashvars )
+        return self._produce_html( href, attr, flashvars )
 
     def _expand_long_macro(self, formatter, content, args):
         largs, kwargs = parse_args( args )
@@ -181,16 +186,19 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           self._set_cache(hash, unicode(mm))
 
         attr = self._get_attr( kwargs )
-        attr['data']   = formatter.context.href.chrome('mindmap','visorFreemind.swf')
+        attr['data'] = formatter.context.href.chrome('mindmap','visorFreemind.swf')
 
-        href   = formatter.req.href.mindmap(hash + '.mm')
+        href = formatter.req.href.mindmap(hash + '.mm')
         flashvars = {
               'openUrl'               : '_blank',
-              'initLoadFile'          : href,
               'startCollapsedToLevel' : '5'
             };
+        try:
+          flashvars.update([ [k,v] for k,v in [kv.split('=') for kv in kwargs['flashvars'].strip("\"'").split('|') ] ])
+        except:
+          pass
         #raise TracError('long')
-        return self._produce_html( attr, flashvars )
+        return self._produce_html( href, attr, flashvars )
 
 
     # ITemplateProvider methods
@@ -268,7 +276,11 @@ class MindMap:
   def decode(self, code):
     indent = -1
     lines = code.splitlines()
-    rec = [lines.pop(0), []]
+    name = ''
+    while not name and lines:
+      name = lines.pop(0).strip()
+
+    rec = [name, []]
     while lines:
       self._decode(rec[1], lines, indent)
     return rec
