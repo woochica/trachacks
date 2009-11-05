@@ -2,14 +2,24 @@ import re
 
 from componentdependencies.interface import IRequireComponents
 from hours import TracHoursPlugin
+from mail2trac.utils import emailaddr2user
 from trac.core import * 
 from trac.perm import PermissionSystem
 from trac.ticket.api import ITicketManipulator
 from trac.ticket.api import ITicketChangeListener
 
+try:
+    from mail2trac.interface import IEmailHandler
+    from mail2trac.email2ticket import ReplyToTicket
+except ImportError:
+    IEmailHandler = None
+
 class TracHoursByComment(Component):
 
-    implements(IRequireComponents, ITicketManipulator, ITicketChangeListener)
+    if IEmailHandler:
+        implements(IEmailHandler, IRequireComponents, ITicketManipulator, ITicketChangeListener)
+    else:
+        implements(IRequireComponents, ITicketManipulator, ITicketChangeListener)
 
     # for ticket comments: 1.5 hours or 1:30 hours
     hours_regex = '(([0-9]+(\.[0-9]+)?)|([0-9]+:[0-5][0-9])) *hours'
@@ -20,7 +30,6 @@ class TracHoursByComment(Component):
     ### method for IRequireComponents
     def requires(self):
         return [TracHoursPlugin]
-
 
     ### methods for ITicketManipulator
     
@@ -42,7 +51,11 @@ class TracHoursByComment(Component):
         if comment is None:
             return []
 
-        def replace(match, self=self, req=req, ticket=ticket):
+        req.args['comment'] = self.munge_comment(comment, ticket)
+        return []
+
+    def munge_comment(self, comment, ticket):
+        def replace(match, ticket=ticket):
             """
             callback for re.sub; this will markup the hours link
             """
@@ -50,9 +63,31 @@ class TracHoursByComment(Component):
 
         comment = re.sub(self.hours_regex, replace, comment)
         comment = re.sub(self.singular_hour_regex, u' [/hours/%s 1 hour]' % ticket.id, comment)
+        return comment
 
-        req.args['comment'] = comment 
-        return []
+    ### methods for IEmailHandler
+
+    def match(self, message):
+        reporter = emailaddr2user(self.env, message['from'])
+        reply_to_ticket = ReplyToTicket(self.env)
+        
+        can_add_hours = PermissionSystem(self.env).check_permission('TICKET_ADD_HOURS', reporter)
+        if not can_add_hours:
+            return False
+        return bool(reply_to_ticket.ticket(message))
+
+    def invoke(self, message, warnings):
+        reply_to_ticket = ReplyToTicket(self.env)
+        ticket = reply_to_ticket.ticket(message)
+        payload = message.get_payload()
+        if isinstance(payload, basestring):
+            if message.get('Content-Disposition', 'inline') == 'inline' and message.get_content_maintype() == 'text':
+                message.set_payload(self.munge_comment(payload, ticket))
+        else:
+            for _message in payload:
+                self.invoke(_message, warnings)
+        return message
+
 
     ### methods for ITicketChangeListener
 
@@ -65,7 +100,6 @@ class TracHoursByComment(Component):
         `old_values` is a dictionary containing the previous values of the
         fields that have changed.
         """
-
         can_add_hours = PermissionSystem(self.env).check_permission('TICKET_ADD_HOURS', author)
 
         if can_add_hours:
