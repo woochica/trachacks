@@ -17,7 +17,7 @@ class RemoveQuotes(Component):
     def invoke(self, message, warnings):
         payload = message.get_payload()
         if isinstance(payload, basestring):
-            if message.get('Content-Disposition', 'inline') == 'inline':
+            if message.get('Content-Disposition', 'inline') == 'inline' and message.get_content_maintype() == 'text':
                 message.set_payload(strip_quotes(payload))
         else:
             for _message in payload:

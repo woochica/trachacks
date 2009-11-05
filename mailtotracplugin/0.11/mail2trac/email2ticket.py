@@ -7,16 +7,16 @@ import re
 
 from mail2trac.email2trac import EmailException
 from mail2trac.interface import IEmailHandler
+from mail2trac.utils import add_attachments
 from mail2trac.utils import emailaddr2user
+from mail2trac.utils import get_description_and_attachments
+from mail2trac.utils import strip_res
 from trac.core import *
 from trac.mimeview.api import KNOWN_MIME_TYPES
 from trac.config import Option
 from trac.perm import PermissionSystem
 from trac.ticket import Ticket
 from trac.ticket.notification import TicketNotifyEmail
-from utils import add_attachments
-from utils import get_description_and_attachments
-from utils import strip_res
 
 
 ### email handlers
