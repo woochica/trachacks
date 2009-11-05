@@ -78,18 +78,19 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
         return (template, data, content_type)
 
 
-    def _produce_html(self, href, attr, flashvars):
+    def _produce_html(self, href, css, attr, flashvars):
       flashvars['initLoadFile'] = href
 
       return tag.div(
           tag.object(
               tag.param( name="quality", value="high" ),
               tag.param( name="bgcolor", value="#ffffff" ),
-              tag.param( name="flashvars", value= "&".join([ "=".join([k,unicode(v)]) for k,v in flashvars.iteritems() ])  ),
+              tag.param( name="flashvars", value= Markup("&".join([ "=".join([k,unicode(v)]) for k,v in flashvars.iteritems() ]) )),
               type   = "application/x-shockwave-flash",
               **attr
           ),
-          class_="mindmap"
+          class_="mindmap",
+          style=Markup(css),
       )
 
     def _set_cache(self, hash, content):
@@ -124,18 +125,27 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
     def get_macro_description(self, name):
       return self.__doc__
 
-    def expand_macro(self, formatter, name, content, args={}):
-        if args:
-          return self._expand_long_macro(formatter, content, args)
-        else:
-          try:
-            args, content = content.split("\n",1)
-          except:
-            return self._expand_short_macro(formatter, content)
-          else:
-            return self._expand_long_macro(formatter, content, args)
 
-    def _get_attr(self, kwargs):
+    def expand_macro(self, formatter, name, content, args={}):
+        try:
+          if not args:
+            args, content = content.split("\n",1)
+        except: # Short macro
+          largs, kwargs = parse_args( content )
+          if not largs:
+            raise TracError("File name missing!")
+          file = largs[0]
+          href = extract_url (self.env, formatter.context, file, raw=True)
+        else: # Long macro
+          largs, kwargs = parse_args( args )
+          digest = md5()
+          digest.update(unicode(content))
+          hash = digest.hexdigest()
+          if not self._check_cache(hash):
+            mm = MindMap(content)
+            self._set_cache(hash, unicode(mm))
+          href = formatter.req.href.mindmap(hash + '.mm')
+
         attr = dict()
         attr['width']  = kwargs.pop('width',"100%")
         attr['height'] = kwargs.pop('height',"600")
@@ -152,43 +162,6 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
         else:
           attr['width'] += "px"
 
-        return attr
-
-        #return 'MM: ' + unicode(mm)
-    def _expand_short_macro(self, formatter, content):
-        largs, kwargs = parse_args( content )
-        if not largs:
-          raise TracError("File name missing!")
-
-        attr = self._get_attr( kwargs )
-        flashvars = {
-              'openUrl'               : '_blank',
-              'startCollapsedToLevel' : '5'
-            };
-        #flashvars.update( for kwargs.pop('flashvars', '').split('|') )
-        try:
-          flashvars.update([ [k,v] for k,v in [kv.split('=') for kv in kwargs['flashvars'].strip("\"'").split('|') ] ])
-        except:
-          pass
-        attr['data'] = formatter.context.href.chrome('mindmap','visorFreemind.swf')
-
-        file = largs[0]
-        href = extract_url (self.env, formatter.context, file, raw=True)
-        return self._produce_html( href, attr, flashvars )
-
-    def _expand_long_macro(self, formatter, content, args):
-        largs, kwargs = parse_args( args )
-        digest = md5()
-        digest.update(unicode(content))
-        hash = digest.hexdigest()
-        if not self._check_cache(hash):
-          mm = MindMap(content)
-          self._set_cache(hash, unicode(mm))
-
-        attr = self._get_attr( kwargs )
-        attr['data'] = formatter.context.href.chrome('mindmap','visorFreemind.swf')
-
-        href = formatter.req.href.mindmap(hash + '.mm')
         flashvars = {
               'openUrl'               : '_blank',
               'startCollapsedToLevel' : '5'
@@ -197,8 +170,18 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           flashvars.update([ [k,v] for k,v in [kv.split('=') for kv in kwargs['flashvars'].strip("\"'").split('|') ] ])
         except:
           pass
-        #raise TracError('long')
-        return self._produce_html( href, attr, flashvars )
+        attr['data'] = formatter.context.href.chrome('mindmap','visorFreemind.swf')
+
+        css  = ''
+        if 'border' in kwargs:
+          border = kwargs['border'].strip("\"'").replace(';','')
+          if border == "1":
+            border = "solid"
+          elif border == "0":
+            border = "none"
+          css = 'border: ' + border
+
+        return self._produce_html( href, css, attr, flashvars )
 
 
     # ITemplateProvider methods
