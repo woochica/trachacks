@@ -23,7 +23,7 @@ class TracHoursRoadmapFilter(Component):
     def requires(self):
         return [TracHoursPlugin]
 
-        ### method for ITemplateStreamFilter
+    ### method for ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):
         """
         filter the stream for the roadmap (/roadmap)
