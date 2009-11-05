@@ -130,6 +130,41 @@ class TracHoursPlugin(Component):
         return sum([hour['seconds_worked'] for hour in self.get_ticket_hours(int(ticket_id))])
 
 
+    def add_ticket_hours(self, ticket, worker, seconds_worked, submitter=None, time_started=None, comments=''):
+        """
+        add hours to a ticket:
+        * ticket : id of the ticket 
+        * worker : who did the work on the ticket
+        * seconds_worked : how much work was done, in seconds
+        * submitter : who recorded the work, if different from the worker
+        * time_started : when the work was begun (a Datetime object) if other than now
+        * comments : comments to record
+        """
+
+        # prepare the data
+        if submitter is None:
+            submitter = worker
+        if time_started is None:
+            time_started = datetime.datetime.now()
+        time_started = int(time.mktime(time_started.timetuple()))
+        comments = comments.strip()
+
+        # execute the SQL
+        sql = """insert into ticket_time(ticket, 
+                                         time_submitted,
+                                         worker,
+                                         submitter,
+                                         time_started,
+                                         seconds_worked,
+                                         comments) values 
+(%s, %s, %s, %s, %s, %s, %s)"""
+        execute_non_query(self.env, sql, ticket, int(time.time()),
+                          worker, submitter, time_started,
+                          seconds_worked, comments)
+
+        # update the hours on the ticket
+        self.update_ticket_hours([ticket])
+
     ###### methods and attributes for trac Interfaces
 
     implements(IRequestHandler, ITemplateStreamFilter, INavigationContributor, 
@@ -141,11 +176,7 @@ class TracHoursPlugin(Component):
         return [SetupTracHours]
 
 
-    ### methods for IPermissionRequestor
-    
-    """Extension point interface for components that define actions."""
-
-
+    ### method for IPermissionRequestor
     def get_permission_actions(self):
         """Return a list of actions defined by this component.
         
@@ -1055,40 +1086,6 @@ class TracHoursPlugin(Component):
         location = req.environ.get('HTTP_REFERER', req.href(req.path_info))
         req.redirect(location)
 
-    def add_ticket_hours(self, ticket, worker, seconds_worked, submitter=None, time_started=None, comments=''):
-        """
-        add hours to a ticket:
-        * ticket : id of the ticket 
-        * worker : who did the work on the ticket
-        * seconds_worked : how much work was done, in seconds
-        * submitter : who recorded the work, if different from the worker
-        * time_started : when the work was begun (a Datetime object) if other than now
-        * comments : comments to record
-        """
-
-        # prepare the data
-        if submitter is None:
-            submitter = worker
-        if time_started is None:
-            time_started = datetime.datetime.now()
-        time_started = int(time.mktime(time_started.timetuple()))
-        comments = comments.strip()
-
-        # execute the SQL
-        sql = """insert into ticket_time(ticket, 
-                                         time_submitted,
-                                         worker,
-                                         submitter,
-                                         time_started,
-                                         seconds_worked,
-                                         comments) values 
-(%s, %s, %s, %s, %s, %s, %s)"""
-        execute_non_query(self.env, sql, ticket, int(time.time()),
-                          worker, submitter, time_started,
-                          seconds_worked, comments)
-
-        # update the hours on the ticket
-        self.update_ticket_hours([ticket])
 
     def edit_ticket_hours(self, req, ticket):
         """respond to a request to edithours for a ticket"""
