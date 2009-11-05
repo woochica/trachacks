@@ -20,7 +20,6 @@ from componentdependencies.interface import IRequireComponents
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
-from genshi.template import MarkupTemplate
 
 from multiproject import MultiprojectHours # local import
 
@@ -85,12 +84,50 @@ class TracHoursPlugin(Component):
               dict(name='time_started', label='Work done on'),
               dict(name='time_submitted', label='Work recorded on')]
 
-    # XXXXXX THIS SHOULD BE MOVED ELSEWHERE!
-    def get_query(self, query_id):
-        results = get_all_dict(self.env, "select title, description, query from ticket_time_query where id=%s", query_id)
-        if not results:
-            raise KeyError("No such query %s" % query_id)
-        return results[0]
+
+    ###### API
+
+    def update_ticket_hours(self, ids):
+        """
+        update the totalhours ticket field from the tracked hours information
+        * ids: ticket ids (list)
+        """
+
+        results = get_all_dict(self.env, "select sum(seconds_worked) as t, ticket from ticket_time where ticket in (%s) group by ticket" % ",".join(map(str,ids)))
+
+        update = "update ticket_custom set value=%s where name='totalhours' and ticket=%s"
+        for result in results:
+            formatted = "%8.2f" % (float(result['t']) / 3600.0)
+            execute_non_query(self.env, update, formatted, result['ticket'])
+
+    def get_ticket_hours(self, ticket_id, from_date=None, to_date=None, worker_filter=None):
+        args = []
+        if isinstance(ticket_id, int):
+            where = "ticket = %s"
+            args.append(ticket_id)
+        else:
+            where = "ticket in (%s)" % ",".join(map(str, ticket_id)) #note the lack of args.  This is because there's no way to do a placeholder for a list that I can see.
+
+        if from_date:
+            where += " and time_started >= %s"
+            args.append(int(time.mktime(from_date.timetuple())))
+
+        if to_date:
+            where += " and time_started < %s"
+            args.append(int(time.mktime(to_date.timetuple())))
+            
+        if worker_filter and worker_filter != '*any':
+            where += " and worker = %s"
+            args.append(worker_filter)
+
+        sql = """select * from ticket_time where """ + where
+        result = get_all_dict(self.env, sql, *args)
+
+        return result
+
+    def get_total_hours(self, ticket_id):
+        """return total SECONDS associated with ticket_id""" 
+        return sum([hour['seconds_worked'] for hour in self.get_ticket_hours(int(ticket_id))])
 
 
     ###### methods and attributes for trac Interfaces
@@ -307,28 +344,22 @@ class TracHoursPlugin(Component):
 
 
     ### method for ITemplateStreamFilter
-
-    """Filter a Genshi event stream prior to rendering."""
-
     def filter_stream(self, req, method, filename, stream, data):
-        """Return a filtered Genshi event stream, or the original unfiltered
-        stream if no match.
-
-        `req` is the current request object, `method` is the Genshi render
-        method (xml, xhtml or text), `filename` is the filename of the template
-        to be rendered, `stream` is the event stream and `data` is the data for
-        the current template.
-
-        See the Genshi documentation for more information.
         """
-        handlers = { 'ticket.html': self.filter_ticket,
-                     'roadmap.html': self.filter_roadmap,
-                     'milestone_view.html': self.filter_roadmap,
-                    }
+        filter hours and estimated hours fields to have them 
+        correctly display on the ticket.html
+        """
 
-        handler = handlers.get(filename)
-        if handler is not None:
-            stream = handler(req, stream, data)
+        if filename == 'ticket.html':
+            totalhours = [ field for field in data['fields'] if field['name'] == 'totalhours' ][0]
+            ticket_id = data['ticket'].id
+            if ticket_id is None: # new ticket
+                field = '0'
+            else:
+                hours = '%.1f' % (self.get_total_hours(ticket_id) / 3600.0)
+                field = tag.a(hours, href=req.href('hours', data['ticket'].id), title="hours for ticket %s" % data['ticket'].id)
+            totalhours['rendered'] = field
+            stream |= Transformer("//input[@id='field-totalhours']").replace(field)
 
         return stream
 
@@ -351,6 +382,13 @@ class TracHoursPlugin(Component):
         return datetime.datetime.fromtimestamp(date).strftime(self.date_format)
 
     ### methods for the query interface
+
+    def get_query(self, query_id):
+        results = get_all_dict(self.env, "select title, description, query from ticket_time_query where id=%s", query_id)
+        if not results:
+            raise KeyError("No such query %s" % query_id)
+        return results[0]
+
 
     def get_columns(self):
         return [ 'seconds_worked', 'worker', 'submitter', 
@@ -1095,153 +1133,4 @@ class TracHoursPlugin(Component):
         self.update_ticket_hours(tickets)
 
         req.redirect(req.href(req.path_info))
-
-    ### functions that perform database operations (query, setting)
-
-    def update_ticket_hours(self, ids):
-        """
-        update the totalhours ticket field from the tracked hours information
-        * ids: ticket ids (list)
-        """
-
-        results = get_all_dict(self.env, "select sum(seconds_worked) as t, ticket from ticket_time where ticket in (%s) group by ticket" % ",".join(map(str,ids)))
-
-        update = "update ticket_custom set value=%s where name='totalhours' and ticket=%s"
-        for result in results:
-            formatted = "%8.2f" % (float(result['t']) / 3600.0)
-            execute_non_query(self.env, update, formatted, result['ticket'])
-
-    def get_ticket_hours(self, ticket_id, from_date=None, to_date=None, worker_filter=None):
-        args = []
-        if isinstance(ticket_id, int):
-            where = "ticket = %s"
-            args.append(ticket_id)
-        else:
-            where = "ticket in (%s)" % ",".join(map(str, ticket_id)) #note the lack of args.  This is because there's no way to do a placeholder for a list that I can see.
-
-        if from_date:
-            where += " and time_started >= %s"
-            args.append(int(time.mktime(from_date.timetuple())))
-
-        if to_date:
-            where += " and time_started < %s"
-            args.append(int(time.mktime(to_date.timetuple())))
-            
-        if worker_filter and worker_filter != '*any':
-            where += " and worker = %s"
-            args.append(worker_filter)
-
-        sql = """select * from ticket_time where """ + where
-        result = get_all_dict(self.env, sql, *args)
-
-        return result
-
-    def get_total_hours(self, ticket_id):
-        """return total SECONDS associated with ticket_id""" 
-        return sum([hour['seconds_worked'] for hour in self.get_ticket_hours(int(ticket_id))])
-
-
-    ### internal methods for filtering genshi template streams
-
-    def filter_ticket(self, req, stream, data):
-        """filter the stream for tickets"""
-
-        totalhours = [ field for field in data['fields'] if field['name'] == 'totalhours' ][0]
-        ticket_id = data['ticket'].id
-        if ticket_id is None: # new ticket
-            field = '0'
-        else:
-            hours = '%.1f' % (self.get_total_hours(ticket_id) / 3600.0)
-            field = tag.a(hours, href=req.href('hours', data['ticket'].id), title="hours for ticket %s" % data['ticket'].id)
-            totalhours['rendered'] = field
-        stream |= Transformer("//input[@id='field-totalhours']").replace(field)
-
-        return stream
-
-    def filter_roadmap(self, req, stream, data):
-        """
-        filter the stream for the roadmap (/roadmap)
-        and milestones /milestone/<milestone>
-        """
-        # XXX maybe this should be refactored to deal with these
-        # views independently; see e.g. #4375
-
-        hours = {}
-
-        milestones = data.get('milestones')
-        this_milestone = None
-        if milestones is None:
-            # /milestone view : only one milestone
-            milestones = [ data['milestone'] ]
-            this_milestone = milestones[0].name
-            find_xpath = "//div[@class='milestone']//h1"
-            xpath = "//div[@class='milestone']//div[@class='info']"
-        else:
-            # /roadmap view
-            find_xpath = "//li[@class='milestone']//h2/a"
-            xpath = "//li[@class='milestone']//div[@class='info']"
-
-
-        for milestone in milestones:
-            hours[milestone.name] = dict(totalhours=0., 
-                                         estimatedhours=0.,)
-                                             
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
-            cursor.execute("select id from ticket where milestone='%s'" % milestone.name)
-            tickets = [i[0] for i in cursor.fetchall()]
-
-            if tickets:
-                hours[milestone.name]['date'] = Ticket(self.env, tickets[0]).time_created
-            for ticket in tickets:
-                ticket = Ticket(self.env, ticket)
-
-                # estimated hours for the ticket
-                try:
-                    estimatedhours = float(ticket['estimatedhours'])
-                except (ValueError, TypeError):
-                    estimatedhours = 0.
-                hours[milestone.name]['estimatedhours'] += estimatedhours
-
-                # total hours for the ticket
-                totalhours = self.get_total_hours(ticket.id)
-                hours[milestone.name]['totalhours'] += totalhours
-                
-                # update date for oldest ticket
-                if ticket.time_created < hours[milestone.name]['date']:
-                    hours[milestone.name]['date'] = ticket.time_created
-            # seconds -> hours
-            hours[milestone.name]['totalhours'] /= 3600.
-
-        class MilestoneMarkup(object): # TODO: move elsewhere
-            def __init__(self, buffer, hours, href):
-                self.buffer = buffer
-                self.hours = hours
-                self.href = href
-            def __iter__(self):
-                if this_milestone is not None: # for /milestone/xxx
-                    milestone = this_milestone
-                else:
-                    milestone = self.buffer.events[3][1]
-                hours = self.hours[milestone]
-                estimatedhours = hours['estimatedhours']
-                totalhours = hours['totalhours']
-                if not (estimatedhours or totalhours):
-                    return iter([])
-                items = []
-                if estimatedhours:
-                    items.append(tag.dt("Estimated Hours:"))
-                    items.append(tag.dd(str(estimatedhours)))
-                date = hours['date']
-                link = self.href("hours", milestone=milestone, 
-                                 from_year=date.year,
-                                 from_month=date.month,
-                                 from_day=date.day)
-                items.append(tag.dt(tag.a("Total Hours:", href=link)))
-                items.append(tag.dd(tag.a(hours_format % totalhours, href=link)))
-                return iter(tag.dl(*items))
-
-        b = StreamBuffer()
-        stream |= Transformer(find_xpath).copy(b).end().select(xpath).append(MilestoneMarkup(b, hours, req.href))
-        return stream
 
