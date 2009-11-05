@@ -166,9 +166,9 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
         else:
           attr['width'] += "px"
 
-        flashvars = dict([ kv.split('=') for kv in self.default_flashvars])
+        flashvars = dict([ [k.strip(),v.strip()] for k,v in [ kv.split('=') for kv in self.default_flashvars]])
         try:
-          flashvars.update([ [k,v] for k,v in [kv.split('=') for kv in kwargs['flashvars'].strip("\"'").split('|') ] ])
+          flashvars.update([ [k.strip(),v.strip()] for k,v in [kv.split('=') for kv in kwargs['flashvars'].strip("\"'").split('|') ] ])
         except:
           pass
 
