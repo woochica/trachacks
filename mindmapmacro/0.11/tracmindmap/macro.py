@@ -3,19 +3,19 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
-from trac.core import *
-from trac.resource import *
+from trac.core         import *
+from trac.resource     import *
 
-from genshi.builder import tag
-from genshi.core import Markup
+from genshi.builder    import tag
+from genshi.core       import Markup
 from trac.mimeview.api import IHTMLPreviewRenderer
-from trac.wiki.api import IWikiMacroProvider, parse_args
-from trac.web.chrome import ITemplateProvider, add_script
-from trac.env import IEnvironmentSetupParticipant
-from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
-from trac.db import Table, Column, DatabaseManager
-from tracextracturl import *
-from trac.util import md5
+from trac.wiki.api     import IWikiMacroProvider, parse_args
+from trac.web.chrome   import ITemplateProvider, add_script
+from trac.env          import IEnvironmentSetupParticipant
+from trac.web.api      import IRequestFilter, IRequestHandler, RequestDone
+from trac.db           import Table, Column, DatabaseManager
+from tracextracturl    import extract_url
+from trac.util         import md5
 
 mindmaps = dict()
 
@@ -125,34 +125,45 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
       return self.__doc__
 
     def expand_macro(self, formatter, name, content, args={}):
-        mm = "<N/A>"
-        if not args:
+        if args:
+          return self._expand_long_macro(formatter, content, args)
+        else:
           try:
             args, content = content.split("\n",1)
-            largs, kwargs = parse_args( args )
-            digest = md5()
-            digest.update(unicode(content))
-            hash = digest.hexdigest()
-            if not self._check_cache(hash):
-              mm = MindMap(content)
-              self._set_cache(hash, unicode(mm))
-          except TracError, e:
-            raise TracError(u'MACRO: ' + unicode(e))
-          except Exception, e:
-            return str(e)
-            largs, kwargs = parse_args( content )
+          except:
+            return self._expand_short_macro(formatter, content)
+          else:
+            return self._expand_long_macro(formatter, content, args)
+
+    def _get_attr(self, kwargs):
+        attr = dict()
+        attr['width']  = kwargs.pop('width',"100%")
+        attr['height'] = kwargs.pop('height',"600")
+        try:
+          int( attr['height'] )
+        except:
+          pass
         else:
-          return 'no args'
-          largs, kwargs = [], args
+          attr['height'] += "px"
+        try:
+          int( attr['width'] )
+        except:
+          pass
+        else:
+          attr['width'] += "px"
+        return attr
 
         #return 'MM: ' + unicode(mm)
-        #href = extract_url (self.env, formatter.context, file, raw=True)
+    def _expand_short_macro(self, formatter, content):
+        largs, kwargs = parse_args( content )
+        if not largs:
+          raise TracError("File name missing!")
 
-        attr = dict()
-        attr['width']  = "100%"
-        attr['height'] = "600px"
-        attr['data']    = formatter.context.href.chrome('mindmap','visorFreemind.swf')
-        href   = formatter.req.href.mindmap(hash + '.mm')
+        attr = self._get_attr( kwargs )
+        attr['data']   = formatter.context.href.chrome('mindmap','visorFreemind.swf')
+
+        file = largs[0]
+        href = extract_url (self.env, formatter.context, file, raw=True)
         flashvars = {
               'openUrl'               : '_blank',
               'initLoadFile'          : href,
@@ -160,31 +171,26 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
             };
         return self._produce_html( attr, flashvars )
 
-        return  """<div id="mm-%s" style="width: 85%%; height: 500px;"></div>
-                   <script type="text/javascript">
-                        $(document).ready(function(){
-                            $('#mm-%s').flash(
-                                { 
-                                  src: '%s/visorFreemind.swf',
-                                  width: 720,
-                                  height: 480,
-                                  flashvars: { initLoadFile: '%s' }
-                                },
-                                { version: 6 }
-                            );
-                        });
-                   </script>
-                """ % (hash,hash,
-            formatter.req.href.chrome('mindmap'),formatter.req.href.mindmap(hash+'.mm'))
+    def _expand_long_macro(self, formatter, content, args):
+        largs, kwargs = parse_args( args )
+        digest = md5()
+        digest.update(unicode(content))
+        hash = digest.hexdigest()
+        if not self._check_cache(hash):
+          mm = MindMap(content)
+          self._set_cache(hash, unicode(mm))
 
-        return tag.div( 
-            tag.pre ( "Args: " + unicode(args) ),
-            tag.pre ( "Content: " + unicode(content) ),
-            tag.pre ( "LArgs: " + unicode(largs) ),
-            tag.pre ( "KwArgs: " + unicode(kwargs) ),
-            tag.pre ( "MindMap: " + unicode(mindmaps)),
-            tag.pre ( "MindMap: ", tag.a(hash, href=formatter.req.href.mindmap(hash) ) ),
-          )
+        attr = self._get_attr( kwargs )
+        attr['data']   = formatter.context.href.chrome('mindmap','visorFreemind.swf')
+
+        href   = formatter.req.href.mindmap(hash + '.mm')
+        flashvars = {
+              'openUrl'               : '_blank',
+              'initLoadFile'          : href,
+              'startCollapsedToLevel' : '5'
+            };
+        #raise TracError('long')
+        return self._produce_html( attr, flashvars )
 
 
     # ITemplateProvider methods
