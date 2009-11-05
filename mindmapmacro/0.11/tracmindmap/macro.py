@@ -147,8 +147,8 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           href = formatter.req.href.mindmap(hash + '.mm')
 
         attr = dict()
-        attr['width']  = kwargs.pop('width',"100%")
-        attr['height'] = kwargs.pop('height',"600")
+        attr['width']  = kwargs.pop('width',"95%")
+        attr['height'] = kwargs.pop('height',"400")
         try:
           int( attr['height'] )
         except:
