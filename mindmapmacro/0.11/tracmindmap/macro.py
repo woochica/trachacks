@@ -16,6 +16,7 @@ from trac.web.api      import IRequestFilter, IRequestHandler, RequestDone
 from trac.db           import Table, Column, DatabaseManager
 from tracextracturl    import extract_url
 from trac.util         import md5
+from trac.config       import Option, ListOption
 
 mindmaps = dict()
 
@@ -29,6 +30,9 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
     implements ( IWikiMacroProvider, IHTMLPreviewRenderer, ITemplateProvider,
                  IRequestHandler, IRequestFilter, IEnvironmentSetupParticipant )
 
+    default_width     = Option('mindmap', 'default_width', '95%', 'Default width for mindmaps')
+    default_height    = Option('mindmap', 'default_height', '400', 'Default height for mindmaps')
+    default_flashvars = ListOption('mindmap', 'default_flashvars', [ 'openUrl = _blank', 'startCollapsedToLevel = 5' ], 'Default flashvars for mindmaps')
 
     SCHEMA = [
         Table('mindmapcache', key='hash')[
@@ -125,7 +129,6 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
     def get_macro_description(self, name):
       return self.__doc__
 
-
     def expand_macro(self, formatter, name, content, args={}):
         try:
           if not args:
@@ -147,8 +150,9 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           href = formatter.req.href.mindmap(hash + '.mm')
 
         attr = dict()
-        attr['width']  = kwargs.pop('width',"95%")
-        attr['height'] = kwargs.pop('height',"400")
+        attr['data']   = formatter.context.href.chrome('mindmap','visorFreemind.swf')
+        attr['width']  = kwargs.pop('width',self.default_width)
+        attr['height'] = kwargs.pop('height',self.default_height)
         try:
           int( attr['height'] )
         except:
@@ -162,15 +166,11 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
         else:
           attr['width'] += "px"
 
-        flashvars = {
-              'openUrl'               : '_blank',
-              'startCollapsedToLevel' : '5'
-            };
+        flashvars = dict([ kv.split('=') for kv in self.default_flashvars])
         try:
           flashvars.update([ [k,v] for k,v in [kv.split('=') for kv in kwargs['flashvars'].strip("\"'").split('|') ] ])
         except:
           pass
-        attr['data'] = formatter.context.href.chrome('mindmap','visorFreemind.swf')
 
         css  = ''
         if 'border' in kwargs:
