@@ -65,25 +65,6 @@ def get_scalar(com, sql, col=0, *params):
     else:
         return None;
 
-def execute_in_trans(com, *args):
-    db = com.env.get_db_cnx()
-    cur = db.cursor()
-    result = True
-    try:
-        for sql, params in args:
-            cur.execute(sql, params)
-        db.commit()
-    except Exception, e:
-        com.log.error('There was a problem executing sql:%s \n \
-        with parameters:%s\nException:%s'%(sql, params, e));
-        db.rollback();
-        result = e
-    try:
-        db.close()
-    except:
-        pass
-    return result
-
 def db_table_exists(com,  table):
     db = com.env.get_db_cnx()
     sql = "SELECT * FROM %s LIMIT 1" % table;
