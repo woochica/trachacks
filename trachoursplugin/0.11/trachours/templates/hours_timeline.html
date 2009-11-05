@@ -27,7 +27,15 @@
 
   <body>
     <div id="content" class="query">
-      <h1>${query_title or 'hours'} <span class="numrows">(${ngettext('%(num)s match', '%(num)s matches', query.num_items)})</span></h1>
+      <h1>
+        <py:choose test="bool(query_title)">
+          <py:when test="True">${query_title}</py:when>
+          <py:otherwise>
+            <a href="${req.href('hours')}">hours</a>
+          </py:otherwise>
+        </py:choose>
+        <span class="numrows">(${ngettext('%(num)s match', '%(num)s matches', query.num_items)})</span>
+      </h1>
 
       <a py:if="multiproject" href="hours/multiproject">
 	Cross-project hours

@@ -12,7 +12,8 @@ import re
 import time
 
 from api import hours_format # local import
-from dbhelper import * # local import
+
+from tracsqlhelper import *
 
 from componentdependencies.interface import IRequireComponents
 
@@ -42,6 +43,7 @@ from trac.web.chrome import add_ctxtnav
 from trac.web.chrome import add_link 
 from trac.web.chrome import add_script
 from trac.web.chrome import add_stylesheet
+from trac.web.chrome import add_warning
 from trac.web.chrome import Chrome
 from trac.web.chrome import INavigationContributor
 
@@ -67,12 +69,6 @@ def query_to_query_string(query):
     args = "&".join(["%s=%s" % i for i in args])
     return args
 
-def get_query(comp, query_id):
-    results = get_all_dict(comp, "select title, description, query from ticket_time_query where id=%s", query_id)
-    if not results:
-        raise KeyError("No such query %s" % query_id)
-    return results[0]
-
 ### main class for TracHours
 
 class TracHoursPlugin(Component):
@@ -88,6 +84,14 @@ class TracHoursPlugin(Component):
               dict(name='submitter', label='Work submitted by'),
               dict(name='time_started', label='Work done on'),
               dict(name='time_submitted', label='Work recorded on')]
+
+    # XXXXXX THIS SHOULD BE MOVED ELSEWHERE!
+    def get_query(self, query_id):
+        results = get_all_dict(self.env, "select title, description, query from ticket_time_query where id=%s", query_id)
+        if not results:
+            raise KeyError("No such query %s" % query_id)
+        return results[0]
+
 
     ###### methods and attributes for trac Interfaces
 
@@ -364,7 +368,7 @@ class TracHoursPlugin(Component):
             if id:
                 #save over an existing query
                 sql = """update ticket_time_query set title = %s, description = %s, query = %s where id = %s"""
-                execute_non_query(self, sql, req.args['title'], 
+                execute_non_query(self.env, sql, req.args['title'], 
                                   req.args['description'], req.args['query'],
                                   id)
             
@@ -373,7 +377,7 @@ class TracHoursPlugin(Component):
                 sql = """insert into ticket_time_query(title, description,
                                                        query) 
                          values (%s, %s, %s)"""
-                execute_non_query(self, sql, req.args['title'], 
+                execute_non_query(self.env, sql, req.args['title'], 
                                   req.args['description'], req.args['query'])
                 #fixme: duplicate title?
                 id = get_scalar(self, "select id from ticket_time_query where title = %s", 0, req.args['title'])
@@ -386,12 +390,12 @@ class TracHoursPlugin(Component):
                                   description = '', 
                                   query=query_to_query_string(req.args))
         elif action == "edit":
-            data['query'] = get_query(self, int(req.args['query_id']))
+            data['query'] = self.get_query(int(req.args['query_id']))
             data['query']['id'] = int(req.args['query_id'])
 
         else:
             #list
-            data['queries'] = get_all_dict(self, "select id, title, description, query from ticket_time_query")
+            data['queries'] = get_all_dict(self.env, "select id, title, description, query from ticket_time_query")
             return ('hours_listqueries.html', data, 'text/html')                    
         return ('hours_savequery.html', data, 'text/html')        
 
@@ -413,13 +417,13 @@ class TracHoursPlugin(Component):
             assert req.perm.has_permission('TICKET_ADD_HOURS')
             query_id = req.args['query_id']
             sql = "delete from ticket_time_query where id=%s"
-            execute_non_query(self, sql, query_id)
+            execute_non_query(self.env, sql, query_id)
             if 'query_id' in req.args:
                 del req.args['query_id']
             return False 
 
     def process_timeline(self, req):
-        """PLEASE FILL IN THIS DOCSTRING!!!"""
+        """/hours view"""
 
         if 'update' in req.args:
             # Reset session vars
@@ -562,7 +566,7 @@ class TracHoursPlugin(Component):
         
 
     def display_html(self, req, query):
-        """returns the HTML according to a query""" # <- reword so that i can understand it
+        """returns the HTML according to a query for /hours view"""
 
         # variables
         now = datetime.datetime.now()
@@ -608,22 +612,28 @@ class TracHoursPlugin(Component):
         req.session['query_time'] = to_timestamp(orig_time)
         req.session['query_tickets'] = ' '.join([str(t['id'])
                                                  for t in tickets])
-        title = _('Custom Query')
 
+
+        # data dictionary for genshi
         data = {}
 
         # get data for saved queries
         query_id = req.args.get('query_id')
         if query_id:
+            try:
+                query_id = int(query_id)
+            except ValueError:
+                add_warning(req, "query_id should be an integer, you put '%s'" % query_id)
+                query_id = None
+        if query_id:
             data['query_id'] = query_id
-            query_data = get_query(self, query_id)
+            query_data = self.get_query(query_id)
 
             data['query_title'] = query_data['title']
             data['query_description'] = query_data['description']
 
         data.setdefault('report', None)
         data.setdefault('description', None)
-        data['title'] = title
 
         data['all_columns'] = query.get_all_columns() + self.get_columns()
         # Don't allow the user to remove the id column        
@@ -1036,7 +1046,7 @@ class TracHoursPlugin(Component):
                                          seconds_worked,
                                          comments) values 
 (%s, %s, %s, %s, %s, %s, %s)"""
-        execute_non_query(self, sql, ticket, int(time.time()),
+        execute_non_query(self.env, sql, ticket, int(time.time()),
                           worker, submitter, time_started,
                           seconds_worked, comments)
 
@@ -1079,9 +1089,9 @@ class TracHoursPlugin(Component):
                 req.perm.require("TRAC_ADMIN")
 
             if new_hours[id]:
-                execute_non_query(self, "update ticket_time set seconds_worked=%s where id=%s", new_hours[id], id)
+                execute_non_query(self.env, "update ticket_time set seconds_worked=%s where id=%s", new_hours[id], id)
             else:
-                execute_non_query(self, "delete from ticket_time where id=%s", id)
+                execute_non_query(self.env, "delete from ticket_time where id=%s", id)
 
         self.update_ticket_hours(tickets)
 
@@ -1095,12 +1105,12 @@ class TracHoursPlugin(Component):
         * ids: ticket ids (list)
         """
 
-        results = get_all_dict(self, "select sum(seconds_worked) as t, ticket from ticket_time where ticket in (%s) group by ticket" % ",".join(map(str,ids)))
+        results = get_all_dict(self.env, "select sum(seconds_worked) as t, ticket from ticket_time where ticket in (%s) group by ticket" % ",".join(map(str,ids)))
 
         update = "update ticket_custom set value=%s where name='totalhours' and ticket=%s"
         for result in results:
             formatted = "%8.2f" % (float(result['t']) / 3600.0)
-            execute_non_query(self, update, formatted, result['ticket'])
+            execute_non_query(self.env, update, formatted, result['ticket'])
 
     def get_ticket_hours(self, ticket_id, from_date=None, to_date=None, worker_filter=None):
         args = []
@@ -1123,7 +1133,7 @@ class TracHoursPlugin(Component):
             args.append(worker_filter)
 
         sql = """select * from ticket_time where """ + where
-        result = get_all_dict(self, sql, *args)
+        result = get_all_dict(self.env, sql, *args)
 
         return result
 
