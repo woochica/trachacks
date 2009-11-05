@@ -848,7 +848,6 @@ class TracHoursPlugin(Component):
         days= [ (i, i == now.day) for i in range(1, 32) ]
 
         # user information and permissions
-        USER = req.authname
         can_add_hours = req.perm.has_permission('TICKET_ADD_HOURS')
         can_add_others_hours = req.perm.has_permission('TRAC_ADMIN')
         users = get_all_users(self.env)

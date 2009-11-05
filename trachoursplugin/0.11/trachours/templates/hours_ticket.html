@@ -34,7 +34,7 @@
 	  <!-- should link to hours for this worker, either a view or
       a report/query -->
 	</td>
-	<py:choose test="can_add_others_hours or can_add_hours and USER == record['worker']">
+	<py:choose test="can_add_others_hours or can_add_hours and req.authname == record['worker']">
 	  <td py:when="True">
 	  <input type="text" name="hours_${record['id']}"
 	  value="${record['hours_worked']}"/>:
@@ -52,7 +52,7 @@
 	  ${record['comments']}
 	</td>
 	<td py:if="can_add_hours">
-	  <input py:if="can_add_others_hours or USER ==record['worker']"
+	  <input py:if="can_add_others_hours or req.authname ==record['worker']"
 	  type="checkbox" name="rm_${record['id']}"/>
 	</td>
       </tr>
@@ -78,13 +78,13 @@
       <span py:if="can_add_others_hours">
 	<select name="worker">
 	  <option py:for="user in users" value="${user}"
-		  py:attrs="{'selected': user == USER or None}">
+		  py:attrs="{'selected': user == req.authname or None}">
 	    ${user}
 	  </option>
 	</select>
       </span>
       <span py:if="not can_add_others_hours">
-	${USER} 
+	${req.authname} 
       </span>
 on 
       <select name="month">
