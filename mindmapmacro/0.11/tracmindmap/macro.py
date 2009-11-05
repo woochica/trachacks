@@ -8,7 +8,7 @@ from trac.resource     import *
 
 from genshi.builder    import tag
 from genshi.core       import Markup
-from trac.config       import Option, ListOption
+from trac.config       import Option, ListOption, BoolOption
 from trac.db           import Table, Column, DatabaseManager
 from trac.env          import IEnvironmentSetupParticipant
 from trac.mimeview.api import IHTMLPreviewRenderer
@@ -34,6 +34,8 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
     default_width     = Option('mindmap', 'default_width', '100%', 'Default width for mindmaps')
     default_height    = Option('mindmap', 'default_height', '600', 'Default height for mindmaps')
     default_flashvars = ListOption('mindmap', 'default_flashvars', [ 'openUrl = _blank', 'startCollapsedToLevel = 5' ], 'Default flashvars for mindmaps')
+    resizable         = Option('mindmap', 'resizable', True, 'Allow mindmaps to be resized. Needs several script and style files.')
+    default_resizable = BoolOption('mindmap', 'default_resizable', True, 'Default setting if mindmaps are resizable.')
 
     SCHEMA = [
         Table('mindmapcache', key='hash')[
@@ -95,11 +97,11 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
     def pre_process_request(self, req, handler):
         return handler
 
-    resizeable = True
     def post_process_request(self, req, template, data, content_type):
         add_script( req, 'mindmap/tools.flashembed-1.0.4.min.js', mimetype='text/javascript' )
         add_script( req, 'mindmap/mindmap.js', mimetype='text/javascript' )
-        if self.resizeable:
+        if self.resizable:
+          add_stylesheet( req, 'mindmap/ui.theme.css', mimetype='text/css' )
           add_stylesheet( req, 'mindmap/ui.resizable.css', mimetype='text/css' )
           add_script( req, 'mindmap/ui.core.js', mimetype='text/javascript' )
           add_script( req, 'mindmap/ui.resizable.js', mimetype='text/javascript' )
@@ -200,6 +202,11 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
             border = "none"
           css = 'border: ' + border
 
+        if self.resizable and ( ('resizable' not in kwargs and self.default_resizable) or kwargs.get('resizable','false').lower() == "true" ):
+          class_ = "resizablemindmap mindmap"
+        else:
+          class_ = "mindmap"
+
         return tag.div(
             tag.object(
                 tag.param( name="quality", value="high" ),
@@ -208,7 +215,7 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
                 type   = "application/x-shockwave-flash",
                 **attr
             ),
-            class_="mindmap",
+            class_=class_,
             style=Markup(css),
         )
 

@@ -12,7 +12,7 @@ rev = str( max( coderev, __revision__ ) )
 
 setup(
     name = 'TracMindMapMacro',
-    version = '0.2.' + rev,
+    version = '0.3.' + rev,
     packages = ['tracmindmap'],
     package_data = {
         'tracmindmap' : [ 'htdocs/*.swf', 'htdocs/*.js' ],
