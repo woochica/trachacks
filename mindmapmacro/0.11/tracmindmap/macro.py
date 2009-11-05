@@ -8,15 +8,16 @@ from trac.resource     import *
 
 from genshi.builder    import tag
 from genshi.core       import Markup
-from trac.mimeview.api import IHTMLPreviewRenderer
-from trac.wiki.api     import IWikiMacroProvider, parse_args
-from trac.web.chrome   import ITemplateProvider, add_script
-from trac.env          import IEnvironmentSetupParticipant
-from trac.web.api      import IRequestFilter, IRequestHandler, RequestDone
-from trac.db           import Table, Column, DatabaseManager
-from tracextracturl    import extract_url
-from trac.util         import md5
 from trac.config       import Option, ListOption
+from trac.db           import Table, Column, DatabaseManager
+from trac.env          import IEnvironmentSetupParticipant
+from trac.mimeview.api import IHTMLPreviewRenderer
+from trac.util         import md5
+from trac.web.api      import IRequestFilter, IRequestHandler, RequestDone
+from trac.web.chrome   import ITemplateProvider, add_script, add_stylesheet
+from trac.web.href     import Href
+from trac.wiki.api     import IWikiMacroProvider, parse_args
+from tracextracturl    import extract_url
 
 mindmaps = dict()
 
@@ -30,8 +31,8 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
     implements ( IWikiMacroProvider, IHTMLPreviewRenderer, ITemplateProvider,
                  IRequestHandler, IRequestFilter, IEnvironmentSetupParticipant )
 
-    default_width     = Option('mindmap', 'default_width', '95%', 'Default width for mindmaps')
-    default_height    = Option('mindmap', 'default_height', '400', 'Default height for mindmaps')
+    default_width     = Option('mindmap', 'default_width', '100%', 'Default width for mindmaps')
+    default_height    = Option('mindmap', 'default_height', '600', 'Default height for mindmaps')
     default_flashvars = ListOption('mindmap', 'default_flashvars', [ 'openUrl = _blank', 'startCollapsedToLevel = 5' ], 'Default flashvars for mindmaps')
 
     SCHEMA = [
@@ -72,30 +73,38 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
             self.log.error(e, exc_info=True)
             raise TracError(unicode(e))
 
-   # IRequestFilter methods
+
+
+    # IHTMLPreviewRenderer methods
+    supported_mimetypes = {
+            'text/x-freemind'        : 9,
+            'text/freemind'          : 9,
+            'application/x-freemind' : 9,
+            'application/freemind'   : 9,
+       }
+
+    def get_quality_ratio(self, mimetype):
+        self.env.log.debug('Mimetype: ' + mimetype)
+        return self.supported_mimetypes.get (mimetype, 0)
+
+    def render(self, context, mimetype, content, filename=None, url=None):
+        return self.produce_html(context, url)
+
+
+    # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
 
+    resizeable = False
     def post_process_request(self, req, template, data, content_type):
         add_script( req, 'mindmap/tools.flashembed-1.0.4.min.js', mimetype='text/javascript' )
         add_script( req, 'mindmap/mindmap.js', mimetype='text/javascript' )
+        if self.resizeable:
+          add_script( req, 'mindmap/ui.core.js', mimetype='text/javascript' )
+          add_script( req, 'mindmap/ui.resizable.js', mimetype='text/javascript' )
+          add_stylesheet( req, 'mindmap/ui.resizable.css', mimetype='text/css' )
         return (template, data, content_type)
 
-
-    def _produce_html(self, href, css, attr, flashvars):
-      flashvars['initLoadFile'] = href
-
-      return tag.div(
-          tag.object(
-              tag.param( name="quality", value="high" ),
-              tag.param( name="bgcolor", value="#ffffff" ),
-              tag.param( name="flashvars", value= Markup("&".join([ "=".join([k,unicode(v)]) for k,v in flashvars.iteritems() ]) )),
-              type   = "application/x-shockwave-flash",
-              **attr
-          ),
-          class_="mindmap",
-          style=Markup(css),
-      )
 
     def _set_cache(self, hash, content):
       db = self.env.get_db_cnx()
@@ -124,21 +133,28 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
 
     ### methods for IWikiMacroProvider
     def get_macros(self):
-      yield 'MindMap'
+      return ['MindMap','Mindmap']
 
-    def get_macro_description(self, name):
+    def get_macro_description(self, name): 
       return self.__doc__
 
     def expand_macro(self, formatter, name, content, args={}):
+        "Produces XHTML code to display mindmaps"
+
+        # Test if this is the long or short version of a macro call
         try:
+          # Starting from Trac 0.12 the `args` argument should be set for long 
+          # macros with arguments. However, it can be still empty and is not
+          # used at all in 0.11.
           if not args:
+            # Check for multi-line content, i.e. long macro form
             args, content = content.split("\n",1)
         except: # Short macro
           largs, kwargs = parse_args( content )
           if not largs:
             raise TracError("File name missing!")
           file = largs[0]
-          href = extract_url (self.env, formatter.context, file, raw=True)
+          url = extract_url (self.env, formatter.context, file, raw=True)
         else: # Long macro
           largs, kwargs = parse_args( args )
           digest = md5()
@@ -147,10 +163,12 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           if not self._check_cache(hash):
             mm = MindMap(content)
             self._set_cache(hash, unicode(mm))
-          href = formatter.req.href.mindmap(hash + '.mm')
+          url = formatter.context.href.mindmap(hash + '.mm')
+        return self.produce_html(formatter.context, url, kwargs)
 
+    def produce_html(self, context, url, kwargs={}):
         attr = dict()
-        attr['data']   = formatter.context.href.chrome('mindmap','visorFreemind.swf')
+        attr['data']   = context.href.chrome('mindmap','visorFreemind.swf')
         attr['width']  = kwargs.pop('width',self.default_width)
         attr['height'] = kwargs.pop('height',self.default_height)
         try:
@@ -171,6 +189,7 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
           flashvars.update([ [k.strip(),v.strip()] for k,v in [kv.split('=') for kv in kwargs['flashvars'].strip("\"'").split('|') ] ])
         except:
           pass
+        flashvars['initLoadFile'] = url
 
         css  = ''
         if 'border' in kwargs:
@@ -181,7 +200,17 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
             border = "none"
           css = 'border: ' + border
 
-        return self._produce_html( href, css, attr, flashvars )
+        return tag.div(
+            tag.object(
+                tag.param( name="quality", value="high" ),
+                tag.param( name="bgcolor", value="#ffffff" ),
+                tag.param( name="flashvars", value= Markup("&".join([ "=".join([k,unicode(v)]) for k,v in flashvars.iteritems() ]) )),
+                type   = "application/x-shockwave-flash",
+                **attr
+            ),
+            class_="mindmap",
+            style=Markup(css),
+        )
 
 
     # ITemplateProvider methods

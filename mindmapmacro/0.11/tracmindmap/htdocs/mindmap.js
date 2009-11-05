@@ -34,6 +34,12 @@
         params["version"] = [parseInt(v[0]), parseInt("0" + v[1])];
         //div.empty();
         div.flashembed(params);
+
+        //if (jQuery.resizable) {
+        //}
+    });
+    $("div.mindmap object").each(function() {
+        $(this).resizable();
     });
 //});
 
