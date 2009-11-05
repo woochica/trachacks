@@ -157,25 +157,12 @@ class ReplyToTicket(Component):
 
         # get the description and attachments
         description, attachments = get_description_and_attachments(message)
-        if description is None:
-            description = ''
-        description = description.strip()
+        if not description:
+            warnings.append("Seems to be a reply to %s but I couldn't find a comment")
+            return message
         
-        # strip quotes
-        body = []
-        on_regex = re.compile('On .*, .* wrote:')
-        for line in description.splitlines():
-            line = line.strip()
-            if line.strip().startswith('>'):
-                continue
-            if on_regex.match(line):
-                continue
-            body.append(line)
-        body = '\n'.join(body)
-        body = body.strip()
-
         # save changes to the ticket
-        ticket.save_changes(reporter, body)
+        ticket.save_changes(reporter, description)
 
         # ticket notification
         tn = TicketNotifyEmail(self.env)

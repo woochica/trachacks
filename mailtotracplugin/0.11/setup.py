@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.4'
+version='0.5'
 
 setup(name='mail2trac',
       version=version,
@@ -21,6 +21,7 @@ setup(name='mail2trac',
       [trac.plugins]
       email2ticket = mail2trac.email2ticket
       emailposthandler = mail2trac.web
+      emailfilters = mail2trac.filters
       """,
       )
 

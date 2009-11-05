@@ -8,7 +8,8 @@ import smtplib
 from trac.attachment import Attachment
 from StringIO import StringIO
 
-subject_re = re.compile('( *[Rr][Ee] *:? *)*(.*)')
+
+### Trac-specific functions
 
 def emailaddr2user(env, addr):
     """returns Trac user name from an email address"""
@@ -41,6 +42,32 @@ def send_email(env, from_addr, recipients, message):
                       smtp_password.encode('utf-8'))
     session.sendmail(from_addr, recipients, message)
 
+def add_attachments(env, ticket, attachments):
+    """add attachments to the ticket"""
+    ctr = 1
+    for msg in attachments:
+        attachment = Attachment(env, 'ticket', ticket.id)
+        attachment.author = ticket['reporter']
+        attachment.description = ticket['summary']
+        payload = msg.get_payload()
+        if msg.get('Content-Transfer-Encoding') == 'base64':
+            payload = base64.b64decode(payload)
+        size = len(payload)
+        filename = msg.get_filename() or message.get('Subject')
+        if not filename:
+            filename = 'attachment-%d' % ctr
+            extensions = KNOWN_MIME_TYPES.get(message.get_content_type())
+            if extensions:
+                filename += '.%s' % extensions[0]
+            ctr += 1
+        buffer = StringIO()
+        print >> buffer, payload
+        buffer.seek(0)
+        attachment.insert(filename, buffer, size)
+        os.chmod(attachment._get_path(), 0666)
+        # TODO : should probably chown too
+
+### generic email functions
     
 def reply_subject(subject):
     """subject line appropriate to reply"""
@@ -78,38 +105,23 @@ def get_description_and_attachments(message, description=None, attachments=None)
 
     return description, attachments
 
-
-def add_attachments(env, ticket, attachments):
-    """add attachments to the ticket"""
-    ctr = 1
-    for msg in attachments:
-        attachment = Attachment(env, 'ticket', ticket.id)
-        attachment.author = ticket['reporter']
-        attachment.description = ticket['summary']
-        payload = msg.get_payload()
-        if msg.get('Content-Transfer-Encoding') == 'base64':
-            payload = base64.b64decode(payload)
-        size = len(payload)
-        filename = msg.get_filename() or message.get('Subject')
-        if not filename:
-            filename = 'attachment-%d' % ctr
-            extensions = KNOWN_MIME_TYPES.get(message.get_content_type())
-            if extensions:
-                filename += '.%s' % extensions[0]
-            ctr += 1
-        buffer = StringIO()
-        print >> buffer, payload
-        buffer.seek(0)
-        attachment.insert(filename, buffer, size)
-        os.chmod(attachment._get_path(), 0666)
-        # TODO : should probably chown too
+subject_re = re.compile('( *[Rr][Ee] *:? *)*(.*)')
 
 def strip_res(subject):
     """strip the REs from a Subject line"""
     match = subject_re.match(subject)
     return match.groups()[-1]
 
-if __name__ == '__main__':
-    import sys
-    # test strip_res
-    print strip_res(' '.join(sys.argv[1:]))
+def strip_quotes(message):
+    """strip quotes from a message string"""
+    body = []
+    on_regex = re.compile('On .*, .* wrote:')
+    for line in message.splitlines():
+        line = line.strip()
+        if line.strip().startswith('>'):
+            continue
+        if on_regex.match(line):
+            continue
+        body.append(line)
+    body = '\n'.join(body)
+    return body.strip()
