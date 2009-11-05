@@ -95,14 +95,14 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
     def pre_process_request(self, req, handler):
         return handler
 
-    resizeable = False
+    resizeable = True
     def post_process_request(self, req, template, data, content_type):
         add_script( req, 'mindmap/tools.flashembed-1.0.4.min.js', mimetype='text/javascript' )
         add_script( req, 'mindmap/mindmap.js', mimetype='text/javascript' )
         if self.resizeable:
+          add_stylesheet( req, 'mindmap/ui.resizable.css', mimetype='text/css' )
           add_script( req, 'mindmap/ui.core.js', mimetype='text/javascript' )
           add_script( req, 'mindmap/ui.resizable.js', mimetype='text/javascript' )
-          add_stylesheet( req, 'mindmap/ui.resizable.css', mimetype='text/css' )
         return (template, data, content_type)
 
 

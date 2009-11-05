@@ -1,4 +1,4 @@
-//$(document).ready(function() {
+$(document).ready(function() {
     $("div.mindmap").each(function() {
         var div = $(this);
         var obj = div.children("object");
@@ -38,8 +38,11 @@
         //if (jQuery.resizable) {
         //}
     });
-    $("div.mindmap object").each(function() {
-        $(this).resizable();
+    $("div.mindmap").each(function() {
+        var div = $(this);
+        var obj = div.children("object");
+        obj = obj[0];
+        $(this).resizable({alsoResize:obj});
     });
-//});
+});
 
