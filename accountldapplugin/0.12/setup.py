@@ -10,7 +10,7 @@
 from setuptools import setup
 
 PACKAGE = 'AccountLDAPPlugin'
-VERSION = '0.31'
+VERSION = '0.32'
 
 setup(
     name = 'AccountLDAP',

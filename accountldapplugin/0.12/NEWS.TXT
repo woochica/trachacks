@@ -13,5 +13,8 @@ Version 0.3. Last changes:
 Version 0.31. Last changes:
  * Adds the user filter option in trac.ini for compatibility with Active Directory. View README.txt for details
  
+Version 0.32. Last changes:
+ * Adds compatible styles to html page. 
+ 
   
  
