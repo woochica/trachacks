@@ -544,6 +544,7 @@ class WatchlistPlugin(Component):
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.log = self.env.log
+        self.env.log.info("Creating table '%s' for WatchlistPlugin", (name,) )
         db_connector, _ = DatabaseManager(self.env)._get_connector()
 
         table = Table(name)[
@@ -566,7 +567,9 @@ class WatchlistPlugin(Component):
         """ Create settings DB table if it not exists. """
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
+        cursor.log = self.env.log
         db_connector, _ = DatabaseManager(self.env)._get_connector()
+        self.env.log.info("Creating 'watchlist_settings' table")
 
         table = Table('watchlist_settings')[
                     Column('wluser', unique=True),
@@ -582,41 +585,50 @@ class WatchlistPlugin(Component):
         self._create_db_table()
         return
 
+
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
         try:
             cursor.execute("SELECT count(wluser),count(resid),count(realm) FROM watchlist")
             count = cursor.fetchone()
             if count is None:
+                self.env.log.info("Watchlist table format to old")
                 return True
             cursor.execute("SELECT count(*) FROM watchlist_settings")
             count = cursor.fetchone()
             if count is None:
+                self.env.log.info("Watchlist settings table not found")
                 return True
             cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
             (version,) = cursor.fetchone()
             if not version or int(version) < __DB_VERSION__:
+                self.env.log.info("Watchlist table version to old")
                 return True
-        except:
+        except Exception, e:
             cursor.connection.rollback()
+            self.env.log.info("Watchlist table needs to be upgraded: " + unicode(e))
             return True
         return False
 
     def upgrade_environment(self, db):
         cursor = db.cursor()
+        version = 0;
         # Ensure system entry exists:
         try:
           cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
           version = cursor.fetchone()
           if not version:
-            raise Exception("")
-        except:
+            raise Exception("No version entry in system table")
+          version = int(version[0])
+        except Exception, e:
+          self.env.log.info("Creating system table entry for watchlist plugin: " + unicode(e))
           cursor.connection.rollback()
           cursor.execute("INSERT INTO system (name, value) VALUES ('watchlist_version', '0')")
 
         try:
             cursor.execute("SELECT count(*) FROM watchlist")
         except:
+            self.env.log.info("No previous watchlist table found")
             cursor.connection.rollback()
             self._create_db_table(db)
             return
@@ -624,31 +636,38 @@ class WatchlistPlugin(Component):
         try:
             cursor.execute("SELECT count(*) FROM watchlist_settings")
         except:
+            self.env.log.info("No previous watchlist_settings table found")
             cursor.connection.rollback()
             self._create_db_table2(db)
 
         # Upgrade existing database
+        self.env.log.info("Updating watchlist table from version %d to %d" % (version,__DB_VERSION__))
         try:
             try:
               cursor.execute("DROP TABLE watchlist_new")
             except:
-              cursor.connection.rollback()
+              pass #cursor.connection.rollback()
             self._create_db_table(db, 'watchlist_new')
-            return
+            cursor = db.cursor()
             try: # from version 0
               cursor.execute("INSERT INTO watchlist_new (wluser, realm, resid) "
                              "SELECT user, realm, id FROM watchlist")
+              self.env.log.info("Update from version 0")
             except: # from version 1
+              self.env.log.info("Update from version 1")
               cursor.connection.rollback ()
+              cursor = db.cursor()
               cursor.execute("INSERT INTO watchlist_new (wluser, realm, resid) "
                               "SELECT wluser, realm, resid FROM watchlist")
 
+            self.env.log.info("Moving new table to old one")
             cursor.execute("DROP TABLE watchlist")
             cursor.execute("ALTER TABLE watchlist_new RENAME TO watchlist")
             cursor.execute("UPDATE system SET value=%s WHERE "
                            "name='watchlist_version'", (str(__DB_VERSION__),) )
         except Exception, e:
             cursor.connection.rollback ()
+            self.env.log.info("Couldn't update DB: " + to_unicode(e))
             raise TracError("Couldn't update DB: " + to_unicode(e))
         return
 
