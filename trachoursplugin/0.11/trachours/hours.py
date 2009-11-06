@@ -884,10 +884,9 @@ class TracHoursPlugin(Component):
     def queryhours2rss(self, req, data):
         """adapt data for /hours to RSS"""
         adapted = {}
-        adapted['title'] = '%s: Hours worked on %s from %s to %s' % (data['title'], 
-                                                                     self.env.project_name, 
-                                                                     data['from_date'].strftime(self.date_format),
-                                                                     data['to_date'].strftime(self.date_format))
+        adapted['title'] = 'Hours worked on %s from %s to %s' % (self.env.project_name, 
+                                                                 data['from_date'].strftime(self.date_format),
+                                                                 data['to_date'].strftime(self.date_format))
         adapted['description'] = data['description'] or adapted['title']
         adapted['url'] = req.abs_href(req.path_info)
         items = []
