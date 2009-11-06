@@ -136,5 +136,5 @@ class SVNHookSystem(FileSystemHooks):
 
 for hook in SVNHookSystem.hooks:
     setattr(SVNHookSystem, hook, 
-            ListOption('repository-hooks', hook, default=[],
+            ListOption('repository-hooks', hook, default='',
                        doc="active listeners for SVN changes on the %s hook" % hook))
