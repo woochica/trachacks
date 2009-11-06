@@ -111,7 +111,6 @@ class TicketChanger(Component):
                         cnum += 1
 
                 # validate the ticket
-                # TODO
 
                 # fake a request
                 # XXX cargo-culted environ from 

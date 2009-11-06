@@ -67,7 +67,7 @@ class RepositoryHookAdmin(Component):
         The items returned by this function must be tuples of the form
         `(category, category_label, page, page_label)`.
         """
-        if req.perm.has_permission('TRAC_ADMIN'): # XXX needed?
+        if req.perm.has_permission('TRAC_ADMIN'):
             system = self.system()
             if system is not None and self.env.config.get('trac', 'repository_dir'):
                 for hook in system.available_hooks():
