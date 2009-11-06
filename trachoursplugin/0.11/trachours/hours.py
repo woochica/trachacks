@@ -1021,13 +1021,10 @@ class TracHoursPlugin(Component):
         """respond to a request to edithours for a ticket"""
 
         # permission check
-        can_add_hours = req.perm.has_permission('TICKET_ADD_HOURS')
-        if not can_add_hours:
-            return #raise 403
-
-        new_hours = {}
+        req.perm.require('TICKET_ADD_HOURS')
 
         # set hours
+        new_hours = {}
         for field, newval in req.args.items():
             if field.startswith("hours_"):
                 id = int(field[len("hours_"):])
@@ -1042,6 +1039,8 @@ class TracHoursPlugin(Component):
 
         hours = self.get_ticket_hours(ticket.id)
         tickets = set()
+
+        # check permission if you're editing another's hours
         for hour in hours:
             tickets.add(hour['ticket'])
 
@@ -1051,6 +1050,15 @@ class TracHoursPlugin(Component):
 
             if not hour['worker'] == req.authname:
                 req.perm.require("TRAC_ADMIN")
+
+
+        # perform the edits
+        for hour in hours:
+            tickets.add(hour['ticket'])
+
+            id = hour['id']
+            if not id in new_hours:
+                continue
 
             if new_hours[id]:
                 execute_non_query(self.env, "update ticket_time set seconds_worked=%s where id=%s", new_hours[id], id)
