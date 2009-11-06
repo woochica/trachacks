@@ -84,7 +84,7 @@ def mail2project(env, message):
     handlers = ExtensionPoint(IEmailHandler).extensions(env)
     _handlers = env.config.getlist('mail', 'handlers')
     if not _handlers: # default value
-        _handlers = [ 'ReplyToTicket', 'EmailToTicket' ]
+        _handlers = [ 'RemoveQuotes', 'ReplyToTicket', 'EmailToTicket' ]
     handler_dict = dict([(h.__class__.__name__, h)
                              for h in handlers])
     handlers = [handler_dict[h] for h in _handlers
