@@ -33,6 +33,17 @@ class LogViewerPage(Component):
     _autotail = Option('logviewer', 'autotail', '1000',
       doc = 'Only applies to autoload: Restrict the evaluated lines to the last N'
             ' lines. Defaults to 1000.')
+    _defaultlevel = Option('logviewer', 'defaultlevel', '3',
+      doc = 'Preset for the log level dropdown (if autoload is disabled). This'
+            ' integer value defaults to 3 (warnings). Possible values:'
+            ' 1=critical, 2=error, 3=warning, 4=info, 5=debug')
+    _defaultup = BoolOption('logviewer', 'defaultup', 'true',
+      doc = 'Check the box to include log events of higher levels when autoload'
+            ' is disabled? This boolean option defaults to true.')
+    _defaulttail = Option('logviewer', 'defaulttail', '',
+      doc = 'Preset for the Tail input (restrict query to the last N lines of the'
+            ' logfile to load). This must be a number (integer), and by default is'
+            ' empty (not set)')
 
     # IAdminPageProvider methods
     def get_admin_panels(self, req):
@@ -83,12 +94,12 @@ class LogViewerPage(Component):
             data['tail']  = self.env.config.get('logviewer','autotail') or ''
             self._do_process(data, logfile)
           else:
-            data['level'] = 3
-            data['up']    = 1
+            data['level'] = int(self.env.config.get('logviewer','defaultlevel') or 3)
+            data['up']    = int(self.env.config.getbool('logviewer','defaultup') or True)
             data['invert']= 0
             data['regexp']= 0
             data['filter']= ''
-            data['tail']  = ''
+            data['tail']  = self.env.config.get('logviewer','defaulttail') or ''
 
         # append the messages
         data['us_message'] = self.data['msg']
