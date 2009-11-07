@@ -17,23 +17,22 @@ class LogViewerApi(Component):
      self.env.log.debug('Logfile name: %s' % (name,))
      return name
 
-  def get_log(self, logname, req):
+  def get_log(self, logname, params):
      """Retrieve the logfile content
      @param logname     : name of the logfile
      @param req
      @return array [0..n] of {level,line}
      """
-     level = req.args.get('level')
-     up = req.args.get('up')
-     invert = req.args.get('invertsearch')
-     regexp = req.args.get('regexp')
-     tail = int(req.args.get('tail') or 0)
-     tfilter = req.args.get('filter')
+     up = params['up']
+     invert = params['invert']
+     regexp = params['regexp']
+     level = int(params['level'])
+     tfilter = params['filter']
+     tail = int(params['tail'] or 0)
      levels  = ['', 'CRITICAL:', 'ERROR:', 'WARNING:', 'INFO:', 'DEBUG:']
      classes = ['', 'log_crit', 'log_err', 'log_warn', 'log_info', 'log_debug']
      log = []
      logline = {}
-     level = int(level)
      try:
        f = open(logname,'r')
        lines = f.readlines()
