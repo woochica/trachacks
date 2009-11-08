@@ -239,7 +239,6 @@ The wildcards '`*`' (matches everything) and '`?`' (matches a single character) 
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.log = self.env.log
 
         if largs:
             sql_wikis = " AND name IN ('"    \
