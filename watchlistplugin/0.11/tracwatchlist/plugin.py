@@ -105,7 +105,7 @@ class WatchlistPlugin(Component):
     def _save_user_settings(self, user, settings):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.log = self.env.log
+        #cursor.log = self.env.log
 
         settingsstr = "&".join([ "=".join(kv) for kv in settings.items()])
 
@@ -201,7 +201,7 @@ class WatchlistPlugin(Component):
             if realm_perm and not is_watching:
               col =  realm == 'wiki' and 'name' or 'id'
               if ispattern:
-                cursor.log = self.env.log
+                #cursor.log = self.env.log
                 # Check if wiki/ticket exists:
                 cursor.execute(
                     "SELECT count(*) FROM %s WHERE %s LIKE %%s" % (realm,col), (pattern,) )
@@ -244,7 +244,7 @@ class WatchlistPlugin(Component):
             lst = (user, realm, resid)
             if realm_perm:
               if ispattern:
-                cursor.log = self.env.log
+                #cursor.log = self.env.log
                 is_watching = True
                 cursor.execute(
                     "DELETE FROM watchlist "
@@ -543,7 +543,7 @@ class WatchlistPlugin(Component):
         """ Create DB table if it not exists. """
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.log = self.env.log
+        #cursor.log = self.env.log
         self.env.log.info("Creating table '%s' for WatchlistPlugin", (name,) )
         db_connector, _ = DatabaseManager(self.env)._get_connector()
 
@@ -567,7 +567,7 @@ class WatchlistPlugin(Component):
         """ Create settings DB table if it not exists. """
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.log = self.env.log
+        #cursor.log = self.env.log
         db_connector, _ = DatabaseManager(self.env)._get_connector()
         self.env.log.info("Creating 'watchlist_settings' table")
 
