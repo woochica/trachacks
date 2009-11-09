@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 [account-manager]
+force_passwd_change = false
 password_file = ${basedir}/trac.htpasswd
 password_store = HtPasswdStore
 
