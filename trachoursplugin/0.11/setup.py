@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.4.3'
+version='0.4.4'
 
 setup(name='TracHoursPlugin',
       version=version,
@@ -17,9 +17,11 @@ setup(name='TracHoursPlugin',
       install_requires=['python-dateutil', 
                         'FeedParser',
                         'ComponentDependencyPlugin',
+                        'TicketSidebarProvider',
                         'TracSQLHelper'],
       dependency_links=[
               "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
+              "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
               "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
               ],
       extras_require=dict(lxml=['lxml']),

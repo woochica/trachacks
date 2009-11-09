@@ -10,14 +10,7 @@ from trac.core import *
 from trac.db import Table, Column, Index, DatabaseManager
 from trac.env import IEnvironmentSetupParticipant
 
-from dbhelper import *
-
-def create_table(comp, table):
-    db_connector, _ = DatabaseManager(comp.env)._get_connector()
-    
-    stmts = db_connector.to_sql(table)
-    for stmt in stmts:
-        execute_non_query(comp, stmt)
+from tracsqlhelper import *
 
 
 class SetupTracHours(Component):
@@ -59,14 +52,14 @@ class SetupTracHours(Component):
         for version in range(self.version(), len(self.steps)):
             for step in self.steps[version]:
                 step(self)
-        execute_non_query(self, "update system set value='%s' where name='trachours.db_version';" % len(self.steps))
+        execute_non_query(self.env, "update system set value='%s' where name='trachours.db_version';" % len(self.steps))
 
 
     ### helper methods
 
     def version(self):
         """returns version of the database (an int)"""
-        version = get_scalar(self, "select value from system where name = 'trachours.db_version';")
+        version = get_scalar(self.env, "select value from system where name = 'trachours.db_version';")
         if version:
             return int(version)
         return 0
@@ -88,8 +81,8 @@ class SetupTracHours(Component):
             Index(['worker']),
             Index(['time_started'])]
 
-        create_table(self, ticket_time_table)
-        execute_non_query(self, "insert into system (name, value) values ('trachours.db_version', '1');")
+        create_table(self.env, ticket_time_table)
+        execute_non_query(self.env, "insert into system (name, value) values ('trachours.db_version', '1');")
 
     def update_custom_fields(self):
         ticket_custom = 'ticket-custom'
@@ -109,10 +102,10 @@ class SetupTracHours(Component):
             Column('description'),
             Column('query')]
 
-        create_table(self, time_query_table)
+        create_table(self.env, time_query_table)
 
     def initialize_old_tickets(self):
-        execute_non_query(self, """INSERT INTO ticket_custom (ticket, name, value)
+        execute_non_query(self.env, """INSERT INTO ticket_custom (ticket, name, value)
   SELECT id, 'totalhours', '0' FROM ticket WHERE id NOT IN (
     SELECT ticket from ticket_custom WHERE name='totalhours'
   );

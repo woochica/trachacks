@@ -2,7 +2,6 @@ import re
 
 from componentdependencies.interface import IRequireComponents
 from hours import TracHoursPlugin
-from mail2trac.utils import emailaddr2user
 from trac.core import * 
 from trac.perm import PermissionSystem
 from trac.ticket.api import ITicketManipulator
@@ -11,6 +10,7 @@ from trac.ticket.api import ITicketChangeListener
 try:
     from mail2trac.interface import IEmailHandler
     from mail2trac.email2ticket import ReplyToTicket
+    from mail2trac.utils import emailaddr2user
 except ImportError:
     IEmailHandler = None
 
