@@ -12,12 +12,15 @@ from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import add_script, ITemplateProvider
 from trac.util.html import html
 from trac.util.translation import _
+from trac.wiki.formatter import wiki_to_html
 
+from genshi import HTML
 from genshi.filters.transform import Transformer
 
 class WikiSectionEditModule(Component):
     implements(IRequestFilter, ITemplateStreamFilter, ITemplateProvider)
     
+    preview_whole_page = BoolOption('section-edit', 'preview_whole_page', True)
     serve_ui_files = BoolOption('section-edit', 'serve_ui_files', True)
 
     # ITemplateProvider
@@ -68,6 +71,8 @@ class WikiSectionEditModule(Component):
             section_html = html(section_element, pre_element, post_element)
             stream = stream | Transformer('//textarea[@name="text"]').empty().append(section_text).before(section_html)
             stream = stream | Transformer('//div[@id="content"]//h1').append("/%s (section %s)"%(section_text[:section_text.find('\n')].strip(" = \r\n"), req.args['section']))
+            if not self.preview_whole_page:
+               stream = stream | Transformer('//div[@class="wikipage"]').empty().append(HTML(wiki_to_html(section_text, self.env, req)))
         return stream
 
     # internals
