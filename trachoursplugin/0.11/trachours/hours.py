@@ -91,6 +91,10 @@ class TracHoursPlugin(Component):
 
     ###### API
 
+    def tickets_with_hours(self):
+        """return all ticket.ids with hours"""
+        return set(get_column(self.env, 'ticket_time', 'ticket'))
+
     def update_ticket_hours(self, ids):
         """
         update the totalhours ticket field from the tracked hours information
@@ -550,7 +554,6 @@ class TracHoursPlugin(Component):
                 cols = [cols]
             base += '&' + "&".join("col=%s" % col for col in cols if not col in query.cols)
 
-            
         now = datetime.datetime.now()
         if 'from_day' in args:
             base += '&from_year=%s&from_month=%s&from_day=%s&to_year=%s&to_month=%s&to_day=%s' % (

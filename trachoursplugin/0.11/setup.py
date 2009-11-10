@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.4.4'
+version='0.5'
 
 setup(name='TracHoursPlugin',
       version=version,
