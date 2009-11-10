@@ -220,7 +220,7 @@ class TracUserHours(Component):
 
     def match_request(self, req):
         """Return whether the handler wants to process the given request."""
-        return req.path_info.rstrip('/') == '/hours/user'
+        return req.path_info == '/hours/user' or req.path_info.startswith('/hours/user/')
 
     def process_request(self, req):
         """Process the request. For ClearSilver, return a (template_name,
@@ -236,12 +236,16 @@ class TracUserHours(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
-        trachours = TracHoursPlugin(self.env)
-        now = datetime.datetime.now()
-        data = {}
         add_stylesheet(req, 'common/css/report.css')
+        if req.path_info.rstrip('/') == '/hours/user':
+            return self.users(req)
+        user = req.path_info.split('/hours/user/', 1)[-1]
+        return self.user(req, user)
 
-        # data for the date
+    ### internal methods
+    def date_data(self, req, data):
+        """data for the date"""
+        now = datetime.datetime.now()
         data['days'] = range(1, 32)
         data['months'] = [ (i, calendar.month_name[i]) for i in range(1,13) ]        
         data['years'] = range(now.year, now.year - 10, -1)
@@ -274,12 +278,22 @@ class TracUserHours(Component):
 
         data['prev_url'] = req.href('/hours/user', **args)
 
+
+    def users(self, req):
+        """hours for all users"""
+
+        data = { 'hours_format' :  hours_format }
+
+        ### date data
+        self.date_data(req, data)
+
         ### get the hours
-        tickets = trachours.tickets_with_hours()
+        #trachours = TracHoursPlugin(self.env)
+        #tickets = trachours.tickets_with_hours()
         hours = get_all_dict(self.env, 
                              "SELECT * FROM ticket_time WHERE time_started >= %s AND time_started < %s",
                              *[int(time.mktime(i.timetuple()))
-                               for i in (from_date, to_date)])
+                               for i in (data['from_date'], data['to_date'])])
         worker_hours = {}
         for entry in hours:
             worker = entry['worker']
@@ -291,6 +305,36 @@ class TracUserHours(Component):
                         for worker, seconds in 
                         sorted(worker_hours.items())]
         data['worker_hours'] = worker_hours
-        data['hours_format'] = hours_format
 
         return 'hours_users.html', data, "text/html"
+
+    def user(self, req, user):
+        """hours page for a single user"""
+        data = { 'hours_format' :  hours_format,
+                 'worker': user }
+        self.date_data(req, data)
+        args = [ user ] 
+        args += [int(time.mktime(i.timetuple()))
+                 for i in (data['from_date'], data['to_date'])]
+        hours = get_all_dict(self.env, 
+                             "SELECT * FROM ticket_time WHERE worker=%s AND time_started >= %s AND time_started < %s",
+                             *args)
+        worker_hours = {}
+        for entry in hours:
+            ticket = entry['ticket']
+            if ticket not in worker_hours:
+                worker_hours[ticket] = 0
+            worker_hours[ticket] += entry['seconds_worked']
+        
+        data['tickets'] = dict([(i, Ticket(self.env, i))
+                                for i in worker_hours.keys()])
+
+        # sort by ticket number and convert to hours
+        worker_hours = [(ticket_id, seconds/3600.)
+                        for ticket_id, seconds in
+                        sorted(worker_hours.items())]
+
+        data['worker_hours'] = worker_hours
+        data['total_hours'] = sum([hours[1] for hours in worker_hours])
+
+        return 'hours_user.html', data, "text/html"

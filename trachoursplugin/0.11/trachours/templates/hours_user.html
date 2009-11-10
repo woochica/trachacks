@@ -7,7 +7,7 @@
   <xi:include href="layout.html" />
 
   <head>
-    <title>User Hours</title>
+    <title>Hours for ${worker}</title>
     <script type="text/javascript"
     src="${chrome.htdocs_location}js/folding.js"></script>
     <script type="text/javascript" src="${chrome.htdocs_location}js/query.js"></script>
@@ -30,7 +30,7 @@
 
     <div id="content" class="query">
       
-      <h1>User Hours</h1>
+      <h1>Hours for ${worker}</h1>
 
       <form id="query" method="get">
 	Hours from 
@@ -89,21 +89,30 @@
 
       </form>
 
+      <b>Total Hours:</b> ${total_hours}
       <table class="listing tickets">
-        <tr><th>Worker</th><th>Hours</th></tr>
-        
-        <tr py:for="worker, hours in worker_hours">
+        <tr><th>Ticket</th><th>Hours</th></tr>
+
+        <tr py:for="ticket_id, hours in worker_hours">
           <td>
-            <a href="${req.href('hours', 'user', worker)}">
-              ${worker}
+            <a href="${req.href('ticket', ticket_id)}">
+              <b>#${ticket_id}</b> 
+              <i>${tickets[ticket_id].values['summary']}</i>
             </a>
           </td>
-          <td>${hours_format % hours}</td>
+          <td>
+            <a href="${req.href('hours', ticket_id)}">
+              ${hours_format % hours}
+            </a>
+          </td>
         </tr>
       </table>
-    </div>
 
-    <a href="${req.href('/hours')}">Query Hours</a>
+      <ul>
+        <li><a href="${req.href('/hours/user')}">User Hours</a></li>
+        <li><a href="${req.href('/hours')}">Query Hours</a></li>
+      </ul>
+    </div>
   </body>
 </html>
 

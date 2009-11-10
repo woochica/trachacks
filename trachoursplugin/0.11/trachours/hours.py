@@ -816,6 +816,9 @@ class TracHoursPlugin(Component):
 
         data['multiproject'] = self.env.is_component_enabled(MultiprojectHours)
 
+        from web_ui import TracUserHours
+        data['user_hours'] = self.env.is_component_enabled(TracUserHours)
+
         # return the rss, if requested
         if req.args.get('format') == 'rss':
             return self.queryhours2rss(req, data)
