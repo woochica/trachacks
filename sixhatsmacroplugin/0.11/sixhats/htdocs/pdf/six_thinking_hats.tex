@@ -1,0 +1,134 @@
+%
+%      author : Louis Cordier <lcordier@gmail.com>
+%     license : Creative Commons, Attribution (by)
+% description : Book request form.
+%    modified : $Id$
+%
+
+\documentclass [fleqn,12pt]{article}
+
+% Define an if-statment that checks to see if the LaTeX
+% source file is being processed by pdflatex or latex. 
+
+\newif\ifpdf 
+\ifx\pdfoutput\undefined 
+  \pdffalse      % we are not running PDFLaTeX
+\else 
+  \pdfoutput=1   % we are running PDFLaTeX 
+  \pdftrue
+\fi
+
+% Creating a article in 12pt typeset for A4 size paper
+ 
+\usepackage{a4}
+\usepackage{latexsym}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
+
+\ifpdf 
+  \usepackage[pdftex]{graphicx}
+  \pdfcompresslevel=9
+\else
+  \usepackage{graphicx}
+  \usepackage{pst-all}      %pstrick have a pdftricks equivalent
+\fi  
+
+\usepackage{setspace}
+\usepackage{url}
+
+
+% This should be the absolute last package to be installed
+% since it redefines most of the standard stuff.
+
+\ifpdf
+\usepackage[pdftex,
+            backref=true,
+	    pagebackref=true,
+	    pdfpagemode=None,
+	    colorlinks=true,
+            plainpages=false,
+%            pdfstartview=FitV,
+            pdftitle=Book\ Request\ Form,
+            pdfauthor=Louis\ Cordier,
+            pdfsubject=Six\ Thinking\ Hats,
+            pdfkeywords=,
+            linkcolor=blue,
+            citecolor=black,
+            urlcolor=blue]{hyperref}
+\else
+\usepackage[dvips,
+            backref=true,
+	    pagebackref=true,
+	    pdfpagemode=None,
+	    colorlinks=true,
+            plainpages=false]{hyperref}
+\fi
+
+
+%%\setlength {\pagewidth}      {mm}
+%\setlength     {\hoffset}        {5mm}    % +1in
+%\setlength     {\oddsidemargin}  {0mm}
+%\setlength     {\evensidemargin} {0mm}
+%\setlength     {\textwidth}      {160mm}
+%
+%%\setlength {\pageheight}     {mm}
+%\setlength     {\voffset}        {0mm}     % +1in
+%\setlength     {\topmargin}      {-20mm}
+%\setlength     {\headheight}     {12pt}
+%\setlength     {\headsep}        {25pt}
+%\setlength     {\textheight}     {247mm}
+%%\setlength {\foorskip}       {mm}
+%
+%\setlength     {\footnotesep}    {3ex}
+%\setlength     {\unitlength}     {1mm}
+\setlength     {\parindent}      {0mm}
+%\setlength     {\bigskipamount}  {10ex}
+
+
+% \renewcommand{\baselinestretch}{1.5}
+\singlespacing
+\pagestyle{empty} %plain
+
+
+\begin{document}
+
+\begin{center}
+{\huge Book Request Form}
+\end{center}
+
+\ \\
+
+\subsection*{Your Details}
+
+\begin{tabular}{|l|l|} \hline
+Name \& Surname & \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\; \\
+& \\ \hline
+E-mail address & \\
+& \\ \hline
+Telephone & \\
+& \\ \hline
+\end{tabular}
+
+\subsection*{Book Details}
+
+\begin{tabular}{|l|l|} \hline
+Title \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\; & Six Thinking Hats (2nd edition) \;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\;\; \\ \hline
+Author & Edward de Bono \\ \hline
+Publisher & Penguin Books \\ \hline
+Year Published & 2000 (October 26, 2000) \\ \hline
+ISBN & 0140296662 \\ \hline
+ISBN-13 & 9780140296662 \\ \hline
+Online Shops & \href{http://www.amazon.com/Six-Thinking-Hats-Edward-Bono/dp/0140296662/}{\parbox{100mm}{http://www.amazon.com/Six-Thinking-Hats-Edward-Bono/dp/0140296662/}} \\ \hline
+% & \href{http://www.amazon.com/gp/redirect.html?ie=UTF8&location=http\%3A\%2F\%2Fwww.amazon.com\%2FSix-Thinking-Hats-Edward-Bono\%2Fdp\%2F0140296662\%3Fie\%3DUTF8\%26qid\%3D1222706346\%26sr\%3D11-1&tag=lcordier-20&linkCode=ur2&camp=1789&creative=9325}{http://www.amazon.com/...} \\ \hline
+% & \url{http://www.google.com/} \\ \hline
+\end{tabular}
+
+\ \\[1em]
+
+Books on a bookshelf makes for an excellent carbon store, but their real
+utility is in when they're being read. If you plan on buying this book
+consider donating it to your local library when you, your friends, family
+and colleagues are done reading it.
+
+\end{document}

@@ -1,0 +1,66 @@
+= SixHats Introduction =
+
+  There is nothing more sad and wasteful than a roomful of intelligent and highly paid people waiting for a chance to attack something the
+  speaker has said. With the Six Hats method the fullest use is made of everyone's intelligence, experience and information. The Six Hats      
+  also removes all 'ego' from the discussion process.
+
+The Six Thinking Hats represent directions of thought. They are used to request thinking in a paticular direction, '''not''' as a description or label to classify ~~your~~ thinking afterwards. They are '''not''' used to characterize people. A person is not a Black hat, but he or she might prefer to think with the Black hat on ~~or be very skilled at thinking in that direction~~. It is desirable for everyone to become skilled in the use of all the hats.
+
+[[Sixhats(cite)]]
+
+www.burymeinbooks.com
+
+[[Sixhats(white,size=m)]]
+
+ * The White hat is neutral and objective.
+ * It focusses on facts and figures.
+ * Think of it as the reference section of an article or book.
+ * Questions to ask with the White hat on:
+   * What information do we have?
+   * What information do we need?
+   * What information is missing?
+   * What questions do we need to ask?
+   * How are we going to get the information we need?
+ * The information can range from hard verifiable facts and figures to soft information such as 3rd party opinions and feelings. Your own opinions and feelings are placed under the Red hat.
+ * Whose fact is it?
+ * Is the information a fact, a likelyhood or a believe?
+ * How true is the fact? Frame the information appropriatly:
+   * Always true
+   * Usually true
+   * Generally true
+   * By and large
+   * More often than not
+   * About half the time
+   * Often
+   * Sometimes true
+   * Occastionally true
+   * Been known to happen
+   * Never true
+   * Cannot be true (contradictory)
+ * Split the facts into two groups: Checked facts and Believed facts.
+|| Checked facts || Believed facts||
+|| The server application has 100M RAM avaliable. || The server can serve 100 requests / second. (not measured) ||
+
+  
+[[Sixhats(red,size=m)]]
+ * The Red hat is subjective.
+ * It exposes and legitimizes emotions and feelings, the non-rational aspects of thinking.
+ * It allows people to express their opinions, hunches, intuitions and impressions. (a function of their of experience)
+ * Resist the temptation to justify your emotions. You don't need to give a reason or a logical basis.
+ * ~~Emotions do not have to be logical or consistent.~~
+ * If emotions and feelings are not permitted as inputs in the thinking process, they will lurk in the background and affect all the thinking in a hidden way.
+ * The red hat makes feelings visible so that they can become part of the thinking map and also part of the value system that chooses the route on the map. 
+ * The red hat covers two broad types of feelings:
+   1. Ordinary emotions such as fear and dislike to more subtle ones such as suspicion.
+   1. Complex judgements that go into such type of feelings as a hunch, intuition, sense, taste, aesthetic feeling and other not visibly justified types of feeling.
+
+
+
+[[Sixhats(yellow,size=m)]]
+
+[[Sixhats(black,size=m)]]
+
+[[Sixhats(green,size=m)]]
+
+[[Sixhats(blue,size=m)]]
+
