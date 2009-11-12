@@ -1,0 +1,38 @@
+<!DOCTYPE HTML PUBLIC 
+      "-//W3C//DTD XHTML 1.0 Strict//EN" 
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/" >
+  <xi:include href="admin.html" />
+<head>
+  <title>hgrc: Permissions and more</title>
+</head>
+<body>
+  <h2>hgrc: Permissions and more</h2>
+  <form id="saveauthzfile" method="post">
+    <div class="field">
+      <textarea rows="20" style="width:63%" name="current">${auth_data}</textarea>
+    </div>
+    <div class="buttons">
+      <input type="submit" name="savehgfile" value=" Apply changes " />
+      <input type="reset" value=" Reset " />
+    </div>
+  </form>
+  
+  <br />
+  
+  <h2>Documentation</h2>
+  <h3>Links</h3>
+  <ul>
+    <li><a href="http://www.selenic.com/mercurial/hgrc.5.html">hgrc man file</a></li>
+    <li>Use following syntax to allow or deny access: 
+	<pre>
+[web]
+allow_push = {name1} {name2}
+allowpull = *
+deny_push = {name4}
+deny_read = {name3}</pre></li>
+  </ul>
+</body>
+</html>
