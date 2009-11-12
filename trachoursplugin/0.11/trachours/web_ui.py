@@ -3,6 +3,7 @@ web handlers for TracHours
 """
 
 import calendar
+import csv
 import datetime
 import time
 
@@ -19,11 +20,14 @@ from trac.ticket import Ticket
 from trac.ticket.model import Milestone
 from trac.web.api import IRequestHandler
 from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import add_link
 from trac.web.chrome import add_stylesheet
 from trac.web.chrome import Chrome
 from trac.web.chrome import ITemplateProvider
 from tracsqlhelper import get_all_dict, get_column
 from utils import get_date
+
+from StringIO import StringIO
 
 class TracHoursRoadmapFilter(Component):
     
@@ -237,6 +241,7 @@ class TracUserHours(Component):
         simply send the response itself and not return anything.
         """
         add_stylesheet(req, 'common/css/report.css')
+        add_link(req, 'alternate', req.href(req.path_info, format='csv'), 'CSV', 'text/csv', 'csv')
         if req.path_info.rstrip('/') == '/hours/user':
             return self.users(req)
         user = req.path_info.split('/hours/user/', 1)[-1]
@@ -316,6 +321,25 @@ class TracUserHours(Component):
                         sorted(worker_hours.items())]
         data['worker_hours'] = worker_hours
 
+        if req.args.get('format') == 'csv':
+            buffer = StringIO()
+            writer = csv.writer(buffer)
+            format = '%B %d, %Y'
+            title = "Hours for %s" % self.env.project_name
+            writer.writerow([title, req.abs_href()])
+            writer.writerow([])
+            writer.writerow(['From', 'To'])
+            writer.writerow([data[i].strftime(format) 
+                             for i in 'from_date', 'to_date'])
+            if milestone:
+                writer.writerow(['Milestone', milestone])
+            writer.writerow([])
+            writer.writerow(['Worker', 'Hours'])
+            for worker, hours in worker_hours:
+                writer.writerow([worker, hours])
+            
+            req.send(buffer.getvalue(), "text/csv")
+
         return 'hours_users.html', data, "text/html"
 
     def user(self, req, user):
@@ -346,5 +370,23 @@ class TracUserHours(Component):
 
         data['worker_hours'] = worker_hours
         data['total_hours'] = sum([hours[1] for hours in worker_hours])
+
+        if req.args.get('format') == 'csv':
+            buffer = StringIO()
+            writer = csv.writer(buffer)
+            format = '%B %d, %Y'
+            title = "Hours for %s" % user
+            writer.writerow([title, req.abs_href()])
+            writer.writerow([])
+            writer.writerow(['From', 'To'])
+            writer.writerow([data[i].strftime(format) 
+                             for i in 'from_date', 'to_date'])
+            writer.writerow([])
+            writer.writerow(['Ticket', 'Hours'])
+            for ticket, hours in worker_hours:
+                writer.writerow([ticket, hours])
+            
+            req.send(buffer.getvalue(), "text/csv")
+
 
         return 'hours_user.html', data, "text/html"

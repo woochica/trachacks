@@ -6,6 +6,7 @@ See: http://trac-hacks.org/wiki/TracHoursPlugin
 """
 
 import calendar
+import csv
 import datetime
 import dateutil.parser
 import re
@@ -43,6 +44,8 @@ from trac.web.chrome import add_stylesheet
 from trac.web.chrome import add_warning
 from trac.web.chrome import Chrome
 from trac.web.chrome import INavigationContributor
+
+from StringIO import StringIO
 
 # local imports
 from setup import SetupTracHours
@@ -823,10 +826,17 @@ class TracHoursPlugin(Component):
         if req.args.get('format') == 'rss':
             return self.queryhours2rss(req, data)
 
+        # return the csv, if requested
+        if req.args.get('format') == 'csv':
+            self.queryhours2csv(req, data)
+
         # add rss link
         rss_href = req.href(req.path_info, format='rss')
         add_link(req, 'alternate', rss_href, _('RSS Feed'),
                  'application/rss+xml', 'rss')        
+
+        # add csv link
+        add_link(req, 'alternate', req.href(req.path_info, format='csv', **req.args), 'CSV', 'text/csv', 'csv')
         
         return ('hours_timeline.html', data, 'text/html')
 
@@ -905,7 +915,7 @@ class TracHoursPlugin(Component):
                 title = '%s:%02d hours worked by %s' % (hours, minutes, 
                                                         entry['worker'])
                 item['title'] = title
-                item['description'] = title
+                item['description'] = title                
                 comments = entry.get('comments')
                 if comments:                    
                     item['description'] += ': %s' % comments
@@ -923,6 +933,8 @@ class TracHoursPlugin(Component):
             
         adapted['items'] = items
         return ('hours.rss', adapted, 'application/rss+xml')
+
+
 
     def tickethours2rss(self, req, data):
         """adapt data for /hours/<ticket number> to RSS"""
@@ -957,15 +969,48 @@ class TracHoursPlugin(Component):
         return ('hours.rss', adapted, 'text/xml')
 
 
+    ### method for transforming hours to csv
+    def queryhours2csv(self, req, data):
+        buffer = StringIO()
+        writer = csv.writer(buffer)
+
+        if data['cur_worker_filter'] != '*any':
+            title = 'Hours for %s' % data['cur_worker_filter']
+        else:
+            title = 'Hours'
+        writer.writerow([title, req.abs_href()])
+
+        for constraint in sorted(data['constraints'].keys()):
+            if constraint == 'status' and data['constraints'][constraint]['values'] == ['bogus']:
+                continue  # XXX I actually have no idea why this is here
+            writer.writerow([constraint] + data['constraints'][constraint]['values'])
+        writer.writerow([])
+
+        format = '%B %d, %Y'
+        writer.writerow(['From', 'To'])
+        writer.writerow([data[i].strftime(format) 
+                         for i in 'from_date', 'to_date'])
+        writer.writerow([])
+
+        for groupname, results in data['groups']:
+            if groupname:
+                writer.writerow(groupname)
+            writer.writerow([header['label'] for header in data['headers']])
+            for result in results:
+                writer.writerow([result[header['name']] 
+                                 for header in data['headers']])
+            writer.writerow([])
+
+        req.send(buffer.getvalue(), "text/csv")
+
+
     ### methods for adding and editting hours associated with tickets
 
     def do_ticket_change(self, req, ticket):
         """respond to a request to add hours to a ticket"""
 
         # permission check
-        can_add_hours = req.perm.has_permission('TICKET_ADD_HOURS')
-        if not can_add_hours:
-            return #raise 403
+        req.perm.require('TICKET_ADD_HOURS')
 
         # 
         now = datetime.datetime.now()
