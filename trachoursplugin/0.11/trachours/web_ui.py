@@ -59,7 +59,6 @@ class TracHoursRoadmapFilter(Component):
                 find_xpath = "//li[@class='milestone']//h2/a"
                 xpath = "//li[@class='milestone']//div[@class='info']"
 
-
             for milestone in milestones:
                 hours[milestone.name] = dict(totalhours=0., 
                                              estimatedhours=0.,)
@@ -92,8 +91,8 @@ class TracHoursRoadmapFilter(Component):
                     hours[milestone.name]['totalhours'] /= 3600.
 
 
-                b = StreamBuffer()
-                stream |= Transformer(find_xpath).copy(b).end().select(xpath).append(self.MilestoneMarkup(b, hours, req.href, this_milestone))
+            b = StreamBuffer()
+            stream |= Transformer(find_xpath).copy(b).end().select(xpath).append(self.MilestoneMarkup(b, hours, req.href, this_milestone))
 
         return stream
 
