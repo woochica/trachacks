@@ -40,9 +40,15 @@
         <span class="numrows">(${ngettext('%(num)s match', '%(num)s matches', query.num_items)})</span>
       </h1>
 
+      <!-- links to other display formats -->
       <a py:if="multiproject" href="hours/multiproject">
 	Cross-project hours
       </a>
+
+      <a py:if="user_hours" href="${req.href('/hours/user', from_day=from_date.day, from_month=from_date.month, from_year=from_date.year, to_day=to_date.year, to_month=to_date.month, to_year=to_date.year)}">
+        User hours
+      </a>
+
 
       <div id="description">
         <p>${query_description}</p>
@@ -321,11 +327,6 @@
       </div><!-- help -->
 
     </div>
-
-    <a py:if="user_hours"
-       href="${req.href('/hours/user')}">
-      User Hours
-    </a>
 
   </body>
 </html>

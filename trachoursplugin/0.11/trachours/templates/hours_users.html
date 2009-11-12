@@ -80,6 +80,20 @@
 	  - ${to_unicode(from_date.strftime('%B %d, %Y'))}</a>
 
 
+        <!-- milestone -->
+        <div py:if="milestones" 
+             py:with="selected_milestone=req.args.get('milestone')">
+          <a href="${req.href('roadmap')}">Milestone</a>:
+          <select name="milestone">
+            <option value=""></option>
+            <option py:for="milestone in milestones" 
+                    py:attrs="{'selected': selected_milestone == milestone.name and True or None}"
+                    value="${milestone.name}">
+              ${milestone.name}
+            </option>
+          </select>
+        </div>
+
         <!-- update -->
         <div class="buttons">
           <input type="submit" name="update" value="${_('Update')}" />
@@ -103,7 +117,7 @@
       </table>
     </div>
 
-    <a href="${req.href('/hours')}">Query Hours</a>
+    <a href="${req.href('/hours', from_day=from_date.day, from_month=from_date.month, from_year=from_date.year, to_day=to_date.year, to_month=to_date.month, to_year=to_date.year)}">Query Hours</a>
   </body>
 </html>
 

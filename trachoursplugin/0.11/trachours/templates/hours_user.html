@@ -109,8 +109,8 @@
       </table>
 
       <ul>
-        <li><a href="${req.href('/hours/user')}">User Hours</a></li>
-        <li><a href="${req.href('/hours')}">Query Hours</a></li>
+        <li><a href="${req.href('/hours/user', from_day=from_date.day, from_month=from_date.month, from_year=from_date.year, to_day=to_date.year, to_month=to_date.month, to_year=to_date.year)}">User Hours</a></li>
+        <li><a href="${req.href('/hours', from_day=from_date.day, from_month=from_date.month, from_year=from_date.year, to_day=to_date.year, to_month=to_date.month, to_year=to_date.year)}">Query Hours</a></li>
       </ul>
     </div>
   </body>

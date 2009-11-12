@@ -16,6 +16,7 @@ from ticketsidebarprovider.interface import ITicketSidebarProvider
 from ticketsidebarprovider.ticketsidebar import TicketSidebarProvider
 from trac.core import *
 from trac.ticket import Ticket
+from trac.ticket.model import Milestone
 from trac.web.api import IRequestHandler
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import add_stylesheet
@@ -287,6 +288,11 @@ class TracUserHours(Component):
         ### date data
         self.date_data(req, data)
 
+        ### milestone data
+        milestone = req.args.get('milestone')
+        milestones = Milestone.select(self.env)
+        data['milestones'] = milestones
+
         ### get the hours
         #trachours = TracHoursPlugin(self.env)
         #tickets = trachours.tickets_with_hours()
@@ -299,6 +305,11 @@ class TracUserHours(Component):
             worker = entry['worker']
             if  worker not in worker_hours:
                 worker_hours[worker] = 0
+
+            if milestone:
+                if milestone != Ticket(self.env, entry['ticket']).values.get('milestone'):
+                    continue
+
             worker_hours[worker] += entry['seconds_worked']
 
         worker_hours = [(worker, seconds/3600.)
