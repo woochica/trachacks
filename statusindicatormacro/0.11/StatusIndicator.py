@@ -1,21 +1,15 @@
 #
-# BackLinks plugin for Trac
+# StatusIndicatorMacro for Trac
 # Version: 5.5
 #
-# Author: Trapanator trap@trapanator.com
-# Website: http://www.trapanator.com/blog/archives/category/trac
+# Author: iceboy <iceboy@iceboy.de>
 # License: GPL 3.0
 #
 from StringIO import StringIO
-from genshi.builder import tag
 from trac.wiki.macros import WikiMacroBase
 import string
 from trac.core import *
 from trac.wiki.formatter import format_to_html
-from trac.util import TracError
-from trac.util.text import to_unicode
-from trac.wiki.model import WikiPage
-from trac.wiki.web_ui import WikiModule
 
 class StatusIndicatorMacro(WikiMacroBase):
     """Inserts a square dot in the give color, white if no color given"""
