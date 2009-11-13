@@ -45,7 +45,7 @@ class TracSitemapPlugin(Component):
             # Special case for the WikiStart page.
             ### TODO: Should we include all three, or just a "canonical" page?
             if row[0] == 'WikiStart':
-                url_list.append(('wiki', row[1],))
+                url_list.append((req.href('wiki'), row[1],))
                 url_list.append(('', row[1],))
 
         # Walk the tickets.
@@ -54,13 +54,13 @@ class TracSitemapPlugin(Component):
             url_list.append((req.href('ticket', row[0]), row[1],))
 
         # Walk the reports.
-        url_list.append(('report', None))
+        url_list.append((req.href('report'), None))
         cursor.execute('SELECT id FROM report ORDER BY id')
         for row in cursor:
             url_list.append((req.href('report', row[0]), None,))
 
         # Walk the milestones.
-        url_list.append(('roadmap', None))
+        url_list.append((req.href('roadmap'), None))
         cursor.execute('SELECT name FROM milestone ORDER BY name')
         for row in cursor:
             url_list.append((req.href('milestone', row[0]), None),)
@@ -71,9 +71,9 @@ class TracSitemapPlugin(Component):
             url_list.append((req.href('attachment', row[0], row[1], row[2]), row[3],))
 
         # Mention a few other pages.
-        url_list.append(('browser', None,))
-        url_list.append(('timeline', None,))
-        url_list.append(('about', None,))
+        url_list.append((req.href('browser'), None,))
+        url_list.append((req.href('timeline'), None,))
+        url_list.append((req.href('about'), None,))
 
         # All done.
         url_list.sort()
