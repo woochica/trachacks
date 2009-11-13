@@ -41,7 +41,7 @@ class TracSitemapPlugin(Component):
         # Walk the wiki pages.
         cursor.execute('SELECT DISTINCT name,MAX(time) FROM wiki GROUP BY name ORDER BY name')
         for row in cursor:
-            url_list.append(('wiki/%s' % (row[0],), row[1],))
+            url_list.append((req.href('wiki', row[0]), row[1],))
             # Special case for the WikiStart page.
             ### TODO: Should we include all three, or just a "canonical" page?
             if row[0] == 'WikiStart':
@@ -51,24 +51,24 @@ class TracSitemapPlugin(Component):
         # Walk the tickets.
         cursor.execute('SELECT id,changetime FROM ticket ORDER BY id')
         for row in cursor:
-            url_list.append(('ticket/%s' % (row[0],), row[1],))
+            url_list.append((req.href('ticket', row[0]), row[1],))
 
         # Walk the reports.
         url_list.append(('report', None))
         cursor.execute('SELECT id FROM report ORDER BY id')
         for row in cursor:
-            url_list.append(('report/%d' % (row[0],), None,))
+            url_list.append((req.href('report', row[0]), None,))
 
         # Walk the milestones.
         url_list.append(('roadmap', None))
         cursor.execute('SELECT name FROM milestone ORDER BY name')
         for row in cursor:
-            url_list.append(('milestone/%s' % (row[0],), None),)
+            url_list.append((req.href('milestone', row[0]), None),)
 
         # Walk the attachments.
         cursor.execute('SELECT type,id,filename,time FROM attachment')
         for row in cursor:
-            url_list.append(('attachment/%s/%s/%s' % (row[0], row[1], row[2],), row[3],))
+            url_list.append((req.href('attachment', row[0], row[1], row[2]), row[3],))
 
         # Mention a few other pages.
         url_list.append(('browser', None,))
@@ -78,7 +78,7 @@ class TracSitemapPlugin(Component):
         # All done.
         url_list.sort()
         port = '' if req.server_port == 80 else ':%s' % (req.server_port,)
-        base_url = '%s://%s%s%s' % (req.scheme, req.server_name, port, req.base_path,)
+        base_url = '%s://%s%s' % (req.scheme, req.server_name, port,)
         req.write("""<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -87,10 +87,10 @@ class TracSitemapPlugin(Component):
 """)
         for url,timestamp in url_list:
             req.write("<url>\n")
-            req.write("    <loc>%s/%s</loc>\n" % (base_url, url,))
+            req.write("    <loc>%s%s</loc>\n" % (base_url, url,))
             if timestamp is not None:
                 tzhour, tzmin = divmod(time.timezone / 60, 60)
-                req.write("    <lastmod>%s+%02d:%02d</lastmod>\n" % (time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(timestamp)), tzhour, tzmin,))
+                req.write("    <lastmod>%s%+03d:%02d</lastmod>\n" % (time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(timestamp)), tzhour, tzmin,))
             req.write("</url>\n")
 
         req.write('</urlset>')
