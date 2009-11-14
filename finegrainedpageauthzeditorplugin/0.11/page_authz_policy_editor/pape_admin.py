@@ -40,6 +40,9 @@ class PageAuthzPolicyEditor(Component):
     # ITemplateProvider methods
     def get_templates_dirs(self):
         return [resource_filename(__name__, 'templates')]
+    
+    def get_htdocs_dirs(self):
+        return []
 
     # IAdminPanelProvider methods
     def get_admin_panels(self, req):
