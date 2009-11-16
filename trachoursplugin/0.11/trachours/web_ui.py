@@ -113,6 +113,8 @@ class TracHoursRoadmapFilter(Component):
                 milestone = self.this_milestone
             else:
                 milestone = self.buffer.events[3][1]
+            if not milestone in self.hours.keys(): 
+                return iter([]) 
             hours = self.hours[milestone]
             estimatedhours = hours['estimatedhours']
             totalhours = hours['totalhours']
