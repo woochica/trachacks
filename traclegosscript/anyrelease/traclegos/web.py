@@ -416,6 +416,7 @@ class View(object):
                 
 
         data = step.data(project_data)
+        data['req'] = req
         data['errors'] = errors
         template = self.loader.load(step.template)
         html =  template.generate(**data).render('html', doctype='html')
