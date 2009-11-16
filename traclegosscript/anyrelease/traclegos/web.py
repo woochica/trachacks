@@ -108,7 +108,7 @@ class CreateProject(Step):
 
         # get a list of TRAC_ADMINs
         # XXX this is a hack, for now
-        project['admins'] = input['trac_admins'].replace(',', ' ').split()
+        project['admins'] = input.get('trac_admins', '').replace(',', ' ').split()
         
 
 class ProjectDetails(Step):
