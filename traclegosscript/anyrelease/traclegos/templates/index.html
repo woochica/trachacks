@@ -9,18 +9,41 @@
   </head>
 <!-- this template should allow customization -->
   <body>
-    <h1>Available Projects</h1>
-    <ul>
-      <li py:for="project in projects" py:choose="">
-        <a py:when="'href' in project" href="$project.href"
-           title="$project.description">$project.name</a>
-        <py:otherwise>
-          <small>$project.name: <em>Error</em> <br /> ($project.description)</small>
-        </py:otherwise>
-      </li>
-    </ul>
 
-    <!-- XXX TODO SECURITY -->
-    <a href="create-project">Create Project</a>
+    <div class="user" py:if="remote_user">
+      <b>Logged in as:</b> ${remote_user}
+      <a href="logout">log out</a>
+    </div>
+
+    <div id="projects">
+      <h1>Available Projects</h1>
+      <ul>
+        <li py:for="project in projects" py:choose="">
+          <a py:when="'href' in project" href="$project.href"
+             title="$project.description">$project.name</a>
+          <py:otherwise>
+            <small>$project.name: <em>Error</em> <br /> ($project.description)</small>
+          </py:otherwise>
+        </li>
+      </ul>
+    </div>
+
+    <div id="login" py:if="auth and not remote_user">
+      <h2>Login</h2>
+      <form method="post" action="/login">
+        <dl>
+          <dt>Name</dt>
+          <dd><input type="text" name="login"/></dd>
+          <dt>Password</dt>
+          <dd><input type="password" name="password"/></dd>
+        </dl>
+        <input type="submit" value="Login"/>
+      </form>
+    </div>
+
+    <div py:if="(auth and remote_user) or (not auth)">
+      <a href="create-project">Create Project</a>
+    </div>
+
   </body>
 </html>

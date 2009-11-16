@@ -315,6 +315,12 @@ class View(object):
                 if name not in self.available_databases:
                     del self.databases[name]
 
+        # enforce authentication
+        self.auth = 'auth' in kw
+
+        self.index = kw.get('index', os.path.join(template_directory, 'index.html'))
+
+
     def trac_projects(self):
         """returns existing Trac projects"""
         proj = {}
@@ -330,8 +336,9 @@ class View(object):
     def __call__(self, environ, start_response):
 
         req = Request(environ)                                     
-        step = req.path_info.strip('/')
+        step = req.path_info.strip('/')            
 
+        # project creation steps
         if step in [i[0] for i in self.steps]:
             # determine which step we are on
             index = [i[0] for i in self.steps].index(step)
@@ -339,9 +346,18 @@ class View(object):
             # delegate to Trac
             # could otherwise take over the index.html serving ourselves
             environ['trac.env_parent_dir'] = self.directory
-            environ['trac.env_index_template'] = os.path.join(template_directory, 'index.html')
+            environ['trac.env_index_template'] = self.index
+
+            data = { 'remote_user': req.remote_user or '',
+                     'auth': self.auth and 'yes' or ''
+                     }
+            environ['trac.template_vars'] = ','.join(["%s=%s" % (key, value) for key, value in data.items()])
             res = dispatch_request(environ, start_response)
             return res
+
+        # if self.auth, enforce remote_user to be set
+        if self.auth and not req.remote_user:
+            return exc.HTTPUnauthorized()(environ, start_response)
             
         # if POST-ing, validate the request and store needed information
         errors = None
@@ -409,5 +425,4 @@ class View(object):
     def get_response(self, text, content_type='text/html'):
         """returns a response object for HTML/text input"""
         res = Response(content_type=content_type, body=text)
-        res.content_length = len(res.body)
         return res
