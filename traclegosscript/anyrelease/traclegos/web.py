@@ -360,7 +360,7 @@ class View(object):
             return exc.HTTPUnauthorized()(environ, start_response)
             
         # if POST-ing, validate the request and store needed information
-        errors = None
+        errors = []
         name, step = self.steps[index]
         base_url = req.url.rsplit(step.name, 1)[0]
         project = req.params.get('project')
