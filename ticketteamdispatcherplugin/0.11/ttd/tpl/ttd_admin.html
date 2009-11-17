@@ -19,39 +19,83 @@ function addNewLine() {
 </head>
 <body>
 
-<h2>TTD: Admin Teams</h2>
-
-<form id="ttd" action="ttd" method="post">
+<h2>Ticket Team Dispatcher: Administration</h2>
+<hr />
+<h3>Ticket Team Dispatcher Field Caption</h3>
+	<form id="ttd" action="ttd" method="post">
 	<table>
 	    <tr>
-	        <td><label for="caption">Caption:</label></td>
+	        <td><label for="caption">Caption of the field:</label></td>
             <td><input type="text" name="caption" value="$caption" /></td>
 	    </tr>
 	</table>
-	<br /><br />
+    <input type="hidden" name="action" value="rename" />
+    <input type="submit" name="save" value="Save" />
+</form>
+	<hr />
+<h3>Add a new team</h3>	
+    <form id="ttd" action="ttd" method="post">
 	<table>
 		<tr>
-        	<td>Team</td>
-        	<td>Dispatcher</td>
-    	</tr>
+			<td>Name</td>
+			<td><input type="text" name="newTeam" /></td>
+		</tr>
+	</table>
+    <br />
+    <input type="hidden" name="action" value="add" />
+    <input type="submit" name="save" value="Add" />
+</form>
+	<hr />
+<h3>Administrate teams</h3>
+	<table>
 		<py:for each="team in teams">
     	<tr>
-       		<td><input type="text" name="team_$team.id" value="$team.name"/></td>
-        	<td><input type="text" name="dispatcher_$team.id" value="$team.dispatcher"/></td>
+       		<td>
+       			<py:if test="editRow == team">
+       			<input type="text" name="team" value="$team"/>
+       			</py:if>
+       			<py:if test="editRow != team">
+       			$team
+       			</py:if>
+       		</td>
+        	<td><a href="ttd?action=up&amp;id=$team">Up</a></td>
+        	<td><a href="ttd?action=down&amp;id=$team">Down</a></td>
+        	<!--<td><a href="ttd?action=edit&amp;editRow=$team.name">Edit</a></td>//-->
+        	<td><a href="ttd?action=delete&amp;id=$team">Delete</a></td>
     	</tr>
   		</py:for>
-  		<tr>
-        	<td>
-        	    <input type="hidden" name="action" value="save" />
-        	    <input type="hidden" name="count"    value="$count" />
-        	</td>
-        	<td style="text-align:right"><a href="javascript:addNewLine();">Add a line</a></td>
-    	</tr>
 	</table>
-	<small>Leave team or dispatcher empty to delete a line.</small><br />
     <br />
-    <br />
-    <input type="submit" name="save" value="Save" accesskey="s" />
+<hr />
+<h3>Administrate Users and Teams</h3>
+    <form id="ttd" action="ttd" method="post">
+<table>
+	<tr>
+		<td></td>
+		<py:for each="team in teams">
+			<td>$team</td>
+		</py:for>
+	</tr>
+		<py:for each="user in users">
+	<tr>
+		<td>
+			$user.username
+		</td>
+		<py:for each="team in teams">
+			<td>
+            <py:if test="user[team] == '1'">
+                <input type="checkbox" checked="true" value="true" name="${user.username}_$team" />
+            </py:if>
+            <py:if test="user[team] == '0'">
+                <input type="checkbox" value="true" name="${user.username}_$team" />
+            </py:if>
+            </td>
+		</py:for>
+	</tr>
+		</py:for>
+</table>
+    <input type="hidden" name="action" value="updateUsers" />
+    <input type="submit" name="save" value="Save" />
 </form>
 
 </body>

@@ -2,6 +2,7 @@ from trac.core import *
 from trac.web.chrome import ITemplateProvider
 from pkg_resources import resource_filename
 
+from tracusermanager.api import UserManager, User
 from trac.admin import IAdminPanelProvider
 
 class TicketTeamDispatcherAdmin(Component):
@@ -15,66 +16,84 @@ class TicketTeamDispatcherAdmin(Component):
     def get_admin_panels(self, req):
         if req.perm.has_permission('TICKET_ADMIN'):
             yield ('ticket', 'Ticket System', 'ttd', 'Ticket Team Dispatcher')
-
+            
+    def getCaption(self):
+        return self.config.get('ticket-custom', 'ttd.label')
+        
+    def setCaption(self, caption):
+        self.config.set('ticket-custom', 'ttd.label', caption)
+        self.config.save()
+                
+    def getTeams(self):
+        return self.config.get('ticket-custom', 'ttd.options').split('|')   
+        
+    def setTeams(self, teams):
+        self.config.set('ticket-custom', 'ttd.options', '|'.join(teams))     
+        self.config.save()
+        
     def render_admin_panel(self, req, category, page, path_info):
         assert req.perm.has_permission('TICKET_ADMIN')
 
         action = req.args.get('action')
         
-        caption = '';
-        teams = []
-        count = 0
+        users = UserManager(self.env).get_active_users()
+        caption = self.getCaption()
+        teams = self.getTeams()
                 
         if action:
             # load data from post
-            count = int(req.args.get('count'))
-            for i in xrange(count):
-                team = req.args.get("team_%i" % i )
-                dispatcher = req.args.get("dispatcher_%i" % i )
-                #TODO: Verify unique team-names and e-mail address struct
-                if action != 'newLine' and ( team == '' or dispatcher == '' ):
-                    continue
-                teams.append({'id': i, 'name' : team , 'dispatcher' : dispatcher})
-            caption = req.args.get("caption")
-            
-            if action == 'newLine': # add an additional empty line
-                teams.append({'id': count, 'name' : '', 'dispatcher' : ''})
-                count = count + 1
-            elif action == 'save': # save the data
-                names = []
-                # write own data and prepare external names
-                count = 0
+            if action == 'rename':
+                caption = req.args.get('caption')
+                self.setCaption(caption)
+            elif action == 'add':
+                newTeam = req.args.get('newTeam')
+                
+                canAdd = True
                 for team in teams:
-                    self.config.set('ticket-team-dispatcher', '%i.team' % count, team['name'])
-                    self.config.set('ticket-team-dispatcher', '%i.dispatcher' % count, team['dispatcher'])
-                    names.append(team['name'])
-                    count = count + 1
-                self.config.set('ticket-team-dispatcher', 'caption', caption)
-                self.config.set('ticket-team-dispatcher', 'count', count)
+                    if team == newTeam:
+                        canAdd = False
+                        break
                 
-                #remove deleted items from trac.ini
-                while self.config.has_option('ticket-team-dispatcher', '%i.team' % count):
-                    self.config.remove('ticket-team-dispatcher', '%i.team' % count)
-                    self.config.remove('ticket-team-dispatcher', '%i.dispatcher' % count)
-                    count = count + 1
-                
-                # evil hack on ticket-custom ;) TODO: use api of http://trac-hacks.org/wiki/CustomFieldAdminPlugin
-                if not self.config.has_option('ticket-custom', 'ttd'):
-                    self.config.set('ticket-custom', 'ttd', 'select')
-                self.config.set('ticket-custom', 'ttd.label',   caption)
-                self.config.set('ticket-custom', 'ttd.options', "|".join(names))                
-                
-                self.config.save()
-        else: 
-            # load data from config
-            count = self.env.config.getint('ticket-team-dispatcher', 'count', 0)
-            for i in xrange(count): 
-                teams.append({'id': i,
-                              'name' : self.config.get('ticket-team-dispatcher', '%i.team' % i, None),
-                              'dispatcher' : self.config.get('ticket-team-dispatcher', '%i.dispatcher' % i, None)})
-            caption = self.env.config.get('ticket-team-dispatcher', 'caption', 'Team')        
+                if canAdd:
+                    teams.append(newTeam)
+                    for user in users:
+                        user[newTeam] = '0'
+                        user.save()
+                    self.setTeams(teams)                
+            elif action == 'up':
+                id = req.args.get('id')
+                i = teams.index(id)
+                if i > 0:
+                    tmp = teams[i-1]
+                    teams[i-1] = teams[i]
+                    teams[i] = tmp
+                    self.setTeams(teams)                
+            elif action == 'down':
+                id = req.args.get('id')
+                i = teams.index(id)
+                if i < len(teams)-1:
+                    tmp = teams[i+1]
+                    teams[i+1] = teams[i]
+                    teams[i] = tmp
+                    self.setTeams(teams)        
+            elif action == 'delete':
+                id = req.args.get('id')
+                teams.remove(id)
+                for user in users:
+                    del user[id]
+                    user.save()
+                self.setTeams(teams)   
+            elif action == 'updateUsers':
+                for user in users:
+                    for team in teams:
+                        if req.args.get('%s_%s' % (user.username, team)):
+                            user[team] = '1'
+                        else:
+                            user[team] = '0'
+                        
+                    user.save()
                                 
-        return 'ttd_admin.html', {'teams' : teams, 'caption' : caption, 'count' : count}
+        return 'ttd_admin.html', {'teams' : teams, 'users' : users, 'caption' : caption}
 
     # INavigationContributor
     def get_templates_dirs(self):

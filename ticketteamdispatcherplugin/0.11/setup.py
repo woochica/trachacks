@@ -1,8 +1,11 @@
 from setuptools import setup
+import pkg_resources
+
+pkg_resources.require("TracUserManagerPlugin>=0.4")
 
 PACKAGE = 'TicketTeamDispatcher'
 PACKAGE_SHORT = 'ttd'
-VERSION = '0.1'
+VERSION = '0.2'
 
 setup(
     name=PACKAGE,
