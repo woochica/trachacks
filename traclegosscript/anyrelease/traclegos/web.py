@@ -8,6 +8,7 @@ import string
 import subprocess
 import sys
 import time
+import traceback
 
 from genshi.core import Markup
 from genshi.template import TemplateLoader
@@ -24,7 +25,7 @@ from traclegos.project import project_dict
 from traclegos.repository import available_repositories
 from webob import Request, Response, exc
 
-# TODO: better handling of errors (not very friendly, currently)
+from StringIO import StringIO
 
 template_directory = os.path.join(os.path.dirname(__file__), 'templates')
 
@@ -242,8 +243,8 @@ class ProjectVariables(Step):
         # TODO: add authenticated user to TRAC_ADMIN of the new site
         # (and redirect to the admin panel?)
         # XXX hack for now
-        for admin in project['admins']:
-            subprocess.call(['trac-admin', project_dir, 'permission', 'add', admin, 'TRAC_ADMIN'])
+#        for admin in project['admins']:
+#            subprocess.call(['trac-admin', project_dir, 'permission', 'add', admin, 'TRAC_ADMIN'])
 
         # XXX hack to sync the repository asynchronously
         if repository_dir:
@@ -318,6 +319,7 @@ class View(object):
         # enforce authentication
         self.auth = 'auth' in kw
 
+        # index page for projects list
         self.index = kw.get('index', os.path.join(template_directory, 'index.html'))
 
 
@@ -338,92 +340,95 @@ class View(object):
         req = Request(environ)                                     
         step = req.path_info.strip('/')            
 
-        # project creation steps
-        if step in [i[0] for i in self.steps]:
-            # determine which step we are on
-            index = [i[0] for i in self.steps].index(step)
-        else:
-            # delegate to Trac
-            # could otherwise take over the index.html serving ourselves
-            environ['trac.env_parent_dir'] = self.directory
-            environ['trac.env_index_template'] = self.index
+        try:
 
-            data = { 'remote_user': req.remote_user or '',
-                     'auth': self.auth and 'yes' or ''
-                     }
-            environ['trac.template_vars'] = ','.join(["%s=%s" % (key, value) for key, value in data.items()])
-            res = dispatch_request(environ, start_response)
-            return res
+            if step in [i[0] for i in self.steps]:
+                # determine which step we are on
+                index = [i[0] for i in self.steps].index(step)
+            else:
+                # delegate to Trac
 
-        # if self.auth, enforce remote_user to be set
-        if self.auth and not req.remote_user:
-            return exc.HTTPUnauthorized()(environ, start_response)
+                environ['trac.env_parent_dir'] = self.directory
+                environ['trac.env_index_template'] = self.index
             
-        # if POST-ing, validate the request and store needed information
-        errors = []
-        name, step = self.steps[index]
-        base_url = req.url.rsplit(step.name, 1)[0]
-        project = req.params.get('project')
-        if req.method == 'POST':
+                # data for index template
+                data = { 'remote_user': req.remote_user or '',
+                         'auth': self.auth and 'yes' or '' 
+                         }
+                environ['trac.template_vars'] = ','.join(["%s=%s" % (key, value) for key, value in data.items()])
+                return dispatch_request(environ, start_response)
 
-            # check for project existence
-            if not project and index:
-                res = exc.HTTPSeeOther("No session found", location="create-project")
-                return res(environ, start_response)
-            if index:
-                if project not in self.projects:
-                    errors.append('Project not found')
 
-            project_data = self.projects.get(project)
-            errors = step.errors(project_data, req.POST)
-            if not index:
-                project_data = self.projects[project] = {}
+            # if self.auth, enforce remote_user to be set
+            if self.auth and not req.remote_user:
+                return exc.HTTPUnauthorized()(environ, start_response)
+        
+            # if POST-ing, validate the request and store needed information
+            errors = []
+            name, step = self.steps[index]
+            base_url = req.url.rsplit(step.name, 1)[0]
+            project = req.params.get('project')
+            if req.method == 'POST':
 
-            # set *after* error check so that `create-project` doesn't find itself
-            project_data['base_url'] = base_url 
-            
-            if not errors: # success
-                step.transition(project_data, req.POST)
-
-                # find the next step and redirect to it
-                while True:
-                    index += 1
-                    
-                    if index == len(self.steps):
-                        destination = self.done % self.projects[project]['vars']
-                        time.sleep(1) # XXX needed?
-                        self.projects.pop(project) # successful project creation
-                        break
-                    else:
-                        name, step = self.steps[index]
-                        if step.display(project_data):
-                            destination = '%s?project=%s' % (self.steps[index][0], project)        
-                            break
-                        else:
-                            step.transition(project_data, {})
-                res = exc.HTTPSeeOther(destination, location=destination)
-                return res(environ, start_response)
-        else: # GET
-            project_data = self.projects.get(project, {})
-            project_data['base_url'] = base_url
-            if index:
-                if project not in self.projects:
+                # check for project existence
+                if not project and index:
                     res = exc.HTTPSeeOther("No session found", location="create-project")
                     return res(environ, start_response)
-            while not step.display(project_data):
-                break
-                step.transition(project_data, {})
-                
+                if index:
+                    if project not in self.projects:
+                        errors.append('Project not found')
 
-        data = step.data(project_data)
-        data['req'] = req
-        data['errors'] = errors
-        template = self.loader.load(step.template)
-        html =  template.generate(**data).render('html', doctype='html')
-        res = self.get_response(html)
-        return res(environ, start_response)
-        
-    def get_response(self, text, content_type='text/html'):
-        """returns a response object for HTML/text input"""
-        res = Response(content_type=content_type, body=text)
-        return res
+                project_data = self.projects.get(project)
+                errors = step.errors(project_data, req.POST)
+                if not index:
+                    project_data = self.projects[project] = {}
+
+                # set *after* error check so that `create-project` doesn't find itself
+                project_data['base_url'] = base_url 
+            
+                if not errors: # success
+                    step.transition(project_data, req.POST)
+
+                    # find the next step and redirect to it
+                    while True:
+                        index += 1
+                    
+                        if index == len(self.steps):
+                            destination = self.done % self.projects[project]['vars']
+                            time.sleep(1) # XXX needed?
+                            self.projects.pop(project) # successful project creation
+                            break
+                        else:
+                            name, step = self.steps[index]
+                            if step.display(project_data):
+                                destination = '%s?project=%s' % (self.steps[index][0], project)        
+                                break
+                            else:
+                                step.transition(project_data, {})
+                    res = exc.HTTPSeeOther(destination, location=destination)
+                    return res(environ, start_response)
+
+            else: # GET
+                project_data = self.projects.get(project, {})
+                project_data['base_url'] = base_url
+                if index and project not in self.projects:
+                    res = exc.HTTPSeeOther("No session found", location="create-project")
+                    return res(environ, start_response)
+            
+            # render the template and return the response
+            data = step.data(project_data)
+            data['req'] = req
+            data['errors'] = errors
+            template = self.loader.load(step.template)
+            html = template.generate(**data).render('html', doctype='html')
+            res = Response(content_type='text/html', body=html)
+            return res(environ, start_response)
+
+        except:
+            # error handling
+            exceptionType, exceptionValue, exceptionTraceback = sys.exc_info()
+            buffer = StringIO()
+            traceback.print_exception(exceptionType, exceptionValue, exceptionTraceback,
+                                      limit=20, file=buffer)
+            res = exc.HTTPServerError(buffer.getvalue())
+            return res(environ, start_response)
