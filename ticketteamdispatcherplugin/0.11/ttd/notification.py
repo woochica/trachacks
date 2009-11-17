@@ -16,9 +16,9 @@ class SpecialTicketNotifyEmail(TicketNotifyEmail):
     
     def get_recipients(self, tktid):
         recipients = []
-        self.env.log.warning('Sending to %s' % self.__team)
+        #self.env.log.warning('Sending to %s' % self.__team)
         for user in UserManager(self.env).get_active_users():
             if user[self.__team] == '1':
                 recipients.append(user['email'])
-                self.env.log.warning('Whhich is %s %s.' % (user.username, user['email']))
+                #self.env.log.warning('Whhich is %s %s.' % (user.username, user['email']))
         return (recipients, [])
