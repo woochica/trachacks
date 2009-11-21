@@ -62,6 +62,7 @@ class LuntbuildTracIntegrationPlugin(Component):
             yield ('build', 'Builds')
 
     def get_timeline_events(self, req, start, stop, filters):
+
         if 'build' in filters:
             add_stylesheet(req, 'LuntTrac/lunttrac.css')
             
@@ -77,9 +78,9 @@ class LuntbuildTracIntegrationPlugin(Component):
             cursor = connection.cursor()
             query =  """
                 SELECT p.name, b.status, b.version, b.id, b.end_date, b.start_date
-                FROM lb_project p,
-                     lb_build b,
-                     lb_schedule s
+                FROM LB_PROJECT p,
+                     LB_BUILD b,
+                     LB_SCHEDULE s
                 WHERE p.id = s.fk_project_id
                   AND s.id = b.fk_schedule_id
                   AND end_date > '%s'
@@ -118,4 +119,6 @@ class LuntbuildTracIntegrationPlugin(Component):
         return  time.mktime(thedatetime.timetuple()) + thedatetime.microsecond / 1e6
         
     def float2datetime(self, thetime):
+        from trac.util.datefmt import to_timestamp
+        thetime = to_timestamp(thetime)
         return  datetime.datetime.fromtimestamp(thetime)
