@@ -100,23 +100,21 @@ var TracWysiwyg = function(textarea) {
 
 TracWysiwyg.prototype.initializeEditor = function(d) {
     var l = window.location;
-    var css = {};
-    css.trac = TracWysiwyg.tracPaths.htdocs + "css/trac.css";
-    css.editor = TracWysiwyg.tracPaths.base + "chrome/tracwysiwyg/editor.css";
-    var html = [
+    var html = [];
+    html.push(
         '<!DOCTYPE html PUBLIC',
         ' "-//W3C//DTD XHTML 1.0 Transitional//EN"',
         ' "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">\n',
         '<html xmlns="http://www.w3.org/1999/xhtml">',
         '<head>',
         '<base href="', l.protocol, '//', l.host, '/" />',
-        '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />',
-        '<link rel="stylesheet" href="' + css.trac + '" type="text/css" />',
-        '<link rel="stylesheet" href="' + css.editor + '" type="text/css" />',
-        '<title></title>',
-        '</head>',
-        '<body></body>',
-        '</html>' ];
+        '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />');
+    var stylesheets = TracWysiwyg.tracPaths.stylesheets;
+    var length = stylesheets.length;
+    for (var i = 0; i < length; i++) {
+        html.push('<link rel="stylesheet" href="' + stylesheets[i] + '" type="text/css" />');
+    }
+    html.push('<title></title>', '</head>', '<body></body>', '</html>');
 
     var first = !window.opera && d.addEventListener ? true : false;
     if (first) {
@@ -3410,46 +3408,35 @@ TracWysiwyg.count = 0;
 TracWysiwyg.tracPaths = null;
 
 TracWysiwyg.getTracPaths = function() {
-    var paths = {};
+    var stylesheets = [];
+    var paths = { stylesheets: stylesheets };
 
     var d = document;
     var head = d.getElementsByTagName("head")[0];
-    var regexpPath = /^[\w.+-]+:\/\/[^\/:]+(?::\d+)?/;
-    var length, i;
-
-    var scripts = head.getElementsByTagName("script");
-    length = scripts.length;
-    var wysiwygjs = "/chrome/tracwysiwyg/wysiwyg.js";
-    for (i = 0; i < length; i++) {
-        var src = scripts[i].src || "";
-        var index = src.length - wysiwygjs.length;
-        if (src.substring(index) == wysiwygjs) {
-            paths.base = src.substring(0, index).replace(regexpPath, "") + "/";
-            break;
-        }
-    }
-    if (!paths.base) {
-        return null;
-    }
-
     var links = head.getElementsByTagName("link");
-    var traccss = "/css/trac.css";
-    length = links.length;
-    for (i = 0; i < length; i++) {
+    var length = links.length;
+    for (var i = 0; i < length; i++) {
         var link = links[i];
-        var rel = (link.getAttribute("rel") || "").toLowerCase();
         var href = link.getAttribute("href") || "";
-        var index = href.length - traccss.length;
-        if (rel == "stylesheet" && href.substring(index) == traccss) {
-            paths.htdocs = href.substring(0, index) + "/";
+        switch ((link.getAttribute("rel") || "").toLowerCase()) {
+        case "tracwysiwyg.base":
+            paths.base = href;
+            break;
+        case "tracwysiwyg.stylesheet":
+            stylesheets.push(href);
+            break;
+        case "search":
+            paths.search = href;
             break;
         }
     }
-    if (!paths.htdocs) {
-        return null;
+    if (paths.base && stylesheets.length > 0) {
+        if (!paths.search) {
+            paths.search = paths.base.replace(/\/$/, "/search");
+        }
+        return paths;
     }
-
-    return paths;
+    return null;
 };
 
 TracWysiwyg.getEditorMode = function() {
@@ -3489,12 +3476,20 @@ TracWysiwyg.setEditorMode = function(mode) {
     }
     TracWysiwyg.editorMode = mode;
 
-    var expires = new Date();
-    expires.setTime(expires.getTime() + 365 * 86400 * 1000);
+    var now = new Date();
+    var expires = new Date(now.getTime() + 365 * 86400 * 1000);
     var pieces = [ "tracwysiwyg=" + mode,
         "path=" + TracWysiwyg.tracPaths.base,
         "expires=" + expires.toUTCString() ];
     document.cookie = pieces.join("; ");
+
+    if (!/\/$/.test(TracWysiwyg.tracPaths.base)) {
+        expires = new Date(now.getTime() - 86400000);
+        pieces = [ "tracwysiwyg=",
+            "path=" + TracWysiwyg.tracPaths.base + "/",
+            "expires=" + expires.toUTCString() ];
+        document.cookie = pieces.join("; ");
+    }
 };
 
 TracWysiwyg.stopEvent = function(event) {
@@ -3588,7 +3583,7 @@ TracWysiwyg.getSelfOrAncestor = function(element, name) {
 
 TracWysiwyg.quickSearchURL = function(link) {
     if (!/^(?:(?:https?|ftp|mailto|file):|[\/.#])/.test(link)) {
-        link = TracWysiwyg.tracPaths.base + "search?q=" + encodeURIComponent(link);
+        link = TracWysiwyg.tracPaths.search + "?q=" + encodeURIComponent(link);
     }
     return link;
 };
