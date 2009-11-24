@@ -38,3 +38,9 @@ except ImportError:
             message = '\n%s\n%s' % (to_unicode('\n'.join(traceback_only)),
                                         message)
         return message
+
+try:
+    # Type available from Trac 0.12dev r8612
+    from trac.util.text import Empty
+except ImportError:
+    Empty = type(None)
