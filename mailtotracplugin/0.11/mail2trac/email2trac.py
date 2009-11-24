@@ -99,7 +99,7 @@ def mail2project(env, message):
             message = handler.invoke(message, warnings)
         except EmailException, e:
             # handle the error
-            if email_errors:
+            if email_errors and original_message['from']:
                 subject = reply_subject(original_message['subject'])
                 response = 'Subject: %s\n\n%s' % (subject, reply_body(str(e), original_message))
                 send_email(env, 
