@@ -11,5 +11,5 @@ setup(
             'terminology = terminology'
         ]
     },
-    licence="BSD",
+    license="BSD",
 )
