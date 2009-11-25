@@ -29,12 +29,15 @@ class TermLink(Component):
         wiki = WikiSystem(self.env)
         page = self._wiki_prefix + target
         href = formatter.href.wiki(page)
+        link_label = label
         if wiki.has_page(page):
-            return html.A(wiki.format_page_name(self._term_desc(target)),
-                        href=href)
+            if not link_label:
+                link_label = self._term_desc(target)
+            return html.A(wiki.format_page_name(link_label), href=href)
         else:
-            return html.A(wiki.format_page_name(self._term_ns + ":" + target)
-                            + "?",
+            if not link_label:
+                link_label = self._term_ns + ":" + target
+            return html.A(wiki.format_page_name(link_label) + "?",
                             href=href, class_="missing wiki", rel="nofollow")
 
     # IWikiSyntaxProvider methods
