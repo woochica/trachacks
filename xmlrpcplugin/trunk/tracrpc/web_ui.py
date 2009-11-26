@@ -26,7 +26,7 @@ from trac.wiki.formatter import wiki_to_oneliner
 
 from tracrpc.api import IXMLRPCHandler, XMLRPCSystem
 from tracrpc.util import from_xmlrpc_datetime, to_xmlrpc_datetime
-from tracrpc.util import exception_to_unicode, Empty
+from tracrpc.util import exception_to_unicode, empty
 
 try:
     try:
@@ -287,7 +287,7 @@ class XMLRPCWeb(Component):
         for res in result:
             if isinstance(res, datetime.datetime):
                 new_result.append(to_xmlrpc_datetime(res))
-            elif res == None or isinstance(res, Empty):
+            elif res is None or res is empty:
                 new_result.append('')
             elif isinstance(res, genshi.builder.Fragment) \
                         or isinstance(res, genshi.core.Markup):

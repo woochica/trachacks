@@ -40,7 +40,7 @@ except ImportError:
         return message
 
 try:
-    # Type available from Trac 0.12dev r8612
-    from trac.util.text import Empty
+    # Constant available from Trac 0.12dev r8612
+    from trac.util.text import empty
 except ImportError:
-    Empty = type(None)
+    empty = None
