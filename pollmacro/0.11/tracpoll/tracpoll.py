@@ -113,7 +113,7 @@ class PollMacro(WikiMacroBase):
 
     eg.
 
-    [[Poll(Which of these do you prefer?; #1; #2; #3; query:component-Request-a-Hack&status!=closed; Cheese dip)]]
+    [[Poll(Which of these do you prefer?; #1; #2; #3; query:component=Request-a-Hack&status!=closed; Cheese dip)]]
     """
 
     implements(IPermissionRequestor, ITemplateProvider)
