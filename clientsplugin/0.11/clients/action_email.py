@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import re
 import os
 import sys
@@ -142,7 +143,7 @@ class ClientActionEmail(Component):
     result = self.transform(summary, view=arg)
     if result:
       images = result.getroot()
-      if images:
+      if images is not None:
         for img in images:
           if 'img' != img.tag:
             continue
