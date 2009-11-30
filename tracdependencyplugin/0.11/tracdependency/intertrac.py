@@ -147,6 +147,62 @@ class InterTrac:
         data.append(tag.br())
         return data
 
+    def validate_ticket(self, ids, field_name, dep_en, log):
+        links = []
+        errors = []
+        #リンクが正しいか確認します．
+        intertracs0 = self.intertracs0
+        if ids is None: #idになにも入ってない場合はエラーになるのでifが必要
+            log.debug("test_link = None ")
+        log.debug("test_link = %s" % ids)
+        tickets = ids.split(',')
+        for ticket in tickets:
+            # ,で分割した文字列に対して処理を行います
+            ticket = ticket.strip() # 前後の空白を削除します
+            idx = ticket.rfind(':#') # プロジェクト名とチケット番号に分割します
+            if idx > 0: # InterTrac ticket
+                current_project = False
+                project_name, id = ticket[:idx], ticket[idx+2:]
+                # プロジェクト名が存在するか確認する
+                try:
+                    intertrac = intertracs0[project_name.lower()]
+                except Exception, e: # 存在していない場合は例外が発生する
+                    errors.append((field_name, ' project %s does not exist.'% project_name))
+                    continue
+            else: # This ticket is in same project.
+                current_project = True
+                project_name = self.env.project_name
+                if ticket.rfind('#') == 0:
+                    id = ticket[1:]
+                else:
+                    id = ticket
+            if ticket != "":
+                # 依存関係を指定しているか確認する 例:(FF)
+                idx = id.rfind('(')
+                if idx > 0:
+                    # 指定されていたならそれはidに含まない
+                    if dep_en == False:
+                        #依存関係を使用しない場合でカッコがあった場合は
+                        errors.append((field_name, 'This field can not have dependency.'))
+                        continue
+                    id = id[:idx]
+                    #依存関係に問題がないかの確認が必要
+                try:
+                    # InterTracの設定のキーは小文字
+                    intertrac = intertracs0[project_name.lower()]
+                    path = intertrac.get('path', '')
+                    # TODO:　オープンできない場合もあるのでエラー処理が必要
+                    project = open_environment(path, use_cache=True)
+                    tkt = Ticket(project, id)
+                    status = tkt['status']
+                    title = tkt['summary']
+                    log.debug("test_link : %s(%s)", title, status)
+                except Exception, e:
+                    errors.append((field_name, 'There is no ticket %s.'%ticket))
+            else: #チケットに何も入っていない
+                errors.append((field_name, 'Many comma are in this field.'))
+        return errors
+
     def linkify_ids(self, env, req, ids, label1, label2, tickets2, log):
         # チケットの表示のページでinterTracリンクの表示するための元を作る
         intertracs0 = self.intertracs0

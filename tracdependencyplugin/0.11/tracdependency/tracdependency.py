@@ -10,6 +10,8 @@ from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_ctxtnav
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.ticket.model import Ticket
+from trac.ticket.api import ITicketManipulator
+from trac.ticket.api import ITicketChangeListener
 
 from trac.env import open_environment
 
@@ -22,7 +24,8 @@ LABEL_PRECEDING = 'Preceding: '
 LABEL_SUBSEQUENT = 'Subsequent: '
 
 class TracDependency(Component):
-    implements(IRequestHandler, IRequestFilter, ITemplateProvider, ITemplateStreamFilter)
+    implements(IRequestHandler, IRequestFilter, ITemplateProvider, 
+        ITemplateStreamFilter, ITicketManipulator, ITicketChangeListener)
 
     def __init__(self):
         self.intertrac = InterTrac(self.config, self.env)
@@ -136,3 +139,54 @@ class TracDependency(Component):
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename('tracdependency', 'templates')]
+
+    # ITicketManipulator methods
+    def prepare_ticket(self, req, ticket, fields, actions):
+        pass
+        
+    def validate_ticket(self, req, ticket):
+        """チケット番号の指定に問題がないかを確認します．"""
+        #チケット番号の指定に問題がないかを確認します．
+        #dependenciesはカンマで分割する，
+        #InterTracの指定ができているかを確認する．
+        #チケットがオープン化どうかを確認する．
+        #summary_ticketは一つしか指定されていないことを確認する
+        #if req.args.get('action') == 'resolve':
+        #    links = TicketLinks(self.env, ticket)
+        #    for i in links.blocked_by:
+        #        if Ticket(self.env, i)['status'] != 'closed':
+        #            yield None, 'Ticket #%s is blocking this ticket'%i
+        errors = []
+        self.log.debug('TracDependency,validate_ticket: summary_ticket %s', ticket['summary_ticket'])
+        errors.extend(self.intertrac.validate_ticket(ticket['summary_ticket'], "summary_ticket", False, self.log))
+        self.log.debug('TracDependency,validate_ticket: dependenvies   %s', ticket['dependencies'])
+        errors.extend(self.intertrac.validate_ticket(ticket['dependencies'], "dependencies", True, self.log))
+        return errors
+
+    # ITicketChangeListener methods
+    def ticket_created(self, tkt):
+        self.log.debug('TracDependency,ticket_created')
+        #self.ticket_changed(tkt, '', tkt['reporter'], {})
+
+    def ticket_changed(self, tkt, comment, author, old_values):
+        self.log.debug('TracDependency,ticket_changed')
+        #db = self.env.get_db_cnx()
+        #
+        #links = TicketLinks(self.env, tkt, db)
+        #links.blocking = set(self.NUMBERS_RE.findall(tkt['blocking'] or ''))
+        #links.blocked_by = set(self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
+        #links.save(author, comment, tkt.time_changed, db)
+        #
+        #db.commit()
+
+    def ticket_deleted(self, tkt):
+        self.log.debug('TracDependency,ticket_deleted')
+        #db = self.env.get_db_cnx()
+        #
+        #links = TicketLinks(self.env, tkt, db)
+        #links.blocking = set()
+        #links.blocked_by = set()
+        #links.save('trac', 'Ticket #%s deleted'%tkt.id, when=None, db=db)
+        #
+        #db.commit()
+        
