@@ -44,18 +44,31 @@ class TicketTweaks(Component):
         for field in (x.strip() for x in enchants.split(',')):
             disabled = False
             hidden = False
-            perm = self.config.get('blackmagic', '%s.permission' % field, '').upper()
-            if perm and perm not in req.perm:
-                denial = self.config.get('blackmagic', '%s.ondenial' % field, None)
-                if denial:
-                    if denial == "disable":
-                        disabled = True
-                    elif denial == "hide":
-                        hidden = True
+            permissions = self.config.get('blackmagic', '%s.permission' % field, '').upper()
+            #permissions are set for field
+            if permissions != "":
+                self.env.log.debug("Permissions %s" % permissions)
+                #default set to denied
+                denied = True
+                #iterate through permissions
+                for perm in (x.strip() for x in permissions.split(',')):
+                    self.env.log.debug("Checking permission %s" % perm)
+                    #user has permission no denied
+                    if perm and perm in req.perm:
+                       self.env.log.debug("Has %s permission" % perm)
+                       denied = False
+                #if denied is true hide/disable dpending on denial setting
+                if denied:
+                    denial = self.config.get('blackmagic', '%s.ondenial' % field, None)
+                    if denial:
+                        if denial == "disable":
+                            disabled = True
+                        elif denial == "hide":
+                            hidden = True
+                        else:
+                            disabled = True
                     else:
                         disabled = True
-                else:
-                    disabled = True
             #field is disabled or hidden, cannot be modified by user
             if disabled or istrue(self.config.get('blackmagic', '%s.disable' % field, False)) or hidden or istrue(self.config.get('blackmagic', '%s.hide' % field, None)):
                 self.env.log.debug('%s disabled or hidden ' % field)
@@ -87,18 +100,32 @@ class TicketTweaks(Component):
 
                 disabled = False
                 hidden = False
-                perm = self.config.get('blackmagic', '%s.permission' % field, '').upper()
-                if perm and perm not in req.perm:
-                    denial = self.config.get('blackmagic', '%s.ondenial' % field, None)
-                    if denial:
-                        if denial == "disable":
-                            disabled = True
-                        elif denial == "hide":
-                            hidden = True
+                permissions = self.config.get('blackmagic', '%s.permission' % field, '').upper()
+                #permissions are set for field
+                if permissions != "":
+                    self.env.log.debug("Permissions %s" % permissions)
+                    #default set to denied
+                    denied = True
+                    #iterate through permissions
+                    for perm in (x.strip() for x in permissions.split(',')):
+                        self.env.log.debug("Checking permission %s" % perm)
+                        #user has permission no denied
+                        if perm and perm in req.perm:
+                            self.env.log.debug("Has %s permission" % perm)
+                            denied = False
+                    #if denied is true hide/disable dpending on denial setting
+                    if denied:
+                        denial = self.config.get('blackmagic', '%s.ondenial' % field, None)
+                        if denial:
+                            if denial == "disable":
+                                disabled = True
+                            elif denial == "hide":
+                                hidden = True
+                            else:
+                                disabled = True
                         else:
-                            disabled = True
-                    else:
-                        disabled = True
+                                disabled = True
+
 
                 if disabled or istrue(self.config.get('blackmagic', '%s.disable' % field, False)):
                     stream = stream | Transformer('//*[@id="field-%s"]' % field).attr("disabled", "disabled")
