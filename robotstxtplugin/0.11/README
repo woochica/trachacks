@@ -1,0 +1,23 @@
+Notes
+=====
+
+Serve a robots.txt file from Trac. Mostly useful to tracd users, but works on
+anything. Just put the data you want in the wiki page ``RobotsTxt``.
+
+Configuration
+=============
+
+To enable the plugin::
+
+    [components]
+    robotstxt.* = enabled
+
+A typical ``RobotsTxt`` wiki page will look like::
+
+    User-agent: *
+    Disallow: /browser
+    Disallow: /log
+    Disallow: /changeset
+    Disallow: /report
+    Disallow: /newticket
+    Disallow: /search
