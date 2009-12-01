@@ -744,7 +744,7 @@ class PerforceNode(Node):
         return self._nodePath.leaf
 
     def get_last_modified(self):
-        return self._repos.getChangelist(self._node.change).time
+        return datetime.fromtimestamp(self._repos.getChangelist(self._node.change).time, utc)
 
 
 class PerforceChangeset(Changeset):
