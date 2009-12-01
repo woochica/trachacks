@@ -127,6 +127,14 @@ class TicketTweaks(Component):
                         else:
                                 disabled = True
 
+                if hidden or istrue(self.config.get('blackmagic', '%s.hide' % field, None)):
+                    #replace th and td in previews with empty tags
+                    stream = stream | Transformer('//th[@id="h_%s"]' % field).replace(tag.th(" "))
+                    stream = stream | Transformer('//td[@headers="h_%s"]' % field).replace(tag.td(" "))
+                    #replace labels and fields with blank space
+                    stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(" ")
+                    stream = stream | Transformer('//*[@id="field-%s"]' % field).replace(" ")
+
                 #change label
                 if self.config.get('blackmagic', '%s.label' % field, None):
                     stream = stream | Transformer('//label[@for="field-%s"]/text()' % field).replace(
@@ -163,13 +171,6 @@ class TicketTweaks(Component):
                         "onmouseover", "Tip('%s')" % tip.replace(r"'", r"\'")
                     )
 
-                if hidden or istrue(self.config.get('blackmagic', '%s.hide' % field, None)):
-                    #replace th and td in previews with empty tags
-                    stream = stream | Transformer('//th[@id="h_%s"]' % field).replace(tag.th(" "))
-                    stream = stream | Transformer('//td[@headers="h_%s"]' % field).replace(tag.td(" "))
-                    #replace labels and fields with blank space
-                    stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(" ")
-                    stream = stream | Transformer('//*[@id="field-%s"]' % field).replace(" ")
 
         return stream
 
