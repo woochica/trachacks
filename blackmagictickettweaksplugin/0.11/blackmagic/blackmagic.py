@@ -142,8 +142,14 @@ class TicketTweaks(Component):
                     )
 
                 if disabled or istrue(self.config.get('blackmagic', '%s.disable' % field, False)):
-                    stream = stream | Transformer('//*[@id="field-%s"]' % field).attr("disabled", "disabled")
                     buffer = StreamBuffer()
+                    #copy input to buffer then disable original
+                    stream |= Transformer('//*[@id="field-%s" and (@checked) and @type="checkbox"]' % field).copy(buffer).after(buffer).attr("disabled","disabled")
+                    #change new element to hidden field instead of checkbox and remove check
+                    stream |= Transformer('//*[@id="field-%s" and not (@disabled) and (@checked) and @type="checkbox"]' % field).attr("type","hidden").attr("checked",None).attr("id",None)
+                    #disable non-check boxes / unchecked check boxes
+                    stream = stream | Transformer('//*[@id="field-%s" and not (@checked)]' % field).attr("disabled", "disabled")
+
                     if not self.gray_disabled:
                         #cut label content into buffer then append it into the label with a strike tag around it
                         stream = stream | Transformer('//label[@for="field-%s"]/text()' % field).cut(buffer).end().select('//label[@for="field-%s"]/' % field).append(tag.strike(buffer))
