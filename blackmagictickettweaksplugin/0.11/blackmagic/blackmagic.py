@@ -8,6 +8,7 @@ from trac.web.api import ITemplateStreamFilter
 from genshi.builder import tag
 from genshi.core import Markup
 from genshi.filters.transform import Transformer
+from genshi.filters.transform import StreamBuffer
 import re, cPickle
 from trac.perm import IPermissionRequestor
 
@@ -126,22 +127,21 @@ class TicketTweaks(Component):
                         else:
                                 disabled = True
 
+                #change label
+                if self.config.get('blackmagic', '%s.label' % field, None):
+                    stream = stream | Transformer('//label[@for="field-%s"]/text()' % field).replace(
+                        self.config.get('blackmagic', '%s.label' % field)
+                    )
 
                 if disabled or istrue(self.config.get('blackmagic', '%s.disable' % field, False)):
                     stream = stream | Transformer('//*[@id="field-%s"]' % field).attr("disabled", "disabled")
+                    buffer = StreamBuffer()
                     if not self.gray_disabled:
-                        stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
-                            tag.strike()('%s:' % field.capitalize())
-                        )
+                        #cut label content into buffer then append it into the label with a strike tag around it
+                        stream = stream | Transformer('//label[@for="field-%s"]/text()' % field).cut(buffer).end().select('//label[@for="field-%s"]/' % field).append(tag.strike(buffer))
                     else:
-                        stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
-                            tag.span(style="color:%s" % self.gray_disabled)('%s:' % field.capitalize())
-                        )
-
-                if self.config.get('blackmagic', '%s.label' % field, None):
-                    stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(
-                        self.config.get('blackmagic', '%s.label' % field)
-                    )
+                        #cut label and replace with coloured span
+                        stream = stream | Transformer('//label[@for="field-%s"]/text()' % field).cut(buffer).end().select('//label[@for="field-%s"]/' % field).append(tag.span(buffer, style="color:%s" % self.gray_disabled))
 
                 if self.config.get('blackmagic', '%s.notice' % field, None):
                     stream = stream | Transformer('//*[@id="field-%s"]' % field).after(
