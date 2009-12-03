@@ -30,14 +30,10 @@ var TracWysiwyg = function(textarea) {
     this.tableMenu = this.createTableMenu(document);
     this.menus = [ this.styleMenu, this.decorationMenu, this.tableMenu ];
     this.toolbarButtons = this.setupMenuEvents();
+    this.toggleEditorButtons = null;
     this.autolinkButton = null;
     this.savedWysiwygHTML = null;
 
-    frame.parentNode.insertBefore(this.wysiwygToolbar, frame);
-    var body = document.body;
-    for (var i = 0; i < this.menus.length; i++) {
-        body.insertBefore(this.menus[i], body.firstChild);
-    }
     this.setupToggleEditorButtons();
     this.setupSyncResizingTextArea();
 
@@ -69,6 +65,14 @@ var TracWysiwyg = function(textarea) {
         frame.setAttribute("tabIndex", "");
         break;
     }
+
+    frame.parentNode.insertBefore(this.wysiwygToolbar, frame);
+    var body = document.body;
+    for (var i = 0; i < this.menus.length; i++) {
+        body.insertBefore(this.menus[i], body.firstChild);
+    }
+    var element = this.wikitextToolbar || this.textarea;
+    element.parentNode.insertBefore(this.toggleEditorButtons, element);
 
     function lazySetup() {
         if (self.contentDocument.body) {
@@ -635,6 +639,7 @@ TracWysiwyg.prototype.setupToggleEditorButtons = function() {
         + '&nbsp; ';
     div.className = "editor-toggle";
     div.innerHTML = html.replace(/@/g, ++TracWysiwyg.count);
+    this.toggleEditorButtons = div;
 
     var buttons = div.getElementsByTagName("input");
     for (var i = 0; i < buttons.length; i++) {
@@ -651,8 +656,6 @@ TracWysiwyg.prototype.setupToggleEditorButtons = function() {
             break;
         }
     }
-    var element = this.wikitextToolbar || this.textarea;
-    element.parentNode.insertBefore(div, element);
 };
 
 TracWysiwyg.prototype.setupSyncResizingTextArea = function() {
