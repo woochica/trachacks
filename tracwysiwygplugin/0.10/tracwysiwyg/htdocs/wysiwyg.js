@@ -3415,6 +3415,7 @@ TracWysiwyg.getTracPaths = function() {
     for (var i = 0; i < length; i++) {
         var link = links[i];
         var href = link.getAttribute("href") || "";
+        var type = link.getAttribute("type") || "";
         switch ((link.getAttribute("rel") || "").toLowerCase()) {
         case "tracwysiwyg.base":
             paths.base = href;
@@ -3423,13 +3424,15 @@ TracWysiwyg.getTracPaths = function() {
             stylesheets.push(href);
             break;
         case "search":
-            paths.search = href;
+            if (type) {
+                paths.search = href;
+            }
             break;
         }
     }
     if (paths.base && stylesheets.length > 0) {
         if (!paths.search) {
-            paths.search = paths.base.replace(/\/$/, "/search");
+            paths.search = paths.base.replace(/\/?$/, "/search");
         }
         return paths;
     }
