@@ -363,7 +363,7 @@ class TracHacksAccountManager(HtPasswdStore):
                 tagspace = TagEngine(self.env).tagspace.wiki
 
                 tagspace.add_tags(None, user, ['user'])
-                page.text = '''= %(user)s =\n\n[[ListTagged(%(user)s)]]\n\n[[TagIt(user)]]''' % {'user' : user}
+                page.text = '''= %(user)s =\n\n[[ListTagged(%(user)s)]]\n''' % {'user' : user}
                 page.save(user, 'New user %s registered' % user, None)
                 self.env.log.debug("New user %s registered" % user)
         HtPasswdStore.set_password(self, user, password)
