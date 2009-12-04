@@ -1,0 +1,40 @@
+
+What's new in version 2.2.3
+---------------------------
+
+- Added CSS rules for submenus plugin. Closes #xxx.
+- Bug fixed: Wiki editor should not be missaligned anymore. Fixes #xxx.
+
+What's new in version 2.2.2
+---------------------------
+
+- Added CSS rules for PyDoc plugin.
+
+- Bug fixed: Floating widgets in administration panels should not overlap
+  contents anymore. Fixes #5549.
+
+What's new in version 2.2.1
+---------------------------
+
+- This version goes for fans of continuous pages. It provides better
+  control for page width adding scroll bars when content doesn't fit in
+  the page. But there is no vertical overflow, hence contents are
+  scrolled and there is no fixed elements (i.e. banners, metanav,
+  mainnav, ctxnav).
+
+What's new in version 2.2.0
+---------------------------
+
+- Now Wiki page contents are displayed correctly in MS IE. This browser
+  is extremely buggy and it doesn't handle the `float` property
+  appropriately.
+
+- Wiki pages include drop-caps. White letters are diplayed on a
+  dark-green background. Some pages are not rendered correctly, but a
+  patch can be applied to revert that.
+
+- Footer has been moved. Now it is inside contents pane.
+
+- Text indentation has been added.
+
+

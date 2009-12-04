@@ -1,0 +1,534 @@
+/* Trac custom stylesheet for Python.org */
+
+html, body {
+  background: #ffffff;
+  font-family: "Bitstream Vera Sans", Verdana, Arial, Geneva, Helvetica, sans-serif;
+  font-size: 103%;
+  margin-left: 5px;
+  padding: 0;
+/*  position: fixed; */
+}
+
+body :link, body :link:hover, body :visited {
+  /*background: transparent no-repeat;*/
+  border-bottom: 1px dashed #cccccc;
+  color: #0000aa;
+}
+
+img {
+  border: 0;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: Georgia, "Bitstream Vera Serif", "New York", Palatino, serif;
+  font-weight: normal;
+  clear: none;
+}
+
+h1 {
+  color: #234764;
+  font-size: 162%;
+  margin: 0.7em 0 0.7em 0;
+  text-decoration: none;
+}
+
+h2 {
+  color: #366d9c;
+  font-size: 140%;
+  margin: 0.7em 0 0.7em 0;
+}
+
+h3 {
+  color: #366d9c;
+  font-size: 135%;
+  font-style: italic;
+  margin: 0.4em 0 0.4em 0;
+}
+
+h4 {
+  color: #366d9c;
+  font-size: 125%;
+  margin: 0.4em 0 0.4em 0;
+}
+
+#banner {
+  background: url(header-bg2.png);
+  background-color: #f7f7f7;
+  background-repeat: repeat; 
+  border: 0;
+  border-bottom: 1px solid #999999;
+  height: auto;
+  padding: 1px;
+  margin-bottom: 1em;
+/*  display: block; */
+  clear:both;
+/*  z-index: 1; */
+}
+
+#header {
+  margin: 0px;
+  padding: 10px 0 10px 0;
+  position: relative;
+  height: auto;
+  clear: both;
+  margin-bottom: 10px;
+/*  font-size: 120%; */
+  vertical-align: text-bottom;
+/*  display: block; */
+}
+
+#header a img {
+  margin-right: 10px;
+  margin-left: -1em;
+/*  float: left; */
+}
+
+#header a h1 {
+/*  position: relative; */
+  margin-left: 5px;
+}
+
+#logo {
+/*  height: 71px; */
+  margin-left: 38px;
+  margin-top: 10px;
+  width: 211px;
+  position: relative;
+/*  display: inline; */
+}
+
+#mainnav {
+  background-color: transparent;
+  background-image: none;
+  border: 0;
+  display: block;
+  float: left;
+  font-size: 75%;
+  height: auto;
+  /*left: 10px;
+  margin-left: 10px;*/
+  padding-top: 0.1em;
+  /*position: absolute;*/
+  display: block;
+  top: 150px;
+  width: 12em;
+  max-width: 20%;
+  overflow-x: auto;
+  z-index: 1;
+}
+
+
+
+#mainnav ul {
+  background: none;
+  display: block;
+  font-size: 100%;
+  list-style: none;
+  margin: 0 0 4px 0.2em;
+  padding: 0;
+  text-align: left;
+}
+
+#mainnav li {
+  color: #3c4b7b;
+  display: inline;
+  padding-bottom: 2px;
+}
+
+#mainnav :link, #mainnav :visited {
+  background: transparent;
+  /*
+  border: 0;
+  border-top: 1px solid #dddddd;
+  */
+  border: 1px solid #DADADA !important;
+  background-color: #F5F5F5;
+  display: block;
+  font-family: Arial, Verdana, Geneva, "Bitstream Vera Sans", Helvetica, sans-serif;
+  margin: 2px 0px 0px 2px;
+  padding: 0.1em 0.1em 0.1em 0.1em;
+  text-align: left;
+  text-transform:uppercase;
+  width: 11em !important;
+  width /**/: 11.2em;
+  background-image: url(nav-off-.png);
+  background-position: right top;
+  background-repeat: no-repeat;
+}
+
+/*
+#mainnav .first :link, #mainnav .first :visited {
+  border-top: 0;
+}
+*/
+
+#mainnav :link {
+  color: #3c4b7b;
+}
+
+#mainnav :visited {
+  color: #4c3b5b;
+}
+
+#mainnav :link:hover, #mainnav :visited:hover {
+  background-color: transparent;
+  border: 0;
+  /* border-top: 1px solid #dddddd; */
+  border: 1px solid #DADADA;
+  background-color: #F5F5F5;
+  color: black;
+  text-decoration: underline;
+}
+
+#mainnav .active :link, #mainnav .active :visited {
+  background-color: #FFFFFF;
+  background-image: url(nav-on-b.png);
+  background-position: right top;
+  background-repeat: no-repeat;
+  border: 1px solid #DADADA;
+  border-left: 3px solid #FFDB4C  !important;
+  color: black;
+}
+
+#mainnav .active :link:hover, #mainnav .active :visited:hover {
+  background-color: #FFFFFF;
+  background-image: url(nav-on-b.png);
+  border: 1px solid #DADADA;
+  border-left: 3px solid #FFDB4C !important;
+  /* border-top: 1px solid #dddddd; */
+}
+
+
+* html #mainnav :link, * html #mainnav :visited {
+  color: #4b5a6a;
+}
+
+#metanav {
+/*  position: absolute;
+  top: 25px;
+  right: 4%; */
+  position: relative;
+  padding: 10px;
+}
+
+#metanav ul li.first {
+  background-color: #376A94;
+  border-bottom: 3px solid #FFBC29;
+  color: white;
+  font-size: 120%;
+  font-weight: bold;
+  padding-bottom: 0pt;
+  padding-left: 0.75em;
+  padding-right: 0.75em;
+  -moz-border-radius-topleft: 11px;
+	-webkit-border-top-left-radius: 11px;
+}
+
+#metanav ul li.first a {
+  background-color: transparent;
+  border: 0px none;
+  color: white;
+}
+
+#main {
+/*  min-height: 20em; */
+/*  height: 80%;
+  max-height: 25em; 
+  overflow: auto; */
+  bottom:35px;
+  font-family:Arial,Verdana,Geneva,"Bitstream Vera Sans",Helvetica,sans-serif;
+  font-size:85%;
+  line-height:1.4em;
+  margin-left:0px;
+  width: auto;
+  float: left;
+  max-width: 80%;
+  overflow-x: auto;
+}
+
+div.system-message {
+    margin-left: 16.5em;
+    margin-right: 10px;
+}
+
+#content {
+  font-family: "Bitstream Vera Sans", Verdana, Arial, Geneva, Helvetica, sans-serif;
+  left: 0;
+  line-height: 1.4em;
+  margin-left: 20px;
+  margin-right: 10px;
+  padding: 0;
+  z-index: 0;
+}
+
+#content.browser {
+  padding: 0 0.55em 40px 0.0em;
+}
+
+#content.browser .first {
+  background: transparent no-repeat;
+  border-bottom: 1px dashed #cccccc;
+  color: #0000aa;
+}
+
+#content.report {
+  padding: 0 0.55em 40px 0.0em;
+}
+
+#content td.report {
+  background: transparent no-repeat;
+  border-bottom: 1px dashed #cccccc;
+  color: #0000aa;
+}
+
+#content.roadmap {
+  padding: 0 0.55em 40px 0.0em;
+}
+
+#content.roadmap {
+  color: #234764;
+}
+
+.roadmap h1, .roadmap h2, .roadmap h3 {
+  margin: 0;
+}
+
+#content.search {
+  padding: 0 0.55em 40px 0.0em;
+}
+
+#content.ticket {
+  padding: 0 0.55em 40px 0.0em;
+}
+
+#content.timeline {
+  padding: 0 0.55em 40px 0.0em;
+}
+
+#content.timeline em {
+  color: #234764;
+}
+
+#content.wiki .wikipage {
+  padding: 0 0.55em 40px 0.0em;
+}
+
+.wikipage h1, .wikipage h2, .wikipage h3 {
+  margin: 0;
+}
+
+#content.query :link, #content.query :link:hover, #content.query :visited,
+#content.report :link, #content.report :link:hover, #content.report :visited  {
+  border-bottom: 0;
+}
+
+#search {
+  font-size: normal;
+  font-weight: bold;
+  /*height: 85px;*/
+  padding: 0 5px 0 0;
+  position: absolute;
+  right: 4%;
+  text-align: right;
+  top: 5px;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: 28.1em;
+  z-index: 1;
+}
+
+#search input {
+  font-size: 150%;
+}
+
+#search input[id="proj-search"] {
+  border: 1px solid #c4cccc;
+  background-color: #ffffff;
+  font-size: 171%;
+  font-weight: normal;
+  margin: 3px 0 0 0;
+  padding: 1px 0 1px 0;
+  vertical-align: top;
+  width: 11em;
+}
+
+.buttons {
+  margin-right: 0;
+}
+
+input[type="Submit"], input[type="Submit"]:hover {
+  background-color: #f8f7f7;
+  background-image: url(button-on-bg.png);
+  background-repeat: no-repeat;
+  border-bottom: 1px solid #6f7777;
+  border-left: 1px solid #c4cccc;
+  border-right: 1px solid #6f7777;
+  border-top: 1px solid #c4cccc;
+  color: #223344;
+  font-family: Arial, Verdana, Geneva, "Bitstream Vera Sans", Helvetica, sans-serif;
+  font-size: 110%;
+  font-weight: bold;
+  margin: 3px 0.4em 0px 0.4em;
+  padding: 0px 0.2em 0px 0.2em;
+  text-transform: lowercase;
+}
+
+#footer {
+  bottom: 10px;
+  /* position: absolute; */
+}
+
+#ctxtnav {
+  padding-bottom: 0.5em;
+}
+
+.wikipage h1 {
+  border-bottom: 1px solid #FFDB4C;
+  border-top: 1px solid #2c94cf;
+  background-color: #f1f4d6;
+}
+
+.wikipage h2 {
+  border-bottom: 1px solid #FFDB4C;
+}
+
+.wikipage h3 {
+  border-bottom: 1px solid #2c94cf;
+}
+
+#outer-wrapper {
+  height: 70%; 
+/*  position: fixed; */
+  width: 97%;
+}
+
+#content-wrapper {
+  height: 85%; 
+/*  position: absolute; */
+  width: 100%;
+}
+
+/* New rules */
+
+/* Fonts & Typography */
+
+h1+p:first-letter, h1+p+div.wiki-toc+p+p:first-letter {
+  float: left;
+  font-size: 2.5em;
+  font-weight: bold;
+  padding: 7px;
+  font-family: 'Palatino Linotype',Palatino,'Times New Roman',serif;
+  background-color: #376A94;
+  color: #FFFFFF;
+  margin-right: 0.15em;
+}
+
+h1+p+h2, h1+p+div.wiki-toc+p+p+h2 {
+  margin-top: 0.3em;
+}
+
+#main h1+p+div.wiki-toc+p+p {
+  text-indent: 0em;
+}
+
+#main p+p {
+  text-indent: 0.5em;
+}
+
+/* Adjusting wiki toolbar */
+
+.wikitoolbar {
+  height:auto;
+}
+
+/* Styles for PyDoc macro */
+
+tr.pydocheading, font.pydocheading {
+  background-color: #376A94;
+  padding-left: 5px;
+}
+
+.pydocheading, .pydocsection {
+  color: white;
+}
+
+tr.pydocsection, td.pydocsection, font.pydocsection {
+  background-color: #376A94;
+}
+
+tr.pydocheading>td, tbody>tr.pydocsection:first-child>td:first-child {
+  border-top: 3px solid #FFBC29; 
+}
+
+tr.pydocsection>td:first-child {
+  border-left: 3px solid #FFBC29;
+}
+
+font.pydocgrey {
+  background-color: #FFFFCC;
+  color:#006633;
+  font-style:italic;
+}
+
+tr.pydocsection+tr>td+td+td>dl:first-child font {
+  background-color: #FFFFCC;
+}
+
+.pydocsection :link, .pydocsection :visited,
+.pydocheader  :link, .pydocheader  :visited {
+  color: white;
+}
+
+.pydocsection :visited:hover, .pydocheader :visited:hover {
+  color: #555555;
+}
+
+/* Prevent overlapping */
+#content.admin>#tabcontent, #content.plugins {
+  width: 100%;
+}
+
+/* Submenus */
+
+#mainnav li {
+  background-color: #FFFFFF;
+  border: none !important;
+}
+
+#mainnav li li {
+  /* text-indent: 0.2em; */
+  margin-left: 0.2em;
+}
+
+.sf-menu ul {
+  background: #FFFFFF no-repeat;
+  position: static;
+}
+
+#mainnav li li :link, #mainnav li li :visited, #mainnav li li :link:hover, 
+#mainnav li li :visited:hover, 
+#mainnav li.active li :link, #mainnav li.active li :visited, 
+#mainnav li.active li :link:hover, #mainnav li.active li :visited:hover {
+  background: #FFFFFF no-repeat !important;
+  border-left: medium none !important;
+  border-right: none !important;
+  border-top: none !important;
+  color: #333399;
+  font-weight: normal;
+  text-transform: none;
+  width: 98% !important;
+}
+
+#mainnav li li:last-child :link, #mainnav li li:last-child :visited, 
+#mainnav li.active li:last-child :link, 
+#mainnav li.active li:last-child :visited  {
+  border: none !important;
+}
+
+textarea {
+  width: 100%;
+}
+
+.sf-sub-indicator { /* Hide triangles */
+  background: none;
+}

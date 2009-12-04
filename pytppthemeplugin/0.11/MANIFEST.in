@@ -1,0 +1,5 @@
+
+exclude setup.cfg
+include CHANGES
+graft pydotorgtheme/templates/*.html
+include pydotorgtheme/htdocs/*.*
