@@ -343,13 +343,11 @@ class TracHacksAccountManager(HtPasswdStore):
 
     # IPasswordStore
     def set_password(self, user, password):
-        import re
         if len(user) < 3:
             raise TracError('user name must be at least 3 characters long')
         if not re.match(r'^\w+$', user):
             raise TracError('user name must consist only of alpha-numeric characters')
         if user not in self.get_users():
-            from trac.wiki.model import WikiPage
             db = self.env.get_db_cnx()
             page = WikiPage(self.env, user, db=db)
             # User creation with existing page
