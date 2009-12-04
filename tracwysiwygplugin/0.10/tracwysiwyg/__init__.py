@@ -34,7 +34,7 @@ class WysiwygModule(Component):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, content_type):
-        add_link(req, 'tracwysiwyg.base', req.href())
+        add_link(req, 'tracwysiwyg.base', req.href() or '/')
         stylesheets = ['chrome/common/css/trac.css', 'chrome/tracwysiwyg/editor.css']
         stylesheets += self.wysiwyg_stylesheets
         for stylesheet in stylesheets:
