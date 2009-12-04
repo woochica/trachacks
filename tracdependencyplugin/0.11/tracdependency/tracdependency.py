@@ -146,18 +146,9 @@ class TracDependency(Component):
         
     def validate_ticket(self, req, ticket):
         """チケット番号の指定に問題がないかを確認します．"""
-        #チケット番号の指定に問題がないかを確認します．
-        #dependenciesはカンマで分割する，
-        #InterTracの指定ができているかを確認する．
-        #チケットがオープン化どうかを確認する．
-        #summary_ticketは一つしか指定されていないことを確認する
-        #if req.args.get('action') == 'resolve':
-        #    links = TicketLinks(self.env, ticket)
-        #    for i in links.blocked_by:
-        #        if Ticket(self.env, i)['status'] != 'closed':
-        #            yield None, 'Ticket #%s is blocking this ticket'%i
         errors = []
         self.log.debug('TracDependency,validate_ticket: summary_ticket %s', ticket['summary_ticket'])
+        #親タスクがループしていないか確認する必要がある
         errors.extend(self.intertrac.validate_ticket(ticket['summary_ticket'], "summary_ticket", False, self.log))
         self.log.debug('TracDependency,validate_ticket: dependenvies   %s', ticket['dependencies'])
         errors.extend(self.intertrac.validate_ticket(ticket['dependencies'], "dependencies", True, self.log))
