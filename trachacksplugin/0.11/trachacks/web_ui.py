@@ -337,7 +337,7 @@ class TracHacksHandler(Component):
 
 
 
-class TracHacksAccountManager(HtPasswdStore):
+class TracHacksHtPasswdStore(HtPasswdStore):
     """Do some basic validation on new users and create a new user page."""
     implements(IPasswordStore)
 
