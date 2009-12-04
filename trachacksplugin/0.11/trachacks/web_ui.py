@@ -342,9 +342,6 @@ class TracHacksAccountManager(HtPasswdStore):
     implements(IPasswordStore)
 
     # IPasswordStore
-    def config_key(self):
-        return 'trachacks-htpasswd'
-
     def set_password(self, user, password):
         import re
         if len(user) < 3:
