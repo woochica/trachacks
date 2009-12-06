@@ -23,6 +23,8 @@ LABEL_SUB = 'Sub: '
 LABEL_PRECEDING = 'Preceding: '
 LABEL_SUBSEQUENT = 'Subsequent: '
 
+TICKET_CUSTOM = "ticket-custom"
+
 class TracDependency(Component):
     implements(IRequestHandler, IRequestFilter, ITemplateProvider, 
         ITemplateStreamFilter, ITicketManipulator, ITicketChangeListener)
@@ -148,36 +150,24 @@ class TracDependency(Component):
         """チケット番号の指定に問題がないかを確認します．"""
         errors = []
         self.log.debug('TracDependency,validate_ticket: summary_ticket %s', ticket['summary_ticket'])
-        #親タスクがループしていないか確認する必要がある
-        errors.extend(self.intertrac.validate_ticket(ticket['summary_ticket'], "summary_ticket", False, self.log))
+        # 親タスクがループしていないか確認する必要がある
+        label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
+        errors.extend(self.intertrac.validate_ticket(ticket['summary_ticket'], label, False, self.log))
         self.log.debug('TracDependency,validate_ticket: dependenvies   %s', ticket['dependencies'])
-        errors.extend(self.intertrac.validate_ticket(ticket['dependencies'], "dependencies", True, self.log))
+        label = self.config.get(TICKET_CUSTOM,"dependencies.label")
+        errors.extend(self.intertrac.validate_ticket(ticket['dependencies'], label, True, self.log))
+        # 親チケットがループしていないか確認する
+        self.log.debug(ticket['summary_ticket'])
+        errors.extend(self.intertrac.validate_outline(ticket['summary_ticket'], ticket.id, self.log))
         return errors
 
     # ITicketChangeListener methods
     def ticket_created(self, tkt):
         self.log.debug('TracDependency,ticket_created')
-        #self.ticket_changed(tkt, '', tkt['reporter'], {})
 
     def ticket_changed(self, tkt, comment, author, old_values):
         self.log.debug('TracDependency,ticket_changed')
-        #db = self.env.get_db_cnx()
-        #
-        #links = TicketLinks(self.env, tkt, db)
-        #links.blocking = set(self.NUMBERS_RE.findall(tkt['blocking'] or ''))
-        #links.blocked_by = set(self.NUMBERS_RE.findall(tkt['blockedby'] or ''))
-        #links.save(author, comment, tkt.time_changed, db)
-        #
-        #db.commit()
 
     def ticket_deleted(self, tkt):
+        #このチケットを指定しているチケットにコメントをつける
         self.log.debug('TracDependency,ticket_deleted')
-        #db = self.env.get_db_cnx()
-        #
-        #links = TicketLinks(self.env, tkt, db)
-        #links.blocking = set()
-        #links.blocked_by = set()
-        #links.save('trac', 'Ticket #%s deleted'%tkt.id, when=None, db=db)
-        #
-        #db.commit()
-        
