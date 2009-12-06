@@ -13,7 +13,7 @@ var TracWysiwyg = function(textarea) {
     var anonymous = document.createElement("div");
     anonymous.innerHTML = '<iframe class="wysiwyg" '
         + 'src="javascript:\'\'" '
-        + 'width="100%" height="' + textarea.offsetHeight + '" '
+        + 'width="100%" height="' + TracWysiwyg.getTextAreaHeight(textarea) + '" '
         + 'frameborder="0" marginwidth="0" marginheight="0">'
         + '</iframe>';
     var frame = anonymous.firstChild;
@@ -179,6 +179,7 @@ TracWysiwyg.prototype.listenerToggleEditor = function(type) {
                     alert("Failed to activate the wysiwyg editor.");
                     throw e;
                 }
+                self.syncResizingTextArea();
                 self.textarea.style.position = "absolute";
                 self.textarea.setAttribute("tabIndex", "-1");
                 if (self.wikitextToolbar) {
@@ -663,13 +664,17 @@ TracWysiwyg.prototype.setupSyncResizingTextArea = function() {
     if (editrows) {
         var self = this;
         function timeout() {
-            var height = self.textarea.offsetHeight;
-            var frame = self.frame;
-            if (height > 0 && frame.height != height) {
-                frame.height = height;
-            }
+            self.syncResizingTextArea();
         }
         addEvent(editrows, "change", function() { setTimeout(timeout, 100) });
+    }
+};
+
+TracWysiwyg.prototype.syncResizingTextArea = function() {
+    var height = this.textarea.offsetHeight;
+    var frame = this.frame;
+    if (height > 0 && frame.height != height) {
+        frame.height = height;
     }
 };
 
@@ -3480,12 +3485,6 @@ TracWysiwyg.setEditorMode = function(mode) {
     TracWysiwyg.editorMode = mode;
 
     var now = new Date();
-    var expires = new Date(now.getTime() + 365 * 86400 * 1000);
-    var pieces = [ "tracwysiwyg=" + mode,
-        "path=" + TracWysiwyg.tracPaths.base,
-        "expires=" + expires.toUTCString() ];
-    document.cookie = pieces.join("; ");
-
     if (!/\/$/.test(TracWysiwyg.tracPaths.base)) {
         expires = new Date(now.getTime() - 86400000);
         pieces = [ "tracwysiwyg=",
@@ -3493,6 +3492,11 @@ TracWysiwyg.setEditorMode = function(mode) {
             "expires=" + expires.toUTCString() ];
         document.cookie = pieces.join("; ");
     }
+    var expires = new Date(now.getTime() + 365 * 86400 * 1000);
+    var pieces = [ "tracwysiwyg=" + mode,
+        "path=" + TracWysiwyg.tracPaths.base,
+        "expires=" + expires.toUTCString() ];
+    document.cookie = pieces.join("; ");
 };
 
 TracWysiwyg.stopEvent = function(event) {
@@ -3547,6 +3551,14 @@ TracWysiwyg.elementPosition = function(element) {
     }
     var offset = TracWysiwyg.elementPosition(element.offsetParent);
     return vector(left - offset.left, top - offset.top);
+};
+
+TracWysiwyg.getTextAreaHeight = function(textarea) {
+    var height = textarea.offsetHeight;
+    if (height == 0) {
+        height = parseInt(textarea.rows) * parseInt(TracWysiwyg.getStyle(textarea, 'line-height'), 10);
+    }
+    return height;
 };
 
 TracWysiwyg.getSelfOrAncestor = function(element, name) {

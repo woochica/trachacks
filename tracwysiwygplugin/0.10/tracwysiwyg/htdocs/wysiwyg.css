@@ -48,6 +48,7 @@ iframe.wysiwyg:focus {
     width: 62px;
     white-space: nowrap;
     overflow-x: hidden;
+    line-height: 1.2;
     padding-left: 2px;
     padding-right: 2px;
     background-image: url(../common/desc.png);
