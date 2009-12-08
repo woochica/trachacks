@@ -47,7 +47,7 @@ class WysiwygModule(Component):
 def _expand_filename(req, filename):
     if filename.startswith('chrome/common/') and 'htdocs_location' in req.chrome:
         href = Href(req.chrome['htdocs_location'])
-        return href(filename[7:])
+        return href(filename[14:])
     if filename.startswith('/') or re.match(r'https?://', filename):
         href = Href(filename)
         return href()
