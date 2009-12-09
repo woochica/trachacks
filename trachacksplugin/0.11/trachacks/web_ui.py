@@ -10,10 +10,11 @@ import re
 import random
 from trac.core import *
 from trac.config import *
-from trac.perm import IPermissionRequestor
+from trac.perm import IPermissionRequestor, PermissionCache
 from trac.web.chrome import Chrome
+from trac.resource import Resource
 from acct_mgr.htfile import HtPasswdStore
-from acct_mgr.api import IPasswordStore
+from acct_mgr.api import IPasswordStore, IAccountChangeListener
 from trac.wiki.model import WikiPage
 from trac.util.compat import sorted
 from trac.web.api import IRequestHandler, ITemplateStreamFilter
@@ -339,7 +340,7 @@ class TracHacksHandler(Component):
 
 class TracHacksHtPasswdStore(HtPasswdStore):
     """Do some basic validation on new users and create a new user page."""
-    implements(IPasswordStore)
+    implements(IPasswordStore, IAccountChangeListener)
 
     # IPasswordStore
     def set_password(self, user, password):
@@ -347,21 +348,37 @@ class TracHacksHtPasswdStore(HtPasswdStore):
             raise TracError('user name must be at least 3 characters long')
         if not re.match(r'^\w+$', user):
             raise TracError('user name must consist only of alpha-numeric characters')
-        if user not in self.get_users():
-            db = self.env.get_db_cnx()
-            page = WikiPage(self.env, user, db=db)
-            # User creation with existing page
-            if page.exists:
-                raise TracError('wiki page "%s" already exists' % user)
-            else:
-                from tractags.api import TagEngine
-                tagspace = TagEngine(self.env).tagspace.wiki
 
-                tagspace.add_tags(None, user, ['user'])
-                page.text = '''= %(user)s =\n\n[[ListTagged(%(user)s)]]\n''' % {'user' : user}
-                page.save(user, 'New user %s registered' % user, None)
-                self.env.log.debug("New user %s registered" % user)
-        HtPasswdStore.set_password(self, user, password)
+        db = self.env.get_db_cnx()
+        page = WikiPage(self.env, user, db=db)
+        if page.exists:
+            raise TracError('wiki page "%s" already exists' % user)
+
+        return HtPasswdStore.set_password(self, user, password)
 
     def delete_user(self, user):
         HtPasswdStore.delete_user(self, user)
+
+    # IAccountChangeListener
+    def user_created(self, user, password):
+        class FakeRequest(object):
+            def __init__(self, env, authname):
+                self.perm = PermissionCache(env, authname)
+
+        req = FakeRequest(self.env, user)
+        resource = Resource('wiki', user)
+        tag_system = TagSystem(self.env)
+        tag_system.add_tags(req, resource, ['user',])
+
+        db = self.env.get_db_cnx()
+        page = WikiPage(self.env, user, db=db)
+        page.text = '''= %(user)s =\n\n[[ListTagged(%(user)s)]]\n''' % {'user' : user}
+        page.save(user, 'New user %s registered' % user, None)
+
+        self.env.log.debug("New user %s registered" % user)
+
+    def user_password_changed(self, user, password):
+        pass
+
+    def user_deleted(self, user):
+        pass
