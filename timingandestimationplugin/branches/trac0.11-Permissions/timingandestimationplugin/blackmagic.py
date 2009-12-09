@@ -73,13 +73,13 @@ def remove_field(stream , field):
     return remove_changelog(remove_header(stream , field), field)
 
 def istrue(v, otherwise=None):
-    if v.lower() in ('yes', 'true', '1', 'on'):
+    if isinstance(v, bool):
+        return v
+    if str(v).lower() in ('yes', 'true', '1', 'on'):
         return True
-    else:
-        if otherwise is None:
-            return False
-        else:
-            return otherwise   
+    if not otherwise:
+        return False
+    return otherwise
 
 csection = 'field settings'
 
