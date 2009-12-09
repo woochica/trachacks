@@ -4,7 +4,11 @@ programmatic front end to trac-admin tasks
 """
 
 import pkg_resources
+import sys
 
+from martini.config import ConfigMunger
+from martini.utils import getlist
+from optparse import OptionParser
 from trac.admin.console import TracAdmin
 from trac.env import open_environment
 from trac.perm import PermissionSystem
@@ -82,5 +86,57 @@ class TracLegosAdmin(TracAdmin):
         perm = PermissionSystem(self.env)
         for agent, p in permissions.items():
             for permission in p:
-                perm.grant_permission(agent, permission)
+                try:
+                    perm.grant_permission(agent, permission)
+                except:
+                    continue
 
+    def remove_permissions(self, permissions):
+        perm = PermissionSystem(self.env)
+        for agent, p in permissions.items():
+            if '*' in p:
+                p = [ i for i, j in perm.get_user_permissions(agent).items() if j]
+            for permission in p:
+                
+                try:
+                    perm.revoke_permission(agent, permission)
+                except:
+                    continue
+
+
+def apply_permissions(envs, ini):
+    munger = ConfigMunger(*ini)
+    
+    if munger.has_section('permissions'):
+        add_permissions = dict([(i, getlist(j)) 
+                                for i, j in munger['permissions'].items()])
+    else:
+        add_permissions = None
+    if munger.has_section('remove-permissions'):
+        remove_permissions = dict([(i, getlist(j)) 
+                                for i, j in munger['remove-permissions'].items()])
+    else:
+        remove_permissions = None
+
+    for env in envs:
+        admin = TracLegosAdmin(env)
+        if add_permissions:
+            admin.add_permissions(add_permissions)
+        if remove_permissions:
+            admin.remove_permissions(remove_permissions)
+
+def main(args=sys.argv[1:]):
+    parser = OptionParser("%prog -e /path/to/env [-e /path/to/env2] [...] permissions.ini [permissions2.ini] [...]")
+    parser.add_option('-e', '--env', dest='env', action='append', 
+                      help="trac environment(s)")
+    options, args = parser.parse_args(args)
+    if not args:
+        parser.error("Please specify one or more permissions .ini files")
+    if not options.env:
+        parser.error("Please specify one or more Trac environments")
+
+    apply_permissions(options.env, args)
+    
+
+if __name__ == '__main__':
+    main()

@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.8'
+version = '0.9'
 
 setup(name='TracLegos',
       version=version,
@@ -30,6 +30,7 @@ setup(name='TracLegos',
       # -*- Entry points: -*-
       [console_scripts]
       create-trac-project = traclegos.legos:main
+      trac-permissions = traclegos.admin:main
 
       [paste.app_factory]
       main = traclegos.wsgiapp:make_app
