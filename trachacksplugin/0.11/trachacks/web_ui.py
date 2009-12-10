@@ -110,8 +110,18 @@ class TracHacksHandler(Component):
         if match.group(1):
             view = match.group(1)
 
-        # Hack types
-        types = [r.id for r, _ in tag_system.query(req, 'realm:wiki type')]
+        # Hack types and their description
+        types = []
+        for category in sorted([r.id for r, _ in
+                             tag_system.query(req, 'realm:wiki type')]):
+            page = WikiPage(self.env, category)
+            match = self.title_extract.search(page.text)
+            if match:
+                title = '%s' % match.group(1).strip()
+            else:
+                title = '%s' % category
+            types.append((category, title))
+
         # Trac releases
         releases = natural_sort([r.id for r, _ in
                                  tag_system.query(req, 'realm:wiki release')])
@@ -123,7 +133,7 @@ class TracHacksHandler(Component):
 
         data['selected_releases'] = selected_releases
 
-        hacks = self.fetch_hacks(req, data, types, selected_releases)
+        hacks = self.fetch_hacks(req, data, [ t[0] for t in types ], selected_releases)
 
         add_stylesheet(req, 'tags/css/tractags.css')
         add_stylesheet(req, 'hacks/css/trachacks.css')

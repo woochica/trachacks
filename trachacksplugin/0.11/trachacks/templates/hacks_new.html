@@ -13,12 +13,12 @@
 
   <body>
     <form id="content" class="newhack wikipage" method="post">
-      <h1>Create a New "Hack" on Trac-Hacks</h1>
+      <h1>Create a new "hack" on Trac-Hacks</h1>
 
       <fieldset id="basics">
         <legend>Basic Information</legend>
         <dl>
-          <dt><label for="name">Name of Hack</label></dt>
+          <dt><label for="name">Name of hack</label></dt>
           <dd>
             <div>
               A <a href="http://trac.edgewall.org/wiki/CamelCase">
@@ -29,7 +29,7 @@
               <span class="hint-pointer">&nbsp;</span>
               <p>
                 A new Wiki page will be created by concatenating the hack name
-                with the <a href="#type">hack type</a>.
+                with the <a href="#type">hack type</a> you select below.
               </p>
               <p>
                 <strong>eg.</strong>
@@ -47,16 +47,15 @@
           <dt><label for="title">Title</label></dt>
           <dd>
             <div>
-              Descriptive title for your Hack (You may use 
-              <a href="${href.wiki('WikiFormatting')}">WikiFormatting</a>
-              here).
+              Descriptive title for your hack.
+              You may use <a href="${href.wiki('WikiFormatting')}">WikiFormatting</a> here.
             </div>
 
             <div id="titlehint" class="hint">
               <span class="hint-pointer">&nbsp;</span>
               <p>
-                This will be the main heading in the Wiki page for your Hack.
-                It will also be displayed in the Hack listing, so <em>make it
+                This will be the main heading in the Wiki page for your hack.
+                It will also be displayed in the hack listing, so <em>make it
                 descriptive</em>.
               </p>
             </div>
@@ -69,14 +68,14 @@
           <dt><label for="description">Description</label></dt>
           <dd>
             <div>
-            A full description of your hack.
-            (You may use <a href="${href.wiki('WikiFormatting')}">WikiFormatting</a> here)
+              A full description of your hack.
+              You may use <a href="${href.wiki('WikiFormatting')}">WikiFormatting</a> here.
             </div>
 
             <div id="descriptionhint" class="hint">
               <span class="hint-pointer">&nbsp;</span>
               <p>
-                This is what visitors will read to determine if your Hack
+                This is what visitors will read to determine if your hack
                 meets their needs.
               </p>
             </div>
@@ -101,33 +100,35 @@
               <div id="typehint" class="hint">
                 <p>
                   The title-cased version of the type will be appended to your
-                  Hack name to create your Wiki page.
+                  hack name to create your Wiki page.
                 </p>
               </div>
-            
-              <py:for each="t in types">
+
+              <py:for each="t,d in types">
                 <input tabindex="4" checked="${t == type or None}" type="radio" value="${t}"
                   id="${t}" name="type"/>
                 <nobr>
                   <label for="${t}">
                     <a href="${href.wiki(t)}">${t}</a>
+                    <span style="font-size:xx-small;">(${d})</span>
                   </label>
                 </nobr>
+                <br />
               </py:for>
             </dd>
 
             <!-- Compatibility -->
             <dt>Compatibility</dt>
             <dd id="release">
-              <div>Release(s) of Trac this Hack works with.</div>
+              <div>Release(s) of Trac this hack works with.</div>
 
               <div id="releasehint" class="hint">
                 <p>
-                  <strong>anyrelease</strong> indicates your Hack will work
+                  <strong>anyrelease</strong> indicates your hack will work
                   with any Trac release.
                 </p>
               </div>
-            
+
               <py:for each="r in releases">
                 <input tabindex="5" type="checkbox" name="release" value="${r}"
                   id="${r}" checked="${r in release or None}"/>
@@ -151,7 +152,7 @@
 
             <div id="installationhint" class="hint">
               <p>
-                Please include full instructions on how to install your Hack,
+                Please include full instructions on how to install your hack,
                 including changes that need to be made to the <a
                 href="http://trac.edgewall.org/wiki/TracIni">trac.ini</a> 
                 file, in particular the
@@ -175,7 +176,8 @@
                 be for people to find your hack.
               </p>
               <p>
-                Toggle tags by selecting from the tag cloud.
+                The tag cloud shows the top-25 tags plus some more, to give you an idea.
+                You can also click on any of these tags to toggle them for your hack.
               </p>
             </div>
 
