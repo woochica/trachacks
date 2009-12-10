@@ -459,6 +459,11 @@ class ListHacksMacro(WikiMacroBase):
 
             lines = 0
             for resource, tags in tag_system.query(req, query):
+                # filter out the page used to make important tags
+                # persistent
+                if resource.id == "tags/persistent":
+                    continue
+
                 lines += 1
                 li = builder.li(link(resource), ': ')
 
