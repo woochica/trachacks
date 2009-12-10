@@ -12,15 +12,16 @@ from trac.core import *
 from trac.config import *
 from trac.perm import IPermissionRequestor, PermissionCache
 from trac.web.chrome import Chrome
-from trac.resource import Resource
+from trac.resource import Resource, render_resource_link
 from acct_mgr.htfile import HtPasswdStore
 from acct_mgr.api import IPasswordStore, IAccountChangeListener
+from trac.wiki.formatter import wiki_to_oneliner
 from trac.wiki.model import WikiPage
+from trac.wiki.macros import WikiMacroBase
 from trac.util.compat import sorted
 from trac.web.api import IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, INavigationContributor, \
                             add_stylesheet, add_script, add_ctxtnav
-from trac.resource import get_resource_url
 from tractags.api import TagSystem
 from tractags.macros import render_cloud
 from tractags.query import Query
@@ -382,3 +383,97 @@ class TracHacksHtPasswdStore(HtPasswdStore):
 
     def user_deleted(self, user):
         pass
+
+
+class ListHacksMacro(WikiMacroBase):
+    """ List of meta types """
+    title_extract = re.compile(r'=\s+([^=]*)=', re.MULTILINE | re.UNICODE)
+
+    def expand_macro(self, formatter, name, content):
+        req = formatter.req
+        tag_system = TagSystem(self.env)
+        categories = sorted([r.id for r, _ in
+                             tag_system.query(req, 'realm:wiki type')])
+        releases = natural_sort([r.id for r, _ in
+                                 tag_system.query(req, 'realm:wiki release')])
+
+        if 'update_th_filter' in req.args:
+            show_releases = req.args.get('release', ['0.11'])
+            if isinstance(show_releases, basestring):
+                show_releases = [show_releases]
+            req.session['th_release_filter'] = ','.join(show_releases)
+        else:
+            show_releases = req.session.get('th_release_filter', '0.11').split(',')
+
+        style = "text-align:right; padding-top:1em; margin-right:5em;"
+        form = builder.form('\n', style=style, method="get")
+
+        style = "font-size:xx-small;"
+        span = builder.span("Show hacks for releases:", style=style)
+
+        for version in releases:
+            inp = builder.input(version, type_="checkbox", name="release",
+                                value=version)
+            if version in show_releases:
+                inp(checked="checked")
+            span(inp, '\n')
+
+        style = "font-size:xx-small; padding:0; border:solid 1px black;"
+        span(builder.input(name="update_th_filter", type_="submit",
+                           style=style, value="Update"), '\n')
+        form('\n', span, '\n')
+
+        output = form + '\n'
+
+        def link(resource):
+            return render_resource_link(self.env, formatter.context,
+                                        resource, 'compact')
+
+        for category in categories:
+            page = WikiPage(self.env, category)
+            match = self.title_extract.search(page.text)
+            if match:
+                title = '%s' % match.group(1).strip()
+            else:
+                title = '%s' % category
+
+            style = "padding:1em; margin:0em 5em 2em 5em; border:1px solid #999;"
+            fieldset = builder.fieldset('\n', style=style)
+            legend = builder.legend(style="color: #999;")
+            legend(builder.a(title, href=self.env.href.wiki(category)))
+            fieldset(legend, '\n')
+
+            ul = builder.ul('\n', class_="listtagged")
+            query = 'realm:wiki (%s) %s' % \
+                (' or '.join(show_releases), category)
+
+            lines = 0
+            for resource, tags in tag_system.query(req, query):
+                lines += 1
+                li = builder.li(link(resource), ': ')
+
+                page = WikiPage(self.env, resource)
+                match = self.title_extract.search(page.text)
+                description = "''no description available''"
+                if match:
+                    if match.group(1):
+                        description = match.group(1).strip()
+
+                li(wiki_to_oneliner(description, self.env, req=req))
+                if tags:
+                    rendered_tags = [ link(resource('tag', tag))
+                                      for tag in natural_sort(tags)
+                                      if tag != category ]
+                    span = builder.span(style="font-size:xx-small;")
+                    span(' (tags: ', rendered_tags[0],
+                       [(', ', tag) for tag in rendered_tags[1:]], ')')
+                    li(span)
+                ul(li, '\n')
+
+            if lines:
+                fieldset(ul, '\n')
+            else:
+                fieldset(builder.p(builder.em("No results for your selection.")), '\n')
+
+            output += fieldset + '\n'
+        return output
