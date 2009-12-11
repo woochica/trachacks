@@ -425,6 +425,10 @@ class ListHacksMacro(WikiMacroBase):
     See [wiki:type] for a list of hack types, [wiki:release] for a list of
     supported Trac releases.
 
+    Other tags may be passed as well. They will be used as additional filter
+    for displayed hacks, but - other than types and releases - have no
+    side-effects otherwise.
+
     For example, the following shows hacks of type `integration` and
     `plugin` for Trac `0.12`:
     {{{
@@ -447,15 +451,20 @@ class ListHacksMacro(WikiMacroBase):
         hide_fieldset_legend = False
         hide_fieldset_description = False
         if args:
-            hide_fieldset_description = True
             categories = []
             releases = []
+            other = []
             for arg in args.split():
                 if arg in all_releases:
                     hide_release_picker = True
                     releases.append(arg)
                 elif arg in all_categories:
                     categories.append(arg)
+                else:
+                    other.append(arg)
+
+            if len(categories) or len(releases):
+                hide_fieldset_description = True
 
             if not len(categories):
                 categories = all_categories
@@ -523,8 +532,8 @@ class ListHacksMacro(WikiMacroBase):
                 fieldset(builder.p(wiki_to_html(cat_body, self.env, req)))
 
             ul = builder.ul('\n', class_="listtagged")
-            query = 'realm:wiki (%s) %s' % \
-                (' or '.join(show_releases), category)
+            query = 'realm:wiki (%s) %s %s' % \
+                (' or '.join(show_releases), category, ' '.join(other))
 
             lines = 0
             for resource, tags in tag_system.query(req, query):
@@ -547,6 +556,9 @@ class ListHacksMacro(WikiMacroBase):
                 if tags:
                     if hide_fieldset_legend == False and category in tags:
                         tags.remove(category)
+                        self.log.debug("hide %s: no legend" % category)
+                    for o in other:
+                        if o in tags: tags.remove(o)
                     rendered_tags = [ link(resource('tag', tag))
                                       for tag in natural_sort(tags) ]
 
