@@ -10,7 +10,7 @@ import re
 import random
 from trac.core import *
 from trac.config import *
-from trac.perm import IPermissionRequestor, PermissionCache
+from trac.perm import IPermissionRequestor, PermissionCache, PermissionSystem
 from trac.web.chrome import Chrome
 from trac.resource import Resource, render_resource_link
 from acct_mgr.htfile import HtPasswdStore
@@ -355,10 +355,22 @@ class TracHacksHtPasswdStore(HtPasswdStore):
 
     # IPasswordStore
     def set_password(self, user, password):
+        perm = PermissionSystem(self.env)
+        all_perms = [ p[0] for p in perm.get_all_permissions() ]
+        if user in all_perms:
+            raise TracError('%s is a reserved name that can not be registered.' % user)
+
+        needles = [ ':', '[', ']' ]
+        for needle in needles:
+            if needle in user:
+                raise TracError('Character "%s" may not be used in user names.' % needle)
+
         if len(user) < 3:
-            raise TracError('user name must be at least 3 characters long')
+            raise TracError('User name must be at least 3 characters long.')
         if not re.match(r'^\w+$', user):
-            raise TracError('user name must consist only of alpha-numeric characters')
+            raise TracError('User name must consist only of alpha-numeric characters.')
+        if user.isupper():
+            raise TracError('User name must not consist of upper-case characters only.')
 
         db = self.env.get_db_cnx()
         page = WikiPage(self.env, user, db=db)
