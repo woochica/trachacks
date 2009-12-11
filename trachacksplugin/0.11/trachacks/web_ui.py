@@ -551,7 +551,9 @@ class ListHacksMacro(WikiMacroBase):
             if lines:
                 fieldset(ul, '\n')
             else:
-                fieldset(builder.p(builder.em("No results for your selection.")), '\n')
+                message = "No results for %s." % \
+                    (hide_release_picker and "this version" or "your selection")
+                fieldset(builder.p(builder.em(message)), '\n')
             output = "%s%s\n" % (output, fieldset)
 
         return output
