@@ -15,7 +15,7 @@ from trac.web.chrome import Chrome
 from trac.resource import Resource, render_resource_link
 from acct_mgr.htfile import HtPasswdStore
 from acct_mgr.api import IPasswordStore, IAccountChangeListener
-from trac.wiki.formatter import wiki_to_oneliner
+from trac.wiki.formatter import wiki_to_oneliner, wiki_to_html
 from trac.wiki.model import WikiPage
 from trac.wiki.macros import WikiMacroBase
 from trac.util.compat import sorted
@@ -432,6 +432,7 @@ class ListHacksMacro(WikiMacroBase):
     }}}
     """
     title_extract = re.compile(r'=\s+([^=]*)=', re.MULTILINE | re.UNICODE)
+    self_extract = re.compile(r'\[\[ListHacks[^\]]*\]\]\s?\n?', re.MULTILINE | re.UNICODE)
 
     def expand_macro(self, formatter, name, args):
         req = formatter.req
@@ -444,7 +445,9 @@ class ListHacksMacro(WikiMacroBase):
 
         hide_release_picker = False
         hide_fieldset_legend = False
+        hide_fieldset_description = False
         if args:
+            hide_fieldset_description = True
             categories = []
             releases = []
             for arg in args.split():
@@ -503,16 +506,21 @@ class ListHacksMacro(WikiMacroBase):
             page = WikiPage(self.env, category)
             match = self.title_extract.search(page.text)
             if match:
-                title = '%s' % match.group(1).strip()
+                cat_title = '%s' % match.group(1).strip()
+                cat_body = self.title_extract.sub('', page.text, 1)
             else:
-                title = '%s' % category
+                cat_title = '%s' % category
+                cat_body = page.text
+            cat_body = self.self_extract.sub('', cat_body).strip()
 
             style = "padding:1em; margin:0em 5em 2em 5em; border:1px solid #999;"
             fieldset = builder.fieldset('\n', style=style)
             if not hide_fieldset_legend:
                 legend = builder.legend(style="color: #999;")
-                legend(builder.a(title, href=self.env.href.wiki(category)))
+                legend(builder.a(cat_title, href=self.env.href.wiki(category)))
                 fieldset(legend, '\n')
+            if not hide_fieldset_description:
+                fieldset(builder.p(wiki_to_html(cat_body, self.env, req)))
 
             ul = builder.ul('\n', class_="listtagged")
             query = 'realm:wiki (%s) %s' % \
