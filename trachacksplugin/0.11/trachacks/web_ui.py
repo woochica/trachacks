@@ -450,10 +450,10 @@ class ListHacksMacro(WikiMacroBase):
         hide_release_picker = False
         hide_fieldset_legend = False
         hide_fieldset_description = False
+        other = []
         if args:
             categories = []
             releases = []
-            other = []
             for arg in args.split():
                 if arg in all_releases:
                     hide_release_picker = True
