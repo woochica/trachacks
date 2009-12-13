@@ -5,7 +5,12 @@ setup(
     license='GPL',
     version='2.0',
     packages=['trachacks'],
-    package_data={'trachacks' : ['templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css']},
+    package_data={
+        'trachacks' : [
+            'templates/*.html', 'htdocs/js/*.js',
+            'htdocs/css/*.css', 'htdocs/*.gif',
+            ]
+        },
     dependency_links=[
         'http://trac-hacks.org/svn/tagsplugin/trunk#egg=TracTags-0.6',
         'http://trac-hacks.org/svn/accountmanagerplugin/trunk#egg=TracAccountManager',
