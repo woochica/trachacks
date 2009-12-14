@@ -102,7 +102,7 @@ class iCalViewPlugin(QueryModule):
         else:
             content.write("%s;VALUE=DATE:%s\r\n" % (propname,d.strftime("%Y%m%d")))
 
-    def export_ical(self, req, query):        
+    def export_ical(self, req, query):
         """
         return the icalendar file
         """
@@ -110,6 +110,7 @@ class iCalViewPlugin(QueryModule):
         duration_key = self.config['icalendar'].get('duration','')
         self.env.log.debug("dtstart_key=%s" % dtstart_key)
         self.env.log.debug("duration_key=%s" % duration_key)
+        self.env.log.debug("base_url=%s" % self.base_url)
 
         if dtstart_key != '':
             self.env.log.debug("use dtstart_key=%s" % dtstart_key)
