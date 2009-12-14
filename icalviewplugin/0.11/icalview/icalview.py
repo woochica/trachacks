@@ -192,7 +192,11 @@ class iCalViewPlugin(QueryModule):
                     if "HTTPS" in os.getenv('SERVER_PROTOCOL') :
                         protocol = "https"
                 content.write("URL:%s://%s%s\r\n" % (protocol,os.getenv('SERVER_NAME'),get_resource_url(self.env,ticket,req.href)))
-                priority = priority_map[result['priority']]
+                priority = None
+                try:
+                    priority = priority_map[result['priority']]
+                except:
+                    self.env.log.debug("unmapped priority %s" % result['priority'])
                 if priority != None:
                     content.write("PRIORITY;VALUE=%s:%d\r\n" % (result['priority'],priority))
 
