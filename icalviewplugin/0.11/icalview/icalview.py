@@ -19,6 +19,7 @@ from trac.mimeview.api import  IContentConverter
 from trac.web.chrome import INavigationContributor
 from cStringIO import StringIO
 from trac.resource import Resource, get_resource_url
+from trac.util.text import CRLF
 
 class iCalViewPlugin(QueryModule):
     implements(IRequestHandler, INavigationContributor, 
@@ -155,6 +156,10 @@ class iCalViewPlugin(QueryModule):
                 if len(k) == 2:
                     priority_map[k[0]] = int(k[1])
 
+        def write_prop(name, value, params={}):
+            propname = ';'.join([name] + [k + '=' + v for k, v in params.items()])
+            propvalue = value.replace('\n','\n ').replace('\r\n \r\n','\r\n')
+            content.write("%s:%s\r\n" % (propname,propvalue))
         for result in results:
             ticket = Resource('ticket', result['id'])
             if 'TICKET_VIEW' in req.perm(ticket):
@@ -202,7 +207,7 @@ class iCalViewPlugin(QueryModule):
 
                 for key in attr_map:
                    if key in cols:
-                       content.write("%s:%s\r\n" % (attr_map[key], unicode(result[key]).encode('utf-8')))
+                       write_prop(attr_map[key], unicode(result[key]).encode('utf-8'),{})
                 content.write("END:%s\r\n" % kind)
         content.write('END:VCALENDAR\r\n')
         return content.getvalue(), 'text/calendar;charset=utf-8'
