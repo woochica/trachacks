@@ -137,7 +137,8 @@ class iCalViewPlugin(QueryModule):
 
         attr_map = {
                     "summary" : "SUMMARY",
-                    "type" :  "CATEGORIES"
+                    "type" :  "CATEGORIES",
+                    "description" : "DESCRIPTION"
                    }
         priority_map = {
                     'blocker' :  1,
