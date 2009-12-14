@@ -110,7 +110,6 @@ class iCalViewPlugin(QueryModule):
         duration_key = self.config['icalendar'].get('duration','')
         self.env.log.debug("dtstart_key=%s" % dtstart_key)
         self.env.log.debug("duration_key=%s" % duration_key)
-        self.env.log.debug("base_url=%s" % self.base_url)
 
         if dtstart_key != '':
             self.env.log.debug("use dtstart_key=%s" % dtstart_key)
