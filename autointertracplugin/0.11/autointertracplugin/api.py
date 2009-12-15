@@ -58,12 +58,11 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
       trac.config.Configuration.save = save
       self.env.setup_config()
       
-
-
     def __init__(self):
       #only if we should be enabled do we monkey patch
       if self.compmgr.enabled[self.__class__]:
         self.run_setup()
+
     def environment_created(self):
       """Called when a new Trac environment is created."""
       pass
