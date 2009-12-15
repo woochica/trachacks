@@ -44,6 +44,7 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
             c.set("intertrac", "%s.title"%kd, kd )
             c.set("intertrac", "%s.url"%kd, urlparse.urljoin(base_url,kd))
             c.set("intertrac", "%s.compat"%kd, "false")
+      setup_config.__doc__ = original_setup.__doc__ + "\n Being extended by AutoInterTracPlugin "
 
       #remove auto added config vars
       def save(self):
@@ -54,6 +55,7 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
           c.remove("intertrac", "%s.url"%key)
           c.remove("intertrac", "%s.compat"%key)
         original_save(self)
+      save.__doc__ = original_save.__doc__ + "\n Being extended by AutoInterTracPlugin "
       trac.env.Environment.setup_config = setup_config
       trac.config.Configuration.save = save
       self.env.setup_config()
