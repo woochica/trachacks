@@ -69,7 +69,7 @@ class TracHacksHandler(Component):
     limit = IntOption('trachacks', 'limit', 25,
         'Default maximum number of hacks to display.')
 
-    path_match = re.compile(r'/hacks/?(new|cloud|list)?')
+    path_match = re.compile(r'/(?:hacks/?(cloud|list)?|newhack)')
     title_extract = re.compile(r'=\s+([^=]*)=', re.MULTILINE | re.UNICODE)
 
     def __init__(self):
@@ -92,7 +92,7 @@ class TracHacksHandler(Component):
 
     def filter_stream(self, req, method, filename, stream, data):
         context = data.get('form_context')
-        if context and context.errors and req.path_info == '/hacks/new':
+        if context and context.errors and req.path_info == '/newhack':
             stream |= context.inject_errors()
         return stream
 
@@ -139,30 +139,35 @@ class TracHacksHandler(Component):
         add_stylesheet(req, 'hacks/css/trachacks.css')
         add_script(req, 'hacks/js/trachacks.js')
 
-        views = ['cloud', 'list', 'new']
-        for v in views:
-            if v != view:
-                if v != 'new':
-                    args = req.args
-                else:
-                    args = {}
-                add_ctxtnav(req, builder.a(v.title(),
-                            href=req.href.hacks(v, **args)))
-            else:
-                add_ctxtnav(req, v.title())
-        if view == 'list':
-            return self.render_list(req, data, hacks)
-        elif view == 'new':
+        if req.path_info == '/newhack':
             return self.render_new(req, data, hacks)
-        return self.render_cloud(req, data, hacks)
+        else:
+            views = ['cloud', 'list']
+            for v in views:
+                if v != view:
+                    args = req.args
+                    add_ctxtnav(req, builder.a(v.title(),
+                                href=req.href.hacks(v, **args)))
+                else:
+                    add_ctxtnav(req, v.title())
+            if view == 'list':
+                return self.render_list(req, data, hacks)
+            else:
+                return self.render_cloud(req, data, hacks)
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
-        return 'hacks'
+        if req.path_info == '/newhack':
+            return 'newhack'
+        else:
+            return 'hacks'
 
     def get_navigation_items(self, req):
         yield ('mainnav', 'hacks',
-                builder.a('Hacks', href=req.href.hacks(), accesskey='H'))
+                builder.a('View Hacks', href=req.href.hacks(), accesskey='H'))
+        if 'HACK_CREATE' in req.perm:
+            yield ('mainnav', 'newhack',
+                    builder.a('New Hack', href=req.href.newhack()))
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -178,7 +183,8 @@ class TracHacksHandler(Component):
         static resources (such as images, style sheets, etc).
         """
         from pkg_resources import resource_filename
-        return [('hacks', resource_filename(__name__, 'htdocs'))]
+        htdocs = resource_filename(__name__, 'htdocs')
+        return [('hacks', htdocs), ('newhack', htdocs)]
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
