@@ -12,6 +12,13 @@
   </head>
 
   <body>
+    <fieldset py:if="page_preview" id="preview" py:choose="">
+      <legend>Preview (<a href="#content">skip</a>)</legend>
+      <div class="wikipage" xml:space="preserve">
+        ${page_preview}
+      </div>
+    </fieldset>
+
     <form id="content" class="newhack wikipage" method="post">
       <h1>Create a new "hack" on Trac-Hacks</h1>
 

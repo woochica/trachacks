@@ -8,8 +8,9 @@
 
 import re
 import random
+from string import Template
 from trac.core import *
-from trac.config import *
+from trac.config import IntOption, Option
 from trac.perm import IPermissionRequestor, PermissionCache, PermissionSystem
 from trac.web.chrome import Chrome
 from trac.resource import Resource, render_resource_link
@@ -68,6 +69,11 @@ class TracHacksHandler(Component):
 
     limit = IntOption('trachacks', 'limit', 25,
         'Default maximum number of hacks to display.')
+    template = Option('trachacks', 'template', 'NewHackTemplate',
+        'Name of wiki page that serves as template for new hacks.')
+    svnbase = Option('trachacks', 'subversion_base_url',
+        'http://trac-hacks.org/svn',
+        'Base URL of the Subversion repository.')
 
     path_match = re.compile(r'/(?:hacks/?(cloud|list)?|newhack)')
     title_extract = re.compile(r'=\s+([^=]*)=', re.MULTILINE | re.UNICODE)
@@ -240,6 +246,32 @@ class TracHacksHandler(Component):
 
             context = self.form.validate(data)
             data['form_context'] = context
+
+            vars = {}
+            vars['OWNER'] = req.authname
+            vars['WIKINAME'] = data['name']
+            if not vars['WIKINAME'].lower().endswith(data['type']):
+                vars['WIKINAME'] += data['type'].title()
+            vars['TYPE'] = data.setdefault('type', 'plugin')
+            vars['TITLE'] = data.setdefault('title', 'No title available')
+            vars['LCNAME'] = vars['WIKINAME'].lower()
+            vars['SOURCEURL'] = '%s/%s' % (self.svnbase, vars['LCNAME'])
+            vars['DESCRIPTION'] = data.setdefault('description',
+                                                  'No description available')
+            vars['EXAMPLE'] = data.setdefault('example',
+                                              'No example available')
+
+            if 'preview' in req.args and not context.errors:
+                page = WikiPage(self.env, self.template)
+                if not page.exists:
+                    raise TracError('New hack template %s does not exist.' % \
+                                    self.template)
+                template = Template(page.text).substitute(vars)
+                template = re.sub(r'\[\[ChangeLog[^\]]*\]\]',
+                                  'No changes yet', template)
+                data['page_preview'] = wiki_to_html(template, self.env, req)
+
+
         else:
             data['form_context'] = None
             data['type'] = 'plugin'
@@ -378,9 +410,7 @@ class TracHacksHtPasswdStore(HtPasswdStore):
         if user.isupper():
             raise TracError('User name must not consist of upper-case characters only.')
 
-        db = self.env.get_db_cnx()
-        page = WikiPage(self.env, user, db=db)
-        if page.exists:
+        if WikiPage(self.env, user).exists:
             raise TracError('wiki page "%s" already exists' % user)
 
         return HtPasswdStore.set_password(self, user, password)
@@ -399,8 +429,7 @@ class TracHacksHtPasswdStore(HtPasswdStore):
         tag_system = TagSystem(self.env)
         tag_system.add_tags(req, resource, ['user',])
 
-        db = self.env.get_db_cnx()
-        page = WikiPage(self.env, user, db=db)
+        page = WikiPage(self.env, user)
         page.text = '''= %(user)s =\n\n[[ListTagged(%(user)s)]]\n''' % {'user' : user}
         page.save(user, 'New user %s registered' % user, None)
 
