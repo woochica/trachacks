@@ -44,10 +44,19 @@ def pluralise(n, word):
 
 
 def natural_sort(l):
-  """Sort the given list in the way that humans expect."""
-  convert = lambda text: int(text) if text.isdigit() else text
-  alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
-  return sorted(l, key=alphanum_key)
+    """Sort the given list in the way that humans expect."""
+    convert = lambda text: int(text) if text.isdigit() else text
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(l, key=alphanum_key)
+
+
+def page_and_path(hack_name, hack_type):
+    """Compute wiki page and repository path from hack name and type, return
+    as tuple (wiki page name, repository path)."""
+    name = hack_name
+    if not name.lower().endswith(hack_type):
+            name += hack_type.title()
+    return (name, '/%s' % name.lower())
 
 
 class FakeRequest(object):
@@ -61,10 +70,18 @@ class HackDoesntExist(Aspect):
         self.env = env
 
     def __call__(self, context, name):
-        page_name = name + context.data.get('type', '').title()
-        if WikiPage(self.env, page_name).exists or WikiPage(self.env, name).exists:
+        hack_type = context.data.get('type', 'plugin')
+        page, path = page_and_path(name, hack_type)
+        if WikiPage(self.env, page).exists or WikiPage(self.env, name).exists:
             raise ValidationError('Page already exists.')
+
+        repos = self.env.get_repository()
+        if repos.has_node(path):
+            raise ValidationError(
+                'Resulting repository path "%s" already exists.' % path
+            )
         return name
+
 
 class ReleasesExist(Aspect):
     """Validate that any of the selected releases exist."""
@@ -87,6 +104,24 @@ class ReleasesExist(Aspect):
                     )
                     raise ValidationError('Selected release %s invalid?!' % str(s))
         return selected
+
+
+class ValidTypeSelected(Aspect):
+    """Validate that a valid type is selected."""
+    def __init__(self, env):
+        self.env = env
+
+    def __call__(self, context, type_):
+        if not (type_ and isinstance(type_, basestring) and len(type_)):
+            raise ValidationError('No type selected?!')
+
+        tags = TagSystem(self.env)
+        req = FakeRequest(self.env)
+        types = [r.id for r, _ in tags.query(req, 'realm:wiki type')]
+        if type_ not in types:
+            raise ValidationError('Selected type %s invalid?!' % str(type_))
+        return type_
+
 
 class TracHacksHandler(Component):
     """Trac-Hacks request handler."""
@@ -119,6 +154,10 @@ class TracHacksHandler(Component):
         form.add('release', Chain(MinLength(1), ReleasesExist(self.env)),
                  'At least one release must be checked.',
                  path='//dd[@id="release"]', where='append')
+        form.add('type', ValidTypeSelected(self.env),
+                 'No type selected?!',
+                 path='//dd[@id="type"]', where='append')
+
         self.form = form
 
     # ITemplateStreamFilter methods
@@ -276,9 +315,7 @@ class TracHacksHandler(Component):
 
             vars = {}
             vars['OWNER'] = req.authname
-            vars['WIKINAME'] = data['name']
-            if not vars['WIKINAME'].lower().endswith(data['type']):
-                vars['WIKINAME'] += data['type'].title()
+            vars['WIKINAME'], _ = page_and_path(data['name'], data['type'])
             vars['TYPE'] = data.setdefault('type', 'plugin')
             vars['TITLE'] = data.setdefault('title', 'No title available')
             vars['LCNAME'] = vars['WIKINAME'].lower()
