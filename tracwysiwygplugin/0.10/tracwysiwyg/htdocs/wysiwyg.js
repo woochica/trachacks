@@ -1982,7 +1982,9 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     }
                 }
                 if (text) {
-                    holder.appendChild(contentDocument.createTextNode(text));
+                    if (!/^[ \t\r\n\f\v]+$/.test(text) || !/^t[dh]$/i.test(holder.tagName)) {
+                        holder.appendChild(contentDocument.createTextNode(text));
+                    }
                 }
             }
             if (!match) {
@@ -2611,9 +2613,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 skipNode = node;
                 _texts.push("||");
                 var text = self.domToWikitext(node).replace(/ *\n/g, "[[BR]]");
-                if (text) {
-                    _texts.push(text);
-                }
+                _texts.push(text || " ");
                 break;
             case "tr":
                 if (quoteDepth > 0) {

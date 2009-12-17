@@ -1,5 +1,5 @@
 addEvent(window, "load", function() {
-    TracWysiwyg.tracPaths = { base: "./", htdocs: "./" };
+    TracWysiwyg.tracPaths = { base: ".", search: "./search", stylesheets: [] };
     var instance = new TracWysiwyg(document.getElementById("textarea"));
     var contentDocument = instance.contentDocument;
 
@@ -729,8 +729,8 @@ addEvent(window, "load", function() {
                     "",
                     "text'', br[[BR]]''",
                     "",
-                    "||1,1[[BR]]||||1,3||",
-                    "||||2,2[[BR]][[BR]]||",
+                    "||1,1[[BR]]|| ||1,3||",
+                    "|| ||2,2[[BR]][[BR]]||",
                     "",
                     " * list, br[[BR]]",
                     " * list, br",
@@ -785,8 +785,8 @@ addEvent(window, "load", function() {
                     "",
                     "text'', br[[BR]]''",
                     "",
-                    "||1,1[[BR]]||||1,3||",
-                    "||||2,2[[BR]][[BR]]||",
+                    "||1,1[[BR]]|| ||1,3||",
+                    "|| ||2,2[[BR]][[BR]]||",
                     "",
                     " * list, br[[BR]]",
                     " * list, br",
