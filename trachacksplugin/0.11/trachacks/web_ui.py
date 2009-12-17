@@ -13,12 +13,13 @@ from trac.core import *
 from trac.config import IntOption, Option
 from trac.perm import IPermissionRequestor, PermissionCache, PermissionSystem
 from trac.web.chrome import Chrome
-from trac.resource import Resource, render_resource_link
+from trac.resource import Resource, ResourceNotFound, render_resource_link
 from acct_mgr.htfile import HtPasswdStore
 from acct_mgr.api import IPasswordStore, IAccountChangeListener
 from trac.wiki.formatter import wiki_to_oneliner, wiki_to_html
 from trac.wiki.model import WikiPage
 from trac.wiki.macros import WikiMacroBase
+from trac.ticket.model import Component as TicketComponent
 from trac.util.compat import sorted
 from trac.web.api import IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, INavigationContributor, \
@@ -80,6 +81,15 @@ class HackDoesntExist(Aspect):
             raise ValidationError(
                 'Resulting repository path "%s" already exists.' % path
             )
+
+        try:
+            TicketComponent(self.env, page)
+        except ResourceNotFound, e:
+            pass
+        else:
+            raise ValidationError(
+                'Resulting component "%s" already exists.' % page
+            )
         return name
 
 
@@ -102,7 +112,7 @@ class ReleasesExist(Aspect):
                     self.env.log.error(
                         "Invalid release %s selected for new hack %s" % (s, hack)
                     )
-                    raise ValidationError('Selected release %s invalid?!' % str(s))
+                    raise ValidationError('Selected release "%s" invalid?!' % str(s))
         return selected
 
 
@@ -119,7 +129,7 @@ class ValidTypeSelected(Aspect):
         req = FakeRequest(self.env)
         types = [r.id for r, _ in tags.query(req, 'realm:wiki type')]
         if type_ not in types:
-            raise ValidationError('Selected type %s invalid?!' % str(type_))
+            raise ValidationError('Selected type "%s" invalid?!' % str(type_))
         return type_
 
 
