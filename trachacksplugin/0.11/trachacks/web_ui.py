@@ -50,6 +50,11 @@ def natural_sort(l):
   return sorted(l, key=alphanum_key)
 
 
+class FakeRequest(object):
+    def __init__(self, env, authname = 'anonymous'):
+        self.perm = PermissionCache(env, authname)
+
+
 class HackDoesntExist(Aspect):
     """Validate that the hack does not exist."""
     def __init__(self, env):
@@ -61,6 +66,27 @@ class HackDoesntExist(Aspect):
             raise ValidationError('Page already exists.')
         return name
 
+class ReleasesExist(Aspect):
+    """Validate that any of the selected releases exist."""
+    def __init__(self, env):
+        self.env = env
+
+    def __call__(self, context, selected):
+        if selected:
+            tags = TagSystem(self.env)
+            req = FakeRequest(self.env)
+            releases = [r.id for r, _ in tags.query(req, 'realm:wiki release')]
+            if isinstance(selected, basestring):
+                selected = [ selected ]
+            for s in selected:
+                if s not in releases:
+                    hack = context.data.get('name', '') + \
+                           context.data.get('type', '').title()
+                    self.env.log.error(
+                        "Invalid release %s selected for new hack %s" % (s, hack)
+                    )
+                    raise ValidationError('Selected release %s invalid?!' % str(s))
+        return selected
 
 class TracHacksHandler(Component):
     """Trac-Hacks request handler."""
@@ -90,7 +116,8 @@ class TracHacksHandler(Component):
                  'Please write a few words for the description.')
         form.add('description', MinLength(16),
                  'Please write at least a sentence or two for the description.')
-        form.add('release', MinLength(1), 'At least one release must be checked.',
+        form.add('release', Chain(MinLength(1), ReleasesExist(self.env)),
+                 'At least one release must be checked.',
                  path='//dd[@id="release"]', where='append')
         self.form = form
 
@@ -420,10 +447,6 @@ class TracHacksHtPasswdStore(HtPasswdStore):
 
     # IAccountChangeListener
     def user_created(self, user, password):
-        class FakeRequest(object):
-            def __init__(self, env, authname):
-                self.perm = PermissionCache(env, authname)
-
         req = FakeRequest(self.env, user)
         resource = Resource('wiki', user)
         tag_system = TagSystem(self.env)
