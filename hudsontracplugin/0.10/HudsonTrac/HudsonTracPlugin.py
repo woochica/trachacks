@@ -94,7 +94,7 @@ class HudsonTracPlugin(Component):
         return 'builds'
 
     def get_navigation_items(self, req):
-        if self.nav_url and 'BUILD_VIEW' in req.perm:
+        if self.nav_url and req.perm.has_permission('BUILD_VIEW'):
             yield 'mainnav', 'builds', Markup('<a href="%s"%s>Builds</a>' % \
                         (self.nav_url, self.disp_tab and ' target="hudson"' or ''))
 
@@ -110,11 +110,11 @@ class HudsonTracPlugin(Component):
     # ITimelineEventProvider methods
 
     def get_timeline_filters(self, req):
-        if 'BUILD_VIEW' in req.perm:
+        if req.perm.has_permission('BUILD_VIEW'):
             yield ('build', 'Hudson Builds')
 
     def get_timeline_events(self, req, start, stop, filters):
-        if 'build' not in filters or 'BUILD_VIEW' not in req.perm:
+        if 'build' not in filters or not req.perm.has_permission('BUILD_VIEW'):
             return
 
         # xml parsing helpers
