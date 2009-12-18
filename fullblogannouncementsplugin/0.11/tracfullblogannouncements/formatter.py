@@ -61,7 +61,7 @@ class BlogEmailFormatter(Component):
             return output
 
     def format_subject(self, transport, realm, style, event):
-        if transport is 'email' and realm is 'wiki' and style is 'test/plain':
+        if transport == 'email' and realm == 'blog' and style == 'text/plain':
             template = NewTextTemplate(self.blog_email_subject)
             return template.generate(
                 blog=event.blog_post, 
