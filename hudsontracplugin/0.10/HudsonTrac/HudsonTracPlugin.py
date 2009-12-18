@@ -50,7 +50,7 @@ class HudsonTracPlugin(Component):
                           'successfully" etc messages.')
 
     def __init__(self):
-        api_url = self.job_url
+        api_url = urllib2.quote(self.job_url, '/%:@')
         if api_url[-1] != '/':
             api_url += '/'
         api_url += 'api/xml'
@@ -79,7 +79,7 @@ class HudsonTracPlugin(Component):
                 path  += '|/*/job/module/build[timestamp>=%(start)s][timestamp<=%(stop)s]'
                 depth += 1
 
-        self.info_url = '%s?xpath=%s&depth=%s&exclude=//action|//artifact|//changeSet|//culprit&wrapper=builds' % (api_url, path, depth)
+        self.info_url = '%s?xpath=%s&depth=%s&exclude=//action|//artifact|//changeSet|//culprit&wrapper=builds' % (api_url.replace('%', '%%'), path, depth)
 
         self.env.log.debug("Build-info url: '%s'" % self.info_url)
 
