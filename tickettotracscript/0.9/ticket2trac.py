@@ -102,8 +102,8 @@ class Ticket2Trac():
         parser.add_option('-o', '--owner', dest='owner',
                           help='Principal person responsible for handling the issue.')
         
-        parser.add_option('-s', '--status', dest='status', 
-                          help='What is the current status? One of new, assigned, closed, reopened.')
+        parser.add_option('-s', '--status', dest='status', default = 'new',
+                          help='What is the current status? One of new, assigned, closed, reopened. default is "new"')
         
         parser.add_option('-d', '--description', dest='description',
                           help='The body of the ticket. A good description should be specific, descriptive and to the point.')
