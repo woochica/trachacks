@@ -13,6 +13,7 @@ from trac.resource import get_resource_url
 from trac.web.chrome import Chrome, add_link, add_stylesheet, add_script, \
   add_ctxtnav
 from trac.web.href import Href
+from trac.resource import Resource
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.attachment import AttachmentModule
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
@@ -1255,8 +1256,16 @@ class DiscussionApi(Component):
         context.data['display'] = display
         context.data['messages'] = messages
         context.data['paginator'] = paginator
+
+        # Create context with topic resource for attachments.
+        topic_context = Context.from_request(context.req)
+        topic_context.realm = context.realm
+        topic_context.resource = Resource('discussion', 'topic/%s' % (
+          context.topic['id'],))
+
+        # Display list of attachments.
         context.data['attachments'] = AttachmentModule(self.env) \
-          .attachment_data(context)
+          .attachment_data(topic_context)
 
     def _get_paginator(self, context, page, items_limit, items_count,
       anchor = ''):
