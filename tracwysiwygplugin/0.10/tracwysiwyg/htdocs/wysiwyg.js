@@ -1264,16 +1264,16 @@ TracWysiwyg.prototype.selectionChanged = function() {
 
     var wikiRules = [];
     wikiRules.push.apply(wikiRules, wikiInlineRules);
-    wikiRules.push("^(?: *>)+[ \\t\\r\\f\\v]*");    // 19. citation
-                                            // 20. header
+    wikiRules.push("^(?: *>)+[ \\t\\r\\f\\v]*");    // -1. citation
+                                            // -2. header
     wikiRules.push("^ *={1,6} *.*? *={1,6} *(?:#[\\w:][-\\w\\d.:]*)?$");
-                                            // 21. list
+                                            // -3. list
     wikiRules.push("^ +(?:[-*]|[0-9]+\\.|[a-zA-Z]\\.|[ivxIVX]{1,5}\\.) ");
-                                            // 22. definition
+                                            // -4. definition
     wikiRules.push("^[ \\t\\r\\f\\v]+(?:`[^`]*`|\\{\\{\\{.*?\\}\\}\\}|[^`{:]|:[^:])+::(?:[ \\t\\r\\f\\v]+|$)");
-    wikiRules.push("^[ \\t\\r\\f\\v]+(?=[^ \\t\\r\\f\\v])");    // 23. leading space
-    wikiRules.push("\\|\\|[ \\t\\r\\f\\v]*$");  // 24. closing table row
-    wikiRules.push("\\|\\|");                   // 25. cell
+    wikiRules.push("^[ \\t\\r\\f\\v]+(?=[^ \\t\\r\\f\\v])");    // -5. leading space
+    wikiRules.push("\\|\\|[ \\t\\r\\f\\v]*$");  // -6. closing table row
+    wikiRules.push("\\|\\|");                   // -7. cell
 
     var wikiSyntaxRules = [];
     wikiSyntaxRules.push(_ticketLink);
@@ -1920,11 +1920,12 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         holder = _fragment;
     }
 
-    function getMatchFirstIndex(match) {
+    function getMatchNumber(match) {
         var length = match.length;
         for (var i = 1; i < length; i++) {
             if (match[i]) {
-                return i;
+                var inlines = wikiInlineRules.length
+                return i <= inlines ? i : inlines - i;
             }
         }
         return null;
@@ -1954,10 +1955,10 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         decorationStack = [];
         for ( ; ; ) {
             var match = wikiRulesPattern.exec(line);
-            var matchFirstIndex = null;
+            var matchNumber = null;
             var text = null;
             if (match) {
-                matchFirstIndex = getMatchFirstIndex(match);
+                matchNumber = getMatchNumber(match);
                 if (prevIndex < match.index) {
                     text = line.substring(prevIndex, match.index);
                 }
@@ -1966,13 +1967,13 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 text = line.substring(prevIndex);
             }
 
-            if ((prevIndex == 0 && text || match && match.index == 0 && matchFirstIndex <= wikiInlineRules.length)
+            if ((prevIndex == 0 && text || match && match.index == 0 && matchNumber > 0)
                 && (!inParagraph || quoteDepth.length > 0)
                 && (!inDefList || !/^ /.test(line)))
             {
                 closeToFragment();
             }
-            if (text || match && matchFirstIndex <= wikiInlineRules.length) {
+            if (text || match && matchNumber > 0) {
                 if (inParagraph && (prevIndex == 0 || /^(?:(?: *>)+\s*|\s+)$/.test(line.substring(0, prevIndex)))) {
                     text = text ? (" " + text) : " ";
                 }
@@ -1994,7 +1995,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
             var matchText = match[0];
 
             if (!/^!/.test(matchText)) {    // start '!'
-                switch (matchFirstIndex) {
+                switch (matchNumber) {
                 case 1:     // bolditalic
                     handleInline("bolditalic");
                     continue;
@@ -2046,10 +2047,10 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 case 18:    // ["internal free link"]
                     handleWikiPageName(matchText.slice(1, -1), matchText.slice(2, -2));
                     continue;
-                case 19:    // citation
+                case -1:    // citation
                     handleCitation(matchText);
                     continue;
-                case 20:    // header
+                case -2:    // header
                     currentHeader = handleHeader(matchText);
                     if (currentHeader) {
                         line = line.replace(/ *=+ *(?:#[\w:][-\w\d:.]*)?$/, "");
@@ -2057,13 +2058,13 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                         continue;
                     }
                     break;
-                case 21:    // list
+                case -3:    // list
                     handleList(matchText)
                     continue;
-                case 22:    // definition
+                case -4:    // definition
                     handleDefinition(matchText);
                     continue;
-                case 23:    // leading space
+                case -5:    // leading space
                     if (listDepth.length == 0 && !inDefList) {
                         handleIndent(matchText);
                         continue;
@@ -2073,13 +2074,13 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     }
                     matchText = matchText.replace(/^\s+/, " ");
                     break;
-                case 24:    // closing table row
+                case -6:    // closing table row
                     if (inTable) {
                         handleTableCell(-1);
                         continue;
                     }
                     break;
-                case 25:    // cell
+                case -7:    // cell
                     if (quoteDepth.length > 0 && match.index == 0) {
                         closeToFragment();
                     }
@@ -2093,7 +2094,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     openParagraph();
                 }
                 var tmp;
-                if (matchFirstIndex == 16) {
+                if (matchNumber == 16) {
                     tmp = /^!?\[\[br\]\]$/i.test(matchText)
                         ? (matchText.charCodeAt(0) == 0x21
                             ? contentDocument.createTextNode(matchText.substring(1))
