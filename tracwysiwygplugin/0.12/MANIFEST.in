@@ -1,0 +1,3 @@
+include tracwysiwyg/htdocs/*.js
+include tracwysiwyg/htdocs/*.css
+include tracwysiwyg/htdocs/*.png
