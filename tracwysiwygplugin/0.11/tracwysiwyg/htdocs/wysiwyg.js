@@ -1966,7 +1966,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 text = line.substring(prevIndex);
             }
 
-            if ((prevIndex == 0 ? !!text : (match && match.index == 0 && matchFirstIndex <= wikiInlineRules.length))
+            if ((prevIndex == 0 && text || match && match.index == 0 && matchFirstIndex <= wikiInlineRules.length)
                 && (!inParagraph || quoteDepth.length > 0)
                 && (!inDefList || !/^ /.test(line)))
             {

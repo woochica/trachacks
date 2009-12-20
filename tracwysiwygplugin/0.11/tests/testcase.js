@@ -1235,6 +1235,29 @@ addEvent(window, "load", function() {
                 "Paragraph" ].join("\n"));
         });
 
+        unit.add("table + rule", function() {
+            var dom = fragment(
+                element("table", { "class": "wiki" },
+                    element("tbody", element("tr", element("td", "1st")))),
+                element("p", element("b", "bold")),
+                element("table", { "class": "wiki" },
+                    element("tbody", element("tr", element("td", "2nd")))),
+                element("p", "'''normal"));
+            generateFragment.call(this, dom, [
+                "||1st||",
+                "'''bold'''",
+                "||2nd||",
+                "!'''normal" ].join("\n"));
+            generate.call(this, dom, [
+                "||1st||",
+                "",
+                "'''bold'''",
+                "",
+                "||2nd||",
+                "",
+                "!'''normal" ].join("\n"));
+        });
+
         unit.add("blockquote + table", function() {
             var dom = fragment(
                 element("p", "Paragraph"),
