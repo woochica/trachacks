@@ -20,8 +20,8 @@ from intertrac import InterTrac
 LABEL_DEPEND_PAGE = u'Dependencies'
 LABEL_SUMMARY = 'Summary: '
 LABEL_SUB = 'Sub: '
-LABEL_PRECEDING = 'Preceding: '
-LABEL_SUBSEQUENT = 'Subsequent: '
+LABEL_PRECEDING = 'Predecessors: '
+LABEL_SUBSEQUENT = 'Successors: '
 
 TICKET_CUSTOM = "ticket-custom"
 

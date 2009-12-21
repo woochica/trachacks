@@ -43,7 +43,7 @@ class InterTrac:
             # trac.iniをオープンする
             project = open_environment(path, use_cache=True)
             # 名前をtrac.iniのプロジェクト名で置き換えます．
-#            intertrac['name'] = project.project_name 
+            #intertrac['name'] = project.project_name 
             intertrac['name'] = intertrac['label'] 
             # プロジェクトの一覧表示用のデータを作成します．
             url = intertrac.get('url', '')
