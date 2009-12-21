@@ -79,8 +79,8 @@ class TracDependency(Component):
         # チケットの情報を取得する
         tkt = Ticket(self.env, tkt_id)
         # チケットの情報から取得できる親チケットと依存関係のリンクを作る
-        summary_ticket = self.intertrac.get_link(tkt['summary_ticket'])
-        dependencies = self.intertrac.get_link(tkt['dependencies'])
+        summary_ticket = self.intertrac.get_link(tkt['summary_ticket'], self.log)
+        dependencies = self.intertrac.get_link(tkt['dependencies'], self.log)
         # このチケットを指定している，intertracで設定されているすべてのプロジェクトからチケットを検索しリンクを作る
         tkt_id_l = self.env.project_name + ':#' + tkt_id
         sub_ticket = self.intertrac.create_links(self.subticket(tkt_id_l), self.subticket_i(tkt_id), self.log) 
@@ -150,15 +150,16 @@ class TracDependency(Component):
         """チケット番号の指定に問題がないかを確認します．"""
         errors = []
         self.log.debug('TracDependency,validate_ticket: summary_ticket %s', ticket['summary_ticket'])
-        # 親タスクがループしていないか確認する必要がある
-        label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
-        errors.extend(self.intertrac.validate_ticket(ticket['summary_ticket'], label, False, self.log))
-        self.log.debug('TracDependency,validate_ticket: dependenvies   %s', ticket['dependencies'])
-        label = self.config.get(TICKET_CUSTOM,"dependencies.label")
-        errors.extend(self.intertrac.validate_ticket(ticket['dependencies'], label, True, self.log))
-        # 親チケットがループしていないか確認する
-        self.log.debug(ticket['summary_ticket'])
-        errors.extend(self.intertrac.validate_outline(ticket['summary_ticket'], ticket.id, self.log))
+        if self.config.get( TICKET_CUSTOM, "summary_ticket"): # カスタムフィールドが有効な場合
+            # 親チケットが存在しているかとか指定方法に間違いがないかを確認する．
+            label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
+            errors.extend(self.intertrac.validate_ticket(ticket['summary_ticket'], label, False, self.log))
+            # 親チケットがループしていないか確認する
+            errors.extend(self.intertrac.validate_outline(ticket['summary_ticket'], ticket.id, label, self.log))
+        if self.config.get( TICKET_CUSTOM, "dependencies"): # カスタムフィールドが有効な場合
+            # 依存関係チケットが存在しているかとか指定方法に間違いがないかを確認する．
+            label = self.config.get(TICKET_CUSTOM,"dependencies.label")
+            errors.extend(self.intertrac.validate_ticket(ticket['dependencies'], label, True, self.log))
         return errors
 
     # ITicketChangeListener methods

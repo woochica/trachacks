@@ -124,7 +124,7 @@ class InterTrac:
         intertracs0 = self.intertracs0
         ticket = ticket.strip() # 前後の空白を削除します
         idx = ticket.rfind(':#') # プロジェクト名とチケット番号に分割します
-        log.debug("get_ticket : ticket=%s current_project_name=%s", ticket, current_project_name)
+        # log.debug("get_ticket : ticket=%s current_project_name=%s", ticket, current_project_name)
         if idx > 0: # InterTrac ticket
             current_project = False
             project_name, id = ticket[:idx], ticket[idx+2:]
@@ -137,12 +137,12 @@ class InterTrac:
             current_project = True
             #project_name = self.env.project_name
             project_name = current_project_name
-            log.debug("get_ticket project_name : %s / %s", project_name, ticket)
+            # log.debug("get_ticket project_name : %s / %s", project_name, ticket)
             if ticket.rfind('#') == 0:
                 id = ticket[1:]
             else:
                 id = ticket
-        log.debug("get_ticket : id=%s current_project_name=%s", id, current_project_name)
+        # log.debug("get_ticket : id=%s current_project_name=%s", id, current_project_name)
         if id != "":
             # 依存関係を指定しているか確認する 例:(FF)
             idx = id.rfind('(')
@@ -153,13 +153,14 @@ class InterTrac:
                     return {'error':'This field can not have dependency.'}
                 id, dep = id[:idx], id[idx+1:]
                 #依存関係に問題がないかの確認が必要
+                if dep.startswith('FF')==False and dep.startswith('FS')==False and dep.startswith('SF')==False and dep.startswith('SS')==False:
+                    return {'error':'Unknown type of dependency.'}
             else:
                 dep = ''
             try:
                 # InterTracの設定のキーは小文字
                 intertrac = intertracs0[project_name.lower()]
                 path = intertrac.get('path', '')
-                # TODO:　オープンできない場合もあるのでエラー処理が必要
                 project = open_environment(path, use_cache=True)
                 tkt = Ticket(project, id)
                 status = tkt['status']
@@ -176,10 +177,10 @@ class InterTrac:
         # leaf_id:葉チケットのID
         # 戻り値:エラー文字列
         error = []
-        log.debug("validate_outline_b : %s", ticket)
+        # log.debug("validate_outline_b : %s", ticket)
         ticket = ticket.strip() # 前後の空白を削除します
         if ticket == leaf_id:
-            log.debug("validate_outline_b : ticket=%s sub_ticket=%s", ticket, sub_ticket)
+            # log.debug("validate_outline_b : ticket=%s sub_ticket=%s", ticket, sub_ticket)
             return 'Ticket(%s)\'s summary ticket is this ticket'%sub_ticket
         t = self.get_ticket(ticket, self.env.project_name, False, log)
         error = t['error']
@@ -195,10 +196,9 @@ class InterTrac:
                     return self.validate_outline_b(ticket, t['name'],leaf_id, log)
         return None
 
-    def validate_outline(self, tkt, id, log):
+    def validate_outline(self, tkt, id, label, log):
         errors = []
         project_name = self.env.project_name
-        #id = tkt.id
         t = self.get_ticket(tkt, self.env.project_name, False, log)
         error = t['error']
         if error is None:
@@ -207,28 +207,30 @@ class InterTrac:
             if e is None:
                 pass
             else:
-                label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
                 errors.append((label, e))
         return errors
 
     def validate_ticket(self, ids, field_name, dep_en, log):
+        # ids:カスタムフィールドに入っている値そのままです．
+        # field_name: エラーを表示するためのフィールド名
+        # dep_en: 親チケットを指定している場合はTrueになります．
+        # log: ログを出力する先
         errors = []
         #リンクが正しいか確認します．
         if ids is None: #idになにも入ってない場合はエラーになるのでifが必要
-            log.debug("test_link = None ")
+            # log.debug("test_link = None ")
             return errors
         if ids == '': #idになにも入ってない場合はエラーになるのでifが必要
-            log.debug("test_link = ")
+            # log.debug("test_link = ")
             return errors
-        log.debug("test_link = %s" % ids)
+        # log.debug("test_link = %s" % ids)
+        # カンマで分割します．
         tickets = ids.split(',')
-        for ticket in tickets:
+        for ticket in tickets: # 分割した文字列でループをまわります．
+            # 一つ一つのチケットのリンクに問題がないか確認します．
             t = self.get_ticket(ticket, self.env.project_name, dep_en, log)
             error = t['error']
-            if error is None:
-                tkt = t['ticket']
-                log.debug("test_link : %s(%s)", tkt['summary'], tkt['status'])
-            else:
+            if error: # エラーがなければ
                 errors.append((field_name, error))
                 continue
         return errors
@@ -240,11 +242,11 @@ class InterTrac:
         for ticket in tickets2:
             tkt = ticket['ticket']
             url = ticket['url']
-            log.debug("linkify_ids url = %s" % url)
+            # log.debug("linkify_ids url = %s" % url)
             status = ticket['status']
-            log.debug("linkify_ids status = %s" % status)
+            # log.debug("linkify_ids status = %s" % status)
             title1 = ticket['title']
-            log.debug("linkify_ids title1 = %s" % title1)
+            # log.debug("linkify_ids title1 = %s" % title1)
             data.append(tag.a('%s'%tkt, href=url, class_='%s ticket'%status, title=title1))
             data.append(', ')
         if data:
@@ -252,7 +254,7 @@ class InterTrac:
             del data[-1]
         return tag.span(*data)
 
-    def get_link(self, ids):
+    def get_link(self, ids, log):
         links = []
         if ids is None: #idになにも入ってない場合はエラーになるのでifが必要
             return links
