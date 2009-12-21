@@ -1269,7 +1269,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
 
     var wikiToDomInlineRules = wikiInlineRules.slice(0);
                                             // 1001. escaping double pipes
-    wikiToDomInlineRules.push("!(?:\\|\\|)+(?:[ \\t\\r\\f\\v]*$|)");
+    wikiToDomInlineRules.push("!=?(?:\\|\\|)+(?:[ \\t\\r\\f\\v]*$|)");
 
     var wikiRules = wikiToDomInlineRules.slice(0);
     wikiRules.push("^(?: *>)+[ \\t\\r\\f\\v]*");    // -1. citation
@@ -1280,11 +1280,11 @@ TracWysiwyg.prototype.selectionChanged = function() {
                                             // -4. definition
     wikiRules.push("^[ \\t\\r\\f\\v]+(?:`[^`]*`|\\{\\{\\{.*?\\}\\}\\}|[^`{:]|:[^:])+::(?:[ \\t\\r\\f\\v]+|$)");
     wikiRules.push("^[ \\t\\r\\f\\v]+(?=[^ \\t\\r\\f\\v])");    // -5. leading space
-    wikiRules.push("(?:\\|\\|)+[ \\t\\r\\f\\v]*$");     // -6. closing table row
-    wikiRules.push("(?:\\|\\|)+");                      // -7. cell
+    wikiRules.push("=?(?:\\|\\|)+[ \\t\\r\\f\\v]*$");   // -6. closing table row
+    wikiRules.push("=?(?:\\|\\|)+=?");                  // -7. cell
 
     var domToWikiInlineRules = wikiInlineRules.slice(0);
-    domToWikiInlineRules.push("!?(?:\\|\\|)+");         // cell
+    domToWikiInlineRules.push("!?=?(?:\\|\\|)+=?");     // cell
 
     var wikiSyntaxRules = [];
     wikiSyntaxRules.push(_ticketLink);
@@ -1840,7 +1840,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         }
     }
 
-    function handleTableCell(action, colspan) {
+    function handleTableCell(action, colspan, header) {
         var d = contentDocument;
         var h, table, tbody;
 
@@ -1886,7 +1886,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
             return;
         }
 
-        var cell = d.createElement("td");
+        var cell = d.createElement(header ? "th" : "td");
         if (colspan > 1) {
             cell.setAttribute("colSpan", colspan);
         }
@@ -2111,7 +2111,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     break;
                 case -6:    // closing table row
                     if (inTable) {
-                        handleTableCell(-1, matchText.length / 2);
+                        handleTableCell(-1);
                         continue;
                     }
                     break;
@@ -2119,7 +2119,8 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     if (quoteDepth.length > 0 && match.index == 0) {
                         closeToFragment();
                     }
-                    handleTableCell(inTableRow ? 0 : 1, matchText.length / 2);
+                    handleTableCell(inTableRow ? 0 : 1,
+                        matchText.replace(/^=|=$/g, '').length / 2, matchText.slice(-1) == "=");
                     continue;
                 }
             }
@@ -2146,7 +2147,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
             closeHeader();
         }
         if (inTable) {
-            handleTableCell(-1, 1);
+            handleTableCell(-1);
         }
     }
     closeToFragment();
@@ -2659,15 +2660,23 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                     quoteCitation = (node.className == "citation");
                 }
                 break;
-            case "td": case "th":
+            case "th":
+                var header = true;
+            case "td":
                 skipNode = node;
                 var colspan = node.getAttribute("colSpan");
                 if (colspan) {
                     colspan = parseInt(colspan, 10);
                 }
                 _texts.push(colspan > 1 ? string("||", colspan) : "||");
+                if (header) {
+                    _texts.push("=");
+                }
                 var text = self.domToWikitext(node).replace(/ *\n/g, "[[BR]]");
                 _texts.push(text || " ");
+                if (header) {
+                    _texts.push("=");
+                }
                 break;
             case "tr":
                 if (quoteDepth > 0) {
