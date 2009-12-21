@@ -643,6 +643,28 @@ addEvent(window, "load", function() {
             generate.call(this, dom, wikitext);
         });
 
+        unit.add("<wiki:bracket links>", function() {
+            function a(link) {
+                return element("a", link, {
+                    href: "./search?q=" + encodeURIComponent(link),
+                    title: link, "tracwysiwyg-link": link, onclick: "return false;" });
+            }
+            var dom = fragment(
+                element("p", "<", a("link:1"), ">"),
+                element("p", "Thing<", a("link:2 and (3)"), ">"),
+                element("p", "<link:1>"),
+                element("p", "Thing<link:2 and (3)>"));
+            var wikitext = [
+                "<link:1>",
+                "",
+                "Thing<link:2 and (3)>",
+                "",
+                "!<link:1>",
+                "",
+                "Thing!<link:2 and (3)>" ].join("\n");
+            generate.call(this, dom, wikitext);
+        });
+
         unit.add("[[macro]]", function() {
             var dom = element("p",
                 "Line break ", element("br"), " another line", element("br"),
