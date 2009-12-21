@@ -378,19 +378,19 @@ addEvent(window, "load", function() {
                 element("p", "Paragraph"),
                 element("table", { "class": "wiki" },
                     element("tbody",
-                        element("tr", element("td", "foo||bar!||foobar")))),
-                element("p", "||cell|| Paragraph"));
+                        element("tr", element("td", "foo||bar!||||||foobar")))),
+                element("p", "||||cell|| Paragraph"));
             generateFragment.call(this, dom, [
                 "Paragraph",
-                "||foo!||bar!!||foobar",
-                "!||cell!||",
+                "||foo!||bar!!||||||foobar",
+                "!||||cell!||",
                 "Paragraph" ].join("\n"));
             generate.call(this, dom, [
                 "Paragraph",
                 "",
-                "||foo!||bar!!||foobar||",
+                "||foo!||bar!!||||||foobar||",
                 "",
-                "!||cell!|| Paragraph" ].join("\n"));
+                "!||||cell!|| Paragraph" ].join("\n"));
         });
 
         unit.add("#ticket", function() {
@@ -1272,6 +1272,34 @@ addEvent(window, "load", function() {
                 "",
                 "||1.1||1.2||",
                 "||2.1||",
+                "||3.1||__3.2__||`3.3`||",
+                "",
+                "Paragraph" ].join("\n"));
+        });
+
+        unit.add("colspan", function() {
+            var dom = fragment(
+                element("p", "Paragraph"),
+                element("table", { "class": "wiki" },
+                    element("tbody",
+                        element("tr", element("td", "1.1"), element("td", "1.2", { colspan: 2 })),
+                        element("tr", element("td", "2.1", { colspan: 3 })),
+                        element("tr",
+                            element("td", "3.1"),
+                            element("td", element("u", "3.2")),
+                            element("td", element("tt", "3.3"))))),
+                element("p", "Paragraph"));
+            generateFragment.call(this, dom, [
+                "Paragraph",
+                "||1.1||||1.2",
+                "||||||2.1",
+                "||3.1||__3.2__||`3.3`",
+                "Paragraph" ].join("\n"));
+            generate.call(this, dom, [
+                "Paragraph",
+                "",
+                "||1.1||||1.2||",
+                "||||||2.1||",
                 "||3.1||__3.2__||`3.3`||",
                 "",
                 "Paragraph" ].join("\n"));
