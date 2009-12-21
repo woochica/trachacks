@@ -12,22 +12,24 @@ from string import Template
 from trac.core import *
 from trac.config import IntOption, Option
 from trac.perm import IPermissionRequestor, PermissionCache, PermissionSystem
-from trac.web.chrome import Chrome
 from trac.resource import Resource, ResourceNotFound, render_resource_link
-from acct_mgr.htfile import HtPasswdStore
-from acct_mgr.api import IPasswordStore, IAccountChangeListener
 from trac.wiki.formatter import wiki_to_oneliner, wiki_to_html
 from trac.wiki.model import WikiPage
 from trac.wiki.macros import WikiMacroBase
 from trac.ticket.model import Component as TicketComponent
 from trac.util.compat import sorted
-from trac.web.api import IRequestHandler, ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider, INavigationContributor, \
-                            add_stylesheet, add_script, add_ctxtnav
+from trac.web.api import IRequestHandler, ITemplateStreamFilter, \
+                         IRequestFilter, RequestDone
+from trac.web.chrome import Chrome, ITemplateProvider, INavigationContributor, \
+                            add_stylesheet, add_script, add_ctxtnav, \
+                            add_warning, add_notice
+from acct_mgr.htfile import HtPasswdStore
+from acct_mgr.api import IPasswordStore, IAccountChangeListener
 from tractags.api import TagSystem
 from tractags.macros import render_cloud
 from tractags.query import Query
 from tracvote import VoteSystem
+from svnauthz.io import AuthzFileReader, AuthzFileWriter
 from genshi.builder import tag as builder
 from genshi.filters.transform import Transformer
 from trachacks.validate import *
@@ -51,13 +53,12 @@ def natural_sort(l):
     return sorted(l, key=alphanum_key)
 
 
-def page_and_path(hack_name, hack_type):
-    """Compute wiki page and repository path from hack name and type, return
-    as tuple (wiki page name, repository path)."""
-    name = hack_name
-    if not name.lower().endswith(hack_type):
-            name += hack_type.title()
-    return (name, '/%s' % name.lower())
+def get_page_name(hack_name, hack_type):
+    """Compute wiki page name from hack name and type"""
+    page_name = hack_name
+    if not page_name.lower().endswith(hack_type):
+        page_name += hack_type.title()
+    return page_name
 
 
 class FakeRequest(object):
@@ -70,27 +71,38 @@ class HackDoesntExist(Aspect):
     def __init__(self, env):
         self.env = env
 
-    def __call__(self, context, name):
+    def __call__(self, context, hack_name):
         hack_type = context.data.get('type', 'plugin')
-        page, path = page_and_path(name, hack_type)
-        if WikiPage(self.env, page).exists or WikiPage(self.env, name).exists:
+        page_name = get_page_name(hack_name, hack_type)
+        if WikiPage(self.env, page_name).exists:
             raise ValidationError('Page already exists.')
 
         repos = self.env.get_repository()
+        path = '/%s' % page_name.lower()
         if repos.has_node(path):
             raise ValidationError(
-                'Resulting repository path "%s" already exists.' % path
+                'Resulting path "%s" already exists in repository.' % path
             )
 
         try:
-            TicketComponent(self.env, page)
+            TicketComponent(self.env, page_name)
         except ResourceNotFound, e:
             pass
         else:
             raise ValidationError(
-                'Resulting component "%s" already exists.' % page
+                'Resulting component "%s" already exists.' % page_name
             )
-        return name
+
+        authz_file = self.env.config.get('trac', 'authz_file')
+        authz = AuthzFileReader().read(authz_file)
+        authz_paths = [ p.get_path() for p in authz.get_paths() ]
+        for ap in authz_paths:
+            if ap.startswith(path):
+                raise ValidationError(
+                    'Resulting path "%s" already exists in authz file.' % path
+                )
+
+        return hack_name
 
 
 class ReleasesExist(Aspect):
@@ -103,7 +115,7 @@ class ReleasesExist(Aspect):
             tags = TagSystem(self.env)
             req = FakeRequest(self.env)
             releases = [r.id for r, _ in tags.query(req, 'realm:wiki release')]
-            if isinstance(selected, basestring):
+            if isinstance(selected, (basestring, unicode)):
                 selected = [ selected ]
             for s in selected:
                 if s not in releases:
@@ -135,8 +147,8 @@ class ValidTypeSelected(Aspect):
 
 class TracHacksHandler(Component):
     """Trac-Hacks request handler."""
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider,
-               IPermissionRequestor, ITemplateStreamFilter)
+    implements(INavigationContributor, IRequestHandler, IRequestFilter,
+               ITemplateProvider, IPermissionRequestor, ITemplateStreamFilter)
 
     limit = IntOption('trachacks', 'limit', 25,
         'Default maximum number of hacks to display.')
@@ -145,6 +157,8 @@ class TracHacksHandler(Component):
     svnbase = Option('trachacks', 'subversion_base_url',
         'http://trac-hacks.org/svn',
         'Base URL of the Subversion repository.')
+    lockfile = Option('trachacks', 'lock_file', '/var/tmp/newhack.lock',
+        'Path and name of lockfile to secure new hack creation')
 
     path_match = re.compile(r'/(?:hacks/?(cloud|list)?|newhack)')
     title_extract = re.compile(r'=\s+([^=]*)=', re.MULTILINE | re.UNICODE)
@@ -171,7 +185,6 @@ class TracHacksHandler(Component):
         self.form = form
 
     # ITemplateStreamFilter methods
-
     def filter_stream(self, req, method, filename, stream, data):
         context = data.get('form_context')
         if context and context.errors and req.path_info == '/newhack':
@@ -179,7 +192,6 @@ class TracHacksHandler(Component):
         return stream
 
     # IRequestHandler methods
-
     def match_request(self, req):
         return self.path_match.match(req.path_info)
 
@@ -212,7 +224,6 @@ class TracHacksHandler(Component):
         data['releases'] = releases
 
         selected_releases = req.args.get('release', set(['0.10', '0.11', 'anyrelease']))
-
         data['selected_releases'] = selected_releases
 
         hacks = self.fetch_hacks(req, data, [ t[0] for t in types ], selected_releases)
@@ -236,6 +247,29 @@ class TracHacksHandler(Component):
                 return self.render_list(req, data, hacks)
             else:
                 return self.render_cloud(req, data, hacks)
+
+    # IRequestHandler methods
+    def pre_process_request(self, req, handler):
+        from trac.wiki.web_ui import WikiModule
+        if isinstance(handler, WikiModule):
+            path = req.path_info
+            args = req.args
+
+            if not (req.method == 'GET'):
+                self.env.log.debug('Hacks: no notice: no GET request')
+            elif not (path.startswith('/wiki/') or path == '/wiki'):
+                self.env.log.debug('Hacks: no notice: not a wiki path')
+            elif not args.has_key('hack'):
+                self.env.log.debug('Hacks: no notice: hack= missing')
+            elif args['hack'] != 'created':
+                self.env.log.debug('Hacks: no notice: hack=%s' % args['hack'])
+            else:
+                self.env.log.debug('Hacks: notice added')
+                add_notice(req, 'Your hack has been created successfully.')
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        return (template, data, content_type)
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -325,7 +359,7 @@ class TracHacksHandler(Component):
 
             vars = {}
             vars['OWNER'] = req.authname
-            vars['WIKINAME'], _ = page_and_path(data['name'], data['type'])
+            vars['WIKINAME'] = get_page_name(data['name'], data['type'])
             vars['TYPE'] = data.setdefault('type', 'plugin')
             vars['TITLE'] = data.setdefault('title', 'No title available')
             vars['LCNAME'] = vars['WIKINAME'].lower()
@@ -335,7 +369,16 @@ class TracHacksHandler(Component):
             vars['EXAMPLE'] = data.setdefault('example',
                                               'No example available')
 
-            if 'preview' in req.args and not context.errors:
+            if 'create' in req.args and not context.errors:
+                success, message = self.create_hack(req, data, vars)
+                if success:
+                    target = '%s?%s' % \
+                        (req.href.wiki(vars['WIKINAME']), 'hack=created')
+                    req.redirect(target)
+                    raise RequestDone
+                else:
+                    add_warning(req, message)
+            elif 'preview' in req.args and not context.errors:
                 page = WikiPage(self.env, self.template)
                 if not page.exists:
                     raise TracError('New hack template %s does not exist.' % \
@@ -344,8 +387,6 @@ class TracHacksHandler(Component):
                 template = re.sub(r'\[\[ChangeLog[^\]]*\]\]',
                                   'No changes yet', template)
                 data['page_preview'] = wiki_to_html(template, self.env, req)
-
-
         else:
             data['form_context'] = None
             data['type'] = 'plugin'
@@ -353,6 +394,115 @@ class TracHacksHandler(Component):
 
         self.env.log.debug('MUPPETS AHOY')
         return 'hacks_new.html', data, None
+
+    def create_hack(self, req, data, vars):
+        import fcntl
+
+        messages = []
+        created = False
+        have_lock = False
+        lockfile = open(self.lockfile, "w")
+        try:
+            rv = fcntl.flock(lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if rv:
+                raise TracError('Failed to acquire lock, error: %i' % rv)
+            have_lock = True
+        except IOError:
+            messages.append(
+                'A hack is currently being created by another user. '
+                'Please wait a few seconds, then click the "Create hack" '
+                'button again.'
+            )
+
+        if have_lock:
+            steps_done = []
+            try:
+                # Step 1: create repository paths
+                from os import popen
+
+                svn_path = 'file://%s' % \
+                    self.env.config.get('trac', 'repository_dir')
+                svn_path = svn_path.rstrip('/')
+                page_name = vars['WIKINAME']
+                hack_path = vars['LCNAME']
+                paths = [ '%s/%s' % (svn_path, hack_path) ]
+                selected_releases = data['selected_releases']
+                if isinstance(selected_releases, (basestring, unicode)):
+                    selected_releases = [ selected_releases, ]
+                for release in selected_releases:
+                    if release == 'anyrelease': continue
+                    paths.append("%s/%s/%s" % \
+                        (svn_path, hack_path, release))
+
+                cmd  = '/usr/bin/op create-hack %s ' % req.authname
+                cmd += '"New hack %s, created by %s" ' % \
+                        (page_name, req.authname)
+                cmd += '%s 2>&1' % ' '.join(paths)
+                output = popen(cmd).readlines()
+                if output:
+                    raise Exception(
+                        "Failed to create Subversion paths:\n%s" % \
+                            '\n'.join(output)
+                        )
+                steps_done.append('repository')
+
+                # Step 2: Add permissions
+                from svnauthz.model import User, Path, PathAcl
+
+                authz_file = self.env.config.get('trac', 'authz_file')
+                authz = AuthzFileReader().read(authz_file)
+
+                svn_path_acl = PathAcl(User(req.authname), r=True, w=True)
+                authz.add_path(Path("/%s" % hack_path, acls = [svn_path_acl,]))
+                AuthzFileWriter().write(authz_file, authz)
+                steps_done.append('permissions')
+
+                # Step 3: Add component
+                component = TicketComponent(self.env)
+                component.name = page_name
+                component.owner = req.authname
+                component.insert()
+                steps_done.append('component')
+
+                # Step 4: Create wiki page
+                template_page = WikiPage(self.env, self.template)
+                page = WikiPage(self.env, page_name)
+                page.text = Template(template_page.text).substitute(vars)
+                page.save(req.authname, 'New hack %s, created by %s' % \
+                          (page_name, req.authname), '0.0.0.0')
+                steps_done.append('wiki')
+
+                # Step 5: Tag the new wiki page
+                res = Resource('wiki', page_name)
+                tags = data['tags'].split() + selected_releases
+                TagSystem(self.env).set_tags(req, res, tags)
+                steps_done.append('tags')
+
+                rv = fcntl.flock(lockfile, fcntl.LOCK_UN)
+                created = True
+            except Exception, e:
+                try:
+                    if 'tags' in steps_done:
+                        res = Resource('wiki', page_name)
+                        tags = data['tags'].split() + selected_releases
+                        TagSystem(self.env).delete_tags(req, res, tags)
+                    if 'wiki' in steps_done:
+                        WikiPage(self.env, page_name).delete()
+                    if 'component' in steps_done:
+                        TicketComponent(self.env, page_name).delete()
+                    if 'permissions' in steps_done:
+                        authz_file = self.env.config.get('trac', 'authz_file')
+                        authz = AuthzFileReader().read(authz_file)
+                        authz.del_path(Path("/%s" % hack_path))
+                        AuthzFileWriter().write(authz_file, authz)
+                    # TODO: rollback subversion path creation
+                    rv = fcntl.flock(lockfile, fcntl.LOCK_UN)
+                except:
+                    self.env.log.error("Rollback failed")
+                    rv = fcntl.flock(lockfile, fcntl.LOCK_UN)
+                self.env.log.error(e, exc_info=True)
+                raise TracError(str(e))
+        return (created, messages)
 
     def render_list(self, req, data, hacks):
         ul = builder.ul()

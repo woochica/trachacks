@@ -15,6 +15,7 @@ setup(
         'http://trac-hacks.org/svn/tagsplugin/trunk#egg=TracTags-0.6',
         'http://trac-hacks.org/svn/accountmanagerplugin/trunk#egg=TracAccountManager',
         'http://trac-hacks.org/svn/voteplugin/0.11#egg=TracVote-0.1',
+        'http://trac-hacks.org:81/browser/svnauthzadminplugin/0.11#egg=SvnAuthzAdminPlugin',
         ],
     entry_points={
         'trac.plugins': [
@@ -25,5 +26,6 @@ setup(
         'TracAccountManager',
         'TracTags >= 0.6',
         'TracVote >= 0.1',
+        'SvnAuthzAdminPlugin',
         ],
     )
