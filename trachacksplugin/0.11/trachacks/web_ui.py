@@ -193,16 +193,17 @@ class TracHacksHandler(Component):
 
     # IRequestHandler methods
     def match_request(self, req):
-        return self.path_match.match(req.path_info)
+        #return self.path_match.match(req.path_info)
+        return req.path_info == '/newhack'
 
     def process_request(self, req):
         data = {}
         tag_system = TagSystem(self.env)
 
-        match = self.path_match.match(req.path_info)
-        view = 'cloud'
-        if match.group(1):
-            view = match.group(1)
+        #match = self.path_match.match(req.path_info)
+        #view = 'cloud'
+        #if match.group(1):
+        #    view = match.group(1)
 
         # Hack types and their description
         types = []
@@ -234,19 +235,19 @@ class TracHacksHandler(Component):
 
         if req.path_info == '/newhack':
             return self.render_new(req, data, hacks)
-        else:
-            views = ['cloud', 'list']
-            for v in views:
-                if v != view:
-                    args = req.args
-                    add_ctxtnav(req, builder.a(v.title(),
-                                href=req.href.hacks(v, **args)))
-                else:
-                    add_ctxtnav(req, v.title())
-            if view == 'list':
-                return self.render_list(req, data, hacks)
-            else:
-                return self.render_cloud(req, data, hacks)
+        #else:
+        #    views = ['cloud', 'list']
+        #    for v in views:
+        #        if v != view:
+        #            args = req.args
+        #            add_ctxtnav(req, builder.a(v.title(),
+        #                        href=req.href.hacks(v, **args)))
+        #        else:
+        #            add_ctxtnav(req, v.title())
+        #    if view == 'list':
+        #        return self.render_list(req, data, hacks)
+        #    else:
+        #        return self.render_cloud(req, data, hacks)
 
     # IRequestHandler methods
     def pre_process_request(self, req, handler):
@@ -273,14 +274,14 @@ class TracHacksHandler(Component):
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
-        if req.path_info == '/newhack':
+        #if req.path_info == '/newhack':
             return 'newhack'
-        else:
-            return 'hacks'
+        #else:
+        #    return 'hacks'
 
     def get_navigation_items(self, req):
-        yield ('mainnav', 'hacks',
-                builder.a('View Hacks', href=req.href.hacks(), accesskey='H'))
+        #yield ('mainnav', 'hacks',
+        #        builder.a('View Hacks', href=req.href.hacks(), accesskey='H'))
         if 'HACK_CREATE' in req.perm:
             yield ('mainnav', 'newhack',
                     builder.a('New Hack', href=req.href.newhack()))
@@ -586,27 +587,27 @@ class TracHacksHandler(Component):
                                               min(limit, len(remainder)))
 
         # Navigation
-        if len(hacks) >= limit:
-            add_ctxtnav(req, builder.a('More', href='?action=more'))
-            limit = len(hacks)
-            data['limit'] = data['limit_message'] = limit
-        else:
-            add_ctxtnav(req, 'More')
-        if q or limit != self.limit:
-            add_ctxtnav(req, builder.a('Default', href='?action=default'))
-        else:
-            add_ctxtnav(req, 'Default')
-        if total_hack_count > limit:
-            add_ctxtnav(req, builder.a('All', href='?action=all'))
-        else:
-            add_ctxtnav(req, 'All')
-        if limit > 10:
-            limit = min(limit, len(hacks))
-            add_ctxtnav(req, builder.a('Less', href='?action=less'))
-        else:
-            add_ctxtnav(req, 'Less')
-        for i, hack in enumerate(hacks):
-            hack[1] = i
+        #if len(hacks) >= limit:
+        #    add_ctxtnav(req, builder.a('More', href='?action=more'))
+        #    limit = len(hacks)
+        #    data['limit'] = data['limit_message'] = limit
+        #else:
+        #    add_ctxtnav(req, 'More')
+        #if q or limit != self.limit:
+        #    add_ctxtnav(req, builder.a('Default', href='?action=default'))
+        #else:
+        #    add_ctxtnav(req, 'Default')
+        #if total_hack_count > limit:
+        #    add_ctxtnav(req, builder.a('All', href='?action=all'))
+        #else:
+        #    add_ctxtnav(req, 'All')
+        #if limit > 10:
+        #    limit = min(limit, len(hacks))
+        #    add_ctxtnav(req, builder.a('Less', href='?action=less'))
+        #else:
+        #    add_ctxtnav(req, 'Less')
+        #for i, hack in enumerate(hacks):
+        #    hack[1] = i
         return hacks
 
 
