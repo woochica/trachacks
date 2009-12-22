@@ -833,3 +833,67 @@ class ListHacksMacro(WikiMacroBase):
             output = "%s%s\n" % (output, fieldset)
 
         return output
+
+
+class ListHackTypesMacro(WikiMacroBase):
+    """ Provide a list of known hack types (categories). """
+    title_extract = re.compile(r'=\s+([^=]*)=', re.MULTILINE | re.UNICODE)
+    self_extract = re.compile(r'\[\[ListHacks[^\]]*\]\]\s?\n?', re.MULTILINE | re.UNICODE)
+
+    def expand_macro(self, formatter, name, args):
+        req = formatter.req
+        tag_system = TagSystem(self.env)
+
+        categories = natural_sort([r.id for r, _ in
+                                 tag_system.query(req, 'realm:wiki type')])
+
+        def link(resource):
+            return render_resource_link(self.env, formatter.context,
+                                        resource, 'compact')
+
+        dl = builder.dl()
+        for category in categories:
+            page = WikiPage(self.env, category)
+            match = self.title_extract.search(page.text)
+            if match:
+                cat_title = '%s' % match.group(1).strip()
+                cat_body = self.title_extract.sub('', page.text, 1)
+            else:
+                cat_title = '%s' % category
+                cat_body = page.text
+            cat_body = self.self_extract.sub('', cat_body).strip()
+
+            dl(builder.dt(link(Resource('wiki', category))))
+            dl(builder.dd(cat_body))
+
+        return dl
+
+
+class ListTracReleasesMacro(WikiMacroBase):
+    """ Provide a list of known Trac releases. """
+    title_extract = re.compile(r'=\s+([^=]*)=', re.MULTILINE | re.UNICODE)
+
+    def expand_macro(self, formatter, name, args):
+        req = formatter.req
+        tag_system = TagSystem(self.env)
+
+        releases = natural_sort([r.id for r, _ in
+                                 tag_system.query(req, 'realm:wiki release')])
+
+        def link(resource):
+            return render_resource_link(self.env, formatter.context,
+                                        resource, 'compact')
+
+        dl = builder.dl()
+        for release in releases:
+            page = WikiPage(self.env, release)
+            match = self.title_extract.search(page.text)
+            if match:
+                rel_title = '%s' % match.group(1).strip()
+            else:
+                rel_title = '%s' % release
+
+            dl(builder.dt(link(Resource('wiki', release))))
+            dl(builder.dd(rel_title))
+
+        return dl
