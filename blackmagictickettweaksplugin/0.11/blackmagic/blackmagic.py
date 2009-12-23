@@ -4,13 +4,14 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from trac.ticket.api import ITicketManipulator
 from trac.ticket import model
 from pkg_resources import resource_filename
-from trac.web.api import ITemplateStreamFilter
+from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from genshi.builder import tag
 from genshi.core import Markup
 from genshi.filters.transform import Transformer
 from genshi.filters.transform import StreamBuffer
 import re, cPickle
-from trac.perm import IPermissionRequestor
+from trac.perm import IPermissionRequestor, IPermissionPolicy, DefaultPermissionStore, IPermissionStore
+from trac.ticket.model import Ticket
 
 def istrue(v, otherwise=None):
     if str(v).lower() in ('yes', 'true', '1', 'on'):
@@ -21,15 +22,91 @@ def istrue(v, otherwise=None):
         else:
             return otherwise
 
-class TicketTweaks(Component):
-    implements(ITemplateStreamFilter, ITemplateProvider, IPermissionRequestor, ITicketManipulator)
+class BlackMagicTicketTweaks(Component):
+    implements(ITemplateStreamFilter, ITemplateProvider, IPermissionRequestor, ITicketManipulator, IPermissionPolicy, IRequestFilter, IPermissionStore)
 
     permissions = ListOption('blackmagic', 'permissions', [])
+    #used to store extra permissions to prevent recursion when using non-blackmagic permissions for ticket options
+    extra_permissions = []
+    
     gray_disabled = Option('blackmagic', 'gray_disabled', '',
         doc="""If not set, disabled items will have their label striked through.
         Otherwise, this color will be used to gray them out. Suggested #cccccc.""")
+    
+    #stores the number of blocked tickets used for matching the count on reports
+    blockedTickets = 0
+    
+    # IPermissionPolicy(Interface)
+    def check_permission(self, action, username, resource, perm):
+        #skip if permission is in ignore_permissions
+        if action in self.permissions or action in self.extra_permissions:
+            return None
 
-    # ITicketActionController methods
+        # Look up the resource parentage for a ticket.
+        while resource:
+            if resource.realm == 'ticket':
+                break
+            resource = resource.parent
+        if resource and resource.realm == 'ticket' and resource.id is not None:
+            """Return if this req is permitted access to the given ticket ID."""
+            try:
+                ticket = Ticket(self.env, resource.id)
+            except TracError:
+                return None # Ticket doesn't exist
+            
+            #get perm for ticket type
+            ticketperm = self.config.get('blackmagic','ticket_type.%s' % ticket["type"], None)
+            self.env.log.debug("Ticket permissions %s type %s " % (ticketperm,ticket["type"]) );
+            if ticketperm is None:
+                #perm isn't set, return
+                self.env.log.debug("Perm isn't set for ticket type %s" % ticket["type"]);
+                return None
+            if not ticketperm in self.permissions:
+                #perm not part of blackmagic perms, adding to extra perms to prevent recursion crash
+                self.extra_permissions.append(ticketperm)
+                self.env.log.debug("Perm %s no in permissions " % ticketperm)
+            #user doesn't have permissions, return false
+            if ticketperm not in perm:
+                self.env.log.debug("User %s doesn't have permission %s" % (username, ticketperm) );
+                self.blockedTickets+=1
+                return False
+        return None
+    
+    
+    #IRequestFilter methods
+
+    def pre_process_request(self, req, handler):
+        return handler
+    def post_process_request(self, req, template, data, content_type):
+        if data is not None:
+            numTickets = data.get("numrows")
+            if numTickets is not None:
+                data.update({"numrows" : numTickets-self.blockedTickets})
+        #reset blocked tickets to 0
+        self.blockedTickets = 0
+        
+        #remove ticket types user doesn't have permission to
+        fields = data.get("fields")
+        if fields is not None:
+            i = 0
+            for type in fields:
+                if  type.get("name") == "type":
+                    newTypes = []
+                    for option in type.get("options"):
+                        #get perm for ticket type
+                        ticketperm = self.config.get('blackmagic','ticket_type.%s' % option, None)
+                        self.env.log.debug("Ticket permissions %s type %s " % (ticketperm,option) );
+                        if ticketperm is None or ticketperm in req.perm:
+                            #user has perm, add to newTypes
+                            newTypes.append(option)
+                            self.env.log.debug("User %s has permission %s" % (req.authname, ticketperm) );
+                    data["fields"][i]["options"]=newTypes
+                i+=1
+        
+        return template, data, content_type
+    
+
+    # ITicketManipulator methods
 
     def validate_ticket(self, req, ticket):
         """Validate a ticket after it's been populated from user input.
@@ -83,6 +160,13 @@ class TicketTweaks(Component):
                 if new != original:
                     res.append(('%s' % field, 'Access denied to modifying %s' % field))
                     self.env.log.debug('Denied access to: %s' % field)
+        
+        #check if user has perm to create ticket type
+        ticketperm = self.config.get("blackmagic","ticket_type.%s" % ticket["type"],None)
+        if ticketperm is not None and ticketperm not in req.perm:
+            self.env.log.debug("Ticket validation failed type %s permission %s"% (ticket["type"], ticketperm))
+            res.append(('type', "Access denied to ticket type %s" % ticket["type"]))
+            
         return res
 
 
@@ -127,6 +211,7 @@ class TicketTweaks(Component):
                         else:
                                 disabled = True
 
+                #hide fields
                 if hidden or istrue(self.config.get('blackmagic', '%s.hide' % field, None)):
                     #replace th and td in previews with empty tags
                     stream = stream | Transformer('//th[@id="h_%s"]' % field).replace(tag.th(" "))
