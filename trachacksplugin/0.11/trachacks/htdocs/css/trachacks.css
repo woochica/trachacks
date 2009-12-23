@@ -71,3 +71,7 @@
   margin:1em 0 2em;
   overflow:auto;
 }
+
+.hacktypesmacro p, .tracreleasesmacro p {
+  margin-top: 0;
+}

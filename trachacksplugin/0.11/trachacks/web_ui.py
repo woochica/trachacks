@@ -842,6 +842,8 @@ class ListHackTypesMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, args):
         req = formatter.req
+        add_stylesheet(req, 'hacks/css/trachacks.css')
+
         tag_system = TagSystem(self.env)
 
         categories = natural_sort([r.id for r, _ in
@@ -851,7 +853,7 @@ class ListHackTypesMacro(WikiMacroBase):
             return render_resource_link(self.env, formatter.context,
                                         resource, 'compact')
 
-        dl = builder.dl()
+        dl = builder.dl(class_='hacktypesmacro')
         for category in categories:
             page = WikiPage(self.env, category)
             match = self.title_extract.search(page.text)
@@ -862,9 +864,8 @@ class ListHackTypesMacro(WikiMacroBase):
                 cat_title = '%s' % category
                 cat_body = page.text
             cat_body = self.self_extract.sub('', cat_body).strip()
-
             dl(builder.dt(link(Resource('wiki', category))))
-            dl(builder.dd(cat_body))
+            dl(builder.dd(wiki_to_html(cat_body, self.env, req)))
 
         return dl
 
@@ -875,8 +876,9 @@ class ListTracReleasesMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, args):
         req = formatter.req
-        tag_system = TagSystem(self.env)
+        add_stylesheet(req, 'hacks/css/trachacks.css')
 
+        tag_system = TagSystem(self.env)
         releases = natural_sort([r.id for r, _ in
                                  tag_system.query(req, 'realm:wiki release')])
 
@@ -884,7 +886,7 @@ class ListTracReleasesMacro(WikiMacroBase):
             return render_resource_link(self.env, formatter.context,
                                         resource, 'compact')
 
-        dl = builder.dl()
+        dl = builder.dl(class_='tracreleasesmacro')
         for release in releases:
             page = WikiPage(self.env, release)
             match = self.title_extract.search(page.text)
@@ -894,6 +896,6 @@ class ListTracReleasesMacro(WikiMacroBase):
                 rel_title = '%s' % release
 
             dl(builder.dt(link(Resource('wiki', release))))
-            dl(builder.dd(rel_title))
+            dl(builder.dd(wiki_to_html(rel_title, self.env, req)))
 
         return dl
