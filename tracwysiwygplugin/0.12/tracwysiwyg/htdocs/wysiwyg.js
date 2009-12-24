@@ -1222,7 +1222,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
 };
 
 (function() {
-    var _linkScheme = "[\\w.+-]+";
+    var _linkScheme = "[a-zA-Z][a-zA-Z0-9+-.]*";
     var _quotedString = "'[^']+'|" + '"[^"]+"';
     var _changesetId = "(?:\\d+|[a-fA-F\\d]{6,})";
     var _ticketLink = "#\\d+";

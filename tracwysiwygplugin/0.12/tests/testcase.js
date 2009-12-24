@@ -497,6 +497,12 @@ addEvent(window, "load", function() {
                     title: "rfc-2396.compatible://link", "tracwysiwyg-link": "rfc-2396.compatible://link",
                     onclick: "return false;" }),
                 " ",
+                "21:09,",
+                element("u", "underline"),
+                ",abc123 !21:09,",
+                element("u", "underline"),
+                ",abc123",
+                " ",
                 element("a", "foo:bar", {
                     href: "./search?q=" + encodeURIComponent("foo:bar"),
                     title: "foo:bar", "tracwysiwyg-link": "foo:bar",
@@ -523,6 +529,7 @@ addEvent(window, "load", function() {
                 "link:'Foo Bar' link:'Foo Bar#baz'",
                 "svn+ssh://example.com/trunk [svn+ssh://example.com/trunk repository]",
                 "rfc-2396.compatible://link [rfc-2396.compatible://link RFC 2396]",
+                "21:09,__underline__,abc123 !21:09,__underline__,abc123",
                 "foo:bar begin[foo:bar foo:bar] [foo:bar foo:bar]end begin[wiki:WikiStart]end",
                 "!link:'Foo Bar#baz'" ].join(" "));
             generate.call(this, dom, [
@@ -531,6 +538,7 @@ addEvent(window, "load", function() {
                 "link:'Foo Bar' link:'Foo Bar#baz'",
                 "svn+ssh://example.com/trunk [svn+ssh://example.com/trunk repository]",
                 "rfc-2396.compatible://link [rfc-2396.compatible://link RFC 2396]",
+                "21:09,__underline__,abc123 !21:09,__underline__,abc123",
                 "foo:bar begin[foo:bar foo:bar] [foo:bar foo:bar]end begin[wiki:WikiStart]end",
                 "!link:'Foo Bar#baz'" ].join(" "));
         });
