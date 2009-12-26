@@ -20,7 +20,7 @@ import re
 
 from  tracextracturl     import  extract_url
 
-MACRO = re.compile(r'.*\[\[redirect\((.*)\)\]\]')
+MACRO = re.compile(r'.*\[\[[rR]edirect\((.*)\)\]\]')
 
 class ServerSideRedirectPlugin(Component):
     """This Trac plug-in implements a server sided redirect functionality.
