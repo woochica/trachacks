@@ -96,9 +96,9 @@ Any other [TracLinks TracLink] can be used:
         if get('components','redirect.*') == 'enabled' or \
            get('components','redirect.redirect.*') == 'enabled' or \
            get('components','redirect.redirect.tracredirect') == 'enabled':
-            yield 'Redirect',
+            return ['Redirect',]
         else:
-            yield 'redirect','Redirect'
+            return ['redirect','Redirect']
 
     def get_macro_description(self,name):
         if name == 'Redirect':
