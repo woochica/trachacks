@@ -23,8 +23,8 @@ from  tracextracturl     import  extract_url
 MACRO = re.compile(r'.*\[\[redirect\((.*)\)\]\]')
 
 class ServerSideRedirectPlugin(Component):
-    """ This Trac plug-in implements a server sided redirect functionality.
-The user interface is the wiki macro `redirect`.
+    """This Trac plug-in implements a server sided redirect functionality.
+The user interface is the wiki macro `Redirect` (alternativly `redirect`).
 
 == Description ==
 Website: http://trac-hacks.org/wiki/ServerSideRedirectPlugin
@@ -60,12 +60,16 @@ The following 'macro' at the begin of the wiki page will cause a
 redirect to the ''!OtherWikiPage''.
 {{{
 [[redirect(OtherWikiPage)]]
+[[Redirect(OtherWikiPage)]]
 }}}
 Any other [TracLinks TracLink] can be used:
 {{{
 [[redirect(wiki:OtherWikiPage)]]
+[[Redirect(wiki:OtherWikiPage)]]
 [[redirect(source:/trunk/file.py)]]
+[[Redirect(source:/trunk/file.py)]]
 [[redirect(http://www.example.com/)]]
+[[Redirect(http://www.example.com/)]]
 }}}
     """
     implements ( IRequestHandler, IRequestFilter, IWikiMacroProvider )
@@ -92,12 +96,15 @@ Any other [TracLinks TracLink] can be used:
         if get('components','redirect.*') == 'enabled' or \
            get('components','redirect.redirect.*') == 'enabled' or \
            get('components','redirect.redirect.tracredirect') == 'enabled':
-            yield ''
+            yield 'Redirect',
         else:
-            yield 'redirect'
+            yield 'redirect','Redirect'
 
     def get_macro_description(self,name):
-        return self.__doc__
+        if name == 'Redirect':
+          return self.__doc__
+        else:
+          return "See macro `Redirect`."
 
     def match_request(self, req):
         """Only handle request when selected from `pre_process_request`."""
