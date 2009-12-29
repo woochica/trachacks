@@ -352,11 +352,17 @@ class ppTSDueTimes( ppTicketSetExtension ):
         month_key = 1;
         day_key = 2;
 
-      if AtheDate and len(AtheDate) == 3 :
-        year=int(AtheDate[year_key]);
-        month=int(AtheDate[month_key]);
-        day=int(AtheDate[day_key]);
-        return datetime.datetime(year,month,day)
+      try:
+        if AtheDate and len(AtheDate) == 3:
+          year=int(AtheDate[year_key]);
+          month=int(AtheDate[month_key]);
+          day=int(AtheDate[day_key]);
+          return datetime.datetime(year,month,day)
+      except:
+        # a problem appears, while parsing the date field
+        # TODO: raise error message
+        pass
+
     return None
 
   def extend(self):
