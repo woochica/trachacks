@@ -4,6 +4,7 @@ A plugin to display hudson results in the timeline and provide a nav-link
 """
 
 import time
+import urllib
 import urllib2
 from xml.dom import minidom
 from datetime import datetime
@@ -50,7 +51,7 @@ class HudsonTracPlugin(Component):
                           'successfully" etc messages.')
 
     def __init__(self):
-        api_url = urllib2.quote(self.job_url, '/%:@')
+        api_url = urllib.quote(self.job_url, '/%:@')
         if api_url[-1] != '/':
             api_url += '/'
         api_url += 'api/xml'
