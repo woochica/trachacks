@@ -176,17 +176,23 @@ class TicketNodePrototype( NodePrototype ):
       self.userim = self.ticketuser
 
     # set colwide for rows
-    self.maxcolwide = 4
+    self.maxcolwide = 5
 
   def adddaterow( self ):
     '''
       Add a Daterow into the Node
     '''
+    if self.ticketstatus == 'closed':
+      # self.addmarkup( 'closed' )
+      # save the line
+      return
+
     self.entertr()
     self.entertd( title = "due",
                   href = "?ticket_inner?__dummy__",
                   bgcolor = "#FFFFFF",
                   colspan = str( self.maxcolwide ) )
+    ticket_overdue_image = self.macroenv.conf.get( 'ticket_overdue_image' )
 
     if ( self.ticketstatus != 'closed' and
          self.ticket.hasextension( 'closingdiff' ) ):
@@ -194,32 +200,29 @@ class TicketNodePrototype( NodePrototype ):
       img = 'none'
       if cd > 0:
         bgcol = self.macroenv.conf.get( 'ticket_overdue_color' )
-        img = os.path.join( self.imgpath,
-                self.macroenv.conf.get( 'ticket_overdue_image' ) )
+        img = os.path.join( self.imgpath, ticket_overdue_image)
         dueline = str( cd ) + ' days delayed'
       elif cd < 0:
         bgcol = self.macroenv.conf.get( 'ticket_ontime_color' )
-        img = os.path.join( self.imgpath,
-                self.macroenv.conf.get( 'ticket_ontime_image' ) )
+        img = os.path.join( self.imgpath, ticket_overdue_image)
         dueline = str( 0 - cd ) + ' days left'
       else:
         bgcol = self.macroenv.conf.get( 'ticket_ontime_color' )
-        img = os.path.join( self.imgpath,
-                self.macroenv.conf.get( 'ticket_ontime_image' ) )
+        img = os.path.join( self.imgpath, ticket_overdue_image)
         dueline = 'today'
       self.entertable( border = "0" )
       self.entertr()
       self.entertd( bgcolor = bgcol )
-      if img != 'none':
+      if  ticket_overdue_image != 'none' and ticket_overdue_image != None:
         self.enterimg( src = img )
         self.leave( 2 )
       else:
+        # fall back if no image is defined
+        self.addmarkup( '<FONT COLOR="#FFFF00">!</FONT>' )
         self.leave( 1 )
       self.entertd()
       self.addmarkup( dueline )
       self.leave( 4 )
-    elif self.ticketstatus == 'closed':
-      self.addmarkup( 'closed' )
     else:
       self.addmarkup( 'due: unknown' )
 
@@ -234,6 +237,17 @@ class TicketNodePrototype( NodePrototype ):
     self.entertd( title = 'state', href = href,
                   color = '#F5F5F5', colspan = "1" )
     self.addmarkup( self.statusim )
+    self.leave()
+  
+  def addconnectorcol( self ):
+    '''
+      Add a Status Column into the Node
+    '''
+    href = '?ticket_state?%s?state=%s' % (
+             self.macroenv.tracreq.href( 'query' ), self.ticketstatus )
+    self.entertd( title = 'connector', href = href,
+                  color = '#F5F5F5', colspan = "1" )
+    self.addmarkup( "X" )
     self.leave()
 
   def addprioritycol( self ):
@@ -325,6 +339,7 @@ class TicketNodePrototype( NodePrototype ):
     self.entertr()
     self.addticketcol()
     self.addstatuscol()
+    self.addconnectorcol()
     self.addownercol()
     self.addprioritycol()
     self.leave()
