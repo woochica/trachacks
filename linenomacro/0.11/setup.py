@@ -5,8 +5,8 @@ setup(
     author = 'Adamansky Anton', 
     author_email = 'anton@adamansky.com',
     description = 'Prints line numbered code listings',
-    license = 'Apache License, Version 2.0'
-    url = 'http://trac-hacks.org/wiki/LinenoMacro'
+    license = 'Apache License, Version 2.0',
+    url = 'http://trac-hacks.org/wiki/LinenoMacro',
     packages=['lineno'],
     package_data={ 'lineno' : [ 'htdocs/css/*.css' ] },
     entry_points = """
