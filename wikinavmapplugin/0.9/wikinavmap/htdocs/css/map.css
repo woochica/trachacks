@@ -1,0 +1,97 @@
+#popupDiv{
+position:absolute;
+font:normal 12px Verdana;
+color: #B41A1A;
+line-height:18px;
+z-index:100;
+width:280px;
+}
+.popuptop{
+	padding: 30px 8px 0 8px;
+	color: #FFFFFF;
+	font:bold 12px Verdana;
+	background: transparent url(../images/popup_bg_top.png) top left repeat-x;
+}
+.popupbottom{
+	padding: 2px 8px 15px 8px;
+	background: transparent url(../images/popup_bg_bottom.png) bottom left repeat-x;
+}
+.popuptopright{
+	padding: 2px 8px 38px 8px;
+	background: transparent url(../images/popup_bg_top_right.png) bottom left repeat-x;
+}
+.popuptopleft{
+	padding: 2px 8px 38px 8px;
+	background: transparent url(../images/popup_bg_top_left.png) bottom left repeat-x;
+}
+.popupbottomright{
+	padding: 30px 8px 0 8px;
+	color: #FFFFFF;
+	font:bold 12px Verdana;
+	background: transparent url(../images/popup_bg_bottom_right.png) top left repeat-x;
+}
+.popupbottomleft{
+	padding: 30px 8px 0 8px;
+	color: #FFFFFF;
+	font:bold 12px Verdana;
+	background: transparent url(../images/popup_bg_bottom_left.png) top left repeat-x;
+}
+.datetd {
+	color: #ccc;
+	font: 10px Verdana;
+	text-align: center;
+}
+.icon {
+	padding-right: 5px;
+}
+#configure_window {
+	position:absolute;
+	background-color:#FFFFFF;
+	border: 1px lightgrey solid;
+	width:800px;
+	padding: 10px 10px 10px 10px;
+}
+#date_err {
+	border:#FF3232 1px dashed;
+	color:#FF3232;
+	margin-bottom:30px;
+}
+#mapdata {
+	overflow:hidden;
+	margin-top:10px;
+	border:1px solid #B41A1A;
+}
+
+/* Same as Main Navigation Bar */
+#configure_tabs {
+ background: #f7f7f7 url(../../common/topbar_gradient.png) 0 0;
+ border: 1px solid #000;
+ font: normal 10px verdana,'Bitstream Vera Sans',helvetica,arial,sans-serif;
+ margin: .66em 0 .33em;
+ padding: .2em 0;
+}
+#configure_tabs li { border-right: none; padding: .25em 0 }
+#configure_tabs :link, #configure_tabs :visited {
+ background: url(../../common/dots.gif) 0 0 no-repeat;
+ border-right: 1px solid #fff;
+ border-bottom: none;
+ border-left: 1px solid #555;
+ color: #000;
+ padding: .2em 20px;
+}
+* html #configure_tabs :link, * html #configure_tabs :visited { background-position: 1px 0 }
+#configure_tabs :link:hover, #configure_tabs :visited:hover {
+ background-color: #ccc;
+ border-right: 1px solid #ddd;
+}
+#configure_tabs .active :link, #configure_tabs .active :visited {
+ background: #333 url(../../common/topbar_gradient2.png) 0 0 repeat-x;
+ border-top: none;
+ border-right: 1px solid #000;
+ color: #eee;
+ font-weight: bold;
+}
+#configure_tabs .active :link:hover, #configure_tabs .active :visited:hover {
+ border-right: 1px solid #000;
+}
+
