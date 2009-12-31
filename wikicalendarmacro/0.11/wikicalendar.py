@@ -18,6 +18,7 @@
 import time
 import calendar
 from cStringIO import StringIO
+from trac.resource import get_relative_resource, get_resource_url 
 from trac.wiki.api import WikiSystem
 from trac.wiki.macros import WikiMacroBase
 from trac.web.href import Href
@@ -229,6 +230,15 @@ table.wiki-calendar a.page { color: #b00 !important; }
                 # check for wikipage with name specified in 'wiki_page_format'
                 wiki = time.strftime(wiki_page_format, tuple(date))
                 url = self.env.href.wiki(wiki)
+
+                if wiki.find(":") >= 0 or wiki.startswith("/"):
+                    url = self.env.href.wiki(wiki)
+                else:
+                    # Support relative paths; based on trac/wiki/formatter.py
+                    rsc = get_relative_resource(formatter.resource, wiki)
+                    wiki = rsc.id
+                    url = get_resource_url(self.env, rsc, formatter.href)
+
                 if WikiSystem(self.env).has_page(wiki):
                     classes += ' page'
                     title += 'Go to page %s' % wiki
