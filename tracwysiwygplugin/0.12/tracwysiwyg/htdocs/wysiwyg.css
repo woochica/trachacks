@@ -2,6 +2,11 @@ iframe.wysiwyg {
     border: 1px solid #d7d7d7;
     clear: both;
     display: block;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+}
+div.trac-resizable {
+    clear: both;
 }
 iframe.wysiwyg:focus {
     border: 1px solid #886;
@@ -16,6 +21,8 @@ iframe.wysiwyg:focus {
     height: 18px;
     width: 400px;
     float: left;
+    -moz-user-select: none;
+    -webkit-user-select: none;
 }
 .wysiwyg-toolbar ul, .wysiwyg-toolbar li {
     list-style-type: none;
