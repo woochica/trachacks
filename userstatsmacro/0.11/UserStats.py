@@ -1,30 +1,36 @@
 # -*- coding: utf-8 -*-
-"""Adds a wiki macro [[UserStats]] which produces a table with all the users and their last loginså
 
-pedro@readingtab.com
-"""
-
-import inspect
-import sys
-import re
-import time
 from datetime import datetime
-from trac.core import Component, implements
+import inspect
+import re
+import sys
+import time
+
+from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
-from trac.wiki import format_to_html
+from trac.wiki.formatter import format_to_html
+from trac.wiki.macros import WikiMacroBase
 
-class UserStatsProcessor(Component):
-    implements(IWikiMacroProvider)
+class UserStatsMacro(WikiMacroBase):
+    """Produces a table with username, last login, elapsed time since last
+    login for each user.
 
-    # IWikiMacroProvider interface
+    Usage:
+    {{{
+    [[UserStats]]
+    }}}
 
-    def get_macros(self):
-        yield 'UserStats'
+    """
 
-    def get_macro_description(self, name):
-        return inspect.getdoc(sys.modules.get(self.__module__))
-    
+    def expand_macro(self, formatter, name, content):
+
+        dt = self.get_users_last_login()
+        content = format_to_html(self.env, formatter.context, dt)
+        content = '<div class="component-list">%s</div>' % content
+        return content
+
     def get_user_last_login(self,user):
+
         cursor = self.env.get_db_cnx().cursor()
         cursor.execute("SELECT last_visit FROM session "
                        "WHERE sid=%s AND authenticated=%s",
@@ -44,6 +50,7 @@ class UserStatsProcessor(Component):
             return "|| [query:?status=assigned&status=new&status=reopened&group=milestone&order=priority&col=id&col=summary&col=status&col=owner&col=type&col=priority&col=component&col=due_close&type=task&owner=%s %s]|| %s || <24h ||\n" % (user, user,last_date)
     
     def get_users_last_login(self):
+
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         result = set()
@@ -53,9 +60,3 @@ class UserStatsProcessor(Component):
             dt += self.get_user_last_login(user) 
         return dt
 
-    
-    def expand_macro(self, formatter, name,other):
-        dt = self.get_users_last_login()
-        content = format_to_html(self.env, formatter.context, dt)
-        content = '<div class="component-list">%s</div>' % content
-        return content
