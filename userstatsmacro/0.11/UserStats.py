@@ -8,8 +8,7 @@ import inspect
 import sys
 import re
 import time
-import datetime
-
+from datetime import datetime
 from trac.core import Component, implements
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import format_to_html
@@ -35,8 +34,8 @@ class UserStatsProcessor(Component):
             return
 
         when = time.localtime(int(row[0]))
-        last = datetime.datetime.fromtimestamp(int(row[0]))
-        now = datetime.datetime.fromtimestamp(time.time())
+        last = datetime.fromtimestamp(int(row[0]))
+        now = datetime.fromtimestamp(time.time())
         how_long = now - last
         last_date = time.strftime("%Y/%m/%d %H:%M:%S", when)
         if how_long.days>0:
