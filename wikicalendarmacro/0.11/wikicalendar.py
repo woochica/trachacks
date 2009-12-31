@@ -164,7 +164,27 @@ table.wiki-calendar a.page { color: #b00 !important; }
                 'url': thispageURL(month=prevMonth, year=prevYear),
                 'title': time.strftime('%B %Y', tuple(date))
                 })
-        
+       
+        # Look up the first weekday. The general procedure came from
+        # http://blogs.gnome.org/patrys/2008/09/29/how-to-determine-the-first-day-of-week/
+        def getfirstweekday():
+            from os import popen, environ
+            import datetime
+            from re import search
+
+            locale = popen("locale first_weekday week-1stday", "r")
+            output = locale.read().strip().split("\n")
+
+            offs, date = output
+            y, m, d = re.search("^(\d{4})(\d{2})(\d{2})$", date).groups()
+
+            firstweekday = datetime.date(int(y), int(m), int(d)) + \
+                datetime.timedelta(days = int(offs) - 1)
+
+            return firstweekday.weekday()
+
+        calendar.setfirstweekday(getfirstweekday())
+ 
         # the caption
         date[0:2] = [year, month]
         buff.write(time.strftime('%B %Y', tuple(date)))
