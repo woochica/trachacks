@@ -29,7 +29,7 @@ class WikiCalendarMacro(WikiMacroBase):
     """Inserts a small calendar where each day links to a wiki page whose name
     matches `wiki-page-format`. The current day is highlighted, and days with
     Milestones are marked in bold. This version makes heavy use of CSS for
-    formatting. Tested in Firefox 2 and IE 6.
+    formatting.
     
     Usage:
     {{{
