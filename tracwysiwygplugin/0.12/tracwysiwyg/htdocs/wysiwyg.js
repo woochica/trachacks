@@ -1404,7 +1404,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
                                             // -4. definition
     wikiRules.push("^[ \\t\\r\\f\\v]+(?:`[^`]*`|\\{\\{\\{.*?\\}\\}\\}|[^`{:]|:[^:])+::(?:[ \\t\\r\\f\\v]+|$)");
     wikiRules.push("^[ \\t\\r\\f\\v]+(?=[^ \\t\\r\\f\\v])");    // -5. leading space
-    wikiRules.push("=?(?:\\|\\|)+[ \\t\\r\\f\\v]*$");   // -6. closing table row
+    wikiRules.push("=?(?:\\|\\|)+[ \\t\\r\\f\\v]*\\\\?$");      // -6. closing table row
     wikiRules.push("=?(?:\\|\\|)+=?");                  // -7. cell
 
     var domToWikiInlineRules = wikiInlineRules.slice(0);
@@ -1555,8 +1555,8 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
     var listDepth = [];
     var decorationStatus;
     var decorationStack;
-    var inCodeBlock, inParagraph, inDefList, inTable, inTableRow;
-    inCodeBlock = inParagraph = inDefList = inTable = inTableRow = false;
+    var inCodeBlock, inParagraph, inDefList, inTable, inTableRow, continueTableRow;
+    inCodeBlock = inParagraph = inDefList = inTable = inTableRow = continueTableRow = false;
 
     function handleCodeBlock(line) {
         if (/^ *\{\{\{ *$/.test(line)) {
@@ -2235,7 +2235,12 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     break;
                 case -6:    // closing table row
                     if (inTable) {
-                        handleTableCell(-1);
+                        if (matchText.slice(-1) != "\\") {
+                            handleTableCell(-1);
+                        }
+                        else {
+                            continueTableRow = true;
+                        }
                         continue;
                     }
                     break;
@@ -2271,7 +2276,12 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
             closeHeader();
         }
         if (inTable) {
-            handleTableCell(-1);
+            if (continueTableRow) {
+                continueTableRow = false;
+            }
+            else {
+                handleTableCell(-1);
+            }
         }
     }
     closeToFragment();
