@@ -1383,7 +1383,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
         + _wikiPageName + "[ \\t\\r\\f\\v]+(?:" + _quotedString + "|[^\\]]+)"
         + ")(?:[ \\t\\r\\f\\v]+(?:" + _quotedString + "|[^\\]]+))?\\]");
                                             // 16. [[macro]]
-    wikiInlineRules.push("!?\\[\\[[\\w/+-]+(?:\\]\\]|\\(.*?\\)\\]\\])");
+    wikiInlineRules.push("!?\\[\\[(?:[\\w/+-]+\\??|\\?)(?:\\]\\]|\\(.*?\\)\\]\\])");
                                             // 17. WikiPageName
     wikiInlineRules.push("(?:\\b|!)" + _wikiPageName);
                                             // 18. ["internal free link"]

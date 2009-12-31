@@ -677,9 +677,9 @@ addEvent(window, "load", function() {
         unit.add("[[macro]]", function() {
             var dom = element("p",
                 "Line break ", element("br"), " another line", element("br"),
-                "last line [[bR]] ![[Br]] [[Macro]] ![[Macro]]");
-            generateFragment.call(this, dom, "Line break [[BR]] another line[[br]]last line ![[bR]] !![[Br]] [[Macro]] ![[Macro]]");
-            generate.call(this, dom, "Line break [[BR]] another line[[BR]]last line ![[bR]] !![[Br]] [[Macro]] ![[Macro]]");
+                "last line [[bR]] ![[Br]] [[Macro]] ![[Macro]] [[Image?]] ![[Image?]] [[?]] ![[?]]");
+            generateFragment.call(this, dom, "Line break [[BR]] another line[[br]]last line ![[bR]] !![[Br]] [[Macro]] ![[Macro]] [[Image?]] ![[Image?]] [[?]] ![[?]]");
+            generate.call(this, dom, "Line break [[BR]] another line[[BR]]last line ![[bR]] !![[Br]] [[Macro]] ![[Macro]] [[Image?]] ![[Image?]] [[?]] ![[?]]");
         });
 
         unit.add("WikiPageName", function() {
