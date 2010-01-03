@@ -24,6 +24,9 @@ from trac.wiki.macros import WikiMacroBase
 from trac.web.href import Href
 from trac.util import *
 
+revision="$Rev$"
+url="$URL$"
+
 class WikiCalendarMacro(WikiMacroBase):
     
     """Inserts a small calendar where each day links to a wiki page whose name
