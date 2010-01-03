@@ -11,6 +11,9 @@ from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import format_to_html
 from trac.wiki.macros import WikiMacroBase
 
+revision="$Rev$"
+url="$URL"
+
 class UserStatsMacro(WikiMacroBase):
     """Produces a table with username, last login, elapsed time since last
     login for each user.
