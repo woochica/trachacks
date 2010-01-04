@@ -11,6 +11,9 @@ from genshi.core import Markup
 from genshi.builder import tag
 from trac.ticket import Milestone
 
+revision="$Rev"
+url="$URL"
+
 class PlannedMilestonesMacro(WikiMacroBase):
     """
     List upcoming milestones.
