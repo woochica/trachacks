@@ -22,7 +22,7 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
       original_setup = trac.env.Environment.setup_config
       original_save = trac.config.Configuration.save
       autointertrac = self
-      self.hash = {}
+      self.ht = {}
       def setup_config(self, load_defaults=False):
         autointertrac.log.debug("AutoInterTrac: setup")
         original_setup(self, load_defaults)
@@ -39,7 +39,7 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
         for (path, kd) in [(os.path.join(root, kd), kd) for kd in kiddirs]:
           # looks like a trac env
           if os.path.exists(os.path.join(path,'VERSION')):  
-            autointertrac.hash[kd] = kd
+            autointertrac.ht[kd] = kd
             c.set("intertrac", kd, kd )
             c.set("intertrac", "%s.title"%kd, kd )
             c.set("intertrac", "%s.url"%kd, urlparse.urljoin(base_url,kd))
@@ -49,7 +49,8 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
       #remove auto added config vars
       def save(self):
         autointertrac.log.debug("AutoInterTrac: save")
-        for key in hash.keys():
+        c = self
+        for key in autointertrac.ht.keys():
           c.remove("intertrac", key)
           c.remove("intertrac", "%s.title"%key)
           c.remove("intertrac", "%s.url"%key)
