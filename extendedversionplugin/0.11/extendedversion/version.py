@@ -11,10 +11,14 @@ import re
 from genshi.builder import tag
 
 from trac.attachment import AttachmentModule
+from trac.config import ExtensionOption
 from trac.core import *
 from trac.mimeview.api import Context
 from trac.resource import Resource, ResourceNotFound
 from trac.ticket import Milestone, Version
+from trac.ticket.roadmap import apply_ticket_permissions, \
+            get_tickets_for_milestone, get_ticket_stats, \
+            milestone_stats_data
 from trac.util.datefmt import get_datetime_format_hint, parse_date
 from trac.util.translation import _
 from trac.web.chrome import add_link, add_notice, add_stylesheet, add_warning
@@ -22,6 +26,7 @@ from trac.web.chrome import add_link, add_notice, add_stylesheet, add_warning
 ### interfaces:  
 from trac.attachment import ILegacyAttachmentPolicyDelegate
 from trac.perm import IPermissionPolicy, IPermissionRequestor
+from trac.ticket.roadmap import ITicketGroupStatsProvider
 from trac.web.api import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.wiki.api import IWikiSyntaxProvider
@@ -30,6 +35,17 @@ from trac.wiki.api import IWikiSyntaxProvider
 class VisibleVersion(Component):
     implements(ILegacyAttachmentPolicyDelegate, INavigationContributor, IPermissionRequestor,
             IRequestHandler, ITemplateProvider, IWikiSyntaxProvider)
+    version_stats_provider = ExtensionOption('version', 'version_stats_provider',
+                                     ITicketGroupStatsProvider,
+                                     'DefaultTicketGroupStatsProvider',
+        """Name of the component implementing `ITicketGroupStatsProvider`,
+        which is used to collect statistics on all version tickets.""")
+    milestone_stats_provider = ExtensionOption('version', 'milestone_stats_provider',
+                                     ITicketGroupStatsProvider,
+                                     'DefaultTicketGroupStatsProvider',
+        """Name of the component implementing `ITicketGroupStatsProvider`,
+        which is used to collect statistics on per milestone tickets in
+        the version view.""")
 
     # ILegacyAttachmentPolicyDelegate methods
 
@@ -253,11 +269,24 @@ class VisibleVersion(Component):
               "ORDER BY name "
         cursor = db.cursor()
         cursor.execute(sql, (version.name,))
+
         milestones = []
+        tickets = []
+        milestone_stats = []
+
         for row in cursor:
             milestone = Milestone(self.env)
             milestone._from_database(row)
             milestones.append(milestone)
+
+            mtickets = get_tickets_for_milestone(self.env, db, milestone.name,
+                                                'owner')
+            mtickets = apply_ticket_permissions(self.env, req, mtickets)
+            tickets += mtickets
+            stat = get_ticket_stats(self.milestone_stats_provider, mtickets)
+            milestone_stats.append(milestone_stats_data(self.env, req, stat, milestone.name))
+
+        stats = get_ticket_stats(self.version_stats_provider, tickets)
 
         resource = Resource('version', version.name)
         context = Context.from_request(req, resource)
@@ -265,8 +294,10 @@ class VisibleVersion(Component):
             'context': context,
             'resource': resource,
             'version': version,
-            'milestones': milestones,
+            'stats': stats,
             'attachments': AttachmentModule(self.env).attachment_data(context),
+            'milestones': milestones,
+            'milestone_stats': milestone_stats,
             }
 
         return 'version_view.html', data, None
