@@ -3254,8 +3254,10 @@ else if (document.selection) {
         return row.insertCell(index);
     };
     TracWysiwyg.prototype.getFocusNode = function() {
-        this.contentWindow.focus();
         var d = this.contentDocument;
+        if (!d.activeElement) {
+            this.contentWindow.focus();
+        }
         var range = d.selection.createRange();
         var node = range.item ? range.item(0) : range.parentElement();
         return node.ownerDocument == d ? node : null;
@@ -3470,8 +3472,10 @@ else if (document.selection) {
         return fragment;
     };
     TracWysiwyg.prototype.getSelectionPosition = function() {
-        this.contentWindow.focus();
         var d = this.contentDocument;
+        if (!d.activeElement) {
+            this.contentWindow.focus();
+        }
         var range = d.selection.createRange();
         var startNode = null;
         var endNode = null;
@@ -3513,8 +3517,10 @@ else if (document.selection) {
         }
     };
     TracWysiwyg.prototype.selectionContainsTagName = function(name) {
-        this.contentWindow.focus();
         var d = this.contentDocument;
+        if (!d.activeElement) {
+            this.contentWindow.focus();
+        }
         var selection = d.selection;
         var range = selection.createRange();
         var parent = range.item ? range.item(0) : range.parentElement();
