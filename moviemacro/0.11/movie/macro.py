@@ -136,7 +136,7 @@ class MovieMacro(WikiMacroBase):
             'clear': 'both'
         }
         
-        if netloc == 'www.youtube.com':
+        if netloc == 'www.youtube.com' or netloc == 'www.youtube-nocookie.com':
             query_dict = xform_query(query)
             video = query_dict.get('v')
             
