@@ -100,8 +100,11 @@ def xform_query(query):
 
 
 class MovieMacro(WikiMacroBase):
+    """ Embed online movies from YouTube, GoogleVideo and MetaCafe, and local
+        movies via FlowPlayer.
+    """
     
-    implements(IWikiMacroProvider, ITemplateProvider)
+    implements(ITemplateProvider)
     
     # IWikiMacroProvider methods
     def expand_macro(self, formatter, name, content):
