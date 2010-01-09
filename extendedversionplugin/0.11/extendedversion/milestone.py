@@ -53,7 +53,7 @@ class MilestoneVersion(Component):
         # Allow setting version for milestone
         if filename == 'milestone_edit.html':
             filter = Transformer('//fieldset[1]')
-            return stream | filter.before(self._version_edit())
+            return stream | filter.before(self._version_edit(data))
 
         # Display version for milestone
         elif filename == 'milestone_view.html':
@@ -90,10 +90,16 @@ class MilestoneVersion(Component):
         else:
             return []
 
-    def _version_edit(self):
+    def _version_edit(self, data):
+        milestone = data.get('milestone').name
         cursor = self.env.get_db_cnx().cursor()
-        cursor.execute("SELECT name FROM version WHERE time IS NULL OR time = 0 OR time>%s",
-                                (to_timestamp(datetime.now(utc)),))
+        cursor.execute("SELECT version FROM milestone_version WHERE milestone=%s", (milestone,))
+        row = cursor.fetchone()
+        value = row and row[0]
+
+        cursor.execute("SELECT name FROM version WHERE time IS NULL OR time = 0 OR time>%s "
+                       "OR name = %s ORDER BY name",
+                                (to_timestamp(datetime.now(utc)),value))
 
         return tag.div(
                 tag.label(
@@ -101,7 +107,7 @@ class MilestoneVersion(Component):
                     tag.br(),
                     tag.select(
                         tag.option(),
-                        [tag.option(row[0]) for row in cursor],
+                        [tag.option(row[0], selected=(value == row[0] or None)) for row in cursor],
                         name="version")),
             class_="field")
 
