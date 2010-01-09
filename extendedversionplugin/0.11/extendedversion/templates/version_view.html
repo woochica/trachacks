@@ -23,9 +23,13 @@
       <h1>Version ${version.name}</h1>
       <div class="info">
         <py:choose>
-          <p py:when="version.time" class="date">
+          <p py:when="is_released" class="date">
             Released ${dateinfo(version.time)} ago
             (${format_datetime(version.time)})
+          </p>
+          <p py:when="version.time" class="date">
+            Due in ${dateinfo(version.time)}
+            (${format_date(version.time)})
           </p>
           <p py:otherwise="" class="date">
             No date set

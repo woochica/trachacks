@@ -8,6 +8,7 @@ See also:  http://trac-hacks.org
 import pkg_resources
 import re
 
+from datetime import date
 from genshi.builder import tag
 
 from trac.attachment import AttachmentModule
@@ -294,6 +295,7 @@ class VisibleVersion(Component):
             'context': context,
             'resource': resource,
             'version': version,
+            'is_released': version.time and version.time.date() < date.today(),
             'stats': stats,
             'attachments': AttachmentModule(self.env).attachment_data(context),
             'milestones': milestones,
