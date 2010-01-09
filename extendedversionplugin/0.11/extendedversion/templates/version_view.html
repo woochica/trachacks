@@ -19,7 +19,7 @@
 
   <body>
     <!--div id="content" class="version"!-->
-    <div id="content" class="milestone">
+    <div id="content" class="version">
       <h1>Version ${version.name}</h1>
       <div class="info">
         <py:choose>
@@ -44,10 +44,9 @@
 
       <div py:if="milestones">
         <h2>Milestones</h2>
-        <ul class="milestones">
-          <li py:for="idx, milestone in enumerate(milestones)" class="milestone">
-
-            <div class="info"  py:with="mstats = milestone_stats[idx]">
+        <table class="milestones" style="width: 100%">
+          <tr py:for="idx, milestone in enumerate(milestones)" class="milestone">
+            <td class="info">
               <h2><a href="${href.milestone(milestone.name)}">
                 <em>${milestone.name}</em>
               </a></h2>
@@ -68,15 +67,12 @@
                   No date set
                 </p>
               </py:choose>
+            </td>
+            <td py:with="mstats = milestone_stats[idx]" class="info">
               <py:if test="mstats.stats.count">${progress_bar(mstats.stats, mstats.interval_hrefs, stats_href=mstats.stats_href)}</py:if>
-            </div>
-
-            <div class="description" xml:space="preserve">
-              ${wiki_to_html(context(milestone.resource), milestone.description)}
-            </div>
-
-          </li>
-        </ul>
+            </td>
+          </tr>
+        </table>
       </div>
       ${list_of_attachments(attachments, compact=True)}
 

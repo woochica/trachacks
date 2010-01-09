@@ -87,7 +87,7 @@ class VisibleVersion(Component):
     # ITemplateProvider methods
 
     def get_htdocs_dirs(self):
-       return []
+       return [('extendedversion', pkg_resources.resource_filename('extendedversion', 'htdocs'))]
 
     def get_templates_dirs(self):
        return [pkg_resources.resource_filename('extendedversion', 'templates')]
@@ -291,6 +291,8 @@ class VisibleVersion(Component):
 
         resource = Resource('version', version.name)
         context = Context.from_request(req, resource)
+        add_stylesheet(req, 'extendedversion/css/extendedversion.css')
+
         data = {
             'context': context,
             'resource': resource,
