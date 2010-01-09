@@ -5,7 +5,6 @@ Plugin for trac:  http://trac.edgewall.org
 See also:  http://trac-hacks.org
 """
 
-import pkg_resources
 import re
 
 from datetime import date
@@ -29,13 +28,13 @@ from trac.attachment import ILegacyAttachmentPolicyDelegate
 from trac.perm import IPermissionPolicy, IPermissionRequestor
 from trac.ticket.roadmap import ITicketGroupStatsProvider
 from trac.web.api import IRequestHandler
-from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.web.chrome import INavigationContributor
 from trac.wiki.api import IWikiSyntaxProvider
 
 
 class VisibleVersion(Component):
     implements(ILegacyAttachmentPolicyDelegate, INavigationContributor, IPermissionRequestor,
-            IRequestHandler, ITemplateProvider, IWikiSyntaxProvider)
+            IRequestHandler, IWikiSyntaxProvider)
     version_stats_provider = ExtensionOption('version', 'version_stats_provider',
                                      ITicketGroupStatsProvider,
                                      'DefaultTicketGroupStatsProvider',
@@ -83,14 +82,6 @@ class VisibleVersion(Component):
         actions = ['VERSION_CREATE', 'VERSION_DELETE', 'VERSION_MODIFY',
                    'VERSION_VIEW']
         return actions + [('VERSION_ADMIN', actions)]
-
-    # ITemplateProvider methods
-
-    def get_htdocs_dirs(self):
-       return [('extendedversion', pkg_resources.resource_filename('extendedversion', 'htdocs'))]
-
-    def get_templates_dirs(self):
-       return [pkg_resources.resource_filename('extendedversion', 'templates')]
 
     # IRequestHandler methods
 

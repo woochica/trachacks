@@ -1,5 +1,8 @@
+import pkg_resources
+
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
+from trac.web.chrome import ITemplateProvider
 
 db_version = 1
 upgrades = [
@@ -16,7 +19,7 @@ upgrades = [
 
 
 class EnvironmentSetup(Component):
-    implements(IEnvironmentSetupParticipant)
+    implements(IEnvironmentSetupParticipant, ITemplateProvider)
 
     # IEnvironmentSetupParticipant methods
 
@@ -47,6 +50,16 @@ class EnvironmentSetup(Component):
         self.log.info('Upgraded ExtendedVersionTracPlugin schema from %d to %d',
                       dbver, db_version)
 
+    # ITemplateProvider methods
+
+    def get_htdocs_dirs(self):
+       return [('extendedversion', pkg_resources.resource_filename('extendedversion', 'htdocs'))]
+
+    def get_templates_dirs(self):
+       return [pkg_resources.resource_filename('extendedversion', 'templates')]
+
+
+    # internal methods
 
     def _get_version(self, db):
         cursor = db.cursor()
