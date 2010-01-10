@@ -9,10 +9,13 @@
 # Author: John Hampton <pacopablo@pacopablo.com>
 
 from trac.wiki.macros import WikiMacroBase
-from trac.util import escape
 from trac.util.text import wrap
+from trac.util.html import Markup, escape
 
-__all__ = ['EmailMacro']
+revision="$Rev$"
+url="$URL$"
+
+__all__ = ["EmailMacro"]
 
 class EmailMacro(WikiMacroBase):
     """Email wrapping formatter
@@ -44,10 +47,10 @@ class EmailMacro(WikiMacroBase):
         yield 'email'
         yield 'Email'
 
-    def expand_macro(self, formatter, name, args):
+    def render_macro(self, req, name, content): 
         text = ''
-        if args:
-            lines = args.split('\n')
+        if content:
+            lines = content.split('\n')
             if lines[0].startswith('cols:'):
                 try:
                     width = int(lines[0][5:].strip())
@@ -57,5 +60,4 @@ class EmailMacro(WikiMacroBase):
             else:
                 width = 72
             text = wrap('\n'.join(lines), cols=width)
-        return '<pre class="wiki">%s</pre>' % escape(text)
-    
+        return Markup("<pre class='wiki'>%s</pre>" % escape(text))
