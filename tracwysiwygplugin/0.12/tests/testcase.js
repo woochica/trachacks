@@ -1342,6 +1342,35 @@ addEvent(window, "load", function() {
                 "Paragraph" ].join("\n"));
         });
 
+        unit.add("table with alignment", function() {
+            var dom = fragment(
+                element("p", "Paragraph"),
+                element("table", { "class": "wiki" },
+                    element("tbody",
+                        element("tr", element("th", "1.1"),
+                        element("td", "1.2", { colSpan: 2, align: "right" })),
+                        element("tr", element("th", "2.1", { colSpan: 3, align: "left" })),
+                        element("tr",
+                            element("td", "3||1", { align: "right" }),
+                            element("th", element("u", "3.2")),
+                            element("td", element("tt", "3.3"), { align: "left" })))),
+                element("p", "Paragraph"));
+            generateFragment.call(this, dom, [
+                "Paragraph",
+                "||=1.1=|||| 1.2",
+                "||||||=2.1 =||",
+                "|| 3!||1||= __3.2__ =||`3.3` ||",
+                "Paragraph" ].join("\n"));
+            generate.call(this, dom, [
+                "Paragraph",
+                "",
+                "||=1.1=|||| 1.2||",
+                "||||||=2.1 =||",
+                "|| 3!||1||=__3.2__=||`3.3` ||",
+                "",
+                "Paragraph" ].join("\n"));
+        });
+
         unit.add("table with row continuation", function() {
             var dom = fragment(
                 element("p", "Paragraph"),

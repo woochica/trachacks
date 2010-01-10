@@ -1964,7 +1964,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         }
     }
 
-    function handleTableCell(action, colspan, header) {
+    function handleTableCell(action, colspan, header, align) {
         var d = contentDocument;
         var h, table, tbody;
 
@@ -2013,6 +2013,9 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         var cell = d.createElement(header ? "th" : "td");
         if (colspan > 1) {
             cell.setAttribute("colSpan", colspan);
+        }
+        if (align != 0) {
+            cell.setAttribute("align", align < 0 ? "left" : "right");
         }
         row.appendChild(cell);
         holder = cell;
@@ -2137,9 +2140,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     }
                 }
                 if (text) {
-                    if (!/^[ \t\r\n\f\v]+$/.test(text) || !/^t[dh]$/i.test(holder.tagName)) {
-                        holder.appendChild(contentDocument.createTextNode(text));
-                    }
+                    holder.appendChild(contentDocument.createTextNode(text));
                 }
             }
             if (!match) {
@@ -2248,8 +2249,42 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     if (quoteDepth.length > 0 && match.index == 0) {
                         closeToFragment();
                     }
+                    var align = 0;
+                    for ( ; ; ) {       // lookahead next double pipes
+                        var m = wikiRulesPattern.exec(line);
+                        switch (m ? getMatchNumber(m) : 0) {
+                        case 0: case -6: case -7:
+                            var end = m ? m.index : line.length;
+                            if (prevIndex < end) {
+                                var tmp = line.substring(prevIndex, end);
+                                m = /[ \t\r\n\f\v]+$/.exec(tmp);
+                                if (m) {
+                                    tmp = tmp.slice(0, -m[0].length);
+                                }
+                                else {
+                                    align++;
+                                }
+                                m = /^[ \t\r\n\f\v]+/.exec(tmp);
+                                if (m) {
+                                    tmp = tmp.substring(m[0].length);
+                                }
+                                else {
+                                    align--;
+                                }
+                                if (!tmp) {
+                                    align = 0;
+                                }
+                                line = line.substring(0, prevIndex) + tmp + line.substring(end);
+                            }
+                            break;
+                        default:
+                            continue;
+                        }
+                        break;
+                    }
+                    wikiRulesPattern.lastIndex = prevIndex;
                     handleTableCell(inTableRow ? 0 : 1,
-                        matchText.replace(/^=|=$/g, '').length / 2, matchText.slice(-1) == "=");
+                        matchText.replace(/^=|=$/g, '').length / 2, matchText.slice(-1) == "=", align);
                     continue;
                 }
             }
@@ -2799,15 +2834,22 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
             case "td":
                 skipNode = node;
                 var colspan = node.getAttribute("colSpan");
-                if (colspan) {
-                    colspan = parseInt(colspan, 10);
-                }
+                colspan = colspan ? parseInt(colspan, 10) : 0;
                 _texts.push(colspan > 1 ? string("||", colspan) : "||");
                 if (header) {
                     _texts.push("=");
                 }
+                var align = node.style.textAlign;
+                if (align != "left" && align != "right") {
+                    align = (node.getAttribute("align") || "").toLowerCase();
+                }
                 var text = self.domToWikitext(node).replace(/ *\n/g, "[[BR]]");
-                _texts.push(text || " ");
+                if (text) {
+                    _texts.push(align == "right" ? " " : "", text, align == "left" ? " " : "");
+                }
+                else {
+                    _texts.push(" ");
+                }
                 if (header) {
                     _texts.push("=");
                 }
