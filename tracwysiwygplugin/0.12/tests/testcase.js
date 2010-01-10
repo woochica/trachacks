@@ -920,6 +920,28 @@ addEvent(window, "load", function() {
                 "====== Heading 6 ====== #anchor-6" ].join("\n"));
         });
 
+        unit.add("header 2", function() {
+            var dom = fragment(
+                element("h1", "Heading 1"),
+                element("h2", { id: "anchor-2" }, "Heading 2"),
+                element("h3", element("u", "Heading"), " ", element("i", "3")),
+                element("h4", { id: "anchor-4" },
+                    "Heading 4 with ",
+                    element("a", "link", {
+                        href: "./search?q=" + encodeURIComponent('wiki:WikiStart'),
+                        title: 'wiki:WikiStart', "tracwysiwyg-link": 'wiki:WikiStart',
+                        onclick: "return false;" })),
+                element("h5", "Heading 5"),
+                element("h6", { id: "anchor-6" }, "Heading 6"));
+            generateFragment.call(this, dom, [
+                "= Heading 1  ",
+                "== Heading 2    #anchor-2",
+                "=== __Heading__ ''3''    ",
+                "==== Heading 4 with [wiki:WikiStart link]      #anchor-4",
+                "===== Heading 5      ",
+                "====== Heading 6        #anchor-6" ].join("\n"));
+        });
+
         unit.add("list", function() {
             var dom = fragment(
                 element("p", "Paragraph"),

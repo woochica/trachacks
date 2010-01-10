@@ -1398,7 +1398,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
     var wikiRules = wikiToDomInlineRules.slice(0);
     wikiRules.push("^(?: *>)+[ \\t\\r\\f\\v]*");    // -1. citation
                                             // -2. header
-    wikiRules.push("^ *={1,6} *.*? *={1,6} *(?:#[\\w:][-\\w\\d.:]*)?$");
+    wikiRules.push("^[ \\t\\r\\f\\v]*={1,6}[ \\t\\r\\f\\v]+.*?(?:#[\\w:][-\\w\\d.:]*)?[ \\t\\r\\f\\v]*$");
                                             // -3. list
     wikiRules.push("^ +(?:[-*]|[0-9]+\\.|[a-zA-Z]\\.|[ivxIVX]{1,5}\\.) ");
                                             // -4. definition
@@ -1631,16 +1631,16 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
     }
 
     function handleHeader(line) {
-        var match = /^ *(={1,6}) *(.*?) *(={1,6}) *(?:#([\w:][-\w\d:.]*))?$/.exec(line);
-        if (!match || match[1].length != match[3].length) {
+        var match = /^\s*(={1,6})[ \t\r\f\v]+.*?(?:#([\w:][-\w\d:.]*))?[ \t\r\f\v]*$/.exec(line);
+        if (!match) {
             return null;
         }
 
         closeToFragment();
         var tag = "h" + match[1].length;
         var element = contentDocument.createElement(tag);
-        if (match[4]) {
-            element.id = match[4];
+        if (match[2]) {
+            element.id = match[2];
         }
         fragment.appendChild(element);
         holder = element;
@@ -2213,8 +2213,12 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 case -2:    // header
                     currentHeader = handleHeader(matchText);
                     if (currentHeader) {
-                        line = line.replace(/ *=+ *(?:#[\w:][-\w\d:.]*)?$/, "");
-                        wikiRulesPattern.lastIndex = prevIndex = line.match(/^ *=+ */)[0].length;
+                        line = line.replace(/\s*(?:#\S+)?\s*$/, "");
+                        var m = /^\s*(=+)[ \t\r\f\v]+/.exec(line);
+                        if (line.slice(-m[1].length) == m[1]) {
+                            line = line.slice(0, -m[1].length).replace(/[ \t\r\f\v]+$/, "");
+                        }
+                        wikiRulesPattern.lastIndex = prevIndex = m[0].length;
                         continue;
                     }
                     break;
