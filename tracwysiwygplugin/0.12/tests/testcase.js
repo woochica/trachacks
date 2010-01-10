@@ -1136,6 +1136,35 @@ addEvent(window, "load", function() {
                 " 3. Item 3" ].join("\n"));
         });
 
+        unit.add("list at beginning of line", function() {
+            var dom = fragment(
+                element("ul",
+                    element("li", "item 1"),
+                    element("li", "item 2"),
+                    element("ul", element("li", "sub 2.1"), element("li", "sub 2.2"))),
+                element("ol", { "class": "loweralpha" },
+                    element("li", "item A"), element("li", "item B")),
+                element("p", "Paragraph"));
+            generateFragment.call(this, dom, [
+                "- item 1",
+                "- item 2",
+                "  - sub 2.1",
+                "  - sub 2.2",
+                "a. item A",
+                "b. item B",
+                "Paragraph" ].join("\n"));
+            generate.call(this, dom, [
+                " * item 1",
+                " * item 2",
+                "   * sub 2.1",
+                "   * sub 2.2",
+                "",
+                " a. item A",
+                " a. item B",
+                "",
+                "Paragraph" ].join("\n"));
+        });
+
         unit.add("list + code block", function() {
             var dom = fragment(
                 element("p", "Paragraph"),

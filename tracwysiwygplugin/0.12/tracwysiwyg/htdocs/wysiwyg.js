@@ -1400,7 +1400,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
                                             // -2. header
     wikiRules.push("^[ \\t\\r\\f\\v]*={1,6}[ \\t\\r\\f\\v]+.*?(?:#[\\w:][-\\w\\d.:]*)?[ \\t\\r\\f\\v]*$");
                                             // -3. list
-    wikiRules.push("^ +(?:[-*]|[0-9]+\\.|[a-zA-Z]\\.|[ivxIVX]{1,5}\\.) ");
+    wikiRules.push("^[ \\t\\r\\f\\v]*(?:[-*]|[0-9]+\\.|[a-zA-Z]\\.|[ivxIVX]{1,5}\\.) ");
                                             // -4. definition
     wikiRules.push("^[ \\t\\r\\f\\v]+(?:`[^`]*`|\\{\\{\\{.*?\\}\\}\\}|[^`{:]|:[^:])+::(?:[ \\t\\r\\f\\v]+|$)");
     wikiRules.push("^[ \\t\\r\\f\\v]+(?=[^ \\t\\r\\f\\v])");    // -5. leading space
@@ -1773,7 +1773,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
     }
 
     function handleList(value) {
-        var match = /^( +)(?:([-*])|((?:([0-9]+)|([a-z])|([A-Z])|[ivxIVX]{1,5})))/.exec(value);
+        var match = /^(\s*)(?:([-*])|((?:([0-9]+)|([a-z])|([A-Z])|[ivxIVX]{1,5})))/.exec(value);
         var tag, className, depth, start;
         if (!match) {
             holder.appendChild(contentDocument.createTextNode(value));
@@ -1813,7 +1813,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         }
 
         var last = listDepth.length - 1;
-        if (depth > (last >= 0 ? listDepth[last] : 0)) {
+        if (depth > (last >= 0 ? listDepth[last] : -1)) {
             closeToFragment("li");
             openList(tag, className, start, depth);
         }
