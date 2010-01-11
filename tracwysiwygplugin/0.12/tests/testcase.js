@@ -1319,20 +1319,20 @@ addEvent(window, "load", function() {
                         element("tr",
                             element("td", "3.1"),
                             element("td", element("u", "3.2")),
-                            element("td", element("tt", "3.3"))))),
+                            element("td", element("tt", "3"), " ", element("tt", "-"))))),
                 element("p", "Paragraph"));
             generateFragment.call(this, dom, [
                 "Paragraph",
                 "||1.1||1.2||",
                 "||2.1",
-                "||3.1||__3.2__||`3.3`",
+                "||3.1||__3.2__||`3` `-`",
                 "Paragraph" ].join("\n"));
             generate.call(this, dom, [
                 "Paragraph",
                 "",
                 "|| 1.1 || 1.2 ||",
                 "|| 2.1 ||",
-                "|| 3.1 || __3.2__ || `3.3` ||",
+                "|| 3.1 || __3.2__ || `3` `-` ||",
                 "",
                 "Paragraph" ].join("\n"));
         });

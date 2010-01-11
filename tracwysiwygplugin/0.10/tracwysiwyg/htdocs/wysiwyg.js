@@ -1983,9 +1983,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     }
                 }
                 if (text) {
-                    if (!/^[ \t\r\n\f\v]+$/.test(text) || !/^t[dh]$/i.test(holder.tagName)) {
-                        holder.appendChild(contentDocument.createTextNode(text));
-                    }
+                    holder.appendChild(contentDocument.createTextNode(text));
                 }
             }
             if (!match) {
