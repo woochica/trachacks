@@ -729,8 +729,8 @@ addEvent(window, "load", function() {
                     "",
                     "text'', br[[BR]]''",
                     "",
-                    "||1,1[[BR]]|| ||1,3||",
-                    "|| ||2,2[[BR]][[BR]]||",
+                    "|| 1,1[[BR]] || || 1,3 ||",
+                    "|| || 2,2[[BR]][[BR]] ||",
                     "",
                     " * list, br[[BR]]",
                     " * list, br",
@@ -785,8 +785,8 @@ addEvent(window, "load", function() {
                     "",
                     "text'', br[[BR]]''",
                     "",
-                    "||1,1[[BR]]|| ||1,3||",
-                    "|| ||2,2[[BR]][[BR]]||",
+                    "|| 1,1[[BR]] || || 1,3 ||",
+                    "|| || 2,2[[BR]][[BR]] ||",
                     "",
                     " * list, br[[BR]]",
                     " * list, br",
@@ -1228,9 +1228,9 @@ addEvent(window, "load", function() {
             generate.call(this, dom, [
                 "Paragraph",
                 "",
-                "||1.1||1.2||",
-                "||2.1||",
-                "||3.1||__3.2__||`3.3`||",
+                "|| 1.1 || 1.2 ||",
+                "|| 2.1 ||",
+                "|| 3.1 || __3.2__ || `3.3` ||",
                 "",
                 "Paragraph" ].join("\n"));
         });
@@ -1249,11 +1249,11 @@ addEvent(window, "load", function() {
                 "||2nd||",
                 "!'''normal" ].join("\n"));
             generate.call(this, dom, [
-                "||1st||",
+                "|| 1st ||",
                 "",
                 "'''bold'''",
                 "",
-                "||2nd||",
+                "|| 2nd ||",
                 "",
                 "!'''normal" ].join("\n"));
         });
@@ -1295,14 +1295,14 @@ addEvent(window, "load", function() {
             generate.call(this, dom, [
                 "Paragraph",
                 "",
-                "||pre.1||pre.2||",
+                "|| pre.1 || pre.2 ||",
                 "",
-                "  ||1.1||1.2||",
-                "  ||2.1||",
-                "    ||deep||",
-                "  ||3.1||__3.2__||`3.3`||",
+                "  || 1.1 || 1.2 ||",
+                "  || 2.1 ||",
+                "    || deep ||",
+                "  || 3.1 || __3.2__ || `3.3` ||",
                 "",
-                "||post.1||post.2||",
+                "|| post.1 || post.2 ||",
                 "",
                 "Paragraph" ].join("\n"));
         });
@@ -1324,8 +1324,8 @@ addEvent(window, "load", function() {
                                     element("li", "item 3"),
                                     element("li", "item 4")))))));
             generateWikitext.call(this, dom, [
-                "||1.1|| * item 1[[BR]] * item 2||",
-                "||2.1[[BR]][[BR]] * item 3[[BR]] * item 4||" ].join("\n"));
+                "|| 1.1 || * item 1[[BR]] * item 2 ||",
+                "|| 2.1[[BR]][[BR]] * item 3[[BR]] * item 4 ||" ].join("\n"));
         });
 
         unit.add("table from word", function() {
@@ -1355,8 +1355,8 @@ addEvent(window, "load", function() {
                 '</tbody></table>',
                 '' ].join("\n");
             generateWikitext.call(this, dom, [
-                "||a[[BR]][[BR]]b||b||",
-                "||c||d||" ].join("\n"));
+                "|| a[[BR]][[BR]]b || b ||",
+                "|| c || d ||" ].join("\n"));
         });
 
         unit.add("domToWikitext for code block", function() {
@@ -1411,7 +1411,7 @@ addEvent(window, "load", function() {
                 " def to_s( ):: dt",
                 "    dd",
                 "",
-                "||cell[[BR]]1||cell[[BR]]2||" ].join("\n"), wikitext);
+                "|| cell[[BR]]1 || cell[[BR]]2 ||" ].join("\n"), wikitext);
         });
 
         unit.add("selectRange", function() {

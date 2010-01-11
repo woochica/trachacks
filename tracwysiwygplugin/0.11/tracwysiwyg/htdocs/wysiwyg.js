@@ -2084,6 +2084,23 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     if (quoteDepth.length > 0 && match.index == 0) {
                         closeToFragment();
                     }
+                    for ( ; ; ) {       // lookahead next double pipes
+                        var m = wikiRulesPattern.exec(line);
+                        switch (m ? getMatchNumber(m) : 0) {
+                        case 0: case -6: case -7:
+                            var end = m ? m.index : line.length;
+                            if (prevIndex < end) {
+                                line = line.substring(0, prevIndex)
+                                    + line.substring(prevIndex, end).replace(/^[ \t\r\n\f\v]+|[ \t\r\n\f\v]+$/g, "")
+                                    + line.substring(end);
+                            }
+                            break;
+                        default:
+                            continue;
+                        }
+                        break;
+                    }
+                    wikiRulesPattern.lastIndex = prevIndex;
                     handleTableCell(inTableRow ? 0 : 1);
                     continue;
                 }
@@ -2613,8 +2630,8 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
             case "td": case "th":
                 skipNode = node;
                 _texts.push("||");
-                var text = self.domToWikitext(node).replace(/ *\n/g, "[[BR]]");
-                _texts.push(text || " ");
+                var text = self.domToWikitext(node).replace(/ *\n/g, "[[BR]]").replace(/^ +| +$/g, "");
+                _texts.push(text ? " " + text + " " : " ");
                 break;
             case "tr":
                 if (quoteDepth > 0) {

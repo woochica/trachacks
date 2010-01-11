@@ -2847,9 +2847,9 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 if (align != "left" && align != "right") {
                     align = (node.getAttribute("align") || "").toLowerCase();
                 }
-                var text = self.domToWikitext(node).replace(/ *\n/g, "[[BR]]");
+                var text = self.domToWikitext(node).replace(/ *\n/g, "[[BR]]").replace(/^ +| +$/g, "");
                 if (text) {
-                    _texts.push(align == "right" ? " " : "", text, align == "left" ? " " : "");
+                    _texts.push(align == "left" ? "" : " ", text, align == "right" ? "" : " ");
                 }
                 else {
                     _texts.push(" ");
