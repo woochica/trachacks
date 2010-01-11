@@ -78,16 +78,14 @@ class BlackMagicTicketTweaks(Component):
     def pre_process_request(self, req, handler):
         return handler
     def post_process_request(self, req, template, data, content_type):
-        if data is not None:
-            numTickets = data.get("numrows")
-            if numTickets is not None:
-                data.update({"numrows" : numTickets-self.blockedTickets})
+        if template == "report_view.html":
+            data["numrows"]-=self.blockedTickets;
         #reset blocked tickets to 0
         self.blockedTickets = 0
-        
-        #remove ticket types user doesn't have permission to
-        fields = data.get("fields")
-        if fields is not None:
+
+        if template == "ticket.html":
+            #remove ticket types user doesn't have permission to
+            fields = data.get("fields")
             i = 0
             for type in fields:
                 if  type.get("name") == "type":
@@ -102,7 +100,18 @@ class BlackMagicTicketTweaks(Component):
                             self.env.log.debug("User %s has permission %s" % (req.authname, ticketperm) );
                     data["fields"][i]["options"]=newTypes
                 i+=1
-        
+        if template == "query.html":
+            #remove ticket types user doesn't have permission to
+            newTypes = []
+            for option in data["fields"]["type"]["options"]:
+                #get perm for ticket type
+                ticketperm = self.config.get('blackmagic','ticket_type.%s' % option, None)
+                self.env.log.debug("Ticket permissions %s type %s " % (ticketperm,option) );
+                if ticketperm is None or ticketperm in req.perm:
+                    #user has perm, add to newTypes
+                    newTypes.append(option)
+                    self.env.log.debug("User %s has permission %s" % (req.authname, ticketperm) );
+            data["fields"]["type"]["options"]=newTypes
         return template, data, content_type
     
 
@@ -179,6 +188,10 @@ class BlackMagicTicketTweaks(Component):
     ## ITemplateStreamFilter
 
     def filter_stream(self, req, method, filename, stream, data):
+        #remove matches from custom queries due to the fact ticket permissions are checked after this stream is manipulated so the count cannot be updated.
+        if filename == "query.html":
+            stream |= Transformer('//div[@class="query"]/h1/span[@class="numrows"]/text()').replace("")
+
         if filename == "ticket.html":
             enchants = self.config.get('blackmagic', 'tweaks', '')
             for field in (x.strip() for x in enchants.split(',')):
