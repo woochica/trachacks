@@ -50,7 +50,7 @@ def render_cloud(env, req, cloud, renderer=None):
         if i == last:
             li(class_='last')
         li()
-        ul(li)
+        ul(li, ' ')
     return ul
 
 
