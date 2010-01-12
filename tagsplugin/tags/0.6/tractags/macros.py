@@ -51,6 +51,7 @@ def render_cloud(env, req, cloud, renderer=None):
 
 
 class TagCloudMacro(WikiMacroBase):
+    """ Displays a cloud of all tags. """
     def expand_macro(self, formatter, name, content):
         req = formatter.req
         query_result = TagSystem(self.env).query(req, content)
@@ -67,6 +68,24 @@ class TagCloudMacro(WikiMacroBase):
 
 
 class ListTaggedMacro(WikiMacroBase):
+    """ Provides the macro
+    {{{
+    [[ListTagged(<expr>)]]
+    }}}
+    that will display a list of resources whose tags match `<expr>`.
+
+    Examples:
+
+    Intersection of `macro` and `plugin` tags:
+    {{{
+    [[ListTagged(macro plugin)]]
+    }}}
+
+    Pages tagged with `macro` but not with `plugin`:
+    {{{
+    [[ListTagged(macro -plugin)]]
+    }}}
+    """
     def expand_macro(self, formatter, name, content):
         req = formatter.req
         query_result = TagSystem(self.env).query(req, content)
