@@ -84,11 +84,11 @@ class WikiTagInterface(Component):
         return tags
 
     def _wiki_view(self, req, stream):
+        add_stylesheet(req, 'tags/css/tractags.css')
         tags = self._page_tags(req)
         if not tags:
             return stream
         tag_system = TagSystem(self.env)
-        add_stylesheet(req, 'tags/css/tractags.css')
         li = []
         for tag_ in tags:
             resource = Resource('tag', tag_)
