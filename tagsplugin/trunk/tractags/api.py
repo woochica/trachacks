@@ -168,6 +168,7 @@ class TagSystem(Component):
     tag_providers = ExtensionPoint(ITagProvider)
 
     # Internal variables
+    _realm = re.compile('realm:(\w+)', re.U | re.I)
     _tag_split = re.compile('[,\s]+')
     _realm_provider_map = None
 
@@ -196,9 +197,15 @@ class TagSystem(Component):
                              req.href('tags'))
             add_warning(req, message)
         query = Query(query, attribute_handlers=all_attribute_handlers)
+        providers = []
+        for m in self._realm.finditer(query.as_string()):
+            realm = m.group(1)
+            providers.append(self._get_provider(realm))
+        if not providers:
+            providers = self.tag_providers
 
         query_tags = set(query.terms())
-        for provider in self.tag_providers:
+        for provider in providers:
             for resource, tags in provider.get_tagged_resources(req, query_tags):
                 if query(tags, context=resource):
                     yield resource, tags
