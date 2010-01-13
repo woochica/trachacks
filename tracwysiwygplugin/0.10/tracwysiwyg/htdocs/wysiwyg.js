@@ -1220,6 +1220,8 @@ TracWysiwyg.prototype.selectionChanged = function() {
 
 (function() {
     var _linkScheme = "[\\w.+-]+";
+    // cf. WikiSystem.XML_NAME, http://www.w3.org/TR/REC-xml/#id
+    var _xmlName = "[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD](?:[-:_.A-Za-z0-9\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]*[-_A-Za-z0-9\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD])?"
     var _quotedString = "'[^']+'|" + '"[^"]+"';
     var _changesetId = "(?:\\d+|[a-fA-F\\d]{6,})";
     var _ticketLink = "#\\d+";
@@ -1266,7 +1268,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
     wikiRules.push.apply(wikiRules, wikiInlineRules);
     wikiRules.push("^(?: *>)+[ \\t\\r\\f\\v]*");    // -1. citation
                                             // -2. header
-    wikiRules.push("^ *={1,6} *.*? *={1,6} *(?:#[\\w:][-\\w\\d.:]*)?$");
+    wikiRules.push("^[ \\t\\r\\f\\v]*={1,6}[ \\t\\r\\f\\v]+.*?[ \\t\\r\\f\\v]+={1,6}(?:[ \\t\\r\\f\\v]+#" + _xmlName + ")?[ \\t\\r\\f\\v]*$");
                                             // -3. list
     wikiRules.push("^ +(?:[-*]|[0-9]+\\.|[a-zA-Z]\\.|[ivxIVX]{1,5}\\.) ");
                                             // -4. definition
@@ -1306,6 +1308,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
     TracWysiwyg.prototype._wikiPageName = _wikiPageName;
     TracWysiwyg.prototype.wikiInlineRules = wikiInlineRules;
     TracWysiwyg.prototype.wikiRules = wikiRules;
+    TracWysiwyg.prototype.xmlNamePattern = new RegExp("^" + _xmlName + "$");
     TracWysiwyg.prototype.wikiInlineRulesPattern = wikiInlineRulesPattern;
     TracWysiwyg.prototype.wikiRulesPattern = wikiRulesPattern;
     TracWysiwyg.prototype.wikiSyntaxPattern = wikiSyntaxPattern;
@@ -1495,16 +1498,16 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
     }
 
     function handleHeader(line) {
-        var match = /^ *(={1,6}) *(.*?) *(={1,6}) *(?:#([\w:][-\w\d:.]*))?$/.exec(line);
-        if (!match || match[1].length != match[3].length) {
+        var match = /^\s*(=+)[ \t\r\f\v]+.*?[ \t\r\f\v]+(=+)(?:[ \t\r\f\v]+#([^ \t\r\f\v]+)[ \t\r\f\v]*)?$/.exec(line);
+        if (!match || match[1].length != match[2].length) {
             return null;
         }
 
         closeToFragment();
         var tag = "h" + match[1].length;
         var element = contentDocument.createElement(tag);
-        if (match[4]) {
-            element.id = match[4];
+        if (match[3]) {
+            element.id = match[3];
         }
         fragment.appendChild(element);
         holder = element;
@@ -2051,8 +2054,8 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 case -2:    // header
                     currentHeader = handleHeader(matchText);
                     if (currentHeader) {
-                        line = line.replace(/ *=+ *(?:#[\w:][-\w\d:.]*)?$/, "");
-                        wikiRulesPattern.lastIndex = prevIndex = line.match(/^ *=+ */)[0].length;
+                        line = line.replace(/[ \t\r\f\v]+=+(?:[ \t\r\f\v]+#[^ \t\r\f\v]+)?[ \t\r\f\v]*$/, "");
+                        wikiRulesPattern.lastIndex = prevIndex = line.match(/^\s*=+[ \t\r\f\v]*/)[0].length;
                         continue;
                     }
                     break;
@@ -2195,6 +2198,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
     var wikiCloseTokens = this.wikiCloseTokens;
     var wikiInlineTags = this.wikiInlineTags;
     var wikiBlockTags = this.wikiBlockTags;
+    var xmlNamePattern = this.xmlNamePattern;
     var wikiInlineRulesPattern = this.wikiInlineRulesPattern;
     var wikiSyntaxPattern = this.wikiSyntaxPattern;
     var tracLinkPattern = new RegExp("^" + this._tracLink + "$");
@@ -2759,7 +2763,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
             }
         }
         if (/^h[1-6]$/.test(name)) {
-            if (/^[\w:][-\w\d.:]*$/.test(node.id || "")) {
+            if (xmlNamePattern.test(node.id || "")) {
                 _texts.push(" #", node.id);
             }
             _texts.push("\n");

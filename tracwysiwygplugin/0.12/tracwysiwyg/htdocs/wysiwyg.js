@@ -1402,7 +1402,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
     var wikiRules = wikiToDomInlineRules.slice(0);
     wikiRules.push("^(?: *>)+[ \\t\\r\\f\\v]*");    // -1. citation
                                             // -2. header
-    wikiRules.push("^[ \\t\\r\\f\\v]*={1,6}[ \\t\\r\\f\\v]+.*?(?:#[\\w:][-\\w\\d.:]*)?[ \\t\\r\\f\\v]*$");
+    wikiRules.push("^[ \\t\\r\\f\\v]*={1,6}[ \\t\\r\\f\\v]+.*?(?:#" + _xmlName + ")?[ \\t\\r\\f\\v]*$");
                                             // -3. list
     wikiRules.push("^[ \\t\\r\\f\\v]*(?:[-*]|[0-9]+\\.|[a-zA-Z]\\.|[ivxIVX]{1,5}\\.) ");
                                             // -4. definition
@@ -1636,7 +1636,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
     }
 
     function handleHeader(line) {
-        var match = /^\s*(={1,6})[ \t\r\f\v]+.*?(?:#([\w:][-\w\d:.]*))?[ \t\r\f\v]*$/.exec(line);
+        var match = /^\s*(=+)[ \t\r\f\v]+.*?(?:#([^ \t\r\f\v]+))?[ \t\r\f\v]*$/.exec(line);
         if (!match) {
             return null;
         }
@@ -2233,7 +2233,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 case -2:    // header
                     currentHeader = handleHeader(matchText);
                     if (currentHeader) {
-                        line = line.replace(/\s*(?:#\S+)?\s*$/, "");
+                        line = line.replace(/(?:[ \t\r\f\v]+#[^ \t\r\f\v]+)?[ \t\r\f\v]*$/, "");
                         var m = /^\s*(=+)[ \t\r\f\v]+/.exec(line);
                         if (line.slice(-m[1].length) == m[1]) {
                             line = line.slice(0, -m[1].length).replace(/[ \t\r\f\v]+$/, "");
@@ -3017,7 +3017,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
             }
         }
         if (/^h[1-6]$/.test(name)) {
-            if (/^[\w:][-\w\d.:]*$/.test(node.id || "")) {
+            if (xmlNamePattern.test(node.id || "")) {
                 _texts.push(" #", node.id);
             }
             _texts.push("\n");

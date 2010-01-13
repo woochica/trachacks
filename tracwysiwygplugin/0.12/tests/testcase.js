@@ -937,7 +937,7 @@ addEvent(window, "load", function() {
                 element("h1", "Heading 1"),
                 element("h2", { id: "anchor-2" }, "Heading 2"),
                 element("h3", element("u", "Heading"), " ", element("i", "3")),
-                element("h4", { id: "anchor-4" },
+                element("h4", { id: "アンカー-4" },
                     "Heading 4 with ",
                     element("a", "link", {
                         href: "./search?q=" + encodeURIComponent('wiki:WikiStart'),
@@ -949,7 +949,7 @@ addEvent(window, "load", function() {
                 "= Heading 1 =",
                 "== Heading 2 == #anchor-2",
                 "=== __Heading__ ''3'' ===",
-                "==== Heading 4 with [wiki:WikiStart link] ==== #anchor-4",
+                "==== Heading 4 with [wiki:WikiStart link] ==== #アンカー-4",
                 "===== Heading 5 =====",
                 "====== Heading 6 ====== #anchor-6" ].join("\n"));
         });
@@ -959,7 +959,7 @@ addEvent(window, "load", function() {
                 element("h1", "Heading 1"),
                 element("h2", { id: "anchor-2" }, "Heading 2"),
                 element("h3", element("u", "Heading"), " ", element("i", "3")),
-                element("h4", { id: "anchor-4" },
+                element("h4", { id: "アンカー-4" },
                     "Heading 4 with ",
                     element("a", "link", {
                         href: "./search?q=" + encodeURIComponent('wiki:WikiStart'),
@@ -971,7 +971,7 @@ addEvent(window, "load", function() {
                 "= Heading 1  ",
                 "== Heading 2    #anchor-2",
                 "=== __Heading__ ''3''    ",
-                "==== Heading 4 with [wiki:WikiStart link]      #anchor-4",
+                "==== Heading 4 with [wiki:WikiStart link]      #アンカー-4",
                 "===== Heading 5      ",
                 "====== Heading 6        #anchor-6" ].join("\n"));
         });
