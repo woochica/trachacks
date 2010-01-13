@@ -56,6 +56,8 @@ class BlackMagicTicketTweaks(Component):
             
             #get perm for ticket type
             ticketperm = self.config.get('blackmagic','ticket_type.%s' % ticket["type"], None)
+            if not ticketperm:
+                ticketperm = None
             self.env.log.debug("Ticket permissions %s type %s " % (ticketperm,ticket["type"]) );
             if ticketperm is None:
                 #perm isn't set, return
@@ -93,6 +95,8 @@ class BlackMagicTicketTweaks(Component):
                     for option in type.get("options"):
                         #get perm for ticket type
                         ticketperm = self.config.get('blackmagic','ticket_type.%s' % option, None)
+                        if not ticketperm:
+                            ticketperm = None
                         self.env.log.debug("Ticket permissions %s type %s " % (ticketperm,option) );
                         if ticketperm is None or ticketperm in req.perm:
                             #user has perm, add to newTypes
@@ -106,6 +110,8 @@ class BlackMagicTicketTweaks(Component):
             for option in data["fields"]["type"]["options"]:
                 #get perm for ticket type
                 ticketperm = self.config.get('blackmagic','ticket_type.%s' % option, None)
+                if not ticketperm:
+                    ticketperm = None
                 self.env.log.debug("Ticket permissions %s type %s " % (ticketperm,option) );
                 if ticketperm is None or ticketperm in req.perm:
                     #user has perm, add to newTypes
@@ -172,6 +178,8 @@ class BlackMagicTicketTweaks(Component):
         
         #check if user has perm to create ticket type
         ticketperm = self.config.get("blackmagic","ticket_type.%s" % ticket["type"],None)
+        if not ticketperm:
+            ticketperm = None
         if ticketperm is not None and ticketperm not in req.perm:
             self.env.log.debug("Ticket validation failed type %s permission %s"% (ticket["type"], ticketperm))
             res.append(('type', "Access denied to ticket type %s" % ticket["type"]))
