@@ -46,7 +46,11 @@ class ScriptAuthStore(Component):
         user_email = ""
 
         try:
-            f = urllib.urlopen(self.script_auth_url.replace('<USERNAME>', user).replace('<PASSWORD>', password))
+            url = self.script_auth_url
+            url = url.replace('<USERNAME>', urllib.quote_plus(user))
+            url = url.replace('<PASSWORD>', urllib.quote_plus(password))
+
+            f = urllib.urlopen(url)
             auth_result = f.readline().rstrip()
             user_email  = f.readline().rstrip()
             f.close()
