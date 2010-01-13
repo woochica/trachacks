@@ -52,7 +52,7 @@ class WikiTagInterface(Component):
         if req and 'TAGS_MODIFY' in req.perm(page.resource) \
                 and req.path_info.startswith('/wiki') and 'save' in req.args:
             if self._update_tags(req, page) and \
-                    req.args.get('text') == page.old_text and \
+                    page.text == page.old_text and \
                     page.readonly == int('readonly' in req.args):
                 req.redirect(get_resource_url(self.env, page.resource, req.href, version=None))
         return []
@@ -84,11 +84,11 @@ class WikiTagInterface(Component):
         return tags
 
     def _wiki_view(self, req, stream):
-        add_stylesheet(req, 'tags/css/tractags.css')
         tags = self._page_tags(req)
         if not tags:
             return stream
         tag_system = TagSystem(self.env)
+        add_stylesheet(req, 'tags/css/tractags.css')
         li = []
         for tag_ in tags:
             resource = Resource('tag', tag_)
