@@ -119,7 +119,7 @@ class WikiTagInterface(Component):
             li.append(tag.li(anchor, ' '))
 
         insert = tag.ul(class_='tags')(tag.li('Tags', class_='header'), li)
-        return stream | Transformer('//div[@class="buttons"]').before(insert)
+        return stream | Transformer('//div[contains(@class,"wikipage")]').after(insert)
 
     def _update_tags(self, req, page):
         tag_system = TagSystem(self.env)
