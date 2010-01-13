@@ -674,6 +674,40 @@ addEvent(window, "load", function() {
             generate.call(this, dom, wikitext);
         });
 
+        unit.add("[=#anchor]", function() {
+            function a(link) {
+                return element("a", link, {
+                    href: "./search?q=" + encodeURIComponent(link),
+                    title: link, "tracwysiwyg-link": link, onclick: "return false;" });
+            }
+            var dom = fragment(
+                element("p",
+                    "This is the ",
+                    element("span", { "class": "wikianchor", id: "init" }),
+                    " initialization routine: ..."),
+                element("p",
+                    "Look for ",
+                    element("span", { "class": "wikianchor", id : "extra" },
+                        element("i", "additional explanations")),
+                    " here."),
+                element("p",
+                    "これは",
+                    element("span", { "class": "wikianchor", id: "初期化" }),
+                    "初期化ルーチン: ..."),
+                element("p",
+                    element("span", { "class": "wikianchor", id : "追加" }, element("i", "追加説明")),
+                    "はここを見てください。"));
+            var wikitext = [
+                "This is the [=#init] initialization routine: ...",
+                "",
+                "Look for [=#extra ''additional explanations''] here.",
+                "",
+                "これは[=#初期化]初期化ルーチン: ...",
+                "",
+                "[=#追加 ''追加説明'']はここを見てください。" ].join("\n");
+            generate.call(this, dom, wikitext);
+        });
+
         unit.add("[[macro]]", function() {
             var dom = element("p",
                 "Line break ", element("br"), " another line", element("br"),

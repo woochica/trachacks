@@ -1347,6 +1347,8 @@ TracWysiwyg.prototype.selectionChanged = function() {
 
 (function() {
     var _linkScheme = "[a-zA-Z][a-zA-Z0-9+-.]*";
+    // cf. WikiSystem.XML_NAME, http://www.w3.org/TR/REC-xml/#id
+    var _xmlName = "[:_A-Za-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD](?:[-:_.A-Za-z0-9\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]*[-_A-Za-z0-9\u00B7\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u037D\u037F-\u1FFF\u200C-\u200D\u203F-\u2040\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD])?"
     var _quotedString = "'[^']+'|" + '"[^"]+"';
     var _changesetId = "(?:\\d+|[a-fA-F\\d]{6,})";
     var _ticketLink = "#\\d+";
@@ -1390,6 +1392,8 @@ TracWysiwyg.prototype.selectionChanged = function() {
     wikiInlineRules.push("!?\\[(?:" + _quotedString + ")\\]");
                                             // 19. <wiki:Trac bracket links>
     wikiInlineRules.push("!?<@:[^>]+>".replace(/@/g, _linkScheme));
+                                            // 20. [=#anchor label]
+    wikiInlineRules.push("!?\\[=#" + _xmlName + "(?:[ \\t\\r\\f\\v]+[^\\]]*)?\\]");
 
     var wikiToDomInlineRules = wikiInlineRules.slice(0);
                                             // 1001. escaping double pipes
@@ -1441,6 +1445,7 @@ TracWysiwyg.prototype.selectionChanged = function() {
     TracWysiwyg.prototype._wikiPageName = _wikiPageName;
     TracWysiwyg.prototype.wikiInlineRules = wikiInlineRules;
     TracWysiwyg.prototype.wikiToDomInlineRules = wikiToDomInlineRules;
+    TracWysiwyg.prototype.xmlNamePattern = new RegExp("^" + _xmlName + "$");
     TracWysiwyg.prototype.domToWikiInlinePattern = domToWikiInlinePattern;
     TracWysiwyg.prototype.wikiRulesPattern = wikiRulesPattern;
     TracWysiwyg.prototype.wikiSyntaxPattern = wikiSyntaxPattern;
@@ -1770,6 +1775,18 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
             return true;
         }
         return false;
+    }
+
+    function handleWikiAnchor(text) {
+        var match = /^\[=#([^ \t\r\f\v\]]+)(?:[ \t\r\f\v]+([^\]]*))?\]$/.exec(text);
+        var d = contentDocument;
+        var element = d.createElement("span");
+        element.className = "wikianchor";
+        element.id = match[1];
+        if (match[2]) {
+            element.appendChild(self.wikitextToOnelinerFragment(match[2], d));
+        }
+        holder.appendChild(element);
     }
 
     function handleList(value) {
@@ -2205,6 +2222,9 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                 case 19:    // <wiki:Trac bracket links>
                     handleBracketLinks(matchText);
                     continue;
+                case 20:    // [=#anchor label]
+                    handleWikiAnchor(matchText);
+                    continue;
                 case 1001:  // escaping double escape
                     break;
                 case -1:    // citation
@@ -2389,6 +2409,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
     var wikiCloseTokens = this.wikiCloseTokens;
     var wikiInlineTags = this.wikiInlineTags;
     var wikiBlockTags = this.wikiBlockTags;
+    var xmlNamePattern = this.xmlNamePattern;
     var domToWikiInlinePattern = this.domToWikiInlinePattern;
     var wikiSyntaxPattern = this.wikiSyntaxPattern;
     var tracLinkPattern = new RegExp("^" + this._tracLink + "$");
@@ -2886,12 +2907,19 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 }
                 break;
             case "span":
-                var token = tokenFromSpan(node);
-                if (token) {
-                    if (name in wikiInlineTags && isTailEscape()) {
-                        _texts.push(" ");
+                if (node.className == "wikianchor" && xmlNamePattern.test(node.id || "")) {
+                    skipNode = node;
+                    var text = self.domToWikitext(node).replace(/^ +| +$|\]/g, "");
+                    _texts.push("[=#", node.id, text ? " " + text + "]" : "]");
+                }
+                else {
+                    var token = tokenFromSpan(node);
+                    if (token) {
+                        if (name in wikiInlineTags && isTailEscape()) {
+                            _texts.push(" ");
+                        }
+                        pushOpenToken(token);
                     }
-                    pushOpenToken(token);
                 }
                 break;
             case "script":
