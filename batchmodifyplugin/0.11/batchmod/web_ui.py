@@ -31,9 +31,10 @@ class BatchModifyModule(Component):
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         """Look for QueryHandler posts and hijack them"""
-        if isinstance(handler, QueryModule):
-            if req.method=='POST' and req.args.get('batchmod'):
-                self._batch_modify(req)
+        if req.path_info == '/query' and req.method=='POST' and \
+            req.args.get('batchmod') and self._has_permission(req):
+            self.log.debug('BatchModifyModule: executing')
+            self._batch_modify(req)
         return handler
 
     def post_process_request(self, req, template, content_type):
@@ -58,6 +59,7 @@ class BatchModifyModule(Component):
                     values[name] = req.args.get('bmod_value_' + name)
 
         selectedTickets = req.args.get('selectedTickets')
+        self.log.debug('BatchModifyPlugin: selected tickets: %s', selectedTickets)
         selectedTickets = isinstance(selectedTickets, list) and selectedTickets or selectedTickets.split(',')
         if not selectedTickets:
             raise TracError, 'No Tickets selected'
@@ -67,6 +69,7 @@ class BatchModifyModule(Component):
                 t = Ticket(self.env, id) 
                 t.populate(values)
                 t.save_changes(req.authname, comment)
+                self.log.debug('BatchModifyPlugin: saved changes to #%s', id)
 
                 # TODO: Send email notifications - copied from ticket.web_ui
                 #try:
@@ -84,9 +87,7 @@ class BatchModifyModule(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, formdata):
         """Adds BatchModify form to the query page"""
-        if filename == 'query.html' and (
-                    req.perm.has_permission('TICKET_ADMIN') or
-                    req.perm.has_permission('TICKET_BATCH_MODIFY') ):
+        if filename == 'query.html' and self._has_permission(req):
             return stream | Transformer('//div[@id="help"]'). \
                                 before(self._generate_form(req, formdata) )
         return stream
@@ -105,3 +106,8 @@ class BatchModifyModule(Component):
         stream = Chrome(self.env).render_template(req, 'batchmod.html',
               batchFormData, fragment=True)
         return stream.select('//form[@id="batchmod-form"]')
+        
+    # Helper methods
+    def _has_permission(self, req):
+        return req.perm.has_permission('TICKET_ADMIN') or \
+                req.perm.has_permission('TICKET_BATCH_MODIFY')
