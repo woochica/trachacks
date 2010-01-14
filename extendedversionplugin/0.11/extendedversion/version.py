@@ -11,7 +11,7 @@ from datetime import date
 from genshi.builder import tag
 
 from trac.attachment import AttachmentModule
-from trac.config import ExtensionOption
+from trac.config import ExtensionOption, Option
 from trac.core import *
 from trac.mimeview.api import Context
 from trac.resource import Resource, ResourceNotFound
@@ -26,21 +26,24 @@ from trac.web.chrome import add_link, add_notice, add_stylesheet, add_warning
 ### interfaces:  
 from trac.attachment import ILegacyAttachmentPolicyDelegate
 from trac.perm import IPermissionPolicy, IPermissionRequestor
+#from trac.search import ISearchSource
 from trac.ticket.roadmap import ITicketGroupStatsProvider
-from trac.web.api import IRequestHandler
+from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor
-from trac.wiki.api import IWikiSyntaxProvider
+from trac.wiki import IWikiSyntaxProvider
 
 
 class VisibleVersion(Component):
     implements(ILegacyAttachmentPolicyDelegate, INavigationContributor, IPermissionRequestor,
             IRequestHandler, IWikiSyntaxProvider)
-    version_stats_provider = ExtensionOption('version', 'version_stats_provider',
+
+    navigation_item = Option('extended_version', 'navigation_item', 'version')
+    version_stats_provider = ExtensionOption('extended_version', 'version_stats_provider',
                                      ITicketGroupStatsProvider,
                                      'DefaultTicketGroupStatsProvider',
         """Name of the component implementing `ITicketGroupStatsProvider`,
         which is used to collect statistics on all version tickets.""")
-    milestone_stats_provider = ExtensionOption('version', 'milestone_stats_provider',
+    milestone_stats_provider = ExtensionOption('extended_version', 'milestone_stats_provider',
                                      ITicketGroupStatsProvider,
                                      'DefaultTicketGroupStatsProvider',
         """Name of the component implementing `ITicketGroupStatsProvider`,
@@ -71,7 +74,7 @@ class VisibleVersion(Component):
     # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
-        return 'roadmap'
+        return self.navigation_item
 
     def get_navigation_items(self, req):
         return []
@@ -96,8 +99,6 @@ class VisibleVersion(Component):
         version_id = req.args.get('id')
         req.perm('version', version_id).require('VERSION_VIEW')
         
-        #add_link(req, 'up', req.href.roadmap(), _('Roadmap'))
-
         db = self.env.get_db_cnx() # TODO: db can be removed
         version = Version(self.env, version_id, db)
         action = req.args.get('action', 'view')
@@ -107,7 +108,7 @@ class VisibleVersion(Component):
                 if version.exists:
                     req.redirect(req.href.version(version.name))
                 else:
-                    req.redirect(req.href.roadmap())
+                    req.redirect(req.href.versions())
             elif action == 'edit':
                 return self._do_save(req, db, version)
             elif action == 'delete':
@@ -118,7 +119,7 @@ class VisibleVersion(Component):
             return self._render_confirm(req, db, version)
 
         if not version.name:
-            req.redirect(req.href.roadmap())
+            req.redirect(req.href.versions())
 
         return self._render_view(req, db, version)
 
@@ -141,7 +142,7 @@ class VisibleVersion(Component):
         db.commit()
         add_notice(req, _('The version "%(name)s" has been deleted.',
                           name=name))
-        req.redirect(req.href.roadmap())
+        req.redirect(req.href.versions())
 
     def _do_save(self, req, db, version):
         resource = Resource('version', version.name)

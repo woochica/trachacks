@@ -2,7 +2,7 @@ from datetime import date
 from genshi.builder import tag
 
 from trac.core import *
-from trac.config import BoolOption
+from trac.config import BoolOption, Option
 from trac.resource import Resource
 from trac.ticket import Version
 from trac.util.datefmt import get_datetime_format_hint, parse_date
@@ -19,17 +19,22 @@ class ReleasesModule(Component):
 
     navigation = BoolOption('extended_version', 'roadmap_navigation', 'false',
         doc="""Whether to add a link to the main navigation bar.""")
+    navigation_item = Option('extended_version', 'navigation_item', 'version',
+        doc="""The name for the navigation item to highlight.
+        
+        May be set to 'roadmap' to highlight the navigation provided by the core
+        ticket module. If roadmap_navigation is also set to true, this completely
+        replaces the main navigation for the core roadmap.""")
 
     # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
-        return 'roadmap'
+        return self.navigation_item
 
     def get_navigation_items(self, req):
-        #if self.navigation and 'VERSION_VIEW' in req.perm:
-        #    yield ('mainnav', 'roadmap',
-        #                       tag.a(_('Versions'), href=req.href.versions()))
-        return []
+        if self.navigation and 'VERSION_VIEW' in req.perm:
+            yield ('mainnav', self.navigation_item,
+                               tag.a(_('Versions'), href=req.href.versions()))
 
     # IRequestHandler methods
 
