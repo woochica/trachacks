@@ -21,10 +21,10 @@ Setup and Configuration file.
 from setuptools import find_packages, setup
 
 setup(
-    name='TracStorypoints', version='0.1',
+    name='TracStorypoints', version='0.1.1',
     author = 'scott turnbull',
     author_email = 'sturnbu@emory.edu',
-    url = 'https://techknowhow.library.emory.edu',
+    url = 'http://trac-hacks.org/wiki/TracStoryPointsPlugin',
     description = 'A lightweight plugin for Trac story point tracking and code completion date',
     license = 'GPLv3',
 

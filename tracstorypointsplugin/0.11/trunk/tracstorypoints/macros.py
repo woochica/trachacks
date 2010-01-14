@@ -94,7 +94,13 @@ class SpTicketQueryMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         
         argv, kwargs = parse_args(content, strict=False) # parse args and kwargs
-        kwargs['col'] = self._check_cols(kwargs.get('col', '')) # define the kwargs and set some defaults
+        
+        # Grab the format needed.
+        if len(argv) > 0 and not 'format' in kwargs: # 0.10 compatibility hack
+            kwargs['format'] = argv[0]
+        fmt = kwargs.pop('format', 'list').strip().lower() # Get the requested fmt type
+        
+        kwargs['col'] = self._check_cols(kwargs.get('col', ''), fmt) # define the kwargs and set some defaults
         
         # Build the ticket query and retrieve the tickets.
         query_string = self._get_querystring(kwargs) # Construct the querystring.
@@ -103,11 +109,6 @@ class SpTicketQueryMacro(WikiMacroBase):
         
         if not tickets: # If no tickets are returned
             return tag.span(("No results"), class_='query_no_results')
-        
-        # Grab the format needed.
-        if len(argv) > 0 and not 'format' in kwargs: # 0.10 compatibility hack
-            kwargs['format'] = argv[0]
-        fmt = kwargs.pop('format', 'list').strip().lower() # Get the requested fmt type
         
         # 'table' format had its own permission checks, here we need to
         # do it explicitly:
@@ -180,9 +181,11 @@ class SpTicketQueryMacro(WikiMacroBase):
             output = ticket['summary']
         return output
     
-    def _check_cols(self, cols):
+    def _check_cols(self, cols, fmt=''):
         '''Formats column arguments to include default values'''
         defaults = ['summary', 'status'] # add any default columns here.
+        if fmt in ['storypoints', 'total', 'completed', 'remaining']:
+            defaults.append('storypoints') # This needs included for tally formats to work.
         fields = cols.split("|")
         for field in defaults:
             if field in fields:
@@ -215,8 +218,8 @@ class SpTicketQueryMacro(WikiMacroBase):
         for ticket in tickets:
             try:
                 total += float(ticket['storypoints'])
-            except KeyError, ValueError:
-                pass # Just keep doin' your thing man.
+            except (KeyError, ValueError):
+                continue # Just keep doin' your thing man.
         return total
         
     def _sp_completed(self, tickets):
