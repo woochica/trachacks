@@ -9,12 +9,72 @@ from trac.config import *
 from trac.wiki.api import parse_args
 from ppcache import ppFSFileCache
 
+from trac.db import get_column_names
+import time
+
+
 import trac.ticket.model
 
 class PPConstant():
   dynamic_content_suffix = 'projectplan_dynamic'
   cache_content_suffix = 'pp_cached'
+  change_ticket_suffix = 'pp_ticket_changes'
   definisection_name = 'pp_options'
+  RelDocPath = 'images'
+  ImagePattern = re.compile( '.*(\.(png|gif|jpg|jpeg))', re.IGNORECASE )
+
+class PPImages( ):
+  selectablekw = None
+  env = None
+  
+  @classmethod
+  def absbasepath( cls ):
+    '''
+      Return the Absolute Basepath for the Path Selectables
+    '''
+    dp = os.path.normpath( PPConstant.RelDocPath )
+    from pkg_resources import resource_filename
+    htdp = os.path.abspath(os.path.normpath(resource_filename(__name__, 'htdocs')))
+    return os.path.join( htdp, dp )
+
+  @classmethod
+  def collectimages(cls, dir, files):
+    '''
+      recursive search for images
+    '''
+    #dir = os.path.abspath(dir)
+    for file in [file for file in os.listdir(dir) if not file in [".",".."]]:
+      nfile = os.path.join(dir,file)
+      if os.access(nfile,os.R_OK):
+        if os.path.isdir(nfile):
+          cls.collectimages(nfile, files)
+        else:
+          # TODO: filter files already at this point
+          files.append(nfile)
+
+  @classmethod
+  def selectable( cls, defaultvalue, env ):
+    '''
+      Return a dict of Selectables (and absolute filenames as values)
+    '''
+    dirlist = []
+    cls.env = env
+    if cls.selectablekw == None:
+      cls.selectablekw = dict()
+      p = cls.absbasepath()
+      try:
+        if os.path.isdir( p ):
+          cls.collectimages(p,dirlist) # collect all accessable images
+        else:
+          dirlist = []
+        for f in dirlist:
+          f_short = f[ len(p)+1: ] # kind of a hack
+          cls.selectablekw[ f_short ] = f # os.path.join( p, f )
+      finally:
+        pass
+      if defaultvalue not in cls.selectablekw:
+        cls.selectablekw[ defaultvalue ] = ''
+    return cls.selectablekw
 
 class PPOption():
   '''
@@ -190,31 +250,50 @@ class PPHTDPathSelOption( PPSingleSelOption ):
     '''
     PPSingleSelOption.__init__( self, env, key, defval, section, catid, groupid, doc )
     self.selectablekw = None
+    self.env = env
+    self.RelDocPath = PPConstant.RelDocPath #new
 
   @classmethod
   def absbasepath( cls ):
     '''
       Return the Absolute Basepath for the Path Selectables
     '''
-    dp = os.path.normpath( cls.RelDocPath )
-    from pkg_resources import resource_filename
-    htdp = os.path.abspath(os.path.normpath(resource_filename(__name__, 'htdocs')))
-    return os.path.join( htdp, dp )
+    #dp = os.path.normpath( cls.RelDocPath )
+    #from pkg_resources import resource_filename
+    #htdp = os.path.abspath(os.path.normpath(resource_filename(__name__, 'htdocs')))
+    #return os.path.join( htdp, dp )
+    return PPImages.absbasepath()
+
+  def collectimages(self,dir, files):
+    '''
+      recursive search for images
+    '''
+    #dir = os.path.abspath(dir)
+    for file in [file for file in os.listdir(dir) if not file in [".",".."]]:
+      nfile = os.path.join(dir,file)
+      if os.access(nfile,os.R_OK):
+        if os.path.isdir(nfile):
+          self.collectimages(nfile, files)
+        else:
+          # TODO: filter files already at this point
+          files.append(nfile)
 
   def selectable( self ):
     '''
       Return a dict of Selectables (and absolute filenames as values)
     '''
+    dirlist = []
     if self.selectablekw == None:
       self.selectablekw = dict()
       p = self.absbasepath()
       try:
         if os.path.isdir( p ):
-          dirlist = os.listdir( p )
+          self.collectimages(p,dirlist) # collect all accessable images
         else:
           dirlist = []
         for f in dirlist:
-          self.selectablekw[ f ] = os.path.join( p, f )
+          f_short = f[ len(p)+1: ] # kind of a hack
+          self.selectablekw[ f_short ] = f # os.path.join( p, f )
       finally:
         pass
       if self.defval not in self.selectablekw:
@@ -243,8 +322,6 @@ class PPImageSelOption(PPHTDPathSelOption):
   '''
     HTDoc Image Path Selection Option
   '''
-  RelDocPath = 'images'
-  ImagePattern = re.compile( '.*(\.(png|gif|jpg|jpeg))', re.IGNORECASE )
 
   def selectable( self ):
     '''
@@ -254,7 +331,7 @@ class PPImageSelOption(PPHTDPathSelOption):
     if self.selectablekw == None:
       seldict = PPHTDPathSelOption.selectable( self )
       for ( e, f ) in seldict.items():
-        if ( not os.path.isfile( f ) ) or ( not re.match( self.ImagePattern, e ) ):
+        if ( not os.path.isfile( f ) ) or ( not re.match( PPConstant.ImagePattern, e ) ):
           if e != self.defval:
             del seldict[ e ]
     return PPHTDPathSelOption.selectable( self )
@@ -275,6 +352,26 @@ class PPDateFormatOption(PPSingleSelOption):
       Check wether the value is in the List of possible Values
     '''
     return [ 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD.MM.YYYY' ]
+
+class PPActivateColumnOption(PPSingleSelOption):
+  '''
+    Selectable DateFormat Option
+  '''
+  def selectable( self ):
+    '''
+      Check wether the value is in the List of possible Values
+    '''
+    return [ 'on', 'off' ]
+
+  def get( self ):
+    '''
+      std getter using env.config.get
+    '''
+    try:
+      return self.env.config.get( self.section, self.key, self.defval )
+    except:
+      return 'on' # standard
+
 
 class PPHTMLColorOption(PPSingleConOption):
   '''
@@ -443,11 +540,23 @@ class PPPriorityColorOption( PerTracModelEnumColor ):
   '''
   enumerator_cls = trac.ticket.model.Priority
 
+class PPTicketTypeColorOption( PerTracModelEnumColor ):
+  '''
+    Per Ticket Type Color Option
+  '''
+  enumerator_cls = trac.ticket.model.Type 
+
 class PPStatusImageOption( PerTracModelEnumImage ):
   '''
     Per Status Image Option
   '''
   enumerator_cls = trac.ticket.model.Status
+
+class PPTicketTypeImageOption( PerTracModelEnumImage ):
+  '''
+    Per TypeImage Option
+  '''
+  enumerator_cls = trac.ticket.model.Type
 
 class PPPriorityImageOption( PerTracModelEnumImage ):
   '''
@@ -477,13 +586,28 @@ class PPConfiguration():
     self.listconf = {}
     self.load()
 
+  # non-list attribute getter/setter defaults
+  def get_defaults( self, n, fallback):
+      return {
+                         'ticket_owned_image': 'crystal_project/16x16/user/gold.png',
+                         'ticket_notowned_image': 'crystal_project/16x16/user/blue.png',
+                         'ticket_multiple_owner_image': 'crystal_project/16x16/user/group.png',
+                         #
+                         'ticket_ontime_image': 'crystal_project/16x16/calendar/xdays.png',
+                         'ticket_overdue_image': 'crystal_project/16x16/calendar/timespan.png',
+                         }.get(n, fallback) # fallback to prevent images if unknown state
+
   # non-list attribute getter/setter
   def get( self, n ):
     '''
       Single Option Value Getter: get value for Key n
     '''
     if n in self.flatconf:
-      return self.flatconf[ n ].get()
+      val = self.flatconf[ n ].get()
+      if val == 'none':
+        return self.get_defaults( n, val )
+      else:
+        return val
     else:
       raise Exception( "Option %s not found" % n )
 
@@ -496,7 +620,39 @@ class PPConfiguration():
     else:
       raise Exception( "Option %s not found" % n )
 
-  # list attribute dict getter/setter
+  def get_map_defaults( self, n , k, color ):
+    '''
+      get default values for attributes of standard trac installation
+    '''
+    # TODO: out sourcing of conf information
+    if 'ColorForPriority' == n :
+      return {     'blocker': 'red',
+                         'critical': 'darkorange',
+                         'major': 'yellow',
+                         'minor': 'thistle1',
+                         'trivial': 'slategray1'
+                         }.get(k, 'grey')
+    elif 'ImageForPriority' == n :
+      return {     'blocker': 'crystal_project/16x16/arrow/priority1up2.png',
+                         'critical': 'crystal_project/16x16/arrow/priority2up1.png',
+                         'major': 'crystal_project/16x16/arrow/priority3right.png',
+                         'minor': 'crystal_project/16x16/arrow/priority4down1.png',
+                         'trivial': 'crystal_project/16x16/arrow/priority5down2.png'
+                         }.get(k, 'none') # fallback to prevent images if unknown state
+    elif 'ImageForStatus' == n :
+      return {     'new': 'crystal_project/16x16/state/new.png',
+                         'assigned': 'crystal_project/16x16/state/kate.png',
+                         'closed': 'crystal_project/16x16/state/ok.png',
+                         'reopened': 'crystal_project/16x16/state/restart.png'
+                         }.get(k, 'none') # fallback to prevent images if unknown state
+    elif 'ImageForTicketType' == n :
+      return {     'task': 'crystal_project/16x16/type/settings.png',
+                         'defect': 'crystal_project/16x16/type/flag.png',
+                         'enhancement': 'crystal_project/16x16/type/enhancements2.png'
+                         }.get(k, 'none') # fallback to prevent images if unknown state
+    else :
+      return color
+
   def get_map( self, n ):
     '''
       List of Options Value Getter: get a dict of values and option keys for (list) Key n
@@ -511,7 +667,10 @@ class PPConfiguration():
       Single Option Value Getter: get value for Key k in List n
     '''
     if n in self.listconf:
-      return self.listconf[ n ].get_val_for( k )
+      val = self.listconf[ n ].get_val_for( k )
+      if val == 'none' : # default values
+        val = self.get_map_defaults( n, k, val )
+      return val
     else:
       raise Exception( "List of Options for %s not found" % n )
 
@@ -552,8 +711,8 @@ class PPConfiguration():
       self.env, 'cachepath', u'/tmp/ppcache', catid='General', groupid='Cache', doc="""
       Path for File based Caching (mainly used for Image/HTML Rendering speedup).\n
       \n
-      ! the cache root directory must be a real directory, not a link\n
-      ! after changing this option you need to manualy delete the old cache
+      Warning: the cache root directory must be a real directory, not a link\n
+      Warning: after changing this option you need to manually delete the old cache
       """ )
 
     self.flatconf[ 'cachedirsize' ] = PPIntegerOption(
@@ -566,7 +725,7 @@ class PPConfiguration():
       0 = off, all Files will be placed into the cache path\n
       1 - digest length for used hash = use max. 16^(cachedirsize) prefix directories\n
       \n
-      ! after changing this option you need to manualy delete the old cache
+      Warning: after changing this option you need to manually delete the old cache
       """ )
 
     self.flatconf[ 'dotpath' ] = PPSingleValOption(
@@ -585,6 +744,19 @@ class PPConfiguration():
       u'DD/MM/YYYY', section='ticket-custom', catid='General', groupid='Tickets', doc="""
       DateTime Format which will be used for Calculating the Closing Date
       """ )
+
+    # TODO: Add Configuration
+    # Ticket Visualizations Options
+    #self.flatconf[ 'custom_show_tickettype' ] = PPActivateColumnOption(
+      #self.env, '%s.value' % self.get( 'custom_show_tickettype'),
+      #u'on', section='ticket-custom', catid='General', groupid='Tickets', doc="""
+      #XXX1
+      #""" )
+    #self.flatconf[ 'custom_show_state' ] = PPActivateColumnOption(
+      #self.env, '%s.value' % self.get( 'custom_show_state'),
+      #u'on', section='ticket-custom', catid='General', groupid='Tickets', doc="""
+      #XXX2
+      #""" )
 
     # Color/Image Options
     self.flatconf[ 'version_fillcolor' ] = PPHTMLColorOption(
@@ -628,7 +800,7 @@ class PPConfiguration():
       """ )
 
     self.flatconf[ 'ticket_notowned_color' ] = PPHTMLColorOption(
-      self.env, 'ticket_notowned_color', u'#6666FF', catid='Color', groupid='Tickets', doc="""
+      self.env, 'ticket_notowned_color', u'#FFFFFF', catid='Color', groupid='Tickets', doc="""
         Color for: Ticket is not Owned by current User
       """ )
 
@@ -652,19 +824,29 @@ class PPConfiguration():
         Symbol for: Ticket is not Owned by current User
       """ )
 
+    self.flatconf[ 'ticket_multiple_owner_image' ] = PPImageSelOption(
+      self.env, 'ticket_multiple_owner_image', u'none', catid='Image', groupid='Tickets', doc="""
+        Symbol for: Ticket is Owned by several Users
+      """ )
+
     self.flatconf[ 'ticket_owned_image' ] = PPImageSelOption(
       self.env, 'ticket_owned_image', u'none', catid='Image', groupid='Tickets', doc="""
         Symbol for: Ticket is Owned by current User
       """ )
 
     self.flatconf[ 'ColorForStatusNE' ] = PPHTMLColorOption(
-      self.env, 'color_for_ne_status', u'#C0C0C0', catid='Color', groupid='Status', doc="""
+      self.env, 'color_for_ne_status', u'#C9C9C9', catid='Color', groupid='Status', doc="""
       Color for Non-Existing/New Status
       """ )
 
     self.flatconf[ 'ColorForPriorityNE' ] = PPHTMLColorOption(
-      self.env, 'color_for_ne_priority', u'#C0C0C0', catid='Color', groupid='Priority', doc="""
+      self.env, 'color_for_ne_priority', u'none', catid='Color', groupid='Priority', doc="""
       Color for Non-Existing/New Priority
+      """ )
+
+    self.flatconf[ 'ColorForTicketType' ] = PPHTMLColorOption(
+      self.env, 'color_for_ticket_type', u'none', catid='Color', groupid='Type', doc="""
+      Color for Ticket Type
       """ )
 
     self.listconf[ 'ColorForStatus' ] = PPStatusColorOption(
@@ -677,6 +859,11 @@ class PPConfiguration():
       HTML Color for rendering Priority "%s"
       """ )
 
+    self.listconf[ 'ColorForTicketType' ] = PPTicketTypeColorOption(
+      self.env, 'colorfortickettype', self.get( 'ColorForTicketType' ), catid='Color', groupid='Type', doc="""
+      HTML Color for rendering Ticket Type"%s"
+      """ )
+
     self.listconf[ 'ImageForStatus' ] = PPStatusImageOption(
       self.env, 'image_for_status_', u'none', catid='Image', groupid='Status', doc="""
       Image for Status "%s"
@@ -686,6 +873,17 @@ class PPConfiguration():
       self.env, 'image_for_priority_', u'none', catid='Image', groupid='Priority', doc="""
       Image for Priority "%s"
       """ )
+
+    self.listconf[ 'ImageForTicketType' ] = PPTicketTypeImageOption(
+      self.env, 'image_for_ticket_type_', u'none', catid='Image', groupid='Type', doc="""
+      Image for Ticket Type "%s"
+      """ )
+
+    # TODO: complete information
+    #self.listconf[ 'ImageForStatus' ] = PPStatusImageOption(
+    #  self.env, 'image_for_connector_', u'none', catid='Image', groupid='Connector', doc="""
+    #  Image for Connector "%s"
+    #  """ )
 
   def save( self ):
     '''
@@ -699,6 +897,9 @@ class PPEnv():
     containing references and so on, for most used objects and values like
     macro arguments, trac environment and request...
   '''
+  # TODO: move to constants
+  connectimg = 'crystal_project/16x16/conf/configure.png'
+
   def __init__( self, env, req, content ):
     '''
       Initialize the Envoironment
@@ -725,3 +926,21 @@ class PPEnv():
     self.mhash.update( self.macroid )
     self.mhash.update( self.tracreq.authname )
     self.mhash.update( str( datetime.date.today() ) )
+
+  def get_args( self , argname):
+    '''
+      get http url parameter
+    '''
+    try:
+      return self.tracreq.args.get( argname )
+    except:
+      return None
+
+  def is_dependency_added( self, dep_from, dep_to ) :
+    '''
+      checks if a specific dependency was added currently
+    '''
+    if dep_from == self.get_args('ppdep_from') and dep_to == self.get_args('ppdep_to') :
+      return True
+    else:
+      return False

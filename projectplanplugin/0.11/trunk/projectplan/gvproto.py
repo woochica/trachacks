@@ -16,6 +16,8 @@ class NodePrototype():
     self.macroenv = macroenv
     self.node = ''
     self.outrostack = []
+    self.imgpath = ppenv.PPImageSelOption.absbasepath()
+    self.color2 = '#E5E5E5'
 
   def _codeargs( self, **kwargs ):
     '''
@@ -38,11 +40,14 @@ class NodePrototype():
       self.node += '<TABLE>'
     self.outrostack.append( '</TABLE>' )
 
-  def entertr( self ):
+  def entertr( self , **kwargs ):
     '''
       Create an Opening TR (Tablerow) Tag and push the Closing Tag on stack.
     '''
-    self.node += '<TR>'
+    if len( kwargs ) > 0:
+      self.node += '<TR ' + self._codeargs( **kwargs ) + ' >'
+    else:
+      self.node += '<TR>'
     self.outrostack.append( '</TR>' )
 
   def entertd( self, **kwargs ):
@@ -110,6 +115,22 @@ class NodePrototype():
       Write an arbitrary string into the Nodestring.
     '''
     self.node = self.node + instr + '\n'
+    
+  def closeimg(self):
+    '''
+      draw a closing image
+    '''
+    # TODO: make configurable
+    self.enterimg(src = os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png'))
+    self.leave()
+
+  def openimg(self):
+    '''
+      draw a opening image
+    '''
+    # TODO: make configurable
+    self.enterimg(src = os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag+.png'))
+    self.leave()
 
   def render( self ):
     '''
@@ -136,22 +157,41 @@ class TicketNodePrototype( NodePrototype ):
     self.ticketstatus = ticket.getfield( 'status' )
     self.ticketpriority = ticket.getfield( 'priority' )
     self.ticketuser = ticket.getfield( 'owner' )
+    self.tickettype = ticket.getfield( 'type' )
 
     # get node color and image args
     self.fillcolor = self.macroenv.conf.get_map_val(
                        'ColorForStatus', self.ticketstatus )
     self.priocolor = self.macroenv.conf.get_map_val(
                        'ColorForPriority', self.ticketpriority )
-    self.imgpath = ppenv.PPImageSelOption.absbasepath()
+    #self.imgpath = ppenv.PPImageSelOption.absbasepath()
 
     # status image
-    if self.macroenv.conf.get_map_val(
-         'ImageForStatus', self.ticketstatus ) != 'none':
+    if self.macroenv.conf.get_map_val('ImageForStatus', self.ticketstatus ) != 'none':
       self.statusim = '<IMG SRC="' + os.path.join( self.imgpath,
         self.macroenv.conf.get_map_val(
           'ImageForStatus', self.ticketstatus ) ) + '"></IMG>'
     else:
       self.statusim = self.ticketstatus
+
+    # status image
+    if self.macroenv.conf.get_map_val('ImageForTicketType', self.tickettype ) != 'none':
+      self.tickettypeim = '<IMG SRC="' + os.path.join( self.imgpath,
+        self.macroenv.conf.get_map_val(
+          'ImageForTicketType', self.tickettype ) ) + '"></IMG>'
+    else:
+      self.tickettypeim = self.tickettype
+
+    # connector image
+    connectorfallback = ppenv.PPEnv.connectimg # currently only one value needed
+    # TODO: complete implementation
+    if False and self.macroenv.conf.get_map_val(
+         'ImageForConnector', connectorfallback ) != 'none':
+      self.connectorim = '<IMG SRC="' + os.path.join( self.imgpath,
+        self.macroenv.conf.get_map_val(
+          'ImageForConnector', connectorfallback ) ) + '"></IMG>'
+    else:
+      self.connectorim = '<IMG SRC="' + os.path.join( self.imgpath, connectorfallback )+'" ></IMG>'
 
     # priority image
     if self.macroenv.conf.get_map_val(
@@ -162,8 +202,18 @@ class TicketNodePrototype( NodePrototype ):
     else:
       self.priorityim = self.ticketpriority
 
+    multiple = self.ticketuser.split(',')
+    contained_in_multiple_user = False
+    if len(multiple) >= 2:
+      #self.macroenv.tracenv.log.warning('>= 2 users: %s, %s' % (self.ticketuser, multiple) )
+      try:
+        multiple.index(self.macroenv.tracreq.authname)
+        contained_in_multiple_user = True
+      except:
+        pass
+
     # user image (owner indicator)
-    if self.ticketuser == self.macroenv.tracreq.authname:
+    if self.ticketuser == self.macroenv.tracreq.authname or contained_in_multiple_user:
       imgopt = 'ticket_owned_image'
       self.usercolor = self.macroenv.conf.get( 'ticket_owned_color' )
     else:
@@ -175,8 +225,16 @@ class TicketNodePrototype( NodePrototype ):
     else:
       self.userim = self.ticketuser
 
+    # if multiple users exist, then add a different image, however keep the color
+    if len(multiple) >= 2 :
+      imgopt = 'ticket_multiple_owner_image'
+      userim = self.macroenv.conf.get( imgopt )
+      self.macroenv.tracenv.log.warning('>= 2 users: %s, %s, %s' % (self.ticketuser, multiple,userim) )
+      if userim != 'none':
+        self.userim = '<IMG SRC="' + os.path.join( self.imgpath, userim ) + '"></IMG>'
+
     # set colwide for rows
-    self.maxcolwide = 5
+    self.maxcolwide = 6
 
   def adddaterow( self ):
     '''
@@ -184,49 +242,90 @@ class TicketNodePrototype( NodePrototype ):
     '''
     if self.ticketstatus == 'closed':
       # self.addmarkup( 'closed' )
-      # save the line
+      cd = self.ticket.getextension( 'closingdiff' )
+      if cd != None :
+        if cd > 0: # to late
+          # TODO: make image configurable
+          color = '#ffb6c2' # lightpink
+          ticket_to_late_image = 'crystal_project/16x16/calendar/timespan.png'
+          img = os.path.join( self.imgpath, ticket_to_late_image )
+          dueline = str( cd ) + ' days to late'
+          title = "finished to late"
+        else : # earlier
+          # TODO: make image configurable
+          color = '#98fa98' # palegreen
+          ticket_earlier_image = 'crystal_project/16x16/calendar/todo.png'
+          img = os.path.join( self.imgpath, ticket_earlier_image )
+          if cd < 0 :
+            dueline = str( 0 - cd ) + ' days earlier'
+          else:
+            dueline = 'bang on time' # at  the specified date
+          title = "finished in time"
+        self.entertr()
+        self.entertd( bgcolor = color, COLSPAN = str( self.maxcolwide), align = "center", title = title )
+        self.entertable(align = "center", cellpadding = "1", cellspacing = "0", border = "0")
+        self.entertr()
+        self.entertd()
+        self.enterimg(src = img )
+        self.leave(2)
+        self.entertd()
+        self.addmarkup(dueline)
+        self.leave(5)
       return
 
-    self.entertr()
-    self.entertd( title = "due",
-                  href = "?ticket_inner?__dummy__",
-                  bgcolor = "#FFFFFF",
-                  colspan = str( self.maxcolwide ) )
+    #rowcolor = "#EEEEEE"
     ticket_overdue_image = self.macroenv.conf.get( 'ticket_overdue_image' )
+    ticket_ontime_image = self.macroenv.conf.get( 'ticket_ontime_image' )
+    # TODO: make configurable
+    ticket_delayed_image = 'crystal_project/16x16/calendar/whatsnext.png'
+    ticket_due_today_image = 'crystal_project/16x16/calendar/today.png'
 
     if ( self.ticketstatus != 'closed' and
          self.ticket.hasextension( 'closingdiff' ) ):
       cd = self.ticket.getextension( 'closingdiff' )
       img = 'none'
       if cd > 0:
-        bgcol = self.macroenv.conf.get( 'ticket_overdue_color' )
-        img = os.path.join( self.imgpath, ticket_overdue_image)
+        bgcol = self.macroenv.conf.get( 'ticket_overdue_color' ) # TODO ticket_delayed_color
+        img = os.path.join( self.imgpath, ticket_delayed_image)
         dueline = str( cd ) + ' days delayed'
       elif cd < 0:
         bgcol = self.macroenv.conf.get( 'ticket_ontime_color' )
-        img = os.path.join( self.imgpath, ticket_overdue_image)
+        img = os.path.join( self.imgpath, ticket_ontime_image)
         dueline = str( 0 - cd ) + ' days left'
       else:
-        bgcol = self.macroenv.conf.get( 'ticket_ontime_color' )
-        img = os.path.join( self.imgpath, ticket_overdue_image)
-        dueline = 'today'
-      self.entertable( border = "0" )
+        #bgcol = '#FF9C00' # Orange(Light) 
+        bgcol = '#9CF9F9'  # Turquoise
+        img = os.path.join( self.imgpath, ticket_due_today_image)
+        dueline = 'due today!'
+
       self.entertr()
-      self.entertd( bgcolor = bgcol )
+      self.entertd( title = "due", href = "?ticket_inner?__dummy__", COLSPAN = str( self.maxcolwide), bgcolor = bgcol )
+      self.entertable(align = "center", cellpadding = "1", cellspacing = "0", border = "0")
+      self.entertr()
+      self.entertd()
+
       if  ticket_overdue_image != 'none' and ticket_overdue_image != None:
         self.enterimg( src = img )
-        self.leave( 2 )
+        self.leave()
       else:
         # fall back if no image is defined
         self.addmarkup( '<FONT COLOR="#FFFF00">!</FONT>' )
-        self.leave( 1 )
+
+      self.leave( 1 )
       self.entertd()
       self.addmarkup( dueline )
-      self.leave( 4 )
+      self.leave( 5 )
     else:
+      # TODO: insert image
+      self.entertr()
+      self.entertd( title = "due", href = "?ticket_inner?__dummy__" )
+      ticket_overdue_image = self.macroenv.conf.get( 'ticket_overdue_image' )
+      unknowndateimg = 'crystal_project/16x16/calendar/disabled.png'
+      self.enterimg( src = os.path.join( self.imgpath, unknowndateimg) )
+      self.leave( 2 )
+      self.entertd( COLSPAN = str( self.maxcolwide-1), title = "due", href = "?ticket_inner?__dummy__" )
       self.addmarkup( 'due: unknown' )
-
-    self.leave( 2 )
+      self.leave( 2 )
 
   def addstatuscol( self ):
     '''
@@ -234,20 +333,31 @@ class TicketNodePrototype( NodePrototype ):
     '''
     href = '?ticket_state?%s?state=%s' % (
              self.macroenv.tracreq.href( 'query' ), self.ticketstatus )
-    self.entertd( title = 'state', href = href,
-                  color = '#F5F5F5', colspan = "1" )
+    self.entertd( title = 'state: '+self.ticketstatus, href = href,
+                  color = self.color2, colspan = "1" )
     self.addmarkup( self.statusim )
     self.leave()
-  
+
+  def addtickettypecol( self ):
+    '''
+      Add a Ticket Type Column into the Node
+    '''
+    href = '?ticket_state?%s?type=%s' % (
+             self.macroenv.tracreq.href( 'query' ), self.ticketstatus )
+    self.entertd( title = 'type: '+self.tickettype, href = href,
+                  color = self.color2, colspan = "1" )
+    #self.addmarkup( self.statusim )
+    self.addmarkup( self.tickettypeim )
+    self.leave()
+
   def addconnectorcol( self ):
     '''
-      Add a Status Column into the Node
+      Add a Connector Column into the Node
     '''
-    href = '?ticket_state?%s?state=%s' % (
-             self.macroenv.tracreq.href( 'query' ), self.ticketstatus )
-    self.entertd( title = 'connector', href = href,
-                  color = '#F5F5F5', colspan = "1" )
-    self.addmarkup( "X" )
+    href = 'javascript: return ppconnecttickets(%s); ' % ( self.ticketid )
+    self.entertd( title = 'add/remove dependencies', href = href,
+                  color = self.color2, colspan = "1" )
+    self.addmarkup( self.connectorim )
     self.leave()
 
   def addprioritycol( self ):
@@ -256,8 +366,8 @@ class TicketNodePrototype( NodePrototype ):
     '''
     href = '?ticket_priority?%s?priority=%s' % (
              self.macroenv.tracreq.href( 'query' ), self.ticketpriority )
-    self.entertd( title = 'priority', href = href,
-                  color = '#F5F5F5', bgcolor = self.priocolor, colspan = "1" )
+    self.entertd( title = 'priority: '+self.ticketpriority, href = href,
+                  color = self.color2, bgcolor = self.priocolor, colspan = "1" )
     self.addmarkup( self.priorityim )
     self.leave()
 
@@ -268,8 +378,8 @@ class TicketNodePrototype( NodePrototype ):
     bgcol = self.usercolor
     href = '?ticket_owner?%s?owner=%s' % (
              self.macroenv.tracreq.href( 'query' ), self.ticketuser )
-    self.entertd( title = self.ticketuser[ 0:10 ], bgcolor = bgcol,
-                  href = href, color = '#F5F5F5', colspan = "1" )
+    self.entertd( title = 'user: '+self.ticketuser, bgcolor = bgcol,
+                  href = href, color = self.color2, colspan = "1" )
     self.addmarkup( self.userim )
     self.leave()
 
@@ -277,8 +387,8 @@ class TicketNodePrototype( NodePrototype ):
     '''
       Add a Ticket Column into the Node
     '''
-    self.entertd( title = "show ticket " + self.ticketid, color = "#F5F5F5",
-                  colspan = "1",
+    self.entertd( title = "show ticket #" + self.ticketid, color = self.color2,
+                  colspan = "1", align = "CENTER",
                   href = "?ticket_inner?" + self.ticket.getfield( 'href' ) )
     self.addmarkup( self.ticketid )
     self.leave()
@@ -289,13 +399,18 @@ class TicketNodePrototype( NodePrototype ):
     '''
     self.entertr()
     self.entertd( TITLE = "summary", BGCOLOR = "#FFFFFF",
-                  COLOR = "#F5F5F5", COLSPAN = str( self.maxcolwide ) )
+                  COLOR = self.color2, COLSPAN = str( self.maxcolwide ) )
     summary = self.ticket.getfield( 'summary' )
-    if len( summary ) > 20:
-      self.addmarkup( summary[ 0:16 ] + '...' )
+    # ensure some space around the summary text 
+    self.entertable( cellpadding = "2", cellspacing = "2", border = "0" )
+    self.entertr()
+    self.entertd()
+    maxtext = 21
+    if len( summary ) > maxtext:
+      self.addmarkup( summary[ 0:(maxtext-2)] + '...' )
     else:
       self.addmarkup( summary )
-    self.leave( 2 )
+    self.leave( 5 )
 
   def adddebugtimes( self ):
     '''
@@ -305,7 +420,7 @@ class TicketNodePrototype( NodePrototype ):
     if self.ticket.hasextension( 'startdate' ):
       self.entertr()
       self.entertd( TITLE = "startdate", BGCOLOR = "#FFFFFF",
-                    COLOR = "#F5F5F5", COLSPAN = str( self.maxcolwide ) )
+                    COLOR = self.color2, COLSPAN = str( self.maxcolwide ) )
       self.addmarkup( 'ETS %s ' % self.ticket.getextension(
                         'startdate' ).strftime( "%d/%m/%y" ) )
       self.leave( 2 )
@@ -313,7 +428,7 @@ class TicketNodePrototype( NodePrototype ):
     if self.ticket.hasextension( 'finishdate' ):
       self.entertr()
       self.entertd( TITLE = "finishdate", BGCOLOR = "#FFFFFF",
-                    COLOR = "#F5F5F5", COLSPAN = str( self.maxcolwide ) )
+                    COLOR = self.color2, COLSPAN = str( self.maxcolwide ) )
       self.addmarkup( 'ETF %s ' % self.ticket.getextension(
                         'finishdate' ).strftime( "%d/%m/%y" ) )
       self.leave( 2 )
@@ -321,7 +436,7 @@ class TicketNodePrototype( NodePrototype ):
     if self.ticket.hasextension( 'buffer' ):
       self.entertr()
       self.entertd( TITLE = "buffer", BGCOLOR = "#FFFFFF",
-                    COLOR = "#F5F5F5", COLSPAN = str( self.maxcolwide ) )
+                    COLOR = self.color2, COLSPAN = str( self.maxcolwide ) )
       self.addmarkup( "Buffer in Days: %s " % str(
                         self.ticket.getextension( 'buffer' ) ) )
       self.leave( 2 )
@@ -331,13 +446,17 @@ class TicketNodePrototype( NodePrototype ):
       Create and Return the Node Markup
     '''
     # table
-    self.entertable( align = "CENTER", bgcolor = self.fillcolor, border = "1",
-                     cellborder = "1", cellpadding = "1", cellspacing = "1",
-                     color = "#C0C0C0", title = "Ticket: " + self.ticketid,
+    # cellpadding should be zero to avoid mouseover problems
+    #self.entertable( align = "CENTER", bgcolor = self.fillcolor, border = "1",
+    self.entertable( align = "CENTER", border = "1",
+                     cellborder = "0", cellpadding = "0", cellspacing = "2",
+                     color = self.priocolor, title = "Ticket: " + self.ticketid,
+                     bgcolor = self.color2,
                      valign = "MIDDLE", href = "?ticket?__dummy__" )
     # first row, |ticketnumer|status|owner|priority|
     self.entertr()
     self.addticketcol()
+    self.addtickettypecol()
     self.addstatuscol()
     self.addconnectorcol()
     self.addownercol()
@@ -454,8 +573,16 @@ class MilestoneNodePrototype( NodePrototype ):
                      valign = "MIDDLE", href = href )
     self.entertr()
     self.entertd()
-    self.addmarkup( '+ Milestone: ' + self.milestone )
-    self.leave( 2 )
+    self.entertable( align = "CENTER",
+                     border = "0", cellborder = "0", cellpadding = "0"
+                     )
+    self.entertr()
+    self.entertd()
+    self.openimg()
+    self.leave( )
+    self.entertd()
+    self.addmarkup( ' Milestone: ' + self.milestone ) # open milestone
+    self.leave( 5 )
     self.entertr()
     self.entertd()
     self.addtickettable()
@@ -519,12 +646,19 @@ class VersionNodePrototype( NodePrototype ):
                      bgcolor = self.macroenv.conf.get( 'version_fillcolor' ),
                      border = "1", cellborder = "1",
                      color = self.macroenv.conf.get( 'version_color' ),
-                     title = 'Version: %s' % self.version,
+                     title = 'open version: %s' % self.version,
                      valign = "MIDDLE", href = href )
     self.entertr()
     self.entertd()
-    self.addmarkup( '+ Version: ' + self.version )
-    self.leave( 2 )
+    # new table, header
+    self.entertable( align = "CENTER", border = "0" , cellborder = "0" )
+    self.entertr()
+    self.entertd()
+    self.openimg()
+    self.leave()
+    self.entertd()
+    self.addmarkup( 'Version: ' + self.version ) # open version
+    self.leave( 5 )
     self.entertr()
     self.entertd()
     self.addcompletiontable()

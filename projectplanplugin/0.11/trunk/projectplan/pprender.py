@@ -2,12 +2,14 @@
 
 import re
 import math
+import os
 
 from genshi.builder import tag
 from genshi.input import HTMLParser
 from genshi.core import Stream as EventStream, Markup
 from genshi.template.markup import MarkupTemplate
 from pptickets import *
+import ppenv
 
 from dotrender import GVCMapXGen
 from gvproto import GVRenderProto
@@ -279,6 +281,8 @@ class GVRenderer(RenderImpl):
     '''
     RenderImpl.__init__(self,macroenv)
     self.cmapxgen = None
+    self.imgpath = ppenv.PPImageSelOption.absbasepath()
+    macroenv.tracenv.log.warning("GVRenderer: %s " % repr(macroenv) )
 
   def _writeVersionClusterHeader( self, vstring, vnum, vhref=None, vtitle=None ):
     '''
@@ -295,9 +299,16 @@ class GVRenderer(RenderImpl):
     self.cmapxgen += 'fontcolor="'+self.macroenv.conf.get('version_fontcolor')+'"; '
     self.cmapxgen += 'color="'+self.macroenv.conf.get('version_color')+'"; '
     if vtitle!=None:
-      self.cmapxgen += 'label="%s"; ' % vtitle
+      myversion = vtitle
     else:
-      self.cmapxgen += 'label="Version: '+vstring+'"; '
+      myversion = 'Version: '+vstring
+    # TODO: label should be better interpreted while parsing the html map
+    if self.macroenv.macroid == 2 : # hierarchical rendering including closing image
+      self.cmapxgen += 'label=<<TABLE BORDER="0" CELLPADDING="0" LABEL="close this version"><TR><TD>'
+      self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png')+'"></IMG>'
+      self.cmapxgen += '</TD><TD>'+myversion+'</TD></TR></TABLE>>; '+"\n"
+    else :
+      self.cmapxgen += 'label=<%s>' % myversion
 
   def _writeMilestoneClusterHeader( self, mstring, mnum, mhref=None, mtitle=None ):
     '''
@@ -314,9 +325,17 @@ class GVRenderer(RenderImpl):
     self.cmapxgen += 'fontcolor="'+self.macroenv.conf.get('milestone_fontcolor')+'"; '
     self.cmapxgen += 'color="'+self.macroenv.conf.get('milestone_color')+'"; '
     if mtitle!=None:
-      self.cmapxgen += 'label="%s"; ' % mtitle
+      mylabel = mtitle
     else:
-      self.cmapxgen += 'label="Milestone: '+mstring+'"; '
+      mylabel = 'Milestone: '+mstring
+    # TODO: label should be better interpreted while parsing the html map
+    if self.macroenv.macroid == 2 : # hierarchical rendering including closing image
+      self.cmapxgen += 'label=<<TABLE BORDER="0" CELLPADDING="0"><TR><TD>'
+      self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png')+'"></IMG>'
+      self.cmapxgen += '</TD><TD>'+mylabel+'</TD></TR></TABLE>>; '+"\n"
+    else:
+      self.cmapxgen += 'label=<%s>' % mylabel
+
 
   def _writeEnumLegendCluster( self, name, enumerator_cls, colconfkey=None, imageconfkey=None ):
     '''
@@ -325,7 +344,8 @@ class GVRenderer(RenderImpl):
     if ( enumerator_cls == None ) or ( ( colconfkey==None ) and (imageconfkey==None) ):
       raise Exception( "Can't generate Legend for %s" % name )
     enumkeys = [ e.name for e in enumerator_cls.select( self.macroenv.tracenv ) ]
-    self.cmapxgen += 'subgraph cluster'+name+'Legend { label="'+name+' Legend"; fontcolor="black"; color="grey"; fillcolor="white";'
+    self.cmapxgen += 'subgraph cluster'+name+'Legend { label="'+name+' Legend"; fontcolor="black"; fontsize="10"; color="grey"; fillcolor="white";  '
+    self.cmapxgen += name+'Legend[ shape=plaintext, label=<<TABLE BORDER="0" CELLPADDING="1" CELLSPACING="3">'
     c = 0
     for k in enumkeys:
       c = c+1
@@ -336,14 +356,16 @@ class GVRenderer(RenderImpl):
       if imageconfkey!=None:
         import os.path
         from ppenv import PPImageSelOption
-        nodelabel='<<TABLE COLOR="'+v+'"><TR><TD>%s</TD><TD><IMG SRC="%s"></IMG></TD></TR></TABLE>>' % (
-          k, os.path.join( PPImageSelOption.absbasepath(), self.macroenv.conf.get_map_val( imageconfkey, k ) ) )
+        nodelabel='<TD COLOR="%s">%s</TD><TD BGCOLOR="%s"><IMG SRC="%s"></IMG></TD>' % (
+          v, k, v, os.path.join( PPImageSelOption.absbasepath(), self.macroenv.conf.get_map_val( imageconfkey, k ) ) )
       else:
-        nodelabel = '"%s"' % k
-      self.cmapxgen += name+'Legend_'+str(c)+' [ shape=rect, style=filled, label=%s, fillcolor="%s" ]; ' %( nodelabel, v )
-    for n in range( 1, c ):
-      self.cmapxgen += name+'Legend_'+str(n)+' -> '+name+'Legend_'+str(n+1)+' [ style="invisible", arrowhead="none" ]; '
-    self.cmapxgen += '}'
+        nodelabel = '<TD>"%s"</TD>' % k
+      #self.cmapxgen += name+'Legend_'+str(c)+' [ shape=rect, style=filled, label=%s, fillcolor="%s" ]; ' %( nodelabel, v )
+      self.cmapxgen += '<TR>'+nodelabel+'</TR>'
+    #for n in range( 1, c ):
+      #self.cmapxgen += name+'Legend_'+str(n)+' -> '+name+'Legend_'+str(n+1)+' [ arrowhead="none", weight=10000 ]; ' #style="invisible", 
+    self.cmapxgen += '</TABLE>>]' # end of node
+    self.cmapxgen += '}' #end of subgraph
 
   def _genhierarch( self, ticketset ):
     '''
@@ -420,7 +442,8 @@ class GVRenderer(RenderImpl):
       generate a TicketNode using the Node Prototype for Tickets
     '''
     nodehtml = GVRenderProto.ticket_gen_markup( self.macroenv, t )
-    self.cmapxgen += "node [shape=note,label=<"+nodehtml+">] Ticket"+str(t.getfield('id'))+";"
+    #self.cmapxgen += "node [shape=note,label=<"+nodehtml+">] Ticket"+str(t.getfield('id'))+";"
+    self.cmapxgen += "node [shape=plaintext,label=<"+nodehtml+">] Ticket"+str(t.getfield('id'))+";"
 
   def _writeticketdeps( self, v ):
     '''
@@ -434,8 +457,17 @@ class GVRenderer(RenderImpl):
         nlabel = str(v.getextension( 'buffer' ))
       else:
         nlabel = ""
-      if v.hasextension( 'critical' ) and d.hasextension( 'critical' ):
-        edgecolstmt = ',color="#FF0000"'
+      # check whether currently a new dependency was inserted
+      is_added = self.macroenv.is_dependency_added( str( v.getfield('id') ), str( d.getfield( 'id' ) ) )
+      is_critical = ( v.hasextension( 'critical' ) and d.hasextension( 'critical' ) )
+
+      # TODO: activate different image if edge was added currently
+      #if  is_added and is_critical:
+        #edgecolstmt = ',color="#8D38C9", label=" added", fontcolor="#8D38C9" ' # Violet
+      #elif is_added:
+        #edgecolstmt = ',color="#F433FF", label=" added", fontcolor="#F433FF" ' # Magenta1
+      if is_critical:
+        edgecolstmt = ',color="#FF0000"' # red
       else:
         edgecolstmt = ''
       self.cmapxgen += "Ticket%s->Ticket%s [ label=<%s>%s ];" % (
@@ -450,9 +482,9 @@ class GVRenderer(RenderImpl):
     # generate DOT file
     self.cmapxgen += 'strict digraph G {'
     self.cmapxgen += 'ratio="fill"; nranksep="0.01"; nodesep="0.10"; fixedsize="true"; center=true; rankdir=TB;'
-    self.cmapxgen += 'graph [fontsize=14, style=filled, fillcolor="#F5F5F5"]; '
+    self.cmapxgen += 'graph [fontsize=14, style=filled, fillcolor="#FFFFFF"]; ' # graph background color
     self.cmapxgen += 'node [fontsize=9, color="#d0d0d0", fillcolor="#e0e0e0"]; '
-    self.cmapxgen += 'edge [fontsize=10, color="#808080"]; '
+    self.cmapxgen += 'edge [fontsize=9, color="#808080"]; '
 
     self.cmapxgen += 'subgraph clusterFrame { URL="'+self.FRAME_ADDR
     self.cmapxgen += '"; label="'+self.FRAME_LABEL+'"; fontcolor="black"; color="white"; '
@@ -465,11 +497,15 @@ class GVRenderer(RenderImpl):
       if len(hierarch_dict) > 0:
         self._writehierarch( hierarch_dict )
 
-    if 'statuslegend' in self.macroenv.macroargs:
+    if ('statuslegend' in self.macroenv.macroargs) or ('legends' in self.macroenv.macroargs):
       self._writeEnumLegendCluster( 'Status', trac.ticket.model.Status, 'ColorForStatus', 'ImageForStatus' )
 
-    if 'prioritylegend' in self.macroenv.macroargs:
+    if ('prioritylegend' in self.macroenv.macroargs) or ('legends' in self.macroenv.macroargs):
       self._writeEnumLegendCluster( 'Priority', trac.ticket.model.Priority, 'ColorForPriority', 'ImageForPriority' )
+
+    if ('tickettypelegend' in self.macroenv.macroargs) or ('legends' in self.macroenv.macroargs):
+      # TODO: replace ColorForPriority with ColorForType
+      self._writeEnumLegendCluster( 'Type', trac.ticket.model.Type, 'ColorForTicketType', 'ImageForTicketType' )
 
     self.cmapxgen += '}}'
     self.cmapxgen.generate()
@@ -485,11 +521,20 @@ class GVRenderer(RenderImpl):
     )
 
     classstr = ''
+    dummy = None
+    href = None
+    onclick = None
 
     # href are coded: ?<css class>?<real title>
     if areadict['href'] and areadict['href'].startswith('?'):
       dummy, classstr, href = areadict[ "href" ].split( '?', 2 )
       areadict[ "href" ] = href
+
+    if areadict['href'] and areadict['href'].startswith('javascript'):
+     onclick = areadict[ "href" ]
+     href = '#'
+     classstr = 'ticket_owner' # TODO: use a similar class
+     areadict[ "href" ] = href
 
     if areadict[ "href" ] == "__dummy__":
       areadict[ "href" ] = None
@@ -504,7 +549,7 @@ class GVRenderer(RenderImpl):
     if areadict[ "href" ]:
       markup(
           tag.div( class_=classstr, style=windowpos )(
-            tag.a( href=areadict[ "href" ], title=areadict[ "title" ], style=windowrect ) ) )
+            tag.a( href=areadict[ "href" ], title=areadict[ "title" ], style=windowrect, onclick = onclick ) ) )
     else:
       markup( tag.div( class_=classstr, style=windowpos+windowrect ) )
 
@@ -539,7 +584,7 @@ class GVRenderer(RenderImpl):
                       int( pos_strs[ GVRenderer.RECT_TOP ] ),
                       int( pos_strs[ GVRenderer.RECT_RIGHT ] ),
                       int( pos_strs[ GVRenderer.RECT_BOTTOM ] ) )
-              if ( areadict[ "title" ] != self.FRAME_LABEL ) and ( areadict[ "href" ] != self.FRAME_ADDR ):
+              if ( (areadict[ "title" ] != self.FRAME_LABEL ) and ( areadict[ "href" ] != self.FRAME_ADDR) or (areadict[ "href" ].startswith('javascript')) ):
                 self._htmlgenerate_div( areadict=areadict, markup=innermarkup, rect=pos, count=count )
                 count+=1
               else:
@@ -579,6 +624,7 @@ class GVRenderer(RenderImpl):
     ticketset.needExtension( 'tslastchange' )
     dt = ticketset.getExtension( 'tslastchange' )
     dts = dt.strftime( '%d/%m/%y %H:%M:%S' )
+    dte = dt.strftime( '%y-%m-%d_%H-%M-%S' )
     self.macroenv.mhash.update( dts )
     self.macroenv.mhash.finalize()
     self.cmapxgen = GVCMapXGen( self.macroenv, self.macroenv.mhash )
@@ -588,16 +634,26 @@ class GVRenderer(RenderImpl):
     filename_png_www = self.cmapxgen.imglink
     ## reparse/generate extended html (in comparision to gv html subset)
     innermarkup, backgroundWidth, backgroundHeight, error = self._htmlgenerate( ticketset )
+
+    # making the url unique if currently a dependency is added
+    add_dependency = ''
+    if (self.macroenv.get_args('ppdep_from') != None) and (self.macroenv.get_args('ppdep_to') != None):
+      add_dependency = self.macroenv.get_args('ppdep_from')+'_'+self.macroenv.get_args('ppdep_to')
+
     if not error:
       outermarkup = tag.div( class_="project_image",
-                             style='height:%dpx; width:%dpx; position:relative; background-image:url(%s)'
-                                                            % ( backgroundHeight, backgroundWidth, filename_png_www ) )(
+                             style='height:%dpx; width:%dpx; position:relative; background-image:url(%s?%s&%s)'
+                                                            % ( backgroundHeight, backgroundWidth, filename_png_www, dte, add_dependency ) )(
                             [
                               tag.div( style="position:absolute; top:1px; left:1px;" ),
                               innermarkup
                             ] )
     else:
        outermarkup = tag.div(innermarkup)
+
+    outermarkup += tag.div( id='ppconnect_from' )
+    outermarkup += tag.div( id='ppconnect_to' )
+    outermarkup += tag.div( id='ppconnect' )
 
     # - generate html code for injection into xhtml trac site
     #   currently this seems to be the only way to support correct client-side rendering since
@@ -709,7 +765,7 @@ class GVCollapsedHRenderer( GVRenderer ):
             if len(mlist)>0:
               href += '&amp;%s_ms=%s' % ( self.macroenv.macroid, ( self.ReqValueDelim ).join( mlist ) )
         href += '#%s' % self.macroenv.macroid
-        self._writeVersionClusterHeader( version, vcount, href, '- Version: %s ' % version )
+        self._writeVersionClusterHeader( version, vcount, href, 'Version: %s ' % version ) # close version
         for (milestone, ticketlist) in milestonedict.items():
           if ( self.hstate > 1 ) and ( self.mmapping[ milestone ] in self.mopen ):
             # add milestone collapse link
@@ -720,7 +776,7 @@ class GVCollapsedHRenderer( GVRenderer ):
             if len(mlist)>0:
               href += '&amp;%s_ms=%s' % ( self.macroenv.macroid, ( self.ReqValueDelim ).join( mlist ) )
             href += '#%s' % self.macroenv.macroid
-            self._writeMilestoneClusterHeader( milestone, mcount, href, '- Milestone: %s ' % version )
+            self._writeMilestoneClusterHeader( milestone, mcount, href, 'Milestone: %s ' % version ) # close milestone
             tlist = ticketlist
             for t in ticketlist:
               self._writeticket( t )

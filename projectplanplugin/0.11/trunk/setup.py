@@ -10,9 +10,17 @@ pppackagedir = u'projectplan'
 pppackage = 'projectplan'
 templatesdir = u'templates'
 htdocsdir = u'htdocs'
-htdocsubdirmapping = { u'css': u'*.css',
-		       u'images': u'*',
-		       u'js': u'*.js' }
+htdocsubdirmapping = { 
+		       u'css': u'*.*',
+		       u'images': u'*.*',
+		       u'images/*': u'*.*',
+		       u'images/*/*': u'*.*',
+		       u'images/*/*/*': u'*.*',
+		       u'js': u'*.js',
+		       #u'js': u'jquery-tooltip/*.js',
+		       u'js/jquery-tooltip': u'*.*',
+		       u'js/jquery-tooltip/lib': u'*.js',
+		        }
 pptemplatesglob = [ os.path.join( templatesdir, u'*.html' ) ]
 pphtdocsglob = [ os.path.join( htdocsdir, subdir, globmap )
 		 for subdir, globmap in htdocsubdirmapping.items() ]
