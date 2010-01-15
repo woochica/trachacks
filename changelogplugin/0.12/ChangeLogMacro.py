@@ -7,6 +7,8 @@ from trac.util import format_datetime
 from trac.versioncontrol import RepositoryManager
 from StringIO import StringIO
 
+revision="$Rev$"
+url="$URL$"
 
 class ChangeLogMacro(WikiMacroBase):
     """ Provides the macro
