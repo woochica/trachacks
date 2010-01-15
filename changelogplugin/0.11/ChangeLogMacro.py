@@ -6,6 +6,8 @@ from trac.wiki.formatter import wiki_to_html
 from trac.util import format_datetime
 from StringIO import StringIO
 
+revision="$Rev$"
+url="$URL$"
 
 class ChangeLogMacro(WikiMacroBase):
     """ Provides the macro
