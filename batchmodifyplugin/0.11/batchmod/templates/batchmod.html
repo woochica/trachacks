@@ -6,7 +6,7 @@
 	xmlns:xi="http://www.w3.org/2001/XInclude">
 <body>
 <form id="batchmod-form" method="post" action="${actionURI}">
-<fieldset><legend>Batch Modify Properties</legend>
+<fieldset id="batchmod-fieldset"><legend class="foldable">Batch Modify Properties</legend>
 <table class="properties">
 	<tr py:for="row in group(fields, 2, lambda f: f.type != 'textarea')"
 		py:with="fullrow = len(row) == 1">
@@ -92,6 +92,7 @@ jQuery(document).ready(function($){
     $("input[@name=selectedTickets]").val(selectedTix);
   })
   $(document.getElementById("columns")).toggleClass("collapsed");
+  $("#batchmod-fieldset").toggleClass("collapsed");
 });
 </script>
 </form>
