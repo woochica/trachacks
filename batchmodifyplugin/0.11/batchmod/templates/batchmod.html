@@ -54,10 +54,12 @@
 <div>
 <input type="hidden" name="selectedTickets" value=""/>
 <input type="submit" id="batchmod" name="batchmod" value="Change tickets" /></div>
-<py:for each="constraint_name, constraint in constraints.items()">
-  <py:for each="constraint_value in constraint['values']">
-    <input type="hidden" name="${constraint_name}" value="${constraint_value}" />
-    <input py:if="constraint['mode']" type="hidden" name="${constraint_name}_mode" value="${constraint['mode']}" />
+<py:for each="idx, constraints in enumerate(clauses)">
+  <py:for each="constraint_name, constraint in constraints.items()">
+    <py:for each="constraint_value in constraint['values']">
+      <input type="hidden" name="${idx}_${constraint_name}" value="${constraint_value}" />
+      <input py:if="constraint['mode']" type="hidden" name="${idx}_${constraint_name}_mode" value="${constraint['mode']}" />
+    </py:for>
   </py:for>
 </py:for>
 <py:for each="column in col">
@@ -79,17 +81,17 @@ jQuery(document).ready(function($){
       $(this).before('<th class="bmod_selector"><input type="checkbox" name="bmod_toggleGroup" /></th>');
     }  
   ) 
-  $("input[@name='bmod_toggleGroup']").click(function() { 
+  $("input[name='bmod_toggleGroup']").click(function() { 
     $("tr td input.bmod_selector",$(this).parents("table.listing")).attr("checked",this.checked);
   })
   <py:for each="field in fields">
-    $("input[@id=bmod_flag_${field.name}]").click(function() { $("*[@name=bmod_value_${field.name}]").enable(this.checked);} )
+    $("input[id=bmod_flag_${field.name}]").click(function() { $("*[@name=bmod_value_${field.name}]").enable(this.checked);} )
   </py:for>
   $("input#bmod_flag_comment").click(function() {enableControl("bmod_value_comment",this.checked);} )
   $("form#batchmod-form").submit(function() {
     var selectedTix=[];    
-    $("input[@name=selectedTicket]:checked").each( function(){ selectedTix.push(this.value);} ); 
-    $("input[@name=selectedTickets]").val(selectedTix);
+    $("input[name=selectedTicket]:checked").each( function(){ selectedTix.push(this.value);} ); 
+    $("input[name=selectedTickets]").val(selectedTix);
   })
   $(document.getElementById("columns")).toggleClass("collapsed");
   $("#batchmod-fieldset").toggleClass("collapsed");
