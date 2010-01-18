@@ -66,7 +66,7 @@ class BatchModifyModule(Component):
         
         for id in selectedTickets:
             if id in tickets:
-                t = Ticket(self.env, id) 
+                t = Ticket(self.env, int(id)) 
                 t.populate(values)
                 t.save_changes(req.authname, comment)
                 self.log.debug('BatchModifyPlugin: saved changes to #%s', id)
