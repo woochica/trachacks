@@ -19,9 +19,10 @@ from trac.admin import IAdminPanelProvider
 from trac.perm import IPermissionRequestor
 from trac.web.chrome import add_stylesheet, add_script
 from trac.util.text import to_unicode
+from genshi.filters.transform import Transformer
+from trac.util import Markup
 
 from pkg_resources import resource_filename
-from genshi.filters.transform import Transformer
 
 import sys, os
 import re
@@ -199,29 +200,35 @@ class TracTweakUIModule(Component):
     # ITemplateStreamFilter
     
     def filter_stream(self, req, method, filename, stream, data):
-        # get all path patterns
-        path_patterns = TracTweakUIModel.get_path_patterns(self.env)
-        # try to match pattern
-        for path_pattern in path_patterns:
-            if re.match(path_pattern, req.path_info):
-                break
-        else:
+        try:
+            # get all path patterns
+            path_patterns = TracTweakUIModel.get_path_patterns(self.env)
+            # try to match pattern
+            for path_pattern in path_patterns:
+                if re.match(path_pattern, req.path_info):
+                    break
+            else:
+                return stream
+
+            filter_names = TracTweakUIModel.get_path_filters(self.env, path_pattern)
+            for filter_name in filter_names:
+                self._apply_filter(req, path_pattern, filter_name)
+                
+            js_files = TracTweakUIModel.get_path_scripts(self.env, path_pattern)
+            if js_files:
+                script = ";\n".join(js_files)
+            else:
+                script = ""            
+            
+            stream = stream | Transformer('head').append(tag.script(Markup(script), type="text/javascript")())
             return stream
-
-        filter_names = TracTweakUIModel.get_path_filters(self.env, path_pattern)
-        for filter_name in filter_names:
-            stream = self._apply_filter(req, stream, path_pattern, filter_name)
-        stream = stream | Transformer('head').append(
-            tag.script(type="text/javascript", 
-            src= req.base_path + "/tractweakui/tweakui_js/" + urllib.quote(path_pattern, "") + ".js")()
-            )
-
-        return stream
+        except:
+            return stream
 
     # IRequestHandler methods
 
     def match_request(self, req):
-        return req.path_info.startswith('/tractweakui/tweakui_js')
+        return False
 
     def process_request(self, req):
         filter_base_path = os.path.normpath(os.path.join(self.env.path, "htdocs", "tractweakui"))
@@ -230,30 +237,30 @@ class TracTweakUIModule(Component):
 
         tweakui_js_path = '/tractweakui/tweakui_js'
         if req.path_info.startswith(tweakui_js_path):
-            path_pattern = urllib.unquote(req.path_info[len(tweakui_js_path) + 1 : -3])
+            path_pattern = urllib.unquote(req.path_info[len(tweakui_js_path) + 1: -3])
             js_files = TracTweakUIModel.get_path_scripts(self.env, path_pattern)
             if js_files:
                 script = ";\n".join(js_files)
             else:
                 script = ""
-            self._send_response(req, script, {'Content-Type': 'text/x-javascript'})
-
+            self._send_response(req, script)
+        
     # internal methods
-    def _apply_filter(self, req, stream, path_pattern, filter_name):
+    def _apply_filter(self, req, path_pattern, filter_name):
         # get filter path
         filter_path = os.path.normpath(os.path.join(self.env.path, "htdocs", "tractweakui", filter_name))
         if not os.path.exists(filter_path):
-            return stream
+            return
 
-        css_files = self._find_filter_files(filter_path, "css")
-        js_files = self._find_filter_files(filter_path, "js")
-
+        css_files = self._find_filter_files(filter_path, ".css")
+        js_files = self._find_filter_files(filter_path, ".js")
+        
         for css_file in css_files:
-            stream = self._add_css(req, stream, filter_name, css_file)
+            add_stylesheet(req, 'site/tractweakui/' + filter_name + "/" + css_file)
+            
         for js_file in js_files:
             if js_file != "__template__.js":
-                stream = self._add_js(req, stream, filter_name, js_file)
-        return stream
+                add_script(req, 'site/tractweakui/' + filter_name + "/" + js_file)
 
     def _find_filter_files(self, filter_path, file_type):
         if not os.path.exists(filter_path):
@@ -267,30 +274,14 @@ class TracTweakUIModule(Component):
 
         return [file for file in os.listdir(filter_base_path)]
 
-    def _add_js(self, req, stream, filter_name, js_file):
-        return stream | Transformer('head').append(
-            tag.script(type="text/javascript", 
-            src=req.href.chrome("site/tractweakui/" + filter_name, js_file))()
-            )
-
-    def _add_css(self, req, stream, filter_name, css_file):
-        return stream | Transformer('head').append(
-                tag.link(type="text/css", 
-                rel="stylesheet", 
-                href=req.href.chrome("site/tractweakui/" + filter_name, css_file))()
-            )
-
-    def _send_response(self, req, message, headers = {}):
+    def _send_response(self, req, message):
         """
         """
         req.send_response(200)
         req.send_header('Cache-control', 'no-cache')
         req.send_header('Expires', 'Fri, 01 Jan 1999 00:00:00 GMT')
-        req.send_header('Content-Type', 'text/plain')
-        #req.send_header('Content-Length', len(message))
-
-        for k, v in headers.items():
-            req.send_header(k, v)
+        req.send_header('Content-Type', 'text/x-javascript')
+        # req.send_header('Content-Length', len(message))
 
         req.end_headers()
 
