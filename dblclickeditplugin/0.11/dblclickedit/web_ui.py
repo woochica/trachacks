@@ -28,6 +28,6 @@ class WikiDblclickEditModule(Component):
 	return handler
 
     def post_process_request(self, req, template, data, content_type):
-        if not 'action' in req.args:
-            add_script(req, 'dblclickedit/js/dblclickedit.js')
+        # if not 'action' in req.args:
+        add_script(req, 'dblclickedit/js/dblclickedit.js')
         return template, data, content_type
