@@ -340,7 +340,7 @@ class TracHacksHandler(Component):
         max_px = 20
 
         def cloud_renderer(tag, count, percent):
-            self.env.log.debug(percent)
+            self.env.log.debug("cloud: %s = %2.2f%%" % (tag, percent * 100))
             return builder.a(tag, href='#', style='font-size: %ipx' %
                              int(min_px + percent * (max_px - min_px)))
 
@@ -475,7 +475,7 @@ class TracHacksHandler(Component):
 
                 # Step 5: Tag the new wiki page
                 res = Resource('wiki', page_name)
-                tags = data['tags'].split() + selected_releases
+                tags = data['tags'].split() + selected_releases + [data['type']]
                 TagSystem(self.env).set_tags(req, res, tags)
                 steps_done.append('tags')
 
