@@ -24,7 +24,7 @@ class RenameTracUsers(object):
                'revision': 'author',
                'session': 'sid',
                'session_attribute': 'sid',
-               'ticket': 'owner',
+               'ticket': ['owner', 'reporter'],
                'ticket_change': 'author',
                'wiki': 'author' }
 
@@ -44,16 +44,27 @@ class RenameTracUsers(object):
         db.commit()
         db.close()
 
-        for table, field in self.tables.items():
-            db = self.env.get_db_cnx()
-            cur = db.cursor()
+        for table, fields in self.tables.items():
 
-            # XXX this should work, but it doesn't, so instead do this the retarded way (thank you, SQL!)
-            # cur.execute("UPDATE %s SET %s=%s WHERE %s=%s", (table, field, new_login, field, old_login))
+            if isinstance(fields, basestring):
+                fields = [ fields ] 
 
-            cur.execute("UPDATE %s SET %s='%s' WHERE %s='%s'" % (table, field, new_login, field, old_login))
-            db.commit()
-            db.close()
+            for field in fields:
+                try:
+                    db = self.env.get_db_cnx()
+                    cur = db.cursor()
+                    
+                    # XXX this should work, but it doesn't, so instead do this the retarded way (thank you, SQL!)
+                    # cur.execute("UPDATE %s SET %s=%s WHERE %s=%s", (table, field, new_login, field, old_login))
+                    
+                    cur.execute("UPDATE %s SET %s='%s' WHERE %s='%s'" % (table, field, new_login, field, old_login))
+                    db.commit()
+                    db.close()
+                    print 'okay'
+                except:
+                    # i hate SQL
+                    raise
+                    import pdb; pdb.set_trace()
 
     def rename_users(self, users):
         """
