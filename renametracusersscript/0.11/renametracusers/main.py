@@ -6,13 +6,9 @@ a plugin for Trac to rename users
 http://trac.edgewall.org
 """
 
-# TODO:
-# // TODO : Changing the cc fields -- ticket.cc || WHERE ticket_change.field = cc
-#   // ticket_change require special attention
-#   $query = 'UPDATE ticket_change SET oldvalue = "' . $newlogin . '" WHERE field = "owner" AND oldvalue = "' . $oldlogin . '";';
-#   $query .= 'UPDATE ticket_change SET newvalue = "' . $newlogin . '" WHERE field = "owner" AND newvalue = "' . $oldlogin . '";';
-#   // cc fields are lists, containing other logins/e-mails as well
-#   $query .= 'UPDATE ticket SET cc = REPLACE("cc", "' . $oldlogin .  '", "' . $newlogin . '") WHERE cc LIKE "%' . $oldlogin . '%";';
+# TODO : Changing the cc fields -- ticket.cc || WHERE ticket_change.field = cc
+#  cc fields are lists, containing other logins/e-mails as well
+#  $query .= 'UPDATE ticket SET cc = REPLACE("cc", "' . $oldlogin .  '", "' . $newlogin . '") WHERE cc LIKE "%' . $oldlogin . '%";';
 
 import os
 import sys
@@ -39,11 +35,23 @@ class RenameTracUsers(object):
         """
         rename one user
         """
+
+        # ticket_change require special attention
+        db = self.env.get_db_cnx()
+        cur = db.cursor()
+        cur.execute("UPDATE ticket_change SET  oldvalue='%s' WHERE field='owner' AND oldvalue='%s'" % (new_login, old_login))
+        cur.execute("UPDATE ticket_change SET  newvalue='%s' WHERE field='owner' AND newvalue='%s'" % (new_login, old_login))
+        db.commit()
+        db.close()
+
         for table, field in self.tables.items():
             db = self.env.get_db_cnx()
             cur = db.cursor()
-            cur.execute("UPDATE %s SET %s=%s WHERE %s=%s", (table, field, new_login, field, old_login))
-#            cur.execute("UPDATE %s SET %s='%s' WHERE %s='%s'" % (table, field, new_login, field, old_login))
+
+            # XXX this should work, but it doesn't, so instead do this the retarded way (thank you, SQL!)
+            # cur.execute("UPDATE %s SET %s=%s WHERE %s=%s", (table, field, new_login, field, old_login))
+
+            cur.execute("UPDATE %s SET %s='%s' WHERE %s='%s'" % (table, field, new_login, field, old_login))
             db.commit()
             db.close()
 
