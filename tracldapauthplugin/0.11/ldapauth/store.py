@@ -11,7 +11,7 @@ class LDAPStore(Component):
 
     host = Option('ldap', 'host', doc='Server to use for LDAP authentication')    
     bind_dn = Option('ldap', 'bind_dn', doc='Template to make the bind DN')
-    use_tls = Option('ldap', 'use_tls', default='false', doc='enable TLS support') 
+    use_tls = BoolOption('ldap', 'use_tls', default='false', doc='enable TLS support') 
 
     implements(IPasswordStore)
 
