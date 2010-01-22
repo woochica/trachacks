@@ -27,6 +27,7 @@ class RenameTracUsers(object):
                'ticket': ['owner', 'reporter'],
                'ticket_change': 'author',
                'ticket_time': ['worker', 'submitter'],
+               'votes': 'username',
                'wiki': 'author',
                }
 
