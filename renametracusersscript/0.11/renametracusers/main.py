@@ -26,7 +26,15 @@ class RenameTracUsers(object):
                'session_attribute': 'sid',
                'ticket': ['owner', 'reporter'],
                'ticket_change': 'author',
-               'wiki': 'author' }
+               'ticket_time': ['worker', 'submitter'],
+               'wiki': 'author',
+               }
+
+    unique = { 'auth_cookie': ['name'],
+               'permission': ['username'],
+               'session': ['sid'],
+               'session_attribute': ['sid'],
+               }
 
     def __init__(self, env):
         self.env = env
@@ -46,10 +54,28 @@ class RenameTracUsers(object):
 
         for table, fields in self.tables.items():
 
+            try:
+                db = self.env.get_db_cnx()
+                cur = db.cursor()
+                cur.execute("SELECT * FROM %s LIMIT 1" % table)
+                db.commit()
+                db.close()
+            except:
+                continue
+            
+
             if isinstance(fields, basestring):
                 fields = [ fields ] 
 
             for field in fields:
+
+                if field in self.unique.get(table, []):
+                    db = self.env.get_db_cnx()
+                    cur = db.cursor()
+                    cur.execute("DELETE FROM %s WHERE %s='%s'" % (table, field, old_login))
+                    db.commit()
+                    db.close()
+
                 try:
                     db = self.env.get_db_cnx()
                     cur = db.cursor()
@@ -60,7 +86,6 @@ class RenameTracUsers(object):
                     cur.execute("UPDATE %s SET %s='%s' WHERE %s='%s'" % (table, field, new_login, field, old_login))
                     db.commit()
                     db.close()
-                    print 'okay'
                 except:
                     # i hate SQL
                     raise
