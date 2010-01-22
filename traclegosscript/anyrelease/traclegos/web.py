@@ -265,7 +265,7 @@ class ProjectVariables(Step):
 class View(object):
     """WebOb view which wraps trac and allows TTW project creations"""
 
-    def __init__(self, **kw):
+    def __init__(self, remote_user_name=None, **kw):
 
         # trac project creator
         argspec = traclegos_factory(kw.get('conf', ()),
@@ -322,6 +322,7 @@ class View(object):
         # index page for projects list
         self.index = kw.get('index', os.path.join(template_directory, 'index.html'))
 
+        self.remote_user_name = remote_user_name
 
     def trac_projects(self):
         """returns existing Trac projects"""
@@ -333,12 +334,12 @@ class View(object):
                 continue
             proj[i] = env
         return proj
-                    
+
     ### methods dealing with HTTP
     def __call__(self, environ, start_response):
 
-        req = Request(environ)                                     
-        step = req.path_info.strip('/')            
+        req = Request(environ)
+        step = req.path_info.strip('/')
 
         try:
 
@@ -350,10 +351,13 @@ class View(object):
 
                 environ['trac.env_parent_dir'] = self.directory
                 environ['trac.env_index_template'] = self.index
-            
+
                 # data for index template
+                if req.remote_user and self.remote_user_name:
+                    # XXX fails if unicode
+                    req.remote_user = str(self.remote_user_name(req.remote_user))
                 data = { 'remote_user': req.remote_user or '',
-                         'auth': self.auth and 'yes' or '' 
+                         'auth': self.auth and 'yes' or ''
                          }
                 environ['trac.template_vars'] = ','.join(["%s=%s" % (key, value) for key, value in data.items()])
                 return dispatch_request(environ, start_response)
@@ -362,7 +366,7 @@ class View(object):
             # if self.auth, enforce remote_user to be set
             if self.auth and not req.remote_user:
                 return exc.HTTPUnauthorized()(environ, start_response)
-        
+
             # if POST-ing, validate the request and store needed information
             errors = []
             name, step = self.steps[index]
