@@ -19,7 +19,7 @@ class TicketWebUiAddon(Component):
     def filter_stream(self, req, method, filename, stream, data):
         self.log.debug("TicketWebUiAddon executing") 
         if not filename == 'ticket.html':
-            self.log.debug("TicketWebUiAddon not the correct template")
+            #self.log.debug("TicketWebUiAddon not the correct template")
             return stream
         stream = stream | Transformer('//div[@id="banner"]').before(
             tag.script(type="text/javascript", 
