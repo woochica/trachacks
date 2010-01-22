@@ -12,6 +12,9 @@ from trac.core import Component, implements
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import format_to_html
 
+revision="$Rev$"
+url="$URL$"
+
 class ComponentsProcessor(Component):
     implements(IWikiMacroProvider)
 
