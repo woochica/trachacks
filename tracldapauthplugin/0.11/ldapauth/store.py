@@ -8,17 +8,17 @@ from acct_mgr.api import IPasswordStore
 
 class LDAPStore(Component):
     """An AccountManager backend to use LDAP."""
-    
-    server_host = Option('ldap', 'server', doc='Server to use for LDAP authentication')    
+
+    host = Option('ldap', 'host', doc='Server to use for LDAP authentication')    
     bind_dn = Option('ldap', 'bind_dn', doc='Template to make the bind DN')
     use_tls = Option('ldap', 'use_tls', default='false', doc='enable TLS support') 
-    
+
     implements(IPasswordStore)
-    
+
     def check_password(self, user, password):
         self.log.debug('LDAPAuth: Checking password for user %s', user)
         try:
-            l = ldap.open(self.server_host)
+            l = ldap.open(self.host)
             if self.use_tls:
                 l.start_tls_s()
             bind_name = (self.bind_dn%user).encode('utf8')
@@ -26,4 +26,4 @@ class LDAPStore(Component):
             l.simple_bind_s(bind_name, password.encode('utf8'))
             return True
         except ldap.LDAPError:
-            return False
+            return None
