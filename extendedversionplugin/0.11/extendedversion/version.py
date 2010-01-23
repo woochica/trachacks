@@ -138,6 +138,9 @@ class VisibleVersion(Component):
         resource = Resource('version', version.name)
         req.perm(resource).require('VERSION_DELETE')
 
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM milestone_version WHERE version=%s",
+                       (version.name,))
         version.delete(db=db)
         db.commit()
         add_notice(req, _('The version "%(name)s" has been deleted.',
@@ -194,9 +197,14 @@ class VisibleVersion(Component):
         
         # -- actually save changes
         if version.exists:
-            version.update()
+            if version.name != version._old_name:
+                # Update tickets
+                cursor = db.cursor()
+                cursor.execute("UPDATE milestone_version SET version=%s WHERE version=%s",
+                               (version.name, version._old_name))
+            version.update(db)
         else:
-            version.insert()
+            version.insert(db)
         db.commit()
 
         req.redirect(req.href.version(version.name))
