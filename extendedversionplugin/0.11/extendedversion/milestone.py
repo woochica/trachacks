@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from genshi.builder import tag
-from genshi.filters import Transformer
+from genshi.filters.transform import StreamBuffer, Transformer
 from genshi.template.markup import MarkupTemplate
 
 from trac.core import *
@@ -57,8 +57,11 @@ class MilestoneVersion(Component):
 
         # Display version for milestone
         elif filename == 'milestone_view.html':
+            milestone = data.get('milestone').name
             filter = Transformer('//div[@class="info"]/p[@class="date"]')
-            return stream | filter.append(self._version_display(req, data))
+            return stream | filter.append(self._version_display(req, milestone))
+        elif filename == 'roadmap.html':
+            return self._milestone_versions(stream, req)
 
         return stream
 
@@ -76,8 +79,22 @@ class MilestoneVersion(Component):
                        "(milestone, version) VALUES (%s, %s)",
                        (milestone, version))
 
-    def _version_display(self, req, data):
-        milestone = data.get('milestone').name
+    def _milestone_versions(self, stream, req):
+        class AddVersionLink(object):
+            def __init__(self, mv, buffer):
+                self.mv = mv
+                self.buffer = buffer
+
+            def __iter__(self):
+                #return iter(tag.span("; " + repr(self.buffer.events[1][1])))
+                return iter(self.mv._version_display(req, self.buffer.events[1][1]))
+
+        b = StreamBuffer()
+        filter = Transformer('//li[@class="milestone"]/div/h2[1]/a/em').copy(b).end() \
+                     .select('//li[@class="milestone"]//p[@class="date"]')
+        return stream | filter.append(AddVersionLink(self, b))
+
+    def _version_display(self, req, milestone):
         cursor = self.env.get_db_cnx().cursor()
         cursor.execute("SELECT version FROM milestone_version WHERE milestone=%s", (milestone,))
         row = cursor.fetchone()
