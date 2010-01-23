@@ -19,7 +19,7 @@ class ReleasesModule(Component):
 
     navigation = BoolOption('extended_version', 'roadmap_navigation', 'false',
         doc="""Whether to add a link to the main navigation bar.""")
-    navigation_item = Option('extended_version', 'navigation_item', 'version',
+    navigation_item = Option('extended_version', 'navigation_item', 'roadmap',
         doc="""The name for the navigation item to highlight.
         
         May be set to 'roadmap' to highlight the navigation provided by the core

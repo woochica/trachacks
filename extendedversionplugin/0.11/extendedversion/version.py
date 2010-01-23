@@ -37,7 +37,7 @@ class VisibleVersion(Component):
     implements(ILegacyAttachmentPolicyDelegate, INavigationContributor, IPermissionRequestor,
             IRequestHandler, IWikiSyntaxProvider)
 
-    navigation_item = Option('extended_version', 'navigation_item', 'version')
+    navigation_item = Option('extended_version', 'navigation_item', 'roadmap')
     version_stats_provider = ExtensionOption('extended_version', 'version_stats_provider',
                                      ITicketGroupStatsProvider,
                                      'DefaultTicketGroupStatsProvider',
