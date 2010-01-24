@@ -13,5 +13,6 @@ setup(name='S5',
       url='http://trac-hacks.org/wiki/S5Plugin',
       license='Public Domain',
       zip_safe = False,
+      install_requires = ['trac >= 0.11'], 
       entry_points = {'trac.plugins': ['s5 = s5']},
       package_data={'s5' : data})
