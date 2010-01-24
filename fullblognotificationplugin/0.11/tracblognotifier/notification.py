@@ -5,13 +5,13 @@ Copyright Nick Loeve 2008
 import re
 import hashlib
 
+from genshi.template.text import TextTemplate
 from trac import __version__
 from trac.core import *
 from trac.util.text import CRLF
-from trac.notification import NotifyEmail
+from trac.notification import Notify, NotifyEmail
 from trac.config import Option, ListOption, BoolOption
 from tracfullblog.model import BlogPost, BlogComment
-from genshi.template.text import TextTemplate
 
 
 class FullBlogNotificationEmail(NotifyEmail):
@@ -24,13 +24,22 @@ class FullBlogNotificationEmail(NotifyEmail):
         self.from_name = self.config.get('fullblog-notification', 'from_name')
         self.from_email = self.config.get('fullblog-notification', 'from_email')
 
-    def notify(self, blog, action, version=None, time=None, comment=None, author=None):
+    def notify(self, blog, action, version=None, time=None, comment=None,
+               author=None):
+
+        notification_actions = self.config.getlist('fullblog-notification', 
+                                                   'notification_actions')
+
+        # Don't notify if action is explicitly omited from notification_actions
+        if notification_actions != [] and action not in notification_actions:
+            return
         
         self.blog = blog
         self.change_author = author
         self.time = time
         self.action = action
         self.version = version
+        self.subject = self.format_subject(action.replace('_', ' '))
 
         self.data['name']= blog.name
         self.data['title']= blog.title
@@ -41,10 +50,25 @@ class FullBlogNotificationEmail(NotifyEmail):
         self.data['action']= action
         self.data['time'] = time
         self.data['link']= self.env.abs_href.blog(blog.name)
-        
-        subject = self.format_subject(action.replace('_', ' '))
 
-        NotifyEmail.notify(self, blog.name, subject)
+        if not self.config.getbool('notification', 'smtp_enabled'):
+            return
+        self.smtp_server = self.config['notification'].get('smtp_server')
+        self.smtp_port = self.config['notification'].getint('smtp_port')
+        self.replyto_email = self.config['notification'].get('smtp_replyto')
+        if not self.from_email and not self.replyto_email:
+            raise TracError(tag(tag.p('Unable to send email due to identity '
+                                        'crisis.'),
+                                  tag.p('Neither ', tag.b('notification.from'),
+                                        ' nor ', tag.b('notification.reply_to'),
+                                        'are specified in the configuration.')),
+                              'SMTP Notification Error')
+
+        # Authentication info (optional)
+        self.user_name = self.config['notification'].get('smtp_user')
+        self.password = self.config['notification'].get('smtp_password')       
+ 
+        Notify.notify(self, blog.name)
 
     def get_recipients(self, pagename):
         """Once day we could build a CC list from author/commenters"""
