@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/CTrac2xml" >
+        <file>Resources/template.xml</file>
+    </qresource>
+</RCC>
