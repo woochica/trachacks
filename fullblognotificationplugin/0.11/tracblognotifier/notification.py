@@ -50,7 +50,7 @@ class FullBlogNotificationEmail(NotifyEmail):
         self.data['time'] = time
         self.data['link']= self.env.abs_href.blog(blog.name)
         
-        subject = self.format_subject(action.replace('_', ' '))
+        subject = self.format_subject()
 
         NotifyEmail.notify(self, blog.name, subject)
 
@@ -154,18 +154,20 @@ class FullBlogNotificationEmail(NotifyEmail):
         except Exception, err:
             self.env.log.debug('Notification could not be sent: %r', err)
 
-    def format_subject(self, action):
+    def format_subject(self):
         template = self.config.get('fullblog-notification', 'subject_template')
         template = TextTemplate(template.encode('utf8'))
 
         prefix = self.config.get('notification', 'smtp_subject_prefix')
         if prefix == '__default__':
             prefix = '[%s]' % self.config.get('project', 'name')
+       
+        action = self.action.strip('post_').replace('_', ' ')
 
         data = {
             'blog': self.blog,
             'prefix': prefix,
-            'action': self.action
+            'action': action
         }
         return template.generate(**data).render('text', encoding=None).strip()
 
