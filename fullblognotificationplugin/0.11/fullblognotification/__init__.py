@@ -1,2 +1,2 @@
 # 
-from tracblognotifier import *
+from fullblognotification import *
