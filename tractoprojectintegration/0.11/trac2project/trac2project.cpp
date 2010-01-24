@@ -1,4 +1,4 @@
-#include "trac2xml.h"
+#include "trac2project.h"
 #include "projectxml.h"
 #include <QDebug>
 #include <QTextOStream>

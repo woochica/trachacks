@@ -1,5 +1,5 @@
 #include <QtGui/QApplication>
-#include "trac2xml.h"
+#include "trac2project.h"
 
 int main(int argc, char *argv[])
 {
