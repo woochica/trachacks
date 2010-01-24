@@ -12,5 +12,6 @@ setup(name='S5',
       author='Alec Thomas',
       url='http://trac-hacks.org/wiki/S5Plugin',
       license='Public Domain',
+      zip_safe = False,
       entry_points = {'trac.plugins': ['s5 = s5']},
       package_data={'s5' : data})
