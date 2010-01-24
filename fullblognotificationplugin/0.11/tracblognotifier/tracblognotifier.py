@@ -5,12 +5,12 @@ Notification of blog post/comment changes
 Copyright Nick Loeve 2008
 """
 import datetime
-from notification import FullBlogNotificationEmail
 from trac.core import *
 from trac.web.chrome import ITemplateProvider
 from trac.config import Option, ListOption, BoolOption
 from tracfullblog.api import IBlogChangeListener
 from tracfullblog.model import BlogPost, BlogComment
+from notification import FullBlogNotificationEmail
 
 class FullBlogNotificationPlugin(Component):
     
