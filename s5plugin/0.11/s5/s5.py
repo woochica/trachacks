@@ -1,15 +1,15 @@
 # s5 plugin
 
 import re
+from trac.config import Option
 from trac.core import *
-from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome
 from trac.mimeview.api import IContentConverter
+from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome
 from trac.web.main import IRequestHandler
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki.formatter import wiki_to_html
 from trac.wiki.model import WikiPage
 from trac.util.html import escape, plaintext, Markup
-from trac.config import Option
 
 class S5Renderer(Component):
     implements(ITemplateProvider, IRequestHandler, IWikiMacroProvider,
@@ -28,9 +28,12 @@ class S5Renderer(Component):
             return 1
 
     def process_request(self, req):
+
+        default_theme = self.config['s5slideshow'].get('default_theme',
+                                                       'default')
         page = req.args.get('page', None)
         location = req.args.get('location', None)
-        theme = req.args.get('theme', 'default')
+        theme = req.args.get('theme', default_theme)
 
         if not page:
             raise TracError('Invalid S5 template')
