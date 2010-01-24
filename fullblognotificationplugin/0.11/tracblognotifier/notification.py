@@ -24,7 +24,15 @@ class FullBlogNotificationEmail(NotifyEmail):
         self.from_name = self.config.get('fullblog-notification', 'from_name')
         self.from_email = self.config.get('fullblog-notification', 'from_email')
 
-    def notify(self, blog, action, version=None, time=None, comment=None, author=None):
+    def notify(self, blog, action, version=None, time=None, comment=None,
+               author=None):
+
+        notification_actions = self.config.getlist('fullblog-notification', 
+                                                   'notification_actions')
+
+        # Don't notify if action is explicitly omited from notification_actions
+        if notification_actions != [] and action not in notification_actions:
+            return
         
         self.blog = blog
         self.change_author = author
