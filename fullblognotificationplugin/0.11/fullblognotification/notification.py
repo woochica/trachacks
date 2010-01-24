@@ -2,17 +2,17 @@
 """
 Copyright Nick Loeve 2008
 """
+
 import re
 import hashlib
 
-from trac import __version__
-from trac.core import *
-from trac.util.text import CRLF
-from trac.notification import NotifyEmail
-from trac.config import Option, ListOption, BoolOption
-from tracfullblog.model import BlogPost, BlogComment
 from genshi.template.text import TextTemplate
-
+from trac import __version__
+from trac.config import Option, ListOption, BoolOption
+from trac.core import *
+from trac.notification import NotifyEmail
+from trac.util.text import CRLF
+from tracfullblog.model import BlogPost, BlogComment
 
 class FullBlogNotificationEmail(NotifyEmail):
 

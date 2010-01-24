@@ -4,18 +4,25 @@ Notification of blog post/comment changes
 
 Copyright Nick Loeve 2008
 """
+
 import datetime
+
+from notification import FullBlogNotificationEmail
+from trac.config import Option, ListOption, BoolOption
 from trac.core import *
 from trac.web.chrome import ITemplateProvider
-from trac.config import Option, ListOption, BoolOption
 from tracfullblog.api import IBlogChangeListener
 from tracfullblog.model import BlogPost, BlogComment
-from notification import FullBlogNotificationEmail
 
 class FullBlogNotificationPlugin(Component):
     
     implements(ITemplateProvider, IBlogChangeListener)
-    
+
+    always_notify_author = BoolOption(
+        'fullblog-notification', 'always_notify_author', 'false',
+        """If true, Always notify the author of a blog change. 
+           Defaults to false.""")
+
     from_email = Option(
         'fullblog-notification', 'from_email', 'trac+blog@localhost',
         """Sender address to use in notification emails.""")
@@ -23,26 +30,23 @@ class FullBlogNotificationPlugin(Component):
     from_name = Option(
         'fullblog-notification', 'from_name', None,
         """Sender name to use in notification emails.
+           Defaults to project name.""")
 
-        Defaults to project name.""")
+    notification_actions = ListOption(
+        'fullblog-notification', 'notification_actions',
+        'post_created, post_updated, post_comment_added, post_deleted',
+        doc="""Actions for which notification emails are sent. Defaults to 'all'
+        """)
 
     smtp_always_cc = ListOption(
         'fullblog-notification', 'smtp_always_cc', [],
         doc="""Comma separated list of email address(es) to always send
-        notifications to.
-
-        Addresses can be seen by all recipients (Cc:).""")
+        notifications to. Addresses can be seen by all recipients (Cc:).""")
 
     subject_template = Option(
-        'fullblog-notification', 'subject_template', '$prefix $blog.title $action',
-        "A Genshi text template snippet used to get the notification subject.")
-
-    always_notify_author = BoolOption(
-        'fullblog-notification', 'always_notify_author', 'false',
-        """Always notify the author of a blog change
-        
-        Defaults to false
-        """)
+        'fullblog-notification', 'subject_template',
+        '$prefix $blog.title $action',
+        "Genshi text template snippet used for the notification subject.")
 
     # ITemplateProvider methods
     def get_templates_dirs(self):

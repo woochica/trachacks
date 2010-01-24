@@ -1,12 +1,11 @@
-This plugin extends the FullBlogPlugin with notifications of post changes and
-comment additions.
+This plugin extends the FullBlogPlugin with notifications of blog changes.
 
 Valid trac.ini options:
 
 [fullblog-notification]
+always_notify_author = False
 from_email = "trac+blog@localhost"
 from_name = None
+notification_actions = post_created, post_updated, post_comment_added, post_deleted
 smtp_always_cc = []
 subject_template = "$prefix $blog.title $action"
-always_notify_author = False
-
