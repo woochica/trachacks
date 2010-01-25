@@ -133,6 +133,7 @@ void CTrac2xml::setConnectInfo()
 	settings.setValue("login",m_ui.m_login->text());
 	settings.setValue("password",m_ui.m_password->text() );
 	settings.setValue("query",m_ui.m_query->text());
+	settings.setValue("notify",m_ui.m_notifycheckBox->checkState ());
 
 	
 
@@ -156,6 +157,11 @@ void CTrac2xml::loadConnectionInfo()
 	QString query=settings.value("query").toString();
 	if (!query.isEmpty())
 		m_ui.m_query->setText(query);
+
+	bool notify=settings.value("notify").toBool();
+	if (notify)
+		m_ui.m_notifycheckBox->setChecked(true);
+
 }
 
 void CTrac2xml::requestTickets( const QString & a_query )

@@ -62,7 +62,9 @@ int CConnection::requestForTicketUpdate(QMap<QString,QVariant> a_ticket )
 	t.insert(ticket_owner,a_ticket[ticket_owner].toString() );
 	t.insert(ticket_due_assign,a_ticket[ticket_due_assign].toString() );
 	//t.insert(ticket_due_assign,xmlrpc::Variant(a_ticket[ticket_due_assign] ) );
-	return m_xmlrpc->request("ticket.update",id,trUtf8(""),t,true);
+
+	QSettings settings;
+	return m_xmlrpc->request("ticket.update",id,trUtf8(""),t,settings.value("notify").toBool());
 }
 
 
