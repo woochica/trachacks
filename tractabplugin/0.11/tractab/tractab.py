@@ -17,14 +17,17 @@ class tractab(Component):
 
 
     def init_config(self):
-        names = self.config.get('tractab','names')
+        names = self.config.get('tractab', 'names', 'None')
         names = names.split(",");
-        urls = self.config.get('tractab','urls')
+        print names
+        urls = self.config.get('tractab', 'urls', 'None')
         urls = urls.split(",");
+        print urls
         urlhash = {}
         for i in range(len(names)):
             urlhash[names[i]]=urls[i]
 
+        print urlhash
         self.last_config_time = self.config._lastmtime
         self.names = names
         self.urls = urls
@@ -41,7 +44,7 @@ class tractab(Component):
 
 
     def check_perms (self, req, idx) :
-        perms = self.config.get('tractab','perms')
+        perms = self.config.get('tractab', 'perms', 'None')
         perm = None
         
         #if we dont specify permissions, the tabs are only for TRAC_ADMIN
@@ -69,7 +72,7 @@ class tractab(Component):
 
     def get_navigation_items(self, req):        
         for idx in range(len(self.names)):
-            if self.check_perms( req, idx ):
+            if self.names[idx] is not 'None' and self.check_perms( req, idx ):
                 name = self.names[idx]
                 yield 'mainnav', name, Markup(self.make_trac_tab(self.env.href.tractab(), name))
 
