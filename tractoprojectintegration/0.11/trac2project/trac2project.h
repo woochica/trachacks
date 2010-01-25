@@ -2,7 +2,7 @@
 #define TRAC2XML_H
 
 #include <QtGui/QWidget>
-#include "ui_trac2xml.h"
+#include "ui_trac2project.h"
 #include "connection.h"
 
 
