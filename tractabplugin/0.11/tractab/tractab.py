@@ -12,11 +12,11 @@ class tractab(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
     tab_names_options = ListOption('tractab', 'names', '',
-        doc='List of names that should create tabs (Whitespace Sensitive)')
+        doc='List of labels to use for tabs in mainnav')
     tab_url_options = ListOption('tractab', 'urls', '',
-        doc='List of urls that relate to tabs')
+        doc='List of urls that the tabs display')
     tab_perm_options = ListOption('tractab', 'perms', '',
-        doc='List of perm required to view')
+        doc='List of permssions required to view tabs')
 
 
     def init_config(self):
