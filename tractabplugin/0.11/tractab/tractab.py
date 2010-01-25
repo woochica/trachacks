@@ -15,22 +15,27 @@ class tractab(Component):
         doc='List of names that should create tabs (Whitespace Sensitive)')
     tab_url_options = ListOption('tractab', 'urls', '',
         doc='List of urls that relate to tabs')
-    tab_url_options = ListOption('tractab', 'perms', '',
+    tab_perm_options = ListOption('tractab', 'perms', '',
         doc='List of perm required to view')
 
 
     def init_config(self):
         names = self.config.getlist('tractab', 'names', 'None')
-        print names
         urls = self.config.getlist('tractab', 'urls', 'None')
+        perms = self.config.getlist('tractab', 'perms', 'None')
+       
+        print perms
+ 
+        #TODO: add some checks that names and urls are same length
+
         urlhash = {}
         for i in range(len(names)):
-            urlhash[names[i]]=urls[i]
+            urlhash[names[i]] = urls[i]
 
-        print urlhash
         self.last_config_time = self.config._lastmtime
         self.names = names
         self.urls = urls
+        self.perms = perms
         self.urlhash = urlhash
     
     def __init__(self):
@@ -44,13 +49,12 @@ class tractab(Component):
 
 
     def check_perms(self, req, idx) :
-        perms = self.config.getlist('tractab', 'perms', 'None')
         perm = None
         
         #if we dont specify permissions, the tabs are only for TRAC_ADMIN
-        if perms:
-            if len(perms) > idx :
-                perm = perms[idx]
+        if self.perms:
+            if len(self.perms) > idx:
+                perm = self.perms[idx]
                 
         if not perm:
             perm = "TRAC_ADMIN"
