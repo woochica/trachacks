@@ -11,18 +11,18 @@ from trac.web.href import Href
 class tractab(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
-    tab_names_options = ListOption('tractab', 'names', '', doc='List of names that should create tabs (Whitespace Sensitive)')
-    tab_url_options = ListOption('tractab', 'urls', '', doc='List of urls that relate to tabs')
-    tab_url_options = ListOption('tractab', 'perms', '', doc='List of perm required to view')
+    tab_names_options = ListOption('tractab', 'names', '',
+        doc='List of names that should create tabs (Whitespace Sensitive)')
+    tab_url_options = ListOption('tractab', 'urls', '',
+        doc='List of urls that relate to tabs')
+    tab_url_options = ListOption('tractab', 'perms', '',
+        doc='List of perm required to view')
 
 
     def init_config(self):
-        names = self.config.get('tractab', 'names', 'None')
-        names = names.split(",");
+        names = self.config.getlist('tractab', 'names', 'None')
         print names
-        urls = self.config.get('tractab', 'urls', 'None')
-        urls = urls.split(",");
-        print urls
+        urls = self.config.getlist('tractab', 'urls', 'None')
         urlhash = {}
         for i in range(len(names)):
             urlhash[names[i]]=urls[i]
@@ -43,23 +43,20 @@ class tractab(Component):
         return s
 
 
-    def check_perms (self, req, idx) :
-        perms = self.config.get('tractab', 'perms', 'None')
+    def check_perms(self, req, idx) :
+        perms = self.config.getlist('tractab', 'perms', 'None')
         perm = None
         
         #if we dont specify permissions, the tabs are only for TRAC_ADMIN
         if perms:
-            perms = perms.split(",")
             if len(perms) > idx :
-                perm = perms[idx].strip()
+                perm = perms[idx]
                 
         if not perm:
             perm = "TRAC_ADMIN"
 
-        
         return req.perm.has_permission(perm)
             
-        
     
     def make_trac_tab(self, url, name):
         return '<a href="%s/%s">%s</a>' % ( url, name, name)
