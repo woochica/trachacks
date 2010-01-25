@@ -43,13 +43,14 @@ class ChangeLogMacro(WikiMacroBase):
             limit = 5
         else:
             limit = int(limit)
-
         node = repo.get_node(path, rev)
         out = StringIO()
         out.write('<div class="changelog">\n')
         for npath, nrev, nlog in node.get_history(limit):
             change = repo.get_changeset(nrev)
-            out.write(wiki_to_html("'''[%s] by %s on %s'''\n\n%s" % (nrev, change.author, format_datetime(change.date), change.message),
+            datetime = format_datetime(change.date, '%Y/%m/%d %H:%M:%S', req.tz)
+            out.write(wiki_to_html("'''[%s] by %s on %s'''\n\n%s" %
+                (nrev, change.author, datetime, change.message),
                                    self.env, req));
         out.write('</div>\n')
         return out.getvalue()
