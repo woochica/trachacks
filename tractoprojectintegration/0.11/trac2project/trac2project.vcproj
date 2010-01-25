@@ -328,9 +328,9 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Rcc&apos;ing $(InputFileName)..."
-						CommandLine="&quot;$(QTDIR)\bin\rcc.exe&quot; -name &quot;$(InputName)&quot; -no-compress &quot;$(InputPath)&quot; -o .\GeneratedFiles\qrc_$(InputName).cpp&#x0D;&#x0A;"
-						AdditionalDependencies="$(InputPath);.\Resources\template.xml"
+						Description="Rcc&apos;ing trac2project.qrc..."
+						CommandLine="&quot;$(QTDIR)\bin\rcc.exe&quot; -name &quot;trac2project&quot; -no-compress &quot;.\trac2project.qrc&quot; -o .\GeneratedFiles\qrc_$(InputName).cpp&#x0D;&#x0A;"
+						AdditionalDependencies=".\trac2project.qrc;.\Resources\template.xml"
 						Outputs=".\GeneratedFiles\qrc_$(InputName).cpp"
 					/>
 				</FileConfiguration>
@@ -339,9 +339,9 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Rcc&apos;ing $(InputFileName)..."
-						CommandLine="&quot;$(QTDIR)\bin\rcc.exe&quot; -name &quot;$(InputName)&quot; -no-compress &quot;$(InputPath)&quot; -o .\GeneratedFiles\qrc_$(InputName).cpp&#x0D;&#x0A;"
-						AdditionalDependencies="$(InputPath);.\Resources\template.xml"
+						Description="Rcc&apos;ing trac2project.qrc..."
+						CommandLine="&quot;$(QTDIR)\bin\rcc.exe&quot; -name &quot;trac2project&quot; -no-compress &quot;.\trac2project.qrc&quot; -o .\GeneratedFiles\qrc_$(InputName).cpp&#x0D;&#x0A;"
+						AdditionalDependencies=".\trac2project.qrc;.\Resources\template.xml"
 						Outputs=".\GeneratedFiles\qrc_$(InputName).cpp"
 					/>
 				</FileConfiguration>
@@ -466,6 +466,10 @@
 						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\GeneratedFiles\qrc_trac2project.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\GeneratedFiles\ui_trac2project.h"

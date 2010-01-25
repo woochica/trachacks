@@ -59,7 +59,7 @@ bool  CProjectXml::loadTicketsFromVariantList( QVariantList a_tickets )
 
 QString CProjectXml::getXmlFromTickets()
 {
-	QFile file(":/CTrac2xml/Resources/template.xml");
+	QFile file(":/Trac2Project/Resources/template.xml");
 	if (!file.open(QIODevice::ReadOnly))
 		return QString();
 	if (!m_template.setContent(&file)) {
