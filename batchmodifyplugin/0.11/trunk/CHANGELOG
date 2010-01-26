@@ -1,0 +1,20 @@
+**********************************************
+** BatchModifyPlugin 0.3 (January 26, 2010) **
+**********************************************
+
+This release fixes the plugin so that it actually does something on 0.11 again. In addition the
+comment field is now a textarea and the batch modify fieldset is collapsible. By default it is collapsed.
+
+Thanks to Ikraav, otaku42, and thomassvs for patches.
+
+Download URL:
+ * http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags/BatchModify-0.3.0-py2.5.egg
+ * http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags/BatchModify-0.3.0-py2.6.egg 
+ 
+Bug Fixes:
+ * #2018 - batchmodifyplugin creates Ticket object with id as str, not int, breaking convention (http://trac-hacks.org/ticket/2018)
+ * #4928 - batchmodify does not work due to QueryModule change (http://trac-hacks.org/ticket/4928)
+
+Enhancements:
+ * #4135 - Change comment field from one-liner to text area (http://trac-hacks.org/ticket/4135)
+ * #6195 - [Patch] Make batch modify fieldset collapsible, and collapsed by default (http://trac-hacks.org/ticket/6195)
