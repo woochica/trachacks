@@ -2031,8 +2031,14 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
         if (colspan > 1) {
             cell.setAttribute("colSpan", colspan);
         }
-        if (align != 0) {
-            cell.setAttribute("align", align < 0 ? "left" : "right");
+        switch (align) {
+            case -1:    align = "left";     break;
+            case 0:     align = "center";   break;
+            case 1:     align = "right";    break;
+            default:    align = null;       break;
+        }
+        if (align !== null) {
+            cell.setAttribute("align", align);
         }
         row.appendChild(cell);
         holder = cell;
@@ -2273,7 +2279,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                     if (quoteDepth.length > 0 && match.index == 0) {
                         closeToFragment();
                     }
-                    var align = 0;
+                    var align = null;
                     for ( ; ; ) {       // lookahead next double pipes
                         var m = wikiRulesPattern.exec(line);
                         switch (m ? getMatchNumber(m) : 0) {
@@ -2281,22 +2287,18 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument) {
                             var end = m ? m.index : line.length;
                             if (prevIndex < end) {
                                 var tmp = line.substring(prevIndex, end);
-                                m = /[ \t\r\n\f\v]+$/.exec(tmp);
+                                var m = /^([ \t\r\n\f\v]*)(.*?)([ \t\r\n\f\v]*)$/.exec(tmp);
                                 if (m) {
-                                    tmp = tmp.slice(0, -m[0].length);
-                                }
-                                else {
-                                    align++;
-                                }
-                                m = /^[ \t\r\n\f\v]+/.exec(tmp);
-                                if (m) {
-                                    tmp = tmp.substring(m[0].length);
-                                }
-                                else {
-                                    align--;
-                                }
-                                if (!tmp) {
-                                    align = 0;
+                                    if (m[1].length == tmp.length) {
+                                        align = null;
+                                    }
+                                    else if ((m[1].length == 0) === (m[3].length == 0)) {
+                                        align = m[1].length >= 2 && m[3].length >= 2 ? 0 : null;
+                                    }
+                                    else {
+                                        align = m[1].length == 0 ? -1 : 1;
+                                    }
+                                    tmp = m[2];
                                 }
                                 line = line.substring(0, prevIndex) + tmp + line.substring(end);
                             }
@@ -2865,12 +2867,17 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                     _texts.push("=");
                 }
                 var align = node.style.textAlign;
-                if (align != "left" && align != "right") {
+                if (!align) {
                     align = (node.getAttribute("align") || "").toLowerCase();
                 }
                 var text = self.domToWikitext(node).replace(/ *\n/g, "[[BR]]").replace(/^ +| +$/g, "");
                 if (text) {
-                    _texts.push(align == "left" ? "" : " ", text, align == "right" ? "" : " ");
+                    switch (align) {
+                        case "left":    _texts.push(text, " ");         break;
+                        case "center":  _texts.push("  ", text, "  ");  break;
+                        case "right":   _texts.push(" ", text);         break;
+                        default:        _texts.push(" ", text, " ");    break;
+                    }
                 }
                 else {
                     _texts.push(" ");

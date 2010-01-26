@@ -1438,13 +1438,18 @@ addEvent(window, "load", function() {
                         element("tr",
                             element("td", "3||1", { align: "right" }),
                             element("th", element("u", "3.2")),
-                            element("td", element("tt", "3.3"), { align: "left" })))),
+                            element("td", element("tt", "3.3"), { align: "left" })),
+                        element("tr",
+                            element("th", "4.1", { align: "center" }),
+                            element("td", "4.2"),
+                            element("td", "4.3", { align: "center" })))),
                 element("p", "Paragraph"));
             generateFragment.call(this, dom, [
                 "Paragraph",
                 "||=1.1=|||| 1.2",
                 "||||||=2.1 =||",
                 "|| 3!||1||= __3.2__ =||`3.3` ||",
+                "||=  4.1     =|| 4.2 ||    4.3    ||",
                 "Paragraph" ].join("\n"));
             generate.call(this, dom, [
                 "Paragraph",
@@ -1452,6 +1457,7 @@ addEvent(window, "load", function() {
                 "||= 1.1 =|||| 1.2||",
                 "||||||=2.1 =||",
                 "|| 3!||1||= __3.2__ =||`3.3` ||",
+                "||=  4.1  =|| 4.2 ||  4.3  ||",
                 "",
                 "Paragraph" ].join("\n"));
         });
