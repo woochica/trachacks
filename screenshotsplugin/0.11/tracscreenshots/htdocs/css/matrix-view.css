@@ -72,13 +72,18 @@ div.screenshots div.controls div.position
 }
 
 /* Go to form style. */
+div.screenshots div.goto
+{
+  display: inline;
+}
+
 div.screenshots form.goto
 {
   display: inline;
   margin: 0em;
 }
 
-div.screenshots form.goto input[type="input"]
+div.screenshots div.goto input[type="text"]
 {
   width: 2em;
   margin: 0em;

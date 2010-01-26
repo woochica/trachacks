@@ -4,6 +4,7 @@ from genshi.builder import tag
 
 from trac.core import *
 from trac.mimeview import Context
+from trac.util.datefmt import to_timestamp
 
 from trac.timeline import ITimelineEventProvider
 
@@ -34,10 +35,9 @@ class ScreenshotsTimeline(Component):
             # Get API component.
             api = self.env[ScreenshotsApi]
 
-            self.log.debug(api.get_new_screenshots(context, start, stop))
-
             # Get message events
-            for screenshot in api.get_new_screenshots(context, start, stop):
+            for screenshot in api.get_new_screenshots(context, to_timestamp(start),
+              to_timestamp(stop)):
                 yield ('newticket', screenshot['time'], screenshot['author'],
                   (screenshot['id'], screenshot['name'],
                    screenshot['description']))

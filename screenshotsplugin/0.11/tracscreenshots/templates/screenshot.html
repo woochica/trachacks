@@ -1,4 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="layout.html"/>
   <xi:include href="macros.html"/>
@@ -51,14 +52,14 @@
       </div>
 
       <div py:if="('SCREENSHOTS_EDIT' in perm) or ('SCREENSHOTS_DELETE' in perm)" class="buttons">
-        <form method="post" action="${href.screenshots()}">
+        <form method="post" action="">
           <div py:if="'SCREENSHOTS_EDIT' in perm">
             <input type="submit" name="edit" value="Edit"/>
             <input type="hidden" name="action" value="edit"/>
             <input type="hidden" name="id" value="${screenshots.screenshot.id}"/>
           </div>
         </form>
-        <form method="post" action="${href.screenshots()}">
+        <form method="post" action="">
           <div py:if="'SCREENSHOTS_DELETE' in perm">
             <input type="submit" name="delete" value="Delete"/>
             <input type="hidden" name="id" value="${screenshots.screenshot.id}"/>

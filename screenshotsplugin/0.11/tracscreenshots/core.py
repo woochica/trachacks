@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import sets, re, os, os.path, shutil, mimetypes, unicodedata, Image, ImageOps
 from datetime import *
@@ -12,7 +12,7 @@ from trac.web.chrome import add_stylesheet, add_script, format_to_oneliner, \
   pretty_timedelta
 from trac.util.html import html
 from trac.util.text import to_unicode
-
+from trac.util.datefmt import to_timestamp
 
 from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
@@ -125,6 +125,8 @@ class ScreenshotsCore(Component):
     def process_request(self, req):
         # Create request context.
         context = Context.from_request(req)('screenshots-core')
+
+        self.log.debug((req.method, req.href))
 
         # Template data dictionary.
         req.data = {}

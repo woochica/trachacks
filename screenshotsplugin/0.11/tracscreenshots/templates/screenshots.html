@@ -1,5 +1,8 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="layout.html"/>
   <xi:include href="macros.html"/>
   <head>
@@ -15,33 +18,33 @@
       <xi:include href="${screenshots.content_template}"/>
 
       <div py:if="('SCREENSHOTS_ADD' in perm) or ('SCREENSHOTS_EDIT' in perm) or ('SCREENSHOTS_DELETE' in perm)" class="buttons screenshot_buttons">
-        <form py:if="'SCREENSHOTS_ADD' in perm" method="post" action="${href.screenshots()}">
+        <form py:if="'SCREENSHOTS_ADD' in perm" method="post" action="">
           <div>
-            <input type="submit" name="add" value="Add"/>
-            <input type="hidden" name="action" value="add"/>
-            <input type="hidden" name="index" value="${screenshots.index}"/>
+            <input type="submit" name="add" value="Add"></input>
+            <input type="hidden" name="action" value="add"></input>
+            <input type="hidden" name="index" value="${screenshots.index}"></input>
           </div>
         </form>
-        <form py:if="('SCREENSHOTS_EDIT' in perm) and (len(screenshots) > 0) and index" method="post" action="${href.screenshots()}">
+        <form py:if="('SCREENSHOTS_EDIT' in perm) and (len(screenshots) > 0) and index" method="post" action="">
           <div>
-            <input type="submit" name="edit" value="Edit"/>
-            <input type="hidden" name="action" value="edit"/>
-            <input type="hidden" name="id" value="${screenshots.id}"/>
-            <input type="hidden" name="index" value="${screenshots.index}"/>
+            <input type="submit" name="edit" value="Edit"></input>
+            <input type="hidden" name="action" value="edit"></input>
+            <input type="hidden" name="id" value="${screenshots.id}"></input>
+            <input type="hidden" name="index" value="${screenshots.index}"></input>
           </div>
         </form>
-        <form py:if="('SCREENSHOTS_DELETE' in perm) and (len(screenshots) > 0) and index" method="post" action="${href.screenshots()}">
+        <form py:if="('SCREENSHOTS_DELETE' in perm) and (len(screenshots) > 0) and index" method="post" action="">
           <div>
-            <input type="submit" name="delete" value="Delete"/>
-            <input type="hidden" name="id" value="${screenshots.id}"/>
-            <input type="hidden" name="index" value="${screenshots.index}"/>
-            <input type="hidden" name="action" value="delete"/>
+            <input type="submit" name="delete" value="Delete"></input>
+            <input type="hidden" name="id" value="${screenshots.id}"></input>
+            <input type="hidden" name="index" value="${screenshots.index}"></input>
+            <input type="hidden" name="action" value="delete"></input>
           </div>
         </form>
       </div>
 
       <div py:if="'SCREENSHOTS_ORDER' in perm" class="order">
-        <form method="post" action="${href.screenshots()}">
+        <form method="post" action="">
           <fieldset>
             <legend>
               Order:
@@ -55,27 +58,27 @@
               <div>
                 <py:choose>
                   <input py:when="order[0] == 'id'" type="radio" name="order_$index" value="id" checked="checked">ID</input>
-                  <input py:otherwise="" type="radio" name="order_$index" value="id">ID</input><br/>
+                  <input py:otherwise="" type="radio" name="order_$index" value="id">ID</input><br></br>
                 </py:choose>
                 <py:choose>
                   <input py:when="order[0] == 'name'" type="radio" name="order_$index" value="name" checked="checked">Name</input>
-                  <input py:otherwise="" type="radio" name="order_$index" value="name">Name</input><br/>
+                  <input py:otherwise="" type="radio" name="order_$index" value="name">Name</input><br></br>
                 </py:choose>
                 <py:choose>
                   <input py:when="order[0] == 'author'" type="radio" name="order_$index" value="author" checked="checked">Author</input>
-                  <input py:otherwise="" type="radio" name="order_$index" value="author">Author</input><br/>
+                  <input py:otherwise="" type="radio" name="order_$index" value="author">Author</input><br></br>
                 </py:choose>
                 <py:choose>
                   <input py:when="order[0] == 'time'" type="radio" name="order_$index" value="time" checked="checked">Time</input>
-                  <input py:otherwise="" type="radio" name="order_$index" value="time">Time</input><br/>
+                  <input py:otherwise="" type="radio" name="order_$index" value="time">Time</input><br></br>
                 </py:choose>
                 <py:choose>
                   <input py:when="order[0] == 'description'" type="radio" name="order_$index" value="description" checked="checked">Description</input>
-                  <input py:otherwise="" type="radio" name="order_$index" value="description">Description</input><br/>
+                  <input py:otherwise="" type="radio" name="order_$index" value="description">Description</input><br></br>
                 </py:choose>
                 <py:choose>
                   <input py:when="order[0] == 'priority'" type="radio" name="order_$index" value="priority" checked="checked">Priority</input>
-                  <input py:otherwise="" type="radio" name="order_$index" value="priority">Priority</input><br/>
+                  <input py:otherwise="" type="radio" name="order_$index" value="priority">Priority</input><br></br>
                 </py:choose>
 
                 <hr/>
@@ -100,7 +103,7 @@
       </div>
 
       <div py:if="'SCREENSHOTS_FILTER' in perm" class="filter">
-        <form method="post" action="${href.screenshots()}">
+        <form method="post" action="">
           <fieldset>
             <legend>
               Display filter:

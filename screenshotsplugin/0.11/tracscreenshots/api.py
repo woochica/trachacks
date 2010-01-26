@@ -6,7 +6,7 @@ from trac.core import *
 from trac.mimeview import Context
 from trac.config import Option
 from trac.wiki.formatter import format_to_html, format_to_oneliner
-from trac.util.datefmt import to_timestamp, to_datetime, utc, pretty_timedelta
+from trac.util.datefmt import to_datetime, utc, pretty_timedelta
 
 class IScreenshotChangeListener(Interface):
     """Extension point interface for components that require notification
@@ -113,7 +113,7 @@ class ScreenshotsApi(Component):
         sql = "SELECT " + ', '.join(columns) + " FROM screenshot WHERE time" \
           "  BETWEEN %s AND %s"
         self.log.debug(sql % (start, stop))
-        context.cursor.execute(sql, (to_timestamp(start), to_timestamp(stop)))
+        context.cursor.execute(sql, (start, stop))
         screenshots = []
         for row in context.cursor:
             row = dict(zip(columns, row))

@@ -1,5 +1,10 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <head></head>
+  <body>
   <div class="images">
     <table>
       <tbody>
@@ -69,12 +74,12 @@
       </py:otherwise>
     </py:choose>
     |
-    <span>
-      <form class="goto" method="get" action="${href.screenshots()}">
-        <input type="input" name="page" value="${screenshots.page or '1'}" onkeypress="return checkNumber(event)"/>
+    <form class="goto" method="get" action="${href.screenshots()}">
+      <div class="goto">
+        <input type="text" name="page" value="${screenshots.page or '1'}" onkeypress="return checkNumber(event)"></input>
         <input type="submit" value="Go"></input>
-      </form>
-    </span>
+      </div>
+    </form>
     |
     <py:choose>
       <py:when test="screenshots.next_index != -1">
@@ -95,4 +100,5 @@
     </py:choose>
     &rarr;
   </div>
+  </body>
 </html>
