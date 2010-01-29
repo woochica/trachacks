@@ -52,14 +52,14 @@
       </div>
 
       <div py:if="('SCREENSHOTS_EDIT' in perm) or ('SCREENSHOTS_DELETE' in perm)" class="buttons">
-        <form method="post" action="">
+        <form method="post" action="${href.screenshots()}">
           <div py:if="'SCREENSHOTS_EDIT' in perm">
             <input type="submit" name="edit" value="Edit"/>
             <input type="hidden" name="action" value="edit"/>
             <input type="hidden" name="id" value="${screenshots.screenshot.id}"/>
           </div>
         </form>
-        <form method="post" action="">
+        <form method="post" action="${href.screenshots()}">
           <div py:if="'SCREENSHOTS_DELETE' in perm">
             <input type="submit" name="delete" value="Delete"/>
             <input type="hidden" name="id" value="${screenshots.screenshot.id}"/>

@@ -1,16 +1,24 @@
 # -*- coding: utf-8 -*-
 
-import sets, re, os, os.path, shutil, mimetypes, unicodedata, Image, ImageOps
+import sys, re, os, os.path, shutil, mimetypes, unicodedata, Image, ImageOps
 from datetime import *
 from zipfile import *
 from StringIO import *
 
+# Deprecated as for Python 2.6.
+try:
+    import sets
+except:
+    pass
+
+from genshi.core import Markup
+from genshi.builder import tag
+
 from trac.core import *
-from trac.mimeview import Context
-from trac.config import Option, ListOption
+from trac.mimeview import Mimeview, Context
+from trac.config import Option, ListOption, PathOption
 from trac.web.chrome import add_stylesheet, add_script, format_to_oneliner, \
   pretty_timedelta
-from trac.util.html import html
 from trac.util.text import to_unicode
 from trac.util.datefmt import to_timestamp
 
@@ -47,7 +55,7 @@ class ScreenshotsCore(Component):
       doc = 'Main navigation bar button title.')
     metanav_title = Option('screenshots', 'metanav_title', '',
       doc = 'Meta navigation bar link title.')
-    path = Option('screenshots', 'path', '/var/lib/trac/screenshots',
+    path = PathOption('screenshots', 'path', '../screenshots',
       doc = 'Path where to store uploaded screenshots.')
     ext = ListOption('screenshots', 'ext', 'jpg,png',
       doc = 'List of screenshot file extensions that can be uploaded. Must be'
@@ -56,9 +64,9 @@ class ScreenshotsCore(Component):
       doc = 'List of allowed formats for screenshot download.')
     default_format = Option('screenshots', 'default_format', 'html',
       doc = 'Default format for screenshot download links.')
-    default_components = ListOption('screenshots', 'default_components', 'none',
+    default_components = ListOption('screenshots', 'default_components', 'all',
       doc = 'List of components enabled by default.')
-    default_versions = ListOption('screenshots', 'default_versions', 'none',
+    default_versions = ListOption('screenshots', 'default_versions', 'all',
       doc = 'List of versions enabled by default.')
     default_filter_relation = Option('screenshots', 'default_filter_relation',
       'or', doc = 'Logical relation between component and version part of'
@@ -103,33 +111,30 @@ class ScreenshotsCore(Component):
     def get_navigation_items(self, req):
         if req.perm.has_permission('SCREENSHOTS_VIEW'):
             if self.mainnav_title:
-                yield 'mainnav', 'screenshots', html.a(self.mainnav_title,
-                  href = req.href.screenshots())
+                yield ('mainnav', 'screenshots', tag.a(self.mainnav_title,
+                  href = req.href.screenshots()))
             if self.metanav_title:
-                yield 'metanav', 'screenshots', html.a(self.metanav_title,
-                  href = req.href.screenshots())
+                yield ('metanav', 'screenshots', tag.a(self.metanav_title,
+                  href = req.href.screenshots()))
 
     # IRequestHandler methods.
 
     def match_request(self, req):
-        match = re.match(r'''^/screenshots($|/$)''', req.path_info)
+        match = re.match(r'/screenshots(?:/(\d+))?$', req.path_info)
         if match:
-            return True
-        match = re.match(r'''^/screenshots/(\d+)($|/$)''', req.path_info)
-        if match:
-            req.args['action'] = 'get-file'
-            req.args['id'] = match.group(1)
-            return True
-        return False
+            if match.group(1):
+                req.args['action'] = 'get-file'
+                req.args['id'] = match.group(1)
+            return 1
 
     def process_request(self, req):
         # Create request context.
-        context = Context.from_request(req)('screenshots-core')
-
-        self.log.debug((req.method, req.href))
+        context = Context.from_request(req)
+        context.realm = 'screenshots-core'
 
         # Template data dictionary.
         req.data = {}
+
 
         # Get database access.
         db = self.env.get_db_cnx()
@@ -229,28 +234,39 @@ class ScreenshotsCore(Component):
                     # Prepare screenshot filename.
                     name, ext = os.path.splitext(screenshot['file'])
                     format = (format == 'raw') and ext or '.' + format
-                    path = os.path.join(self.path, to_unicode(
-                      screenshot['id']))
-                    filename = os.path.join(path, '%s-%sx%s%s' % (name,
-                      width, height, format))
-                    orig_name = os.path.join(path, '%s-%sx%s%s' % (name,
-                      screenshot['width'], screenshot['height'], ext))
+                    path = os.path.normpath(os.path.join(self.path, to_unicode(
+                      screenshot['id'])))
+                    filename = os.path.normpath(os.path.join(path, '%s-%sx%s%s'
+                      % (name, width, height, format)))
+                    orig_name = os.path.normpath(os.path.join(path, '%s-%sx%s%s'
+                      % (name, screenshot['width'], screenshot['height'], ext)))
+                    base_name = os.path.normpath(os.path.basename(filename))
 
                     self.log.debug('filemame: %s' % (filename,))
 
                     # Create requested file from original if not exists.
-                    if not os.path.exists(filename):
+                    if not os.path.isfile(filename.encode('utf-8')):
                         self._create_image(orig_name, path, name, format,
                           width, height)
 
+                    # Guess mime type.
+                    file = open(filename.encode('utf-8'), "r")
+                    file_data = file.read(1000)
+                    file.close()
+                    mimeview = Mimeview(self.env)
+                    mime_type = mimeview.get_mimetype(filename, file_data)
+                    if not mime_type:
+                        mime_type = 'application/octet-stream'
+                    if 'charset=' not in mime_type:
+                        charset = mimeview.get_charset(file_data, mime_type)
+                        mime_type = mime_type + '; charset=' + charset
+
                     # Send file to request.
                     context.req.send_header('Content-Disposition',
-                      'attachment;filename=%s' % (os.path.basename(
-                      filename)))
+                      'attachment;filename=%s' % (base_name))
                     context.req.send_header('Content-Description',
                       screenshot['description'])
-                    context.req.send_file(filename, mimetypes.guess_type(filename)
-                      [0])
+                    context.req.send_file(filename.encode('utf-8'), mime_type)
 
             elif action == 'add':
                 context.req.perm.assert_permission('SCREENSHOTS_ADD')
@@ -376,11 +392,10 @@ class ScreenshotsCore(Component):
                 # Prepare file paths.
                 if filename:
                     name, ext = os.path.splitext(screenshot['file'])
-                    path = os.path.join(self.path, unicode(screenshot_id))
-                    filepath = os.path.join(path, '%s-%ix%i%s' % (name,
-                      screenshot['width'], screenshot['height'], ext))
-                    path = os.path.normpath(path)
-                    filepath = os.path.normpath(filepath)
+                    path = os.path.normpath(os.path.join(self.path, to_unicode(
+                      screenshot_id)))
+                    filepath = os.path.normpath(os.path.join(path, '%s-%ix%i%s'
+                      % (name, screenshot['width'], screenshot['height'], ext)))
 
                     self.log.debug('path: %s' % (path,))
                     self.log.debug('filepath: %s' % (filepath,))
@@ -388,22 +403,22 @@ class ScreenshotsCore(Component):
                     # Delete present images.
                     try:
                         for file in os.listdir(path):
-                            file = os.path.join(path, file)
-                            file = os.path.normpath(file)
-                            os.remove(file)
+                            file = os.path.normpath(os.path.join(path,
+                              to_unicode(file)))
+                            os.remove(file.encode('utf-8'))
                     except Exception, error:
                         raise TracError('Error deleting screenshot. Original' \
                           ' message was: %s' % (to_unicode(error),))
 
                     # Store uploaded image.
                     try:
-                        out_file = open(filepath, 'wb+') 
+                        out_file = open(filepath.encode('utf-8'), 'wb+') 
                         in_file.seek(0)
                         shutil.copyfileobj(in_file, out_file)
                         out_file.close()
                     except Exception, error:
                         try:
-                            os.remove(filename)
+                            os.remove(filepath.encode('utf-8'))
                         except:
                             pass
                         raise TracError('Error storing file. Is directory' \
@@ -437,18 +452,18 @@ class ScreenshotsCore(Component):
                 api.delete_screenshot(context, screenshot['id'])
 
                 # Delete screenshot files. Don't append any other files there :-).
-                path = os.path.join(self.path, to_unicode(screenshot['id']))
-                path = os.path.normpath(path)
+                path = os.path.normpath(os.path.join(self.path, to_unicode(
+                  screenshot['id'])))
                 self.log.debug('path: %s' % (path,))
-
                 try:
                     for file in os.listdir(path):
-                        file = os.path.join(path, file)
-                        file = os.path.normpath(file)
-                        os.remove(file)
-                    os.rmdir(path)
-                except:
-                    pass
+                        file = os.path.normpath(os.path.join(path,
+                          to_unicode(file)))
+                        os.remove(file.encode('utf-8'))
+                    os.rmdir(path.encode('utf-8'))
+                except Exception, error:
+                    raise TracError('Error deleting screenshot. Original' \
+                      ' message was: %s' % (to_unicode(error),))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
@@ -607,30 +622,29 @@ class ScreenshotsCore(Component):
 
         # Prepare file paths
         name, ext = os.path.splitext(screenshot['file'])
-        path = os.path.join(self.path, unicode(screenshot['id']))
-        filepath = os.path.join(path, '%s-%ix%i%s' % (name, screenshot['width'],
-          screenshot['height'], ext))
-        path = os.path.normpath(path)
-        filepath = os.path.normpath(filepath)
+        path = os.path.normpath(os.path.join(self.path, to_unicode(
+          screenshot['id'])))
+        filepath = os.path.normpath(os.path.join(path, '%s-%ix%i%s' % (name,
+          screenshot['width'], screenshot['height'], ext)))
 
         self.log.debug('path: %s' % (path,))
         self.log.debug('filename: %s' % (filepath,))
 
         # Store uploaded image.
         try:
-            os.mkdir(path)
-            out_file = open(filepath, 'wb+') 
+            os.mkdir(path.encode('utf-8'))
+            out_file = open(filepath.encode('utf-8'), "wb+")
             file.seek(0)
             shutil.copyfileobj(file, out_file)
             out_file.close()
         except Exception, error:
             api.delete_screenshot(context, screenshot['id'])
             try:
-                os.remove(filename)
+                os.remove(filepath.encode('utf-8'))
             except:
                 pass
             try:
-                os.rmdir(path)
+                os.rmdir(path.encode('utf-8'))
             except:
                 pass
             raise TracError('Error storing file. Is directory specified in path' \
@@ -638,14 +652,17 @@ class ScreenshotsCore(Component):
               ' Original message was: %s' % (to_unicode(error),))
 
         # Notify change listeners.
+        self.log.debug("screenshot created listeners: %s" % (
+          self.change_listeners,))
         for listener in self.change_listeners:
             listener.screenshot_created(context.req, screenshot)
 
     def _create_image(self, orig_name, path, name, ext, width, height):
-        image = Image.open(orig_name)
+        image = Image.open(orig_name.encode('utf-8'))
         image = image.resize((width, height), Image.ANTIALIAS)
-        image.save(os.path.join(path, '%s-%sx%s%s' % (name, width, height,
-          ext)))
+        image_name = os.path.normpath(os.path.join(path, '%s-%sx%s%s' % (name,
+          width, height, ext)))
+        image.save(image_name.encode('utf-8'))
 
     def _get_file_from_req(self, req):
         image = req.args['image']
@@ -653,10 +670,14 @@ class ScreenshotsCore(Component):
         # Test if file is uploaded.
         if not hasattr(image, 'filename') or not image.filename:
             raise TracError('No file uploaded.')
+
+        # Get file size.
         if hasattr(image.file, 'fileno'):
             size = os.fstat(image.file.fileno())[6]
         else:
-            size = image.file.len
+            image.file.seek(0, 2)
+            size = image.file.tell()
+            image.file.seek(0)
         if size == 0:
             raise TracError('Can\'t upload empty file.')
 

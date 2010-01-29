@@ -18,14 +18,14 @@
       <xi:include href="${screenshots.content_template}"/>
 
       <div py:if="('SCREENSHOTS_ADD' in perm) or ('SCREENSHOTS_EDIT' in perm) or ('SCREENSHOTS_DELETE' in perm)" class="buttons screenshot_buttons">
-        <form py:if="'SCREENSHOTS_ADD' in perm" method="post" action="">
+        <form py:if="'SCREENSHOTS_ADD' in perm" method="post" action="${href.screenshots()}">
           <div>
             <input type="submit" name="add" value="Add"></input>
             <input type="hidden" name="action" value="add"></input>
             <input type="hidden" name="index" value="${screenshots.index}"></input>
           </div>
         </form>
-        <form py:if="('SCREENSHOTS_EDIT' in perm) and (len(screenshots) > 0) and index" method="post" action="">
+        <form py:if="('SCREENSHOTS_EDIT' in perm) and (len(screenshots) > 0) and index" method="post" action="${href.screenshots()}">
           <div>
             <input type="submit" name="edit" value="Edit"></input>
             <input type="hidden" name="action" value="edit"></input>
@@ -33,7 +33,7 @@
             <input type="hidden" name="index" value="${screenshots.index}"></input>
           </div>
         </form>
-        <form py:if="('SCREENSHOTS_DELETE' in perm) and (len(screenshots) > 0) and index" method="post" action="">
+        <form py:if="('SCREENSHOTS_DELETE' in perm) and (len(screenshots) > 0) and index" method="post" action="${href.screenshots()}">
           <div>
             <input type="submit" name="delete" value="Delete"></input>
             <input type="hidden" name="id" value="${screenshots.id}"></input>
@@ -44,7 +44,7 @@
       </div>
 
       <div py:if="'SCREENSHOTS_ORDER' in perm" class="order">
-        <form method="post" action="">
+        <form method="post" action="${href.screenshots()}">
           <fieldset>
             <legend>
               Order:
@@ -103,7 +103,7 @@
       </div>
 
       <div py:if="'SCREENSHOTS_FILTER' in perm" class="filter">
-        <form method="post" action="">
+        <form method="post" action="${href.screenshots()}">
           <fieldset>
             <legend>
               Display filter:

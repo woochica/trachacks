@@ -1,9 +1,10 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import sets
 
 from tracscreenshots.api import *
 from trac.core import *
+from trac.config import ListOption
 from trac.resource import *
 
 from tractags.api import DefaultTagProvider, TagSystem
@@ -28,6 +29,12 @@ class ScreenshotsTags(Component):
         to screenshots.
     """
     implements(IScreenshotChangeListener)
+
+    # Configuration options.
+    additional_tags = ListOption('screenshots', 'additional_tags',
+      'author,components,versions,name', doc = 'Additional tags that will be '
+      'created for submitted screenshots. Possible values are: author, '
+      'components, versions, name, description.')
 
     # IScreenshotChangeListener methods.
 
@@ -74,13 +81,17 @@ class ScreenshotsTags(Component):
 
     def _get_tags(self, screenshot):
         # Prepare tag names.
-        tags = [screenshot['author']]
-        if screenshot['components']:
+        self.log.debug("additional_tags: %s" % (self.additional_tags,))
+        if 'author' in self.additional_tags:
+           tags = [screenshot['author']]
+        if 'components' in self.additional_tags and screenshot['components']:
             tags += [component for component in screenshot['components']]
-        if screenshot['versions']:
+        if 'versions' in self.additional_tags and screenshot['versions']:
             tags += [version for version in screenshot['versions']]
-        if screenshot['name']:
+        if 'name' in self.additional_tags and screenshot['name']:
             tags += [screenshot['name']]
+        if 'description' in self.additional_tags and screenshot['description']:
+            tags += [screenshot['description']]
         if screenshot['tags']:
             tags += screenshot['tags'].split()
         return sorted(tags)

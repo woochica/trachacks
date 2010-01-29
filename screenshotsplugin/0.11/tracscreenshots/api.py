@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import time
 
@@ -86,19 +86,23 @@ class ScreenshotsApi(Component):
         has_none_component = True
         columns = ('id', 'name', 'description', 'time', 'author', 'tags',
           'file', 'width', 'height', 'priority')
+
+        # Prepare SQL statement substrings.
         versions_str = (', '.join(['%s'] * len(versions))) or 'NULL'
         components_str = (', '.join(['%s'] * len(components))) or 'NULL'
         orders_str = ', '.join(['%s %s' % (field, direction.upper()) for \
           field, direction in orders])
+
+        # Join them.
         sql = 'SELECT DISTINCT ' + ', '.join(columns) + ' FROM screenshot s ' \
           'LEFT JOIN (SELECT screenshot, version FROM screenshot_version) v ' \
           'ON s.id = v.screenshot LEFT JOIN (SELECT screenshot, component ' \
           'FROM screenshot_component) c ON s.id = c.screenshot WHERE ' \
           '(v.version IN (' + versions_str + ')' + (('none' in versions) and \
           ' OR v.version IS NULL) ' or ') ') + ((relation == 'and') and 'AND' or \
-          'OR') + ' (c.component IN (' + components_str + ')' + (('none' in 
+          'OR') + ' (c.component IN (' + components_str + ')' + (('none' in
           components) and ' OR c.component IS NULL) ' or ') ') + 'ORDER BY ' + \
-            orders_str
+          orders_str
         self.log.debug(sql % tuple(versions + components))
         context.cursor.execute(sql, versions + components)
         screenshots = []

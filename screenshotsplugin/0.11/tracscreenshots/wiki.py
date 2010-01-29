@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 
@@ -304,6 +304,5 @@ Example:
         description = description.replace('$versions',
           ', '.join(screenshot['versions']))
 
-        self.log.debug(description)
         return format_to_oneliner(self.env, context, description)
 

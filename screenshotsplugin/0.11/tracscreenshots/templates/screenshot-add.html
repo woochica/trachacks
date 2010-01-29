@@ -13,7 +13,7 @@
         <h1>${screenshots.title}</h1>
       </div>
 
-      <form class="add_form" method="post" enctype="multipart/form-data" action="">
+      <form class="add_form" method="post" enctype="multipart/form-data" action="${href.screenshots()}">
         <fieldset>
           <legend>
             ${(req.args.action == 'add') and 'Add Screenshot:' or 'Edit Screenshot'}

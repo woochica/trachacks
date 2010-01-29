@@ -1,6 +1,9 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
+
+import os, os.path
 
 from trac.core import *
+from trac.config import PathOption
 from trac.db import *
 from trac.env import IEnvironmentSetupParticipant
 
@@ -14,6 +17,10 @@ class ScreenshotsInit(Component):
     """
     implements(IEnvironmentSetupParticipant)
 
+    # Configuration options.
+    path = PathOption('screenshots', 'path', '../screenshots',
+      doc = 'Path where to store uploaded screenshots.')
+
     # IEnvironmentSetupParticipanttr
     def environment_created(self):
         pass
@@ -22,10 +29,15 @@ class ScreenshotsInit(Component):
         cursor = db.cursor()
 
         # Is database up to date?
-        return self._get_db_version(cursor) != last_db_version
+        return (self._get_db_version(cursor) != last_db_version) or not \
+          os.path.isdir(self.path)
 
     def upgrade_environment(self, db):
         cursor = db.cursor()
+
+        # Create screenshots directory if not exists.
+        if not os.path.isdir(self.path):
+            os.mkdir(os.path.normpath(self.path))
 
         # Get current database schema version
         db_version = self._get_db_version(cursor)
