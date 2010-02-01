@@ -1,0 +1,39 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>Contacts</title>
+  </head>
+
+  <body>
+    <h1>Contacts</h1>
+    <div id="tabs">
+        <ul><li class="active">Contacts
+            <ul><li class="active"><a href="${req.href.contacts()}">View</a></li>
+                <li py:if="can_edit"><a href="${req.href.contact()}">Add</a></li>
+            </ul></li>
+        </ul>
+    </div>
+    <div id="tabcontent">
+        <table class="listing" id="contact_list">
+            <thead>
+                <tr><th>Name</th><th>Position</th><th>Phone</th><th>E-mail</th></tr>
+            </thead>
+            <tbody>
+                <tr py:for="contact in contacts">
+                    <td py:if="can_edit"><a href="${req.href.contact(contact.id)}">${contact.last_first()}</a></td>
+                    <td py:if="not can_edit">${contact.last_first()}</td>
+                    <td>$contact.position</td>
+                    <td>$contact.phone</td>
+                    <td>$contact.email</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+  </body>
+</html>

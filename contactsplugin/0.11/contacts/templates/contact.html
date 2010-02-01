@@ -1,0 +1,66 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>$title</title>
+  </head>
+
+  <body>
+    <h1>Contacts</h1>
+    <div id="tabs">
+        <ul><li class="active">Contacts
+            <ul><li><a href="${req.href.contacts()}">View</a></li>
+                <li class="active"><a href="${req.href.contact()}">Add</a></li>
+            </ul></li>
+        </ul>
+    </div>
+    <div id="tabcontent">
+        <h2>$title</h2>
+        <form class="mod" id="modcontact" method="POST">
+            <fieldset>
+                <legend>Contact Info</legend>
+                <div class="field">
+                    <label for="first">First:</label>
+                    <input class="edit value" type="text" name="first" value="$contact.first" />
+                    <input class="edit revert" py:if="edit" type="button" value="Revert" />
+                    <span py:if="edit" class="first static">$contact.first</span>
+                </div>
+                <div class="field">
+                    <label for="last">Last:</label>
+                    <input class="edit value" type="text" name="last" value="$contact.last" />
+                    <input class="edit revert" py:if="edit" type="button" value="Revert" />
+                    <span class="last static">$contact.last</span>
+                </div>
+                <div class="field">
+                    <label for="position">Position:</label>
+                    <input class="edit value" type="text" name="position" value="$contact.position" />
+                    <input class="edit revert" py:if="edit" type="button" value="Revert" />
+                    <span class="position static">$contact.position</span>
+                </div>
+                <div class="field">
+                    <label for="email">E-mail:</label>
+                    <input class="edit value" type="text" name="email" value="$contact.email" />
+                    <input class="edit revert" py:if="edit" type="button" value="Revert" />
+                    <span class="email static">$contact.email</span>
+                </div>
+                <div class="field">
+                    <label for="phone">Phone:</label>
+                    <input class="edit value" type="text" name="phone" value="$contact.phone" />
+                    <input class="edit revert" py:if="edit" type="button" value="Revert" />
+                    <span class="phone static">$contact.phone</span>
+                </div>
+                <div class="buttons">
+                    <input type="hidden" name="redirect" value = "$redirect" />
+                    <input type="submit" name="addcontact" value="Save" />
+                </div>
+            </fieldset>
+        </form>
+    </div>
+  </body>
+</html>
+
