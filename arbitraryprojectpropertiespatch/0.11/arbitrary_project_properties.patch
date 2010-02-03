@@ -1,0 +1,32 @@
+Index: trac/env.py
+===================================================================
+--- trac/env.py	(revision 7941)
++++ trac/env.py	(working copy)
+@@ -195,6 +195,10 @@
+             ('setuptools', setuptools.__version__),
+             ]
+         self._href = self._abs_href = None
++        
++        self.project_info = dict(self.config.options('project_info'))
+ 
+         from trac.loader import load_components
+         plugins_dir = self.config.get('inherit', 'plugins_dir')
+Index: trac/web/main.py
+===================================================================
+--- trac/web/main.py	(revision 7941)
++++ trac/web/main.py	(working copy)
+@@ -550,10 +550,11 @@
+                 proj = {
+                     'name': env.project_name,
+                     'description': env.project_description,
+-                    'href': href(env_name)
++                    'href': href(env_name),
++                    'info': env.project_info
+                 }
+             except Exception, e:
+-                proj = {'name': env_name, 'description': to_unicode(e)}
++                proj = {'name': env_name, 'description': to_unicode(e), 'info': {}}
+             projects.append(proj)
+         projects.sort(lambda x, y: cmp(x['name'].lower(), y['name'].lower()))
+ 
+
