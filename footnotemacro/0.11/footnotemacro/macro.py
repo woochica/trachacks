@@ -44,27 +44,38 @@ class FootNoteMacro(WikiMacroBase):
         # Make sure data capsule is in place
         if not hasattr(formatter, '_footnotes'):
             formatter._footnotes = []
-        
+
         # Chrome
         add_stylesheet(formatter.req, 'footnote/footnote.css')
         add_script(formatter.req, 'footnote/footnote.js')
-        
+
         if content:
             # Add a new footnote
             try:
-                # Existing footnote
+                # Reference to an existing footnote
                 output_id = int(content)
-                
+
                 try:
                     content = formatter._footnotes[output_id-1][0]
                 except IndexError:
                     content = 'Unknown footnote'
             except ValueError:
-                # Adding a new footnote
+                output_id = None
+
+                # Try to collate with an existing footnote
+                for i in xrange(len(formatter._footnotes)):
+                    if formatter._footnotes[i][0] == content:
+                        output_id = i + 1
+                        break
+
+                # Format markup
                 markup = format_to_oneliner(self.env, formatter.context, content)
-                formatter._footnotes.append((content, markup))
-                output_id = len(formatter._footnotes) 
-                
+
+                # Adding a new footnote
+                if not output_id:
+                    formatter._footnotes.append((content, markup))
+                    output_id = len(formatter._footnotes)
+
             return tag.sup(
                 tag.a(
                     output_id,
@@ -98,7 +109,7 @@ class FootNoteMacro(WikiMacroBase):
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
         return [('footnote', resource_filename(__name__, 'htdocs'))]
-            
+
     def get_templates_dirs(self):
         #return [resource_filename(__name__, 'templates')]
         return []
