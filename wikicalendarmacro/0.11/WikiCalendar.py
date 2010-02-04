@@ -138,8 +138,12 @@ class WikiCalendarMacro(WikiMacroBase):
 table.wiki-calendar { margin: 0; border: none; padding: 0; border-collapse: collapse; }
 table.wiki-calendar caption { font-size: 120%; white-space: nowrap; }
 table.wiki-calendar caption a { display: inline; margin: 0; border: 0; padding: 0; background-color: transparent; color: #b00; text-decoration: none;}
-table.wiki-calendar caption a.prev { padding-right: 5px; }
-table.wiki-calendar caption a.next { padding-left: 5px; }
+table.wiki-calendar caption a.prev { padding-right: 12px; font-size:9pt; }
+table.wiki-calendar caption a.prevm {padding-right: 0px;font-size:9pt;}
+table.wiki-calendar caption a.next { padding-left: 12px;font-size:9pt; }
+table.wiki-calendar caption a.nextm {padding-left: 0px;font-size:9pt}
+table.wiki-calendar td.x {}
+table.wiki-calendar td.y {text-align:center; width:120%;font-size: 10pt;font-weight:bold;}
 table.wiki-calendar caption a:hover { background-color: #eee; }
 table.wiki-calendar th { border: none; border-bottom: 2px solid #000; text-align: center; font-weight: bold; }
 table.wiki-calendar td { padding: 0; border: none; text-align: right; }
@@ -153,17 +157,16 @@ table.wiki-calendar a.page { color: #b00 !important; }
 </style>
 <table class="wiki-calendar"><caption>
 ''')
-        
         if showbuttons:
             # prev year link
             date[0:2] = [year-1, month]
-            buff.write('<a class="prev" href="%(url)s" title="%(title)s">&lt;&lt;</a>' % {
+            buff.write('<table><tr><td class="x"><a class="prev" href="%(url)s" title="%(title)s">&lt;&lt;</a></td>' % {
                 'url': thispageURL(month=month, year=year-1),
                 'title': time.strftime('%B %Y', tuple(date))
                 })
             # prev month link
             date[0:2] = [prevYear, prevMonth]
-            buff.write('<a class="prev" href="%(url)s" title="%(title)s">&lt;</a>' % {
+            buff.write('<td class="x"><a class="prevm" href="%(url)s" title="%(title)s">&lt;</a></td>' % {
                 'url': thispageURL(month=prevMonth, year=prevYear),
                 'title': time.strftime('%B %Y', tuple(date))
                 })
@@ -190,18 +193,21 @@ table.wiki-calendar a.page { color: #b00 !important; }
  
         # the caption
         date[0:2] = [year, month]
-        buff.write(time.strftime('%B %Y', tuple(date)))
+        if showbuttons:
+            buff.write('<td class="y">%(title)s</td>' %{'title': time.strftime('%B %Y', tuple(date))})
+        else:
+            buff.write(time.strftime('%B %Y', tuple(date)))
         
         if showbuttons:
-            # next month link
+             # next month link
             date[0:2] = [nextYear, nextMonth]
-            buff.write('<a class="next" href="%(url)s" title="%(title)s">&gt;</a>' % {
+            buff.write('<td class="x"><a class="nextm" href="%(url)s" title="%(title)s">&gt;</a></td>' % {
                 'url': thispageURL(month=nextMonth, year=nextYear),
                 'title': time.strftime('%B %Y', tuple(date))
                 })
             # next year link
             date[0:2] = [year+1, month]
-            buff.write('<a class="next" href="%(url)s" title="%(title)s">&gt;&gt;</a>' % {
+            buff.write('<td class="x"><a class="next" href="%(url)s" title="%(title)s">&gt;&gt;</a></td></tr></table>' % {
                 'url': thispageURL(month=month, year=year+1),
                 'title': time.strftime('%B %Y', tuple(date))
                 })
