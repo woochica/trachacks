@@ -1,5 +1,10 @@
 class DailyLolMacro(WikiMacroBase):
-    """Display a picture of a cat with a funny caption."""
+    """Display a picture of a cat with a funny caption.
+    Usage:
+    {{{
+    [[DailyLol]]
+    }}}
+    """
 
     def expand_macro(self, formatter, name, args):
         import urllib2
@@ -8,7 +13,7 @@ class DailyLolMacro(WikiMacroBase):
         website_html = website.read()
 
         beg_pos = -1
-        beg_pos = website_html.find('<img class', beg_pos+1)
+        beg_pos = website_html.find('<img title', beg_pos+1)
         beg_pos = website_html.find('src=', beg_pos)
         end_pos = website_html.find('"', beg_pos+5)
         raw_url = website_html[beg_pos+5:end_pos]
