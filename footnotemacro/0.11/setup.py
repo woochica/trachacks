@@ -8,19 +8,18 @@ setup(
     version = '1.0',
     packages = ['footnotemacro'],
     package_data = { 'footnotemacro': ['htdocs/*.css' ] },
-
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
-    description = '',
+    maintainer = 'Ryan Ollos',
+    maintainer_email = 'ryano@physiosonics.com',
+    description = 'Add footnotes to a wiki page',
     license = 'BSD',
     keywords = 'trac plugin',
     url = 'http://trac-hacks.org/wiki/FootNoteMacroPlugin',
     classifiers = [
         'Framework :: Trac',
     ],
-    
     install_requires = ['Trac'],
-
     entry_points = {
         'trac.plugins': [
             'footnotemacro.macro = footnotemacro.macro',
