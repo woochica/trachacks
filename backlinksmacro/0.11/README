@@ -12,13 +12,19 @@ HOW TO INSTALL
 
 1. Rename BackLinks.5.py to BackLinks.py
 2. Put it into: 
-  /usr/share/trac/wiki-macros/
+  PROJECTENVIRONMENT/plugins
+
+   (for example, in debian is:  /var/lib/trac/PROJECTENVIRONMENT/plugins )
+
 3. Restart Apache2/Tracd server if needed.
 
 
 =============
 CHANGELOG
 =============
+
+6.0 2010-02-08
+ * Fixed many bugs (thanks to many reporters!)
 
 5.5 2008-08-18
  * Support for Trac 0.11
