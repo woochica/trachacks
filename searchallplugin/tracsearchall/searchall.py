@@ -56,7 +56,10 @@ class SearchAllPlugin(Component):
             try:
                 env = open_environment(project_path, use_cache = True)
             except:
-                continue
+                try:
+                    env = open_environment(project_path)
+                except:
+                    continue
             
             projects.append((project, project_path, project_url, env))
             
