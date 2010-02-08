@@ -17,42 +17,37 @@ import time
 import base64
 from stat import *
 
-ENV = None
-
 def add_tt_table(env, db):
     """Migrate from template files to db."""
-    global ENV
-    
-    ENV = env
     
     cursor = db.cursor()
 
 
     # detect existing templates files
-    allTmpls = _findAllTmpls()
+    allTmpls = _findAllTmpls(env)
     allTmpls.sort(_cmp)
 
     # import into db
     for tt_name in allTmpls:
-        tt_text = _loadTemplateText(tt_name)
+        tt_text = _loadTemplateText(env, tt_name)
         modi_time = _getMTime(tt_name)
         
         from tickettemplate.model import TT_Template
-        TT_Template.insert(ENV, tt_name, tt_text, modi_time)
+        TT_Template.insert(env, tt_name, tt_text, modi_time)
 
     # base64
     # detect existing templates files
-    allTmpls = _findAllTmplsBase64()
+    allTmpls = _findAllTmplsBase64(env)
     allTmpls.sort(_cmpBase64)
 
     # import into db
     for tt_name in allTmpls:
-        tt_text = _loadTemplateTextBase64(tt_name)
+        tt_text = _loadTemplateTextBase64(env, tt_name)
         modi_time = _getMTimeBase64(tt_name)
         
         from tickettemplate.model import TT_Template
         tt_name = base64.decodestring(tt_name).decode("utf-8")
-        TT_Template.insert(ENV, tt_name, tt_text, modi_time)
+        TT_Template.insert(env, tt_name, tt_text, modi_time)
     
     
 def _cmp(tt_name1, tt_name2):
@@ -89,13 +84,12 @@ def _getMTimeBase64(tt_name):
     return mtime
 
 
-def _findAllTmpls():
+def _findAllTmpls(env):
     """ find all templates in trac environment
     """
-    global ENV
     allTmpls = []
     
-    basePath = os.path.join(ENV.path, "templates")
+    basePath = os.path.join(env.path, "templates")
     files = os.listdir(basePath)
     for file in files:
         if file.startswith("description_") and file.endswith(".tmpl"):
@@ -110,14 +104,12 @@ def _findAllTmpls():
                 
     return allTmpls
 
-def _findAllTmplsBase64():
+def _findAllTmplsBase64(env):
     """ find all templates in trac environment
-    """
-    global ENV
-    
+    """    
     allTmplsBase64 = []
     
-    basePath = os.path.join(ENV.path, "templates")
+    basePath = os.path.join(env.path, "templates")
     files = os.listdir(basePath)
     for file in files:
         if file.startswith("description_") and file.endswith(".tmpl"):
@@ -130,18 +122,17 @@ def _findAllTmplsBase64():
             allTmplsBase64.append(tt_name_base64)
     return allTmplsBase64
     
-def _getTTFilePath(tt_name):
+def _getTTFilePath(env, tt_name):
     """ get ticket template file path
     """
-    global ENV
     tt_file_name = "description_%s.tmpl" % tt_name
-    tt_file = os.path.join(ENV.path, "templates", tt_file_name)
+    tt_file = os.path.join(env.path, "templates", tt_file_name)
     return tt_file
 
-def _loadTemplateText(tt_name):
+def _loadTemplateText(env, tt_name):
     """ load ticket template text from file.
     """
-    tt_file = _getTTFilePath(tt_name)
+    tt_file = _getTTFilePath(env, tt_name)
 
     try:
         fp = open(tt_file,'r')
@@ -151,10 +142,10 @@ def _loadTemplateText(tt_name):
         tt_text = ""
     return tt_text
 
-def _loadTemplateTextBase64(tt_name):
+def _loadTemplateTextBase64(env, tt_name):
     """ load ticket template text from file.
     """
-    tt_file = _getTTFilePath(tt_name)
+    tt_file = _getTTFilePath(env, tt_name)
 
     try:
         fp = open(tt_file,'r')
@@ -173,31 +164,40 @@ def add_tt_custom(env, db):
     connector, _ = DatabaseManager(env)._get_connector()
     cursor = db.cursor()
 
-    table = schema[1]
+    table = schema[0]
+    # for stmt in connector.to_sql(table):
+        # cursor.execute(stmt)
+
+def add_ticket_template_store(env, db):
+    """Add table ticket_template_store."""
+    from tickettemplate.model import schema, schema_version, TT_Template
+    from trac.db import DatabaseManager
+
+    connector, _ = DatabaseManager(env)._get_connector()
+    cursor = db.cursor()
+
+    table = schema[0]
     for stmt in connector.to_sql(table):
-        cursor.execute(stmt)
-        
-def alter_user_username(env, db):
-    """Alter table tt_custom field from user to username."""
-    # get current custom records
-    cursor.execute("SELECT * FROM tt_custom")
-    rows = cursor.fetchall()
-    
-    # refresh tt_custom schema
-    cursor.execute("DROP TABLE tt_custom")
-    
-    add_tt_custom(env, db)
-    
-    # restore records
-    for username, tt_name, tt_text in rows:
-        cursor.execute("INSERT INTO tt_custom "
-                       "(username,tt_name,tt_text) VALUES (%s,%s,%s)",
-                       (username, tt_name, tt_text))
-                       
-    db.commit()
+        try:
+            cursor.execute(stmt)
+        except:
+            pass
+
+    from default_templates import DEFAULT_TEMPLATES
+    from ttadmin import SYSTEM_USER
+
+    now = int(time.time())
+    for tt_name, tt_value in DEFAULT_TEMPLATES:
+        record = (now, SYSTEM_USER, tt_name, "description", tt_value,)
+        TT_Template.insert(env, record)
+
+    for id, modi_time, tt_name, tt_text in cursor.fetchall():
+        record = (modi_time, SYSTEM_USER, tt_name, "description", tt_text,)
+        TT_Template.insert(env, record)
 
 map = {
-    1: [add_tt_table],
-    2: [add_tt_custom],
-    3: [alter_user_username],
+    1: [],
+    2: [],
+    3: [],
+    4: [add_ticket_template_store],
 }

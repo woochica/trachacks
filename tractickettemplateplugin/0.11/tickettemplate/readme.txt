@@ -1,10 +1,16 @@
 = About this software =
- * http://trac-hacks.org/wiki/TicketTemplate(coming...)
+ * http://trac-hacks.org/wiki/TracTicketTemplatePlugin
  * TicketTemplate is a Trac plugin. 
- * TicketTemplate enable users to create ticket using templates which can be customized by Trac administrator.
- * Ticket templates are ticket type specific.
- * Trac administrator can spcify a general template '''default''' for all uncustomized ticket types.
- * This version tested with Trac 10.4. Other Trac versions may work too.
+ * TicketTemplate enable users to create ticket using templates which can be customized by Trac administrator and themselves.
+ * Trac administrator can spcify a general system level template '''default''' for all uncustomized ticket types.
+ * System level ticket templates are ticket type specific.
+ * User level ticket templates (ie, my template) can be managed by common users.
+ * This version can work with Trac 0.11/0.12. 
+
+= Changes in version 0.7 =
+ * This version has fully i18n support with Trac 0.12dev r9098 above.
+ * New feature: support '''My Template'''. Everyone can manage their own templates now.
+ * New feature: template can include any fields, the default field is description.
 
 = Install =
 
@@ -15,6 +21,11 @@
  1. Uninstall TracTicketTemplate if you have installed before.
 
  2. Change to the directory containning setup.py.
+ 
+ * (Optional): If you are using Trac 0.12 with i18n, you should compile language files here:
+ {{{
+python setup.py compile_catalog -f
+}}} 
 
  3. If you want to install this plugin globally, that will install this plugin to the python path:
   * python setup.py install
@@ -30,12 +41,11 @@ cp dist/*.egg /srv/trac/env/plugins
   {{{
 [components]
 tickettemplate.* = enabled
+
+[tickettemplate]
+field_list = summary, description, reporter, owner, priority, cc, milestone, component, version, type
 }}}
-
- 6. If you are installing this plugin first time, you can copy description.tmpl to your/trac/environment/templates to utilize some default ticket templates.
-
-= Prerequisite =
- * [http://trac-hacks.org/wiki/WebAdminPlugin WebAdminPlugin]
+ Set field_list to choose which field should be included in template.
 
 = Usage =
  * Trac administrator should define the template for all ticket types:

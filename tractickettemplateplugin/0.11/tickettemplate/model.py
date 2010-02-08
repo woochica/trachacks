@@ -13,78 +13,178 @@ import time
 
 from trac.db import Table, Column, Index
 
+from utils import *
+
+
 class TT_Template(object):
     """Represents a generated tt."""
 
     _schema = [
-        Table('tt_template', key='id')[
-            Column('id', auto_increment=True), 
-            Column('modi_time', type='int'),
+        Table('ticket_template_store')[
+            Column('tt_time', type='int'),
+            Column('tt_user'), 
             Column('tt_name'), 
-            Column('tt_text'),
-            Index(['tt_name', 'modi_time'])
-        ],
-        Table('tt_custom')[
-            Column('username'),
-            Column('tt_name'), 
-            Column('tt_text'),
-            Index(['username', 'tt_name'])
-        ],
+            Column('tt_field'),
+            Column('tt_value'),
+        ]
     ]
 
-    def __init__(self, env, modi_time=None, tt_name=None, tt_text=None):
+    def __init__(self, env):
         """Initialize a new report with the specified attributes.
 
         To actually create this build log in the database, the `insert` method
         needs to be called.
         """
         self.env = env
-        self.id = None
-        self.modi_time = modi_time
-        self.tt_name = tt_name
-        self.tt_text = tt_text
 
     exists = property(fget=lambda self: self.id is not None,
                       doc='Whether this tt exists in the database')
 
-#    def delete(self, db=None):
-#        """Remove the tt from the database."""
-#        assert self.exists, 'Cannot delete a non-existing report'
-#        if not db:
-#            db = self.env.get_db_cnx()
-#            handle_ta = True
-#        else:
-#            handle_ta = False
-#
-#        cursor = db.cursor()
-#        cursor.execute("DELETE FROM tt_template WHERE id=%s", (self.id,))
-#
-#        if handle_ta:
-#            db.commit()
-#        self.id = None
-
-    def insert(cls, env, tt_name, tt_text, modi_time, db=None):
-        """Insert a new tt into the database."""
-        if not db:
-            db = env.get_db_cnx()
-            handle_ta = True
-        else:
-            handle_ta = False
-            
-        #modi_time = int(time.time())
+    def deleteCustom(cls, env, data):
+        """Remove the tt from the database."""
+        db = env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("INSERT INTO tt_template "
-                       "(modi_time,tt_name,tt_text) VALUES (%s,%s,%s)",
-                       (modi_time, tt_name, tt_text))
-        id = db.get_last_id(cursor, 'tt_template')
 
-        if handle_ta:
-            db.commit()
+        cursor.execute("""DELETE FROM ticket_template_store 
+                WHERE tt_user='%(tt_user)s' 
+                AND tt_name='%(tt_name)s'""" % data)
+
+        db.commit()
+    deleteCustom = classmethod(deleteCustom)
+
+    def insert(cls, env, record):
+        """Insert a new tt into the database."""
+        db = env.get_db_cnx()
+            
+        cursor = db.cursor()
+        sqlString = """INSERT INTO ticket_template_store 
+                       (tt_time,tt_user,tt_name,tt_field,tt_value) 
+                       VALUES (%s,%s,%s,%s,%s)"""
+        cursor.execute(sqlString, record)
+        db.commit()
         
-        return id
-    
     insert = classmethod(insert)
     
+    def fetchCurrent(cls, env, data):
+        """Retrieve an existing tt from the database by ID."""
+        db = env.get_db_cnx()
+
+        cursor = db.cursor()
+        
+        cursor.execute("""SELECT tt_field, tt_value  
+                        FROM ticket_template_store 
+                        WHERE tt_user = '%(tt_user)s' 
+                        AND tt_time =  (SELECT max(tt_time) 
+                            FROM ticket_template_store 
+                            WHERE tt_name='%(tt_name)s')""" % data)
+        
+        field_value_mapping = {}
+        for tt_field, tt_value in cursor.fetchall():
+            if tt_value:
+                field_value_mapping[tt_field] = tt_value
+
+        return field_value_mapping
+
+    fetchCurrent = classmethod(fetchCurrent)
+
+    def fetchAll(cls, env, data):
+        """Retrieve an existing tt from the database by ID.
+            result:
+                {
+                    "field_value_mapping":{
+                            "default":{
+                                    "summary":"aaa",
+                                    "description":"bbb",
+                                },
+
+                        },
+                    "field_value_mapping_custom":{
+                            "my_template":{
+                                    "summary":"ccc",
+                                    "description":"ddd",
+                                },
+
+                        },
+                }
+
+        """
+        db = env.get_db_cnx()
+
+        cursor = db.cursor()
+
+        real_user = data.get("tt_user")
+
+        field_value_mapping = {}
+        field_value_mapping_custom = {}
+
+        # field_value_mapping_custom
+        sqlString = """SELECT tt_name, tt_field, tt_value 
+                        FROM ticket_template_store 
+                        WHERE tt_user = '%(tt_user)s' ; """
+
+        cursor.execute(sqlString % data)
+    
+        for tt_name, tt_field, tt_value in cursor.fetchall():
+            if not field_value_mapping_custom.has_key(tt_name):
+                field_value_mapping_custom[tt_name] = {}
+            if tt_value:
+                tt_value = formatField(env.config, tt_value, real_user)
+                field_value_mapping_custom[tt_name][tt_field] = tt_value
+
+
+        # field_value_mapping
+        sqlString = """SELECT DISTINCT tt_name 
+                            FROM ticket_template_store
+                            WHERE tt_user = '%(tt_user)s' ; """
+        cursor.execute(sqlString % {"tt_user": SYSTEM_USER})
+        tt_name_list = [row[0] for row in cursor.fetchall()]
+
+        data["tt_user"] = SYSTEM_USER
+        for tt_name in tt_name_list:
+            data["tt_name"] = tt_name
+
+            sqlString = """SELECT tt_field, tt_value 
+                            FROM ticket_template_store 
+                            WHERE tt_user = '%(tt_user)s' 
+                            AND tt_name = '%(tt_name)s' 
+                            AND tt_time =  (SELECT max(tt_time) 
+                                FROM ticket_template_store 
+                                WHERE tt_name = '%(tt_name)s'); """
+            cursor.execute(sqlString % data)
+        
+            for tt_field, tt_value in cursor.fetchall():
+                if not field_value_mapping.has_key(tt_name):
+                    field_value_mapping[tt_name] = {}
+                if tt_value:
+                    tt_value = formatField(env.config, tt_value, real_user)
+                    field_value_mapping[tt_name][tt_field] = tt_value
+
+        result = {}
+        result["field_value_mapping"] = field_value_mapping
+        result["field_value_mapping_custom"] = field_value_mapping_custom
+        return result
+
+    fetchAll = classmethod(fetchAll)
+
+    def getCustomTemplate(cls, env, tt_user):
+        """Retrieve from the database that match
+        the specified criteria.
+        """
+        db = env.get_db_cnx()
+
+        cursor = db.cursor()
+
+        sqlString = """SELECT DISTINCT tt_name 
+                       FROM ticket_template_store 
+                       WHERE tt_user = '%(tt_user)s' 
+                       ORDER BY tt_name """
+
+        cursor.execute(sqlString % {"tt_user": tt_user, })
+        
+        return [row[0] for row in cursor.fetchall()]
+
+    getCustomTemplate = classmethod(getCustomTemplate)
+
     def fetch(cls, env, tt_name, db=None):
         """Retrieve an existing tt from the database by ID."""
         if not db:
@@ -92,8 +192,8 @@ class TT_Template(object):
 
         cursor = db.cursor()
         
-        cursor.execute("SELECT tt_text FROM tt_template WHERE id="
-                       "(SELECT max(id) FROM tt_template WHERE tt_name=%s)", (tt_name,))
+        cursor.execute("SELECT tt_value FROM ticket_template_store WHERE tt_time="
+                       "(SELECT max(tt_time) FROM ticket_template_store WHERE tt_name=%s and tt_field='description')", (tt_name,))
         
         row = cursor.fetchone()
         if not row:
@@ -102,126 +202,6 @@ class TT_Template(object):
             return row[0]
 
     fetch = classmethod(fetch)
-
-    def fetchById(cls, env, id, db=None):
-        """Retrieve from the database that match
-        the specified criteria.
-        """
-        if not db:
-            db = env.get_db_cnx()
-
-        cursor = db.cursor()
-
-        cursor.execute("SELECT tt_text "
-                       "FROM tt_template "
-                       "WHERE id=%s", (id,))
-        
-        row = cursor.fetchone()
-        if not row:
-            return None
-        else:
-            return row[0]
     
-    fetchById = classmethod(fetchById)
-
-    def getNameById(cls, env, id, db=None):
-        """Retrieve from the database that match
-        the specified criteria.
-        """
-        if not db:
-            db = env.get_db_cnx()
-
-        cursor = db.cursor()
-
-        cursor.execute("SELECT tt_name "
-                       "FROM tt_template "
-                       "WHERE id=%s", (id,))
-        
-        row = cursor.fetchone()
-        if not row:
-            return None
-        else:
-            return row[0]
-    
-    getNameById = classmethod(getNameById)
-
-
-    def selectByName(cls, env, tt_name, db=None):
-        """Retrieve from the database that match
-        the specified criteria.
-        """
-        if not db:
-            db = env.get_db_cnx()
-
-        cursor = db.cursor()
-
-        cursor.execute("SELECT id,modi_time,tt_name,tt_text "
-                       "FROM tt_template "
-                       "WHERE tt_name=%s ORDER BY modi_time DESC", (tt_name,))
-        
-        for id,modi_time,tt_name,tt_text in cursor:
-            yield id,modi_time,tt_name,tt_text
-
-    selectByName = classmethod(selectByName)
-
-    def getCustomTemplate(cls, env, username, db=None):
-        """Retrieve from the database that match
-        the specified criteria.
-        """
-        if not db:
-            db = env.get_db_cnx()
-
-        cursor = db.cursor()
-
-        cursor.execute("SELECT tt_name,tt_text "
-                       "FROM tt_custom "
-                       "WHERE username=%s ORDER BY tt_name ", (username,))
-        
-        return cursor.fetchall()
-
-    getCustomTemplate = classmethod(getCustomTemplate)
-
-    def saveCustom(cls, env, username, tt_name, tt_text, db=None):
-        """Insert a new tt custom into the database."""
-        if not db:
-            db = env.get_db_cnx()
-            handle_ta = True
-        else:
-            handle_ta = False
-            
-        cursor = db.cursor()
-
-        # remove exist rows
-        cursor.execute("DELETE FROM tt_custom WHERE username=%s AND tt_name=%s ;", (username, tt_name))
-        
-        cursor.execute("INSERT INTO tt_custom "
-                       "(username,tt_name,tt_text) VALUES (%s,%s,%s)",
-                       (username, tt_name, tt_text))
-
-        if handle_ta:
-            db.commit()
-        
-    
-    saveCustom = classmethod(saveCustom)
-
-
-    def deleteCustom(cls, env, username, tt_name, db=None):
-        """Remove the custom from the database."""
-        if not db:
-            db = env.get_db_cnx()
-            handle_ta = True
-        else:
-            handle_ta = False
-
-        cursor = db.cursor()
-        cursor.execute("DELETE FROM tt_custom WHERE username='%s' AND tt_name='%s' ;" % (username, tt_name))
-
-        if handle_ta:
-            db.commit()
-
-    deleteCustom = classmethod(deleteCustom)
-
-
-
 schema = TT_Template._schema
-schema_version = 3
+schema_version = 4

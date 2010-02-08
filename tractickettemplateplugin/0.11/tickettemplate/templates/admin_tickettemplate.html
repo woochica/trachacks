@@ -2,22 +2,22 @@
     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/"
-      xmlns:i18n="http://genshi.edgewall.org/i18n">
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      i18n:domain="tickettemplate">
+
   <xi:include href="admin.html" />
 
 <head><title>Available Projects</title></head>
 <body>
 
-<h2>Ticket: template</h2>
-
-
+<h2>Ticket: Template</h2>
 
 <form id="savetickettemplate" action="tickettemplate" method="post">
 
   <div class="field">
-    <label for="type">Ticket Type:</label>
+    <label for="type">Type:</label>
     <p>
     <select size="1" id="type" name="type">
       <option py:for="option in options"
@@ -26,8 +26,7 @@
               selected="selected">${type}</option>
     </select>
     <input type="submit" name="loadtickettemplate" value="${_('Load')}" />
-    <input type="submit" name="loadhistory" value="${_('History')}" />
-    <input type="submit" name="savetickettemplate" value="${_('Apply changes')}" />
+    <input type="submit" name="savetickettemplate" value="${_('Apply change')}" />
     <input type="reset" value="${_('Reset')}" />  
     </p>
   </div>
@@ -41,9 +40,7 @@
     </p>
   </div>
 
-
 </form>
-
 
 </body>
 

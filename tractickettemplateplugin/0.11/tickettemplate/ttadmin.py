@@ -6,6 +6,7 @@
 # Author:       Richard Liao <richard.liao.i@gmail.com>
 #
 #----------------------------------------------------------------------------
+
 from trac.core import *
 from trac.db import DatabaseManager
 from trac.util.html import html
@@ -14,15 +15,19 @@ from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.perm import IPermissionRequestor
 from trac.web import IRequestHandler
 
+from trac.web.api import RequestDone
+
 from trac.web.api import ITemplateStreamFilter
 
 from trac.ticket import Milestone, Ticket, TicketSystem, ITicketManipulator
+from trac.web.chrome import add_ctxtnav, add_link, add_script, add_stylesheet, \
+                            Chrome
 
 from trac.ticket.web_ui import TicketModule
 
 from trac.admin import IAdminPanelProvider
 
-from trac.util.translation import _
+from trac.util.compat import partial
 
 from genshi.filters.transform import Transformer
 
@@ -33,15 +38,19 @@ import pickle
 import inspect
 import time
 import textwrap
+import urllib
+
+import simplejson
 
 from tickettemplate.model import schema, schema_version, TT_Template
-from default_templates import DEFAULT_TEMPLATES
+
+from utils import *
+
+from i18n_domain import gettext, _, tag_, N_, add_domain
 
 __all__ = ['TicketTemplateModule']
 
-
 class TicketTemplateModule(Component):
-    ticket_manipulators = ExtensionPoint(ITicketManipulator)
     
     implements(ITemplateProvider, 
                IAdminPanelProvider, 
@@ -50,6 +59,10 @@ class TicketTemplateModule(Component):
                ITemplateStreamFilter,
                IRequestHandler, 
                )
+
+    def __init__(self):
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
 
     # IPermissionRequestor methods
 
@@ -73,8 +86,17 @@ class TicketTemplateModule(Component):
                        "VALUES ('tt_version',%s)", (schema_version,))
 
         # Create some default templates
-        for tt_name, tt_text in DEFAULT_TEMPLATES:
-            TT_Template.insert(self.env, tt_name, tt_text, 0)
+        now = int(time.time())
+        from default_templates import DEFAULT_TEMPLATES
+        for tt_name, tt_value in DEFAULT_TEMPLATES:
+            record = [
+                now,
+                SYSTEM_USER,
+                tt_name,
+                "description",
+                tt_value,
+                ]
+            TT_Template.insert(self.env, record)
         
         db.commit()
 
@@ -107,17 +129,19 @@ class TicketTemplateModule(Component):
                       current_version, schema_version)
 
     # IAdminPanelProvider methods
-    _type = 'tickettemplate'
-    _label = ('Ticket Template', 'Ticket Template')
-
     def get_admin_panels(self, req):
         if 'TRAC_ADMIN' in req.perm:
-            yield ('ticket', 'Ticket System', self._type, self._label[1])
+            yield ('ticket', _('Ticket System'), 'tickettemplate', _('Ticket Template'))
 
     def render_admin_panel(self, req, cat, page, path_info):
         req.perm.assert_permission('TT_ADMIN')
 
-        data = {}
+        data = {
+            "gettext": gettext,
+            "_": _,
+            "tag_": tag_,
+            "N_": N_,
+        }
         
         data['options'] = self._getTicketTypeNames()
         data['type'] = req.args.get('type')
@@ -177,7 +201,6 @@ class TicketTemplateModule(Component):
 
         return 'admin_tickettemplate.html', data
 
-
     # ITemplateProvider
     def get_templates_dirs(self):
         """
@@ -204,119 +227,189 @@ class TicketTemplateModule(Component):
 
     def match_request(self, req):
         #return req.path_info.startswith('/newticket')
-        return req.path_info.startswith('/tt_custom')
+        return req.path_info.startswith('/tt')
 
     def process_request(self, req):
         req.perm.assert_permission('TICKET_CREATE')
+        data = {
+            "gettext": gettext,
+            "_": _,
+            "tag_": tag_,
+            "N_": N_,
+        }
+        
+        if req.path_info.startswith('/tt/query'):
+            # handle XMLHTTPRequest
 
-        # tt_custom
-        if req.path_info.startswith('/tt_custom') and req.method == "POST":
-            if req.args.get("tt_custom_save"):
-                tt_text = req.args.get("tt_custom_textarea")
-                tt_name = req.args.get("tt_custom_name")
-                if tt_name and tt_text:
-                    TT_Template.saveCustom(self.env, req.authname, tt_name, tt_text)
+            data.update({"tt_user": req.authname})
+            result = TT_Template.fetchAll(self.env, data)
+            result["status"] = "1"
+            result["field_list"] = self._getFieldList()
+            if req.args.has_key("warning"):
+                result["warning"] = "1"
+            jsonstr = simplejson.dumps(result)
+            self._sendResponse(req, jsonstr)
 
-            elif req.args.get("tt_custom_delete"):
-                tt_custom_select = req.args.get("tt_custom_select")
-                TT_Template.deleteCustom(self.env, req.authname, tt_custom_select)
+        # tt_custom save
+        elif req.path_info.startswith('/tt/custom_save'):
+            tt_name, custom_template = self._handleCustomSave(req);
+            result = {}
+            result["status"] = "1"
+            result["tt_name"] = tt_name
+            result["new_template"] = custom_template
+            jsonstr = simplejson.dumps(result)
+            self._sendResponse(req, jsonstr)
 
-            req.redirect(req.base_path + "/newticket")
+        # tt_custom delete
+        elif req.path_info.startswith('/tt/custom_delete'):
+            tt_name = self._handleCustomDelete(req);
+            result = {}
+            result["status"] = "1"
+            result["tt_name"] = tt_name
+            jsonstr = simplejson.dumps(result)
+            self._sendResponse(req, jsonstr)
 
+        elif req.path_info.startswith('/tt/edit_buffer_save'):
+            tt_name, custom_template = self._handleCustomSave(req);
+            result = {}
+            result["status"] = "1"
+            result["tt_name"] = tt_name
+            result["new_template"] = custom_template
+            jsonstr = simplejson.dumps(result)
+            self._sendResponse(req, jsonstr)
+        elif req.path_info.startswith('/tt/tt_newticket.js'):
+            filename = resource_filename(__name__, 'templates/tt_newticket.js')
+            chrome = Chrome(self.env)
+            message = chrome.render_template(req, filename, data, 'text/plain')
+            
+            req.send_response(200)
+            req.send_header('Cache-control', 'no-cache')
+            req.send_header('Expires', 'Fri, 01 Jan 1999 00:00:00 GMT')
+            req.send_header('Content-Type', 'text/x-javascript')
+            req.send_header('Content-Length', len(isinstance(message, unicode) and message.encode("utf-8") or message))
+            req.end_headers()
 
-    ## ITemplateStreamFilter
+            if req.method != 'HEAD':
+                req.write(message)
+            raise RequestDone
+            
+    # ITemplateStreamFilter
     
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == "ticket.html" and req.path_info == '/newticket' and not req.args.get("preview"):
-            # tt.js
+        if filename == "ticket.html" and req.path_info.startswith('/newticket'):
+            # common js files
+            add_script(req, 'tt/json2.js')
+            
             stream = stream | Transformer('body').append(
                 tag.script(type="text/javascript", 
-                src=req.href.chrome("tt", "tt.js"))()
+                src=req.href("tt", "tt_newticket.js"))()
             )
-
-            # get all templates
-            all_textarea = tag.textarea()
-            indx = 0
-            for tt_name in self._getTicketTypeNames():
-                all_textarea += tag.textarea(id="description_%s" % indx)(Markup(self._loadTemplateText(tt_name)))
-                indx += 1
-
-            stream = stream | Transformer('body').after(tag.div(id="tt_div", style=
-                "z-index:-99; visibility:hidden; "
-                "position:static; top:-1000; right:-1000; ")) \
-                .end().select('//*[@id="tt_div"]') \
-                .prepend(all_textarea)
-
-            # short circut if not enable_custom
-            if not self.config.get("tickettemplate", "enable_custom"):
-                return stream
-
-            # custom
-
-            # select
-            selected_name = None
-
-            # get tt_custom_names
-            rows = TT_Template.getCustomTemplate(self.env, req.authname)
-            tt_custom_names = [row[0] for row in rows]
-            # add one empty item
-            tt_custom_names.append("")
-
-            tt_custom_mapping = {}
-            for row in rows:
-                tt_custom_mapping[row[0]] = row[1]
-
-            # get all templates
-            all_textarea = tag.textarea(id="tt_custom_textarea", name="tt_custom_textarea")
-            indx = 0
-            for tt_name in tt_custom_names:
-                all_textarea += tag.textarea(id="tt_custom_%s" % indx)(Markup(tt_custom_mapping.get(tt_name, "")))
-                indx += 1
-
-            tt_custom = tag.form(
-                tag.div(
-                    tag.fieldset(
-                        tag.legend("My Templates"),
-                            tag.select([tag.option(x, selected=None) for x in tt_custom_names],
-                                id="tt_custom_select", name="tt_custom_select", style="width:10em;"
-                                ), 
-                            tag.br(),
-                            tag.input(type='hidden', name="tt_custom_name", id="tt_custom_name"), 
-                            tag.br(),
-                            tag.input(type='submit', name="tt_custom_save", id="tt_custom_save", value='create'), 
-                            tag.input(type='submit', name="tt_custom_delete", value='delete'), 
-                            tag.div(
-                                all_textarea,
-                                style='z-index: -99; visibility: hidden; position: absolute;'),
-                            ),
-                    id="tt_custom", 
-                    style="position:static; "),
-                id="tt_custom_form",
-                name="tt_custom_form",
-                method="post",
-                action="tt_custom",
-                style=" clear: right; float: right; margin: 10em 0 4em; width: 200px; ",
-                )
-
-            stream = stream | Transformer('//div[@id="content"]').before(tt_custom)
-            #select('items/item[@status="closed" and  (@resolution="invalid" or not(@resolution))]/summary/text()')
-
 
         return stream
     
-    # private methods
-    def _previewTemplateText(self, tt_name, tt_text, req):
-        """ preview ticket template
+    # internal methods
+    def _handleCustomDelete(self, req):
+        """ delete custom template
         """
-        db = self.env.get_db_cnx()        
-        description_preview = wiki_to_html(tt_text, self.env, req, db)
-        return description_preview
-    
-    def _getCustomTemplates(self, req):
-        """
-        """
-        return TT_Template.getCustomTemplate(self.env, req.authname)
+        jsonstr = urllib.unquote(req.read())
+        custom_data = simplejson.loads(jsonstr)
+        tt_name = custom_data.get("tt_name")
+        if not tt_name:
+            return
 
+        tt_user = req.authname
+
+        # delete same custom template if exist
+        delete_data = {
+            "tt_user": tt_user,
+            "tt_name": tt_name,
+            }
+        TT_Template.deleteCustom(self.env, delete_data)
+        return tt_name
+
+    def _handleCustomSave(self, req):
+        """ save custom template
+        """
+        jsonstr = urllib.unquote(req.read())
+        custom_data = simplejson.loads(jsonstr)
+        tt_name = custom_data.get("tt_name")
+        custom_template = custom_data.get("custom_template")
+        if not tt_name or not custom_template:
+            return tt_name, custom_template
+
+        now = int(time.time())
+        tt_user = req.authname
+
+        # delete same custom template if exist
+        delete_data = {
+            "tt_user": tt_user,
+            "tt_name": tt_name,
+            }
+        TT_Template.deleteCustom(self.env, delete_data)
+
+        # save custom template
+        field_list = self._getFieldList()
+        for tt_field in field_list:
+            tt_value = custom_template.get(tt_field)
+
+            if tt_value is not None:
+                record = [
+                    now,
+                    tt_user,
+                    tt_name,
+                    tt_field,
+                    tt_value,
+                    ]
+                TT_Template.insert(self.env, record)
+
+        return tt_name, custom_template
+
+    def _getFieldList(self):
+        """ Get available fields
+            return:
+                ["summary", "description", ...]
+        """
+        field_list = self.config.getlist("tickettemplate", "field_list", [])
+        field_list = [field.lower() for field in field_list]
+        if "description" not in field_list:
+            field_list.append("description")
+        return field_list
+
+    def _getTTFields(self, tt_user, tt_name):
+        """
+            Get all fields values
+            return:
+                {
+                    "summary": {"field_type":"text", "field_value": "abc"},
+                    "description": {"field_type":"textarea", "field_value": "xyz"},
+                }
+
+        """
+        result = {}
+
+        # init result
+        field_list = self._getFieldList()
+        for field in field_list:
+            result[field] = ""
+
+        # update from db
+        data = {
+            "tt_user": tt_user,
+            "tt_name": tt_name,
+            }
+        field_value_mapping = TT_Template.fetchCurrent(self.env, data)
+        for k, v in field_value_mapping.items():
+            if k in field_list:
+                result[k] = v
+
+        for field in field_list:
+            field_type = self.config.get("tickettemplate", field + ".type", "text")
+            field_value = field_value_mapping.get(field)
+            field_detail = {"field_type":field_type, "field_value": field_value}
+            result[field] = field_detail
+
+        return result
+        
     def _loadTemplateText(self, tt_name):
         """ get tempate text from tt_dict.
             return tt_text if found in db
@@ -329,30 +422,32 @@ class TicketTemplateModule(Component):
         
         return tt_text
 
-    def _getNameById(self, id):
-        """ get tempate name from tt_dict.
+    def _sendResponse(self, req, message):
+        """ send response and stop request handling
         """
-        tt_name = TT_Template.getNameById(self.env, id)
-        
-        return tt_name        
-        
-        
-    def _loadTemplateTextById(self, id):
-        """ get tempate text from tt_dict.
-        """
-        tt_text = TT_Template.fetchById(self.env, id)
-        
-        return tt_text        
-        
+        req.send_response(200)
+        req.send_header('Cache-control', 'no-cache')
+        req.send_header('Expires', 'Fri, 01 Jan 1999 00:00:00 GMT')
+        req.send_header('Content-Type', 'text/plain' + ';charset=utf-8')
+        req.send_header('Content-Length', len(isinstance(message, unicode) and message.encode("utf-8") or message))
+        req.end_headers()
+
+        if req.method != 'HEAD':
+            req.write(message)
+        raise RequestDone
+
+
     def _saveTemplateText(self, tt_name, tt_text):
         """ save ticket template text to db.
         """
-        
-        id = TT_Template.insert(self.env, tt_name, tt_text, time.time())
+        id = TT_Template.insert(self.env, (int(time.time()), "SYSTEM", tt_name, "description", tt_text))
         return id
 
+        
     def _getTicketTypeNames(self):
         """ get ticket type names
+            return:
+                ["defect", "enhancement", ..., "default"]
         """
         options = []
 
@@ -364,8 +459,4 @@ class TicketTemplateModule(Component):
         options.extend(["default"])
 
         return options
-
-    def _formatTime(self, modi_time):
-        """
-        """
-        return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(modi_time))
+        

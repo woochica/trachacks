@@ -1,0 +1,96 @@
+# Chinese (China) translations for TracTicketTemplate.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the
+# TracTicketTemplate project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TracTicketTemplate 0.7\n"
+"Report-Msgid-Bugs-To: richard.liao.i@gmail.com\n"
+"POT-Creation-Date: 2010-02-08 15:05+0800\n"
+"PO-Revision-Date: 2010-02-03 16:24+0800\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: zh_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r14358\n"
+
+#: tickettemplate/ttadmin.py:133
+msgid "Ticket System"
+msgstr "传票系统"
+
+#: tickettemplate/ttadmin.py:133
+msgid "Ticket Template"
+msgstr "传票模板"
+
+#: tickettemplate/templates/admin_tickettemplate.html:12
+msgid "Available Projects"
+msgstr "有效项目"
+
+#: tickettemplate/templates/admin_tickettemplate.html:15
+msgid "Ticket: Template"
+msgstr "传票: 模板"
+
+#: tickettemplate/templates/admin_tickettemplate.html:20
+msgid "Type:"
+msgstr "类型:"
+
+#: tickettemplate/templates/admin_tickettemplate.html:28
+msgid "Load"
+msgstr "载入"
+
+#: tickettemplate/templates/admin_tickettemplate.html:29
+msgid "Apply change"
+msgstr "应用变更"
+
+#: tickettemplate/templates/admin_tickettemplate.html:30
+msgid "Reset"
+msgstr "重置"
+
+#: tickettemplate/templates/admin_tickettemplate.html:35
+msgid "Description:"
+msgstr "描述:"
+
+#: tickettemplate/templates/tt_newticket.js:7
+msgid "My Template"
+msgstr "我的模板"
+
+#: tickettemplate/templates/tt_newticket.js:8
+msgid "Create"
+msgstr "创建"
+
+#: tickettemplate/templates/tt_newticket.js:9
+msgid "Delete"
+msgstr "删除"
+
+#: tickettemplate/templates/tt_newticket.js:10
+msgid "Load last edit data"
+msgstr "载入上次编辑的内容"
+
+#: tickettemplate/templates/tt_newticket.js:11
+msgid "Save template success: "
+msgstr "成功保存模板: "
+
+#: tickettemplate/templates/tt_newticket.js:12
+msgid "Delete template success: "
+msgstr "成功删除模板: "
+
+#: tickettemplate/templates/tt_newticket.js:13
+msgid "Please input template name(Using exist name can will overwrite it.)"
+msgstr "请输入模板名称(使用已有模板名称, 可以覆盖现有模板内容)"
+
+#: tickettemplate/templates/tt_newticket.js:14
+msgid "Sure to replace with last edit content?"
+msgstr "确定使用上次编辑内容替换吗?"
+
+#: tickettemplate/templates/tt_newticket.js:15
+msgid "Submit ticket?"
+msgstr "确认提交传票吗?"
+
+#: tickettemplate/templates/tt_newticket.js:16
+msgid "Replace ticket content with template?"
+msgstr "使用模板替换传票内容吗?"
+
