@@ -42,7 +42,7 @@ is used as $USER if not specified explicitly.
 
 import re
 import string
-from trac import __version__ as version
+from trac import __version__ as trac_ver
 from trac.wiki.formatter import wiki_to_oneliner
 from trac.ticket.report import ReportModule
 from trac.ticket.model import Ticket
@@ -53,8 +53,8 @@ except:
     has_query = False
 
 # plugin info
-revison="$Rev$"
-url="$URL$"
+revision="$Rev$"
+home_page="http://trac-hacks.org/wiki/TicketBoxMacro"
 
 ## Mock request object for trac 0.10.x or before
 class MockReq(object):
@@ -65,7 +65,7 @@ class MockReq(object):
         
 
 # get trac version
-verstr = re.compile('([0-9.]+).*').match(version).group(1)
+verstr = re.compile('([0-9.]+).*').match(trac_ver).group(1)
 ver = [int(x) for x in verstr.split(".")]
 
 if ver <= [0, 10]:
