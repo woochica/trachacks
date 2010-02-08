@@ -180,7 +180,8 @@ def parse(content):
 def call(func, vars):
     names = call_args[func.__name__]
     args = [vars[x] for x in names]
-    return func(*args)
+    # NOTE: ignore 3rd return value 'missing' in Trac 0.12.
+    return func(*args)[:2]
     
 def run0(req, env, db, content):
     args = parse(content or '')
