@@ -21,7 +21,7 @@ from trac.wiki.model import WikiPage
 from trac.wiki.web_ui import WikiModule
 
 class BackLinksMacro(WikiMacroBase):
-    revision = "$Rev: 600 $"
+    revision = "$Rev$"
     url = "$URL$"
 
     def expand_macro(self, formatter, name, args):
