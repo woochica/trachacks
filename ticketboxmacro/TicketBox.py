@@ -52,6 +52,10 @@ try:
 except:
     has_query = False
 
+# plugin info
+revison="$Rev$"
+url="$URL$"
+
 ## Mock request object for trac 0.10.x or before
 class MockReq(object):
     def __init__(self, hdf):
