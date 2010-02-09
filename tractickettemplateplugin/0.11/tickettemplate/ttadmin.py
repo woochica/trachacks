@@ -240,11 +240,15 @@ class TicketTemplateModule(Component):
         
         if req.path_info.startswith('/tt/query'):
             # handle XMLHTTPRequest
-
+                
             data.update({"tt_user": req.authname})
             result = TT_Template.fetchAll(self.env, data)
             result["status"] = "1"
             result["field_list"] = self._getFieldList()
+            if self.config.getbool("tickettemplate", "enable_custom", True):
+                result["enable_custom"] = True
+            else:
+                result["enable_custom"] = False
             if req.args.has_key("warning"):
                 result["warning"] = "1"
             jsonstr = simplejson.dumps(result)

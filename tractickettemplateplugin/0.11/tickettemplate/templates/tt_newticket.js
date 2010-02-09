@@ -74,12 +74,10 @@ $.fn.extend({
                     }
                 }
             }
-            
             // for TracWysiwyg
             if (wysiwyg_mode) {
                 $("#editor-wysiwyg-1").click();
             }
-            
         }
 
         function handleResponseQuery(result) {
@@ -87,6 +85,19 @@ $.fn.extend({
                 return;
             }
             queryResult = result;
+            
+            if (isLoad == true && queryResult.enable_custom) {
+                // custom
+                $("#content").prepend(myTemplateHtml);
+                $("#tt_custom_select").append("<option></option>");
+                
+                $("#tt_custom_save").click(onCustomSave);
+                $("#tt_custom_delete").click(onCustomDelete);
+                $("#tt_custom_select").change(onCustomChanged);
+                $("#tt_custom_tip").click(onCustomTip);
+                // set custom to null
+                $("#tt_custom_select").val("");
+            }
             
             // fill custom template select
             var custom_names = [];
@@ -341,23 +352,10 @@ $.fn.extend({
 
         }
 
-
         $("#field-type").change(onTypeChanged);
-        
-        // custom
-        $("#content").prepend(myTemplateHtml);
-        $("#tt_custom_select").append("<option></option>");
-        
-        $("#tt_custom_save").click(onCustomSave);
-        $("#tt_custom_delete").click(onCustomDelete);
-        $("#tt_custom_select").change(onCustomChanged);
-        $("#tt_custom_tip").click(onCustomTip);
         
         // tag
         $("#propertyform").submit(onFormSubmit);
-        
-        // set custom to null
-        $("#tt_custom_select").val("");
 
         // requery
         if ($("#warning").get(0))

@@ -1,3 +1,8 @@
+TicketTemplate 0.7 (Feb 9, 2010)
+ * Fully i18n support with Trac 0.12dev r9098 above.
+ * Support '''My Template'''. Everyone can manage their own templates now.
+ * Template can include all fields, the default field is description.
+
 TicketTemplate 0.5 (April 11, 2008)
 
  * use trac db to store all templates data

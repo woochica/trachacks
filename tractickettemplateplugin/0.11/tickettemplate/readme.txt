@@ -10,7 +10,7 @@
 = Changes in version 0.7 =
  * This version has fully i18n support with Trac 0.12dev r9098 above.
  * New feature: support '''My Template'''. Everyone can manage their own templates now.
- * New feature: template can include any fields, the default field is description.
+ * New feature: template can include all fields, the default field is description.
 
 = Install =
 
@@ -44,8 +44,10 @@ tickettemplate.* = enabled
 
 [tickettemplate]
 field_list = summary, description, reporter, owner, priority, cc, milestone, component, version, type
+enable_custom = true
 }}}
- Set field_list to choose which field should be included in template.
+  * Set field_list to choose which field should be included in template.
+  * Set enable_custom to false will disable My Template, which default is true.
 
 = Usage =
  * Trac administrator should define the template for all ticket types:
