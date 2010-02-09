@@ -7,6 +7,8 @@ setup(
     name = 'wikitable',
     author = 'Martin Aspeli',
     author_email = 'optilude@gmail.com',
+    maintainer = 'Ryan J Ollos',
+    maintainer_email = 'ryano@physiosonics.com',
     description = 'Trac plugin for drawing a table from a SQL query in a wiki page',
     version = '0.1',
     license='BSD',
