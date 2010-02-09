@@ -367,7 +367,8 @@ try:
     from trac.wiki.macros import WikiMacroBase
 
     class TicketBoxMacro(WikiMacroBase):
-
+        __doc__ = __doc__
+        
         # plugin macro I/F for trac 0.10.x
         def render_macro(self, req, name, content):
             db = env.get_db_cnx()
