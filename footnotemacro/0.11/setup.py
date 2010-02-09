@@ -4,8 +4,8 @@
 from setuptools import setup
 
 setup(
-    name = 'TracFootNoteMacro',
-    version = '1.01',
+    name = 'FootNoteMacro',
+    version = '1.02',
     packages = ['footnotemacro'],
     package_data = { 'footnotemacro': ['htdocs/*.css',
                                        'htdocs/*.js'] },
