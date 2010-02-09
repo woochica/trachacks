@@ -25,7 +25,7 @@ cp dist/*.egg /srv/trac/env/plugins
  5. Config trac.ini:
   {{{
 [components]
-ticketvalidator.* = enabled
+tracticketvalidator.* = enabled
 
 [ticketvalidator]
 validate_author = true

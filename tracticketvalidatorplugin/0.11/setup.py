@@ -19,5 +19,5 @@ setup(
     ],
     
     install_requires = [],
-    entry_points = {'trac.plugins': ['ticketvalidator = ticketvalidator.ticketvalidator']},
+    entry_points = {'trac.plugins': ['tracticketvalidator = ticketvalidator.ticketvalidator']},
 )
