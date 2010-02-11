@@ -67,6 +67,9 @@ class BatchModifyModule(Component):
         for id in selectedTickets:
             if id in tickets:
                 t = Ticket(self.env, int(id)) 
+                
+                values['keywords'] = self._merge_keywords(t.values['keywords'], values['keywords'])
+                
                 t.populate(values)
                 t.save_changes(req.authname, comment)
                 self.log.debug('BatchModifyPlugin: saved changes to #%s', id)
@@ -83,6 +86,17 @@ class BatchModifyModule(Component):
                 #for controller in self._get_action_controllers(req, ticket,
                 #                                               action):
                 #    controller.apply_action_side_effects(req, ticket, action)
+
+    def _merge_keywords(self, original_keywords, new_keywords):
+        """Prevent duplicate keywords by merging the two lists."""
+        self.log.debug('BatchModifyPlugin: existing keywords are %s', original_keywords)
+        self.log.debug('BatchModifyPlugin: new keywords are %s', new_keywords)
+        
+        combined_keywords = (original_keywords).split(',')
+        [combined_keywords.append(keyword) for keyword in new_keywords.split(',') if keyword not in combined_keywords]
+            
+        self.log.debug('BatchModifyPlugin: combined keywords are %s', combined_keywords)
+        return ''.join(combined_keywords)
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, formdata):
