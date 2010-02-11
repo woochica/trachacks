@@ -147,7 +147,7 @@ class BlackMagicTicketTweaks(Component):
                 for perm in (x.strip() for x in permissions.split(',')):
                     self.env.log.debug("Checking permission %s" % perm)
                     #user has permission no denied
-                    if perm and perm in req.perm:
+                    if perm and perm in req.perm(ticket.resource):
                        self.env.log.debug("Has %s permission" % perm)
                        denied = False
                 #if denied is true hide/disable dpending on denial setting
@@ -216,7 +216,7 @@ class BlackMagicTicketTweaks(Component):
                     for perm in (x.strip() for x in permissions.split(',')):
                         self.env.log.debug("Checking permission %s" % perm)
                         #user has permission no denied
-                        if perm and perm in req.perm:
+                        if perm and perm in req.perm(data.get("ticket").resource):
                             self.env.log.debug("Has %s permission" % perm)
                             denied = False
                     #if denied is true hide/disable dpending on denial setting
