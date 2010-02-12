@@ -115,6 +115,8 @@ class BatchModifyModule(Component):
         for field in TicketSystem(self.env).get_ticket_fields():
             if field['name'] not in ('summary', 'reporter', 'description'):
                 fields.append(field)
+            if field['name'] == 'owner':
+                TicketSystem(self.env).eventually_restrict_owner(field)
         batchFormData['fields']=fields
 
         stream = Chrome(self.env).render_template(req, 'batchmod.html',
