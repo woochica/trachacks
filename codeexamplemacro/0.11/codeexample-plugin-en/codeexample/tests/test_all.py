@@ -26,7 +26,8 @@ class CodeExampleTestCase(unittest.TestCase):
     def test_get_macros(self):
         """ Testing the get_macros method. """
         processor = CodeExample(self.env)
-        expected_result = ['BadCodeExample', 'CodeExample', 'GoodCodeExample']
+        expected_result = ['BadCodeExample', 'CodeExample',
+                           'CodeExamplePath', 'GoodCodeExample']
         index = 0
         for macros in processor.get_macros():
             self.assertEqual(macros, expected_result[index])
@@ -119,22 +120,25 @@ class CodeExampleTestCase(unittest.TestCase):
         processor = CodeExample(self.env)
         args = 'test1'
         pygmentized = 'test1'
-        self.assertEqual(pygmentized, processor.pygmentize_args(args, True))
-        self.assertEqual(args, processor.pygmentize_args(args, False))
+        self.assertEqual(pygmentized,
+                         processor.pygmentize_args(args, True, False))
+        self.assertEqual(args, processor.pygmentize_args(args, False, False))
 
     def test_pygmentize_with_python(self):
         """ Testing the pygmentize_args method with Python code. """
         processor = CodeExample(self.env)
         args = '#!python\ntest1'
         pygmentized = 'test1\n'
-        self.assertEqual(pygmentized, processor.pygmentize_args(args, True))
+        self.assertEqual(pygmentized,
+                         processor.pygmentize_args(args, True, False))
 
     def test_invalid_lang(self):
         """ Testing the pygmentize_args method with invalid language. """
         processor = CodeExample(self.env)
         args = '#!python1\ntest1\n'
         pygmentized = 'test1\n'
-        self.assertEqual(pygmentized, processor.pygmentize_args(args, True))
+        self.assertEqual(pygmentized,
+                         processor.pygmentize_args(args, True, False))
 
     def test_pygmentize_multiline(self):
         """ Testing the pygmentize_args method with multiline code. """
@@ -143,7 +147,8 @@ class CodeExampleTestCase(unittest.TestCase):
         pygmentized = '<span class="k">def</span> ' \
         '<span class="nf">Class</span><span class="p">:</span>\n' \
         '    <span class="k">pass</span>\n'
-        self.assertEqual(pygmentized, processor.pygmentize_args(args, True))
+        self.assertEqual(pygmentized,
+                         processor.pygmentize_args(args, True, False))
 
     def test_render_as_lang(self):
         """ Testing the render_as_lang method. """
@@ -169,6 +174,28 @@ class CodeExampleTestCase(unittest.TestCase):
         htdocs = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                               '..', 'htdocs'))
         self.assertEqual(processor.get_htdocs_dirs(), [('ce', htdocs)])
+
+    def test_path_recognition(self):
+        """ Testing correct path requirements. """
+        processor = CodeExample(self.env)
+        args = 'ТЕСТ'
+        formatter = Formatter(self.env, self.context)
+
+        name = 'CodeExamplePath'
+        expected = '<div ' \
+        'class="example">\n    <div class="title">EXAMPLE:\n    ' \
+        '<span class="select_code" id="link1">' \
+        'SELECT ALL</span></div>\n    \n    ' \
+        '<div class="system-message">\n    <strong>' \
+        'During the example analyzing the following problems' \
+        ' appear:</strong>\n    <ul>\n        ' \
+        '<li>Unsupported version control system "svn": Can\'t find' \
+        ' an appropriate component, maybe the corresponding plugin was ' \
+        'not enabled? </li>\n    </ul>\n    </div>\n    \n    ' \
+        '<div class="code">' \
+        '\n        <pre id="codelink1">ТЕСТ</pre>\n    </div>\n</div>'
+        self.assertEqual(expected,
+                        processor.expand_macro(formatter, name, args))
 
 
 from mocker import MockerTestCase
