@@ -85,7 +85,7 @@ jQuery(document).ready(function($){
     $("tr td input.bmod_selector",$(this).parents("table.listing")).attr("checked",this.checked);
   })
   <py:for each="field in fields">
-    $("input[id=bmod_flag_${field.name}]").click(function() { $("*[@name=bmod_value_${field.name}]").enable(this.checked);} )
+    $("input[id=bmod_flag_${field.name}]").click(function() { $("*[name=bmod_value_${field.name}]").enable(this.checked);} )
   </py:for>
   $("input#bmod_flag_comment").click(function() {enableControl("bmod_value_comment",this.checked);} )
   $("form#batchmod-form").submit(function() {
