@@ -68,7 +68,8 @@ class BatchModifyModule(Component):
             if id in tickets:
                 t = Ticket(self.env, int(id)) 
                 
-                values['keywords'] = self._merge_keywords(t.values['keywords'], values['keywords'])
+                if 'keywords' in values:
+                    values['keywords'] = self._merge_keywords(t.values['keywords'], values['keywords'])
                 
                 t.populate(values)
                 t.save_changes(req.authname, comment)
