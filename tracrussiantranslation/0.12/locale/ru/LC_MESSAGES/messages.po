@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Trac 0.12\n"
 "Report-Msgid-Bugs-To: trac-dev@googlegroups.com\n"
 "POT-Creation-Date: 2007-07-15 21:01+0200\n"
-"PO-Revision-Date: 2010-02-07 23:59+0200\n"
+"PO-Revision-Date: 2010-02-13 15:53+0200\n"
 "Last-Translator: Dmitri Bogomolov <4glitch@gmail.com>\n"
 "Language-Team: ru_RU <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
@@ -88,7 +88,7 @@ msgid "Upload failed"
 msgstr "Ошибка загрузки"
 
 #: trac/attachment.py:592
-#, fuzzy, python-format
+#, python-format
 msgid "Attachment field %(field)s is invalid: %(message)s"
 msgstr "Неверное значение поля %(field)s: %(message)s"
 
@@ -366,6 +366,11 @@ msgid ""
 " Please enter the name of your project.\n"
 " This name will be used in page titles and descriptions.\n"
 msgstr ""
+"Для начала Trac задаст несколько вопросов об окружении проекта,\n"
+"чтобы инициализировать и подготовить базу данных.\n"
+"\n"
+" Пожалуйста укажите название своего проекта.\n"
+" Оно будет использоваться в заголовках страниц и описаниях."
 
 #: trac/admin/console.py:339
 #, python-format
@@ -381,6 +386,10 @@ msgid ""
 " PostgreSQL database (check the Trac documentation for the exact\n"
 " connection string syntax).\n"
 msgstr ""
+" Пожалуйста укажите строку соединения с базой данных.\n"
+" По умолчанию в каталоге окружения создается локальная база\n"
+" SQLite. Также можно использовать существующую базу PostgreSQL\n"
+" (точный формат строки соединения можно найти в документации Trac)"
 
 #: trac/admin/console.py:349
 #, python-format
@@ -418,6 +427,17 @@ msgid ""
 "you'll need to check again your trac.ini file and the [trac] \n"
 "repository_type and repository_path settings.\n"
 msgstr ""
+"\n"
+"---------------------------------------------------------------------\n"
+"Внимание: не удается проиндексировать главное хранилище.\n"
+"\n"
+"Для этого может быть несколько причин: неправильный тип хранилища,\n"
+"нет подходящих внешних библиотек для работы с выбранным типом хранилища,\n"
+"хранилище отсутствует по указанному пути...\n"
+"\n"
+"Несмотря на это вы можете начать использовать Trac, но необходимо\n"
+"еще раз проверить файл trac.ini - настройки repository_type и\n"
+"repository_path в разделе [trac]."
 
 #: trac/admin/console.py:471
 #, python-format
@@ -1081,8 +1101,9 @@ msgid "deleted file %(deleted)s"
 msgstr "удален файл %(deleted)s"
 
 #: trac/mimeview/patch.py:239
+#, fuzzy
 msgid "this hunk was shorter than expected"
-msgstr ""
+msgstr "этот ломоть оказался короче, чем предполагалось"
 
 #: trac/mimeview/pygments.py:121 trac/prefs/templates/prefs_pygments.html:9
 msgid "Syntax Highlighting"
@@ -2225,8 +2246,9 @@ msgid "Ticket #%(shortname)s"
 msgstr "Билет №%(shortname)s"
 
 #: trac/ticket/default_workflow.py:225
+#, fuzzy
 msgid "Current state no longer exists"
-msgstr ""
+msgstr "Текущее состояние больше не существует"
 
 #: trac/ticket/default_workflow.py:227
 msgid "The ticket will be disowned"
@@ -2503,9 +2525,8 @@ msgid "Query parameter \"sort=%(sort_col)s\"  is invalid"
 msgstr "Параметр запроса \"sort=%(sort_col)s\" недопустим"
 
 #: trac/ticket/roadmap.py:208
-#, fuzzy
 msgid "ticket status"
-msgstr "состояние билетов"
+msgstr "состояние билета"
 
 #: trac/ticket/roadmap.py:208
 msgid "ticket"
@@ -2516,11 +2537,11 @@ msgid "tickets"
 msgstr "билеты"
 
 #: trac/ticket/roadmap.py:218
-#, python-format
+#, python-format, fuzzy
 msgid ""
 "'%(group1)s' and '%(group2)s' milestone groups both are declared to be "
 "\"catch-all\" groups. Please check your configuration."
-msgstr ""
+msgstr "группы этапов '%(group1)s' и '%(group2)s' описаны в качестве групп \"catch-all\". Пожалуйста, проверьте конфигурацию."
 
 #: trac/ticket/roadmap.py:234
 #, python-format
@@ -3347,16 +3368,17 @@ msgstr "Заявитель:"
 
 #: trac/ticket/templates/ticket.html:417
 msgid "This checkbox allows you to add or remove yourself from the CC list."
-msgstr ""
+msgstr "Этот флажок позволяет добавить или исключить свой адрес из копий."
 
 #: trac/ticket/templates/ticket.html:423
 msgid "Space or comma delimited email addresses and usernames are accepted."
-msgstr ""
+msgstr "Принимается список адресов и имен пользователей, разделенных запятой."
 
 #: trac/ticket/templates/ticket.html:476
 #: trac/wiki/templates/wiki_edit_form.html:49
+#, fuzzy
 msgid "E-mail address and user name can be saved in the"
-msgstr ""
+msgstr "Электронный адрес и имя пользователя могут быть сохранены в"
 
 #: trac/ticket/templates/ticket.html:485
 msgid "I have files to attach to this ticket"
@@ -3625,8 +3647,9 @@ msgid ""
 msgstr ""
 
 #: trac/versioncontrol/admin.py:235
+#, fuzzy
 msgid "Missing arguments to add a repository."
-msgstr ""
+msgstr "Нехватает аргументов для добавления хранилища."
 
 #: trac/versioncontrol/admin.py:244
 #, fuzzy, python-format
@@ -3635,7 +3658,7 @@ msgstr "Псевдоним \"%(name)s\" добавлен."
 
 #: trac/versioncontrol/admin.py:247
 msgid "Missing arguments to add an alias."
-msgstr ""
+msgstr "Нехватает аргументов для добавления псевдонима."
 
 #: trac/versioncontrol/admin.py:260
 #, fuzzy
@@ -3738,11 +3761,10 @@ msgid "No such node"
 msgstr "Нет такого узла"
 
 #: trac/versioncontrol/cache.py:140
-#, fuzzy
 msgid ""
 "The 'repository_dir' has changed, a 'trac-admin $ENV repository resync' "
 "operation is needed."
-msgstr "Изменен 'repository_dir', требуется выполнить 'trac-admin resync'."
+msgstr "Изменен 'repository_dir', требуется выполнить 'trac-admin $ENV repository resync'."
 
 #: trac/versioncontrol/svn_authz.py:73
 #, python-format
@@ -3804,8 +3826,9 @@ msgid "(toggle deleted branches)"
 msgstr ""
 
 #: trac/versioncontrol/svn_prop.py:234
+#, fuzzy
 msgid "View merge source"
-msgstr ""
+msgstr "Смотреть источник объединения"
 
 #: trac/versioncontrol/svn_prop.py:245
 #, fuzzy
@@ -3818,16 +3841,18 @@ msgid "merged: "
 msgstr "объединены:"
 
 #: trac/versioncontrol/svn_prop.py:280
+#, fuzzy
 msgid "blocked: "
-msgstr ""
+msgstr "заблокировано: "
 
 #: trac/versioncontrol/svn_prop.py:281
 msgid "reverse-merged: "
 msgstr ""
 
 #: trac/versioncontrol/svn_prop.py:281
+#, fuzzy
 msgid "un-blocked: "
-msgstr ""
+msgstr "разблокировано: "
 
 #: trac/versioncontrol/svn_prop.py:292
 #, fuzzy
@@ -3846,7 +3871,7 @@ msgstr ""
 #: trac/versioncontrol/svn_prop.py:324
 #, python-format
 msgid "Property %(prop)s changed"
-msgstr ""
+msgstr "Свойство %(prop)s изменено"
 
 #: trac/versioncontrol/templates/admin_repositories.html:14
 #, fuzzy
@@ -3856,22 +3881,22 @@ msgstr "Управление хранилищами"
 #: trac/versioncontrol/templates/admin_repositories.html:24
 #, fuzzy
 msgid "Default:"
-msgstr "По умолчанию"
+msgstr "Главное:"
 
 #: trac/versioncontrol/templates/admin_repositories.html:30
 #, fuzzy
 msgid "Repository:"
-msgstr " Индексирование хранилища"
+msgstr "Хранилище:"
 
 #: trac/versioncontrol/templates/admin_repositories.html:43
 #, fuzzy
 msgid "Modify Repository:"
-msgstr " Индексирование хранилища"
+msgstr "Изменить хранилище:"
 
 #: trac/versioncontrol/templates/admin_repositories.html:44
 #, fuzzy
 msgid "View Repository:"
-msgstr "Посмотреть правку:"
+msgstr "Смотреть хранилище:"
 
 #: trac/versioncontrol/templates/admin_repositories.html:45
 msgid ""
@@ -4042,9 +4067,9 @@ msgstr "смотреть разницы"
 #, fuzzy, python-format
 msgid "%(num)d diff"
 msgid_plural "%(num)d diffs"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
+msgstr[0] "%(num)d различие"
+msgstr[1] "%(num)d различия"
+msgstr[2] "%(num)d различий"
 
 #: trac/versioncontrol/templates/changeset.html:93
 #, fuzzy, python-format
@@ -4153,7 +4178,7 @@ msgstr "Последнее изменение"
 
 #: trac/versioncontrol/templates/path_links.html:15
 msgid "Go to repository root"
-msgstr ""
+msgstr "Идти в корень хранилища"
 
 #: trac/versioncontrol/templates/path_links.html:15
 msgid "Go to repository index"
@@ -4915,6 +4940,8 @@ msgid ""
 "[1:Last modified]\n"
 "            by %(author)s on %(datetime)s (%(reldate)s ago)"
 msgstr ""
+"[1:Последнее изменение]\n"
+"             от %(author)s %(datetime)s (%(reldate)s назад)"
 
 #: trac/wiki/templates/wiki_view.html:60
 msgid "The page"
@@ -4946,7 +4973,7 @@ msgstr "(с чистого листа)"
 
 #: trac/wiki/templates/wiki_view.html:110
 msgid "Delete this version"
-msgstr "Удалить данную версию"
+msgstr "Удалить эту версию"
 
 #: trac/wiki/templates/wiki_view.html:112
 msgid "Delete page"
