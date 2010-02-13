@@ -134,6 +134,21 @@ Sub import(query As String)
     Next
 End Sub
 
+Function comp(v1 As String, v2 As String) As Boolean
+    comp = False
+    On Error GoTo e1
+    If InStr(1, v1, ".") > 1 Or InStr(1, v2, ".") > 1 Then
+        If CDec(v1) = CDec(v2) Then
+            comp = True
+        End If
+        Exit Function
+    End If
+e1:
+    If v1 = v2 Then
+        comp = True
+    End If
+End Function
+
 Sub check()
     Dim row As Integer
     Dim attributes As Collection
@@ -160,11 +175,11 @@ Sub check()
         'setColor
     Loop
     If s.Cells(1, 1).comment.text <> "id" Then
-        MsgBox "Cell A1' comment is not id.'"
+        MsgBox "A comment on the cell A1 is not id.'"
         Exit Sub
     End If
     If s.Cells(1, 2).comment.text <> "summary" Then
-        MsgBox "B1のコメントがsummaryではありません．"
+        MsgBox "A comment on the cell B1 is not 'summary'."
         Exit Sub
     End If
     i = 1
@@ -176,7 +191,6 @@ Sub check()
             Set attributes = devTrac.getTicket(id)
             i = 2
             Do
-                Debug.Print "loop:" & i
                 If s.Cells(1, i).value = "" Then Exit Do
                 fieldName = s.Cells(1, i).comment.text
                 Dim v As String, fieldValue As String
@@ -185,7 +199,7 @@ Sub check()
                 clearColor s.Cells(row, i)
                 fieldValue = ""
                 fieldValue = attributes.Item(fieldName)
-                If v <> fieldValue Then
+                If comp(v, fieldValue) = False Then
                     setColor s.Cells(row, i)
                 End If
                 On Error GoTo 0
@@ -207,7 +221,7 @@ Sub check()
     Loop
     Exit Sub
 err_sheet_format:
-    MsgBox "先頭行のフォーマットに誤りがあります"
+    MsgBox "format is wrong."
 End Sub
 
 Sub update()
@@ -234,14 +248,14 @@ Sub update()
             Exit Sub
         End If
         i = i + 1
-        'setColor
+' setColor
     Loop
     If s.Cells(1, 1).comment.text <> "id" Then
-        MsgBox "A1のコメントがidではありません．"
+        MsgBox "A comment on the cell A1 is not id.'"
         Exit Sub
     End If
     If s.Cells(1, 2).comment.text <> "summary" Then
-        MsgBox "B1のコメントがsummaryではありません．"
+        MsgBox "A comment on the cell B1 is not 'summary'."
         Exit Sub
     End If
     i = 1
@@ -255,7 +269,6 @@ Sub update()
             Set newAttributes = New Collection
             i = 2
             Do
-                Debug.Print "loop:" & i
                 If s.Cells(1, i).value = "" Then Exit Do
                 fieldName = s.Cells(1, i).comment.text
                 Dim v As String, fieldValue As String
@@ -264,7 +277,7 @@ Sub update()
                 clearColor s.Cells(row, i)
                 fieldValue = ""
                 fieldValue = attributes.Item(fieldName)
-                If v <> fieldValue Then
+                If comp(v, fieldValue) = False Then
                     setColor s.Cells(row, i)
                     newAttributes.Add v, fieldName
                 End If
@@ -272,7 +285,7 @@ Sub update()
                 i = i + 1
             Loop
             If newAttributes.Count > 0 Then
-                Set newAttributes = devTrac.updateTicket(CLng(id), "Excelより自動追加", newAttributes, False)
+                Set newAttributes = devTrac.updateTicket(CLng(id), "This ticket is added/updated by TicketEdit Excel macro.", newAttributes, False)
                 newAttributes.Add id, "id"
                 fillRow row, newAttributes
             End If
@@ -305,7 +318,7 @@ Sub update()
     Loop
     Exit Sub
 err_sheet_format:
-    MsgBox "先頭行のフォーマットに誤りがあります"
+    MsgBox "format is wrong."
 End Sub
 
 

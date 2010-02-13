@@ -47,8 +47,8 @@ End Sub
 Sub setValidationString(r As Range, v As String)
     Dim work As String
     work = v
-    work = replace(work, ",", "ÅC")
-    work = replace(work, " ", ",")
+    work = Replace(work, ",", "ÅC")
+    work = Replace(work, " ", ",")
     With r.Validation
         .Delete
         .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
@@ -86,18 +86,20 @@ Sub setColor(r As Range)
     With r.Interior
         .Pattern = xlSolid
         .PatternColorIndex = xlAutomatic
-        .ThemeColor = xlThemeColorAccent2
-        .TintAndShade = 0.799981688894314
-        .PatternTintAndShade = 0
+        .ColorIndex = 7
+   '     .TintAndShade = 0.799981688894314
+   '     .PatternTintAndShade = 0
     End With
 End Sub
 
 Sub clearColor(r As Range)
     With r.Interior
         .Pattern = xlNone
-        .TintAndShade = 0
-        .PatternTintAndShade = 0
+        .ColorIndex = 2
+   '     .TintAndShade = 0
+   '     .PatternTintAndShade = 0
     End With
 End Sub
+
 
 

@@ -58,19 +58,32 @@ End Sub
 'user:admin
 'pw:admin
 Public Sub init(URL As String, projectName As String, user As String, pw As String)
-    m_URL = URL
     m_projectName = projectName
+    m_URL = URL
+    If m_projectName <> "" Then
+        m_URL = m_URL & "/" & m_projectName
+    End If
     m_user = user
     m_pw = pw
-    getStringArray m_type, "type"
-    getStringArray m_status, "status"
-    getStructArray m_resolution, "resolution"
-    getStructArray m_milestone, "milestone"
-    getStructArray m_version, "version"
-    getStructArray m_component, "component"
-    getStringArray m_priority, "priority"
-    getStringArray m_severity, "severity"
-    getTicketFields m_fieldN, m_fieldL, "field", "ticket.getTicketFields"
+'    getStringArray m_type, "type"
+'    getStringArray m_status, "status"
+'    getStructArray m_resolution, "resolution"
+'    getStructArray m_milestone, "milestone"
+'    getStructArray m_version, "version"
+'    getStructArray m_component, "component"
+'    getStringArray m_priority, "priority"
+'    getStringArray m_severity, "severity"
+'    getTicketFields m_fieldN, m_fieldL, "field", "ticket.getTicketFields"
+    Set m_milestone = Nothing
+    Set m_status = Nothing
+    Set m_version = Nothing
+    Set m_component = Nothing
+    Set m_priority = Nothing
+    Set m_resolution = Nothing
+    Set m_severity = Nothing
+    Set m_type = Nothing
+    Set m_fieldN = Nothing
+    Set m_fieldL = Nothing
     m_initialized = True
 End Sub
 
@@ -215,7 +228,7 @@ Public Function createStruct(arrayMember As Collection) As String
     structString = "<struct>" + vbCrLf
     
     On Error Resume Next
-    For Each name In m_fieldN
+    For Each name In Me.field
         Dim fieldName As String, value As String
         fieldName = name.Item("name")
 '        If fieldName <> "id" Then
@@ -314,7 +327,7 @@ Private Function getMember(method As String, params As String, tag As String) As
     Set xmlSv = CreateObject("MSXML2.XMLHTTP")
     Dim addr As String
     
-    addr = m_URL & "/" & m_projectName & "/login/xmlrpc"
+    addr = Me.URL() & "/login/xmlrpc"
     
     xmlSv.Open "POST", addr, False, m_user, m_pw
     xmlSv.setRequestHeader "Method", "POST " & addr & " HTTP/1.1"
@@ -433,42 +446,71 @@ End Function
 
 Public Property Get milestone() As Collection
     Set milestone = m_milestone
+    If m_milestone Is Nothing Then
+        getStructArray m_milestone, "milestone"
+    End If
+    Set milestone = m_milestone
 End Property
 
 Public Property Get version() As Collection
     Set version = m_version
+    If m_version Is Nothing Then
+        getStructArray m_version, "version"
+    End If
+    Set version = m_version
 End Property
 
 Public Property Get ticketType() As Collection
+    If m_type Is Nothing Then
+        getStringArray m_type, "type"
+    End If
     Set ticketType = m_type
 End Property
 
 Public Property Get status() As Collection
+    If m_status Is Nothing Then
+        getStringArray m_status, "status"
+    End If
     Set status = m_status
 End Property
 
 Public Property Get component() As Collection
+    If m_component Is Nothing Then
+        getStructArray m_component, "component"
+    End If
     Set component = m_component
 End Property
 
 Public Property Get priority() As Collection
+    If m_priority Is Nothing Then
+        getStringArray m_priority, "priority"
+    End If
     Set priority = m_priority
 End Property
 
 Public Property Get resolution() As Collection
+    If m_resolution Is Nothing Then
+        getStructArray m_resolution, "resolution"
+    End If
     Set resolution = m_resolution
 End Property
 
 Public Property Get severity() As Collection
+    If m_severity Is Nothing Then
+        getStringArray m_severity, "severity"
+    End If
     Set severity = m_severity
 End Property
 
 Public Property Get field() As Collection
+    If m_fieldN Is Nothing Then
+        getTicketFields m_fieldN, m_fieldL, "field", "ticket.getTicketFields"
+    End If
     Set field = m_fieldN
 End Property
 
 Public Property Get URL() As String
-    URL = m_URL & "/" & m_projectName
+    URL = m_URL
 End Property
 Public Property Get projectName() As String
     projectName = m_projectName
@@ -571,13 +613,13 @@ Public Function getWorkHours(id As Integer) As Collection
     Set getWorkHours = getStructArray2(funcName, params)
 End Function
 
-Public Function executeQuery(query As String, sort As String) As Collection
-    Dim funcName As String, params As String
-    funcName = "dependency.executeQuery"
-    params = "<param><value><string>" & query & "</string></value></param>" & _
-            "<param><value><string>" & sort & "</string></value></param>"
-    Set executeQuery = getStructArray2(funcName, params)
-End Function
+'Public Function executeQuery(query As String, sort As String) As Collection
+'    Dim funcName As String, params As String
+'    funcName = "dependency.executeQuery"
+'    params = "<param><value><string>" & query & "</string></value></param>" & _
+'            "<param><value><string>" & sort & "</string></value></param>"
+'    Set executeQuery = getStructArray2(funcName, params)
+'End Function
 
 Public Function getStructArray2(funcName As String, params As String) As Collection
     Dim dataType As String
@@ -613,5 +655,7 @@ Public Function getStructArray2(funcName As String, params As String) As Collect
         End If
     Next
 End Function
+
+
 
 

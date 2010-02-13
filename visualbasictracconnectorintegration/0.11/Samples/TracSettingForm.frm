@@ -13,6 +13,7 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+
 'Copyright (c) 2009 Yuji OKAZAKI. All rights reserved.
 '
 'Redistribution and use in source and binary forms, with or without modification, are permitted provided
