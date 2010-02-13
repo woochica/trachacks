@@ -27,8 +27,9 @@ class CodeExampleTestCase(unittest.TestCase):
     def test_get_macros(self):
         """ Testing the get_macros method. """
         processor = CodeExample(self.env)
-        expected_result = ['BadCodeExample', 'CodeExample',
-                           'CodeExamplePath', 'GoodCodeExample']
+        expected_result = ['BadCodeExample', 'BadCodeExamplePath',
+                           'CodeExample', 'CodeExamplePath',
+                           'GoodCodeExample', 'GoodCodeExamplePath']
         index = 0
         for macros in processor.get_macros():
             self.assertEqual(macros, expected_result[index])

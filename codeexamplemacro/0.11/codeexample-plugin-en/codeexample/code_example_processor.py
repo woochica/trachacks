@@ -57,10 +57,10 @@ class CodeExample(Component):
                 'description': 'Render the code block as a good example.'},
         'CodeExamplePath': {'title': u'EXAMPLE', 'css_class': 'example',
         'description': 'Render the code from the path as a plain example.'},
-        'BadCodeExample': {'title': u'INCORRECT EXAMPLE',
+        'BadCodeExamplePath': {'title': u'INCORRECT EXAMPLE',
                            'css_class': 'bad_example',
         'description': 'Render the code from the path as a bad example.'},
-        'GoodCodeExample': {'title': u'CORRECT EXAMPLE',
+        'GoodCodeExamplePath': {'title': u'CORRECT EXAMPLE',
                             'css_class': 'good_example',
         'description': 'Render the code from the path as a good example.'},
 }
