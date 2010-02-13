@@ -4,6 +4,7 @@
 import unittest
 import os.path
 from trac.test import EnvironmentStub, Mock
+from trac.versioncontrol.api import NoSuchNode
 from trac.web.href import Href
 from trac.mimeview.api import Context
 from trac.wiki.formatter import Formatter
@@ -196,6 +197,67 @@ class CodeExampleTestCase(unittest.TestCase):
         '\n        <pre id="codelink1">ТЕСТ</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
+
+    def test_get_quote(self):
+        """ Testing getting quote from the text. """
+        processor = CodeExample(self.env)
+        text = 'one\ntwo\nthree'
+        args = 'regex=two\nlines=1'
+        expected = 'two'
+        self.assertEqual(expected, processor.get_quote(text, args))
+
+    def test_get_quote_without_match(self):
+        """ Testing getting quote from the text without regex match. """
+        processor = CodeExample(self.env)
+        text = 'one\ntwo\nthree'
+        args = 'regex=four'
+        expected = 'two'
+        self.assertEqual(text, processor.get_quote(text, args))
+
+    class Repo:
+
+        def __init__(self, is_incorrect = False):
+            self.is_incorrect = is_incorrect
+
+        def get_node(self, path):
+
+            class Node:
+
+                def get_content(self):
+
+                    class Stream:
+
+                        def read(self):
+                            return 'test'
+                    return Stream()
+            if self.is_incorrect:
+                raise NoSuchNode("1", "1")
+            return Node()
+
+        def close(self):
+            pass
+
+    def test_get_sources(self):
+        """ Testing getting sources. """
+        processor = CodeExample(self.env)
+        processor.env.get_repository = lambda: self.Repo()
+        src = 'path=1'
+        expected = 'test'
+        self.assertEqual(expected, processor.get_sources(src))
+
+    def test_get_sources_with_incorrect_path(self):
+        """ Testing getting sources with incorrect path. """
+        processor = CodeExample(self.env)
+        processor.env.get_repository = lambda: self.Repo()
+        src = 'path1=1'
+        self.assertEqual(src, processor.get_sources(src))
+
+    def test_get_sources_with_missing_file(self):
+        """ Testing getting sources with incorrect path. """
+        processor = CodeExample(self.env)
+        processor.env.get_repository = lambda: self.Repo(True)
+        src = 'path=1'
+        self.assertEqual(src, processor.get_sources(src))
 
 
 from mocker import MockerTestCase
