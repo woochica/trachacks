@@ -25,6 +25,9 @@ from genshi.builder import tag
 
 import re, StringIO, inspect
 
+revison = "$Rev$"
+url     = "$URL$"
+
 KEY_REGEX    = re.compile('^([^\s]+.*)\:\s*$', re.I)
 ATTRIB_REGEX = re.compile('^(\s+)@([^@\s]+?)\:\s*(.+)?$', re.I)
 
