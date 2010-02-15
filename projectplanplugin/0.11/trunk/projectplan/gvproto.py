@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: iso-8859-15 -*-
 
 import os
 
@@ -26,6 +26,8 @@ class NodePrototype():
     '''
     nstring = ''
     for ( key, val ) in kwargs.items():
+      if key.upper() == 'TITLE' :
+        val = ppenv.htmlspecialchars(val)
       nstring += '%s="%s" ' % ( key.upper(), val )
     return nstring
 
@@ -112,9 +114,15 @@ class NodePrototype():
 
   def addmarkup( self, instr ):
     '''
-      Write an arbitrary string into the Nodestring.
+      Write an arbitrary string into the Nodestring, use the string might contain html markup
     '''
     self.node = self.node + instr + '\n'
+    
+  def add( self, instr ):
+    '''
+      Write an arbitrary string into the Nodestring, applies htmlspecialchars to generate a safe html string
+    '''
+    self.node = self.node + ppenv.htmlspecialchars(instr) + '\n'
     
   def closeimg(self):
     '''
@@ -269,7 +277,7 @@ class TicketNodePrototype( NodePrototype ):
         self.enterimg(src = img )
         self.leave(2)
         self.entertd()
-        self.addmarkup(dueline)
+        self.add(dueline)
         self.leave(5)
       return
 
@@ -313,7 +321,7 @@ class TicketNodePrototype( NodePrototype ):
 
       self.leave( 1 )
       self.entertd()
-      self.addmarkup( dueline )
+      self.add( dueline )
       self.leave( 5 )
     else:
       # TODO: insert image
@@ -346,7 +354,6 @@ class TicketNodePrototype( NodePrototype ):
              self.macroenv.tracreq.href( 'query' ), self.ticketstatus )
     self.entertd( title = 'type: '+self.tickettype, href = href,
                   color = self.color2, colspan = "1" )
-    #self.addmarkup( self.statusim )
     self.addmarkup( self.tickettypeim )
     self.leave()
 
@@ -407,9 +414,9 @@ class TicketNodePrototype( NodePrototype ):
     self.entertd()
     maxtext = 21
     if len( summary ) > maxtext:
-      self.addmarkup( summary[ 0:(maxtext-2)] + '...' )
+      self.add( summary[ 0:(maxtext-2)] + '...' )
     else:
-      self.addmarkup( summary )
+      self.add( summary )
     self.leave( 5 )
 
   def adddebugtimes( self ):
@@ -421,7 +428,7 @@ class TicketNodePrototype( NodePrototype ):
       self.entertr()
       self.entertd( TITLE = "startdate", BGCOLOR = "#FFFFFF",
                     COLOR = self.color2, COLSPAN = str( self.maxcolwide ) )
-      self.addmarkup( 'ETS %s ' % self.ticket.getextension(
+      self.add( 'ETS %s ' % self.ticket.getextension(
                         'startdate' ).strftime( "%d/%m/%y" ) )
       self.leave( 2 )
 
@@ -429,7 +436,7 @@ class TicketNodePrototype( NodePrototype ):
       self.entertr()
       self.entertd( TITLE = "finishdate", BGCOLOR = "#FFFFFF",
                     COLOR = self.color2, COLSPAN = str( self.maxcolwide ) )
-      self.addmarkup( 'ETF %s ' % self.ticket.getextension(
+      self.add( 'ETF %s ' % self.ticket.getextension(
                         'finishdate' ).strftime( "%d/%m/%y" ) )
       self.leave( 2 )
 
@@ -437,7 +444,7 @@ class TicketNodePrototype( NodePrototype ):
       self.entertr()
       self.entertd( TITLE = "buffer", BGCOLOR = "#FFFFFF",
                     COLOR = self.color2, COLSPAN = str( self.maxcolwide ) )
-      self.addmarkup( "Buffer in Days: %s " % str(
+      self.add( "Buffer in Days: %s " % str(
                         self.ticket.getextension( 'buffer' ) ) )
       self.leave( 2 )
 
@@ -531,9 +538,9 @@ class MilestoneNodePrototype( NodePrototype ):
         self.entertd( bgcolor = self.macroenv.conf.get_map_val(
                                   'ColorForStatus', key ) )
         if len( key ) > 0:
-          self.addmarkup( key + ': ' + str( val ) )
+          self.add( key + ': ' + str( val ) )
         else:
-          self.addmarkup( 'status unknown: ' + str( val ) )
+          self.add( 'status unknown: ' + str( val ) )
         self.leave( 2 )
       if ( unknown > 0 ) or ( delayedc > 0 ) or ( delayeda > 0 ):
         self.entertr()
@@ -544,7 +551,7 @@ class MilestoneNodePrototype( NodePrototype ):
           if num > 0:
             self.entertr()
             self.entertd( bgcolor = bgcol )
-            self.addmarkup( text + ': ' + str( num ) )
+            self.add( text + ': ' + str( num ) )
             self.leave( 2 )
         writeduecol( '#FF0000', 'delayed closing', delayedc )
         writeduecol( '#FF0000', 'delayed assignment', delayeda )
@@ -581,7 +588,7 @@ class MilestoneNodePrototype( NodePrototype ):
     self.openimg()
     self.leave( )
     self.entertd()
-    self.addmarkup( ' Milestone: ' + self.milestone ) # open milestone
+    self.add( ' Milestone: ' + self.milestone ) # open milestone
     self.leave( 5 )
     self.entertr()
     self.entertd()
@@ -631,7 +638,7 @@ class VersionNodePrototype( NodePrototype ):
     for ( k, v ) in msmap.items():
       self.entertr()
       self.entertd()
-      self.addmarkup( v )
+      self.add( v )
       self.leave( 2 )
     self.leave( 2 )
 
@@ -657,7 +664,7 @@ class VersionNodePrototype( NodePrototype ):
     self.openimg()
     self.leave()
     self.entertd()
-    self.addmarkup( 'Version: ' + self.version ) # open version
+    self.add( 'Version: ' + self.version ) # open version
     self.leave( 5 )
     self.entertr()
     self.entertd()

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: iso-8859-15 -*-
 
 import re
 import math
@@ -15,6 +15,9 @@ from dotrender import GVCMapXGen
 from gvproto import GVRenderProto
 
 import trac.ticket.model
+
+
+
 
 class RenderImpl():
   '''
@@ -299,16 +302,16 @@ class GVRenderer(RenderImpl):
     self.cmapxgen += 'fontcolor="'+self.macroenv.conf.get('version_fontcolor')+'"; '
     self.cmapxgen += 'color="'+self.macroenv.conf.get('version_color')+'"; '
     if vtitle!=None:
-      myversion = vtitle
+      myversion =ppenv.htmlspecialchars(vtitle)
     else:
-      myversion = 'Version: '+vstring
+      myversion = 'Version: '+ppenv.htmlspecialchars(vstring)
     # TODO: label should be better interpreted while parsing the html map
     if self.macroenv.macroid == 2 : # hierarchical rendering including closing image
       self.cmapxgen += 'label=<<TABLE BORDER="0" CELLPADDING="0" LABEL="close this version"><TR><TD>'
       self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png')+'"></IMG>'
       self.cmapxgen += '</TD><TD>'+myversion+'</TD></TR></TABLE>>; '+"\n"
     else :
-      self.cmapxgen += 'label=<%s>' % myversion
+      self.cmapxgen += 'label=<%s> ' % myversion
 
   def _writeMilestoneClusterHeader( self, mstring, mnum, mhref=None, mtitle=None ):
     '''
@@ -325,16 +328,16 @@ class GVRenderer(RenderImpl):
     self.cmapxgen += 'fontcolor="'+self.macroenv.conf.get('milestone_fontcolor')+'"; '
     self.cmapxgen += 'color="'+self.macroenv.conf.get('milestone_color')+'"; '
     if mtitle!=None:
-      mylabel = mtitle
+      mylabel =ppenv.htmlspecialchars(mtitle)
     else:
-      mylabel = 'Milestone: '+mstring
+      mylabel = 'Milestone: '+ppenv.htmlspecialchars(mstring)
     # TODO: label should be better interpreted while parsing the html map
     if self.macroenv.macroid == 2 : # hierarchical rendering including closing image
       self.cmapxgen += 'label=<<TABLE BORDER="0" CELLPADDING="0"><TR><TD>'
       self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png')+'"></IMG>'
       self.cmapxgen += '</TD><TD>'+mylabel+'</TD></TR></TABLE>>; '+"\n"
     else:
-      self.cmapxgen += 'label=<%s>' % mylabel
+      self.cmapxgen += 'label=<%s> ' % mylabel
 
 
   def _writeEnumLegendCluster( self, name, enumerator_cls, colconfkey=None, imageconfkey=None ):
@@ -470,8 +473,8 @@ class GVRenderer(RenderImpl):
         edgecolstmt = ',color="#FF0000"' # red
       else:
         edgecolstmt = ''
-      self.cmapxgen += "Ticket%s->Ticket%s [ label=<%s>%s ];" % (
-        str( v.getfield('id') ), str( d.getfield( 'id' ) ), nlabel, edgecolstmt )
+      self.cmapxgen += "Ticket%s->Ticket%s [ label=<%s> %s ];" % (
+        str( v.getfield('id') ), str( d.getfield( 'id' ) ),ppenv.htmlspecialchars(nlabel), edgecolstmt )
 
   def _cmapxgenerate( self, ticketset ):
     '''
@@ -487,7 +490,7 @@ class GVRenderer(RenderImpl):
     self.cmapxgen += 'edge [fontsize=9, color="#808080"]; '
 
     self.cmapxgen += 'subgraph clusterFrame { URL="'+self.FRAME_ADDR
-    self.cmapxgen += '"; label="'+self.FRAME_LABEL+'"; fontcolor="black"; color="white"; '
+    self.cmapxgen += '"; label="'+ppenv.htmlspecialchars(self.FRAME_LABEL)+'"; fontcolor="black"; color="white"; '
 
     self.withbufs = ( 'withbuffer' in self.macroenv.macroargs )
 

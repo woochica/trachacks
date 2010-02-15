@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import time
 import subprocess
 
 import ppenv
@@ -93,7 +94,7 @@ class GVCMapXGen():
         # execute: dot -v -Tcmapx -o fn.map -Tpng -o fn.png fn.dot >fn.log 2>&1
         dotexec = self.config.get( 'dotpath' )
         if os.path.isabs( dotexec ) and ( not os.path.isfile( dotexec ) ):
-          raise Exception( "DOT Executable not found" );
+          raise Exception( "DOT Executable not found: "+dotexec );
         gvctx = subprocess.Popen(
                   executable = dotexec,
                   args = [ "-v",
@@ -105,6 +106,7 @@ class GVCMapXGen():
                   stdout = logfobj,
                   stderr = subprocess.STDOUT )
         exitstatus = gvctx.wait()
+        time.sleep(10) # just to be sure, wait 3 sec, ticket #6541
         #pid, exitstatus = os.waitpid( gvctx.pid, 0 )
         if exitstatus != 0:
           # simply raise an exception with link to the logfile

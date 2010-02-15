@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: iso-8859-15 -*-
 
 import re
 import datetime
@@ -944,3 +944,16 @@ class PPEnv():
       return True
     else:
       return False
+
+
+
+def htmlspecialchars(text):
+  '''
+    replace special characters (like in PHP)
+  '''
+  text = text.replace('&', '&amp;')
+  text = text.replace('"', '&quot;')
+  text = text.replace('<', '&lt;')
+  text = text.replace('>', '&gt;')
+  text = text.replace("'", '&#039;')
+  return text
