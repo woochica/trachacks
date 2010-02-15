@@ -18,6 +18,9 @@ class BlogSubscriber(Component):
         resource_dir = resource_filename(__name__, 'templates')
         return [resource_dir]
 
+    def get_htdocs_dirs(self):
+        return []
+
     #IAnnouncementSubscriber
     def get_subscription_realms(self):
         return ('blog',)
