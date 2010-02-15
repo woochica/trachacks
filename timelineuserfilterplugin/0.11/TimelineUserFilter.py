@@ -5,7 +5,7 @@ from trac.web.api import ITemplateStreamFilter
 from genshi.builder import tag
 from genshi.filters import Transformer
 
-author = "daveappendix"
+author = "daveappendix, asic_druide"
 
 class TimelineUserFilterPlugin(Component):
     """Filters timeline events by user.
