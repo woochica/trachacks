@@ -25,7 +25,7 @@ class extendedcamelcase(Component):
         from trac.wiki.formatter import Formatter
         def wikipagename_link(formatter, match, fullmatch):
             return self._format_link(formatter, 'wiki', match, match)
-        yield (r"(?P<name>\b([A-Z0-9]+[a-z0-9]*)+[A-Z0-9]+[a-z0-9]+\b)" , wikipagename_link)
+        yield (r"(?P<name>\b([A-Z]+[a-z0-9]*)+[A-Z]+[a-z0-9]+\b)" , wikipagename_link)
 
 
     def get_link_resolvers(self):
