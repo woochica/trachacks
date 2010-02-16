@@ -1,0 +1,351 @@
+body {
+    font: normal 9pt Verdana, Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #000;
+	margin: 0 50px;
+	background: #4B4D4D url(fondo.gif);
+}
+
+#PageHeader {
+    background: #98AFCE url("bgHMid.jpg") no-repeat right 21px;
+    color: #eee;
+    font-size: 16pt;
+	padding-bottom: 1px;
+}
+
+* html #PageHeader {
+	height: 56px;
+}
+
+#PageHeader #top {
+	background: #8CA2BE;
+	border-bottom: #AAA solid 2px;
+}
+
+#PageHeader #title {
+	margin-left: 9px;
+	font-size: 19px;
+}
+#PageHeader #logo {
+	background: #CCC url("logo.jpg") no-repeat bottom;
+	width: 50px;
+}
+
+#PageHeader #tdSearch {
+	width: 220px;
+}
+
+* html #PageHeader #tdSearch div {
+	margin-left: auto;
+	width: 220px;
+}
+
+#PageHeader a, #PageHeader a:hover {
+    text-decoration: none;
+    color: #fff;
+    border: none;
+    background: none;
+}
+
+#PageHeader a:hover {
+    text-decoration: underline;
+}
+
+#PageHeader ul {
+    font-size: 8pt;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+	padding: 2px 1px;
+	text-align: right;
+	border-right: 11px solid #CCC;
+}
+
+#PageHeader li {
+    display: inline;
+    padding: 0 6px 0 6px;
+}
+
+#PageHeader table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+#projects {
+	background: #CCC url(bgProjects.jpg) repeat-y right top;
+	padding-left: 10px;
+	width: 112px;
+}
+#projects a {
+	color: #666;
+	font-size: 12px;
+}
+#projects a:hover {
+	text-decoration: none;
+}
+
+#PageHeader table#hMid {
+	margin: 6px 0;
+}
+
+#search {
+	margin: 0;
+	padding: 6px 6px 5px;
+}
+#search #proj-search {
+	background: url(inputbg.jpg) repeat-x;
+	border: #D7D7D7 solid 1px;
+}
+
+#MenuBar {
+    background-color: #98AFCE;
+	background: url(bgMenu.jpg) repeat;
+    margin: 0;
+    color: #eee;
+    font-weight: bold;
+	float: left;
+	width: 100%;
+}
+
+#MenuBar a {
+    text-decoration: none;
+    color: #666;
+    border-right: 1px solid #BBB;
+	padding: 4px 7px 7px;
+}
+
+#MenuBar a:hover {
+    color: #000;
+    background: url(bgMenuActive.jpg);
+	padding: 6px 7px 7px;
+}
+
+#MenuBar .active a {
+	color: #333;
+	background: url(bgMenuActive.jpg);
+	padding: 5px 7px 6px;
+	position: relative;
+	top: -2px;
+}
+
+#MenuBar ul, #SubMenuBar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+	white-space: nowrap;
+}
+
+#MenuBar ul {
+	float: left;
+}
+#SubMenuBar ul {
+	float: right;
+}
+
+#MenuBar li, #SubMenuBar li {
+    border-right: 1px solid #fff;
+    padding: 0 6px 0 6px;
+    white-space: nowrap;
+}
+#MenuBar li {
+	border: none;
+	padding: 5px 0 4px;
+	float: left;
+}
+
+#MenuBar a:link, #MenuBar a:visited {
+	border-bottom: none;
+}
+
+#MenuBar .last, #SubMenuBar .last {
+    border-right: none;
+}
+
+#SubMenuBar .active a {
+    color: #FFF;
+}
+
+#SubMenuBar {
+    background: #CCC;
+    color: #eee;
+    font: normal 11px Verdana, Arial, sans-serif;
+    padding: 4px 1px 0px;
+	text-align: right;
+	height: 14px;
+	clear: both;
+}
+
+#SubMenuBar li {
+	border-right: #999 solid 1px;
+	float: left;
+}
+
+#SubMenuBar a {
+    text-decoration: none;
+    color: #555;
+    border: none;
+}
+
+#SubMenuBar a:hover {
+    color: #000;
+    background: none;
+}
+
+#MenuBarShadow {
+    background: url("menu-shadow.png") repeat-x;
+    height: 4px;
+    margin: 0;
+    padding: 0;
+	border-left: 2px solid #CCC;
+	border-right: 2px solid #CCC;
+	border-top: 3px solid #CCC;
+	clear: both;
+}
+
+#Container {
+    overflow: hidden;
+    padding: 12px;
+	background: #FFF;
+	border-bottom: 16px solid #CCC;
+	border-left: 2px solid #CCC;
+	border-right: 2px solid #CCC;
+}
+
+#Footer {
+    border-top: 6px solid #98AFCE;
+    color: #EEE;
+    font-size: 8t;
+    padding: 12px 19px;
+    margin-bottom: 25px;
+    background-color: #8CA2BE;
+	text-align: right;
+	font-size: 11px;
+}
+
+#Footer a {
+    color: #888;
+    text-decoration: underline;
+}
+
+h1 {
+    font-size: 20pt;
+}
+
+h2 {
+    font-size: 18pt;
+    /*border-style: solid;
+    border-color: #888;
+    border-width: 0 0 1px 0;*/
+    margin-top: 24px;
+}
+
+h3 {
+
+}
+
+@media print {
+    .noprint {
+        display: none;
+    }
+}
+
+:link, :visited , dt em{
+	color: #3396FF;
+}
+:link:hover, :visited:hover {
+	color: #565E68;
+}
+
+#content.admin h1 {
+	float: none;
+}
+
+a.missing:link, a.missing:visited, a.missing, span.missing, a.forbidden, span.forbidden {
+	color: #777;
+}
+
+.milestone .info h2 em {
+	color: #3396FF !important;
+}
+
+div.announcer_preference_title {
+	background: #98AFCE;
+}
+
+.announcer_preference_options ul {
+    list-style-type: none;
+}
+
+#q {
+	background: #FFF url(inputbg.jpg) repeat-x;
+}
+
+option {
+    background: #FFF;
+}
+
+textarea {
+	padding: 0.25em 0.5em;
+}
+
+* html label input {
+	background: #FFF !important;
+}
+
+textarea, input, #comment{
+	border: #888 solid 1px;
+}
+
+select {
+    border: #888 solid 1px;
+	padding: 0.15em 0 0.15em 0.3em;
+	background: #FFF url(inputbg.jpg) repeat-x;
+}
+
+input[type="text"], input.textwidget, textarea {
+	border: 1px solid #888;
+	background: url(inputbg.jpg) repeat-x;
+}
+
+input[type="text"]:focus, input.textwidget:focus, textarea:focus {
+	border: 1px solid orange;
+}
+
+* html .editor-toggle input, * html fieldset input {
+	background: none !important;
+}
+
+.ac_results {
+	width: 280px;
+}
+
+.ac_results li {
+	width: 280px;
+}
+
+#properties table td {
+	vertical-align: top;
+}
+
+.overflow {
+	overflow-x: auto;
+	overflow-y: hidden;
+}
+
+h2.report-result {
+	margin-top: 0.5em;
+} 
+
+.down {
+	background: url(down.jpg) no-repeat;
+	height: 96px;
+	width: 91px;
+	display: block;
+	margin: 20px auto 10px;
+	border: none;
+}
+
+.down span {
+	display: none;
+}

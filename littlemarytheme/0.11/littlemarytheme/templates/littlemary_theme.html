@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC
+  "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+  
+  <head py:match="head" py:attrs="select('@*')">
+    ${select('*')}
+  </head>
+
+  <?python from genshi import HTML ?>
+
+  <body py:match="body" py:attrs="select('@*')">
+    <div id="PageHeader" class="noprint">
+	  <table>
+		<tr id="top">
+			<td id="logo" rowspan="2">
+			</td>
+			<td id="projects">
+				<a href="http://issuetracker.ddit/projects/" onfocus="this.blur();">Proyectos</a>
+			</td>
+			<td colspan="2">
+			  <ul>
+				<li py:for="idx, item in enumerate(chrome.nav['metanav'])">
+					${HTML(item.label)}
+				</li>
+			  </ul>
+			</td>
+		</tr>
+		<tr id="mid">
+			<td colspan="2">
+				<a id="title" href="${chrome.logo.link}">${chrome.logo.alt}</a>	  
+			</td>
+			<td id="tdSearch">
+				<form id="search" action="${href.search()}" method="get">
+					<div py:if="'SEARCH_VIEW' in perm">
+					   <label for="proj-search">Busqueda:</label>
+					   <input type="text" id="proj-search" name="q" size="18" accesskey="f" value="" />
+					   <input type="submit" value="Buscar" />
+					</div>
+				 </form>
+			</td>
+		</tr>
+	  </table>
+    </div>
+
+    <div id="MenuBar" class="noprint">
+      <div id="MenuBarHighlight">
+      <ul>
+        <li py:for="idx, item in enumerate(chrome.nav['mainnav'])" class="${classes(first_last(idx, chrome.nav['mainnav']), active=item.active)}">
+          ${item.label}
+        </li>
+      </ul>
+      </div>
+    </div>
+
+	<py:if test="len(chrome.ctxtnav) > 0">
+      <div id="SubMenuBar" class="noprint">
+        <ul>
+          <li py:for="i, elm in enumerate(chrome.ctxtnav)" class="${classes(first_last(i, chrome.ctxtnav), active=elm.active)}">$elm</li>
+        </ul>
+      </div>
+	</py:if>
+
+    <div id="MenuBarShadow" class="noprint"></div>
+      
+    <div id="Container">
+      ${select('*')}
+    </div>
+
+    <div id="Footer" class="noprint">
+      © 2009 Proyectos AFIP / Trac<br/>
+    </div>
+  </body>
+</html>
+      
