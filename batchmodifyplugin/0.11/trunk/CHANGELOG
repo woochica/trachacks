@@ -1,3 +1,24 @@
+***********************************************
+** BatchModifyPlugin 0.4 (February 16, 2010) **
+***********************************************
+
+This release fixes a bug preventing fields in the form from being enabled. It also adds a couple
+of new features. New keywords will now be merged with existing keywords on each ticket and the
+restrict_owner setting will be respected in the form.
+
+Thanks to miau for the patch for #5810.
+
+Download URL:
+ * http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags/BatchModify-0.4.0-py2.5.egg
+ * http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags/BatchModify-0.4.0-py2.6.egg 
+
+Bug Fixes:
+ * #6516 - Checking a property doesn't enable its field (http://trac-hacks.org/ticket/6516)
+
+Enhancements
+ * #2311 - New keywords are now merged with existing keywords on each ticket (http://trac-hacks.org/ticket/2311)
+ * #5810 - restrict_owner option now respected in form (http://trac-hacks.org/ticket/5810)
+
 **********************************************
 ** BatchModifyPlugin 0.3 (January 26, 2010) **
 **********************************************

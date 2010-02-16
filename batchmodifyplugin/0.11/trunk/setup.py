@@ -7,12 +7,12 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'BatchModify'
-VERSION = '0.3.0'
+VERSION = '0.4.0'
 
 setup(
     name=PACKAGE, version=VERSION,
     description='Allows batch modification of tickets',
-    author="Ashwin Phatak", author_email="ashwinpphatak@gmail.com",
+    author="Brian Meeker", author_email="meeker.brian@gmail.com",
     license='BSD', url='http://trac-hacks.org/wiki/BatchModifyPlugin',
     packages = ['batchmod'],
     package_data={
