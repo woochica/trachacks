@@ -1,0 +1,137 @@
+/* Using :
+	The perfect fluid width layout: http://css-tricks.com/the-perfect-fluid-width-layout/ */
+
+body {
+	background: black url(bg_header.png) repeat-x scroll left top;
+	margin: 0px;
+}
+
+a, :link, :visited {
+	color: #FF7E00;
+	text-decoration: none;
+}
+
+#page-wrap {
+	min-width: 780px;
+	max-width: 1260px;
+	margin: auto;
+	padding: 10px;
+}
+
+	
+#custom-header {
+	margin-bottom: 10px;
+	text-align: right;
+	}
+	#header_logo {
+		float: left;
+	}
+	#header_logo a {
+		border: none;
+	}
+	#header_logo a:hover {
+		background: transparent;
+	}
+	#header_searchbar {
+}
+
+#custom-metanav {
+	color: white;
+	}
+	#custom-metanav ul {
+		margin-right: 45px;
+	}
+	#custom-metanav ul li {
+	}
+	#custom-metanav ul li a {
+		color: white;
+		background-image: url(button_background.png);
+	}
+	#custom-metanav ul li a:hover {
+		text-decoration: underline;
+}
+
+#custom-mainnav {
+	text-align: right;
+	margin-right: 30px;
+	}
+	#custom-mainnav ul {
+	}
+	#custom-mainnav ul li {
+		padding: 0px 0px 0px 4px;
+	}
+	#custom-mainnav ul li a {
+		-moz-border-radius: 5px 5px 0px 0px;
+
+		background: #ff7e00;
+		color: white;
+		font-weight: bold;
+
+		padding: 8px 0px;
+		margin: 0;
+		width: 120px;
+
+		font-size: 10px;
+		font-weight: bold;
+		text-align: center;
+	}
+	#custom-mainnav ul li.active a, 
+        #custom-mainnav ul li.active a:hover {
+		background: white;
+		color: black;
+	}
+	#custom-mainnav ul li a:hover {
+		background: #f05400;
+		color: white;
+}
+
+#custom-contextnav {
+	float: right;
+	margin-right: 20px;
+	margin-top: 10px;
+	}
+	#custom-contextnav ul {
+	}
+	#custom-contextnav ul li {
+	}
+	#custom-contextnav ul li a {
+		display: inline;
+	}
+	#custom-contextnav ul li a:hover {
+}
+
+#main-content {
+	background: white;
+	padding: 20px;
+	-moz-border-radius-topleft: 10px;
+	-moz-border-radius-topright: 10px;
+	min-height: 350px;
+}
+
+#custom-footer {
+	background: #FF7E00;
+	text-align: center;
+	color: white;
+	padding: 5px;
+	-moz-border-radius-bottomleft: 10px;
+	-moz-border-radius-bottomright: 10px;
+	background: black url(bg_footer.png) repeat-x scroll left bottom;
+}
+
+.custom-nav {
+	font-size: 10px;
+	}
+	.custom-nav ul {
+		display: inline;
+	}
+	.custom-nav ul li {
+		display: table-cell;
+	}
+	.custom-nav ul li a {
+		display: block;
+		border: none;
+		margin-left: 5px;
+		padding: 1px 6px;
+		-moz-border-radius: 2px;
+}
+

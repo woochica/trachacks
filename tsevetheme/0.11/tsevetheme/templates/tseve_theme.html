@@ -1,0 +1,84 @@
+<!-- TSEVE Theme for Trac 
+	Created by Havok (Carlos Jenkins)
+	Created on september 30 2009 
+	Special thanks to : 
+		http://css-tricks.com/the-perfect-fluid-width-layout/
+-->
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+
+<!-- Utility Function Definition -->
+<div py:def="navigation(category)" id="custom-${category}" class="custom-nav">
+	<ul py:if="chrome.nav[category]">
+		<li py:for="idx, item in  enumerate(chrome.nav[category])"
+		    class="${classes(first_last(idx, chrome.nav[category]), active=item.active)}">${item.label}</li>
+	</ul>
+</div>
+
+<body py:match="body" py:attrs="select('@*')">
+
+	<div id="page-wrap">
+
+		<!-- Header -->
+		<div id="custom-header">
+
+			<!-- Logo -->
+			<div id="header_logo" style="height: ${chrome.logo.height}px;">
+				<a href="${chrome.logo.link}">
+					<img src="${chrome.logo.src}" 
+					     alt="${chrome.logo.alt}" 
+					     width="${chrome.logo.width}" 
+					     height="${chrome.logo.height}" />
+				</a>
+			</div>
+
+			<!-- Search bar -->
+			<div id="header_searchbar">
+				<form id="searchform" action="${href.search()}" method="get">
+					<div py:if="'SEARCH_VIEW' in perm">
+						<input type="text" id="proj-search" name="q" size="18" accesskey="f" value="" />
+						<input type="submit" value="Search" />
+					</div>
+				</form>
+			</div>
+
+			<div style="clear: both;" />
+
+			<!-- Metanav (Login, Preferences, Help/Guide, etc) -->
+			${navigation('metanav')}
+
+		</div>
+
+		<!-- Mainnav (Wiki, Timeline, Roadmap, Browse Source, View Tickets, New Ticket, Admin, etc) -->
+		${navigation('mainnav')}
+
+		<!-- Contextnav (Start Page, Index, History, Last Change, etc) -->
+		<div id="custom-contextnav" class="custom-nav">
+			<!-- <ul py:if="chrome.ctxtnav"> -->
+			<ul>
+				<li py:for="i, elm in enumerate(chrome.ctxtnav)" 
+				    class="${i == 0 and 'first ' or None}${i+1 == len(chrome.ctxtnav) and 'last' or None}">$elm</li>
+			</ul>
+		</div>
+	
+		<!-- Main content -->
+		<div id="main-content">
+			${select('*|text()')}
+			<div style="clear: both;" />
+		</div>
+
+		<!-- Footer -->
+		<div id="custom-footer">
+			<p>${chrome.footer}</p>
+		</div>
+	
+	</div>
+
+</body>
+
+</html>
