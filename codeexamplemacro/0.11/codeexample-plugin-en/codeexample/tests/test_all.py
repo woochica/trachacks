@@ -8,11 +8,14 @@ from trac.versioncontrol.api import NoSuchNode
 from trac.web.href import Href
 from trac.mimeview.api import Context
 from trac.wiki.formatter import Formatter
+from trac.core import TracError
 from codeexample import CodeExample
 import imp
+import mocker
+from mocker import MockerTestCase
 
 
-class CodeExampleTestCase(unittest.TestCase):
+class CodeExampleTestCase(MockerTestCase):
     """ Class with test cases for code example processor. """
 
     def setUp(self):
@@ -191,10 +194,10 @@ class CodeExampleTestCase(unittest.TestCase):
         '<div class="system-message">\n    <strong>' \
         'During the example analyzing the following problems' \
         ' appear:</strong>\n    <ul>\n        ' \
-        '<li>Unsupported version control system "svn": Can\'t find' \
-        ' an appropriate component, maybe the corresponding plugin was ' \
-        'not enabled? </li>\n    </ul>\n    </div>\n    \n    ' \
-        '<div class="code">' \
+        '<li>Unsupported version control system "svn": Can\'t find an' \
+        ' appropriate component, maybe the corresponding plugin was not' \
+        ' enabled? </li>\n    </ul>\n    </div>' \
+        '\n    \n    <div class="code">' \
         '\n        <pre id="codelink1">ТЕСТ</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
@@ -215,60 +218,77 @@ class CodeExampleTestCase(unittest.TestCase):
         expected = 'two'
         self.assertEqual(text, processor.get_quote(text, args))
 
-    class Repo:
+    class RepositoryManager:
 
         def __init__(self, is_incorrect = False):
             self.is_incorrect = is_incorrect
 
-        def get_node(self, path):
+        def get_repository(self, param):
 
-            class Node:
+            class Repo:
 
-                def get_content(self):
+                def __init__(self, is_incorrect = False):
+                    self.is_incorrect = is_incorrect
 
-                    class Stream:
+                def get_node(self, path):
 
-                        def read(self):
-                            return 'test'
-                    return Stream()
-            if self.is_incorrect:
-                raise NoSuchNode("1", "1")
-            return Node()
+                    class Node:
 
-        def close(self):
+                        def get_content(self):
+
+                            class Stream:
+
+                                def read(self):
+                                    return 'test'
+                            return Stream()
+                    if self.is_incorrect:
+                        raise NoSuchNode("1", "1")
+                    return Node()
+
+            return Repo(self.is_incorrect)
+
+        def shutdown(self):
             pass
 
     def test_get_sources(self):
         """ Testing getting sources. """
         processor = CodeExample(self.env)
-        processor.env.get_repository = lambda: self.Repo()
+        processor.get_repos_manager = lambda: self.RepositoryManager()
         src = 'path=1'
         expected = 'test'
+        self.assertEqual(expected, processor.get_sources(src))
+
+    def test_broken_repos(self):
+        """ Testing broken repository. """
+
+        def get_broken_repos():
+            raise TracError('')
+
+        processor = CodeExample(self.env)
+        processor.get_repos_manager = get_broken_repos
+        src = ''
+        expected = ''
         self.assertEqual(expected, processor.get_sources(src))
 
     def test_get_sources_with_incorrect_path(self):
         """ Testing getting sources with incorrect path. """
         processor = CodeExample(self.env)
-        processor.env.get_repository = lambda: self.Repo()
+        processor.get_repos_manager = lambda: self.RepositoryManager()
         src = 'path1=1'
         self.assertEqual(src, processor.get_sources(src))
 
     def test_get_sources_with_missing_file(self):
         """ Testing getting sources with incorrect path. """
         processor = CodeExample(self.env)
-        processor.env.get_repository = lambda: self.Repo(True)
+        processor.get_repos_manager = lambda: self.RepositoryManager(True)
         src = 'path=1'
         self.assertEqual(src, processor.get_sources(src))
-
-
-from mocker import MockerTestCase
 
 
 class ImportTestCase(MockerTestCase):
 
     def test_import(self):
         """ Testing with pygments not installed. """
-        import mocker
 
         import_stub = self.mocker.replace('__builtin__.__import__')
         self.expect(import_stub(mocker.MATCH(lambda x: x.count('pygments')),

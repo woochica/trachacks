@@ -22,7 +22,7 @@ import re
 from trac.wiki.macros import IWikiMacroProvider
 from trac.core import implements, Component, TracError
 from trac.util.text import to_unicode
-from trac.versioncontrol.api import NoSuchNode
+from trac.versioncontrol.api import NoSuchNode, RepositoryManager
 from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome, \
     Markup, add_script
 from trac.config import Option
@@ -116,10 +116,15 @@ class CodeExample(Component):
         else:
             return '\n'.join(text.split('\n')[begin_idx:])
 
+    def get_repos_manager(self):
+        """ Get repository manager. """
+        return RepositoryManager(self.env)
+
     def get_sources(self, src):
         """ Try to get sources from the required path. """
         try:
-            repos = self.env.get_repository()
+            repo_mgr = self.get_repos_manager()
+            repos = repo_mgr.get_repository(None)
         except TracError, exception:
             self._render_exceptions.append(exception)
             return src
@@ -128,6 +133,9 @@ class CodeExample(Component):
                                    src, re.MULTILINE)
             if path_match:
                 path = path_match.group(1)
+                #import ipdb
+                #ipdb.set_trace()
+
                 node = repos.get_node(path)
                 stream = node.get_content()
                 src = self.get_quote(to_unicode(stream.read()), src)
@@ -136,7 +144,7 @@ class CodeExample(Component):
         except NoSuchNode, exception:
             self._render_exceptions.append(exception)
         finally:
-            repos.close()
+            repo_mgr.shutdown()
         return src
 
     def pygmentize_args(self, args, have_pygments, is_path):
