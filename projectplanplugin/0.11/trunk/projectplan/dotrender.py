@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: iso-8859-15 -*-
 
 import os
 import time
@@ -97,7 +97,9 @@ class GVCMapXGen():
           raise Exception( "DOT Executable not found: "+dotexec );
         gvctx = subprocess.Popen(
                   executable = dotexec,
-                  args = [ "-v",
+                  args = [
+                          "-v",
+                          "-Kdot", # mandatory at least since graphviz 2.26.3
                           "-Tcmapx",
                           "-o" + self.cmapxfile,
                           "-Tpng", "-o" + self.imgfile,

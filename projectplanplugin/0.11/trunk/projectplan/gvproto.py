@@ -40,7 +40,7 @@ class NodePrototype():
       self.node += '<TABLE ' + self._codeargs( **kwargs ) + '>'
     else:
       self.node += '<TABLE>'
-    self.outrostack.append( '</TABLE>' )
+    self.outrostack.append( "</TABLE>\n" )
 
   def entertr( self , **kwargs ):
     '''
