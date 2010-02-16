@@ -44,6 +44,11 @@ class GVCMapXGen():
       else:
         self.cached = True
 
+    # if wished by the user, the cache will not be used
+    if self.env.get_args('ppforcereload') == '1':
+      self.cached = False
+      self.centry.wipe()
+
     # build absolute filenames, no cache entries written at the moment!
     self.dotfile = self.centry.getFileName( '.dot' )
     self.cmapxfile = self.centry.getFileName( '.map' )

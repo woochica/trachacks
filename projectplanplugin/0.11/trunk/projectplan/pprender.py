@@ -277,6 +277,9 @@ class GVRenderer(RenderImpl):
   # (all other Nodes and Cluster Frames are in this rect) Area
   FRAME_ADDR = "http://dummy.invalid"
   FRAME_LABEL = "Project Plan"
+  
+  # if true the cache will not be used
+  ppforcereload = False
 
   def __init__(self,macroenv):
     '''
@@ -286,6 +289,12 @@ class GVRenderer(RenderImpl):
     self.cmapxgen = None
     self.imgpath = ppenv.PPImageSelOption.absbasepath()
     macroenv.tracenv.log.warning("GVRenderer: %s " % repr(macroenv) )
+    #macroenv.tracenv.log.warning("force reload: ppforcereload=%s " % repr(macroenv.get_args('ppforcereload') ) )
+    if macroenv.get_args('ppforcereload') == '1' :
+      self.ppforcereload = True
+
+  def isForceReload(self):
+    return self.ppforcereload
 
   def _writeVersionClusterHeader( self, vstring, vnum, vhref=None, vtitle=None ):
     '''
@@ -643,10 +652,15 @@ class GVRenderer(RenderImpl):
     if (self.macroenv.get_args('ppdep_from') != None) and (self.macroenv.get_args('ppdep_to') != None):
       add_dependency = self.macroenv.get_args('ppdep_from')+'_'+self.macroenv.get_args('ppdep_to')
 
+    forcereload =''
+    if self.isForceReload() :
+      forcereload = 'ppforcereload=1'
+      dte += str(datetime.datetime.now().microsecond)
+
     if not error:
       outermarkup = tag.div( class_="project_image",
-                             style='height:%dpx; width:%dpx; position:relative; background-image:url(%s?%s&%s)'
-                                                            % ( backgroundHeight, backgroundWidth, filename_png_www, dte, add_dependency ) )(
+                             style='height:%dpx; width:%dpx; position:relative; background-image:url(%s?%s&%s%s)'
+                                                            % ( backgroundHeight, backgroundWidth, filename_png_www, dte, add_dependency, forcereload ) )(
                             [
                               tag.div( style="position:absolute; top:1px; left:1px;" ),
                               innermarkup

@@ -165,7 +165,7 @@ class PPCacheContentProvider(Component):
         serve the request but check wether the file realy is in cache
         ( absolute second part, f.e. an attemp to access restricted areas )
         for those request, trying access files anywhere, serve an Exception,
-        otherwise let let it handle send_file, which checks for existence and serves
+        otherwise let it handle send_file, which checks for existence and serves
         either the file or an error
       '''
       if req.path_info.startswith('/'):
@@ -336,11 +336,21 @@ class ProjectPlanMacro(WikiMacroBase):
 
         macroenv = PPEnv( self.env, formatter.req, content )
         ts = ppFilter( macroenv ).get_tickets()
+        
+        if macroenv.get_args('ppforcereload') == '1':
+          noteForceReload = tag.span('The image was recreated.', class_ = 'ppforcereloadinfo' )
+        else:
+          noteForceReload = tag.span()
+        
         return tag.div(
                  tag.div( tag.a( name=macroenv.macroid )( 'Projectplan '+macroenv.macroid  ) ),
                  ppRender().render( macroenv, ts ),
                  tag.div(  
-                         tag.div( 'It took '+str((datetime.datetime.now()-macrostart).microseconds/1000)+'ms to generate this visualization.' ), 
-                         id = 'ppstat' ),
+                         tag.div( 
+			    tag.span('It took '+str((datetime.datetime.now()-macrostart).microseconds/1000)+'ms to generate this visualization. ' , class_ = 'ppstat' ),
+			    noteForceReload,
+			    tag.span(tag.a('Force recreation of the image.', href='?ppforcereload=1', class_ = 'ppforcereload' ) )
+			    )
+                         )
                  )
                  #tag.div( id = 'ppstat' ) )
