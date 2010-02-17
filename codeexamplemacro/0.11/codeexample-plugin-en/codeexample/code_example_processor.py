@@ -133,9 +133,6 @@ class CodeExample(Component):
                                    src, re.MULTILINE)
             if path_match:
                 path = path_match.group(1)
-                #import ipdb
-                #ipdb.set_trace()
-
                 node = repos.get_node(path)
                 stream = node.get_content()
                 src = self.get_quote(to_unicode(stream.read()), src)
@@ -151,7 +148,7 @@ class CodeExample(Component):
         """ Process args via Pygments. """
         actualize = lambda src: self.get_sources(src) if is_path else src
         if have_pygments:
-            match = re.match('^#!(.+)\s*\n((.*\s*)*)$', args, re.MULTILINE)
+            match = re.match('^#!(\w+)\s+((.*\s*)*)$', args, re.MULTILINE)
             if match:
                 return self.render_as_lang(match.group(1),
                                            actualize(match.group(2)))
