@@ -3,7 +3,8 @@
      xmlns:xi="http://www.w3.org/2001/XInclude">
   <div class="title">
 	<span class="select_code" id="link$index">SELECT ALL</span>
-	$title:
+	<a href="$link" py:if="link">$title:</a>
+	<span py:if="not link">$title:</span>
 </div>
     <py:if test="exceptions">
     <div class="system-message">

@@ -72,6 +72,7 @@ class CodeExample(Component):
         super(CodeExample, self).__init__()
         self._render_exceptions = []
         self._index = 0
+        self._link = None
 
     def get_macros(self):
         """Yield the name of the macro based on the class name."""
@@ -93,32 +94,79 @@ class CodeExample(Component):
             self._render_exceptions.append(exception)
         return content
 
-    def get_quote(self, text, args):
+    def get_analyzed_content(self, text, required_lines):
+        """ Strip text for required lines. """
+        lines = list(enumerate(text.split('\n')))
+        if required_lines:
+            lines_range = self.get_range(required_lines)
+            lines = filter(lambda i: i[0] + 1 in lines_range, lines)
+        return lines
+
+    def get_quote(self, text, args, required_lines=None, focus_line=None):
         """ Try to get the required quote from the text. """
         regex_match = re.search('^\s*regex\s*=\s*"?(.+?)"?\s*$',
                                    args, re.MULTILINE)
         lines_match = re.search('^\s*lines\s*=\s*(\d+)\s*$',
                                    args, re.MULTILINE)
         begin_idx = 0
+        content = self.get_analyzed_content(text, required_lines)
         if regex_match:
             regex = regex_match.group(1)
-            for s in text.split('\n'):
-                if re.search(regex, s):
+            for begin_idx, s in list(enumerate(content)):
+                if re.search(regex, s[1]):
                     break
-                begin_idx += 1
             else:
                 err = 'Nothing is match to regex: ' + regex
                 self._render_exceptions.append(err)
                 begin_idx = 0
+        if begin_idx and self._link and not focus_line:
+            self._link += "#L%d" % (list(content)[begin_idx][0] + 1)
+        if self._link and focus_line:
+            self._link += "#L%d" % focus_line
+        simple_content = [i[1] for i in content]
         if lines_match:
             lines = int(lines_match.group(1))
-            return '\n'.join(text.split('\n')[begin_idx:lines + begin_idx])
+            return '\n'.join(simple_content[begin_idx:lines + begin_idx])
         else:
-            return '\n'.join(text.split('\n')[begin_idx:])
+            return '\n'.join(simple_content[begin_idx:])
 
     def get_repos_manager(self):
         """ Get repository manager. """
         return RepositoryManager(self.env)
+
+    def parse_path(self, path):
+        """ Parse source path. """
+        path_match = re.search(
+            '^\s*path\s*=\s*(?P<path>.+?)(?P<rev>@\w+)?' \
+            '(?P<lines>:\d+(-\d+)?(,\d+(-\d+)?)*)?(?P<focus>#L\d+)?\s*$',
+            path, re.MULTILINE)
+        if path_match:
+            path = path_match.group('path')
+            rev = path_match.group('rev')
+            if rev:
+                rev = rev[1:]
+            lines = path_match.group('lines')
+            if lines:
+                lines = lines[1:]
+            focus_line = path_match.group('focus')
+            if focus_line:
+                focus_line = int(focus_line[2:])
+            return path, rev, lines, focus_line
+        return None, None, None, None
+
+    @staticmethod
+    def get_range(lines):
+        """ Get range from lines string. """
+        groups = lines.split(',')
+        lines_range = set()
+        for group in groups:
+            numbers = group.strip().split('-')
+            if len(numbers) == 2:
+                num1, num2 = numbers
+                lines_range |= set(range(int(num1), int(num2) + 1))
+            else:
+                lines_range.add(int(numbers[0]))
+        return sorted(lines_range)
 
     def get_sources(self, src):
         """ Try to get sources from the required path. """
@@ -129,13 +177,13 @@ class CodeExample(Component):
             self._render_exceptions.append(exception)
             return src
         try:
-            path_match = re.search('^\s*path\s*=\s*(.+)\s*$',
-                                   src, re.MULTILINE)
-            if path_match:
-                path = path_match.group(1)
-                node = repos.get_node(path)
+            path, rev, lines, focus_line = self.parse_path(src)
+            if path:
+                node = repos.get_node(path, rev)
+                self._link = self.env.href.browser(node.path)
                 stream = node.get_content()
-                src = self.get_quote(to_unicode(stream.read()), src)
+                src = self.get_quote(to_unicode(stream.read()), src, lines,
+                                     focus_line)
             else:
                 self._render_exceptions.append('Path element is not found.')
         except NoSuchNode, exception:
@@ -182,6 +230,7 @@ class CodeExample(Component):
     def expand_macro(self, formatter, name, args):
         """ Expand macro parameters and return required html. """
         self._render_exceptions = []
+        self._link = None
         self._index += 1
         add_stylesheet(formatter.req, '/pygments/%s.css' %
                        formatter.req.session.get('pygments_style',
@@ -194,6 +243,7 @@ class CodeExample(Component):
         data.update({'args': Markup(args)})
         data.update({'exceptions': self._render_exceptions})
         data.update({'index': self._index})
+        data.update({'link': self._link})
         req = formatter.req
         return Chrome(self.env).render_template(req, 'codeexample.html', data,
             None, fragment=True).render(strip_whitespace = False)

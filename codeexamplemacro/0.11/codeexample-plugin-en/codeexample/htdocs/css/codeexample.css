@@ -19,6 +19,12 @@ div.good_example span.select_code {
     color: blue;
 }
 
+div.example a,
+div.bad_example a,
+div.good_example a {
+    color: blue;
+}
+
 div.example div.title {
     background-color: silver;
     padding: 4px;

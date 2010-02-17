@@ -55,7 +55,7 @@ class CodeExampleTestCase(MockerTestCase):
         expected = '<div ' \
         'class="example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link1">' \
-        'SELECT ALL</span>\n\tEXAMPLE:\n</div>\n    \n    ' \
+        'SELECT ALL</span>\n\t\n\t<span>EXAMPLE:</span>\n</div>\n    \n    ' \
         '<div class="code">' \
         '\n        <pre id="codelink1">ТЕСТ</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
@@ -71,7 +71,7 @@ class CodeExampleTestCase(MockerTestCase):
         expected = '<div ' \
         'class="example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link1">' \
-        'SELECT ALL</span>\n\tEXAMPLE:\n</div>\n    \n    ' \
+        'SELECT ALL</span>\n\t\n\t<span>EXAMPLE:</span>\n</div>\n    \n    ' \
         '<div class="code">' \
         '\n        <pre id="codelink1">test</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
@@ -81,8 +81,8 @@ class CodeExampleTestCase(MockerTestCase):
         expected = '<div ' \
         'class="bad_example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link2">' \
-        'SELECT ALL</span>\n\tINCORRECT EXAMPLE:\n</div>\n    \n    ' \
-        '<div class="code">' \
+        'SELECT ALL</span>\n\t\n\t<span>INCORRECT EXAMPLE:</span>\n' \
+        '</div>\n    \n    <div class="code">' \
         '\n        <pre id="codelink2">test</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
@@ -91,8 +91,8 @@ class CodeExampleTestCase(MockerTestCase):
         expected = '<div ' \
         'class="good_example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link3">' \
-        'SELECT ALL</span>\n\tCORRECT EXAMPLE:\n</div>\n    \n    ' \
-        '<div class="code">' \
+        'SELECT ALL</span>\n\t\n\t<span>CORRECT EXAMPLE:</span>\n</div>' \
+        '\n    \n    <div class="code">' \
         '\n        <pre id="codelink3">test</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
@@ -107,7 +107,7 @@ class CodeExampleTestCase(MockerTestCase):
         expected = '<div ' \
         'class="example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link1">' \
-        'SELECT ALL</span>\n\tEXAMPLE:\n</div>\n    \n    ' \
+        'SELECT ALL</span>\n\t\n\t<span>EXAMPLE:</span>\n</div>\n    \n    ' \
         '<div class="system-message">\n    <strong>' \
         'During the example analyzing the following problems appear:' \
         '</strong>\n    ' \
@@ -188,7 +188,7 @@ class CodeExampleTestCase(MockerTestCase):
         expected = '<div ' \
         'class="example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link1">' \
-        'SELECT ALL</span>\n\tEXAMPLE:\n</div>\n    \n    ' \
+        'SELECT ALL</span>\n\t\n\t<span>EXAMPLE:</span>\n</div>\n    \n    ' \
         '<div class="system-message">\n    <strong>' \
         'During the example analyzing the following problems' \
         ' appear:</strong>\n    <ul>\n        ' \
@@ -228,9 +228,11 @@ class CodeExampleTestCase(MockerTestCase):
                 def __init__(self, is_incorrect = False):
                     self.is_incorrect = is_incorrect
 
-                def get_node(self, path):
+                def get_node(self, path, rev=None):
 
                     class Node:
+
+                        path = ''
 
                         def get_content(self):
 
@@ -281,6 +283,45 @@ class CodeExampleTestCase(MockerTestCase):
         processor.get_repos_manager = lambda: self.RepositoryManager(True)
         src = 'path=1'
         self.assertEqual(src, processor.get_sources(src))
+
+    def test_link_updating_with_index(self):
+        """ Testing adding anchor to the source link. """
+        processor = CodeExample(self.env)
+        processor._link = 'path'
+        processor.get_quote("test1\ndef\ntest2", "regex=def")
+        expected = 'path#L2'
+        self.assertEqual(expected, processor._link)
+
+    def test_parse_path(self):
+        """ Testing correctness of parsing path. """
+        processor = CodeExample(self.env)
+        get_lines = lambda path: processor.parse_path(path)[2]
+        self.assertEqual('100', get_lines('path=path@rev:100'))
+        self.assertEqual('26-30', get_lines('path=path@rev:26-30'))
+        self.assertEqual('26-30,32-34,40',
+                         get_lines('path=path@rev:26-30,32-34,40'))
+        get_focus_line = lambda path: processor.parse_path(path)[3]
+        self.assertEqual(100, get_focus_line('path=path@rev:100#L100'))
+
+    def test_get_range(self):
+        """ Testing getting required range from parsed lines. """
+        self.assertEqual([26, 27, 28, 29, 30, 32, 33, 34, 40],
+                         CodeExample.get_range('26-30,32-34,40'))
+
+    def test_get_analyzed_content(self):
+        """ Testing getting required range from the text."""
+        processor = CodeExample(self.env)
+        text = 'one\ntwo\nthree\nfour'
+        lines = '1-2, 4'
+        expected = [(0, 'one'), (1, 'two'), (3, 'four')]
+        self.assertEqual(expected, processor.get_analyzed_content(text, lines))
+
+    def test_focus_line(self):
+        """ Testing generating URL with focus line. """
+        processor = CodeExample(self.env)
+        processor._link = 'path'
+        processor.get_quote('', '', '', 100)
+        self.assertEqual('path#L100', processor._link)
 
 
 class ImportTestCase(MockerTestCase):
