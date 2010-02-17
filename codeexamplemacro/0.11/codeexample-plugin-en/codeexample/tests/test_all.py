@@ -3,6 +3,8 @@
 
 import unittest
 import os.path
+import mocker
+from mocker import MockerTestCase
 from trac.test import EnvironmentStub, Mock
 from trac.versioncontrol.api import NoSuchNode
 from trac.web.href import Href
@@ -10,12 +12,9 @@ from trac.mimeview.api import Context
 from trac.wiki.formatter import Formatter
 from trac.core import TracError
 from codeexample import CodeExample
-import imp
-import mocker
-from mocker import MockerTestCase
 
 
-class CodeExampleTestCase(MockerTestCase):
+class CodeExampleTestCase(unittest.TestCase):
     """ Class with test cases for code example processor. """
 
     def setUp(self):
@@ -340,7 +339,7 @@ class ImportTestCase(MockerTestCase):
         self.mocker.call(import_errror_raiser)
         self.mocker.replay()
         import codeexample.code_example_processor
-        imp.reload(codeexample.code_example_processor)
+        reload(codeexample.code_example_processor)
         from codeexample.code_example_processor import CodeExample
         self.assertEqual(CodeExample.is_have_pygments(), False)
 

@@ -19,6 +19,7 @@
 """ Code example processor module. """
 
 import re
+import os.path
 from trac.wiki.macros import IWikiMacroProvider
 from trac.core import implements, Component, TracError
 from trac.util.text import to_unicode
@@ -179,28 +180,34 @@ class CodeExample(Component):
         try:
             path, rev, lines, focus_line = self.parse_path(src)
             if path:
-                node = repos.get_node(path, rev)
-                self._link = self.env.href.browser(node.path)
-                stream = node.get_content()
-                src = self.get_quote(to_unicode(stream.read()), src, lines,
+                try:
+                    node = repos.get_node(path, rev)
+                    self._link = self.env.href.browser(node.path)
+                    stream = node.get_content()
+                    src = self.get_quote(to_unicode(stream.read()), src, lines,
                                      focus_line)
+                except NoSuchNode, exception:
+                    self._render_exceptions.append(exception)
             else:
                 self._render_exceptions.append('Path element is not found.')
-        except NoSuchNode, exception:
-            self._render_exceptions.append(exception)
         finally:
             repo_mgr.shutdown()
         return src
 
+    def actualize(self, src, is_path):
+        """ Detect and load required sources. """
+        if is_path:
+            return self.get_sources(src)
+        return src
+
     def pygmentize_args(self, args, have_pygments, is_path):
         """ Process args via Pygments. """
-        actualize = lambda src: self.get_sources(src) if is_path else src
         if have_pygments:
             match = re.match('^#!(\w+)\s+((.*\s*)*)$', args, re.MULTILINE)
             if match:
                 return self.render_as_lang(match.group(1),
-                                           actualize(match.group(2)))
-        return actualize(args)
+                                       self.actualize(match.group(2), is_path))
+        return self.actualize(args, is_path)
 
     @staticmethod
     def get_templates_dirs():
@@ -221,7 +228,7 @@ class CodeExample(Component):
         resources on the local file system.
         """
         from pkg_resources import resource_filename
-        return [('ce', resource_filename(__name__, 'htdocs'))]
+        return [('ce', os.path.abspath(resource_filename(__name__, 'htdocs')))]
 
     @staticmethod
     def is_have_pygments():
