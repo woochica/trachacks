@@ -53,9 +53,9 @@ class CodeExampleTestCase(MockerTestCase):
 
         name = 'CodeExample'
         expected = '<div ' \
-        'class="example">\n    <div class="title">EXAMPLE:\n    ' \
+        'class="example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link1">' \
-        'SELECT ALL</span></div>\n    \n    ' \
+        'SELECT ALL</span>\n\tEXAMPLE:\n</div>\n    \n    ' \
         '<div class="code">' \
         '\n        <pre id="codelink1">ТЕСТ</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
@@ -69,9 +69,9 @@ class CodeExampleTestCase(MockerTestCase):
 
         name = 'CodeExample'
         expected = '<div ' \
-        'class="example">\n    <div class="title">EXAMPLE:\n    ' \
+        'class="example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link1">' \
-        'SELECT ALL</span></div>\n    \n    ' \
+        'SELECT ALL</span>\n\tEXAMPLE:\n</div>\n    \n    ' \
         '<div class="code">' \
         '\n        <pre id="codelink1">test</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
@@ -79,10 +79,9 @@ class CodeExampleTestCase(MockerTestCase):
 
         name = 'BadCodeExample'
         expected = '<div ' \
-        'class="bad_example">\n    <div class="title">' \
-        'INCORRECT EXAMPLE:\n    ' \
+        'class="bad_example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link2">' \
-        'SELECT ALL</span></div>\n    \n    ' \
+        'SELECT ALL</span>\n\tINCORRECT EXAMPLE:\n</div>\n    \n    ' \
         '<div class="code">' \
         '\n        <pre id="codelink2">test</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
@@ -90,10 +89,9 @@ class CodeExampleTestCase(MockerTestCase):
 
         name = 'GoodCodeExample'
         expected = '<div ' \
-        'class="good_example">\n    <div class="title">' \
-        'CORRECT EXAMPLE:\n    ' \
+        'class="good_example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link3">' \
-        'SELECT ALL</span></div>\n    \n    ' \
+        'SELECT ALL</span>\n\tCORRECT EXAMPLE:\n</div>\n    \n    ' \
         '<div class="code">' \
         '\n        <pre id="codelink3">test</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
@@ -107,9 +105,9 @@ class CodeExampleTestCase(MockerTestCase):
 
         name = 'CodeExample'
         expected = '<div ' \
-        'class="example">\n    <div class="title">EXAMPLE:\n    ' \
+        'class="example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link1">' \
-        'SELECT ALL</span></div>\n    \n    ' \
+        'SELECT ALL</span>\n\tEXAMPLE:\n</div>\n    \n    ' \
         '<div class="system-message">\n    <strong>' \
         'During the example analyzing the following problems appear:' \
         '</strong>\n    ' \
@@ -188,9 +186,9 @@ class CodeExampleTestCase(MockerTestCase):
 
         name = 'CodeExamplePath'
         expected = '<div ' \
-        'class="example">\n    <div class="title">EXAMPLE:\n    ' \
+        'class="example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link1">' \
-        'SELECT ALL</span></div>\n    \n    ' \
+        'SELECT ALL</span>\n\tEXAMPLE:\n</div>\n    \n    ' \
         '<div class="system-message">\n    <strong>' \
         'During the example analyzing the following problems' \
         ' appear:</strong>\n    <ul>\n        ' \
