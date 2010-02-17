@@ -26,9 +26,17 @@ class NodePrototype():
     '''
     nstring = ''
     for ( key, val ) in kwargs.items():
-      if key.upper() == 'TITLE' :
+      addparameter = True
+      
+      if key.upper() == 'TITLE' or key.upper() == 'ALT':
         val = ppenv.htmlspecialchars(val)
-      nstring += '%s="%s" ' % ( key.upper(), val )
+      if (key.upper() == 'COLOR' or key.upper() == 'BGCOLOR') and str(val).upper() == 'NONE':
+        #self.macroenv.tracenv.log.warning(' _codeargs %s: %s = %s' % (self.ticket.getfield('id'), key, val) )
+        addparameter = False
+      
+      if addparameter:
+        nstring += '%s="%s" ' % ( key.upper(), val )
+      
     return nstring
 
   def entertable( self, **kwargs ):
@@ -172,6 +180,10 @@ class TicketNodePrototype( NodePrototype ):
                        'ColorForStatus', self.ticketstatus )
     self.priocolor = self.macroenv.conf.get_map_val(
                        'ColorForPriority', self.ticketpriority )
+    self.statuscolor = self.macroenv.conf.get_map_val(
+                       'ColorForStatus', self.ticketstatus )
+    self.typecolor = self.macroenv.conf.get_map_val(
+                       'ColorForTicketType', self.tickettype )
     #self.imgpath = ppenv.PPImageSelOption.absbasepath()
 
     # status image
@@ -342,7 +354,7 @@ class TicketNodePrototype( NodePrototype ):
     href = '?ticket_state?%s?state=%s' % (
              self.macroenv.tracreq.href( 'query' ), self.ticketstatus )
     self.entertd( title = 'state: '+self.ticketstatus, href = href,
-                  color = self.color2, colspan = "1" )
+                  bgcolor = self.statuscolor , colspan = "1" )
     self.addmarkup( self.statusim )
     self.leave()
 
@@ -353,7 +365,7 @@ class TicketNodePrototype( NodePrototype ):
     href = '?ticket_state?%s?type=%s' % (
              self.macroenv.tracreq.href( 'query' ), self.ticketstatus )
     self.entertd( title = 'type: '+self.tickettype, href = href,
-                  color = self.color2, colspan = "1" )
+                  bgcolor = self.typecolor, colspan = "1" )
     self.addmarkup( self.tickettypeim )
     self.leave()
 
@@ -363,7 +375,7 @@ class TicketNodePrototype( NodePrototype ):
     '''
     href = 'javascript: return ppconnecttickets(%s); ' % ( self.ticketid )
     self.entertd( title = 'add/remove dependencies', href = href,
-                  color = self.color2, colspan = "1" )
+                  bgcolor = self.color2, colspan = "1" )
     self.addmarkup( self.connectorim )
     self.leave()
 
@@ -374,7 +386,7 @@ class TicketNodePrototype( NodePrototype ):
     href = '?ticket_priority?%s?priority=%s' % (
              self.macroenv.tracreq.href( 'query' ), self.ticketpriority )
     self.entertd( title = 'priority: '+self.ticketpriority, href = href,
-                  color = self.color2, bgcolor = self.priocolor, colspan = "1" )
+                  bgcolor = self.priocolor, colspan = "1" )
     self.addmarkup( self.priorityim )
     self.leave()
 
