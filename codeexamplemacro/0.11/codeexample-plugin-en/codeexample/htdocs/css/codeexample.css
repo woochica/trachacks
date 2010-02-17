@@ -1,6 +1,7 @@
 div.example, div.good_example {
     border: 1px solid gray;
     margin:1em 1.75em;
+	overflow: auto;
 }
 
 div.example div.system-message,
@@ -22,6 +23,7 @@ div.example div.title {
     background-color: silver;
     padding: 4px;
     border-bottom: 1px solid gray;
+	overflow: auto;
 }
 
 div.example div.code {
@@ -37,6 +39,7 @@ div.example div.code pre {
 div.bad_example {
     border: 1px solid red;
     margin:1em 1.75em;
+	overflow: auto;
 }
 
 div.bad_example div.title {
