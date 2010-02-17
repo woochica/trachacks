@@ -108,8 +108,10 @@ class ProtectedMacro(Component):
     # IRequestFilter
     def pre_process_request(self, req, handler):
         action = req.args.get("action", "view")
+        format = req.args.get("format")
 
-        if not action == "view":
+        if (not action == "view") or \
+           (action == "view" and format):
             # this security filter applies to all non-VIEW
             # actions. Other actions, such as DELETE, EDIT, and DIFF
             # either give access to the protected parts, or allow

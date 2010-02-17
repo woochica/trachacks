@@ -11,7 +11,7 @@ from setuptools import setup
 
 setup(
     name = 'TracProtected',
-    version = '2.1.0',
+    version = '2.1.1',
     packages = ['protected'],
     package_data = {"protected":[]},
     author = 'Boudewijn Schoon',
