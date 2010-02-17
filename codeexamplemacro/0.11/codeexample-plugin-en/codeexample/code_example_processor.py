@@ -95,7 +95,7 @@ class CodeExample(Component):
 
     def get_quote(self, text, args):
         """ Try to get the required quote from the text. """
-        regex_match = re.search('^\s*regex\s*=\s*(.+)\s*$',
+        regex_match = re.search('^\s*regex\s*=\s*"?(.+?)"?\s*$',
                                    args, re.MULTILINE)
         lines_match = re.search('^\s*lines\s*=\s*(\d+)\s*$',
                                    args, re.MULTILINE)

@@ -310,6 +310,3 @@ def suite():
     suite.addTest(unittest.makeSuite(CodeExampleTestCase, 'test'))
     suite.addTest(unittest.makeSuite(ImportTestCase, 'test'))
     return suite
-
-if __name__ == '__main__':
-    unittest.main()
