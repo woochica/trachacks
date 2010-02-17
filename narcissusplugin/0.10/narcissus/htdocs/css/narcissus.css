@@ -1,0 +1,86 @@
+h4 :link, h4 :visited {
+  color: #BB0000;
+}
+
+p {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+a {
+  color: #116699;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #666666;
+  text-decoration: underline;
+}
+
+input {
+  padding: 3px;
+  font: 1em/1.5 sans-serif;
+  border: 1px solid black;
+}
+
+em {
+  color: #E69105;
+  font-style: normal;
+}
+
+.date {
+  font-size: 80%;
+  margin-bottom: 1.2em;
+}
+
+.nar-time {
+  font-size: 80%;
+  color: #999999;
+}
+
+.nar-column-in {
+  margin: 0px;
+  padding: 0px 10px 10px;
+}
+
+.nar-vis-column-in {
+  margin: 0px;
+  padding: 0px 10px 10px;
+}
+
+.nar-cleaner {
+  clear: both;
+  height: 1px;
+  font-size: 1px;
+  border: none;
+  margin: 0px;
+  padding: 0px;
+  background: transparent;
+  display: none;
+}
+
+#nar-header {
+  margin: 5px;
+}
+
+#nar-container {
+  width: 98%;
+  padding: 0px;
+  display: table;
+}
+
+#nar-row  {
+  display: table-row;
+  padding: 0px;
+}
+
+#nar-left {
+  display: table-cell;
+}
+
+#nar-right {
+  width: 350px;
+  background: #F7F7F7;
+  display: table-cell;
+  border: 1px solid #D7D7D7;
+}
