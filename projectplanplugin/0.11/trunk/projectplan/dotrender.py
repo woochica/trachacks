@@ -113,7 +113,6 @@ class GVCMapXGen():
                   stdout = logfobj,
                   stderr = subprocess.STDOUT )
         exitstatus = gvctx.wait()
-        time.sleep(10) # just to be sure, wait 3 sec, ticket #6541
         #pid, exitstatus = os.waitpid( gvctx.pid, 0 )
         if exitstatus != 0:
           # simply raise an exception with link to the logfile
