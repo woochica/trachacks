@@ -203,7 +203,7 @@ class CodeExample(Component):
     def pygmentize_args(self, args, have_pygments, is_path):
         """ Process args via Pygments. """
         if have_pygments:
-            match = re.match('^#!(\w+)\s+((.*\s*)*)$', args, re.MULTILINE)
+            match = re.match('^#!(.+?)\s+((.*\s*)*)$', args, re.MULTILINE)
             if match:
                 return self.render_as_lang(match.group(1),
                                        self.actualize(match.group(2), is_path))

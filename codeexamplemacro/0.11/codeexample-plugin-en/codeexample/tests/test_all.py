@@ -152,6 +152,16 @@ class CodeExampleTestCase(unittest.TestCase):
         self.assertEqual(pygmentized,
                          processor.pygmentize_args(args, True, False))
 
+    def test_pygmentize_with_windows_new_lines(self):
+        """ Testing the pygmentize_args method with Windows new lines. """
+        processor = CodeExample(self.env)
+        args = '#!python\r\ndef Class:\n    pass\n'
+        pygmentized = '<span class="k">def</span> ' \
+        '<span class="nf">Class</span><span class="p">:</span>\n' \
+        '    <span class="k">pass</span>\n'
+        self.assertEqual(pygmentized,
+                         processor.pygmentize_args(args, True, False))
+
     def test_render_as_lang(self):
         """ Testing the render_as_lang method. """
         processor = CodeExample(self.env)
@@ -162,13 +172,15 @@ class CodeExampleTestCase(unittest.TestCase):
         '    <span class="k">pass</span>\n'
         self.assertEqual(pygmentized, processor.render_as_lang(lang, content))
 
-    def test_render_with_invalid_lang(self):
-        """ Testing the render_as_lang method with invalid language. """
+    def test_csharp_render(self):
+        """ Testing the CSharp rendering. """
         processor = CodeExample(self.env)
-        lang = 'python1'
-        content = 'def Class:\n    pass\n'
-        pygmentized = 'def Class:\n    pass\n'
-        self.assertEqual(pygmentized, processor.render_as_lang(lang, content))
+        content = '#!c#\ndouble test() {}'
+        pygmentized = '<span class="kt">double</span> ' \
+            '<span class="nf">test</span><span class="p">()</span> ' \
+            '<span class="k">{}</span>\n'
+        self.assertEqual(pygmentized, processor.pygmentize_args(content,
+                                                                True, False))
 
     def test_get_htdocs_dirs(self):
         """ Testing get_htdocs_dirs method. """
