@@ -82,8 +82,8 @@ class PageToDocPlugin(Component):
 
         # temporary files and folders
         self.tempdir = mkdtemp(prefix="page2doc")
-        htmlfilehandle, htmlfilepath = mkstemp(prefix='trac_', dir=self.tempdir)
-        wordfilehandle, wordfilepath = mkstemp(prefix='word_', dir=self.tempdir)
+        htmlfilehandle, htmlfilepath = mkstemp(prefix='trac_', dir=self.tempdir, suffix = ".html")
+        wordfilehandle, wordfilepath = mkstemp(prefix='word_', dir=self.tempdir, suffix = ".doc")
         os.close(wordfilehandle)
 
         # for debug: set all rights
@@ -134,7 +134,7 @@ class PageToDocPlugin(Component):
         if xsltproc_error:
             raise_dependency_issue(xsltproc_error, req, self.env)
 
-        cmd = '%s %s -o --html %s %s %s' % (
+        cmd = '%s %s --html -o %s %s %s' % (
             xsltprocpath, verb, wordfilepath, xsltfilepath, htmlfilepath)
         self.execute_external_program(cmd)
 
