@@ -58,11 +58,11 @@ class PageToDocPlugin(Component):
         # TBD: Fehler ausgeben, wenn xsltfile nicht gelesen werden kann
         # TBD: Parameter aus der trac.ini an zentraler Stelle auslesen
         if xsltfilepath == '':
-            message = "You have to set the 'xlstfile' option in the " \
+            message = "You have to set the 'xsltfile' option in the " \
                 "[pagetodoc] section in trac.ini"
             raise_dependency_issue(message, req, self.env)
         if not os.path.exists(xsltfilepath):
-            message = ("Value for 'xlstfile' in the [pagetodoc] section in " \
+            message = ("Value for 'xsltfile' in the [pagetodoc] section in " \
                 "trac.ini does not exist: '%s'.")% xsltfilepath
             raise_dependency_issue(message, req, self.env)
 
