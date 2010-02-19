@@ -111,13 +111,14 @@ class BatchModifyModule(Component):
     def _generate_form(self, req, data):
         batchFormData = dict(data)
         batchFormData['actionUri']= req.session['query_href'] or req.href.query()
-
+        
+        ticketSystem = TicketSystem(self.env)
         fields = []
-        for field in TicketSystem(self.env).get_ticket_fields():
+        for field in ticketSystem.get_ticket_fields():
             if field['name'] not in ('summary', 'reporter', 'description'):
                 fields.append(field)
-            if field['name'] == 'owner':
-                TicketSystem(self.env).eventually_restrict_owner(field)
+            if field['name'] == 'owner' and hasattr(ticketSystem, 'eventually_restrict_owner'):
+                ticketSystem.eventually_restrict_owner(field)
         batchFormData['fields']=fields
 
         stream = Chrome(self.env).render_template(req, 'batchmod.html',
