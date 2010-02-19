@@ -632,6 +632,12 @@ class PPConfiguration():
                          'minor': 'thistle1',
                          'trivial': 'slategray1'
                          }.get(k, 'grey')
+    elif 'ColorForStatus' == n :
+      return {     'assigned': '#F0F0F0',
+                         'new': '#909090',
+                         'reopened': '#F0F090',
+                         'closed': '#C0F0C0'
+                         }.get(k, self.get('ColorForStatusNE'))
     elif 'ImageForPriority' == n :
       return {     'blocker': 'crystal_project/16x16/arrow/priority1up2.png',
                          'critical': 'crystal_project/16x16/arrow/priority2up1.png',
@@ -668,7 +674,7 @@ class PPConfiguration():
     '''
     if n in self.listconf:
       val = self.listconf[ n ].get_val_for( k )
-      if val == 'none' : # default values
+      if val.upper() == 'NONE' : # default values
         val = self.get_map_defaults( n, k, val )
       return val
     else:
@@ -850,7 +856,7 @@ class PPConfiguration():
       """ )
 
     self.listconf[ 'ColorForStatus' ] = PPStatusColorOption(
-      self.env, 'colorforstatus', self.get( 'ColorForStatusNE' ), catid='Color', groupid='Status', doc="""
+      self.env, 'colorforstatus', u'none', catid='Color', groupid='Status', doc="""
       HTML Color for rendering Status "%s"
       """ )
 
@@ -935,6 +941,16 @@ class PPEnv():
       return self.tracreq.args.get( argname )
     except:
       return None
+
+  def has_args( self , argname):
+    '''
+      check existence of http url parameter
+    '''
+    try:
+      self.tracreq.args.get( argname )
+      return True
+    except:
+      return False
 
   def is_dependency_added( self, dep_from, dep_to ) :
     '''

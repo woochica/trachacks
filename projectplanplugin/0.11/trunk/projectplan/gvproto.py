@@ -160,6 +160,16 @@ class TicketNodePrototype( NodePrototype ):
     Creates HTML Code for GV Nodelabels
   '''
 
+  TICKET_CLOSED_TO_LATE = 0
+  TICKET_CLOSED_TO_EARLY = 1
+  TICKET_CLOSED_ON_TIME = 2
+  TICKET_CLOSED_NO_TIME = 3
+  TICKET_OPEN_TO_LATE = 4
+  TICKET_OPEN_TO_EARLY = 5
+  TICKET_OPEN_DUE_TODAY = 6
+  TICKET_OPEN_NO_TIME = 7
+
+
   def __init__( self, macroenv, ticket ):
     '''
       Initialize the Node Prototype and set usefull Vars.
@@ -176,29 +186,26 @@ class TicketNodePrototype( NodePrototype ):
     self.tickettype = ticket.getfield( 'type' )
 
     # get node color and image args
-    self.fillcolor = self.macroenv.conf.get_map_val(
-                       'ColorForStatus', self.ticketstatus )
-    self.priocolor = self.macroenv.conf.get_map_val(
-                       'ColorForPriority', self.ticketpriority )
-    self.statuscolor = self.macroenv.conf.get_map_val(
-                       'ColorForStatus', self.ticketstatus )
-    self.typecolor = self.macroenv.conf.get_map_val(
-                       'ColorForTicketType', self.tickettype )
+    self.fillcolor = self.macroenv.conf.get_map_val('ColorForStatus', self.ticketstatus )
+    self.priocolor = self.macroenv.conf.get_map_val('ColorForPriority', self.ticketpriority )
+    self.statuscolor = self.macroenv.conf.get_map_val('ColorForStatus', self.ticketstatus )
+    self.typecolor = self.macroenv.conf.get_map_val('ColorForTicketType', self.tickettype )
+    self.ticketnrcolor = self.color2
     #self.imgpath = ppenv.PPImageSelOption.absbasepath()
 
     # status image
     if self.macroenv.conf.get_map_val('ImageForStatus', self.ticketstatus ) != 'none':
       self.statusim = '<IMG SRC="' + os.path.join( self.imgpath,
-        self.macroenv.conf.get_map_val(
-          'ImageForStatus', self.ticketstatus ) ) + '"></IMG>'
+        self.macroenv.conf.get_map_val('ImageForStatus', self.ticketstatus ) 
+      ) + '"></IMG>'
     else:
       self.statusim = self.ticketstatus
 
     # status image
     if self.macroenv.conf.get_map_val('ImageForTicketType', self.tickettype ) != 'none':
       self.tickettypeim = '<IMG SRC="' + os.path.join( self.imgpath,
-        self.macroenv.conf.get_map_val(
-          'ImageForTicketType', self.tickettype ) ) + '"></IMG>'
+        self.macroenv.conf.get_map_val( 'ImageForTicketType', self.tickettype ) 
+      ) + '"></IMG>'
     else:
       self.tickettypeim = self.tickettype
 
@@ -256,96 +263,160 @@ class TicketNodePrototype( NodePrototype ):
     # set colwide for rows
     self.maxcolwide = 6
 
-  def adddaterow( self ):
+
+  def getdateclassification( self ):
     '''
-      Add a Daterow into the Node
+      returns a tuple with the state and due
     '''
+    cd = self.ticket.getextension( 'closingdiff' )
+    self.macroenv.tracenv.log.warning("getdateconf  getdateclassification:  cd=%s" % cd )
     if self.ticketstatus == 'closed':
-      # self.addmarkup( 'closed' )
-      cd = self.ticket.getextension( 'closingdiff' )
-      if cd != None :
+      if cd != None: 
         if cd > 0: # to late
-          # TODO: make image configurable
-          color = '#ffb6c2' # lightpink
-          ticket_to_late_image = 'crystal_project/16x16/calendar/timespan.png'
-          img = os.path.join( self.imgpath, ticket_to_late_image )
-          dueline = str( cd ) + ' days to late'
-          title = "finished to late"
-        else : # earlier
-          # TODO: make image configurable
-          color = '#98fa98' # palegreen
-          ticket_earlier_image = 'crystal_project/16x16/calendar/todo.png'
-          img = os.path.join( self.imgpath, ticket_earlier_image )
-          if cd < 0 :
-            dueline = str( 0 - cd ) + ' days earlier'
-          else:
-            dueline = 'bang on time' # at  the specified date
-          title = "finished in time"
-        self.entertr()
-        self.entertd( bgcolor = color, COLSPAN = str( self.maxcolwide), align = "center", title = title )
-        self.entertable(align = "center", cellpadding = "1", cellspacing = "0", border = "0")
-        self.entertr()
-        self.entertd()
-        self.enterimg(src = img )
-        self.leave(2)
-        self.entertd()
-        self.add(dueline)
-        self.leave(5)
-      return
-
-    #rowcolor = "#EEEEEE"
-    ticket_overdue_image = self.macroenv.conf.get( 'ticket_overdue_image' )
-    ticket_ontime_image = self.macroenv.conf.get( 'ticket_ontime_image' )
-    # TODO: make configurable
-    ticket_delayed_image = 'crystal_project/16x16/calendar/whatsnext.png'
-    ticket_due_today_image = 'crystal_project/16x16/calendar/today.png'
-
-    if ( self.ticketstatus != 'closed' and
-         self.ticket.hasextension( 'closingdiff' ) ):
-      cd = self.ticket.getextension( 'closingdiff' )
-      img = 'none'
-      if cd > 0:
-        bgcol = self.macroenv.conf.get( 'ticket_overdue_color' ) # TODO ticket_delayed_color
-        img = os.path.join( self.imgpath, ticket_delayed_image)
-        dueline = str( cd ) + ' days delayed'
-      elif cd < 0:
-        bgcol = self.macroenv.conf.get( 'ticket_ontime_color' )
-        img = os.path.join( self.imgpath, ticket_ontime_image)
-        dueline = str( 0 - cd ) + ' days left'
+          return (TicketNodePrototype.TICKET_CLOSED_TO_LATE, cd)
+        elif cd < 0 :
+          return (TicketNodePrototype.TICKET_CLOSED_TO_EARLY, cd)
+        else:
+          return (TicketNodePrototype.TICKET_CLOSED_ON_TIME, cd)
+      else:# cd = None
+        return (TicketNodePrototype.TICKET_CLOSED_NO_TIME, None)
+    
+    else: #if self.ticketstatus != 'closed':
+      if cd != None:
+        if cd > 0: # to late
+          return (TicketNodePrototype.TICKET_OPEN_TO_LATE, cd)
+        elif cd < 0 : # to early
+          return (TicketNodePrototype.TICKET_OPEN_TO_EARLY, cd)
+        else: # today
+          return (TicketNodePrototype.TICKET_OPEN_DUE_TODAY, cd)
       else:
-        #bgcol = '#FF9C00' # Orange(Light) 
-        bgcol = '#9CF9F9'  # Turquoise
-        img = os.path.join( self.imgpath, ticket_due_today_image)
-        dueline = 'due today!'
+        return (TicketNodePrototype.TICKET_OPEN_NO_TIME, None)
 
-      self.entertr()
-      self.entertd( title = "due", href = "?ticket_inner?__dummy__", COLSPAN = str( self.maxcolwide), bgcolor = bgcol )
-      self.entertable(align = "center", cellpadding = "1", cellspacing = "0", border = "0")
-      self.entertr()
-      self.entertd()
+  def getdateconf( self, dueclassification, cd):
+    '''
+      return markup information
+    '''
+    self.macroenv.tracenv.log.warning("getdateconf: cd=%s ,  %s =?= %s " % (cd, dueclassification, TicketNodePrototype.TICKET_CLOSED_TO_EARLY) )
+    if cd != None and ( cd > 1 or cd < -1 ):
+      days = 'days'
+    else:
+      days = 'day'
+    if TicketNodePrototype.TICKET_CLOSED_TO_LATE == dueclassification :
+      return (
+        '#ffb6c2',  # lightpink
+        '!', 
+        'crystal_project/16x16/calendar/timespan.png', 
+        'closed: '+str( cd ) + ' '+days+' to late'
+      )
+    if TicketNodePrototype.TICKET_CLOSED_TO_EARLY == dueclassification :
+      return (
+        '#98fa98' ,  # palegreen
+        '', 
+        'crystal_project/16x16/calendar/todo.png',  
+        'closed: ' + str( 0 - cd ) + ' '+days+' earlier'
+      )
+    if TicketNodePrototype.TICKET_CLOSED_ON_TIME == dueclassification :
+      return (
+        '#98fa98' , # palegreen
+        '', 
+        'crystal_project/16x16/calendar/todo.png', 
+        'closed: bang on time' 
+      )
+    if TicketNodePrototype.TICKET_CLOSED_NO_TIME == dueclassification :
+      return ( None, None, None, None )
+    if TicketNodePrototype.TICKET_OPEN_TO_LATE == dueclassification :
+      return ( 
+        self.macroenv.conf.get( 'ticket_overdue_color' ), 
+        '!', 
+        self.macroenv.conf.get( 'ticket_overdue_image' ), 
+        'closed: ' + str( cd ) + ' '+days+' delayed' 
+      )
+    if TicketNodePrototype.TICKET_OPEN_TO_EARLY == dueclassification :
+      return ( 
+        self.macroenv.conf.get( 'ticket_ontime_color' ), 
+        '', 
+        self.macroenv.conf.get( 'ticket_ontime_image' ), 
+        'open: ' + str( 0 - cd ) + ' '+days+' left' 
+      )
+    if TicketNodePrototype.TICKET_OPEN_DUE_TODAY == dueclassification :
+      return (  
+        '#9CF9F9',  # Turquoise
+        '!', 
+        'crystal_project/16x16/calendar/today.png', 
+        'open: due today!' 
+      )
+    if TicketNodePrototype.TICKET_OPEN_NO_TIME == dueclassification :
+      return ( None, None, None, None )
 
-      if  ticket_overdue_image != 'none' and ticket_overdue_image != None:
+    return ('#FF00FF', 'ERR', 'error.png', 'ERROR' )  # fallback, default, should not happened
+
+#return { # switch/case in Python style
+        #str(TicketNodePrototype.TICKET_CLOSED_TO_LATE): (),
+        #str(TicketNodePrototype.TICKET_CLOSED_TO_EARLY): ( ), 
+        #str(TicketNodePrototype.TICKET_CLOSED_ON_TIME): ( ), 
+        #str(TicketNodePrototype.TICKET_CLOSED_NO_TIME): (),
+        #str(TicketNodePrototype.TICKET_OPEN_TO_LATE): ( ),
+        #str(TicketNodePrototype.TICKET_OPEN_TO_EARLY): (  ),
+        #str(TicketNodePrototype.TICKET_OPEN_DUE_TODAY): (),
+        #str(TicketNodePrototype.TICKET_OPEN_NO_TIME): ()
+        #}.get( str(dueclassification), ('#FF00FF', 'ERR', 'error.png', 'ERROR' ) ) # fallback, default, should not happened
+
+  def adddatecol( self ):
+    '''
+      returns column with date information
+    '''
+    (ticketclass, diff) = self.getdateclassification()
+    (color, textshort, image, dueline) = self.getdateconf(ticketclass, diff)
+    
+    if color == None:  # due date is not contained in the ticket
+      return
+    else: 
+      href = '?ticket_state?%s?state=%s' % (
+             self.macroenv.tracreq.href( 'query' ), self.ticketstatus )
+      self.entertd( title = dueline, href = href,
+                  bgcolor = color , colspan = "1" )
+      #self.entertd( title = dueline, href = "?ticket_inner?__dummy__", bgcolor = color )
+     
+      if  image != None:
+        img = os.path.join( self.imgpath, image )
         self.enterimg( src = img )
         self.leave()
       else:
         # fall back if no image is defined
-        self.addmarkup( '<FONT COLOR="#FFFF00">!</FONT>' )
+        self.addmarkup( '<FONT COLOR="#FFFF00">'+textshort+'</FONT>' )
+     
+      self.leave( 1 )
+
+
+  def adddaterow( self ):
+    '''
+      returns row with date information
+    '''
+    ticketclass, diff = self.getdateclassification()
+    color, textshort, image, dueline = self.getdateconf(ticketclass, diff)
+    
+    if color == None:  # due date is not contained in the ticket
+      return
+    else: 
+      self.entertr()
+      self.entertd( title = "due", href = "?ticket_inner?__dummy__", COLSPAN = str( self.maxcolwide), bgcolor = color )
+      self.entertable(align = "center", cellpadding = "1", cellspacing = "0", border = "0")
+      self.entertr()
+      self.entertd()
+
+      if  image != None:
+        img = os.path.join( self.imgpath, image )
+        self.enterimg( src = img )
+        self.leave()
+      else:
+        # fall back if no image is defined
+        self.addmarkup( '<FONT COLOR="#FFFF00">'+textshort+'</FONT>' )
 
       self.leave( 1 )
       self.entertd()
       self.add( dueline )
       self.leave( 5 )
-    else:
-      # TODO: insert image
-      self.entertr()
-      self.entertd( title = "due", href = "?ticket_inner?__dummy__" )
-      ticket_overdue_image = self.macroenv.conf.get( 'ticket_overdue_image' )
-      unknowndateimg = 'crystal_project/16x16/calendar/disabled.png'
-      self.enterimg( src = os.path.join( self.imgpath, unknowndateimg) )
-      self.leave( 2 )
-      self.entertd( COLSPAN = str( self.maxcolwide-1), title = "due", href = "?ticket_inner?__dummy__" )
-      self.addmarkup( 'due: unknown' )
-      self.leave( 2 )
+
 
   def addstatuscol( self ):
     '''
@@ -406,8 +477,8 @@ class TicketNodePrototype( NodePrototype ):
     '''
       Add a Ticket Column into the Node
     '''
-    self.entertd( title = "show ticket #" + self.ticketid, color = self.color2,
-                  colspan = "1", align = "CENTER",
+    self.entertd( title = "show ticket #" + self.ticketid, color = self.ticketnrcolor,
+                  colspan = "1", align = "CENTER", valign = "MIDDLE", 
                   href = "?ticket_inner?" + self.ticket.getfield( 'href' ) )
     self.addmarkup( self.ticketid )
     self.leave()
@@ -460,6 +531,28 @@ class TicketNodePrototype( NodePrototype ):
                         self.ticket.getextension( 'buffer' ) ) )
       self.leave( 2 )
 
+  def renderhighlight_header( self ):
+    '''
+      start a frame, purpose: hightlight of this ticket
+    '''
+    # TODO: choose better colors
+    if self.macroenv.macrokw.get('highlightticket', '0') == self.ticketid:
+      self.entertable(border = 0, bgcolor = '#FFFFD7', cellspacing = 2, cellpadding = 0)
+      self.entertr()
+      self.entertd()
+      self.entertable(border = 0, bgcolor = '#FFFFAF', cellspacing = 2, cellpadding = 0)
+      self.entertr()
+      self.entertd()
+      self.entertable(border = 0,  bgcolor = '#FFFF87', cellspacing = 2, cellpadding = 0)
+      self.entertr()
+      self.entertd()
+      self.entertable( border = 0, bgcolor = '#FFFF5F', cellspacing = 2, cellpadding = 0)
+      self.entertr()
+      self.entertd()
+      self.entertable( border = 0, bgcolor = '#FFFFFF', cellspacing = 2, cellpadding = 0)
+      self.entertr()
+      self.entertd()
+
   def render( self ):
     '''
       Create and Return the Node Markup
@@ -467,6 +560,8 @@ class TicketNodePrototype( NodePrototype ):
     # table
     # cellpadding should be zero to avoid mouseover problems
     #self.entertable( align = "CENTER", bgcolor = self.fillcolor, border = "1",
+    self.renderhighlight_header() # render has to be finished with leaveall
+    
     self.entertable( align = "CENTER", border = "1",
                      cellborder = "0", cellpadding = "0", cellspacing = "2",
                      color = self.priocolor, title = "Ticket: " + self.ticketid,
@@ -490,6 +585,45 @@ class TicketNodePrototype( NodePrototype ):
     self.leaveall()
 
     return NodePrototype.render( self )
+
+
+
+class TicketSimpleNodePrototype( TicketNodePrototype ):
+  '''
+    simple renderer for ticket nodes
+    creates HTML code for GV nodelabels encoding only ticketnumber, ticketpriority and ticketstatus
+    inspired by MasterTicketsPlugin (http://trac-hacks.org/wiki/MasterTicketsPlugin)
+  '''
+
+  def __init__( self, macroenv, ticket ):
+    '''
+      Initialize the Node Prototype and set usefull Vars.
+    '''
+    TicketNodePrototype.__init__( self, macroenv, ticket )
+    self.ticketnrcolor = self.statuscolor
+
+
+  def render( self ):
+    '''
+      Create and Return the Node Markup
+    '''
+    self.renderhighlight_header() # render has to be finished with leaveall
+    
+    self.entertable( align = "CENTER", border = "2",
+                     cellborder = "0", cellpadding = "0", cellspacing = "2",
+                     title = "Ticket: " + self.ticketid+ "(" + self.ticketstatus + " " + self.tickettype + ")",
+                     color = self.priocolor,
+                     bgcolor = self.statuscolor,
+                     valign = "MIDDLE", href = "?ticket?__dummy__" )
+    self.entertr()
+    self.addticketcol()
+    self.addstatuscol()
+    self.adddatecol()
+    self.leaveall()
+    
+    return NodePrototype.render( self )
+
+
 
 class MilestoneNodePrototype( NodePrototype ):
   '''
@@ -582,8 +716,7 @@ class MilestoneNodePrototype( NodePrototype ):
       Create and Return the Node Markup
     '''
     href = '?ticket?%s' % self.href
-    self.enterfont( color = self.macroenv.conf.get( 'milestone_fontcolor' ),
-                    size = '10' )
+    self.enterfont( color = self.macroenv.conf.get( 'milestone_fontcolor' ), size = '10' )
     self.entertable( align = "CENTER",
                      bgcolor = self.macroenv.conf.get( 'milestone_fillcolor' ),
                      border = "1", cellborder = "1",
@@ -592,9 +725,7 @@ class MilestoneNodePrototype( NodePrototype ):
                      valign = "MIDDLE", href = href )
     self.entertr()
     self.entertd()
-    self.entertable( align = "CENTER",
-                     border = "0", cellborder = "0", cellpadding = "0"
-                     )
+    self.entertable( align = "CENTER", border = "0", cellborder = "0", cellpadding = "0" )
     self.entertr()
     self.entertd()
     self.openimg()
@@ -697,7 +828,13 @@ class GVRenderProto():
     '''
       Create and Return Markup for the Ticket ticket
     '''
-    return TicketNodePrototype( macroenv, ticket ).render()
+    # choose between the different implementations
+    #macroenv.tracenv.log.warning("ticket_gen_markup %s", macroenv.macroid )
+    
+    if str(macroenv.macroid) in ['3'] :
+      return TicketSimpleNodePrototype( macroenv, ticket ).render()
+    else :
+      return TicketNodePrototype( macroenv, ticket ).render()
 
   @classmethod
   def milestone_gen_markup( cls, macroenv, version,

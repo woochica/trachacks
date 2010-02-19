@@ -292,6 +292,10 @@ class GVRenderer(RenderImpl):
     #macroenv.tracenv.log.warning("force reload: ppforcereload=%s " % repr(macroenv.get_args('ppforcereload') ) )
     if macroenv.get_args('ppforcereload') == '1' :
       self.ppforcereload = True
+    if str(macroenv.macroid) == '3':
+      macroenv.tracenv.log.warning('GVRenderer: overwrite _writeMilestoneClusterHeader _writeMilestoneClusterFooter')
+      self._writeMilestoneClusterHeader = dummy
+      self._writeMilestoneClusterFooter = dummy
 
   def isForceReload(self):
     return self.ppforcereload
@@ -315,12 +319,12 @@ class GVRenderer(RenderImpl):
     else:
       myversion = 'Version: '+ppenv.htmlspecialchars(vstring)
     # TODO: label should be better interpreted while parsing the html map
-    if self.macroenv.macroid == 2 : # hierarchical rendering including closing image
-      self.cmapxgen += 'label=<<TABLE BORDER="0" CELLPADDING="0" LABEL="close this version"><TR><TD>'
+    if str(self.macroenv.macroid) in ['2', '3']: # standard rendering
+      self.cmapxgen += 'label=<%s> ' % myversion
+    elif str(self.macroenv.macroid) == '1' : # hierarchical rendering including closing image
+      self.cmapxgen += 'label=<<TABLE BORDER="0" CELLPADDING="0" TITLE="close this version"><TR><TD>'
       self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png')+'"></IMG>'
       self.cmapxgen += '</TD><TD>'+myversion+'</TD></TR></TABLE>>; '+"\n"
-    else :
-      self.cmapxgen += 'label=<%s> ' % myversion
 
   def _writeMilestoneClusterHeader( self, mstring, mnum, mhref=None, mtitle=None ):
     '''
@@ -341,13 +345,18 @@ class GVRenderer(RenderImpl):
     else:
       mylabel = 'Milestone: '+ppenv.htmlspecialchars(mstring)
     # TODO: label should be better interpreted while parsing the html map
-    if self.macroenv.macroid == 2 : # hierarchical rendering including closing image
+    if str(self.macroenv.macroid) in ['2', '3'] : # standard rendering
+      self.cmapxgen += 'label=<%s> ' % mylabel
+    elif str(self.macroenv.macroid) == '1' : # hierarchical rendering including closing image
       self.cmapxgen += 'label=<<TABLE BORDER="0" CELLPADDING="0"><TR><TD>'
       self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png')+'"></IMG>'
       self.cmapxgen += '</TD><TD>'+mylabel+'</TD></TR></TABLE>>; '+"\n"
-    else:
-      self.cmapxgen += 'label=<%s> ' % mylabel
 
+  def _writeMilestoneClusterFooter( self ):
+    '''
+      closes the milestone cluster 
+    '''
+    self.cmapxgen += " } \n";
 
   def _writeEnumLegendCluster( self, name, enumerator_cls, colconfkey=None, imageconfkey=None ):
     '''
@@ -416,7 +425,8 @@ class GVRenderer(RenderImpl):
         mcount += 1
         for t in ticketlist:
           self._writeticket( t )
-        self.cmapxgen += '}'
+        #self.cmapxgen += '}'
+        self._writeMilestoneClusterFooter()
       self.cmapxgen += '}'
 
     # if end/start ticket is given, put them in the toplevel cluster (frame cluster)
@@ -934,3 +944,10 @@ class ppRender():
       renderer = 'default'
     ConcreteRenderer = RenderRegister.get( renderer )
     return ConcreteRenderer( macroenv ).render( ticketset )
+
+
+def dummy( *args ):
+  '''
+    dummy method used as place holder
+  '''
+  pass
