@@ -93,7 +93,7 @@ class QueryFilter( ParamFilter ):
       q = Query.from_string(self.macroenv.tracenv, '%s=%s&%s' % ( self.filtercol, self.queryarg, self.colsstr ) , order='id' )
       return q.execute( self.macroenv.tracreq )
     else:
-      return Nullfilter( self.macroenv ).get_tickets()
+      return NullFilter( self.macroenv ).get_tickets()
 
 class AuthedOwnerFilter( QueryFilter ):
   '''
@@ -122,6 +122,65 @@ class AuthedReporterFilter( QueryFilter ):
     QueryFilter.__init__( self, macroenv )
     self.set_col( 'reporter' )
     self.set_queryarg( self.macroenv.tracreq.authname )
+
+class TicketBiDepGraphFilter( ParamFilter ):
+  '''
+    Special Query Filter Class, which returns the Tickets depending on
+    self.queryarg (ticket id)
+  '''
+
+  DEPEXTENSION = ''
+
+  def __init__( self, macroenv ):
+    '''
+      Initialize the Base Filter
+    '''
+    ParamFilter.__init__( self, macroenv )
+
+  def get_tickets( self ):
+    '''
+      Query Database and Calculate Dependencies
+    '''
+    # get param
+    v = self.queryarg
+
+    # query data
+    ticketset = ppTicketSet( self.macroenv )
+    ticketdata = NullFilter( self.macroenv ).get_tickets()
+    for t in ticketdata:
+      ticketset.addTicket(t)
+
+    # calculate deps
+    depqueue = list()
+    depset = set()
+    depqueue.append( int( v ) )
+    depset.add( int( v ) )
+    ticketset.needExtension( self.DEPEXTENSION )
+    while len( depqueue ) > 0:
+      current = depqueue.pop( 0 )
+      cdata = ticketset.getTicket( current )
+      deps = cdata.getextension( self.DEPEXTENSION )
+      for d in deps:
+        if int( d.getfield( 'id' ) ) not in depset:
+          depqueue.append( int( d.getfield( 'id' ) ) )
+          depset.add( int( d.getfield( 'id' ) ) )
+
+    # build ticketlist with deps
+    del ticketset
+    depdata = list()
+    for t in ticketdata:
+      if int( t[ 'id' ] ) in depset:
+         depdata.append( t )
+    del ticketdata
+
+    return depdata
+
+class TicketDepGraphFilter( TicketBiDepGraphFilter ):
+  DEPEXTENSION = 'dependencies'
+
+
+class TicketRevDepGraphFilter( TicketBiDepGraphFilter ):
+  DEPEXTENSION = 'reverse_dependencies'
 
 class ppFilter():
   '''
@@ -167,7 +226,10 @@ class ppFilter():
 
     # entries: <kw key>: <ParamFilter cls>
     # - value is passed with cls.set_queryarg, afterwards cls.get_tickets() is called
-    param_filters = {}
+    param_filters = {
+      'filter_ticketdeps': TicketDepGraphFilter,
+      'filter_ticketrdeps': TicketRevDepGraphFilter
+    }
 
     # entries: <args key>: <BaseFilter cls>
     # - only get_tickets() is called
@@ -185,7 +247,7 @@ class ppFilter():
         f.set_queryarg( v )
         parmfilter = True
       elif k in param_filters:
-        f = nullparam_filters[ k ]( self.macroenv )
+        f = param_filters[ k ]( self.macroenv )
         f.set_queryarg( v )
         parmfilter = True
       if parmfilter:
