@@ -1,4 +1,20 @@
 ***********************************************
+** BatchModifyPlugin 0.4.1 (February 19, 2010) **
+***********************************************
+
+This release fixes a bug introduced in #5810. TicketSystem.eventually_restrict_owner did not
+exist before Trac 0.11.2. This release fixes errors that users of Trac 0.11 and 0.11.1 were
+seeing related to this.
+
+Download URL:
+ * http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags/BatchModify-0.4.1-py2.5.egg
+ * http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags/BatchModify-0.4.1-py2.6.egg 
+
+Bug Fixes:
+ * #5810 - TicketSystem.eventually_restrict_owner does not exist before Trac 0.11.2 (http://trac-hacks.org/ticket/5810)
+ 
+
+***********************************************
 ** BatchModifyPlugin 0.4 (February 16, 2010) **
 ***********************************************
 
