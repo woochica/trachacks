@@ -2,8 +2,8 @@ from setuptools import setup
 
 PACKAGE = 'overrideeditplugin'
 
-setup(name=PACKAGE,
-      version='0.0.1',
+setup(name="OverrideEditPlugin",
+      version='0.0.2',
       packages=[PACKAGE],
       url='http://www.trac-hacks.org/wiki/OverrideEditPlugin',
       license='http://www.opensource.org/licenses/mit-license.php',

@@ -1,3 +1,5 @@
+from trac.core import *
+from trac.env import IEnvironmentSetupParticipant
 from trac.util import Markup
 import trac.ticket.web_ui as web
 from trac.web.chrome import add_link, add_script, add_stylesheet, \
@@ -161,4 +163,38 @@ def _validate_ticket(self, req, ticket):
                 add_warning(req, message)
     return valid
 
-web.TicketModule._validate_ticket = _validate_ticket
+
+class OverrideEditPluginSetupParticipant(Component):
+    """ This component monkey patches web.TicketModule._validate_ticket so that
+        you can still edit even when someone else has added a comment.
+        If you are not careful you can overrite ticket description changes, the
+        plugin attempts to show a diff if there are changes.
+    """
+    implements(IEnvironmentSetupParticipant)
+    def __init__(self):
+      #only if we should be enabled do we monkey patch
+      if self.compmgr.enabled[self.__class__]:
+        web.TicketModule._validate_ticket = _validate_ticket
+
+    def environment_created(self):
+      """Called when a new Trac environment is created."""
+      pass
+
+    def environment_needs_upgrade(self, db):
+      """Called when Trac checks whether the environment needs to be upgraded.
+      
+      Should return `True` if this participant needs an upgrade to be
+      performed, `False` otherwise.
+      
+      """
+      pass
+
+    def upgrade_environment(self, db):
+      """Actually perform an environment upgrade.
+
+      Implementations of this method should not commit any database
+      transactions. This is done implicitly after all participants have
+      performed the upgrades they need without an error being raised.
+      """
+      pass
+
