@@ -25,6 +25,7 @@ from pptickets import *
 from pprender import *
 from ppenv import *
 from ppticketviewtweak import *
+from pputil import *
 
 from pkg_resources import resource_filename
 
@@ -322,7 +323,7 @@ class ProjectPlanMacro(WikiMacroBase):
         '''
         macrostart = datetime.now()
         
-        addExternFiles( formatter )
+        addExternFiles( formatter.req )
         # needed because of ajax call while showing ticket details
         add_stylesheet( formatter.req, 'common/css/ticket.css' )
         
@@ -348,15 +349,3 @@ class ProjectPlanMacro(WikiMacroBase):
                  #tag.div( id = 'ppstat' ) )
 
 
-def addExternFiles(formatter):
-  '''
-    add javascript and style files
-  '''
-  # enable jquery tooltips
-  add_script( formatter.req, 'projectplan/js/jquery-tooltip/lib/jquery.dimensions.js' )
-  add_script( formatter.req, 'projectplan/js/jquery-tooltip/jquery.tooltip.js' )
-  add_stylesheet( formatter.req, 'projectplan/js/jquery-tooltip/jquery.tooltip.css' )
-
-  # move to gvrender?
-  add_stylesheet( formatter.req, 'projectplan/css/projectplan.css' )
-  add_script( formatter.req, 'projectplan/js/projectplan.js' )

@@ -117,7 +117,14 @@ function hideIfShown(){
 // }
 
 $(document).ready(function () {
-	$(".project_image .ticket_inner a").tooltip({
+	addTooltip(".project_image .ticket_inner a"); // project image
+	// remove all title values
+//  	$(".project_image .ticket_inner a").each(function() { this.title = "";});
+	addTooltip(".properties a.ticket_inner"); // ticket view
+});
+
+function addTooltip( sel ){
+	$(sel).tooltip({
  		bodyHandler: function() { 
  			$("#tooltip").load(this.href+" #ticket");
  			this.title = ""
@@ -133,8 +140,6 @@ $(document).ready(function () {
  		extraClass: "tooltip2", 
 		showURL: true
 	});
-	// remove all title values
-//  	$(".project_image .ticket_inner a").each(function() { this.title = "";});
-});
+}
 
 

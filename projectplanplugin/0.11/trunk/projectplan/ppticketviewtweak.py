@@ -7,16 +7,17 @@ from genshi.core import TEXT
 from genshi.filters import Transformer
 from genshi.input import HTML
 from trac.ticket.api import ITicketManipulator
-from trac.web.api import ITemplateStreamFilter # IRequestHandler, IRequestFilter, 
+from trac.web.api import ITemplateStreamFilter, IRequestFilter #, IRequestHandler
 from trac.ticket.query import *
 from ppenv import PPConfiguration
+from pputil import *
 import re
 
 class PPTicketViewTweak(Component):
   '''
     BETA: computes links on ticket dependency entries
   '''
-  implements(ITemplateStreamFilter)
+  implements(ITemplateStreamFilter, IRequestFilter)
   
   field = None
 
@@ -72,10 +73,17 @@ class PPTicketViewTweak(Component):
     return stream
  
  
+  # IRequestFilter methods
+  def pre_process_request(self, req, handler):
+    return handler
+
+  def post_process_request(self, req, template, data, content_type):
+    '''
+      add javascript and stylesheet to ticket view
+    '''
+    if req.path_info.startswith('/ticket/'):
+      #tkt = data['ticket']
+      addExternFiles(req)
+    return template, data, content_type
  
-def isNumber( string ) :
-  try:
-    stripped = str(int(string))
-    return True
-  except:
-    return False
+ 
