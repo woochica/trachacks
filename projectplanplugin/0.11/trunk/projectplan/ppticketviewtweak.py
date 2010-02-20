@@ -26,6 +26,11 @@ class PPTicketViewTweak(Component):
     '''
       replace the dependency-field by links
     '''
+    
+    # stop if it is not a ticket
+    if not req.path_info.startswith('/ticket/'):
+      return stream
+    
     self.field = PPConfiguration( self.env ).get('custom_dependency_field')
     
     dependencies = data['ticket'].values.get(self.field).strip()

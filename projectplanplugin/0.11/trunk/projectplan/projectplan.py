@@ -321,20 +321,11 @@ class ProjectPlanMacro(WikiMacroBase):
           Wiki Macro Method which generates a Genshi Markup Stream
         '''
         macrostart = datetime.now()
-
-        # enable jquery tooltips
-        add_script( formatter.req, 'projectplan/js/jquery-tooltip/lib/jquery.dimensions.js' )
-        add_script( formatter.req, 'projectplan/js/jquery-tooltip/jquery.tooltip.js' )
-        add_stylesheet( formatter.req, 'projectplan/js/jquery-tooltip/jquery.tooltip.css' )
-
-        # verlagern in gvrender? -> stylesheet gehoert zu gvrender nicht direkt zum macro
-        add_stylesheet( formatter.req, 'projectplan/css/projectplan.css' )
-        add_script( formatter.req, 'projectplan/js/projectplan.js' )
-
+        
+        addExternFiles( formatter )
         # needed because of ajax call while showing ticket details
         add_stylesheet( formatter.req, 'common/css/ticket.css' )
-
-
+        
         macroenv = PPEnv( self.env, formatter.req, content )
         ts = ppFilter( macroenv ).get_tickets()
         
@@ -355,3 +346,17 @@ class ProjectPlanMacro(WikiMacroBase):
                          )
                  )
                  #tag.div( id = 'ppstat' ) )
+
+
+def addExternFiles(formatter):
+  '''
+    add javascript and style files
+  '''
+  # enable jquery tooltips
+  add_script( formatter.req, 'projectplan/js/jquery-tooltip/lib/jquery.dimensions.js' )
+  add_script( formatter.req, 'projectplan/js/jquery-tooltip/jquery.tooltip.js' )
+  add_stylesheet( formatter.req, 'projectplan/js/jquery-tooltip/jquery.tooltip.css' )
+
+  # move to gvrender?
+  add_stylesheet( formatter.req, 'projectplan/css/projectplan.css' )
+  add_script( formatter.req, 'projectplan/js/projectplan.js' )
