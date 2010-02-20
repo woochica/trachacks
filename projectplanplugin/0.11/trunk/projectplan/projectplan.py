@@ -24,6 +24,7 @@ from ppfilter import *
 from pptickets import *
 from pprender import *
 from ppenv import *
+from ppticketviewtweak import *
 
 from pkg_resources import resource_filename
 
