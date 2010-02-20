@@ -320,7 +320,7 @@ class ProjectPlanMacro(WikiMacroBase):
         '''
           Wiki Macro Method which generates a Genshi Markup Stream
         '''
-        macrostart = datetime.datetime.now()
+        macrostart = datetime.now()
 
         # enable jquery tooltips
         add_script( formatter.req, 'projectplan/js/jquery-tooltip/lib/jquery.dimensions.js' )
@@ -348,7 +348,7 @@ class ProjectPlanMacro(WikiMacroBase):
                  ppRender().render( macroenv, ts ),
                  tag.div(  
                          tag.div( 
-			    tag.span('It took '+str((datetime.datetime.now()-macrostart).microseconds/1000)+'ms to generate this visualization. ' , class_ = 'ppstat' ),
+			    tag.span('It took '+str((datetime.now()-macrostart).microseconds/1000)+'ms to generate this visualization. ' , class_ = 'ppstat' ),
 			    noteForceReload,
 			    tag.span(tag.a('Force recreation of the image.', href='?ppforcereload=1', class_ = 'ppforcereload' ) )
 			    )
