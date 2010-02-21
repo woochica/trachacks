@@ -218,7 +218,7 @@ class TicketWorkflowOpStatusPrevious(TicketWorkflowOpBase):
         actions = ConfigurableTicketWorkflow(self.env).actions
         label = actions[action]['name']
         new_status = self._new_status(ticket)
-        if new_status != ticket['status']:
+        if new_status != self._old_status(ticket):
             hint = 'The status will change to %s' % new_status
         else:
             hint = ''
@@ -228,6 +228,10 @@ class TicketWorkflowOpStatusPrevious(TicketWorkflowOpBase):
     def get_ticket_changes(self, req, ticket, action):
         """Returns the change of status."""
         return {'status': self._new_status(ticket)}
+
+    def _old_status(self, ticket):
+        """Determines what the ticket state was (is)"""
+        return ticket._old.get('status', ticket['status'])
 
     def _new_status(self, ticket):
         """Determines the new status"""
