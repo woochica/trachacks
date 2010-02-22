@@ -298,7 +298,15 @@ class TicketWorkflowOpRunExternal(Component):
 
     def apply_action_side_effects(self, req, ticket, action):
         """Run the external script"""
+        print "running external script for %s" % action
         script = os.path.join(self.env.path, 'hooks', action)
+        for extension in ('', '.exe', '.cmd', '.bat'):
+            if os.path.exists(script + extension):
+                script += extension
+                break
+        else:
+            self.env.log.error("Error in ticket workflow config; could not find external command to run for %s in %s" % (action, os.path.join(self.env.path, 'hooks')))
+            return
         retval = call([script, str(ticket.id), req.authname])
         if retval:
             self.env.log.error("External script %r exited with return code %s." % (script, retval))
