@@ -28,7 +28,7 @@ class WikiPrintAdmin(Component):
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        return []
+        return ['WIKIPRINT_ADMIN', 'WIKIPRINT_FILESYSTEM']
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -41,12 +41,12 @@ class WikiPrintAdmin(Component):
 
     # IAdminPanelsProvider methods
     def get_admin_panels(self, req):
-        if req.perm.has_permission('WIKI_ADMIN'):
-            yield ('general', 'General', 'wikiprint', 'WikiPrint')
+        if req.perm.has_permission('WIKIPRINT_ADMIN'):
+            yield ('wikiprint', 'WikiPrint', 'options', 'Options')
 
     # IAdminPanelProvider methods
     def render_admin_panel(self, req, cat, page, component):
-        req.perm.assert_permission('WIKI_ADMIN')
+        req.perm.assert_permission('WIKIPRINT_ADMIN')
         data = {}
         
         allpages = list(WikiSystem(self.env).get_pages())
@@ -122,18 +122,20 @@ class WikiPrintAdmin(Component):
     def _send_resource_file(self, req, content_type, file, default_value):
         # Send the output
         req.send_response(200)
-        req.send_header('Content-Type', content_type)
+        req.send_header('Content-Type', 'text/plain')
         if not file:
             out = default_value
         else:
-            linkloader = wikiprint.linkLoader(self.env)
+            linkloader = wikiprint.linkLoader(self.env, req, allow_local = True)
             resolved_file = linkloader.getFileName(file)
+            if not resolved_file :
+                raise Exception("File or URL load problem: %s (need WIKIPRINT_FILESYSTEM permissions?)" % file)
             try:
                 f = open(resolved_file)
                 out = f.read()
                 f.close()
             except IOError:
-                raise Exception("File or URL load problem: %s" % file)
+                raise Exception("File or URL load problem: %s (IO Error)" % file)
             del linkloader
             
         req.send_header('Content-Length', len(out))

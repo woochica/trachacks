@@ -9,9 +9,15 @@
 <body>
 <form method="post" onsubmit="compile_pages(this);">
 <fieldset>
-    <legend>Style/Content Properties (leave blank for defaults)</legend>
+    <legend>Style/Content Properties</legend>
     <table>
     <tbody>
+        <tr>
+            <td colspan="3">
+                Specify a path to a file in the local filesystem, or an URL to the resource.
+                <br/>Leave blank for using default styles or content.
+            </td>
+        </tr>
         <tr>
             <td>CSS file or URL:</td>
             <td><input type="text" value="${css_url}" name="css_url" size="80"/></td>

@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name = 'TracWikiPrintPlugin',
-    version = '1.6',
+    version = '1.7',
     packages = ['wikiprint'],
     package_data={ 'wikiprint' : [ 'templates/*', 'htdocs/js/*' ] },
     author = "Alvaro J. Iradier",

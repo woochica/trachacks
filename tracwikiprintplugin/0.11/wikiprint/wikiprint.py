@@ -57,10 +57,12 @@ class linkLoader:
     it when linkLoader is unloaded. 
     """
     
-    def __init__(self, env, auth_cookie = None):
+    def __init__(self, env, req, auth_cookie = None, allow_local = False):
         self.tfileList = []
         self.env = env
         self.auth_cookie = auth_cookie
+        self.req = req
+        self.allow_local = allow_local
         self.env.log.debug('WikiPrint.linkLoader => Initializing')
     
     def __del__(self):
@@ -70,41 +72,50 @@ class linkLoader:
             
     def getFileName(self, name, relative=''):
         try:
+            if self.allow_local:
+                self.req.perm.assert_permission('WIKIPRINT_FILESYSTEM')
+                self.env.log.debug("WikiPrint.linkLoader => Resolve local filesystem %s", name)
+                return name
+                
             if name.startswith('http://') or name.startswith('https://'):
                 self.env.log.debug('WikiPrint.linkLoader => Resolving URL: %s' % name)
                 url = urlparse.urljoin(relative, name)
                 self.env.log.debug('WikiPrint.linkLoader => urljoined URL: %s' % url)
-                path = urlparse.urlsplit(url)[2]
-                self.env.log.debug('WikiPrint.linkLoader => path: %s' % path)
-                suffix = ""
-                if "." in path:
-                    new_suffix = "." + path.split(".")[-1].lower()
-                    if new_suffix in (".css", ".gif", ".jpg", ".png"):
-                        suffix = new_suffix
-                path = tempfile.mktemp(prefix="pisa-", suffix = suffix)          
-                
-                #Prepare the request with the auth cookie
-                request = urllib2.Request(url)
-                self.env.log.debug("Adding cookie to HTTP request: pdfgenerator_cookie=%s", self.auth_cookie)
-                request.add_header("Cookie", "pdfgenerator_cookie=%s" % self.auth_cookie)
-                ufile = urllib2.urlopen(request)
-                tfile = file(path, "wb")
-                size = 0
-                while True:
-                    data = ufile.read(1024)
-                    if not data:
-                        break
-                    # print data
-                    size = size + len(data)
-                    tfile.write(data)
-                ufile.close()
-                tfile.close()
-                self.tfileList.append(path)
-                self.env.log.debug("WikiPrint.linkLoader => loading %s to %s, %d bytes", url, path, size)
-                return path
             else:
-                self.env.log.debug('WikiPrint.linkLoader => Resolving local path: %s' % name)
-                return name
+                #Relative path
+                self.env.log.debug("WikiPrint.linkLoader => Relative path %s to %s", name, urlparse.urljoin(self.req.abs_href(), name))
+                url = urlparse.urljoin(self.req.abs_href(), name)
+                
+            path = urlparse.urlsplit(url)[2]
+            self.env.log.debug('WikiPrint.linkLoader => path: %s' % path)
+            suffix = ""
+            if "." in path:
+                new_suffix = "." + path.split(".")[-1].lower()
+                if new_suffix in (".css", ".gif", ".jpg", ".png"):
+                    suffix = new_suffix
+            path = tempfile.mktemp(prefix="pisa-", suffix = suffix)          
+            
+            #Prepare the request with the auth cookie
+            #TO-DO: What to do for http authorization?
+            request = urllib2.Request(url)
+            self.env.log.debug("Adding cookie to HTTP request: pdfgenerator_cookie=%s", self.auth_cookie)
+            request.add_header("Cookie", "pdfgenerator_cookie=%s" % self.auth_cookie)
+            ufile = urllib2.urlopen(request)
+            tfile = file(path, "wb")
+            size = 0
+            while True:
+                data = ufile.read(1024)
+                if not data:
+                    break
+                # print data
+                size = size + len(data)
+                tfile.write(data)
+            ufile.close()
+            tfile.close()
+            self.tfileList.append(path)
+            self.env.log.debug("WikiPrint.linkLoader => loading %s to %s, %d bytes", url, path, size)
+            return path
+
         except Exception, e:
             self.env.log.debug("WikiPrint.linkLoader ERROR: %s" % e)
         return None
@@ -157,10 +168,10 @@ class WikiPrint(Component):
             text = r.sub('', text)
         
         #Escape [[PageOutline]], to avoid wiki processing
-        text = text.replace('[[PageOutline]]', '![[PageOutline]]')
+        for r in [re.compile(r'\[\[TOC(\(.*\))?\]\]'), re.compile(r'\[\[PageOutline(\(.*\))?\]\]')]:
+            text = r.sub('![[pdf-toc]]', text)
 
         self.env.log.debug('WikiPrint => Wiki input for WikiPrint: %r' % text)
-        #Use format_to_html instead of old wiki_to_html
         
         #First create a Context object from the wiki page
         context = Context(Resource('wiki', page_name), req.abs_href, req.perm)
@@ -183,22 +194,21 @@ class WikiPrint(Component):
         page = Markup('\n<div><pdf:nextpage /></div>'.join(html_pages))
         
         #Replace PageOutline macro with Table of Contents
-        #TODO: Should not replace "![[PageOutline]]", only "[[PageOutline]]" !!!
         if book:
-            #If book, remove [[PageOutlines]], and add at beginning
-            page = page.replace('[[PageOutline]]','')
+            #If book, remove [[TOC]], and add at beginning
+            page = page.replace('[[pdf-toc]]','')
             page = Markup(self.get_toc()) + Markup(page)
         else:
-            page = page.replace('[[PageOutline]]',self.get_toc())
+            page = page.replace('[[pdf-toc]]',self.get_toc())
 
-        page = self.add_headers(page, book, title=title, subject=subject, version=version, date=date)
+        page = self.add_headers(req, page, book, title=title, subject=subject, version=version, date=date)
         page = page.encode(self.default_charset, 'replace')
-        css_data = self.get_css()
+        css_data = self.get_css(req)
 
         pdf_file = StringIO.StringIO()
 
         auth_cookie = hex_entropy()
-        loader = linkLoader(self.env, auth_cookie)
+        loader = linkLoader(self.env, req, auth_cookie)
 
         #Temporary authentication
         self.env.log.debug("Storing temporary auth cookie %s for user %s", auth_cookie, req.authname)
@@ -219,27 +229,27 @@ class WikiPrint(Component):
 
         return out
 
-    def html_to_printhtml(self, html_pages, title='', subject='', version='', date='', ):
+    def html_to_printhtml(self, req, html_pages, title='', subject='', version='', date='', ):
         
         self.env.log.debug('WikiPrint => Start function html_to_printhtml')
 
         page = Markup('<hr>'.join(html_pages))
         
-        css_data = '<style type="text/css">%s</style>' % self.get_css()
-        page = self.add_headers(page, book=False, title=title, subject=subject, version=version, date=date, extra_headers = css_data)
+        css_data = '<style type="text/css">%s</style>' % self.get_css(req)
+        page = self.add_headers(req, page, book=False, title=title, subject=subject, version=version, date=date, extra_headers = css_data)
 
         page = page.encode(self.default_charset, 'replace')
         
         
         return page
         
-    def add_headers(self, page, book=False, title='', subject='', version='', date='', extra_headers = ''):
+    def add_headers(self, req, page, book=False, title='', subject='', version='', date='', extra_headers = ''):
         """
         Add HTML standard begin and end tags, and header tags and styles.
         Add front page and extra contents (header/footer), replacing #EXPRESSIONS (title, subject, version and date)
         """
 
-        extra_content = self.get_extracontent()
+        extra_content = self.get_extracontent(req)
         extra_content = extra_content.replace('#TITLE', title)
         extra_content = extra_content.replace('#VERSION', version)
         extra_content = extra_content.replace('#DATE', date)
@@ -247,15 +257,15 @@ class WikiPrint(Component):
         
 
         if book:
-            frontpage = self.get_frontpage()
+            frontpage = self.get_frontpage(req)
             frontpage = frontpage.replace('#TITLE', title)
             frontpage = frontpage.replace('#VERSION', version)
             frontpage = frontpage.replace('#DATE', date)
             frontpage = frontpage.replace('#SUBJECT', subject)
             page = Markup(frontpage) + Markup(page)
-            style = Markup(self.get_book_css())
+            style = Markup(self.get_book_css(req))
         else:
-            style = Markup(self.get_article_css())
+            style = Markup(self.get_article_css(req))
         
         #Get pygment style
         if pigments_loaded:
@@ -283,8 +293,8 @@ class WikiPrint(Component):
             
         return page
         
-    def get_file_or_default(self, file_or_url, default):
-        loader = linkLoader(self.env)
+    def get_file_or_default(self, req, file_or_url, default):
+        loader = linkLoader(self.env, req, allow_local=True)
         if file_or_url: 
             file_or_url = loader.getFileName(file_or_url)
             self.env.log.debug("wikiprint => Loading URL: %s" % file_or_url)
@@ -299,20 +309,20 @@ class WikiPrint(Component):
         
         return to_unicode(data)
 
-    def get_css(self):
-        return self.get_file_or_default(self.css_url, defaults.CSS)
+    def get_css(self, req):
+        return self.get_file_or_default(req, self.css_url, defaults.CSS)
 
-    def get_book_css(self):
-        return self.get_file_or_default(self.book_css_url, defaults.BOOK_EXTRA_CSS)
+    def get_book_css(self, req):
+        return self.get_file_or_default(req, self.book_css_url, defaults.BOOK_EXTRA_CSS)
 
-    def get_article_css(self):
-        return self.get_file_or_default(self.article_css_url, defaults.ARTICLE_EXTRA_CSS)
+    def get_article_css(self, req):
+        return self.get_file_or_default(req, self.article_css_url, defaults.ARTICLE_EXTRA_CSS)
 
-    def get_frontpage(self):
-        return self.get_file_or_default(self.frontpage_url, defaults.FRONTPAGE)
+    def get_frontpage(self, req):
+        return self.get_file_or_default(req, self.frontpage_url, defaults.FRONTPAGE)
 
-    def get_extracontent(self):
-        return self.get_file_or_default(self.extracontent_url, defaults.EXTRA_CONTENT)
+    def get_extracontent(self, req):
+        return self.get_file_or_default(req, self.extracontent_url, defaults.EXTRA_CONTENT)
 
     def get_toc(self):
         return Markup('<h1 style="-pdf-outline: false;">%s</h1><div><pdf:toc /></div><div><pdf:nextpage /></div>' % self.toc_title)
@@ -371,5 +381,5 @@ class WikiToHtmlPage(WikiPrint):
         wikiprint = WikiPrint(self.env)
         
         page = wikiprint.wikipage_to_html(text, req.args.get('page', 'WikiStart'), req)
-        out = wikiprint.html_to_printhtml([page], self.default_charset)
+        out = wikiprint.html_to_printhtml(req, [page], self.default_charset)
         return (out, 'text/html')
