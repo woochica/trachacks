@@ -95,11 +95,24 @@ class linkLoader:
                     suffix = new_suffix
             path = tempfile.mktemp(prefix="pisa-", suffix = suffix)          
             
+            #Allow wikiprint to authenticate using user and password, Basic HTTP Auth or Digest
+            if self.env.config.get('wikiprint', 'httpauth_user'):
+                pwmgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+                pwmgr.add_password(None, url,
+                    self.env.config.get('wikiprint', 'httpauth_user'),
+                    self.env.config.get('wikiprint', 'httpauth_password'))
+                auth_handler = urllib2.HTTPBasicAuthHandler(pwmgr)
+                auth_handler2 = urllib2.HTTPDigestAuthHandler(pwmgr)
+            
+                opener = urllib2.build_opener(auth_handler, auth_handler2)
+                urllib2.install_opener(opener)
+            
             #Prepare the request with the auth cookie
-            #TO-DO: What to do for http authorization?
             request = urllib2.Request(url)
             self.env.log.debug("Adding cookie to HTTP request: pdfgenerator_cookie=%s", self.auth_cookie)
             request.add_header("Cookie", "pdfgenerator_cookie=%s" % self.auth_cookie)
+            
+            #Make the request and download the file
             ufile = urllib2.urlopen(request)
             tfile = file(path, "wb")
             size = 0
@@ -129,11 +142,12 @@ class WikiPrint(Component):
     article_css_url = Option('wikiprint', 'article_css_url')
     frontpage_url = Option('wikiprint', 'frontpage_url')
     extracontent_url = Option('wikiprint', 'extracontent_url')
+    httpauth_user = Option('wikiprint', 'httpauth_user')
+    httpauth_password = Option('wikiprint', 'httpauth_password')
     default_charset = Option('trac', 'default_charset', 'utf-8')
     
     implements(IAuthenticator)
     
-
     def _get_name_for_cookie(self, cookie):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
