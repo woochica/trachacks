@@ -92,6 +92,10 @@ jQuery(document).ready(function($){
     var selectedTix=[];    
     $("input[name=selectedTicket]:checked").each( function(){ selectedTix.push(this.value);} ); 
     $("input[name=selectedTickets]").val(selectedTix);
+    if(selectedTix.length == 0){
+        alert("No tickets selected to modify");
+        return false;
+    }
   })
   $(document.getElementById("columns")).toggleClass("collapsed");
   $("#batchmod-fieldset").toggleClass("collapsed");
