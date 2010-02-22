@@ -11,6 +11,7 @@ from trac.core import implements, Component
 from trac.ticket import model
 from trac.ticket.api import ITicketActionController
 from trac.ticket.default_workflow import ConfigurableTicketWorkflow
+from trac.ticket.model import Milestone
 
 
 class TicketWorkflowOpBase(Component):
@@ -429,3 +430,44 @@ class TicketWorkflowOpXRef(TicketWorkflowOpBase):
             # "OperationalError: no such column: new"
             xticket = model.Ticket(self.env, ticket.id)
             xticket.save_changes(author, comment)
+
+
+class TicketWorkflowOpResetMilestone(TicketWorkflowOpBase):
+    """Resets the ticket milestone if it is assigned to a completed milestone.
+    This is useful for reopen operations.
+
+    reopened = closed -> reopened
+    reopened.name = Reopened
+    reopened.operations = reset_milestone
+
+
+    Don't forget to add the `TicketWorkflowOpResetMilestone` to the  workflow
+    option in [ticket].
+    If there is no workflow option, the line will look like this:
+
+    workflow =  ConfigurableTicketWorkflow,TicketWorkflowOpResetMilestone
+    """
+
+    _op_name = 'reset_milestone'
+
+    # ITicketActionController methods
+
+    def render_ticket_action_control(self, req, ticket, action):
+        """Returns the action control"""
+        actions = ConfigurableTicketWorkflow(self.env).actions
+        label = actions[action]['name']
+        # check if the assigned milestone has been completed
+        milestone = Milestone(self.env,ticket['milestone'])
+        if milestone.is_completed:
+            hint = 'The milestone will be reset'
+        else:
+            hint = ''
+        control = tag('')
+        return (label, control, hint)
+
+    def get_ticket_changes(self, req, ticket, action):
+        """Returns the change of milestone, if needed."""
+        milestone = Milestone(self.env,ticket['milestone'])
+        if milestone.is_completed:
+            return {'milestone': ''}
+        return {}
