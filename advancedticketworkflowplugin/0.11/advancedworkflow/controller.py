@@ -329,7 +329,7 @@ class TicketWorkflowOpTriage(TicketWorkflowOpBase):
         label = actions[action]['name']
         new_status = self._new_status(ticket, action)
         if new_status != ticket['status']:
-            hint = 'The status will change.'
+            hint = 'The status will change to %s.' % new_status
         else:
             hint = ''
         control = tag('')
