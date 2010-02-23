@@ -43,6 +43,7 @@ class WikiPrintAdmin(Component):
     def get_admin_panels(self, req):
         if req.perm.has_permission('WIKIPRINT_ADMIN'):
             yield ('wikiprint', 'WikiPrint', 'options', 'Options')
+        if req.perm.has_permission('WIKIPRINT_BOOK'):
             yield ('wikiprint', 'WikiPrint', 'makebook', 'Make Book')
 
     # IAdminPanelProvider methods
