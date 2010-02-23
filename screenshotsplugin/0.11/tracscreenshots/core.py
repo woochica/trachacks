@@ -135,7 +135,6 @@ class ScreenshotsCore(Component):
         # Template data dictionary.
         req.data = {}
 
-
         # Get database access.
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()

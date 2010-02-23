@@ -82,6 +82,7 @@ class ScreenshotsTags(Component):
     def _get_tags(self, screenshot):
         # Prepare tag names.
         self.log.debug("additional_tags: %s" % (self.additional_tags,))
+        tags = []
         if 'author' in self.additional_tags:
            tags = [screenshot['author']]
         if 'components' in self.additional_tags and screenshot['components']:
