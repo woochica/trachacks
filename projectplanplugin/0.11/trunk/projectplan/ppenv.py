@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 
 import re
 import datetime
@@ -627,10 +627,10 @@ class PPConfiguration():
     # TODO: out sourcing of conf information
     if 'ColorForPriority' == n :
       return {     'blocker': 'red',
-                         'critical': 'darkorange',
+                         'critical': '#f88017', # darkorange
                          'major': 'yellow',
-                         'minor': 'thistle1',
-                         'trivial': 'slategray1'
+                         'minor': '#fcdfff', # thistle1
+                         'trivial': '#c2dfff' # slategray1
                          }.get(k, 'grey')
     elif 'ColorForStatus' == n :
       return {     'assigned': '#F0F0F0',
@@ -961,15 +961,19 @@ class PPEnv():
     else:
       return False
 
+  def get_bool_arg(self, arg, default ):
+    '''
+      returns the value of the given arg, interpreted as bool (YES, NO, Y, N, TRUE, FALSE), caseinsensitve
+    '''
+    try:
+      return { # switch/case in Python style
+        'YES': True,
+        'NO': False,
+        'Y': True,
+        'N': False,
+        'TRUE': True,
+        'FALSE': False,
+      }.get( self.macrokw.get(arg).strip().upper(), default) # fallback: default
+    except:
+      return default
 
-
-def htmlspecialchars(text):
-  '''
-    replace special characters (like in PHP)
-  '''
-  text = text.replace('&', '&amp;')
-  text = text.replace('"', '&quot;')
-  text = text.replace('<', '&lt;')
-  text = text.replace('>', '&gt;')
-  text = text.replace("'", '&#039;')
-  return text

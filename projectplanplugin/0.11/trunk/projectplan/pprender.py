@@ -9,6 +9,8 @@ from genshi.input import HTMLParser
 from genshi.core import Stream as EventStream, Markup
 from genshi.template.markup import MarkupTemplate
 from pptickets import *
+from pputil import *
+from ppenv import PPConstant
 import ppenv
 
 from dotrender import GVCMapXGen
@@ -29,6 +31,12 @@ class RenderImpl():
       Initialize
     '''
     self.macroenv = macroenv
+    
+  def log_warn( self, message ):
+    '''
+      shortcut: warn logging
+    '''
+    self.macroenv.tracenv.log.warn(message)
 
   def render(self, ticketset):
     '''
@@ -88,6 +96,34 @@ class SortedReportRenderer(RenderImpl):
     Base Class for Renderer which enumerate a TicketSet,
     Sort them by a given Key and Output them into a HTML Table
   '''
+  
+  # Map resolving the row to a real name
+  headermap = { 
+                      'id': 'ticket', 
+                      #'summary': 'Summary', 
+                      #'component': 'Component' ,
+                      #'status': 'Status',
+                      'type': 'ticket type',
+                      'time': 'created'
+                  }
+  # default value, overwritten by macro parameter "rows"
+  fields = [ 'id', 'summary' ] 
+  # all field are shown (True)
+  allfields = False 
+  # all fields are shown, excluding these
+  allfieldsexclude = [ 'href', 'priority_value' ] 
+  ascending = True
+  # specific rows are extended with images (True)
+  useimages = False
+  usecolors = False
+  
+  # map resolving the sorting type (jquery.tablesorter), TODO: fix it, does not work considering buffer
+  sorttype = {  
+                      #'id': '{sorter: \'digit\'}' , 
+                      #'buffer': '{sorter: \'digit\'}' , 
+                      #'closingdiff': '{sorter: \'digit\'}' ,
+                      #'assigndiff': '{sorter: \'digit\'}' 
+                  }
 
   def __init__(self,macroenv):
     '''
@@ -95,15 +131,50 @@ class SortedReportRenderer(RenderImpl):
       and a Mapping for Field Headers.
     '''
     RenderImpl.__init__(self,macroenv)
-    self.ascending = True
     self.sortkey = 'id'
-    self.fields = [ 'id', 'summary' ]
     self.extensions = []
-    self.headermap = { 'id': 'Ticket ID' }
+    self.imgpath = macroenv.tracreq.href.chrome( 'projectplan', PPConstant.RelDocPath );
     try:
       self.limitlines = int(self.macroenv.macrokw.get( 'limitlines', 0 ))
     except:
       self.limitlines = 0
+    
+    # rows configured by user
+    confrows = self.macroenv.macrokw.get( 'rows', '' ).strip()
+    
+    if confrows.upper() == 'ALL': # show all existing fields
+      self.allfields = True
+    else: # show a specified set of fields
+      if confrows != '' :
+        self.rows = [ r.strip() for r in confrows.split('|') if str(r).strip() != "" ]
+        self.fields = ['id']
+        self.fields.extend(self.rows)
+      else:
+        self.rows = []
+    
+    # should images be used in the cols
+    self.useimages = self.macroenv.get_bool_arg('useimages', self.useimages )
+    self.usecolors = self.macroenv.get_bool_arg('usecolors', self.usecolors )
+
+  def setsortkey( self, default ):
+    '''
+      set the standard table sort attribute
+      if it is not given or it does not exists within the fields/extensions then the default value is used
+      always call this method after setting self.fields and self.extensions
+    '''
+    sortkey = self.macroenv.macrokw.get( 'sortby', default )
+    if (sortkey in self.fields) or (sortkey in self.extensions) :
+      self.sortkey = sortkey
+    else:
+      self.sortkey = default
+
+  def setascending( self, default ):
+    '''
+      set the standard table sort attribute
+      if it is not given or it does not exists within the fields/extensions then the default value is used
+      always call this method after setting self.fields and self.extensions
+    '''
+    self.ascending = self.macroenv.get_bool_arg('asc', self.ascending )
 
   def keysortedids( self, ticketset ):
     '''
@@ -128,24 +199,89 @@ class SortedReportRenderer(RenderImpl):
       srtkeys.reverse()
     return srtkeys
 
+  def getcssheaderclass( self, field ):
+    '''
+      get css class needed for tablesorter
+    '''
+    sorttype = self.sorttype.get( field, '')
+    
+    if field == self.sortkey and self.ascending == True:
+      return 'headerSortDown '+sorttype
+    elif field == self.sortkey and self.ascending == False:
+      return 'headerSortUp '+sorttype
+    else:
+      return sorttype
+
+  # bad style, this functionality should be placed somewhere else
+  def getcsscolstyle(self, field, value):
+    '''
+      calculates css-style information
+      returns tuple (class,style)
+    '''
+    if (not self.useimages) and (not self.usecolors): # no images by configuration
+      return ('', '')
+    
+    backgroundimage = ''
+    color = ''
+    cssclass = ''
+    
+    # choose image
+    if self.useimages == True:
+      backgroundimage = { # switch/case in Python style
+          'status': self.macroenv.conf.get_map_val('ImageForStatus', value ),
+          'priority': self.macroenv.conf.get_map_val('ImageForPriority', value ),
+          'type': self.macroenv.conf.get_map_val('ImageForTicketType', value ),
+        }.get( field, '' ) # fallback: empty
+      if backgroundimage != '' :
+        cssclass = 'ppimagecol'
+        backgroundimage = ('background-image: url(%s);' % os.path.join( self.imgpath, backgroundimage ))
+    
+    # choose image 
+    if self.usecolors == True:
+      color = { # switch/case in Python style
+          'status': self.macroenv.conf.get_map_val('ColorForStatus', value ),
+          'priority': self.macroenv.conf.get_map_val('ColorForPriority', value ),
+          'type': self.macroenv.conf.get_map_val('ColorForTicketType', value ),
+        }.get( field, '' ) # fallback: empty
+      if color != '' :
+        color = ('background-color: %s;' % color )
+    
+    return (cssclass,  backgroundimage+color)
+
+
   def render(self, ticketset):
     '''
       Generate a HTML Table for the Fields/Extensions given
     '''
-    outer = tag.table( class_="listing" )
+    # style overwritten to prevent browser rendering issues 
+    outer = tag.table( class_="listing pptickettable tablesorter pplisting" , style = 'width:auto;')
     srtlist = self.keysortedids( ticketset )
+    tablehead = tag.thead()
     inner = tag.tr()
+    
+    # TODO: problem: if the ticketset is empty, then the default rows will appear, 
+    # solution: get the fields from somewhere else
+    if self.allfields == True and len(ticketset.getIDList()) > 0:
+      self.fields = []
+      for f in (ticketset.getTicket(ticketset.getIDList()[0])).getfielddefs():
+        if not ( f.lower() in self.allfieldsexclude ):
+          self.fields.append( f )
+    
+    # generate HTML: Table head
     for f in self.fields:
       if f in self.headermap:
-        inner( tag.th( self.headermap[ f ] ) )
+        inner( tag.th( self.headermap[ f ] , title=f, class_ = self.getcssheaderclass(f) ) )
       else:
-        inner( tag.th( f ) )
+        inner( tag.th( f ), class_ = self.getcssheaderclass(f) )
     for e in self.extensions:
       if e in self.headermap:
-        inner( tag.th( self.headermap[ e ] ) )
+        inner( tag.th( self.headermap[ e ], title=e, class_ = self.getcssheaderclass(e) ) )
       else:
-        inner( tag.th( e ) )
-    outer(inner)
+        inner( tag.th( e ), class_ = self.getcssheaderclass(e) )
+    tablehead(inner)
+    outer(tablehead)
+    
+    # generate HTML: Table body
     _odd = True
     for k in srtlist:
       t = ticketset.getTicket( k )
@@ -155,23 +291,33 @@ class SortedReportRenderer(RenderImpl):
         inner = tag.tr( class_='even' )
       _odd = not _odd
       for f in self.fields:
-        if f!='id':
-          inner( tag.td( t.getfielddef( f, '' ) ) )
-        else:
-          if t.getfielddef( 'status', '' )!='closed':
-            inner( tag.td( tag.a( '#'+str(t.getfielddef( f, '' )), href=t.getfielddef( 'href', '' ) ) ) )
+        if f == 'id':
+          if t.getfielddef( 'status', '' )=='closed':
+            cssclass ="ticket closed"
           else:
-            inner( tag.td( tag.a( '#'+str(t.getfielddef( f, '' )), href=t.getfielddef( 'href', '' ), class_="closed ticket" ) ) )
+            cssclass ="ticket "
+          inner( tag.td( tag.a( '#'+str(t.getfielddef( f, '' )), href=t.getfielddef( 'href', '' ), class_ = cssclass ) ) )
+        else:
+          cssclass,style = self.getcsscolstyle(f, t.getfielddef( f, '' ) )
+          if f == 'priority' : # special case 
+            # two-digit integer representation of priority sorting (as definend in trac admin panel)
+            text = tag.span(str(99-int(t.getfielddef( 'priority_value', '' ))), class_ = 'invisible')+' '+t.getfielddef( f, '' ) 
+          else :
+            text = t.getfielddef( f, '' )
+          inner( tag.td( text, style = style, class_ = cssclass ) )
       for e in self.extensions:
         if t.hasextension( e ):
-          inner( tag.td( t.getextension( e ) ) )
+          cssclass,style = self.getcsscolstyle(e, t.getfielddef( e, '' ) )
+          inner( tag.td( t.getextension( e ), style = style, class_ = cssclass  ) )
         else:
-          inner( tag.td( '--' ) )
+          #inner( tag.td( '0', title='no statement possible', class_ = 'ppinvisibletabletext' ) )
+          inner( tag.td( '', title='no statement possible', class_ = 'ppinvisibletabletext' ) )
       outer(inner)
       if self.limitlines>0:
         self.limitlines-=1;
         if self.limitlines<=0:
           break
+    
     return outer
 
 class SortedBufferReportRenderer(SortedReportRenderer):
@@ -185,11 +331,11 @@ class SortedBufferReportRenderer(SortedReportRenderer):
       Initialize Fields/Extensions to be shown
     '''
     SortedReportRenderer.__init__(self,macroenv)
-    self.ascending = True
-    self.sortkey = 'buffer'
-    self.fields = [ 'id', 'summary' ]
+    #self.fields = [ 'id', 'summary' ] # has to be performed before super constructor
     self.extensions = [ 'buffer' ]
-    self.headermap = { 'id': 'Ticket ID', 'buffer': 'Buffer in Days' }
+    self.headermap.update({ 'buffer': 'Buffer in days' })
+    self.setsortkey('buffer')
+    self.setascending(True)
 
   def render(self,ticketset):
     '''
@@ -212,11 +358,11 @@ class SortedClosingDelayReportRenderer(SortedReportRenderer):
       Initialize Fields/Extensions to be shown
     '''
     SortedReportRenderer.__init__(self,macroenv)
-    self.ascending = False
-    self.sortkey = 'closingdiff'
-    self.fields = [ 'id', 'summary' ]
+    #self.fields = [ 'id', 'summary' ] # has to be performed before super constructor
     self.extensions = [ 'closingdiff' ]
-    self.headermap = { 'id': 'Ticket ID', 'closingdiff': 'Closing delay in Days' }
+    self.headermap.update({ 'closingdiff': 'Closing delay in days' })
+    self.setsortkey('closingdiff')
+    self.setascending(False)
 
   def render(self,ticketset):
     '''
@@ -238,11 +384,11 @@ class SortedAssignDelayReportRenderer(SortedReportRenderer):
       Initialize Fields/Extensions to be shown
     '''
     SortedReportRenderer.__init__(self,macroenv)
-    self.ascending = False
-    self.sortkey = 'assigndiff'
-    self.fields = [ 'id', 'summary' ]
+    #self.fields = [ 'id', 'summary' ] # has to be performed before super constructor
     self.extensions = [ 'assigndiff' ]
-    self.headermap = { 'id': 'Ticket ID', 'assigndiff': 'Assignment delay in Days' }
+    self.headermap.update({ 'assigndiff': 'Assignment delay in days' })
+    self.setsortkey('assigndiff')
+    self.setascending(False)
 
   def render(self,ticketset):
     '''
@@ -252,6 +398,9 @@ class SortedAssignDelayReportRenderer(SortedReportRenderer):
     return SortedReportRenderer.render( self, ticketset )
 
 RenderRegister.add( SortedAssignDelayReportRenderer, 'report_assign_delay' )
+
+
+
 
 class GVRenderer(RenderImpl):
   '''
@@ -288,10 +437,11 @@ class GVRenderer(RenderImpl):
     RenderImpl.__init__(self,macroenv)
     self.cmapxgen = None
     self.imgpath = ppenv.PPImageSelOption.absbasepath()
-    macroenv.tracenv.log.warning("GVRenderer: %s " % repr(macroenv) )
+    
     #macroenv.tracenv.log.warning("force reload: ppforcereload=%s " % repr(macroenv.get_args('ppforcereload') ) )
     if macroenv.get_args('ppforcereload') == '1' :
       self.ppforcereload = True
+    
     if str(macroenv.macroid) == '3':
       macroenv.tracenv.log.warning('GVRenderer: overwrite _writeMilestoneClusterHeader _writeMilestoneClusterFooter')
       self._writeMilestoneClusterHeader = dummy
@@ -315,9 +465,9 @@ class GVRenderer(RenderImpl):
     self.cmapxgen += 'fontcolor="'+self.macroenv.conf.get('version_fontcolor')+'"; '
     self.cmapxgen += 'color="'+self.macroenv.conf.get('version_color')+'"; '
     if vtitle!=None:
-      myversion =ppenv.htmlspecialchars(vtitle)
+      myversion =htmlspecialchars(vtitle)
     else:
-      myversion = 'Version: '+ppenv.htmlspecialchars(vstring)
+      myversion = 'Version: '+htmlspecialchars(vstring)
     # TODO: label should be better interpreted while parsing the html map
     if str(self.macroenv.macroid) in ['2', '3']: # standard rendering
       self.cmapxgen += 'label=<%s> ' % myversion
@@ -341,9 +491,9 @@ class GVRenderer(RenderImpl):
     self.cmapxgen += 'fontcolor="'+self.macroenv.conf.get('milestone_fontcolor')+'"; '
     self.cmapxgen += 'color="'+self.macroenv.conf.get('milestone_color')+'"; '
     if mtitle!=None:
-      mylabel =ppenv.htmlspecialchars(mtitle)
+      mylabel = htmlspecialchars(mtitle)
     else:
-      mylabel = 'Milestone: '+ppenv.htmlspecialchars(mstring)
+      mylabel = 'Milestone: '+ htmlspecialchars(mstring)
     # TODO: label should be better interpreted while parsing the html map
     if str(self.macroenv.macroid) in ['2', '3'] : # standard rendering
       self.cmapxgen += 'label=<%s> ' % mylabel
@@ -493,7 +643,7 @@ class GVRenderer(RenderImpl):
       else:
         edgecolstmt = ''
       self.cmapxgen += "Ticket%s->Ticket%s [ label=<%s> %s ];" % (
-        str( v.getfield('id') ), str( d.getfield( 'id' ) ),ppenv.htmlspecialchars(nlabel), edgecolstmt )
+        str( v.getfield('id') ), str( d.getfield( 'id' ) ),htmlspecialchars(nlabel), edgecolstmt )
 
   def _cmapxgenerate( self, ticketset ):
     '''
@@ -509,7 +659,7 @@ class GVRenderer(RenderImpl):
     self.cmapxgen += 'edge [fontsize=9, color="#808080"]; '
 
     self.cmapxgen += 'subgraph clusterFrame { URL="'+self.FRAME_ADDR
-    self.cmapxgen += '"; label="'+ppenv.htmlspecialchars(self.FRAME_LABEL)+'"; fontcolor="black"; color="white"; '
+    self.cmapxgen += '"; label="'+htmlspecialchars(self.FRAME_LABEL)+'"; fontcolor="black"; color="white"; '
 
     self.withbufs = ( 'withbuffer' in self.macroenv.macroargs )
 

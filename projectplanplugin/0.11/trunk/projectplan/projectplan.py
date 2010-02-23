@@ -331,7 +331,7 @@ class ProjectPlanMacro(WikiMacroBase):
         ts = ppFilter( macroenv ).get_tickets()
         
         if macroenv.get_args('ppforcereload') == '1':
-          noteForceReload = tag.span('The image was recreated.', class_ = 'ppforcereloadinfo' )
+          noteForceReload = tag.span('The visualization was recreated.', class_ = 'ppforcereloadinfo' )
         else:
           noteForceReload = tag.span()
         
@@ -342,7 +342,7 @@ class ProjectPlanMacro(WikiMacroBase):
                          tag.div( 
 			    tag.span('It took '+str((datetime.now()-macrostart).microseconds/1000)+'ms to generate this visualization. ' , class_ = 'ppstat' ),
 			    noteForceReload,
-			    tag.span(tag.a('Force recreation of the image.', href='?ppforcereload=1', class_ = 'ppforcereload' ) )
+			    tag.span(tag.a('Force recreation of the visualization.', href='?ppforcereload=1', class_ = 'ppforcereload' ) )
 			    )
                          )
                  )

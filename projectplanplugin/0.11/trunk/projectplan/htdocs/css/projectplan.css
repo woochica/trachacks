@@ -1,4 +1,6 @@
-
+.invisible {
+  display:none;
+}
 /*
   <tag class="project..."><div class="cbox0"></div>...
  */
@@ -126,3 +128,28 @@
 	border-style:inset; 
 	padding:1px;
 }
+
+
+/* ******************** jquery.tablesorter ******************** */
+th.headerSortUp { 
+    background-image: url(asc.gif); 
+} 
+
+th.headerSortDown { 
+    background-image: url(desc.gif); 
+} 
+
+th.header { 
+    cursor: pointer; 
+    background-repeat: no-repeat; 
+    background-position: center right; 
+    padding-right: 24px;
+}
+
+/* images in ticket tables */
+table.pplisting tbody td.ppimagecol {
+  background-position: right center;
+  background-repeat: no-repeat;
+  padding-right: 32px;
+}
+

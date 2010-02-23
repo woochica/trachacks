@@ -57,6 +57,12 @@ class ppTicket():
     '''
     return self.__dataref[ name ]
 
+  def getfielddefs( self ):
+    '''
+      return the set of valid fields
+    '''
+    return self.__dataref.keys()
+
   def getfielddef(self,name,defval):
     '''
       return ticketdata for key <name> or default if theres no data

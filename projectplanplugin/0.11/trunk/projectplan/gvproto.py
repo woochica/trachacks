@@ -1,8 +1,9 @@
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 
 import os
 
 import ppenv
+from pputil import *
 
 class NodePrototype():
   '''
@@ -29,7 +30,7 @@ class NodePrototype():
       addparameter = True
       
       if key.upper() == 'TITLE' or key.upper() == 'ALT':
-        val = ppenv.htmlspecialchars(val)
+        val = htmlspecialchars(val)
       if (key.upper() == 'COLOR' or key.upper() == 'BGCOLOR') and str(val).upper() == 'NONE':
         #self.macroenv.tracenv.log.warning(' _codeargs %s: %s = %s' % (self.ticket.getfield('id'), key, val) )
         addparameter = False
@@ -130,7 +131,7 @@ class NodePrototype():
     '''
       Write an arbitrary string into the Nodestring, applies htmlspecialchars to generate a safe html string
     '''
-    self.node = self.node + ppenv.htmlspecialchars(instr) + '\n'
+    self.node = self.node + htmlspecialchars(instr) + '\n'
     
   def closeimg(self):
     '''
@@ -269,7 +270,6 @@ class TicketNodePrototype( NodePrototype ):
       returns a tuple with the state and due
     '''
     cd = self.ticket.getextension( 'closingdiff' )
-    self.macroenv.tracenv.log.warning("getdateconf  getdateclassification:  cd=%s" % cd )
     if self.ticketstatus == 'closed':
       if cd != None: 
         if cd > 0: # to late
@@ -296,7 +296,6 @@ class TicketNodePrototype( NodePrototype ):
     '''
       return markup information
     '''
-    self.macroenv.tracenv.log.warning("getdateconf: cd=%s ,  %s =?= %s " % (cd, dueclassification, TicketNodePrototype.TICKET_CLOSED_TO_EARLY) )
     if cd != None and ( cd > 1 or cd < -1 ):
       days = 'days'
     else:

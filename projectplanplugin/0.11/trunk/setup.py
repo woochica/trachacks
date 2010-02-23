@@ -18,6 +18,7 @@ htdocsubdirmapping = {
 		       u'images/*/*/*': u'*.*',
 		       u'js': u'*.js',
 		       #u'js': u'jquery-tooltip/*.js',
+		       u'js/jquery-tablesorter': u'*.*',
 		       u'js/jquery-tooltip': u'*.*',
 		       u'js/jquery-tooltip/lib': u'*.js',
 		        }
@@ -29,7 +30,7 @@ pppackagedataglobs = pphtdocsglob + pptemplatesglob
 # create setup instance - done
 setup(
   name = u'ProjectPlan',
-  version = u'0.70b',
+  version = u'0.80b',
   description = u'ProjectPlanPlugin for Trac 0.11',
   long_description = u"""
     ProjectPlan Plugin basicaly adds the possibility for fast and

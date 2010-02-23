@@ -7,12 +7,19 @@ def addExternFiles(req):
   '''
     add javascript and style files
   '''
-  # enable jquery tooltips
+  # include jquery tooltips
   add_script( req, 'projectplan/js/jquery-tooltip/lib/jquery.dimensions.js' )
   add_script( req, 'projectplan/js/jquery-tooltip/jquery.tooltip.js' )
+  
+  # include jquery tablesorter
+  # TODO: now included in projectplan.js to prevent errors
+  # add_stylesheet( req, 'projectplan/js/jquery-tablesorter/jquery.tablesorter.min.js'); # production
+  #add_stylesheet( req, 'projectplan/js/jquery-tablesorter/jquery.tablesorter.js'); # debug
+
+  # css: jquery tooltips
   add_stylesheet( req, 'projectplan/js/jquery-tooltip/jquery.tooltip.css' )
 
-  # move to gvrender?
+  # PP css and js
   add_stylesheet( req, 'projectplan/css/projectplan.css' )
   add_script( req, 'projectplan/js/projectplan.js' )
 
@@ -26,3 +33,15 @@ def isNumber( string ) :
     return True
   except:
     return False
+
+
+def htmlspecialchars(text):
+  '''
+    replace special characters (like in PHP)
+  '''
+  text = text.replace('&', '&amp;')
+  text = text.replace('"', '&quot;')
+  text = text.replace('<', '&lt;')
+  text = text.replace('>', '&gt;')
+  text = text.replace("'", '&#039;')
+  return text
