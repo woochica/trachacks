@@ -20,7 +20,7 @@ class CalendarPopUp(Component):
 
     implements(ITemplateProvider, ITemplateStreamFilter)
 
-    insert_into = ListOption('calendarpopup', 'files', 'ticket.html,milestone_edit.html',
+    insert_into = ListOption('calendarpopup', 'files', 'ticket.html,milestone_edit.html,admin_milestones.html',
         doc='List of files that calendarpopup should handle.')
 
     watch_ids = ListOption('calendarpopup', 'ids', 'field-due_assign,field-due_close,duedate=MM/dd/yy',
