@@ -40,10 +40,10 @@ ol.arabic     { list-style-type: decimal }
 :link, :visited {
  text-decoration: none;
  color: #517489; /* Modified */
- border-bottom: 0px dotted #bbb;
+ border-bottom: 1px dotted #bbb;
 }
 :link:hover, :visited:hover {
- background-color: transparent;
+ background-color: #d5e2ff;
  color: #555;
 }
 h1 :link, h1 :visited ,h2 :link, h2 :visited, h3 :link, h3 :visited,
@@ -370,7 +370,7 @@ div.code, pre.wiki, pre.literal-block {
  background: #e2f1f8;
  border-width: 1px 0 1px 0;
  border-style: solid;
- border-color: #bce715;
+ /* border-color: #bce715; */
  margin: 30px;
  padding: 10px;
  overflow: auto;
