@@ -149,7 +149,7 @@ code, kbd, samp {font-family:monospace; font-size:110%;}
     #strip #ctxtnav li.last {padding-right: 0;}
 
 /* Content */
-#page {background:#FFF url("img/bg_page.gif") 0 0 repeat-y;}
+#page {background:#FFF url("img/bg_page.gif") 0 0 repeat-y; margin-top: -1px;}
 #page-in {padding:0 20px 0 20px; background:url("img/bg_page_in.jpg") 0 0 no-repeat;}
 
 /* Footer */
