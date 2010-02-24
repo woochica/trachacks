@@ -1,4 +1,4 @@
-# -*- coding: iso-8859-15 -*-
+# -*- coding: utf-8 -*-
 
 import re
 import math
@@ -320,6 +320,10 @@ class SortedReportRenderer(RenderImpl):
     
     return outer
 
+RenderRegister.add( SortedReportRenderer, 'report' )
+
+
+
 class SortedBufferReportRenderer(SortedReportRenderer):
   '''
     Sorted Report Renderer which Sorts per Buffer Extension
@@ -421,6 +425,8 @@ class GVRenderer(RenderImpl):
   RECT_TOP = 1
   RECT_RIGHT = 2
   RECT_BOTTOM = 3
+  
+  DEFAULT_GVRENDER_MACROID = '2' # standard macro
 
   # Dummy Frame Address and Label for the Toplevel Cluster
   # (all other Nodes and Cluster Frames are in this rect) Area
@@ -441,6 +447,9 @@ class GVRenderer(RenderImpl):
     #macroenv.tracenv.log.warning("force reload: ppforcereload=%s " % repr(macroenv.get_args('ppforcereload') ) )
     if macroenv.get_args('ppforcereload') == '1' :
       self.ppforcereload = True
+    
+    if macroenv.macroid.upper() == 'NONE' or macroenv.macroid == None or macroenv.macroid == '':
+      macroenv.macroid = self.DEFAULT_GVRENDER_MACROID
     
     if str(macroenv.macroid) == '3':
       macroenv.tracenv.log.warning('GVRenderer: overwrite _writeMilestoneClusterHeader _writeMilestoneClusterFooter')
@@ -838,6 +847,8 @@ class GVRenderer(RenderImpl):
     return Markup(outermarkup.generate().render('html',encoding=None,strip_whitespace=False))
 
 RenderRegister.add( GVRenderer, 'gvrender' )
+RenderRegister.add( GVRenderer, 'default' )
+
 
 class GVCollapsedHRenderer( GVRenderer ):
   '''
@@ -1078,7 +1089,7 @@ class GVCollapsedHRenderer( GVRenderer ):
           tdep, ddep, str(scale_linewidth( hdepmap[tdep][ddep]['count'] )), edgecolstmt )
 
 RenderRegister.add( GVCollapsedHRenderer, 'gvhierarchical' )
-RenderRegister.add( GVCollapsedHRenderer, 'default' )
+#RenderRegister.add( GVCollapsedHRenderer, 'default' )
 
 class ppRender():
   '''

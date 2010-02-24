@@ -34,16 +34,15 @@ setup(
   description = u'ProjectPlanPlugin for Trac 0.11',
   long_description = u"""
     ProjectPlan Plugin basicaly adds the possibility for fast and
-    easy integration of different Projectmananagement visualizations
-    (those working on the Tickets and generating output like reports,
-     charts and so on).
-    The output generation does work in 3 steps:
-      1. collect the Tickets neede for the output - can be controlled by user arguments, if its allowed by the output/plugin
-      2. calculate - controlled by output, some calculations can be enabled/disabled with user arguments, depending on the output
-      3. render - generate the output, controlled by user arguments, additional arguments are output dependend
+    easy integration of different project mananagement visualizations
+    (those working on the tickets and generating output like reports, charts and so on).
+    The output generation does work in three steps:
+      1. collect the tickets needed for the output: can be controlled by user arguments if its allowed by the output/plugin
+      2. calculate (controlled by output), some calculations can be enabled/disabled with user arguments, depending on the output
+      3. render (generate the output), controlled by user arguments, additional arguments are output dependend
     Additional information can be found at the Trac-Hacks Projectpage for this Plugin.
   """,
-  author = u'makadev',
+  author = u'makadev & anbo',
   author_email = u'makadev at googlemail dot com',
   url = u'http://trac-hacks.org/wiki/ProjectPlanPlugin',
   download_url = u'http://trac-hacks.org/svn/projectplanplugin',

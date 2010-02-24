@@ -143,13 +143,13 @@ th.header {
     cursor: pointer; 
     background-repeat: no-repeat; 
     background-position: center right; 
-    padding-right: 24px;
+    padding-right: 20px !important;
 }
 
 /* images in ticket tables */
 table.pplisting tbody td.ppimagecol {
   background-position: right center;
   background-repeat: no-repeat;
-  padding-right: 32px;
+  padding-right: 24px !important;
 }
 
