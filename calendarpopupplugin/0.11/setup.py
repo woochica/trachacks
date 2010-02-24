@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(name='CalendarPopUp',
-      version='0.0.2',
+      version='0.0.3',
       description="show selectable calendar pop-up where needed",
       author='Julian Dittrich',
       author_email='julian@nextwii.de',
