@@ -13,6 +13,7 @@ function SearchCalenderPoints() {
 		var element = document.getElementById(calendarPopUpArrayOfIDs[i]);
 		if (element) {
 			element.onclick = new Function("cal.select(this, this.id, \"" + calendarPopUpArrayOfIDsFormat[i] + "\"); return false;");
+			element.onblur = new Function("cal.hidePopup(); return true;");
 			found = 1;
 		}
 	}
