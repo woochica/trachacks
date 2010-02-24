@@ -637,3 +637,7 @@ div.system-message p.system-message-title { font-weight: bold; }
 #tabcontent form {
     width: 65%;
 }
+
+#notice.system-message {
+    background-color: #FFF765;
+}
