@@ -122,7 +122,7 @@
           <label for="scheme">Scheme:</label>
           <select id="scheme" name="scheme" value="__none__">
             <option name="__none__">&nbsp;</option>
-            <option py:for="name, scheme in current_theme['schemes']" value="$name">${name.title()}</option>
+            <option py:for="name, scheme in current_theme['schemes']" value="$name">${name.islower() and name.title() or name}</option>
           </select>
         </div>
       </fieldset>

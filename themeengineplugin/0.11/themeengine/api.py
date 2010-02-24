@@ -49,10 +49,10 @@ class ThemeEngineSystem(Component):
     implements(IThemeProvider)
                    
     def theme(self):
-        if self.theme_name == 'default' or self.theme_name == '':
+        if self.theme_name.lower() == 'default' or self.theme_name == '':
             return None
-        elif self.theme_name in self.info:
-            return self.info[self.theme_name]
+        elif self.theme_name.lower() in self.info:
+            return self.info[self.theme_name.lower()]
         else:
             raise ThemeNotFound(self.theme_name)
     theme = property(theme)
@@ -68,7 +68,7 @@ class ThemeEngineSystem(Component):
                 theme['provider'] = provider
                 theme['module'] = provider.__class__.__module__
                 theme['name'] = name
-                self.info[name] = theme
+                self.info[name.lower()] = theme
                 
     # IThemeProvider methods
     def get_theme_names(self):

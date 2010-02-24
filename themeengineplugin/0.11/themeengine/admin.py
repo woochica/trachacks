@@ -27,7 +27,7 @@ class SimpleThemeAdminModule(Component):
 
     def render_admin_panel(self, req, cat, page, path_info):
         if req.method == 'POST':
-            self.config.set('theme', 'theme', req.args['theme'])
+            self.config.set('theme', 'theme', req.args['theme'].lower())
             self.config.save()
             
             req.redirect(req.href.admin(cat, page)) 
@@ -38,12 +38,13 @@ class SimpleThemeAdminModule(Component):
             },
         }
 
-        theme_name = self.system.theme_name or 'default'
+        theme_name = self.system.theme and self.system.theme['name'] or 'default'
+        theme_name = theme_name.islower() and theme_name.title() or theme_name
         data['themeengine']['current'] = theme_name
         index = 0
         curtheme = None
         for i, (k, v) in enumerate(data['themeengine']['info']):
-            if k == theme_name:
+            if k.lower() == theme_name.lower():
                 index = i
                 curtheme = v
                 break

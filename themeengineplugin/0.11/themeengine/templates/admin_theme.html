@@ -22,7 +22,7 @@
           <li py:for="name, theme in themeengine.info">
             <p>
               <input type="radio" id="theme_${name}_radio" name="theme" value="$name" checked="${themeengine.current == name or None}" />
-              <label for="theme_${name}_radio" class="themename">${name.title()}</label>
+              <label for="theme_${name}_radio" class="themename">${theme.name.islower() and theme.name.title() or theme.name}</label>
             </p>
             <p>
               <label for="theme_${name}_radio">
