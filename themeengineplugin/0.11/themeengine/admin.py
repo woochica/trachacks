@@ -108,7 +108,7 @@ class CustomThemeAdminModule(Component):
     def get_admin_panels(self, req):
         if req.perm.has_permission('THEME_ADMIN'):
             yield 'theme', 'Theme', 'custom', 'Customize'
-            yield 'theme', 'Theme', 'advanced', 'Customize: Advanaced'
+            yield 'theme', 'Theme', 'advanced', 'Customize: Advanced'
 
     def render_admin_panel(self, req, cat, page, path_info):
         data = {
