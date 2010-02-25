@@ -1,7 +1,29 @@
 # -*- coding: utf-8 -*-
 
+import re
+
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 
+class __TicketIDMatcher:
+  '''
+    Wrapper class for static match pattern!
+    Internal use only, may be changed, deleted or replaced in future!
+    Use @ticketIDsFromString instead.
+  '''
+  __IDMATCHPATTERN = re.compile('[0-9]+')
+
+  @classmethod
+  def idsFromString( cls, s ):
+    intset = set()
+    for strv in cls.__IDMATCHPATTERN.findall( s ):
+      intset.add(int(strv))
+    return intset
+
+def ticketIDsFromString( s ):
+  '''
+    get ticket id's from string
+  '''
+  return __TicketIDMatcher.idsFromString( s )
 
 def addExternFiles(req):
   '''

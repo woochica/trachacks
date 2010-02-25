@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import re
 import datetime
+import pputil
 from trac.util.datefmt import to_datetime, utc
 
 class TSExtensionRegister(object):
@@ -259,7 +259,6 @@ class ppTSDependencies( ppTicketSetExtension ):
   def __init__(self,ticketset,ticketsetdata):
     self.__tso = ticketset
     self.__ts = ticketsetdata
-    self.__depmatchpattern = re.compile('[0-9]+')
 
   def extend(self):
     '''
@@ -271,9 +270,7 @@ class ppTSDependencies( ppTicketSetExtension ):
 
     for k in self.__ts:
       v = self.__ts[ k ]
-      intset = set()
-      for strv in self.__depmatchpattern.findall( v.getfielddef( depfield, '' ) ):
-        intset.add(int(strv))
+      intset = pputil.ticketIDsFromString( v.getfielddef( depfield, '' ) )
       v._setextension( 'all_dependencies', intset )
       depset = set()
       for d in intset:
