@@ -343,6 +343,16 @@ class PPListOfImageSelOptions( PPListOfHTDPathSelOptions ):
   '''
   pass
 
+class PPBooleanSwitchOption(PPSingleSelOption):
+  '''
+    Selectable Boolean Option
+  '''
+  def selectable( self ):
+    '''
+      Return a List of possible Values
+    '''
+    return [ 'enabled', 'disabled' ]
+
 class PPDateFormatOption(PPSingleSelOption):
   '''
     Selectable DateFormat Option
@@ -737,6 +747,12 @@ class PPConfiguration():
     self.flatconf[ 'dotpath' ] = PPSingleValOption(
       self.env, 'dot_executable', u'/usr/bin/dot', catid='General', groupid='Renderer', doc="""
       Executable Path for the Graphiz dot Program
+      """ )
+
+    self.flatconf[ 'dotfixfparm' ] = PPBooleanSwitchOption(
+      self.env, 'dotfixfparm', u'disabled', catid='General', groupid='Renderer', doc="""
+      First Parameter Fix, visit http://trac-hacks.org/wiki/ProjectPlanPlugin/DotCompatibility for
+      further information.
       """ )
 
     # Ticket Custom Options

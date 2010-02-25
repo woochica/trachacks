@@ -96,15 +96,22 @@ class GVCMapXGen():
       self.__iobj.close()
       try:
         logfobj = open( self.genoefile, 'w' )
-        # execute: dot -v -Tcmapx -o fn.map -Tpng -o fn.png fn.dot >fn.log 2>&1
+        # execute: dot $forcelayout -v -Tcmapx -o fn.map \
+        #              -Tpng -o fn.png fn.dot >fn.log 2>&1
         dotexec = self.config.get( 'dotpath' )
         if os.path.isabs( dotexec ) and ( not os.path.isfile( dotexec ) ):
           raise Exception( "DOT Executable not found: "+dotexec );
+        # first parameter/explicit layout engine fixup
+        dotfixfparm = self.config.get( 'dotfixfparm' )
+        if dotfixfparm.strip()=='disabled':
+          forcelayout = "-Kdot" # mandatory at least since graphviz 2.26.3
+        else:
+          forcelayout = "dot" # graphviz 2.26.0/3 (linux)
         gvctx = subprocess.Popen(
                   executable = dotexec,
                   args = [
+                          forcelayout,
                           "-v",
-                          "-Kdot", # mandatory at least since graphviz 2.26.3
                           "-Tcmapx",
                           "-o" + self.cmapxfile,
                           "-Tpng", "-o" + self.imgfile,
@@ -119,8 +126,9 @@ class GVCMapXGen():
           # the logfile may be still accessible as long as the cache entry is
           # not rewritten
           raise Exception( '''dot execution failed,
-            logfile _may_ be still accessible at %s ''' %
-            self.env.cache.urlCacheFile( self.genoefile ) )
+           logfile _may_ be still accessible at %s''' % (
+              self.env.tracreq.href( ppenv.PPConstant.cache_content_suffix,
+              self.env.cache.urlCacheFile( self.genoefile ) ) ) )
       except Exception:
         # just in case.. close logfile
         logfobj.close()
