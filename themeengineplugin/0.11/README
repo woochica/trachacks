@@ -1,0 +1,64 @@
+Notes
+=====
+
+Adds a simple API and GUI for packaging and configuring Trac themes.
+
+Configuration
+=============
+
+trac.ini
+--------
+
+All configuration options go in the ``[theme]`` section.
+
+``theme`` : *optional, default: "default"*
+    Theme name to use. Name is case-insensitive.
+
+``enable_css`` : *optional, default: false*
+    Enable or disable the CSS customizations.
+
+``color.*`` : *optional*
+    Stored values for simple CSS overrides. Note that changing this will
+    not take effect until you save them in the admin panel.
+
+Web interface
+-------------
+
+Theme
+~~~~~
+
+Use the arrows to select your theme from the installed options and then click
+the button to activate it.
+
+.. image:: http://trac-hacks.org/attachment/wiki/ThemeEnginePlugin/admin_theme.png?format=raw
+
+Customize
+~~~~~~~~~
+
+Here you can further customize your theme by changing colors for certain
+pieces of the UI. The scheme drop down allows you to load pre-configured 
+color schemes. Note that not all themes will support this, or support the
+same options.
+
+.. image:: http://trac-hacks.org/attachment/wiki/ThemeEnginePlugin/admin_customize.png?format=raw
+
+Customize: Advanced
+~~~~~~~~~~~~~~~~~~~
+
+Here you can customize the CSS even further. As mentioned in the file, if you
+edit this file by hand, you should not use the simple customizer system or
+you will lose your changes.
+
+.. image:: http://trac-hacks.org/attachment/wiki/ThemeEnginePlugin/admin_advanced.png?format=raw
+
+Example
+=======
+
+To enable the PyDotOrg theme::
+
+    [theme]
+    theme = pydotorg
+    
+    [components]
+    themeengine.* = enabled
+    pydotorgtheme.* = enabled
