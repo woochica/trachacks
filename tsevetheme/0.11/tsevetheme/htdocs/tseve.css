@@ -61,7 +61,10 @@ a, :link, :visited {
 		padding: 0px 0px 0px 4px;
 	}
 	#custom-mainnav ul li a {
-		-moz-border-radius: 5px 5px 0px 0px;
+		border-radius: 5px 5px 0px 0px;			/* Standard CSS3 */
+		-moz-border-radius: 5px 5px 0px 0px;	/* Gecko based */
+		-ms-border-radius: 5px 5px 0px 0px;		/* IE/Trident */
+		-webkit-border-radius: 5px 5px 0px 0px;	/* Webkit based */
 
 		background: #ff7e00;
 		color: white;
@@ -109,12 +112,15 @@ a, :link, :visited {
 }
 
 #custom-footer {
+	border-radius: 0 0 10px 10px;			/* Standard CSS3 */
+	-moz-border-radius: 0 0 10px 10px;		/* Gecko based */
+	-ms-border-radius: 0 0 10px 10px;		/* IE/Trident */
+	-webkit-border-radius: 0 0 10px 10px;	/* Webkit based */
+		
 	background: #FF7E00;
 	text-align: center;
 	color: white;
 	padding: 5px;
-	-moz-border-radius-bottomleft: 10px;
-	-moz-border-radius-bottomright: 10px;
 	background: black url(bg_footer.png) repeat-x scroll left bottom;
 }
 
@@ -128,10 +134,14 @@ a, :link, :visited {
 		display: table-cell;
 	}
 	.custom-nav ul li a {
+		border-radius: 2px;					/* Standard CSS3 */
+		-moz-border-radius: 2px;			/* Gecko based */
+		-ms-border-radius: 2px;				/* IE/Trident */
+		-webkit-border-radius: 2px;			/* Webkit based */
+	
 		display: block;
 		border: none;
 		margin-left: 5px;
 		padding: 1px 6px;
-		-moz-border-radius: 2px;
 }
 
