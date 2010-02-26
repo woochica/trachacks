@@ -39,19 +39,31 @@ class TicketBackLinksMacro(WikiMacroBase):
         if args:
                 thispage = args.replace('\'', '\'\'')
         else:
-       	        thispage = WikiPage(self.env, resource).name
+                thispage = WikiPage(self.env, resource).name
 
         sql = 'SELECT w1.name FROM wiki w1, ' + \
-                  '(SELECT name, MAX(version) AS VERSION FROM WIKI GROUP BY NAME) w2 ' + \
+                  '(SELECT name, MAX(version) AS VERSION FROM wiki GROUP BY NAME) w2 ' + \
                   'WHERE w1.version = w2.version AND w1.name = w2.name '
-	sql += 'AND ( w1.text LIKE \'%%[ticket:%s]%%\' ' % thispage
-	sql += 'OR w1.text LIKE \'%%#%s %%\' )' % thispage
+        sql += 'AND ( w1.text LIKE \'%%[ticket:%s]%%\' ' % thispage
+        sql += 'OR w1.text LIKE \'%%#%s %%\' )' % thispage
+        sql += 'AND ( w1.text LIKE \'%%[ticket:%s]%%\' ' % thispage
+        sql += 'OR (w1.text LIKE \'%%#%s%%\' )' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s0%%\'' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s1%%\'' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s2%%\'' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s3%%\'' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s4%%\'' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s5%%\'' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s6%%\'' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s7%%\'' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s8%%\'' % thispage
+        sql += 'AND w1.text NOT LIKE \'%%#%s9%%\' )' % thispage
 
 
         cursor.execute(sql)
         buf = StringIO()
 
-	firsttime = 1
+        firsttime = 1
 
 	for page in cursor.fetchall():
 		if page == None:
@@ -63,14 +75,14 @@ class TicketBackLinksMacro(WikiMacroBase):
 				buf.write('<h3 id="comment:description"> Mentioned in:</h3><ul>')
 			buf.write('<li><a href="%s">%s</a></li>' % (self.env.href.wiki(page[0]),page[0]))
 			firsttime = 0
-	buf.write('</ul>')
-	return buf.getvalue()
+    buf.write('</ul>')
+    return buf.getvalue()
  
 class TicketBackLinksDescription(Component):
     implements(ITemplateStreamFilter, ITemplateProvider)
 
     def filter_stream(self, req, method, filename, stream, data):
-        if filename != 'ticket.html':
+        if filename != 'ticket.html' and (filename != 'typedticket.html'):
             return stream
 	ticket = data['ticket']
 	id = ticket.id
