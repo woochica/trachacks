@@ -17,6 +17,7 @@ from trac.web import IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from trac.mimeview.api import get_mimetype
 from trac.ticket.query import *
+from trac.ticket.model import Ticket
 from trac.admin.api import *
 from trac.perm import *
 
@@ -214,12 +215,12 @@ class PPChangeTicketProvider(Component):
       else:
         slashes = 1
       name = req.path_info[(slashes+len(PPConstant.change_ticket_suffix)):]
-      conf = PPConfiguration( self.env )
+      self.conf = PPConfiguration( self.env )
       self.req = req
 
       done = self.update_connections()
       if done:
-        name = 'images/crystal_project/16x16/state/ok.png'
+        name = 'crystal_project/16x16/state/ok.png'
         accessname = os.path.join( path, name )
       else:
         #name = 'images/crystal_project/16x16/messagebox/critical.png'
@@ -239,69 +240,59 @@ class PPChangeTicketProvider(Component):
 
     def update_connections(self):
       '''
-        add or remove a dependency between 2 tickets
-        Quick Hack, TODO: make this right
+        Rewrite Ticket Dependencies
       '''
       # search choosen connection of tickets
       dep_from = self.get_args('ppdep_from')
       dep_to = self.get_args('ppdep_to')
-      user = self.req.authname
-      ret = '';
-      Adepends = [];
 
-      # if nothing to do
-      if dep_from == None or dep_to == None or dep_from == "0" or dep_to == "0" or dep_from.strip() == "" or dep_to.strip() == "" :
-        return False;
+      # 1. check for numbers
+      if dep_from == None or dep_to == None or (
+           not dep_from.strip().isdigit() ) or (
+           not dep_to.strip().isdigit() ):
+        return False
 
-      db = self.env.get_db_cnx()
-      cursor = db.cursor()
-      cursor.execute('SELECT ticket,name,value FROM ticket_custom WHERE ticket='+dep_to+' AND name="dependencies" ', '')
-      Sdepends = "";
-      for row in cursor:
-        #ret += repr(row)
-        Sdepends = row[2];
-        Adepends = row[2].split(',');
+      dep_from = dep_from.strip()
+      dep_to = dep_to.strip()
 
-      #ret += repr(Adepends);
-      #cssclass='background-color:#FF9;padding:7px;border:1px dotted #999;';
-      #revert='''
-        #<span style="padding:3px;margin-left:15px;background-color:#FFF;"><a href="javascript:location.reload();">&Auml;nderungen r&uuml;ckg&auml;ngig machen</a></span>
-        #<span style="padding:3px;margin-left:15px;background-color:#FFF;"><a href="'''+("HTTP.PathInfo")+'''">Diese Seite neu laden</a></span>''';
+      # 2. check for valid tkid
+      if ( not Ticket.id_is_valid( dep_from ) ) or (
+           not Ticket.id_is_valid( dep_to ) ):
+        return False
 
-      if Sdepends.strip() == "":
-        do_depend = True;
-      if not dep_from in Adepends:
-        do_depend = True;
+      toticket = Ticket( self.env, int(dep_to) )
+      # 3. check valid ticket from database
+      if toticket.id == None:
+        return False
+
+      # get dependencies
+      depstring = toticket.get_value_or_default( 
+        self.conf.get( 'custom_dependency_field' ) )
+      if depstring != None:
+        deps = pputil.ticketIDsFromString( depstring )
       else:
-        do_depend = False;
+        deps = set()
 
-      #if do_depend == True:
-        #ret += '<div style="'+cssclass+'" class="ps_more_info"><b>Abh&auml;ngigkeit</b> des Tickets '+dep_to+' vom Ticket '+dep_from+' <b>hinzugef&uuml;gt.</b> '+revert+'</div>';
-      #else:
-        #ret += '<div style="'+cssclass+'" class="ps_more_info"><b>Abh&auml;ngigkeit</b> des Tickets '+dep_to+' vom Ticket '+dep_from+' <b>entfernt.</b> '+revert+'</div>';
-
-      # Array verarbeiten
-      if do_depend:
-        Adepends.append(dep_from);
+      # modify dependencies
+      if int(dep_from) in deps:
+        comstring = "removed dependency #%s" % str(dep_from)
+        deps.remove( int(dep_from) )
       else:
-        Adepends.remove(dep_from);
+        comstring = "added dependency #%s" % str(dep_from)
+        deps.add( int(dep_from) )
 
-      SdependsNew = ','.join(Adepends);
-      changetime = str(int(time.time()))
+      # build new depstring
+      depstring = ",".join( [ str(d) for d in deps ] )
+      toticket[ self.conf.get( 'custom_dependency_field' ) ] = depstring
 
-      # updaten der dependencies
-      query1='INSERT OR REPLACE INTO ticket_custom (value, ticket, name ) VALUES ("%s", "%s", "dependencies")' % (SdependsNew , dep_to  )
-      cursor.execute(query1);
+      # commit
+      try:
+        if not toticket.save_changes( self.req.authname, comstring ):
+          raise TracError( "Could not update Ticket #%s " % str(dep_to) )
+      except:
+        return False
 
-      query2='INSERT INTO ticket_change (ticket, time, author, field, oldvalue, newvalue) VALUES ('+dep_to+', "'+changetime+'", "'+user+'", "dependencies", "'+Sdepends+'", "'+SdependsNew+'") '
-      cursor.execute(query2);
-
-      query3='UPDATE ticket SET changetime="%s" WHERE id = "%s" ' % ( changetime, dep_to )
-      cursor.execute(query3);
-
-      db.commit();
-
-      return(True);
+      return True
 
 
 
