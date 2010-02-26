@@ -132,8 +132,12 @@ class UserSyncAdmin(Component):
       for rec in coll[sid]:
          for att in self.env.config.getlist('user_sync','sync_fields'):
             if not att in rec: continue
-            if not att in res[sid]:
-              res[sid][att] = rec[att]
+            try:
+              if not att in res[sid]:
+                res[sid][att] = rec[att]
+                continue
+            except KeyError:
+              self.env.log.debug('KeyError for %s' % (sid))
               continue
             if res[sid][att] == rec[att]: continue
             if merge_conflicts.lower() == 'newer':
@@ -192,7 +196,7 @@ class UserSyncAdmin(Component):
           sql.append("UPDATE session_attribute SET value='%s' WHERE sid='%s' AND name='%s' AND authenticated=%s;\n" % (userdata[user][att],user,att,authenticated,))
         else:
           if not dryrun: cursor.execute("INSERT INTO session_attribute (sid,authenticated,name,value) VALUES('%s',%s,'%s','%s');\n" % (user,authenticated,att,userdata[user][att]))
-          sql.append("INSERT INTO session_attribute (sid,authenticated,name,att) VALUES('%s',%s,'%s','%s');\n" % (user,authenticated,att,userdata[user][att]))
+          sql.append("INSERT INTO session_attribute (sid,authenticated,name,value) VALUES('%s',%s,'%s','%s');\n" % (user,authenticated,att,userdata[user][att]))
     if len(sql):
       if not dryrun: db.commit()
       sql_file_path = self.env.config.get('user_sync','sql_file_path') or os.path.join(self.env.path,'log')
@@ -206,7 +210,12 @@ class UserSyncAdmin(Component):
           self.env.log.debug('Writing SQL to %s' % (sqlfile,))
           f = open(sqlfile,'a')
           f.write('--- SQL for Trac environment %s\n' % (tracenv,));
-          f.writelines(sql)
+          try:
+            f.writelines(sql)
+          except TypeError:
+            self.env.log.debug('TypeError for writelines param: %s, %s rows' % (type(sql),len(sql)))
+            for line in sql:
+              f.write(line)
           f.close()
         except IOError:
           self.env.log.debug('Could not write SQL file %s!' % (sqlfile,))
