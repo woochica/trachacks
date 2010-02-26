@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import json
 from os import environ
 from trac.core import *
+
+try:
+    import json
+except:
+    import simplejson as json
 
 class LocaleUtil:
 
