@@ -91,7 +91,7 @@ class TicketTemplateAdmin(Component):
         for cf in customfields:
             cf['enable'] = False
             for field in enable_list:
-                if field.strip() == unicode(cf['name'], 'utf-8'):
+                if (field.strip() == cf['name']):
                     cf['enable'] = True
                     break
 
