@@ -67,6 +67,7 @@ _ = ticketext.Localizer.getLocalizedString;
 ticketext.TicketTemplate = function(baseUrlValue) {
     
     this.STYLE_CLASS_EXCLUDE = "te_exclude";
+    this.STYLE_CLASS_CHANGED = "te_changed";
     this.DELIM               = ",";
     
     // for TracWysiwygPlugin Parameter
@@ -99,10 +100,24 @@ ticketext.TicketTemplate.prototype.initialize = function() {
         return;
     }
     
+    var descElem = document.getElementById(this.descId);
+    if (!descElem) {
+        return;
+    }
+    
     // Apply template at the first time.
     this.selectTemplate(typeElem);
     
+    // if change type, change the template.
     $(typeElem).change(this.changeType(typeElem));
+    
+    // if change description, the css is changed for showing confirm dialog.
+    var self = this;
+    $(descElem).change(function() {
+        if (!$(descElem).hasClass(self.STYLE_CLASS_CHANGED)) {
+            $(descElem).addClass(self.STYLE_CLASS_CHANGED);
+        }
+    });
 }
 
 /**
@@ -115,10 +130,31 @@ ticketext.TicketTemplate.prototype.changeType = function(typeElem) {
     var self = this;
     
     var func = function(event) {
-        var isProceed = confirm(_("Apply the template to the description.\nThe description will be clear, but you sure?")); 
-        if (!isProceed) {
-            return;
+        var descElem = document.getElementById(self.descId);
+        
+        // check the change at the wysiwyg mode.
+        if (!$(descElem).hasClass(self.STYLE_CLASS_CHANGED)) {
+            var textBefore = $(descElem).text();
+            
+            var dummyFunc = function() {};
+            self.execFunctionWithTracWysiwygPlugin(dummyFunc);
+            
+            var textAfter = $(descElem).text();
+            
+            if (textBefore != textAfter) {
+                $(descElem).addClass(self.STYLE_CLASS_CHANGED);
+            }
         }
+        
+        // show the dialog.
+        if ($(descElem).hasClass(self.STYLE_CLASS_CHANGED)) {
+            var isProceed = confirm(_("Apply the template to the description.\nThe description will be clear, but you sure?")); 
+            if (!isProceed) {
+                return;
+            }
+        }
+        
+        $(descElem).removeClass(self.STYLE_CLASS_CHANGED);
         
         self.selectTemplate(typeElem);
     };
@@ -201,67 +237,12 @@ ticketext.TicketTemplate.prototype.applyDescription = function(templateData) {
     
     var templateValue = templateData.template;
     
-    // if TracWysiwygPlugin is used,
-    // it must be chnage edit mode before change the description value.
-    var enableWysiwyg = false;
-    if(typeof TracWysiwyg == "function") {
-        enableWysiwyg = true;
-    }
-
-    var editorMode;
-    var txtareaModeElemArray = new Array();
-    var wysiwygModeElemArray = new Array();
-    
-    if (enableWysiwyg) {
-        for (var index = 0; index < this.WYSISYG_MAX_NUM; index++) {
-            var countStr = String(index + 1);
-            var txtareaModeElem = document.getElementById("editor-textarea-" + countStr);
-            var wysiwygModeElem = document.getElementById("editor-wysiwyg-" + countStr);
-            if (txtareaModeElem && wysiwygModeElem) {
-                txtareaModeElemArray.push(txtareaModeElem);
-                wysiwygModeElemArray.push(wysiwygModeElem);
-            } else {
-                break;
-            }
-        }
-        
-        editorMode = TracWysiwyg.getEditorMode();
-        
-        if (editorMode != "textarea") {
-            for (var index = 0; index < txtareaModeElemArray.length; index++) {
-                var txtareaModeElem = txtareaModeElemArray[index];
-                if (txtareaModeElem) {
-                    txtareaModeElem.click();
-                }
-            }
-        }
-    }
-    
     // apply template
-    descElem.value = templateValue;
-    
-    if (enableWysiwyg) {
-        switch (editorMode) {
-        case "textarea":
-            for (var index = 0; index < txtareaModeElemArray.length; index++) {
-                var txtareaModeElem = txtareaModeElemArray[index];
-                if (txtareaModeElem) {
-                    txtareaModeElem.click();
-                }
-            }
-            break;
-        case "wysiwyg":
-            for (var index = 0; index < wysiwygModeElemArray.length; index++) {
-                var wysiwygModeElem = wysiwygModeElemArray[index];
-                if (wysiwygModeElem) {
-                    wysiwygModeElem.click();
-                }
-            }
-            break;
-        default:
-           break;
-        }
+    var func = function() {
+        descElem.value = templateValue;
     }
+    
+    this.execFunctionWithTracWysiwygPlugin(func);
 }
 
 /**
@@ -405,6 +386,75 @@ ticketext.TicketTemplate.prototype.setReadyDescription = function(readyDescripti
  */
 ticketext.TicketTemplate.prototype.setReadyCustomfields = function(readyCustomfields) {
     this.readyCustomfields = readyCustomfields;
+}
+
+/**
+ * 
+ * This function is needed for TracWysiwygPlugin. 
+ * 
+ * @param func
+ *            execute function
+ */
+ticketext.TicketTemplate.prototype.execFunctionWithTracWysiwygPlugin = function(func) {
+    if (typeof TracWysiwyg != "function" && typeof func != "function") {
+        return;
+    }
+    
+    // if TracWysiwygPlugin is used,
+    // it must be chnage edit mode before change the description value.
+    
+    var editorMode;
+    var txtareaModeElemArray = new Array();
+    var wysiwygModeElemArray = new Array();
+    
+    for (var index = 0; index < this.WYSISYG_MAX_NUM; index++) {
+        var countStr = String(index + 1);
+        var txtareaModeElem = document.getElementById("editor-textarea-" + countStr);
+        var wysiwygModeElem = document.getElementById("editor-wysiwyg-" + countStr);
+        if (txtareaModeElem && wysiwygModeElem) {
+            txtareaModeElemArray.push(txtareaModeElem);
+            wysiwygModeElemArray.push(wysiwygModeElem);
+        } else {
+            break;
+        }
+    }
+    
+    editorMode = TracWysiwyg.getEditorMode();
+    
+    // change the editor mode.
+    if (editorMode != "textarea") {
+        for (var index = 0; index < txtareaModeElemArray.length; index++) {
+            var txtareaModeElem = txtareaModeElemArray[index];
+            if (txtareaModeElem) {
+                txtareaModeElem.click();
+            }
+        }
+    }
+    
+    // execute function.
+    func();
+    
+    // revert the editor mode.
+    switch (editorMode) {
+    case "textarea":
+        for (var index = 0; index < txtareaModeElemArray.length; index++) {
+            var txtareaModeElem = txtareaModeElemArray[index];
+            if (txtareaModeElem) {
+                txtareaModeElem.click();
+            }
+        }
+        break;
+    case "wysiwyg":
+        for (var index = 0; index < wysiwygModeElemArray.length; index++) {
+            var wysiwygModeElem = wysiwygModeElemArray[index];
+            if (wysiwygModeElem) {
+                wysiwygModeElem.click();
+            }
+        }
+        break;
+    default:
+       break;
+    }
 }
 
 /**
