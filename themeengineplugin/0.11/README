@@ -62,3 +62,88 @@ To enable the PyDotOrg theme::
     [components]
     themeengine.* = enabled
     pydotorgtheme.* = enabled
+
+Creating a theme
+================
+
+Simple way
+----------
+
+The easiest way to make a new theme is to inherit from ``ThemeBase``. A
+basic example theme is as follows::
+
+    from trac.core import *
+    
+    from themeengine.api import ThemeBase
+    
+    class ExampleTheme(ThemeBase):
+        """A example theme."""
+        
+        template = htdocs = css = screenshot = True
+
+The name will be inferred from the class name ("Example" in this case) and the
+docstring will be used as the description. There are several class variables
+you can set to configure the theme. By default all of these are set to
+``False`` and so are disabled. If set to ``True``, each option will use a
+generally sane default. If set to any value other than those, that value will
+be used directly.
+
+The available options as follows (all are optional):
+
+``template`` : *default: $name_theme.html*
+    The filename of the replacement template.
+
+``css`` : *default: $name.css*
+    Filename for a stylesheet to include.
+
+``htdocs`` : *default: htdocs*
+    Subfolder containing static content.
+
+``screenshot`` : *default: htdocs/screenshot.png*
+    Package-relative path to the screenshot file.
+
+``colors`` : 
+    Specifiers for simple color customization system. This should be an
+    iterable of tuples of the form ``(name, property, selector)``. ``name``
+    will be shown in the customization UI for that entry. ``property`` will
+    generally be ``color`` or ``background-color``. ``selector`` should be
+    a CSS selector string to apply the color rule to.
+
+``schemes`` :
+    Pre-built color schemes. This should be an iterable of tuples of the form
+    ``(name, color_dict)``. The ``color_dict`` should be a dictionary mapping
+    color name to hex color string (of the form ``#00AAFF``).
+
+Advanced API
+------------
+
+For more advanced control you can implement ``IThemeProvider`` from 
+``themeengine.api``. The interface definition is::
+
+    class IThemeProvider(Interface):
+        """An interface to provide style information."""
+    
+        def get_theme_names():
+            """Return an iterable of names."""
+        
+        def get_theme_info(name):
+            """Return a dict containing 0 or more of the following pairs:
+        
+             description::
+               A breif description of the theme.
+             template::
+               The name of the theme template file. 
+             css::
+               The filename of the CSS file.
+             htdocs::
+               The folder containg the static content.
+             screenshot::
+               The name of the screenshot file.
+             colors::
+               A list of (name, css-property, selector) tuples.
+             schemes::
+               A list of (name, {color-name: value, ...}) tuples.
+            """
+
+Most of these are the same as the simple API above, except ``description``
+is explicit.
