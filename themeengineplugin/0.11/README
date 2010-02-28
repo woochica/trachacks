@@ -100,7 +100,8 @@ The available options as follows (all are optional):
     Subfolder containing static content.
 
 ``screenshot`` : *default: htdocs/screenshot.png*
-    Package-relative path to the screenshot file.
+    Package-relative path to the screenshot file. File should be 640x400 or
+    use the same aspect ratio.
 
 ``colors`` : 
     Specifiers for simple color customization system. This should be an
