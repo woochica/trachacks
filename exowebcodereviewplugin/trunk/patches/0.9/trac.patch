@@ -1,0 +1,145 @@
+diff -ru trac.orig/attachment.py trac/attachment.py
+--- trac.orig/attachment.py	2007-03-15 15:42:17.000000000 +0800
++++ trac/attachment.py	2007-03-15 15:48:03.000000000 +0800
+@@ -325,7 +325,7 @@
+     # IRequestHandler methods
+ 
+     def match_request(self, req):
+-        match = re.match(r'^/attachment/(ticket|wiki)(?:[/:](.*))?$',
++        match = re.match(r'^/attachment/(ticket|wiki|CodeReview)(?:[/:](.*))?$',
+                          req.path_info)
+         if match:
+             req.args['type'] = match.group(1)
+@@ -337,7 +337,7 @@
+         path = req.args.get('path')
+         if not parent_type or not path:
+             raise HTTPBadRequest('Bad request')
+-        if not parent_type in ['ticket', 'wiki']:
++        if not parent_type in ['ticket', 'wiki', 'CodeReview']:
+             raise HTTPBadRequest('Unknown attachment type')
+ 
+         action = req.args.get('action', 'view')
+@@ -377,8 +377,19 @@
+         parent_link = req.href(parent_type, parent_id)
+         if parent_type == 'ticket':
+             parent_text = 'Ticket #' + parent_id
+-        else: # 'wiki'
++        # Commented by tc
++        #else: # 'wiki'
++        #    parent_text = parent_id
++        # end
++        # Add support for CodeReview by tc
++        elif parent_type == 'wiki':
+             parent_text = parent_id
++        elif parent_type == 'CodeReview':
++            parent_text = 'CodeReview r' + parent_id
++        else:
++            parent_text = 'None'
++        # end of add
++
+         req.hdf['attachment.parent'] = {
+             'type': parent_type, 'id': parent_id,
+             'name': parent_text, 'href': parent_link
+@@ -435,7 +446,8 @@
+     # Internal methods
+ 
+     def _do_save(self, req, attachment):
+-        perm_map = {'ticket': 'TICKET_APPEND', 'wiki': 'WIKI_MODIFY'}
++        perm_map = {'ticket': 'TICKET_APPEND', 'wiki': 'WIKI_MODIFY', \
++                    'CodeReview': 'CODE_REVIEW_EDIT'}
+         req.perm.assert_permission(perm_map[attachment.parent_type])
+ 
+         if req.args.has_key('cancel'):
+@@ -485,7 +497,8 @@
+                                             attachment.parent_id, filename)
+                 if not (old_attachment.author and req.authname \
+                         and old_attachment.author == req.authname):
+-                    perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE'}
++                    perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE', \
++                                'CodeReview': 'CODE_REVIEW_EDIT'}
+                     req.perm.assert_permission(perm_map[old_attachment.parent_type])
+                 old_attachment.delete()
+             except TracError:
+@@ -497,7 +510,8 @@
+         req.redirect(attachment.href(req))
+ 
+     def _do_delete(self, req, attachment):
+-        perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE'}
++        perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE', \
++                    'CodeReview': 'CODE_REVIEW_EDIT'}
+         req.perm.assert_permission(perm_map[attachment.parent_type])
+ 
+         if req.args.has_key('cancel'):
+@@ -509,7 +523,8 @@
+         req.redirect(attachment.parent_href(req))
+ 
+     def _render_confirm(self, req, attachment):
+-        perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE'}
++        perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE', \
++                    'CodeReview': 'CODE_REVIEW_EDIT'}
+         req.perm.assert_permission(perm_map[attachment.parent_type])
+ 
+         req.hdf['title'] = '%s (delete)' % attachment.title
+@@ -517,14 +532,16 @@
+                                  'mode': 'delete'}
+ 
+     def _render_form(self, req, attachment):
+-        perm_map = {'ticket': 'TICKET_APPEND', 'wiki': 'WIKI_MODIFY'}
++        perm_map = {'ticket': 'TICKET_APPEND', 'wiki': 'WIKI_MODIFY', \
++                    'CodeReview': 'CODE_REVIEW_EDIT'}
+         req.perm.assert_permission(perm_map[attachment.parent_type])
+ 
+         req.hdf['attachment'] = {'mode': 'new',
+                                  'author': get_reporter_id(req)}
+ 
+     def _render_view(self, req, attachment):
+-        perm_map = {'ticket': 'TICKET_VIEW', 'wiki': 'WIKI_VIEW'}
++        perm_map = {'ticket': 'TICKET_VIEW', 'wiki': 'WIKI_VIEW', \
++                    'CodeReview': 'CODE_REVIEW_EDIT'}
+         req.perm.assert_permission(perm_map[attachment.parent_type])
+ 
+         req.check_modified(attachment.time)
+@@ -537,7 +554,8 @@
+         req.hdf['attachment.description'] = wiki_to_html(attachment.description,
+                                                          self.env, req)
+ 
+-        perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE'}
++        perm_map = {'ticket': 'TICKET_ADMIN', 'wiki': 'WIKI_DELETE', \
++                    'CodeReview': 'CODE_REVIEW_EDIT'}
+         if req.perm.has_permission(perm_map[attachment.parent_type]):
+             req.hdf['attachment.can_delete'] = 1
+ 
+diff -ru trac.orig/versioncontrol/web_ui/changeset.py trac/versioncontrol/web_ui/changeset.py
+--- trac.orig/versioncontrol/web_ui/changeset.py	2007-03-15 15:42:18.000000000 +0800
++++ trac/versioncontrol/web_ui/changeset.py	2007-03-15 15:40:59.000000000 +0800
+@@ -622,6 +622,14 @@
+                    % (diff.old_path or '/', diff.old_rev or 'latest',
+                       diff.new_path or '/', diff.new_rev or 'latest')
+ 
++    # Added by codereview plugin patch for trac 0.10.3.1
++
++    def get_codereview_status(self, rev):
++        from codereview.model import status_str, CodeReview
++        cr = CodeReview(self.env, int(rev))
++        return status_str[cr.get_item()['status']]
++    # end
++
+     # ITimelineEventProvider methods
+ 
+     def get_timeline_filters(self, req):
+@@ -676,6 +684,15 @@
+                                              chg[0] or '/'))
+                     message = html.UL(files, class_="changes") + message
+ 
++                # Added by codereview plugin patch for trac 0.10.3.1
++                status = self.get_codereview_status(chgset.rev)
++                status_wiki = '([%s codereview : %s])' % \
++                         (self.env.href.CodeReview(chgset.rev), status)
++                status_msg = wiki_to_oneliner(status_wiki, self.env, \
++                                         db, absurls=True, shorten=True)
++                message = Markup("%s %s", message, status_msg)
++                # end
++
+                 yield 'changeset', href, title, chgset.date, chgset.author,\
+                       message
+ 

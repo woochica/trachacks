@@ -1,0 +1,59 @@
+﻿===================
+Code Review in Trac
+===================
+
+-----------
+Description
+-----------
+
+A Trac plugin to aiding code review in development process.
+
+------------
+Installation
+------------
+
+  * Install CodeReview egg, just like you would any other Trac plugin. Drop the 
+    egg into your plugins or site-packages folder and then try to access Trac 
+    in your browser. You will get an error message saying that the database 
+    needs to be upgraded and telling you to use the trac-admin command to do 
+    it. (I think it's something like 'trac-admin PathToYourProject upgrade'). 
+    Perform the upgrade.
+  * Put the files under site_templates into your trac sites's templates folder
+  * Patch your Trac code: find installed Trac code, which is usually 
+    /usr/lib/python2.x/site-packages/trac, and then apply corresponding patches 
+    in CodeReview plugin
+    patches/0.11.1/trac/versioncontrol/templates/changeset.html.diff, it just add
+    a code review link into the changeset page
+  * Adjust email notification settings on codereview manager page 
+    (http://your_trac_site/CodeReviewManager) as you like.  Please make sure 
+    you have CODE_REVIEW_ADMIN permission.
+  * Assign permissions to users for 'CODE_REVIEW_VIEW' and 'CODE_REVIEW_ADMIN'. 
+    The CODE_REVIEW_ADMIN permission gives users writable access to the page of 
+    CODEREVIEW Manager.
+
+---------------------
+Bugs/Feature Requests
+---------------------
+
+Existing bugs and feature requests for CodeReview plugin are
+https://contrib.exoweb.net/report/9
+
+If you have any issues, create a new ticket over the following URL:
+https://contrib.exoweb.net/newticket
+
+------
+Source
+------
+
+You can use subversion to check out CodeReview plugin from
+    https://contrib.exoweb.net/svn/codereviewplugin/trunk
+
+or you can browse source code with any browser at 
+    https://contrib.exoweb.net/browser/codereviewplugin/trunk
+
+
+-------
+Contact
+-------
+
+If you run into any problem, please contact research@exoweb.net.

@@ -1,0 +1,91 @@
+==========================
+CodeReview Plugin Tutorial
+==========================
+
+
+Why code review
+===============
+
+Code review is a basic mechanism for validating the design and
+implementation.  It also helps us maintain a level of consistency
+in design and implementation practices across the many developers,
+especially within distributed work environment.
+
+Code review has two purposes. Their first purpose is to make sure that
+the code that is being produced has sufficient quality to be released. In
+other words, it's the acid test for whether the code should be promoted to
+the next step in the process. Code reviews are very effective at finding
+errors of all types, including those caused by poor structure, those that
+don't match business process, and also those simple omissions. That's
+why they are an effective litmus test for the quality of the code.
+The second purpose is as a teaching tool to help developers learn when
+and how to apply techniques to improve code quality, consistency, and
+maintainability. Through thoughtfully evaluating code on a recurring
+basis, developers have the opportunity to learn different and potentially
+better ways of coding.
+
+
+Why CodeReview Plugin
+=====================
+
+CodeReview plugin is a Trac plugin to facilitate code review with more
+automation and fun.  CodeReview plugin follows the philosophy of Trac,
+imposing as little as possible on a team's established development process
+and policies.  A code review is just comments of WiKi format on a commit.
+Thanks the power of Trac WiKi, which is really quick and productive.
+Developers can add as many comments on committed code as possible if
+they like.  CodeReview also provides email notification so that they
+could get valuable feedback from others once code review is completed.
+
+The following sections will show you how to use CodeReview efficiently.
+Let's assume that Trac has been installed to http://localhost/trac,
+and also CodeReview has been installed and configured.  If not, please
+refer to README under top directory of CodeReview plugin.
+
+Getting Started
+===============
+
+It's easy and simple to create a new code review.  Open the web page
+(http://localhost/trac/CodeReview) using your favourate browser, and you
+will see that all the commits are listed in the section, "Awaiting code
+review", in which each line in this section contains the information
+of the commit, click-able id, date, click-able "New", comment, path.
+To create a new code review, just click "New" :-)  Each code review
+is just WiKi, and you can edit it as you like.  We usually choose the
+following format
+::
+
+  == somebody 1 ==
+  bla bla bla bla
+  
+  == somebody 2 ==
+  bla bla bla bla
+
+CodeReviewPlugin also provides "Preview" and "Attach File", for better
+code review experience.
+
+Once you create a code review and edit something, you can set it to
+the status of "Undergoing review", "Completely reviewed" or "No need
+to review" depending on the process rule of your team.  Once the code
+review is set to either of the latter two kinds status, the commit line in
+CodeReview main page will be moved to "CompletelyReviewed" page; or the
+commit will move up to the section of "Undergoing review" in CodeReview
+main page, so that others can continue to add or edit this code review.
+
+To facilitate reviewing small trivial commits and bad commits, CodeReview
+provides two quick buttons on the bottom of CodeReview main page,
+"No need to review" and "Set to critical".  You can select multiple
+commits and set them to either of these two states.
+
+
+Email Notification
+==================
+
+Automated email notification is definitely necessary, so that developers
+needn't stop work on hand to search and check code reviews.  Usage is
+transparent, once notification is properly configured.  Email notification
+depends on notification section of trac.ini in your Trac instance.
+Once configured properly, developers will get the feedback from others
+after code review is completed.  Administrator can also set teamlist
+field in http://localhost/trac/CodeReviewManager, so that all the team
+members could be notified.

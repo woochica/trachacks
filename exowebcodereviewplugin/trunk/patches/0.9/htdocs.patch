@@ -1,0 +1,93 @@
+diff -ru htdocs.orig/css/trac.css htdocs/css/trac.css
+--- htdocs.orig/css/trac.css	2007-03-20 11:52:19.000000000 +0800
++++ htdocs/css/trac.css	2007-03-20 11:51:07.000000000 +0800
+@@ -336,9 +336,23 @@
+ 
+ .wikitoolbar {
+  border: solid #d7d7d7;
+- border-width: 1px 1px 1px 0;
++ border-width: 1px 1px 1px 1px;
+  height: 18px;
+- width: 208px;
++ width: 374px;
++}
++.wikitoolbar #sourcelist {
++ height: 16px;
++ width: 120px;
++ font-size: 10px;
++ padding: 0px 0px 0px 0px;
++ margin: 0px 0px 3px 0px;
++ }
++.wikitoolbar #insertbutton {
++ height: 16px;
++ width: 45px;
++ font-size: 10px;
++ padding: 0px 0px 0px 0px;
++ margin: 0px 0px 3px 0px;
+ }
+ .wikitoolbar :link, .wikitoolbar :visited {
+  background: transparent url(../edit_toolbar.png) no-repeat;
+diff -ru htdocs.orig/js/wikitoolbar.js htdocs/js/wikitoolbar.js
+--- htdocs.orig/js/wikitoolbar.js	2007-03-20 11:52:19.000000000 +0800
++++ htdocs/js/wikitoolbar.js	2007-03-20 11:47:34.000000000 +0800
+@@ -17,6 +17,50 @@
+     toolbar.appendChild(a);
+   }
+ 
++  function addInsertButton(id, title, fn) {
++    var button = document.createElement("input");
++    button.value = "Source";
++    button.id = id;
++    button.type = "button";
++    button.title = title;
++    button.onclick = function(){
++                                 list = document.getElementById("sourcelist");
++                                 try{
++                                 for(i=0; i<list.length; i++)
++                                 {
++                                   if(list.options[i].selected)
++                                   {
++                                     encloseSelection(list.options[i].innerHTML,"");
++                                     return false;
++                                   }
++                                 }
++                                 }
++                                 catch (e) {}
++                                 return false;
++                               };
++    toolbar.appendChild(button);
++  }
++
++  function addList(id, title, fn){
++    var list = document.createElement("select");
++    list.id = id;
++    list.title = title
++    list.size = "1";
++    var option = 0;
++    for(i=0;i < sourcelists.length; i++)
++    {
++      option = document.createElement("option");
++      option.innerHTML = sourcelists[i];
++      if(i==0)
++      {
++        option.selected = "selected";
++      }
++      list.appendChild(option);
++    }
++    list.tabIndex = 400;
++    toolbar.appendChild(list);
++  }
++
+   function encloseSelection(prefix, suffix) {
+     textarea.focus();
+     var start, end, sel, scrollPos, subst;
+@@ -72,7 +116,8 @@
+   addButton("br", "Line break: [[BR]]", function() {
+     encloseSelection("[[BR]]\n", "");
+   });
+-
++  addList("sourcelist", "source_select", "");
++  addInsertButton("insertbutton", "Insert_source", "");
+   textarea.parentNode.insertBefore(toolbar, textarea);
+ }
+ 

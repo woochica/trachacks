@@ -1,0 +1,12 @@
+*** original/trac/versioncontrol/templates/changeset.html	2008-08-27 16:59:04.000000000 +0800
+--- changeset.html.new	2008-08-27 17:11:22.000000000 +0800
+***************
+*** 89,94 ****
+--- 89,95 ----
+          </py:with>
+        </py:def>
+  
++       <a href="../CodeReview/${new_rev}">code review</a>
+        <dl id="overview">
+          <py:if test="changeset">
+            <dt class="property time">Timestamp:</dt>

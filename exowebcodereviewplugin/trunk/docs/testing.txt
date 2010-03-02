@@ -1,0 +1,85 @@
+====================
+Testing Trac Plugins
+====================
+
+Automated testing is an extremely useful weapon in the bug-killing arsenal
+of the modern developer. When initially writing code, a test suite can
+be used to validate that code behaves as expected. When refactoring or
+modifying code, tests serve as a guide to ensure that behavior hasn't
+changed unexpectedly as a result of the refactor.
+
+Testing a Trac plugin is extremely complex, as a running Trac server is
+usually necessary in advance, although Trac also provides a simple test
+execution framework to help you test your plugin, and range of utilities
+that can be used to stimulate and inspect various facets of a Trac plugin.
+
+
+Unit Test
+---------
+
+CodeReview puts all unittest under tests/unit, and whole directory follows the
+convention:
+
+* Directory layout
+  ::
+
+       PACKAGE/
+           tests/
+               __init__.py
+               unit
+                   __init__.py
+                   test_xxxxxx.py
+                   ...
+       
+* unit directory hosts all the unit tests, which all follows the name convention:
+  test_xxxxxx.py
+* Each utest must provide suite function, to resurn an instance of TestSuite
+  * Don't touch unit/__init__.py
+
+To run all the unit tests for the package, with CodeReview plugin as an example:
+
+* Export the direcotry of the package using PYTHONPATH unless if you install it yet
+  ::
+
+    export PYTHONPATH='/your/path/to/CodeReview'
+
+* Run the following command
+  ::
+   
+   python tests/unit/__init__.py
+
+
+Selenium Test
+-------------
+
+Selenium is a test tool for web applications. Selenium tests run
+directly in a browser, just as real users do. And they run in Internet
+Explorer, Mozilla and Firefox on Windows, Linux, and Macintosh.
+A test-case is represented by an HTML document written in "Selenese",
+containing a table with 3 columns, room enough for a command and two
+arguments. (See the Reference Guide for a complete list of commands over
+http://release.openqa.org/selenium-core/nightly/reference.html.) Not
+all commands take two arguments; in this case either leave the column
+blank or use a space; to make the table look better.  You can start with a
+simple example, tests/functional/test_codereview_main.html.
+
+It's a little more complex to run selenium tests, cause it needs web
+server support, usually Apache.  To run selenium tests, you need:
+
+* Set up local trac server, usually http://localhost/trac.
+* Install and activate TracAccountManager and CodeReview plugins.
+* Install Selenium Core (http://www.openqa.org/selenium-core/download.action). 
+  Usually extract selenium into your Apache root directory, and rename as
+  selenium, and then you can access selenium over
+  http://localhost/selenium/core/TestRunner.html.
+* Generate TestSuite.html using testing tool, generate_test_suite.py,
+  http://contrib.exoweb.net/trac/browser/exotrac/trunk/plugins/admin/generate_test_suite.py
+  ::
+
+    python generate_test_suite.py YOUR/PATH/TO/SELENIUM/TESTS > TestSuite.html
+
+* Copy TestSuite.html and all the selenium test-cases to
+  YOUR/PATH/TO/SELENIUM/tests, and custom login user and password in all the
+  test cases
+* Open your browser, access http://localhost/selenium/core/TestRunner.html,
+  and then you can play fun with Selenium

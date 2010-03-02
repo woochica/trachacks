@@ -1,0 +1,28 @@
+diff -ru templates.orig/changeset.cs templates/changeset.cs
+--- templates.orig/changeset.cs	2007-03-15 16:09:42.000000000 +0800
++++ templates/changeset.cs	2007-03-15 05:51:32.000000000 +0800
+@@ -65,6 +65,7 @@
+     </h1><?cs
+    /if ?><?cs
+   /if ?>
++ <a href="../CodeReview/<?cs var:changeset.revision ?>">code review</a>
+  </div>
+ 
+ <?cs each:change = changeset.changes ?><?cs
+diff -ru templates.orig/header.cs templates/header.cs
+--- templates.orig/header.cs	2007-03-15 16:09:42.000000000 +0800
++++ templates/header.cs	2007-03-20 11:40:25.000000000 +0800
+@@ -22,6 +22,13 @@
+  each:script = chrome.scripts ?>
+  <script type="<?cs var:script.type ?>" src="<?cs var:script.href ?>"></script><?cs
+  /each ?>
++<script type="text/javascript" language="javascript">
++     <?cs if:source_count ?>
++     var sourcelists = new Array(<?cs each:item=sourcelists ?>"<?cs var:item.v ?>"<?cs if:item.i+1<source_count ?>, <?cs /if ?><?cs /each ?>);
++     <?cs else ?>
++     var sourcelists = new Array("")
++     <?cs /if ?>
++ </script>
+ </head>
+ <body>
+ <?cs include "site_header.cs" ?>

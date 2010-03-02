@@ -1,0 +1,185 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
+<title>New Test</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">test_codereview_search</td></tr>
+</thead><tbody>
+<tr>
+	<td>open</td>
+	<td>/trac/login</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>user</td>
+	<td>tony</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>password</td>
+	<td>test4u</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>xpath=//input[@type='submit' and @value='Login']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>logged in as tony</td>
+	<td></td>
+</tr>
+<tr>
+	<td>open</td>
+	<td>/trac/CodeReview</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>author</td>
+	<td>tc</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyValue</td>
+	<td>author</td>
+	<td>tc</td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>bjorn</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>author</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>date</td>
+	<td>20060622</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyValue</td>
+	<td>date</td>
+	<td>20060622</td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Jun 22 17:55</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>Aug 22 17:41</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>date</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>comment</td>
+	<td>Skeleton</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyValue</td>
+	<td>comment</td>
+	<td>Skeleton</td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>bjorn</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>tc</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>author</td>
+	<td>bjorn</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>comment</td>
+	<td>Skeleton</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>date</td>
+	<td>20051229</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyValue</td>
+	<td>author</td>
+	<td>bjorn</td>
+</tr>
+<tr>
+	<td>verifyValue</td>
+	<td>comment</td>
+	<td>Skeleton</td>
+</tr>
+<tr>
+	<td>verifyValue</td>
+	<td>date</td>
+	<td>20051229</td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>bjorn</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>tc</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextNotPresent</td>
+	<td>tc</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>xpath=//a[@href='/trac/logout']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Login</td>
+	<td></td>
+</tr>
+</tbody></table>
+</body>
+</html>
