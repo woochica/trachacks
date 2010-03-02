@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.8'
+version='0.8.1'
 
 setup(name='TicketSubmitPolicy',
       version=version,
@@ -19,9 +19,9 @@ function according to the value of other ticket fields.
       keywords='trac plugin',
       license="GPL",
       packages=['ticketsubmitpolicy'],
-      package_data={'ticketsubmitpolicy' : ['templates/*.html']},
+      package_data={'ticketsubmitpolicy' : ['templates/*.html', 'htdocs/js/*.js']},
       zip_safe=False,
-      install_requires=['simplejson'],
+      install_requires=['Trac', 'simplejson'],
       entry_points = """
       [trac.plugins]
       ticketsubmitpolicy = ticketsubmitpolicy
