@@ -1,0 +1,44 @@
+from setuptools import find_packages, setup
+
+extra = {}
+
+try:
+    import babel
+    extractors = [
+        ('**.py',                'python', None),
+        ('**/templates/**.html', 'genshi', None),
+        ('**/templates/**.js',   'javascript', None),
+        ('**/templates/**.txt',  'genshi',
+         {'template_class': 'genshi.template:NewTextTemplate'}),
+    ]
+    extra['message_extractors'] = {
+        '${package_code}': extractors,
+    }
+except ImportError:
+    pass
+
+setup(
+    name = ${repr(project)},
+    version = "0.1",
+    description = "${description}",
+    author = "${author}",
+    author_email = "${author_email}",
+    url = "http://trac-hacks.org/wiki/${project}",
+    license = "BSD",
+    packages = find_packages(exclude=['ez_setup', 'examples', 'tests*']),
+    include_package_data = True,
+    package_data = { ${repr(package_code)}: [ '*.txt', 'templates/*.*', 'htdocs/*.*', 
+        'tests/*.*', 'locale/*.*', 'locale/*/LC_MESSAGES/*.*' ] },
+    zip_safe = False,
+    keywords = "trac ${project}",
+    classifiers = [
+        'Framework :: Trac',
+    ],
+    install_requires = [],
+    entry_points = """
+    [trac.plugins]
+    ${package_code} = ${package_code}.web_ui
+    """,
+    **extra
+    )
+

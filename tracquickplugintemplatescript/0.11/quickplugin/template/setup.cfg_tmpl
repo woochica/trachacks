@@ -1,0 +1,21 @@
+[extract_messages]
+add_comments = TRANSLATOR:
+msgid_bugs_address = ${author_email}
+output_file = ${package_code}/locale/messages.pot
+keywords = _ ngettext:1,2 N_ tag_
+width = 72
+
+[init_catalog]
+input_file = ${package_code}/locale/messages.pot
+output_dir = ${package_code}/locale
+domain = ${package_code}
+
+[compile_catalog]
+directory = ${package_code}/locale
+domain = ${package_code}
+
+[update_catalog]
+input_file = ${package_code}/locale/messages.pot
+output_dir = ${package_code}/locale
+domain = ${package_code}
+

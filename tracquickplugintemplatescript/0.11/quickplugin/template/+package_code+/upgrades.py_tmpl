@@ -1,0 +1,21 @@
+# -*- coding: utf-8 -*-
+#----------------------------------------------------------------------------
+# Name:         upgrades.py
+# Purpose:      The ${project} Trac plugin upgrade module
+#
+# Author:       ${author} <${author_email}>
+#
+#----------------------------------------------------------------------------
+
+
+"""Automated upgrades for the ${project} database tables, and other data stored
+in the Trac environment."""
+
+def add_${package_code}_table(env, db):
+    """Migrate db."""
+
+    pass
+
+map = {
+    1: [add_${package_code}_table],
+}

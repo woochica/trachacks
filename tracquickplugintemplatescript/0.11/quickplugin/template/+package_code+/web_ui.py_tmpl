@@ -1,0 +1,169 @@
+# -*- coding: utf-8 -*-
+#----------------------------------------------------------------------------
+# Name:         web_ui.py
+# Purpose:      The ${project} Trac plugin handler module
+#
+# Author:       ${author} <${author_email}>
+#
+#----------------------------------------------------------------------------
+
+# python modules
+import os
+import inspect
+import time
+import textwrap
+
+# trac modules
+from trac.core import *
+from trac.db import DatabaseManager
+from trac.util.html import html
+
+# trac interfaces for components
+from trac.perm import IPermissionRequestor
+from trac.web.chrome import ITemplateProvider
+from trac.web.chrome import INavigationContributor
+from trac.web import IRequestHandler
+from trac.admin import IAdminPanelProvider
+from trac.env import IEnvironmentSetupParticipant
+
+# other trac modules you may need
+# from trac.web.chrome import add_script, add_stylesheet
+# from trac.web.main import IRequestFilter
+
+# third party modules
+from pkg_resources import resource_filename
+
+# import plugins module
+from model import schema, schema_version, ${package_code.capitalize()}Store
+from utils import *
+from i18n_domain import gettext, _, tag_, N_, add_domain
+
+__all__ = ['${package_code.capitalize()}Module']
+
+class ${package_code.capitalize()}Module(Component):
+
+    implements(
+                IPermissionRequestor,
+                ITemplateProvider,
+                INavigationContributor,
+                IRequestHandler,
+                IAdminPanelProvider,
+                # uncomment this line after modify model.py
+                # IEnvironmentSetupParticipant,
+            )
+
+    def __init__(self):
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
+        
+    # IPermissionRequestor methods
+
+    def get_permission_actions(self):
+        actions = ['${package_code.upper()}_VIEW', '${package_code.upper()}_EDIT','${package_code.upper()}_ADMIN', ]
+        return actions
+
+    # IEnvironmentSetupParticipant methods
+
+    def environment_created(self):
+        # Create the required tables
+        db = self.env.get_db_cnx()
+        connector, _ = DatabaseManager(self.env)._get_connector()
+        cursor = db.cursor()
+        for table in schema:
+            for stmt in connector.to_sql(table):
+                cursor.execute(stmt)
+
+        # Insert a global version flag
+        cursor.execute("INSERT INTO system (name,value) VALUES ('${package_code}_version',%s)", (schema_version,))
+
+        db.commit()
+
+    def environment_needs_upgrade(self, db):
+        cursor = db.cursor()
+        cursor.execute("SELECT value FROM system WHERE name='${package_code}_version'")
+        row = cursor.fetchone()
+        if not row or int(row[0]) < schema_version:
+            return True
+
+    def upgrade_environment(self, db):
+        cursor = db.cursor()
+        cursor.execute("SELECT value FROM system WHERE name='${package_code}_version'")
+        row = cursor.fetchone()
+        if not row:
+            self.environment_created()
+            current_version = 0
+        else:
+            current_version = int(row[0])
+
+        from ${package_code} import upgrades
+        for version in range(current_version + 1, schema_version + 1):
+            for function in upgrades.map.get(version):
+                print textwrap.fill(inspect.getdoc(function))
+                function(self.env, db)
+                print 'Done.'
+        cursor.execute("UPDATE system SET value=%s WHERE name='${package_code}_version'", (schema_version,))
+        self.log.info('Upgraded ${project} tables from version %d to %d',
+                      current_version, schema_version)
+
+    # INavigationContributor methods
+
+    def get_active_navigation_item(self, req):
+        return '${package_code}'
+
+    def get_navigation_items(self, req):
+        if not req.perm.has_permission('${package_code.upper()}_VIEW'):
+            return
+        yield ('mainnav', '${package_code}',
+               html.A(_('${project}'), href= req.href.${package_code}()))
+
+
+    # ITemplateProvider
+
+    def get_templates_dirs(self):
+        return [resource_filename(__name__, 'templates')]
+
+    def get_htdocs_dirs(self):
+        return [('${package_code}', resource_filename(__name__, 'htdocs'))]
+
+
+    # IRequestHandler methods
+
+    def match_request(self, req):
+        return req.path_info.startswith('/${package_code}')
+
+
+    def process_request(self, req):
+        req.perm.assert_permission('${package_code.upper()}_VIEW')
+
+        data = {
+            "gettext": gettext,
+            "_": _,
+            "tag_": tag_,
+            "N_": N_,
+        }
+
+        return '${package_code}.html', data, None
+
+    # IAdminPanelProvider methods
+
+    def get_admin_panels(self, req):
+        self.env.log.info('get_admin_pages')
+
+        if '${package_code.upper()}_ADMIN' in req.perm:
+            yield ('${package_code}', _('${project}'), '${package_code}_admin', _('${project} Admin'))
+
+    def render_admin_panel(self, req, cat, page, path_info):
+        req.perm.assert_permission('${package_code.upper()}_ADMIN')
+
+        data = {
+            "gettext": gettext,
+            "_": _,
+            "tag_": tag_,
+            "N_": N_,
+        }
+        
+        req.hdf['data'] = data
+
+        return '${package_code}_admin.html', data
+
+    # internal methods
