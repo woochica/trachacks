@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.2'
+version='0.2.1'
 
 setup(name='GeoTrac',
       version=version,
@@ -68,7 +68,8 @@ setup(name='GeoTrac',
       "http://trac-hacks.org/svn/customfieldproviderplugin/0.11#egg=CustomFieldProvider",
       "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
       "http://trac-hacks.org/svn/captchaauthplugin/0.11#egg=CaptchaAuth",
-
+      "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
+      "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
       ],
       zip_safe=False,
       entry_points = """
