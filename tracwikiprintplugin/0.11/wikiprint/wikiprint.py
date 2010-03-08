@@ -72,15 +72,15 @@ class linkLoader:
             
     def getFileName(self, name, relative=''):
         try:
-            if self.allow_local:
-                self.req.perm.assert_permission('WIKIPRINT_FILESYSTEM')
-                self.env.log.debug("WikiPrint.linkLoader => Resolve local filesystem %s", name)
-                return name
                 
             if name.startswith('http://') or name.startswith('https://'):
                 self.env.log.debug('WikiPrint.linkLoader => Resolving URL: %s' % name)
                 url = urlparse.urljoin(relative, name)
                 self.env.log.debug('WikiPrint.linkLoader => urljoined URL: %s' % url)
+            elif self.allow_local:
+                self.req.perm.assert_permission('WIKIPRINT_FILESYSTEM')
+                self.env.log.debug("WikiPrint.linkLoader => Resolve local filesystem %s", name)
+                return name
             else:
                 #Relative path
                 self.env.log.debug("WikiPrint.linkLoader => Relative path %s to %s", name, urlparse.urljoin(self.req.abs_href(), name))
