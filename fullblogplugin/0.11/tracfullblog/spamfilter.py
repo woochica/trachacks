@@ -49,7 +49,7 @@ class BlogSpamFilterAdapter(Component):
         return []
 
     def validate_blog_comment(self, req, postname, fields):
-        if 'blog-preview' in req.args:
+        if 'previewcomment' in req.args:
             return []
 
         blog_res = Resource('blog', postname)
