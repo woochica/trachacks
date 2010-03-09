@@ -51,14 +51,13 @@ class LDAPAuthNStore (Component):
                     yield entry[1]['uid'][0]
         finally:
             con.unbind()
-
+    '''
     def set_password(self, user, password):
-        '''
         con = self.init_connection()
         con.passwd_s(dn, password)
-        '''
-        
+         
         self.log.debug('set password for %s current %s', user, password)
+    '''
         
 
     def init_connection(self):
