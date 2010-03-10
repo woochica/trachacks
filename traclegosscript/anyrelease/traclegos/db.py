@@ -166,9 +166,14 @@ class PostgreSQL(DatabaseSetup):
                 raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(createuser))
 
         # create the database
-        retval = subprocess.call(createdb)
+        process = subprocess.Popen(createdb,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        retval = process.wait()
         if retval:
-            raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(createdb))
+            if not stderr.strip().endswith(' already exists'):
+                raise DatabaseCreationError('PostgreSQL: Error executing command: "%s"' % ' '.join(createdb))
 
 
 def available_databases():
