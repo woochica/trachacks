@@ -38,7 +38,9 @@ def get_absolute_url(base, url):
         """ Remove double slashes.
         """
         parts = [part.strip('/') for part in parts]
-        return '/' + '/'.join(parts)
+        url = '/' + '/'.join(parts)
+        url = url.replace('//', '/')
+        return url
     
     scheme, netloc, path, query, params, fragment = urlparse(url)
     
