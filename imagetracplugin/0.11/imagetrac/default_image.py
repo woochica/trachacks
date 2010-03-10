@@ -39,7 +39,8 @@ class DefaultTicketImage(Component):
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
         """
-        db.commit()
+        if db is not None:
+            db.commit()
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         try:
@@ -55,7 +56,8 @@ class DefaultTicketImage(Component):
         transactions. This is done implicitly after all participants have
         performed the upgrades they need without an error being raised.
         """
-        db.commit()
+        if db is not None:
+            db.commit()
         self.create_db()
 
     ### method for IRequireComponents
