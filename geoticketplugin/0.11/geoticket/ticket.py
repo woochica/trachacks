@@ -436,7 +436,8 @@ class GeoTicket(Component):
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
         """
-        db.commit() # XXX if I don't have this line, get InteralError: current transaction aborted
+        if db is not None:
+            db.commit() # XXX if I don't have this line, get InteralError: current transaction aborted
         return not self.version()
 
     def upgrade_environment(self, db):
