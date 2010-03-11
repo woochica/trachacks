@@ -4,8 +4,9 @@ import re
 
 from trac.core import Component, implements
 from trac.config import ListOption
+from trac.ticket.web_ui import TicketModule
 from trac.web.api import IRequestFilter
-from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script
+from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script, add_script_data
 from trac.web.href import Href
 
 
@@ -33,6 +34,14 @@ class WysiwygModule(Component):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
+        options = {}
+        options['escapeNewlines'] = False
+        if template == 'ticket.html':
+            options['escapeNewlines'] = TicketModule(self.env).must_preserve_newlines
+
+        if options:
+            add_script_data(req, { '_tracwysiwyg': options })
+
         add_link(req, 'tracwysiwyg.base', req.href() or '/')
         stylesheets = ['chrome/common/css/trac.css', 'chrome/tracwysiwyg/editor.css']
         stylesheets += self.wysiwyg_stylesheets
@@ -41,6 +50,7 @@ class WysiwygModule(Component):
         add_stylesheet(req, 'tracwysiwyg/wysiwyg.css')
         add_script(req, 'tracwysiwyg/wysiwyg.js')
         add_script(req, 'tracwysiwyg/wysiwyg-load.js')
+
         return (template, data, content_type)
 
 

@@ -2,9 +2,14 @@
 
 import re
 
+from genshi.builder import tag
+from genshi.filters.transform import Transformer
+
 from trac.core import Component, implements
 from trac.config import ListOption
-from trac.web.api import IRequestFilter
+from trac.util.text import javascript_quote
+from trac.ticket.web_ui import TicketModule
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script
 from trac.web.href import Href
 
@@ -13,7 +18,7 @@ __all__ = ['WysiwygModule']
 
 
 class WysiwygModule(Component):
-    implements(ITemplateProvider, IRequestFilter)
+    implements(ITemplateProvider, IRequestFilter, ITemplateStreamFilter)
 
     wysiwyg_stylesheets = ListOption('tracwysiwyg', 'wysiwyg_stylesheets',
             doc="""Add stylesheets to the WYSIWYG editor""")
@@ -41,7 +46,20 @@ class WysiwygModule(Component):
         add_stylesheet(req, 'tracwysiwyg/wysiwyg.css')
         add_script(req, 'tracwysiwyg/wysiwyg.js')
         add_script(req, 'tracwysiwyg/wysiwyg-load.js')
+
         return (template, data, content_type)
+
+    # ITemplateStreamFilter
+    def filter_stream(self, req, method, filename, stream, data):
+        options = {}
+        if filename == 'ticket.html':
+            options['escapeNewlines'] = TicketModule(self.env).must_preserve_newlines
+
+        if options:
+            text = 'var _tracwysiwyg = %s' % _to_json(options)
+            stream |= Transformer('//head').append(tag.script(text, type='text/javascript'))
+
+        return stream
 
 
 def _expand_filename(req, filename):
@@ -52,5 +70,25 @@ def _expand_filename(req, filename):
         href = Href(filename)
         return href()
     return req.href(filename)
+
+
+def _to_json(value):
+    if isinstance(value, basestring):
+        return '"%s"' % javascript_quote(value)
+    if value is None:
+        return 'null'
+    if value is False:
+        return 'false'
+    if value is True:
+        return 'true'
+    if isinstance(value, (int, long)):
+        return str(value)
+    if isinstance(value, (list, tuple)):
+        return '[ %s ]' % ', '.join([_to_json(v) for v in value])
+    if isinstance(value, dict):
+        return '{ %s }' % ', '.join([
+                '%s: %s' % (_to_json(k), _to_json(v))
+                for k, v in value.iteritems()])
+    raise TypeError, 'Unsupported type "%s"' % type(value)
 
 

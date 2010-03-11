@@ -1,6 +1,7 @@
 addEvent(window, "load", function() {
     TracWysiwyg.tracPaths = { base: ".", search: "./search", stylesheets: [] };
-    var instance = new TracWysiwyg(document.getElementById("textarea"));
+    var options = TracWysiwyg.getOptions();
+    var instance = new TracWysiwyg(document.getElementById("textarea"), options);
     var contentDocument = instance.contentDocument;
 
     var d = document;
@@ -34,13 +35,13 @@ addEvent(window, "load", function() {
         setTimeout(arguments.callee, 500);
     }, 500);
 
-    function generate(dom, wikitext, withoutDomToWikitext, withoutWikitextToFragment) {
+    function generate(dom, wikitext, options, withoutDomToWikitext, withoutWikitextToFragment) {
         dom = dom.cloneNode(true);
         var anonymous = dom.ownerDocument.createElement("div");
         anonymous.appendChild(dom);
 
         if (!withoutWikitextToFragment) {
-            var fragment = instance.wikitextToFragment(wikitext, contentDocument);
+            var fragment = instance.wikitextToFragment(wikitext, contentDocument, options);
             var generated = contentDocument.createElement("div");
             generated.appendChild(fragment);
             var generatedHtml = generated.innerHTML;
@@ -50,22 +51,23 @@ addEvent(window, "load", function() {
             this.assertEqual(anonymous.innerHTML, generatedHtml, "wikitextToFragment");
         }
         if (!withoutDomToWikitext) {
-            this.assertEqual(wikitext, instance.domToWikitext(anonymous), "domToWikitext");
+            this.assertEqual(wikitext, instance.domToWikitext(anonymous, options), "domToWikitext");
         }
     }
 
-    function generateFragment(dom, wikitext) {
-        generate.call(this, dom, wikitext, true);
+    function generateFragment(dom, wikitext, options) {
+        generate.call(this, dom, wikitext, options, true, false);
     }
 
-    function generateWikitext(dom, wikitext) {
-        generate.call(this, dom, wikitext, false, true);
+    function generateWikitext(dom, wikitext, options) {
+        generate.call(this, dom, wikitext, options, false, true);
     }
 
     function run() {
         var unit = new TracWysiwyg.TestUnit();
         var fragment = unit.fragment;
         var element = unit.element;
+        var br = function() { return element("br") };
         var a = function(link, label) {
             var attrs = {
                 href: "./search?q=" + encodeURIComponent(link),
@@ -1660,6 +1662,59 @@ addEvent(window, "load", function() {
                 "    dd",
                 "",
                 "|| cell[[BR]]1 ||= cell[[BR]]2 =||" ].join("\n"), wikitext);
+        });
+
+        unit.add("escape newlines", function() {
+            var dom = fragment(
+                element("h1", "header"),
+                element("blockquote", { "class": "citation" },
+                    element("p",
+                        br(),
+                        "preserve", br(),
+                        "newlines", br(),
+                        br(),
+                        element("i", "(since 0.11)"), br(),
+                        br(),
+                        br())),
+                element("p",
+                    "Whether Wiki formatter should respect the new lines present", br(),
+                    "in the Wiki text. If set to ", element("b", "default"), ", this is equivalent to", br(),
+                    element("i", "yes"), " for new environments but keeps the old behavior for", br(),
+                    "upgraded environments (i.e. 'no')."),
+                element("p", "must_preserve_newlines"),
+                element("ul",
+                    element("li", "first", br(), "word"),
+                    element("li", "second", br(), "word")),
+                element("dl",
+                    element("dt", "trac"),
+                    element("dd", "trac.edgewall.org", br(), "trac-hacks.org")),
+                element("table", { "class": "wiki" },
+                    element("tbody",
+                        element("tr",
+                            element("td", "cell", br(), "cell")))));
+            generate.call(this, dom, [
+                "= header =",
+                "> ",
+                "> preserve",
+                "> newlines",
+                "> ",
+                "> ''(since 0.11)''",
+                "> ",
+                "> ",
+                "",
+                "Whether Wiki formatter should respect the new lines present",
+                "in the Wiki text. If set to '''default''', this is equivalent to",
+                "''yes'' for new environments but keeps the old behavior for",
+                "upgraded environments (i.e. 'no').",
+                "",
+                "must_preserve_newlines",
+                "",
+                " * first[[BR]]word",
+                " * second[[BR]]word",
+                "",
+                " trac:: trac.edgewall.org[[BR]]trac-hacks.org",
+                "",
+                "|| cell[[BR]]cell ||" ].join("\n"), { escapeNewlines: true });
         });
 
         unit.add("selectRange", function() {
