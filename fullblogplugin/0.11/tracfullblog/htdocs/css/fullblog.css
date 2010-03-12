@@ -110,7 +110,7 @@ div.blogflash {
     border: 2px solid gray;
     float: right;
     font-size: 0.8em;
-    margin: 0em;
+    margin: 0 0 1.25em 1.25em;
     padding: 0.5em 1em;
     width: 400px;
 }
