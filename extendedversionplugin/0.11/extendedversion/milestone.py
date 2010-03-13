@@ -80,19 +80,12 @@ class MilestoneVersion(Component):
                        (milestone, version))
 
     def _milestone_versions(self, stream, req):
-        class AddVersionLink(object):
-            def __init__(self, mv, buffer):
-                self.mv = mv
-                self.buffer = buffer
-
-            def __iter__(self):
-                #return iter(tag.span("; " + repr(self.buffer.events[1][1])))
-                return iter(self.mv._version_display(req, self.buffer.events[1][1]))
-
-        b = StreamBuffer()
-        filter = Transformer('//li[@class="milestone"]/div/h2[1]/a/em').copy(b).end() \
-                     .select('//li[@class="milestone"]//p[@class="date"]')
-        return stream | filter.append(AddVersionLink(self, b))
+        buffer = StreamBuffer()
+        def apply_version():
+            return self._version_display(req, buffer.events[1][1])
+        filter = Transformer('//li[@class="milestone"]/div/h2/a/em').copy(buffer).end() \
+                     .select('//li[@class="milestone"]//p[@class="date"]').append(apply_version)
+        return stream | filter
 
     def _version_display(self, req, milestone):
         cursor = self.env.get_db_cnx().cursor()
