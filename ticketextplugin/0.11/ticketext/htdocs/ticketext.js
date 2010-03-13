@@ -84,7 +84,7 @@ ticketext.TicketTemplate = function(baseUrlValue) {
     // trac default field name
     this.defaultPropArray = ["field_summary", "field_reporter", "field_description",
                              "field_owner", "field_type", "field_priority", "field_milestone",
-                             "field_component", "field_version", "field_keywords", "field_cc"];
+                             "field_component", "field_version", "field_severity", "field_keywords",                             "field_cc"];
     
     if (baseUrlValue) {
         this.baseUrl = baseUrlValue;
