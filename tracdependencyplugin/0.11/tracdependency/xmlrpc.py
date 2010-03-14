@@ -19,6 +19,7 @@ class WorkHoursRPC(Component):
         return 'dependency'
 
     def xmlrpc_methods(self):
+        yield ('TICKET_VIEW', ((int),), self.getMaxTicketId)
         yield ('TICKET_VIEW', ((list, str, str),), self.executeQuery)
         #yield ('TICKET_VIEW', ((list, str),), self.getWorkHourChangeTimes)
         #yield ('TICKET_VIEW', ((list, str),), self.getWorkHourChanges)
@@ -26,9 +27,20 @@ class WorkHoursRPC(Component):
         #yield ('TICKET_VIEW', ((list, int),), self.getWorkHoursPriod)
         yield ('TICKET_VIEW', ((list, ),), self.getUsers)
 
+    def getMaxTicketId(self, req):
+        res = 0
+        sql = "SELECT "
+        sql = sql + "MAX(t.id), "
+        sql = sql + "FROM ticket t "
+        for row in cursor:
+            res=row[0]
+        return res
+
     def executeQuery(self, req, query, sort):
         """Returns results of query"""
         ##クエリーを実行します．
+        ##ORDER BYは次のように指定する．フィールド名だけでなく番号でも問題ない．"フィールド一" [ASC, DESC], "フィールド二" [ASC, DESC]
+
         #if query == "":
         #    query = "t.id>0"
         #if sort == "":
