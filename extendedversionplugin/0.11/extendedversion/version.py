@@ -16,9 +16,9 @@ from trac.core import *
 from trac.mimeview.api import Context
 from trac.resource import Resource, ResourceNotFound
 from trac.ticket import Milestone, Version
+from trac.ticket.query import QueryModule
 from trac.ticket.roadmap import apply_ticket_permissions, \
-            get_tickets_for_milestone, get_ticket_stats, \
-            milestone_stats_data
+            get_tickets_for_milestone, get_ticket_stats
 from trac.util.datefmt import get_datetime_format_hint, parse_date
 from trac.util.translation import _
 from trac.web.chrome import add_link, add_notice, add_stylesheet, add_warning
@@ -31,6 +31,21 @@ from trac.ticket.roadmap import ITicketGroupStatsProvider
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor
 from trac.wiki import IWikiSyntaxProvider
+
+
+def milestone_stats_data(env, req, stat, name, grouped_by='component',
+                         group=None):
+    has_query = env[QueryModule] is not None
+    def query_href(extra_args):
+        if not has_query:
+            return None
+        args = {'milestone': name, grouped_by: group, 'group': 'status'}
+        args.update(extra_args)
+        return req.href.query(args)
+    return {'stats': stat,
+            'stats_href': query_href(stat.qry_args),
+            'interval_hrefs': [query_href(interval['qry_args'])
+                               for interval in stat.intervals]}
 
 
 class VisibleVersion(Component):
