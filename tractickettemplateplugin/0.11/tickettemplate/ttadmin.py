@@ -40,7 +40,10 @@ import time
 import textwrap
 import urllib
 
-import simplejson
+try: 
+    import json as simplejson 
+except ImportError: 
+    import simplejson 
 
 from tickettemplate.model import schema, schema_version, TT_Template
 
