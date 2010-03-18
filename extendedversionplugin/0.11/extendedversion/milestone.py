@@ -68,12 +68,10 @@ class MilestoneVersion(Component):
     # internal methods
 
     def _delete_milestone_version(self, db, milestone):
-        print "delete version for milestone "+milestone
         cursor = db.cursor()
         cursor.execute("DELETE FROM milestone_version WHERE milestone=%s", (milestone,))
 
     def _insert_milestone_version(self, db, milestone, version):
-        print "insert version "+version+" for milestone "+milestone
         cursor = db.cursor()
         cursor.execute("INSERT INTO milestone_version "
                        "(milestone, version) VALUES (%s, %s)",

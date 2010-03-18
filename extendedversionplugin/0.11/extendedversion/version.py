@@ -69,7 +69,6 @@ class VisibleVersion(Component):
 
     def check_attachment_permission(self, action, username, resource, perm):
         if resource.parent.realm != 'version':
-            print "declined"
             return
 
         if action == 'ATTACHMENT_CREATE':
