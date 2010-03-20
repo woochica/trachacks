@@ -7,7 +7,6 @@ from genshi.filters.transform import Transformer
 
 from trac.core import Component, implements
 from trac.config import ListOption
-from trac.util.text import javascript_quote
 from trac.ticket.web_ui import TicketModule
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script
@@ -72,9 +71,29 @@ def _expand_filename(req, filename):
     return req.href(filename)
 
 
+_escape_re = re.compile(r'[\010\f\n\r\t"><&\\]')
+
+_escape_chars = {
+    '\010': r'\b',
+    '\f'  : r'\f',
+    '\n'  : r'\n',
+    '\r'  : r'\r',
+    '\t'  : r'\t',
+    '"'   : r'\"',
+    '>'   : r'\u003E',
+    '<'   : r'\u003C',
+    '&'   : r'\u0026',
+    '\\'  : r'\\',
+}
+
+
+def _escape_replace(match):
+    return _escape_chars[match.group(0)]
+
+
 def _to_json(value):
     if isinstance(value, basestring):
-        return '"%s"' % javascript_quote(value)
+        return '"%s"' % _escape_re.sub(_escape_replace, value)
     if value is None:
         return 'null'
     if value is False:
