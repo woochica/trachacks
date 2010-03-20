@@ -24,6 +24,29 @@ import re
 MANTIS_URL = "http://bugs.farmanager.com"
 MANTIS_BUG_FMT = "/".join([MANTIS_URL, "view.php?id=%d"])
 
+
+def genshi_parse(url):
+    """parse url content to get issue title
+    todo: use html parses that doesn't fail on malformed output
+
+    >>> genshi_parse("http://www.mantisbt.org/bugs/view.php?id=555")
+    u'0000555: User partitioning not working - MantisBT'   
+    >>> print genshi_parse("http://bugs.farmanager.com/view.php?id=1288")
+    None
+
+    :return: issue title or None of malformed input
+    """
+    title_path = "head/title/text()"
+    mbt_file = urllib2.urlopen(url)
+    #mbt_genshi = genshi.input.HTML(mbt_file)
+    mbt_genshi = genshi.input.HTMLParser(mbt_file)
+    try:
+        title = mbt_genshi.parse().select(title_path).render().decode("utf-8")
+    except genshi.ParseError, err:
+        return None
+    return title
+
+
 class MantisChangesetQuery(Component):
     """Change mantis ticket references ("Mantis #xxxxxx") in changeset messages
        to direct links to external Mantis installation. Query Mantis to get
@@ -49,20 +72,16 @@ class MantisChangesetQuery(Component):
                 url = MANTIS_BUG_FMT % no
                 self.log.info("Lookup bug title at Mantis webpage %s" % url)
 
-                # genshi stuff
-                title_path = "head/title/text()"
-                mbt_file = urllib2.urlopen(url)
-                mbt_genshi = genshi.input.HTMLParser(mbt_file)
-                res = mbt_genshi.parse().select(title_path).render().decode("utf-8")
+                title = genshi_parse(url)
 
                 # example  : 0000619: Bug description - Mantis
                 # validate : ends with "- Mantis", starts with bug number
-                if not res:
+                if not title:
                     self.log.warning("Bug title lookup failed %s" % url)
                 else:
                     # strip suffix/prefix
-                    res = self.mantis_re_title.sub(u"\g<mbt_title>", res)
-                    bugs_info[no]["title"] = res
+                    title = self.mantis_re_title.sub(u"\g<mbt_title>", title)
+                    bugs_info[no]["title"] = title
 
             # to simplify - links are embedded in message comment directly
             # it is also possible to construct a special formatter or macros,
@@ -87,3 +106,6 @@ if __name__ == "__main__":
     r = MantisChangesetQuery.mantis_re
     m = r.findall(doc)
     print m
+
+    import doctest
+    doctest.testmod()
