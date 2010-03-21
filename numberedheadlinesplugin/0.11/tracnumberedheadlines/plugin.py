@@ -68,6 +68,15 @@ class NumberedHeadlinesPlugin(Component):
 
         depth = min(len(fullmatch.group('nhdepth')), 6)
 
+        try:
+          formatter.close_table()
+          formatter.close_paragraph()
+          formatter.close_indentation()
+          formatter.close_list()
+          formatter.close_def_list()
+        except:
+          pass
+
         ## BEGIN of code provided by Joshua Hoke, see th:#4521.
         # moved and modified by Martin
 
