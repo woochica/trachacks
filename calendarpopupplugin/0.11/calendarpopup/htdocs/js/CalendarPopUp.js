@@ -5,7 +5,6 @@
 window.onload=SearchCalenderPoints;
 
 var cal;
-
 function SearchCalenderPoints() {
 
 	var found = 0;	
@@ -13,14 +12,17 @@ function SearchCalenderPoints() {
 		var element = document.getElementById(calendarPopUpArrayOfIDs[i]);
 		if (element) {
 			element.onclick = new Function("cal.select(this, this.id, \"" + calendarPopUpArrayOfIDsFormat[i] + "\"); return false;");
-			element.onblur = new Function("cal.hidePopup(); return true;");
+			if (navigator.appName == "Opera") {
+				element.onblur = new Function("cal.hidePopup(); return true;");
+			}
 			found = 1;
 		}
 	}
-
 	if(found == 1) {
 		cal  = new CalendarPopup('CalendarPopUpDiv');
 		cal.setCssPrefix("CPU");
+		cal.weekStartDay = 1;
+		cal.isShowNavigationDropdowns = true;
 	}
 	return;
 }
@@ -64,7 +66,6 @@ function PopupWindow_autoHide(){this.autoHideEnabled = true;}
 function PopupWindow_hidePopupWindows(e){for(var i=0;i<popupWindowObjects.length;i++){if(popupWindowObjects[i] != null){var p = popupWindowObjects[i];p.hideIfNotClicked(e);}}}
 function PopupWindow_attachListener(){if(document.layers){document.captureEvents(Event.MOUSEUP);}window.popupWindowOldEventListener = document.onmouseup;if(window.popupWindowOldEventListener != null){document.onmouseup = new Function("window.popupWindowOldEventListener();PopupWindow_hidePopupWindows();");}else{document.onmouseup = PopupWindow_hidePopupWindows;}}
 function PopupWindow(){if(!window.popupWindowIndex){window.popupWindowIndex = 0;}if(!window.popupWindowObjects){window.popupWindowObjects = new Array();}if(!window.listenerAttached){window.listenerAttached = true;PopupWindow_attachListener();}this.index = popupWindowIndex++;popupWindowObjects[this.index] = this;this.divName = null;this.popupWindow = null;this.width=0;this.height=0;this.populated = false;this.visible = false;this.autoHideEnabled = false;this.contents = "";this.url="";this.windowProperties="toolbar=no,location=no,status=no,menubar=no,scrollbars=auto,resizable,alwaysRaised,dependent,titlebar=no";if(arguments.length>0){this.type="DIV";this.divName = arguments[0];}else{this.type="WINDOW";}this.use_gebi = false;this.use_css = false;this.use_layers = false;if(document.getElementById){this.use_gebi = true;}else if(document.all){this.use_css = true;}else if(document.layers){this.use_layers = true;}else{this.type = "WINDOW";}this.offsetX = 0;this.offsetY = 0;this.getXYPosition = PopupWindow_getXYPosition;this.populate = PopupWindow_populate;this.setUrl = PopupWindow_setUrl;this.setWindowProperties = PopupWindow_setWindowProperties;this.refresh = PopupWindow_refresh;this.showPopup = PopupWindow_showPopup;this.hidePopup = PopupWindow_hidePopup;this.setSize = PopupWindow_setSize;this.isClicked = PopupWindow_isClicked;this.autoHide = PopupWindow_autoHide;this.hideIfNotClicked = PopupWindow_hideIfNotClicked;}
-
 
 /* SOURCE FILE: CalendarPopup.js */
 function CP_stop(e) { if (e && e.stopPropagation) { e.stopPropagation(); } }
