@@ -106,8 +106,13 @@ $(document).ready(function() {
             break;
         }
         
+        if ($("#ticket.ticketdraft").length) {
+            var preview_mode = true;
+        } else {
+            var preview_mode = false;
+        }
         
-        if (!location.pathname.match(/newticket/g)){
+        if (!location.pathname.match(/newticket/g) || preview_mode){
             $("select[id^='field-tcf_']").each(function(){
                 var orig_value = tcf_orig_values[this.id];
                 
