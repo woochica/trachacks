@@ -5,10 +5,26 @@ $(document).ready(function() {
             return;
         }
         var tcf_define = result["tcf_define"];
+        var chained_fields = result["chained_fields"];
+        if (chained_fields.length) {
+            var selector_inputs = [];
+            var selector_selects = [];
+            for (var i=0; i<chained_fields.length; i++ ) {
+                var field = chained_fields[i];
+                selector_inputs.push("input#field-" + field);
+                selector_selects.push("select#field-" + field);
+            }
+            var field_selector_input = selector_inputs.join(",");
+            var field_selector_select = selector_selects.join(",");
+            
+        } else {
+            var field_selector_input = "input[id^='field-tcf_']";
+            var field_selector_select = "select[id^='field-tcf_']";
+        }
         
         var tcf_orig_values = {};
         
-        $("input[id^='field-tcf_']").each(function(){
+        $(field_selector_input).each(function(){
             var new_field = $('<select name="'+$(this).attr("name")+'"/>');
             var id = this.id;
             
@@ -21,7 +37,7 @@ $(document).ready(function() {
             new_field.attr("id", id);
         });
         
-        $("select[id^='field-tcf_']").change(function(){
+        $(field_selector_select).change(function(){
             if (location.pathname.match(/newticket/g)){
                 var url = "tcf/query_field_change";
             } else{
@@ -30,7 +46,7 @@ $(document).ready(function() {
             
             var data = {"trigger": this.id};
         
-            $("select[id^='field-tcf_']").each(function(){
+            $(field_selector_select).each(function(){
                 data[this.id] = $(this).val();
             });
             
@@ -113,7 +129,7 @@ $(document).ready(function() {
         }
         
         if (!location.pathname.match(/newticket/g) || preview_mode){
-            $("select[id^='field-tcf_']").each(function(){
+            $(field_selector_select).each(function(){
                 var orig_value = tcf_orig_values[this.id];
                 
                 var options = {};

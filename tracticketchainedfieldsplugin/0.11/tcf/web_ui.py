@@ -145,12 +145,14 @@ class TracTicketChainedFieldsModule(Component):
 
     def process_request(self, req):
         hide_empty_fields = self.config.getbool("tcf", "hide_empty_fields", False)
+        chained_fields = self.config.getlist("tcf", "chained_fields", [])
         
         if req.path_info.startswith('/tcf/query_tcf_define'):
             # handle XMLHTTPRequest
             result = {}
             result["status"] = "1"
             result["hide_empty_fields"] = hide_empty_fields
+            result["chained_fields"] = chained_fields
             
             tcf_define = TracTicketChainedFields_List.get_tcf_define(self.env)
             result["tcf_define"] = simplejson.loads(tcf_define)
@@ -223,7 +225,7 @@ class TracTicketChainedFieldsModule(Component):
         req.send_header('Cache-control', 'no-cache')
         req.send_header('Expires', 'Fri, 01 Jan 1999 00:00:00 GMT')
         req.send_header('Content-Type', 'text/plain' + ';charset=utf-8')
-#        req.send_header('Content-Length', len(message))
+        req.send_header('Content-Length', len(isinstance(message, unicode) and message.encode("utf-8") or message))
         req.end_headers()
 
         if req.method != 'HEAD':

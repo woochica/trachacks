@@ -27,6 +27,7 @@ tcf.* = enabled
 
 [tcf]
 hide_empty_fields = false
+chained_fields = 
 }}}
 
 "hide_empty_fields" is the option which enable "hide fields when there are no supplied options", default is false. 
