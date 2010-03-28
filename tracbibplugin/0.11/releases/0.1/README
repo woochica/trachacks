@@ -1,9 +1,0 @@
-Install:
-   * Run "python setup.py bdist_egg"
-   * Copy the created egg into the plugins folder of your project environment 
-
-Requirements:
-   * This plugin needs the "python-bibtex" package:
-      Gentoo: "emerge python-bibtex"
-      Debian: "apt-get install python-bibtex"
-      Source: https://sourceforge.net/project/showfiles.php?group_id=4825
