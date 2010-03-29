@@ -1,9 +1,57 @@
 from trac.core import *
-from trac.wiki.api import IWikiMacroProvider, parse_args
+from trac.wiki.api import IWikiMacroProvider
+try:
+  from trac.wiki.api import parse_args
+except ImportError: # for trac 0.10:
+  import re
+  # following is from
+  # http://trac.edgewall.org/browser/trunk/trac/wiki/api.py
+  def parse_args(args, strict=True):
+      """Utility for parsing macro "content" and splitting them into arguments.
+
+      The content is split along commas, unless they are escaped with a
+      backquote (like this: \,).
+
+      :param args: macros arguments, as plain text
+      :param strict: if `True`, only Python-like identifiers will be
+                     recognized as keyword arguments
+
+      Example usage:
+
+      >>> parse_args('')
+      ([], {})
+      >>> parse_args('Some text')
+      (['Some text'], {})
+      >>> parse_args('Some text, mode= 3, some other arg\, with a comma.')
+      (['Some text', ' some other arg, with a comma.'], {'mode': ' 3'})
+      >>> parse_args('milestone=milestone1,status!=closed', strict=False)
+      ([], {'status!': 'closed', 'milestone': 'milestone1'})
+
+      """   
+      largs, kwargs = [], {}
+      if args:
+          for arg in re.split(r'(?<!\\),', args):
+              arg = arg.replace(r'\,', ',')
+              if strict:
+                  m = re.match(r'\s*[a-zA-Z_]\w+=', arg)
+              else:
+                  m = re.match(r'\s*[^=]+=', arg)
+              if m:
+                  kw = arg[:m.end()-1].strip()
+                  if strict:
+                      kw = unicode(kw).encode('utf-8')
+                  kwargs[kw] = arg[m.end():]
+              else:
+                  largs.append(arg)
+      return largs, kwargs
+
 from trac.wiki.macros import WikiMacroBase
 from trac.attachment import Attachment
 from trac.env import Environment
-from genshi.builder import tag
+try:
+  from genshi.builder import tag
+except ImportError: # for trac 0.10:
+  from trac.util.html import html as tag
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import WikiProcessor
 from trac.util.text import to_unicode
@@ -67,6 +115,9 @@ def extract_entries(text):
 
 class BibAddMacro(WikiMacroBase):
   implements(IWikiMacroProvider)
+
+  def render_macro(self, request,name,content):
+    return self.expand_macro(request,name,content)
 
   def expand_macro(self,formatter,name,content):
     args, kwargs = parse_args(content, strict=False)
@@ -148,6 +199,9 @@ class BibAddMacro(WikiMacroBase):
 
 class BibCiteMacro(WikiMacroBase):
   implements(IWikiMacroProvider)
+
+  def render_macro(self, request,name,content):
+    return self.expand_macro(request,name,content)
   
   def expand_macro(self,formatter,name,content):
 
@@ -174,6 +228,9 @@ class BibCiteMacro(WikiMacroBase):
 class BibNoCiteMacro(WikiMacroBase):
   implements(IWikiMacroProvider)
   
+  def render_macro(self, request,name,content):
+    return self.expand_macro(request,name,content)
+
   def expand_macro(self,formatter,name,content):
 
     args, kwargs = parse_args(content, strict=False)
@@ -197,6 +254,9 @@ class BibNoCiteMacro(WikiMacroBase):
 
 class BibRefMacro(WikiMacroBase):
   implements(IWikiMacroProvider)
+
+  def render_macro(self, request,name,content):
+    return self.expand_macro(request,name,content)
 
   def expand_macro(self,formatter,name,content):
     citelist = getattr(formatter, CITELIST,[])

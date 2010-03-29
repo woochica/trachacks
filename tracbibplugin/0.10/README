@@ -1,0 +1,37 @@
+
+
+
+= Version 0.2 =
+
+== What's new? ==
+   * If you create a wiki page called "BibTex" you can use a code block "{{{ }}}" to store bibtex entries in it. The content is loadad automatically.
+	* Any kind of page can be used as additional "BibTex" page by using "BibAdd(wiki:page)".
+	* The keyword 'latest' can be used insted of "head" or "git".
+	* General syntax changes for the BibAdd function to be trac-link compatible. 
+
+== Install ==
+   * Run "python setup.py bdist_egg"
+   * Copy the created egg into the plugins folder of your project environment 
+
+== Requirements: ==
+	* bibtexparser from http://www.geocities.com/fiolj/bibtexparse.html written by Vidar Bronken Gundersen and modified by Sara Sprenkle. The necessary files are included in the plugin, no additional source is necessary.
+	
+== Usage ==
+
+=== Synopsis ===
+	[[BibAdd(source:file[@rev])]] 
+	[[BibAdd(attachment:[wikipage/]file)]]
+	[[BibAdd(wiki:page)]]
+
+	[[BibCite(BibTexKey)]]	
+	[[BibNoCite(BibTexKey)]]
+	[[BibRef()]]
+
+=== Examples ===
+	[[BibAdd(source:bib.bib@2)]]
+	[[BibAdd(source:bib.bib@latest)]]
+	[[BibAdd(source:bib.bib)]]
+	[[BibAdd(attachment:fiol.bib)]]
+	[[BibAdd(attachment:mypage/lala.bib)]]
+
+	Have a look on "http://trac-hacks.org/wiki/TracBibPlugin" for details and news.
