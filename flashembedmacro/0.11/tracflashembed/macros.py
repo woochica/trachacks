@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2009 Alexey Kinyov <rudy@05bit.com>
+# Copyright (C) 2010 Alexey Kinyov <rudi@05bit.com>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -9,7 +9,6 @@
 from StringIO import StringIO
 from genshi.builder import tag
 from trac.wiki.api import IWikiMacroProvider, parse_args
-from trac.wiki.formatter import format_to_oneliner, extract_link
 from trac.wiki.macros import WikiMacroBase
 
 
@@ -95,16 +94,15 @@ def embed_swf(formatter, params):
     
     # url for attachment
     if url[0] != '/' and url[0:7] != 'http://' and url[0:8] != 'https://':
-        if url[:11] != 'attachment:':
-            url = 'attachment:%s' % url
-        url = extract_link(formatter.env, formatter.context, '[%s attachment]' % url)
-        url = '/raw-' + url.attrib.get('href')[1:]
+        if url[:11] == 'attachment:':
+            url = url[11:]
+        url = formatter.env.abs_href('/raw-attachment/%s/%s/%s' % (formatter.resource.realm, formatter.resource.id, url))
     
     # embed code
     code = '<object width="%(w)s" height="%(h)s">\
 <param name="movie" value="%(url)s"></param>\
 <param name="allowFullScreen" value="false"></param><param name="allowscriptaccess" value="always"></param>\
-<embed src="%(url)s" type="application/x-shockwave-flash"\
+<embed src="%(url)s" type="application/x-shockwave-flash" \
 allowscriptaccess="always" allowfullscreen="false" width="%(w)s" height="%(h)s"></embed>\
 </object>' % {'url': url, 'w': params.get('w', '100%'), 'h': params.get('h', '100%')}
 
