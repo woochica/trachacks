@@ -6,6 +6,7 @@
 # you should have received as part of this distribution.
 #
 
+from urllib import urlencode
 from StringIO import StringIO
 from genshi.builder import tag
 from trac.wiki.api import IWikiMacroProvider, parse_args
@@ -26,12 +27,14 @@ class EmbedMacro(WikiMacroBase):
      [[Embed(youtube=emYqURahUKI)]]
      [[Embed(vimeo=3840952,w=400,h=300)]]
      [[Embed(swf=http://media.nadprof.org/flash/rudy/flowers/flowers.swf,w=500,h=400)]]
+     [[Embed(flv=video.flv,purl=/jwplayer.swf,w=500,h=400)]]
     }}}
 
     Available keys:
      * ''youtube'': video from !YouTube http://youtube.com
      * ''vimeo'': video from Vimeo http://vimeo.com
      * ''swf'': SWF by URL
+     * ''flv'': insert JW player with flv file (http://www.longtailvideo.com/players/jw-flv-player/)
 
     Optional parameters:
      * ''w'' and ''h'': width and height of embedded flash object
@@ -52,6 +55,8 @@ class EmbedMacro(WikiMacroBase):
             return embed_vimeo(params['vimeo'], params)
         elif 'swf' in params:
             return embed_swf(formatter, params)
+        elif 'flv' in params:
+            return embed_flv(formatter, params)
             
         return '<!-- Unknown content type! -->'
 
@@ -105,5 +110,25 @@ def embed_swf(formatter, params):
 <embed src="%(url)s" type="application/x-shockwave-flash" \
 allowscriptaccess="always" allowfullscreen="false" width="%(w)s" height="%(h)s"></embed>\
 </object>' % {'url': url, 'w': params.get('w', '100%'), 'h': params.get('h', '100%')}
+
+    return code
+    
+def embed_flv(formatter, params):
+    """
+    Produces embedding code for flv-file in JW Player.
+    """
+    url = params['flv']
+    purl = params['purl']
+    
+    # url for attachment
+    if url[0] != '/' and url[0:7] != 'http://' and url[0:8] != 'https://':
+        if url[:11] == 'attachment:':
+            url = url[11:]
+        url = formatter.env.abs_href('/raw-attachment/%s/%s/%s' % (formatter.resource.realm, formatter.resource.id, url))
+    
+    # embed code
+    code = '<embed src="%(purl)s" width="%(w)s" height="%(h)s" bgcolor="undefined" allowscriptaccess="always" \
+allowfullscreen="true" flashvars="%(file)s" />' %\
+{'file': urlencode({'file': url}), 'purl': purl, 'w': params.get('w', '100%'), 'h': params.get('h', '100%')}
 
     return code
