@@ -52,9 +52,7 @@ class DrupalIntegration(Component):
 		db = self.env.get_db_cnx()
 		cur = db.cursor()
 		cur.execute("SELECT pass FROM users WHERE name=%s, pass=%s", user, hashed)
-		# Hackish code to only check one account
-		for pass in cur:
-			return pass == hashed
+		return cur.fetchone() == hashed
 
 	def delete_user(self, user):
 		""" Delete Drupal and Trac account. """
