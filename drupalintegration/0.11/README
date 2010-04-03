@@ -1,0 +1,8 @@
+*** DRUPAL INTEGRATION FOR TRAC ***
+
+You can install this module as usual.
+
+Eggs are provided.
+
+Currently does user integration for Trac. Soon, full integration will 
+come.
