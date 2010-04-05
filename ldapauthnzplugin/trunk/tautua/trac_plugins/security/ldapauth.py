@@ -23,19 +23,23 @@ class LDAPAuthNStore (Component):
 
         base = self.user_searchbase + ',' + self.root_dn
         filter = self.user_searchfilter % user
+        
+        ''' require nested "try:" in order to support python2.4 '''
         try:
-            resp = con.search_s(base, ldap.SCOPE_SUBTREE, filter, ['dn'])
+            try:
+                resp = con.search_s(base, ldap.SCOPE_SUBTREE, filter, ['dn'])
 
-            if not len(resp):
-                return None
+                if not len(resp) :
+                    return None
 
-            resp = con.simple_bind_s(resp[0][0], password)
-            return True;
-        except ldap.INVALID_CREDENTIALS:
-            self.log.debug('bad credentials, user %s not authenticated.', user)
-            return False
+                resp = con.simple_bind_s(resp[0][0], password)
+                return True;
+            except ldap.INVALID_CREDENTIALS:
+                self.log.debug('bad credentials, user %s not authenticated.', user)
+                return False
         finally:
             con.unbind()
+
 
     def get_users(self):
         con = self.init_connection()
