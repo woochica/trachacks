@@ -33,7 +33,7 @@ class LDAPAuthNStore (Component):
                     return None
 
                 resp = con.simple_bind_s(resp[0][0], password)
-                return True;
+                return True
             except ldap.INVALID_CREDENTIALS:
                 self.log.debug('bad credentials, user %s not authenticated.', user)
                 return False
