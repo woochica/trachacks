@@ -1,0 +1,31 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+      
+  <head py:match="head" py:attrs="select('@*')">
+    ${select('*|comment()|text()')}
+    <style>
+        #table-main-wrapper { width: 100%; margin:0; padding:0; }
+        #left-side { vertical-align: top; padding-top: 130px; }
+        #right-side { padding-left: 60px; }
+        #left-side ul, #left-side li { list-style: none; padding-left: 0; }
+        #left-side li { margin-left: 0px; }
+        #left-side ul { margin-left: 20px; }
+    </style>
+  </head>
+
+  <body py:match="body" py:attrs="select('@*')">
+    
+    <table id="table-main-wrapper">
+    <tr>
+        <td id="left-side">
+            ${wiki_to_html(context, "[[TracFlexWikiTree]]")}
+        </td>
+        <td id="right-side">
+            ${select('*|text()')}
+        </td>
+    </tr>
+    </table>
+
+  </body>
+</html>
