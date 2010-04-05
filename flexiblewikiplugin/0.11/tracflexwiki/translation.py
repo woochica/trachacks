@@ -25,13 +25,15 @@ class TracFlexWikiTranslation(Component):
     # IRequestFilter methods
     
     def pre_process_request(self, req, handler):
-        try:
-            from babel.support import Translations
-            from pkg_resources import resource_filename
+        locale = getattr(req, 'locale', None)
+        if locale:
             global translations
-            translations = Translations.load(resource_filename(__name__, 'locale'), req.locale)
-        except ImportError:
-            pass
+            try:
+                from babel.support import Translations
+                from pkg_resources import resource_filename
+            except ImportError:
+                return handler
+            translations = Translations.load(resource_filename(__name__, 'locale'), locale)
         return handler
     
     def post_process_request(self, req, template, data, content_type):
