@@ -45,3 +45,4 @@ input.save, button.save{ background: url('accept.png') no-repeat 2px center tran
 td.textarea-holder{width:250px; white-space:pre-wrap;}
 td.buttons{width:150px;}
 .line-item .number {text-align:right;}
+#estimateBody{width:800px;}
