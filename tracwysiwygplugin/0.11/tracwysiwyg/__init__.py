@@ -6,7 +6,7 @@ from genshi.builder import tag
 from genshi.filters.transform import Transformer
 
 from trac.core import Component, implements
-from trac.config import ListOption
+from trac.config import ListOption, _TRUE_VALUES
 from trac.ticket.web_ui import TicketModule
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script
@@ -52,7 +52,7 @@ class WysiwygModule(Component):
     def filter_stream(self, req, method, filename, stream, data):
         options = {}
         if filename == 'ticket.html':
-            options['escapeNewlines'] = TicketModule(self.env).must_preserve_newlines
+            options['escapeNewlines'] = _preserve_newlines(self.env)
 
         if options:
             text = 'var _tracwysiwyg = %s' % _to_json(options)
@@ -60,6 +60,17 @@ class WysiwygModule(Component):
 
         return stream
 
+
+def _preserve_newlines(env):
+    ticket = TicketModule(env)
+    # Trac 0.11.2 later
+    if hasattr(ticket, 'must_preserve_newlines'):
+        return ticket.must_preserve_newlines
+
+    preserve_newlines = ticket.preserve_newlines
+    if preserve_newlines == 'default':
+        preserve_newlines = env.get_version(initial=True) >= 21 # 0.11
+    return preserve_newlines in _TRUE_VALUES
 
 def _expand_filename(req, filename):
     if filename.startswith('chrome/common/') and 'htdocs_location' in req.chrome:
