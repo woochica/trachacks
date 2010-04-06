@@ -33,3 +33,15 @@ del, del table tr td, del table tr th{
 text-decoration: line-through;
 }
 
+button.up{ background: url('arrow_up.png') no-repeat center center transparent; width:25px; }
+button.down{ background: url('arrow_down.png') no-repeat center center transparent; width:25px; }
+button.delete{ background: url('delete.png') no-repeat 2px center transparent;
+   padding-left:20px; }
+button.refresh{ background: url('arrow_refresh.png') no-repeat 2px center transparent;padding-left:20px; }
+button.new{ background: url('add.png') no-repeat 2px center transparent;padding-left:20px; }
+input.save, button.save{ background: url('accept.png') no-repeat 2px center transparent;
+   padding-left:20px; }
+
+td.textarea-holder{width:250px; white-space:pre-wrap;}
+td.buttons{width:150px;}
+.line-item .number {text-align:right;}

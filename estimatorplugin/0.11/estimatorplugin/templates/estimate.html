@@ -57,43 +57,46 @@
 
 
 	<table border="0" cellpadding="3" cellspacing="1" id="estimateBody" width="660" >
-	  <tr id="lineItemheader" >
-	    <th>Description</th>
-	    <th>Low </th>
-	    <th>High </th>
-	    <th>Ave </th>
-	    <th></th>
-	  </tr>
-
-
-	  <tr id="lineItemFooter">
-	    <th class="fieldLabel" >         Total:</th>
-	    <td id="lowTotal" class="numberCell" ></td>
-	    <td id="highTotal" class="numberCell"></td>
-	    <td id="aveTotal" class="numberCell"></td>
-	    <td></td>
-	  </tr>
-	  <tr>
-	    <th class="fieldLabel" >Adjusted Hours:</th>
-	    <td id="lowAdjusted" class="numberCell" ></td>
-	    <td id="highAdjusted" class="numberCell" ></td>
-	    <td id="aveAdjusted" class="numberCell" ></td>
-	    <td></td>
-	  </tr>
-	  <tr>
-	    <th class="fieldLabel">          Cost:</th>
-	    <td id="lowCost" class="numberCell" ></td>
-	    <td id="highCost" class="numberCell" ></td>
-	    <td id="aveCost" class="numberCell" ></td>
-	    <td></td>
-	  </tr>
+	  <thead>
+	    <tr id="lineItemheader" >
+	      <th>Description</th>
+	      <th>Low </th>
+	      <th>High </th>
+	      <th>Ave </th>
+	      <th></th>
+	    </tr>
+	  </thead>
+	  <tbody></tbody>
+	  <tfoot>
+	    <tr id="lineItemFooter">
+	      <th class="fieldLabel" >         Total:</th>
+	      <td id="lowTotal" class="numberCell" ></td>
+	      <td id="highTotal" class="numberCell"></td>
+	      <td id="aveTotal" class="numberCell"></td>
+	      <td></td>
+	    </tr>
+	    <tr>
+	      <th class="fieldLabel" >Adjusted Hours:</th>
+	      <td id="lowAdjusted" class="numberCell" ></td>
+	      <td id="highAdjusted" class="numberCell" ></td>
+	      <td id="aveAdjusted" class="numberCell" ></td>
+	      <td></td>
+	    </tr>
+	    <tr>
+	      <th class="fieldLabel">          Cost:</th>
+	      <td id="lowCost" class="numberCell" ></td>
+	      <td id="highCost" class="numberCell" ></td>
+	      <td id="aveCost" class="numberCell" ></td>
+	      <td></td>
+	    </tr>
+	  </tfoot>
 	</table>
-
-	<button id="newrow" onclick="newLineItem();return false;">new row</button>
-	<button onclick="runCalculation();return false;">refresh calculations</button>
+	  
+	<button id="newrow" class="new" onclick="newLineItem();return false;">new row</button>
+	<button class="refresh" onclick="runCalculation();return false;">refresh calculations</button>
 	<br /><br />
-	<input type="submit" value="Save Estimate" onclick="runCalculation();this.form.submit();return false;" />
-	<input type="submit" value="Save and Go to Ticket" onclick="document.getElementById('shouldRedirect').value='True';runCalculation();this.form.submit();return false;" />
+	<input class="save" type="submit" value="Save Estimate" onclick="runCalculation();this.form.submit();return false;" />
+	<input class="save go" type="submit" value="Save and Go to Ticket" onclick="document.getElementById('shouldRedirect').value='True';runCalculation();this.form.submit();return false;" />
 	<input type="hidden" id="shouldRedirect" name="shouldRedirect" value="False"/>
 	<div>
 	    <h3>Comment Preview</h3>

@@ -37,45 +37,59 @@ function evenDeeperClone(node /* pred */){
    var pred = arguments[1] || chromeCleanerPredicate;
    var kid, cloned;
    if (pred && !pred(node)) return null;
-   var newNode = node.cloneNode(false);
-   for(var i=0 ; kid=node.childNodes[i] ; i++){
-      if(kid.tagName && kid.tagName.toLowerCase()=='textarea'){
-	 cloned = cn('div');
-	 cloned.innerHTML = kid.value.replace('\r\n','<br />', 'g').replace('\r','<br />', 'g').replace('\n','<br />', 'g');
-      }else{
-	 cloned = evenDeeperClone(kid);
-      }
-      if(cloned) newNode.appendChild(cloned);
-   }
-   return newNode;
+   var res = $(node).clone()[0];
+   //Clone the actual current textarea value rather than what it started with
+   $("textarea", node).each(function(){
+     var x = $(this);
+     $("textarea#"+x.attr('id'),res).val(x.val());
+   });
+   return res;
+}
+
+function swapUp(btn){
+  var row = btn;
+  while((row = row.parentNode).tagName != 'TR');
+  row = $(row);
+  $(row).prev().before(row);
+}
+function swapDown(btn){
+  var row = btn;
+  while((row = row.parentNode).tagName != 'TR');
+  row = $(row);
+  $(row).next().after(row);
 }
 
 function lineItemRow (lineitem){
    var uid = function (str){
       return _uid(lineitem, str);
-   }
+   };
    var valFn = function(str){
       if (lineitem[str]) return lineitem[str];
       else return "";
-   }
-
-   var tr = cn('tr', {},
-	     cn('td', {},
-		cn('textarea', {id:uid("description"), name:uid("description"), style:"height: 68px; width:100%;"},
+   };
+   var  tarea;
+   var tr = cn('tr', {'class':"line-item"},
+	     cn('td', {'class':'textarea-holder'},
+		tarea=cn('textarea', {id:uid("description"), name:uid("description"),
+				      style:"height: 68px; width:100%;", 'class':'item-description'},
                    valFn('description'))),
-	     cn('td', { valign:'top'},
-		cn('input', {id:uid('low'),name:uid('low'), type:'text', style:"width:80px;", 
-			 value: valFn('low'), onkeyup:'runCalculation()',
-			 onkeydown:'return enterMeansNewRow(event)'})),
-	     cn('td', {valign:'top'},
+	     cn('td', {'class':'number', valign:'top'},
+		cn('input', {id:uid('low'),name:uid('low'), type:'text', style:"width:80px;",
+			     'class':'number', value: valFn('low'), onkeyup:'runCalculation()',
+			     onkeydown:'return enterMeansNewRow(event)'})),
+	     cn('td', {'class':'number',valign:'top'},
 		cn('input', {id:uid('high'), name:uid('high'),type:'text', style:"width:80px;",
-			 value: valFn('high'), onkeyup:'runCalculation()',
-			 onkeydown:'return enterMeansNewRow(event)'})),
+			     'class':'number',value: valFn('high'), onkeyup:'runCalculation()',
+			     onkeydown:'return enterMeansNewRow(event)'})),
 	     cn('td', {id:uid('ave'), 'class':"numberCell", valign:'top', style:"width:80px;"}),
-	     cn('td', {id:uid('buttons'),valign:'top'},
-	        cn('button',{onclick:'removeLineItem(this);return false;'},'remove')));
+	     cn('td', {id:uid('buttons'), 'class':'buttons',valign:'top'},
+	        cn('button',{onclick:'removeLineItem(this);return false;', 'class':'delete'},
+		'remove'),
+		cn('button',{onclick:'swapUp(this);return false;', 'class':'up'},'&nbsp;'),
+		cn('button',{onclick:'swapDown(this);return false;', 'class':'down'},'&nbsp;')));
    tr.item = lineitem;
    lineitem.row = tr;
+   $(tarea).autoResize({extraSpace:20});
    return tr;
 }
 var currentIdx = 400000000;
@@ -96,7 +110,7 @@ function makeNumberAccessor(id, def){
       var val = Number(str);
       if (isNaN(val)) return def;
       return val;
-   }
+   };
 }
 
 var rate = makeNumberAccessor('rate', 1);
@@ -122,7 +136,7 @@ function runCalculation(){
       }
       var valFn = function(str){
 	 return makeNumberAccessor(uid(str), 0)();
-      }
+      };
       var low = valFn('low');
       var high = valFn('high');
 
@@ -132,7 +146,7 @@ function runCalculation(){
    }
    var adjust = function(num){
       return Math.round(num*1000)/1000;
-   }
+   };
    lowTotal = adjust(lowTotal);
    highTotal = adjust(highTotal);
    lowAdjusted = adjust(variability() * communication() * lowTotal);
@@ -153,48 +167,20 @@ function runCalculation(){
 
 function removeLineItem( btn ){
    var row = btn.parentNode.parentNode;
-   lineItems.removeItem(row.item);   
+   lineItems.removeItem(row.item);
    row.parentNode.removeChild(row);
    runCalculation();
 }
 function removeInputsAndIds(parent){
-   if(!parent.tagName) return;
-   var name = parent.tagName.toLowerCase();
-   if(name == "input"){
-      parent.parentNode.innerHTML = parent.value;
-   }
-   else if(name == "textarea"){
-      //alert(parent.parentNode.innerHTML);
-      parent.parentNode.innerHTML = parent.value;
-   }
-   else if (name == "button"){
-      parent.parentNode.removeChild(parent);
-   }
-   else{
-      for(var i=0 ; node = parent.childNodes[i] ;i++){
-	 removeInputsAndIds(node);
-      }
-   }
-   if (parent.id){
-      parent.className = (parent.className || "") +" "+ parent.id;
-      parent.id = "";
-   }
+   $("input, textarea", parent).each(function(){ var x = $(this); x.parent().html(x.val()); });
+   $("td.buttons", parent).remove();
+   $("[id]",parent).each(function(){ $(this).removeAttr("id"); });
+   $(parent).removeAttr("id");
    return parent;
 }
 function removeFirstRow( elem ){
-   var nd = elem.firstChild;
-   do{
-      if(nd.tagName){
-	 if(nd.tagName.toLowerCase() == 'tbody'){
-	    nd = nd.firstChild;
-	 }
-	 if(nd.tagName.toLowerCase() == 'tr'){
-	    nd.parentNode.removeChild(nd);
-	    return elem;
-	 }
-      }
-   }while(nd = nd.nextSibling);
-   return elem;
+  $(elem.rows[0]).remove();
+  return elem;
 }
 
 function prepareComment( preview ){
@@ -239,8 +225,7 @@ function loadLineItems() {
    var item;
    for(var i=0; item = lineItems[i] ; i++){
       var tr = lineItemRow(item);
-      var foot = $$('lineItemFooter');
-      foot.parentNode.insertBefore(tr, foot);
+      $('#estimateBody tbody').append(tr);
    }
    runCalculation();
 }

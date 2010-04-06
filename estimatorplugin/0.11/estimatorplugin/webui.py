@@ -297,6 +297,7 @@ class EstimationsPage(Component):
                         for i in data['estimate']['tickets'].split(',')]
             addMessage("Estimate saved and added to tickets: "+(', '.join(tickets)))
 
+        add_script(req, "Estimate/russ-autoresize.jquery.js")
         add_script(req, "Estimate/JSHelper.js")
         add_script(req, "Estimate/Controls.js")
         add_script(req, "Estimate/estimate.js")
