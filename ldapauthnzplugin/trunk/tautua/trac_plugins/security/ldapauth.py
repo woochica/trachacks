@@ -47,14 +47,16 @@ class LDAPAuthNStore (Component):
         base = self.user_searchbase + ',' + self.root_dn
         filter = 'objectclass=person'
         
+        resp = None
+        
         try:
             resp = con.search_s(base, ldap.SCOPE_SUBTREE, filter, ['dn','uid'])
-        
-            for entry in resp:
-                if entry[1]['uid'][0]:
-                    yield entry[1]['uid'][0]
         finally:
             con.unbind()
+        
+        for entry in resp:
+            if entry[1]['uid'][0]:
+                yield entry[1]['uid'][0]
     '''
     def set_password(self, user, password):
         con = self.init_connection()
