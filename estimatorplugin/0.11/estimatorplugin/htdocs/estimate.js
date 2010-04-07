@@ -98,8 +98,7 @@ function newLineItem(){
    var lineItem = {id:currentIdx++};
    var tr = lineItemRow(lineItem);
    lineItems.push(lineItem);
-   var foot = $$('lineItemFooter');
-   foot.parentNode.insertBefore(tr, foot);
+   $('#estimateBody tbody').append(tr);
    return tr;
 }
 

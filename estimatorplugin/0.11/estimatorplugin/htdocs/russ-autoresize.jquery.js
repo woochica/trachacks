@@ -6,15 +6,23 @@
 (function($){
     $.fn.autoResize = function(options) {
         var settings = $.extend({ extraSpace : 20 }, options);
+        //A textarea to play with the broweser rendering to determine height, without showing anything
+	// freakin the hell out
+        var testarea=$('<textarea style="position:absolute;top:-1000px;"></textarea>');
+        $(document.body).append(testarea);
         // Only textarea's auto-resize:
         this.filter('textarea').each(function(){
 	    // Get rid of scrollbars and disable WebKit resizing:
             var textarea = $(this).css({resize:'none','overflow-y':'hidden'}),
-	      origHeight = textarea.height(),
+	      origHeight = null,
 	      lastScrollTop = null,
 	      updateSize = function() {
 		var ta = $(this);
-		ta.scrollTop(10000).height(Math.max(origHeight,ta.height()+ta.scrollTop()));
+		if(!origHeight) origHeight = textarea.height();
+		testarea.height(origHeight).val(ta.val()).scrollTop(10000);
+		var newheight = testarea.height()+testarea.scrollTop();
+		console.log(origHeight, newheight);
+		ta.height(newheight);
               };
             // Bind namespaced handlers to appropriate events:
             textarea
