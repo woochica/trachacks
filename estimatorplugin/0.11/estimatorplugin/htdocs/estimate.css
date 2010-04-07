@@ -6,41 +6,32 @@
   margin:5px;
 }
 
-table.estimateBody tr td {
-   border-top:1px solid #CCC;
-}
+table.estimateBody tr td { border-top:1px solid #CCC; }
 
-table.estimateBody tr.lineItemFooter th {
-   border-top:1px solid #CCC;
-}
+table.estimateBody tr.lineItemFooter th { border-top:1px solid #CCC; }
 
 .numberCell, table.estimateBody tr td.numberCell { 
-  text-align:right;
-  border:1px solid blue;
-  width:80px;
-}
+  text-align:right; border:1px solid blue; width:80px; }
 
-.fieldLabel{ 
-  font-weight:bold;
-  text-align:right;
-}
+.fieldLabel{ font-weight:bold; text-align:right; }
 
-th{ 
-  font-weight:bold;
-} 
+th{ font-weight:bold; } 
 
-del, del table tr td, del table tr th{ 
-text-decoration: line-through;
-}
+del, del table tr td, del table tr th{ text-decoration: line-through; }
 
-button.up{ background: url('arrow_up.png') no-repeat center center transparent; width:25px; }
-button.down{ background: url('arrow_down.png') no-repeat center center transparent; width:25px; }
-button.delete{ background: url('delete.png') no-repeat 2px center transparent;
+button.up{ background: url('arrow_up.png') no-repeat center center #FFE; width:25px; }
+button.down{ background: url('arrow_down.png') no-repeat center center #FFE; width:25px; }
+button.delete{ background: url('delete.png') no-repeat 2px center #FFE; padding-left:20px; }
+button.refresh{ background: url('arrow_refresh.png') no-repeat 2px center #FFE;
    padding-left:20px; }
-button.refresh{ background: url('arrow_refresh.png') no-repeat 2px center transparent;padding-left:20px; }
-button.new{ background: url('add.png') no-repeat 2px center transparent;padding-left:20px; }
-input.save, button.save{ background: url('accept.png') no-repeat 2px center transparent;
-   padding-left:20px; }
+button.new{ background: url('add.png') no-repeat 2px center #FFE;padding-left:20px; }
+button:hover{background-color:#FFC}
+input[type=submit].save, button.save, input[type=submit].save:hover, button.save:hover
+{ background: url('accept.png') no-repeat 2px center #FFE; 
+   padding-left:20px;  }
+input[type=submit].save:hover, button.save:hover
+{ background: url('accept.png') no-repeat 2px center #FFC; 
+   padding-left:20px;  }
 
 td.textarea-holder{width:250px; white-space:pre-wrap;}
 td.buttons{width:150px;}
