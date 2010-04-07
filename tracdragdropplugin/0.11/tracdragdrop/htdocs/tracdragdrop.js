@@ -14,7 +14,7 @@ jQuery(document).ready(function($) {
         return;
     }
     var indicator =
-        $('<div id="tracdragdrop_indicator">Enable drap-and-drop attachments</div>')
+        $('<div id="tracdragdrop_indicator">Enabled drag-and-drop attachments</div>')
         .appendTo(document.body);
     var queueFiles = [];
     var countFiles = 0;
