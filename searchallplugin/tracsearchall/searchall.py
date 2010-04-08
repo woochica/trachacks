@@ -15,6 +15,7 @@ except ImportError:
 from trac.perm import IPermissionRequestor
 from trac.env import open_environment
 from trac.util import Markup
+from trac.util.datefmt import to_datetime
 
 import re
 import posixpath
@@ -132,13 +133,19 @@ class SearchAllPlugin(Component):
             self.env.log.debug("Searching project %s" % project )
             self.env.log.debug("Searching for %s" % query[0] )           
             self.env.log.debug("Searching with filters %s" % subfilters )
-            
+
             #Update request data
             orig_href = req.href
             req.href = Href(project_url)
             
             for source in env_search.search_sources:
-                results += list(source.get_search_results(req, query, subfilters))
+                for filter in subfilters:
+                    try:
+                        results += list(source.get_search_results(req, query, [filter]))
+                    except Exception, ex:
+                        results += [(req.href('search', **req.args), 
+                            "<strong>ERROR</strong> in search filter <em>%s</em>" % filter,
+                            to_datetime(None), "none", "Exception: %s" % str(ex)),]
             
             req.href = orig_href
             
