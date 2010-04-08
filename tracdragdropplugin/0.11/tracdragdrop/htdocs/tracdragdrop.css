@@ -37,3 +37,8 @@
     background-color: #cec;
     height: 1.0em;
 }
+@media print {
+    #tracdragdrop_indicator, #tracdragdrop_notice {
+        display: none;
+    }
+}
