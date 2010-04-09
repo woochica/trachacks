@@ -13,7 +13,7 @@ class JobControlSetupParticipant(Component):
     
     def __init__(self):
         self.db_version_key = 'jobcontrol_plugin_version'
-        self.db_version = 1
+        self.db_version = 2
         self.db_installed_version = None
 
         # Initialise database schema version tracking.
@@ -42,14 +42,30 @@ class JobControlSetupParticipant(Component):
                 print 'Creating job table'
                 cursor.execute('DROP TABLE job ')
                 cursor.execute('CREATE TABLE job ('
-                               'id               TEXT,'
-                               'release        TEXT,'
-                               'enabled       TEXT'
+                               'id      TEXT,'
+                               'release TEXT,'
+                               'enabled TEXT'
                                ')')
             
             # Updates complete, set the version
             cursor.execute("UPDATE system SET value=%s WHERE name=%s", 
                            (self.db_version, self.db_version_key))
+                           
+            if self.db_installed_version < 2:
+                print 'Changing release to run script'
+                cursor.execute('CREATE TABLE run ('
+                               'id        INTEGER,'
+                               'job       TEXT,'
+                               'started   INTEGER,'
+                               'ended     INTEGER,'
+                               'status    TEXT,'
+                               'logpost   TEXT,'
+                               'pid       TEXT,'
+                               'uid       TEXT,'
+                               'host      TEXT,'
+                               'root      TEXT,'
+                               'log       TEXT'
+                               ')')
             db.commit()
             db.close()
         except Exception, e:
