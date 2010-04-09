@@ -1,4 +1,4 @@
-.infomessage { 
+.message { 
   color:green;
   border:2px solid green;
   font-weight:bold;
@@ -24,8 +24,14 @@ button.down{ background: url('arrow_down.png') no-repeat center center #FFE; wid
 button.delete{ background: url('delete.png') no-repeat 2px center #FFE; padding-left:20px; }
 button.refresh{ background: url('arrow_refresh.png') no-repeat 2px center #FFE;
    padding-left:20px; }
+button.reset{ background: url('exclamation.png') no-repeat 2px center #FFE;
+   padding-left:20px; }
 button.new{ background: url('add.png') no-repeat 2px center #FFE;padding-left:20px; }
 button:hover{background-color:#FFC}
+
+div.reset { float:right; margin-right:100px; width:320px;}
+div.reset p {font-size:.8em;}
+
 input[type=submit].save, button.save, input[type=submit].save:hover, button.save:hover
 { background: url('accept.png') no-repeat 2px center #FFE; 
    padding-left:20px;  }
@@ -37,3 +43,4 @@ td.textarea-holder{width:250px; white-space:pre-wrap;}
 td.buttons{width:150px;}
 .line-item .number {text-align:right;}
 #estimateBody{width:800px;}
+

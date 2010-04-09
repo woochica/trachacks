@@ -27,7 +27,16 @@
 		<div class="message" >$item</div>
 	      </py:for>
 	    </div>
-
+	    <div class="reset">
+	      <button onclick="return resetPage();" class="reset">
+		Reset Page (removes data stored in browser)</button><br />
+	      <p>
+		The estimator plugin attempts to use HTML5 storage so that you do not
+		lose any data from an in progress estimate because your browser crashed,
+		or you accidentally closed the tab. If you want to start a new estimate
+		you can click this button to remove the data saved in your browser
+	      </p>
+	    </div>
 	<table border="0" cellpadding="3" cellspacing="0" id="estimateParams" >
 	  <tr>
 	    <td class="fieldLabel" ><label for="tickets">Ticket Numbers:</label></td>
@@ -93,10 +102,12 @@
 	</table>
 	  
 	<button id="newrow" class="new" onclick="newLineItem();return false;">new row</button>
-	<button class="refresh" onclick="runCalculation();return false;">refresh calculations</button>
+	<button class="refresh" onclick="runCalculation(true);return false;">refresh calculations</button>
 	<br /><br />
-	<input class="save" type="submit" value="Save Estimate" onclick="runCalculation();this.form.submit();return false;" />
-	<input class="save go" type="submit" value="Save and Go to Ticket" onclick="document.getElementById('shouldRedirect').value='True';runCalculation();this.form.submit();return false;" />
+	<input class="save" type="submit" value="Save Estimate"
+	       onclick="saveEstimate(this);return false;" />
+	<input class="save go" type="submit" value="Save and Go to Ticket"
+	       onclick="$('#shouldRedirect').val('True');saveEstimate(this);return false;" />
 	<input type="hidden" id="shouldRedirect" name="shouldRedirect" value="False"/>
 	<div>
 	    <h3>Comment Preview</h3>
@@ -108,7 +119,12 @@
 	</div>
 
 	<script language="javascript" >
-	   var lineItems = ${estimate.lineItems};
+	   var savedLineItems = lineItems = ${estimate.lineItems};
+	   var lastSaved = ${estimate.saveepoch};
+	   var ticketDefault = "${estimate.tickets}";
+	   var rateDefault = ${estimate.rate};
+	   var variabilityDefault = ${estimate.variability};
+	   var communicationDefault = ${estimate.communication};
 	   loadLineItems();
 	   if(lineItems.length == 0) newLineItem();
 	</script >

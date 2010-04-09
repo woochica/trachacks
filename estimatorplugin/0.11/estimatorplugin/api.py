@@ -6,7 +6,7 @@ from macro_provider import *
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 
-dbversion = 3
+dbversion = 4
 dbkey = 'EstimatorPluginDbVersion'
 
 
@@ -64,8 +64,12 @@ class EstimatorSetupParticipant(Component):
                 )""",[]))
         #ver 2 might have left the database in an invalid state.
         if ver < 3:
-            self.log.debug('Creating Estimate and Estimate_Line_Item tables (Version 1)')
+            self.log.debug('Altering estimate adding diffcoment 2')
             success = success and dbhelper.execute_in_trans(self.env, (""" ALTER TABLE estimate ADD COLUMN diffcomment text ; """,[]))
+        if ver < 4:
+            self.log.debug('Adding save date to estimates (Version 3)')
+            success = success and dbhelper.execute_in_trans(self.env, (""" ALTER TABLE estimate ADD COLUMN saveepoch int ; """,[]))
+
 
         # SHOULD BE LAST IN THIS FUNCTION
         if success:

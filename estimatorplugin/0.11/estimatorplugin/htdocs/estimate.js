@@ -1,8 +1,124 @@
 var cn = ADW.Controls.createNode;
 
+var blinkFade = function(m){
+  m = $(m);
+  m.animate({opacity:1},10000);
+  m.animate({opacity:0},1000, null, function(){m.remove();});
+};
+
+var message = function(m){
+  m = $('<div class="message">'+m+'</div>');
+  $("#messages").append(m);
+  blinkFade(m);
+};
+
+var clearHistory = function(){
+  if(typeof(localStorage) != 'undefined') localStorage.clear();
+};
+
+var clearPageHistory = function(){
+  if(typeof(localStorage) == 'undefined') return ;
+  var i, v, name;
+  var names = ['lineItems', 'persistenceDate', 'tickets','rate', 'variability', 'communication'];
+  for(i=0 ; name=names[i]; i++)
+    localStorage.removeItem(window.location+'#'+name);
+};
+
+var resetPage = function(){
+  if(!confirm("Are you sure you wish to permanently remove this data without saving?"))
+    return false;
+  $("#estimateBody tbody tr").remove();
+  currentIdx = 400000000;
+  lineItems = savedLineItems;
+  $('#tickets').val(ticketDefault);
+  $('#rate').val(rateDefault);
+  $('#variability').val(variabilityDefault);
+  $('#communication').val(communicationDefault);
+  clearPageHistory();
+  loadLineItems();
+  return false;
+};
+
+var browserPersist = function(){ };
+if(typeof(localStorage) != 'undefined'){
+  browserPersist = function(key /*, value*/){
+    key = window.location+'#'+key;
+    if(arguments.length >= 2){
+      var value = arguments[1];
+      localStorage.setItem(key, value);
+      //if(typeof(console)!='undefined') console.log("Persisting:",key, arguments[1]);
+      return value;
+    }
+    else {
+      var v = localStorage.getItem(key);
+      //if(typeof(console)!='undefined') console.log("Loading persisting:",key, v);
+      return v;
+    }
+  };
+}
+else{
+  $('div.reset').remove(); // remove this extra stuff, since the browser doesnt support it anyway
+}
+
+var persistenceDate = function (){
+  return browserPersist('persistenceDate');
+};
+
+var saveEstimate = function(ctl){
+  runCalculation();
+  ctl.form.submit();
+};
+
+var persistPage = function(){
+  browserPersist('persistenceDate', Math.floor(new Date().getTime()/1000));
+  persistLineItems();
+  browserPersist('tickets', $('#tickets').val());
+  browserPersist('rate', $('#rate').val());
+  browserPersist('variability', $('#variability').val());
+  browserPersist('communication', $('#communication').val());
+};
+
+var loadPersistedPage = function(){
+  // our persisted data is older than the saved data
+  if( Number(lastSaved) >= Number(persistenceDate()) ) return;
+  var items = persistedLineItems();
+  if(items) message("Loading unsaved data, dont forget to save");
+  else return;
+  // we have persisted items and they seem newer than the saved ones
+  if(items && items.length > 0) lineItems = items;
+  function loadPersistedFields(names){
+    var i, v, name;
+    for(i=0 ; v=browserPersist(name=names[i]); i++) if(v)$('#'+name).val(v);
+  }
+  loadPersistedFields(['tickets','rate', 'variability', 'communication']);
+};
+
+var persistLineItems = function(){
+  var preparedLineItems = [];
+  var li;
+  var valueLi = function(id, row){
+    var newli = {id:id};
+    newli.description = $("#description"+id,row).val();
+    newli.low = $("#low"+id,row).val();
+    newli.high = $("#high"+id,row).val();
+    return newli;
+  };
+  var i = 0;
+  $("#estimateBody tbody tr").each(function(){
+    var tr= $(this);
+    var rowid = tr.attr('rowid');
+    preparedLineItems[i++] = valueLi(rowid, tr);
+  });
+  browserPersist('lineItems', JSON.stringify(preparedLineItems));
+};
+
+var persistedLineItems = function(){
+  return JSON.parse(browserPersist('lineItems'));;
+};
+
 var uid = function (lineitem, str){
    return str+lineitem.id;
-}
+};
 var _uid = uid;// wrappable version;
 
 function enterMeansNothing(event){
@@ -51,12 +167,14 @@ function swapUp(btn){
   while((row = row.parentNode).tagName != 'TR');
   row = $(row);
   $(row).prev().before(row);
+  persistPage();
 }
 function swapDown(btn){
   var row = btn;
   while((row = row.parentNode).tagName != 'TR');
   row = $(row);
   $(row).next().after(row);
+  persistPage();
 }
 
 function lineItemRow (lineitem){
@@ -68,7 +186,7 @@ function lineItemRow (lineitem){
       else return "";
    };
    var  tarea;
-   var tr = cn('tr', {'class':"line-item"},
+   var tr = cn('tr', {'class':"line-item", "rowid":lineitem.id},
 	     cn('td', {'class':'textarea-holder'},
 		tarea=cn('textarea', {id:uid("description"), name:uid("description"),
 				      style:"height: 68px; width:100%;", 'class':'item-description'},
@@ -95,9 +213,12 @@ function lineItemRow (lineitem){
 var currentIdx = 400000000;
 
 function newLineItem(){
-   var lineItem = {id:currentIdx++};
+   $('#estimateBody tbody tr').each(function(){
+     var id = Number($(this).attr("rowid"));
+     if(id > currentIdx) currentIdx = id;
+   });
+   var lineItem = {id:++currentIdx};
    var tr = lineItemRow(lineItem);
-   lineItems.push(lineItem);
    $('#estimateBody tbody').append(tr);
    return tr;
 }
@@ -123,50 +244,52 @@ var ave_no_zero = function (x, y){
    }
    else if (x !=0) return x;
    else return y;
-}
+};
 
 
-function runCalculation(){
-   var item, lowTotal=0, highTotal=0, lowAdjusted, highAdjusted,
+var _runCalcWait;
+function runCalculation(immediate){
+  function calc (){
+    var item, lowTotal=0, highTotal=0, lowAdjusted, highAdjusted,
       lowCost, highCost;
-   for(var i=0; item = lineItems[i] ; i++){
-      function uid(str){
-	 return _uid(item, str);
-      }
-      var valFn = function(str){
-	 return makeNumberAccessor(uid(str), 0)();
-      };
-      var low = valFn('low');
-      var high = valFn('high');
-
+    $("#estimateBody tbody tr").each(function(){
+      var tr= $(this);
+      var rowid = tr.attr('rowid');
+      var low = Number($("#low"+rowid,tr).val());
+      var high = Number($("#high"+rowid,tr).val());
       lowTotal+=low;
       highTotal+=high;
-      $$(uid('ave')).innerHTML = ave_no_zero(low, high);
-   }
-   var adjust = function(num){
+      $("#ave"+rowid,tr).html( ave_no_zero(low, high));
+    });
+    var adjust = function(num){
       return Math.round(num*1000)/1000;
-   };
-   lowTotal = adjust(lowTotal);
-   highTotal = adjust(highTotal);
-   lowAdjusted = adjust(variability() * communication() * lowTotal);
-   highAdjusted = adjust(variability() * communication() * highTotal);
-   lowCost = adjust(rate() * lowAdjusted);
-   highCost = adjust(rate() * highAdjusted);
-   $$('lowTotal').innerHTML = lowTotal;
-   $$('highTotal').innerHTML = highTotal;
-   $$('aveTotal').innerHTML = ave_no_zero(lowTotal, highTotal);
-   $$('lowAdjusted').innerHTML = lowAdjusted;
-   $$('highAdjusted').innerHTML = highAdjusted;
-   $$('aveAdjusted').innerHTML = ave_no_zero(lowAdjusted, highAdjusted);
-   $$('lowCost').innerHTML = lowCost;
-   $$('highCost').innerHTML = highCost;
-   $$('aveCost').innerHTML = ave_no_zero(lowCost, highCost);
-   preparePreview();
+    };
+    lowTotal = adjust(lowTotal);
+    highTotal = adjust(highTotal);
+    lowAdjusted = adjust(variability() * communication() * lowTotal);
+    highAdjusted = adjust(variability() * communication() * highTotal);
+    lowCost = adjust(rate() * lowAdjusted);
+    highCost = adjust(rate() * highAdjusted);
+    $('#lowTotal').html( lowTotal );
+    $('#highTotal').html( highTotal );
+    $('#aveTotal').html( ave_no_zero(lowTotal, highTotal) );
+    $('#lowAdjusted').html( lowAdjusted );
+    $('#highAdjusted').html( highAdjusted );
+    $('#aveAdjusted').html( ave_no_zero(lowAdjusted, highAdjusted) );
+    $('#lowCost').html( lowCost );
+    $('#highCost').html( highCost );
+    $('#aveCost').html( ave_no_zero(lowCost, highCost) );
+    preparePreview();
+    persistPage();
+  }
+  // this just prevents us from spinning on this constantly
+  if( _runCalcWait ) window.clearTimeout(_runCalcWait);
+  if( immediate ) calc();
+  else _runCalcWait = window.setTimeout( calc, 750 );
 };
 
 function removeLineItem( btn ){
    var row = btn.parentNode.parentNode;
-   lineItems.removeItem(row.item);
    row.parentNode.removeChild(row);
    runCalculation();
 }
@@ -208,25 +331,23 @@ function prepareComment( preview ){
    }
    walker(preview);
    return s;
-}
+};
 
 function preparePreview(){
-   var preview = $$('estimateoutput');
-   while(preview.childNodes.length > 0) preview.removeChild(preview.firstChild);
-   preview.appendChild(removeFirstRow(removeInputsAndIds(evenDeeperClone($$('estimateParams')))));
-   preview.appendChild(removeInputsAndIds(evenDeeperClone($$('estimateBody'))));
-   //alert(prepareComment( preview ));
-   $$('diffcomment').value = prepareComment( preview );
-   $$('comment').value = preview.innerHTML;
-}
+  var preview = $('#estimateoutput');
+  preview.empty().
+    append(removeFirstRow(removeInputsAndIds(evenDeeperClone($$('estimateParams'))))).
+    append(removeInputsAndIds(evenDeeperClone($$('estimateBody'))));
+  $('#diffcomment').val( prepareComment(preview[0]));
+  $('#comment').val( preview.html() );
+};
 
 function loadLineItems() {
-   var item;
-   for(var i=0; item = lineItems[i] ; i++){
-      var tr = lineItemRow(item);
-      $('#estimateBody tbody').append(tr);
-   }
-   runCalculation();
-}
-
-
+  loadPersistedPage();
+  var item;
+  for(var i=0; item = lineItems[i] ; i++){
+    var tr = lineItemRow(item);
+    $('#estimateBody tbody').append(tr);
+  }
+  runCalculation();
+};

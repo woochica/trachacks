@@ -21,7 +21,6 @@
 		if(!origHeight) origHeight = textarea.height();
 		testarea.height(origHeight).val(ta.val()).scrollTop(10000);
 		var newheight = testarea.height()+testarea.scrollTop();
-		console.log(origHeight, newheight);
 		ta.height(newheight);
               };
             // Bind namespaced handlers to appropriate events:
@@ -30,5 +29,7 @@
                 .bind('keyup.dynSiz', updateSize)
                 .bind('keydown.dynSiz', updateSize)
                 .bind('change.dynSiz', updateSize);
+	    // Resize as soon as feasible incase we have hidden content already
+	    $(window).load(function(){updateSize.call(textarea);});
         });
         return this;};})(jQuery);

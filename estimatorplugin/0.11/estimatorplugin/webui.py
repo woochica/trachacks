@@ -9,7 +9,7 @@ from trac.web.chrome import add_stylesheet, add_script, \
 from trac.web.href import Href
 from estimator import *
 from trac.ticket import Ticket
-import datetime
+import datetime, time
 from trac.web.chrome import Chrome
 from trac.util.datefmt import utc, to_timestamp
 from trac.versioncontrol.diff import get_diff_options, diff_blocks
@@ -111,6 +111,7 @@ class EstimationsPage(Component):
                 data["estimate"]["tickets"] = estimate_rs.value("tickets", 0)
                 data["estimate"]["variability"] = estimate_rs.value("variability", 0)
                 data["estimate"]["communication"] = estimate_rs.value("communication", 0)
+                data["estimate"]["saveepoch"] = (estimate_rs.value("saveepoch", 0) or 0);
                 rs = getEstimateLineItemsResultSet(self.env, id)
                 if rs:
                     data["estimate"]["lineItems"] = rs.json_out()
@@ -195,9 +196,11 @@ class EstimationsPage(Component):
                 old_tickets = self.notify_old_tickets(req, id, addMessage, req.authname, args['diffcomment'])
                 sql = estimateUpdate
             self.log.debug('Old Tickets to Update: %r' % old_tickets)
+            save_epoch = int(time.mktime(datetime.datetime.now().timetuple()))
             estimate_args = [args['rate'], args['variability'],
                              args['communication'], tickets,
-                             args['comment'], args['diffcomment'], id]
+                             args['comment'], args['diffcomment'], save_epoch, id]
+            self.log.debug("Sql:%s\n\nArgs:%s\n\n" % (sql, estimate_args));
             saveEstimate = (sql, estimate_args)
             saveLineItems = []
             newLineItemId = nextEstimateLineItemId (self.env)
@@ -284,6 +287,7 @@ class EstimationsPage(Component):
             "id": None,
             "lineItems": '[]',
             "tickets": '',
+            "saveepoch":0,
             "rate": self.config.get( 'estimator','default_rate') or 200,
             "variability": self.config.get( 'estimator','default_variability') or 1,
             "communication": self.config.get( 'estimator','default_communication') or 1,
@@ -301,6 +305,7 @@ class EstimationsPage(Component):
         add_script(req, "Estimate/JSHelper.js")
         add_script(req, "Estimate/Controls.js")
         add_script(req, "Estimate/estimate.js")
+        add_script(req, "Estimate/json2.min.js")
         add_stylesheet(req, "Estimate/estimate.css")
         #return 'estimate.cs', 'text/html'
         return 'estimate.html', data, None

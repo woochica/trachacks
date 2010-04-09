@@ -1,12 +1,13 @@
 import dbhelper
 
 estimateUpdate = """
-UPDATE estimate SET rate=%s, variability=%s, communication=%s, tickets=%s, comment=%s, diffcomment=%s
+UPDATE estimate SET rate=%s, variability=%s, communication=%s, tickets=%s, comment=%s,
+   diffcomment=%s, saveepoch=%s
 WHERE id=%s
 """
 estimateInsert = """
-INSERT INTO estimate (rate, variability, communication, tickets, comment, diffcomment, id)
-VALUES(%s,%s,%s,%s,%s,%s, %s)
+INSERT INTO estimate (rate, variability, communication, tickets, comment, diffcomment, saveepoch,  id)
+VALUES(%s,%s,%s,%s,%s,%s,%s,%s)
 """
 lineItemInsert = """
 INSERT INTO estimate_line_item (estimate_id, description, low, high, id)
