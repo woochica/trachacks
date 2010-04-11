@@ -18,6 +18,7 @@ Attribute VB_Name = "MultiPrjTicketEdit"
 'OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 'STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 'THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 Sub import()
     Dim user As String, pw As String, URL As String, projectNames As String, projectName As String, query As String
     
@@ -25,8 +26,17 @@ Sub import()
     Set settingSheet = Sheet1
     
     URL = settingSheet.Cells(2, 3).value
-    user = settingSheet.Cells(6, 3).value
-    pw = settingSheet.Cells(7, 3).value
+    If settingSheet.Cells(5, 3).value = True Then
+        Dim frm As PwDlg
+        Set frm = New PwDlg
+        frm.Show
+        user = frm.TextBox1.value
+        pw = frm.TextBox2.value
+        Unload frm
+    Else
+        user = settingSheet.Cells(6, 3).value
+        pw = settingSheet.Cells(7, 3).value
+    End If
     projectNames = settingSheet.Cells(3, 3).value
     query = settingSheet.Cells(4, 3).value
 
@@ -59,8 +69,17 @@ Sub check()
     Set settingSheet = Sheet1
     
     URL = settingSheet.Cells(2, 3).value
-    user = settingSheet.Cells(6, 3).value
-    pw = settingSheet.Cells(7, 3).value
+    If settingSheet.Cells(5, 3).value = True Then
+        Dim frm As PwDlg
+        Set frm = New PwDlg
+        frm.Show
+        user = frm.TextBox1.value
+        pw = frm.TextBox2.value
+        Unload frm
+    Else
+        user = settingSheet.Cells(6, 3).value
+        pw = settingSheet.Cells(7, 3).value
+    End If
     projectNames = settingSheet.Cells(3, 3).value
 
     Dim te As TicketEdit
@@ -88,8 +107,17 @@ Sub update()
     Set settingSheet = Sheet1
     
     URL = settingSheet.Cells(2, 3).value
-    user = settingSheet.Cells(6, 3).value
-    pw = settingSheet.Cells(7, 3).value
+    If settingSheet.Cells(5, 3).value = True Then
+        Dim frm As PasswordDlg
+        Set frm = New PasswordDlg
+        frm.Show
+        user = frm.TextBox1.value
+        pw = frm.TextBox2.value
+        Unload frm
+    Else
+        user = settingSheet.Cells(6, 3).value
+        pw = settingSheet.Cells(7, 3).value
+    End If
     projectNames = settingSheet.Cells(3, 3).value
 
     Dim te As TicketEdit
