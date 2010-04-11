@@ -19,49 +19,31 @@ Attribute VB_Name = "MiscModule"
 'STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 'THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Sub setValidationMilestone(r As Range, milestone As Collection)
-    Dim msStr As String
-    For Each ms In milestone
-        If msStr = "" Then
-            msStr = ms.Item("name")
-        Else
-            msStr = msStr + "," & ms.Item("name")
-        End If
-    Next
-    With r.Validation
-        .Delete
-        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
-        xlBetween, Formula1:=msStr
-        .IgnoreBlank = True
-        .InCellDropdown = True
-        .InputTitle = ""
-        .ErrorTitle = ""
-        .InputMessage = ""
-        .errorMessage = ""
-        .IMEMode = xlIMEModeNoControl
-        .ShowInput = True
-        .ShowError = True
-    End With
-End Sub
-
 Sub setValidationString(r As Range, v As String)
     Dim work As String
     work = v
     work = Replace(work, ",", "C")
     work = Replace(work, " ", ",")
+    If Len(work) > 255 Then
+        Debug.Print "Too many options in the project"
+        Debug.Print work
+        work = ""
+    End If
     With r.Validation
         .Delete
-        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
-        xlBetween, Formula1:=work
-        .IgnoreBlank = True
-        .InCellDropdown = True
-        .InputTitle = ""
-        .ErrorTitle = ""
-        .InputMessage = ""
-        .errorMessage = ""
-        .IMEMode = xlIMEModeNoControl
-        .ShowInput = True
-        .ShowError = True
+        If Len(work) > 0 Then
+            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Operator:= _
+                xlBetween, Formula1:=work
+            .IgnoreBlank = True
+            .InCellDropdown = True
+            .InputTitle = ""
+            .ErrorTitle = ""
+            .InputMessage = ""
+            .errorMessage = ""
+            .IMEMode = xlIMEModeNoControl
+            .ShowInput = True
+            .ShowError = True
+        End If
     End With
 End Sub
 
