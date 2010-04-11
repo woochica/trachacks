@@ -1,4 +1,5 @@
 # Copyright (c) 2008, Stephen Hansen
+# Copyright (c) 2009, Rowan Wookey www.obsidianproject.co.uk
 # 
 # All rights reserved.
 # 
@@ -33,10 +34,12 @@ setup(
     name = 'BlackMagicTicketTweaks', 
     version = '0.1',
     author = 'Stephen Hansen',
+    maintainer = 'Rowan Wookey',
+    maintainer_email = 'support@obsidianproject.co.uk',
     author_email = 'shansen@advpubtech.com',
     description = "Various simple hacks to alter the behavior of the Ticket forms..",
     license = \
-    """Copyright (c) 2008, Stephen Hansen. All rights reserved. Released under the 3-clause BSD license. """,
+    """Copyright (c) 2008, Stephen Hansen. Copyright (c) 2009 Rowan Wookey. All rights reserved. Released under the 3-clause BSD license. """,
     url = "http://trac-hacks.org/wiki/BlackMagicTicketTweaks",
     packages = find_packages(exclude=['*.tests*']),
     package_data = {'blackmagic' : ['templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css']}, 

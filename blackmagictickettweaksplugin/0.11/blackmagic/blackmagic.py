@@ -118,6 +118,35 @@ class BlackMagicTicketTweaks(Component):
                     newTypes.append(option)
                     self.env.log.debug("User %s has permission %s" % (req.authname, ticketperm) );
             data["fields"]["type"]["options"]=newTypes
+            #hide ticket fields user doesn't have access to
+            removeFields = []
+            for i in range(len(data["tickets"])):
+                ticket = data["tickets"][i]
+                for field in ticket:
+                    hidden = False
+                    permissions = self.config.get('blackmagic', '%s.permission' % field, '').upper()
+                    #permissions are set for field
+                    if permissions != "":
+                        self.env.log.debug("Permissions %s" % permissions)
+                        #default set to denied
+                        denied = True
+                        #iterate through permissions
+                        for perm in (x.strip() for x in permissions.split(',')):
+                            self.env.log.debug("Checking permission %s" % perm)
+                            #user has permission no denied
+                            ticket = model.Ticket(self.env,ticket.get("id",None));
+                            if perm and perm in req.perm(ticket.resource):
+                                self.env.log.debug("Has %s permission" % perm)
+                                denied = False
+                        #if denied is true hide/disable dpending on denial setting
+                        if denied:
+                            denial = self.config.get('blackmagic', '%s.ondenial' % field, None)
+                            self.env.log.debug("%s Denial %s" % (field,denial))
+                            if denial:
+                                if denial != "hide":
+                                    denied = False
+                        if denied:
+                            data["tickets"][i].update({ field : '-' })
         return template, data, content_type
     
 
