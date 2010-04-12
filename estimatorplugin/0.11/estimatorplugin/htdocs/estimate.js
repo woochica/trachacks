@@ -77,6 +77,7 @@ var persistPage = function(){
   browserPersist('variability', $('#variability').val());
   browserPersist('communication', $('#communication').val());
 };
+$(window).unload(persistPage);// persist before we leave
 
 var loadPersistedPage = function(){
   // our persisted data is older than the saved data
