@@ -63,6 +63,7 @@ class TimingEstimationAndBillingPage(Component):
         billing_time_sql = """
         SELECT DISTINCT time as value, str_value as text
         FROM bill_date
+        ORDER BY time DESC
         """
         rs = dbhelper.get_result_set(self, billing_time_sql)
         if rs:

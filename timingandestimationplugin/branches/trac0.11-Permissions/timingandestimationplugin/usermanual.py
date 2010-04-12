@@ -1,5 +1,5 @@
 user_manual_title = "Timing and Estimation Plugin User Manual"
-user_manual_version = 13
+user_manual_version = 14
 user_manual_wiki_title = "TimingAndEstimationPluginUserManual"
 user_manual_content = """
 
@@ -85,6 +85,13 @@ Remember to fill in the @reportID of the report you want to modify.
 Recently a branch of this plugin was sponsored by [http://www.obsidiansoft.com/ Obsidian Software] so that it would support per field permissions.  
 
 This is accomplished with Genshi 5 stream filters in trac 11.  This code draws from the [http://trac-hacks.org/wiki/BlackMagicTicketTweaksPlugin BlackMagicTicketTweaksPlugin]
+{{{
+#!html
+<br />
+<a href="http://www.obsidiansoft.com/" >
+<img src="http://trac-hacks.org/attachment/wiki/TimeEstimationUserManual/obsidian-logo.gif?format=raw" />
+</a>
+}}}
 
 === Configuration ===
 There is a new trac.ini configuration section which is filled in by default as follows.
@@ -93,10 +100,15 @@ There is a new trac.ini configuration section which is filled in by default as f
 [field settings] # per field permissions
 
 # a list of all the fields to apply permissions to
-fields = billable, totalhours, hours, estimatedhours
+fields = billable, totalhours, hours, estimatedhours, internal
 
 # a bunch of:
 # field.permission = PERMISSION:consequence
+#
+#  If PERMISSION=ALWAYS, then the consequence always occurs
+#    eg: billable.permission = ALWAYS:hide 
+#        will always result in billable being hidden, irrespective of user permissions    
+#
 # where consequence is one of: hide, remove, disable
 #    hide - replaces with hidden input
 #    remove - removes element
@@ -105,23 +117,21 @@ billable.permission = TIME_VIEW:hide, TIME_RECORD:disable
 totalhours.permission = TIME_VIEW:remove, TIME_RECORD:disable
 hours.permission = TIME_RECORD:remove
 estimatedhours.permission = TIME_RECORD:disable
+internal.permission = TIME_RECORD:hide
 }}}
-
 
 It also adds an "Internal" checkbox which allows you to set a ticket as internal.  For this policy to work correctly you need to add a line to the trac section of the config telling it which permission policies to use.  (The setup will attempt to put this line of configuration in place. )  The permission that looks at currently is 'TIME_ADMIN'.  To change that group set the internalgroup of the ticket section in the trac.ini as follows:
 
 {{{
 #!ini
 [ticket]
-internalgroup = TRAC_ADMIN
+internalgroup = TRAC_ADMIN #or whatever group / permission you want
 
 [trac]
 permission_policies = InternalTicketsPolicy, DefaultPermissionPolicy, LegacyAttachmentPolicy
 }}}
 
-
 == Future Improvements ==
- * [http://trac-hacks.org/wiki/TimingAndEstimationPlugin See tickets] at the [http://trac-hacks.org/wiki/TimingAndEstimationPlugin project trac]
-
+ * [http://trac-hacks.org/report/9?COMPONENT=TimingAndEstimationPlugin See tickets] at the [http://trac-hacks.org/wiki/TimingAndEstimationPlugin project trac]
 
 """
