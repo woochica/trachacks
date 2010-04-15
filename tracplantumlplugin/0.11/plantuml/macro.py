@@ -1,5 +1,6 @@
 import inspect
 import urllib
+import hashlib
 from StringIO import StringIO
 
 from trac.core import *
@@ -34,28 +35,31 @@ class PlantUMLMacro(WikiMacroBase):
             return system_message("plantuml.jar not found: %s" % self.plantuml_jar)
 
         source = str(args).strip()
-        
-        cmd = "java -jar \"%s\" -pipe" % (self.plantuml_jar)
-        p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        (stdout, stderr) = p.communicate(input=source)
-        if p.returncode != 0:
-            return system_message("Error running plantuml: %s" % stderr)
-        
-        img_id = int(formatter.req.session.get('plantuml_id', 0))
+
         try:
             graphs = pickle.loads(base64.b64decode(formatter.req.session.get('plantuml',"")))
         except:
             graphs = {}
-        
-        graphs[str(img_id)] = (stdout, datetime.now())        
-        
+            
+        img_id = hashlib.sha1(source).hexdigest()            
+            
         #Clean old images
         for key, graph in graphs.items():
-            if (datetime.now() - graph[1]).seconds > 60:
-                del graphs[key]
+            if (datetime.now() - graph[1]).seconds > 3600:
+                del graphs[key]              
+
+        if not graphs.has_key(img_id):
+        
+            cmd = "java -jar \"%s\" -pipe" % (self.plantuml_jar)
+            p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            (stdout, stderr) = p.communicate(input=source)
+            if p.returncode != 0:
+                return system_message("Error running plantuml: %s" % stderr)
+
+            graphs[img_id] = (stdout, datetime.now())        
+        
         
         formatter.req.session['plantuml'] = base64.b64encode(pickle.dumps(graphs))
-        formatter.req.session['plantuml_id'] = str(img_id + 1)        
 
         out = "{{{\n#!html\n<img src='%s' alt='PlantUML Diagram' />\n}}}\n" % formatter.href("plantuml", id=img_id)
         return wiki_to_html(out, self.env, formatter.req)

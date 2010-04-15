@@ -5,7 +5,7 @@ Author: Alvaro Iradier <alvaro.iradier@polartech.es>
 from setuptools import setup
 
 NAME = "PlantUML"
-VERSION = 1.0
+VERSION = 1.1
 
 setup(
     name = NAME,
