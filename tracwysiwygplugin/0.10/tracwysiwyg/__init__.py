@@ -5,7 +5,7 @@ import re
 from trac.core import Component, implements
 from trac.config import ListOption
 from trac.web.api import IRequestFilter
-from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
+from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script
 from trac.web.href import Href
 from trac.util.html import Markup
 
