@@ -34,11 +34,11 @@ class WysiwygModule(Component):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, content_type):
-        add_link(req, 'tracwysiwyg.base', req.href() or '/')
+        add_link(req, 'tracwysiwyg-base', req.href() or '/')
         stylesheets = ['chrome/common/css/trac.css', 'chrome/tracwysiwyg/editor.css']
         stylesheets += self.wysiwyg_stylesheets
         for stylesheet in stylesheets:
-            add_link(req, 'tracwysiwyg.stylesheet', _expand_filename(req, stylesheet))
+            add_link(req, 'tracwysiwyg-stylesheet', _expand_filename(req, stylesheet))
         add_stylesheet(req, 'tracwysiwyg/wysiwyg.css')
         add_script(req, 'tracwysiwyg/wysiwyg.js')
         footer = req.hdf['project.footer'] + '<script type="text/javascript">TracWysiwyg.initialize();</script>'
@@ -47,8 +47,8 @@ class WysiwygModule(Component):
 
 
 def _expand_filename(req, filename):
-    if filename.startswith('chrome/common/') and 'htdocs_location' in req.chrome:
-        href = Href(req.chrome['htdocs_location'])
+    if filename.startswith('chrome/common/') and 'htdocs_location' in req.hdf:
+        href = Href(req.hdf['htdocs_location'])
         return href(filename[14:])
     if filename.startswith('/') or re.match(r'https?://', filename):
         href = Href(filename)

@@ -3451,10 +3451,10 @@ TracWysiwyg.getTracPaths = function() {
         var href = link.getAttribute("href") || "";
         var type = link.getAttribute("type") || "";
         switch ((link.getAttribute("rel") || "").toLowerCase()) {
-        case "tracwysiwyg.base":
+        case "tracwysiwyg-base":
             paths.base = href;
             break;
-        case "tracwysiwyg.stylesheet":
+        case "tracwysiwyg-stylesheet":
             stylesheets.push(href);
             break;
         case "search":
