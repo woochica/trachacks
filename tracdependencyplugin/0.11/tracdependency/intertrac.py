@@ -122,54 +122,57 @@ class InterTrac:
         # 指定されたInterTrac形式のチケット名から情報を取得する
         # 問題があった場合はエラーを返す．
         intertracs0 = self.intertracs0
-        ticket = ticket.strip() # 前後の空白を削除します
-        idx = ticket.rfind(':#') # プロジェクト名とチケット番号に分割します
-        # log.debug("get_ticket : ticket=%s current_project_name=%s", ticket, current_project_name)
-        if idx > 0: # InterTrac ticket
-            current_project = False
-            project_name, id = ticket[:idx], ticket[idx+2:]
-            # プロジェクト名が存在するか確認する
-            try:
-                intertrac = intertracs0[project_name.lower()]
-            except Exception, e: # 存在していない場合は例外が発生する
-                return {'error':' project %s does not exist.'% project_name}
-        else: # This ticket is in same project.
-            current_project = True
-            #project_name = self.env.project_name
-            project_name = current_project_name
-            # log.debug("get_ticket project_name : %s / %s", project_name, ticket)
-            if ticket.rfind('#') == 0:
-                id = ticket[1:]
-            else:
-                id = ticket
-        # log.debug("get_ticket : id=%s current_project_name=%s", id, current_project_name)
-        if id != "":
-            # 依存関係を指定しているか確認する 例:(FF)
-            idx = id.rfind('(')
-            if idx > 0:
-                # 指定されていたならそれはidに含まない
-                if dep_en == False:
-                    #依存関係を使用しない場合でカッコがあった場合は
-                    return {'error':'This field can not have dependency.'}
-                id, dep = id[:idx], id[idx+1:]
-                #依存関係に問題がないかの確認が必要
-                if dep.startswith('FF')==False and dep.startswith('FS')==False and dep.startswith('SF')==False and dep.startswith('SS')==False:
-                    return {'error':'Unknown type of dependency.'}
-            else:
-                dep = ''
-            try:
-                # InterTracの設定のキーは小文字
-                intertrac = intertracs0[project_name.lower()]
-                path = intertrac.get('path', '')
-                project = open_environment(path, use_cache=True)
-                tkt = Ticket(project, id)
-                status = tkt['status']
-                title = tkt['summary']
-            except Exception, e:
-                return {'error':'There is no ticket %s(%s,%s).'%(ticket, project_name, id)}
-        else: #チケットに何も入っていない
-            return {'error':'Many comma are in this field.'}
-        return {'name':project_name+':#'+id, 'id':id, 'project':project, 'url':intertrac.get('url', ''), 'project_name':project_name, 'dependency':dep, 'error':None, 'ticket':tkt}
+        if ticket:
+            ticket = ticket.strip() # 前後の空白を削除します
+            idx = ticket.rfind(':#') # プロジェクト名とチケット番号に分割します
+            # log.debug("get_ticket : ticket=%s current_project_name=%s", ticket, current_project_name)
+            if idx > 0: # InterTrac ticket
+                current_project = False
+                project_name, id = ticket[:idx], ticket[idx+2:]
+                # プロジェクト名が存在するか確認する
+                try:
+                    intertrac = intertracs0[project_name.lower()]
+                except Exception, e: # 存在していない場合は例外が発生する
+                    return {'error':' project %s does not exist.'% project_name}
+            else: # This ticket is in same project.
+                current_project = True
+                #project_name = self.env.project_name
+                project_name = current_project_name
+                # log.debug("get_ticket project_name : %s / %s", project_name, ticket)
+                if ticket.rfind('#') == 0:
+                    id = ticket[1:]
+                else:
+                    id = ticket
+            # log.debug("get_ticket : id=%s current_project_name=%s", id, current_project_name)
+            if id != "":
+                # 依存関係を指定しているか確認する 例:(FF)
+                idx = id.rfind('(')
+                if idx > 0:
+                    # 指定されていたならそれはidに含まない
+                    if dep_en == False:
+                        #依存関係を使用しない場合でカッコがあった場合は
+                        return {'error':'This field can not have dependency.'}
+                    id, dep = id[:idx], id[idx+1:]
+                    #依存関係に問題がないかの確認が必要
+                    if dep.startswith('FF')==False and dep.startswith('FS')==False and dep.startswith('SF')==False and dep.startswith('SS')==False:
+                        return {'error':'Unknown type of dependency.'}
+                else:
+                    dep = ''
+                try:
+                    # InterTracの設定のキーは小文字
+                    intertrac = intertracs0[project_name.lower()]
+                    path = intertrac.get('path', '')
+                    project = open_environment(path, use_cache=True)
+                    tkt = Ticket(project, id)
+                    status = tkt['status']
+                    title = tkt['summary']
+                except Exception, e:
+                    return {'error':'There is no ticket %s(%s,%s).'%(ticket, project_name, id)}
+            else: #チケットに何も入っていない
+                return {'error':'Many comma are in this field.'}
+            return {'name':project_name+':#'+id, 'id':id, 'project':project, 'url':intertrac.get('url', ''), 'project_name':project_name, 'dependency':dep, 'error':None, 'ticket':tkt}
+        else:
+            return {'error': 'Ticekt 	not exists'}
 
     def validate_outline_b(self, ticket, sub_ticket, leaf_id, log):
         # tkt:InterTrac形式のチケット名
@@ -178,7 +181,8 @@ class InterTrac:
         # 戻り値:エラー文字列
         error = []
         # log.debug("validate_outline_b : %s", ticket)
-        ticket = ticket.strip() # 前後の空白を削除します
+        if ticket:
+            ticket = ticket.strip() # 前後の空白を削除します
         if ticket == leaf_id:
             # log.debug("validate_outline_b : ticket=%s sub_ticket=%s", ticket, sub_ticket)
             return 'Ticket(%s)\'s summary ticket is this ticket'%sub_ticket
