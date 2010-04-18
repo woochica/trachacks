@@ -1,11 +1,11 @@
 from setuptools import setup
 
 setup(
-    name='awesomeAttachmentsPlugin', version='0.1',
-    packages=['ticket'],
-    package_data={ 'ticket': [ 'htdocs/images/*', 'templates/*' ]},
+    name='AwesomeAttachmentsPlugin', version='0.2',
+    packages=['awesome'],
+    package_data={ 'awesome': [ 'htdocs/images/*', 'htdocs/js/*', 'htdocs/css/*' ]},
     entry_points = """
         [trac.plugins]
-        ticketupload = ticket.ticketupload
+        awesome = awesome.ticketuploadmodule
     """,
 )
