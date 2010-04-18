@@ -21,7 +21,6 @@ class WorkHoursRPC(Component):
     def xmlrpc_methods(self):
         yield ('TICKET_VIEW', ((int),), self.getMaxTicketId)
         yield ('TICKET_VIEW', ((list, str, str),), self.executeQuery)
-        yield ('TICKET_VIEW', ((list),), self.getIntertracProject)
         #yield ('TICKET_VIEW', ((list, str),), self.getWorkHourChangeTimes)
         #yield ('TICKET_VIEW', ((list, str),), self.getWorkHourChanges)
         yield ('TICKET_VIEW', ((list, int),), self.getWorkHours)
@@ -36,44 +35,6 @@ class WorkHoursRPC(Component):
         for row in cursor:
             res=row[0]
         return res
-
-    def getIntertracProject(self, req):
-        result = []
-        self.intertracs0 = {}
-        self.env = env
-        for key, value in config.options('intertrac'):
-            # オプションの数のループを回り，左辺値の.を探します．
-            idx = key.rfind('.')  
-            if idx > 0: # .が無い場合はショートカットですが無視します
-                # .があった場合の処理
-                # 左辺値を分割します
-                prefix, attribute = key[:idx], key[idx+1:]
-                # すでにあるものをとってきます無ければ新規で作成
-                intertrac = self.intertracs0.setdefault(prefix, {})
-                # 左辺値のピリオド以降をキーで右辺値を登録
-                intertrac[attribute] = value
-                # プロジェクト名を設定します．(注：すべて小文字になっている) 
-                intertrac['name'] = prefix
-
-        self.intertracs = []
-        # 取得したinterTrac設定の名前が小文字になっているので元に戻します．
-        # ついでに，プロジェクトの一覧表示用のデータを作成しておきます．
-        # 結局はintertrac['label'] 設定することにしたので意味はないのですが，つくっちゃったのでこのままにします．
-        for prefix in self.intertracs0:
-            intertrac = self.intertracs0[prefix]
-            # Trac.iniのパスを取得します
-            path = intertrac.get('path', '')
-            # trac.iniをオープンする
-            project = open_environment(path, use_cache=True)
-            # 名前をtrac.iniのプロジェクト名で置き換えます．
-            #intertrac['name'] = project.project_name 
-            intertrac['name'] = intertrac['label'] 
-            # プロジェクトの一覧表示用のデータを作成します．
-            url = intertrac.get('url', '')
-            title = intertrac.get('title', url)
-            name = project.project_name
-            self.intertracs.append({'name': name, 'title': title, 'url': url, 'path': path})
-        return result
 
     def executeQuery(self, req, query, sort):
         """Returns results of query"""
