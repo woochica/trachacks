@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'TracDragDrop',
-    version = '0.1',
+    version = '0.2',
     description = 'Add drag-and-drop attachments feature to Trac',
     license = 'BSD',
     url = 'http://trac-hacks.org/wiki/TracDragDropPlugin',
