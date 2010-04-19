@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 
 setup(
   name='TracDupPlugin',
-  version=0.1.1,
+  version="0.1.1",
   description='duplication of tickets to other tickets',
   long_description=""" """,
   classifiers=[
