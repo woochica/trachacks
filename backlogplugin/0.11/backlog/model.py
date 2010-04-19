@@ -134,7 +134,7 @@ class Backlog(object):
                      WHERE t.id = b.tkt_id 
                      AND b.bklg_id = %%s 
                      AND (b.tkt_order IS NULL OR b.tkt_order > -1)
-                     ORDER BY b.tkt_order, t.time"""%(','.join(columns), HARD_DEADLINE_FIELD)
+                     ORDER BY b.tkt_order, t.time DESC"""%(','.join(columns), HARD_DEADLINE_FIELD)
             columns.append('hard_deadline')    
             self.env.log.info('GET_TICKETS sql = """%s"""'%sql)      
             cursor.execute(sql, (self.id,))            
