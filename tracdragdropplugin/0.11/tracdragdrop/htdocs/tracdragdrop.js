@@ -1,24 +1,84 @@
 jQuery(document).ready(function($) {
-    try {
-        new FileReader();
-        var xhr = new XMLHttpRequest();
-        if (!xhr.upload) {
-            return;
+    var methodsHTML5 = {
+        createXMLHttpRequest: function(options) {
+            var uploadProgress = options.uploadProgress || emptyFunction;
+            var success = options.success || emptyFunction;
+            var error = options.error || emptyFunction;
+
+            var xhr = new XMLHttpRequest();
+            xhr.upload.addEventListener("progress", uploadProgress, false);
+            xhr.onreadystatechange = function() {
+                switch (xhr.readyState) {
+                case 4:
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        success(xhr);
+                    }
+                    else if (xhr.status >= 400 && xhr.status < 600) {
+                        error(xhr);
+                    }
+                    xhr.upload.removeEventListener("progress", uploadProgress, false);
+                    xhr.onreadystatechange = null;
+                    break;
+                }
+            };
+            xhr.open(options.method || 'POST', options.url, options.async || true);
+            for (var name in options.headers) {
+                xhr.setRequestHeader(name, options.headers[name]);
+            }
+            xhr.sendAsBinary(options.data);
+            return xhr;
+        },
+        getDataTransfer: function(event) {
+            return event.originalEvent.dataTransfer;
         }
-    }
-    catch (e) {
+    };
+    var methodsGears = {
+        createXMLHttpRequest: function(options) {
+            var uploadProgress = options.uploadProgress || emptyFunction;
+            var success = options.success || emptyFunction;
+            var error = options.error || emptyFunction;
+
+            var xhr = google.gears.factory.create('beta.httprequest');
+            xhr.upload.onprogress = uploadProgress;
+            xhr.onreadystatechange = function() {
+                switch (xhr.readyState) {
+                case 4:
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        success(xhr);
+                    }
+                    else if (xhr.status >= 400 && xhr.status < 600) {
+                        error(xhr);
+                    }
+                    xhr.upload.onprogress = null;
+                    xhr.onreadystatechange = null;
+                    break;
+                }
+            };
+            xhr.open(options.method || 'POST', options.url, options.async || true);
+            for (var name in options.headers) {
+                xhr.setRequestHeader(name, options.headers[name]);
+            }
+            xhr.send(options.data);
+            return xhr;
+        },
+        getDataTransfer: function(event) {
+            return gearsDesktop.getDragData(event.originalEvent, 'application/x-gears-files');
+        }
+    };
+
+    var uploadUrl = null;
+    var gearsDesktop = null;
+    var methods = null;
+    if (!initialize()) {
         return;
     }
-    var url = getUploadUrl();
-    if (!url) {
-        return;
-    }
+
     var indicator =
         $('<div id="tracdragdrop_indicator">Enabled drag-and-drop attachments</div>')
         .appendTo(document.body);
     var queueFiles = [];
     var countFiles = 0;
-    var target = $(document.body);
+    var target = $('body');
     target
         .bind('dragenter', dragenter)
         .bind('dragleave', dragleave)
@@ -29,27 +89,43 @@ jQuery(document).ready(function($) {
     var notice_entire_progress = null;
     var notice_curr_text = null;
     var notice_curr_progress = null;
+    var dragging = [];
 
     function dragenter(event) {
         var transfer = event.originalEvent.dataTransfer;
         var types = transfer.types;
         var length = types.length;
-        for (var i = 0; i < length; i++) {
+        var dragFiles = false;
+        var i;
+        for (i = 0; i < length; i++) {
             if (types[i] == 'Files') {
-                indicator.addClass('active');
-                return false;
+                dragFiles = true;
+                break;
             }
+        }
+        if (dragFiles === true) {
+            if (dragging.length === 0) {
+                indicator.addClass('active');
+            }
+            dragging.push(event.target);
+            dragging = $.unique(dragging);
+            return false;
         }
     }
     function dragleave(event) {
-        indicator.removeClass('active');
+        dragging = $.grep(dragging, function(value, index) { return value != event.target });
+        if (dragging.length === 0) {
+            indicator.removeClass('active');
+        }
         return false;
     }
     function dragover(event) {
         return false;
     }
     function drop(event) {
-        var transfer = event.originalEvent.dataTransfer;
+        dragging = [];
+        indicator.removeClass('active');
+        var transfer = methods.getDataTransfer(event);
         var files = transfer.files;
         var length = files.length;
         if (length == 0) {
@@ -83,15 +159,16 @@ jQuery(document).ready(function($) {
         function startReader() {
             file = queueFiles.shift();
             filename = (file.name || '').replace(/"/g, '');
+            if (typeof file.blob != 'undefined') {
+                startSendContents(file.blob);
+                return;
+            }
             reader = new FileReader();
             reader.addEventListener('loadend', readerLoadend, false);
+            reader.addEventListener('abort', readerAbort, false);
             reader.readAsBinaryString(file);
         }
         function nextFile() {
-            xhr.upload.removeEventListener('progress', uploadProgress, false);
-            xhr.upload.removeEventListener('load', uploadLoad, false);
-            xhr.upload.removeEventListener('error', uploadError, false);
-            xhr.upload.removeEventListener('abort', uploadAbort, false);
             xhr = null;
             if (queueFiles.length === 0) {
                 endUpload();
@@ -102,18 +179,25 @@ jQuery(document).ready(function($) {
         }
         function readerLoadend(event) {
             if (!reader.error) {
-                xhr = new XMLHttpRequest();
-                xhr.upload.addEventListener('progress', uploadProgress, false);
-                xhr.upload.addEventListener('load', uploadLoad, false);
-                xhr.upload.addEventListener('error', uploadError, false);
-                xhr.upload.addEventListener('abort', uploadAbort, false);
-                xhr.open('POST', url, true);
-                xhr.setRequestHeader('Content-Type', 'application/octet-stream; filename="' + filename + '"');
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                xhr.sendAsBinary(reader.result);
+                startSendContents(reader.result);
             }
             reader.removeEventListener('loadend', readerLoadend, false);
             reader = null;
+            if (reader.error) {
+                nextFile();
+            }
+        }
+        function startSendContents(contents) {
+            xhr = methods.createXMLHttpRequest({
+                url: uploadUrl,
+                data: contents,
+                headers: {
+                    'Content-Type': 'application/octet-stream; filename="' + filename + '"',
+                    'X-Requested-With': 'XMLHttpRequest' },
+                uploadProgress: uploadProgress, success: uploadSuccess, error: uploadError });
+        }
+        function readerAbort(event) {
+            nextFile();
         }
         function showProgress(percentage) {
             var value = percentage + '%';
@@ -129,14 +213,11 @@ jQuery(document).ready(function($) {
                 showProgress(Math.round((event.loaded * 100) / event.total));
             }
         }
-        function uploadLoad(event) {
+        function uploadSuccess() {
             showProgress(100);
             nextFile();
         }
-        function uploadError(event) {
-            nextFile();
-        }
-        function uploadAbort(event) {
+        function uploadError() {
             nextFile();
         }
     }
@@ -171,5 +252,42 @@ jQuery(document).ready(function($) {
             }
         }
         return null;
+    }
+    function initialize() {
+        var url = getUploadUrl();
+        if (!url) {
+            return false;
+        }
+        uploadUrl = url;
+
+        function emptyFunction() { }
+
+        // HTML5
+        try {
+            new FileReader();
+            var xhr = new XMLHttpRequest();
+            if (!xhr.upload || !xhr.sendAsBinary) {
+                return false;
+            }
+            methods = methodsHTML5;
+            return true;
+        }
+        catch (e) {
+        }
+
+        // Google Gears
+        try {
+            var xhr = google.gears.factory.create('beta.httprequest');
+            if (!xhr.upload) {
+                return false;
+            }
+            gearsDesktop = google.gears.factory.create('beta.desktop');
+            methods = methodsGears;
+            return true;
+        }
+        catch (e) {
+        }
+
+        return false;   // not available
     }
 });
