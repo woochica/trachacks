@@ -21,7 +21,7 @@ def disable_field(stream, field):
             yield kind,data,pos
 
     return stream | Transformer(
-        '//input[@id="field-%s"]' % field
+        '//*[@id="field-%s"]' % field
         ).filter(helper)
 
 
@@ -62,14 +62,14 @@ def hide_field(stream , field):
                                         type="hidden", name=name).generate():
             yield kind,data,pos
     stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(" ")
-    stream = stream | Transformer('//input[@id="field-%s"]' % field).filter(helper)
+    stream = stream | Transformer('//*[@id="field-%s"]' % field).filter(helper)
 
     return remove_changelog(remove_header(stream , field), field)
 
 def remove_field(stream , field):
     """ Removes a field from the form area"""
     stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(" ")
-    stream = stream | Transformer('//input[@id="field-%s"]' % field).replace(" ")
+    stream = stream | Transformer('//*[@id="field-%s"]' % field).replace(" ")
     return remove_changelog(remove_header(stream , field), field)
 
 def istrue(v, otherwise=None):
