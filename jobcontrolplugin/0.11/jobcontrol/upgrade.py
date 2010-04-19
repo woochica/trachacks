@@ -13,7 +13,7 @@ class JobControlSetupParticipant(Component):
     
     def __init__(self):
         self.db_version_key = 'jobcontrol_plugin_version'
-        self.db_version = 2
+        self.db_version = 5
         self.db_installed_version = None
 
         # Initialise database schema version tracking.
@@ -66,6 +66,14 @@ class JobControlSetupParticipant(Component):
                                'root      TEXT,'
                                'log       TEXT'
                                ')')
+                               
+            if self.db_installed_version < 4:
+                print 'Updating clients table (v3)'
+                print 'trying to ALTER TABLE job ADD COLUMN command INTEGER'
+                cursor.execute('ALTER TABLE job ADD COLUMN command INTEGER')
+                print 'trying to ALTER TABLE job DROP COLUMN release INTEGER'
+                cursor.execute('ALTER TABLE job DROP COLUMN release INTEGER')
+                
             db.commit()
             db.close()
         except Exception, e:

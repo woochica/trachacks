@@ -27,7 +27,7 @@ Each job run environment and schedule is specified by the version of a single co
         'trac.plugins': [
             'jobcontrol.upgrade = jobcontrol.upgrade',
             'jobcontrol.job = jobcontrol.job',
-            'jobcontrol.model = jobcontrol.model',
+            'jobcontrol.models = jobcontrol.models',
             'jobcontrol.admin = jobcontrol.admin',
         ]
     })
