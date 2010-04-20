@@ -7,12 +7,19 @@ from pkg_resources import resource_filename
 from tempfile import TemporaryFile
 
 from trac.attachment import AttachmentModule
-from trac.core import Component, implements
+from trac.core import Component, implements, TracError
 from trac.mimeview.api import Context
 from trac.perm import PermissionError
 from trac.resource import get_resource_url
 from trac.web.api import IRequestHandler, IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script
+from trac.util.text import unicode_quote
+
+
+__all__ = ['TracDragDropModule']
+
+
+_HEADER = 'X-TracDragDrop'
 
 
 class TracDragDropModule(Component):
@@ -89,7 +96,7 @@ class TracDragDropModule(Component):
     # IRequestHandler#process_request
     def process_request(self, req):
         if req.get_header('X-Requested-With') != 'XMLHttpRequest':
-            raise PermissionError
+            self._send_message_on_except(req, unicode(PermissionError()), 403)
 
         # XXX dirty hack
         req.redirect_listeners.insert(0, self._redirect_listener)
@@ -98,9 +105,17 @@ class TracDragDropModule(Component):
             attachment.process_request(req)
         except RedirectListened:
             req.send('', status=200)
-        except:
-            raise
-        req.send('', status=500)
+        except TracError, e:
+            self._send_message_on_except(req, unicode(e), 500)
+        except PermissionError, e:
+            self._send_message_on_except(req, unicode(e), 403)
+        except Exception, e:
+            self.log.error('AttachmentModule.process_request failed', exc_info=True)
+            self._send_message_on_except(req, unicode(e), 500)
+
+    def _send_message_on_except(self, req, message, status):
+        req.send_header(_HEADER, unicode_quote(message))
+        req.send(message, status=status)
 
     def _redirect_listener(self, req, url, permanent):
         raise RedirectListened

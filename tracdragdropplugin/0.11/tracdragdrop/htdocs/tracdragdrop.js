@@ -11,10 +11,10 @@ jQuery(document).ready(function($) {
                 switch (xhr.readyState) {
                 case 4:
                     if (xhr.status >= 200 && xhr.status < 300) {
-                        success(xhr);
+                        success(xhr.responseText, xhr.statusText, xhr);
                     }
                     else if (xhr.status >= 400 && xhr.status < 600) {
-                        error(xhr);
+                        error(xhr, xhr.statusText);
                     }
                     xhr.upload.removeEventListener("progress", uploadProgress, false);
                     xhr.onreadystatechange = null;
@@ -44,10 +44,10 @@ jQuery(document).ready(function($) {
                 switch (xhr.readyState) {
                 case 4:
                     if (xhr.status >= 200 && xhr.status < 300) {
-                        success(xhr);
+                        success(xhr.responseText, xhr.statusText, xhr);
                     }
                     else if (xhr.status >= 400 && xhr.status < 600) {
-                        error(xhr);
+                        error(xhr, xhr.statusText);
                     }
                     xhr.upload.onprogress = null;
                     xhr.onreadystatechange = null;
@@ -165,8 +165,25 @@ jQuery(document).ready(function($) {
             }
             reader = new FileReader();
             reader.addEventListener('loadend', readerLoadend, false);
+            reader.addEventListener('error', readerError, false);
             reader.addEventListener('abort', readerAbort, false);
-            reader.readAsBinaryString(file);
+            try {
+                reader.readAsBinaryString(file);
+            }
+            catch (e) {
+                var file_ = file;
+                setTimeout(function() { showReaderError(file_, e) }, 10);
+                cleanReader();
+                nextFile();
+            }
+        }
+        function cleanReader() {
+            if (reader !== null) {
+                reader.removeEventListener('loadend', readerLoadend, false);
+                reader.removeEventListener('error', readerError, false);
+                reader.removeEventListener('abort', readerAbort, false);
+                reader = null;
+            }
         }
         function nextFile() {
             xhr = null;
@@ -178,12 +195,12 @@ jQuery(document).ready(function($) {
             }
         }
         function readerLoadend(event) {
-            if (!reader.error) {
+            var error = reader.error;
+            if (!error) {
                 startSendContents(reader.result);
             }
-            reader.removeEventListener('loadend', readerLoadend, false);
-            reader = null;
-            if (reader.error) {
+            cleanReader();
+            if (error) {
                 nextFile();
             }
         }
@@ -196,7 +213,14 @@ jQuery(document).ready(function($) {
                     'X-Requested-With': 'XMLHttpRequest' },
                 uploadProgress: uploadProgress, success: uploadSuccess, error: uploadError });
         }
+        function readerError(event) {
+            setTimeout(function() { showReaderError(file, e) }, 0);
+            cleanReader();
+            nextFile();
+        }
         function readerAbort(event) {
+            setTimeout(function() { showReaderError(file, e) }, 0);
+            cleanReader();
             nextFile();
         }
         function showProgress(percentage) {
@@ -213,11 +237,14 @@ jQuery(document).ready(function($) {
                 showProgress(Math.round((event.loaded * 100) / event.total));
             }
         }
-        function uploadSuccess() {
+        function uploadSuccess(data, textStatus, xhr) {
             showProgress(100);
             nextFile();
         }
-        function uploadError() {
+        function uploadError(xhr, textStatus, errorThrown) {
+            var filename = file.name;
+            var message = xhr.responseText || decodeURIComponent(xhr.getResponseHeader('X-TracDragDrop'));
+            setTimeout(function() { alert(filename + ': ' + message) }, 0);
             nextFile();
         }
     }
@@ -252,6 +279,24 @@ jQuery(document).ready(function($) {
             }
         }
         return null;
+    }
+    function showReaderError(file, e) {
+        var text;
+        switch (e.code) {
+        case e.NOT_FOUND_ERR:
+            text = file.name + ' is not found.';
+            break;
+        case e.SECURITY_ERR:
+            text = file.name + ' could not be accessed for security reasons.';
+            break;
+        case e.NOT_READABLE_ERR:
+            text = file.name + ' could not be read.';
+            break;
+        default:
+            text = e.toString();
+            break;
+        }
+        alert(text);
     }
     function initialize() {
         var url = getUploadUrl();
