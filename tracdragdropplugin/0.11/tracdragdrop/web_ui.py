@@ -11,8 +11,10 @@ from trac.core import Component, implements, TracError
 from trac.mimeview.api import Context
 from trac.perm import PermissionError
 from trac.resource import get_resource_url
+from trac.ticket.model import Ticket, Milestone
 from trac.web.api import IRequestHandler, IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script
+from trac.wiki.model import WikiPage
 from trac.util.text import unicode_quote
 
 
@@ -32,7 +34,7 @@ class TracDragDropModule(Component):
 
     # ITemplateProvider#get_templates_dirs
     def get_templates_dirs(self):
-        return []
+        return [resource_filename(__name__, 'templates')]
 
     # IRequestFilter#pre_process_request
     def pre_process_request(self, req, handler):
@@ -77,7 +79,8 @@ class TracDragDropModule(Component):
                         name = data['milestone'].name
 
                 if name is not None:
-                    add_link(req, 'tracdragdrop.upload', req.href.tracdragdrop(realm, name))
+                    add_link(req, 'tracdragdrop.view', req.href.tracdragdrop('view', realm, name))
+                    add_link(req, 'tracdragdrop.new', req.href.tracdragdrop('new', realm, name))
                     add_stylesheet(req, 'tracdragdrop/tracdragdrop.css')
                     add_script(req, 'tracdragdrop/tracdragdrop.js')
 
@@ -85,33 +88,63 @@ class TracDragDropModule(Component):
 
     # IRequestHandler#match_request
     def match_request(self, req):
-        match = re.match(r'/tracdragdrop/([^/]+)/(.*)\Z', req.path_info)
+        match = re.match(r'/tracdragdrop/([^/]+)/([^/]+)/(.*)\Z', req.path_info)
         if match:
-            req.args['action'] = 'new'
-            req.args['realm'] = match.group(1)
-            req.args['path'] = match.group(2)
-            req.args['attachment'] = PseudoAttachmentObject(req)
+            req.args['action'] = match.group(1)
+            req.args['realm'] = match.group(2)
+            req.args['path'] = match.group(3)
+            if req.args['action'] == 'new':
+                req.args['attachment'] = PseudoAttachmentObject(req)
             return True
 
     # IRequestHandler#process_request
     def process_request(self, req):
-        if req.get_header('X-Requested-With') != 'XMLHttpRequest':
+        if req.method != 'POST' or req.get_header('X-Requested-With') != 'XMLHttpRequest':
             self._send_message_on_except(req, unicode(PermissionError()), 403)
 
-        # XXX dirty hack
-        req.redirect_listeners.insert(0, self._redirect_listener)
-        attachment = AttachmentModule(self.env)
-        try:
-            attachment.process_request(req)
-        except RedirectListened:
-            req.send('', status=200)
-        except TracError, e:
-            self._send_message_on_except(req, unicode(e), 500)
-        except PermissionError, e:
-            self._send_message_on_except(req, unicode(e), 403)
-        except Exception, e:
-            self.log.error('AttachmentModule.process_request failed', exc_info=True)
-            self._send_message_on_except(req, unicode(e), 500)
+        action = req.args['action']
+        if action == 'view':
+            return self._render_attachments(req)
+
+        if action == 'new':
+            # XXX dirty hack
+            req.redirect_listeners.insert(0, self._redirect_listener)
+            attachment = AttachmentModule(self.env)
+            try:
+                attachment.process_request(req)
+            except RedirectListened:
+                req.send('', status=200)
+            except TracError, e:
+                self._send_message_on_except(req, unicode(e), 500)
+            except PermissionError, e:
+                self._send_message_on_except(req, unicode(e), 403)
+            except Exception, e:
+                self.log.error('AttachmentModule.process_request failed', exc_info=True)
+                self._send_message_on_except(req, unicode(e), 500)
+            req.send('', status=500)
+
+    def _render_attachments(self, req):
+        realm = req.args['realm']
+        path = req.args['path']
+
+        data = {}
+        model = None
+        if realm == 'wiki':
+            data['compact'] = True
+            model = WikiPage(self.env, path)
+        elif realm == 'ticket':
+            data['compact'] = False
+            model = Ticket(self.env, path)
+        elif realm == 'milestone':
+            data['compact'] = True
+            model = Milestone(self.env, path)
+
+        if model is not None:
+            context = Context.from_request(req, model.resource)
+            attachments = AttachmentModule(self.env).attachment_data(context)
+            attachments['can_create'] = False
+            data['attachments'] = attachments
+            return 'tracdragdrop_list.html', data, None
 
     def _send_message_on_except(self, req, message, status):
         req.send_header(_HEADER, unicode_quote(message))

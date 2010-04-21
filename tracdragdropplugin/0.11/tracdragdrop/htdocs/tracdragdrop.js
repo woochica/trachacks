@@ -66,7 +66,7 @@ jQuery(document).ready(function($) {
         }
     };
 
-    var uploadUrl = null;
+    var urls = null;
     var gearsDesktop = null;
     var methods = null;
     if (!initialize()) {
@@ -206,7 +206,7 @@ jQuery(document).ready(function($) {
         }
         function startSendContents(contents) {
             xhr = methods.createXMLHttpRequest({
-                url: uploadUrl,
+                url: urls['tracdragdrop.new'],
                 data: contents,
                 headers: {
                     'Content-Type': 'application/octet-stream; filename="' + filename + '"',
@@ -243,7 +243,9 @@ jQuery(document).ready(function($) {
         }
         function uploadError(xhr, textStatus, errorThrown) {
             var filename = file.name;
-            var message = xhr.responseText || decodeURIComponent(xhr.getResponseHeader('X-TracDragDrop'));
+            var message = xhr.responseText
+                        || decodeURIComponent(xhr.getResponseHeader('X-TracDragDrop') || '')
+                        || textStatus;
             setTimeout(function() { alert(filename + ': ' + message) }, 0);
             nextFile();
         }
@@ -265,8 +267,38 @@ jQuery(document).ready(function($) {
         }
         notice = null;
         countFiles = 0;
+        if (!/[?&]action=edit(?:&|$)/.test(location)) {
+            $.ajax({
+                type: 'POST', dataType: 'text', url: urls['tracdragdrop.view'],
+                success: function(data, textStatus, xhr) {
+                    var attachments = $('#attachments');
+                    if (attachments.size() > 0) {
+                        var element = attachments.find('dl.attachments');
+                        data = $('<div />').html(data).find('dl.attachments');
+                        if (element.size() > 0) {
+                            element.replaceWith(data);
+                        }
+                        else {
+                            attachments.prepend(data);
+                        }
+                    }
+                    else {
+                        var buttons = $('#content > div.buttons');
+                        var element = buttons.prev('ul');
+                        if (element.size() > 0) {
+                            element.after($('<div />').html(data).find('ul'));
+                            element.remove();
+                        }
+                        else {
+                            buttons.before(data);
+                        }
+                    }
+                }
+            });
+        }
     }
-    function getUploadUrl() {
+    function getUrls() {
+        var urls = {};
         var head = document.getElementsByTagName('head')[0];
         var links = head.getElementsByTagName('link');
         var length = links.length;
@@ -274,11 +306,17 @@ jQuery(document).ready(function($) {
             var link = links[i];
             var rel = link.getAttribute('rel');
             var href = link.getAttribute('href');
-            if (rel === 'tracdragdrop.upload' && href !== null) {
-                return href;
+            if (href === null) {
+                continue;
+            }
+            switch (rel) {
+            case 'tracdragdrop.view':
+            case 'tracdragdrop.new':
+                urls[rel] = href;
+                break;
             }
         }
-        return null;
+        return urls['tracdragdrop.view'] && urls['tracdragdrop.new'] ? urls : null;
     }
     function showReaderError(file, e) {
         var text;
@@ -299,13 +337,11 @@ jQuery(document).ready(function($) {
         alert(text);
     }
     function initialize() {
-        var url = getUploadUrl();
-        if (!url) {
+        urls = getUrls();
+        if (!urls) {
             return false;
         }
-        uploadUrl = url;
 
-        function emptyFunction() { }
 
         // HTML5
         try {
@@ -335,4 +371,5 @@ jQuery(document).ready(function($) {
 
         return false;   // not available
     }
+    function emptyFunction() { }
 });
