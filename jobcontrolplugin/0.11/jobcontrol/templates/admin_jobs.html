@@ -9,7 +9,25 @@
     <title>Jobs</title>
     <style type="text/css">
       p.contextual { margin-top:0; margin-bottom:2em }
+     
+
     </style>
+    <style type="text/css" title="currentStyle">
+			@import "http://www.datatables.net//release-datatables/media/css/demo_page.css";
+			@import "http://www.datatables.net//release-datatables/media/css/demo_table.css";
+		</style>
+        
+    	<script type="text/javascript" language="javascript" src="http://www.datatables.net//release-datatables/media/js/jquery.js"></script>
+
+		<script type="text/javascript" language="javascript" src="http://www.datatables.net//release-datatables/media/js/jquery.dataTables.js"></script>
+	
+    <script type="text/javascript" charset="utf-8">
+			$(document).ready(function() {
+				$('#example').dataTable();
+			} );
+		</script>
+
+        
   </head>
 
   <body>
@@ -65,7 +83,7 @@
         <fieldset>
           <legend>Runs</legend>
         
-        <table class="listing" id="joblist">
+        <table  id="example" >
               <thead>
                 <tr>
                    <th>run id</th><th>started</th><th>ended</th><th>status</th><th>message</th><th>pid</th><th>uid</th><th>host</th><th>root</th><th>log</th>
@@ -75,7 +93,7 @@
             <tr py:for="run in runs">
                 <td>${run.html.id}</td>
                 <td>${run.html.started} </td>
-                <td>${run.html.started}</td>
+                <td>${run.html.ended}</td>
                 <td>${run.html.status}</td>
                 <td>${run.html.logpost}</td>
                 <td>${run.html.pid}</td>

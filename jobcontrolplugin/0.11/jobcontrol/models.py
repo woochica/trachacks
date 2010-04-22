@@ -160,7 +160,7 @@ class Job(Record):
     def __init__(self, env, **kwa):
         super(Job, self).__init__(env, **kwa)
         self.started = time.time()
-        self.log = '
+        self.log = ''
         
     def defaults(self):
         return  '',  '', True
