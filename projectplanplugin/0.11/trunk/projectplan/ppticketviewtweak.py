@@ -34,8 +34,11 @@ class PPTicketViewTweak(Component):
     
     self.field = PPConfiguration( self.env ).get('custom_dependency_field')
     
-    dependencies = data['ticket'].values.get(self.field).strip()
-    #dependencies = '1, 8; 2 y 3, 99,x' # test
+    try:
+      dependencies = data['ticket'].values.get(self.field).strip()
+      #dependencies = '1, 8; 2 y 3, 99,x' # test
+    except:
+      return stream
     
     # TODO: replace this by a central method
     r = re.compile('[;, ]')
