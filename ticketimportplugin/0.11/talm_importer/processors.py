@@ -31,7 +31,7 @@ class ImportProcessor(object):
         self.missingdefaultedfields = None
         self.computedfields = None
 
-    def start(self, importedfields, reconciliate_by_owner_also):
+    def start(self, importedfields, reconciliate_by_owner_also, has_comments):
         pass
 
     def process_missing_fields(self, missingfields, missingemptyfields, missingdefaultedfields, computedfields):
@@ -40,6 +40,9 @@ class ImportProcessor(object):
         self.computedfields = computedfields
 
     def process_notimported_fields(self, notimportedfields):
+        pass
+
+    def process_comment_field(self, comment):
         pass
 
     def start_process_row(self, row_idx, ticket_id):
@@ -69,11 +72,15 @@ class ImportProcessor(object):
 
         else:
             self.ticket = PatchedTicket(self.env, db=self.db)
+        self.comment = ''
 
     def process_cell(self, column, cell):
         cell = unicode(cell)
         # this will ensure that the changes are logged, see model.py Ticket.__setitem__
         self.ticket[column.lower()] = cell
+
+    def process_comment(self, comment):
+        self.comment = comment
 
     def end_process_row(self):
         try:
@@ -88,15 +95,23 @@ class ImportProcessor(object):
             for f in self.missingemptyfields:
                 if self.ticket.values.has_key(f) and self.ticket[f] == None:
                     self.ticket[f] = ''
+
+            if self.comment:
+                self.ticket['description'] = self.ticket['description'] + "\n[[BR]][[BR]]\n''Batch insert from file " + self.filename + ":''\n" + self.comment
+
             for f in self.computedfields:
                  if self.computedfields[f] != None and self.computedfields[f]['set']:
                      self.ticket[f] = self.computedfields[f]['value']
 
+            
             self.added += 1
             self.ticket.insert(when=tickettime, db=self.db)
-        else: 
-            message = "Batch update from file " + self.filename
-            if self.ticket.is_modified():
+        else:
+            if self.comment:
+                message = "''Batch update from file " + self.filename + ":'' " + self.comment
+            else:
+                message = "''Batch update from file " + self.filename + "''"
+            if self.ticket.is_modified() or self.comment:
                 self.modifiedcount += 1
                 self.ticket.save_changes(get_reporter_id(self.req), message, when=tickettime, db=self.db) # TODO: handle cnum, cnum = ticket.values['cnum'] + 1)
             else:
@@ -158,7 +173,7 @@ class PreviewProcessor(object):
         self.notmodifiedcount = 0
         self.added = 0
 
-    def start(self, importedfields, reconciliate_by_owner_also):
+    def start(self, importedfields, reconciliate_by_owner_also, has_comments):
         self.data['title'] = 'Preview Import'
 
         self.message = ''
@@ -174,7 +189,7 @@ class PreviewProcessor(object):
         # we use one more color to set a style for all fields in a row... the CS templates happens 'color' + color + '-odd'
         self.styles = "<style type=\"text/css\">\n.ticket-imported, .modified-ticket-imported { width: 40px; }\n"
         self.styles += ".color-new-odd td, .color-new-even td, .modified-ticket-imported"
-        for col in importedfields:
+        for col in importedfields + (['comment'] if has_comments else []):
             if col.lower() != 'ticket' and col.lower() != 'id':
                 title=col.capitalize()
                 self.data['headers'].append({ 'col': col, 'title': title })
@@ -198,6 +213,9 @@ class PreviewProcessor(object):
     def process_notimported_fields(self, notimportedfields):
         self.message += ' * Some fields will not be imported because they don\'t exist in Trac: ' + ', '.join([x and x or "''(empty name)''" for x in notimportedfields])  + '.\n'
 
+    def process_comment_field(self, comment):
+        self.message += ' * The field "%s" will be used as comment when modifying tickets, and appended to the description for new tickets.\n' % comment
+
     def start_process_row(self, row_idx, ticket_id):
         from ticket import PatchedTicket
         self.ticket = None
@@ -214,6 +232,10 @@ class PreviewProcessor(object):
             self.modified = True
         else:
             self.cells.append( { 'col': column, 'value': cell, 'style': column })
+
+    def process_comment(self, comment):
+        column = 'comment'
+        self.cells.append( { 'col': column, 'value': comment, 'style': column })
 
     def end_process_row(self):
         odd = len(self.data['rows']) % 2

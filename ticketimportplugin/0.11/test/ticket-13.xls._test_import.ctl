@@ -3200,6 +3200,6 @@
             u'testuser',
             u'comment',
             u'',
-            u'Batch update from file test/ticket-13.xls')],
+            u"''Batch update from file test/ticket-13.xls''")],
     [],
     []]

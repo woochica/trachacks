@@ -132,7 +132,7 @@ class ImporterTestCase(unittest.TestCase):
         self._do_test_diffs(env, 'simple.csv', self._test_preview)
         self._do_test_diffs(env, 'simple.csv', self._test_preview)
         self.assert_(self._do_test(env, 'simple.csv', self._test_import))
-        # Run again, to make sure that the lookups are done corrctly
+        # Run again, to make sure that the lookups are done correctly
         ImporterTestCase.TICKET_TIME = 1190909221
         self.assert_(self._do_test(env, 'simple-copy.csv', self._test_import))
         # import after modification should throw exception
@@ -145,6 +145,29 @@ class ImporterTestCase(unittest.TestCase):
         except TracError, err_string:
             print err_string
         #TODO: change the test case to modify the second or third row, to make sure that db.rollback() works
+
+    def test_import_with_comments(self):
+        env = self._setup()
+        db = env.get_db_cnx()
+        cursor = db.cursor()
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [1245, u'defect', 1191377630, 1191377630, u'component1', None, u'major', u'somebody', u'anonymous', u'', u'', u'', u'new', None, u'sum2', u'', u''])
+        db.commit()
+        self._do_test_diffs(env, 'simple.csv', self._test_import)
+        self._do_test_diffs(env, 'simple_with_comments.csv', self._test_preview)
+        ImporterTestCase.TICKET_TIME = ImporterTestCase.TICKET_TIME + 100
+        self._do_test_diffs(env, 'simple_with_comments.csv', self._test_import)
+
+    def test_import_with_comments_and_description(self):
+        env = self._setup()
+        db = env.get_db_cnx()
+        cursor = db.cursor()
+        _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [1245, u'defect', 1191377630, 1191377630, u'component1', None, u'major', u'somebody', u'anonymous', u'', u'', u'', u'new', None, u'sum2', u'', u''])
+        db.commit()
+        self._do_test_diffs(env, 'simple.csv', self._test_import)
+        self._do_test_diffs(env, 'simple_with_comments_and_description.csv', self._test_preview)
+        ImporterTestCase.TICKET_TIME = ImporterTestCase.TICKET_TIME + 100
+        self._do_test_diffs(env, 'simple_with_comments_and_description.csv', self._test_import)
+
 
     def test_import_2(self):
         env = self._setup()
@@ -256,7 +279,7 @@ class ImporterTestCase(unittest.TestCase):
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
-    #return unittest.TestSuite( [ ImporterTestCase('test_import_2') ])
+    #return unittest.TestSuite( [ ImporterTestCase('test_import_with_comments_and_description') ])
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')

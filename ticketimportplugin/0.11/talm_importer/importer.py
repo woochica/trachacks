@@ -183,8 +183,9 @@ class ImportModule(Component):
         columns = map(str, columns)
 
         importedfields = [f for f in columns if f.lower() in tracfields]
-        notimportedfields = [f for f in columns if f.lower() not in tracfields and f.lower() != 'ticket' and f.lower() != 'id']        
-        
+        notimportedfields = [f for f in columns if f.lower() not in tracfields + ['comment']]
+        commentfields = [f for f in columns if f.lower() == 'comment']
+        commentfield = commentfields[0] if commentfields else None
         lowercaseimportedfields = [f.lower() for f in importedfields]
 
         idcolumn = None
@@ -234,7 +235,7 @@ class ImportModule(Component):
             else:
                 computedfields[f] = None
 
-        processor.start(importedfields, ownercolumn != None)
+        processor.start(importedfields, ownercolumn != None, commentfield)
 
         missingfields = [f for f in computedfields if f not in lowercaseimportedfields]
         missingemptyfields = [ f for f in missingfields if computedfields[f] == None or computedfields[f]['value'] == '']
@@ -246,6 +247,9 @@ class ImportModule(Component):
         # end TODO: this is too complex
         if notimportedfields != []:
             processor.process_notimported_fields(notimportedfields)
+
+        if commentfield:
+            processor.process_comment_field(commentfield)
 
         # TODO: test the cases where those fields have empty values. They should be handled as None. (just to test, may be working already :)
         selects = [
@@ -327,6 +331,7 @@ class ImportModule(Component):
                 
                 # collect the new lookup values
                 if column.lower() in existingvalues.keys():
+                    cell = cell.strip()
                     if cell != '' and cell not in existingvalues[column.lower()] and cell not in newvalues[column.lower()]:
                         newvalues[column.lower()] += [ cell ]
 
@@ -338,6 +343,9 @@ class ImportModule(Component):
                 # and proces the value.
                 if column.lower() != 'ticket' and column.lower() != 'id':
                     processor.process_cell(column, cell)
+                
+            if commentfield:
+                processor.process_comment(row[commentfield])
 
             processor.end_process_row()
             row_idx += 1

@@ -58,6 +58,9 @@ First, you will be shown a preview of the changes, and then you will be able to 
 <p>
 Components, Milestones, etc... found in the spreadsheet will be added to Trac if they do not exist yet. You may want to customize them after that in the Admin section.
 </p>
+<p>
+If the spreadsheet contains a Comment column, this column will be added as comment to the tickets.
+</p>
 
 <form id="importer" method="post" enctype="multipart/form-data" action="">
    <div class="field">
@@ -66,7 +69,7 @@ Components, Milestones, etc... found in the spreadsheet will be added to Trac if
    </div>
    <br/>
    <div class="field">
-     <label for="sheet">If Excel spreadsheet, index of the worksheet to import:</label>
+     <label for="sheet">For an Excel spreadsheet, index of the worksheet to import:</label>
        <select name="sheet">
        <option value="1">1</option>
        <option value="2">2</option>

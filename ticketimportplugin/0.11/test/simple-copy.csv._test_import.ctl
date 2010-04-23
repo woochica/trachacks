@@ -58,6 +58,6 @@
             u'testuser',
             u'comment',
             u'',
-            u'Batch update from file test/simple.csv')],
+            u"''Batch update from file test/simple.csv''")],
     [],
     []]

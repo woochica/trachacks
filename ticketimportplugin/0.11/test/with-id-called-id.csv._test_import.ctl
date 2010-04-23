@@ -66,7 +66,7 @@
             u'testuser',
             u'comment',
             u'',
-            u'Batch update from file test/with-id-called-id.csv'),
+            u"''Batch update from file test/with-id-called-id.csv''"),
         (2, 1190909220, u'testuser', u'owner', u'somebody2', u'you'),
         (2, 1190909220, u'testuser', u'priority', u'major', u'yourpriority'),
         (   2,
@@ -81,6 +81,6 @@
             u'testuser',
             u'comment',
             u'',
-            u'Batch update from file test/with-id-called-id.csv')],
+            u"''Batch update from file test/with-id-called-id.csv''")],
     [(u'priority', u'herpriority', u'6')],
     [(u'hercomp', None, None)]]
