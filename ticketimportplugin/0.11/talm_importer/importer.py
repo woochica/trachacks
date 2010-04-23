@@ -185,7 +185,10 @@ class ImportModule(Component):
         importedfields = [f for f in columns if f.lower() in tracfields]
         notimportedfields = [f for f in columns if f.lower() not in tracfields + ['comment']]
         commentfields = [f for f in columns if f.lower() == 'comment']
-        commentfield = commentfields[0] if commentfields else None
+        if commentfields:
+            commentfield = commentfields[0]
+        else:
+            commentfield = None
         lowercaseimportedfields = [f.lower() for f in importedfields]
 
         idcolumn = None

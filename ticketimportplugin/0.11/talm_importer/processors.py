@@ -189,7 +189,11 @@ class PreviewProcessor(object):
         # we use one more color to set a style for all fields in a row... the CS templates happens 'color' + color + '-odd'
         self.styles = "<style type=\"text/css\">\n.ticket-imported, .modified-ticket-imported { width: 40px; }\n"
         self.styles += ".color-new-odd td, .color-new-even td, .modified-ticket-imported"
-        for col in importedfields + (['comment'] if has_comments else []):
+        columns = importedfields[:]
+        if has_comments:
+            columns.append('comment')
+
+        for col in columns:
             if col.lower() != 'ticket' and col.lower() != 'id':
                 title=col.capitalize()
                 self.data['headers'].append({ 'col': col, 'title': title })
