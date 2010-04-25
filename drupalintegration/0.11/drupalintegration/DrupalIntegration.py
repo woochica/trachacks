@@ -25,26 +25,38 @@ class DrupalIntegration(Component):
 		""" Pull list of users from Drupal. """
 		db = self.env.get_db_cnx()
 		cur = db.cursor()
-		cur.execute("SELECT name FROM %susers")
+		cur.execute("SELECT name FROM %susers", self.tblpre.encode('utf-8'))
 		for name in cursor:
 			yield name
+
+	def _latest_uid():
+		db = self.env.get_db_cnx()
+		cur = db.cursor()
+		cur.execute("SELECT uid FROM %susers", self.tblpre.encode('utf-8'))
+		return cur.fetchone()
 
 	def has_user(self, user):
 		""" Check for a user. """
 		db = self.env.get_db_cnx()
 		cur = db.cursor()
-		cur.execute("SELECT * FROM users WHERE name=%s", user)
+		cur.execute("SELECT * FROM %susers WHERE name=%s", user, self.tblpre.encode('utf-8'))
 		for name in cur:
 			return True
 		return False
 
 	def set_password(self, user, password):
 		""" Set the user's Trac and Drupal password. """
+		""" Make way for registering accounts... """
 		hashed = md5(password).hexdigest()
 		db = self.env.get_db_cnx()
 		cur = db.cursor()
+		if self.has_user(user) == False:
+			cur.execute("INSERT INTO %susers(uid,name,pass) VALUES (%s,%s,%s)", self.tblpre.encode('utf-8'), _latest_uid()+1, user, hashed)
+			db.commit()
+			return True
 		cur.execute("UPDATE users SET pass=%s WHERE name=%s", hashed, user)
 		db.commit()
+		return False
 
 	def check_password(self, user, password):
 		""" Very alike the above. """
