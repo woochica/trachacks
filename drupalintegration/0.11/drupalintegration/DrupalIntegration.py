@@ -39,7 +39,7 @@ class DrupalIntegration(Component):
 		""" Check for a user. """
 		db = self.env.get_db_cnx()
 		cur = db.cursor()
-		cur.execute("SELECT * FROM %susers WHERE name=%s", user, self.tblpre.encode('utf-8'))
+		cur.execute("SELECT * FROM %susers WHERE name=%s", self.tblpre.encode('utf-8'), user)
 		for name in cur:
 			return True
 		return False
@@ -54,6 +54,7 @@ class DrupalIntegration(Component):
 			cur.execute("INSERT INTO %susers(uid,name,pass) VALUES (%s,%s,%s)", self.tblpre.encode('utf-8'), _latest_uid()+1, user, hashed)
 			db.commit()
 			return True
+
 		cur.execute("UPDATE users SET pass=%s WHERE name=%s", hashed, user)
 		db.commit()
 		return False
