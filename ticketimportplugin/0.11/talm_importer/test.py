@@ -19,6 +19,15 @@ from trac.core import TracError
 
 from talm_importer.importer import ImportModule
 
+import trac
+if trac.__version__.startswith('0.12'):
+    CTL_EXT = '-0.12.ctl'
+    TICKETS_DB = 'tickets-0.12.db'
+else:
+    CTL_EXT = '.ctl'
+    TICKETS_DB = 'tickets.db'
+
+
 def _exec(cursor, sql, args = None): cursor.execute(sql, args)
 
 def _printme(something): pass # print something
@@ -81,7 +90,7 @@ class ImporterTestCase(unittest.TestCase):
         from os.path import join, dirname
         testdir = join(dirname(dirname(dirname(testfolder))), 'test')
         outfilename = join(testdir, filename + '.' + testfun.__name__ + '.out')
-        ctlfilename = join(testdir, filename + '.' + testfun.__name__ + '.ctl')
+        ctlfilename = join(testdir, filename + '.' + testfun.__name__ + CTL_EXT)
         open(outfilename, 'w').write(testfun(env, join(testdir, filename)))
         return filecmp.cmp(outfilename, ctlfilename)
 
@@ -93,9 +102,10 @@ class ImporterTestCase(unittest.TestCase):
         from difflib import Differ
         d = Differ()
         def readall(ext): return open(join(testdir, filename + ext), 'rb').readlines()
-        result = d.compare(readall('.' + testfun.__name__ + '.ctl'), readall('.' + testfun.__name__ + '.out'))
+        result = d.compare(readall('.' + testfun.__name__ + CTL_EXT), 
+                           readall('.' + testfun.__name__ + '.out'))
         lines = [ line for line in result if line[0] != ' ']
-       #sys.stdout.writelines(lines)
+        #sys.stdout.writelines(lines)
         self.assertEquals(0, len(lines)) 
 
     def _do_test_with_exception(self, env, filename, testfun):
@@ -218,7 +228,7 @@ class ImporterTestCase(unittest.TestCase):
         _dbfile = os.path.join(os.path.join(instancedir, 'db'), 'trac.db')
         env = Environment(instancedir, create=True)
         os.remove(_dbfile)
-        shutil.copyfile(os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(testfolder))), 'test'), 'tickets.db'), _dbfile)
+        shutil.copyfile(os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(testfolder))), 'test'), TICKETS_DB), _dbfile)
         open(os.path.join(os.path.join(instancedir, 'conf'), 'trac.ini'), 'a').write('\n[ticket-custom]\ndomain = text\ndomain.label = Domain\nstage = text\nstage.label = Stage\nusers = text\nusers.label = Users\n')
         env = Environment(instancedir)
         self.assert_(self._do_test(env, 'ticket-13.xls', self._test_import))
@@ -279,7 +289,7 @@ class ImporterTestCase(unittest.TestCase):
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
-    #return unittest.TestSuite( [ ImporterTestCase('test_import_with_comments_and_description') ])
+    #return unittest.TestSuite( [ ImporterTestCase('test_import_7') ])
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')
