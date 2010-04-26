@@ -16,6 +16,7 @@ from trac.web.chrome import add_stylesheet
 from trac.web.chrome import ITemplateProvider
 from trac.wiki.formatter import Formatter
 from tractags.macros import TagCloudMacro
+from genshi.builder import tag
 
 class LoomingClouds(Component):
 
@@ -40,13 +41,13 @@ class LoomingClouds(Component):
         if filename == 'ticket.html':
 
             add_stylesheet(req, 'tags/css/tractags.css')
-            add_stylesheet(req, 'tags/css/tagcloud.css')
-            add_script(req, 'tags/js/tag_filler.js')
+            add_stylesheet(req, 'loomingclouds/css/tagcloud.css')
+            add_script(req, 'loomingclouds/js/tag_filler.js')
             formatter = Formatter(self.env, Context.from_request(req))
             macro = TagCloudMacro(self.env)
             cloud = macro.expand_macro(formatter, 'TagCloud', '')
 
-            stream |= Transformer("//input[@id='field-keywords']").after(cloud)
+            stream |= Transformer("//input[@id='field-keywords']").after(cloud).after(tag.a('More...',href='#',class_='tag-cloud-filler'))
 
         return stream
 
@@ -64,7 +65,7 @@ class LoomingClouds(Component):
         resources on the local file system.
         
         """
-        return [('tags', resource_filename(__name__, 'htdocs'))]
+        return [('loomingclouds', resource_filename(__name__, 'htdocs'))]
         
 
     def get_templates_dirs(self):

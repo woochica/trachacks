@@ -6,4 +6,17 @@ $(document).ready(function() {
                 tagnode.val(value);
                 return false;
             });
+       $(".tag-cloud-filler").click(function(){
+       			if($("ul.tagcloud").css("maxHeight")=="40px")
+       			{
+       			$("ul.tagcloud").css("maxHeight","99999px");
+       			$(this).html("Less...");
+       			}
+       			else
+       			{
+       			$("ul.tagcloud").css("maxHeight","40px");
+       			$(this).html("More...");
+       			}
+       			return false;
+       			});
     });
