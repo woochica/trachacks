@@ -6,6 +6,7 @@ A plugin to display hudson results in the timeline and provide a nav-link
 import time
 import urllib
 import urllib2
+import base64
 from xml.dom import minidom
 from datetime import datetime
 from trac.core import *
@@ -62,7 +63,7 @@ class HudsonTracPlugin(Component):
         bAuth = urllib2.HTTPBasicAuthHandler(pwdMgr)
         dAuth = urllib2.HTTPDigestAuthHandler(pwdMgr)
 
-        self.url_opener = urllib2.build_opener(bAuth, dAuth)
+        self.url_opener = urllib2.build_opener(bAuth, dAuth, self.HudsonFormLoginHandler(self))
 
         self.env.log.debug("registered auth-handler for '%s', username='%s'" %
                            (api_url, self.username))
@@ -152,7 +153,8 @@ class HudsonTracPlugin(Component):
                 self.env.log.exception("Error getting build info from '%s'" % url)
                 raise IOError, \
                     "Error getting build info from '%s': %s: %s. This most " \
-                    "likely means you configured a wrong job_url." % \
+                    "likely means you configured a wrong job_url, username, " \
+                    "or password." % \
                     (url, sys.exc_info()[0].__name__, str(sys.exc_info()[1]))
         finally:
             self.url_opener.close()
@@ -199,4 +201,31 @@ class HudsonTracPlugin(Component):
             title = 'Build "%s" (%s)' % (get_string(entry, 'fullDisplayName'), result.lower())
 
             yield kind, href, title, completed, None, comment
+
+    class HudsonFormLoginHandler(urllib2.BaseHandler):
+        def __init__(self, parent):
+            self.p = parent
+
+        def http_error_403(self, req, fp, code, msg, headers):
+            for h in self.p.url_opener.handlers:
+                if isinstance(h, self.p.HTTPOpenHandlerBasicAuthNoChallenge):
+                    return
+
+            self.p.url_opener.add_handler(
+                    self.p.HTTPOpenHandlerBasicAuthNoChallenge(self.p.username, self.p.password))
+            self.p.env.log.debug("registered auth-handler for form-based authentication")
+
+            fp.close()
+            return self.p.url_opener.open(req)
+
+    class HTTPOpenHandlerBasicAuthNoChallenge(urllib2.BaseHandler):
+
+        auth_header = 'Authorization'
+
+        def __init__(self, username, password):
+            raw = "%s:%s" % (username, password)
+            self.auth = 'Basic %s' % base64.b64encode(raw).strip()
+
+        def default_open(self, req):
+            req.add_header(self.auth_header, self.auth)
 
