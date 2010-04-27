@@ -262,6 +262,7 @@ table.wiki-calendar a.page { color: #b00 !important; }
 
                 if wiki.find(":") >= 0 or wiki.startswith("/"):
                     url = self.env.href.wiki(wiki)
+                    wiki = wiki.lstrip("/")
                 else:
                     # Support relative paths; based on trac/wiki/formatter.py
                     rsc = get_relative_resource(formatter.resource, wiki)
