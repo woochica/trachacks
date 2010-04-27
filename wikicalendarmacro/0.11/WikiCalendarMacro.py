@@ -279,7 +279,7 @@ table.wiki-calendar a.page { color: #b00 !important; }
                 buff.write('\n<td><a class="%(classes)s" href="%(url)s" title="%(title)s">%(day)s</a></td>' % {
                     'classes': classes.strip(),
                     'url': url,
-                    'title': title,
+                    'title': title.unicode('utf-8'),
                     'day': day
                     })
             buff.write('\n</tr>')
