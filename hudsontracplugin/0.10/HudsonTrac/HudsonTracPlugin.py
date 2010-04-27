@@ -161,7 +161,7 @@ class HudsonTracPlugin(Component):
             raise IOError, \
                 "Error getting build info from '%s': returned document has " \
                 "unexpected node '%s'. This most likely means you configured " \
-                "a wrong job_url" % (info_url, info.documentElement.nodeName)
+                "a wrong job_url." % (self.info_url, info.documentElement.nodeName)
 
         # extract all build entries
         for entry in info.documentElement.getElementsByTagName("build"):
