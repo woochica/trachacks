@@ -4,7 +4,7 @@ import os, shutil, re, mimetypes, unicodedata
 from datetime import *
 
 from trac.core import *
-from trac.config import Option, BoolOption, ListOption, PathOption
+from trac.config import Option, IntOption, BoolOption, ListOption, PathOption
 from trac.resource import Resource
 from trac.mimeview import Mimeview, Context
 from trac.web.chrome import add_stylesheet, add_script
@@ -43,6 +43,8 @@ class DownloadsApi(Component):
       doc = 'Path where to store uploaded downloads.')
     ext = ListOption('downloads', 'ext', 'zip,gz,bz2,rar',
       doc = 'List of file extensions allowed to upload.')
+    max_size = IntOption('downloads', 'max_size', 268697600,
+      'Maximum allowed file size (in bytes) for downloads. Default is 256 MB.')
     visible_fields = ListOption('downloads', 'visible_fields',
       'id,file,description,size,time,count,author,tags,component,version,'
       'architecture,platform,type', doc = 'List of downloads table fields that'
@@ -785,9 +787,14 @@ class DownloadsApi(Component):
         if not 'all' in self.ext:
             self.log.debug('file_ext: %s ext: %s' % (ext, self.ext))
             if not ext[1:].lower() in self.ext:
-                raise TracError('Unsupported uploaded file type.')
+                raise TracError('Unsupported file type.')
         else:
-            raise TracError('Unsupported uploaded file type.')
+            raise TracError('Unsupported file type.')
+
+        # Check for maximum file size.
+        if self.max_size >= 0 and download['size'] > self.max_size:
+            raise TracError('Maximum file size: %s bytes' % (self.max_size),
+              'Upload failed')
 
         # Add new download to DB.
         self.add_download(context, download)
