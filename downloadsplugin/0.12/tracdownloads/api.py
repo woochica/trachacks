@@ -4,15 +4,15 @@ import os, shutil, re, mimetypes, unicodedata
 from datetime import *
 
 from trac.core import *
-from trac.config import Option, BoolOption, ListOption
+from trac.config import Option, BoolOption, ListOption, PathOption
 from trac.resource import Resource
+from trac.mimeview import Mimeview, Context
 from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc, \
   format_datetime, pretty_timedelta
 from trac.util.text import to_unicode, unicode_unquote, unicode_quote, \
   pretty_size
-
 
 class IDownloadChangeListener(Interface):
     """Extension point interface for components that require notification
@@ -39,8 +39,8 @@ class DownloadsApi(Component):
     # Configuration options.
     title = Option('downloads', 'title', 'Downloads',
       doc = 'Main navigation bar button title.')
-    path = Option('downloads', 'path', '/var/lib/trac/downloads',
-      doc = 'Directory to store uploaded downloads.')
+    path = PathOption('downloads', 'path', '../downloads',
+      doc = 'Path where to store uploaded downloads.')
     ext = ListOption('downloads', 'ext', 'zip,gz,bz2,rar',
       doc = 'List of file extensions allowed to upload.')
     visible_fields = ListOption('downloads', 'visible_fields',
@@ -341,7 +341,7 @@ class DownloadsApi(Component):
         self.log.debug('modes: %s' % modes)
 
         # Perform mode actions
-        self._do_action(context, modes)
+        self._do_actions(context, modes)
 
         # Fill up HDF structure and return template
         self.data['authname'] = context.req.authname
@@ -361,78 +361,6 @@ class DownloadsApi(Component):
         db.commit()
         self.env.log.debug('data: %s' % (self.data,))
         return modes[-1] + '.html', {'downloads' : self.data}
-
-    def store_download(self, context, download, file):
-        # Check for file name uniqueness.
-        if self.unique_filename:
-            if self.get_download_by_file(context, download['file']):
-                raise TracError('File with same name is already' \
-                  ' uploaded and unique file names are enabled.')
-
-        # Add new download.
-        self.add_download(context, download)
-
-        # Get inserted download.
-        download = self.get_download_by_time(context, download['time'])
-
-        # Check correct file type.
-        if not 'all' in self.ext:
-            name, ext = os.path.splitext(download['file'])
-            self.log.debug('file_ext: %s ext: %s' % (ext, self.ext))
-            if not ext[1:].lower() in self.ext:
-                raise TracError('Unsupported uploaded file type.')
-        else:
-            raise TracError('Unsupported uploaded file type.')
-
-        # Prepare file paths
-        path = os.path.join(self.path, unicode(download['id']))
-        filepath = os.path.join(path, download['file'])
-        path = os.path.normpath(path)
-        filepath = os.path.normpath(filepath)
-        self.log.debug('filepath: %s' % ((filepath,)))
-        self.log.debug('path: %s' % ((path,)))
-
-        # Store uploaded image.
-        try:
-            os.mkdir(path)
-            out_file = open(filepath, "wb+")
-            shutil.copyfileobj(file, out_file)
-            file.close()
-            out_file.close()
-        except Exception, error:
-            self.log.debug(error)
-            self.delete_download(context, download['id'])
-            try:
-                os.remove(filepath)
-            except:
-                pass
-            try:
-                os.rmdir(path)
-            except:
-                pass
-            raise TracError('Error storing file %s! Is directory' \
-              ' specified in path config option in [downloads] section' \
-              ' of trac.ini existing?' % (download['file'],))
-
-        # Notify change listeners.
-        for listener in self.change_listeners:
-            listener.download_created(context, download)
-
-    def remove_download(self, context, download):
-        try:
-            self.delete_download(context, download['id'])
-            path = os.path.join(self.path, to_unicode(download['id']))
-            filepath = os.path.join(path, download['file'])
-            path = os.path.normpath(path)
-            filepath = os.path.normpath(filepath)
-            os.remove(filepath)
-            os.rmdir(path)
-
-            # Notify change listeners.
-            for listener in self.change_listeners:
-                listener.download_deleted(context, download)
-        except:
-            pass
 
     # Internal functions.
 
@@ -496,12 +424,12 @@ class DownloadsApi(Component):
         else:
             pass
 
-    def _do_action(self, context, modes):
-        for mode in modes:
-            if mode == 'get-file':
+    def _do_actions(self, context, actions):
+        for action in actions:
+            if action == 'get-file':
                 context.req.perm.require('DOWNLOADS_VIEW')
 
-                # Get form values.
+                # Get request arguments.
                 download_id = context.req.args.get('id') or 0
                 download_file = context.req.args.get('file')
 
@@ -511,42 +439,55 @@ class DownloadsApi(Component):
                 else:
                     download = self.get_download_by_file(context, download_file)
 
-                if download:
-                    # Check resource based permission
-                    context.req.perm.require('DOWNLOADS_VIEW',
-                      Resource('downloads', download['id']))
-
-                    # Get download file path.
-                    path = os.path.join(self.path, to_unicode(download['id']),
-                      download['file'])
-                    path = os.path.normpath(path)
-                    self.log.debug('path: %s' % (path,))
-
-                    # Increase downloads count.
-                    new_download = {'count' : download['count'] + 1}
-
-                    # Edit download.
-                    self.edit_download(context, download['id'], new_download)
-
-                    # Notify change listeners.
-                    for listener in self.change_listeners:
-                        listener.download_changed(context, new_download,
-                          download)
-
-                    # Commit DB before file send.
-                    db = self.env.get_db_cnx()
-                    db.commit()
-
-                    # Return uploaded file to request.
-                    context.req.send_header('Content-Disposition',
-                      'attachment;filename=%s' % (download['file']))
-                    context.req.send_header('Content-Description',
-                      download['description'])
-                    context.req.send_file(path, mimetypes.guess_type(path)[0])
-                else:
+                # Check if requested download exists.
+                if not download:
                     raise TracError('File not found.')
 
-            elif mode == 'downloads-list':
+                # Check resource based permission.
+                context.req.perm.require('DOWNLOADS_VIEW',
+                  Resource('downloads', download['id']))
+
+                # Get download file path.
+                path = os.path.normpath(os.path.join(self.path, to_unicode(
+                  download['id']), download['file']))
+                self.log.debug('path: %s' % (path,))
+
+                # Increase downloads count.
+                new_download = {'count' : download['count'] + 1}
+
+                # Edit download.
+                self.edit_download(context, download['id'], new_download)
+
+                # Notify change listeners.
+                for listener in self.change_listeners:
+                    listener.download_changed(context, new_download,
+                      download)
+
+                # Commit DB before file send.
+                db = self.env.get_db_cnx()
+                db.commit()
+
+                # Guess mime type.
+                file = open(path.encode('utf-8'), "r")
+                file_data = file.read(1000)
+                file.close()
+                mimeview = Mimeview(self.env)
+                mime_type = mimeview.get_mimetype(path, file_data)
+                if not mime_type:
+                    mime_type = 'application/octet-stream'
+                if 'charset=' not in mime_type:
+                    charset = mimeview.get_charset(file_data, mime_type)
+                    mime_type = mime_type + '; charset=' + charset
+
+                # Return uploaded file to request.
+                context.req.send_header('Content-Disposition',
+                  'attachment;filename="%s"' % (os.path.normpath(
+                  download['file'])))
+                context.req.send_header('Content-Description',
+                  download['description'])
+                context.req.send_file(path.encode('utf-8'), mime_type)
+
+            elif action == 'downloads-list':
                 context.req.perm.require('DOWNLOADS_VIEW')
 
                 # Get form values.
@@ -576,7 +517,7 @@ class DownloadsApi(Component):
                     self.data['platforms'] = self.get_platforms(context)
                     self.data['types'] = self.get_types(context)
 
-            elif mode == 'admin-downloads-list':
+            elif action == 'admin-downloads-list':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values
@@ -601,10 +542,10 @@ class DownloadsApi(Component):
                 self.data['platforms'] = self.get_platforms(context)
                 self.data['types'] = self.get_types(context)
 
-            elif mode == 'description-edit':
+            elif action == 'description-edit':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
-            elif mode == 'description-post-edit':
+            elif action == 'description-post-edit':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
@@ -613,7 +554,7 @@ class DownloadsApi(Component):
                 # Set new description.
                 self.edit_description(context, description)
 
-            elif mode == 'downloads-post-add':
+            elif action == 'downloads-post-add':
                 context.req.perm.require('DOWNLOADS_ADD')
 
                 # Get form values.
@@ -632,12 +573,12 @@ class DownloadsApi(Component):
                             'type' : context.req.args.get('type')}
 
                 # Upload file to DB and file storage.
-                self.store_download(context, download, file)
+                self._add_download(context, download, file)
 
                 # Close input file.
                 file.close()
 
-            elif mode == 'downloads-post-edit':
+            elif action == 'downloads-post-edit':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
@@ -658,7 +599,7 @@ class DownloadsApi(Component):
                 for listener in self.change_listeners:
                     listener.download_changed(context, download, old_download)
 
-            elif mode == 'downloads-delete':
+            elif action == 'downloads-delete':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get selected downloads.
@@ -671,9 +612,9 @@ class DownloadsApi(Component):
                     for download_id in selection:
                         download = self.get_download(context, download_id)
                         self.log.debug('download: %s' % (download,))
-                        self.remove_download(context, download)
+                        self._delete_download(context, download)
 
-            elif mode == 'admin-architectures-list':
+            elif action == 'admin-architectures-list':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values
@@ -692,7 +633,7 @@ class DownloadsApi(Component):
                 self.data['architectures'] = self.get_architectures(context,
                   order, desc)
 
-            elif mode == 'architectures-post-add':
+            elif action == 'architectures-post-add':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
@@ -702,7 +643,7 @@ class DownloadsApi(Component):
                 # Add architecture.
                 self.add_architecture(context, architecture)
 
-            elif mode == 'architectures-post-edit':
+            elif action == 'architectures-post-edit':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
@@ -713,7 +654,7 @@ class DownloadsApi(Component):
                 # Add architecture.
                 self.edit_architecture(context, architecture_id, architecture)
 
-            elif mode == 'architectures-delete':
+            elif action == 'architectures-delete':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get selected architectures.
@@ -726,7 +667,7 @@ class DownloadsApi(Component):
                     for architecture_id in selection:
                         self.delete_architecture(context, architecture_id)
 
-            elif mode == 'admin-platforms-list':
+            elif action == 'admin-platforms-list':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
@@ -745,7 +686,7 @@ class DownloadsApi(Component):
                 self.data['platforms'] = self.get_platforms(context, order,
                   desc)
 
-            elif mode == 'platforms-post-add':
+            elif action == 'platforms-post-add':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
@@ -755,7 +696,7 @@ class DownloadsApi(Component):
                 # Add platform.
                 self.add_platform(context, platform)
 
-            elif mode == 'platforms-post-edit':
+            elif action == 'platforms-post-edit':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
@@ -766,7 +707,7 @@ class DownloadsApi(Component):
                 # Add platform.
                 self.edit_platform(context, platform_id, platform)
 
-            elif mode == 'platforms-delete':
+            elif action == 'platforms-delete':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get selected platforms.
@@ -779,7 +720,7 @@ class DownloadsApi(Component):
                     for platform_id in selection:
                         self.delete_platform(context, platform_id)
 
-            elif mode == 'admin-types-list':
+            elif action == 'admin-types-list':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values
@@ -796,7 +737,7 @@ class DownloadsApi(Component):
                 self.data['type'] = self.get_type(context, platform_id)
                 self.data['types'] = self.get_types(context, order, desc)
 
-            elif mode == 'types-post-add':
+            elif action == 'types-post-add':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
@@ -806,7 +747,7 @@ class DownloadsApi(Component):
                 # Add type.
                 self.add_type(context, type)
 
-            elif mode == 'types-post-edit':
+            elif action == 'types-post-edit':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
@@ -817,7 +758,7 @@ class DownloadsApi(Component):
                 # Add platform.
                 self.edit_type(context, type_id, type)
 
-            elif mode == 'types-delete':
+            elif action == 'types-delete':
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get selected types.
@@ -829,6 +770,80 @@ class DownloadsApi(Component):
                 if selection:
                     for type_id in selection:
                         self.delete_type(context, type_id)
+
+    """ Full implementation of download addition. It creates DB entry for
+    download <download> and stores download file <file> to file system. """
+    def _add_download(self, context, download, file):
+        # Check for file name uniqueness.
+        if self.unique_filename:
+            if self.get_download_by_file(context, download['file']):
+                raise TracError('File with same name is already uploaded and'
+                  ' unique file names are enabled.')
+
+        # Check correct file type.
+        name, ext = os.path.splitext(download['file'])
+        if not 'all' in self.ext:
+            self.log.debug('file_ext: %s ext: %s' % (ext, self.ext))
+            if not ext[1:].lower() in self.ext:
+                raise TracError('Unsupported uploaded file type.')
+        else:
+            raise TracError('Unsupported uploaded file type.')
+
+        # Add new download to DB.
+        self.add_download(context, download)
+
+        # Get inserted download by time to get its ID.
+        download = self.get_download_by_time(context, download['time'])
+
+        # Prepare file paths.
+        path = os.path.normpath(os.path.join(self.path, to_unicode(
+          download['id'])))
+        filepath = os.path.normpath(os.path.join(path, download['file']))
+
+        self.log.debug('path: %s' % ((path,)))
+        self.log.debug('filepath: %s' % ((filepath,)))
+
+        # Store uploaded image.
+        try:
+            os.mkdir(path.encode('utf-8'))
+            out_file = open(filepath.encode('utf-8'), "wb+")
+            file.seek(0)
+            shutil.copyfileobj(file, out_file)
+            out_file.close()
+        except Exception, error:
+            self.delete_download(context, download['id'])
+            self.log.debug(error)
+            try:
+                os.remove(filepath.encode('utf-8'))
+            except:
+                pass
+            try:
+                os.rmdir(path.encode('utf-8'))
+            except:
+                pass
+            raise TracError('Error storing file %s! Is directory specified in' \
+              ' path config option in [downloads] section of trac.ini' \
+              ' existing?' % (download['file'],))
+
+        # Notify change listeners.
+        for listener in self.change_listeners:
+            listener.download_created(context, download)
+
+    def _delete_download(self, context, download):
+        try:
+            self.delete_download(context, download['id'])
+            path = os.path.join(self.path, to_unicode(download['id']))
+            filepath = os.path.join(path, download['file'])
+            path = os.path.normpath(path)
+            filepath = os.path.normpath(filepath)
+            os.remove(filepath)
+            os.rmdir(path)
+
+            # Notify change listeners.
+            for listener in self.change_listeners:
+                listener.download_deleted(context, download)
+        except:
+            pass
 
     def _get_file_from_req(self, context):
         file = context.req.args['file']
