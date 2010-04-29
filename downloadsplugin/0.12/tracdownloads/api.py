@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import os, shutil, re, mimetypes, unicodedata
 from datetime import *
@@ -47,6 +47,31 @@ class DownloadsApi(Component):
       'id,file,description,size,time,count,author,tags,component,version,'
       'architecture,platform,type', doc = 'List of downloads table fields that'
       ' should be visible to users on Downloads section.')
+    download_sort = Option('downloads', 'download_sort', 'time', 'Column by'
+      ' which downloads list will be sorted. Possible values are: id, file,'
+      ' description, size, time, count, author, tags, component, version,'
+      ' architecture, platform, type. Default value is: time.')
+    download_sort_direction = Option('downloads', 'download_sort_direction',
+      'desc', 'Direction of downloads list sorting. Possible values are: asc,'
+      ' desc. Default value is: desc.')
+    architecture_sort = Option('downloads', 'architecture_sort', 'name',
+      'Column by which architectures list will be sorted. Possible values are:'
+      ' id, name, description. Default value is: name.')
+    architecture_sort_direction = Option('downloads',
+      'architecture_sort_direction', 'asc', 'Direction of architectures list'
+      ' sorting. Possible values are: asc, desc. Default value is: asc.')
+    platform_sort = Option('downloads', 'platform_sort', 'name', 'Column by'
+      ' which platforms list will be sorted. Possible values are: id, name,'
+      ' description. Default value is: name.')
+    platform_sort_direction = Option('downloads', 'platform_sort_direction',
+      'asc', 'Direction of platforms list sorting. Possible values are: asc,'
+      ' desc. Default value is: asc.')
+    type_sort = Option('downloads', 'type_sort', 'name', 'Column by which types'
+      ' list will be sorted. Possible values are: id, name, description.'
+      ' Default value is: name.')
+    type_sort_direction = Option('downloads', 'type_sort_direction', 'asc',
+      'Direction of types list sorting. Possible values are: asc, desc. Default'
+      ' value is: asc.')
     unique_filename = BoolOption('downloads', 'unique_filename', False,
       doc = 'If enabled checks if uploaded file has unique name.')
 
@@ -525,8 +550,11 @@ class DownloadsApi(Component):
                 context.req.perm.require('DOWNLOADS_VIEW')
 
                 # Get form values.
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.download_sort
+                if context.req.args.has_key('desc'):
+                    desc = context.req.args.get('desc') == '1'
+                else:
+                    desc = self.download_sort_direction
 
                 self.data['order'] = order
                 self.data['desc'] = desc
@@ -552,8 +580,11 @@ class DownloadsApi(Component):
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.download_sort
+                if context.req.args.has_key('desc'):
+                    desc = context.req.args.get('desc') == '1'
+                else:
+                    desc = self.download_sort_direction
                 download_id = int(context.req.args.get('download') or 0)
 
                 self.data['order'] = order
@@ -646,8 +677,11 @@ class DownloadsApi(Component):
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.architecture_sort
+                if context.req.args.has_key('desc'):
+                    desc = context.req.args.get('desc') == '1'
+                else:
+                    desc = self.architecture_sort_direction
                 architecture_id = int(context.req.args.get('architecture') or 0)
 
                 # Display architectures.
@@ -696,8 +730,11 @@ class DownloadsApi(Component):
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values.
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.platform_sort
+                if context.req.args.has_key('desc'):
+                    desc = context.req.args.get('desc') == '1'
+                else:
+                    desc = self.platform_sort_direction
                 platform_id = int(context.req.args.get('platform') or 0)
 
                 # Display platforms.
@@ -746,8 +783,11 @@ class DownloadsApi(Component):
                 context.req.perm.require('DOWNLOADS_ADMIN')
 
                 # Get form values
-                order = context.req.args.get('order') or 'id'
-                desc = context.req.args.get('desc')
+                order = context.req.args.get('order') or self.type_sort
+                if context.req.args.has_key('desc'):
+                    desc = context.req.args.get('desc') == '1'
+                else:
+                    desc = self.type_sort_direction
                 platform_id = int(context.req.args.get('type') or 0)
 
                 # Display platforms.
