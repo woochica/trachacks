@@ -1,6 +1,6 @@
 You have been subscribed to topic #${discussion.topic.id} - ${discussion.topic.subject}
 ----------------------------------------------------------------------------
-Author:     ${discussion.topic.author}
+Author:     ${format_author(discussion.topic.author)}
 Created:    ${format_datetime(discussion.topic.time)}
 Moderators: ${discussion.forum.moderators}
 ----------------------------------------------------------------------------

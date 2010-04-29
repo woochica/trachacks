@@ -18,7 +18,7 @@
               <a href="${href.discussion('topic', topic.id)}">
                 <strong>${format_to_oneliner_no_links(discussion.env, context, topic.subject) or '&nbsp;'}</strong>
               </a> (#${topic.id})<br/>
-              by ${format_to_oneliner(discussion.env, context, topic.author)} - ${format_datetime(topic.time)} (${pretty_timedelta(topic.time)} ago)
+              by ${format_to_oneliner(discussion.env, context, format_author(topic.author))} - ${format_datetime(topic.time)} (${pretty_timedelta(topic.time)} ago)
             </div>
           </td>
           <td class="replies">

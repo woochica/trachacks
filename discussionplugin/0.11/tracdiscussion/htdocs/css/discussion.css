@@ -1,10 +1,10 @@
-/* General styles */
+/* General styles. */
 .discussion table
 {
   text-align: left;
 }
 
-/* Forum list */
+/* Forum list. */
 .forum-list tr >td
 {
   margin: 0em !important;
@@ -74,7 +74,7 @@
   display: inline-block;
 }
 
-/* Message list */
+/* Message list. */
 .message-list div.topic
 {
   margin: 2em;
@@ -106,7 +106,7 @@
   margin: 1em;
 }
 
-/* Message list reply tree */
+/* Message list reply tree. */
 .message-list div.replies
 {
   display: block;
@@ -230,4 +230,10 @@
 .message-list div.attachments
 {
   padding-left: 1em;
+}
+
+/* Timeline. */
+dt.discussion, dt.discussion a
+{
+  background-image: url(../discussion.png) !important
 }

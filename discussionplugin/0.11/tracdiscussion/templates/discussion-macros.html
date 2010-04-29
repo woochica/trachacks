@@ -2,6 +2,7 @@
   <?python
     from trac.wiki.formatter import format_to_oneliner, format_to_html
     from trac.util.datefmt import format_datetime, pretty_timedelta
+    from tracdiscussion.api import format_to_oneliner_no_links
   ?>
 
   <py:def function="sortable_th(order, desc, Class, title, href)">
@@ -47,7 +48,7 @@
 
         <div class="footer">
           <div class="author">
-            ${format_to_oneliner(discussion.env, context, discussion.topic.author)}
+            ${format_to_oneliner_no_links(discussion.env, context, format_author(discussion.topic.author))}
           </div>
           <div class="time">
             ${format_datetime(discussion.topic.time)} (${pretty_timedelta(discussion.topic.time)} ago)
@@ -135,8 +136,8 @@
         <div class="field">
           <label for="author">Author:</label><br/>
           <py:choose>
-            <input py:when="req.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or req.authname}"/>
-            <input py:otherwise="" type="text" id="author" name="author" value="${req.authname}" readonly="readonly"/>
+            <input py:when="req.authname == 'anonymous'" type="text" id="author" name="author" value="${format_author(req.args.author or req.authname)}"/>
+            <input py:otherwise="" type="text" id="author" name="author" value="${format_author(req.authname)}" readonly="readonly"/>
           </py:choose><br/>
         </div>
 
@@ -175,7 +176,7 @@
       </div>
       <div class="footer">
         <div class="author">
-          ${req.authname}
+          ${format_author(req.authname)}
         </div>
         <div class="time">
           ${format_datetime(discussion.time)} (${pretty_timedelta(discussion.time)} ago)
@@ -221,7 +222,7 @@
 
         <div class="footer">
           <div class="author">
-            ${is_message_edit and discussion.author or message.author}
+            ${format_author(is_message_edit and discussion.author or message.author)}
           </div>
           <div class="time">
             ${is_message_edit and format_datetime(discussion.time) or format_datetime(message.time)} (${is_message_edit and pretty_timedelta(discussion.time) or pretty_timedelta(message.time)} ago)

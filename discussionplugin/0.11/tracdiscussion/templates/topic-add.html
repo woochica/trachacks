@@ -30,7 +30,7 @@
               </div>
               <div class="footer">
                 <div class="author">
-                  ${format_to_oneliner(discussion.env, context, req.args.author)}
+                  ${format_to_oneliner(discussion.env, context, format_author(req.args.author))}
                 </div>
                 <div class="time">
                   ${format_datetime(discussion.time)} (${pretty_timedelta(discussion.time)} ago)
@@ -50,8 +50,8 @@
             <div class="field">
               <label for="author">Author:</label><br/>
               <py:choose>
-                <input py:when="req.authname == 'anonymous'" type="text" id="author" name="author" value="${req.args.author or req.authname}"/>
-                <input py:otherwise="" type="text" id="author" name="author" value="${req.authname}" readonly="readonly"/>
+                <input py:when="req.authname == 'anonymous'" type="text" id="author" name="author" value="${format_author(req.args.author or req.authname)}"/>
+                <input py:otherwise="" type="text" id="author" name="author" value="${format_author(req.authname)}" readonly="readonly"/>
               </py:choose><br/>
             </div>
 

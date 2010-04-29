@@ -5,6 +5,7 @@ from genshi.builder import tag
 from trac.core import *
 from trac.mimeview import Context
 from trac.config import Option
+from trac.web.chrome import add_stylesheet
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc
 from trac.util.text import to_unicode
@@ -29,6 +30,7 @@ class DiscussionTimeline(Component):
     def get_timeline_events(self, req, start, stop, filters):
         self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop,
           filters))
+
         if ('discussion' in filters) and 'DISCUSSION_VIEW' in req.perm:
             # Create context.
             context = Context.from_request(req)
@@ -38,13 +40,16 @@ class DiscussionTimeline(Component):
             db = self.env.get_db_cnx()
             context.cursor = db.cursor()
 
+            # Add CSS styles and scripts.
+            add_stylesheet(context.req, 'discussion/css/discussion.css')
+
             # Get forum events
             for forum in self._get_changed_forums(context, start, stop):
                 # Return event.
                 title = 'New forum %s created' % (forum['name'],)
                 description = tag(forum['subject'], ' - ', forum['description'])
                 ids = ('forum', forum['id'])
-                yield ('changeset', forum['time'], forum['author'], (title,
+                yield ('discussion', forum['time'], forum['author'], (title,
                   description, ids))
 
             # Get topic events
@@ -52,7 +57,7 @@ class DiscussionTimeline(Component):
                 title = 'New topic on %s created' % (topic['forum_name'])
                 description = topic['subject']
                 ids = ('topic', topic['id'])
-                yield ('newticket', topic['time'], topic['author'], (title,
+                yield ('discussion', topic['time'], topic['author'], (title,
                   description, ids))
 
             # Get message events
@@ -60,7 +65,7 @@ class DiscussionTimeline(Component):
                 title = 'New reply on %s created' % (message['forum_name'])
                 description = message['topic_subject']
                 ids = ('message', message['id'])
-                yield ('newticket', message['time'], message['author'], (title,
+                yield ('discussion', message['time'], message['author'], (title,
                   description, ids))
 
     def render_timeline_event(self, context, field, event):

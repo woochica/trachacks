@@ -5,7 +5,7 @@ from tracdiscussion.core import *
 from trac.core import *
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.wiki.web_ui import WikiModule
-from trac.wiki.formatter import format_to_oneliner
+from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.web.main import IRequestFilter
 from trac.web.chrome import Chrome, add_stylesheet
 from trac.util import format_datetime
@@ -27,15 +27,19 @@ class DiscussionWiki(Component):
     implements(IWikiSyntaxProvider, IWikiMacroProvider, IRequestFilter)
 
     # IWikiSyntaxProvider methods
+
     def get_link_resolvers(self):
         yield ('forum', self._discussion_link)
         yield ('topic', self._discussion_link)
         yield ('message', self._discussion_link)
+        yield ('topic-attachment', self._discussion_attachment_link)
+        yield ('raw-topic-attachment', self._discussion_attachment_link)
 
     def get_wiki_syntax(self):
         return []
 
     # IWikiMacroProvider methods
+
     def get_macros(self):
         yield 'ViewTopic'
 
@@ -112,15 +116,16 @@ class DiscussionWiki(Component):
     def post_process_request(self, req, template, data, content_type):
         return (template, data, content_type)
 
-    # Core code methods.
-    def _discussion_link(self, formatter, ns, params, label):
+    # Internal methods.
+
+    def _discussion_link(self, formatter, namespace, params, label):
         id = params
 
         # Get database access.
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        if ns == 'forum':
+        if namespace == 'forum':
             columns = ('subject',)
             sql = "SELECT f.subject FROM forum f WHERE f.id = %s"
             self.log.debug(sql % (id,))
@@ -131,7 +136,7 @@ class DiscussionWiki(Component):
                   id), title = row['subject'].replace('"', ''))
             return html.a(label, href = formatter.href.discussion('forum', id),
               title = label, class_ = 'missing')
-        elif ns == 'topic':
+        elif namespace == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
             sql = "SELECT t.forum, f.subject, t.subject FROM topic t LEFT" \
               " JOIN forum f ON t.forum = f.id WHERE t.id = %s"
@@ -145,7 +150,7 @@ class DiscussionWiki(Component):
                   .replace('"', ''))
             return html.a(label, href = formatter.href.discussion('topic', id),
               title = label.replace('"', ''), class_ = 'missing')
-        elif ns == 'message':
+        elif namespace == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
             sql = "SELECT m.forum, m.topic, f.subject, t.subject FROM" \
               " message m, (SELECT subject, id FROM forum) f," \
@@ -163,4 +168,25 @@ class DiscussionWiki(Component):
               title = label.replace('"', ''), class_ = 'missing')
         else:
             return html.a(label, href = formatter.href.discussion('message', id),
+              title = label.replace('"', ''), class_ = 'missing')
+
+    def _discussion_attachment_link(self, formatter, namespace, params, label):
+        id, name = params.split(':')
+
+        # Create request context.
+        context = Context.from_request(formatter.req)
+        context.realm = 'discussion-wiki'
+
+        # Get database access.
+        db = self.env.get_db_cnx()
+        context.cursor = db.cursor()
+
+        if namespace == 'topic-attachment':
+            return format_to_html(self.env, context,
+              '[attachment:discussion:topic/%s:%s %s]' % (id, name, label))
+        elif namespace == 'raw-topic-attachment':
+            return format_to_html(self.env, context,
+              '[raw-attachment:discussion:topic/%s:%s %s]' % (id, name, label))
+        else:
+            return html.a(label, href = formatter.href.discussion('topic', id),
               title = label.replace('"', ''), class_ = 'missing')

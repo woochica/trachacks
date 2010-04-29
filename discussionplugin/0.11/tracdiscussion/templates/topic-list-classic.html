@@ -31,7 +31,7 @@
           <td class="author">
             <div class="author">
               <a href="${href.discussion('topic', topic.id)}">
-                <span>${format_to_oneliner_no_links(discussion.env, context, topic.author) or '&nbsp;'}</span>
+                <span>${format_to_oneliner_no_links(discussion.env, context, format_author(topic.author)) or '&nbsp;'}</span>
               </a>
             </div>
           </td>
