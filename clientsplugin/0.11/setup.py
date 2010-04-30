@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from setuptools import setup
 
@@ -29,6 +30,7 @@ setup(name=PACKAGE,
             'clients.summary = clients.summary',
             'clients.summary_milestone = clients.summary_milestone',
             'clients.summary_ticketchanges = clients.summary_ticketchanges',
+            'clients.summary_monthlyhours = clients.summary_monthlyhours',
             'clients.action = clients.action',
             'clients.action_email = clients.action_email',
             'clients.action_zendesk_forum = clients.action_zendesk_forum',
