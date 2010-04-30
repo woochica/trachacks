@@ -110,7 +110,6 @@ class ClientMonthlyHoursSummary(Component):
       ticket = etree.SubElement(xsummary, 'ticket')
       etree.SubElement(ticket, 'id').text = str(tid)
       etree.SubElement(ticket, 'summary').text = summary
-      print "Trying to generate summary for ticket %s" % (tid,)
       ticket.append(etree.XML('<description>%s</description>' % wiki_to_html(extract_client_text(description), self.env, req)))
       etree.SubElement(ticket, 'status').text = status
       etree.SubElement(ticket, 'month').text = month
