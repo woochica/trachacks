@@ -13,7 +13,7 @@ class ClientsSetupParticipant(Component):
     
     def __init__(self):
         self.db_version_key = 'clients_plugin_version'
-        self.db_version = 5
+        self.db_version = 6
         self.db_installed_version = None
 
         # Initialise database schema version tracking.
@@ -118,8 +118,13 @@ class ClientsSetupParticipant(Component):
                 cursor.execute('INSERT INTO client SELECT name, description, default_rate, currency FROM client_tmp')
                 cursor.execute('DROP TABLE client_tmp')
             
-            #if self.db_installed_version < 6:
-            #    print 'Updating clients table (v6)'
+            if self.db_installed_version < 6:
+                print 'Updating clients table (v6)'
+                cursor.execute('ALTER TABLE client '
+                               'CHANGE COLUMN default_rate default_rate DECIMAL(10,2)')
+            
+            #if self.db_installed_version < 7:
+            #    print 'Updating clients table (v7)'
             #    cursor.execute('...')
             
             # Updates complete, set the version
