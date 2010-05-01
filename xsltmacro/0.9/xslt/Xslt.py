@@ -63,7 +63,7 @@ import threading
 import re
 import libxml2
 
-from trac.core import Component, implements
+from trac.core import Component, implements, TracError
 from trac.web.api import RequestDone
 from trac.web.main import IRequestHandler
 from trac.wiki.api import IWikiMacroProvider
@@ -374,7 +374,6 @@ class BrowserSource(TransformSource):
 
 class FileSource(TransformSource):
     def __init__(self, env, id, file):
-        import re
         file = re.sub('[^a-zA-Z0-9._/-]', '', file)     # remove forbidden chars
         file = re.sub('^/+', '', file)                  # make sure it's relative
         file = os.path.normpath(file)                   # resolve ..'s
@@ -469,8 +468,8 @@ class XsltProcessor(Component):
     def process_request(self, req):
         stylespec = (req.args.get('ss_mod'), req.args.get('ss_id'), req.args.get('ss_fil'))
         docspec   = (req.args.get('doc_mod'), req.args.get('doc_id'), req.args.get('doc_fil'))
-        if not stylespec[0] or not stylespec[1] or not stylespec[2] or \
-           not docspec[0] or not docspec[1] or not docspec[2]:
+        if None in stylespec or None in docspec:
+            self.env.log.error("Missing request parameters: %s", req.args)
             raise TracError('Bad request')
 
         style_obj = _get_src(self.env, req.hdf, *stylespec)
@@ -491,7 +490,7 @@ class XsltProcessor(Component):
         else:
             req.send_header('Last-Modified', http_date(lastmod))
 
-        page, content_type = _transform(style_obj, doc_obj, params, env, hdf)
+        page, content_type = _transform(style_obj, doc_obj, params, self.env, req.hdf)
 
         req.send_response(200)
         req.send_header('Content-Type', content_type + ';charset=utf-8')
