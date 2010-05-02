@@ -60,6 +60,11 @@ class XsltMacro(WikiMacroBase):
      * `xp_*` are all passed as parameters to the xsl transformer with the `xp_` prefix
        stripped
 
+    When referencing a file in a repository on Trac 0.12 or later (with
+    multi-repository support), the first part of the file is used to select
+    the repository - if it doesn't match any repository, then the default
+    repository is used.
+
     Examples:
     {{{
         [[Xslt(style.xsl, data.xml)]]
@@ -68,13 +73,14 @@ class XsltMacro(WikiMacroBase):
 
     You can use stylesheets and docs from other pages, other tickets, or other modules:
     {{{
-        [[Xslt(OtherPage:foo.xsl, BarPage:bar.xml)]]        # attachments on other wiki pages
-        [[Xslt(base/sub:bar.xsl, foo.xml)]]                 # hierarchical wiki page
-        [[Xslt(view.xsl, #3:baz.xml)]]                      # attachment on ticket #3 is data
-        [[Xslt(view.xsl, ticket:36:boo.xml)]]               # attachment on ticket #36 is data
-        [[Xslt(view.xsl, source:/trunk/docs/foo.xml)]]      # doc from repository
-        [[Xslt(htdocs:foo/bar.xsl, data.xml)]]              # stylesheet in project htdocs dir.
-        [[Xslt(view.xsl, http://test.foo.bar/bar.xml)]]     # xml in external url (only http(s) urls allowed)
+        [[Xslt(OtherPage:foo.xsl, BarPage:bar.xml)]]         # attachments on other wiki pages
+        [[Xslt(base/sub:bar.xsl, foo.xml)]]                  # hierarchical wiki page
+        [[Xslt(view.xsl, #3:baz.xml)]]                       # attachment on ticket #3 is data
+        [[Xslt(view.xsl, ticket:36:boo.xml)]]                # attachment on ticket #36 is data
+        [[Xslt(view.xsl, source:/trunk/docs/foo.xml)]]       # doc from default repository
+        [[Xslt(view.xsl, source:/repo2/trunk/docs/foo.xml)]] # doc from repository 'repo2'
+        [[Xslt(htdocs:foo/bar.xsl, data.xml)]]               # stylesheet in project htdocs dir.
+        [[Xslt(view.xsl, http://test.foo.bar/bar.xml)]]      # xml in external url (only http(s) urls allowed)
     }}}
 
     Passing parameters to the transform:
@@ -399,9 +405,14 @@ class TransformSource(object):
 
 class BrowserSource(TransformSource):
     def __init__(self, env, req, file):
+        from trac.versioncontrol import RepositoryManager
         from trac.versioncontrol.web_ui import get_existing_node
-        repos = env.get_repository(req.authname)
-        obj   = get_existing_node(env, repos, file, None)
+
+        if hasattr(RepositoryManager, 'get_repository_by_path'): # Trac 0.12
+            repo, file = RepositoryManager(env).get_repository_by_path(file)[1:3]
+        else:
+            repo = RepositoryManager(env).get_repository(req.authname)
+        obj = get_existing_node(req, repo, file, None)
 
         TransformSource.__init__(self, "browser", "source", file, obj)
 
