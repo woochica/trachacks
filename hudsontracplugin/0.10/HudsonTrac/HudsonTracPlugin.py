@@ -144,7 +144,7 @@ class HudsonTracPlugin(Component):
         add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
 
         # get and parse the build-info
-        url = self.info_url % {'start': start*1000, 'stop': stop*1000}
+        url = self.info_url % {'start': int(start*1000), 'stop': int(stop*1000)}
         try:
             try:
                 info = minidom.parse(self.url_opener.open(url))
