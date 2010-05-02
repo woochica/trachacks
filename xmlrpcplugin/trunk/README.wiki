@@ -27,16 +27,22 @@ get help, and how to report issues.
 
 == API Documentation ==
 
-The API documentation is available at `<project_url>/xmlrpc` and
-`<project_url/jsonrpc` for projects that have the plugin installed and enabled.
-It can be accessed by all users that have been granted `XML_RPC` permission.
+The API documentation is available at `<project_url>/rpc` for projects that
+have the plugin installed and enabled. It can be accessed by all users that
+have been granted `XML_RPC` permission.
 
-== Developing ==
+== Development ==
 
-The Trac RPC plugin has interfaces that make it possible to extend the set of
-methods available for remote procedure calls. See source for documentation.
+The Trac RPC plugin uses pluggable interfaces to do all its work. That means it
+is easy to extend, and currently supports:
+ * protocols; add a new protocol in addition to the builtin ones and read input
+   and answer request in whatever form and format needed.
+ * methods; adding new methods available for remote procedure calls that will
+   work for any enabled protocol.
 
-The source code can be obtained from: http://trac-hacks.org/svn/xmlrpcplugin/
+See source for documentation. The source code can be obtained from:
+
+http://trac-hacks.org/svn/xmlrpcplugin/
 
 For work on the plugin itself (for submitting patches and more), please verify
 patches by running unittests (requires Trac source code on path):
@@ -50,6 +56,7 @@ Thanks to all those that use the plugin, and contribute with error reports,
 and patches for bugs and enhancements. Special thanks to:
  * Matt Good
  * Steffen Pingel
+ * Olemis Lang
 
 == License ==
 

@@ -6,22 +6,54 @@ License: BSD
 (c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
-from trac.core import *
-from trac.perm import IPermissionRequestor
 import inspect
 import types
+from datetime import datetime
 import xmlrpclib
-import datetime
 
-try:
-    set = set
-except:
-    from sets import Set as set
+from trac.core import *
+from trac.perm import IPermissionRequestor
+
+__all__ = ['expose_rpc', 'IRPCProtocol', 'IXMLRPCHandler', 'AbstractRPCHandler',
+            'Method', 'XMLRPCSystem', 'Binary', 'RPCError', 'MethodNotFound', 
+            'ProtocolException', 'ServiceException']
+
+class Binary(xmlrpclib.Binary):
+    """ RPC Binary type. Currently == xmlrpclib.Binary. """
+    pass
+
+#----------------------------------------------------------------
+# RPC Exception classes
+#----------------------------------------------------------------
+class RPCError(TracError):
+    """ Error class for general RPC-related errors. """
+
+class MethodNotFound(RPCError):
+    """ Error to raise when requested method is not found. """
+
+class _CompositeRpcError(RPCError):
+    def __init__(self, details, title=None, show_traceback=False):
+        if isinstance(details, Exception):
+          self._exc = details
+          message = unicode(details)
+        else :
+          self._exc = None
+          message = details
+        RPCError.__init__(self, message, title, show_traceback)
+    def __unicode__(self):
+        return u"%s details : %s" % (self.__class__.__name__, self.message)
+
+class ProtocolException(_CompositeRpcError):
+    """Protocol could not handle RPC request. Usually this means 
+    that the request has some sort of syntactic error, a library 
+    needed to parse the RPC call is not available, or similar errors."""
+
+class ServiceException(_CompositeRpcError):
+    """The called method threw an exception. Helpful to identify bugs ;o)"""
 
 RPC_TYPES = {int: 'int', bool: 'boolean', str: 'string', float: 'double',
-             xmlrpclib.DateTime: 'dateTime.iso8601', xmlrpclib.Binary: 'base64',
+             datetime: 'dateTime.iso8601', Binary: 'base64',
              list: 'array', dict: 'struct', None : 'int'}
-
 
 def expose_rpc(permission, return_type, *arg_types):
     """ Decorator for exposing a method as an RPC call with the given
@@ -35,7 +67,79 @@ def expose_rpc(permission, return_type, *arg_types):
     return decorator
 
 
+class IRPCProtocol(Interface):
+    
+    def rpc_info():
+        """ Returns a tuple of (name, docs). Method provides
+        general information about the protocol used for the RPC HTML view.
+        
+        name: Shortname like 'XML-RPC'.
+        docs: Documentation for the protocol.
+        """
+
+    def rpc_match():
+        """ Return an iterable of (path_item, content_type) combinations that
+        will be handled by the protocol.
+        
+        path_item: Single word to use for matching against
+                   (/login)?/<path_item>. Answer to 'rpc' only if possible.
+        content_type: Starts-with check of 'Content-Type' request header. """
+
+    def parse_rpc_request(req, content_type):
+        """ Parse RPC requests. 
+        
+        req          :        HTTP request object
+        content_type :        Input MIME type
+        
+        Return a dictionary with the following keys set. All the other 
+        values included in this mapping will be ignored by the core 
+        RPC subsystem, will be protocol-specific, and SHOULD NOT be 
+        needed in order to invoke a given method.
+
+        method  (MANDATORY): target method name (e.g. 'ticket.get')
+        params  (OPTIONAL) : a tuple containing input positional arguments
+        headers (OPTIONAL) : if the protocol supports custom headers set 
+                              by the client, then this value SHOULD be a 
+                              dictionary binding `header name` to `value`. 
+                              However, protocol handlers as well as target 
+                              RPC methods *MUST (SHOULD ?) NOT* rely on 
+                              specific values assigned to a particular 
+                              header in order to send a response back 
+                              to the client.
+        mimetype           : request MIME-type. This value will be set
+                              by core RPC components after calling
+                              this method so, please, ignore
+
+        If the request cannot be parsed this method *MUST* raise 
+        an instance of `ProtocolException` optionally wrapping another 
+        exception containing details about the failure.
+        """
+
+    def send_rpc_result(req, result):
+        """Serialize the result of the RPC call and send it back to 
+        the client.
+        
+        req     : Request object. The same mapping returned by 
+                  `parse_rpc_request` can be accessed through 
+                  `req.rpc` (see above).
+        result  : The value returned by the target RPC method
+        """
+
+    def send_rpc_error(req, rpcreq, e):
+        """Send a fault message back to the caller. Exception type 
+        and message are used for this purpose. This method *SHOULD* 
+        handle `RPCError`, `PermissionError`, `ResourceNotFound` and 
+        their subclasses. This method is *ALWAYS* called from within 
+        an exception handler.
+        
+        req     : Request object. The same mapping returned by 
+                  `parse_rpc_request` can be accessed through 
+                  `req.rpc` (see above).
+        e       : exception object describing the failure
+        """
+
 class IXMLRPCHandler(Interface):
+
     def xmlrpc_namespace():
         """ Provide the namespace in which a set of methods lives.
             This can be overridden if the 'name' element is provided by
@@ -55,7 +159,6 @@ class IXMLRPCHandler(Interface):
         method. Each signature is a tuple consisting of the return type
         followed by argument types.
         """
-
 
 class AbstractRPCHandler(Component):
     implements(IXMLRPCHandler)
@@ -180,7 +283,7 @@ class XMLRPCSystem(Component):
                 p = Method(provider, *candidate)
                 if p.name == method:
                     return p
-        raise xmlrpclib.Fault(1, 'RPC method "%s" not found' % method)
+        raise MethodNotFound('RPC method "%s" not found' % method)
         
     # Exported methods
     def all_methods(self, req):
@@ -199,10 +302,8 @@ class XMLRPCSystem(Component):
         for signature in signatures:
             try:
                 yield self.get_method(signature['methodName'])(req, signature['params'])
-            except xmlrpclib.Fault, e:
-                yield e
             except Exception, e:
-                yield xmlrpclib.Fault(2, "'%s' while executing '%s()'" % (str(e), signature['methodName']))
+                yield e
 
     def listMethods(self, req):
         """ This method returns a list of strings, one for each (non-system)
@@ -235,4 +336,4 @@ class XMLRPCSystem(Component):
         indicate API breaking changes, while minor version changes are simple
         additions, bug fixes, etc. """
         import tracrpc
-        return map(int, tracrpc.__version__.split('.'))
+        return map(int, tracrpc.__version__.split('-')[0].split('.'))

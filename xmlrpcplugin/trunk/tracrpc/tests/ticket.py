@@ -10,15 +10,20 @@ import unittest
 import xmlrpclib
 import os
 import shutil
+import time
 
-from tracrpc.tests import rpc_testenv
+from tracrpc.tests import rpc_testenv, TracRpcTestCase
 
-class RpcTicketTestCase(unittest.TestCase):
+class RpcTicketTestCase(TracRpcTestCase):
     
     def setUp(self):
+        TracRpcTestCase.setUp(self)
         self.anon = xmlrpclib.ServerProxy(rpc_testenv.url_anon)
         self.user = xmlrpclib.ServerProxy(rpc_testenv.url_user)
         self.admin = xmlrpclib.ServerProxy(rpc_testenv.url_admin)
+
+    def tearDown(self):
+        TracRpcTestCase.tearDown(self)
 
     def test_getActions(self):
         tid = self.admin.ticket.create("ticket_getActions", "kjsald", {})
@@ -32,7 +37,11 @@ class RpcTicketTestCase(unittest.TestCase):
                   [['action_reassign_reassign_owner', 'admin', []]]],
                   ['accept', 'accept',
                   "The owner will change from (none) to admin. Next status will be 'accepted'.", []]]
-        self.assertEquals(default, actions)
+        # Some action text was changed in trac:changeset:9041 - adjust default for test
+        if 'will be changed' in actions[2][2]:
+            default[2][2] = default[2][2].replace('will change', 'will be changed')
+            default[3][2] = default[3][2].replace('will change', 'will be changed')
+        self.assertEquals(actions, default)
         self.admin.ticket.delete(tid)
 
     def test_getAvailableActions_DeleteTicket(self):
@@ -41,9 +50,11 @@ class RpcTicketTestCase(unittest.TestCase):
         self.assertEquals(False,
                 'delete' in self.admin.ticket.getAvailableActions(tid))
         env = rpc_testenv.get_trac_environment()
+        delete_plugin = os.path.join(rpc_testenv.tracdir,
+                                    'plugins', 'DeleteTicket.py')
         shutil.copy(os.path.join(
             rpc_testenv.trac_src, 'sample-plugins', 'workflow', 'DeleteTicket.py'),
-            os.path.join(rpc_testenv.tracdir, 'plugins'))
+                    delete_plugin)
         env.config.set('ticket', 'workflow',
                 'ConfigurableTicketWorkflow,DeleteTicketActionController')
         env.config.save()
@@ -57,6 +68,9 @@ class RpcTicketTestCase(unittest.TestCase):
         rpc_testenv.restart()
         self.assertEquals(False,
                 'delete' in self.admin.ticket.getAvailableActions(tid))
+        # Clean up
+        os.unlink(delete_plugin)
+        rpc_testenv.restart()
 
     def test_FineGrainedSecurity(self):
         self.assertEquals(1, self.admin.ticket.create('abc', '123', {}))
@@ -101,9 +115,21 @@ class RpcTicketTestCase(unittest.TestCase):
         self.assertEquals(0, self.admin.ticket.delete(1))
         self.assertEquals(0, self.admin.ticket.delete(2))
         self.assertEquals(0, self.admin.ticket.delete(3))
-        
-def suite():
+
+    def test_getRecentChanges(self):
+        tid1 = self.admin.ticket.create("ticket_getRecentChanges", "one", {})
+        time.sleep(1)
+        tid2 = self.admin.ticket.create("ticket_getRecentChanges", "two", {})
+        _id, created, modified, attributes = self.admin.ticket.get(tid2)
+        changes = self.admin.ticket.getRecentChanges(created)
+        try:
+            self.assertEquals(changes, [tid2])
+        finally:
+            self.admin.ticket.delete(tid1)
+            self.admin.ticket.delete(tid2)
+
+def test_suite():
     return unittest.makeSuite(RpcTicketTestCase)
 
 if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+    unittest.main(defaultTest='test_suite')

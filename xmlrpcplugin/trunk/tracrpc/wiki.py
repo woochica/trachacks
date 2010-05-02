@@ -6,22 +6,20 @@ License: BSD
 (c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
-import xmlrpclib
 import os
+from datetime import datetime
 
+from trac.attachment import Attachment
 from trac.core import *
-from trac.resource import Resource
-from trac.util.datefmt import to_timestamp, to_datetime, utc
+from trac.resource import Resource, ResourceNotFound
 from trac.wiki.api import WikiSystem
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html
-from trac.attachment import Attachment
 
-from tracrpc.api import IXMLRPCHandler, expose_rpc
+from tracrpc.api import IXMLRPCHandler, expose_rpc, Binary
+from tracrpc.util import StringIO, to_utimestamp, from_utimestamp
+
+__all__ = ['WikiRPC']
 
 class WikiRPC(Component):
     """Superset of the
@@ -36,7 +34,7 @@ class WikiRPC(Component):
         return 'wiki'
 
     def xmlrpc_methods(self):
-        yield (None, ((dict, xmlrpclib.DateTime),), self.getRecentChanges)
+        yield (None, ((dict, datetime),), self.getRecentChanges)
         yield ('WIKI_VIEW', ((int,),), self.getRPCVersionSupported)
         yield (None, ((str, str), (str, str, int),), self.getPage)
         yield (None, ((str, str, int),), self.getPage, 'getPageVersion')
@@ -47,10 +45,10 @@ class WikiRPC(Component):
         yield (None, ((dict, str, int),), self.getPageInfo, 'getPageInfoVersion')
         yield (None, ((bool, str, str, dict),), self.putPage)
         yield (None, ((list, str),), self.listAttachments)
-        yield (None, ((xmlrpclib.Binary, str),), self.getAttachment)
-        yield (None, ((bool, str, xmlrpclib.Binary),), self.putAttachment)
-        yield (None, ((bool, str, str, str, xmlrpclib.Binary),
-                               (bool, str, str, str, xmlrpclib.Binary, bool)),
+        yield (None, ((Binary, str),), self.getAttachment)
+        yield (None, ((bool, str, Binary),), self.putAttachment)
+        yield (None, ((bool, str, str, str, Binary),
+                               (bool, str, str, str, Binary, bool)),
                                self.putAttachmentEx)
         yield (None, ((bool, str),(bool, str, int)), self.deletePage)
         yield (None, ((bool, str),), self.deleteAttachment)
@@ -58,12 +56,12 @@ class WikiRPC(Component):
         yield ('WIKI_VIEW', ((str, str),), self.wikiToHtml)
 
     def _page_info(self, name, when, author, version, comment):
-        return dict(name=name, lastModified=to_datetime(when, utc),
+        return dict(name=name, lastModified=when,
                     author=author, version=int(version), comment=comment)
 
     def getRecentChanges(self, req, since):
         """ Get list of changed pages since timestamp """
-        since = to_timestamp(since)
+        since = to_utimestamp(since)
         wiki_realm = Resource('wiki')
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -73,7 +71,8 @@ class WikiRPC(Component):
         for name, when, author, version, comment in cursor:
             if 'WIKI_VIEW' in req.perm(wiki_realm(id=name, version=version)):
                 result.append(
-                    self._page_info(name, when, author, version, comment))
+                    self._page_info(name, from_utimestamp(when),
+                                    author, version, comment))
         return result
 
     def getRPCVersionSupported(self, req):
@@ -90,7 +89,7 @@ class WikiRPC(Component):
             msg = 'Wiki page "%s" does not exist' % pagename
             if version is not None:
                 msg += ' at version %s' % version
-            raise xmlrpclib.Fault(0, msg)
+            raise ResourceNotFound(msg)
 
     def getPageHTML(self, req, pagename, version=None):
         """ Return page in rendered HTML, latest version. """
@@ -156,7 +155,7 @@ class WikiRPC(Component):
         pagename, filename = os.path.split(path)
         attachment = Attachment(self.env, 'wiki', pagename, filename)
         req.perm(attachment.resource).require('ATTACHMENT_VIEW')
-        return xmlrpclib.Binary(attachment.open().read())
+        return Binary(attachment.open().read())
 
     def putAttachment(self, req, path, data):
         """ (over)writes an attachment. Returns True if successful.
@@ -173,7 +172,7 @@ class WikiRPC(Component):
         
         Use this method if you don't care about WikiRPC compatibility. """
         if not WikiPage(self.env, pagename).exists:
-            raise TracError, 'Wiki page "%s" does not exist' % pagename
+            raise ResourceNotFound, 'Wiki page "%s" does not exist' % pagename
         if replace:
             try:
                 attachment = Attachment(self.env, 'wiki', pagename, filename)
@@ -192,7 +191,7 @@ class WikiRPC(Component):
         """ Delete an attachment. """
         pagename, filename = os.path.split(path)
         if not WikiPage(self.env, pagename).exists:
-            raise TracError, 'Wiki page "%s" does not exist' % pagename
+            raise ResourceNotFound, 'Wiki page "%s" does not exist' % pagename
         attachment = Attachment(self.env, 'wiki', pagename, filename)
         req.perm(attachment.resource).require('ATTACHMENT_DELETE')
         attachment.delete()

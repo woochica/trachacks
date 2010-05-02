@@ -1,0 +1,5 @@
+include README.wiki
+include setup.cfg
+include tracrpc/htdocs/*.css
+include tracrpc/htdocs/*.js
+include tracrpc/templates/*.html

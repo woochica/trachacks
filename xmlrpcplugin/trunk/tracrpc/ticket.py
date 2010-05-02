@@ -6,25 +6,27 @@ License: BSD
 (c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
+import inspect
+from datetime import datetime
+
+import genshi
+
 from trac.attachment import Attachment
 from trac.core import *
 from trac.perm import PermissionError
-from trac.resource import Resource
+from trac.resource import Resource, ResourceNotFound
 import trac.ticket.model as model
 import trac.ticket.query as query
 from trac.ticket.api import TicketSystem
 from trac.ticket.notification import TicketNotifyEmail
 from trac.ticket.web_ui import TicketModule
 from trac.web.chrome import add_warning
-from trac.util.datefmt import to_datetime, to_timestamp, utc
+from trac.util.datefmt import to_datetime, utc
 
-import genshi
+from tracrpc.api import IXMLRPCHandler, expose_rpc, Binary
+from tracrpc.util import StringIO, to_utimestamp
 
-import inspect
-import xmlrpclib
-from StringIO import StringIO
-
-from tracrpc.api import IXMLRPCHandler, expose_rpc
+__all__ = ['TicketRPC']
 
 class TicketRPC(Component):
     """ An interface to Trac's ticketing system. """
@@ -37,7 +39,7 @@ class TicketRPC(Component):
 
     def xmlrpc_methods(self):
         yield (None, ((list,), (list, str)), self.query)
-        yield (None, ((list, xmlrpclib.DateTime),), self.getRecentChanges)
+        yield (None, ((list, datetime),), self.getRecentChanges)
         yield (None, ((list, int),), self.getAvailableActions)
         yield (None, ((list, int),), self.getActions)
         yield (None, ((list, int),), self.get)
@@ -46,10 +48,10 @@ class TicketRPC(Component):
         yield (None, ((None, int),), self.delete)
         yield (None, ((dict, int), (dict, int, int)), self.changeLog)
         yield (None, ((list, int),), self.listAttachments)
-        yield (None, ((xmlrpclib.Binary, int, str),), self.getAttachment)
+        yield (None, ((Binary, int, str),), self.getAttachment)
         yield (None,
-               ((str, int, str, str, xmlrpclib.Binary, bool),
-                (str, int, str, str, xmlrpclib.Binary)),
+               ((str, int, str, str, Binary, bool),
+                (str, int, str, str, Binary)),
                self.putAttachment)
         yield (None, ((bool, int, str),), self.deleteAttachment)
         yield ('TICKET_VIEW', ((list,),), self.getTicketFields)
@@ -68,7 +70,7 @@ class TicketRPC(Component):
 
     def getRecentChanges(self, req, since):
         """Returns a list of IDs of tickets that have changed since timestamp."""
-        since = to_timestamp(since)
+        since = to_utimestamp(since)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('SELECT id FROM ticket'
@@ -243,13 +245,13 @@ class TicketRPC(Component):
         """ returns the content of an attachment. """
         attachment = Attachment(self.env, 'ticket', ticket, filename)
         req.perm(attachment.resource).require('ATTACHMENT_VIEW')
-        return xmlrpclib.Binary(attachment.open().read())
+        return Binary(attachment.open().read())
 
     def putAttachment(self, req, ticket, filename, description, data, replace=True):
         """ Add an attachment, optionally (and defaulting to) overwriting an
         existing one. Returns filename."""
         if not model.Ticket(self.env, ticket).exists:
-            raise TracError('Ticket "%s" does not exist' % ticket)
+            raise ResourceNotFound('Ticket "%s" does not exist' % ticket)
         if replace:
             try:
                 attachment = Attachment(self.env, 'ticket', ticket, filename)
@@ -267,7 +269,7 @@ class TicketRPC(Component):
     def deleteAttachment(self, req, ticket, filename):
         """ Delete an attachment. """
         if not model.Ticket(self.env, ticket).exists:
-            raise TracError('Ticket "%s" does not exists' % ticket)
+            raise ResourceNotFound('Ticket "%s" does not exists' % ticket)
         attachment = Attachment(self.env, 'ticket', ticket, filename)
         req.perm(attachment.resource).require('ATTACHMENT_DELETE')
         attachment.delete()

@@ -1,0 +1,13 @@
+#rpc-toc {
+    display: none;
+    float: right;
+    width: 15em;
+}
+#rpc-toc.wiki-toc h4 {
+    text-align: center;
+}
+#rpc-toc ul {
+    margin: 0;
+    padding: 0.3em 0.15em;
+    list-style-type: none;
+}

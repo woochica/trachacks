@@ -6,24 +6,12 @@ License: BSD
 (c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
-import datetime
-import time
-import xmlrpclib
+from trac.util.compat import any
 
-from trac.util.datefmt import utc
-
-### PUBLIC
-
-def to_xmlrpc_datetime(dt):
-    """ Convert a datetime.datetime object to a xmlrpclib DateTime object """
-    return xmlrpclib.DateTime(dt.utctimetuple())
-
-def from_xmlrpc_datetime(data):
-    """Return datetime (in utc) from XMLRPC datetime string (is always utc)"""
-    t = list(time.strptime(data.value, "%Y%m%dT%H:%M:%S")[0:6])
-    return apply(datetime.datetime, t, {'tzinfo': utc})
-
-### INTERNAL / COMPAT
+try:
+  from cStringIO import StringIO
+except ImportError:
+  from StringIO import StringIO
 
 try:
     # Method only available in Trac 0.11.3 or higher
@@ -44,3 +32,26 @@ try:
     from trac.util.text import empty
 except ImportError:
     empty = None
+
+def accepts_mimetype(req, mimetype):
+    if isinstance(mimetype, basestring):
+      mimetype = (mimetype,)
+    accept = req.get_header('Accept')
+    if accept is None :
+        # Don't make judgements if no MIME type expected and method is GET
+        return req.method == 'GET'
+    else :
+        accept = accept.split(',')
+        return any(x.strip().startswith(y) for x in accept for y in mimetype)
+
+def prepare_docs(text, indent=4):
+    r"""Remove leading whitespace"""
+    return ''.join(l[indent:] for l in text.splitlines(True))
+
+try:
+    # Micro-second support added to 0.12dev r9210
+    from trac.util.datefmt import to_utimestamp, from_utimestamp
+except ImportError:
+    from trac.util.datefmt import to_timestamp, to_datetime, utc
+    to_utimestamp = to_timestamp
+    from_utimestamp = lambda x: to_datetime(x, utc)

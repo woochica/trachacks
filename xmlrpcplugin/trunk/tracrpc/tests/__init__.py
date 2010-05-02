@@ -35,19 +35,20 @@ try:
             print "Enabling RPC plugin and permissions..."
             env.config.set('components', 'tracrpc.*', 'enabled')
             env.config.save()
+            self.getLogger = lambda : env.log
             self._tracadmin('permission', 'add', 'anonymous', 'XML_RPC')
             print "Created test environment: %s" % self.dirname
             parts = urllib2.urlparse.urlsplit(self.url)
-            self.url_anon = '%s://%s:%s/xmlrpc' % (parts[0], parts[1],
+            # Regular URIs
+            self.url_anon = '%s://%s:%s/rpc' % (parts[0], parts[1],
                                 self.port)
+            self.url_auth = '%s://%s:%s/login/rpc' % (parts[0],
+                                parts[1], self.port)
+            # URIs with user:pass as part of URL
             self.url_user = '%s://user:user@%s:%s/login/xmlrpc' % \
                                 (parts[0], parts[1], self.port)
             self.url_admin = '%s://admin:admin@%s:%s/login/xmlrpc' % \
                                 (parts[0], parts[1], self.port)
-            self.url_anon_json = '%s://%s:%s/jsonrpc' % (parts[0], parts[1],
-                                self.port)
-            self.url_auth_json = '%s://%s:%s/login/jsonrpc' % (parts[0],
-                                parts[1], self.port)
             print "Starting web server: %s:%s\n" % (self.url, self.port)
             self.restart()
             SvnFunctionalTestEnvironment.post_create(self, env)
@@ -66,20 +67,60 @@ try:
                 os.path.realpath(__file__), '..', '..', '..', 'rpctestenv')),
                 '8765', 'http://127.0.0.1')
 
-    def suite():
+    def test_suite():
         suite = unittest.TestSuite()
-        import tracrpc.tests.xml
-        suite.addTest(tracrpc.tests.xml.suite())
-        import tracrpc.tests.json
-        suite.addTest(tracrpc.tests.json.suite())
+        import tracrpc.tests.api
+        suite.addTest(tracrpc.tests.api.test_suite())
+        import tracrpc.tests.xml_rpc
+        suite.addTest(tracrpc.tests.xml_rpc.test_suite())
+        import tracrpc.tests.json_rpc
+        suite.addTest(tracrpc.tests.json_rpc.test_suite())
         import tracrpc.tests.ticket
-        suite.addTest(tracrpc.tests.ticket.suite())
+        suite.addTest(tracrpc.tests.ticket.test_suite())
         import tracrpc.tests.wiki
-        suite.addTest(tracrpc.tests.wiki.suite())
+        suite.addTest(tracrpc.tests.wiki.test_suite())
+        import tracrpc.tests.web_ui
+        suite.addTest(tracrpc.tests.web_ui.test_suite())
         return suite
 
 except Exception, e:
     print e
     print "Trac test infrastructure not available."
     print "Install Trac as 'python setup.py develop' (run Trac from source).\n"
-    suite = unittest.TestSuite() # return empty suite
+    test_suite = unittest.TestSuite() # return empty suite
+    
+    TracRpcTestCase = unittest.TestCase
+else :
+    __unittest = 1          # Do not show this module in tracebacks
+    class TracRpcTestCase(unittest.TestCase):
+        def setUp(self):
+            log = rpc_testenv.get_trac_environment().log
+            log.info('=' * 70)
+            log.info('(TEST) Starting %s.%s',
+                            self.__class__.__name__,
+                            self._testMethodName)
+            log.info('=' * 70)
+
+        def failUnlessRaises(self, excClass, callableObj, *args, **kwargs):
+            """Enhanced assertions to detect exceptions."""
+            try:
+                callableObj(*args, **kwargs)
+            except excClass, e:
+                return e
+            except self.failureException :
+                raise
+            except Exception, e :
+                if hasattr(excClass, '__name__'): excName = excClass.__name__
+                else: excName = str(excClass)
+
+                if hasattr(e, '__name__'): excMsg = e.__name__
+                else: excMsg = str(e)
+
+                raise self.failureException("\n\nExpected %s\n\nGot %s : %s" % (
+                                        excName, e.__class__.__name__, excMsg))
+            else:
+                if hasattr(excClass,'__name__'): excName = excClass.__name__
+                else: excName = str(excClass)
+                raise self.failureException, "Expected %s\n\nNothing raised" % excName
+
+        assertRaises = failUnlessRaises

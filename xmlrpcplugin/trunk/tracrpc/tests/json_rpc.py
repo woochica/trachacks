@@ -9,17 +9,17 @@ import unittest
 import os
 import shutil
 import urllib2
-from StringIO import StringIO
 
-from tracrpc.web_ui import json
+from tracrpc.json_rpc import json
+from tracrpc.util import StringIO
 
 if json:
-    from tracrpc.tests import rpc_testenv
+    from tracrpc.tests import rpc_testenv, TracRpcTestCase
 
-    class JsonTestCase(unittest.TestCase):
-        
+    class JsonTestCase(TracRpcTestCase):
+
         def _anon_req(self, data):
-            req = urllib2.Request(rpc_testenv.url_anon_json,
+            req = urllib2.Request(rpc_testenv.url_anon,
                         headers={'Content-Type': 'application/json'})
             req.data = json.dumps(data)
             resp = urllib2.urlopen(req)
@@ -29,20 +29,20 @@ if json:
             password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
             handler = urllib2.HTTPBasicAuthHandler(password_mgr)
             password_mgr.add_password(realm=None,
-                          uri=rpc_testenv.url_auth_json,
+                          uri=rpc_testenv.url_auth,
                           user=user,
                           passwd=user)
-            req = urllib2.Request(rpc_testenv.url_auth_json,
+            req = urllib2.Request(rpc_testenv.url_auth,
                         headers={'Content-Type': 'application/json'})
             req.data = json.dumps(data)
             resp = urllib2.build_opener(handler).open(req)
             return json.loads(resp.read())
 
         def setUp(self):
-            pass
+            TracRpcTestCase.setUp(self)
 
         def tearDown(self):
-            pass
+            TracRpcTestCase.tearDown(self)
 
         def test_call(self):
             result = self._anon_req(
@@ -59,6 +59,7 @@ if json:
                     {'method': 'nonexisting', 'params': []}
                 ], 'id': 233}
             result = self._anon_req(data)
+            self.assertEquals(None, result['error'])
             self.assertEquals(4, len(result['result']))
             items = result['result']
             self.assertEquals(1, items[0]['id'])
@@ -116,7 +117,7 @@ if json:
                                          'id': 'no-perm'})
                 self.assertEquals(None, result['result'])
                 self.assertEquals('no-perm', result['id'])
-                self.assertEquals(-32600, result['error']['code'])
+                self.assertEquals(403, result['error']['code'])
                 self.assertTrue('XML_RPC' in result['error']['message'])
             finally:
                 # Add back the default permission for further tests
@@ -129,7 +130,7 @@ if json:
             self.assertTrue(result['error'])
             self.assertEquals(result['id'], 'no-method')
             self.assertEquals(None, result['result'])
-            self.assertEquals(-32603, result['error']['code'])
+            self.assertEquals(-32601, result['error']['code'])
             self.assertTrue('not found' in result['error']['message'])
 
         def test_wrong_argspec(self):
@@ -142,11 +143,36 @@ if json:
             self.assertTrue('listMethods() takes exactly 2 arguments' \
                                 in result['error']['message'])
 
-    def suite():
+        def test_call_permission(self):
+            # Test missing call-specific permission
+            result = self._anon_req({'method': 'ticket.component.delete',
+                    'params': ['component1'], 'id': 2332})
+            self.assertEquals(None, result['result'])
+            self.assertEquals(2332, result['id'])
+            self.assertEquals(403, result['error']['code'])
+            self.assertEquals(result['error']['message'],
+                'TICKET_ADMIN privileges are required to perform this operation')
+
+        def test_resource_not_found(self):
+            # A Ticket resource
+            result = self._anon_req({'method': 'ticket.get',
+                    'params': [2147483647], 'id': 3443})
+            self.assertEquals(result['id'], 3443)
+            self.assertEquals(result['error']['code'], 404)
+            self.assertEquals(result['error']['message'],
+                     'Ticket 2147483647 does not exist.')
+            # A Wiki resource
+            result = self._anon_req({'method': 'wiki.getPage',
+                    'params': ["Test", 10], 'id': 3443})
+            self.assertEquals(result['error']['code'], 404)
+            self.assertEquals(result['error']['message'],
+                     'Wiki page "Test" does not exist at version 10')
+
+    def test_suite():
         return unittest.makeSuite(JsonTestCase)
 else:
     print "SKIP: json not available. Cannot run tests."
-    suite = unittest.TestSuite()
+    test_suite = unittest.TestSuite()
 
 if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+    unittest.main(defaultTest='test_suite')

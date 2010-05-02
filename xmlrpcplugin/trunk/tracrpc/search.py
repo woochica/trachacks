@@ -7,14 +7,13 @@ License: BSD
 """
 
 from trac.core import *
-from tracrpc.api import IXMLRPCHandler
 from trac.search.api import ISearchSource
 from trac.search.web_ui import SearchModule
+from trac.util.compat import set
 
-try:
-    a = set()
-except:
-    from sets import Set as set
+from tracrpc.api import IXMLRPCHandler
+
+__all__ = ['SearchRPC']
 
 class SearchRPC(Component):
     """ Search Trac. """
