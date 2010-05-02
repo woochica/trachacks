@@ -32,6 +32,9 @@ The remaining arguments are optional:
  * `xp_*` are all passed as parameters to the xsl transformer with the `xp_` prefix
    stripped
 
+Additionally, any request parameters whose name starts with `xp_` are also
+passed to the xsl transformer as parameters (with the `xp_` prefix stripped).
+
 Examples:
 {{{
     [[Xslt(style.xsl, data.xml)]]
@@ -97,9 +100,10 @@ def execute(hdf, args, env):
     opts      = _parse_opts(args[2:])
 
     if 'use_iframe' in opts or 'use_object' in opts:
+        params = dict(_get_opts(opts, 'xp_', False))
+        params.update(_get_opts(_req_args(hdf), 'xp_', False))
         url = env.href(MY_URL, ss_mod=stylespec[0], ss_id=stylespec[1], ss_fil=stylespec[2],
-                       doc_mod=docspec[0], doc_id=docspec[1], doc_fil=docspec[2],
-                       **dict(_get_opts(opts, 'xp_', False)))
+                       doc_mod=docspec[0], doc_id=docspec[1], doc_fil=docspec[2], **params)
 
         res = """
           <script type="text/javascript">
@@ -138,6 +142,7 @@ def execute(hdf, args, env):
         style_obj = _get_src(env, hdf, *stylespec)
         doc_obj   = _get_src(env, hdf, *docspec)
         params    = dict(_get_opts(opts, 'xp_'))
+        params.update(_get_opts(_req_args(hdf), 'args.xp_'))
 
         page, ct  = _transform(style_obj, doc_obj, params, env, hdf)
 
@@ -317,6 +322,16 @@ def _get_opts(opts, prefix, strip_prefix=True):
     off = strip_prefix and len(prefix) or 0
     return ((_to_str(k)[off:], _to_str(opts[k])) \
                                 for k in opts if k.startswith(prefix))
+
+def _req_args(hdf):
+    args = {}
+
+    node = hdf.getObj('args').child()
+    while node:
+        args[node.name()] = node.value()
+        node = node.next()
+
+    return args
 
 class TransformSource(object):
     """Represents the source of an input (stylesheet or xml-doc) to the transformer"""

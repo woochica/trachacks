@@ -60,6 +60,10 @@ class XsltMacro(WikiMacroBase):
      * `xp_*` are all passed as parameters to the xsl transformer with the `xp_` prefix
        stripped
 
+    Additionally, any request parameters whose name starts with `xp_` are also
+    passed to the xsl transformer as parameters (with the `xp_` prefix
+    stripped).
+
     When referencing a file in a repository on Trac 0.12 or later (with
     multi-repository support), the first part of the file is used to select
     the repository - if it doesn't match any repository, then the default
@@ -106,6 +110,7 @@ class XsltMacro(WikiMacroBase):
 
         if 'use_iframe' in opts or 'use_object' in opts:
             params = dict(self._get_opts(opts, 'xp_', False))
+            params.update(self._get_opts(formatter.req.args, 'xp_', False))
             url = self.env.href(MY_URL, ss_mod=stylespec[0], ss_id=stylespec[1],
                                 ss_fil=stylespec[2], doc_mod=docspec[0],
                                 doc_id=docspec[1], doc_fil=docspec[2], **params)
@@ -147,6 +152,7 @@ class XsltMacro(WikiMacroBase):
             style_obj = self._get_src(self.env, formatter.req, *stylespec)
             doc_obj   = self._get_src(self.env, formatter.req, *docspec)
             params    = dict(self._get_opts(opts, 'xp_'))
+            params.update(self._get_opts(formatter.req.args, 'xp_'))
 
             page, ct  = self._transform(style_obj, doc_obj, params, self.env, formatter.req)
 
