@@ -105,7 +105,7 @@ class XsltMacro(WikiMacroBase):
         opts      = self._parse_opts(args[2:])
 
         if 'use_iframe' in opts or 'use_object' in opts:
-            params = dict([(k, v) for k, v in opts.iteritems() if k.startswith('xp_')])
+            params = dict(self._get_opts(opts, 'xp_', False))
             url = self.env.href(MY_URL, ss_mod=stylespec[0], ss_id=stylespec[1],
                                 ss_fil=stylespec[2], doc_mod=docspec[0],
                                 doc_id=docspec[1], doc_fil=docspec[2], **params)
@@ -125,7 +125,7 @@ class XsltMacro(WikiMacroBase):
 
             if 'use_iframe' in opts:
                 attrs = { 'style': 'width: 100%; margin: 0pt', 'frameborder': '0', 'scrolling': 'auto' }
-                attrs.update(dict([(k[3:], v) for k, v in opts.iteritems() if k.startswith('if_')]))
+                attrs.update(self._get_opts(opts, 'if_'))
 
                 res += """
                   <iframe src="%(src)s" onload="maximizeFrame(this)" %(attrs)s></iframe>
@@ -134,7 +134,7 @@ class XsltMacro(WikiMacroBase):
 
             if 'use_object' in opts:
                 attrs = { 'style': 'width: 100%; margin: 0pt' }
-                attrs.update(dict([(k[4:], v) for k, v in opts.iteritems() if k.startswith('obj_')]))
+                attrs.update(self._get_opts(opts, 'obj_'))
 
                 res += """
                   <object data="%(src)s" type="text/html" onload="maximizeFrame(this)" %(attrs)s></object>
@@ -146,7 +146,7 @@ class XsltMacro(WikiMacroBase):
         else:
             style_obj = self._get_src(self.env, formatter.req, *stylespec)
             doc_obj   = self._get_src(self.env, formatter.req, *docspec)
-            params    = dict([(self._to_str(k[3:]), self._to_str(v)) for k, v in opts.iteritems() if k.startswith('xp_')])
+            params    = dict(self._get_opts(opts, 'xp_'))
 
             page, ct  = self._transform(style_obj, doc_obj, params, self.env, formatter.req)
 
@@ -322,6 +322,11 @@ class XsltMacro(WikiMacroBase):
 
     _get_src = staticmethod(_get_src)
 
+    def _get_opts(self, opts, prefix, strip_prefix=True):
+        off = strip_prefix and len(prefix) or 0
+        return ((self._to_str(k)[off:], self._to_str(opts[k])) \
+                                    for k in opts if k.startswith(prefix))
+
     # IRequestHandler interface
 
     def match_request(self, req):
@@ -336,7 +341,7 @@ class XsltMacro(WikiMacroBase):
 
         style_obj = self._get_src(self.env, req, *stylespec)
         doc_obj   = self._get_src(self.env, req, *docspec)
-        params    = dict([(k[3:], req.args.get(k)) for k in req.args.keys() if k.startswith('xp_')])
+        params    = dict(self._get_opts(req.args, 'xp_'))
 
         lastmod = max(style_obj.get_last_modified(),
                       doc_obj.get_last_modified())
