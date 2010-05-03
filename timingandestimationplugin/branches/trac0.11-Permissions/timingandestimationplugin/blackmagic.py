@@ -11,6 +11,21 @@ from trac.perm import IPermissionRequestor
 
 #@staticmethod
 def disable_field(stream, field):
+    def select_helper(stream):
+        s = Stream(stream)
+        name = s.select('@name').render()
+        opt = s.select('//option[@selected]')
+        if not opt: s.select('//option[position()=1]')
+        text = opt.select("text()").render()
+        value = s.select('@value').render()
+        if not value: value = text
+
+        for kind,data,pos in tag.span(text, id=("field-%s"%field)).generate():
+            yield kind,data,pos
+        for kind,data,pos in tag.input(value=value, name=name, type="hidden").generate():
+            yield kind,data,pos
+
+
     def helper(field_stream):
         s = Stream(field_stream)
         value = s.select('@value').render()
@@ -20,9 +35,9 @@ def disable_field(stream, field):
         for kind,data,pos in tag.input(value=value, name=name, type="hidden").generate():
             yield kind,data,pos
 
-    return stream | Transformer(
-        '//*[@id="field-%s"]' % field
-        ).filter(helper)
+    stream = stream | Transformer( '//select[@id="field-%s"]' % field ).filter(select_helper)
+    stream = stream | Transformer( '//input[@id="field-%s"]' % field ).filter(helper)
+    return stream
 
 
 def remove_header(stream, field):
@@ -61,8 +76,21 @@ def hide_field(stream , field):
         for kind,data,pos in tag.input( value=value,
                                         type="hidden", name=name).generate():
             yield kind,data,pos
+
+    def select_helper(stream):
+        s = Stream(stream)
+        name = s.select('@name').render()
+        opt = s.select('//option[@selected]')
+        if not opt: s.select('//option[position()=1]')
+        text = opt.select("text()").render()
+        value = s.select('@value').render()
+        if not value: value = text
+        for kind,data,pos in tag.input(value=value, name=name, type="hidden").generate():
+            yield kind,data,pos
+
     stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(" ")
-    stream = stream | Transformer('//*[@id="field-%s"]' % field).filter(helper)
+    stream = stream | Transformer('//input[@id="field-%s"]' % field).filter(helper)
+    stream = stream | Transformer('//select[@id="field-%s"]' % field).filter(select_helper)
 
     return remove_changelog(remove_header(stream , field), field)
 
