@@ -30,7 +30,7 @@ class ChangeLogMacro(WikiMacroBase):
         if 'CHANGESET_VIEW' not in req.perm:
             return Markup('<i>Changelog not available</i>')
 
-        repo = self.env.get_repository(req.authname)
+        repo = self.env.get_repository()
 
         if rev is None:
             rev = repo.get_youngest_rev()
