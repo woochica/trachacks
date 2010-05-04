@@ -4,6 +4,7 @@ from __future__ import generators
 from trac.core import *
 from trac.wiki import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.util.text import to_unicode
 
 from pickle import *
 
@@ -130,12 +131,13 @@ Examples:
                     visited.append(page)
                     req.session['visited-pages'] = '|'.join(visited)
                     req.session.bake_cookie(expires)
+
             # Set template values and return rendered macro
             db.commit()
             req.hdf['visitcounter.count'] = count
             req.hdf['visitcounter.show_digits'] = digits > 0
             req.hdf['visitcounter.digits'] = self._get_digits(count, digits)
-            return req.hdf.render('visitcounter.cs')
+            return to_unicode(req.hdf.render('visitcounter.cs'))
         else:
             raise TracError('Not implemented macro %s' % (name))
 
