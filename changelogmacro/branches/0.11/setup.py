@@ -18,4 +18,5 @@ setup(
             'changelog.ChangeLogMacro = changelog.ChangeLogMacro'
         ]
     },
+    install_requires = ['Trac <= 0.11.7'],
 )
