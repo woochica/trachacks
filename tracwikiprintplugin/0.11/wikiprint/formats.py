@@ -40,7 +40,7 @@ class WikiPrintOutput(Component):
             out = wikiprint.html_to_pdf(req, html_pages, book=False, title=title, subject=subject, version=version, date=date)
             req.send_header('Content-Disposition', 'attachment; filename=' + pdfname + '.pdf')
         elif format == 'printhtml':
-            out = wikiprint.html_to_printhtml(html_pages, title=title, subject=subject, version=version, date=date)
+            out = wikiprint.html_to_printhtml(req, html_pages, title=title, subject=subject, version=version, date=date)
         
         req.send_header('Content-Length', len(out))
         req.end_headers()
