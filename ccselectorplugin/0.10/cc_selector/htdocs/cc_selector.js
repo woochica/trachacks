@@ -83,7 +83,8 @@ function guess_cc_field()
 {
   var doc = document;
 
-  if (window.opener)
+  // are we in the popup?
+  if (window.opener && ! window.opener.closed && document.getElementById('cc_developers'))
   {
     doc = window.opener.document;
   }
