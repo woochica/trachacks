@@ -249,11 +249,13 @@ class WikiPrint(Component):
 
         page = Markup('<hr>'.join(html_pages))
         
+        #TO-DO: Make a nice TOC for HTML printable output
+        page = page.replace('[[pdf-toc]]','')        
+        
         css_data = '<style type="text/css">%s</style>' % self.get_css(req)
         page = self.add_headers(req, page, book=False, title=title, subject=subject, version=version, date=date, extra_headers = css_data)
 
         page = page.encode(self.default_charset, 'replace')
-        
         
         return page
         
