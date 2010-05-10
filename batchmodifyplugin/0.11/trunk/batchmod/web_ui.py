@@ -9,6 +9,7 @@ from trac.ticket.query import QueryModule
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, Chrome
 from trac.web.main import IRequestFilter
+from trac.util.datefmt import to_datetime, to_timestamp
 from genshi.filters.transform import Transformer
 
 __all__ = ['BatchModifyModule']
@@ -48,7 +49,8 @@ class BatchModifyModule(Component):
     # Internal methods 
     def _batch_modify(self, req):
         tickets = req.session['query_tickets'].split(' ')
-        comment = req.args.get('bmod_value_comment', '') 
+        comment = req.args.get('bmod_value_comment', '')
+        modify_changetime = bool(req.args.get('bmod_modify_changetime', True))
         values = {} 
 
         # TODO: improve validation and better handle advanced statuses
@@ -66,14 +68,25 @@ class BatchModifyModule(Component):
         
         for id in selectedTickets:
             if id in tickets:
-                t = Ticket(self.env, int(id)) 
+                t = Ticket(self.env, int(id))
+                
+                log_msg = ""
+                if not modify_changetime:
+                  original_changetime = to_timestamp(t.time_changed)
                 
                 if 'keywords' in values:
                     values['keywords'] = self._merge_keywords(t.values['keywords'], values['keywords'])
                 
                 t.populate(values)
                 t.save_changes(req.authname, comment)
-                self.log.debug('BatchModifyPlugin: saved changes to #%s', id)
+
+                if not modify_changetime:
+                  log_msg = "(changetime not modified)"
+                  db = self.env.get_db_cnx()
+                  db.cursor().execute("UPDATE ticket set changetime=%s where id=%s" % (original_changetime, t.id))
+                  db.commit()
+
+                self.log.debug('BatchModifyPlugin: saved changes to #%s %s' % (id, log_msg))
 
                 # TODO: Send email notifications - copied from ticket.web_ui
                 #try:

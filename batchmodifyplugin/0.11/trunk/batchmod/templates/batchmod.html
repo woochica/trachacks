@@ -52,8 +52,10 @@
 	</tr>
 </table>
 <div>
-<input type="hidden" name="selectedTickets" value=""/>
-<input type="submit" id="batchmod" name="batchmod" value="Change tickets" /></div>
+    <input type="hidden" name="selectedTickets" value=""/>
+    <input type="submit" id="batchmod" name="batchmod" value="Change tickets" />
+    <input type="checkbox" id="bmod_modify_changetime" name="bmod_modify_changetime" value="true" checked="checked" />Modify Ticket Changetime
+</div>
 <py:for each="idx, constraints in enumerate(clauses)">
   <py:for each="constraint_name, constraint in constraints.items()">
     <py:for each="constraint_value in constraint['values']">
