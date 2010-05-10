@@ -11,6 +11,7 @@ from trac.web.chrome import ITemplateProvider, Chrome
 from trac.web.main import IRequestFilter
 from trac.util.datefmt import to_datetime, to_timestamp
 from genshi.filters.transform import Transformer
+import re
 
 __all__ = ['BatchModifyModule']
 
@@ -106,11 +107,12 @@ class BatchModifyModule(Component):
         self.log.debug('BatchModifyPlugin: existing keywords are %s', original_keywords)
         self.log.debug('BatchModifyPlugin: new keywords are %s', new_keywords)
         
-        combined_keywords = (original_keywords).split(',')
-        [combined_keywords.append(keyword) for keyword in new_keywords.split(',') if keyword not in combined_keywords]
+        regexp = re.compile(r'\W+')
+        combined_keywords = regexp.split(original_keywords)
+        [combined_keywords.append(keyword) for keyword in regexp.split(new_keywords) if keyword not in combined_keywords]
             
         self.log.debug('BatchModifyPlugin: combined keywords are %s', combined_keywords)
-        return ''.join(combined_keywords)
+        return ' '.join(combined_keywords)
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, formdata):
