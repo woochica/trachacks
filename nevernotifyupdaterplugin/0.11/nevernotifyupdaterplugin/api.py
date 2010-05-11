@@ -5,8 +5,12 @@ import trac.ticket.notification as note
 
 old_get_recipients = note.TicketNotifyEmail.get_recipients
 def new_get_recipients(self, tktid):
-  self.env.log.debug('NeverNotifyUpdaterPlugin: active, getting recipients for %s' % tktid)
+  self.env.log.debug('NeverNotifyUpdaterPlugin: getting recipients for %s' % tktid)
   (torecipients, ccrecipients) = old_get_recipients(self,tktid)
+  if !self.compmgr.enabled[self.__class__]:
+    self.env.log.debug('NeverNotifyUpdaterPlugin: disabled, returning original results')
+    return (torecipients, ccrecipients)
+
   self.env.log.debug('NeverNotifyUpdaterPlugin: START tkt:%s, tos , ccs = %s, %s' %
                      (tktid, torecipients, ccrecipients))
   defaultDomain = self.env.config.get("notification", "smtp_default_domain")
@@ -48,7 +52,7 @@ def new_get_recipients(self, tktid):
     if rtn:
       self.env.log.debug('NeverNotifyUpdaterPlugin: blocking recipient %s' % r)
       return rtn
-
+  
   torecipients = [r for r in torecipients if not finder(r)]
   ccrecipients = [r for r in ccrecipients if not finder(r)]
   self.env.log.debug('NeverNotifyUpdaterPlugin: DONE tos , ccs = %s, %s' %
