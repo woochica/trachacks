@@ -51,7 +51,7 @@ class BatchModifyModule(Component):
     def _batch_modify(self, req):
         tickets = req.session['query_tickets'].split(' ')
         comment = req.args.get('bmod_value_comment', '')
-        modify_changetime = bool(req.args.get('bmod_modify_changetime', True))
+        modify_changetime = bool(req.args.get('bmod_modify_changetime', False))
         values = {} 
 
         # TODO: improve validation and better handle advanced statuses
