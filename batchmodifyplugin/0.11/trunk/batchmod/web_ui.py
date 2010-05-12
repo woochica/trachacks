@@ -9,7 +9,7 @@ from trac.ticket.query import QueryModule
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, Chrome
 from trac.web.main import IRequestFilter
-from trac.util.datefmt import to_datetime, to_timestamp
+from trac.util.datefmt import to_datetime, to_utimestamp
 from genshi.filters.transform import Transformer
 import re
 
@@ -73,7 +73,7 @@ class BatchModifyModule(Component):
                 
                 log_msg = ""
                 if not modify_changetime:
-                  original_changetime = to_timestamp(t.time_changed)
+                  original_changetime = to_utimestamp(t.time_changed)
                 
                 if 'keywords' in values:
                     values['keywords'] = self._merge_keywords(t.values['keywords'], values['keywords'])
