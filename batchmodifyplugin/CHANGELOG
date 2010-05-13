@@ -1,6 +1,23 @@
-***********************************************
+********************************************
+** BatchModifyPlugin 0.5.0 (May 13, 2010) **
+********************************************
+
+This is the first release that has separate versions for 0.11 and 0.12. It adds better handling of
+keyword separators and gives you the option to not modify the ticket changetime.
+
+Thanks to daltonmatos for the patch for #7048 and the anonymous contributor of the patch for #7086.
+
+Eggs can be found at:
+ * Trac 0.11 - http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags
+ * Trac 0.12 - http://trac-hacks.org/browser/batchmodifyplugin/0.12/tags
+
+Enhancements:
+ * #7048 - Can now not modify the changetime of tickets. Can be useful if you wish to also use the TracUnreadPlugin.
+ * #7086 - Keyword separators can now be any non-alphanumeric character.
+
+*************************************************
 ** BatchModifyPlugin 0.4.1 (February 19, 2010) **
-***********************************************
+*************************************************
 
 This release fixes a bug introduced in #5810. TicketSystem.eventually_restrict_owner did not
 exist before Trac 0.11.2. This release fixes errors that users of Trac 0.11 and 0.11.1 were
