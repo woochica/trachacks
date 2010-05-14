@@ -97,7 +97,9 @@ class SubWikiMacro(WikiMacroBase):
         
         self.log.debug('HierWikiPlugin: Listing pages below')
         while self.index < len(self.good_pages):
-            p, t, s = self.good_pages[self.index][0]
+            p = self.good_pages[self.index][0]
+            t = self.good_pages[self.index][1]
+            s = self.good_pages[self.index][2]
             
             if not p.startswith(prefix):
                 break
