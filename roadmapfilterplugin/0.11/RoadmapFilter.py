@@ -98,7 +98,6 @@ class RoadmapFilterPlugin(Component):
             if not show_descriptions:
                 for m in data['milestones']:
                     m.description= ''
-                    m.description= self._session(req, 'show_descriptions', 'pies')
 
         return (template, data, content_type)
 
