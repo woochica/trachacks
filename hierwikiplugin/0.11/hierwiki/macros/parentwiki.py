@@ -29,7 +29,7 @@ class ParentWikiMacro(Component):
         """Return the subclass's docstring."""
         return inspect.getdoc(self.__class__)
         
-    def render_macro(self, req, name, args):
+    def expand_macro(self, formatter, name, args):
         db = self.env.get_db_cnx()    
         cursor = db.cursor()
             
@@ -39,7 +39,7 @@ class ParentWikiMacro(Component):
         if args:        
             prefix = args.replace('\'', '\'\'')    
         else: 
-            prefix = req.hdf.getValue('wiki.page_name', '') + '/'    
+            prefix = formatter.resource.id + '/'    
             
         parent = 'WikiStart'    
         
