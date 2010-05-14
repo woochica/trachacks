@@ -12,16 +12,40 @@ class RoadmapFilterPlugin(Component):
     """
     implements(IRequestFilter, ITemplateStreamFilter)
 
+    def _sessionKey(self, name):
+        return "roadmap.filter.%s" % name
+
+    def _session(self, req, name, default):
+        return req.session.get(self._sessionKey(name), default)
+
     def _getFilter(self, req, name):
-        sessionKey= "roadmap.filter.%s" % name
+        sessionKey= self._sessionKey(name)
         result= ''
-        if (req.args.has_key(name)):
+        if req.args.has_key(name):
             result= req.args[name]
             # make value persistent...
             req.session[sessionKey]= result
-        elif (req.session.has_key(sessionKey)):
+        elif req.session.has_key(sessionKey):
             # use persistent value...
             result= req.session[sessionKey]
+        return result
+
+    def _getCheckbox(self, req, name, default):
+        sessionKey= self._sessionKey(name)
+        result= False
+
+        if req.args.has_key('user_modification'):
+            # User has hit the update button on the form,
+            # so update the session data.
+            if req.args.has_key(name):
+                result= True
+            if result:
+                req.session[sessionKey]= 'true'
+            else:
+                req.session[sessionKey]= 'false'
+        elif req.session.get(sessionKey, default) == 'true':
+            result= True
+
         return result
 
     def _matchFilter(self, name, filters):
@@ -53,9 +77,9 @@ class RoadmapFilterPlugin(Component):
         if template == 'roadmap.html':
             inc_milestones= self._getFilter(req, 'inc_milestones')
             exc_milestones= self._getFilter(req, 'exc_milestones')
+            show_descriptions= self._getCheckbox(req, 'show_descriptions', 'true')
 
-            if (inc_milestones != ''):
-                # use defined filter... 
+            if inc_milestones != '':
                 inc_milestones = [m.strip() for m in inc_milestones.split('|')]
                 filtered = []
                 for m in data['milestones']:
@@ -63,15 +87,19 @@ class RoadmapFilterPlugin(Component):
                         filtered.append(m)
                 data['milestones'] = filtered
                 
-            if (exc_milestones != ''):
-                # use defined filter... 
+            if exc_milestones != '':
                 exc_milestones = [m.strip() for m in exc_milestones.split('|')]
                 filtered = []
                 for m in data['milestones']:
                     if not self._matchFilter(m.name, exc_milestones):
                         filtered.append(m)
                 data['milestones'] = filtered
-                
+
+            if not show_descriptions:
+                for m in data['milestones']:
+                    m.description= ''
+                    m.description= self._session(req, 'show_descriptions', 'pies')
+
         return (template, data, content_type)
 
     # ITemplateStreamFilter methods
@@ -83,22 +111,40 @@ class RoadmapFilterPlugin(Component):
             return stream | filter.before(self._user_field_input(req))
         return stream
 
+    def _filterBox(self, req, label, name):
+        return tag.label(label,
+                         tag.input(type= "text",
+                                   name= name,
+                                   value= self._session(req, name, ''),
+                                   style_= "width:60%"))
+
+    def _toggleBox(self, req, label, name, default):
+        if self._session(req, name, default) == 'true':
+            checkbox= tag.input(type= 'checkbox',
+                                name= name,
+                                value='true',
+                                checked='checked')
+        else:
+            checkbox= tag.input(type= 'checkbox',
+                                name= name,
+                                value= 'true')
+        return checkbox + ' ' + tag.label(label, for_= name)
+
+    def _hackedHiddenField(self):
+        # Hack: shove a hidden field in so we can tell if the update
+        # button has been hit.
+        return tag.input(type= 'hidden',
+                         name= 'user_modification',
+                         value='true')
+
     def _user_field_input(self, req):
-        return tag.div(tag.label("Include: ",
-                                 tag.input(type="text",
-                                           name="inc_milestones",
-                                           value=req.session.get('roadmap.filter.inc_milestones',''),
-                                           style_="width:60%"
-                                          )
-                                )
-                       +
-                       tag.br()
-                       +
-                       tag.label("Exclude: ",
-                                 tag.input(type="text",
-                                           name="exc_milestones",
-                                           value=req.session.get('roadmap.filter.exc_milestones',''),
-                                           style_="width:60%"
-                                          )
-                                )
-                      )                    
+        return tag.div(self._hackedHiddenField()
+                       + self._toggleBox(req,
+                                         'Show milestone descriptions',
+                                         'show_descriptions',
+                                         'true')
+                       + tag.br()
+                       + self._filterBox(req, "Include: ", "inc_milestones")
+                       + tag.br()
+                       + self._filterBox(req, "Exclude: ", "exc_milestones")
+                       )                    
