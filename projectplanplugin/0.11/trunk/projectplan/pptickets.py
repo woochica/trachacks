@@ -3,6 +3,7 @@
 import datetime
 import pputil
 from trac.util.datefmt import to_datetime, utc
+from trac.ticket.model import Ticket
 
 class TSExtensionRegister(object):
   '''
@@ -61,7 +62,8 @@ class ppTicket():
     '''
       return the set of valid fields
     '''
-    return self.__dataref.keys()
+    #return self.__dataref.keys()
+    return TicketSet.getfielddefs()
 
   def getfielddef(self,name,defval):
     '''
@@ -99,6 +101,10 @@ class ppTicket():
     '''
     del self.__extensions[ name ]
 
+  def get_changelog( self ):
+    t = Ticket(self.env, id)
+    return( t.get_changelog() )
+
 class ppTicketSet():
 
   def __init__(self, macroenv):
@@ -114,6 +120,10 @@ class ppTicketSet():
       add a new ticket with ticket data <ticket>
     '''
     self.__tickets[ ticket['id'] ] = ppTicket(ticket,self)
+
+  @classmethod
+  def getfielddefs( self ):
+    return [ f['name'] for f in TicketSystem( self.macroenv.tracenv ).get_ticket_fields() ]
 
   def getIDList(self):
     '''
@@ -158,6 +168,11 @@ class ppTicketSet():
             self.__extensions[ name ] = exttsdata
             return
       raise TracError( 'extension "%s" went missing or failed' % name )
+
+  def get_changelog( self , ticketid):
+    t = Ticket(self.macroenv.tracenv, ticketid)
+    return( t.get_changelog() )
+
 
 class ppTicketSetExtension():
   '''

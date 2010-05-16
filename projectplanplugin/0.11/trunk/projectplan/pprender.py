@@ -15,34 +15,34 @@ import ppenv
 
 from dotrender import GVCMapXGen
 from gvproto import GVRenderProto
+from renderer import *
 
 import trac.ticket.model
 
 
 
+#class RenderImpl():
+  #'''
+    #Renderer implementation baseclass
+  #'''
 
-class RenderImpl():
-  '''
-    Renderer implementation baseclass
-  '''
-
-  def __init__(self,macroenv):
-    '''
-      Initialize
-    '''
-    self.macroenv = macroenv
+  #def __init__(self,macroenv):
+    #'''
+      #Initialize
+    #'''
+    #self.macroenv = macroenv
     
-  def log_warn( self, message ):
-    '''
-      shortcut: warn logging
-    '''
-    self.macroenv.tracenv.log.warn(message)
+  #def log_warn( self, message ):
+    #'''
+      #shortcut: warn logging
+    #'''
+    #self.macroenv.tracenv.log.warn(message)
 
-  def render(self, ticketset):
-    '''
-      Generate Output and Return XML/HTML Code/Tags suited for Genshi
-    '''
-    pass
+  #def render(self, ticketset):
+    #'''
+      #Generate Output and Return XML/HTML Code/Tags suited for Genshi
+    #'''
+    #pass
 
 class RenderRegister(object):
   '''
@@ -1091,6 +1091,10 @@ class GVCollapsedHRenderer( GVRenderer ):
 RenderRegister.add( GVCollapsedHRenderer, 'gvhierarchical' )
 #RenderRegister.add( GVCollapsedHRenderer, 'default' )
 
+
+RenderRegister.add( BurndownChartTickets, 'burndowntickets' )
+
+
 class ppRender():
   '''
     Renderer Abstraction
@@ -1099,12 +1103,22 @@ class ppRender():
     The Matching or Default Renderer is selected from those Classes,
     in the Render Register.
   '''
-  def render(self, macroenv, ticketset):
+  def __init__(self, macroenv ):
+    '''
+      determine concrete renderer
+    '''
+    self.macroenv = macroenv
     renderer = macroenv.macrokw.get('renderer')
     if ( renderer == '' ) or ( renderer not in RenderRegister.keys() ):
       renderer = 'default'
     ConcreteRenderer = RenderRegister.get( renderer )
-    return ConcreteRenderer( macroenv ).render( ticketset )
+    self.concreteRenderer = ConcreteRenderer( self.macroenv )
+
+  def render(self, ticketset):
+    return self.concreteRenderer.render( ticketset )
+
+  def getHeadline(self):
+    return self.concreteRenderer.getHeadline()
 
 
 def dummy( *args ):

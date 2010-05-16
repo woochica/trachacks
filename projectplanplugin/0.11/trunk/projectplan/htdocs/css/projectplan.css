@@ -153,3 +153,7 @@ table.pplisting tbody td.ppimagecol {
   padding-right: 24px !important;
 }
 
+.ppwarning {
+  background-color:#BBB;
+  padding:1ex;
+}

@@ -326,9 +326,19 @@ class ProjectPlanMacro(WikiMacroBase):
         else:
           noteForceReload = tag.span()
         
+        renderer = ppRender( macroenv )
+        
+        # show text in the headline
+        moretitle = ''
+        #macroenv.tracenv.log.warning('macroenv label=%s (%s)' % (macroenv.get_args('label'),macroenv.tracreq.args))
+        if macroenv.macrokw.get('label', None) != None: # use parameter: label 
+          moretitle = macroenv.macrokw.get('label', '')
+        else:
+          moretitle = renderer.getHeadline() # get the pre-defined headline
+        
         return tag.div(
-                 tag.div( tag.a( name=macroenv.macroid )( 'Projectplan '+macroenv.macroid  ) ),
-                 ppRender().render( macroenv, ts ),
+                 tag.h5( tag.a( name=macroenv.macroid )( '%s' % (moretitle,)  ) ),
+                 renderer.render( ts ),
                  tag.div(  
                          tag.div( 
 			    tag.span('It took '+str((datetime.now()-macrostart).microseconds/1000)+'ms to generate this visualization. ' , class_ = 'ppstat' ),
