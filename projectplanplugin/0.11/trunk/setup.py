@@ -21,6 +21,7 @@ htdocsubdirmapping = {
 		       u'js/jquery-tablesorter': u'*.*',
 		       u'js/jquery-tooltip': u'*.*',
 		       u'js/jquery-tooltip/lib': u'*.js',
+		       u'js/jquery-burndown': u'*.*',
 		        }
 pptemplatesglob = [ os.path.join( templatesdir, u'*.html' ) ]
 pphtdocsglob = [ os.path.join( htdocsdir, subdir, globmap )
@@ -30,7 +31,7 @@ pppackagedataglobs = pphtdocsglob + pptemplatesglob
 # create setup instance - done
 setup(
   name = u'ProjectPlan',
-  version = u'0.80c',
+  version = u'0.81',
   description = u'ProjectPlanPlugin for Trac 0.11',
   long_description = u"""
     ProjectPlan Plugin basicaly adds the possibility for fast and
@@ -46,10 +47,11 @@ setup(
   author_email = u'makadev at googlemail dot com',
   url = u'http://trac-hacks.org/wiki/ProjectPlanPlugin',
   download_url = u'http://trac-hacks.org/svn/projectplanplugin',
-  packages = [ pppackage ],
+  #packages = [ pppackage ],
+  packages = find_packages(),
   license = u'GPL2',
   keywords = u'project plan visualization',
-  package_dir={ pppackage: pppackagedir },
+  #package_dir={ pppackage: pppackagedir , },
   package_data = { pppackage: pppackagedataglobs },
   install_requires = ( u'Trac >=0.11, <0.12' ),
   entry_points = { u'trac.plugins': u'projectplan = projectplan.projectplan' }
