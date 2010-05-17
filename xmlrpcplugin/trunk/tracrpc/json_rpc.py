@@ -33,6 +33,7 @@ except (ImportError, AttributeError):
         import simplejson as json
     except ImportError:
         json = None
+        __all__ = []
 
 if json:
     class TracRpcJSONEncoder(json.JSONEncoder):
