@@ -25,18 +25,13 @@ class RpcXmlTestCase(TracRpcTestCase):
     def test_xmlrpc_permission(self):
         # Test returned response if not XML_RPC permission
         rpc_testenv._tracadmin('permission', 'remove', 'anonymous',
-                                'XML_RPC')
-        def local_test():
-            self.anon.system.listMethods()
-            rpc_testenv._tracadmin('permission', 'add', 'anonymous',
-                                        'XML_RPC')
-            self.fail("Revoked permissions not taken effect???")
-
-        e = self.assertRaises(xmlrpclib.Fault, local_test)
+                                'XML_RPC', wait=True)
+        e = self.assertRaises(xmlrpclib.Fault,
+                    self.anon.system.listMethods)
         self.assertEquals(403, e.faultCode)
         self.assertTrue('XML_RPC' in e.faultString)
         rpc_testenv._tracadmin('permission', 'add', 'anonymous',
-                                        'XML_RPC')
+                                        'XML_RPC', wait=True)
 
     def test_method_not_found(self):
         def local_test():

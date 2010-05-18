@@ -30,6 +30,7 @@ try:
                     __import__('trac', []).__file__, '..' , '..'))
             print "\nFound Trac source: %s" % self.trac_src
             SvnFunctionalTestEnvironment.init(self)
+            self.url = "%s:%s" % (self.url, self.port)
 
         def post_create(self, env):
             print "Enabling RPC plugin and permissions..."
@@ -40,28 +41,22 @@ try:
             print "Created test environment: %s" % self.dirname
             parts = urllib2.urlparse.urlsplit(self.url)
             # Regular URIs
-            self.url_anon = '%s://%s:%s/rpc' % (parts[0], parts[1],
-                                self.port)
-            self.url_auth = '%s://%s:%s/login/rpc' % (parts[0],
-                                parts[1], self.port)
+            self.url_anon = '%s://%s/rpc' % (parts[0], parts[1])
+            self.url_auth = '%s://%s/login/rpc' % (parts[0], parts[1])
             # URIs with user:pass as part of URL
-            self.url_user = '%s://user:user@%s:%s/login/xmlrpc' % \
-                                (parts[0], parts[1], self.port)
-            self.url_admin = '%s://admin:admin@%s:%s/login/xmlrpc' % \
-                                (parts[0], parts[1], self.port)
-            print "Starting web server: %s:%s\n" % (self.url, self.port)
-            self.restart()
+            self.url_user = '%s://user:user@%s/login/xmlrpc' % \
+                                (parts[0], parts[1])
+            self.url_admin = '%s://admin:admin@%s/login/xmlrpc' % \
+                                (parts[0], parts[1])
             SvnFunctionalTestEnvironment.post_create(self, env)
-
-        def restart(self):
-            SvnFunctionalTestEnvironment.restart(self)
-            # Add a delay to make sure server comes up...
-            time.sleep(1)
+            print "Starting web server: %s" % self.url
+            self.restart()
 
         def _tracadmin(self, *args, **kwargs):
+            do_wait = kwargs.pop('wait', False)
             SvnFunctionalTestEnvironment._tracadmin(self, *args, **kwargs)
-            # Delay to make sure command executes and cache resets
-            time.sleep(5)
+            if do_wait: # Delay to ensure command executes and caches resets
+                time.sleep(5)
 
     rpc_testenv = RpcTestEnvironment(os.path.realpath(os.path.join(
                 os.path.realpath(__file__), '..', '..', '..', 'rpctestenv')),

@@ -13,9 +13,53 @@ import urllib2
 from tracrpc.json_rpc import json
 from tracrpc.util import StringIO
 
-if json:
-    from tracrpc.tests import rpc_testenv, TracRpcTestCase
+from tracrpc.tests import rpc_testenv, TracRpcTestCase
 
+class JsonModuleAvailabilityTestCase(TracRpcTestCase):
+
+    def setUp(self):
+        TracRpcTestCase.setUp(self)
+
+    def tearDown(self):
+        TracRpcTestCase.tearDown(self)
+
+    def test_json_not_available(self):
+        if not json:
+            # No json, so just make sure the protocol isn't there
+            import tracrpc.json_rpc
+            self.failIf(hasattr(tracrpc.json_rpc, 'JsonRpcProtocol'),
+                        "JsonRpcProtocol really available?")
+            return
+        # Module manipulation to simulate json libs not available
+        import sys
+        old_json = sys.modules.get('json', None)
+        sys.modules['json'] = None
+        old_simplejson = sys.modules.get('simplejson', None)
+        sys.modules['simplejson'] = None
+        if 'tracrpc.json_rpc' in sys.modules:
+            del sys.modules['tracrpc.json_rpc']
+        try:
+            import tracrpc.json_rpc
+            self.failIf(hasattr(tracrpc.json_rpc, 'JsonRpcProtocol'),
+                    "JsonRpcProtocol really available?")
+        finally:
+            del sys.modules['json']
+            del sys.modules['simplejson']
+            if old_json:
+                sys.modules['json'] = old_json
+            if old_simplejson:
+                sys.modules['simplejson'] = old_simplejson
+            if 'tracrpc.json_rpc' in sys.modules:
+                del sys.modules['tracrpc.json_rpc']
+            import tracrpc.json_rpc
+            self.failIf(not hasattr(tracrpc.json_rpc, 'JsonRpcProtocol'),
+                    "What, no JsonRpcProtocol?")
+
+if not json:
+    print "SKIP: json not available. Cannot run JsonTestCase."
+    class JsonTestCase(TracRpcTestCase):
+        pass
+else:
     class JsonTestCase(TracRpcTestCase):
 
         def _anon_req(self, data):
@@ -111,7 +155,7 @@ if json:
         def test_xmlrpc_permission(self):
             # Test returned response if not XML_RPC permission
             rpc_testenv._tracadmin('permission', 'remove', 'anonymous',
-                                    'XML_RPC')
+                                    'XML_RPC', wait=True)
             try:
                 result = self._anon_req({'method': 'system.listMethods',
                                          'id': 'no-perm'})
@@ -122,7 +166,7 @@ if json:
             finally:
                 # Add back the default permission for further tests
                 rpc_testenv._tracadmin('permission', 'add', 'anonymous',
-                                            'XML_RPC')
+                                            'XML_RPC', wait=True)
 
         def test_method_not_found(self):
             result = self._anon_req({'method': 'system.doesNotExist',
@@ -168,11 +212,11 @@ if json:
             self.assertEquals(result['error']['message'],
                      'Wiki page "Test" does not exist at version 10')
 
-    def test_suite():
-        return unittest.makeSuite(JsonTestCase)
-else:
-    print "SKIP: json not available. Cannot run tests."
+def test_suite():
     test_suite = unittest.TestSuite()
+    test_suite.addTest(unittest.makeSuite(JsonModuleAvailabilityTestCase))
+    test_suite.addTest(unittest.makeSuite(JsonTestCase))
+    return test_suite
 
 if __name__ == '__main__':
     unittest.main(defaultTest='test_suite')
