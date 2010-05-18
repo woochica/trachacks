@@ -7,7 +7,7 @@ old_get_recipients = note.TicketNotifyEmail.get_recipients
 def new_get_recipients(self, tktid):
   self.env.log.debug('NeverNotifyUpdaterPlugin: getting recipients for %s' % tktid)
   (torecipients, ccrecipients) = old_get_recipients(self,tktid)
-  if !self.compmgr.enabled[self.__class__]:
+  if not self.compmgr.enabled[self.__class__]:
     self.env.log.debug('NeverNotifyUpdaterPlugin: disabled, returning original results')
     return (torecipients, ccrecipients)
 
