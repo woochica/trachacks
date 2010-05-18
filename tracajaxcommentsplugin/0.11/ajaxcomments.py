@@ -43,7 +43,7 @@ class AjaxComments(Component):
 
     # IPreferencePanelProvider
     def get_preference_panels(self, req):
-        return [('ajaxcomments', 'AjaxComment preferances')]
+        return [('ajaxcomments', 'AjaxComments preferances')]
 
     def render_preference_panel(self, req, panel):
         if (panel == 'ajaxcomments'):
