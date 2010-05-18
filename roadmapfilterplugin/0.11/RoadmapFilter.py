@@ -81,19 +81,27 @@ class RoadmapFilterPlugin(Component):
 
             if inc_milestones != '':
                 inc_milestones = [m.strip() for m in inc_milestones.split('|')]
-                filtered = []
-                for m in data['milestones']:
+                filteredMilestones = []
+                filteredStats= []
+                for i in range(len(data['milestones'])):
+                    m= data['milestones'][i]
                     if self._matchFilter(m.name, inc_milestones):
-                        filtered.append(m)
-                data['milestones'] = filtered
+                        filteredMilestones.append(m)
+                        filteredStats.append(data['milestone_stats'][i])
+                data['milestones'] = filteredMilestones
+                data['milestone_stats'] = filteredStats
                 
             if exc_milestones != '':
                 exc_milestones = [m.strip() for m in exc_milestones.split('|')]
-                filtered = []
-                for m in data['milestones']:
+                filteredMilestones = []
+                filteredStats= []
+                for i in range(len(data['milestones'])):
+                    m= data['milestones'][i]
                     if not self._matchFilter(m.name, exc_milestones):
-                        filtered.append(m)
-                data['milestones'] = filtered
+                        filteredMilestones.append(m)
+                        filteredStats.append(data['milestone_stats'][i])
+                data['milestones'] = filteredMilestones
+                data['milestone_stats'] = filteredStats
 
             if not show_descriptions:
                 for m in data['milestones']:
