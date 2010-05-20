@@ -61,7 +61,8 @@ class DeveloperLogModule(Component):
         def fn(stream):
             for kind, data, pos in stream:
                 if kind is END and data.localname == 'body':
-                    first_time = req._tracdeveloper_hdlr.buf[0].created
+                    first_time = req._tracdeveloper_hdlr.buf \
+                                 and req._tracdeveloper_hdlr.buf[0].created
                     
                     elm = tag.div(tag.table(tag.thead(tag.tr(
                         tag.th('Time'),
