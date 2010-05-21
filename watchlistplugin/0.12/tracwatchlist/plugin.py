@@ -626,6 +626,7 @@ class WatchlistPlugin(Component):
           self.env.log.info("Creating system table entry for watchlist plugin: " + unicode(e))
           cursor.connection.rollback()
           cursor.execute("INSERT INTO system (name, value) VALUES ('watchlist_version', '0')")
+          version = 0
 
         try:
             cursor.execute("SELECT count(*) FROM watchlist")
