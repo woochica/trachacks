@@ -173,7 +173,7 @@ Any other [TracLinks TracLink] can be used:
 
     def _check_redirect(self, req):
         """Checks if the request should be redirected."""
-        if req.path_info == '/wiki':
+        if req.path_info == '/' or req.path_info == '/wiki':
           wiki = 'WikiStart'
         elif not req.path_info.startswith('/wiki/'):
           return False
@@ -211,7 +211,7 @@ Any other [TracLinks TracLink] can be used:
 
         if not isinstance(handler, WikiModule):
            return handler
-        if not req.path_info.startswith('/wiki/') and not req.path_info == '/wiki':
+        if not req.path_info.startswith('/wiki/') and not req.path_info == '/wiki' and not req.path_info == '/':
            self.env.log.debug("SSR: no redirect: Path is not a wiki path")
            return handler
         if req.method != 'GET':
