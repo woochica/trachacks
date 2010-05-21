@@ -26,6 +26,7 @@ from trac.core import *
 
 from  trac.env         import  IEnvironmentSetupParticipant
 from  trac.util        import  format_datetime, pretty_timedelta
+from trac.util.datefmt import  from_utimestamp, to_utimestamp
 from  trac.web.chrome  import  INavigationContributor
 from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
 from  trac.web.chrome  import  ITemplateProvider, add_ctxtnav, add_link, add_script, add_notice
@@ -37,6 +38,7 @@ from  trac.config      import  BoolOption
 from  trac.db          import  Table, Column, Index, DatabaseManager
 from  trac.wiki.model  import  WikiPage
 from  trac.ticket.model import Ticket
+
 
 __DB_VERSION__ = 3
 
@@ -347,9 +349,9 @@ class WatchlistPlugin(Component):
                         'name' : name,
                         'author' : author,
                         'version' : version,
-                        'datetime' : format_datetime( time ),
-                        'timedelta' : pretty_timedelta( time ),
-                        'timeline_link' : timeline_link( time ),
+                        'datetime' : from_utimestamp( time ),
+                        'timedelta' : pretty_timedelta( from_utimestamp(time) ),
+                        'timeline_link' : timeline_link( from_utimestamp(time) ),
                         'comment' : comment,
                         'notify'  : notify,
                     })
@@ -426,9 +428,9 @@ class WatchlistPlugin(Component):
                         'author' : author,
                         'commentnum': to_unicode(self.commentnum),
                         'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
-                        'datetime' : format_datetime( changetime ),
-                        'timedelta' : pretty_timedelta( changetime ),
-                        'timeline_link' : timeline_link( changetime ),
+                        'datetime' : from_utimestamp( changetime ),
+                        'timedelta' : pretty_timedelta( from_utimestamp( changetime ) ),
+                        'timeline_link' : timeline_link( from_utimestamp( changetime ) ),
                         'changes' : changes,
                         'summary' : summary,
                         'notify'  : notify,
