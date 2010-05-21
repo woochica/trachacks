@@ -14,6 +14,7 @@ from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import format_to_oneliner
 from genshi.builder import tag
 from trac.util import format_datetime, pretty_timedelta
+from trac.util.datefmt import utc, to_datetime, from_utimestamp, to_utimestamp, format_date
 from urllib import quote_plus
 from trac.web.api import IRequestFilter
 from trac.web.chrome import add_stylesheet, ITemplateProvider
@@ -85,24 +86,30 @@ class ListOfWikiPagesComponent(Component):
                 + ['s',''][val == 1]
             val =  int( val * self.tunits[ unit ] )
           val = int(unixtime()) - val
+          # mod for trac 0.12
+          nval = to_utimestamp(to_datetime(val))
+          
         except:
           raise TracError("Invalid value '%s' for argument '%s'! "
               % (self.kwargs[name],name) )
-        return (val,text)
+        return (nval,text)
       else:
-        return default
+        defval, deftext = default
+        ndef = to_utimestamp(to_datetime(defval))
+        return (ndef,deftext)
 
 
     def formattime(self,time):
         """Return formatted time for ListOfWikiPages table."""
-        time = int(time)
-        return [ tag.span( format_datetime  ( time ) ),
+        # mod for 0.12 timestamp
+        ntime = from_utimestamp(time)
+        return [ tag.span( format_datetime  ( ntime ) ),
                  tag.span(
                     " (", 
-                    tag.a( pretty_timedelta ( time ),
+                    tag.a( pretty_timedelta ( ntime ),
                            href = self.href('timeline',
                                   precision='seconds', from_=
-                                  quote_plus( format_datetime (time,'iso8601') )
+                                  quote_plus( format_datetime (ntime,'iso8601') )
                            ) ),
                     " ago)"
                  )
@@ -254,7 +261,8 @@ The wildcards '`*`' (matches everything) and '`?`' (matches a single character) 
         self.kwargs = kwargs
         dfrom, fromtext = self.timeval('from', (0,''))
         dto, totext     = self.timeval('to',   (int(unixtime()),''))
-
+       
+       
         if 'from' in kwargs or 'to' in kwargs:
           sql_time = " time BETWEEN %d AND %d AND " % (dfrom,dto)
         else:
