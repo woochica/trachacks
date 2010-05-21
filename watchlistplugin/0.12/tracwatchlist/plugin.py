@@ -604,7 +604,7 @@ class WatchlistPlugin(Component):
             cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
             version = cursor.fetchone()
             if not version or int(version[0]) < __DB_VERSION__:
-                self.env.log.info("Watchlist table version to old")
+                self.env.log.info("Watchlist table version (%s) to old"%(version))
                 return True
         except Exception, e:
             cursor.connection.rollback()
@@ -626,6 +626,7 @@ class WatchlistPlugin(Component):
           self.env.log.info("Creating system table entry for watchlist plugin: " + unicode(e))
           cursor.connection.rollback()
           cursor.execute("INSERT INTO system (name, value) VALUES ('watchlist_version', '0')")
+          cursor.connection.commit()
           version = 0
 
         try:
