@@ -111,6 +111,10 @@ class FullBlogCore(Component):
         else:
             return 'Blog: '+bp.title
 
+    def resource_exists(self, resource):
+        bp = BlogPost(self.env, resource.id)
+        return len(bp.versions)
+
     # IWikiSyntaxProvider methods
 
     def get_wiki_syntax(self):
