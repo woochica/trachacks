@@ -85,7 +85,7 @@ class DocumentationTestCase(TracRpcTestCase):
             self.assertEquals(200, resp.code)
             body = resp.read()
             self.assertTrue('<h3 id="XML-RPC">XML-RPC</h3>' in body)
-            self.assertTrue('<h3 id="xmlrpc.ticket.status">' in body)
+            self.assertTrue('<h3 id="rpc.ticket.status">' in body)
 
     def assert_unsupported_media_type(self, opener, req):
         """Ensure HTTP 415 is returned back to the client"""
