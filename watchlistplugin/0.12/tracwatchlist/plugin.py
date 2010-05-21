@@ -647,7 +647,9 @@ class WatchlistPlugin(Component):
         # Upgrade existing database
         self.env.log.info("Updating watchlist table")
         try:
-          self.env.log.info("Old version: %d, new version: %d") % (int(version),int(__DB_VERSION__))
+            self.env.log.info("Old version: %d, new version: %d") % (int(version),int(__DB_VERSION__))
+        except:
+            pass
 
         try:
             try:
