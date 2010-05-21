@@ -5,8 +5,8 @@ from tracserversideredirect.plugin import __revision__ as coderev
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
-__revision__ = r"$Rev$"[6:-2]
-__date__     = r"$Date$"[7:-2]
+__revision__ = ur"$Rev$"[6:-2]
+__date__     = ur"$Date$"[7:-2]
 
 rev = max(coderev, __revision__)
 
@@ -22,6 +22,8 @@ setup(
     zip_safe     = False,
     keywords     = 'trac plugin server redirect',
     classifiers  = ['Framework :: Trac'],
+    setup_requires = ['TracExtractUrl>=0.2.7030'],
+    install_requires = ['TracExtractUrl>=0.2.7030'],
     entry_points = {'trac.plugins': ['tracserversideredirect.plugin = tracserversideredirect.plugin']}
 )
 
