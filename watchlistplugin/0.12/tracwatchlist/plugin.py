@@ -614,7 +614,7 @@ class WatchlistPlugin(Component):
 
     def upgrade_environment(self, db):
         cursor = db.cursor()
-        version = 0;
+        version = 0
         # Ensure system entry exists:
         try:
           cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
@@ -645,7 +645,10 @@ class WatchlistPlugin(Component):
             self._create_db_table2(db)
 
         # Upgrade existing database
-        self.env.log.info("Updating watchlist table from version %d to %d" % (version,__DB_VERSION__))
+        self.env.log.info("Updating watchlist table")
+        try:
+          self.env.log.info("Old version: %d, new version: %d") % (int(version),int(__DB_VERSION__))
+
         try:
             try:
               cursor.execute("DROP TABLE watchlist_new")
