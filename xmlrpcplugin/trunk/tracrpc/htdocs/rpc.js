@@ -6,7 +6,7 @@
         function toc_entry(_this, item) {
             return $('<li><a href="#' + _this.id + '" title="'
                      + $(item).text().replace(/^\s+|\s+$/g, '')
-                     + '">' + _this.id + '</a></li>');
+                     + '">' + _this.id.replace(/^rpc\./, '') + '</a></li>');
         }
         var ul = $('#rpc-toc ul');
         $("#content").find("*[id]").each(function(index, item) {

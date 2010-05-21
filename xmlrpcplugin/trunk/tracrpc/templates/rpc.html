@@ -57,7 +57,7 @@
   
         <div id="searchable">
           <dl py:for="key in sorted(rpc.functions)" py:with="namespace = rpc.functions[key]">
-            <h3 id="${'xmlrpc.' + to_unicode(namespace.namespace)}">
+            <h3 id="${'rpc.' + to_unicode(namespace.namespace)}">
               ${namespace.namespace} - ${namespace.description}
             </h3>
             <dd>
