@@ -1,0 +1,24 @@
+Trac Metapost Plugin v0.0.1 Release Notes
+=========================================
+May 22, 2010
+
+First release of Trac Metapost Plugin.
+
+
+More Information
+----------------
+
+The graphviz plugin macro home page can be found at:
+https://trac-hacks.swapoff.org/wiki/MetapostPlugin
+
+The plugin is almost not tested. Since I was interested solving
+my particular problem with lack of good UML diagrams in my TRAC, I tested
+only my configuration. Extended testing for different other versions,
+platforms and configurations would be appreciated.
+
+Bugs and enhancement requests can be submitted at:
+http://trac-hacks.swapoff.org/newticket?component=MetapostPlugin&owner=pkropf
+
+
+
+$Id$
