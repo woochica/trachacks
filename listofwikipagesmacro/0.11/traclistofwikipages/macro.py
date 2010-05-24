@@ -76,7 +76,7 @@ class ListOfWikiPagesComponent(Component):
     def timeval(self, name, default):
       if name in self.kwargs:
         try:
-          val = self.kwargs[name]advparseargsplugin/releases/TracAdvParseArgsPlugin-0.3.7033-py2.6.egg
+          val = self.kwargs[name]
           try:
             val = int(val)
             text = \
@@ -151,24 +151,32 @@ class ListOfWikiPagesComponent(Component):
           return tag()
 
     def _get_sql_exclude(self, list):
-      return self._get_sql_pattern(list, " AND name NOT LIKE '%s' ")
+      return self._get_sql_pattern(list, " AND name NOT LIKE '%s' ", " AND name NOT in ('%s') ")
 
     def _get_sql_include(self, list):
-      return self._get_sql_pattern(list, " OR name LIKE '%s' ")
+      return self._get_sql_pattern(list, " OR name LIKE '%s' ", " OR name in ('%s') ")
 
-    def _get_sql_pattern(self, list, sqlexpr):
+    def _get_sql_pattern(self, list, sqlpattern, sqllist=None):
       import re
       if not list:
         return ''
       star  = re.compile(r'(?<!\\)\*')
       ques  = re.compile(r'(?<!\\)\?')
-      sql_cmdfrag = ''
+      listelem = []
+      sql_cmdlist = ''
+      sql_cmdpattern = ''
       for pattern in list:
         pattern = pattern.replace('%',r'\%').replace('_',r'\_')
-        pattern = star.sub('%', pattern)
-        pattern = ques.sub('_', pattern)
-        sql_cmdfrag = sql_cmdfrag + sqlexpr % pattern
-      return sql_cmdfrag
+        npattern = star.sub('%', pattern)
+        npattern = ques.sub('_', npattern)
+        if pattern == npattern:
+          listelem.append(pattern)
+        else:
+          sql_cmdpattern = sql_cmdpattern + sqlpattern % npattern
+      if sqllist:
+        sql_cmdlist = sqllist % "','".join(listelem)
+      return sql_cmdlist + sql_cmdpattern
+
 
     def ListOfWikiPages(self, formatter, content):
         """
@@ -245,12 +253,9 @@ The wildcards '`*`' (matches everything) and '`?`' (matches a single character) 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
+        sql_wikis = ''
         if largs:
-            sql_wikis = " AND name IN ('"    \
-                        + "','".join(largs) \
-                        + "') "
-        else:
-            sql_wikis = ''
+          sql_wikis = self._get_sql_include(largs)
 
         sql_exclude = ''
         if 'exclude' in kwargs:
@@ -270,12 +275,15 @@ The wildcards '`*`' (matches everything) and '`?`' (matches a single character) 
         else:
           order = " DESC "
 
-        cursor.execute(
+        sqlcmd = \
             "SELECT name,time,author,version,comment FROM wiki AS w1 WHERE " \
             + sql_time + \
             "author NOT IN ('%s') "  % "','".join( self.ignore_users ) + sql_wikis + sql_exclude + \
             "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY time " + \
-            order)
+            order
+        self.log.debug(sqlcmd)
+        cursor.execute(sqlcmd)
+
         rows = [ self.formatrow(n,name,time,version,comment,author)
               for n,[name,time,author,version,comment] in enumerate(cursor) ]
 
