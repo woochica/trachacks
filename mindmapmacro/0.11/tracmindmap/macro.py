@@ -12,7 +12,7 @@ from trac.config       import Option, ListOption, BoolOption
 from trac.db           import Table, Column, DatabaseManager
 from trac.env          import IEnvironmentSetupParticipant
 from trac.mimeview.api import IHTMLPreviewRenderer
-from trac.util         import md5
+from trac.util         import md5, to_unicode
 from trac.web.api      import IRequestFilter, IRequestHandler, RequestDone
 from trac.web.chrome   import ITemplateProvider, add_script, add_stylesheet
 from trac.web.href     import Href
@@ -256,13 +256,24 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
 
         try:
             hash = req.path_info[9:-3]
-            req.send( self._get_cache(hash), content_type='application/x-freemind', status=200)
+            mm = to_unicode(self._get_cache(hash)).encode('utf-8')
+            req.send_response(200)
+            req.send_header('Cache-control', 'must-revalidate')
+            req.send_header('Content-Type', 'application/x-freemind')
+            req.send_header('Content-Length', len(mm))
+            req.end_headers()
+            if req.method != 'HEAD':
+              req.write( mm )
         except RequestDone:
             pass
         except Exception, e:
             self.log.error(e)
-            req.send_response(404)
-            req.end_headers()
+            req.send_response(500)
+            try:
+              req.end_headers()
+              req.write( str(e) )
+            except Exception, e:
+              self.log.error(e)
         raise RequestDone
 
 
