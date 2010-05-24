@@ -151,31 +151,46 @@ class ListOfWikiPagesComponent(Component):
           return tag()
 
     def _get_sql_exclude(self, list):
-      return self._get_sql_pattern(list, " AND name NOT LIKE '%s' ", " AND name NOT in ('%s') ")
+      names, patterns = self._get_sql_names_and_patterns(list)
+      if not names and not pattern:
+        return ""
+      if names and not pattern:
+        return " AND name NOT IN ('%s') " % names
+      if not names and pattern:
+        return " AND ( " + ' AND '.join([" name NOT LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
+      if names and pattern:
+        return " AND ( name NOT IN ('%s') " % names + ''.join([" AND name NOT LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
 
     def _get_sql_include(self, list):
-      return self._get_sql_pattern(list, " OR name LIKE '%s' ", " OR name in ('%s') ")
+      names, patterns = self._get_sql_names_and_patterns(list)
+      if not names and not pattern:
+        return ""
+      if names and not pattern:
+        return " AND name IN ('%s') " % names
+      if not names and pattern:
+        return " AND ( " + ' OR '.join([" name LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
+      if names and pattern:
+        return " AND ( name IN ('%s') " % names + ''.join([" OR name LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
 
-    def _get_sql_pattern(self, list, sqlpattern, sqllist=None):
+
+    def _get_sql_names_and_patterns(self, nameorpatternlist):
       import re
-      if not list:
-        return ''
+      if not nameorpatternlist:
+        return [], []
       star  = re.compile(r'(?<!\\)\*')
       ques  = re.compile(r'(?<!\\)\?')
-      listelem = []
-      sql_cmdlist = ''
-      sql_cmdpattern = ''
-      for pattern in list:
-        pattern = pattern.replace('%',r'\%').replace('_',r'\_')
-        npattern = star.sub('%', pattern)
-        npattern = ques.sub('_', npattern)
-        if pattern == npattern:
-          listelem.append(pattern)
+      names = []
+      patterns = []
+      for norp in nameorpatternlist:
+        pattern = norp.replace('%',r'\%').replace('_',r'\_')
+        pattern_unsub = pattern
+        pattern = star.sub('%', pattern)
+        pattern = ques.sub('_', pattern)
+        if pattern == pattern_unsub:
+          names.append(norp)
         else:
-          sql_cmdpattern = sql_cmdpattern + sqlpattern % npattern
-      if sqllist:
-        sql_cmdlist = sqllist % "','".join(listelem)
-      return sql_cmdlist + sql_cmdpattern
+          patterns.append(pattern)
+      return names, patterns
 
 
     def ListOfWikiPages(self, formatter, content):
