@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracTicketTemplate 0.7\n"
 "Report-Msgid-Bugs-To: richard.liao.i@gmail.com\n"
-"POT-Creation-Date: 2010-02-09 01:37+0800\n"
+"POT-Creation-Date: 2010-05-24 09:49+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.0dev-r14358\n"
 
-#: tickettemplate/ttadmin.py:134
+#: tickettemplate/ttadmin.py:137
 msgid "Ticket System"
 msgstr ""
 
-#: tickettemplate/ttadmin.py:134
+#: tickettemplate/ttadmin.py:137
 msgid "Ticket Template"
 msgstr ""
 
@@ -75,11 +75,11 @@ msgid "Delete template success: "
 msgstr ""
 
 #: tickettemplate/templates/tt_newticket.js:14
-msgid "Please input template name(Using exist name can will overwrite it.)"
+msgid "Please input template name (overwriting existing one with equal name)."
 msgstr ""
 
 #: tickettemplate/templates/tt_newticket.js:15
-msgid "Sure to replace with last edit content?"
+msgid "Sure to restore the last edited content?"
 msgstr ""
 
 #: tickettemplate/templates/tt_newticket.js:16

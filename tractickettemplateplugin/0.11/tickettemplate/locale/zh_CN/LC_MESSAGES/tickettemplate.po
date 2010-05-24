@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracTicketTemplate 0.7\n"
 "Report-Msgid-Bugs-To: richard.liao.i@gmail.com\n"
-"POT-Creation-Date: 2010-02-08 15:05+0800\n"
+"POT-Creation-Date: 2010-05-24 09:49+0800\n"
 "PO-Revision-Date: 2010-02-03 16:24+0800\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: zh_CN <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.0dev-r14358\n"
 
-#: tickettemplate/ttadmin.py:133
+#: tickettemplate/ttadmin.py:137
 msgid "Ticket System"
 msgstr "传票系统"
 
-#: tickettemplate/ttadmin.py:133
+#: tickettemplate/ttadmin.py:137
 msgid "Ticket Template"
 msgstr "传票模板"
 
@@ -54,43 +54,39 @@ msgstr "重置"
 msgid "Description:"
 msgstr "描述:"
 
-#: tickettemplate/templates/tt_newticket.js:7
+#: tickettemplate/templates/tt_newticket.js:9
 msgid "My Template"
 msgstr "我的模板"
 
-#: tickettemplate/templates/tt_newticket.js:8
+#: tickettemplate/templates/tt_newticket.js:10
 msgid "Create"
 msgstr "创建"
 
-#: tickettemplate/templates/tt_newticket.js:9
+#: tickettemplate/templates/tt_newticket.js:11
 msgid "Delete"
 msgstr "删除"
 
-#: tickettemplate/templates/tt_newticket.js:10
-msgid "Load last edit data"
-msgstr "载入上次编辑的内容"
-
-#: tickettemplate/templates/tt_newticket.js:11
+#: tickettemplate/templates/tt_newticket.js:12
 msgid "Save template success: "
 msgstr "成功保存模板: "
 
-#: tickettemplate/templates/tt_newticket.js:12
+#: tickettemplate/templates/tt_newticket.js:13
 msgid "Delete template success: "
 msgstr "成功删除模板: "
 
-#: tickettemplate/templates/tt_newticket.js:13
-msgid "Please input template name(Using exist name can will overwrite it.)"
+#: tickettemplate/templates/tt_newticket.js:14
+msgid "Please input template name (overwriting existing one with equal name)."
 msgstr "请输入模板名称(使用已有模板名称, 可以覆盖现有模板内容)"
 
-#: tickettemplate/templates/tt_newticket.js:14
-msgid "Sure to replace with last edit content?"
+#: tickettemplate/templates/tt_newticket.js:15
+msgid "Sure to restore the last edited content?"
 msgstr "确定使用上次编辑内容替换吗?"
 
-#: tickettemplate/templates/tt_newticket.js:15
+#: tickettemplate/templates/tt_newticket.js:16
 msgid "Submit ticket?"
 msgstr "确认提交传票吗?"
 
-#: tickettemplate/templates/tt_newticket.js:16
+#: tickettemplate/templates/tt_newticket.js:17
 msgid "Replace ticket content with template?"
 msgstr "使用模板替换传票内容吗?"
 

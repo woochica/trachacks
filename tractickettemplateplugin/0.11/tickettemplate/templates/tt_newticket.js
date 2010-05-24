@@ -11,8 +11,8 @@ $.fn.extend({
             _('Delete'),
             _('Save template success: '),
             _('Delete template success: '),
-            _('Please input template name(Using exist name can will overwrite it.)'),
-            _('Sure to replace with last edit content?'),
+            _('Please input template name (overwriting existing one with equal name).'),
+            _('Sure to restore the last edited content?'),
             _('Submit ticket?'),
             _('Replace ticket content with template?'),
             _('')
@@ -198,7 +198,7 @@ $.fn.extend({
         }
 
         function onCustomSave(evt) {
-            var tt_name = prompt("${_('Please input template name(Using exist name can will overwrite it.)')}");
+            var tt_name = prompt("${_('Please input template name (overwriting existing one with equal name).')}");
             if (!tt_name) {
                 return;
             }
@@ -289,7 +289,7 @@ $.fn.extend({
         }
 
         function loadEditBuffer(evt) {
-            var answer = confirm("${_('Sure to replace with last edit content?')}");
+            var answer = confirm("${_('Sure to restore the last edited content?')}");
             if (!answer) {
                 return;
             }
