@@ -1,0 +1,21 @@
+{{{
+#!metapost
+input metauml;
+beginfig(1);
+
+Class.A("A")()();
+Class.B("B")()();
+
+Package.pA("net.foo")();
+Package.pB("net.foo.bar")(A, B);
+
+leftToRight(20)(A, B);
+leftToRight(50)(pA, pB);
+
+drawObjects(pA, pB);
+
+clink(nest)(pB, pA);
+
+endfig;
+end
+}}}

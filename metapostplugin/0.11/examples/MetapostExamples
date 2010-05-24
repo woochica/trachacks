@@ -1,0 +1,14 @@
+= Metapost Examples =
+
+== Just the basics ==
+
+Example: [wiki:MetapostExamples/MetapostClassDiagram ClassDiagram], [wiki:MetapostExamples/MetapostPackageDiagram PackageDiagram].
+
+== Output Formats ==
+
+Setting the output format to [wiki:MetapostExamples/OutputPng png], [wiki:MetapostExamples/OutputJpg jpg], [wiki:MetapostExamples/OutputGif gif] and [wiki:MetapostExamples/OutputSvg svg].
+
+== Non-MetaUML example ==
+
+Just took from wikipedia: [wiki:MetapostExamples/JustTestingMetapost wikipedia].
+

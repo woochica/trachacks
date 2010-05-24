@@ -1,0 +1,22 @@
+= Metapost Example Output Png =
+{{{
+#!metapost/png
+input metauml;
+beginfig(1);
+
+Begin.b;
+State.On("On")();
+State.Off("Off")();
+End.e;
+
+leftToRight(20)(b, On, Off, e);
+
+drawObjects(b, On, Off, e);
+
+clink(transition)(b, On);
+clink(transition)(On, Off);
+clink(transition)(Off, e);
+
+endfig;
+end
+}}}

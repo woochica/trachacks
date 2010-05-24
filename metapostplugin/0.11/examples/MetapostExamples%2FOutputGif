@@ -1,0 +1,26 @@
+= Metapost Example Output Gif =
+{{{
+#!metapost/gif
+input metauml;
+beginfig(1);
+
+Class.P("Person")()();
+Class.C("Company")()();
+
+leftToRight(150)(P, C);
+
+drawObjects(P, C);
+
+clink(association)(P, C);
+
+item(iAssoc)("employee")(obj.sw = P.e);
+item(iAssoc)("1..*")(obj.nw = P.e);
+
+item(iAssoc)("employer")(obj.se = C.w);
+item(iAssoc)("0..*")(obj.ne = C.w);
+
+item(iAssoc)("works for")(obj.s =.5[P.e,C.w]);
+
+endfig;
+end
+}}}

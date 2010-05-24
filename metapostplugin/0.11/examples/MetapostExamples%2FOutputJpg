@@ -1,0 +1,27 @@
+= Metapost Example Output Jpg =
+{{{
+#!metapost/jpeg
+input metauml;
+beginfig(1);
+
+Actor.user("User");
+Actor.db("Database");
+
+Usecase.dbquery("Query database");
+Usecase.auth("Authentification");
+Usecase.authA("Authentification by", "username, password");
+Usecase.authB("Authentification by", "smartcard");
+
+% simple positioning code not listed, see the manual
+
+drawObjects(user, auth, dbquery, db, authA, authB);
+
+clink(inheritance)(authA, auth);
+clink(inheritance)(authB, auth);
+clink(association)(auth, dbquery);
+clink(association)(user.human, auth);
+clink(association)(dbquery, db.human);
+
+endfig;
+end
+}}}
