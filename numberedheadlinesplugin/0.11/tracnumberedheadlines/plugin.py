@@ -28,6 +28,7 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.api import IWikiSyntaxProvider
 from trac.wiki.formatter import format_to_oneliner
 from genshi.util import plaintext
+from trac.util import to_unicode
 from trac.wiki.parser import WikiParser
 from trac.config import BoolOption
 
@@ -45,6 +46,7 @@ class NumberedHeadlinesPlugin(Component):
       BoolOption('numberedheadlines', 'numbering_starts_at_level_two',
         False, """Whether or not to start the numbering at level two instead at 
         level one.""")
+    fix_paragraph = BoolOption('numberedheadlines', 'fix_paragraph', True, 'Fix surrounding paragraph HTML-tags.')
 
     XML_NAME = r"[\w:](?<!\d)[\w:.-]*?" # See http://www.w3.org/TR/REC-xml/#id 
 
@@ -167,8 +169,12 @@ class NumberedHeadlinesPlugin(Component):
             pass
         ## END of provided code
 
-        return tag.__getattr__('h' + str(depth))(
+        html = tag.__getattr__('h' + str(depth))(
             heading, id = anchor)
+        if self.fix_paragraph:
+          return '</p>' + to_unicode(html) + '<p>'
+        else:
+          return html
 
     def get_wiki_syntax(self):
         yield ( self.NUM_HEADLINE , self._parse_heading )
