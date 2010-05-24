@@ -20,14 +20,18 @@ from trac.web.chrome import add_stylesheet, ITemplateProvider
 from trac.util.text import to_unicode
 from time import time as unixtime
 from tracadvparseargs import parse_args
+from trac.config import Option, ListOption
 
 class ListOfWikiPagesComponent(Component):
     implements ( IWikiMacroProvider, IRequestFilter, ITemplateProvider )
+
 
     rev = __revision__
     date = __date__
 
     long_format = False
+    default_format = Option('listofwikipages', 'default_format', 'short', 'Default format, either "long" or "short" (default).')
+    ignore_users   = ListOption('listofwikipages', 'ignore_users', ['trac'], doc='List of users which wiki pages should be ignored (like "trac").')
 
     tunits = {
         's': 1,
@@ -227,15 +231,11 @@ The wildcards '`*`' (matches everything) and '`?`' (matches a single character) 
         largs, kwargs = parse_args( content, multi = ['exclude'] )
 
         self.href = formatter.req.href
-        section = 'listofwikipages'
 
-        long_format = self.env.config.get(section, 'default_format', 
-            'short').lower() == 'long'
+        long_format = self.default_format.lower() == 'long'
         if 'format' in kwargs:
           long_format = kwargs['format'].lower() == 'long'
         self.long_format = long_format
-
-        ignoreusers = self.env.config.getlist(section, 'ignore_users', ['trac'])
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -268,7 +268,7 @@ The wildcards '`*`' (matches everything) and '`?`' (matches a single character) 
         cursor.execute(
             "SELECT name,time,author,version,comment FROM wiki AS w1 WHERE " \
             + sql_time + \
-            "author NOT IN ('%s') "  % "','".join( ignoreusers ) + sql_wikis + sql_exclude + \
+            "author NOT IN ('%s') "  % "','".join( self.ignore_users ) + sql_wikis + sql_exclude + \
             "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY time " + \
             order)
         rows = [ self.formatrow(n,name,time,version,comment,author)
