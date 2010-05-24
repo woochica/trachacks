@@ -152,24 +152,24 @@ class ListOfWikiPagesComponent(Component):
 
     def _get_sql_exclude(self, list):
       names, patterns = self._get_sql_names_and_patterns(list)
-      if not names and not pattern:
+      if not names and not patterns:
         return ""
-      if names and not pattern:
+      if names and not patterns:
         return " AND name NOT IN ('%s') " % names
-      if not names and pattern:
+      if not names and patterns:
         return " AND ( " + ' AND '.join([" name NOT LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
-      if names and pattern:
+      if names and patterns:
         return " AND ( name NOT IN ('%s') " % names + ''.join([" AND name NOT LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
 
     def _get_sql_include(self, list):
       names, patterns = self._get_sql_names_and_patterns(list)
-      if not names and not pattern:
+      if not names and not patterns:
         return ""
-      if names and not pattern:
+      if names and not patterns:
         return " AND name IN ('%s') " % names
-      if not names and pattern:
+      if not names and patterns:
         return " AND ( " + ' OR '.join([" name LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
-      if names and pattern:
+      if names and patterns:
         return " AND ( name IN ('%s') " % names + ''.join([" OR name LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
 
 
