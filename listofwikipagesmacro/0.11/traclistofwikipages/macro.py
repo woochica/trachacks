@@ -76,7 +76,7 @@ class ListOfWikiPagesComponent(Component):
     def timeval(self, name, default):
       if name in self.kwargs:
         try:
-          val = self.kwargs[name]
+          val = self.kwargs[name]advparseargsplugin/releases/TracAdvParseArgsPlugin-0.3.7033-py2.6.egg
           try:
             val = int(val)
             text = \
@@ -151,19 +151,24 @@ class ListOfWikiPagesComponent(Component):
           return tag()
 
     def _get_sql_exclude(self, list):
+      return self._get_sql_pattern(list, " AND name NOT LIKE '%s' ")
+
+    def _get_sql_include(self, list):
+      return self._get_sql_pattern(list, " OR name LIKE '%s' ")
+
+    def _get_sql_pattern(self, list, sqlexpr):
       import re
       if not list:
         return ''
       star  = re.compile(r'(?<!\\)\*')
       ques  = re.compile(r'(?<!\\)\?')
-      sql_exclude = ''
+      sql_cmdfrag = ''
       for pattern in list:
         pattern = pattern.replace('%',r'\%').replace('_',r'\_')
         pattern = star.sub('%', pattern)
         pattern = ques.sub('_', pattern)
-        sql_exclude = sql_exclude + " AND name NOT LIKE '%s' " % pattern
-      #sql_exclude = sql_exclude + r" ESCAPE '\\' "
-      return sql_exclude
+        sql_cmdfrag = sql_cmdfrag + sqlexpr % pattern
+      return sql_cmdfrag
 
     def ListOfWikiPages(self, formatter, content):
         """
