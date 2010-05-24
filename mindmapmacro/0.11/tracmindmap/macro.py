@@ -300,7 +300,7 @@ class MindMap:
     if not content:
       return tag.node(TEXT=name,**args)
     else:
-      return tag.node( [ self.node(n,c,a) for n,c,a in content ], TEXT=name, LINK=name, **args)
+      return tag.node( [ self.node(n,c,a) for n,c,a in content ], TEXT=name, **args)
 
 
   def decode(self, code):
