@@ -7,8 +7,8 @@
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
-__revision__ = int("0" + r"$Rev$"[6:-2])
-__date__     = r"$Date$"[7:-2]
+__revision__ = int("0" + ur"$Rev$"[6:-2])
+__date__     = ur"$Date$"[7:-2]
 
 from genshi.builder import Element,tag
 from StringIO import StringIO
@@ -23,6 +23,7 @@ from trac.web.chrome import ITemplateProvider, add_link, add_script
 from trac.env import IEnvironmentSetupParticipant
 from genshi.builder import Element
 from urllib import urlopen,quote_plus
+from trac.config import Option, IntOption
 import re
 
 COUNT = '_googlemapmacro_count'
@@ -225,9 +226,14 @@ The same with hyperlinked markers:
     """
     implements(IRequestFilter,ITemplateProvider,IRequestFilter,IEnvironmentSetupParticipant)
 
+    geocoding = Option('googlemap','geocoding','client','Which side is handling the geocoding: either "server" or "client" (default).')
+    api_key   = Option('googlemap', 'api_key', '', 'Google Map API key. Available from http://code.google.com/apis/maps/signup.html .')
+    default_zoom = IntOption('googlemap', 'default_zoom', '6', 'Default map zoom used if no zoom specified by the user (default: 6)')
+    default_size =    Option('googlemap', 'default_size', '300x300', 'Default map size (width x height, in pixel without units) used if no size specified by the user (default: 300x300)')
+    default_target =  Option('googlemap', 'default_target', '', 'Default target for hyperlinked markers. Use "_blank" to open target in new window. (Default: "")')
+
     def __init__(self):
-        self.geocoding_server = unicode(self.env.config.get('googlemap', 'geocoding',
-            "client")).lower() == "server"
+        self.geocoding_server = self.geocoding.lower() == "server"
 
     def _create_db_table(self, db=None, commit=True):
         """ Create DB table if it not exists. """
@@ -286,9 +292,8 @@ The same with hyperlinked markers:
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
         # Add Google Map API key using a link tag:
-        key = self.env.config.get('googlemap', 'api_key', None)
-        if key:
-            add_link (req, rel='google-key', href='', title=key, classname='google-key')
+        if self.api_key:
+            add_link (req, rel='google-key', href='', title=self_key, classname='google-key')
             add_script (req, 'googlemap/tracgooglemap.js')
         return (template, data, content_type)
 
@@ -364,7 +369,7 @@ The same with hyperlinked markers:
 
         # Check if Google API key is set (if not the Google Map script file
         # wasn't inserted by `post_process_request` and the map wont load)
-        if not self.env.config.get('googlemap', 'api_key', None):
+        if not self.api_key:
             raise TracError("No Google Maps API key given! Tell your web admin to get one at http://code.google.com/apis/maps/signup.html .\n")
 
         # Use default values if needed
@@ -374,19 +379,19 @@ The same with hyperlinked markers:
             if 'zoom' in kwargs:
                 zoom = unicode( int( kwargs['zoom'] ) )
             else:
-                zoom = unicode( int( self.env.config.get('googlemap', 'default_zoom', "6") ) )
+                zoom = unicode( self.default_zoom )
         except:
             raise TracError("Invalid value for zoom given! Please provide an integer from 0 to 19.")
 
         if 'size' in kwargs:
             size = unicode( kwargs['size'] )
         else:
-            size = unicode( self.env.config.get('googlemap', 'default_size', "300x300") )
+            size = unicode( self.default_size )
 
         # Set target for hyperlinked markers
         target = ""
         if not 'target' in kwargs:
-            kwargs['target'] = unicode( self.env.config.get('googlemap', 'default_target', "") )
+            kwargs['target'] = self.default_target
         if kwargs['target'] in ('new','newwindow','_blank'):
             target = "newwindow"
 
