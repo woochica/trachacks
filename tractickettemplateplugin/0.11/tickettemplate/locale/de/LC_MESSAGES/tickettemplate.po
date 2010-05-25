@@ -1,0 +1,94 @@
+# translation of tickettemplate.po to German
+# German (Germany) translations for TracTicketTemplate.
+# Copyright (C) 2010
+# This file is distributed under the same license as the
+# TracTicketTemplate project.
+#
+# Steffen Hoffmann <hoff.st@web.de>, 2010.
+msgid ""
+msgstr ""
+"Project-Id-Version: Trac 0.12\n"
+"Report-Msgid-Bugs-To: richard.liao.i@gmail.com\n"
+"POT-Creation-Date: 2010-05-24 09:49+0800\n"
+"PO-Revision-Date: 2010-05-24 13:53+0200\n"
+"Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
+"Language-Team: German <de_DE <trac-dev@googlegroups.com>>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+"X-Generator: KBabel 1.11.4\n"
+
+#: tickettemplate/ttadmin.py:137
+msgid "Ticket System"
+msgstr "Ticket-System"
+
+#: tickettemplate/ttadmin.py:137
+msgid "Ticket Template"
+msgstr "Ticket-Vorlage"
+
+#: tickettemplate/templates/admin_tickettemplate.html:12
+msgid "Available Projects"
+msgstr "Verfügbare Projekte"
+
+#: tickettemplate/templates/admin_tickettemplate.html:15
+msgid "Ticket: Template"
+msgstr "Ticket: Vorlage"
+
+#: tickettemplate/templates/admin_tickettemplate.html:20
+msgid "Type:"
+msgstr "Typ:"
+
+#: tickettemplate/templates/admin_tickettemplate.html:28
+msgid "Load"
+msgstr "Laden"
+
+#: tickettemplate/templates/admin_tickettemplate.html:29
+msgid "Apply change"
+msgstr "Übernehmen"
+
+#: tickettemplate/templates/admin_tickettemplate.html:30
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+#: tickettemplate/templates/admin_tickettemplate.html:35
+msgid "Description:"
+msgstr "Beschreibung:"
+
+#: tickettemplate/templates/tt_newticket.js:9
+msgid "My Template"
+msgstr "Meine Vorlage"
+
+#: tickettemplate/templates/tt_newticket.js:10
+msgid "Create"
+msgstr "Erstellen"
+
+#: tickettemplate/templates/tt_newticket.js:11
+msgid "Delete"
+msgstr "Löschen"
+
+#: tickettemplate/templates/tt_newticket.js:12
+msgid "Save template success: "
+msgstr "Speichern der Vorlage erfolgreich: "
+
+#: tickettemplate/templates/tt_newticket.js:13
+msgid "Delete template success: "
+msgstr "Löschen der Vorlage erfolgreich: "
+
+#: tickettemplate/templates/tt_newticket.js:14
+msgid "Please input template name (overwriting existing one with equal name)."
+msgstr "Bitte geben Sie einen Vorlagenamen an (überschreibe vorhandene bei Namensgleichheit)."
+
+#: tickettemplate/templates/tt_newticket.js:15
+msgid "Sure to restore the last edited content?"
+msgstr "Wollen Sie wirklich den vorherigen Inhalt wiederherstellen?"
+
+#: tickettemplate/templates/tt_newticket.js:16
+msgid "Submit ticket?"
+msgstr "Ticket absenden?"
+
+#: tickettemplate/templates/tt_newticket.js:17
+msgid "Replace ticket content with template?"
+msgstr "Ticket-Beschreibung durch Vorlage ersetzen?"
+
