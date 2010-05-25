@@ -8,14 +8,12 @@ __revision__ = ur"$Rev$"[6:-2]
 __date__     = ur"$Date$"[7:-2]
 
 
-from trac.core import *
-from genshi.builder import tag, Fragment
-from urllib import quote_plus
-from trac.web.api import IRequestHandler, RequestDone
-from trac.util.text import to_unicode
-from trac.config import Option, ListOption
-from time import time as unixtime
-from  trac.util        import  format_datetime
+from  trac.core       import  *
+from  genshi.builder  import  tag
+from  trac.web.api    import  IRequestHandler, RequestDone
+from  trac.util.text  import  <F5>to_unicode
+from  trac.config     import  Option, ListOption
+from  trac.util       import  format_datetime
 
 class GoogleSidemapPlugin(Component):
     implements ( IRequestHandler )
