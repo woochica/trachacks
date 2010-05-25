@@ -2,10 +2,10 @@
  Copyright (c) 2010 by Martin Scharrer <martin@scharrer-online.de>
 """
 
-__url__      = ur"$URL: http://trac-hacks.org/svn/listofwikipagesmacro/0.11/traclistofwikipages/macro.py $"[6:-2]
-__author__   = ur"$Author: martin_s $"[9:-2]
-__revision__ = ur"$Rev: 7109 $"[6:-2]
-__date__     = ur"$Date: 2009-11-08 19:58:32 +0000 (Sun, 08 Nov 2009) $"[7:-2]
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = ur"$Rev$"[6:-2]
+__date__     = ur"$Date$"[7:-2]
 
 
 from trac.core import *
