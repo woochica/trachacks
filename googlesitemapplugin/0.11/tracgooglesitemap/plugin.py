@@ -23,9 +23,9 @@ class GoogleSidemapPlugin(Component):
     rev = __revision__
     date = __date__
 
-    sidemappath = Option('googlesidemap', 'sidemappath', '/sidemap.xml', 'Path of sidemap (default: "/sidemap.xml")')
-    ignoreusers = ListOption('googlesidemap', 'ignore_users', ['trac'], doc='Do not list wiki pages from listed users (default: "trac")')
-    ignorewikis = ListOption('googlesidemap', 'ignore_wikis', ['WikiStart'], doc='List of wiki pages to not be included in sidemap')
+    sitemappath = Option('googlesitemap', 'sitemappath', '/sitemap.xml', 'Path of sitemap (default: "/sitemap.xml")')
+    ignoreusers = ListOption('googlesitemap', 'ignore_users', ['trac'], doc='Do not list wiki pages from listed users (default: "trac")')
+    ignorewikis = ListOption('googlesitemap', 'ignore_wikis', ['WikiStart'], doc='List of wiki pages to not be included in sitemap')
 
     def _get_sql_exclude(self, list):
       import re
@@ -49,7 +49,7 @@ class GoogleSidemapPlugin(Component):
 
    # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info == self.sidemappath
+        return req.path_info == self.sitemappath
 
     def _fixtime(self, timestring):
         if not timestring.endswith('Z'):
