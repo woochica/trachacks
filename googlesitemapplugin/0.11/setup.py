@@ -22,5 +22,5 @@ setup(
     zip_safe     = False,
     keywords = 'trac google sitemap plugin',
     classifiers = ['Framework :: Trac'],
-    entry_points = {'trac.plugins': ['tracgooglesitemap = tracgooglesitemap']}
+    entry_points = {'trac.plugins': ['tracgooglesitemap.plugin = tracgooglesitemap.plugin']}
 )
