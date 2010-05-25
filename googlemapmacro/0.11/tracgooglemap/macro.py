@@ -293,7 +293,7 @@ The same with hyperlinked markers:
     def post_process_request(self, req, template, data, content_type):
         # Add Google Map API key using a link tag:
         if self.api_key:
-            add_link (req, rel='google-key', href='', title=self_key, classname='google-key')
+            add_link (req, rel='google-key', href='', title=self.api_key, classname='google-key')
             add_script (req, 'googlemap/tracgooglemap.js')
         return (template, data, content_type)
 
