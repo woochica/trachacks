@@ -11,19 +11,20 @@ __date__     = ur"$Date$"[7:-2]
 from  trac.core       import  *
 from  genshi.builder  import  tag
 from  trac.web.api    import  IRequestHandler, RequestDone
-from  trac.util.text  import  <F5>to_unicode
+from  trac.util.text  import  to_unicode
 from  trac.config     import  Option, ListOption
 from  trac.util       import  format_datetime
 
-class GoogleSidemapPlugin(Component):
+class GoogleSitemapPlugin(Component):
     implements ( IRequestHandler )
 
     rev = __revision__
     date = __date__
 
     sitemappath = Option('googlesitemap', 'sitemappath', '/sitemap.xml', 'Path of sitemap (default: "/sitemap.xml")')
-    ignoreusers = ListOption('googlesitemap', 'ignore_users', ['trac'], doc='Do not list wiki pages from listed users (default: "trac")')
-    ignorewikis = ListOption('googlesitemap', 'ignore_wikis', ['WikiStart'], doc='List of wiki pages to not be included in sitemap')
+    ignoreusers = ListOption('googlesitemap', 'ignore_users', 'trac', doc='Do not list wiki pages from this users (default: "trac")')
+    ignorewikis = ListOption('googlesitemap', 'ignore_wikis', '', doc='List of wiki pages to not be included in sitemap')
+    listrealms  = ListOption('googlesitemap', 'list_realms', 'wiki,ticket', doc='Which realms should be listed. Supported are "wiki" and "ticket".')
 
     def _get_sql_exclude(self, list):
       import re
@@ -50,7 +51,7 @@ class GoogleSidemapPlugin(Component):
         return req.path_info == self.sitemappath
 
     def _fixtime(self, timestring):
-        if not timestring.endswith('Z'):
+        if not timestring.endswith('Z') and timestring[-3] != ':':
             return timestring[:-2] + ':' + timestring[-2:]
 
     def process_request(self, req):
@@ -58,17 +59,29 @@ class GoogleSidemapPlugin(Component):
             db = self.env.get_db_cnx()
             cursor = db.cursor()
 
-            sql_exclude = self._get_sql_exclude(self.ignorewikis)
+            if 'wiki' in self.listrealms:
+              sql_exclude = self._get_sql_exclude(self.ignorewikis)
 
-            sql = "SELECT name,time,version FROM wiki AS w1 WHERE " \
-                  "author NOT IN ('%s') "  % "','".join( self.ignoreusers ) + sql_exclude + \
-                  "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY name "
-            self.log.debug(sql)
-            cursor.execute(sql)
-            urls = [ tag.url(
-                            tag.loc( req.base_url + req.href.wiki(name) ),
-                            tag.lastmod( self._fixtime(format_datetime (time,'iso8601 %Y-%m-%dT%H:%M:%S%z')) )
-                       ) for n,[name,time,version] in enumerate(cursor) ]
+              sql = "SELECT name,time,version FROM wiki AS w1 WHERE " \
+                    "author NOT IN ('%s') "  % "','".join( self.ignoreusers ) + sql_exclude + \
+                    "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY name "
+              self.log.debug(sql)
+              cursor.execute(sql)
+              urls = [ tag.url(
+                              tag.loc( req.base_url + req.href.wiki(name) ),
+                              tag.lastmod( self._fixtime(format_datetime (time,'iso8601')) )
+                        ) for n,[name,time,version] in enumerate(cursor) ]
+            else:
+              urls = []
+
+            if 'ticket' in self.listrealms:
+              cursor.execute(
+                  "SELECT id,changetime FROM ticket"
+              )
+              urls.append( [ tag.url(
+                              tag.loc( req.base_url + req.href.ticket(ticketid) ),
+                              tag.lastmod( self._fixtime(format_datetime (changetime,'iso8601')) )
+                        ) for n,[ticketid,changetime] in enumerate(cursor) ] )
 
                 #xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
                 #'xmlns:xsi'="http://www.w3.org/2001/XMLSchema-instance"
@@ -89,7 +102,7 @@ class GoogleSidemapPlugin(Component):
             #                  http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
 
-            req.send( xmlheader + to_unicode(xml) + xmlfooter, content_type='text/xml', status=200)
+            req.send( unicode(xmlheader + to_unicode(xml) + xmlfooter).encode('utf-8'), content_type='text/xml', status=200)
         except RequestDone:
             pass
         except Exception, e:
