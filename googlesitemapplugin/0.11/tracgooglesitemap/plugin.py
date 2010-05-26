@@ -89,7 +89,7 @@ class GoogleSitemapPlugin(Component):
                               tag.lastmod( self._fixtime(format_datetime (changetime,'iso8601')) )
                         ) for n,[ticketid,changetime] in enumerate(cursor) ] )
 
-            xml = tag.urlset(urls, self._urlset_attrs)
+            xml = tag.urlset(urls, **self._urlset_attrs)
 
             req.send( xml.generate().render('xml','utf-8'), content_type='text/xml', status=200)
         except RequestDone:
