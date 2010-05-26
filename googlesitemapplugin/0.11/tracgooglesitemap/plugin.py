@@ -12,7 +12,7 @@ from  trac.core       import  *
 from  genshi.builder  import  tag
 from  trac.web.api    import  IRequestHandler, RequestDone
 from  trac.util.text  import  to_unicode
-from  trac.config     import  Option, ListOption
+from  trac.config     import  Option, ListOption, BoolOption, IntOption
 from  trac.util       import  format_datetime
 
 class GoogleSitemapPlugin(Component):
@@ -25,6 +25,8 @@ class GoogleSitemapPlugin(Component):
     ignoreusers = ListOption('googlesitemap', 'ignore_users', 'trac', doc='Do not list wiki pages from this users (default: "trac")')
     ignorewikis = ListOption('googlesitemap', 'ignore_wikis', '', doc='List of wiki pages to not be included in sitemap')
     listrealms  = ListOption('googlesitemap', 'list_realms', 'wiki,ticket', doc='Which realms should be listed. Supported are "wiki" and "ticket".')
+    compress_sitemap = BoolOption('googlesitemap', 'compress_sitemap', False, doc='Send sitemap compressed. Useful for larger sitemaps.')
+    compression_level = IntOption('googlesitemap', 'compression_level', 6, doc='Compression level. Value range: 1 (low) to 9 (high). Default: 6')
 
     _urlset_attrs = {
               'xmlns':"http://www.sitemaps.org/schemas/sitemap/0.9",
@@ -90,8 +92,25 @@ class GoogleSitemapPlugin(Component):
                         ) for n,[ticketid,changetime] in enumerate(cursor) ] )
 
             xml = tag.urlset(urls, **self._urlset_attrs)
+            content = xml.generate().render('xml','utf-8')
 
-            req.send( xml.generate().render('xml','utf-8'), content_type='text/xml', status=200)
+            if self.compress_sitemap:
+              from zlib import compress
+              zcontent = compress(content, self.compression_level)
+
+              self.send_response(200)
+              self.send_header('Cache-control', 'must-revalidate')
+              self.send_header('Content-Type', 'text/xml;charset=utf-8')
+              self.send_header('Content-Encoding', 'gzip')
+              self.send_header('Content-Length', len(zcontent))
+              self.end_headers()
+
+              if self.method != 'HEAD':
+                  self.write(zcontent)
+              raise RequestDone
+            else:
+              req.send( content, content_type='text/xml', status=200)
+
         except RequestDone:
             pass
         except Exception, e:
