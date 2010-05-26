@@ -27,6 +27,7 @@ class GoogleSitemapPlugin(Component):
     listrealms  = ListOption('googlesitemap', 'list_realms', 'wiki,ticket', doc='Which realms should be listed. Supported are "wiki" and "ticket".')
     compress_sitemap = BoolOption('googlesitemap', 'compress_sitemap', False, doc='Send sitemap compressed. Useful for larger sitemaps.')
     compression_level = IntOption('googlesitemap', 'compression_level', 6, doc='Compression level. Value range: 1 (low) to 9 (high). Default: 6')
+    changefreq = Option('googlesitemap', 'change_frequency', '', 'Change frequency of URLs. Valid values: always, hourly, daily, weekly, monthly, yearly, never. Disabled if empty.')
 
     _urlset_attrs = {
               'xmlns':"http://www.sitemaps.org/schemas/sitemap/0.9",
@@ -77,7 +78,8 @@ class GoogleSitemapPlugin(Component):
               cursor.execute(sql)
               urls = [ tag.url(
                               tag.loc( self.env.abs_href.wiki(name) ),
-                              tag.lastmod( self._fixtime(format_datetime (time,'iso8601')) )
+                              tag.lastmod( self._fixtime(format_datetime (time,'iso8601')) ),
+                              self.changefreq and tag.changefreq( self.changefreq ) or ''
                         ) for n,[name,time,version] in enumerate(cursor) ]
             else:
               urls = []
