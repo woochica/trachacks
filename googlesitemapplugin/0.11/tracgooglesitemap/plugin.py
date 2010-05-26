@@ -21,7 +21,7 @@ class GoogleSitemapPlugin(Component):
     rev = __revision__
     date = __date__
 
-    sitemappath = Option('googlesitemap', 'sitemappath', '/sitemap.xml', 'Path of sitemap (default: "/sitemap.xml")')
+    sitemappath = Option('googlesitemap', 'sitemappath', 'sitemap.xml', 'Path of sitemap (default: "sitemap.xml")')
     ignoreusers = ListOption('googlesitemap', 'ignore_users', 'trac', doc='Do not list wiki pages from this users (default: "trac")')
     ignorewikis = ListOption('googlesitemap', 'ignore_wikis', '', doc='List of wiki pages to not be included in sitemap')
     listrealms  = ListOption('googlesitemap', 'list_realms', 'wiki,ticket', doc='Which realms should be listed. Supported are "wiki" and "ticket".')
@@ -56,7 +56,7 @@ class GoogleSitemapPlugin(Component):
 
    # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info == self.sitemappath
+        return req.path_info == '/' + self.sitemappath
 
     def _fixtime(self, timestring):
         if not timestring.endswith('Z') and timestring[-3] != ':':
@@ -76,7 +76,7 @@ class GoogleSitemapPlugin(Component):
               #self.log.debug(sql)
               cursor.execute(sql)
               urls = [ tag.url(
-                              tag.loc( req.base_url + req.href.wiki(name) ),
+                              tag.loc( self.env.abs_href.wiki(name) ),
                               tag.lastmod( self._fixtime(format_datetime (time,'iso8601')) )
                         ) for n,[name,time,version] in enumerate(cursor) ]
             else:
