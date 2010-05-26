@@ -73,7 +73,7 @@ class GoogleSitemapPlugin(Component):
               sql = "SELECT name,time,version FROM wiki AS w1 WHERE " \
                     "author NOT IN ('%s') "  % "','".join( self.ignoreusers ) + sql_exclude + \
                     "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY name "
-              self.log.debug(sql)
+              #self.log.debug(sql)
               cursor.execute(sql)
               urls = [ tag.url(
                               tag.loc( req.base_url + req.href.wiki(name) ),
@@ -94,19 +94,26 @@ class GoogleSitemapPlugin(Component):
             xml = tag.urlset(urls, **self._urlset_attrs)
             content = xml.generate().render('xml','utf-8')
 
-            if self.compress_sitemap:
-              from zlib import compress
-              zcontent = compress(content, self.compression_level)
+            accept_enc = req.get_header('accept-encoding')
+            if self.compress_sitemap and accept_enc and ( accept_enc.find('gzip') != -1 or accept_enc == '*' ):
+              import StringIO
+              from gzip import GzipFile
+              gzbuf = StringIO.StringIO()
+              gzfile = GzipFile(mode='wb', fileobj=gzbuf, compresslevel=self.compression_level)
+              gzfile.write(content)
+              gzfile.close()
+              zcontent = gzbuf.getvalue()
+              gzbuf.close()
 
-              self.send_response(200)
-              self.send_header('Cache-control', 'must-revalidate')
-              self.send_header('Content-Type', 'text/xml;charset=utf-8')
-              self.send_header('Content-Encoding', 'gzip')
-              self.send_header('Content-Length', len(zcontent))
-              self.end_headers()
+              req.send_response(200)
+              req.send_header('Cache-control', 'must-revalidate')
+              req.send_header('Content-Type', 'text/xml;charset=utf-8')
+              req.send_header('Content-Encoding', 'gzip')
+              req.send_header('Content-Length', len(zcontent))
+              req.end_headers()
 
-              if self.method != 'HEAD':
-                  self.write(zcontent)
+              if req.method != 'HEAD':
+                  req.write(zcontent)
               raise RequestDone
             else:
               req.send( content, content_type='text/xml', status=200)
