@@ -26,6 +26,12 @@ class GoogleSitemapPlugin(Component):
     ignorewikis = ListOption('googlesitemap', 'ignore_wikis', '', doc='List of wiki pages to not be included in sitemap')
     listrealms  = ListOption('googlesitemap', 'list_realms', 'wiki,ticket', doc='Which realms should be listed. Supported are "wiki" and "ticket".')
 
+    _urlset_attrs = {
+              'xmlns':"http://www.sitemaps.org/schemas/sitemap/0.9",
+              'xmlns:xsi':"http://www.w3.org/2001/XMLSchema-instance",
+              'xsi:schemaLocation':"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" 
+            }
+
     def _get_sql_exclude(self, list):
       import re
       if not list:
@@ -83,26 +89,9 @@ class GoogleSitemapPlugin(Component):
                               tag.lastmod( self._fixtime(format_datetime (changetime,'iso8601')) )
                         ) for n,[ticketid,changetime] in enumerate(cursor) ] )
 
-                #xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-                #'xmlns:xsi'="http://www.w3.org/2001/XMLSchema-instance"
-                #'xsi:schemaLocation'="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd")
-            #xml = Fragment()
-            #ml.append(ur'<?xml version="1.0" encoding="UTF-8"?>')
-            #xml.append( tag.urlset(urls) )
-            xmlheader = ur"""<?xml version="1.0" encoding="UTF-8"?>
-                    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">"""
-            xmlfooter = ur'</urlset>'
+            xml = tag.urlset(urls, self._urlset_attrs)
 
-            xml = tag(urls)
-
-            #xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-            #      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
-            #                  http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
-
-
-            req.send( unicode(xmlheader + to_unicode(xml) + xmlfooter).encode('utf-8'), content_type='text/xml', status=200)
+            req.send( xml.generate().render('xml','utf-8'), content_type='text/xml', status=200)
         except RequestDone:
             pass
         except Exception, e:
