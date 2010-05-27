@@ -13,7 +13,7 @@ rev = max(__revision__, codereva, coderevb)
 
 setup(
     name = 'TracGoogleSitemapPlugin',
-    version = '0.2.' + rev,
+    version = '1.0.' + rev,
     packages = ['tracgooglesitemap'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
