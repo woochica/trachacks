@@ -16,6 +16,14 @@ from  trac.config     import  Option, ListOption, BoolOption, IntOption
 from  trac.util       import  format_datetime
 
 class GoogleSitemapPlugin(Component):
+    """ Generates a Google compatible sitemap with all wiki pages and/or tickets.
+
+     The sitemap can be compressed with the `compress_sitemap` option. In this case the XML file can be sent compressed in two different ways:
+       * If the XML file (.xml) is requested it will be send with a gzip `content-encoding` if the requesting HTTP client supports it,
+         i.e. sent a `accept-encoding` header with either includes '`gzip`' or indentical to '`*`'.
+       * If a gzipped XML file is requested (.xml.gz) directly the compressed sitemap will be sent as gzip file (mime-type `application/x-gzip`).
+         This option is enabled implictly if the `sitemappath` ends in '`.gz`'.
+    """
     implements ( IRequestHandler )
 
     rev = __revision__
@@ -57,7 +65,8 @@ class GoogleSitemapPlugin(Component):
 
    # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info == '/' + self.sitemappath
+        path = '/' + self.sitemappath
+        return req.path_info == path or (self.compress_sitemap and req.path_info == path + '.gz')
 
     def _fixtime(self, timestring):
         if not timestring.endswith('Z') and timestring[-3] != ':':
@@ -96,8 +105,10 @@ class GoogleSitemapPlugin(Component):
             xml = tag.urlset(urls, **self._urlset_attrs)
             content = xml.generate().render('xml','utf-8')
 
-            accept_enc = req.get_header('accept-encoding')
-            if self.compress_sitemap and accept_enc and ( accept_enc.find('gzip') != -1 or accept_enc == '*' ):
+            accept_enc  = req.get_header('accept-encoding')
+            accept_gzip = accept_enc and ( accept_enc.find('gzip') != -1 or accept_enc == '*' )
+            compressed  = self.sitemappath.endswith('.gz') or req.path_info == '/' + self.sitemappath + '.gz'
+            if compressed or (self.compress_sitemap and accept_gzip):
               import StringIO
               from gzip import GzipFile
               gzbuf = StringIO.StringIO()
@@ -109,8 +120,11 @@ class GoogleSitemapPlugin(Component):
 
               req.send_response(200)
               req.send_header('Cache-control', 'must-revalidate')
-              req.send_header('Content-Type', 'text/xml;charset=utf-8')
-              req.send_header('Content-Encoding', 'gzip')
+              if compressed:
+                req.send_header('Content-Type', 'application/x-gzip')
+              else:
+                req.send_header('Content-Type', 'text/xml;charset=utf-8')
+                req.send_header('Content-Encoding', 'gzip')
               req.send_header('Content-Length', len(zcontent))
               req.end_headers()
 
