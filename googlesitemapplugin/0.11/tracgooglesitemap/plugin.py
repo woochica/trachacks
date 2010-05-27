@@ -22,14 +22,15 @@ class GoogleSitemapPlugin(Component):
        * If the XML file (.xml) is requested it will be send with a gzip `content-encoding` if the requesting HTTP client supports it,
          i.e. sent a `accept-encoding` header with either includes '`gzip`' or indentical to '`*`'.
        * If a gzipped XML file is requested (.xml.gz) directly the compressed sitemap will be sent as gzip file (mime-type `application/x-gzip`).
-         This option is enabled implictly if the `sitemappath` ends in '`.gz`'.
+         This is also done if the `sitemappath` ends in '`.gz`'.
     """
     implements ( IRequestHandler )
 
     rev = __revision__
     date = __date__
 
-    sitemappath = Option('googlesitemap', 'sitemappath', 'sitemap.xml', 'Path of sitemap (default: "sitemap.xml")')
+    sitemappath = Option('googlesitemap', 'sitemappath', 'sitemap.xml', 'Path of sitemap relative to Trac main URL (default: "sitemap.xml"). '
+                                                                        'If this path ends in `.gz` the sidemap will automatically be compressed.')
     ignoreusers = ListOption('googlesitemap', 'ignore_users', 'trac', doc='Do not list wiki pages from this users (default: "trac")')
     ignorewikis = ListOption('googlesitemap', 'ignore_wikis', '', doc='List of wiki pages to not be included in sitemap')
     listrealms  = ListOption('googlesitemap', 'list_realms', 'wiki,ticket', doc='Which realms should be listed. Supported are "wiki" and "ticket".')
