@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="layout.html"/>
+  <head>
+    <link type="text/css" href="${href.chrome('watchlist','css','style.css')}" rel="stylesheet" />
+    <link type="text/css" href="${href.chrome('watchlist','css','tablesorter.css')}" rel="stylesheet" />
+    <title>Watchlist</title>
+    <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
+    <script type="text/javascript" 
+      src="${href.chrome('watchlist','js','jquery.tablesorter.min.js')}"></script>
+    <script type="text/javascript" 
+      src="${href.chrome('watchlist','js','jquery.tablesorter.pager.js')}"></script>
+    <script type="text/javascript" 
+      src="${href.chrome('watchlist','js','watchlist.js')}"></script>
+    <script type="text/javascript">
+       // <![CDATA[
+      jQuery(document).ready(function($) {
+        $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+      jQuery(document).ready(function() {
+          $("#wikilist").tablesorter({ widthFixed: true, headers: { 4: { sorter: false }, 5: { sorter: false }, 6: { sorter: false } } }).tablesorterPager({container: $("#wikipager")}); 
+          $("#ticketlist").tablesorter({ widthFixed: true, headers: { 4: { sorter: false } } }).tablesorterPager({container: $("#ticketpager")});
+        });
+       // ]]>
+    </script>
+    <py:def function="link(realm, resid, text='')">
+        <a href="${href(realm,resid)}">${text or ":".join([realm,resid])}</a>
+    </py:def>
+  </head>
+
+  <body>
+    <div id="content" class="watchlist">
+        <py:def function="ackmsg">
+              <input id="ackmsg" type="button" value="Ok" />
+        </py:def>
+        <py:def function="unwatchicon">
+          <img src="${href.chrome('watchlist/ico/unwatch.png')}" width="14px"
+            height="14px" title="Unwatch" alt="Unwatch" />
+        </py:def>
+        <py:def function="notifybox(realm,name,notifyon)">
+          <py:choose test="">
+            <a class="notifyon plainlink" py:when="notifyon" 
+              href="${href.watchlist(action='notifyoff',realm=realm,resid=name)}">
+              <input checked="checked" type="checkbox" name="$name" />
+            </a>
+            <a class="notifyoff plainlink" py:otherwise="" 
+              href="${href.watchlist(action='notifyon',realm=realm,resid=name)}">
+              <input type="checkbox" name="$name" />
+            </a>
+          </py:choose>
+        </py:def>
+        <py:def function="tablepager(name)">
+          <div class="tablesorterPager" id="$name">
+            <form action="">
+              <div>
+              <img class="first" alt="|&lt;" src="${href.chrome('watchlist/ico/first.png')}"/>
+              <img class="prev" alt="&lt;&lt;" src="${href.chrome('watchlist/ico/prev.png')}"/>
+              <input type="text" class="pagedisplay"/>
+              <img class="next" alt="&gt;&gt;" src="${href.chrome('watchlist/ico/next.png')}"/>
+              <img class="last" alt="&gt;|" src="${href.chrome('watchlist/ico/last.png')}"/>
+              <select class="pagesize">
+                <option value="10" selected="selected">10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="40">40</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="1000000">All</option>
+              </select>
+              </div>
+            </form>
+          </div>
+        </py:def>
+
+        <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>
+        <div py:if="show_messages and action" py:choose="action" id="message-box">
+            <py:when test="'watch'">
+                <py:choose test="">
+                    <py:when test="error">
+                        <div class="system-message" id="error">
+                            <p class="system-message-title">Does not exists</p>
+                            <p>Selected $realm:$resid does not exists and therefore can not be watched.
+                            ${ackmsg()}
+                            </p>
+                        </div>
+                    </py:when>
+                    <py:when test="is_watching">
+                        <div class="system-message" id="warning">
+                            <p class="system-message-title">Already watched</p>
+                            <p>Selected ${link(realm,resid)} is already watched.
+                            (<a href="${href.watchlist(action='unwatch',realm=realm,resid=resid)}">Unwatch it?</a>)
+                            ${ackmsg()}
+                            </p>
+                        </div>
+                    </py:when>
+                    <py:otherwise>
+                        <div class="system-message" id="notice">
+                            <p class="system-message-title">Added to Watchlist</p>
+                            <p>The selected ${link(realm,resid)} was added to the watchlist.
+                            (<a href="${href.watchlist(action='unwatch',realm=realm,resid=resid)}">Remove again</a>)
+                            ${ackmsg()}
+                            </p>
+                        </div>
+                    </py:otherwise>
+                </py:choose>
+            </py:when>
+            <py:when test="'unwatch'">
+                <py:choose test="">
+                    <py:when test="is_watching">
+                        <div class="system-message" id="notice">
+                            <p class="system-message-title">Removed from Watchlist</p>
+                            <p>The selected ${link(realm,resid)} was removed from watchlist.
+                            (<a href="${href.watchlist(action='watch',realm=realm,resid=resid)}">Add again</a>)
+                            ${ackmsg()}
+                            </p>
+                        </div>
+                    </py:when>
+                    <py:otherwise>
+                        <div class="system-message" id="warning">
+                            <p class="system-message-title">Not watched</p>
+                            <p>Selected ${link(realm,resid)} couldn't be unwatched because it was not watched.
+                            (<a href="${href.watchlist(action='watch',realm=realm,resid=resid)}">Watch it?</a>)
+                            ${ackmsg()}
+                            </p>
+                        </div>
+                    </py:otherwise>
+                </py:choose>
+            </py:when>
+        </div>
+
+      <div id="wikis">
+        <div>
+          <span class="showhide"></span>
+          <h2>Wikis</h2>
+        </div>
+      <py:choose test="">
+      <div class="system-message" py:when="not wiki_perm">You lack permission to view wikis.</div>
+      <div id="wikilist-plusadd">
+      <py:choose test="" py:otherwise="">
+      <div id="wikilist-parent" py:when="wikilist">
+      ${tablepager("wikipager")}
+      <table class="wikilist" id="wikilist">
+          <thead>
+              <tr>
+                  <th py:for="head in (['Page&nbsp;&nbsp;&nbsp;','name'],['Last Changed
+                      At','datetime'], ['By&nbsp;&nbsp;&nbsp;','author'],
+                      ['Version&nbsp;&nbsp;&nbsp;', 'version'], ['Diff','diff'],
+                      ['History','history'], ['U','unwatch'])"
+                      class="${head[1]}">${head[0]}</th>
+                  <th py:if="notify"
+                      class="notify">Notify&nbsp;&nbsp;&nbsp;</th>
+                  <th py:for="head in (['Comment&nbsp;&nbsp;&nbsp;','comment'],)"
+                      class="${head[1]}">${head[0]}</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr py:for="page in wikilist">
+                  <td class="name">${link('wiki',page.name,text=page.name)}</td>
+                  <td class="datetime">$page.datetime
+                      <py:if test="page.timedelta"> (<a
+                          href="$page.timeline_link">$page.timedelta</a> ago)</py:if></td>
+                  <td class="author">$page.author</td>
+                  <td class="version"><a py:if="not page.deleted"
+                          href="${href('wiki',page.name,version=page.version)}">$page.version</a></td>
+                  <td class="diff"><a py:if="not page.deleted"
+                      href="${href('wiki',page.name,action='diff',version=page.version)}">
+                        <img src="${href.chrome('watchlist/ico/diff.png')}" width="16px"
+                          height="16px" title="Diff" alt="Diff" />
+                      </a></td>
+                  <td class="history"><a py:if="not page.deleted"
+                      href="${href('wiki',page.name,action='history')}">
+                        <img src="${href.chrome('watchlist/ico/history.png')}" width="16px"
+                          height="16px" title="History" alt="History" />
+                      </a></td>
+                  <td class="unwatch"><a class="plainlink"
+                      href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">
+                      ${unwatchicon()}</a></td>
+                  <td class="notify"
+                    py:if="notify">${notifybox('wiki',page.name,page.notify)}</td>
+                  <td class="comment">$page.comment</td>
+              </tr>
+          </tbody>
+      </table>
+      </div>
+      <div py:otherwise=""><span>No wikis are currently watched.</span></div>
+      </py:choose>
+      <form method="get" action="" class="addtowatch">
+        <div>
+          Add Wiki: <input type="text" name="resid" />
+          <input type="hidden" name="realm" value="wiki" />
+          <input type="hidden" name="action" value="watch" />
+        </div>
+      </form>
+      </div>
+      </py:choose>
+      </div>
+
+      <div id="tickets">
+        <div>
+          <span class="showhide"></span>
+          <h2>Tickets</h2>
+        </div>
+      <py:choose test="">
+      <div class="system-message" py:when="not ticket_perm">You lack permission to view tickets.</div>
+      <div id="ticketlist-plusadd">
+      <py:choose test="" py:otherwise="">
+      <div id="ticketlist-parent" py:when="ticketlist">
+      ${tablepager("ticketpager")}
+      <table class="ticketlist" id="ticketlist">
+          <thead>
+              <tr>
+                  <th py:for="head in (['Ticket&nbsp;&nbsp;&nbsp;','id'],['Last Changed At','datetime'],
+                      ['By&nbsp;&nbsp;&nbsp;','author'], ['Comment #&nbsp;&nbsp;&nbsp;','commentnum'], ['U','unwatch'])"
+                      class="${head[1]}">${head[0]}</th>
+                  <th py:if="notify"
+                      class="notify">Notify&nbsp;&nbsp;&nbsp;</th>
+                  <th py:for="head in (['Changes&nbsp;&nbsp;&nbsp;','changes'], ['Comment&nbsp;&nbsp;&nbsp;','comment'])"
+                      class="${head[1]}">${head[0]}</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr py:for="ticket in ticketlist">
+                  <td class="id">
+                    <a href="${href('ticket', ticket.id)}" title="${ticket.summary}">#${ticket.id}</a></td>
+                  <td class="datetime">$ticket.datetime
+                      <py:if test="ticket.timedelta"> (<a
+                          href="$ticket.timeline_link">$ticket.timedelta</a> ago)</py:if></td>
+                  <td class="author">$ticket.author</td>
+                  <td class="commentnum">
+                      <a href="${href('ticket',ticket.id) + ((ticket.commentnum != '0') and ('#comment:'
+                          + ticket.commentnum) or '')}">$ticket.commentnum</a></td>
+                  <td class="unwatch"><a class="plainlink"
+                      href="${href.watchlist(action='unwatch',realm='ticket',resid=ticket.id)}">
+                      ${unwatchicon()}</a></td>
+                  <td class="notify"
+                    py:if="notify">${notifybox('ticket',ticket.id,ticket.notify)}</td>
+                  <td class="changes">$ticket.changes</td>
+                  <td class="comment">$ticket.comment</td>
+              </tr>
+          </tbody>
+      </table>
+      </div>
+      <div py:otherwise=""><span>No tickets are currently watched.</span></div>
+      </py:choose>
+      <form method="get" action="" class="addtowatch">
+        <div>
+          Add Ticket : #<input type="text" name="resid" />
+          <input type="hidden" name="realm" value="ticket" />
+          <input type="hidden" name="action" value="watch" />
+        </div>
+      </form>
+      </div>
+      </py:choose>
+    </div>
+
+    <div id="settings">
+      <div>
+        <span class="showhide"></span>
+        <h2>Settings</h2>
+        <form action="${href.watchlist()}" method="get">
+          <div>
+            <input type="hidden" name="action" value="settings" />
+            <input type="checkbox" name="autonotify" value="1"
+            checked="${user_settings.get('autonotify')}" />
+            Auto Notify (${user_settings.autonotify})<br />
+            <input type="checkbox" name="notifications" value="1"
+            checked="${user_settings.get('notifications')}" />
+            Notifications <br />
+            <br />
+            ${str(user_settings)}
+            <input type="submit" value="Save" />
+            <input type="reset" />
+          </div>
+        </form>
+      </div>
+    </div>
+
+    </div>
+  </body>
+</html>
