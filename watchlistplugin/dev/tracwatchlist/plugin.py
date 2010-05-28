@@ -170,24 +170,20 @@ class WatchlistPlugin(Component):
               pattern = self._convert_pattern(resid)
             else:
               reslink = href(realm,resid)
-              res_exists  = self.res_exists(realm, resid, user)
+              res_exists  = self.res_exists(realm, resid)
         else:
             is_watching = None
 
         wlhref = href("watchlist")
-        for (realm,handler) in self.realm_handler.iteritems():
-          name = handler.get_realm_label(realm, plural=True)
+        for (xrealm,handler) in self.realm_handler.iteritems():
+          name = handler.get_realm_label(xrealm, plural=True)
           add_ctxtnav(req, "Watched " + name.capitalize(), href=wlhref + '#' + name)
         #add_ctxtnav(req, "Settings", href=wlhref + '#settings')
 
-        wiki_perm   = self.realm_handler['wiki'].has_perm(req.perm)
-        ticket_perm = self.realm_handler['ticket'].has_perm(req.perm)
+        wldict['perm'] = req.perm
         wldict['realms'] = self.realms
-        wldict['wiki_perm']   = wiki_perm
-        wldict['ticket_perm'] = ticket_perm
         wldict['error'] = False
-        gnotify = self.gnotify
-        wldict['notify'] = gnotify and self.gnotifycolumn
+        wldict['notify'] = self.gnotify and self.gnotifycolumn
         if onwatchlistpage:
           wldict['show_messages'] = self.gmsgwowlpage
         else:
@@ -310,132 +306,10 @@ class WatchlistPlugin(Component):
 
         wldict['is_watching'] = is_watching
         if action == "view":
-            timeline = href('timeline', precision='seconds') + "&from="
-            def timeline_link(time):
-                return timeline + quote_plus( format_datetime (time,'iso8601') )
-
-            wikilist = []
-            if wiki_perm:
-                # Watched wikis which got deleted:
-                cursor.execute(
-                    "SELECT resid FROM watchlist WHERE realm='wiki' AND wluser=%s "
-                    "AND resid NOT IN (SELECT DISTINCT name FROM wiki);", (user,) )
-
-                for (name,) in cursor.fetchall():
-                    notify = False
-                    if gnotify:
-                      notify = self.is_notify(req.session.sid, True, 'wiki', name)
-                    wikilist.append({
-                        'name' : name,
-                        'author' : '?',
-                        'datetime' : '?',
-                        'comment' : tag.strong("DELETED!", class_='deleted'),
-                        'notify'  : notify,
-                        'deleted' : True,
-                    })
-                # Existing watched wikis:
-                cursor.execute(
-                    "SELECT name,author,time,version,comment FROM wiki AS w1 WHERE name IN "
-                    "(SELECT resid FROM watchlist WHERE wluser=%s AND realm='wiki') "
-                    "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) "
-                    "ORDER BY time DESC;", (user,) )
-
-                wikis = cursor.fetchall()
-                for name,author,time,version,comment in wikis:
-                    notify = False
-                    if gnotify:
-                      notify = self.is_notify(req.session.sid, True, 'wiki', name)
-                    wikilist.append({
-                        'name' : name,
-                        'author' : author,
-                        'version' : version,
-                        'datetime' : format_datetime( time ),
-                        'timedelta' : pretty_timedelta( time ),
-                        'timeline_link' : timeline_link( time ),
-                        'comment' : comment,
-                        'notify'  : notify,
-                    })
-                wldict['wikilist'] = wikilist
-
-
-            if ticket_perm:
-                ticketlist = []
-                cursor.execute(
-                    "SELECT id,type,time,changetime,summary,reporter FROM ticket WHERE id IN "
-                    "(SELECT CAST(resid AS decimal) FROM watchlist WHERE wluser=%s AND realm='ticket') "
-                    "GROUP BY id,type,time,changetime,summary,reporter "
-                    "ORDER BY changetime DESC;", (user,) )
-                tickets = cursor.fetchall()
-                for id,type,time,changetime,summary,reporter in tickets:
-                    self.commentnum = 0
-                    self.comment    = ''
-
-                    notify = False
-                    if gnotify:
-                      notify = self.is_notify(req.session.sid, True, 'ticket', id)
-
-                    cursor.execute(
-                        "SELECT author,field,oldvalue,newvalue FROM ticket_change "
-                        "WHERE ticket=%s and time=%s "
-                        "ORDER BY field DESC;",
-                        (id, changetime )
-                    )
-
-                    def format_change(field,oldvalue,newvalue):
-                        """Formats tickets changes."""
-                        fieldtag = tag.strong(field)
-                        if field == 'cc':
-                            oldvalues = set(oldvalue and oldvalue.split(', ') or [])
-                            newvalues = set(newvalue and newvalue.split(', ') or [])
-                            added   = newvalues.difference(oldvalues)
-                            removed = oldvalues.difference(newvalues)
-                            strng = fieldtag
-                            if added:
-                                strng += tag(" ", tag.em(', '.join(added)), " added")
-                            if removed:
-                                if added:
-                                    strng += tag(', ')
-                                strng += tag(" ", tag.em(', '.join(removed)), " removed")
-                            return strng
-                        elif field == 'description':
-                            return fieldtag + tag(" modified (", tag.a("diff",
-                               href=href('ticket',id,action='diff',version=self.commentnum)), ")")
-                        elif field == 'comment':
-                            self.commentnum = oldvalue
-                            self.comment    = newvalue
-                            return tag("")
-                        elif not oldvalue:
-                            return fieldtag + tag(" ", tag.em(newvalue), " added")
-                        elif not newvalue:
-                            return fieldtag + tag(" ", tag.em(oldvalue), " deleted")
-                        else:
-                            return fieldtag + tag(" changed from ", tag.em(oldvalue),
-                                                  " to ", tag.em(newvalue))
-
-                    changes = []
-                    author  = reporter
-                    for author_,field,oldvalue,newvalue in cursor.fetchall():
-                        author = author_
-                        changes.extend( [format_change(field,oldvalue,newvalue), tag("; ") ])
-                    # changes holds list of formatted changes interleaved with
-                    # tag('; '). The first change is always the comment which
-                    # returns an empty tag, so we skip the first two elements
-                    # [tag(''), tag('; ')] and remove the last tag('; '):
-                    changes = changes and tag(changes[2:-1]) or tag()
-                    ticketlist.append({
-                        'id' : to_unicode(id),
-                        'type' : type,
-                        'author' : author,
-                        'commentnum': to_unicode(self.commentnum),
-                        'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
-                        'datetime' : format_datetime( changetime ),
-                        'timedelta' : pretty_timedelta( changetime ),
-                        'timeline_link' : timeline_link( changetime ),
-                        'changes' : changes,
-                        'summary' : summary,
-                        'notify'  : notify,
-                    })
-                    wldict['ticketlist'] = ticketlist
+            for (xrealm,handler) in self.realm_handler.iteritems():
+              if handler.has_perm(req.perm):
+                wldict[xrealm + 'list'] = handler.get_list(self, req)
+                self.env.log.debug(xrealm + 'list: ' + str(wldict[xrealm + 'list']))
             return ("watchlist.html", wldict, "text/html")
         else:
             raise WatchlistError("Invalid watchlist action '%s'!" % action)
@@ -546,6 +420,53 @@ class WikiWatchlist(Component):
     def has_perm(self, perm):
       return 'WIKI_VIEW' in perm
 
+    def get_list(self, wl, req):
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      user = req.authname
+      wikilist = []
+      # Watched wikis which got deleted:
+      cursor.execute(
+          "SELECT resid FROM watchlist WHERE realm='wiki' AND wluser=%s "
+          "AND resid NOT IN (SELECT DISTINCT name FROM wiki);", (user,) )
+
+      for (name,) in cursor.fetchall():
+          notify = False
+          if wl.gnotify:
+            notify = wl.is_notify(req.session.sid, True, 'wiki', name)
+          wikilist.append({
+              'name' : name,
+              'author' : '?',
+              'datetime' : '?',
+              'comment' : tag.strong("DELETED!", class_='deleted'),
+              'notify'  : notify,
+              'deleted' : True,
+          })
+      # Existing watched wikis:
+      cursor.execute(
+          "SELECT name,author,time,version,comment FROM wiki AS w1 WHERE name IN "
+          "(SELECT resid FROM watchlist WHERE wluser=%s AND realm='wiki') "
+          "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) "
+          "ORDER BY time DESC;", (user,) )
+
+      wikis = cursor.fetchall()
+      self.env.log.debug('user: ' + user)
+      self.env.log.debug('wikis: ' + str(wikis))
+      for name,author,time,version,comment in wikis:
+          notify = False
+          if wl.gnotify:
+            notify = wl.is_notify(req.session.sid, True, 'wiki', name)
+          wikilist.append({
+              'name' : name,
+              'author' : author,
+              'version' : version,
+              'datetime' : format_datetime( time ),
+              'timedelta' : pretty_timedelta( time ),
+              'timeline_link' : req.href.timeline(precision='seconds', from_=format_datetime (time,'iso8601')),
+              'comment' : comment,
+              'notify'  : notify,
+          })
+      return wikilist
 
 class TicketWatchlist(Component):
     implements( IWatchlistProvider )
@@ -562,6 +483,88 @@ class TicketWatchlist(Component):
     def has_perm(self, perm):
       return 'TICKET_VIEW' in perm
 
+    def get_list(self, wl, req):
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      user = req.authname
+      ticketlist = []
+      cursor.execute(
+          "SELECT id,type,time,changetime,summary,reporter FROM ticket WHERE id IN "
+          "(SELECT CAST(resid AS decimal) FROM watchlist WHERE wluser=%s AND realm='ticket') "
+          "GROUP BY id,type,time,changetime,summary,reporter "
+          "ORDER BY changetime DESC;", (user,) )
+      tickets = cursor.fetchall()
+      for id,type,time,changetime,summary,reporter in tickets:
+          self.commentnum = 0
+          self.comment    = ''
+
+          notify = False
+          if wl.gnotify:
+            notify = wl.is_notify(req.session.sid, True, 'ticket', id)
+
+          cursor.execute(
+              "SELECT author,field,oldvalue,newvalue FROM ticket_change "
+              "WHERE ticket=%s and time=%s "
+              "ORDER BY field DESC;",
+              (id, changetime )
+          )
+
+          def format_change(field,oldvalue,newvalue):
+              """Formats tickets changes."""
+              fieldtag = tag.strong(field)
+              if field == 'cc':
+                  oldvalues = set(oldvalue and oldvalue.split(', ') or [])
+                  newvalues = set(newvalue and newvalue.split(', ') or [])
+                  added   = newvalues.difference(oldvalues)
+                  removed = oldvalues.difference(newvalues)
+                  strng = fieldtag
+                  if added:
+                      strng += tag(" ", tag.em(', '.join(added)), " added")
+                  if removed:
+                      if added:
+                          strng += tag(', ')
+                      strng += tag(" ", tag.em(', '.join(removed)), " removed")
+                  return strng
+              elif field == 'description':
+                  return fieldtag + tag(" modified (", tag.a("diff",
+                      href=href('ticket',id,action='diff',version=self.commentnum)), ")")
+              elif field == 'comment':
+                  self.commentnum = oldvalue
+                  self.comment    = newvalue
+                  return tag("")
+              elif not oldvalue:
+                  return fieldtag + tag(" ", tag.em(newvalue), " added")
+              elif not newvalue:
+                  return fieldtag + tag(" ", tag.em(oldvalue), " deleted")
+              else:
+                  return fieldtag + tag(" changed from ", tag.em(oldvalue),
+                                        " to ", tag.em(newvalue))
+
+          changes = []
+          author  = reporter
+          for author_,field,oldvalue,newvalue in cursor.fetchall():
+              author = author_
+              changes.extend( [format_change(field,oldvalue,newvalue), tag("; ") ])
+          # changes holds list of formatted changes interleaved with
+          # tag('; '). The first change is always the comment which
+          # returns an empty tag, so we skip the first two elements
+          # [tag(''), tag('; ')] and remove the last tag('; '):
+          changes = changes and tag(changes[2:-1]) or tag()
+          ticketlist.append({
+              'id' : to_unicode(id),
+              'type' : type,
+              'author' : author,
+              'commentnum': to_unicode(self.commentnum),
+              'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
+              'datetime' : format_datetime( changetime ),
+              'timedelta' : pretty_timedelta( changetime ),
+              'timeline_link' : req.href.timeline(precision='seconds', from_=format_datetime (time,'iso8601')),
+              'changes' : changes,
+              'summary' : summary,
+              'notify'  : notify,
+          })
+      return ticketlist
+
 class ExampleWatchlist(Component):
     implements( IWatchlistProvider )
 
@@ -576,4 +579,7 @@ class ExampleWatchlist(Component):
 
     def has_perm(self, perm):
       return 'EXAMPLE_VIEW' in perm
+
+    def get_list(self, wl, req):
+      return []
 
