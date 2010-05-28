@@ -19,24 +19,23 @@
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
-__revision__ = int("0" + r"$Rev$"[6:-2])
-__date__     = r"$Date$"[7:-2]
+__revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
+__date__     = ur"$Date$"[7:-2]
 
 from trac.core import *
 
-from  trac.env         import  IEnvironmentSetupParticipant
-from  trac.util        import  format_datetime, pretty_timedelta
-from  trac.web.chrome  import  INavigationContributor
-from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
-from  trac.web.chrome  import  ITemplateProvider, add_ctxtnav, add_link, add_script, add_notice
-from  trac.web.href    import  Href
-from  trac.util.text   import  to_unicode
-from  genshi.builder   import  tag, Markup
-from  urllib           import  quote_plus
-from  trac.config      import  BoolOption
-from  trac.db          import  Table, Column, Index, DatabaseManager
-from  trac.wiki.model  import  WikiPage
-from  trac.ticket.model import Ticket
+from  genshi.builder     import  tag, Markup
+from  trac.config        import  BoolOption
+from  trac.db            import  Table, Column, Index, DatabaseManager
+from  trac.ticket.model  import  Ticket
+from  trac.util          import  format_datetime, pretty_timedelta
+from  trac.util.text     import  to_unicode
+from  trac.web.api       import  IRequestFilter, IRequestHandler, RequestDone
+from  trac.web.chrome    import  ITemplateProvider, add_ctxtnav, add_link, add_script, add_notice
+from  trac.web.href      import  Href
+from  trac.wiki.model    import  WikiPage
+from  urllib             import  quote_plus
+from  tracwatchlist.api  import  IWatchlistProvider
 
 __DB_VERSION__ = 3
 
@@ -47,9 +46,10 @@ class WatchlistError(TracError):
 
 class WatchlistPlugin(Component):
     """For documentation see http://trac-hacks.org/wiki/WatchlistPlugin"""
+    providers = ExtensionPoint(IWatchlistProvider)
 
-    implements( INavigationContributor, IRequestHandler, IRequestFilter,
-                IEnvironmentSetupParticipant, ITemplateProvider )
+
+    implements( IRequestHandler, IRequestFilter, ITemplateProvider )
     gnotify = BoolOption('watchlist', 'notifications', False,
                 "Enables notification features")
     gnotifyctxtnav = BoolOption('watchlist', 'display_notify_navitems', False,
@@ -83,16 +83,13 @@ class WatchlistPlugin(Component):
     # Per user setting # FTTB FIXME
     notifyctxtnav = gnotifyctxtnav
 
-    ### methods for INavigationContributor
-    def get_active_navigation_item(self, req):
-        if req.path_info.startswith("/watchlist"):
-            return 'watchlist'
-        return ''
+    def __init__(self):
+      self.realm_handler = {}
+      for provider in self.providers:
+        for realm in provider.get_realms():
+          self.realm_handler[realm] = provider
+          self.env.log.debug("realm: %s %s" % (realm, str(provider)))
 
-    def get_navigation_items(self, req):
-        user = req.authname
-        if user and user != 'anonymous':
-            yield ('mainnav', 'watchlist', tag.a( "Watchlist", href=req.href("watchlist") ) )
 
     def _convert_pattern(self, pattern):
         # needs more work, excape sequences, etc.
@@ -527,7 +524,6 @@ class WatchlistPlugin(Component):
     def pre_process_request(self, req, handler):
         return handler
 
-
     # ITemplateProvider methods:
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
@@ -538,142 +534,27 @@ class WatchlistPlugin(Component):
         return [ resource_filename(__name__, 'templates') ]
 
 
-    # IEnvironmentSetupParticipant methods:
-    def _create_db_table(self, db=None, name='watchlist'):
-        """ Create DB table if it not exists. """
-        db = db or self.env.get_db_cnx()
-        cursor = db.cursor()
-        #cursor.log = self.env.log
-        self.env.log.info("Creating table '%s' for WatchlistPlugin", (name,) )
-        db_connector, _ = DatabaseManager(self.env)._get_connector()
+class WikiWatchlist(Component):
+    implements( IWatchlistProvider )
 
-        table = Table(name)[
-                    Column('wluser'),
-                    Column('realm'),
-                    Column('resid'),
-                ]
+    def get_realms(self):
+      return ('wiki',)
 
-        for statement in db_connector.to_sql(table):
-            cursor.execute(statement)
+    def get_realm_label(self, realm, plural=False):
+      return plural and 'wikis' or 'wiki'
 
-        # Set database schema version.
-        if (name == 'watchlist'):
-          self._create_db_table2(db)
-          cursor.execute("UPDATE system SET value=%s WHERE name='watchlist_version'",
-                (str(__DB_VERSION__),) )
-        return
+    def res_exists(self, realm, resid):
+      return WikiPage(self.env, resid).exists
 
-    def _create_db_table2(self, db=None):
-        """ Create settings DB table if it not exists. """
-        db = db or self.env.get_db_cnx()
-        cursor = db.cursor()
-        #cursor.log = self.env.log
-        db_connector, _ = DatabaseManager(self.env)._get_connector()
-        self.env.log.info("Creating 'watchlist_settings' table")
+class TicketWatchlist(Component):
+    implements( IWatchlistProvider )
 
-        table = Table('watchlist_settings')[
-                    Column('wluser', unique=True),
-                    Column('settings'),
-                ]
+    def get_realms(self):
+      return ('ticket',)
 
-        for statement in db_connector.to_sql(table):
-            cursor.execute(statement)
+    def get_realm_label(self, realm, plural=False):
+      return plural and 'tickets' or 'ticket'
 
-        return
-
-    def environment_created(self):
-        self._create_db_table()
-        return
-
-
-    def environment_needs_upgrade(self, db):
-        cursor = db.cursor()
-        try:
-            cursor.execute("SELECT count(wluser),count(resid),count(realm) FROM watchlist")
-            count = cursor.fetchone()
-            if count is None:
-                self.env.log.info("Watchlist table format to old")
-                return True
-            cursor.execute("SELECT count(*) FROM watchlist_settings")
-            count = cursor.fetchone()
-            if count is None:
-                self.env.log.info("Watchlist settings table not found")
-                return True
-            cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
-            (version,) = cursor.fetchone()
-            if not version or int(version) < __DB_VERSION__:
-                self.env.log.info("Watchlist table version to old")
-                return True
-        except Exception, e:
-            cursor.connection.rollback()
-            self.env.log.info("Watchlist table needs to be upgraded: " + unicode(e))
-            return True
-        return False
-
-    def upgrade_environment(self, db):
-        cursor = db.cursor()
-        version = 0
-        # Ensure system entry exists:
-        try:
-          cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
-          version = cursor.fetchone()
-          if not version:
-            raise Exception("No version entry in system table")
-          version = int(version[0])
-        except Exception, e:
-          self.env.log.info("Creating system table entry for watchlist plugin: " + unicode(e))
-          cursor.connection.rollback()
-          cursor.execute("INSERT INTO system (name, value) VALUES ('watchlist_version', '0')")
-          version = 0
-
-        try:
-            cursor.execute("SELECT count(*) FROM watchlist")
-        except:
-            self.env.log.info("No previous watchlist table found")
-            cursor.connection.rollback()
-            self._create_db_table(db)
-            return
-
-        try:
-            cursor.execute("SELECT count(*) FROM watchlist_settings")
-        except:
-            self.env.log.info("No previous watchlist_settings table found")
-            cursor.connection.rollback()
-            self._create_db_table2(db)
-
-        # Upgrade existing database
-        self.env.log.info("Updating watchlist table")
-        try:
-            self.env.log.info("Old version: %d, new version: %d") % (int(version),int(__DB_VERSION__))
-        except:
-            pass
-
-        try:
-            try:
-              cursor.execute("DROP TABLE watchlist_new")
-            except:
-              pass #cursor.connection.rollback()
-            self._create_db_table(db, 'watchlist_new')
-            cursor = db.cursor()
-            try: # from version 0
-              cursor.execute("INSERT INTO watchlist_new (wluser, realm, resid) "
-                             "SELECT user, realm, id FROM watchlist")
-              self.env.log.info("Update from version 0")
-            except: # from version 1
-              self.env.log.info("Update from version 1")
-              cursor.connection.rollback ()
-              cursor = db.cursor()
-              cursor.execute("INSERT INTO watchlist_new (wluser, realm, resid) "
-                              "SELECT wluser, realm, resid FROM watchlist")
-
-            self.env.log.info("Moving new table to old one")
-            cursor.execute("DROP TABLE watchlist")
-            cursor.execute("ALTER TABLE watchlist_new RENAME TO watchlist")
-            cursor.execute("UPDATE system SET value=%s WHERE "
-                           "name='watchlist_version'", (str(__DB_VERSION__),) )
-        except Exception, e:
-            cursor.connection.rollback ()
-            self.env.log.info("Couldn't update DB: " + to_unicode(e))
-            raise TracError("Couldn't update DB: " + to_unicode(e))
-        return
+    def res_exists(self, realm, resid):
+      return Ticket(self.env, resid).exists
 

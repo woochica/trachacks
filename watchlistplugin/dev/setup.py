@@ -5,14 +5,14 @@ from tracwatchlist.plugin import __revision__ as coderev
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
-__revision__ = int("0" + r"$Rev$"[6:-2])
-__date__     = r"$Date$"[7:-2]
+__revision__ = int("0" + ur"$Rev$"[6:-2].strip('M') )
+__date__     = ur"$Date$"[7:-2]
 
 rev = str( max( coderev, __revision__ ) )
 
 setup(
     name = 'TracWatchlistPlugin',
-    version = '0.4.' + rev,
+    version = '0.5.' + rev + '_dev',
     packages = ['tracwatchlist'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
@@ -35,5 +35,10 @@ setup(
     keywords = 'trac watchlist wiki plugin',
     classifiers = ['Framework :: Trac'],
     entry_points = {'trac.plugins':
-      ['tracwatchlist.plugin = tracwatchlist.plugin']}
+      [
+        'tracwatchlist = tracwatchlist',
+        'tracwatchlist.plugin = tracwatchlist.plugin',
+        'tracwatchlist.db = tracwatchlist.db',
+        'tracwatchlist.nav = tracwatchlist.nav'
+      ]}
 )
