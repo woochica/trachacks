@@ -199,16 +199,19 @@ class WikiFormsMacro(WikiMacroBase,Component):
                 req.send_response(302)
                 req.send_header('Content-type', 'text/plain')
                 req.send_header('Location', backpath)
+                req.send_header('Content-Length', 2)
                 req.end_headers()
                 req.write('OK')
             else:
                 req.send_response(200)
                 req.send_header('Content-type', 'text/plain')
+                req.send_header('Content-Length', 2)
                 req.end_headers()
                 req.write('OK')
         except Exception, e:
             req.send_response(500)
             req.send_header('Content-type', 'text/plain')
+            req.send_header('Content-Length', len(str(e)))
             req.end_headers()
             req.write(str(e))
 
