@@ -84,9 +84,12 @@ class WatchlistPlugin(Component):
     notifyctxtnav = gnotifyctxtnav
 
     def __init__(self):
+      self.realms = []
       self.realm_handler = {}
       for provider in self.providers:
         for realm in provider.get_realms():
+          assert realm not in self.realms
+          self.realms.append(realm)
           self.realm_handler[realm] = provider
           self.env.log.debug("realm: %s %s" % (realm, str(provider)))
 
@@ -159,10 +162,10 @@ class WatchlistPlugin(Component):
                 resid = to_unicode( args['resid'] )
             except KeyError:
                 raise WatchlistError("Realm and ResId needed for watch/unwatch action!")
-            if realm not in ('wiki','ticket'):
-                raise WatchlistError("Only wikis and tickets can be watched/unwatched!")
+            if realm not in self.realms:
+                raise WatchlistError("Realm '%s' is not supported by the watchlist! Maybe you need to install and enable a watchlist extension for it first?")
             is_watching = self.is_watching(realm, resid, user)
-            realm_perm  = realm.upper() + '_VIEW' in req.perm
+            realm_perm   = self.realm_handler[realm].has_perm(req.perm)
             if ispattern:
               pattern = self._convert_pattern(resid)
             else:
@@ -172,12 +175,14 @@ class WatchlistPlugin(Component):
             is_watching = None
 
         wlhref = href("watchlist")
-        add_ctxtnav(req, "Watched Wikis",   href=wlhref + '#wikis')
-        add_ctxtnav(req, "Watched Tickets", href=wlhref + '#tickets')
+        for (realm,handler) in self.realm_handler.iteritems():
+          name = handler.get_realm_label(realm, plural=True)
+          add_ctxtnav(req, "Watched " + name.capitalize(), href=wlhref + '#' + name)
         #add_ctxtnav(req, "Settings", href=wlhref + '#settings')
 
-        wiki_perm   = 'WIKI_VIEW'   in req.perm
-        ticket_perm = 'TICKET_VIEW' in req.perm
+        wiki_perm   = self.realm_handler['wiki'].has_perm(req.perm)
+        ticket_perm = self.realm_handler['ticket'].has_perm(req.perm)
+        wldict['realms'] = self.realms
         wldict['wiki_perm']   = wiki_perm
         wldict['ticket_perm'] = ticket_perm
         wldict['error'] = False
@@ -450,16 +455,8 @@ class WatchlistPlugin(Component):
         else:
             return True
 
-    def res_exists(self, realm, resid, user):
-        """Checks if resource exists """
-        if realm == 'wiki':
-          res_exists = WikiPage(self.env, resid).exists
-        else:
-          try:
-            res_exists = Ticket(self.env, resid).exists
-          except:
-            res_exists = False
-        return res_exists
+    def res_exists(self, realm, resid):
+        return self.realm_handler[realm].res_exists(realm, resid)
 
     def is_watching(self, realm, resid, user):
         """Checks if user watches the given element."""
@@ -546,6 +543,10 @@ class WikiWatchlist(Component):
     def res_exists(self, realm, resid):
       return WikiPage(self.env, resid).exists
 
+    def has_perm(self, perm):
+      return 'WIKI_VIEW' in perm
+
+
 class TicketWatchlist(Component):
     implements( IWatchlistProvider )
 
@@ -557,4 +558,22 @@ class TicketWatchlist(Component):
 
     def res_exists(self, realm, resid):
       return Ticket(self.env, resid).exists
+
+    def has_perm(self, perm):
+      return 'TICKET_VIEW' in perm
+
+class ExampleWatchlist(Component):
+    implements( IWatchlistProvider )
+
+    def get_realms(self):
+      return ('example',)
+
+    def get_realm_label(self, realm, plural=False):
+      return plural and 'examples' or 'example'
+
+    def res_exists(self, realm, resid):
+      return False
+
+    def has_perm(self, perm):
+      return 'EXAMPLE_VIEW' in perm
 

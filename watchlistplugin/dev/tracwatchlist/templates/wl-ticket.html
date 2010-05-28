@@ -1,0 +1,66 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+
+      <div id="tickets">
+        <div>
+          <span class="showhide"></span>
+          <h2>Tickets</h2>
+        </div>
+      <py:choose test="">
+      <div class="system-message" py:when="not ticket_perm">You lack permission to view tickets.</div>
+      <div id="ticketlist-plusadd">
+      <py:choose test="" py:otherwise="">
+      <div id="ticketlist-parent" py:when="ticketlist">
+      ${tablepager("ticketpager")}
+      <table class="ticketlist" id="ticketlist">
+          <thead>
+              <tr>
+                  <th py:for="head in (['Ticket&nbsp;&nbsp;&nbsp;','id'],['Last Changed At','datetime'],
+                      ['By&nbsp;&nbsp;&nbsp;','author'], ['Comment #&nbsp;&nbsp;&nbsp;','commentnum'], ['U','unwatch'])"
+                      class="${head[1]}">${head[0]}</th>
+                  <th py:if="notify"
+                      class="notify">Notify&nbsp;&nbsp;&nbsp;</th>
+                  <th py:for="head in (['Changes&nbsp;&nbsp;&nbsp;','changes'], ['Comment&nbsp;&nbsp;&nbsp;','comment'])"
+                      class="${head[1]}">${head[0]}</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr py:for="ticket in ticketlist">
+                  <td class="id">
+                    <a href="${href('ticket', ticket.id)}" title="${ticket.summary}">#${ticket.id}</a></td>
+                  <td class="datetime">$ticket.datetime
+                      <py:if test="ticket.timedelta"> (<a
+                          href="$ticket.timeline_link">$ticket.timedelta</a> ago)</py:if></td>
+                  <td class="author">$ticket.author</td>
+                  <td class="commentnum">
+                      <a href="${href('ticket',ticket.id) + ((ticket.commentnum != '0') and ('#comment:'
+                          + ticket.commentnum) or '')}">$ticket.commentnum</a></td>
+                  <td class="unwatch"><a class="plainlink"
+                      href="${href.watchlist(action='unwatch',realm='ticket',resid=ticket.id)}">
+                      ${unwatchicon()}</a></td>
+                  <td class="notify"
+                    py:if="notify">${notifybox('ticket',ticket.id,ticket.notify)}</td>
+                  <td class="changes">$ticket.changes</td>
+                  <td class="comment">$ticket.comment</td>
+              </tr>
+          </tbody>
+      </table>
+      </div>
+      <div py:otherwise=""><span>No tickets are currently watched.</span></div>
+      </py:choose>
+      <form method="get" action="" class="addtowatch">
+        <div>
+          Add Ticket : #<input type="text" name="resid" />
+          <input type="hidden" name="realm" value="ticket" />
+          <input type="hidden" name="action" value="watch" />
+        </div>
+      </form>
+      </div>
+      </py:choose>
+    </div>
+</html>

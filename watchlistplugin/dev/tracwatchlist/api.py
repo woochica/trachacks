@@ -38,3 +38,6 @@ class IWatchlistProvider(Interface):
   def get_realm_label(realm, plural=False):
     pass
 
+  def has_perm(perm):
+    pass
+

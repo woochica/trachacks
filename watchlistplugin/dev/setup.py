@@ -24,7 +24,7 @@ setup(
             'htdocs/js/jquery.tablesorter.min.js',
             'htdocs/js/jquery.tablesorter.pager.js',
             'htdocs/js/watchlist.js',
-            'templates/watchlist.html',
+            'templates/*.html',
         ],
     },
     description = "Watchlist Plugin for Trac",
