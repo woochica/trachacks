@@ -195,39 +195,18 @@ class WatchlistPlugin(Component):
         cursor = db.cursor()
 
         if action == "watch":
-            lst = (user, realm, resid)
             if realm_perm and not is_watching:
-              col =  realm == 'wiki' and 'name' or 'id'
-              if ispattern:
-                #cursor.log = self.env.log
-                # Check if wiki/ticket exists:
-                cursor.execute(
-                    "SELECT count(*) FROM %s WHERE %s LIKE %%s" % (realm,col), (pattern,) )
-                    #("'"+pattern+"'",) )
-                count = cursor.fetchone()
-                if not count or not count[0]:
+              if not res_exists:
+                  wldict['error'] = True
+                  if redirectback and not onwatchlistpage:
                     raise WatchlistError(
-                        "Selected pattern %s:%s (%s) doesn't match anything!" % (realm,resid,pattern) )
-                #cursor.execute(
-                #    "INSERT INTO watchlist (wluser, realm, resid) "
-                #    "SELECT '%s','%s',%s FROM %s WHERE %s LIKE %%s" % (user,realm,col,
-                #      realm,col), (resid,) )
-                cursor.execute(
-                    "INSERT INTO watchlist (wluser, realm, resid) " +
-                    "SELECT %s,%s,%s FROM %s WHERE %s LIKE %%s" % \
-                    ("'"+user+"'","'"+realm+"'", col, realm, col), (pattern,) )
+                        "Selected resource %s:%s doesn't exists!" % (realm,resid) )
+                  redirectback = False
               else:
-                if not res_exists:
-                    wldict['error'] = True
-                    if redirectback and not onwatchlistpage:
-                      raise WatchlistError(
-                          "Selected resource %s:%s doesn't exists!" % (realm,resid) )
-                    redirectback = False
-                else:
-                    cursor.execute(
-                        "INSERT INTO watchlist (wluser, realm, resid) "
-                        "VALUES (%s,%s,%s);", lst )
-              db.commit()
+                  cursor.execute(
+                      "INSERT INTO watchlist (wluser, realm, resid) "
+                      "VALUES (%s,%s,%s);", (user, realm, resid) )
+                  db.commit()
             if not onwatchlistpage and redirectback and msgrespage:
                   req.session['watchlist_message'] = (
                     'This %s has been added to your watchlist.' % realm)
@@ -239,10 +218,8 @@ class WatchlistPlugin(Component):
                 raise RequestDone
               action = "view"
         elif action == "unwatch":
-            lst = (user, realm, resid)
             if realm_perm:
               if ispattern:
-                #cursor.log = self.env.log
                 is_watching = True
                 cursor.execute(
                     "DELETE FROM watchlist "
@@ -251,7 +228,7 @@ class WatchlistPlugin(Component):
               elif is_watching:
                 cursor.execute(
                     "DELETE FROM watchlist "
-                    "WHERE wluser=%s AND realm=%s AND resid=%s;", lst )
+                    "WHERE wluser=%s AND realm=%s AND resid=%s;", (user, realm, resid))
                 db.commit()
               elif not res_exists:
                 wldict['error'] = True
@@ -368,8 +345,7 @@ class WatchlistPlugin(Component):
 
         realm, resid = parts[:2]
 
-        if realm not in ('wiki','ticket') \
-          or realm.upper() + '_VIEW' not in req.perm:
+        if realm not in self.realms or self.realm_handler[realm].has_perm(req.perm):
             return (template, data, content_type)
 
         href = Href(req.base_path)
@@ -575,11 +551,20 @@ class ExampleWatchlist(Component):
       return plural and 'examples' or 'example'
 
     def res_exists(self, realm, resid):
-      return False
+      return True
 
     def has_perm(self, perm):
-      return 'EXAMPLE_VIEW' in perm
+      return True
 
     def get_list(self, wl, req):
-      return []
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      user = req.authname
+      examplelist = []
+      cursor.execute(
+          "SELECT resid FROM watchlist WHERE wluser=%s AND realm='example'", (user,))
+      examples = cursor.fetchall()
+      for (name,) in examples:
+        examplelist.append({'name':name})
+      return examplelist
 
