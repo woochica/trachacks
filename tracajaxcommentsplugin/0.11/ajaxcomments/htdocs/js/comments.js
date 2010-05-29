@@ -11,7 +11,8 @@ var properties_section_sel = '#properties';
 function update_ui(clear_form, responseText, statusText) {
     if (statusText == 'success') {
 	var $response = $(responseText);
-	var selectors = ['#ticket', '#attachments', '#changelog'];
+        var ticket_sel = '#ticket', attach_sel = '#attachments', changelog_sel = '#changelog';
+	var selectors = [ticket_sel, attach_sel, changelog_sel];
 	var update_changetime = function ($resp) {
 	    var input_sel = 'input[name=ts]';
 	    $(input_sel).replaceWith($(input_sel, $resp));
@@ -31,6 +32,13 @@ function update_ui(clear_form, responseText, statusText) {
 	if (clear_form)
 	    selectors.push(form_sel);
 	$.each(selectors, function (i, s) {$(s).replaceWith($(s, $response)); });
+	if (!$(changelog_sel)[0] && $(changelog_sel, $response)[0]) {
+	    // when there are no comments to the ticket, we have to add comments section
+ 	    $(attach_sel)
+		.after($(changelog_sel, $response))
+		.after($('<h2>Change History</h2>'));
+	}
+
 	if (clear_form) {
 	    setup_form_handlers();
 	} else { // update only ticket change time
