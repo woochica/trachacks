@@ -50,7 +50,7 @@ class WatchlistPlugin(Component):
 
 
     implements( IRequestHandler, IRequestFilter, ITemplateProvider )
-    gnotify = BoolOption('watchlist', 'notifications', False,
+    gnotifyu = BoolOption('watchlist', 'notifications', False,
                 "Enables notification features")
     gnotifyctxtnav = BoolOption('watchlist', 'display_notify_navitems', False,
                 "Enables notification navigation items")
@@ -69,7 +69,7 @@ class WatchlistPlugin(Component):
                 "Enables action messages while on watchlist page.")
 
 
-    if gnotify:
+    if gnotifyu:
       try:
         # Import methods from WatchSubscriber from the AnnouncerPlugin
         from  announcerplugin.subscribers.watchers  import  WatchSubscriber
@@ -79,6 +79,8 @@ class WatchlistPlugin(Component):
         set_unwatch  = unset_notify
       except:
         gnotify = False
+      else:
+        gnotify = True
 
     # Per user setting # FTTB FIXME
     notifyctxtnav = gnotifyctxtnav
