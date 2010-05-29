@@ -161,18 +161,96 @@ class WatchlistPlugin(Component):
 
 
     def process_request(self, req):
+        user  = to_unicode( req.authname )
+        realm = to_unicode( req.args.get('realm', '') )
+        resid = to_unicode( req.args.get('resid', '') )
+        action = req.args.get('action','view')
+        names,patterns = self._get_sql_names_and_patterns( resid and resid.split(',') or [] )
+        redirectback = self.gredirectback
+
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        if not user or user == 'anonymous':
+            raise WatchlistError(
+                    tag( "Please ", tag.a("log in", href=req.href('login')),
+                        " to view or change your watchlist!" ) )
+
+        wldict = req.args.copy()
+        wldict['perm']   = req.perm
+        wldict['realms'] = self.realms
+        wldict['error']  = False
+        wldict['notify'] = self.gnotify and self.gnotifycolumn
+        wldict['user_settings'] = self._get_user_settings(user)
+
+        onwatchlistpage = req.environ.get('HTTP_REFERER','').find(req.href.watchlist()) != -1
+        if onwatchlistpage:
+          wldict['show_messages'] = self.gmsgwowlpage
+        else:
+          wldict['show_messages'] = self.gmsgwlpage
+
+        new_res = []
+        del_res = []
+        err_res = []
+        err_pat = []
+        if action == "unwatch":
+          for pattern in patterns:
+            cursor.execute(
+                "SELECT resid FROM watchlist "
+                "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
+            reses = [ res[0] for res in cursor.fetchall() ]
+            if not reses:
+              err_pat.append(pattern)
+            else:
+              del_res.extend(reses)
+              cursor.execute(
+                  "DELETE FROM watchlist "
+                  "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
+          if names:
+            sql = "SELECT resid FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
+                  + ",".join( ("%s",) * len(names) ) + ")"
+            cursor.execute( sql, [user,realm] + names)
+            reses = [ res[0] for res in cursor.fetchall() ]
+            del_res.extend(reses)
+            err_res.extend(set(names).difference(reses))
+
+            sql = "DELETE FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
+                  + ",".join( ("%s",) * len(names) ) + ")"
+            cursor.execute( sql, [user,realm] + names)
+          db.commit()
+
+          if self.gnotify and self.gnotifybydefault:
+            pass
+            #action = "notifyoff"
+          else:
+            if redirectback:
+              req.redirect(reslink)
+              raise RequestDone
+            action = "view"
+        wldict['del_res'] = del_res
+        wldict['err_res'] = err_res
+        wldict['err_pat'] = err_pat
+
+        if action == "view":
+            for (xrealm,handler) in self.realm_handler.iteritems():
+              if handler.has_perm(req.perm):
+                wldict[xrealm + 'list'] = handler.get_list(self, req)
+            return ("watchlist.html", wldict, "text/html")
+        else:
+            raise WatchlistError("Invalid watchlist action '%s'!" % action)
+
+
+    def _process_request(self, req):
         user = to_unicode( req.authname )
         if not user or user == 'anonymous':
             raise WatchlistError(
                     tag( "Please ", tag.a("log in", href=req.href('login')),
                         " to view or change your watchlist!" ) )
 
-        args = req.args
         wldict = args.copy()
         action = args.get('action','view')
         redirectback = self.gredirectback
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(req.href.watchlist()) != -1
-        names,patterns = self._get_sql_names_and_patterns( args.get('resid', "").split(',') )
         single = len(names) == 1 and not patterns
         res_exists = False
 
@@ -200,9 +278,9 @@ class WatchlistPlugin(Component):
           add_ctxtnav(req, "Watched " + name.capitalize(), href=req.href('watchlist#' + name))
         #add_ctxtnav(req, "Settings", href=wlhref + '#settings')
 
-        wldict['perm'] = req.perm
+        wldict['perm']   = req.perm
         wldict['realms'] = self.realms
-        wldict['error'] = False
+        wldict['error']  = False
         wldict['notify'] = self.gnotify and self.gnotifycolumn
         if onwatchlistpage:
           wldict['show_messages'] = self.gmsgwowlpage
