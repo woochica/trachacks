@@ -347,7 +347,7 @@ class WatchlistPlugin(Component):
 
         realm, resid = parts[:2]
 
-        if realm not in self.realms or self.realm_handler[realm].has_perm(req.perm):
+        if realm not in self.realms or not self.realm_handler[realm].has_perm(req.perm):
             return (template, data, content_type)
 
         href = Href(req.base_path)
