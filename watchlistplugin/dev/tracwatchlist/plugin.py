@@ -96,6 +96,26 @@ class WatchlistPlugin(Component):
           self.env.log.debug("realm: %s %s" % (realm, str(provider)))
 
 
+    def _get_sql_names_and_patterns(self, nameorpatternlist):
+      import re
+      if not nameorpatternlist:
+        return [], []
+      star  = re.compile(r'(?<!\\)\*')
+      ques  = re.compile(r'(?<!\\)\?')
+      names = []
+      patterns = []
+      for norp in nameorpatternlist:
+        norp.strip()
+        pattern = norp.replace('%',r'\%').replace('_',r'\_')
+        pattern_unsub = pattern
+        pattern = star.sub('%', pattern)
+        pattern = ques.sub('_', pattern)
+        if pattern == pattern_unsub:
+          names.append(norp)
+        else:
+          patterns.append(pattern)
+      return names, patterns
+
     def _convert_pattern(self, pattern):
         # needs more work, excape sequences, etc.
         return pattern.replace('*','%').replace('?','_')
@@ -141,21 +161,22 @@ class WatchlistPlugin(Component):
 
 
     def process_request(self, req):
-        href = req.href
         user = to_unicode( req.authname )
         if not user or user == 'anonymous':
             raise WatchlistError(
-                    tag( "Please ", tag.a("log in", href=href('login')),
+                    tag( "Please ", tag.a("log in", href=req.href('login')),
                         " to view or change your watchlist!" ) )
 
         args = req.args
         wldict = args.copy()
         action = args.get('action','view')
         redirectback = self.gredirectback
-        ispattern = False# Disabled for now, not implemented fully # args.get('ispattern','0')
-        onwatchlistpage = req.environ.get('HTTP_REFERER','').find(href.watchlist()) != -1
+        onwatchlistpage = req.environ.get('HTTP_REFERER','').find(req.href.watchlist()) != -1
+        names,patterns = self._get_sql_names_and_patterns( args.get('resid', "").split(',') )
+        single = len(names) == 1 and not patterns
+        res_exists = False
 
-        if ispattern or onwatchlistpage:
+        if single or onwatchlistpage:
           redirectback = False
 
         if action in ('watch','unwatch','notifyon','notifyoff'):
@@ -167,19 +188,16 @@ class WatchlistPlugin(Component):
             if realm not in self.realms:
                 raise WatchlistError("Realm '%s' is not supported by the watchlist! Maybe you need to install and enable a watchlist extension for it first?")
             is_watching = self.is_watching(realm, resid, user)
-            realm_perm   = self.realm_handler[realm].has_perm(req.perm)
-            if ispattern:
-              pattern = self._convert_pattern(resid)
-            else:
-              reslink = href(realm,resid)
-              res_exists  = self.res_exists(realm, resid)
+            realm_perm  = self.realm_handler[realm].has_perm(req.perm)
+            if single:
+              reslink    = req.href(realm,resid)
+              res_exists = self.res_exists(realm, resid)
         else:
             is_watching = None
 
-        wlhref = href("watchlist")
         for (xrealm,handler) in self.realm_handler.iteritems():
           name = handler.get_realm_label(xrealm, plural=True)
-          add_ctxtnav(req, "Watched " + name.capitalize(), href=wlhref + '#' + name)
+          add_ctxtnav(req, "Watched " + name.capitalize(), href=req.href('watchlist#' + name))
         #add_ctxtnav(req, "Settings", href=wlhref + '#settings')
 
         wldict['perm'] = req.perm
@@ -197,7 +215,7 @@ class WatchlistPlugin(Component):
         cursor = db.cursor()
 
         if action == "watch":
-            if realm_perm and not is_watching:
+            if realm_perm:
               if not res_exists:
                   wldict['error'] = True
                   if redirectback and not onwatchlistpage:
@@ -220,25 +238,17 @@ class WatchlistPlugin(Component):
                 raise RequestDone
               action = "view"
         elif action == "unwatch":
-            if realm_perm:
-              if ispattern:
-                is_watching = True
-                cursor.execute(
-                    "DELETE FROM watchlist "
-                    "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
-                db.commit()
-              elif is_watching:
-                cursor.execute(
-                    "DELETE FROM watchlist "
-                    "WHERE wluser=%s AND realm=%s AND resid=%s;", (user, realm, resid))
-                db.commit()
-              elif not res_exists:
-                wldict['error'] = True
-                if redirectback and not onwatchlistpage:
-                  raise WatchlistError(
-                      "Selected resource %s:%s doesn't exists!" % (realm,resid) )
-                redirectback = False
-            if not onwatchlistpage and redirectback and msgrespage:
+            for pattern in patterns:
+              cursor.execute(
+                  "DELETE FROM watchlist "
+                  "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
+            if names:
+              sql = "DELETE FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
+                    + ",".join( ("%s",) * len(names) ) + ")"
+              self.env.log.debug(sql)
+              cursor.execute( sql, [user,realm] + names)
+              db.commit()
+            if single and not onwatchlistpage and redirectback and msgrespage:
               req.session['watchlist_message'] = (
                 'This %s has been removed from your watchlist.' % realm)
             if self.gnotify and self.gnotifybydefault:
@@ -553,6 +563,9 @@ class ExampleWatchlist(Component):
       return plural and 'examples' or 'example'
 
     def res_exists(self, realm, resid):
+      return True
+
+    def res_pattern_exists(self, pattern, resid):
       return True
 
     def has_perm(self, perm):
