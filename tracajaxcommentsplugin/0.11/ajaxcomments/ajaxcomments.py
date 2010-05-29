@@ -48,8 +48,9 @@ class AjaxComments(Component):
     def render_preference_panel(self, req, panel):
         if (panel == 'ajaxcomments'):
             if req.method == 'POST':
-                req.session[self.session_field] = 'True' if req.args.get('enabled') \
-                                                  else 'False'
+                req.session[self.session_field] = 'True'
+                if req.args.get('enabled'):
+                    req.session[self.session_field] = 'False'
                 req.redirect(req.href.prefs(panel))
             return 'preferences.html', {
                 'enabled': req.session.get(self.session_field, 'True') == 'True'}
