@@ -25,19 +25,55 @@ __date__     = ur"$Date$"[7:-2]
 from trac.core import *
 
 class IWatchlistProvider(Interface):
+    def get_realms():
+      """ Must return list or tuple of realms provided. """
+      pass
 
-  def get_realms():
-    """ Must return list or tuple of realms provided. """
-    pass
+    def get_realm_label(realm, plural=False):
+      pass
 
-  def res_exists(realm, resid):
-    """ Returns if resource given by `realm` and `resid` exists. """
-    pass
+    def res_exists(realm, resid):
+      """ Returns if resource given by `realm` and `resid` exists. """
+      pass
+
+    def res_list_exists(realm, reslist):
+      pass
+
+    def res_pattern_exists(realm, pattern):
+      pass
+
+    def has_perm(realm, perm):
+      pass
+
+    def get_list(realm, wl, req):
+      pass
 
 
-  def get_realm_label(realm, plural=False):
-    pass
 
-  def has_perm(perm):
-    pass
+class BasicWatchlist(Component):
+    implements( IWatchlistProvider )
+    realms = []
+
+    def get_realms(self):
+      return self.realms
+
+    def get_realm_label(self, realm, plural=False):
+      return realm + plural and 's' or ''
+
+    def res_exists(self, realm, resid):
+      return False
+
+    def res_list_exists(self, realm, reslist):
+      for res in reslist:
+        if self.res_exists(realm, res):
+          yield res
+
+    def res_pattern_exists(self, realm, pattern):
+      return []
+
+    def has_perm(self, realm, perm):
+      return realm.upper() + '_VIEW' in perm
+
+    def get_list(self, realm, wl, req):
+      return []
 

@@ -35,7 +35,7 @@ from  trac.web.chrome    import  ITemplateProvider, add_ctxtnav, add_link, add_s
 from  trac.web.href      import  Href
 from  trac.wiki.model    import  WikiPage
 from  urllib             import  quote_plus
-from  tracwatchlist.api  import  IWatchlistProvider
+from  tracwatchlist.api  import  BasicWatchlist, IWatchlistProvider
 
 __DB_VERSION__ = 3
 
@@ -105,7 +105,7 @@ class WatchlistPlugin(Component):
       names = []
       patterns = []
       for norp in nameorpatternlist:
-        norp.strip()
+        norp = norp.strip()
         pattern = norp.replace('%',r'\%').replace('_',r'\_')
         pattern_unsub = pattern
         pattern = star.sub('%', pattern)
@@ -113,8 +113,19 @@ class WatchlistPlugin(Component):
         if pattern == pattern_unsub:
           names.append(norp)
         else:
+          pattern = pattern.replace('\*','*').replace('\?','?')
           patterns.append(pattern)
       return names, patterns
+
+    def _sql_pattern_unescape(self, pattern):
+      import re
+      percent    = re.compile(r'(?<!\\)%')
+      underscore = re.compile(r'(?<!\\)_')
+      pattern = pattern.replace('*','\*').replace('?','\?')
+      pattern = percent.sub('*', pattern)
+      pattern = underscore.sub('?', pattern)
+      pattern = pattern.replace('\%','%').replace('\_','_')
+      return pattern
 
     def _convert_pattern(self, pattern):
         # needs more work, excape sequences, etc.
@@ -162,10 +173,15 @@ class WatchlistPlugin(Component):
 
     def process_request(self, req):
         user  = to_unicode( req.authname )
-        realm = to_unicode( req.args.get('realm', '') )
-        resid = to_unicode( req.args.get('resid', '') )
+        realm = to_unicode( req.args.get('realm', u'') )
+        resid = req.args.get('resid', u'')
+        resids = []
+        if not isinstance(resid,(list,tuple)):
+          resid = [resid]
+        for r in resid:
+          resids.extend(r.replace(',',' ').split())
         action = req.args.get('action','view')
-        names,patterns = self._get_sql_names_and_patterns( resid and resid.split(',') or [] )
+        names,patterns = self._get_sql_names_and_patterns( resids )
         redirectback = self.gredirectback
 
         db = self.env.get_db_cnx()
@@ -191,21 +207,40 @@ class WatchlistPlugin(Component):
 
         new_res = []
         del_res = []
+        alw_res = []
         err_res = []
         err_pat = []
-        if action == "unwatch":
+        if action == "watch":
+          handler = self.realm_handler[realm]
+          if names:
+            reses = list(handler.res_list_exists(realm, names))
+
+            sql = "SELECT resid FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
+                  + ",".join( ("%s",) * len(names) ) + ")"
+            cursor.execute( sql, [user,realm] + names)
+            alw_res = [ res[0] for res in cursor.fetchall() ]
+            new_res.extend(set(reses).difference(alw_res))
+            err_res.extend(set(names).difference(reses))
           for pattern in patterns:
-            cursor.execute(
-                "SELECT resid FROM watchlist "
-                "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
-            reses = [ res[0] for res in cursor.fetchall() ]
+            reses = list(handler.res_pattern_exists(realm, pattern))
+
             if not reses:
-              err_pat.append(pattern)
+              err_pat.append(self._sql_pattern_unescape(pattern))
             else:
-              del_res.extend(reses)
               cursor.execute(
-                  "DELETE FROM watchlist "
-                  "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
+                "SELECT resid FROM watchlist WHERE wluser=%s AND realm=%s AND resid LIKE (%s)",
+                (user,realm,pattern) )
+              watched_res = [ res[0] for res in cursor.fetchall() ]
+              alw_res.extend(set(reses).intersection(watched_res))
+              new_res.extend(set(reses).difference(alw_res))
+
+          if new_res:
+            cursor.executemany(
+                "INSERT INTO watchlist (wluser, realm, resid) "
+                "VALUES (%s,%s,%s);", [ (user, realm, res) for res in new_res ] )
+            db.commit()
+          action = "view"
+        elif action == "unwatch":
           if names:
             sql = "SELECT resid FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
                   + ",".join( ("%s",) * len(names) ) + ")"
@@ -217,6 +252,18 @@ class WatchlistPlugin(Component):
             sql = "DELETE FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
                   + ",".join( ("%s",) * len(names) ) + ")"
             cursor.execute( sql, [user,realm] + names)
+          for pattern in patterns:
+            cursor.execute(
+                "SELECT resid FROM watchlist "
+                "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
+            reses = [ res[0] for res in cursor.fetchall() ]
+            if not reses:
+              err_pat.append(self._sql_pattern_unescape(pattern))
+            else:
+              del_res.extend(reses)
+              cursor.execute(
+                  "DELETE FROM watchlist "
+                  "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
           db.commit()
 
           if self.gnotify and self.gnotifybydefault:
@@ -230,11 +277,13 @@ class WatchlistPlugin(Component):
         wldict['del_res'] = del_res
         wldict['err_res'] = err_res
         wldict['err_pat'] = err_pat
+        wldict['new_res'] = new_res
+        wldict['alw_res'] = alw_res
 
         if action == "view":
             for (xrealm,handler) in self.realm_handler.iteritems():
-              if handler.has_perm(req.perm):
-                wldict[xrealm + 'list'] = handler.get_list(self, req)
+              if handler.has_perm(realm, req.perm):
+                wldict[xrealm + 'list'] = handler.get_list(realm, self, req)
             return ("watchlist.html", wldict, "text/html")
         else:
             raise WatchlistError("Invalid watchlist action '%s'!" % action)
@@ -266,7 +315,7 @@ class WatchlistPlugin(Component):
             if realm not in self.realms:
                 raise WatchlistError("Realm '%s' is not supported by the watchlist! Maybe you need to install and enable a watchlist extension for it first?")
             is_watching = self.is_watching(realm, resid, user)
-            realm_perm  = self.realm_handler[realm].has_perm(req.perm)
+            realm_perm  = self.realm_handler[realm].has_perm(realm, req.perm)
             if single:
               reslink    = req.href(realm,resid)
               res_exists = self.res_exists(realm, resid)
@@ -374,8 +423,8 @@ class WatchlistPlugin(Component):
         wldict['is_watching'] = is_watching
         if action == "view":
             for (xrealm,handler) in self.realm_handler.iteritems():
-              if handler.has_perm(req.perm):
-                wldict[xrealm + 'list'] = handler.get_list(self, req)
+              if handler.has_perm(realm, req.perm):
+                wldict[xrealm + 'list'] = handler.get_list(realm, self, req)
                 self.env.log.debug(xrealm + 'list: ' + str(wldict[xrealm + 'list']))
             return ("watchlist.html", wldict, "text/html")
         else:
@@ -435,7 +484,7 @@ class WatchlistPlugin(Component):
 
         realm, resid = parts[:2]
 
-        if realm not in self.realms or not self.realm_handler[realm].has_perm(req.perm):
+        if realm not in self.realms or not self.realm_handler[realm].has_perm(realm, req.perm):
             return (template, data, content_type)
 
         href = Href(req.base_path)
@@ -471,22 +520,20 @@ class WatchlistPlugin(Component):
         return [ resource_filename(__name__, 'templates') ]
 
 
-class WikiWatchlist(Component):
-    implements( IWatchlistProvider )
 
-    def get_realms(self):
-      return ('wiki',)
-
-    def get_realm_label(self, realm, plural=False):
-      return plural and 'wikis' or 'wiki'
+class WikiWatchlist(BasicWatchlist):
+    realms = ['wiki']
 
     def res_exists(self, realm, resid):
       return WikiPage(self.env, resid).exists
 
-    def has_perm(self, perm):
-      return 'WIKI_VIEW' in perm
+    def res_pattern_exists(self, realm, pattern):
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      cursor.execute( "SELECT name FROM wiki WHERE name LIKE (%s)", (pattern,) )
+      return [ vals[0] for vals in cursor.fetchall() ]
 
-    def get_list(self, wl, req):
+    def get_list(self, realm, wl, req):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       user = req.authname
@@ -534,22 +581,14 @@ class WikiWatchlist(Component):
           })
       return wikilist
 
-class TicketWatchlist(Component):
-    implements( IWatchlistProvider )
 
-    def get_realms(self):
-      return ('ticket',)
-
-    def get_realm_label(self, realm, plural=False):
-      return plural and 'tickets' or 'ticket'
+class TicketWatchlist(BasicWatchlist):
+    realms = ['ticket']
 
     def res_exists(self, realm, resid):
       return Ticket(self.env, resid).exists
 
-    def has_perm(self, perm):
-      return 'TICKET_VIEW' in perm
-
-    def get_list(self, wl, req):
+    def get_list(self, realm, wl, req):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       user = req.authname
@@ -632,7 +671,7 @@ class TicketWatchlist(Component):
       return ticketlist
 
 class ExampleWatchlist(Component):
-    implements( IWatchlistProvider )
+    #implements( IWatchlistProvider )
 
     def get_realms(self):
       return ('example',)
@@ -643,13 +682,16 @@ class ExampleWatchlist(Component):
     def res_exists(self, realm, resid):
       return True
 
-    def res_pattern_exists(self, pattern, resid):
+    def res_list_exists(self, realm, reslist):
+      return []
+
+    def res_pattern_exists(self, realm, pattern):
       return True
 
-    def has_perm(self, perm):
+    def has_perm(self, realm, perm):
       return True
 
-    def get_list(self, wl, req):
+    def get_list(self, realm, wl, req):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       user = req.authname
