@@ -48,6 +48,11 @@ class IWatchlistProvider(Interface):
     def get_list(realm, wl, req):
       pass
 
+    def get_href(realm, resid=None):
+      pass
+
+    def get_abs_href(realm, resid=None):
+      pass
 
 
 class BasicWatchlist(Component):
@@ -58,7 +63,10 @@ class BasicWatchlist(Component):
       return self.realms
 
     def get_realm_label(self, realm, plural=False):
-      return realm + plural and 's' or ''
+      if plural:
+        return realm + 's'
+      else:
+        return realm
 
     def res_exists(self, realm, resid):
       return False
@@ -72,8 +80,22 @@ class BasicWatchlist(Component):
       return []
 
     def has_perm(self, realm, perm):
+      if realm not in self.realms:
+        return False
       return realm.upper() + '_VIEW' in perm
 
     def get_list(self, realm, wl, req):
       return []
+
+    def get_href(self, realm, resid=None, **kwargs):
+      if resid is None:
+        return self.env.href.__get_attr__(realm)
+      else:
+        return self.env.href(realm,resid,**kwargs)
+
+    def get_abs_href(self, realm, resid=None, **kwargs):
+      if resid is None:
+        return self.env.abs_href.__get_attr__(realm)
+      else:
+        return self.env.abs_href(realm,resid,**kwargs)
 
