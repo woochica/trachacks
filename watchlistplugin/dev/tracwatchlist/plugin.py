@@ -205,6 +205,7 @@ class WatchlistPlugin(Component):
         action = req.args.get('action','view')
         names,patterns = self._get_sql_names_and_patterns( resids )
         single = len(names) == 1 and not patterns
+        async = req.args.get('async', 'false') == 'true'
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -325,7 +326,7 @@ class WatchlistPlugin(Component):
               for res in resids:
                 self.set_notify(req, realm, res)
               db.commit()
-            if redirectback_notify:
+            if redirectback_notify and not async:
               if self.gmsgrespage:
                 req.session['watchlist_notify_message'] = (
                   'You are now receiving '
@@ -338,7 +339,7 @@ class WatchlistPlugin(Component):
               for res in resids:
                 self.unset_notify(req, realm, res)
               db.commit()
-            if redirectback_notify:
+            if redirectback_notify and not async:
               if self.gmsgrespage:
                 req.session['watchlist_notify_message'] = (
                   'You are no longer receiving '
@@ -347,6 +348,11 @@ class WatchlistPlugin(Component):
               raise RequestDone
             action = "view"
 
+        if async:
+          req.send_response(200)
+          req.send_header('content-type', 'text/plain')
+          req.end_headers()
+          raise RequestDone
 
         if action == "view":
             for (xrealm,handler) in self.realm_handler.iteritems():
