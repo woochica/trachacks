@@ -29,6 +29,24 @@
     <py:def function="slink(realm, resid, text='')">
         <a href="${href(realm,resid)}">${text or resid}</a>
     </py:def>
+    <py:def function="modify_form(realm, label=None)">
+      <div class="modwatch">
+      <form method="get" action="" class="addtowatch">
+        <span>
+          Add ${label or (realm.capitalize() + 's')}: <input type="text" name="resid" />
+          <input type="hidden" name="realm" value="$realm" />
+          <input type="hidden" name="action" value="watch" />
+        </span>
+      </form>
+      <form method="get" action="" class="remfromwatch">
+        <span>
+          Remove ${label or (realm.capitalize() + 's')}: <input type="text" name="resid" />
+          <input type="hidden" name="realm" value="$realm" />
+          <input type="hidden" name="action" value="unwatch" />
+        </span>
+      </form>
+      </div>
+    </py:def>
   </head>
 
   <body>
@@ -112,15 +130,26 @@
                 </div>
                 <div class="system-message" id="notice" py:if="len(new_res)>1">
                     <h3 class="system-message-title">Added to Watchlist</h3>
-                    <p>The following selected ${realm}s where added to the watchlist:</p>
+                    <p>The following selected ${realm}s where added to the watchlist:
+                      (<a href="${href.watchlist(action='unwatch',realm=realm,resid=new_res)}">Remove them again</a>)
+                    </p>
                     <ul><li py:for="res in new_res">${slink(realm,res)}</li></ul>
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
             </py:when>
             <py:when test="'unwatch'">
-                <div class="system-message" id="notice" py:if="del_res">
+                <div class="system-message" id="notice" py:if="len(del_res)==1">
                     <h3 class="system-message-title">Removed from Watchlist</h3>
-                    <p>The following selected ${realm}s where removed from the watchlist:</p>
+                    <p>The selected ${link(realm,del_res[0])} was removed to the watchlist.
+                    (<a href="${href.watchlist(action='watch',realm=realm,resid=del_res[0])}">Add again</a>)
+                    ${ackmsg()}
+                    </p>
+                </div>
+                <div class="system-message" id="notice" py:if="len(del_res)>1">
+                    <h3 class="system-message-title">Removed from Watchlist</h3>
+                    <p>The following selected ${realm}s where removed from the watchlist:
+                      (<a href="${href.watchlist(action='watch',realm=realm,resid=del_res)}">Add them again</a>)
+                    </p>
                     <ul><li py:for="res in del_res">${slink(realm,res)}</li></ul>
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>

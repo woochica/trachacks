@@ -62,13 +62,7 @@
       </div>
       <div py:otherwise=""><span>No wikis are currently watched.</span></div>
       </py:choose>
-      <form method="get" action="" class="addtowatch">
-        <div>
-          Add Wiki: <input type="text" name="resid" />
-          <input type="hidden" name="realm" value="wiki" />
-          <input type="hidden" name="action" value="watch" />
-        </div>
-      </form>
+      ${modify_form('wiki')}
       </div>
       </py:choose>
     </div>

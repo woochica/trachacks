@@ -53,13 +53,7 @@
       </div>
       <div py:otherwise=""><span>No tickets are currently watched.</span></div>
       </py:choose>
-      <form method="get" action="" class="addtowatch">
-        <div>
-          Add Ticket : #<input type="text" name="resid" />
-          <input type="hidden" name="realm" value="ticket" />
-          <input type="hidden" name="action" value="watch" />
-        </div>
-      </form>
+      ${modify_form('ticket')}
       </div>
       </py:choose>
     </div>

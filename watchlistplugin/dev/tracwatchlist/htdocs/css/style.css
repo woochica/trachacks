@@ -69,11 +69,16 @@ td.history img {
   border: none;
 }
 
-form.addtowatch {
+div.modwatch {
   padding-top: 1ex;
 }
 
-div.watchlist > h2 {
+form.addtowatch, form.remfromwatch {
+  padding-right: 2em;
+  display: inline;
+}
+
+div.watchlist h2 {
   margin-top: 2em;
 }
 

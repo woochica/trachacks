@@ -270,7 +270,7 @@ class WatchlistPlugin(Component):
           if self.gmsgrespage and not onwatchlistpage and redirectback:
             req.session['watchlist_message'] = 'You are now watching this resource.'
           if self.gnotify and self.gnotifybydefault:
-            for res in resids:
+            for res in new_res:
               self.set_notify(req, realm, res)
             db.commit()
           if redirectback:
@@ -307,7 +307,7 @@ class WatchlistPlugin(Component):
           if self.gmsgrespage and not onwatchlistpage and redirectback:
             req.session['watchlist_message'] = 'You are no longer watching this resource.'
           if self.gnotify and self.gnotifybydefault:
-            for res in resids:
+            for res in del_res:
               self.unset_notify(req, realm, res)
             db.commit()
           if redirectback:
@@ -633,8 +633,6 @@ class WikiWatchlist(BasicWatchlist):
           "ORDER BY time DESC;", (user,) )
 
       wikis = cursor.fetchall()
-      self.env.log.debug('user: ' + user)
-      self.env.log.debug('wikis: ' + str(wikis))
       for name,author,time,version,comment in wikis:
           notify = False
           if wl.gnotify:
@@ -656,7 +654,19 @@ class TicketWatchlist(BasicWatchlist):
     realms = ['ticket']
 
     def res_exists(self, realm, resid):
-      return Ticket(self.env, resid).exists
+      try:
+        return Ticket(self.env, int(resid)).exists
+      except:
+        return False
+
+    def res_pattern_exists(self, realm, pattern):
+      if pattern == '%':
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute( "SELECT id FROM ticket" )
+        return [ vals[0] for vals in cursor.fetchall() ]
+      else:
+        return []
 
     def get_list(self, realm, wl, req):
       db = self.env.get_db_cnx()
