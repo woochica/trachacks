@@ -43,23 +43,23 @@ class TracDependencyAdminWebUI(Component):
     # IAdminPanelProvider
     def get_admin_panels(self, req):
         if 'TRAC_ADMIN' in req.perm:
-            # ŠÇ—ƒpƒlƒ‹‚ÉŸ‚Ì“ñ‚Â‚Ìƒƒjƒ…[‚ğ’Ç‰Á‚µ‚Ü‚·D
+            # ç®¡ç†ãƒ‘ãƒãƒ«ã«æ¬¡ã®äºŒã¤ã®ãƒ¡ãƒ‹ãƒ¥ãƒ¼ã‚’è¿½åŠ ã—ã¾ã™ï¼
             yield ('Dependency', ADMIN_PANEL_TRACDEP, 'intertrac', ADMIN_PANEL_INTERTRAC)
             if self.customfield_panel_enable():
-                # ƒJƒXƒ^ƒ€ƒtƒB[ƒ‹ƒh‚Í’Ç‰Á‚µ‚©€”õ‚µ‚Ä‚¢‚È‚¢‚½‚ßC•K—v‚ª–³‚¯‚ê‚Î•\¦‚µ‚Ü‚¹‚ñD
+                # ã‚«ã‚¹ã‚¿ãƒ ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã¯è¿½åŠ ã—ã‹æº–å‚™ã—ã¦ã„ãªã„ãŸã‚ï¼Œå¿…è¦ãŒç„¡ã‘ã‚Œã°è¡¨ç¤ºã—ã¾ã›ã‚“ï¼
                 yield ('Dependency', ADMIN_PANEL_TRACDEP, 'customfield', ADMIN_PANEL_CUSTOMFIELD)
 
     def render_admin_panel(self, req, cat, page, path_info):
         custom_field = (page == 'customfield')
         if req.method == 'POST':
             if req.args.get('add'):
-                # ƒtƒH[ƒ€‚É“ü—Í‚³‚ê‚½interTrac‚Ìİ’è‚ğ’Ç‰Á‚µ‚Ü‚·D
+                # ãƒ•ã‚©ãƒ¼ãƒ ã«å…¥åŠ›ã•ã‚ŒãŸinterTracã®è¨­å®šã‚’è¿½åŠ ã—ã¾ã™ï¼
                 name = req.args.get('name')
                 description = req.args.get('description')
                 url = req.args.get('url')
                 path = req.args.get('path')
                 title = self.config.get('intertrac', name + '.title')
-                if title: #ƒvƒƒWƒFƒNƒg‚ª‚·‚Å‚É‘¶İ‚µ‚Ä‚¢‚½ê‡‚ÍƒGƒ‰[‚É‚·‚éD
+                if title: #ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ãƒˆãŒã™ã§ã«å­˜åœ¨ã—ã¦ã„ãŸå ´åˆã¯ã‚¨ãƒ©ãƒ¼ã«ã™ã‚‹ï¼
                     raise TracError(ERROR_PROJECT_EXIST)
                 self.config.set('intertrac', name + '.title', description)
                 self.config.set('intertrac', name + '.url', url)
@@ -69,7 +69,7 @@ class TracDependencyAdminWebUI(Component):
                 req.redirect(req.href.admin(cat, page))
 
             elif req.args.get('remove'):
-                # ‘I‘ğ‚³‚ê‚½interTrac‚Ìİ’è‚ğíœ‚µ‚Ü‚·D
+                # é¸æŠã•ã‚ŒãŸinterTracã®è¨­å®šã‚’å‰Šé™¤ã—ã¾ã™ï¼
                 sel = req.args.get('sel')
                 if not sel:
                     raise TracError(ERROR_PROJECT_NOT_SEL)
@@ -83,7 +83,7 @@ class TracDependencyAdminWebUI(Component):
                 self.config.save();
 
             elif req.args.get('dependencies_create'):
-                # ˆË‘¶ŠÖŒW‚ÌƒJƒXƒ^ƒ€ƒtƒB[ƒ‹ƒh‚ğ’Ç‰Á‚µ‚Ü‚·
+                # ä¾å­˜é–¢ä¿‚ã®ã‚«ã‚¹ã‚¿ãƒ ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã‚’è¿½åŠ ã—ã¾ã™
                 self.config.set(TICKET_CUSTOM,"summary_ticket", "text")
                 self.config.set(TICKET_CUSTOM,"summary_ticket.order", "50")
                 self.config.set(TICKET_CUSTOM,"summary_ticket.label", LABEL_SUMMARY_TICKET)
@@ -93,7 +93,7 @@ class TracDependencyAdminWebUI(Component):
                 self.config.save();
 
             elif req.args.get('baseline_create'):
-                # Šî€Œv‰æŠÖ˜A‚ÌƒJƒXƒ^ƒ€ƒtƒB[ƒ‹ƒh‚ğ’Ç‰Á‚µ‚Ü‚·D
+                # åŸºæº–è¨ˆç”»é–¢é€£ã®ã‚«ã‚¹ã‚¿ãƒ ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã‚’è¿½åŠ ã—ã¾ã™ï¼
                 self.config.set(TICKET_CUSTOM,"baseline_start", "text")
                 self.config.set(TICKET_CUSTOM,"baseline_start.order", "52")
                 self.config.set(TICKET_CUSTOM,"baseline_start.label", LABEL_BASELINE_START)
@@ -103,8 +103,8 @@ class TracDependencyAdminWebUI(Component):
                 self.config.set(TICKET_CUSTOM,"baseline_cost", "text")
                 self.config.set(TICKET_CUSTOM,"baseline_cost.order", "54")
                 self.config.set(TICKET_CUSTOM,"baseline_cost.label", LABEL_BASELINE_COST)
-                # TODO:‚È‚É‚àŠm”F‚¹‚¸‚É’Ç‰Á‚µ‚Ä‚¢‚é‚¾‚¯‚È‚Ì‚Å‚à‚¤­‚µ‚¿‚á‚ñ‚Æ‚·‚é•K—v‚ª‚ ‚éD
-                # Trac-Hacks‚Å‚Í‚±‚±‚ÍƒRƒƒ“ƒg‚Ì‚Ù‚¤‚ª‚¢‚¢
+                # TODO:ãªã«ã‚‚ç¢ºèªã›ãšã«è¿½åŠ ã—ã¦ã„ã‚‹ã ã‘ãªã®ã§ã‚‚ã†å°‘ã—ã¡ã‚ƒã‚“ã¨ã™ã‚‹å¿…è¦ãŒã‚ã‚‹ï¼
+                # Trac-Hacksã§ã¯ã“ã“ã¯ã‚³ãƒ¡ãƒ³ãƒˆã®ã»ã†ãŒã„ã„
                 # calendar_fields = self.config.get( "decorator", "calendar_fields")
                 # self.config.set("decorator", "calendar_fields", calendar_fields + ",baseline_start,baseline_finish")
                 self.config.save();
@@ -123,6 +123,10 @@ class TracDependencyAdminWebUI(Component):
                                        'custom_field': custom_field}
     
     #ITemplateProvider
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('static', resource_filename('tracdependency', 'htdocs'))]
+
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename('tracdependency', 'templates')]

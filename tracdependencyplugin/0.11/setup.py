@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 PACKAGE = 'tracdependency'
 
 setup(
-    name = 'TracDependencyPlugin', version = '0.11.1.19',
+    name = 'TracDependencyPlugin', version = '0.11.1.21',
     packages=find_packages(exclude=['*.tests*']),
     author = 'Yuji OKAZAKI',
     author_email = 'u-z@users.sourceforge.jp',
@@ -17,5 +17,5 @@ setup(
         [trac.plugins]
         tracdependency = tracdependency
     """,
-    package_data= {'tracdependency': ['templates/*.html', 'htdocs/*.css', 'htdocs/*.png', 'htdocs/*.js']},
+    package_data= {'tracdependency': ['templates/*.html', 'htdocs/*.css', 'htdocs/*.png', 'htdocs/*.js']}
 )
