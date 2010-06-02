@@ -1,0 +1,85 @@
+0.1.0 - initial release by Michael Comb (11-Jan-2008)
+ based on WikiCalendarMacro by Matthew Good
+ * add links to tickets as well as milestones
+ * changed format to look more like a regular calendar
+
+0.1.1 - bugfix release provided by Michael Comb (09-Feb-2008)
+ (was: WikiTicketCalendarMacro.py)
+ changes by Vladislav Naumov for compatibility with Trac 0.11.1
+
+0.1.2 - non-maintainer release provided by Michael Comb (24-Mar-2008)
+ (was: WikiTicketCalendarMacro.py.txt)
+ changes by Alex
+ * fixed 'ordinal not in range' issue by replacing
+   StringIO with cStringIO for better unicode handling,
+   actually a tradeoff of performance for unicode support
+
+0.2.0 - experimental release provided by Michael Comb (25-Mar-2008)
+ (was: WikiTicketCalendar-trac11-experimental.py.txt)
+ changes by Mike Greer, reported to work with Trac 0.11b1
+
+0.2.1 - non-maintainer release provided by Michael Comb (29-Sep-2008)
+ (was: WikiTicketCalendarMacro.zip)
+ * dates fixed for milestone presentation (Trac 0.11.1), 
+
+0.3.0 - non-maintainer release provided by Michael Comb (01-Oct-2008)
+ (was: WikiTicketCalendarMacro.2.py)
+ changes by JaeWook Choi
+ * complete full functionality from both WikiTicketCalendarPlugin
+   and WikiCalendarPlugin
+ * CSS copied from Andy Schlaikjer
+
+0.4.0 - non-maintainer release provided by Michael Comb (27-Nov-2008)
+ (was: WikiTicketCalendarMacro.20081127.py)
+ changes by W. Martin Borgert
+ * shows also ticket opening dates
+ * use ISO 8601 date format by default
+ * description field: show only the first kByte
+ * simpler HTML structure (no nested tables)
+ * simplified some code
+ * use consistent indentation (PEP8)
+
+0.4.1 - public, unreleased revision (03-Feb-2009)
+ (was: wiki content describing patch)
+ changes
+ * fix encoding problems for e.g. German chars
+ * fix a problem related to daylight savings setting
+
+0.4.2 - non-maintainer release provided by Michael Comb (03-Apr-2009)
+ (was: WikiTicketCalendarMacro.20090403.py)
+ changes by W. Martin Borgert
+ * fixed two CSS issues that killed pisa/xhtml2pdf (TracWikiPrintPlugin)
+ * less table width for Saturday and Sunday
+
+0.5.0 - non-maintainer release provided by Michael Comb (29-Oct-2009)
+ (was: WikiTicketCalendarMacro.20091029.py.gz)
+ changes by JaeWook Choi
+ * update to Google Calendar style css
+ * Wiki brief is shown in calendar if exists
+ * open tickets shown under milestone (line 305)
+ * ticket action history shown instead of tickets created and closed
+ * only close history shown by default, this can be modified (hack line 330)
+
+0.5.1 - initial import to SVN at trac-hacks.org by Ryan J Ollos (09-Feb-2010)
+ (trac-hacks.org SVN r7524, new maintainer)
+
+0.6.0 - private, unreleased revision (17-Aug-2009)
+ changes by Steffen Hoffmann
+ * configurabe template to create new wiki pages
+
+0.6.1 - private, unreleased revision (18-Aug-2009)
+ changes by Steffen Hoffmann
+ * preliminary i18n work (code borrowed from TracEditorGuidePlugin),
+   but beware: no-op l10n support
+
+0.6.2 - private, unreleased revision (18-Jan-2010)
+ changes by Steffen Hoffmann
+ * unicode error with Genshi fixed using to_unicode from trac.util.text
+
+1.0.0 - 1st release for Trac 0.12 imported to SVN by Ryan J Ollos (27-Apr-2010)  
+ changes by Steffen Hoffmann
+ * inherits changes 0.6.0 - 0.6.2
+ * fixed ticket queries using import to_utimestamp from trac.util.datefmt
+   to adapt for switch to POSIX microsecond time stamps in Trac SVN r9210
+ * add 3rd set of navfast-forward/-rewind month navigation links
+ * code cleanup
