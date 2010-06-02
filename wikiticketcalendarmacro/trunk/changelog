@@ -81,10 +81,13 @@
  changes by Steffen Hoffmann
  * unicode error with Genshi fixed using to_unicode from trac.util.text
 
+0.7.0 - private, unreleased revision (18-Jan-2010)
+ changes by Steffen Hoffmann
+ * add a 3rd set of navfast-forward/-rewind month navigation links
+
 1.0.0 - 1st release for Trac 0.12 imported to SVN by Ryan J Ollos (27-Apr-2010)  
  changes by Steffen Hoffmann
- * inherits changes 0.6.0 - 0.6.2
+ * inherits changes 0.6.0 - 0.7.0
  * fixed ticket queries using import to_utimestamp from trac.util.datefmt
    to adapt for switch to POSIX microsecond time stamps in Trac SVN r9210
- * add 3rd set of navfast-forward/-rewind month navigation links
  * code cleanup

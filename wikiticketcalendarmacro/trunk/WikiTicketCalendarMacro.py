@@ -37,22 +37,27 @@
 # - added l10n support, code borrowed from TracEditorGuidePlugin
 # Changes by Steffen Hoffmann <hoff.st@shaas.net> 2010-01
 # - fixed unicode error with Genshi with unicode routine from util
+# - some code cleanup
 
 import calendar
 import string
 import sys
 import time
 
-from trac.wiki.api import WikiSystem
-from trac.util import *
-from trac.wiki.macros import WikiMacroBase
-from trac.web.href import Href
-from trac.config import Option, IntOption
+from datetime               import datetime
+
+from trac.wiki.api          import WikiSystem
+from trac.util              import *
+from trac.util.datefmt      import to_utimestamp, FixedOffset
+from trac.wiki.macros       import WikiMacroBase
+from trac.web.href          import Href
+from trac.config            import Option, IntOption
 
 # added for translation support
-from trac.core import *
-from trac.util.translation import gettext_noop
-from trac.web.api import IRequestFilter
+from trac.core              import *
+from trac.util.text         import  to_unicode
+from trac.util.translation  import gettext_noop
+from trac.web.api           import IRequestFilter
 
 """
   Activate it in 'trac.ini'
@@ -205,10 +210,9 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         # url to the current page (used in the navigation links)
         thispageURL = Href(formatter.req.base_path + formatter.req.path_info)
         # for the prev/next navigation links
-        prevMonth = month-1
-        prevYear  = year
-        nextMonth = month+1
-        nextYear  = year
+        prevMonth = month - 1
+        nextMonth = month + 1
+        nextYear = prevYear = year
         # check for year change (KISS version)
         if prevMonth == 0:
             prevMonth = 12
@@ -319,10 +323,10 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                     # first check for milestone on that day
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
-                    duedatestamp = time.mktime(
-                        (year, month, day, 0, 0, 0, 0, 0, 0))
-                    duedatestamp_eod = time.mktime(
-                        (year, month, day, 23, 59, 0, 0, 0, 0))
+                    utc = FixedOffset(0, 'UTC')
+                    duedatestamp = t = to_utimestamp(datetime(year, month,
+                                                     day, 0, 0, 0, 0, tzinfo=utc))
+                    duedatestamp_eod = t + 86399999999
 
                     dayString = "%02d" % day
                     monthString = "%02d" % month
@@ -339,9 +343,8 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                         a_classes = "day"
                         url += "?action=edit"
                         # adding template name, if specified
-                        if not wiki_page_template == "":
-                            url += "&template="
-                            url += wiki_page_template
+                        if wiki_page_template != "":
+                            url += "&template=" + wiki_page_template
                         title = _('Create page %s') % wiki
 
                     buff.append('<td class="%(td_classes)s" valign="top"><a class="%(a_classes)s" href="%(url)s" title="%(title)s"><b>%(day)s</b></a>' % {
