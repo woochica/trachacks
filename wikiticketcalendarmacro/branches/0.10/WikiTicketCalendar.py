@@ -23,9 +23,6 @@ from StringIO import StringIO
 from trac.wiki.api import WikiSystem
 from trac.util import *
 
-revision="$Rev$"
-url="$URL$"
-
 # format:
 #   WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format]]])
 #

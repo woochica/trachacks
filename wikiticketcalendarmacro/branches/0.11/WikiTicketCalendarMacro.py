@@ -54,6 +54,9 @@ from trac.core import *
 from trac.util.translation import gettext_noop
 from trac.web.api import IRequestFilter
 
+revision = "$Rev$"
+url = "$URL$"
+
 """
   Activate it in 'trac.ini'
 
