@@ -238,9 +238,9 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
                     duedatestamp = time.mktime(
-                        (year, month, day, 0, 0, 0, 0, 0, -1))
+                        (year, month, day, 0, 0, 0, 0, 0, 0))
                     duedatestamp_eod = time.mktime(
-                        (year, month, day, 23, 59, 0, 0, 0, -1))
+                        (year, month, day, 23, 59, 0, 0, 0, 0))
 
                     dayString = "%02d" % day
                     monthString = "%02d" % month

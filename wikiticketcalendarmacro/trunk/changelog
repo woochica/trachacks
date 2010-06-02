@@ -64,6 +64,10 @@
  * ticket action history shown instead of tickets created and closed
  * only close history shown by default, this can be modified (hack line 330)
 
+0.5.1 - non-maintainer release provided by Michael Comb (29-Oct-2009)
+ * fix a problem with datetime -> POSIX time stamp conversion
+   related to daylight saving settings
+
 0.6.0 - private, unreleased revision (17-Aug-2009)
  changes by Steffen Hoffmann
  * configurabe template to create new wiki pages
