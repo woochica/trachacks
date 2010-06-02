@@ -115,6 +115,11 @@ class TracLegos(object):
         ### set variables
 
         dirname = os.path.join(self.directory, project)
+        
+        if os.path.isdir(dirname) and os.listdir(dirname):
+            raise ValueError("Project directory %r already exists, "
+                             "cowardly refusing to create anything" % dirname)
+
         _vars = vars or {}
         vars = self.vars.copy()
         vars.update(_vars)
