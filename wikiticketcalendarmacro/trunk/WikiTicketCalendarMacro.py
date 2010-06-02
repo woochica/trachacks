@@ -35,8 +35,11 @@
 # Changes by Steffen Hoffmann <hoff.st@shaas.net> 2009-08
 # - call configurabe template to create new wiki pages
 # - added l10n support, code borrowed from TracEditorGuidePlugin
+# Changes by Steffen Hoffmann <hoff.st@shaas.net> 2010-01
+# - fixed unicode error with Genshi with unicode routine from util
 
 import calendar
+#import locale
 import string
 import sys
 import time
@@ -137,6 +140,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, arguments):
 
+#       loc = locale.setlocale(locale.LC_ALL)
+#       locale.setlocale(locale.LC_TIME, 'C')
         today = time.localtime()
         http_param_year = formatter.req.args.get('year','')
         http_param_month = formatter.req.args.get('month','')
@@ -248,32 +253,32 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
             date[0:2] = [year-1, month]
             buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&lt;</a>' % {
                 'url': thispageURL(month=month, year=year-1),
-                'title': time.strftime('%B %Y', tuple(date))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
 
             # prev month link
             date[0:2] = [prevYear, prevMonth]
             buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&nbsp;</a>' % {
                 'url': thispageURL(month=prevMonth, year=prevYear),
-                'title': time.strftime('%B %Y', tuple(date))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
 
         # the caption
         date[0:2] = [year, month]
-        buff.append(time.strftime('<strong>%B %Y</strong>', tuple(date)))
+        buff.append(to_unicode(time.strftime('<strong>%B %Y</strong>', tuple(date))))
 
         if showbuttons:
             # next month link
             date[0:2] = [nextYear, nextMonth]
             buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&nbsp;</a>' % {
                 'url': thispageURL(month=nextMonth, year=nextYear),
-                'title': time.strftime('%B %Y', tuple(date))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # next year link
             date[0:2] = [year+1, month]
             buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&gt;</a>' % {
                 'url': thispageURL(month=month, year=year+1),
-                'title': time.strftime('%B %Y', tuple(date))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
 
         buff.append('</caption>\n<thead><tr align="center">')
@@ -409,4 +414,5 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
         buff.append('</tbody>\n</table>')
 
         table = "\n".join(buff)
+#       locale.setlocale(locale.LC_ALL, loc)
         return Markup(table)
