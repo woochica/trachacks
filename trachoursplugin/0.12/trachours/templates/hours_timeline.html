@@ -118,7 +118,8 @@
               <tr style="height: 1px"><td colspan="4"></td></tr>
             </tbody>
             <py:for each="field_name, field in fields.items()">
-              <py:for each="constraint_name, constraint in constraints.items()">
+	      <py:for each="constraintset in constraints">
+              <py:for each="constraint_name, constraint in constraintset.items()">
                 <tbody py:if="field_name == constraint_name"
                        py:with="multiline = field.type in ('select', 'text')">
                   <py:for each="constraint_idx, constraint_value in enumerate(constraint['values'])">
@@ -186,6 +187,7 @@
                 </tbody>
               </py:for>
             </py:for>
+	    </py:for>
 
             <tbody>
               <tr class="actions">
@@ -196,8 +198,8 @@
                     <option py:for="field_name, field in fields.items()"
                             value="$field_name"
                             disabled="${(field.type == 'radio' and
-                                         field_name in constraints and
-                                         len(constraints[field_name])) or None}">
+                                         field_name in constraintset and
+                                         len(constraintset[field_name])) or None}">
                       ${field.label}
                     </option>
                   </select>
