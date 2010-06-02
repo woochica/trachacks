@@ -3,7 +3,11 @@
  * add links to tickets as well as milestones
  * changed format to look more like a regular calendar
 
-0.1.1 - bugfix release provided by Michael Comb (09-Feb-2008)
+0.1.1 - initial import to SVN at trac-hacks.org by Ryan J Ollos (09-Feb-2010)
+ (trac-hacks.org SVN r7524, new maintainer)
+ * add revision and URL info
+
+0.1.2 - bugfix release provided by Michael Comb (09-Feb-2008)
  (was: WikiTicketCalendarMacro.py)
  changes by Vladislav Naumov for compatibility with Trac 0.11.1
 
@@ -59,9 +63,6 @@
  * open tickets shown under milestone (line 305)
  * ticket action history shown instead of tickets created and closed
  * only close history shown by default, this can be modified (hack line 330)
-
-0.5.1 - initial import to SVN at trac-hacks.org by Ryan J Ollos (09-Feb-2010)
- (trac-hacks.org SVN r7524, new maintainer)
 
 0.6.0 - private, unreleased revision (17-Aug-2009)
  changes by Steffen Hoffmann
