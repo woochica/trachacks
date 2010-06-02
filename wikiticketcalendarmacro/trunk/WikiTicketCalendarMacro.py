@@ -39,7 +39,6 @@
 # - fixed unicode error with Genshi with unicode routine from util
 
 import calendar
-#import locale
 import string
 import sys
 import time
@@ -140,8 +139,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, arguments):
 
-#       loc = locale.setlocale(locale.LC_ALL)
-#       locale.setlocale(locale.LC_TIME, 'C')
         today = time.localtime()
         http_param_year = formatter.req.args.get('year','')
         http_param_month = formatter.req.args.get('month','')
@@ -219,6 +216,18 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         if nextMonth == 13:
             nextMonth = 1
             nextYear += 1
+        # prepare a fast-forward/-rewind
+        ffYear = frYear = year
+        if month < 3:
+            frMonth = month + 9
+            frYear -= 1
+        else:
+            frMonth = month - 3
+        if month > 9:
+            ffMonth = month - 9
+            frYear += 1
+        else:
+            ffMonth = month + 3
 
         # building the output
         buff = []
@@ -255,10 +264,15 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                 'url': thispageURL(month=month, year=year-1),
                 'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
-
+            # fast-rewind month link
+            date[0:2] = [frYear, frMonth]
+            buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&nbsp;</a>' % {
+                'url': thispageURL(month=frMonth, year=frYear),
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
+                })
             # prev month link
             date[0:2] = [prevYear, prevMonth]
-            buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&nbsp;</a>' % {
+            buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&laquo;&nbsp;</a>' % {
                 'url': thispageURL(month=prevMonth, year=prevYear),
                 'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
@@ -270,8 +284,14 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
         if showbuttons:
             # next month link
             date[0:2] = [nextYear, nextMonth]
-            buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&nbsp;</a>' % {
+            buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&raquo;&nbsp;</a>' % {
                 'url': thispageURL(month=nextMonth, year=nextYear),
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
+                })
+            # fast-forward month link
+            date[0:2] = [ffYear, ffMonth]
+            buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&nbsp;</a>' % {
+                'url': thispageURL(month=ffMonth, year=ffYear),
                 'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # next year link
@@ -414,5 +434,4 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
         buff.append('</tbody>\n</table>')
 
         table = "\n".join(buff)
-#       locale.setlocale(locale.LC_ALL, loc)
         return Markup(table)
