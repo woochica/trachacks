@@ -50,7 +50,7 @@ class PlantUMLMacro(WikiMacroBase):
 
         if not graphs.has_key(img_id):
         
-            cmd = "java -jar \"%s\" -pipe" % (self.plantuml_jar)
+            cmd = "java -jar -Djava.awt.headless=true \"%s\" -pipe" % (self.plantuml_jar)
             p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
             (stdout, stderr) = p.communicate(input=source)
             if p.returncode != 0:
