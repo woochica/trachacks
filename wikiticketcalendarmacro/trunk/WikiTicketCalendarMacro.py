@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (C) 2005 Matthew Good <trac@matt-good.net>
 # Copyright (C) 2005 Jan Finell <finell@cenix-bioscience.com>
 # Copyright (C) 2007 Mike Comb <mcomb@mac.com>
@@ -33,6 +34,7 @@
 # - less width for Saturday and Sunday
 # Changes by Steffen Hoffmann <hoff.st@shaas.net> 2009-08
 # - call configurabe template to create new wiki pages
+# - added l10n support, code borrowed from TracEditorGuidePlugin
 
 import calendar
 import string
@@ -44,6 +46,11 @@ from trac.util import *
 from trac.wiki.macros import WikiMacroBase
 from trac.web.href import Href
 from trac.config import Option, IntOption
+
+# added for translation support
+from trac.core import *
+from trac.util.translation import gettext_noop
+from trac.web.api import IRequestFilter
 
 """
   Activate it in 'trac.ini'
@@ -81,8 +88,47 @@ from trac.config import Option, IntOption
     WikiTicketCalendar(2006,07,true,Meeting-%Y-%m-%d,true,Meeting)
 """
 
-class WikiTicketCalendarMacro(WikiMacroBase):
+# private l10n function
+__all__ = ['_', 'TranslationComponent', ]
 
+translations = None
+
+def gettext(string, **kwargs):
+    global translations
+    if translations:
+        trans = translations.ugettext(string)
+    else:
+        trans = string
+    return kwargs and trans % kwargs or trans
+
+_ = gettext
+
+    
+class TranslationComponent(Component):
+    """
+    Translation component. It handles request and loads translations
+    using locale from request.
+    """
+    
+    implements(IRequestFilter)
+    
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        try:
+            from babel.support import Translations
+            global translations
+            locale_name = req.locale
+#            translations = Translations.load("locale/%(locale)/LC_MESSAGES/WikiTicketCalendar.mo"), req.locale)
+            translations = Translations.load('locale/de_DE/LC_MESSAGES/WikiTicketCalendar.mo', req.locale)
+        except ImportError:
+            pass
+        return handler
+    
+    def post_process_request(self, req, template, data, content_type):
+        return template, data, content_type
+
+
+class WikiTicketCalendarMacro(WikiMacroBase):
     # Read options from [datafield] section
     date_format = Option('datefield', 'format', default='ymd',
         doc='The format to use for dates. Valid values are dmy, mdy, and ymd.')
@@ -263,7 +309,7 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                     url = self.env.href.wiki(wiki)
                     if WikiSystem(self.env).has_page(wiki):
                         a_classes = "day_haspage"
-                        title = 'Go to page %s' % wiki
+                        title = _('Go to page %s') % wiki
                     else:
                         a_classes = "day"
                         url += "?action=edit"
@@ -271,7 +317,7 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                         if not wiki_page_template == "":
                             url += "&template="
                             url += wiki_page_template
-                        title = 'Create page %s' % wiki
+                        title = _('Create page %s') % wiki
 
                     buff.append('<td class="%(td_classes)s" valign="top"><a class="%(a_classes)s" href="%(url)s" title="%(title)s"><b>%(day)s</b></a>' % {
                         'day': day,
