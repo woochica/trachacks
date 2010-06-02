@@ -273,7 +273,7 @@ class RevtreeModule(Component):
         """Handle AJAX log requests"""
         try:
             rev = int(req.args['logrev'])
-            repos = self.env.get_repository(req.authname)
+            repos = self.env.get_repository()
             chgset = repos.get_changeset(rev)
             wikimsg = wiki_to_html(chgset.message, self.env, req, None, 
                                    True, False)

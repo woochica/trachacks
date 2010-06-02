@@ -327,7 +327,7 @@ class Repository(object):
         # Logger
         self.log = env.log
         # Trac version control
-        self._crepos = self.env.get_repository(authname)
+        self._crepos = self.env.get_repository()
         # Dictionary of changesets
         self._changesets = {}
         # Dictionary of branches
