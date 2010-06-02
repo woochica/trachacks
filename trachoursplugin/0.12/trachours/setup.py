@@ -98,7 +98,7 @@ class SetupTracHours(Component):
     def add_query_table(self):
         time_query_table = Table('ticket_time_query', key=('id'))[
             Column('id', auto_increment=True),
-            Column('title', unique=True),
+            Column('title'),
             Column('description'),
             Column('query')]
 
