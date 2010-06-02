@@ -31,6 +31,8 @@
 # Changes by W. Martin Borgert <debacle@debian.org> 2009-04
 # - fixed two CSS issues that killed pisa/xhtml2pdf (TracWikiPrintPlugin)
 # - less width for Saturday and Sunday
+# Changes by Steffen Hoffmann <hoff.st@shaas.net> 2009-08
+# - call configurabe template to create new wiki pages
 
 import calendar
 import string
@@ -52,12 +54,13 @@ from trac.config import Option, IntOption
 
   format:
     WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format,
-        [show_ticket_open_dates]]]])
+        [show_ticket_open_dates,[wiki_page_template]]]]])
 
     displays a calendar, the days link to:
      - milestones (day in bold) if there is one on that day
      - a wiki page that has wiki_page_format (if exist)
      - create that wiki page if it does not exist
+     - use page template (if exist) for new wiki page
 
   arguments:
     year, month = display calendar for month in year ('*' for current year/month)
@@ -67,6 +70,7 @@ from trac.config import Option, IntOption
                        (if exist, otherwise link to create page)
                        default is "%Y-%m-%d", '*' for default
     show_ticket_open_dates = true/false, show also when a ticket was opened
+    wiki_page_template = wiki template tried to create new page
 
   examples:
     WikiTicketCalendar(2006,07)
@@ -74,6 +78,7 @@ from trac.config import Option, IntOption
     WikiTicketCalendar(*,*,true,Meeting-%Y-%m-%d)
     WikiTicketCalendar(2006,07,false,Meeting-%Y-%m-%d)
     WikiTicketCalendar(2006,07,true,*,true)
+    WikiTicketCalendar(2006,07,true,Meeting-%Y-%m-%d,true,Meeting)
 """
 
 class WikiTicketCalendarMacro(WikiMacroBase):
@@ -131,6 +136,12 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         show_ticket_open_dates = True
         if len(args) >= 5:
             show_ticket_open_dates = args[4] in ["True", "true", "yes", "1"]
+
+        # template name tried to create new pages
+        # optional, default (empty page) is used, if name is invalid
+        wiki_page_template = ""
+        if len(args) >= 6:
+            wiki_page_template = args[5]
 
         curr_day = None
         if year == today.tm_year and month == today.tm_mon:
@@ -256,6 +267,10 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                     else:
                         a_classes = "day"
                         url += "?action=edit"
+                        # adding template name, if specified
+                        if not wiki_page_template == "":
+                            url += "&template="
+                            url += wiki_page_template
                         title = 'Create page %s' % wiki
 
                     buff.append('<td class="%(td_classes)s" valign="top"><a class="%(a_classes)s" href="%(url)s" title="%(title)s"><b>%(day)s</b></a>' % {
