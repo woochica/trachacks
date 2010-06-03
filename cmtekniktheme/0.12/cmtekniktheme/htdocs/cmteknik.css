@@ -1,0 +1,155 @@
+body {
+    font: normal 9pt Verdana, Arial, Helvetica, sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #000;
+}
+
+#PageHeader {
+    background-color: #000;
+    color: #eee;
+    margin: 0;
+    font-size: 16pt;
+    padding: 6px;
+}
+
+#PageHeader a, #PageHeader a:hover {
+    text-decoration: none;
+    color: #fff;
+    border: none;
+    background: none;
+}
+
+#PageHeader a:hover {
+    text-decoration: underline;
+}
+
+#PageHeader ul {
+    float: right;
+    font-size: 8pt;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#PageHeader li {
+    display: inline;
+    padding: 0 6px 0 6px;
+    white-space: nowrap;
+}
+
+#MenuBar {
+    background: url("menu-tile.gif") repeat-x;
+    background-color: #4f9413;
+    height: 37px;
+    margin: 0;
+    padding: 0px 6px 0 6px;
+    color: #eee;
+    font-weight: bold;
+}
+
+#MenuBarHighlight {
+    background: url("menu-highlight.png") no-repeat;
+    padding: 10px 0 0 0;
+}
+
+#MenuBar a {
+    text-decoration: none;
+    color: #bbb;
+    border: none;
+}
+
+#MenuBar a:hover {
+    color: #fff;
+    background: none;
+}
+
+#MenuBar ul, #SubMenuBar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#MenuBar li, #SubMenuBar li {
+    display: inline;
+    border-right: 2px solid #fff;
+    padding: 0 6px 0 6px;
+    white-space: nowrap;
+}
+
+#MenuBar .last, #SubMenuBar .last {
+    border-right: none;
+}
+
+#MenuBar .active a, #SubMenuBar .active a {
+    color: #fff;
+}
+
+#SubMenuBar {
+    background: #0f171a;
+    color: #eee;
+    font: normal 11px Verdana, Arial, sans-serif;
+    padding: 6px;
+}
+
+#SubMenuBar a, #SubMenuBar a:hover {
+    text-decoration: none;
+    color: #bbb;
+    border: none;
+}
+
+#SubMenuBar a:hover {
+    color: #fff;
+    background: none;
+}
+
+#MenuBarShadow {
+    background: url("menu-shadow.png") repeat-x;
+    height: 4px;
+    margin: 0;
+    padding: 0;
+}
+
+#Container {
+    margin-top: 6px;
+    overflow: hidden;
+    padding: 12px;
+}
+
+#Footer {
+    border-top: 1px solid #bbb;
+    color: #888;
+    font-size: 8t;
+    padding: 12px;
+    margin-top: 32px;
+    margin-bottom: 0px;
+    background: url("footer-highlight.png") repeat-x;
+    background-color: #ddd;
+}
+
+#Footer a {
+    color: #888;
+    text-decoration: underline;
+}
+
+h1 {
+    font-size: 26pt;
+}
+
+h2 {
+    font-size: 18pt;
+    border-style: solid;
+    border-color: #888;
+    border-width: 0 0 1px 0;
+    margin-top: 24px;
+}
+
+h3 {
+
+}
+
+@media print {
+    .noprint {
+        display: none;
+    }
+}
