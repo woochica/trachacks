@@ -100,21 +100,25 @@ class ImageSvg(Component):
                     svg = "".join(svg).replace('\n', '')
                 else:
                     svg = targetSize
-                w = re.search('''width=["']([0-9]+)(.*?)["']''', svg)
-                h = re.search('''height=["']([0-9]+)(.*?)["']''', svg)
+                w = re.search('''width=["']([0-9]+\.?[0-9]?)(.*?)["']''', svg)
+                h = re.search('''height=["']([0-9]+\.?[0-9]?)(.*?)["']''', svg)
                 (w_val, w_unit) = w.group(1,2)
                 (h_val, h_unit) = h.group(1,2)
+                w_unit = w_unit.strip()
+                h_unit = h_unit.strip()
 
                 unitMapping = {
                     "cm": 72 / 2.54,
                     "mm": 72 / 25.4,
                     "in": 72 / 1,
                     "pc": 72 / 6,
+                    "": 1,
                 }
 
+                import math
                 if w_unit in unitMapping.keys():
-                    w_val = int(float(w_val) * unitMapping[w_unit])
-                    h_val = int(float(h_val) * unitMapping[w_unit])
+                    w_val = int(math.ceil(float(w_val) * unitMapping[w_unit]))
+                    h_val = int(math.ceil(float(h_val) * unitMapping[w_unit]))
                     w_unit = "pt"
                     h_unit = "pt"
 
@@ -163,7 +167,7 @@ class ImageSvg(Component):
             req.send_header('Cache-control', 'no-cache')
             req.send_header('Expires', 'Fri, 01 Jan 1999 00:00:00 GMT')
             req.send_header('Content-Type', 'image/svg+xml')
-            req.send_header('Content-Length', len(message))
+            req.send_header('Content-Length', len(isinstance(message, unicode) and message.encode("utf-8") or message))
             req.end_headers()
 
             if req.method != 'HEAD':
