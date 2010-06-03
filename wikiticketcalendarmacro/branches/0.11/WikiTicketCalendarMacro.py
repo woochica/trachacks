@@ -22,15 +22,27 @@ import string
 import sys
 import time
 
-from trac.wiki.api import WikiSystem
-from trac.util import *
-from trac.wiki.macros import WikiMacroBase
-from trac.web.href import Href
-from trac.config import Option, IntOption
+from datetime               import datetime
 
+from genshi.core            import Markup
 
+from trac.wiki.api          import WikiSystem
+from trac.util.text         import to_unicode
+from trac.util.datefmt      import FixedOffset # another import is deferred
+from trac.wiki.macros       import WikiMacroBase
+from trac.web.href          import Href
+from trac.config            import Option, IntOption
+
+uts = None
+try:
+    from trac.util.datefmt  import to_utimestamp
+    uts = "env with POSIX microsecond time stamps found"
+except ImportError:
+    #fallback to old module for 0.11 compatibility
+    from trac.util.datefmt  import to_timestamp
+    
 revision = "$Rev$"
-version = "0.7.1"
+version = "0.8.0"
 url = "$URL$"
 
 
@@ -264,10 +276,15 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                     # first check for milestone on that day
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
-                    duedatestamp = time.mktime(
-                        (year, month, day, 0, 0, 0, 0, 0, 0))
-                    duedatestamp_eod = time.mktime(
-                        (year, month, day, 23, 59, 0, 0, 0, 0))
+                    utc = FixedOffset(0, 'UTC')
+                    if uts:
+                        duedatestamp = t = to_utimestamp(datetime(year, month,
+                                                 day, 0, 0, 0, 0, tzinfo=utc))
+                        duedatestamp_eod = t + 86399999999
+                    else:
+                        duedatestamp = t = to_timestamp(datetime(year, month,
+                                                day, 0, 0, 0, 0, tzinfo=utc))
+                        duedatestamp_eod = t + 86399
 
                     dayString = "%02d" % day
                     monthString = "%02d" % month
