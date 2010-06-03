@@ -4,6 +4,7 @@
 # Copyright (C) 2007 Mike Comb <mcomb@mac.com>
 # Copyright (C) 2008 JaeWook Choi <http://trac-hacks.org/wiki/butterflow>
 # Copyright (C) 2008, 2009 W. Martin Borgert <debacle@debian.org>
+# Copyright (C) 2010 Steffen Hoffmann <hoff.st@shaas.net>
 #
 # "THE BEER-WARE LICENSE" (Revision 42):
 # <trac@matt-good.net> wrote this file.  As long as you retain this notice you
@@ -13,30 +14,8 @@
 #  http://people.freebsd.org/~phk/)
 #
 # Author: Matthew Good <trac@matt-good.net>
-# Month/Year navigation by: Jan Finell <finell@cenix-bioscience.com>
+# See changelog for a detailed history
 
-# Major revisions by Mike Comb <mcomb@mac.com> to display tickets, improve
-# formatting and turn into a full page calendar.
-
-# Revsied by JaeWook Choi <http://trac-hacks.org/wiki/butterflow> to complete
-# full functionality from both WikiTicketCalendarPlugin and WikiCalendarPlugin
-# CSS copied from Andy Schlaikjer <andrew.schlaikjer@gmail.com>'s version
-
-# Changes by W. Martin Borgert <debacle@debian.org> 2008-11
-# - show also opening dates of tickets
-# - ISO 8601 as default date format, also use this internally
-# - description field: show only the first kByte
-# - simpler HTML structure (no nested tables)
-# - simplified some code
-# - use consistent indentation (PEP8)
-# Changes by W. Martin Borgert <debacle@debian.org> 2009-04
-# - fixed two CSS issues that killed pisa/xhtml2pdf (TracWikiPrintPlugin)
-# - less width for Saturday and Sunday
-# Changes by Steffen Hoffmann <hoff.st@shaas.net> 2009-08
-# - call configurabe template to create new wiki pages
-# - added l10n support, code borrowed from TracEditorGuidePlugin
-# Changes by Steffen Hoffmann <hoff.st@shaas.net> 2010-01
-# - fixed unicode error with Genshi with unicode routine from util
 
 import calendar
 import string
@@ -49,24 +28,17 @@ from trac.wiki.macros import WikiMacroBase
 from trac.web.href import Href
 from trac.config import Option, IntOption
 
-# added for translation support
-from trac.core import *
-from trac.util.translation import gettext_noop
-from trac.web.api import IRequestFilter
 
 revision = "$Rev$"
+version = "0.7.1"
 url = "$URL$"
 
-"""
-  Activate it in 'trac.ini'
 
-  [components]
-  WikiTicketCalendarMacro.* = enabled
+__all__ = ['WikiTicketCalendarMacro', ]
 
 
-  format:
-    WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format,
-        [show_ticket_open_dates,[wiki_page_template]]]]])
+class WikiTicketCalendarMacro(WikiMacroBase):
+    """Display Milestones and Tickets in a calendar view.
 
     displays a calendar, the days link to:
      - milestones (day in bold) if there is one on that day
@@ -74,7 +46,18 @@ url = "$URL$"
      - create that wiki page if it does not exist
      - use page template (if exist) for new wiki page
 
-  arguments:
+    Activate it in 'trac.ini':
+    --------
+    [components]
+    WikiTicketCalendarMacro.* = enabled
+
+    Usage
+    -----
+    WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format,
+        [show_ticket_open_dates,[wiki_page_template]]]]])
+
+    Arguments
+    ---------
     year, month = display calendar for month in year ('*' for current year/month)
     showbuttons = true/false, show prev/next buttons
     wiki_page_format = strftime format for wiki pages to display as link
@@ -84,57 +67,17 @@ url = "$URL$"
     show_ticket_open_dates = true/false, show also when a ticket was opened
     wiki_page_template = wiki template tried to create new page
 
-  examples:
+    Examples
+    --------
     WikiTicketCalendar(2006,07)
     WikiTicketCalendar(2006,07,false)
     WikiTicketCalendar(*,*,true,Meeting-%Y-%m-%d)
     WikiTicketCalendar(2006,07,false,Meeting-%Y-%m-%d)
     WikiTicketCalendar(2006,07,true,*,true)
     WikiTicketCalendar(2006,07,true,Meeting-%Y-%m-%d,true,Meeting)
-"""
-
-# private l10n function
-__all__ = ['_', 'TranslationComponent', ]
-
-translations = None
-
-def gettext(string, **kwargs):
-    global translations
-    if translations:
-        trans = translations.ugettext(string)
-    else:
-        trans = string
-    return kwargs and trans % kwargs or trans
-
-_ = gettext
-
-    
-class TranslationComponent(Component):
     """
-    Translation component. It handles request and loads translations
-    using locale from request.
-    """
-    
-    implements(IRequestFilter)
-    
-    # IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        try:
-            from babel.support import Translations
-            global translations
-            locale_name = req.locale
-#            translations = Translations.load("locale/%(locale)/LC_MESSAGES/WikiTicketCalendar.mo"), req.locale)
-            translations = Translations.load('locale/de_DE/LC_MESSAGES/WikiTicketCalendar.mo', req.locale)
-        except ImportError:
-            pass
-        return handler
-    
-    def post_process_request(self, req, template, data, content_type):
-        return template, data, content_type
 
-
-class WikiTicketCalendarMacro(WikiMacroBase):
-    # Read options from [datafield] section
+    # Read options from trac.ini's [datafield] section, if existing
     date_format = Option('datefield', 'format', default='ymd',
         doc='The format to use for dates. Valid values are dmy, mdy, and ymd.')
     date_sep = Option('datefield', 'separator', default='-',
@@ -208,10 +151,9 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         # url to the current page (used in the navigation links)
         thispageURL = Href(formatter.req.base_path + formatter.req.path_info)
         # for the prev/next navigation links
-        prevMonth = month-1
-        prevYear  = year
-        nextMonth = month+1
-        nextYear  = year
+        prevMonth = month - 1
+        nextMonth = month + 1
+        nextYear = prevYear = year
         # check for year change (KISS version)
         if prevMonth == 0:
             prevMonth = 12
@@ -234,7 +176,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
         # building the output
         buff = []
-        buff.append('''\
+        buff.append(""" \
 <style type="text/css">
 <!--
 table.wikiTicketCalendar { width: 100%; }
@@ -258,7 +200,7 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
 -->
 </style>
 <table class="wikiTicketCalendar"><caption>
-''')
+""")
 
         if showbuttons:
             # prev year link
@@ -337,15 +279,14 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                     url = self.env.href.wiki(wiki)
                     if WikiSystem(self.env).has_page(wiki):
                         a_classes = "day_haspage"
-                        title = _('Go to page %s') % wiki
+                        title = "Go to page %s" % wiki
                     else:
                         a_classes = "day"
                         url += "?action=edit"
                         # adding template name, if specified
-                        if not wiki_page_template == "":
-                            url += "&template="
-                            url += wiki_page_template
-                        title = _('Create page %s') % wiki
+                        if wiki_page_template != "":
+                            url += "&template=" + wiki_page_template
+                        title = "Create page %s" % wiki
 
                     buff.append('<td class="%(td_classes)s" valign="top"><a class="%(a_classes)s" href="%(url)s" title="%(title)s"><b>%(day)s</b></a>' % {
                         'day': day,
