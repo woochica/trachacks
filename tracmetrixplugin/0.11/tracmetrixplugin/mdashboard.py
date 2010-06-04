@@ -405,10 +405,10 @@ class MDashboard(Component):
                 'ticketstat' : {}
                 }
             
-        data.update(milestone_stats_data(req, stat, milestone.name))
+        data.update(milestone_stats_data(self.env, req, stat, milestone.name))
         
         ticketstat = {'name':'ticket type'}
-        ticketstat.update(milestone_stats_data(req, tstat, milestone.name))
+        ticketstat.update(milestone_stats_data(self.env, req, tstat, milestone.name))
         data['ticketstat'] = ticketstat
         
         #self.env.log.info("ticketstat = %s" % (ticketstat,))

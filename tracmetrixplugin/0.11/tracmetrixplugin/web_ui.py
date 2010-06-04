@@ -194,7 +194,7 @@ class PDashboard(Component):
             tickets = get_tickets_for_milestone(self.env, db, milestone.name,
                                                 'owner')
             stat = get_ticket_stats(self.stats_provider, tickets)
-            stats.append(milestone_stats_data(req, stat, milestone.name))
+            stats.append(milestone_stats_data(self.env, req, stat, milestone.name))
 
         project = {
             'name': self.env.project_name,
