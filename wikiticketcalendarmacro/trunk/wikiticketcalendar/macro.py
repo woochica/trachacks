@@ -17,22 +17,25 @@
 # See changelog for a detailed history
 
 
-import calendar
-import string
-import sys
-import time
+import                      calendar, inspect, pkg_resources, \
+                            string, sys, time
 
 from datetime               import datetime
 
-from trac.wiki.api          import WikiSystem
-from trac.util              import *
+from genshi.core            import Markup
+
+from trac.config            import Option
+from trac.core              import implements
 from trac.util.datefmt      import to_utimestamp, FixedOffset
-from trac.wiki.macros       import WikiMacroBase
+from trac.util.text         import to_unicode
+from trac.util.translation  import domain_functions
 from trac.web.href          import Href
-from trac.config            import Option, IntOption
+from trac.web.chrome        import add_stylesheet, ITemplateProvider
+from trac.wiki.api          import IWikiMacroProvider, WikiSystem
+from trac.wiki.macros       import WikiMacroBase
 
-
-version = "1.0.1-WiP"
+_, tag_, N_, add_domain = \
+    domain_functions('wikiticketcalendar', '_', 'tag_', 'N_', 'add_domain')
 
 
 __all__ = ['WikiTicketCalendarMacro', ]
@@ -78,12 +81,41 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     WikiTicketCalendar(2006,07,true,Meeting-%Y-%m-%d,true,Meeting)
     """
 
-    # Read options from trac.ini's [datafield] section, if existing
-    date_format = Option('datefield', 'format', default='ymd',
-        doc='The format to use for dates. Valid values are dmy, mdy, and ymd.')
-    date_sep = Option('datefield', 'separator', default='-',
-        doc='The separator character to use for dates.')
+    implements(IWikiMacroProvider, ITemplateProvider)
 
+    def __init__(self):
+        # bind the 'foo' catalog to the specified locale directory
+        locale_dir = pkg_resources.resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
+
+        # Read options from trac.ini's [datafield] section, if existing
+        self.date_format = Option('datefield', 'format', default='ymd',
+            doc="""
+            The format to use for dates. Valid values are dmy, mdy, and ymd.
+            """)
+        self.date_sep = Option('datefield', 'separator', default='-',
+            doc="The separator character to use for dates.")
+
+    # ITemplateProvider methods
+    # Returns additional path where stylesheets are placed.
+    def get_htdocs_dirs(self):
+        from pkg_resources    import resource_filename
+        return [('wikiticketcalendar', resource_filename(__name__, 'htdocs'))]
+
+    # Returns additional path where templates are placed.
+    def get_templates_dirs(self):
+        return []
+
+    # IWikiMacroProvider methods
+    # Returns list of provided macro names.
+    def get_macros(self):
+        yield "WikiTicketCalendar"
+
+    # Returns documentation for provided macros.
+    def get_macro_description(self, name):
+        return inspect.getdoc(self.__class__)
+
+    # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
 
         today = time.localtime()
@@ -175,52 +207,35 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         else:
             ffMonth = month + 3
 
+        # add CSS stylesheet
+        add_stylesheet(formatter.req,
+            'wikiticketcalendar/css/wikiticketcalendar.css')
+
         # building the output
         buff = []
-        buff.append(""" \
-<style type="text/css">
-<!--
-table.wikiTicketCalendar { width: 100%; }
-table.wikiTicketCalendar th.workday { width: 17%; }
-table.wikiTicketCalendar th.weekend { width: 7%; }
-table.wikiTicketCalendar caption { font-size: 120%; white-space: nowrap; }
-table.wikiTicketCalendar caption a { display: inline; margin: 0; border: 0; padding: 0; background-color: transparent; color: #b00; text-decoration: none;}
-table.wikiTicketCalendar caption a.prev { padding-right: 5px; font:bold; }
-table.wikiTicketCalendar caption a.next { padding-left: 5px; font:bold; }
-table.wikiTicketCalendar caption a:hover { background-color: #eee; }
-table.wikiTicketCalendar td.today { background: #fbfbfb; border-color: #444444; color: #444; border-style:solid; border-width:1px; }
-table.wikiTicketCalendar td.day   { background: #e5e5e5; border-color: #444444; color: #333; border-style:solid; border-width:1px; }
-table.wikiTicketCalendar div.milestone { font-size: 9px; background: #f7f7f0; border: 1px solid #d7d7d7; border-bottom-color: #999; text-align: left; }
-table.wikiTicketCalendar a.day         { width: 2em; height: 100%; margin:0; border: 0px; padding: 0; color: #333; text-decoration: none; }
-table.wikiTicketCalendar a.day_haspage { width: 2em; height: 100%; margin:0; border: 0px; padding: 0; color: #b00 !important; text-decoration: none; }
-table.wikiTicketCalendar a.day:hover { border-color: #eee; background-color: #eee; color: #000; }
-table.wikiTicketCalendar div.open   { font-size: 9px; color: #000000; }
-table.wikiTicketCalendar div.closed { font-size: 9px; color: #777777; text-decoration: line-through; }
-table.wikiTicketCalendar div.opendate_open { font-size: 9px; color: #000077; }
-table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; text-decoration: line-through; }
--->
-</style>
-<table class="wikiTicketCalendar"><caption>
-""")
+        buff.append('<table class="wikiTicketCalendar"><caption>')
 
         if showbuttons:
             # prev year link
             date[0:2] = [year-1, month]
             buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&lt;</a>' % {
                 'url': thispageURL(month=month, year=year-1),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': _("Turn up %s") %
+                    to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # fast-rewind month link
             date[0:2] = [frYear, frMonth]
             buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&nbsp;</a>' % {
                 'url': thispageURL(month=frMonth, year=frYear),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': _("Turn up %s") %
+                    to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # prev month link
             date[0:2] = [prevYear, prevMonth]
             buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&laquo;&nbsp;</a>' % {
                 'url': thispageURL(month=prevMonth, year=prevYear),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': _("Turn up %s") %
+                    to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
 
         # the caption
@@ -232,19 +247,22 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
             date[0:2] = [nextYear, nextMonth]
             buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&raquo;&nbsp;</a>' % {
                 'url': thispageURL(month=nextMonth, year=nextYear),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': _("Turn up %s") %
+                    to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # fast-forward month link
             date[0:2] = [ffYear, ffMonth]
             buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&nbsp;</a>' % {
                 'url': thispageURL(month=ffMonth, year=ffYear),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': _("Turn up %s") %
+                    to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # next year link
             date[0:2] = [year+1, month]
             buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&gt;</a>' % {
                 'url': thispageURL(month=month, year=year+1),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': _("Turn up %s") %
+                    to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
 
         buff.append('</caption>\n<thead><tr align="center">')

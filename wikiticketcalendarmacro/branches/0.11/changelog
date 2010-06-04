@@ -1,4 +1,4 @@
-Author: Matthew Good <trac@matt-good.net>
+Author: Michael Comb <mcomb@mac.com>
 Maintainer: Ryan J Ollos <rjollos@gmail.com>
 
 Note: Because of a history of undocumented forks and merges log might still
@@ -9,7 +9,7 @@ WikiTicketCalendar inherits history of WikiCalendarMacro before 2008,
 most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
 
 0.1.0 - initial release by Michael Comb <mcomb@mac.com> (11-Jan-2008)
- based on WikiCalendarMacro by Matthew Good
+ based on WikiCalendarMacro by Matthew Good <trac@matt-good.net>
  * add links to tickets as well as milestones
  * changed format to look more like a regular, full page  calendar
 
@@ -121,3 +121,12 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * finalize move of notes and references on history to changelog
  * improve embedded documentation for display in Trac plugin admin page
  * code cleanup removing change notes and non-functional i18n module
+
+1.1.0 - 1st genuine 0.12 version (04-Jun-2010)
+ by Steffen Hoffmann
+ * package single-file macro (as Python egg)
+ * break out CSS stylesheet into separate file
+ * implement Trac native i18n support for plugins
+ * generate first message catalog and German translation
+ * setup contribution of translations via Transifex
+   http://www.transifex.net/projects/p/Trac_Plugin-L10N/c/wikiticketcalendar/
