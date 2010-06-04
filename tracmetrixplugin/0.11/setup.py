@@ -11,6 +11,8 @@ setup(
     license='http://www.opensource.org/licenses/bsd-license.php',
     author='Bhuricha Sethanandha at Portland State University',
     author_email='khundeen@gmail.com',
+    maintainer = 'Ryan J Ollos',
+    maintainer_email = 'ryano@physiosonics.com',
     long_description="""
     This Trac 0.11 plugin provides support for project metrics and statistics.
 
