@@ -28,8 +28,8 @@ from trac.admin import IAdminCommandProvider
 from trac.core import *
 from trac.util.text import printout
 
-from .api import *
-from .commit_updater import *
+from ticketchangesets.api import *
+from ticketchangesets.commit_updater import *
 
 class TicketChangesetsAdmin(Component):
     """trac-admin command provider for ticketchangesets plugin."""

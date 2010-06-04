@@ -24,8 +24,8 @@
 
 from trac.db import *
 
-from ..api import *
-from ..commit_updater import *
+from ticketchangesets.api import *
+from ticketchangesets.commit_updater import *
 
 ##
 ## Database schema
