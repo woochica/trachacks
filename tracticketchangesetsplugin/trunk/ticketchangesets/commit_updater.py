@@ -7,7 +7,7 @@
 # distributed with Trac 0.12 from Edgewall Software. The terms
 # are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
-# This plugin is based on code from:
+# This component is based on code from (or almost a duplicate of):
 #   * The tracopt/ticket/commit_updater.py script, distributed with Trac 0.12
 #     from Edgewall Software (see copyright notice below).
 # ----------------------------------------------------------------------------

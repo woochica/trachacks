@@ -1,3 +1,10 @@
+# This is not a test module in the normal sense, but merely a hacking corner
+# to create and verify some tricky code fragments which have been pasted into
+# the installation code. This module is kept for the purposes of further
+# development.
+
+# TODO: Create a real test environment.
+
 import re
 
 from trac.util.compat import any

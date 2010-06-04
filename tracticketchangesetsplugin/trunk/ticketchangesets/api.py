@@ -169,11 +169,3 @@ class Changesets(object):
             return '[log:@%s %s]' % (','.join([str(r) for r in
                                      self.get_compact()]),
                                      _("Revision Log"))
-
-
-# def default_repo_id(env):
-    # """Return id of default repo."""
-    # repos = RepositoryManager(env).get_all_repositories()
-    # for reponame, repoinfo in repos.iteritems():
-        # if not reponame:
-            # return repoinfo['id']
