@@ -55,7 +55,7 @@ body {
 
 #MenuBar a {
     text-decoration: none;
-    color: #bbb;
+    color: #fff;
     border: none;
 }
 
@@ -83,10 +83,11 @@ body {
 
 #MenuBar .active a, #SubMenuBar .active a {
     color: #fff;
+    text-decoration: underline;
 }
 
 #SubMenuBar {
-    background: #0f171a;
+    background: #2a2012;
     color: #eee;
     font: normal 11px Verdana, Arial, sans-serif;
     padding: 6px;
@@ -137,15 +138,21 @@ h1 {
 }
 
 h2 {
-    font-size: 18pt;
-    border-style: solid;
-    border-color: #888;
-    border-width: 0 0 1px 0;
-    margin-top: 24px;
+  font-size: 16pt;
+  background: #f8e9c7;
+  border-style: solid;
+  border-width: 0 0 1px 0;
+  border-color: #f8ba20;
+  margin-top: 24px;
+  padding: 4px;
 }
 
 h3 {
 
+}
+
+.wiki a {
+  color: #be3e0b;
 }
 
 @media print {
@@ -153,3 +160,33 @@ h3 {
         display: none;
     }
 }
+
+
+/* Documentation extras */
+
+.docbox {
+  padding: 12px 12px 12px 64px;
+  margin: 18px 64px 18px 64px;
+  border-width: 1px 1px 1px 18px;
+  border-style: solid;
+}
+
+.fixme {
+  border-color: #2FF;
+  background: #DFF;
+}
+
+.warning {
+  border-color: #f8ba20;
+  background: #f8e9c7;
+}
+
+.tip {
+  border-color: #699536;
+  background: #dfec93;
+}
+
+.docbox .icon {
+  margin-left: -12px;
+}
+
