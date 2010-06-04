@@ -1,0 +1,39 @@
+= CapchaAuthPlus =
+
+A capcha protection plugin for account management's Trac's plugin.
+
+== Installation ==
+ 1. Run: python setup.py bdist_egg
+ 2. If necessary create a folder called "plugins" in your Trac environment.
+ 3. Copy the .egg file from the dist folder created by step 1 into the "plugins"
+    directory of your Trac environment.
+
+== Configuration ==
+
+   2. Add the following to your trac.ini file 
+
+[captchaauthplus]
+dictionary_file = /path/to/dictionary.txt
+type = png
+
+both parameters are optional. type defaults to png and dictionary_file
+defaults to http://java.sun.com/docs/books/tutorial/collections/interfaces/examples/dictionary.txt
+dictionary_file can be either an url or a file.
+
+where /path/to/dictionary.txt is the path to the text file used to generate the words for the CAPTCHAs. If you do not provide your own dictionary file, the plugin will download the dictionary file here on startup. 
+
+Enable plugins from administration.
+
+The following plugins must be enabled:
+AuthCaptchaPlus 
+ImageCaptcha
+
+The following plugins are optional:	
+LoginCaptcha
+RegistrationCaptcha
+
+To enforce plugin dependencies ComponentDependencyPlugin should be enabled.
+
+	
+
+
