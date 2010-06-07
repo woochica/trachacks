@@ -32,7 +32,7 @@
 from setuptools     import find_packages, setup
 
 PACKAGE = "WikiTicketCalendarMacro"
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 setup(
     name = PACKAGE,
@@ -45,44 +45,13 @@ setup(
     url = "http://trac-hacks.org/wiki/WikiTicketCalendarMacro",
     classifiers = ['Framework :: Trac'],
     description = "Full page Milestone and Ticket calendar for Trac wiki.",
-    long_description = """
-    Display Milestones and Tickets in a calendar view, the days link to:
-     - milestones (day in bold) if there is one on that day
-     - a wiki page that has wiki_page_format (if exist)
-     - create that wiki page if it does not exist
-     - use page template (if exist) for new wiki page
-
-    Activate it in 'trac.ini':
-    --------
-    [components]
-    WikiTicketCalendarMacro.* = enabled
-
-    Usage
-    -----
-    WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format,
-        [show_ticket_open_dates,[wiki_page_template]]]]])
-
-    Arguments
-    ---------
-    year, month = display calendar for month in year ('*' for current year/month)
-    showbuttons = true/false, show prev/next buttons
-    wiki_page_format = strftime format for wiki pages to display as link
-                       (if there is not a milestone placed on that day)
-                       (if exist, otherwise link to create page)
-                       default is "%Y-%m-%d", '*' for default
-    show_ticket_open_dates = true/false, show also when a ticket was opened
-    wiki_page_template = wiki template tried to create new page
-
-    Examples
-    --------
-    WikiTicketCalendar(2006,07)
-    WikiTicketCalendar(2006,07,false)
-    WikiTicketCalendar(*,*,true,Meeting-%Y-%m-%d)
-    WikiTicketCalendar(2006,07,false,Meeting-%Y-%m-%d)
-    WikiTicketCalendar(2006,07,true,*,true)
-    WikiTicketCalendar(2006,07,true,Meeting-%Y-%m-%d,true,Meeting)
-    """,
-
+    long_description = """Display Milestones and Tickets in a calendar view, 
+        the days link to:
+         - milestones (day in bold) if there is one on that day
+         - a wiki page that has wiki_page_format (if exist)
+         - create that wiki page, if it does not exist and
+           use page template (if exist) for that new page
+        """,
     license = """
         Copyright (c), Matthew Good.
         See cangelog in source for contributors.

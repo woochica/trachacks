@@ -18,31 +18,31 @@
 
 
 import calendar
-import string
 import sys
 import time
 
 from datetime               import datetime
+from string                 import replace
 
 from genshi.core            import Markup
 
-from trac.wiki.api          import WikiSystem
+from trac.config            import Option
 from trac.util.text         import to_unicode
 from trac.util.datefmt      import FixedOffset # another import is deferred
-from trac.wiki.macros       import WikiMacroBase
 from trac.web.href          import Href
-from trac.config            import Option, IntOption
+from trac.wiki.api          import WikiSystem
+from trac.wiki.macros       import WikiMacroBase
 
 uts = None
 try:
     from trac.util.datefmt  import to_utimestamp
     uts = "env with POSIX microsecond time stamps found"
 except ImportError:
-    #fallback to old module for 0.11 compatibility
+    # fallback to old module for 0.11 compatibility
     from trac.util.datefmt  import to_timestamp
     
 revision = "$Rev$"
-version = "0.8.0"
+version = "0.8.1"
 url = "$URL$"
 
 
@@ -70,7 +70,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     Arguments
     ---------
-    year, month = display calendar for month in year ('*' for current year/month)
+    year, month = display calendar for month in year
+                  ('*' for current year/month)
     showbuttons = true/false, show prev/next buttons
     wiki_page_format = strftime format for wiki pages to display as link
                        (if there is not a milestone placed on that day)
@@ -91,10 +92,13 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     # Read options from trac.ini's [datafield] section, if existing
     date_format = Option('datefield', 'format', default='ymd',
-        doc='The format to use for dates. Valid values are dmy, mdy, and ymd.')
+        doc="""
+        The format to use for dates. Valid values are dmy, mdy, and ymd.
+        """)
     date_sep = Option('datefield', 'separator', default='-',
         doc='The separator character to use for dates.')
 
+    # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
 
         today = time.localtime()
@@ -153,14 +157,14 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         if year == today.tm_year and month == today.tm_mon:
             curr_day = today.tm_mday
 
-        # Can use this to change the day the week starts on, but this
-        # is a system-wide setting
+        # Can use this to change the day the week starts on,
+        # but this is a system-wide setting.
         calendar.setfirstweekday(calendar.MONDAY)
         cal = calendar.monthcalendar(year, month)
 
         date = [year, month + 1] + [1] * 7
 
-        # url to the current page (used in the navigation links)
+        # URL to the current page (used in the navigation links)
         thispageURL = Href(formatter.req.base_path + formatter.req.path_info)
         # for the prev/next navigation links
         prevMonth = month - 1
@@ -194,21 +198,52 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 table.wikiTicketCalendar { width: 100%; }
 table.wikiTicketCalendar th.workday { width: 17%; }
 table.wikiTicketCalendar th.weekend { width: 7%; }
-table.wikiTicketCalendar caption { font-size: 120%; white-space: nowrap; }
-table.wikiTicketCalendar caption a { display: inline; margin: 0; border: 0; padding: 0; background-color: transparent; color: #b00; text-decoration: none;}
+table.wikiTicketCalendar caption {
+    font-size: 120%; white-space: nowrap;
+    }
+table.wikiTicketCalendar caption a {
+    display: inline; margin: 0; border: 0; padding: 0;
+    background-color: transparent; color: #b00; text-decoration: none;
+    }
 table.wikiTicketCalendar caption a.prev { padding-right: 5px; font:bold; }
 table.wikiTicketCalendar caption a.next { padding-left: 5px; font:bold; }
 table.wikiTicketCalendar caption a:hover { background-color: #eee; }
-table.wikiTicketCalendar td.today { background: #fbfbfb; border-color: #444444; color: #444; border-style:solid; border-width:1px; }
-table.wikiTicketCalendar td.day   { background: #e5e5e5; border-color: #444444; color: #333; border-style:solid; border-width:1px; }
-table.wikiTicketCalendar div.milestone { font-size: 9px; background: #f7f7f0; border: 1px solid #d7d7d7; border-bottom-color: #999; text-align: left; }
-table.wikiTicketCalendar a.day         { width: 2em; height: 100%; margin:0; border: 0px; padding: 0; color: #333; text-decoration: none; }
-table.wikiTicketCalendar a.day_haspage { width: 2em; height: 100%; margin:0; border: 0px; padding: 0; color: #b00 !important; text-decoration: none; }
-table.wikiTicketCalendar a.day:hover { border-color: #eee; background-color: #eee; color: #000; }
-table.wikiTicketCalendar div.open   { font-size: 9px; color: #000000; }
-table.wikiTicketCalendar div.closed { font-size: 9px; color: #777777; text-decoration: line-through; }
-table.wikiTicketCalendar div.opendate_open { font-size: 9px; color: #000077; }
-table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; text-decoration: line-through; }
+table.wikiTicketCalendar td.today {
+    background: #fbfbfb; border-color: #444444; color: #444;
+    border-style:solid; border-width:1px;
+    }
+table.wikiTicketCalendar td.day {
+    background: #e5e5e5; border-color: #444444; color: #333;
+    border-style:solid; border-width:1px;
+    }
+table.wikiTicketCalendar div.milestone {
+    font-size: 9px; background: #f7f7f0; border: 1px solid #d7d7d7;
+    border-bottom-color: #999; text-align: left;
+    }
+table.wikiTicketCalendar a.day {
+    width: 2em; height: 100%; margin:0; border: 0px; padding: 0;
+    color: #333; text-decoration: none;
+    }
+table.wikiTicketCalendar a.day_haspage {
+    width: 2em; height: 100%; margin:0; border: 0px; padding: 0;
+    color: #b00 !important; text-decoration: none;
+    }
+table.wikiTicketCalendar a.day:hover {
+    border-color: #eee; background-color: #eee; color: #000;
+    }
+table.wikiTicketCalendar div.open   {
+    font-size: 9px; color: #000000;
+    }
+table.wikiTicketCalendar div.closed {
+    font-size: 9px; color: #777777; text-decoration: line-through;
+    }
+table.wikiTicketCalendar div.opendate_open {
+    font-size: 9px; color: #000077;
+    }
+table.wikiTicketCalendar div.opendate_closed {
+    font-size: 9px; color: #000077; text-decoration: line-through;
+
+    }
 -->
 </style>
 <table class="wikiTicketCalendar"><caption>
@@ -217,43 +252,56 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
         if showbuttons:
             # prev year link
             date[0:2] = [year-1, month]
-            buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&lt;</a>' % {
+            buff.append("""<a class="prev" href="%(url)s"
+                title="%(title)s">&nbsp;&lt;&lt;</a>
+                """ % {
                 'url': thispageURL(month=month, year=year-1),
                 'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # fast-rewind month link
             date[0:2] = [frYear, frMonth]
-            buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&nbsp;</a>' % {
+            buff.append("""<a class="prev" href="%(url)s"
+                title="%(title)s">&nbsp;&lt;&nbsp;</a>
+                """ % {
                 'url': thispageURL(month=frMonth, year=frYear),
                 'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # prev month link
             date[0:2] = [prevYear, prevMonth]
-            buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&laquo;&nbsp;</a>' % {
+            buff.append("""<a class="prev" href="%(url)s"
+                title="%(title)s">&nbsp;&laquo;&nbsp;</a>
+                """ % {
                 'url': thispageURL(month=prevMonth, year=prevYear),
                 'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
 
         # the caption
         date[0:2] = [year, month]
-        buff.append(to_unicode(time.strftime('<strong>%B %Y</strong>', tuple(date))))
+        buff.append(to_unicode(time.strftime('<strong>%B %Y</strong>',
+                                                      tuple(date))))
 
         if showbuttons:
             # next month link
             date[0:2] = [nextYear, nextMonth]
-            buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&raquo;&nbsp;</a>' % {
+            buff.append("""<a class="next" href="%(url)s"
+                title="%(title)s">&nbsp;&raquo;&nbsp;</a>
+                """ % {
                 'url': thispageURL(month=nextMonth, year=nextYear),
                 'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # fast-forward month link
             date[0:2] = [ffYear, ffMonth]
-            buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&nbsp;</a>' % {
+            buff.append("""<a class="next" href="%(url)s"
+                title="%(title)s">&nbsp;&gt;&nbsp;</a>
+                """ % {
                 'url': thispageURL(month=ffMonth, year=ffYear),
                 'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # next year link
             date[0:2] = [year+1, month]
-            buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&gt;</a>' % {
+            buff.append("""<a class="next" href="%(url)s"
+                title="%(title)s">&nbsp;&gt;&gt;</a>
+                """ % {
                 'url': thispageURL(month=month, year=year+1),
                 'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
@@ -262,9 +310,13 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
         date[0:2] = [year, month]
 
         for day in calendar.weekheader(2).split()[:-2]:
-            buff.append('<th class="workday" scope="col"><b>%s</b></th>' % day)
+            buff.append("""<th class="workday"
+                        scope="col"><b>%s</b></th>
+                        """ % day)
         for day in calendar.weekheader(2).split()[-2:]:
-            buff.append('<th class="weekend" scope="col"><b>%s</b></th>' % day)
+            buff.append("""<th class="weekend"
+                        scope="col"><b>%s</b></th>
+                        """ % day)
         buff.append('</tr></thead>\n<tbody>\n')
 
         for row in cal:
@@ -290,7 +342,8 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                     monthString = "%02d" % month
                     yearString = "%04d" % year
 
-                    # check for wikipage with name specified in 'wiki_page_format'
+                    # check for wikipage with name specified in
+                    # 'wiki_page_format'
                     date[0:3] = [year, month, day]
                     wiki = time.strftime(wiki_page_format, tuple(date))
                     url = self.env.href.wiki(wiki)
@@ -305,7 +358,10 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                             url += "&template=" + wiki_page_template
                         title = "Create page %s" % wiki
 
-                    buff.append('<td class="%(td_classes)s" valign="top"><a class="%(a_classes)s" href="%(url)s" title="%(title)s"><b>%(day)s</b></a>' % {
+                    buff.append("""<td class="%(td_classes)s"
+                        valign="top"><a class="%(a_classes)s" href="%(url)s"
+                        title="%(title)s"><b>%(day)s</b></a>
+                        """ % {
                         'day': day,
                         'title': title,
                         'url': url,
@@ -317,14 +373,19 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                     duedate = { 'dmy': '%(dd)s%(sep)s%(mm)s%(sep)s%(yy)s',
                                 'mdy': '%(mm)s%(sep)s%(dd)s%(sep)s%(yy)s',
                                 'ymd': '%(yy)s%(sep)s%(mm)s%(sep)s%(dd)s'
-                    }.get(self.date_format, '%(yy)s%(sep)s%(mm)s%(sep)s%(dd)s') % {
+                    }.get(self.date_format,
+                    '%(yy)s%(sep)s%(mm)s%(sep)s%(dd)s') % {
                         'dd': dayString,
                         'mm': monthString,
                         'yy': yearString,
                         'sep': self.date_sep
                     }
 
-                    cursor.execute("SELECT name FROM milestone WHERE due=%s", (duedatestamp,))
+                    cursor.execute("""
+                        SELECT name
+                          FROM milestone
+                         WHERE due=%s
+                    """, (duedatestamp,))
                     while (1):
                         row = cursor.fetchone()
                         if row == None:
@@ -333,12 +394,20 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                         else:
                             name = row[0]
                             url = self.env.href.milestone(name)
-                            buff.append('<div class="milestone"><a href="%(url)s">* %(name)s</a></div>' % {
+                            buff.append("""<div class="milestone"><a
+                                href="%(url)s">* %(name)s</a></div>
+                                """ % {
                                 'name': name,
                                 'url': url,
                             })
 
-                    cursor.execute("SELECT t.id,t.summary,t.keywords, t.owner,t.status,t.description FROM ticket t, ticket_custom tc WHERE tc.ticket=t.id and tc.name='due_close' and tc.value=%s", (duedate, ))
+                    cursor.execute("""
+                        SELECT t.id,t.summary,t.keywords,
+                               t.owner,t.status,t.description
+                          FROM ticket t, ticket_custom tc
+                         WHERE tc.ticket=t.id and tc.name='due_close' and
+                               tc.value=%s
+                    """, (duedate, ))
                     while (1):
                         row = cursor.fetchone()
                         if row == None:
@@ -351,18 +420,29 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                             owner = row[3]
                             status = row[4]
                             description = row[5][:1024]
-                            buff.append('<div class="%(classes)s" align="left"><a href="%(url)s" title=\'%(description)s\' target="_blank">#%(id)s</a> %(ticket)s (%(owner)s)</div>' % {
+                            buff.append("""<div class="%(classes)s"
+                                align="left"><a href="%(url)s"
+                                title=\'%(description)s\'
+                                target="_blank">#%(id)s</a> %(ticket)s
+                                (%(owner)s)</div>
+                                """ % {
                                 'id': id,
                                 'url': url,
                                 'day': day,
                                 'ticket': ticket[0:100],
                                 'owner': owner,
-                                'classes': status == 'closed' and 'closed' or 'open',
-                                'description': string.replace(description, "\'", "&#39;"),
+                                'classes': status == 'closed' and
+                                    'closed' or 'open',
+                                'description': replace(description,
+                                    "\'", "&#39;"),
                             })
 
                     if show_ticket_open_dates:
-                        cursor.execute("SELECT t.id,t.summary,t.keywords, t.owner,t.status,t.description,t.time FROM ticket t")
+                        cursor.execute("""
+                            SELECT t.id,t.summary,t.keywords,
+                                   t.owner,t.status,t.description,t.time
+                              FROM ticket t
+                        """)
                         while (1):
                             row = cursor.fetchone()
                             if row == None:
@@ -379,14 +459,22 @@ table.wikiTicketCalendar div.opendate_closed { font-size: 9px; color: #000077; t
                                 if ticket_time < duedatestamp or \
                                         ticket_time > duedatestamp_eod:
                                     continue
-                                buff.append('<div class="opendate_%(classes)s" align="left"><a href="%(url)s" title=\'%(description)s\' target="_blank">#%(id)s</a> %(ticket)s (%(owner)s)</div>' % {
+                                buff.append("""
+                                    <div class="opendate_%(classes)s"
+                                    align="left"><a href="%(url)s"
+                                    title=\'%(description)s\'
+                                    target="_blank">#%(id)s</a>
+                                    %(ticket)s (%(owner)s)</div>
+                                    """ % {
                                     'id': id,
                                     'url': url,
                                     'day': day,
                                     'ticket': ticket[0:100],
                                     'owner': owner,
-                                    'classes': status == 'closed' and 'closed' or 'open',
-                                    'description': string.replace(description, "\'", "&#39;"),
+                                    'classes': status == 'closed' and
+                                        'closed' or 'open',
+                                    'description': replace(description,
+                                        "\'", "&#39;"),
                                 })
 
                 buff.append('</td>')

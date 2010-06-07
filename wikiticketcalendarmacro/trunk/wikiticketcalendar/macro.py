@@ -17,10 +17,14 @@
 # See changelog for a detailed history
 
 
-import                      calendar, inspect, pkg_resources, \
-                            string, sys, time
+import calendar
+import sys
+import time
 
 from datetime               import datetime
+from inspect                import getdoc
+from pkg_resources          import resource_filename
+from string                 import replace
 
 from genshi.core            import Markup
 
@@ -62,7 +66,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     Arguments
     ---------
-    year, month = display calendar for month in year ('*' for current year/month)
+    year, month = display calendar for month in year
+                  ('*' for current year/month)
     showbuttons = true/false, show prev/next buttons
     wiki_page_format = strftime format for wiki pages to display as link
                        (if there is not a milestone placed on that day)
@@ -85,7 +90,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     def __init__(self):
         # bind the 'foo' catalog to the specified locale directory
-        locale_dir = pkg_resources.resource_filename(__name__, 'locale')
+        locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
         # Read options from trac.ini's [datafield] section, if existing
@@ -99,7 +104,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     # ITemplateProvider methods
     # Returns additional path where stylesheets are placed.
     def get_htdocs_dirs(self):
-        from pkg_resources    import resource_filename
         return [('wikiticketcalendar', resource_filename(__name__, 'htdocs'))]
 
     # Returns additional path where templates are placed.
@@ -113,7 +117,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     # Returns documentation for provided macros.
     def get_macro_description(self, name):
-        return inspect.getdoc(self.__class__)
+        return getdoc(self.__class__)
 
     # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
@@ -174,14 +178,14 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         if year == today.tm_year and month == today.tm_mon:
             curr_day = today.tm_mday
 
-        # Can use this to change the day the week starts on, but this
-        # is a system-wide setting
+        # Can use this to change the day the week starts on,
+        # but this is a system-wide setting.
         calendar.setfirstweekday(calendar.MONDAY)
         cal = calendar.monthcalendar(year, month)
 
         date = [year, month + 1] + [1] * 7
 
-        # url to the current page (used in the navigation links)
+        # URL to the current page (used in the navigation links)
         thispageURL = Href(formatter.req.base_path + formatter.req.path_info)
         # for the prev/next navigation links
         prevMonth = month - 1
@@ -218,21 +222,27 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         if showbuttons:
             # prev year link
             date[0:2] = [year-1, month]
-            buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&lt;</a>' % {
+            buff.append("""<a class="prev" href="%(url)s"
+                title="%(title)s">&nbsp;&lt;&lt;</a>
+                """ % {
                 'url': thispageURL(month=month, year=year-1),
                 'title': _("Turn up %s") %
                     to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # fast-rewind month link
             date[0:2] = [frYear, frMonth]
-            buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&lt;&nbsp;</a>' % {
+            buff.append("""<a class="prev" href="%(url)s"
+                title="%(title)s">&nbsp;&lt;&nbsp;</a>
+                """ % {
                 'url': thispageURL(month=frMonth, year=frYear),
                 'title': _("Turn up %s") %
                     to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # prev month link
             date[0:2] = [prevYear, prevMonth]
-            buff.append('<a class="prev" href="%(url)s" title="%(title)s">&nbsp;&laquo;&nbsp;</a>' % {
+            buff.append("""<a class="prev" href="%(url)s"
+                title="%(title)s">&nbsp;&laquo;&nbsp;</a>
+                """ % {
                 'url': thispageURL(month=prevMonth, year=prevYear),
                 'title': _("Turn up %s") %
                     to_unicode(time.strftime('%B %Y', tuple(date)))
@@ -240,26 +250,33 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
         # the caption
         date[0:2] = [year, month]
-        buff.append(to_unicode(time.strftime('<strong>%B %Y</strong>', tuple(date))))
+        buff.append(to_unicode(time.strftime('<strong>%B %Y</strong>',
+                                                      tuple(date))))
 
         if showbuttons:
             # next month link
             date[0:2] = [nextYear, nextMonth]
-            buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&raquo;&nbsp;</a>' % {
+            buff.append("""<a class="next" href="%(url)s"
+                title="%(title)s">&nbsp;&raquo;&nbsp;</a>
+                """ % {
                 'url': thispageURL(month=nextMonth, year=nextYear),
                 'title': _("Turn up %s") %
                     to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # fast-forward month link
             date[0:2] = [ffYear, ffMonth]
-            buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&nbsp;</a>' % {
+            buff.append("""<a class="next" href="%(url)s"
+                title="%(title)s">&nbsp;&gt;&nbsp;</a>
+                """ % {
                 'url': thispageURL(month=ffMonth, year=ffYear),
                 'title': _("Turn up %s") %
                     to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # next year link
             date[0:2] = [year+1, month]
-            buff.append('<a class="next" href="%(url)s" title="%(title)s">&nbsp;&gt;&gt;</a>' % {
+            buff.append("""<a class="next" href="%(url)s"
+                title="%(title)s">&nbsp;&gt;&gt;</a>
+                """ % {
                 'url': thispageURL(month=month, year=year+1),
                 'title': _("Turn up %s") %
                     to_unicode(time.strftime('%B %Y', tuple(date)))
@@ -269,9 +286,13 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         date[0:2] = [year, month]
 
         for day in calendar.weekheader(2).split()[:-2]:
-            buff.append('<th class="workday" scope="col"><b>%s</b></th>' % day)
+            buff.append("""<th class="workday"
+                        scope="col"><b>%s</b></th>
+                        """ % day)
         for day in calendar.weekheader(2).split()[-2:]:
-            buff.append('<th class="weekend" scope="col"><b>%s</b></th>' % day)
+            buff.append("""<th class="weekend"
+                        scope="col"><b>%s</b></th>
+                        """ % day)
         buff.append('</tr></thead>\n<tbody>\n')
 
         for row in cal:
@@ -285,14 +306,15 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     cursor = db.cursor()
                     utc = FixedOffset(0, 'UTC')
                     duedatestamp = t = to_utimestamp(datetime(year, month,
-                                                     day, 0, 0, 0, 0, tzinfo=utc))
+                                           day, 0, 0, 0, 0, tzinfo=utc))
                     duedatestamp_eod = t + 86399999999
 
                     dayString = "%02d" % day
                     monthString = "%02d" % month
                     yearString = "%04d" % year
 
-                    # check for wikipage with name specified in 'wiki_page_format'
+                    # check for wikipage with name specified in
+                    # 'wiki_page_format'
                     date[0:3] = [year, month, day]
                     wiki = time.strftime(wiki_page_format, tuple(date))
                     url = self.env.href.wiki(wiki)
@@ -307,7 +329,10 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             url += "&template=" + wiki_page_template
                         title = _("Create page %s") % wiki
 
-                    buff.append('<td class="%(td_classes)s" valign="top"><a class="%(a_classes)s" href="%(url)s" title="%(title)s"><b>%(day)s</b></a>' % {
+                    buff.append("""<td class="%(td_classes)s"
+                        valign="top"><a class="%(a_classes)s" href="%(url)s"
+                        title="%(title)s"><b>%(day)s</b></a>
+                        """ % {
                         'day': day,
                         'title': title,
                         'url': url,
@@ -319,14 +344,19 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     duedate = { 'dmy': '%(dd)s%(sep)s%(mm)s%(sep)s%(yy)s',
                                 'mdy': '%(mm)s%(sep)s%(dd)s%(sep)s%(yy)s',
                                 'ymd': '%(yy)s%(sep)s%(mm)s%(sep)s%(dd)s'
-                    }.get(self.date_format, '%(yy)s%(sep)s%(mm)s%(sep)s%(dd)s') % {
+                    }.get(self.date_format,
+                    '%(yy)s%(sep)s%(mm)s%(sep)s%(dd)s') % {
                         'dd': dayString,
                         'mm': monthString,
                         'yy': yearString,
                         'sep': self.date_sep
                     }
 
-                    cursor.execute("SELECT name FROM milestone WHERE due=%s", (duedatestamp,))
+                    cursor.execute("""
+                        SELECT name
+                          FROM milestone
+                         WHERE due=%s
+                    """, (duedatestamp,))
                     while (1):
                         row = cursor.fetchone()
                         if row == None:
@@ -335,12 +365,20 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                         else:
                             name = row[0]
                             url = self.env.href.milestone(name)
-                            buff.append('<div class="milestone"><a href="%(url)s">* %(name)s</a></div>' % {
+                            buff.append("""<div class="milestone"><a
+                                href="%(url)s">* %(name)s</a></div>
+                                """ % {
                                 'name': name,
                                 'url': url,
                             })
 
-                    cursor.execute("SELECT t.id,t.summary,t.keywords, t.owner,t.status,t.description FROM ticket t, ticket_custom tc WHERE tc.ticket=t.id and tc.name='due_close' and tc.value=%s", (duedate, ))
+                    cursor.execute("""
+                        SELECT t.id,t.summary,t.keywords,
+                               t.owner,t.status,t.description
+                          FROM ticket t, ticket_custom tc
+                         WHERE tc.ticket=t.id and tc.name='due_close' and
+                               tc.value=%s
+                    """, (duedate, ))
                     while (1):
                         row = cursor.fetchone()
                         if row == None:
@@ -353,18 +391,29 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             owner = row[3]
                             status = row[4]
                             description = row[5][:1024]
-                            buff.append('<div class="%(classes)s" align="left"><a href="%(url)s" title=\'%(description)s\' target="_blank">#%(id)s</a> %(ticket)s (%(owner)s)</div>' % {
+                            buff.append("""<div class="%(classes)s"
+                                align="left"><a href="%(url)s"
+                                title=\'%(description)s\'
+                                target="_blank">#%(id)s</a> %(ticket)s
+                                (%(owner)s)</div>
+                                """ % {
                                 'id': id,
                                 'url': url,
                                 'day': day,
                                 'ticket': ticket[0:100],
                                 'owner': owner,
-                                'classes': status == 'closed' and 'closed' or 'open',
-                                'description': string.replace(description, "\'", "&#39;"),
+                                'classes': status == 'closed' and
+                                    'closed' or 'open',
+                                'description': replace(description,
+                                    "\'", "&#39;"),
                             })
 
                     if show_ticket_open_dates:
-                        cursor.execute("SELECT t.id,t.summary,t.keywords, t.owner,t.status,t.description,t.time FROM ticket t")
+                        cursor.execute("""
+                            SELECT t.id,t.summary,t.keywords,
+                                   t.owner,t.status,t.description,t.time
+                              FROM ticket t
+                        """)
                         while (1):
                             row = cursor.fetchone()
                             if row == None:
@@ -381,14 +430,22 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                 if ticket_time < duedatestamp or \
                                         ticket_time > duedatestamp_eod:
                                     continue
-                                buff.append('<div class="opendate_%(classes)s" align="left"><a href="%(url)s" title=\'%(description)s\' target="_blank">#%(id)s</a> %(ticket)s (%(owner)s)</div>' % {
+                                buff.append("""
+                                    <div class="opendate_%(classes)s"
+                                    align="left"><a href="%(url)s"
+                                    title=\'%(description)s\'
+                                    target="_blank">#%(id)s</a>
+                                    %(ticket)s (%(owner)s)</div>
+                                    """ % {
                                     'id': id,
                                     'url': url,
                                     'day': day,
                                     'ticket': ticket[0:100],
                                     'owner': owner,
-                                    'classes': status == 'closed' and 'closed' or 'open',
-                                    'description': string.replace(description, "\'", "&#39;"),
+                                    'classes': status == 'closed' and
+                                        'closed' or 'open',
+                                    'description': replace(description,
+                                        "\'", "&#39;"),
                                 })
 
                 buff.append('</td>')

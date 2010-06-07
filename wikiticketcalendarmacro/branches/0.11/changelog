@@ -102,11 +102,15 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * improve embedded documentation for display in Trac plugin admin page
  * code cleanup removing change notes and non-functional i18n module
 
-0.8.0 - major revision for 0.11 and 0.12 without i18n support (18-Jan-2010)
+0.8.0 - major revision for 0.11 and 0.12 without i18n support (03-Jun-2010)
  changes by Steffen Hoffmann
  * add conditional time stamp creation for new (POSIX mircroseconds) and
    old timestamp format (as a fallback for 0.11 compatibility)
  * code cleanup, lean import from trac.util, import from Genshi directly
+
+0.8.1 - maintainance revision for 0.11/0.12 branch (07-Jun-2010)
+ changes by Steffen Hoffmann
+ * code cleanup and consistent formatting again (PEP8)
 
 1.0.0 - 1st release for Trac 0.12 imported to SVN by Ryan J Ollos (27-Apr-2010)  
  changes by Steffen Hoffmann
@@ -130,3 +134,7 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * generate first message catalog and German translation
  * setup contribution of translations via Transifex
    http://www.transifex.net/projects/p/Trac_Plugin-L10N/c/wikiticketcalendar/
+
+1.1.1 - maintainance revision for 0.12 branch (07-Jun-2010)
+ changes by Steffen Hoffmann
+ * code cleanup and consistent formatting again (PEP8)
