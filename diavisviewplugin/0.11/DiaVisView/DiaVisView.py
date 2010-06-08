@@ -200,7 +200,7 @@ class DiaVisViewMacro(WikiMacroBase):
                 # Insert as new entry
                 cursor.execute("INSERT INTO attachment VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                         (png_attachment.parent_realm, png_attachment.parent_id, png_filename,
-                            png_file_size, png_mtime, 'PNG render of ' + description,
+                            png_file_size, png_file_time, 'PNG render of ' + description,
                             png_attachment.author, png_attachment.ipnr))
                 self.env.log.info('New attachment: %s by %s', png_filename, png_attachment.author)
 
