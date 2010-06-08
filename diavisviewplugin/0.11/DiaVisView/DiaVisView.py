@@ -11,8 +11,8 @@
 
 
 import os
-import popen2
 import re
+import subprocess
 import Image
 
 
@@ -132,16 +132,11 @@ class DiaVisViewMacro(WikiMacroBase):
 
         if (dia_mtime > png_mtime) or (existing_width != width and width != None):
             try:
+                diacmd = ['dia', '-l', '--filter=png', '--export=%s' % png_path, dia_path]
                 if width:
-                  diacmd = 'dia -l --filter=png --size=%dx --export=%s %s' % (int(width), png_path, dia_path)
-                else:
-                  diacmd = 'dia -l --filter=png --export=%s %s' % (png_path, dia_path)
-                self.env.log.info('Running Dia : %s',diacmd)
-                f = popen2.Popen4(diacmd)
-                lines = []
-                while (f.poll() == -1):
-                    lines += f.fromchild.readlines()
-                    f.wait()
+                    diacmd.insert(1, '--size=%dx' % int(width))
+                self.env.log.info('Running Dia : %s', ' '.join(diacmd))
+                subprocess.call(diacmd)
                 self.env.log.info('Exiting Dia')
             except Exception, e:
                 self.env.log.info('Dia failed with exception= %s',e)
