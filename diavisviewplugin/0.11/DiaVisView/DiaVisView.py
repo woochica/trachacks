@@ -31,6 +31,12 @@ class DiaVisViewMacro(WikiMacroBase):
     the horizontal width can be given separated by a comma, as
     can other image parmaeters to position it.  Will now also accept
     vdx format drawings, as well as compressed files.
+
+    One can select one or more layers with the layers parameter and a
+    dot separated list, e.g.
+    [[(DiaVisView(myfile, layers=0.1.2)]]
+    (which shows only layers 0, 1, and 2.
+
     Please see the image macro for more details on arguments.
     ''Adapted from the Image.py macro created by Shun-ichi Goto
     <gotoh@taiyo.co.jp>''
@@ -52,13 +58,17 @@ class DiaVisViewMacro(WikiMacroBase):
         attr_re = re.compile('(align|border|width|height|alt'
                              '|title|longdesc|class|id|usemap)=(.+)')
         quoted_re = re.compile("(?:[\"'])(.*)(?:[\"'])$")
+        layers_re = re.compile("^[0-9]+(\.[0-9]+)*$")
         attr = {}
         style = {}
         link = ''
         width = None
+        layers = None
         for arg in args[1:]:
             arg = arg.strip()
             if size_re.match(arg):
+                if width:
+                    raise Exception("Argument 'width' appears more than once.")
                 width = arg
                 attr['width'] = arg
                 continue
@@ -75,6 +85,12 @@ class DiaVisViewMacro(WikiMacroBase):
             if arg in ('left', 'right', 'top', 'bottom'):
                 style['float'] = arg
                 continue
+            if arg.startswith('layers='):
+                if layers:
+                    raise Exception("Argument 'layers' appears more than once.")
+                layers = arg.split('=', 1)[1]
+                if not layers_re.match(layers):
+                    raise Exception("Wrong layer list format, use dot separated list of integer numbers.")
             match = attr_re.match(arg)
             if match:
                 key, val = match.groups()
@@ -104,6 +120,14 @@ class DiaVisViewMacro(WikiMacroBase):
         dia_filename = dia_attachment.filename
         png_path = dia_path.replace('.dia','.png').replace(".vdx",".png")
         png_filename = dia_filename.replace('.dia','.png').replace(".vdx",".png")
+
+        # the layers are encoded into the path as dot-separated list, e.g. basename.1.2.png
+        if layers:
+            layers_extension = '.' + layers + '.png'
+            png_path = png_path.replace('.png', layers_extension)
+            png_filename = png_filename.replace('.png', layers_extension)
+            png_url = png_url.replace(".png", layers_extension)
+
         png_attachment = Attachment(self.env, realm, resource_id, filespec)
 
         if len(description) <= 0:
@@ -134,9 +158,11 @@ class DiaVisViewMacro(WikiMacroBase):
 
         if (dia_mtime > png_mtime) or (existing_width != width and width != None):
             try:
-                diacmd = ['dia', '-l', '--filter=png', '--export=%s' % png_path, dia_path]
+                diacmd = ['dia', '--log-to-stderr', '--filter=png', '--export=%s' % png_path, dia_path]
                 if width:
                     diacmd.insert(1, '--size=%dx' % int(width))
+                if layers:
+                    diacmd.insert(1, '--show-layers=%s' % layers.replace(".", ","))
                 self.env.log.info('Running Dia : %s', ' '.join(diacmd))
                 subprocess.call(diacmd)
                 self.env.log.info('Exiting Dia')
