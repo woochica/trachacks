@@ -163,7 +163,7 @@ class AutoComplete(Component):
             if m:
                 email, zh_name = m.group(1), m.group(2)
                 email = email.lower().strip()
-                if email.startswith(email_init_str):
+                if email.startswith(email_init_str) or zh_name.lower().strip().startswith(email_init_str):
                     return_list.append({"email": email, "zh_name": zh_name})
         return return_list
         
