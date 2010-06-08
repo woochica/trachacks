@@ -16,12 +16,13 @@ import subprocess
 import Image
 
 
-from genshi.builder import tag
+from genshi.builder import Element, tag
 
 from trac.resource import get_resource_url, get_resource_summary
 from trac.util.html import escape
 from trac.wiki.macros import WikiMacroBase
 from trac.attachment import Attachment, AttachmentModule
+from trac.wiki.formatter import extract_link
 
 class DiaVisViewMacro(WikiMacroBase):
     """Embed a Dia as an png image in wiki-formatted text.
@@ -94,7 +95,6 @@ class DiaVisViewMacro(WikiMacroBase):
 
         if attachment and 'ATTACHMENT_VIEW' in formatter.perm(attachment):
             url = get_resource_url(self.env, attachment, formatter.href)
-            desc = get_resource_summary(self.env, attachment)
 
         # Includes vdx for use with Visio
         png_url = url.replace(".dia",".png").replace(".vdx",".png")
