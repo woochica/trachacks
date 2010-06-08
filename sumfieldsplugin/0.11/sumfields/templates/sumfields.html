@@ -1,0 +1,50 @@
+<script type="text/javascript" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+jQuery(document).ready(function($){
+    // loop through each "listing tickets" table
+    jQuery('.listing.tickets tbody').each(function(i){
+        var sums = new Object();
+        var fields = new Array();
+        
+        // sum each provided field's column
+        <py:for each="field in data.fields" >
+            sums['${field}'] = 0;
+            fields.push('${field}');
+            
+            // sum up each row
+            jQuery('.${field}', this).each(function(){
+                var num = parseInt($(this).text());
+                if (!isNaN(num)){
+                    sums['${field}'] += num;
+                }
+            });
+        </py:for>
+        
+        // clone the last row in table and replace with the sum(s)
+        var lastrow = $(this).find('tr:last');
+        var sumrow = lastrow.clone().removeAttr('class');
+        var found = false;
+        sumrow.find('td').each(function(){
+            var field = $(this).attr('class');
+            if (field != 'id'){
+                // HACK: remove all but the id class to resolve plugin conflicts:
+                //  1. have BatchModify plugin find the row to add checkbox (to ensure column alignment)
+                //  2. have GridModify not find the rest of the fields
+                $(this).removeAttr('class');
+            }
+            if (jQuery.inArray(field, fields) == -1){
+                $(this).text('');
+                $(this).children().remove();
+            } else {
+                $(this).text(sums[field]);
+                found = true;
+            }
+        });
+        if (found){
+            sumrow.find('td:first').text('sum:')
+            lastrow.after(sumrow);
+        }
+    });
+});
+</script>
