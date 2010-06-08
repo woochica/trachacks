@@ -9,6 +9,7 @@ setup(
     version = '1.0',
     author = 'Mikael Relbe',
     author_email = 'mikael@relbe.se',
+    url = 'http://trac-hacks.org/wiki/TracTicketChangesetsPlugin',
     packages = find_packages(exclude=['*.tests']),
     description = 'Update referenced tickets based on commit messages.',
     long_description = open(os.path.join(os.path.dirname(__file__),
