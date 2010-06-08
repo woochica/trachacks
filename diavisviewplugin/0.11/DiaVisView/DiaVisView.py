@@ -13,7 +13,6 @@
 import os
 import popen2
 import re
-import gzip
 import Image
 
 
@@ -133,31 +132,6 @@ class DiaVisViewMacro(WikiMacroBase):
 
         if (dia_mtime > png_mtime) or (existing_width != width and width != None):
             try:
-                # The file maybe compressed.  The name has to be prepended to keep the extension.
-                (attachDir, attachFile) = os.path.split(dia_path)
-                decompFileName = os.path.join(attachDir, 'decomp_' + attachFile)
-                try:
-                    decompFile = open(decompFileName , 'w')
-                except Exception, e:
-                    self.env.log.info('Creating temp uncompressed file for Dia Failed = %s',e)
-                    raise Exception('Dia execution failed.')
-                try:
-                    for line in gzip.GzipFile(dia_path):
-                        decompFile.write(line)
-                except IOError, e:
-                    if e.message == 'Not a gzipped file':
-                        self.env.log.info('Not a gzipped file, so linking %s', dia_path)
-                        try:
-                            os.unlink(decompFileName)
-                            os.link(dia_path, decompFileName)
-                        except Exception, e:
-                            self.env.log.info('Error linking uncompressed file for Dia:- %s', dia_path)
-                            raise
-                    else:
-                      self.env.log.info('Error decompressing file for Dia = %s',e)
-                      raise Exception('Dia execution failed.')
-                finally:
-                    decompFile.close
                 if width:
                   diacmd = 'dia -l --filter=png --size=%dx --export=%s %s' % (int(width), png_path, dia_path)
                 else:
@@ -172,12 +146,6 @@ class DiaVisViewMacro(WikiMacroBase):
             except Exception, e:
                 self.env.log.info('Dia failed with exception= %s',e)
                 raise Exception('Dia execution failed.')
-            finally:
-                try:
-                    os.unlink(decompFileName)
-                except Exception, e:
-                    self.env.log.info('Error unlinking uncompressed file for Dia:- %s', decompFileName)
-                    raise
 
             (png_file_size, png_file_time) = os.stat(png_path)[6:8]
             # Based on attachment.py, insert
