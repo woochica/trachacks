@@ -131,7 +131,7 @@ class DiaVisViewMacro(WikiMacroBase):
 
 
 
-        if (dia_mtime > png_mtime) or (existing_width != width and width = None):
+        if (dia_mtime > png_mtime) or (existing_width != width and width != None):
             try:
                 # The file maybe compressed.  The name has to be prepended to keep the extension.
                 (attachDir, attachFile) = os.path.split(dia_path)
