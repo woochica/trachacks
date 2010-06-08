@@ -32,7 +32,7 @@
 from setuptools     import find_packages, setup
 
 PACKAGE = "WikiTicketCalendarMacro"
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 
 setup(
     name = PACKAGE,

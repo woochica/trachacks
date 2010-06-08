@@ -138,3 +138,7 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
 1.1.1 - maintainance revision for 0.12 branch (07-Jun-2010)
  changes by Steffen Hoffmann
  * code cleanup and consistent formatting again (PEP8)
+
+1.1.2 - maintainance revision for 0.12 branch (08-Jun-2010)
+ changes by Steffen Hoffmann
+ * correct source documentation on macro activation

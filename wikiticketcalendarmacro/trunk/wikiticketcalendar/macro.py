@@ -57,7 +57,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     Activate it in 'trac.ini':
     --------
     [components]
-    WikiTicketCalendarMacro.* = enabled
+    wikiticketcalendar.* = enabled
 
     Usage
     -----
