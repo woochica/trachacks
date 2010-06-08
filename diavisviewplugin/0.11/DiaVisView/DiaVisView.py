@@ -95,6 +95,7 @@ class DiaVisViewMacro(WikiMacroBase):
 
         if attachment and 'ATTACHMENT_VIEW' in formatter.perm(attachment):
             url = get_resource_url(self.env, attachment, formatter.href)
+            description = get_resource_summary(self.env, attachment)
 
         # Includes vdx for use with Visio
         png_url = url.replace(".dia",".png").replace(".vdx",".png")
@@ -105,7 +106,8 @@ class DiaVisViewMacro(WikiMacroBase):
         png_filename = dia_filename.replace('.dia','.png').replace(".vdx",".png")
         png_attachment = Attachment(self.env, realm, resource_id, filespec)
 
-        description = 'PNG render of ' + dia_filename
+        if len(description) <= 0:
+            description = 'PNG render of ' + dia_filename
 
         self.env.log.info('Getting file modification times.')
         try:
@@ -163,7 +165,7 @@ class DiaVisViewMacro(WikiMacroBase):
                 # Insert as new entry
                 cursor.execute("INSERT INTO attachment VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                         (png_attachment.parent_realm, png_attachment.parent_id, png_filename,
-                            png_file_size, png_file_time, 'PNG render of ' + description,
+                            png_file_size, png_file_time, description,
                             png_attachment.author, png_attachment.ipnr))
                 self.env.log.info('New attachment: %s by %s', png_filename, png_attachment.author)
 
