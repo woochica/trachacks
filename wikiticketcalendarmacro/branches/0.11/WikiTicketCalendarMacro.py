@@ -42,7 +42,7 @@ except ImportError:
     from trac.util.datefmt  import to_timestamp
     
 revision = "$Rev$"
-version = "0.8.2"
+version = "0.8.3"
 url = "$URL$"
 
 
@@ -179,7 +179,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             nextYear += 1
         # prepare a fast-forward/-rewind
         ffYear = frYear = year
-        if month < 3:
+        if month < 4:
             frMonth = month + 9
             frYear -= 1
         else:

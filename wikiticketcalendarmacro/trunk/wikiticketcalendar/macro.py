@@ -200,7 +200,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             nextYear += 1
         # prepare a fast-forward/-rewind
         ffYear = frYear = year
-        if month < 3:
+        if month < 4:
             frMonth = month + 9
             frYear -= 1
         else:

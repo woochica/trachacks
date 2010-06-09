@@ -17,14 +17,14 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  (trac-hacks.org SVN r7524, new maintainer)
  * add revision and URL info
 
-0.1.1a - maintainance revision for 0.10 branch (09-Jun-2010)
+0.1.1a - maintenance revision for 0.10 branch (09-Jun-2010)
  changes by Steffen Hoffmann
  * remove obsolete revision and URL info
  * code cleanup for consistent indentation (PEP8) and
    better SQL query formatting as done in other branches before
  * add README with end-of-life statement for 0.10 branch
 
-0.1.1b - maintainance revision for 0.10 branch (09-Jun-2010)
+0.1.1b - maintenance revision for 0.10 branch (09-Jun-2010)
  changes suggested by delsauce@gmail.com
  * better milestone query to match not on full time stamp by whole day
 
@@ -106,7 +106,7 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  changes by Steffen Hoffmann
  * add a 3rd set of navfast-forward/-rewind month navigation links
 
-0.7.1 - maintainance revision for 0.11 branch (03-Jun-2010)
+0.7.1 - maintenance revision for 0.11 branch (03-Jun-2010)
  changes by Steffen Hoffmann
  * add explicit version number
  * finalize move of notes and references on history to changelog
@@ -119,13 +119,17 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
    old timestamp format (as a fallback for 0.11 compatibility)
  * code cleanup, lean import from trac.util, import from Genshi directly
 
-0.8.1 - maintainance revision for 0.11/0.12 branch (07-Jun-2010)
+0.8.1 - maintenance revision for 0.11/0.12 branch (07-Jun-2010)
  changes by Steffen Hoffmann
  * code cleanup and consistent formatting again (PEP8)
 
-0.8.2 - maintainance revision for 0.11/0.12 branch (09-Jun-2010)
+0.8.2 - maintenance revision for 0.11/0.12 branch (09-Jun-2010)
  changes suggested by delsauce@gmail.com
  * better milestone query to match not on full time stamp by whole day
+
+0.8.3 - maintenance revision for 0.11/0.12 branch (09-Jun-2010)
+ changes suggested by David Byrne
+ * correct year switch test condition for 3-months-back nav link
 
 1.0.0 - 1st release for Trac 0.12 imported to SVN by Ryan J Ollos (27-Apr-2010)  
  changes by Steffen Hoffmann
@@ -134,7 +138,7 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
    to adapt for switch to POSIX microsecond time stamps in Trac SVN r9210
  * code cleanup
 
-1.0.1 - maintainance revision for 0.12 branch (03-Jun-2010)
+1.0.1 - maintenance revision for 0.12 branch (03-Jun-2010)
  changes by Steffen Hoffmann
  * add explicit version number
  * finalize move of notes and references on history to changelog
@@ -150,14 +154,18 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * setup contribution of translations via Transifex
    http://www.transifex.net/projects/p/Trac_Plugin-L10N/c/wikiticketcalendar/
 
-1.1.1 - maintainance revision for 0.12 branch (07-Jun-2010)
+1.1.1 - maintenance revision for 0.12 branch (07-Jun-2010)
  changes by Steffen Hoffmann
  * code cleanup and consistent formatting again (PEP8)
 
-1.1.2 - maintainance revision for 0.12 branch (08-Jun-2010)
+1.1.2 - maintenance revision for 0.12 branch (08-Jun-2010)
  changes by Steffen Hoffmann
  * correct source documentation on macro activation
 
-1.1.3 - maintainance revision for 0.12 branch (09-Jun-2010)
+1.1.3 - maintenance revision for 0.12 branch (09-Jun-2010)
  changes suggested by delsauce@gmail.com
  * better milestone query to match not on full time stamp by whole day
+
+1.1.4 - maintenance revision for 0.12 branch (09-Jun-2010)
+ changes suggested by David Byrne
+ * correct year switch test condition for 3-months-back nav link
