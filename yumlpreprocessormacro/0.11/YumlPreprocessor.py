@@ -29,7 +29,7 @@ class YumlUseCaseMacro(WikiMacroBase):
         (Login)>(Captcha)
         }}}
         '''
-        content = content.replace('\n', ', ')
+        content = content.strip().replace('\n', ', ')
         return '<img src="http://yuml.me/diagram/scruffy/usecase/' + content + '" />'
     
     # Note that there's no need to HTML escape the returned data,
@@ -57,7 +57,7 @@ class YumlClassMacro(WikiMacroBase):
         [Order]-0..1>[PaymentMethod]
         }}}
         '''
-        content = content.replace('\n', ', ')
+        content = content.strip().replace('\n', ', ')
         return '<img src="http://yuml.me/diagram/scruffy/class/' + content + '" />'
     
     # Note that there's no need to HTML escape the returned data,
@@ -84,7 +84,7 @@ class YumlActivityMacro(WikiMacroBase):
         <d1>not logged in->(Show Login)->|a|
         }}}
         '''
-        content = content.replace('\n', ', ')
+        content = content.strip().replace('\n', ', ')
         return '<img src="http://yuml.me/diagram/scruffy/activity/' + content + '" />'
     
     # Note that there's no need to HTML escape the returned data,
