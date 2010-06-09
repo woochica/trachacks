@@ -17,11 +17,18 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  (trac-hacks.org SVN r7524, new maintainer)
  * add revision and URL info
 
+0.1.1a - maintainance revision for 0.10 branch (09-Jun-2010)
+ changes by Steffen Hoffmann
+ * remove obsolete revision and URL info
+ * code cleanup for consistent indentation (PEP8) and
+   better SQL query formatting as done in other branches before
+ * add README with end-of-life statement for 0.10 branch
+
 0.1.2 - bugfix release provided by Michael Comb (09-Feb-2008)
  (was: WikiTicketCalendarMacro.py)
  changes by Vladislav Naumov for compatibility with Trac 0.11.1
 
-0.1.2 - non-maintainer release provided by Michael Comb (24-Mar-2008)
+0.1.3 - non-maintainer release provided by Michael Comb (24-Mar-2008)
  (was: WikiTicketCalendarMacro.py.txt)
  changes by Alex
  * fixed 'ordinal not in range' issue by replacing
