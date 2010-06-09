@@ -42,7 +42,7 @@ except ImportError:
     from trac.util.datefmt  import to_timestamp
     
 revision = "$Rev$"
-version = "0.8.1"
+version = "0.8.2"
 url = "$URL$"
 
 
@@ -384,8 +384,8 @@ table.wikiTicketCalendar div.opendate_closed {
                     cursor.execute("""
                         SELECT name
                           FROM milestone
-                         WHERE due=%s
-                    """, (duedatestamp,))
+                         WHERE due >= %s and due < %s
+                    """, (duedatestamp, duedatestamp_eod))
                     while (1):
                         row = cursor.fetchone()
                         if row == None:

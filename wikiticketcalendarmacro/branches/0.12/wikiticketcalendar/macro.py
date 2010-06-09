@@ -355,8 +355,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     cursor.execute("""
                         SELECT name
                           FROM milestone
-                         WHERE due=%s
-                    """, (duedatestamp,))
+                         WHERE due >= %s and due < %s
+                    """, (duedatestamp, duedatestamp_eod))
                     while (1):
                         row = cursor.fetchone()
                         if row == None:
