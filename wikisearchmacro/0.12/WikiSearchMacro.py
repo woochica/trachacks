@@ -58,7 +58,7 @@ class WikiSearchMacro(WikiMacroBase):
         if limit:
             sql += ' LIMIT %s'
             args.append(limit)
-        sql += ') WHERE text LIKE %s'
+        sql += ') AS rows WHERE text LIKE %s'
         args.append('%' + search + '%')
 	print sql
 	print args
