@@ -201,6 +201,28 @@ class DiscussionApi(Component):
             else:
                 return 'Message #%s' % (message['id'],)
 
+    def resource_exists(self, resource):
+        # Create context.
+        context = Context('discussion-core')
+
+        # Get database access.
+        db = self.env.get_db_cnx()
+        context.cursor = db.cursor()
+            
+        type, id = resource.id.split('/')
+       
+        # Check if forum exists.
+        if type == 'forum':
+            return self.get_forum(context, id) != None
+
+        # Check if topic exits.
+        elif type == 'topic':
+            return self.get_topic(context, id) != None
+
+        # Check if message exists.
+        elif type == 'message':
+            return self.get_message(context, id) != None
+
     # Main request processing function.
 
     def process_discussion(self, context):
