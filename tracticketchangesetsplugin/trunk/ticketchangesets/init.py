@@ -36,7 +36,10 @@ class TicketChangesetsInit(Component):
 
     # IEnvironmentSetupParticipant.
     def environment_created(self):
-        pass
+        # Initialise a created environment.
+        @self.env.with_transaction()
+        def do_create(db):
+            self.upgrade_environment(db)
 
     def environment_needs_upgrade(self, db):
         # Is database up to date?
