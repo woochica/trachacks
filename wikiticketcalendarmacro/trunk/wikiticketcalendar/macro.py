@@ -26,6 +26,7 @@ from inspect                import getdoc
 from pkg_resources          import resource_filename
 from string                 import replace
 
+from genshi.builder         import tag
 from genshi.core            import Markup
 
 from trac.config            import Option
@@ -207,7 +208,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             frMonth = month - 3
         if month > 9:
             ffMonth = month - 9
-            frYear += 1
+            ffYear += 1
         else:
             ffMonth = month + 3
 
@@ -219,7 +220,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         buff = []
         buff.append('<table class="wikiTicketCalendar"><caption>')
 
-        if showbuttons:
+        if showbuttons is True:
             # prev year link
             date[0:2] = [year-1, month]
             buff.append("""<a class="prev" href="%(url)s"
@@ -253,7 +254,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         buff.append(to_unicode(time.strftime('<strong>%B %Y</strong>',
                                                       tuple(date))))
 
-        if showbuttons:
+        if showbuttons is True:
             # next month link
             date[0:2] = [nextYear, nextMonth]
             buff.append("""<a class="next" href="%(url)s"
@@ -316,29 +317,27 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     # check for wikipage with name specified in
                     # 'wiki_page_format'
                     date[0:3] = [year, month, day]
+                    if day == curr_day:
+                        td_class = 'today'
+                    else:
+                        td_class = 'day'
                     wiki = time.strftime(wiki_page_format, tuple(date))
                     url = self.env.href.wiki(wiki)
                     if WikiSystem(self.env).has_page(wiki):
-                        a_classes = "day_haspage"
+                        a_class = "day_haspage"
                         title = _("Go to page %s") % wiki
                     else:
-                        a_classes = "day"
+                        a_class = "day"
                         url += "?action=edit"
                         # adding template name, if specified
                         if wiki_page_template != "":
                             url += "&template=" + wiki_page_template
                         title = _("Create page %s") % wiki
 
-                    buff.append("""<td class="%(td_classes)s"
-                        valign="top"><a class="%(a_classes)s" href="%(url)s"
-                        title="%(title)s"><b>%(day)s</b></a>
-                        """ % {
-                        'day': day,
-                        'title': title,
-                        'url': url,
-                        'td_classes': day == curr_day and 'today' or 'day',
-                        'a_classes': a_classes,
-                    })
+                    dayURL = tag.a(tag.b(day), href=url)
+                    dayURL(class_=a_class, title_=title)
+                    buff.append('<td class="' + td_class + \
+                        '" valign="top">' + str(dayURL))
 
                     # Use get to handle default format
                     duedate = { 'dmy': '%(dd)s%(sep)s%(mm)s%(sep)s%(yy)s',
@@ -359,94 +358,80 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     """, (duedatestamp, duedatestamp_eod))
                     while (1):
                         row = cursor.fetchone()
-                        if row == None:
+                        if row is None:
                             buff.append('<br>')
                             break
                         else:
                             name = row[0]
                             url = self.env.href.milestone(name)
-                            buff.append("""<div class="milestone"><a
-                                href="%(url)s">* %(name)s</a></div>
-                                """ % {
-                                'name': name,
-                                'url': url,
-                            })
+                            milestone = tag.div(tag.a('* ' + name, href=url))
+                            milestone(class_='milestone')
+                            buff.append(to_unicode(str(milestone)))
 
                     cursor.execute("""
-                        SELECT t.id,t.summary,t.keywords,
-                               t.owner,t.status,t.description
+                        SELECT t.id,t.summary,t.owner,t.status,t.description
                           FROM ticket t, ticket_custom tc
                          WHERE tc.ticket=t.id and tc.name='due_close' and
                                tc.value=%s
                     """, (duedate, ))
                     while (1):
                         row = cursor.fetchone()
-                        if row == None:
+                        if row is None:
                             break
                         else:
-                            id = row[0]
+                            id = str(row[0])
                             url = self.env.href.ticket(id)
-                            ticket = row[1]
-                            keyword = row[2]
-                            owner = row[3]
-                            status = row[4]
-                            description = row[5][:1024]
-                            buff.append("""<div class="%(classes)s"
-                                align="left"><a href="%(url)s"
-                                title=\'%(description)s\'
-                                target="_blank">#%(id)s</a> %(ticket)s
-                                (%(owner)s)</div>
-                                """ % {
-                                'id': id,
-                                'url': url,
-                                'day': day,
-                                'ticket': ticket[0:100],
-                                'owner': owner,
-                                'classes': status == 'closed' and
-                                    'closed' or 'open',
-                                'description': replace(description,
-                                    "\'", "&#39;"),
-                            })
+                            summary = row[1][0:100]
+                            owner = row[2]
+                            status = row[3]
+                            description = row[4][:1024]
 
-                    if show_ticket_open_dates:
+                            if status == 'closed':
+                                a_class = 'closed'
+                            else:
+                                a_class = 'open'
+                            description = replace(description, "\'", "&#39;"),
+
+                            ticketURL = tag.a('#' + id, href=url)
+                            ticketURL(title=description, target='_blank')
+                            ticket = tag.div(ticketURL)
+                            ticket(class_=a_class, align='left')
+                            ticket(' ', summary, ' (', owner, ')')
+                            buff.append(to_unicode(str(ticket)))
+
+                    if show_ticket_open_dates is True:
                         cursor.execute("""
-                            SELECT t.id,t.summary,t.keywords,
-                                   t.owner,t.status,t.description,t.time
+                            SELECT t.id,t.summary,t.owner,t.status,
+                                   t.description,t.time
                               FROM ticket t
                         """)
                         while (1):
                             row = cursor.fetchone()
-                            if row == None:
+                            if row is None:
                                 break
+                            id = str(row[0])
+                            url = self.env.href.ticket(id)
+                            summary = row[1][0:100]
+                            owner = row[2]
+                            status = row[3]
+                            description = row[4][:1024]
+                            ticket_time = int(row[5])
+                            if ticket_time < duedatestamp or \
+                                    ticket_time > duedatestamp_eod:
+                                continue
+
+                            if status == 'closed':
+                                a_class = 'closed'
                             else:
-                                id = row[0]
-                                url = self.env.href.ticket(id)
-                                ticket = row[1]
-                                keyword = row[2]
-                                owner = row[3]
-                                status = row[4]
-                                description = row[5][:1024]
-                                ticket_time = int(row[6])
-                                if ticket_time < duedatestamp or \
-                                        ticket_time > duedatestamp_eod:
-                                    continue
-                                buff.append("""
-                                    <div class="opendate_%(classes)s"
-                                    align="left"><a href="%(url)s"
-                                    title=\'%(description)s\'
-                                    target="_blank">#%(id)s</a>
-                                    %(ticket)s (%(owner)s)</div>
-                                    """ % {
-                                    'id': id,
-                                    'url': url,
-                                    'day': day,
-                                    'ticket': ticket[0:100],
-                                    'owner': owner,
-                                    'classes': status == 'closed' and
-                                        'closed' or 'open',
-                                    'description': replace(description,
-                                        "\'", "&#39;"),
-                                })
+                                a_class = 'open'
+                            description = replace(description, "\'", "&#39;"),
+
+                            ticketURL = tag.a('#' + id, href=url)
+                            ticketURL(title=description, target='_blank')
+                            ticket = tag.div(ticketURL)
+                            ticket(class_='opendate_' + a_class, align='left')
+                            ticket(' ', summary, ' (', owner, ')')
+                            buff.append(to_unicode(str(ticket)))
 
                 buff.append('</td>')
             buff.append('</tr>\n')
