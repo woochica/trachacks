@@ -22,9 +22,10 @@
 # IN THE SOFTWARE.
 # ----------------------------------------------------------------------------
 
-from trac.util.translation import _
 from trac.versioncontrol.api import RepositoryManager
 from trac.wiki.formatter import format_to_oneliner
+
+from ticketchangesets.translation import _
 
 
 class TicketChangesets(object):
@@ -38,8 +39,8 @@ class TicketChangesets(object):
         """Get ticket changesets from db"""
         db = self.env.get_read_db()
         cursor = db.cursor()
-        cursor.execute("SELECT value FROM ticket_changesets "
-                       "WHERE ticket=%s AND repository=%s",
+        cursor.execute('SELECT value FROM ticket_changesets '
+                       'WHERE ticket=%s AND repository=%s',
                        [tkt_id, repo_id])
         row = cursor.fetchone()
         if row:
@@ -56,16 +57,16 @@ class TicketChangesets(object):
             value = str(changesets)
             if changesets.exists:
                 if value:
-                    cursor.execute("UPDATE ticket_changesets SET value=%s "
-                                   "WHERE ticket=%s AND repository=%s",
+                    cursor.execute('UPDATE ticket_changesets SET value=%s '
+                                   'WHERE ticket=%s AND repository=%s',
                                    [value, tkt_id, repo_id])
                 else:
-                    cursor.execute("DELETE ticket_changesets "
-                                   "WHERE ticket=%s AND repository=%s",
+                    cursor.execute('DELETE ticket_changesets '
+                                   'WHERE ticket=%s AND repository=%s',
                                    [tkt_id, repo_id])
             elif value:
-                cursor.execute("INSERT INTO ticket_changesets "
-                               "(ticket,repository,value) VALUES(%s,%s,%s)",
+                cursor.execute('INSERT INTO ticket_changesets '
+                               '(ticket,repository,value) VALUES(%s,%s,%s)',
                                [tkt_id, repo_id, value])
     
     def add(self, tkt_id, repo_id, rev):

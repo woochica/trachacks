@@ -58,10 +58,9 @@ from trac.ticket import Ticket
 from trac.ticket.notification import TicketNotifyEmail
 from trac.util.datefmt import utc
 from trac.util.text import exception_to_unicode
-from trac.util.translation import _
 from trac.versioncontrol import IRepositoryChangeListener
 
-from api import TicketChangesets
+from ticketchangesets.api import TicketChangesets
 
 
 class CommitTicketUpdater(Component):
@@ -237,7 +236,7 @@ class CommitTicketUpdater(Component):
         perm = PermissionCache(self.env, changeset.author)
         for tkt_id, cmds in tickets.iteritems():
             try:
-                self.log.debug("ticketchangesets: Updating #%d", tkt_id)
+                self.log.debug('ticketchangesets: Updating #%d', tkt_id)
                 ticket = [None]
                 @self.env.with_transaction()
                 def do_update(db):
@@ -247,8 +246,8 @@ class CommitTicketUpdater(Component):
                     ticket[0].save_changes(changeset.author, comment, date, db)
                 self._notify(ticket[0], date)
             except Exception, e:
-                self.log.error("Unexpected error while processing ticket "
-                               "#%s: %s", tkt_id, exception_to_unicode(e))
+                self.log.error('Unexpected error while processing ticket '
+                               '#%s: %s', tkt_id, exception_to_unicode(e))
     
     def _notify(self, ticket, date):
         """Send a ticket update notification."""
@@ -258,9 +257,8 @@ class CommitTicketUpdater(Component):
             tn = TicketNotifyEmail(self.env)
             tn.notify(ticket, newticket=False, modtime=date)
         except Exception, e:
-            self.log.error("Failure sending notification on change to "
-                    "ticket #%s: %s", ticket.id,
-                    exception_to_unicode(e))
+            self.log.error('Failure sending notification on change to '
+                    'ticket #%s: %s', ticket.id, exception_to_unicode(e))
     
     def _get_functions(self):
         """Create a mapping from commands to command functions."""

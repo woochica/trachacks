@@ -21,15 +21,16 @@ from trac.core import *
 from trac.config import BoolOption
 from trac.mimeview.api import Context
 from trac.util.compat import any
-from trac.util.translation import _
-from trac.web.api import ITemplateStreamFilter
 from trac.versioncontrol import RepositoryManager
 from trac.versioncontrol.web_ui.changeset import ChangesetModule
+from trac.web.api import ITemplateStreamFilter
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.wiki.macros import WikiMacroBase
 
-from api import TicketChangesets
-from commit_updater import CommitTicketUpdater
+from ticketchangesets.api import TicketChangesets
+from ticketchangesets.commit_updater import CommitTicketUpdater
+from ticketchangesets.translation import _, init_translation
+
 
 class TicketChangesetsMacro(WikiMacroBase):
     """Insert all changesets referencing a ticket into the output.
@@ -40,7 +41,10 @@ class TicketChangesetsMacro(WikiMacroBase):
     where ticket is a ticket id
     }}}
     """
-
+    
+    def __init__(self):
+        init_translation(self.env.path)
+    
     def expand_macro(self, formatter, name, content, args={}):
         if args:
             tkt_id = args.get('ticket')
@@ -70,6 +74,9 @@ class ViewTicketChangesets(Component):
     
     implements(ITemplateStreamFilter)
 
+    def __init__(self):
+        init_translation(self.env.path)
+
     # ITemplateStreamFilter methods
 
     def filter_stream(self, req, method, filename, stream, data):
@@ -89,13 +96,13 @@ class ViewTicketChangesets(Component):
     def _render(self, req, ticket, exists):
         if exists:
             message = self.changesets.format()
-            return tag.div(tag.h2(tag.a(_("Repository changesets")),
+            return tag.div(tag.h2(tag.a(_("Repository Changesets")),
                         class_='foldable', style='cursor: pointer'),
                         tag.div(message, id='changelog'),
                         class_=self.collapsed and 'collapsed')
         else:
             message = _("(none)")
-            return tag.div(tag.h2(tag.a(_("Repository changesets"), ' ',
+            return tag.div(tag.h2(tag.a(_("Repository Changesets"), ' ',
                         message), class_='foldable', style='cursor: pointer'))
 
 
@@ -162,6 +169,9 @@ class CommitMessageMacro(WikiMacroBase):
     Arguments can be stated in any order.
     """
     
+    def __init__(self):
+        init_translation(self.env.path)
+    
     def expand_macro(self, formatter, name, content, args={}):
         if args:
             reponame = args.get('repository', '')
@@ -189,12 +199,12 @@ class CommitMessageMacro(WikiMacroBase):
             ticket_re = CommitTicketUpdater.ticket_re
             if not any(int(tkt_id) == formatter.context.resource.id
                        for tkt_id in ticket_re.findall(message)):
-                return tag.p(_("(The changeset message doesn't reference this "
-                             "ticket)"), class_='hint')
+                return tag.div(tag.p(_("(The changeset message doesn't "
+                    "reference this ticket)"), class_='hint'),
+                    class_='commitmessage')
         if ChangesetModule(self.env).wiki_format_messages:
             return tag.div(format_to_html(self.env,
                 formatter.context('changeset', rev, parent=repos.resource),
                 message, escape_newlines=True), class_='commitmessage')
         else:
             return tag.pre(message, class_='commitmessage')
-
