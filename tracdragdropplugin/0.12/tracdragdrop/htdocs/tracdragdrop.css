@@ -1,0 +1,44 @@
+#tracdragdrop_indicator {
+    position: fixed;
+    top: 0px;
+    right: 0px;
+    font-size: 11px;
+    line-height: 1.0;
+    padding: 3px 6px;
+    background-color: #cec;
+    opacity: 0.5;
+}
+#tracdragdrop_indicator.active {
+    background-color: #d77;
+    opacity: 1.0;
+}
+#tracdragdrop_notice {
+    position: fixed;
+    top: 0px;
+    left: 37.5%;
+    width: 25%;
+    border-width: 1px;
+    border-color: #666;
+    border-style: none solid solid solid;
+    background-color: #fff;
+    padding: 4px 6px 12px;
+    font-size: 11px;
+}
+#tracdragdrop_notice .message {
+    text-align: center;
+}
+#tracdragdrop_notice .progress {
+    border: 1px solid #ccc;
+    height: 1.0em;
+    line-height: 1.0;
+}
+#tracdragdrop_notice .progress span {
+    display: inline-block;
+    background-color: #cec;
+    height: 1.0em;
+}
+@media print {
+    #tracdragdrop_indicator, #tracdragdrop_notice {
+        display: none;
+    }
+}
