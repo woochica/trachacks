@@ -61,7 +61,7 @@ class TicketChangesets(object):
                                    'WHERE ticket=%s AND repository=%s',
                                    [value, tkt_id, repo_id])
                 else:
-                    cursor.execute('DELETE ticket_changesets '
+                    cursor.execute('DELETE FROM ticket_changesets '
                                    'WHERE ticket=%s AND repository=%s',
                                    [tkt_id, repo_id])
             elif value:
