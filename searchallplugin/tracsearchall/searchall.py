@@ -1,6 +1,7 @@
 ## AMB SearchAll - Search multiple trac projects at once
 
 from trac.core import *
+from trac.config import Option, ListOption
 from trac.web.href import Href
 try:
     from trac.search import ISearchSource, shorten_result
@@ -30,6 +31,12 @@ class SearchAllPlugin(Component):
     """ Search the source repository. """
     implements(ISearchSource)
     implements(IPermissionRequestor)
+    
+    include_projects = ListOption('searchall', 'include_projects', [], 
+        doc="Comma separated list of projects to include in ''Search All Projects''. If empty, all projects will be searched. Case sensitive.")
+    exclude_projects = ListOption('searchall', 'exclude_projects', [], 
+        doc="Comma separated list of projects to exclude in ''Search All Projects''. Case sensitive.")
+    
 
     def get_project_list(self, req):
         # get search path and base_url
@@ -47,7 +54,15 @@ class SearchAllPlugin(Component):
             # skip our own project
             if project == this_project:
                 continue
-            
+                
+            #Include only if project is in include_projects, or include_projects is empty
+            if self.include_projects and (project not in self.include_projects):
+                continue
+
+            #Exclude if project is in exclude_projcets
+            if project in self.exclude_projects:
+                continue
+
             # make up URL for project
             project_url = '/'.join( (base_url, project) )              
             project_path = os.path.join(search_path, project)
