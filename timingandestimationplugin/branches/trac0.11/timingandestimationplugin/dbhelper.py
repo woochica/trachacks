@@ -13,7 +13,7 @@ def get_all(com, sql, *params):
     except Exception, e:
         com.log.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
-        db.rollback();
+        if db: db.rollback();
     try:
         db.close()
     except:
@@ -31,7 +31,7 @@ def execute_non_query(com,  sql, *params):
     except Exception, e:
         com.log.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
-        db.rollback();
+        if db: db.rollback();
     try:
         db.close()
     except:
@@ -49,7 +49,7 @@ def get_first_row(com,  sql,*params):
     except Exception, e:
         com.log.error('There was a problem executing sql:%s \n \
         with parameters:%s\nException:%s'%(sql, params, e));
-        db.rollback()
+        if db: db.rollback();
     try:
         db.close()
     except:
@@ -75,7 +75,7 @@ def execute_in_trans(com, *args):
     except Exception, e:
         com.log.error('There was a problem executing sql:%s \n \
         with parameters:%s\nException:%s'%(sql, params, e));
-        db.rollback();
+        if db: db.rollback();
         result = e
     try:
         db.close()
@@ -93,8 +93,7 @@ def db_table_exists(com,  table):
         db.commit()
     except Exception, e:
         has_table = False
-        db.rollback()
-
+        if db: db.rollback();
     try:
         db.close()
     except:

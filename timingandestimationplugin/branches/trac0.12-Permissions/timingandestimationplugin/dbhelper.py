@@ -14,10 +14,6 @@ def get_all(com, sql, *params):
         com.log.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback();
-    try:
-        db.close()
-    except:
-        pass
 
     return (desc, data)
 
@@ -32,10 +28,6 @@ def execute_non_query(com,  sql, *params):
         com.log.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback();
-    try:
-        db.close()
-    except:
-        pass
 
 def get_first_row(com,  sql,*params):
     """ Returns the first row of the query results as a tuple of values (or None)"""
@@ -50,10 +42,7 @@ def get_first_row(com,  sql,*params):
         com.log.error('There was a problem executing sql:%s \n \
         with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback()
-    try:
-        db.close()
-    except:
-        pass
+
     return data;
 
 def get_scalar(com, sql, col=0, *params):
@@ -77,10 +66,7 @@ def execute_in_trans(com, *args):
         with parameters:%s\nException:%s'%(sql, params, e));
         db.rollback();
         result = e
-    try:
-        db.close()
-    except:
-        pass
+
     return result
 
 def db_table_exists(com,  table):
@@ -95,10 +81,6 @@ def db_table_exists(com,  table):
         has_table = False
         db.rollback()
 
-    try:
-        db.close()
-    except:
-        pass
     return has_table
 
 def get_column_as_list(com, sql, col=0, *params):

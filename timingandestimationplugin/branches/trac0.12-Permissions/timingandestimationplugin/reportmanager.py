@@ -1,7 +1,5 @@
 from trac.core import *
 
-
-
 class CustomReportManager:
   """A Class to manage custom reports"""
   version = 1
@@ -51,7 +49,7 @@ class CustomReportManager:
       cursor.execute("UPDATE system SET value=%s WHERE name=%s", 
                      (self.version, self.name))
       db.commit()
-      db.close()
+
     
     except Exception, e:
       self.log.error("CustomReportManager Exception: %s" % (e,));
@@ -185,10 +183,6 @@ class CustomReportManager:
       self.log.error('There was a problem executing sql:%s \n \
       with parameters:%s\nException:%s'%(sql, params, e));
       db.rollback()
-    try:
-      db.close()
-    except:
-      pass
     return data;
 
   def get_scalar(self, sql, col=0, *params):
@@ -212,10 +206,6 @@ class CustomReportManager:
       with parameters:%s\nException:%s'%(sql, params, e));
       db.rollback();
       success = False
-    try:
-      db.close()
-    except:
-      pass
     return success
 
     
