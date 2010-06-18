@@ -12,6 +12,7 @@ from StringIO import StringIO
 import csv
 from trac.mimeview.api import Context
 from trac.resource import Resource
+from trac.web.chrome import  Chrome
 
 import sys 
 if sys.version_info < (2, 4, 0): 
