@@ -42,27 +42,32 @@ def get_diffs(self, req, title, old_text, new_text):
     stream = tmpl.generate(**data)
     return stream.render()
 
-
-
-def _validate_ticket(self, req, ticket):
+def _validate_ticket(self, req, ticket, force_collision_check=False):
     valid = True
     resource = ticket.resource
 
-    # If the ticket has been changed, check the proper permission
+    # If the ticket has been changed, check the proper permissions
     if ticket.exists and ticket._old:
-        if 'TICKET_CHGPROP' not in req.perm(resource):
-            add_warning(req, _("No permission to change ticket fields."))
-            ticket.values.update(ticket._old)
+        # Status and resolution can be modified by the workflow even
+        # without having TICKET_CHGPROP
+        changed = set(ticket._old) - set(['status', 'resolution'])
+        if 'description' in changed \
+                and 'TICKET_EDIT_DESCRIPTION' not in req.perm(resource):
+            add_warning(req, _("No permission to edit the ticket "
+                               "description."))
             valid = False
-        else: # TODO: field based checking
-            if ('description' in ticket._old and \
-                   'TICKET_EDIT_DESCRIPTION' not in req.perm(resource)) or \
-               ('reporter' in ticket._old and \
-                   'TICKET_ADMIN' not in req.perm(resource)):
-                add_warning(req, _("No permissions to change ticket "
-                                   "fields."))
-                ticket.values.update(ticket._old)
-                valid = False
+        changed.discard('description')
+        if 'reporter' in changed \
+                and 'TICKET_ADMIN' not in req.perm(resource):
+            add_warning(req, _("No permission to change the ticket "
+                               "reporter."))
+            valid = False
+        changed.discard('reporter')
+        if changed and 'TICKET_CHGPROP' not in req.perm(resource):
+            add_warning(req, _("No permission to change ticket fields."))
+            valid = False
+        if not valid:
+            ticket.values.update(ticket._old)
 
     comment = req.args.get('comment')
     if comment:
@@ -71,7 +76,14 @@ def _validate_ticket(self, req, ticket):
             add_warning(req, _("No permissions to add a comment."))
             valid = False
 
-###############################################################################
+    # Mid air collision?
+    if ticket.exists and (ticket._old or comment or force_collision_check):
+        if req.args.get('ts') != str(ticket['changetime']):
+            add_warning(req, _("Sorry, can not save your changes. "
+                          "This ticket has been modified by someone else "
+                          "since you started"))
+            valid = False
+    ###############################################################################
 
 
     # Mid air collision?
@@ -100,13 +112,13 @@ def _validate_ticket(self, req, ticket):
         elif req.session.has_key(skey):
             del(req.session[skey])
 
-###############################################################################
+    ###############################################################################
 
     # Always require a summary
     if not ticket['summary']:
-        add_warning(req, _('Tickets must contain a summary.'))
+        add_warning(req, _("Tickets must contain a summary."))
         valid = False
-        
+
     # Always validate for known values
     for field in ticket.fields:
         if 'options' not in field:
@@ -122,20 +134,21 @@ def _validate_ticket(self, req, ticket):
                                 'the %s field.' % (value, name))
                     valid = False
             elif not field.get('optional', False):
-                add_warning(req, 'field %s must be set' % name)
+                add_warning(req, _("field %(name)s must be set",
+                                   name=name))
                 valid = False
 
     # Validate description length
     if len(ticket['description'] or '') > self.max_description_size:
-        add_warning(req, _('Ticket description is too long (must be less '
-                      'than %(num)s characters)',
-                      num=self.max_description_size))
+        add_warning(req, _("Ticket description is too long (must be less "
+                           "than %(num)s characters)",
+                           num=self.max_description_size))
         valid = False
 
     # Validate comment length
     if len(comment or '') > self.max_comment_size:
-        add_warning(req, _('Ticket comment is too long (must be less '
-                           'than %(num)s characters)',
+        add_warning(req, _("Ticket comment is too long (must be less "
+                           "than %(num)s characters)",
                            num=self.max_comment_size))
         valid = False
 
@@ -149,7 +162,7 @@ def _validate_ticket(self, req, ticket):
             int(replyto or 0)
     except ValueError:
         # Shouldn't happen in "normal" circumstances, hence not a warning
-        raise InvalidTicket(_('Invalid comment threading identifier'))
+        raise InvalidTicket(_("Invalid comment threading identifier"))
 
     # Custom validation rules
     for manipulator in self.ticket_manipulators:
@@ -157,8 +170,8 @@ def _validate_ticket(self, req, ticket):
             valid = False
             if field:
                 add_warning(req, _("The ticket field '%(field)s' is "
-                              "invalid: %(message)s",
-                              field=field, message=message))
+                                   "invalid: %(message)s",
+                                   field=field, message=message))
             else:
                 add_warning(req, message)
     return valid
@@ -197,4 +210,5 @@ class OverrideEditPluginSetupParticipant(Component):
       performed the upgrades they need without an error being raised.
       """
       pass
+
 
