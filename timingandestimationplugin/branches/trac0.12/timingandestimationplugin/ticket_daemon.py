@@ -16,7 +16,7 @@ def convertfloat(x):
 
 try:
     import trac.util.datefmt
-    to_timestamp = trac.util.datefmt.to_timestamp
+    to_timestamp = trac.util.datefmt.to_utimestamp
 except Exception:
     to_timestamp = identity
 

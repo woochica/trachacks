@@ -13,6 +13,7 @@ from trac.web.chrome import add_stylesheet, add_script, \
 from trac.web.href import Href
 from reportmanager import CustomReportManager
 from statuses import get_statuses
+import trac.util.datefmt
 
 #get_statuses = api.get_statuses
 
@@ -23,19 +24,18 @@ class TimingEstimationAndBillingPage(Component):
         pass
 
     def set_bill_date(self, username="Timing and Estimation Plugin",  when=0):
-        now = time.time()
+        now = trac.util.datefmt.to_datetime(None)#get now
         if not when:
             when = now
-        when = int(when)
-        now = int(now)
-        dtwhen = datetime.datetime.fromtimestamp(when);
+
         strwhen = "%s-%s-%s %#02d:%#02d:%#02d" % \
-                (dtwhen.year, dtwhen.month, dtwhen.day, dtwhen.hour,dtwhen.minute, dtwhen.second)
+                (when.year, when.month, when.day, when.hour,when.minute, when.second)
         sql = """
         INSERT INTO bill_date (time, set_when, str_value)
         VALUES (%s, %s, %s)
         """
-        dbhelper.execute_non_query(self, sql, when, now, strwhen)
+        dbhelper.execute_non_query(self, sql, trac.util.datefmt.to_timestamp(when),
+                                   trac.util.datefmt.to_timestamp(now), strwhen)
 
 
 
@@ -68,7 +68,7 @@ class TimingEstimationAndBillingPage(Component):
         rs = dbhelper.get_result_set(self, billing_time_sql)
         if rs:
             for (value, text) in rs.rows:
-                billing_info = {'text':text , 'value':value}
+                billing_info = {'text':text , 'value':value*1000*1000}
                 billing_dates.extend([billing_info])
         #self.log.debug("bill-dates: %s"%billing_dates)
         data['billing_info']["billdates"] = billing_dates

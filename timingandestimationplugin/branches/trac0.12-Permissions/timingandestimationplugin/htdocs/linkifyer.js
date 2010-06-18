@@ -6,9 +6,7 @@
    var invalidDate = new Date("invalid").toString();
    var billingfields= {};
    var statusfields = [];
-   function dateToUnixEpoch(date){
-      return Math.round(date.getTime()/1000) - (60 * date.getTimezoneOffset());
-   }
+   function dateToUnixEpoch(date){ return  (Math.round(1000*date.getTime())); }
    function makeDate(val) {
       var d = null;
       if (val && val.length && val.length>0){
