@@ -1,3 +1,24 @@
+*****************************************************
+** BatchModifyPlugin 0.6.0 - r8120 (June 18, 2010) **
+*****************************************************
+
+This release adds configuration for keyword separators. It also allows you to treat other fields
+as lists through configuration.
+
+Thanks to beachroad for the patch on #7181.
+
+Eggs can be found at:
+ * Trac 0.11 - http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags
+ * Trac 0.12 - http://trac-hacks.org/browser/batchmodifyplugin/0.12/tags
+
+Bug Fixes
+ * #7181 - Fixed a bug when applying keyword changes to multiple tickets. (http://trac-hacks.org/ticket/7181)
+ * #7230 - After batch modify, all filters are reset to default. (http://trac-hacks.org/ticket/7230)
+
+Enhancements
+ * #6875 - Batch keyword removal is now supported. Simply add '-' before the keyword you wish to remove. (http://trac-hacks.org/ticket/6875)
+ * #7181 - Added configuration for keyword separators. You can also specify other fields to treat as lists. (http://trac-hacks.org/ticket/7181)
+
 ********************************************
 ** BatchModifyPlugin 0.5.0 (May 13, 2010) **
 ********************************************

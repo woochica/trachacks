@@ -7,7 +7,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'BatchModify'
-VERSION = '0.5.0-trac0.11'
+VERSION = '0.6.0-trac0.11'
 
 setup(
     name=PACKAGE, version=VERSION,
