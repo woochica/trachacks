@@ -15,12 +15,8 @@ def get_all(env, sql, *params):
     except Exception, e:
         mylog.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
-        db.rollback();
-    try:
-        db.close()
-    except:
-        pass
-    
+        if db: db.rollback();
+   
     return (desc, data)
 
 def execute_non_query(env, sql, *params):
@@ -33,12 +29,8 @@ def execute_non_query(env, sql, *params):
     except Exception, e:
         mylog.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
-        db.rollback();
-    try:
-        db.close()
-    except:
-        pass
-    
+        if db: db.rollback();
+   
 def get_first_row(env, sql,*params):
     """ Returns the first row of the query results as a tuple of values (or None)"""
     db = env.get_db_cnx()
@@ -51,11 +43,7 @@ def get_first_row(env, sql,*params):
     except Exception, e:
         mylog.error('There was a problem executing sql:%s \n \
         with parameters:%s\nException:%s'%(sql, params, e));
-        db.rollback()
-    try:
-        db.close()
-    except:
-        pass
+        if db: db.rollback();
     return data;
 
 def get_scalar(env, sql, col=0, *params):
@@ -77,12 +65,8 @@ def execute_in_trans(env, *args):
     except Exception, e:
         mylog.error('There was a problem executing sql:%s \n \
         with parameters:%s\nException:%s'%(sql, params, e));
-        db.rollback();
+        if db: db.rollback();
         result = e
-    try:
-        db.close()
-    except:
-        pass
     return result
 
 def db_table_exists(env,  table):
@@ -95,12 +79,8 @@ def db_table_exists(env,  table):
         db.commit()
     except Exception, e:
         has_table = False
-        db.rollback()
+        if db: db.rollback();
         
-    try:
-        db.close()
-    except:
-        pass
     return has_table
 
 def get_column_as_list(env, sql, col=0, *params):
