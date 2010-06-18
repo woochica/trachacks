@@ -1,0 +1,136 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:py="http://genshi.edgewall.org/"
+  xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+      
+  <head>
+	<title>Advanced Estimations for Trac.11</title>
+	<script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+	<script type="text/javascript" py:choose="">
+	  $(document).ready(function() {
+          $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        });
+    </script>
+      </head>
+
+      <body>
+	<form method="post" action="${estimate.href}" >
+	  <input type="hidden" name="id" value="${estimate.id}"/>
+	  
+	  <div id="content" class="estimate">
+	    <div id="messages" >
+	      <py:for each="item in estimate.messages" >
+		<div class="message" >$item</div>
+	      </py:for>
+	    </div>
+	    <div class="reset">
+	      <button onclick="return resetPage();" class="reset">
+		Reset Page (removes data stored in browser)</button><br />
+	      <p>
+		The estimator plugin attempts to use HTML5 storage so that you do not
+		lose any data from an in progress estimate because your browser crashed,
+		or you accidentally closed the tab. If you want to start a new estimate
+		you can click this button to remove the data saved in your browser
+	      </p>
+	    </div>
+	<table border="0" cellpadding="3" cellspacing="0" id="estimateParams" >
+	  <tr>
+	    <td class="fieldLabel" ><label for="tickets">Ticket Numbers:</label></td>
+	    <td><input id="tickets" name="tickets" type="text"
+		      value="${estimate.tickets}"
+		      onkeydown="return enterMeansNothing(event)" /></td>
+	  </tr>
+	  <tr>
+	    <td class="fieldLabel" ><label for="rate">         Rate:</label></td>
+	    <td><input id="rate" name="rate" type="text" onkeyup="runCalculation()"
+		      value="${estimate.rate}"
+		      onkeydown="return enterMeansNothing(event)" /></td>
+	  </tr>
+	  <tr>
+	    <td class="fieldLabel" ><label for="variability">  Variability:</label></td>
+	    <td><input id="variability" name="variability" type="text" onkeyup="runCalculation()"
+		      value="${estimate.variability}"
+		      onkeydown="return enterMeansNothing(event)" /></td>
+	  </tr>
+	  <tr>
+	    <td class="fieldLabel" ><label for="communication">Communication:</label></td>
+	    <td><input id="communication" name="communication" type="text" onkeyup="runCalculation()"
+		      value="${estimate.communication}"
+		      onkeydown="return enterMeansNothing(event)" /></td>
+	  </tr>
+	</table>
+
+
+	<table border="0" cellpadding="3" cellspacing="1" id="estimateBody" >
+	  <thead>
+	    <tr id="lineItemheader" >
+	      <th>Description</th>
+	      <th>Low </th>
+	      <th>High </th>
+	      <th>Ave </th>
+	      <th></th>
+	    </tr>
+	  </thead>
+	  <tbody></tbody>
+	  <tfoot>
+	    <tr id="lineItemFooter">
+	      <th class="fieldLabel" >         Total:</th>
+	      <td id="lowTotal" class="numberCell" ></td>
+	      <td id="highTotal" class="numberCell"></td>
+	      <td id="aveTotal" class="numberCell"></td>
+	      <td></td>
+	    </tr>
+	    <tr>
+	      <th class="fieldLabel" >Adjusted Hours:</th>
+	      <td id="lowAdjusted" class="numberCell" ></td>
+	      <td id="highAdjusted" class="numberCell" ></td>
+	      <td id="aveAdjusted" class="numberCell" ></td>
+	      <td></td>
+	    </tr>
+	    <tr>
+	      <th class="fieldLabel">          Cost:</th>
+	      <td id="lowCost" class="numberCell" ></td>
+	      <td id="highCost" class="numberCell" ></td>
+	      <td id="aveCost" class="numberCell" ></td>
+	      <td></td>
+	    </tr>
+	  </tfoot>
+	</table>
+	  
+	<button id="newrow" class="new" onclick="newLineItem();return false;">new row</button>
+	<button class="refresh" onclick="runCalculation(true);return false;">refresh calculations</button>
+	<br /><br />
+	<input class="save" type="submit" value="Save Estimate"
+	       onclick="saveEstimate(this);return false;" />
+	<input class="save go" type="submit" value="Save and Go to Ticket"
+	       onclick="$('#shouldRedirect').val('True');saveEstimate(this);return false;" />
+	<input type="hidden" id="shouldRedirect" name="shouldRedirect" value="False"/>
+	<div>
+	    <h3>Comment Preview</h3>
+	    <div id="estimateoutput" >
+
+	    </div>
+	    <textarea id="diffcomment" name="diffcomment" style="display:none;"></textarea>
+	    <textarea id="comment" name="comment" style="display:none;"></textarea>
+	</div>
+
+	<script language="javascript" >
+	   var savedLineItems = lineItems = ${estimate.lineItems};
+	   var lastSaved = ${estimate.saveepoch};
+	   var ticketDefault = "${estimate.tickets}";
+	   var rateDefault = ${estimate.rate};
+	   var variabilityDefault = ${estimate.variability};
+	   var communicationDefault = ${estimate.communication};
+	   loadLineItems();
+	   if(lineItems.length == 0) newLineItem();
+	</script >
+      </div>
+
+    </form>
+</body>
+</html>
+    
