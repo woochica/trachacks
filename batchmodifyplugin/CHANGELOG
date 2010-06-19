@@ -5,7 +5,7 @@
 This release adds configuration for keyword separators. It also allows you to treat other fields
 as lists through configuration.
 
-Thanks to beachroad for the patch on #7181.
+Thanks to beachroad for the patch on #7181 and oliver for the patch on #6875.
 
 Eggs can be found at:
  * Trac 0.11 - http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags
