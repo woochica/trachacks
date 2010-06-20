@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
+import os.path
 
 from genshi.builder import tag
 from genshi.filters.transform import Transformer
@@ -14,7 +15,7 @@ from trac.env import open_environment
 
 class InterTrac:
 
-    def __init__(self, config, env):
+    def __init__(self, config, env,project_label):
         # interTracの設定を取得します．
         self.intertracs0 = {}
         self.env = env
@@ -50,6 +51,8 @@ class InterTrac:
             title = intertrac.get('title', url)
             name = project.project_name
             self.intertracs.append({'name': name, 'title': title, 'url': url, 'path': path})
+        # 
+        self.project_label = project_label
 
     def get_projects(self):
         return self.intertracs0
@@ -58,10 +61,11 @@ class InterTrac:
         return self.intertracs
 
     def create_links(self, sql, sql_i, log):
-        # InterTrac設定しているプロジェクトすべてを検索する必要がある
+        # InterTrac設定しているプロジェクトすべてを検索する必要がある,
         # 後続チケットまたは，子チケットへのリンクを作ります．
         links = []
         intertracs0 = self.get_projects()
+        # すべてのinterTrc設定を回りサブチケットまたは後続チケットを探します．まずはInterTrac形式の指定のもの
         for prefix in intertracs0:
             intertrac = intertracs0[prefix]
             path = intertrac.get('path', '')
@@ -79,10 +83,11 @@ class InterTrac:
                 pass
             # オープンできない場合もあるのでエラー処理が必要
         try:
+            # チケット番号のみの指定のサブチケットと後続チケットを探します．
             db = self.env.get_db_cnx()
             cursor = db.cursor();
             cursor.execute(sql_i)
-            intertrac = intertracs0[self.env.project_name.lower()]
+            intertrac = intertracs0[self.get_project_name().lower()]
             for id, type, summary, owner, description, status in cursor:
                 url = intertrac.get('url', '') + '/ticket/' + str(id)
                 dep_url = intertrac.get('url', '') + '/dependency/ticket/' + str(id)
@@ -100,7 +105,7 @@ class InterTrac:
         tickets = ids.split(',') #なにもない場合はエラーになるのでifが必要
         data.append(label1)
         for ticket in tickets:
-            t = self.get_ticket(ticket, self.env.project_name, True, log)
+            t = self.get_ticket(ticket, self.get_project_name(), True, log)
             error = t['error']
             if error is None:
                 tkt = t['ticket']
@@ -125,7 +130,6 @@ class InterTrac:
         if ticket:
             ticket = ticket.strip() # 前後の空白を削除します
             idx = ticket.rfind(':#') # プロジェクト名とチケット番号に分割します
-            # log.debug("get_ticket : ticket=%s current_project_name=%s", ticket, current_project_name)
             if idx > 0: # InterTrac ticket
                 current_project = False
                 project_name, id = ticket[:idx], ticket[idx+2:]
@@ -138,12 +142,10 @@ class InterTrac:
                 current_project = True
                 #project_name = self.env.project_name
                 project_name = current_project_name
-                # log.debug("get_ticket project_name : %s / %s", project_name, ticket)
                 if ticket.rfind('#') == 0:
                     id = ticket[1:]
                 else:
                     id = ticket
-            # log.debug("get_ticket : id=%s current_project_name=%s", id, current_project_name)
             if id != "":
                 # 依存関係を指定しているか確認する 例:(FF)
                 idx = id.rfind('(')
@@ -180,11 +182,9 @@ class InterTrac:
         # leaf_id:葉チケットのID
         # 戻り値:エラー文字列
         error = []
-        # log.debug("validate_outline_b : %s", ticket)
         if ticket:
             ticket = ticket.strip() # 前後の空白を削除します
         if ticket == leaf_id:
-            # log.debug("validate_outline_b : ticket=%s sub_ticket=%s", ticket, sub_ticket)
             return 'Ticket(%s)\'s summary ticket is this ticket'%sub_ticket
         t = self.get_ticket(ticket, self.env.project_name, False, log)
         error = t['error']
@@ -222,10 +222,8 @@ class InterTrac:
         errors = []
         #リンクが正しいか確認します．
         if ids is None: #idになにも入ってない場合はエラーになるのでifが必要
-            # log.debug("test_link = None ")
             return errors
         if ids == '': #idになにも入ってない場合はエラーになるのでifが必要
-            # log.debug("test_link = ")
             return errors
         # log.debug("test_link = %s" % ids)
         # カンマで分割します．
@@ -246,11 +244,8 @@ class InterTrac:
         for ticket in tickets2:
             tkt = ticket['ticket']
             url = ticket['url']
-            # log.debug("linkify_ids url = %s" % url)
             status = ticket['status']
-            # log.debug("linkify_ids status = %s" % status)
             title1 = ticket['title']
-            # log.debug("linkify_ids title1 = %s" % title1)
             data.append(tag.a('%s'%tkt, href=url, class_='%s ticket'%status, title=title1))
             data.append(', ')
         if data:
@@ -264,7 +259,7 @@ class InterTrac:
             return links
         tickets = ids.split(',')
         for ticket in tickets:
-            t = self.get_ticket(ticket, self.env.project_name, True, log)
+            t = self.get_ticket(ticket, self.get_project_name(), True, log)
             error = t['error']
             if error is None:
                 tkt = t['ticket']
@@ -276,6 +271,9 @@ class InterTrac:
                 dep_url = u + '/dependency/ticket/' + id
                 link = links.append({'ticket':ticket, 'title':title, 'url':url, 'dep_url':dep_url, 'status':status})
             else:
-                errors.append((field_name, error))
                 continue
         return links
+
+    def get_project_name(self):
+        return self.project_label
+

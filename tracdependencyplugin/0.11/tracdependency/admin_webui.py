@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import os.path
 
 from genshi.builder import tag
 
@@ -30,9 +31,19 @@ class TracDependencyAdminWebUI(Component):
     implements(IAdminPanelProvider, ITemplateProvider)
 
     def __init__(self):
-        self.intertrac = InterTrac(self.config, self.env)
+        self.project_label = self.config.get( "tracdependency", "label")
+        self.log.debug("[tracdependency]:label = %s", self.project_label)
+        if not self.project_label:
+            self.project_label=os.path.basename(self.env.path)
+            self.log.debug("base name of env_path = %s", self.project_label)
+            intertrac_project_label = self.config.get( "intertrac", self.project_label+".label")
+            if intertrac_project_label:
+                self.project_label = intertrac_project_label
+                self.log.debug("label from intertrac setting = %s", self.project_label)
+        self.intertrac = InterTrac(self.config, self.env, self.project_label)
 
     def customfield_panel_enable(self):
+        # カスタムフィールドパネルを有効にするかどうかの
         dependencies_enabled = ( self.config.get( TICKET_CUSTOM, "summary_ticket") or \
                      self.config.get( TICKET_CUSTOM, "dependencies"))
         baseline_enabled = ( self.config.get( TICKET_CUSTOM, "baseline_start") or \
@@ -44,6 +55,7 @@ class TracDependencyAdminWebUI(Component):
     def get_admin_panels(self, req):
         if 'TRAC_ADMIN' in req.perm:
             # 管理パネルに次の二つのメニューを追加します．
+            # InterTrac設定の表示と設定を行うパネルを表示するメニューを追加します．
             yield ('Dependency', ADMIN_PANEL_TRACDEP, 'intertrac', ADMIN_PANEL_INTERTRAC)
             if self.customfield_panel_enable():
                 # カスタムフィールドは追加しか準備していないため，必要が無ければ表示しません．
@@ -108,10 +120,10 @@ class TracDependencyAdminWebUI(Component):
                 # calendar_fields = self.config.get( "decorator", "calendar_fields")
                 # self.config.set("decorator", "calendar_fields", calendar_fields + ",baseline_start,baseline_finish")
                 self.config.save();
-
+        # 親チケットか依存関係のカスタムフィールドが存在したら
         dependencies_enabled = ( self.config.get( TICKET_CUSTOM, "summary_ticket") or \
                      self.config.get( TICKET_CUSTOM, "dependencies"))
-
+        # 計画の開始と，計画の終了のどちらかがあったとき
         baseline_enabled = ( self.config.get( TICKET_CUSTOM, "baseline_start") or \
                      self.config.get( TICKET_CUSTOM, "baseline_finish"))
 
