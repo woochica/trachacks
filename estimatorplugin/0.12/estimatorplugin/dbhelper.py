@@ -1,6 +1,3 @@
-mylog = None;
-env = None;
-
 def get_all(env, sql, *params):
     """Executes the query and returns the (description, data)"""
     db = env.get_read_db()
@@ -12,7 +9,7 @@ def get_all(env, sql, *params):
         data = list(cur.fetchall())
         desc = cur.description
     except Exception, e:
-        mylog.error('There was a problem executing sql:%s \n \
+        env.log.error('There was a problem executing sql:%s \n \
 with parameters:%s\nException:%s'%(sql, params, e));
    
     return (desc, data)
@@ -30,7 +27,7 @@ def get_first_row(env, sql,*params):
         cur.execute(sql, params)
         data = cur.fetchone();
     except Exception, e:
-        mylog.error('There was a problem executing sql:%s \n \
+        env.log.error('There was a problem executing sql:%s \n \
         with parameters:%s\nException:%s'%(sql, params, e));
     return data;
 
@@ -55,12 +52,9 @@ def execute_in_trans(env, *args):
                 c_params[0] = params
                 cur.execute(sql, params)
     except Exception, e:
-        mylog.exception('There was a problem executing sql:%s \n \
+        env.log.exception('There was a problem executing sql:%s \n \
     with parameters:%s\nException:%s'%(c_sql[0], c_params[0], e));
         result = e
-
-    mylog.debug("Calling exec in trans, result: %s\n%s" % (result, args))
-
     return result
 
 def db_table_exists(env,  table):

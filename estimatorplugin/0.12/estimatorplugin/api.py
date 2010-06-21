@@ -14,8 +14,7 @@ class EstimatorSetupParticipant(Component):
     """ Makes sure our database is what we expect """
     implements(IEnvironmentSetupParticipant)
     def __init__(self):
-        # Setup logging
-        dbhelper.mylog = self.log
+        pass
 
     def environment_created(self):
         """Called when a new Trac environment is created."""
