@@ -51,6 +51,20 @@ class TicketChangesetsAdmin(Component):
                """,
                None, self.diff)
                
+        yield ('ticket_changesets get', '[ticketid]',
+               """Get a comma-separated list of related revisions.
+               
+               List format:
+               #ticketid: rev/reponame,...
+               
+               "/reponame" is left out for the default repository.
+               
+               All tickets related to changesets are listed if ticketid is
+               omitted (one ticket on each line). If no changeset relation
+               exists, "None" is displayed.
+               """,
+               None, self.get_revs)
+               
         yield ('ticket_changesets reformat', '',
                """Reformat ticket commit messages (DANGEROUS!)
                
@@ -83,6 +97,27 @@ class TicketChangesetsAdmin(Component):
     def diff(self):
         self._scan_ticket_commit_messages(False)
         
+    def get_revs(self, tkt_id=None):
+        r = {}
+        if tkt_id is None:
+            # Get tickets from db
+            db = self.env.get_read_db()
+            cursor = db.cursor()
+            cursor.execute('SELECT ticket FROM ticket_changesets')
+            for tkt_id, in cursor:
+                csets = TicketChangesets(self.env).get(tkt_id)
+                for (reponame, changesets) in csets:
+                    r[tkt_id] = changesets.list_revs(reponame)
+        else:
+            csets = TicketChangesets(self.env).get(tkt_id)
+            for (reponame, changesets) in csets:
+                r[tkt_id] = changesets.list_revs(reponame)
+        if r:
+            for tkt_id, revs in r.iteritems():
+                printout('#%s: %s' % (tkt_id, ','.join(revs)))
+        else:
+            printout('None')
+            
     def reformat(self):
         self._scan_ticket_commit_messages(True)
         
@@ -121,8 +156,8 @@ class TicketChangesetsAdmin(Component):
                 if rev == repos.get_youngest_rev():
                     break
                 rev = repos.next_rev(rev)
-        print('Done, %d tickets related to %d changesets' %
-              (_count_affected_tickets(), n_changesets))
+        printout('Done, %d tickets related to %d changesets' %
+                 (_count_affected_tickets(), n_changesets))
 
     def _scan_ticket_commit_messages(self, reformat=False):
         """Convert commit messages from old to new format. (DANGEROUS)"""

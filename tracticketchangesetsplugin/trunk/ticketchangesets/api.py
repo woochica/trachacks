@@ -150,6 +150,14 @@ class Changesets(object):
         except:
             pass
 
+    def list_revs(self, reponame):
+        """Make list of revisions for a given repo"""
+        r = self.revs
+        if reponame and reponame != '(default)':
+            return ['%s/%s' % (c, reponame) for c in r]
+        else:
+            return ['%s' % c for c in r]
+
     def wiki_revs(self, reponame, compact):
         """Make wiki text of revisions for a given repo"""
         if compact:
