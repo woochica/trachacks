@@ -9,9 +9,8 @@ from trac.web.chrome import add_stylesheet, add_script, \
 from trac.web.href import Href
 from estimator import *
 from trac.ticket import Ticket
-import datetime, time
 from trac.web.chrome import Chrome
-from trac.util.datefmt import utc, to_timestamp
+from trac.util.datefmt import to_utimestamp, to_datetime, to_timestamp
 from trac.versioncontrol.diff import get_diff_options, diff_blocks
 from genshi.template import TemplateLoader
 from genshi.filters.transform import Transformer
@@ -151,7 +150,7 @@ class EstimationsPage(Component):
                      [t,
                     #there were problems if we update the same tickets comment in the same tick
                     # so we subtract an arbitrary tick to get around this
-                      to_timestamp(datetime.datetime.now(utc)) - 1,
+                      to_utimestamp(to_datetime(None)) - 1,# now -1
                       req.authname,
                       comment
                       ])
@@ -196,11 +195,11 @@ class EstimationsPage(Component):
                 old_tickets = self.notify_old_tickets(req, id, addMessage, req.authname, args['diffcomment'])
                 sql = estimateUpdate
             self.log.debug('Old Tickets to Update: %r' % old_tickets)
-            save_epoch = int(time.mktime(datetime.datetime.now().timetuple()))
+            save_epoch = to_timestamp(to_datetime(None))
             estimate_args = [args['rate'], args['variability'],
                              args['communication'], tickets,
                              args['comment'], args['diffcomment'], save_epoch, id]
-            self.log.debug("Sql:%s\n\nArgs:%s\n\n" % (sql, estimate_args));
+            #self.log.debug("Sql:%s\n\nArgs:%s\n\n" % (sql, estimate_args));
             saveEstimate = (sql, estimate_args)
             saveLineItems = []
             newLineItemId = nextEstimateLineItemId (self.env)

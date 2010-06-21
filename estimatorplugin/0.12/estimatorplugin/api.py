@@ -6,7 +6,7 @@ from macro_provider import *
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 
-dbversion = 5
+dbversion = 4
 dbkey = 'EstimatorPluginDbVersion'
 
 
