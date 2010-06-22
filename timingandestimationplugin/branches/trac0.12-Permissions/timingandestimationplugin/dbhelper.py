@@ -62,7 +62,7 @@ def db_table_exists(env,  table):
     db = env.get_read_db()
     cur = db.cursor()
     has_table = True;
-    try:
+    try: # an exception can break a transaction if we are in one
         cur.execute("SAVEPOINT db_table_exists;")
         cur.execute("SELECT * FROM %s LIMIT 1" % table)
     except Exception, e:
