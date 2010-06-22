@@ -42,7 +42,7 @@ class WatchlistDataBase(Component):
         self.env.log.info("Creating table '%s' for WatchlistPlugin", (name,) )
         db_connector, _ = DatabaseManager(self.env)._get_connector()
 
-        table = Table(name)[
+        table = Table(name, key=['wluser',])[
                     Column('wluser'),
                     Column('realm'),
                     Column('resid'),
@@ -67,8 +67,8 @@ class WatchlistDataBase(Component):
         db_connector, _ = DatabaseManager(self.env)._get_connector()
         self.env.log.info("Creating 'watchlist_settings' table")
 
-        table = Table('watchlist_settings')[
-                    Column('wluser', unique=True),
+        table = Table('watchlist_settings', key=['wluser',])[
+                    Column('wluser'),
                     Column('settings'),
                 ]
 

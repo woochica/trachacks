@@ -573,8 +573,8 @@ class WatchlistPlugin(Component):
         db_connector, _ = DatabaseManager(self.env)._get_connector()
         self.env.log.info("Creating 'watchlist_settings' table")
 
-        table = Table('watchlist_settings')[
-                    Column('wluser', unique=True),
+        table = Table('watchlist_settings', key='wluser')[
+                    Column('wluser'),
                     Column('settings'),
                 ]
 
