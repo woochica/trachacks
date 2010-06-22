@@ -78,8 +78,9 @@ class TimeTrackingTicketObserver(Component):
             if ticket.values.has_key(name):
                 return tipe(ticket.values[name] or default)
             else:
-                val = dbhelper.get_first_row(self.env, "SELECT * FROM ticket_custom where ticket=%s and name=%s",
-                                             (ticket.id, name))
+                val = dbhelper.get_first_row(
+                    self.env, "SELECT * FROM ticket_custom where ticket=%s and name=%s",
+                    ticket.id, name)
                 if val:
                     return tipe(val[2] or default)
                 return default

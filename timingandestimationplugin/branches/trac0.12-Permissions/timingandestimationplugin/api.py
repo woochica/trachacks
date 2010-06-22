@@ -62,7 +62,7 @@ class TimeTrackingSetupParticipant(Component):
         self.db_version_key = 'TimingAndEstimationPlugin_Db_Version'
         self.db_version = 8
         # Initialise database schema version tracking.
-        self.db_installed_version = dbhelper.get_system_value(self, \
+        self.db_installed_version = dbhelper.get_system_value(self.env, \
             self.db_version_key) or 0
 
     def environment_created(self):
@@ -84,18 +84,18 @@ class TimeTrackingSetupParticipant(Component):
             str_value text
             );
             """
-            dbhelper.execute_non_query(self,  sql)
+            dbhelper.execute_non_query(self.env,  sql)
 
 
         if self.db_installed_version < 5:
-            if dbhelper.db_table_exists(self, 'report_version'):
+            if dbhelper.db_table_exists(self.env, 'report_version'):
                 print "Dropping report_version table"
                 sql = "DELETE FROM report " \
                     "WHERE author=%s AND id IN (SELECT report FROM report_version)"
-                dbhelper.execute_non_query(self, sql, 'Timing and Estimation Plugin')
+                dbhelper.execute_non_query(self.env, sql, 'Timing and Estimation Plugin')
 
                 sql = "DROP TABLE report_version"
-                dbhelper.execute_non_query(self, sql)
+                dbhelper.execute_non_query(self.env, sql)
 
         #version 6 upgraded reports
 
@@ -110,7 +110,7 @@ class TimeTrackingSetupParticipant(Component):
 
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # This statement block always goes at the end this method
-        dbhelper.set_system_value(self, self.db_version_key, self.db_version)
+        dbhelper.set_system_value(self.env, self.db_version_key, self.db_version)
         self.db_installed_version = self.db_version
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -135,7 +135,7 @@ class TimeTrackingSetupParticipant(Component):
     def do_reports_upgrade(self, force=False):
         self.log.debug( "Beginning Reports Upgrade");
         mgr = CustomReportManager(self.env, self.log)
-        statuses = get_statuses(self)
+        statuses = get_statuses(self.env)
         stat_vars = status_variables(statuses)
 
         for report_group in all_reports:
@@ -208,8 +208,9 @@ class TimeTrackingSetupParticipant(Component):
         self.config.save();
 
     def needs_user_man(self):
-        maxversion = dbhelper.get_scalar(self, "SELECT MAX(version) FROM wiki WHERE name like %s", 0,
-                                         user_manual_wiki_title)
+        maxversion = dbhelper.get_scalar(
+            self.env, "SELECT MAX(version) FROM wiki WHERE name like %s", 0,
+            user_manual_wiki_title)
         if (not maxversion) or maxversion < user_manual_version:
             return True
         return False
@@ -221,7 +222,7 @@ class TimeTrackingSetupParticipant(Component):
         INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly)
         VALUES ( %s, %s, %s, 'Timing and Estimation Plugin', '127.0.0.1', %s,'',0)
         """
-        dbhelper.execute_non_query(self, sql,
+        dbhelper.execute_non_query(self.env, sql,
                                    user_manual_wiki_title,
                                    user_manual_version,
                                    when,
@@ -235,17 +236,19 @@ class TimeTrackingSetupParticipant(Component):
         performed, `False` otherwise.
 
         """
-        self.log.debug("NEEDS UP?: sys:%s, rep:%s, stats:%s, fields:%s, man:%s" % \
-                       ((self.system_needs_upgrade()),
-                        (self.reports_need_upgrade()),
-                        (self.have_statuses_changed()),
-                        (self.ticket_fields_need_upgrade()),
-                        (self.needs_user_man())))
-        return (self.system_needs_upgrade()) or \
-               (self.reports_need_upgrade()) or \
-               (self.have_statuses_changed()) or \
-               (self.ticket_fields_need_upgrade()) or \
-               (self.needs_user_man())
+        sysUp = self.system_needs_upgrade()
+        # Dont check for upgrades that will break the transaction
+        # If we dont have a system, then everything needs to be updated
+        res = (sysUp,
+               sysUp or self.reports_need_upgrade(),
+               sysUp or self.have_statuses_changed(),
+               sysUp or self.ticket_fields_need_upgrade(),
+               sysUp or self.needs_user_man())
+        self.log.debug("T&E NEEDS UP?: sys:%s, rep:%s, stats:%s, fields:%s, man:%s" % \
+                       res)
+        r = False;
+        for i in res: r |= i
+        return r
 
     def upgrade_environment(self, db):
         """Actually perform an environment upgrade.
@@ -265,9 +268,9 @@ class TimeTrackingSetupParticipant(Component):
 
         #make sure we upgrade the statuses string so that we dont need to always rebuild the
         # reports
-        stats = get_statuses(self)
+        stats = get_statuses(self.env)
         val = ','.join(list(stats))
-        dbhelper.set_system_value(self, self.statuses_key, val)
+        dbhelper.set_system_value(self.env, self.statuses_key, val)
 
         if self.ticket_fields_need_upgrade():
             p("Upgrading fields")
@@ -282,10 +285,10 @@ class TimeTrackingSetupParticipant(Component):
         compare them to the ones we have now (ignoring '' and None),
         if we have different ones, throw return true
         """
-        s = dbhelper.get_system_value(self, self.statuses_key)
+        s = dbhelper.get_system_value(self.env, self.statuses_key)
         if not s:
             return True
-        sys_stats = get_statuses(self)
+        sys_stats = get_statuses(self.env)
         s = s.split(',')
         sys_stats.symmetric_difference_update(s)
         sys_stats.difference_update(['', None])

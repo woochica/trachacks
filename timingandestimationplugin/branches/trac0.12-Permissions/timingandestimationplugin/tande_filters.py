@@ -44,7 +44,7 @@ def new_csv_export(self, req, query, sep=',', mimetype='text/plain'):
     writer.writerow([unicode(c).encode('utf-8') for c in cols if c not in hidden_fields])
     
     context = Context.from_request(req)
-    results = query.execute(req, self.env.get_db_cnx())
+    results = query.execute(req, self.env.get_read_db())
     self.log.debug('QueryModule.csv_export: hidding columns %s' %  hidden_fields)
     for result in results:
         ticket = Resource('ticket', result['id'])

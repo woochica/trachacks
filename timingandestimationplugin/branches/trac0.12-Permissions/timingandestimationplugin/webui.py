@@ -42,7 +42,7 @@ class TimingEstimationAndBillingPage(Component):
         INSERT INTO bill_date (time, set_when, str_value)
         VALUES (%s, %s, %s)
         """
-        dbhelper.execute_non_query(self, sql, trac.util.datefmt.to_timestamp(when),
+        dbhelper.execute_non_query(self.env, sql, trac.util.datefmt.to_timestamp(when),
                                    trac.util.datefmt.to_timestamp(now), strwhen)
 
 
@@ -69,7 +69,7 @@ class TimingEstimationAndBillingPage(Component):
         FROM bill_date
         ORDER BY time DESC
         """
-        rs = dbhelper.get_result_set(self, billing_time_sql)
+        rs = dbhelper.get_result_set(self.env, billing_time_sql)
         if rs:
             for (value, text) in rs.rows:
                 billing_info = {'text':text , 'value':value*1000*1000}

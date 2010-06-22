@@ -8,13 +8,13 @@ except NameError:
 def status_variables(statuses):
     return ', '.join(['$'+i.upper().replace("_","").replace(" ","") for i in list(statuses)])
 
-def get_statuses(com):
-    config = com.config
+def get_statuses(env):
+    config = env.config
     stats = get_statuses_from_workflow(config)
     status_sql = """
     SELECT DISTINCT status FROM ticket WHERE status <> '' ;
     """
-    stats |= set(dbhelper.get_column_as_list(com, status_sql))
+    stats |= set(dbhelper.get_column_as_list(env, status_sql))
     stats.difference_update(['', None])
     return stats
 

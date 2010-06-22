@@ -82,7 +82,7 @@ def report_id_from_text(text):
 
 def get_billing_reports(comp):
     billing_reports = set()
-    rows = dbhelper.get_all(comp, "SELECT id FROM custom_report")[1]
+    rows = dbhelper.get_all(comp.env, "SELECT id FROM custom_report")[1]
     if rows:
         billing_reports = set([x[0] for x in rows])
     return billing_reports
