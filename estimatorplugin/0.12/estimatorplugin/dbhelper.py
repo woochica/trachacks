@@ -1,3 +1,5 @@
+from trac.db import DatabaseManager
+
 def get_all(env, sql, *params):
     """Executes the query and returns the (description, data)"""
     db = env.get_read_db()
@@ -59,14 +61,14 @@ def execute_in_trans(env, *args):
 
 def db_table_exists(env,  table):
     db = env.get_read_db()
-    sql = "SELECT * FROM %s LIMIT 1" % table;
     cur = db.cursor()
     has_table = True;
-    try:
-        cur.execute(sql)
+    try: # an exception can break a transaction if we are in one
+        cur.execute("SAVEPOINT db_table_exists;")
+        cur.execute("SELECT * FROM %s LIMIT 1" % table)
     except Exception, e:
+        cur.execute("ROLLBACK TO SAVEPOINT db_table_exists;")
         has_table = False
-        
     return has_table
 
 def get_column_as_list(env, sql, col=0, *params):
