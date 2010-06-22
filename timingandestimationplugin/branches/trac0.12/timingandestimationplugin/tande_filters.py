@@ -36,7 +36,7 @@ class RowFilter(object):
 
     def __init__(self, comp):
         self.component = comp
-        rows = dbhelper.get_all(comp, "SELECT id FROM custom_report")[1]
+        rows = dbhelper.get_all(comp.env, "SELECT id FROM custom_report")[1]
         if rows:
             self.billing_reports = set([x[0] for x in rows])
         else:

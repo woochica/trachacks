@@ -1,6 +1,7 @@
 from trac.ticket import ITicketChangeListener, Ticket, ITicketManipulator
 from trac.core import *
 import datetime
+import dbhelper
 
 def identity(x):
     return x;
@@ -22,7 +23,7 @@ except Exception:
 
 
 def save_custom_field_value( db, ticket_id, field, value ):
-    cursor = db.cursor();
+    cursor = db.cursor()
     cursor.execute("SELECT * FROM ticket_custom "
                    "WHERE ticket=%s and name=%s", (ticket_id, field))
     if cursor.fetchone():
@@ -33,7 +34,6 @@ def save_custom_field_value( db, ticket_id, field, value ):
         cursor.execute("INSERT INTO ticket_custom (ticket,name, "
                        "value) VALUES(%s,%s,%s)",
                        (ticket_id, field, value))
-    db.commit()
 
 DONTUPDATE = "DONTUPDATE"
 
@@ -66,7 +66,6 @@ def save_ticket_change( db, ticket_id, author, change_time, field, oldvalue, new
             cursor.execute("""INSERT INTO ticket_change  (ticket,time,author,field, oldvalue, newvalue)
                         VALUES(%s, %s, %s, %s, %s, %s)""",
                            (ticket_id, change_time, author, field, oldvalue, newvalue))
-    db.commit()
 
 class TimeTrackingTicketObserver(Component):
     implements(ITicketChangeListener)
@@ -79,9 +78,8 @@ class TimeTrackingTicketObserver(Component):
             if ticket.values.has_key(name):
                 return tipe(ticket.values[name] or default)
             else:
-                cursor = self.env.get_db_cnx().cursor()
-                cursor.execute("SELECT * FROM ticket_custom where ticket=%s and name=%s" , (ticket.id, name))
-                val = cursor.fetchone()
+                val = dbhelper.get_first_row(self.env, "SELECT * FROM ticket_custom where ticket=%s and name=%s",
+                                             (ticket.id, name))
                 if val:
                     return tipe(val[2] or default)
                 return default
@@ -90,7 +88,7 @@ class TimeTrackingTicketObserver(Component):
         hours = readTicketValue("hours", convertfloat)
         totalHours = readTicketValue("totalhours", convertfloat)
 
-        db = self.env.get_db_cnx()
+        
         ticket_id = ticket.id
         cl = ticket.get_changelog()
 
@@ -108,25 +106,27 @@ class TimeTrackingTicketObserver(Component):
             change_time = ticket.time_created
             author = ticket.values["reporter"]
 
+        @self.env.with_transaction()
+        def fn(db):
+            ## SAVE estimated hour
+            estimatedhours = readTicketValue("estimatedhours", convertfloat)
+            self.log.debug("found Estimated hours:"+str(estimatedhours))
+            save_ticket_change( db, ticket_id, author, change_time, "estimatedhours",
+                                DONTUPDATE, str(estimatedhours), self.log, True)
+            save_custom_field_value( db, ticket.id, "estimatedhours", str(estimatedhours))
+            #######################
 
-        ## SAVE estimated hour
-        estimatedhours = readTicketValue("estimatedhours", convertfloat)
-        self.log.debug("found Estimated hours:"+str(estimatedhours))
-        db = self.env.get_db_cnx()
-        save_ticket_change( db, ticket_id, author, change_time, "estimatedhours", DONTUPDATE, str(estimatedhours), self.log, True)
-        save_custom_field_value( db, ticket.id, "estimatedhours", str(estimatedhours))
-        db.commit();
-        #######################
 
-
-        ## If our hours changed
-        if not hours == 0:
-            newtotal = str(totalHours+hours)
-            save_ticket_change( db, ticket_id, author, change_time, "hours", '0.0', str(hours), self.log)
-            save_ticket_change( db, ticket_id, author, change_time, "totalhours", str(totalHours), str(newtotal), self.log)
-            save_custom_field_value( db, ticket_id, "hours", '0')
-            save_custom_field_value( db, ticket_id, "totalhours", str(newtotal) )
-        ########################
+            ## If our hours changed
+            if not hours == 0:
+                newtotal = str(totalHours+hours)
+                save_ticket_change( db, ticket_id, author, change_time, "hours",
+                                    '0.0', str(hours), self.log)
+                save_ticket_change( db, ticket_id, author, change_time, "totalhours",
+                                    str(totalHours), str(newtotal), self.log)
+                save_custom_field_value( db, ticket_id, "hours", '0')
+                save_custom_field_value( db, ticket_id, "totalhours", str(newtotal) )
+            ########################
 
     # END of watch_hours
 
