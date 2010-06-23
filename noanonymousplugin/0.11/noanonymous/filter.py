@@ -8,7 +8,7 @@ class NoAnonymousModule(Component):
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        paths = ['/login', '/reset_password']
+        paths = ['/login', '/reset_password', '/chrome/site', '/chrome/common']
 
         if req.authname == 'anonymous':
             for p in paths:
