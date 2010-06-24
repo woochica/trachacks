@@ -39,7 +39,7 @@ from trac.mimeview.api import IHTMLPreviewRenderer, content_to_unicode
 import creoleparser
 
 class WikiCreoleRenderer(Component):
-    """Renders nroff man page as HTML."""
+    """Renders WikiCreole text as HTML."""
     implements(IHTMLPreviewRenderer)
 
     expand_tabs = False
