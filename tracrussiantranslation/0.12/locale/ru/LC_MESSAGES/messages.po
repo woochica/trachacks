@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Trac 0.12\n"
 "Report-Msgid-Bugs-To: trac-dev@googlegroups.com\n"
 "POT-Creation-Date: 2007-07-15 21:01+0200\n"
-"PO-Revision-Date: 2010-06-23 17:02+0300\n"
+"PO-Revision-Date: 2010-06-23 20:15+0300\n"
 "Last-Translator: Dmitri Bogomolov <4glitch@gmail.com>\n"
 "Language-Team: ru_RU <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
@@ -54,20 +54,20 @@ msgid "Comment %(num)s not found"
 msgstr "Комментарий %(num)s не найден"
 
 #: tracopt/ticket/templates/ticket_delete.html:11
-#, fuzzy, python-format
+#, python-format
 msgid "Delete Ticket #%(id)s"
-msgstr "Удалить билет №"
+msgstr "Удалить билет №%(id)s"
 
 #: tracopt/ticket/templates/ticket_delete.html:12
 #: tracopt/ticket/templates/ticket_delete.html:49
-#, fuzzy, python-format
+#, python-format
 msgid "Delete comment %(num)s on Ticket #%(id)s"
-msgstr "Комментарий %(cnum)s для Билета №%(id)s"
+msgstr "Комментарий %(num)s для Билета №%(id)s"
 
 #: tracopt/ticket/templates/ticket_delete.html:20
-#, fuzzy, python-format
+#, python-format
 msgid "Delete [1:Ticket #%(id)s]"
-msgstr "Удалить билет №"
+msgstr "Удалить [1:билет №%(id)s]"
 
 #: tracopt/ticket/templates/ticket_delete.html:33
 msgid "Are you sure you want to delete this ticket?"
@@ -143,16 +143,16 @@ msgid "Could not delete attachment"
 msgstr "Ошибка удаления вложения"
 
 #: trac/attachment.py:210
-#, python-format
+#, python-format, fuzzy
 msgid ""
 "Cannot reparent attachment \"%(att)s\" as it already exists in "
 "%(realm)s:%(id)s"
-msgstr ""
+msgstr "Не удается переподчинить вложение \"%(att)s\", потому что оно уже существует в %(realm)s:%(id)s"
 
 #: trac/attachment.py:229
 #, fuzzy, python-format
 msgid "Could not reparent attachment %(name)s"
-msgstr ""
+msgstr "Не удалось переподчинить вложение %(name)s"
 
 #: trac/attachment.py:346
 #, python-format
@@ -176,7 +176,7 @@ msgstr "%(attachment)s прикреплено к %(resource)s"
 #: trac/attachment.py:587
 #, fuzzy, python-format
 msgid "Unparented attachment %(id)s"
-msgstr "Потерянное вложение: %(id)s"
+msgstr "Потерянное вложение %(id)s"
 
 #: trac/attachment.py:595
 #, python-format
@@ -326,7 +326,7 @@ msgstr ""
 msgid ""
 "Visit the Trac open source project at<br /><a "
 "href=\"http://trac.edgewall.org/\">http://trac.edgewall.org/</a>"
-msgstr ""
+msgstr "Посетите открытый проект Trac на <br /><a href=\\\"http://trac.edgewall.org/\\\">http://trac.edgewall.org/</a>"
 
 #: trac/env.py:582
 msgid "Database newer than Trac version"
@@ -429,19 +429,25 @@ msgid ""
 "\n"
 "  trac-admin %(path)s wiki upgrade"
 msgstr ""
+"Обновление выполнено.\n"
+"\n"
+"Возможно вы хотите обновить документацию Trac, тогда выполните:\n"
+"\n"
+"  trac-admin %(path)s wiki upgrade"
 
 #: trac/notification.py:155
 msgid "TLS enabled but server does not support TLS"
 msgstr "Включена опция TLS, однако сервер не поддерживает TLS"
 
 #: trac/notification.py:303
-#, fuzzy, python-format
+#, python-format
 msgid "Invalid email encoding setting: %(pref)s"
-msgstr "Неверный выбор кодировки email: %(pref)s"
+msgstr "Неверный выбор почтовой кодировки: %(pref)s"
 
 #: trac/notification.py:317
+#, fuzzy
 msgid "Unable to send email due to identity crisis."
-msgstr ""
+msgstr "Невозможно отправить письмо из-за кризиса идентификации."
 
 #: trac/notification.py:321
 #, python-format
@@ -710,7 +716,7 @@ msgstr ""
 #: trac/admin/console.py:536
 #, fuzzy, python-format
 msgid "Non-ascii environment path '%(path)s' not supported."
-msgstr "путь к окружению с не-ASCII символами '%(path)s' не поддерживается."
+msgstr "Путь к окружению с не-ASCII символами '%(path)s' не поддерживается."
 
 #: trac/admin/web_ui.py:65
 msgid "Admin"
@@ -843,6 +849,7 @@ msgid "Plugins"
 msgstr "Дополнения"
 
 #: trac/admin/web_ui.py:436
+#, fuzzy
 msgid "Uploaded file is not a Python source file or egg"
 msgstr "Принятый файл не является исходным кодом или яйцом Питона"
 
@@ -937,7 +944,7 @@ msgid ""
 "                here):"
 msgstr ""
 "Описание (здесь можно использовать\n"
-"                [1:WikiFormatting])"
+"                [1:WikiFormatting]):"
 
 #: trac/admin/templates/admin_components.html:56
 #: trac/admin/templates/admin_enums.html:25
@@ -1006,9 +1013,9 @@ msgstr ""
 "            не будет отображаться в интерфейсе пользователя."
 
 #: trac/admin/templates/admin_enums.html:14
-#, python-format
+#, python-format, fuzzy
 msgid "Manage %(label_plural)s"
-msgstr ""
+msgstr "Управлять %(label_plural)s"
 
 #: trac/admin/templates/admin_enums.html:19
 #, python-format
@@ -1160,7 +1167,8 @@ msgid ""
 "Note that [1:Subject] or [2:Group] names can't be all upper-case,\n"
 "      as that is reserved for permission names."
 msgstr ""
-"Имена [1:Субъектов] или [2:Групп] не могут состоять только из заглавных букв,\n"
+"Имена [1:Субъектов] или [2:Групп] не могут состоять только из заглавных "
+"букв,\n"
 "      т.к. такие слова зарезервированы для именования разрешений."
 
 #: trac/admin/templates/admin_plugins.html:42
@@ -1796,7 +1804,8 @@ msgid ""
 "Property %(name)s\n"
 "                  changed from %(old)s to %(new)s"
 msgstr ""
-"Свойство %(name)s\\n\n"
+"Свойство %(name)s\n"
+"\n"
 "         изменено с %(old)s на %(new)s"
 
 #: trac/templates/diff_div.html:76
@@ -1807,7 +1816,7 @@ msgstr "Свойство %(name)s установлено в %(value)s"
 #: trac/templates/diff_div.html:79
 #, python-format
 msgid "Property %(name)s deleted"
-msgstr "Свойство %(num)d удалено"
+msgstr "Свойство %(name)s удалено"
 
 #: trac/templates/diff_div.html:86
 msgid "Differences"
@@ -2195,11 +2204,15 @@ msgstr "(файл пуст)"
 msgid ""
 "[1:HTML preview not available], since the file size exceeds %(size)s "
 "bytes."
-msgstr "[1:Предпросмотр HTML недоступен], так как длина файла превышает %(size)s байт."
+msgstr ""
+"[1:Предпросмотр HTML недоступен], так как длина файла превышает %(size)s "
+"байт."
 
 #: trac/templates/preview_file.html:22
 msgid "[1:HTML preview not available], since no preview renderer could handle it."
-msgstr "[1:Предпросмотр HTML недоступен], так как обработчик не может с ним справиться."
+msgstr ""
+"[1:Предпросмотр HTML недоступен], так как обработчик не может с ним "
+"справиться."
 
 #: trac/templates/preview_file.html:26
 msgid "Try [1:downloading] the file instead."
@@ -2366,7 +2379,7 @@ msgstr "Не выбрано %s"
 #: trac/ticket/admin.py:650
 #, python-format
 msgid "The selected %(field)s values have been removed."
-msgstr "Выбранные значения %(fields)s были удалены."
+msgstr "Выбранные значения %(field)s были удалены."
 
 #: trac/ticket/admin.py:672
 msgid ""
@@ -2913,7 +2926,9 @@ msgstr "Действие \"%(name)s\" недоступно."
 msgid ""
 "Please review your configuration, probably starting with %(section)s in "
 "your %(tracini)s."
-msgstr "Пожалуйста проверьте вашу конфигурацию, пожалуй, начиная с %(section)s в %(tracini)s."
+msgstr ""
+"Пожалуйста проверьте вашу конфигурацию, пожалуй, начиная с %(section)s в "
+"%(tracini)s."
 
 #: trac/ticket/web_ui.py:580 trac/ticket/web_ui.py:797
 #, python-format
@@ -3162,17 +3177,17 @@ msgstr "изменено (%(diff)s)"
 #, fuzzy, python-format
 msgid "%(items)s added"
 msgid_plural "%(items)s added"
-msgstr[0] "%(item)s добавлен"
-msgstr[1] "%(item)s добавлено"
-msgstr[2] "%(item)s добавлены"
+msgstr[0] "%(items)s добавлен"
+msgstr[1] "%(items)s добавлено"
+msgstr[2] "%(items)s добавлены"
 
 #: trac/ticket/web_ui.py:1624
 #, fuzzy, python-format
 msgid "%(items)s removed"
 msgid_plural "%(items)s removed"
-msgstr[0] "%(item)s удален"
-msgstr[1] "%(item)s удалено"
-msgstr[2] "%(item)s удалены"
+msgstr[0] "%(items)s удален"
+msgstr[1] "%(items)s удалено"
+msgstr[2] "%(items)s удалены"
 
 #: trac/ticket/web_ui.py:1633
 #, fuzzy, python-format
@@ -3725,7 +3740,9 @@ msgstr "Принимается список адресов и имен поль�
 #: trac/wiki/templates/wiki_edit_form.html:50
 #, fuzzy
 msgid "E-mail address and user name can be saved in the [1:Preferences]."
-msgstr "Электронный адрес и имя пользователя могут быть сохранены в [1:Предпочтениях]."
+msgstr ""
+"Электронный адрес и имя пользователя могут быть сохранены в "
+"[1:Предпочтениях]."
 
 #: trac/ticket/templates/ticket.html:383
 msgid "I have files to attach to this ticket"
@@ -3872,7 +3889,7 @@ msgid "other kinds of events"
 msgstr "другие типы событий"
 
 #: trac/timeline/web_ui.py:354
-#, python-format, fuzzy
+#, fuzzy, python-format
 msgid "Event provider %(name)s failed for filters %(kinds)s: "
 msgstr "Поставщик событий %(name)s спотыкается на фильтрах %(kinds)s: "
 
@@ -3925,7 +3942,7 @@ msgstr ""
 "        для справки по истории изменений."
 
 #: trac/util/datefmt.py:82
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)d year"
 msgid_plural "%(num)d years"
 msgstr[0] "%(num)d год"
@@ -3933,7 +3950,7 @@ msgstr[1] "%(num)d года"
 msgstr[2] "%(num)d лет"
 
 #: trac/util/datefmt.py:83
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)d month"
 msgid_plural "%(num)d months"
 msgstr[0] "%(num)d месяц"
@@ -3941,7 +3958,7 @@ msgstr[1] "%(num)d месяца"
 msgstr[2] "%(num)d месяцев"
 
 #: trac/util/datefmt.py:84
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)d week"
 msgid_plural "%(num)d weeks"
 msgstr[0] "%(num)d неделя"
@@ -3949,7 +3966,7 @@ msgstr[1] "%(num)d недели"
 msgstr[2] "%(num)d недель"
 
 #: trac/util/datefmt.py:85
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)d day"
 msgid_plural "%(num)d days"
 msgstr[0] "%(num)d день"
@@ -3957,7 +3974,7 @@ msgstr[1] "%(num)d дня"
 msgstr[2] "%(num)d дней"
 
 #: trac/util/datefmt.py:86
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)d hour"
 msgid_plural "%(num)d hours"
 msgstr[0] "%(num)d час"
@@ -3965,7 +3982,7 @@ msgstr[1] "%(num)d часа"
 msgstr[2] "%(num)d часов"
 
 #: trac/util/datefmt.py:87
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)d minute"
 msgid_plural "%(num)d minutes"
 msgstr[0] "%(num)d минута"
@@ -3973,7 +3990,7 @@ msgstr[1] "%(num)d минуты"
 msgstr[2] "%(num)d минут"
 
 #: trac/util/datefmt.py:106
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)i second"
 msgid_plural "%(num)i seconds"
 msgstr[0] "%(num)i секунда"
@@ -4045,7 +4062,7 @@ msgid "Resyncing repository history for %(reponame)s... "
 msgstr "Перечитывание истории хранилища %(reponame)s... "
 
 #: trac/versioncontrol/admin.py:142
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)s revision cached."
 msgid_plural "%(num)s revisions cached."
 msgstr[0] "%(num)s правка получена"
@@ -4073,14 +4090,18 @@ msgstr "Теперь следует выполнить %(resync)s для син�
 #: trac/versioncontrol/admin.py:208
 #, python-format
 msgid "You may have to run %(resync)s to synchronize Trac with the repository."
-msgstr "Может потребоваться выполнить %(resync)s для синхронизации Trac с хранилищем."
+msgstr ""
+"Может потребоваться выполнить %(resync)s для синхронизации Trac с "
+"хранилищем."
 
 #: trac/versioncontrol/admin.py:216
 #, python-format
 msgid ""
 "You will need to update your post-commit hook to call %(cset_added)s with"
 " the new repository name."
-msgstr "Вам потребуется обновить обработчик post-commit для вызова %(cset_added)s с новым именем хранилища."
+msgstr ""
+"Вам потребуется обновить обработчик post-commit для вызова %(cset_added)s"
+" с новым именем хранилища."
 
 #: trac/versioncontrol/admin.py:238
 #, python-format
@@ -4092,7 +4113,9 @@ msgstr "Хранилище \"%(name)s\" добавлено."
 msgid ""
 "You should also set up a post-commit hook on the repository to call "
 "%(cset_added)s for each committed changeset."
-msgstr "Можно также настроить обработчик post-commit в хранилище для вызова %(cset_added)s для каждого зафиксированного набора изменений."
+msgstr ""
+"Можно также настроить обработчик post-commit в хранилище для вызова "
+"%(cset_added)s для каждого зафиксированного набора изменений."
 
 #: trac/versioncontrol/admin.py:254
 msgid "Missing arguments to add a repository."
@@ -4629,7 +4652,7 @@ msgid "view diffs"
 msgstr "смотреть разницы"
 
 #: trac/versioncontrol/templates/changeset.html:122
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)d diff"
 msgid_plural "%(num)d diffs"
 msgstr[0] "%(num)d различие"
@@ -4637,7 +4660,7 @@ msgstr[1] "%(num)d различия"
 msgstr[2] "%(num)d различий"
 
 #: trac/versioncontrol/templates/changeset.html:125
-#, python-format
+#, fuzzy, python-format
 msgid "%(num)d prop"
 msgid_plural "%(num)d props"
 msgstr[0] "%(num)d свойство"
@@ -4666,6 +4689,7 @@ msgid "Location:"
 msgstr "Расположение:"
 
 #: trac/versioncontrol/templates/changeset.html:170
+#, fuzzy
 msgid "File:"
 msgid_plural "Files:"
 msgstr[0] "Файл:"
@@ -4895,7 +4919,9 @@ msgstr "Копировано или переименовано"
 #: trac/versioncontrol/templates/revisionlog.html:182
 #, fuzzy
 msgid "Diff from Old Revision to New Revision (as selected in the Diff column)"
-msgstr "Разница между старой и новой правкой (в соответствии с выбором в столбце разниц)"
+msgstr ""
+"Разница между старой и новой правкой (в соответствии с выбором в столбце "
+"разниц)"
 
 #: trac/versioncontrol/templates/revisionlog.html:94
 msgid "Old / New"
@@ -5247,7 +5273,7 @@ msgid "Already logged in as %(user)s."
 msgstr "Вы уже представились как %(user)s."
 
 #: trac/web/chrome.py:567
-#, python-format, fuzzy
+#, fuzzy, python-format
 msgid "Error with navigation contributor \"%(name)s\""
 msgstr "Ошибка поставщика просмотра \"%(name)s\""
 
@@ -5888,311 +5914,4 @@ msgstr "(пустая страница)"
 #: trac/wiki/templates/wiki_view.html:128
 msgid "The following pages have a name similar to this page, and may be related:"
 msgstr "Следующая страница имеет имя, похожее на эту, и может быть связана:"
-
-#~ msgid "on Ticket #"
-#~ msgstr "к билету №"
-
-#~ msgid "(comments:"
-#~ msgstr "(комментарии:"
-
-#~ msgid ""
-#~ ",\n"
-#~ "                attachments:"
-#~ msgstr ""
-#~ ",\n"
-#~ "                        вложения:"
-
-#~ msgid "Upgrade done."
-#~ msgstr "Обновление завершено."
-
-#~ msgid "Group names must be in lower case and actions in upper case"
-#~ msgstr "Имена групп должны быть в нижнем регистре, а действий - в верхнем"
-
-#~ msgid "Note that"
-#~ msgstr "Обратите внимание, что"
-
-#~ msgid "Group"
-#~ msgstr "Группа"
-
-#~ msgid "Invalid unified diff content"
-#~ msgstr ""
-
-#~ msgid "(UTC)."
-#~ msgstr "(UTC)."
-
-#~ msgid ""
-#~ "Note: Universal Co-ordinated Time (UTC)"
-#~ " is also known as Greenwich Mean "
-#~ "Time (GMT)."
-#~ msgstr ""
-#~ "UTC, всеообщее скоординированное время, также"
-#~ " известно как GMT, среднее время по"
-#~ " Гринвичу."
-
-#~ msgid "http://trac.edgewall.org/"
-#~ msgstr "http://trac.edgewall.org/"
-
-#~ msgid "Add Attachment to"
-#~ msgstr "Добавить вложение к"
-
-#~ msgid "Property"
-#~ msgstr "Свойство"
-
-#~ msgid "to"
-#~ msgstr "на"
-
-#~ msgid "Show"
-#~ msgstr "Показать"
-
-#~ msgid "lines around each change"
-#~ msgstr "строк вокруг каждого изменения"
-
-#~ msgid "Changes"
-#~ msgstr "Изменения"
-
-#~ msgid "between"
-#~ msgstr "между"
-
-#~ msgid "and"
-#~ msgstr "и"
-
-#~ msgid "from"
-#~ msgstr "с"
-
-#~ msgid "of"
-#~ msgstr "из"
-
-#~ msgid "(IP:"
-#~ msgstr "(IP:"
-
-#~ msgid ""
-#~ "==== How to Reproduce ====\n"
-#~ "\n"
-#~ "While doing a"
-#~ msgstr ""
-#~ "==== Как воспроизвести ====\n"
-#~ "\n"
-#~ "Во время выполнения"
-
-#~ msgid "operation on `"
-#~ msgstr "операции с `"
-
-#~ msgid ""
-#~ "`, Trac issued an internal error.\n"
-#~ "\n"
-#~ "''(please provide additional details here)''"
-#~ msgstr ""
-#~ "`, возникла внутренняя ошибка Trac.\n"
-#~ "\n"
-#~ "''(здесь пожалуйста предоставьте детали)''"
-
-#~ msgid ""
-#~ "Request parameters:\n"
-#~ "{{{"
-#~ msgstr ""
-#~ "Параметры запроса:\n"
-#~ "{{{"
-
-#~ msgid "==== System Information ===="
-#~ msgstr "==== Системные сведения ==== "
-
-#~ msgid "==== Enabled Plugins ===="
-#~ msgstr "==== Включенные дополнения ===="
-
-#~ msgid ""
-#~ "==== Python Traceback ====\n"
-#~ "{{{"
-#~ msgstr ""
-#~ "==== Отладочный вывод python ====\n"
-#~ "{{{"
-
-#~ msgid "a ticket."
-#~ msgstr "билет."
-
-#~ msgid "You should"
-#~ msgstr "Вам следует"
-
-#~ msgid ""
-#~ "a ticket at the admin Trac to report\n"
-#~ "                    the issue."
-#~ msgstr ""
-
-#~ msgid "Note that the"
-#~ msgstr "Обратите внимание, что"
-
-#~ msgid "plugin seems to be involved."
-#~ msgstr "дополнение может быть причастно."
-
-#~ msgid "File \""
-#~ msgstr "Файл \""
-
-#~ msgid ""
-#~ "\",\n"
-#~ "                        line"
-#~ msgstr ""
-#~ "\",\n"
-#~ "                        строка"
-
-#~ msgid ", in"
-#~ msgstr ", в"
-
-#~ msgid "\", line"
-#~ msgstr "\", строка"
-
-#~ msgid "HTML preview not available"
-#~ msgstr "Просмотр в формате HTML невозможен"
-
-#~ msgid "Try"
-#~ msgstr "Попробуйте"
-
-#~ msgid "downloading"
-#~ msgstr "загрузить"
-
-#~ msgid "%(title)s %(unit)s:"
-#~ msgid_plural "%(title)s %(units)s:"
-#~ msgstr[0] ""
-#~ msgstr[1] ""
-#~ msgstr[2] ""
-
-#~ msgid "to "
-#~ msgstr "на "
-
-#~ msgid "ticket"
-#~ msgstr "билет"
-
-#~ msgid "Invalid action \"%(name)s\""
-#~ msgstr "Недопустимое действие \"%(name)s\""
-
-#~ msgid "by"
-#~ msgstr "-"
-
-#~ msgid "This is a list of available reports."
-#~ msgstr "Список доступных отчетов."
-
-#~ msgid "%(num)d match"
-#~ msgid_plural "%(num)d matches"
-#~ msgstr[0] "%(num)d совпадение"
-#~ msgstr[1] "%(num)d совпадения"
-#~ msgstr[2] "%(num)d совпадений"
-
-#~ msgid "No matches"
-#~ msgstr "Нет совпадений"
-
-#~ msgid "— at"
-#~ msgstr "— в"
-
-#~ msgid "The ticket validation has [1:failed]."
-#~ msgstr "Проверка корректности билета [1:провалена]."
-
-#~ msgid "Changed by"
-#~ msgstr "Изменен "
-
-#~ msgid "changed from"
-#~ msgstr "изменен с"
-
-#~ msgid "Changes (by"
-#~ msgstr "Изменения (от"
-
-#~ msgid ""
-#~ "-- \n"
-#~ "Ticket URL: <"
-#~ msgstr ""
-#~ "-- \n"
-#~ "Ссылка: <"
-
-#~ msgid "Unknown repository '%(reponame)s'"
-#~ msgstr "Неизвестное хранилища '%(reponame)s'"
-
-#~ msgid "Repository %(name)s does not exist."
-#~ msgstr "Хранилище %(name)s не существует."
-
-#~ msgid "Alias of"
-#~ msgstr "Псевдоним для"
-
-#~ msgid "in"
-#~ msgstr ""
-
-#~ msgid "View %(path_kind)s"
-#~ msgstr "Смотреть %(path_kind)s"
-
-#~ msgid "View log starting at"
-#~ msgstr "Смотреть журнал начиная с"
-
-#~ msgid "and back to"
-#~ msgstr "и назад до"
-
-#~ msgid "Show at most"
-#~ msgstr "Показывать не более"
-
-#~ msgid "revisions per page."
-#~ msgstr "правок на страницу."
-
-#~ msgid ""
-#~ "#\n"
-#~ "# ChangeLog for"
-#~ msgstr ""
-#~ "#\n"
-#~ "# История изменений для"
-
-#~ msgid " in $(reponame)s"
-#~ msgstr " в $(reponame)s"
-
-#~ msgid ""
-#~ "# \n"
-#~ "# Generated by Trac"
-#~ msgstr ""
-#~ "# \n"
-#~ "# Сгенерировано Trac"
-
-#~ msgid "No repository '%(repo)s' found"
-#~ msgstr "Не найдено хранилище '%(repo)s'"
-
-#~ msgid "No repository found for '%(reponame)s'"
-#~ msgstr "Не найдено хранилище '%(reponame)s'"
-
-#~ msgid "A datetime object must be specified"
-#~ msgstr "Должен быть указан объект даты/времени"
-
-#~ msgid " edited"
-#~ msgstr " изменена"
-
-#~ msgid "Are you sure you want to"
-#~ msgstr "Вы действительно хотите"
-
-#~ msgid "delete"
-#~ msgstr "удалить"
-
-#~ msgid "this page?"
-#~ msgstr "эту страницу?"
-
-#~ msgid "(highlighted below as deletions)."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Please review all those changes and manually merge them with your\n"
-#~ "        own changes."
-#~ msgstr ""
-#~ "Пожалуйста, просмотрите изменения и вручную объедините их\n"
-#~ "        с вашими."
-
-#~ msgid "If you're unsure about what you're doing, please press"
-#~ msgstr "Если вы не уверены в своих действиях, пожалуйста нажмите"
-
-#~ msgid ""
-#~ "(losing your changes) and start editing"
-#~ " the latest version of the page\n"
-#~ ""
-#~ "        again."
-#~ msgstr ""
-#~ "(отбросив свои изменения) и начните "
-#~ "редактировать последнюю версию страницы."
-
-#~ msgid "(modified by"
-#~ msgstr "(изменено пользователем"
-
-#~ msgid "Rename"
-#~ msgstr "Переименовать"
-
-#~ msgid "The page"
-#~ msgstr "Страница"
 
