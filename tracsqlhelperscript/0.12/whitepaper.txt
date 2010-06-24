@@ -1,0 +1,3 @@
+Table(name).select(*columns, limit=None, **where)
+Table(name).delete(**where)
+Table(name).set(**values, **where)
