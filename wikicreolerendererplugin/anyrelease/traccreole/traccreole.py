@@ -48,6 +48,19 @@ def wrap_stream(tag):
         yield genshi.core.END, genshi.core.QName(tag), (None, -1, -1)
     return wrap_filter
 
+def render_creole(text):
+    """Returns wikicreole text as html"""
+    if text.startswith(u"\ufeff"):
+        text = text[1:]
+    html = creoleparser.creole2html(text)
+    # convert wikicreole normally, and add a wiki class to each tablea
+    stream = creoleparser.creole2html.generate(text)
+    embodied_stream = stream.filter(wrap_stream(u"body"))
+    transformed_stream = embodied_stream | Transformer(".//table").attr("class", "wiki")
+    disembodied_stream = transformed_stream.select("*")
+    html = disembodied_stream.render()
+    return html
+
 class WikiCreoleRenderer(Component):
     """Renders WikiCreole text as HTML."""
     implements(IHTMLPreviewRenderer)
@@ -62,14 +75,5 @@ class WikiCreoleRenderer(Component):
     def render(self, req, mimetype, content, filename=None, rev=None):
         """Returns wikicreole text as html"""
         text = content_to_unicode(self.env, content, mimetype)
-        if text.startswith(u"\ufeff"):
-            text = text[1:]
-        html = creoleparser.creole2html(text)
-        # convert wikicreole normally, and add a wiki class to each tablea
-        stream = creoleparser.creole2html.generate(text)
-        embodied_stream = wrap_stream(u"body")
-        transformed_stream = embodied_stream | Transformer(".//table").wrap("").attr("class", "wiki")
-        disembodied_stream = transformed_stream.select("*")
-        html = disembodied_stream.render()
-        return html
+        return render_creole(text)
 
