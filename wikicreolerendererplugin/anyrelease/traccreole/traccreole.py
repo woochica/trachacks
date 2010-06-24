@@ -36,7 +36,17 @@ See wikicreole for more info: http://www.wikicreole.org/
 
 from trac.core import *
 from trac.mimeview.api import IHTMLPreviewRenderer, content_to_unicode
+from genshi.filters import Transformer
+import genshi
 import creoleparser
+
+def wrap_stream(tag):
+    def wrap_filter(stream):
+        yield genshi.core.START, (genshi.core.QName(tag), genshi.core.Attrs()), (None, -1, -1)
+        for kind, data, pos in stream:
+            yield kind, data, pos
+        yield genshi.core.END, genshi.core.QName(tag), (None, -1, -1)
+    return wrap_filter
 
 class WikiCreoleRenderer(Component):
     """Renders WikiCreole text as HTML."""
@@ -55,5 +65,11 @@ class WikiCreoleRenderer(Component):
         if text.startswith(u"\ufeff"):
             text = text[1:]
         html = creoleparser.creole2html(text)
+        # convert wikicreole normally, and add a wiki class to each tablea
+        stream = creoleparser.creole2html.generate(text)
+        embodied_stream = wrap_stream(u"body")
+        transformed_stream = embodied_stream | Transformer(".//table").wrap("").attr("class", "wiki")
+        disembodied_stream = transformed_stream.select("*")
+        html = disembodied_stream.render()
         return html
 
