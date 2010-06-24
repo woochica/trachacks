@@ -2,7 +2,7 @@
 DB utility functions
 """
 
-# XXX this should be moved to its own module
+# XXX important -- see http://trac-hacks.org/attachment/ticket/7262
 
 from trac.db import DatabaseManager
 
@@ -29,10 +29,10 @@ with parameters:%s
 Exception:%s""" %(sql, params, e))
             db.rollback()
             raise
-        try:
-            db.close()
-        except:
-            pass
+        #try:
+        #    db.close()
+        #except:
+        #    pass
         return self.return_values(**_data)
 
 execute_non_query = SQLHelper()
