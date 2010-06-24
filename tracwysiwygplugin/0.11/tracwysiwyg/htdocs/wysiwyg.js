@@ -115,6 +115,11 @@ TracWysiwyg.prototype.initializeEditor = function(d) {
         '<base href="', l.protocol, '//', l.host, '/" />',
         '<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />');
     var stylesheets = TracWysiwyg.tracPaths.stylesheets;
+    if (!stylesheets) {
+        // Work around wysiwyg stops with Agilo
+        var base = TracWysiwyg.tracPaths.base.replace(/\/*$/, "/");
+        stylesheets = [ base + "chrome/common/css/trac.css", base + "chrome/tracwysiwyg/editor.css" ];
+    }
     var length = stylesheets.length;
     for (var i = 0; i < length; i++) {
         html.push('<link rel="stylesheet" href="' + stylesheets[i] + '" type="text/css" />');
