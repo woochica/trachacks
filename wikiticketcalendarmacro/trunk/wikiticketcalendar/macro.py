@@ -25,11 +25,16 @@ from datetime               import datetime
 from inspect                import getdoc
 from pkg_resources          import resource_filename
 from string                 import replace
+from StringIO               import StringIO
 
 from genshi.builder         import tag
-from genshi.core            import Markup
+# FIXME: remove following Markup import with debug code later
+from genshi.core            import escape, Markup
+from genshi.filters.html    import HTMLSanitizer
+from genshi.input           import HTMLParser, ParseError
+from genshi.util            import plaintext
 
-from trac.config            import Option
+from trac.config            import BoolOption, Option
 from trac.core              import implements
 from trac.util.datefmt      import to_utimestamp, FixedOffset
 from trac.util.text         import to_unicode
@@ -37,6 +42,7 @@ from trac.util.translation  import domain_functions
 from trac.web.href          import Href
 from trac.web.chrome        import add_stylesheet, ITemplateProvider
 from trac.wiki.api          import IWikiMacroProvider, WikiSystem
+from trac.wiki.formatter    import format_to_html
 from trac.wiki.macros       import WikiMacroBase
 
 _, tag_, N_, add_domain = \
@@ -101,6 +107,10 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             """)
         self.date_sep = Option('datefield', 'separator', default='-',
             doc="The separator character to use for dates.")
+
+        self.sanitize = True
+        if BoolOption('wiki', 'render_unsafe_content', False) is True:
+            self.sanitize = False
 
     # ITemplateProvider methods
     # Returns additional path where stylesheets are placed.
@@ -218,6 +228,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
         # building the output
         buff = []
+        buff.append('<div class="wikiTicketCalendar">')
         buff.append('<table class="wikiTicketCalendar"><caption>')
 
         if showbuttons is True:
@@ -362,11 +373,13 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             buff.append('<br>')
                             break
                         else:
-                            name = row[0]
+                            name = to_unicode(row[0])
                             url = self.env.href.milestone(name)
                             milestone = tag.div(tag.a('* ' + name, href=url))
                             milestone(class_='milestone')
-                            buff.append(to_unicode(str(milestone)))
+                            markup = format_to_html(self.env,
+                                         formatter.context, str(milestone))
+                            buff.append(to_unicode(markup))
 
                     cursor.execute("""
                         SELECT t.id,t.summary,t.owner,t.status,t.description
@@ -390,14 +403,28 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                 a_class = 'closed'
                             else:
                                 a_class = 'open'
-                            description = replace(description, "\'", "&#39;"),
+                            markup = format_to_html(self.env,
+                                              formatter.context, description)
+                            markup = replace(markup, u'<li>', u'<li>* ')
+                            markup = plaintext(markup)
+                            markup = replace(markup, u'\n', u'\n ')
+                            markup = replace(markup, u'\n \n', u' | ')
+                            # Escape if needed
+                            if self.sanitize is True:
+                                try:
+                                    description = HTMLParser(StringIO(markup)
+                                        ).parse() | HTMLSanitizer()
+                                except ParseError:
+                                    description = escape(markup)
+                            else:
+                                description = markup
 
                             ticketURL = tag.a('#' + id, href=url)
                             ticketURL(title=description, target='_blank')
                             ticket = tag.div(ticketURL)
                             ticket(class_=a_class, align='left')
                             ticket(' ', summary, ' (', owner, ')')
-                            buff.append(to_unicode(str(ticket)))
+                            buff.append(to_unicode(ticket))
 
                     if show_ticket_open_dates is True:
                         cursor.execute("""
@@ -411,7 +438,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                 break
                             id = str(row[0])
                             url = self.env.href.ticket(id)
-                            summary = row[1][0:100]
+                            summary = to_unicode(row[1][0:100])
                             owner = row[2]
                             status = row[3]
                             description = row[4][:1024]
@@ -424,19 +451,34 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                 a_class = 'closed'
                             else:
                                 a_class = 'open'
-                            description = replace(description, "\'", "&#39;"),
+                            markup = format_to_html(self.env,
+                                              formatter.context, description)
+                            markup = replace(markup, u'<li>', u'<li>* ')
+                            markup = plaintext(markup)
+                            markup = replace(markup, u'\n', u'\n ')
+                            markup = replace(markup, u'\n \n', u' | ')
+                            # Escape if needed
+                            if self.sanitize is True:
+                                try:
+                                    description = HTMLParser(StringIO(markup)
+                                        ).parse() | HTMLSanitizer()
+                                except ParseError:
+                                    description = escape(markup)
+                            else:
+                                description = markup
 
                             ticketURL = tag.a('#' + id, href=url)
                             ticketURL(title=description, target='_blank')
                             ticket = tag.div(ticketURL)
                             ticket(class_='opendate_' + a_class, align='left')
                             ticket(' ', summary, ' (', owner, ')')
-                            buff.append(to_unicode(str(ticket)))
+                            buff.append(to_unicode(ticket))
 
                 buff.append('</td>')
             buff.append('</tr>\n')
 
-        buff.append('</tbody>\n</table>')
+        buff.append('</tbody>\n</table>\n</div>')
 
         table = "\n".join(buff)
-        return Markup(table)
+
+        return table

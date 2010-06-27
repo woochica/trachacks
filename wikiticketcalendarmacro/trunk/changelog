@@ -169,3 +169,10 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
 1.1.4 - maintenance revision for 0.12 branch (09-Jun-2010)
  changes suggested by David Byrne
  * correct year switch test condition for 3-months-back nav link
+
+1.1.5 - development version for 0.12 branch (WiP)
+ changes by Steffen Hoffmann
+ * sanitize untrusted input before adding to calendar
+ * use Genshi's tag() for sane HTML code construction
+ * extend use of to_unicode() to further prevent encoding issues
+ * wrap calender in div section with own style
