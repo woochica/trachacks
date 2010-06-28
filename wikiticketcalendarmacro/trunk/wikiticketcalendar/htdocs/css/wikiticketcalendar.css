@@ -10,27 +10,27 @@ table.wikiTicketCalendar caption a {
     display: inline; margin: 0; border: 0; padding: 0;
     background-color: transparent; color: #b00; text-decoration: none;
     }
-table.wikiTicketCalendar caption a.prev { padding-right: 5px; font:bold; }
-table.wikiTicketCalendar caption a.next { padding-left: 5px; font:bold; }
+table.wikiTicketCalendar caption a.prev { padding-right: 5px; font: bold; }
+table.wikiTicketCalendar caption a.next { padding-left: 5px; font: bold; }
 table.wikiTicketCalendar caption a:hover { background-color: #eee; }
 table.wikiTicketCalendar td.today {
     background: #fbfbfb; border-color: #444444; color: #444;
-    border-style:solid; border-width:1px;
+    border-style: solid; border-width: 1px;
     }
 table.wikiTicketCalendar td.day {
     background: #e5e5e5; border-color: #444444; color: #333;
-    border-style:solid; border-width:1px;
+    border-style: solid; border-width: 1px;
     }
 table.wikiTicketCalendar div.milestone {
     font-size: 9px; background: #f7f7f0; border: 1px solid #d7d7d7;
     border-bottom-color: #999; text-align: left;
     }
 table.wikiTicketCalendar a.day {
-    width: 2em; height: 100%; margin:0; border: 0px; padding: 0;
+    width: 2em; height: 100%; margin: 0; border: 0px; padding: 0;
     color: #333; text-decoration: none;
     }
 table.wikiTicketCalendar a.day_haspage {
-    width: 2em; height: 100%; margin:0; border: 0px; padding: 0;
+    width: 2em; height: 100%; margin: 0; border: 0px; padding: 0;
     color: #b00 !important; text-decoration: none;
     }
 table.wikiTicketCalendar a.day:hover {
@@ -47,4 +47,15 @@ table.wikiTicketCalendar div.opendate_open {
     }
 table.wikiTicketCalendar div.opendate_closed {
     font-size: 9px; color: #000077; text-decoration: line-through;
+    }
+
+/* pure CSS style tooltip */
+table.wikiTicketCalendar a.tip {
+    position: relative; color: #000; text-decoration: none; cursor: help;
+    }
+table.wikiTicketCalendar a.tip span { display: none; }
+table.wikiTicketCalendar a.tip:hover span {
+    display: block; z-index: 1; font-size: 0.75em;
+    position: absolute; top: 0.8em; left: 0;
+    border: 1px solid #000; background-color: #fff; padding: 5px;
     }

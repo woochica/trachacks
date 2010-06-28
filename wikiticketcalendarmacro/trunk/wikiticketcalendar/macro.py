@@ -28,11 +28,9 @@ from string                 import replace
 from StringIO               import StringIO
 
 from genshi.builder         import tag
-# FIXME: remove following Markup import with debug code later
 from genshi.core            import escape, Markup
 from genshi.filters.html    import HTMLSanitizer
 from genshi.input           import HTMLParser, ParseError
-from genshi.util            import plaintext
 
 from trac.config            import BoolOption, Option
 from trac.core              import implements
@@ -313,7 +311,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 if not day:
                     buff.append('<td class="day">')
                 else:
-                    # first check for milestone on that day
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
                     utc = FixedOffset(0, 'UTC')
@@ -362,6 +359,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                         'sep': self.date_sep
                     }
 
+                    # first check for milestone on that day
                     cursor.execute("""
                         SELECT name
                           FROM milestone
@@ -377,10 +375,9 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             url = self.env.href.milestone(name)
                             milestone = tag.div(tag.a('* ' + name, href=url))
                             milestone(class_='milestone')
-                            markup = format_to_html(self.env,
-                                         formatter.context, str(milestone))
-                            buff.append(to_unicode(markup))
+                            buff.append(to_unicode(milestone))
 
+                    # get tickets with due date set to day
                     cursor.execute("""
                         SELECT t.id,t.summary,t.owner,t.status,t.description
                           FROM ticket t, ticket_custom tc
@@ -394,10 +391,10 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                         else:
                             id = str(row[0])
                             url = self.env.href.ticket(id)
-                            summary = row[1][0:100]
-                            owner = row[2]
+                            summary = to_unicode(row[1][0:100])
+                            owner = to_unicode(row[2])
                             status = row[3]
-                            description = row[4][:1024]
+                            description = to_unicode(row[4][:1024])
 
                             if status == 'closed':
                                 a_class = 'closed'
@@ -405,10 +402,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                 a_class = 'open'
                             markup = format_to_html(self.env,
                                               formatter.context, description)
-                            markup = replace(markup, u'<li>', u'<li>* ')
-                            markup = plaintext(markup)
-                            markup = replace(markup, u'\n', u'\n ')
-                            markup = replace(markup, u'\n \n', u' | ')
                             # Escape if needed
                             if self.sanitize is True:
                                 try:
@@ -419,14 +412,16 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             else:
                                 description = markup
 
-                            ticketURL = tag.a('#' + id, href=url)
-                            ticketURL(title=description, target='_blank')
+                            tooltip = tag.span(Markup(description))
+                            ticketURL = tag.a('#' + id + Markup(tooltip), href=url)
+                            ticketURL(class_='tip', target='_blank')
                             ticket = tag.div(ticketURL)
                             ticket(class_=a_class, align='left')
                             ticket(' ', summary, ' (', owner, ')')
                             buff.append(to_unicode(ticket))
 
                     if show_ticket_open_dates is True:
+                        # get tickets created on day
                         cursor.execute("""
                             SELECT t.id,t.summary,t.owner,t.status,
                                    t.description,t.time
@@ -439,9 +434,9 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             id = str(row[0])
                             url = self.env.href.ticket(id)
                             summary = to_unicode(row[1][0:100])
-                            owner = row[2]
+                            owner = to_unicode(row[2])
                             status = row[3]
-                            description = row[4][:1024]
+                            description = to_unicode(row[4][:1024])
                             ticket_time = int(row[5])
                             if ticket_time < duedatestamp or \
                                     ticket_time > duedatestamp_eod:
@@ -453,10 +448,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                 a_class = 'open'
                             markup = format_to_html(self.env,
                                               formatter.context, description)
-                            markup = replace(markup, u'<li>', u'<li>* ')
-                            markup = plaintext(markup)
-                            markup = replace(markup, u'\n', u'\n ')
-                            markup = replace(markup, u'\n \n', u' | ')
                             # Escape if needed
                             if self.sanitize is True:
                                 try:
@@ -467,8 +458,9 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             else:
                                 description = markup
 
-                            ticketURL = tag.a('#' + id, href=url)
-                            ticketURL(title=description, target='_blank')
+                            tooltip = tag.span(Markup(description))
+                            ticketURL = tag.a('#' + id + Markup(tooltip), href=url)
+                            ticketURL(class_='tip', target='_blank')
                             ticket = tag.div(ticketURL)
                             ticket(class_='opendate_' + a_class, align='left')
                             ticket(' ', summary, ' (', owner, ')')
