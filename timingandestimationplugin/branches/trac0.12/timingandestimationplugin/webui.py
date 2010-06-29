@@ -86,7 +86,7 @@ class TimingEstimationAndBillingPage(Component):
 
         mgr = CustomReportManager(self.env, self.log)
         data = {};
-        data["statuses"] = get_statuses(self)
+        data["statuses"] = get_statuses(self.env)
         data["reports"] = mgr.get_reports_by_group(CustomReportManager.TimingAndEstimationKey);
         #self.log.debug("DEBUG got %s, %s" % (data["reports"], type(data["reports"])));
         data["billing_info"] = {"messages":         messages,
