@@ -44,10 +44,11 @@ class TT_Template(object):
         """Remove the tt from the database."""
         db = env.get_db_cnx()
         cursor = db.cursor()
-
-        cursor.execute("""DELETE FROM ticket_template_store 
-                WHERE tt_user='%(tt_user)s' 
-                AND tt_name='%(tt_name)s'""" % data)
+        sqlString = """DELETE FROM ticket_template_store 
+                        WHERE tt_user=%s 
+                        AND tt_name=%s
+                    """
+        cursor.execute(sqlString, (data["tt_user"], data["tt_name"], ))
 
         db.commit()
     deleteCustom = classmethod(deleteCustom)
@@ -70,13 +71,14 @@ class TT_Template(object):
         db = env.get_db_cnx()
 
         cursor = db.cursor()
-        
-        cursor.execute("""SELECT tt_field, tt_value  
+        sqlString = """SELECT tt_field, tt_value  
                         FROM ticket_template_store 
-                        WHERE tt_user = '%(tt_user)s' 
+                        WHERE tt_user = %s
                         AND tt_time =  (SELECT max(tt_time) 
                             FROM ticket_template_store 
-                            WHERE tt_name='%(tt_name)s')""" % data)
+                            WHERE tt_name=%s)
+                    """
+        cursor.execute(sqlString, (data["tt_user"], data["tt_name"], ))
         
         field_value_mapping = {}
         for tt_field, tt_value in cursor.fetchall():
@@ -120,9 +122,10 @@ class TT_Template(object):
         # field_value_mapping_custom
         sqlString = """SELECT tt_name, tt_field, tt_value 
                         FROM ticket_template_store 
-                        WHERE tt_user = '%(tt_user)s' ; """
+                        WHERE tt_user = %s
+                    """
 
-        cursor.execute(sqlString % data)
+        cursor.execute(sqlString, (data["tt_user"], ))
     
         for tt_name, tt_field, tt_value in cursor.fetchall():
             if not field_value_mapping_custom.has_key(tt_name):
@@ -134,9 +137,11 @@ class TT_Template(object):
 
         # field_value_mapping
         sqlString = """SELECT DISTINCT tt_name 
-                            FROM ticket_template_store
-                            WHERE tt_user = '%(tt_user)s' ; """
-        cursor.execute(sqlString % {"tt_user": SYSTEM_USER})
+                        FROM ticket_template_store
+                        WHERE tt_user = %s
+                    """
+        cursor.execute(sqlString, (SYSTEM_USER, ))
+        
         tt_name_list = [row[0] for row in cursor.fetchall()]
 
         data["tt_user"] = SYSTEM_USER
@@ -145,12 +150,13 @@ class TT_Template(object):
 
             sqlString = """SELECT tt_field, tt_value 
                             FROM ticket_template_store 
-                            WHERE tt_user = '%(tt_user)s' 
-                            AND tt_name = '%(tt_name)s' 
+                            WHERE tt_user = %s 
+                            AND tt_name = %s 
                             AND tt_time =  (SELECT max(tt_time) 
                                 FROM ticket_template_store 
-                                WHERE tt_name = '%(tt_name)s'); """
-            cursor.execute(sqlString % data)
+                                WHERE tt_name = %s)
+                        """
+            cursor.execute(sqlString, (data["tt_user"], data["tt_name"], data["tt_name"], ))
         
             for tt_field, tt_value in cursor.fetchall():
                 if not field_value_mapping.has_key(tt_name):
@@ -176,10 +182,11 @@ class TT_Template(object):
 
         sqlString = """SELECT DISTINCT tt_name 
                        FROM ticket_template_store 
-                       WHERE tt_user = '%(tt_user)s' 
-                       ORDER BY tt_name """
+                       WHERE tt_user = %s 
+                       ORDER BY tt_name 
+                    """
 
-        cursor.execute(sqlString % {"tt_user": tt_user, })
+        cursor.execute(sqlString, (tt_user, ))
         
         return [row[0] for row in cursor.fetchall()]
 
@@ -191,9 +198,16 @@ class TT_Template(object):
             db = env.get_db_cnx()
 
         cursor = db.cursor()
+        sqlString = """SELECT tt_value 
+                        FROM ticket_template_store 
+                        WHERE tt_time=(
+                            SELECT max(tt_time) 
+                                FROM ticket_template_store 
+                                WHERE tt_name=%s and tt_field='description'
+                            )
+                    """
         
-        cursor.execute("SELECT tt_value FROM ticket_template_store WHERE tt_time="
-                       "(SELECT max(tt_time) FROM ticket_template_store WHERE tt_name=%s and tt_field='description')", (tt_name,))
+        cursor.execute(sqlString, (tt_name,))
         
         row = cursor.fetchone()
         if not row:
