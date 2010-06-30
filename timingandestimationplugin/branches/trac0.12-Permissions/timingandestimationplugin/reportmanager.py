@@ -142,6 +142,8 @@ class CustomReportManager:
         "LEFT JOIN report ON custom_report.id=report.id "
         "WHERE custom_report.maingroup=%s "
         "ORDER BY custom_report.subgroup,custom_report.ordering", group)
+      if not res:
+        return rv
       for subgroup, id, title, version, uuid in res.rows:
         if not rv.has_key(subgroup):
           rv[subgroup] = { "title": subgroup,
@@ -164,6 +166,8 @@ class CustomReportManager:
         "WHERE custom_report.maingroup=%s "
         "ORDER BY custom_report.subgroup,custom_report.ordering",
         group)
+      if not res:
+        return rv;
       for subgroup, id, title, version, uuid in res.rows:
         rv[uuid] = version
     except:
