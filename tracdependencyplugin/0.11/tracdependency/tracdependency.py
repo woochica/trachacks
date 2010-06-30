@@ -42,45 +42,6 @@ class TracDependency(Component):
                 self.log.debug("label from intertrac setting = %s", self.project_label)
         self.intertrac = InterTrac(self.config, self.env, self.project_label)
 
-    def subsequentticket(self,ids):
-        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
-                    "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
-                    "WHERE (c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
-                    " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
-                    " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
-                    " c.value like '%%, %s' or c.value like '%%,%s')" % (ids, ids, ids, ids, ids, ids, ids, ids, ids))
-        return sql
-        
-    def subsequentticket_i(self,ids):
-        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
-                    "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
-                    "WHERE "
-                    "(c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
-                    " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
-                    " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
-                    " c.value like '%%, %s' or c.value like '%%,%s' or "
-                    " c.value = '#%s' or c.value like '#%s(%%' or c.value like '#%s,%%' or "
-                    " c.value like '%%, #%s(%%' or c.value like '%%, #%s,%%' or "
-                    " c.value like '%%,#%s(%%' or c.value like '%%,#%s,%%' or "
-                    " c.value like '%%, #%s' or c.value like '%%,#%s')" % (ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids))
-        return sql
-        
-    def subticket(self, id_l):
-        # InterTrac形式で指定したidを親に指定しているチケットのクエリ文字列を返す
-        # id_l InterTrac形式のチケットid
-        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
-                    "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
-                    "WHERE a.value = '%s'" % id_l)
-        return sql
-
-    def subticket_i(self, id_num):
-        # 自プロジェクト内で指定したidを親に指定しているチケットのクエリ文字列を返す
-        # id_num チケットのid（数値）
-        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
-                    "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
-                    "WHERE a.value = '#%s' or  a.value = '%s'" % (id_num, id_num))
-        return sql
-
     # IRequestHandler methods
     def match_request(self, req):
         # TODO:要確認
@@ -96,12 +57,7 @@ class TracDependency(Component):
         # チケットの情報から取得できる親チケットと依存関係のリンクを作る
         summary_ticket = self.intertrac.get_link(tkt['summary_ticket'], self.log)
         dependencies = self.intertrac.get_link(tkt['dependencies'], self.log)
-        # このチケットを指定している，intertracで設定されているすべてのプロジェクトからチケットを検索しリンクを作る
-        tkt_id_l = self.get_project_name() + ':#' + tkt_id
-        self.log.debug("self.intertrac.create_links3 %s",tkt_id_l)
-        sub_ticket = self.intertrac.create_links(self.subticket(tkt_id_l), self.subticket_i(tkt_id), self.log) 
-        self.log.debug("self.intertrac.create_links4 %s",tkt_id_l)
-        subsequentticket = self.intertrac.create_links(self.subsequentticket(tkt_id_l), self.subsequentticket_i(tkt_id), self.log) 
+        sub_ticket, subsequentticket = self.intertrac.create_ticket_links(tkt_id, self.log)
         summary_ticket_enabled = not not ( self.config.get( TICKET_CUSTOM, "summary_ticket" ))
         dependencies_enabled = not not ( self.config.get( TICKET_CUSTOM, "dependencies"))
         intertracs = self.intertrac.project_information()
@@ -125,10 +81,7 @@ class TracDependency(Component):
             add_ctxtnav(req, LABEL_DEPEND_PAGE, href)
             # このページのデータを置き換えるためのでデータを作成します．
             tkt = data['ticket'] # チケットのid
-            tkt_id_l = self.get_project_name() + ':#' + str(tkt.id) # intertrac形式のチケット名
-            sub_ticket = self.intertrac.create_links(self.subticket(tkt_id_l), self.subticket_i(str(tkt.id)), self.log)
-            self.log.debug("self.intertrac.create_links2 %s",tkt_id_l)
-            subsequentticket = self.intertrac.create_links(self.subsequentticket(tkt_id_l), self.subsequentticket_i(str(tkt.id)), self.log) 
+            sub_ticket, subsequentticket = self.intertrac.create_ticket_links(str(tkt.id), self.log)
             data['tracdependency'] = {
                 'field_values': {
                     'summary_ticket': self.intertrac.linkify_ids(self.env, req, tkt['summary_ticket'],LABEL_SUMMARY ,LABEL_SUB ,sub_ticket, self.log),

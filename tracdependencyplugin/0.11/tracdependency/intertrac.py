@@ -60,6 +60,45 @@ class InterTrac:
     def project_information(self):
         return self.intertracs
 
+    def subsequentticket(self,ids):
+        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
+                    "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
+                    "WHERE (c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
+                    " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
+                    " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
+                    " c.value like '%%, %s' or c.value like '%%,%s')" % (ids, ids, ids, ids, ids, ids, ids, ids, ids))
+        return sql
+        
+    def subsequentticket_i(self,ids):
+        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
+                    "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
+                    "WHERE "
+                    "(c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
+                    " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
+                    " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
+                    " c.value like '%%, %s' or c.value like '%%,%s' or "
+                    " c.value = '#%s' or c.value like '#%s(%%' or c.value like '#%s,%%' or "
+                    " c.value like '%%, #%s(%%' or c.value like '%%, #%s,%%' or "
+                    " c.value like '%%,#%s(%%' or c.value like '%%,#%s,%%' or "
+                    " c.value like '%%, #%s' or c.value like '%%,#%s')" % (ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids, ids))
+        return sql
+        
+    def subticket(self, id_l):
+        # InterTrac形式で指定したidを親に指定しているチケットのクエリ文字列を返す
+        # id_l InterTrac形式のチケットid
+        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
+                    "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
+                    "WHERE a.value = '%s'" % id_l)
+        return sql
+
+    def subticket_i(self, id_num):
+        # 自プロジェクト内で指定したidを親に指定しているチケットのクエリ文字列を返す
+        # id_num チケットのid（数値）
+        sql = ("SELECT id, type, summary, owner, description, status from ticket t "
+                    "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
+                    "WHERE a.value = '#%s' or  a.value = '%s'" % (id_num, id_num))
+        return sql
+
     def create_links(self, sql, sql_i, log):
         # InterTrac設定しているプロジェクトすべてを検索する必要がある,
         # 後続チケットまたは，子チケットへのリンクを作ります．
@@ -96,6 +135,12 @@ class InterTrac:
         except Exception, e:
             pass
         return links
+
+    def create_ticket_links(self, tkt_id, log):
+        tkt_id_l = self.get_project_name() + ':#' + tkt_id
+        sub_ticket = self.create_links(self.subticket(tkt_id_l), self.subticket_i(tkt_id), log) 
+        subsequentticket = self.create_links(self.subsequentticket(tkt_id_l), self.subsequentticket_i(tkt_id), log) 
+        return sub_ticket, subsequentticket
 
     def linkify_ids_b(self, env, req, ids, label1, log):
         # チケットの表示のページでinterTracリンクの表示するための元を作る
