@@ -34,7 +34,19 @@ jQuery(document).ready(function($){
   	//Collapse the form by default
   	$("#batchmod-fieldset").toggleClass("collapsed");
   
+  	//Add the new batch modify field when the user selects one from the dropdown.
   	$("#add_batchmod_field").change(function() {
-		alert("test")
+		if (this.selectedIndex < 1)
+        	return;
+		
+		//Disable or remove each element from the option list when it is selected.
+		//Add the field to the table. Will need information about the type of input to be inserted for each field.
+			//What to do about textareas? They are currently filtered out, but then are handled anyways. Obviously this is never hit.
+		//Add a remove button for each field.
+		//Insert the new rows in the same order as listed in the dropdown. This is the same behavior as the filters.
+		//Rules
+			//When Status is set to "closed" a resolution must also be set.
+			//Setting a resolution sets the status to closed.
+			//Validate these server-side as well.
 	});
 });
