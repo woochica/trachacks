@@ -56,8 +56,25 @@ jQuery(document).ready(function($){
         var propertyName = this.options[this.selectedIndex].value;
         var property = properties[propertyName];
         
+        var tr = $("<tr>").addClass('batchmod_' + propertyName);
+        // Add the remove button
+        tr.append($('<td>')
+            .append($('<div class="inlinebuttons">')
+                .append($('<input type="button" value="&ndash;">')
+                    .click(function() { alert("remove " + propertyName); }))));
+        
+        $("#batchmod-fieldset table tbody").append(tr);
+        
         $("#batchmod-fieldset table tbody")
-            .append('<tr><td><label>' + propertyName + '</label>' + createSelect(propertyName, property.options, false) + "</td></tr>");
+            .append($('<tr>')
+                .append($('<td>')
+                    .append($('<label>')
+                        .append(propertyName)
+                    )
+                .append(createSelect(propertyName, property.options, false))
+            )
+        );
+                
 		//Add the field to the table. Will need information about the type of input to be inserted for each field.
 			//What to do about textareas? They are currently filtered out, but then are handled anyways. Obviously this is never hit.
 		//Add a remove button for each field.
