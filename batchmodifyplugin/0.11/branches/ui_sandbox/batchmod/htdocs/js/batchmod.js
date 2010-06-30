@@ -34,12 +34,30 @@ jQuery(document).ready(function($){
   	//Collapse the form by default
   	$("#batchmod-fieldset").toggleClass("collapsed");
   
+    // Convenience function for creating a <select>
+    function createSelect(name, options, optional) {
+        var e = $($.htmlFormat('<select name="$1">', name));
+        if (optional)
+            $("<option>").appendTo(e);
+        for (var i = 0; i < options.length; i++) {
+            var opt = options[i], v = opt, t = opt;
+            if (typeof opt == "object") 
+                v = opt.value, t = opt.text;
+            $($.htmlFormat('<option value="$1">$2</option>', v, t)).appendTo(e);
+        }
+        return e;
+    }
+  
   	//Add the new batch modify field when the user selects one from the dropdown.
   	$("#add_batchmod_field").change(function() {
 		if (this.selectedIndex < 1)
         	return;
-		
-		//Disable or remove each element from the option list when it is selected.
+        
+        var propertyName = this.options[this.selectedIndex].value;
+        var property = properties[propertyName];
+        
+        $("#batchmod-fieldset table tbody")
+            .append('<tr><td><label>' + propertyName + '</label>' + createSelect(propertyName, property.options, false) + "</td></tr>");
 		//Add the field to the table. Will need information about the type of input to be inserted for each field.
 			//What to do about textareas? They are currently filtered out, but then are handled anyways. Obviously this is never hit.
 		//Add a remove button for each field.
@@ -48,5 +66,8 @@ jQuery(document).ready(function($){
 			//When Status is set to "closed" a resolution must also be set.
 			//Setting a resolution sets the status to closed.
 			//Validate these server-side as well.
+        
+        //Disable each element from the option list when it is selected.
+        this.options[this.selectedIndex].disabled = 'disabled'
 	});
 });
