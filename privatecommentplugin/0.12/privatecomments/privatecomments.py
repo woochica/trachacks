@@ -2,6 +2,7 @@ from trac.core import *
 from trac.perm import PermissionSystem, IPermissionRequestor
 from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.web_ui import TicketModule
+from trac.config import Option
 
 from trac.web.api import ITemplateStreamFilter, IRequestHandler, IRequestFilter
 from genshi.builder import tag
@@ -12,9 +13,27 @@ from genshi.input import HTML
 class PrivateComments(Component):
 	implements(ITemplateStreamFilter, IEnvironmentSetupParticipant, IRequestHandler, IRequestFilter, IPermissionRequestor)
 	
+	private_comment_permission = Option(
+		'privatecomments', 
+		'permission',
+		default='PRIVATE_COMMENT_PERMISSION',
+        doc='The name of the permission which allows to see private comments')
+	
+	css_class_checkbox = Option(
+		'privatecomments',
+		'css_class_checkbox', 
+		default='private_comment_checkbox',
+        doc='The name of the css class for the label of the checkbox')
+	
+	css_class_private_comment_marker = Option(
+		'privatecomments',
+		'css_class_private_comment_marker', 
+		default='private_comment_marker',
+        doc='The name of the css class for the \"this is a private comment\" -label')
+	
 	# IPermissionRequestor methods
 	def get_permission_actions(self):
-		group_actions = [self.config.get('privatecomments','permission','PRIVATE_COMMENT_PERMISSION')] 
+		group_actions = [self.private_comment_permission]
 		return group_actions
 	
 	# IRequestHandler methods
@@ -25,8 +44,12 @@ class PrivateComments(Component):
 		if req.method != 'POST':
 			return handler
 		
-		# determine the ticket id
+		# only the ticket page
 		url = req.path_info
+		if url.find('/ticket') == -1:
+			return handler
+			
+		# determine the ticket id
 		find = url.rfind('/')
 		if find == -1 or find == 0:
 			return handler
@@ -66,9 +89,11 @@ class PrivateComments(Component):
 		
 		try:
 			if editing == True:
-				sql = 'UPDATE private_comment SET private=%d WHERE ticket_id=%d AND comment_id=%d' % (int(private),int(ticket_id),int(comment_id))	
+				sql = 'UPDATE private_comment SET private=%d WHERE ticket_id=%d AND comment_id=%d' % \
+				(int(private),int(ticket_id),int(comment_id))	
 			elif editing == False:
-				sql = 'INSERT INTO private_comment(ticket_id,comment_id,private) values(%d,%d,%d)' % (int(ticket_id),int(comment_id),int(private))
+				sql = 'INSERT INTO private_comment(ticket_id,comment_id,private) values(%d,%d,%d)' % \
+				(int(ticket_id),int(comment_id),int(private))
 				
 			self.log.debug(sql)
 			
@@ -98,10 +123,6 @@ class PrivateComments(Component):
 		
 	def environment_needs_upgrade(self, db):
 		cursor = db.cursor()
-		
-		if self.config.get('privatecomments','permission','') == '':
-			return True
-		
 		try:
 			cursor.execute('SELECT * FROM private_comment')
 			cursor.close ()
@@ -111,36 +132,38 @@ class PrivateComments(Component):
 			return True
 	
 	def upgrade_environment(self, db):
-		self.config.set('privatecomments','permission','PRIVATE_COMMENT_PERMISSION')
-		self.config.save()
-	
+		cursor = db.cursor()
 		try:
 			cursor = db.cursor()
 			cursor.execute('CREATE TABLE private_comment(ticket_id integer, comment_id integer, private tinyint)')
 			cursor.close ()
 			db.commit()
 		except:
-			return
+			cursor.close ()
 	
 	# ITemplateStreamFilter methods
 	def filter_stream(self, req, method, filename, stream, data):
 		if filename != 'ticket.html':
 			return stream
 		
+		# only the ticket page
+		url = req.path_info
+		if url.find('/ticket') == -1:
+			return stream
+			
+		# determine ticket id
+		find = url.rfind('/')
+		if find == -1 or find == 0:
+			return stream	
+		ticket_id = int(url[find+1:])
+		
 		# determine the username of the current user
 		user = req.authname
 		
-		# determine ticket id
-		href = req.path_info
-		find = href.rfind('/')
-		if find == -1 or find == 0:
-			return stream	
-		ticket_id = int(href[find+1:])
-		
 		# determine if the user has the permission to see private comments
 		perms = PermissionSystem(self.env)
-		hasprivatepermission = self.config.get('privatecomments','permission','PRIVATE_COMMENT_PERMISSION') in perms.get_user_permissions(user)
-
+		hasprivatepermission = self.private_comment_permission in perms.get_user_permissions(user)
+		
 		buffer = StreamBuffer()
 		
 		def check_comments():
@@ -160,20 +183,25 @@ class PrivateComments(Component):
 					comment_id = comment[:find]
 					# concat the delimiter and the comment again
 					comment_code = delimiter+comment
-					# if the user has the permission to see the comment the commentcode will be appended to the commentstream
+					# if the user has the permission to see the comment 
+					# the commentcode will be appended to the commentstream
 					comment_private = self._is_comment_private(ticket_id,comment_id)
 					
 					if comment_private:
-						comment_code = comment_code.replace('<span class="threading">','<span class="threading"> <span class="private_comment_marker">this comment is private</span>')
-					
-					if hasprivatepermission or not comment_private:	
+						comment_code = comment_code.replace(
+							'<span class="threading">',
+							'<span class="threading"> <span class="%s">this comment is private</span>' % \
+								(str(self.css_class_private_comment_marker))
+						)
+
+					if hasprivatepermission or not comment_private:
 						commentstream = commentstream + comment_code	
 			
 			return HTML(commentstream)
 			
 		def checkbox_for_privatecomments():
 			return tag(
-						tag.span('Private Comment ', class_='private_comment_checkbox'),
+						tag.span('Private Comment ', class_=self.css_class_checkbox),
 						tag.input(type='checkbox', name='private_comment')
 					)
 		
@@ -196,7 +224,8 @@ class PrivateComments(Component):
 		db = self.env.get_db_cnx()
 		cursor = db.cursor()
 		
-		sql = 'SELECT private FROM private_comment WHERE ticket_id=%d AND comment_id=%d' % (int(ticket_id),int(comment_id))
+		sql = 'SELECT private FROM private_comment WHERE ticket_id=%d AND comment_id=%d' % \
+		(int(ticket_id),int(comment_id))
 		self.log.debug(sql)
 		
 		cursor.execute(sql)
