@@ -82,7 +82,7 @@ class CustomReportManager:
        (next_id, uuid, maingroup, subgroup, version, ordering)))
     self.log.debug("Attempting to increment sequence (only works in postgres)")
     try:
-      dbhelper.execute_in_trans(self.env,("SELECT nextval('report_id_seq');",[]));
+      dbhelper.execute_in_nested_trans(self.env, "update_seq", ("SELECT nextval('report_id_seq');",[]));
       self.log.debug("Sequence updated");
     except:
       self.log.debug("Sequence failed to update, perhaps you are not running postgres?");

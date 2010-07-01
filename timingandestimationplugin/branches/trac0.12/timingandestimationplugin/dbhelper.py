@@ -52,22 +52,41 @@ def execute_in_trans(env, *args):
                 c_sql[0] = sql
                 c_params[0] = params
                 cur.execute(sql, params)
-    except Exception, e:
+    except Exception, e :
         env.log.exception('There was a problem executing sql:%s \n \
     with parameters:%s\nException:%s'%(c_sql[0], c_params[0], e));
-        result = e
+        raise e
+    return result
+
+def execute_in_nested_trans(env, name, *args):
+    result = True
+    c_sql =[None]
+    c_params = [None]
+    try:
+        @env.with_transaction()
+        def fn(db):
+            cur = db.cursor()
+            cur.execute("SAVEPOINT %s" % name)
+            for sql, params in args:
+                c_sql[0] = sql
+                c_params[0] = params
+                cur.execute(sql, params)
+            cur.execute("RELEASE SAVEPOINT %s" % name)
+    except Exception, e :
+        cur.execute("ROLLBACK TO SAVEPOINT %s" % name)
+        env.log.exception('There was a problem executing sql:%s \n \
+    with parameters:%s\nException:%s'%(c_sql[0], c_params[0], e));
+        raise e
     return result
 
 def db_table_exists(env,  table):
-    db = env.get_read_db()
-    cur = db.cursor()
     has_table = True;
     try:
-        cur.execute("SAVEPOINT db_table_exists;")
-        cur.execute("SELECT * FROM %s LIMIT 1" % table)
-    except Exception, e:
-        cur.execute("ROLLBACK TO SAVEPOINT db_table_exists;")
-        has_table = False
+        execute_in_nested_trans(
+            env, "db_table_exists",
+            ("SELECT * FROM %s LIMIT 1" % table,[]))
+    except:
+        has_table = False;
     return has_table
 
 def get_column_as_list(env, sql, col=0, *params):
