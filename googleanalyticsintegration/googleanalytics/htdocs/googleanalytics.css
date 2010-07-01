@@ -1,0 +1,4 @@
+div.warning { background-color: #FFFFAA; border: 2px solid #888866; }
+div.notice { background-color: #BBFFBB; border: 2px solid #448844; }
+div.help { border: 1px dashed #ccc; background-color: #F7F7F0; padding: 4px; }
+div.help pre { margin: 4px 4px; padding: 3px 3px; background-color: #ccc; }

@@ -1,0 +1,50 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+<!-- Google Analytics Widget Code -->
+<script type="text/javascript">
+  var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+  document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+  try {
+    jQuery(document).ready( function() {
+      var pageTracker = _gat._getTracker("${ opt.uid }");
+      <py:if test="opt.tracking_domain_name"
+      >pageTracker._setDomainName("${ opt.tracking_domain_name }");
+      pageTracker._setAllowLinker()</py:if>
+    <py:if test="opt.outbound_link_tracking">
+      <!--! // console.log('traversing links'); -->
+      jQuery('a').each( function() {
+        var url;
+        if ( this.href.match("${base_url}") ) {
+          <!--! //console.log('Internal link', this.href); -->
+          if ( this.href.match(/\.(${ opt.extensions })$/) ) {
+            <!--! //console.log('Extension Listened', this.href); -->
+            url = this.pathname + this.search;
+          };
+        } else {
+          <!--! //console.log('External link', this.href); -->
+          var port = '';
+          if ( this.port != '') port = ':'+this.port;
+          url = '${ opt.google_external_path }' + this.hostname + port + this.pathname + this.search;
+        };
+        <!--! //console.log(1, url) -->
+        if ( url ) {
+          if ( ! url.match('^\/attachment\/') ) {
+            jQuery(this).click( function() {
+              <!--! //alert(url); -->
+              pageTracker._trackPageview(url);
+            });
+          };
+        };
+      });
+    </py:if>
+    pageTracker._trackPageview();
+    });
+  } catch(err) {}
+</script>
+<!-- Google Analytics Widget Code Ended -->
+</html>

@@ -1,0 +1,6 @@
+include README.txt
+include LICENSE
+include setup.*
+recursive-include tracext *.py *.css *.html
+recursive-include *.egg-info *.*
+

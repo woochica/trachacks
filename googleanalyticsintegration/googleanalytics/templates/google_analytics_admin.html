@@ -1,0 +1,108 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="admin.html" />
+
+  <head>
+    <title>Google Analytics Options</title>
+  </head>
+  <body>
+    <div class="system-message warning">
+      <p><strong>I here by state that I won't be held responsible
+        for breaking your Google AdSense policy because you're using a plugin I
+        coded. Yet, all attempts were made to make sure the resulting code is exactly
+        like the one Google gives us.<br/>
+        Use At Your Own Risk!</strong>
+      </p>
+    </div>
+    <form class="mod" id="modads" method="post">
+      <fieldset>
+        <legend>Basic Options</legend>
+        <label for="uid">UID:</label>
+        <input type="text" name="uid" value="${ga.uid.value.upper()}"/>
+        <p class="help">Enter your Google Analytics' UID in this box.<br/>
+          The UID is needed for Google Analytics to log your website stats.<br/>
+          Your UID can be found by looking in the JavaScript Google Analytics
+          gives you to put on your page.<br/> Look for your UID in between:
+          <strong><tt>var pageTracker = _gat._getTracker("UA-111111-11");</tt></strong>
+          in the javascript.<br/>
+          In this example you would put <strong>UA-11111-1</strong> in the
+          UID box.</p><br/>
+
+        <label for="admin_logging">Admin Logging:</label>
+        <input type="checkbox" name="admin_logging" value="yes" checked="${
+          ga.admin_logging.value and 'checked' or None}"/>
+        <p class="help">Disabling this option will prevent all logged in
+          <tt><strong>TRAC_ADMIN</strong></tt>'s from showing up on your Google
+          Analytics reports.</p><br/>
+
+        <label for="authenticated_logging">Authenticated Users Logging:</label>
+        <input type="checkbox" name="authenticated_logging" value="yes" checked="${
+          ga.authenticated_logging.value and 'checked' or None}"/>
+        <p class="help">Disabling this option will prevent all
+        <strong>authenticated</strong> users from showing up on your Google
+        Analytics reports.</p><br/>
+      </fieldset>
+
+      <fieldset>
+        <legend>Advanced Options</legend>
+        <label for="outbound_link_tracking">Outbound Link Tracking:</label>
+        <input type="checkbox" value="yes" name="outbound_link_tracking" checked="${
+          ga.outbound_link_tracking.value and 'checked' or None}"/>
+        <p class="help">Disabling this option will turn off the tracking of
+          outbound links.<br/>It's recommended not to disable this option unless
+          you're a privacy advocate (now why would you be using Google Analytics
+          in the first place?) or it's causing some kind of weird issue.</p><br/>
+
+        <label for="google_external_path">Google External Path:</label>
+        <input type="text" name="google_external_path"
+          value="${ga.google_external_path.value}"/>
+        <p class="help">This will be the path shown on Google Analytics
+          regarding external links. Consider the following link:<br/><strong><tt>
+          &lt;a href="http://trac.edgewall.org/">Trac&lt;/a&gt;</tt></strong><br/>
+          The above link will be shown as <strong><tt>${
+          ga.google_external_path.value}trac.edgewall.org/</tt></strong>.<br/>
+          This way you will be able to track outgoing links.<br/>
+          <em>Outbound link tracking must be enabled for external links to be
+          tracked.</em></p><br/>
+
+        <label for="extensions">Download Extensions To Track:</label>
+        <input type="text" name="extensions" size="50" value="${
+          ga.extensions.value }"/>
+        <p class="help">Enter any extensions of files you would like to be
+          tracked as a download.<br/>For example to track all MP3s and PDFs enter
+          <strong>mp3,pdf</strong>.<br/><em>Outbound link tracking must be enabled
+          for downloads to be tracked.</em></p><br/>
+
+        <label for="tracking_domain_name">Tracking Domain Name:</label>
+        <input type="text" name="tracking_domain_name" size="50" value="${
+          ga.tracking_domain_name.value }"/>
+        <p class="help">If you're tracking multiple subdomains with the same
+        Google Analytics profile, like what's talked about
+        <a href="https://www.google.com/support/googleanalytics/bin/answer.py?answer=55524">here</a>,
+        enter your main domain here. For more info, please visit the previous
+        link.</p><br/>
+      </fieldset>
+      <div class="buttons">
+        <input type="submit" name="apply" value="Apply changes" />
+      </div>
+    </form>
+    <fieldset>
+      <legend>Contribute Back</legend>
+      <span id="contribution">
+      <span style="float: left;">If you think this plugin is usefull and would like
+        to contribute back, feel free to click on the donate button.<br/>
+        <strong>This is optional</strong>.</span>
+      <span style="float: right;">
+      <form id="donation_code" action="https://www.paypal.com/cgi-bin/webscr" method="post">
+      <input type="hidden" name="cmd" value="_s-xclick"/>
+      <input type="image" src="https://www.paypal.com/en_US/i/btn/x-click-but21.gif" border="0" name="submit" alt="Make payments with PayPal - it's fast, free and secure!"/>
+      <img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1"/>
+      <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7-----"/>
+      </form></span>
+    </span></fieldset>
+</body>
+</html>
