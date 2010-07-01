@@ -134,7 +134,6 @@ class PrivateComments(Component):
 	def upgrade_environment(self, db):
 		cursor = db.cursor()
 		try:
-			cursor = db.cursor()
 			cursor.execute('CREATE TABLE private_comment(ticket_id integer, comment_id integer, private tinyint)')
 			cursor.close ()
 			db.commit()
