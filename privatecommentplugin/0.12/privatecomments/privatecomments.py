@@ -138,8 +138,6 @@ class PrivateComments(Component):
 			return stream	
 		ticket_id = int(href[find+1:])
 		
-		print req
-		
 		# determine if the user has the permission to see private comments
 		perms = PermissionSystem(self.env)
 		hasprivatepermission = self.config.get('privatecomments','permission','PRIVATE_COMMENT_PERMISSION') in perms.get_user_permissions(user)
