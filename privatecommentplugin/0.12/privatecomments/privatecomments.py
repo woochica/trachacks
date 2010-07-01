@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.perm import IPermissionGroupProvider,PermissionSystem, IPermissionRequestor
+from trac.perm import PermissionSystem, IPermissionRequestor
 from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.web_ui import TicketModule
 
@@ -10,7 +10,6 @@ from genshi.filters.transform import StreamBuffer
 from genshi.input import HTML
 
 class PrivateComments(Component):
-	group_providers = ExtensionPoint(IPermissionGroupProvider)
 	implements(ITemplateStreamFilter, IEnvironmentSetupParticipant, IRequestHandler, IRequestFilter, IPermissionRequestor)
 	
 	# IPermissionRequestor methods
@@ -141,7 +140,7 @@ class PrivateComments(Component):
 		# determine if the user has the permission to see private comments
 		perms = PermissionSystem(self.env)
 		hasprivatepermission = self.config.get('privatecomments','permission','PRIVATE_COMMENT_PERMISSION') in perms.get_user_permissions(user)
-		
+
 		buffer = StreamBuffer()
 		
 		def check_comments():
