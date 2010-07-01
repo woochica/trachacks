@@ -21,7 +21,7 @@ Based on ideas from TracFormsPlugin.
     packages=['wikiforms'],
     entry_points = {
                     'trac.plugins': [
-                                      'wikiforms.macros = wikiforms.macros',
+                                      'wikiforms = wikiforms',
                                     ]
                    }
     )
