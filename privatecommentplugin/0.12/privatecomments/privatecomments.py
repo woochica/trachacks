@@ -4,14 +4,14 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.web_ui import TicketModule
 from trac.config import Option
 
-from trac.web.api import ITemplateStreamFilter, IRequestHandler, IRequestFilter
+from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
 from genshi.input import HTML
 
 class PrivateComments(Component):
-	implements(ITemplateStreamFilter, IEnvironmentSetupParticipant, IRequestHandler, IRequestFilter, IPermissionRequestor)
+	implements(ITemplateStreamFilter, IEnvironmentSetupParticipant, IRequestFilter, IPermissionRequestor)
 	
 	private_comment_permission = Option(
 		'privatecomments', 
@@ -36,7 +36,7 @@ class PrivateComments(Component):
 		group_actions = [self.private_comment_permission]
 		return group_actions
 	
-	# IRequestHandler methods
+	# IRequestFilter methods
 	def pre_process_request(self, req, handler):
 		if handler is not TicketModule(self.env):
 			return handler	
@@ -107,13 +107,6 @@ class PrivateComments(Component):
 
 	def post_process_request(self, req, template, data, content_type):
 		return template, data, content_type
-	
-	# IRequestFilter methods
-	def match_request(self,req):
-		return False
-		
-	def process_request(self,req):
-		return None
 	
 	# IEnvironmentSetupParticipant methods
 	def environment_created(self):
