@@ -81,7 +81,9 @@ class BatchModifyModule(Component):
         for field in TicketSystem(self.env).get_ticket_fields():
             name = field['name']
             if name not in ('summary', 'reporter', 'description'):
-                values[name] = req.args.get('bmod_value_' + name)
+                value = req.args.get('bmod_value_' + name)
+                if value is not None:
+                    values[name] = value
 
         selectedTickets = req.args.get('selectedTickets')
         self.log.debug('BatchModifyPlugin: selected tickets: %s', selectedTickets)
@@ -111,19 +113,6 @@ class BatchModifyModule(Component):
                   db.commit()
 
                 self.log.debug('BatchModifyPlugin: saved changes to #%s %s' % (id, log_msg))
-
-                # TODO: Send email notifications - copied from ticket.web_ui
-                #try:
-                #    tn = TicketNotifyEmail(self.env)
-                #    tn.notify(ticket, newticket=False, modtime=now)
-                #except Exception, e:
-                #    self.log.exception("Failure sending notification on change to "
-                #                       "ticket #%s: %s" % (ticket.id, e))
-    
-                # TODO: deal with actions and side effects - copied from ticket.web_ui
-                #for controller in self._get_action_controllers(req, ticket,
-                #                                               action):
-                #    controller.apply_action_side_effects(req, ticket, action)
 
     def _merge_keywords(self, original_keywords, new_keywords):
         """Prevent duplicate keywords by merging the two lists."""
