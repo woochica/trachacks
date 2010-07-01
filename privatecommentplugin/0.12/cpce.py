@@ -2,7 +2,7 @@
 	Description:
 	------------
 	This script adds the necesarry entries to the private_comment table
-	to enable the editing of comments which are created before the 
+	to enable the editing of comments which were created before the 
 	installation of the privatecomments plugin
 	
 	Usage:
