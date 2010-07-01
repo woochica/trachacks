@@ -18,6 +18,7 @@
 
 
 import calendar
+import re
 import sys
 import time
 
@@ -411,9 +412,15 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                     description = escape(markup)
                             else:
                                 description = markup
+                            # strip tags that destruct tooltips too much
+                            desc = re.sub('<a .*?>', '', Markup(description))
+                            desc = re.sub('</a>', '', desc)
+                            desc = re.sub('<span .*?>', '', desc)
+                            description = re.sub('</span>', '', desc)
 
                             tooltip = tag.span(Markup(description))
-                            ticketURL = tag.a('#' + id + Markup(tooltip), href=url)
+                            id = '#' + id
+                            ticketURL = tag.a(id + Markup(tooltip), href=url)
                             ticketURL(class_='tip', target='_blank')
                             ticket = tag.div(ticketURL)
                             ticket(class_=a_class, align='left')
@@ -457,9 +464,15 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                     description = escape(markup)
                             else:
                                 description = markup
+                            # strip tags that destruct tooltips too much
+                            desc = re.sub('<a .*?>', '', Markup(description))
+                            desc = re.sub('</a>', '', desc)
+                            desc = re.sub('<span .*?>', '', desc)
+                            description = re.sub('</span>', '', desc)
 
                             tooltip = tag.span(Markup(description))
-                            ticketURL = tag.a('#' + id + Markup(tooltip), href=url)
+                            id = '#' + id
+                            ticketURL = tag.a(id + Markup(tooltip), href=url)
                             ticketURL(class_='tip', target='_blank')
                             ticket = tag.div(ticketURL)
                             ticket(class_='opendate_' + a_class, align='left')

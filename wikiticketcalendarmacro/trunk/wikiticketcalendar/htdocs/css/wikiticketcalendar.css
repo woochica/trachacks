@@ -51,11 +51,11 @@ table.wikiTicketCalendar div.opendate_closed {
 
 /* pure CSS style tooltip */
 table.wikiTicketCalendar a.tip {
-    position: relative; color: #000; text-decoration: none; cursor: help;
+    position: relative; cursor: help;
     }
 table.wikiTicketCalendar a.tip span { display: none; }
 table.wikiTicketCalendar a.tip:hover span {
-    display: block; z-index: 1; font-size: 0.75em;
+    display: block; z-index: 1; font-size: 0.75em; text-decoration: none;
     position: absolute; top: 0.8em; left: 0;
     border: 1px solid #000; background-color: #fff; padding: 5px;
     }
