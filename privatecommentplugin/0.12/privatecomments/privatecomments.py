@@ -2,7 +2,6 @@ from trac.core import *
 from trac.perm import IPermissionGroupProvider,PermissionSystem, IPermissionRequestor
 from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.web_ui import TicketModule
-#from trac.config import Configuration
 
 from trac.web.api import ITemplateStreamFilter, IRequestHandler, IRequestFilter
 from genshi.builder import tag
@@ -30,8 +29,9 @@ class PrivateComments(Component):
 		# determine the ticket id
 		url = req.path_info
 		find = url.rfind('/')
-		if find == -1:
+		if find == -1 or find == 0:
 			return handler
+				
 		ticket_id = url[find+1:]
 		
 		# determine if the request is an editing request, the comment id and if the comment should be private
@@ -134,7 +134,7 @@ class PrivateComments(Component):
 		# determine ticket id
 		href = req.path_info
 		find = href.rfind('/')
-		if find == -1:
+		if find == -1 or find == 0:
 			return stream	
 		ticket_id = int(href[find+1:])
 		
