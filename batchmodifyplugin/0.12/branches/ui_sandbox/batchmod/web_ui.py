@@ -8,7 +8,7 @@ from trac.perm import IPermissionRequestor
 from trac.ticket import TicketSystem, Ticket
 from trac.ticket.query import QueryModule
 from trac.web.api import ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider, Chrome, add_script        
+from trac.web.chrome import ITemplateProvider, Chrome, add_script, add_stylesheet
 from trac.web.main import IRequestFilter
 from trac.util.datefmt import to_datetime, to_timestamp
 from genshi.filters.transform import Transformer
@@ -81,8 +81,7 @@ class BatchModifyModule(Component):
         for field in TicketSystem(self.env).get_ticket_fields():
             name = field['name']
             if name not in ('summary', 'reporter', 'description'):
-                if req.args.has_key('bmod_flag_' + name):
-                    values[name] = req.args.get('bmod_value_' + name)
+                values[name] = req.args.get('bmod_value_' + name)
 
         selectedTickets = req.args.get('selectedTickets')
         self.log.debug('BatchModifyPlugin: selected tickets: %s', selectedTickets)
@@ -152,6 +151,7 @@ class BatchModifyModule(Component):
     def filter_stream(self, req, method, filename, stream, formdata):
         """Adds BatchModify form to the query page"""
         if filename == 'query.html' and self._has_permission(req):
+            self.log.debug('BatchModifyPlugin: rendering template')
             return stream | Transformer('//div[@id="help"]'). \
                                 before(self._generate_form(req, formdata) )
         return stream
@@ -171,6 +171,7 @@ class BatchModifyModule(Component):
         batchFormData['fields']=fields
 
         add_script(req, 'batchmod/js/batchmod.js')
+        add_stylesheet(req, 'batchmod/css/batchmod.css')
         stream = Chrome(self.env).render_template(req, 'batchmod.html',
               batchFormData, fragment=True)
         return stream.select('//form[@id="batchmod-form"]')

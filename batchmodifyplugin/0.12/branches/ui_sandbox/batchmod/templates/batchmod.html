@@ -9,67 +9,38 @@
 <form id="batchmod-form" method="post">
 	
 <fieldset id="batchmod-fieldset">
-	<legend class="foldable">Batch Modify Properties</legend>
-	<table class="properties">
-		<tr py:for="row in group(fields, 2, lambda f: f.type != 'textarea')"
-			py:with="fullrow = len(row) == 1">
-			<py:for each="idx, field in enumerate(row)">
-				<th style="text-align: left" class="col${idx + 1}"
-					py:if="idx == 0 or not fullrow">
-					<input py:if="field" type="checkbox" id="bmod_flag_${field.name}" name="bmod_flag_${field.name}" />
-					<label py:if="field" for="bmod_value_${field.name}" class="disabled">${field.label or field.name}:</label>
-				</th>
-				<td class="col${idx + 1}" py:if="idx == 0 or not fullrow"
-					colspan="${fullrow and 3 or None}">
-				<py:choose test="field.type" py:if="field">
-					<select py:when="'select'" id="bmod_value_${field.name}"
-						name="bmod_value_${field.name}" disabled="disabled">
-						<option py:if="field.optional" />
-						<option py:for="option in field.options" py:content="option"/>
-					</select>
-					<textarea py:when="'textarea'" id="bmod_value_${field.name}"
-						name="bmod_value_${field.name}" cols="${field.width or 80}"
-						rows="${field.height or 5}" disabled="disabled" />
-					<span py:when="'checkbox'"> <input type="checkbox"
-						id="bmod_value_${field.name}" name="bmod_value_${field.name}"
-						value="1" disabled="disabled" /> <input type="hidden"
-						name="bmod_value_checkbox_${field.name}" value="1" /> </span>
-					<label py:when="'radio'"
-						py:for="idx, option in enumerate(field.options)" class="disabled">
-						<input type="radio" name="bmod_value_${field.name}" 
-						value="${option}" disabled="disabled" /> ${option} 
-					</label>
-					<input py:otherwise="" type="text" id="bmod_value_${field.name}"
-						name="bmod_value_${field.name}" value="" disabled="disabled" />
-				</py:choose>
-				</td>
-			</py:for>
-		</tr>
-		<tr>
-			<th style="text-align: left"><input type="checkbox"
-				id="bmod_flag_comment" name="bmod_flag_comment" checked="checked" /> <label
-				for="bmod_value_comment">Comment:</label></th>
-			<td class="fullrow" colspan="3"><textarea
+	<legend class="foldable">Batch Modify</legend>
+	<table summary="Batch modification fields">
+		<tr id="batchmod_comment">
+			<th colspan="2">
+                <label for="bmod_value_comment">Comment:</label>
+            </th>
+			<td class="fullrow"><textarea
 				id="bmod_value_comment" name="bmod_value_comment" value="" cols="70" rows="5"/>
 			</td>
 		</tr>
 		
 		<tr>
-			<td>
-				<label for="add_batchmod_field">Add Field:</label>
+			<td colspan="3">
+				<label class="batchmod_label" for="add_batchmod_field">Add Field:</label>
 				<select id="add_batchmod_field">
 					<option></option>
-	                <option py:for="field in fields" value="${field.name}">${field.label}</option>
+	                <option py:for="field in fields" py:if="field.name not in ('time', 'changetime')" value="${field.name}">${field.label}</option>
 				</select>
 			</td>
 		</tr>
+        <tr>
+            <td colspan="3">
+                <label class="batchmod_label" for="bmod_modify_changetime">Modify Ticket Changetime</label>
+                <input type="checkbox" id="bmod_modify_changetime" name="bmod_modify_changetime" value="true" checked="checked" />
+            </td>
+        </tr>
 	</table>
 	
 	<div>
 	    <input type="hidden" name="selectedTickets" value=""/>
 	    <input type="hidden" name="query_href" value="${query_href}"/>
 	    <input type="submit" id="batchmod" name="batchmod" value="Change tickets" />
-	    <input type="checkbox" id="bmod_modify_changetime" name="bmod_modify_changetime" value="true" checked="checked" />Modify Ticket Changetime
 	</div>
 	
 	<py:for each="idx, constraints in enumerate(clauses)">
@@ -86,15 +57,7 @@
 
 </fieldset>
 
-<script type="text/javascript">
-jQuery(document).ready(function($){
-  <py:for each="field in fields">
-    $("input[id=bmod_flag_${field.name}]").click(function() {
-		$("*[name=bmod_value_${field.name}]").enable(this.checked);
-	});
-  </py:for>
-});
-</script>
 </form>
 </body>
+
 </html>
