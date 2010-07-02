@@ -81,11 +81,12 @@ class CustomReportManager:
          "VALUES (%s, %s, %s, %s, %s, %s)",
        (next_id, uuid, maingroup, subgroup, version, ordering)))
     self.log.debug("Attempting to increment sequence (only works in postgres)")
-    try:
-      dbhelper.execute_in_nested_trans(self.env, "update_seq", ("SELECT nextval('report_id_seq');",[]));
-      self.log.debug("Sequence updated");
-    except:
-      self.log.debug("Sequence failed to update, perhaps you are not running postgres?");
+    if type(e.get_read_db().cnx) == trac.db.postgres_backend.PostgreSQLConnection:
+      try:
+        dbhelper.execute_in_nested_trans(self.env, "update_seq", ("SELECT nextval('report_id_seq');",[]));
+        self.log.debug("Sequence updated");
+      except:
+        self.log.debug("Sequence failed to update, perhaps you are not running postgres?");
 
   def _update_report (self, id, title, author, description, query,
                       maingroup, subgroup, version):
