@@ -25,7 +25,6 @@ import time
 from datetime               import datetime
 from inspect                import getdoc
 from pkg_resources          import resource_filename
-from string                 import replace
 from StringIO               import StringIO
 
 from genshi.builder         import tag
@@ -306,6 +305,13 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                         """ % day)
         buff.append('</tr></thead>\n<tbody>\n')
 
+        # compile regex pattern before use for better performance
+        end_RE  = re.compile('(?:</a>)')
+        del_RE  = re.compile('(?:<span .*?>)|(?:</span>)')
+        item_RE = re.compile('(?:<img .*?>)')
+        look_RE = re.compile('(?: class=".*?")')
+        open_RE = re.compile('(?:<a .*?>)')
+
         for row in cal:
             buff.append('<tr align="right">')
             for day in row:
@@ -412,19 +418,23 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                     description = escape(markup)
                             else:
                                 description = markup
-                            # strip tags that destruct tooltips too much
-                            desc = re.sub('<a .*?>', '', Markup(description))
-                            desc = re.sub('</a>', '', desc)
-                            desc = re.sub('<span .*?>', '', desc)
-                            description = re.sub('</span>', '', desc)
+
+                            # replace tags that destruct tooltips too much
+                            desc = end_RE.sub(']', Markup(description))
+                            desc = del_RE.sub('', desc)
+                            desc = item_RE.sub('X', desc)
+                            desc = look_RE.sub(' class="tip"', desc)
+                            description = open_RE.sub('[', desc)
 
                             tooltip = tag.span(Markup(description))
                             id = '#' + id
+                            # fix stripping of regular leading space in IE
+                            blank = '&nbsp;'
                             ticketURL = tag.a(id + Markup(tooltip), href=url)
                             ticketURL(class_='tip', target='_blank')
                             ticket = tag.div(ticketURL)
                             ticket(class_=a_class, align='left')
-                            ticket(' ', summary, ' (', owner, ')')
+                            ticket(Markup(blank), summary, ' (', owner, ')')
                             buff.append(to_unicode(ticket))
 
                     if show_ticket_open_dates is True:
@@ -464,19 +474,23 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                     description = escape(markup)
                             else:
                                 description = markup
-                            # strip tags that destruct tooltips too much
-                            desc = re.sub('<a .*?>', '', Markup(description))
-                            desc = re.sub('</a>', '', desc)
-                            desc = re.sub('<span .*?>', '', desc)
-                            description = re.sub('</span>', '', desc)
+
+                            # replace tags that destruct tooltips too much
+                            desc = end_RE.sub(']', Markup(description))
+                            desc = del_RE.sub('', desc)
+                            desc = item_RE.sub('X', desc)
+                            desc = look_RE.sub(' class="tip"', desc)
+                            description = open_RE.sub('[', desc)
 
                             tooltip = tag.span(Markup(description))
                             id = '#' + id
+                            # fix stripping of regular leading space in IE
+                            blank = '&nbsp;'
                             ticketURL = tag.a(id + Markup(tooltip), href=url)
                             ticketURL(class_='tip', target='_blank')
                             ticket = tag.div(ticketURL)
                             ticket(class_='opendate_' + a_class, align='left')
-                            ticket(' ', summary, ' (', owner, ')')
+                            ticket(Markup(blank), summary, ' (', owner, ')')
                             buff.append(to_unicode(ticket))
 
                 buff.append('</td>')
