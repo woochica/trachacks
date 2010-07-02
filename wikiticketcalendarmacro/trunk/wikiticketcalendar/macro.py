@@ -236,8 +236,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 title="%(title)s">&nbsp;&lt;&lt;</a>
                 """ % {
                 'url': thispageURL(month=month, year=year-1),
-                'title': _("Turn up %s") %
-                    to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # fast-rewind month link
             date[0:2] = [frYear, frMonth]
@@ -245,8 +244,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 title="%(title)s">&nbsp;&lt;&nbsp;</a>
                 """ % {
                 'url': thispageURL(month=frMonth, year=frYear),
-                'title': _("Turn up %s") %
-                    to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # prev month link
             date[0:2] = [prevYear, prevMonth]
@@ -254,8 +252,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 title="%(title)s">&nbsp;&laquo;&nbsp;</a>
                 """ % {
                 'url': thispageURL(month=prevMonth, year=prevYear),
-                'title': _("Turn up %s") %
-                    to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
 
         # the caption
@@ -270,8 +267,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 title="%(title)s">&nbsp;&raquo;&nbsp;</a>
                 """ % {
                 'url': thispageURL(month=nextMonth, year=nextYear),
-                'title': _("Turn up %s") %
-                    to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # fast-forward month link
             date[0:2] = [ffYear, ffMonth]
@@ -279,8 +275,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 title="%(title)s">&nbsp;&gt;&nbsp;</a>
                 """ % {
                 'url': thispageURL(month=ffMonth, year=ffYear),
-                'title': _("Turn up %s") %
-                    to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
             # next year link
             date[0:2] = [year+1, month]
@@ -288,8 +283,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 title="%(title)s">&nbsp;&gt;&gt;</a>
                 """ % {
                 'url': thispageURL(month=month, year=year+1),
-                'title': _("Turn up %s") %
-                    to_unicode(time.strftime('%B %Y', tuple(date)))
+                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
                 })
 
         buff.append('</caption>\n<thead><tr align="center">')

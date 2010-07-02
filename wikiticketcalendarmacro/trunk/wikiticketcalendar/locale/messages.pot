@@ -7,9 +7,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: WikiTicketCalendarMacro 1.1.0\n"
+"Project-Id-Version: WikiTicketCalendarMacro 1.1.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-06-04 03:03+0200\n"
+"POT-Creation-Date: 2010-07-02 14:46+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,19 +18,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.0dev-r482\n"
 
-#: wikiticketcalendar/macro.py:223 wikiticketcalendar/macro.py:230
-#: wikiticketcalendar/macro.py:237 wikiticketcalendar/macro.py:250
-#: wikiticketcalendar/macro.py:257 wikiticketcalendar/macro.py:264
-#, python-format
-msgid "Turn up %s"
-msgstr ""
-
-#: wikiticketcalendar/macro.py:301
+#: wikiticketcalendar/macro.py:337
 #, python-format
 msgid "Go to page %s"
 msgstr ""
 
-#: wikiticketcalendar/macro.py:308
+#: wikiticketcalendar/macro.py:344
 #, python-format
 msgid "Create page %s"
 msgstr ""
