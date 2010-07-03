@@ -32,7 +32,7 @@ from genshi.core            import escape, Markup
 from genshi.filters.html    import HTMLSanitizer
 from genshi.input           import HTMLParser, ParseError
 
-from trac.config            import BoolOption, Option
+from trac.config            import Configuration
 from trac.core              import implements
 from trac.util.datefmt      import to_utimestamp, FixedOffset
 from trac.util.text         import to_unicode
@@ -99,15 +99,13 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         add_domain(self.env.path, locale_dir)
 
         # Read options from trac.ini's [datafield] section, if existing
-        self.date_format = Option('datefield', 'format', default='ymd',
-            doc="""
-            The format to use for dates. Valid values are dmy, mdy, and ymd.
-            """)
-        self.date_sep = Option('datefield', 'separator', default='-',
-            doc="The separator character to use for dates.")
+        # The format to use for dates. Valid values are dmy, mdy, and ymd.
+        self.date_format = self.config.get('datefield', 'format') or 'ymd'
+        # The separator character to use for dates.
+        self.date_sep = self.config.get('datefield', 'separator') or '-'
 
         self.sanitize = True
-        if BoolOption('wiki', 'render_unsafe_content', False) is True:
+        if self.config.getbool('wiki', 'render_unsafe_content') is True:
             self.sanitize = False
 
     # ITemplateProvider methods
@@ -128,18 +126,40 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     def get_macro_description(self, name):
         return getdoc(self.__class__)
 
+    def _mknav(self, label, style, month, year):
+        """The calendar nav button builder.
+
+        This is a convenience module for shorter and better serviceable code.
+        """
+        self.date[0:2] = [year, month]
+        tip = to_unicode(time.strftime('%B %Y', tuple(self.date)))
+        # URL to the current page
+        thispageURL = Href(self.ref.req.base_path + self.ref.req.path_info)
+        url = thispageURL(month=month, year=year)
+        markup = tag.a(Markup(label), href=url)
+        markup(class_=style, title=tip)
+        return markup
+
     # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
 
-        today = time.localtime()
-        http_param_year = formatter.req.args.get('year','')
-        http_param_month = formatter.req.args.get('month','')
+        self.ref = formatter
+
+        # Add CSS stylesheet
+        add_stylesheet(self.ref.req,
+            'wikiticketcalendar/css/wikiticketcalendar.css')
+
+
+        # Parse arguments from macro invocation
         if arguments == "":
             args = []
         else:
             args = arguments.split(',')
 
-        # find out whether use http param, current or macro param year/month
+        # Find out whether use http param, current or macro param year/month
+        http_param_year = formatter.req.args.get('year','')
+        http_param_month = formatter.req.args.get('month','')
+        today = time.localtime()
 
         if http_param_year == "":
             # not clicked on a prev or next button
@@ -183,20 +203,20 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         if len(args) >= 6:
             wiki_page_template = args[5]
 
-        curr_day = None
-        if year == today.tm_year and month == today.tm_mon:
-            curr_day = today.tm_mday
 
         # Can use this to change the day the week starts on,
         # but this is a system-wide setting.
         calendar.setfirstweekday(calendar.MONDAY)
         cal = calendar.monthcalendar(year, month)
 
-        date = [year, month + 1] + [1] * 7
+        curr_day = None
+        if year == today.tm_year and month == today.tm_mon:
+            curr_day = today.tm_mday
 
-        # URL to the current page (used in the navigation links)
-        thispageURL = Href(formatter.req.base_path + formatter.req.path_info)
-        # for the prev/next navigation links
+        self.date = [year, month + 1] + [1] * 7
+
+
+        # for prev/next navigation links
         prevMonth = month - 1
         nextMonth = month + 1
         nextYear = prevYear = year
@@ -207,7 +227,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         if nextMonth == 13:
             nextMonth = 1
             nextYear += 1
-        # prepare a fast-forward/-rewind
+
+        # for fast-forward/-rewind navigation links
         ffYear = frYear = year
         if month < 4:
             frMonth = month + 9
@@ -220,97 +241,69 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         else:
             ffMonth = month + 3
 
-        # add CSS stylesheet
-        add_stylesheet(formatter.req,
-            'wikiticketcalendar/css/wikiticketcalendar.css')
-
-        # building the output
-        buff = []
-        buff.append('<div class="wikiTicketCalendar">')
-        buff.append('<table class="wikiTicketCalendar"><caption>')
-
-        if showbuttons is True:
-            # prev year link
-            date[0:2] = [year-1, month]
-            buff.append("""<a class="prev" href="%(url)s"
-                title="%(title)s">&nbsp;&lt;&lt;</a>
-                """ % {
-                'url': thispageURL(month=month, year=year-1),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
-                })
-            # fast-rewind month link
-            date[0:2] = [frYear, frMonth]
-            buff.append("""<a class="prev" href="%(url)s"
-                title="%(title)s">&nbsp;&lt;&nbsp;</a>
-                """ % {
-                'url': thispageURL(month=frMonth, year=frYear),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
-                })
-            # prev month link
-            date[0:2] = [prevYear, prevMonth]
-            buff.append("""<a class="prev" href="%(url)s"
-                title="%(title)s">&nbsp;&laquo;&nbsp;</a>
-                """ % {
-                'url': thispageURL(month=prevMonth, year=prevYear),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
-                })
-
-        # the caption
-        date[0:2] = [year, month]
-        buff.append(to_unicode(time.strftime('<strong>%B %Y</strong>',
-                                                      tuple(date))))
-
-        if showbuttons is True:
-            # next month link
-            date[0:2] = [nextYear, nextMonth]
-            buff.append("""<a class="next" href="%(url)s"
-                title="%(title)s">&nbsp;&raquo;&nbsp;</a>
-                """ % {
-                'url': thispageURL(month=nextMonth, year=nextYear),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
-                })
-            # fast-forward month link
-            date[0:2] = [ffYear, ffMonth]
-            buff.append("""<a class="next" href="%(url)s"
-                title="%(title)s">&nbsp;&gt;&nbsp;</a>
-                """ % {
-                'url': thispageURL(month=ffMonth, year=ffYear),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
-                })
-            # next year link
-            date[0:2] = [year+1, month]
-            buff.append("""<a class="next" href="%(url)s"
-                title="%(title)s">&nbsp;&gt;&gt;</a>
-                """ % {
-                'url': thispageURL(month=month, year=year+1),
-                'title': to_unicode(time.strftime('%B %Y', tuple(date)))
-                })
-
-        buff.append('</caption>\n<thead><tr align="center">')
-        date[0:2] = [year, month]
-
-        for day in calendar.weekheader(2).split()[:-2]:
-            buff.append("""<th class="workday"
-                        scope="col"><b>%s</b></th>
-                        """ % day)
-        for day in calendar.weekheader(2).split()[-2:]:
-            buff.append("""<th class="weekend"
-                        scope="col"><b>%s</b></th>
-                        """ % day)
-        buff.append('</tr></thead>\n<tbody>\n')
-
-        # compile regex pattern before use for better performance
+        # Compile regex pattern before use for better performance
         end_RE  = re.compile('(?:</a>)')
         del_RE  = re.compile('(?:<span .*?>)|(?:</span>)')
         item_RE = re.compile('(?:<img .*?>)')
         look_RE = re.compile('(?: class=".*?")')
         open_RE = re.compile('(?:<a .*?>)')
 
+
+        # Finally building the output
+        # Begin with caption and optional navigation links
+        buff = tag.caption()
+
+        if showbuttons is True:
+            # calendar navigation buttons
+            nx = 'next'
+            pv = 'prev'
+            nav_pvY = self._mknav('&nbsp;&lt;&lt;', pv, month, year-1)
+            nav_frM = self._mknav('&nbsp;&lt;&nbsp;', pv, frMonth, frYear)
+            nav_pvM = self._mknav('&nbsp;&laquo;&nbsp;', pv, prevMonth,
+                                                                 prevYear)
+            nav_nxM = self._mknav('&nbsp;&raquo;&nbsp;', nx, nextMonth,
+                                                                 nextYear)
+            nav_ffM = self._mknav('&nbsp;&gt;&nbsp;', nx, ffMonth, ffYear)
+            nav_nxY = self._mknav('&nbsp;&gt;&gt;', nx, month, year+1)
+
+            # add buttons for going to previous months and year
+            buff(nav_pvY, nav_frM, nav_pvM)
+        
+        # The caption will always be there.
+        self.date[0:2] = [year, month]
+        buff(tag.strong(to_unicode(time.strftime('%B %Y', tuple(self.date)))))
+
+        if showbuttons is True:
+            # add buttons for going to next months and year
+            buff(nav_nxM, nav_ffM, nav_nxY)
+
+        buff = tag.caption(buff)
+        buff = tag.table(buff)
+        buff(class_='wikiTicketCalendar')
+
+        col_heading = tag.tr()
+        col_heading(align='center')
+
+        for day in calendar.weekheader(2).split()[:-2]:
+            col = tag.th(tag.b(day))
+            col(class_='workday', scope='col')
+            col_heading(col)
+        for day in calendar.weekheader(2).split()[-2:]:
+            col = tag.th(tag.b(day))
+            col(class_='weekend', scope='col')
+            col_heading(col)
+
+        buff(tag.thead(col_heading))
+
+        # Building main calendar table body
+        buff(tag.tbody())
         for row in cal:
-            buff.append('<tr align="right">')
+            line = tag.tr()
+            line(align='right')
             for day in row:
                 if not day:
-                    buff.append('<td class="day">')
+                    cell = tag.td('')
+                    cell(class_='day')
                 else:
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
@@ -325,12 +318,12 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
                     # check for wikipage with name specified in
                     # 'wiki_page_format'
-                    date[0:3] = [year, month, day]
+                    self.date[0:3] = [year, month, day]
                     if day == curr_day:
                         td_class = 'today'
                     else:
                         td_class = 'day'
-                    wiki = time.strftime(wiki_page_format, tuple(date))
+                    wiki = time.strftime(wiki_page_format, tuple(self.date))
                     url = self.env.href.wiki(wiki)
                     if WikiSystem(self.env).has_page(wiki):
                         a_class = "day_haspage"
@@ -343,10 +336,10 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             url += "&template=" + wiki_page_template
                         title = _("Create page %s") % wiki
 
-                    dayURL = tag.a(tag.b(day), href=url)
-                    dayURL(class_=a_class, title_=title)
-                    buff.append('<td class="' + td_class + \
-                        '" valign="top">' + str(dayURL))
+                    cell = tag.a(tag.b(day), href=url)
+                    cell(class_=a_class, title_=title)
+                    cell = tag.td(cell)
+                    cell(class_=td_class, valign='top')
 
                     # Use get to handle default format
                     duedate = { 'dmy': '%(dd)s%(sep)s%(mm)s%(sep)s%(yy)s',
@@ -360,7 +353,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                         'sep': self.date_sep
                     }
 
-                    # first check for milestone on that day
+                    # at first check for milestone on that day
                     cursor.execute("""
                         SELECT name
                           FROM milestone
@@ -369,14 +362,16 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     while (1):
                         row = cursor.fetchone()
                         if row is None:
-                            buff.append('<br>')
+                            cell.append(tag.br())
                             break
                         else:
                             name = to_unicode(row[0])
                             url = self.env.href.milestone(name)
-                            milestone = tag.div(tag.a('* ' + name, href=url))
+                            milestone = '* ' + name
+                            milestone = tag.div(tag.a(milestone, href=url))
                             milestone(class_='milestone')
-                            buff.append(to_unicode(milestone))
+
+                            cell(milestone)
 
                     # get tickets with due date set to day
                     cursor.execute("""
@@ -402,8 +397,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             else:
                                 a_class = 'open'
                             markup = format_to_html(self.env,
-                                              formatter.context, description)
-                            # Escape if needed
+                                              self.ref.context, description)
+                            # Escape, if requested
                             if self.sanitize is True:
                                 try:
                                     description = HTMLParser(StringIO(markup)
@@ -413,23 +408,24 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             else:
                                 description = markup
 
-                            # replace tags that destruct tooltips too much
+                            # Replace tags that destruct tooltips too much
                             desc = end_RE.sub(']', Markup(description))
                             desc = del_RE.sub('', desc)
                             desc = item_RE.sub('X', desc)
                             desc = look_RE.sub(' class="tip"', desc)
                             description = open_RE.sub('[', desc)
 
-                            tooltip = tag.span(Markup(description))
-                            id = '#' + id
+                            tip = tag.span(Markup(description))
+                            ticket = '#' + id
+                            ticket = tag.a(ticket, href=url)
+                            ticket(tip, class_='tip', target='_blank')
+                            ticket = tag.div(ticket)
+                            ticket(class_=a_class, align='left')
                             # fix stripping of regular leading space in IE
                             blank = '&nbsp;'
-                            ticketURL = tag.a(id + Markup(tooltip), href=url)
-                            ticketURL(class_='tip', target='_blank')
-                            ticket = tag.div(ticketURL)
-                            ticket(class_=a_class, align='left')
                             ticket(Markup(blank), summary, ' (', owner, ')')
-                            buff.append(to_unicode(ticket))
+
+                            cell(ticket)
 
                     if show_ticket_open_dates is True:
                         # get tickets created on day
@@ -458,8 +454,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             else:
                                 a_class = 'open'
                             markup = format_to_html(self.env,
-                                              formatter.context, description)
-                            # Escape if needed
+                                              self.ref.context, description)
+                            # Escape, if requested
                             if self.sanitize is True:
                                 try:
                                     description = HTMLParser(StringIO(markup)
@@ -469,29 +465,29 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             else:
                                 description = markup
 
-                            # replace tags that destruct tooltips too much
+                            # Replace tags that destruct tooltips too much
                             desc = end_RE.sub(']', Markup(description))
                             desc = del_RE.sub('', desc)
                             desc = item_RE.sub('X', desc)
                             desc = look_RE.sub(' class="tip"', desc)
                             description = open_RE.sub('[', desc)
 
-                            tooltip = tag.span(Markup(description))
-                            id = '#' + id
+                            tip = tag.span(Markup(description))
+                            ticket = '#' + id
+                            ticket = tag.a(ticket, href=url)
+                            ticket(tip, class_='tip', target='_blank')
+                            ticket = tag.div(ticket)
+                            ticket(class_='opendate_' + a_class, align='left')
                             # fix stripping of regular leading space in IE
                             blank = '&nbsp;'
-                            ticketURL = tag.a(id + Markup(tooltip), href=url)
-                            ticketURL(class_='tip', target='_blank')
-                            ticket = tag.div(ticketURL)
-                            ticket(class_='opendate_' + a_class, align='left')
                             ticket(Markup(blank), summary, ' (', owner, ')')
-                            buff.append(to_unicode(ticket))
 
-                buff.append('</td>')
-            buff.append('</tr>\n')
+                            cell(ticket)
 
-        buff.append('</tbody>\n</table>\n</div>')
+                line(cell)
+            buff(line)
 
-        table = "\n".join(buff)
+        buff = tag.div(buff)
+        buff(class_='wikiTicketCalendar')
 
-        return table
+        return buff

@@ -178,3 +178,9 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * change description tooltip to pure CSS style pop-up box
    with some tweaks to work around IE render bugs
  * wrap calender in div section with own style
+
+1.1.6 - development version for 0.12 branch (03-Jul-2010)
+ changes by Steffen Hoffmann
+ * replace re-definition of config options (bad) with config read calls
+ * build markup from Genshi calls only, overcoming old string serialization
+ * code cleanup
