@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2006 Ashwin Phatak
 # Copyright (C) 2007 Dave Gynn
+# Copyright (C) 2010 Brian Meeker
 
 from trac.core import *
 from trac.config import Option, ListOption
@@ -53,7 +54,7 @@ class BatchModifyModule(Component):
     def pre_process_request(self, req, handler):
         """Look for QueryHandler posts and hijack them"""
         if req.path_info == '/query' and req.method=='POST' and \
-            req.args.get('batchmod') and self._has_permission(req):
+            req.args.get('batchmod_submit') and self._has_permission(req):
             self.log.debug('BatchModifyModule: executing')
             self._batch_modify(req)
             # redirect to original Query
@@ -73,23 +74,24 @@ class BatchModifyModule(Component):
     # Internal methods 
     def _batch_modify(self, req):
         tickets = req.session['query_tickets'].split(' ')
-        comment = req.args.get('bmod_value_comment', '')
-        modify_changetime = bool(req.args.get('bmod_modify_changetime', False))
+        comment = req.args.get('batchmod_value_comment', '')
+        modify_changetime = bool(req.args.get('batchmod_modify_changetime', False))
         values = {} 
 
-        # TODO: improve validation and better handle advanced statuses
         for field in TicketSystem(self.env).get_ticket_fields():
             name = field['name']
             if name not in ('summary', 'reporter', 'description'):
-                value = req.args.get('bmod_value_' + name)
+                value = req.args.get('batchmod_value_' + name)
                 if value is not None:
                     values[name] = value
+        
+        values = self._check_for_resolution(values);
 
         selectedTickets = req.args.get('selectedTickets')
         self.log.debug('BatchModifyPlugin: selected tickets: %s', selectedTickets)
         selectedTickets = isinstance(selectedTickets, list) and selectedTickets or selectedTickets.split(',')
         if not selectedTickets:
-            raise TracError, 'No Tickets selected'
+            raise TracError, 'No tickets selected'
         
         for id in selectedTickets:
             if id in tickets:
@@ -113,6 +115,13 @@ class BatchModifyModule(Component):
                   db.commit()
 
                 self.log.debug('BatchModifyPlugin: saved changes to #%s %s' % (id, log_msg))
+
+    
+    def _check_for_resolution(self, values):
+        """If a resolution has been set the status is automatically set to closed."""
+        if values['resolution'] is not None:
+            values['status'] = 'closed'
+        return values;
 
     def _merge_keywords(self, original_keywords, new_keywords):
         """Prevent duplicate keywords by merging the two lists."""
@@ -163,7 +172,7 @@ class BatchModifyModule(Component):
         add_stylesheet(req, 'batchmod/css/batchmod.css')
         stream = Chrome(self.env).render_template(req, 'batchmod.html',
               batchFormData, fragment=True)
-        return stream.select('//form[@id="batchmod-form"]')
+        return stream.select('//form[@id="batchmod_form"]')
         
     # Helper methods
     def _has_permission(self, req):

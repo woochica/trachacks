@@ -1,3 +1,5 @@
+// Copyright (C) 2010 Brian Meeker
+
 var BatchMod = {
 	
 	// Convenience function for creating a <label>
@@ -75,14 +77,8 @@ var BatchMod = {
     },
     
     getInputName: function(propertyName){
-        return 'bmod_value_' + propertyName;
+        return 'batchmod_value_' + propertyName;
     },
-    
-    //Remove the row for the given property. Reenable it in the list.
-    removeRow: function(propertyName){
-        $('#batchmod_' + propertyName).remove();
-        $($.htmlFormat("#add_batchmod_field option[value='$1']", propertyName)).enable();
-    }
 	
 }
 
@@ -92,38 +88,71 @@ jQuery(document).ready(function($){
     //Selecting a ticket marks it for inclusion in the batch. 
     $("table.listing tr td.id").each(function() {
         tId=$(this).text().substring(1); 
-        $(this).before('<td><input type="checkbox" name="selectedTicket" class="bmod_selector" value="'+tId+'"/></td>');
+        $(this).before('<td><input type="checkbox" name="selectedTicket" class="batchmod_selector" value="'+tId+'"/></td>');
     });
 
     //Add a checkbox at the top of the column to select ever ticket in the group.
     $("table.listing tr th.id").each(function() { 
-        $(this).before('<th class="bmod_selector"><input type="checkbox" name="bmod_toggleGroup" /></th>');
+        $(this).before('<th class="batchmod_selector"><input type="checkbox" name="batchmod_toggleGroup" /></th>');
     });
 
     //Add the click behavior for the group toggle. 
-    $("input[name='bmod_toggleGroup']").click(function() { 
-        $("tr td input.bmod_selector",$(this).parents("table.listing")).attr("checked",this.checked);
+    $("input[name='batchmod_toggleGroup']").click(function() { 
+        $("tr td input.batchmod_selector",$(this).parents("table.listing")).attr("checked",this.checked);
     });
   
     //At least one ticket must be selected to submit the batch.
-    $("form#batchmod-form").submit(function() {
+    $("form#batchmod_form").submit(function() {
+		//First remove all existing validation messages.
+		$(".batchmod_required").detach()
+		
+		var valid = true;
         var selectedTix=[];    
         $("input[name=selectedTicket]:checked").each( function(){ selectedTix.push(this.value);} ); 
         $("input[name=selectedTickets]").val(selectedTix);
+		
+		//At least one ticket must be selected.
         if(selectedTix.length == 0){
-            alert("No tickets selected to modify");
-            return false;
+            $("#batchmod_submit").after('<span class="batchmod_required">You must select at least one ticket.</span>');
+            valid = false;
         }
+		
+		//Check that each radio property has something selected.
+		$("#add_batchmod_field option:disabled").each(function(){
+		    var propertyName = $(this).val();
+		    if(properties[propertyName].type == "radio"){
+		        var isChecked = false;
+		        var inputName = BatchMod.getInputName(propertyName);
+		        $("[name=" + inputName + "]").each(function(){
+		            isChecked = isChecked || $(this).is(':checked');
+		        })
+		        if(!isChecked){
+					//Select the last label in the row to add the error message
+		            $("[name=" + inputName + "] ~ label:last")
+						.after('<span class="batchmod_required">Required</span>')
+					valid = false;
+		        }
+		    }
+		})
+		
+		//If the status is set to closed, a resolution must be selected.
+		if($("#batchmod_value_status_closed").checked() && $("#batchmod_resolution").length < 1){
+			$("[name=batchmod_value_status] ~ label:last").after('<span class="batchmod_required">Resolution Required</span>')
+		}
+		
+		return valid;
     });
   
     //Collapse the form by default
-    $("#batchmod-fieldset").toggleClass("collapsed");
+    $("#batchmod_fieldset").toggleClass("collapsed");
   
     //Add the new batch modify field when the user selects one from the dropdown.
     $("#add_batchmod_field").change(function() {
         if (this.selectedIndex < 1)
             return;
         
+		//Trac has a properties object that has information about each property that filters
+		//could be built with. We use it hear to add batchmod fields.
         var propertyName = this.options[this.selectedIndex].value;
         var property = properties[propertyName];
         
@@ -133,7 +162,10 @@ jQuery(document).ready(function($){
         tr.append($('<td>')
             .append($('<div class="inlinebuttons">')
                 .append($('<input type="button" value="&ndash;">')
-                    .click(function() { BatchMod.removeRow(propertyName); })
+                    .click(function() { 
+						$('#batchmod_' + propertyName).remove();
+        				$($.htmlFormat("#add_batchmod_field option[value='$1']", propertyName)).enable(); 
+					})
                 )
             )
         );
@@ -149,12 +181,8 @@ jQuery(document).ready(function($){
         //Add the element before the comment box.
         $("#batchmod_comment").before(tr);
                 
-		//Add the field to the table. Will need information about the type of input to be inserted for each field.
-			//What to do about textareas? They are currently filtered out, but then are handled anyways. Obviously this is never hit.
-		//Add a remove button for each field.
 		//Insert the new rows in the same order as listed in the dropdown. This is the same behavior as the filters.
 		//Rules
-			//When Status is set to "closed" a resolution must also be set.
 			//Setting a resolution sets the status to closed.
 			//Validate these server-side as well.
         
