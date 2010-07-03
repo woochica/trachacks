@@ -1,36 +1,35 @@
 // Copyright (C) 2010 Brian Meeker
 
-var BatchMod = {
-	
-	// Convenience function for creating a <label>
-    createLabel: function(text, htmlFor) {
+jQuery(document).ready(function($){
+    // Convenience function for creating a <label>
+    function createLabel(text, htmlFor) {
       var label = $($.htmlFormat("<label>$1</label>", text));
       if (htmlFor)
         label.attr("for", htmlFor).addClass("control");
       return label;
-    },
+    }
 	
 	// Convenience function for creating an <input type="text">
-    createText: function(name, size) {
+    function createText(name, size) {
       return $($.htmlFormat('<input type="text" name="$1" size="$2">', 
                             name, size));
-    },
+    }
     
     // Convenience function for creating an <input type="checkbox">
-    createCheckbox: function(name, value, id) {
+    function createCheckbox(name, value, id) {
       return $($.htmlFormat('<input type="checkbox" id="$1" name="$2"' +
                             ' value="$3">', id, name, value));
-    },
+    }
     
     // Convenience function for creating an <input type="radio">
-    createRadio: function(name, value, id) {
+    function createRadio(name, value, id) {
       // Workaround for IE, otherwise the radio buttons are not selectable
       return $($.htmlFormat('<input type="radio" id="$1" name="$2"' +
                             ' value="$3">', id, name, value));
-    },
+    }
   
     // Convenience function for creating a <select>
-    createSelect: function(name, options, optional) {
+    function createSelect(name, options, optional) {
         var e = $($.htmlFormat('<select id="$1" name="$1">', name));
         if (optional)
             $("<option>").appendTo(e);
@@ -41,49 +40,45 @@ var BatchMod = {
             $($.htmlFormat('<option value="$1">$2</option>', v, t)).appendTo(e);
         }
         return e;
-    },
-    
-    //Create the appropriate input for the property.
-    createInput: function(inputName, property){
+    }
+	
+	//Create the appropriate input for the property.
+    function createInput(inputName, property){
         var td = $('<td class="batchmod_property>')
         switch(property.type){
             case 'select':
-                td.append(BatchMod.createSelect(inputName, property.options, true));
+                td.append(createSelect(inputName, property.options, true));
                 break;
             case 'radio':
                 for (var i = 0; i < property.options.length; i++) {
                     var option = property.options[i];
-                    td.append(BatchMod.createRadio(inputName, option, inputName + "_" + option))
+                    td.append(createRadio(inputName, option, inputName + "_" + option))
                         .append(" ")
-                        .append(BatchMod.createLabel(option ? option : "none", inputName + "_" + option))
+                        .append(createLabel(option ? option : "none", inputName + "_" + option))
                         .append(" ");
                 }
                 break;
             case 'checkbox':
-                td.append(BatchMod.createRadio(inputName, "1", inputName + "_on"))
-                    .append(" ").append(BatchMod.createLabel(_("yes"), inputName + "_on"))
+                td.append(createRadio(inputName, "1", inputName + "_on"))
+                    .append(" ").append(createLabel(_("yes"), inputName + "_on"))
                     .append(" ")
-                    .append(BatchMod.createRadio(inputName, "0", inputName + "_off"))
-                    .append(" ").append(BatchMod.createLabel(_("no"), inputName + "_off"));
+                    .append(createRadio(inputName, "0", inputName + "_off"))
+                    .append(" ").append(createLabel(_("no"), inputName + "_off"));
                 break;
             case 'text':
-                td.append(BatchMod.createText(inputName, 42));
+                td.append(createText(inputName, 42));
                 break;
             case 'time':
-                td.append(BatchMod.createText(inputName, 42).addClass("time"));
+                td.append(createText(inputName, 42).addClass("time"));
                 break;
         }
         return td;
-    },
-    
-    getInputName: function(propertyName){
-        return 'batchmod_value_' + propertyName;
-    },
+    }
 	
-}
-
-jQuery(document).ready(function($){
-    
+	function getInputName(propertyName){
+        return 'batchmod_value_' + propertyName;
+    }
+	
     //Add a new column with checkboxes for each ticket.
     //Selecting a ticket marks it for inclusion in the batch. 
     $("table.listing tr td.id").each(function() {
@@ -122,7 +117,7 @@ jQuery(document).ready(function($){
 		    var propertyName = $(this).val();
 		    if(properties[propertyName].type == "radio"){
 		        var isChecked = false;
-		        var inputName = BatchMod.getInputName(propertyName);
+		        var inputName = getInputName(propertyName);
 		        $("[name=" + inputName + "]").each(function(){
 		            isChecked = isChecked || $(this).is(':checked');
 		        })
@@ -172,11 +167,11 @@ jQuery(document).ready(function($){
         
         //Add the header row.
         tr.append($('<th scope="row">')
-            .append(BatchMod.createLabel(property.label, BatchMod.getInputName(propertyName)))
+            .append(createLabel(property.label, getInputName(propertyName)))
         );
         
         // Add the input element.
-        tr.append(BatchMod.createInput(BatchMod.getInputName(propertyName), property));
+        tr.append(createInput(getInputName(propertyName), property));
         
         //Add the element before the comment box.
         $("#batchmod_comment").before(tr);

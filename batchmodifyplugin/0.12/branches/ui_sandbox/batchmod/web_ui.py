@@ -85,7 +85,8 @@ class BatchModifyModule(Component):
                 if value is not None:
                     values[name] = value
         
-        values = self._check_for_resolution(values);
+        values = self._check_for_resolution(values)
+        values = self._remove_resolution_if_not_closed(values)
 
         selectedTickets = req.args.get('selectedTickets')
         self.log.debug('BatchModifyPlugin: selected tickets: %s', selectedTickets)
@@ -119,9 +120,14 @@ class BatchModifyModule(Component):
     
     def _check_for_resolution(self, values):
         """If a resolution has been set the status is automatically set to closed."""
-        if values['resolution'] is not None:
+        if values.has_key('resolution'):
             values['status'] = 'closed'
-        return values;
+        return values
+    
+    def _remove_resolution_if_not_closed(self, values):
+        if values.has_key('status') and values['status'] is not 'closed':
+            values['resolution'] = ''
+        return values
 
     def _merge_keywords(self, original_keywords, new_keywords):
         """Prevent duplicate keywords by merging the two lists."""
