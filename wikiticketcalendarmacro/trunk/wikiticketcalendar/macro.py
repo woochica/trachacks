@@ -138,7 +138,50 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         url = thispageURL(month=month, year=year)
         markup = tag.a(Markup(label), href=url)
         markup(class_=style, title=tip)
+
         return markup
+
+    def _gen_ticket_entry(self, row, a_class=''):
+        id = str(row[0])
+        url = self.env.href.ticket(id)
+        summary = to_unicode(row[1][0:100])
+        owner = to_unicode(row[2])
+        status = row[3]
+        description = to_unicode(row[4][:1024])
+
+        if status == 'closed':
+            a_class = a_class + 'closed'
+        else:
+            a_class = a_class + 'open'
+        markup = format_to_html(self.env, self.ref.context, description)
+        # Escape, if requested
+        if self.sanitize is True:
+            try:
+                description = HTMLParser(StringIO(markup)
+                                           ).parse() | HTMLSanitizer()
+            except ParseError:
+                description = escape(markup)
+        else:
+            description = markup
+
+        # Replace tags that destruct tooltips too much
+        desc = self.end_RE.sub(']', Markup(description))
+        desc = self.del_RE.sub('', desc)
+        desc = self.item_RE.sub('X', desc)
+        desc = self.look_RE.sub(' class="tip"', desc)
+        description = self.open_RE.sub('[', desc)
+
+        tip = tag.span(Markup(description))
+        ticket = '#' + id
+        ticket = tag.a(ticket, href=url)
+        ticket(tip, class_='tip', target='_blank')
+        ticket = tag.div(ticket)
+        ticket(class_=a_class, align='left')
+        # fix stripping of regular leading space in IE
+        blank = '&nbsp;'
+        ticket(Markup(blank), summary, ' (', owner, ')')
+
+        return ticket
 
     # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
@@ -215,6 +258,13 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
         self.date = [year, month + 1] + [1] * 7
 
+        # Compile regex pattern before use for better performance
+        self.end_RE  = re.compile('(?:</a>)')
+        self.del_RE  = re.compile('(?:<span .*?>)|(?:</span>)')
+        self.item_RE = re.compile('(?:<img .*?>)')
+        self.look_RE = re.compile('(?: class=".*?")')
+        self.open_RE = re.compile('(?:<a .*?>)')
+
 
         # for prev/next navigation links
         prevMonth = month - 1
@@ -240,13 +290,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             ffYear += 1
         else:
             ffMonth = month + 3
-
-        # Compile regex pattern before use for better performance
-        end_RE  = re.compile('(?:</a>)')
-        del_RE  = re.compile('(?:<span .*?>)|(?:</span>)')
-        item_RE = re.compile('(?:<img .*?>)')
-        look_RE = re.compile('(?: class=".*?")')
-        open_RE = re.compile('(?:<a .*?>)')
 
 
         # Finally building the output
@@ -385,45 +428,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                         if row is None:
                             break
                         else:
-                            id = str(row[0])
-                            url = self.env.href.ticket(id)
-                            summary = to_unicode(row[1][0:100])
-                            owner = to_unicode(row[2])
-                            status = row[3]
-                            description = to_unicode(row[4][:1024])
-
-                            if status == 'closed':
-                                a_class = 'closed'
-                            else:
-                                a_class = 'open'
-                            markup = format_to_html(self.env,
-                                              self.ref.context, description)
-                            # Escape, if requested
-                            if self.sanitize is True:
-                                try:
-                                    description = HTMLParser(StringIO(markup)
-                                        ).parse() | HTMLSanitizer()
-                                except ParseError:
-                                    description = escape(markup)
-                            else:
-                                description = markup
-
-                            # Replace tags that destruct tooltips too much
-                            desc = end_RE.sub(']', Markup(description))
-                            desc = del_RE.sub('', desc)
-                            desc = item_RE.sub('X', desc)
-                            desc = look_RE.sub(' class="tip"', desc)
-                            description = open_RE.sub('[', desc)
-
-                            tip = tag.span(Markup(description))
-                            ticket = '#' + id
-                            ticket = tag.a(ticket, href=url)
-                            ticket(tip, class_='tip', target='_blank')
-                            ticket = tag.div(ticket)
-                            ticket(class_=a_class, align='left')
-                            # fix stripping of regular leading space in IE
-                            blank = '&nbsp;'
-                            ticket(Markup(blank), summary, ' (', owner, ')')
+                            ticket = self._gen_ticket_entry(row, a_class)
 
                             cell(ticket)
 
@@ -438,49 +443,14 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             row = cursor.fetchone()
                             if row is None:
                                 break
-                            id = str(row[0])
-                            url = self.env.href.ticket(id)
-                            summary = to_unicode(row[1][0:100])
-                            owner = to_unicode(row[2])
-                            status = row[3]
-                            description = to_unicode(row[4][:1024])
+
                             ticket_time = int(row[5])
                             if ticket_time < duedatestamp or \
                                     ticket_time > duedatestamp_eod:
                                 continue
 
-                            if status == 'closed':
-                                a_class = 'closed'
-                            else:
-                                a_class = 'open'
-                            markup = format_to_html(self.env,
-                                              self.ref.context, description)
-                            # Escape, if requested
-                            if self.sanitize is True:
-                                try:
-                                    description = HTMLParser(StringIO(markup)
-                                        ).parse() | HTMLSanitizer()
-                                except ParseError:
-                                    description = escape(markup)
-                            else:
-                                description = markup
-
-                            # Replace tags that destruct tooltips too much
-                            desc = end_RE.sub(']', Markup(description))
-                            desc = del_RE.sub('', desc)
-                            desc = item_RE.sub('X', desc)
-                            desc = look_RE.sub(' class="tip"', desc)
-                            description = open_RE.sub('[', desc)
-
-                            tip = tag.span(Markup(description))
-                            ticket = '#' + id
-                            ticket = tag.a(ticket, href=url)
-                            ticket(tip, class_='tip', target='_blank')
-                            ticket = tag.div(ticket)
-                            ticket(class_='opendate_' + a_class, align='left')
-                            # fix stripping of regular leading space in IE
-                            blank = '&nbsp;'
-                            ticket(Markup(blank), summary, ' (', owner, ')')
+                            a_class = 'opendate_'
+                            ticket = self._gen_ticket_entry(row, a_class)
 
                             cell(ticket)
 
