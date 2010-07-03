@@ -428,7 +428,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                         if row is None:
                             break
                         else:
-                            ticket = self._gen_ticket_entry(row, a_class)
+                            ticket = self._gen_ticket_entry(row)
 
                             cell(ticket)
 
