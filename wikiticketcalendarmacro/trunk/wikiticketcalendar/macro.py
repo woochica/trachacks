@@ -126,7 +126,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     def get_macro_description(self, name):
         return getdoc(self.__class__)
 
-    def _mknav(self, label, style, month, year):
+    def _mknav(self, label, a_class, month, year):
         """The calendar nav button builder.
 
         This is a convenience module for shorter and better serviceable code.
@@ -137,7 +137,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         thispageURL = Href(self.ref.req.base_path + self.ref.req.path_info)
         url = thispageURL(month=month, year=year)
         markup = tag.a(Markup(label), href=url)
-        markup(class_=style, title=tip)
+        markup(class_=a_class, title=tip)
 
         return markup
 
@@ -320,33 +320,32 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             # add buttons for going to next months and year
             buff(nav_nxM, nav_ffM, nav_nxY)
 
-        buff = tag.caption(buff)
         buff = tag.table(buff)
         buff(class_='wikiTicketCalendar')
 
-        col_heading = tag.tr()
-        col_heading(align='center')
+        heading = tag.tr()
+        heading(align='center')
 
         for day in calendar.weekheader(2).split()[:-2]:
-            col = tag.th(tag.b(day))
+            col = tag.th(day)
             col(class_='workday', scope='col')
-            col_heading(col)
+            heading(col)
         for day in calendar.weekheader(2).split()[-2:]:
-            col = tag.th(tag.b(day))
+            col = tag.th(day)
             col(class_='weekend', scope='col')
-            col_heading(col)
+            heading(col)
 
-        buff(tag.thead(col_heading))
+        heading = buff(tag.thead(heading))
 
         # Building main calendar table body
-        buff(tag.tbody())
+        buff = tag.tbody()
         for row in cal:
             line = tag.tr()
             line(align='right')
             for day in row:
                 if not day:
                     cell = tag.td('')
-                    cell(class_='day')
+                    cell(class_='fill')
                 else:
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
@@ -457,7 +456,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 line(cell)
             buff(line)
 
-        buff = tag.div(buff)
+        buff = tag.div(heading(buff))
         buff(class_='wikiTicketCalendar')
 
         return buff
