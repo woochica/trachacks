@@ -12,7 +12,7 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, add_ctxtn
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.ticket.model import Ticket
 from trac.ticket.api import ITicketManipulator
-from trac.ticket.api import ITicketChangeListener
+# from trac.ticket.api import ITicketChangeListener
 
 from trac.env import open_environment
 
@@ -28,18 +28,18 @@ TICKET_CUSTOM = "ticket-custom"
 
 class TracDependency(Component):
     implements(IRequestHandler, IRequestFilter, ITemplateProvider, 
-        ITemplateStreamFilter, ITicketManipulator, ITicketChangeListener)
+        ITemplateStreamFilter, ITicketManipulator)
 
     def __init__(self):
         self.project_label = self.config.get( "tracdependency", "label")
-        self.log.debug("[tracdependency]:label = %s", self.project_label)
+        # self.log.debug("[tracdependency]:label = %s", self.project_label)
         if not self.project_label:
             self.project_label=os.path.basename(self.env.path)
-            self.log.debug("base name of env_path = %s", self.project_label)
+            # self.log.debug("base name of env_path = %s", self.project_label)
             intertrac_project_label = self.config.get( "intertrac", self.project_label+".label")
             if intertrac_project_label:
                 self.project_label = intertrac_project_label
-                self.log.debug("label from intertrac setting = %s", self.project_label)
+                # self.log.debug("label from intertrac setting = %s", self.project_label)
         self.intertrac = InterTrac(self.config, self.env, self.project_label)
 
     # IRequestHandler methods
@@ -60,12 +60,12 @@ class TracDependency(Component):
         sub_ticket, subsequentticket = self.intertrac.create_ticket_links(tkt_id, self.log)
         summary_ticket_enabled = not not ( self.config.get( TICKET_CUSTOM, "summary_ticket" ))
         dependencies_enabled = not not ( self.config.get( TICKET_CUSTOM, "dependencies"))
-        intertracs = self.intertrac.project_information()
         custom_field = False
-        return 'trac_dependency.html', {'intertracs': intertracs, 'custom_field':custom_field,
+        return 'trac_dependency.html', {'custom_field':custom_field,
                                         'summary_ticket': summary_ticket, 'dependencies': dependencies,
                                         'sub_ticket': sub_ticket, 'subsequentticket': subsequentticket,
                                         'summary_ticket_enabled': summary_ticket_enabled,
+                                        'project_list_enabled': False,
                                         'dependencies_enabled':dependencies_enabled }, None
    
     # IRequestFilter methods
@@ -73,7 +73,7 @@ class TracDependency(Component):
         return handler
          
     def post_process_request(self, req, template, data, content_type):
-        # ページのアドレスは/dependency/ticket/1
+        # ページのアドレスは/ticket/1
         if (req.path_info.startswith('/ticket/')) and data:
             # チケット表示ページの場合の処理
             # 依存ページへのリンクを作成し，このページで処理するには時間がかかるものは次のページで表示します
@@ -84,8 +84,8 @@ class TracDependency(Component):
             sub_ticket, subsequentticket = self.intertrac.create_ticket_links(str(tkt.id), self.log)
             data['tracdependency'] = {
                 'field_values': {
-                    'summary_ticket': self.intertrac.linkify_ids(self.env, req, tkt['summary_ticket'],LABEL_SUMMARY ,LABEL_SUB ,sub_ticket, self.log),
-                    'dependencies': self.intertrac.linkify_ids(self.env, req, tkt['dependencies'],LABEL_PRECEDING ,LABEL_SUBSEQUENT , subsequentticket, self.log),
+                    'summary_ticket': self.intertrac.linkify_ids(tkt['summary_ticket'],LABEL_SUMMARY ,LABEL_SUB ,sub_ticket, self.log),
+                    'dependencies': self.intertrac.linkify_ids(tkt['dependencies'],LABEL_PRECEDING ,LABEL_SUBSEQUENT , subsequentticket, self.log),
                 },
             }
         return template, data, content_type
@@ -131,16 +131,16 @@ class TracDependency(Component):
             errors.extend(self.intertrac.validate_ticket(ticket['dependencies'], label, True, self.log))
         return errors
 
-    # ITicketChangeListener methods
-    def ticket_created(self, tkt):
-        pass
-
-    def ticket_changed(self, tkt, comment, author, old_values):
-        pass
-
-    def ticket_deleted(self, tkt):
-        #このチケットを指定しているチケットにコメントをつける
-        pass
+#    # ITicketChangeListener methods
+#    def ticket_created(self, tkt):
+#        pass
+#
+#    def ticket_changed(self, tkt, comment, author, old_values):
+#        pass
+#
+#    def ticket_deleted(self, tkt):
+#        #このチケットを指定しているチケットにコメントをつける
+#        pass
 
     def get_project_name(self):
         return self.project_label

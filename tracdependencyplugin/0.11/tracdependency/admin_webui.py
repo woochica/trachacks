@@ -12,8 +12,6 @@ from trac.admin import IAdminPanelProvider
 
 from trac.env import open_environment
 
-from intertrac import InterTrac
-
 TICKET_CUSTOM = "ticket-custom"
 
 ADMIN_PANEL_TRACDEP = u'Trac Dependency'
@@ -35,11 +33,11 @@ class TracDependencyAdminWebUI(Component):
         self.log.debug("[tracdependency]:label = %s", self.project_label)
         if not self.project_label:
             self.project_label=os.path.basename(self.env.path)
-            self.log.debug("base name of env_path = %s", self.project_label)
+            # self.log.debug("base name of env_path = %s", self.project_label)
             intertrac_project_label = self.config.get( "intertrac", self.project_label+".label")
             if intertrac_project_label:
                 self.project_label = intertrac_project_label
-                self.log.debug("label from intertrac setting = %s", self.project_label)
+                # self.log.debug("label from intertrac setting = %s", self.project_label)
 
     def customfield_panel_enable(self):
         # カスタムフィールドパネルを有効にするかどうかの
@@ -62,27 +60,22 @@ class TracDependencyAdminWebUI(Component):
 
     def project_information(self):
         # interTracの設定を取得します．
-        self.intertracs0 = {}
+        intertracs0 = {}
         for key, value in self.config.options('intertrac'):
             # オプションの数のループを回り，左辺値の.を探します．
             idx = key.rfind('.')  
-            if idx > 0: # .が無い場合はショートカットですが無視します
-                # .があった場合の処理
-                # 左辺値を分割します
-                prefix, attribute = key[:idx], key[idx+1:]
-                # すでにあるものをとってきます無ければ新規で作成
-                intertrac = self.intertracs0.setdefault(prefix, {})
-                # 左辺値のピリオド以降をキーで右辺値を登録
-                intertrac[attribute] = value
-                # プロジェクト名を設定します．(注：すべて小文字になっている) 
-                intertrac['name'] = prefix
+            if idx > 0: # .が無い場合はショートカットでので無視します
+                prefix, attribute = key[:idx], key[idx+1:]  # 左辺値を分割します
+                intertrac = intertracs0.setdefault(prefix, {})
+                intertrac[attribute] = value    # 左辺値のピリオド以降をキーで右辺値を登録
+                intertrac['name'] = prefix  # プロジェクト名を設定します．
 
-        self.intertracs = []
+        intertracs = []
         # 取得したinterTrac設定の名前が小文字になっているので元に戻します．
         # ついでに，プロジェクトの一覧表示用のデータを作成しておきます．
         # 結局はintertrac['label'] 設定することにしたので意味はないのですが，つくっちゃったのでこのままにします．
-        for prefix in self.intertracs0:
-            intertrac = self.intertracs0[prefix]
+        for prefix in intertracs0:
+            intertrac = intertracs0[prefix]
             # Trac.iniのパスを取得します
             path = intertrac.get('path', '')
             # trac.iniをオープンする
@@ -93,8 +86,8 @@ class TracDependencyAdminWebUI(Component):
             url = intertrac.get('url', '')
             title = intertrac.get('title', url)
             name = project.project_name
-            self.intertracs.append({'name': name, 'title': title, 'url': url, 'path': path})
-        return self.intertracs
+            intertracs.append({'name': name, 'title': title, 'url': url, 'path': path})
+        return intertracs
 
     def render_admin_panel(self, req, cat, page, path_info):
         custom_field = (page == 'customfield')

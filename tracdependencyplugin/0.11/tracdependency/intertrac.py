@@ -36,32 +36,10 @@ class InterTrac:
                 intertrac[attribute] = value
                 # プロジェクト名を設定します．(注：すべて小文字になっている) 
                 intertrac['name'] = prefix
-
-        self.intertracs = []
-        # 取得したinterTrac設定の名前が小文字になっているので元に戻します．
-        # ついでに，プロジェクトの一覧表示用のデータを作成しておきます．
-        # 結局はintertrac['label'] 設定することにしたので意味はないのですが，つくっちゃったのでこのままにします．
-        for prefix in self.intertracs0:
-            intertrac = self.intertracs0[prefix]
-            # Trac.iniのパスを取得します
-            path = intertrac.get('path', '')
-            # trac.iniをオープンする
-            project = open_environment(path, use_cache=True)
-            # 名前をtrac.iniのプロジェクト名で置き換えます．
-            intertrac['name'] = intertrac['label'] 
-            # プロジェクトの一覧表示用のデータを作成します．
-            url = intertrac.get('url', '')
-            title = intertrac.get('title', url)
-            name = project.project_name
-            self.intertracs.append({'name': name, 'title': title, 'url': url, 'path': path})
-        # 
         self.project_label = project_label
 
     def get_projects(self):
         return self.intertracs0
-
-    def project_information(self):
-        return self.intertracs
 
     def subsequentticket(self,ids):
         sql = ("SELECT id, type, summary, owner, description, status from ticket t "
@@ -145,7 +123,7 @@ class InterTrac:
         subsequentticket = self.create_links(self.subsequentticket(tkt_id_l), self.subsequentticket_i(tkt_id), log) 
         return sub_ticket, subsequentticket
 
-    def linkify_ids_b(self, env, req, ids, label1, log):
+    def linkify_ids_b(self, ids, label1, log):
         # チケットの表示のページでinterTracリンクの表示するための元を作る
         data = []
         if ids is None:
@@ -188,7 +166,6 @@ class InterTrac:
                     return {'error':' project %s does not exist.'% project_name}
             else: # This ticket is in same project.
                 current_project = True
-                #project_name = self.env.get_project_name()
                 project_name = current_project_name
                 if ticket.rfind('#') == 0:
                     id = ticket[1:]
@@ -292,9 +269,9 @@ class InterTrac:
                 continue
         return errors
 
-    def linkify_ids(self, env, req, ids, label1, label2, tickets2, log):
+    def linkify_ids(self, ids, label1, label2, tickets2, log):
         # チケットの表示のページでinterTracリンクの表示するための元を作る
-        data = self.linkify_ids_b(env, req, ids, label1, log)
+        data = self.linkify_ids_b(ids, label1, log)
         data.append(label2)
         for ticket in tickets2:
             tkt = ticket['ticket']
