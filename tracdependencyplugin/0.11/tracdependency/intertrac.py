@@ -13,12 +13,16 @@ from trac.ticket.model import Ticket
 
 from trac.env import open_environment
 
+TICKET_CUSTOM = "ticket-custom"
+
 class InterTrac:
 
     def __init__(self, config, env,project_label):
         # interTracの設定を取得します．
         self.intertracs0 = {}
         self.env = env
+        self.summary_label = config.get(TICKET_CUSTOM,"summary_ticket.label")
+        self.dependencies_label = config.get(TICKET_CUSTOM,"dependencies.label")
         for key, value in config.options('intertrac'):
             # オプションの数のループを回り，左辺値の.を探します．
             idx = key.rfind('.')  
@@ -44,7 +48,6 @@ class InterTrac:
             # trac.iniをオープンする
             project = open_environment(path, use_cache=True)
             # 名前をtrac.iniのプロジェクト名で置き換えます．
-            #intertrac['name'] = project.project_name 
             intertrac['name'] = intertrac['label'] 
             # プロジェクトの一覧表示用のデータを作成します．
             url = intertrac.get('url', '')
@@ -130,7 +133,7 @@ class InterTrac:
             for id, type, summary, owner, description, status in cursor:
                 url = intertrac.get('url', '') + '/ticket/' + str(id)
                 dep_url = intertrac.get('url', '') + '/dependency/ticket/' + str(id)
-                ticket = self.env.project_name + ':#' + str(id)
+                ticket = self.get_project_name() + ':#' + str(id)
                 links.append({'ticket':ticket, 'title':summary, 'url':url, 'dep_url':dep_url, 'status':status})
         except Exception, e:
             pass
@@ -185,7 +188,7 @@ class InterTrac:
                     return {'error':' project %s does not exist.'% project_name}
             else: # This ticket is in same project.
                 current_project = True
-                #project_name = self.env.project_name
+                #project_name = self.env.get_project_name()
                 project_name = current_project_name
                 if ticket.rfind('#') == 0:
                     id = ticket[1:]
@@ -226,12 +229,13 @@ class InterTrac:
         # project_name:葉チケットのプロジェクト名
         # leaf_id:葉チケットのID
         # 戻り値:エラー文字列
+        log.debug("validate_outline_b0010 ticket=%s, sub_ticket=%s, leaf_id=%s" , ticket, sub_ticket, leaf_id)
         error = []
         if ticket:
             ticket = ticket.strip() # 前後の空白を削除します
         if ticket == leaf_id:
             return 'Ticket(%s)\'s summary ticket is this ticket'%sub_ticket
-        t = self.get_ticket(ticket, self.env.project_name, False, log)
+        t = self.get_ticket(ticket, self.get_project_name(), False, log)
         error = t['error']
         if error is None:
             tkt = t['ticket']
@@ -245,18 +249,24 @@ class InterTrac:
                     return self.validate_outline_b(ticket, t['name'],leaf_id, log)
         return None
 
-    def validate_outline(self, tkt, id, label, log):
+    def validate_outline(self, tkt, id, log):
+        # tkt:InterTrac形式のチケット名
+        # project_name:葉チケットのプロジェクト名
+        # id:チケットのID
+        # 戻り値:エラー文字列のリスト
         errors = []
-        project_name = self.env.project_name
-        t = self.get_ticket(tkt, self.env.project_name, False, log)
+        project_name = self.get_project_name()
+        log.debug("validate_outline0010 project_name=%s tkt=%s id=%s" , project_name, tkt, id)
+        t = self.get_ticket(tkt, self.get_project_name(), False, log)
         error = t['error']
         if error is None:
             leaf_id = project_name + u':#' + str(id)
+            log.debug("validate_outline0020 leaf_id=%s" , leaf_id)
             e = self.validate_outline_b(tkt, leaf_id, leaf_id, log)
             if e is None:
                 pass
             else:
-                errors.append((label, e))
+                errors.append((self.summary_label, e))
         return errors
 
     def validate_ticket(self, ids, field_name, dep_en, log):
@@ -275,7 +285,7 @@ class InterTrac:
         tickets = ids.split(',')
         for ticket in tickets: # 分割した文字列でループをまわります．
             # 一つ一つのチケットのリンクに問題がないか確認します．
-            t = self.get_ticket(ticket, self.env.project_name, dep_en, log)
+            t = self.get_ticket(ticket, self.get_project_name(), dep_en, log)
             error = t['error']
             if error: # エラーがなければ
                 errors.append((field_name, error))

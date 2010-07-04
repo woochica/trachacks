@@ -124,7 +124,7 @@ class TracDependency(Component):
             label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
             errors.extend(self.intertrac.validate_ticket(ticket['summary_ticket'], label, False, self.log))
             # 親チケットがループしていないか確認する
-            errors.extend(self.intertrac.validate_outline(ticket['summary_ticket'], ticket.id, label, self.log))
+            errors.extend(self.intertrac.validate_outline(ticket['summary_ticket'], ticket.id, self.log))
         if self.config.get( TICKET_CUSTOM, "dependencies"): # カスタムフィールドが有効な場合
             # 依存関係チケットが存在しているかとか指定方法に間違いがないかを確認する．
             label = self.config.get(TICKET_CUSTOM,"dependencies.label")
