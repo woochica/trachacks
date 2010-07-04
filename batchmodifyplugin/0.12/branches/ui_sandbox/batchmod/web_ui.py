@@ -172,6 +172,7 @@ class BatchModifyModule(Component):
                 fields.append(field)
             if field['name'] == 'owner' and hasattr(ticketSystem, 'eventually_restrict_owner'):
                 ticketSystem.eventually_restrict_owner(field)
+        fields.sort(key=lambda f: f['name'])
         batchFormData['fields']=fields
 
         add_script(req, 'batchmod/js/batchmod.js')

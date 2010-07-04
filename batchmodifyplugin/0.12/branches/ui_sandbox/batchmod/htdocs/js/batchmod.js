@@ -78,6 +78,10 @@ jQuery(document).ready(function($){
 	function getInputName(propertyName){
         return 'batchmod_value_' + propertyName;
     }
+
+	function getDisabledOptions(){
+		return $("#add_batchmod_field option:disabled");
+	}
 	
     //Add a new column with checkboxes for each ticket.
     //Selecting a ticket marks it for inclusion in the batch. 
@@ -113,7 +117,7 @@ jQuery(document).ready(function($){
         }
 		
 		//Check that each radio property has something selected.
-		$("#add_batchmod_field option:disabled").each(function(){
+		getDisabledOptions().each(function(){
 		    var propertyName = $(this).val();
 		    if(properties[propertyName].type == "radio"){
 		        var isChecked = false;
@@ -174,12 +178,20 @@ jQuery(document).ready(function($){
         tr.append(createInput(getInputName(propertyName), property));
         
         //Add the element before the comment box.
-        $("#batchmod_comment").before(tr);
+		//New rows are added in the same order as listed in the dropdown. This is the same behavior as the filters.
+		var insertionPoint = null;
+		getDisabledOptions().each(function(){
+			if(insertionPoint == null && $(this).val() > propertyName){
+				insertionPoint = $("#batchmod_" + $(this).val());
+			}
+			
+		})
+		if (insertionPoint == null) {
+			insertionPoint = $("#batchmod_comment");
+		}
+        insertionPoint.before(tr);
                 
-		//Insert the new rows in the same order as listed in the dropdown. This is the same behavior as the filters.
-		//Rules
-			//Setting a resolution sets the status to closed.
-			//Validate these server-side as well.
+		
         
         //Disable each element from the option list when it is selected.
         this.options[this.selectedIndex].disabled = 'disabled'
