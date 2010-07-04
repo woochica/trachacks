@@ -177,7 +177,6 @@ jQuery(document).ready(function($){
         // Add the input element.
         tr.append(createInput(getInputName(propertyName), property));
         
-        //Add the element before the comment box.
 		//New rows are added in the same order as listed in the dropdown. This is the same behavior as the filters.
 		var insertionPoint = null;
 		getDisabledOptions().each(function(){
@@ -190,9 +189,7 @@ jQuery(document).ready(function($){
 			insertionPoint = $("#batchmod_comment");
 		}
         insertionPoint.before(tr);
-                
 		
-        
         //Disable each element from the option list when it is selected.
         this.options[this.selectedIndex].disabled = 'disabled'
 	});

@@ -125,12 +125,16 @@ class BatchModifyModule(Component):
         return values
     
     def _remove_resolution_if_not_closed(self, values):
+        """If the status is set to something other than closed the resolution should be removed."""
         if values.has_key('status') and values['status'] is not 'closed':
             values['resolution'] = ''
         return values
 
     def _merge_keywords(self, original_keywords, new_keywords):
-        """Prevent duplicate keywords by merging the two lists."""
+        """
+        Prevent duplicate keywords by merging the two lists.
+        Any keywords prefixed with '-' will be removed.
+        """
         self.log.debug('BatchModifyPlugin: existing keywords are %s', original_keywords)
         self.log.debug('BatchModifyPlugin: new keywords are %s', new_keywords)
         
