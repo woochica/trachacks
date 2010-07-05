@@ -1,10 +1,7 @@
 /* WikiTicketCalendar styles */
 
 .wikiTicketCalendar div, table { width: 100%; }
-table.wikiTicketCalendar th {
-    font-size: 100%; font-weight: bold;
-    background-color: transparent; border-color: transparent;    
-    }
+table.wikiTicketCalendar th { font-weight: bold; }
 table.wikiTicketCalendar th.workday { width: 17%; }
 table.wikiTicketCalendar th.weekend { width: 7%; }
 table.wikiTicketCalendar caption {
@@ -68,8 +65,4 @@ a.tip:hover span {
     /* big left move because of z-index render bug in IE<8 */
     position: absolute; top: 0.8em; left: 6em;
     border: 1px solid #000; background-color: #fff; padding: 5px;
-    }
-table.tip { border-collapse: collapse; }
-table.tip td, th {
-    font-size: 0.75em; border: 1px solid #ccc; background-color: #eee;
     }

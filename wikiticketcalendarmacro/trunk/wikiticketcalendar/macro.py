@@ -167,8 +167,10 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         # Replace tags that destruct tooltips too much
         desc = self.end_RE.sub(']', Markup(description))
         desc = self.del_RE.sub('', desc)
+        # need 2nd run after purging newline in table cells in 1st run
+        desc = self.del_RE.sub('', desc)
         desc = self.item_RE.sub('X', desc)
-        desc = self.look_RE.sub(' class="tip"', desc)
+        desc = self.tab_RE.sub('[|||]', desc)
         description = self.open_RE.sub('[', desc)
 
         tip = tag.span(Markup(description))
@@ -259,11 +261,14 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         self.date = [year, month + 1] + [1] * 7
 
         # Compile regex pattern before use for better performance
+        pattern_del  = '(?:<span .*?>)|(?:</span>)'
+        pattern_del += '|(?:<p>)|(?:<p .*?>)|(?:</p>)'
+        pattern_del += '|(?:</table>)|(?:<td.*?\n)|(?:<tr.*?</tr>)'
         self.end_RE  = re.compile('(?:</a>)')
-        self.del_RE  = re.compile('(?:<span .*?>)|(?:</span>)')
+        self.del_RE  = re.compile(pattern_del)
         self.item_RE = re.compile('(?:<img .*?>)')
-        self.look_RE = re.compile('(?: class=".*?")')
         self.open_RE = re.compile('(?:<a .*?>)')
+        self.tab_RE  = re.compile('(?:<table .*?>)')
 
 
         # for prev/next navigation links
@@ -404,7 +409,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     while (1):
                         row = cursor.fetchone()
                         if row is None:
-                            cell.append(tag.br())
+                            cell(tag.br())
                             break
                         else:
                             name = to_unicode(row[0])
