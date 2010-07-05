@@ -2,7 +2,7 @@ from setuptools import setup
 
 PACKAGE = 'addstaticresourcesplugin'
 
-setup(name="Add Static Resource Plugin",
+setup(name="Add Static Resources Plugin",
       version='0.0.2',
       packages=[PACKAGE],
       url='http://www.trac-hacks.org/wiki/AddStaticResourcePlugin',
