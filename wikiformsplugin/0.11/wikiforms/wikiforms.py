@@ -181,13 +181,17 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	fields_to_be_deleted = []							         
     											         
     	for name,value in args.iteritems():
-    	  if (re.match('/[0-9]+:[0-9]+/$',name)):					         
+          #self.log.debug("name>%s<     value>%s<" % (name,value));
+    	  if (re.match('CNT/[0-9]+/:VAL/[0-9]+/$',name)):					         
     	    # there is a checkbutton...
+    	    #self.log.debug("checkbox >%s<  >%s<" % (name,value));
     	    if (value not in args):							         
     	      # ...which is unchecked => remove database entry...			         
     	      fields_to_be_deleted.append(value)					         
+    	      #self.log.debug("delete >%s<  >%s<" % (name,value));
     	  else: 									         
     	    fields_to_be_stored[name]=value						         
+    	    #self.log.debug("store >%s<  >%s<" % (name,value));
 
     	# store all values in database...
     	db	 = self.env.get_db_cnx()  
@@ -1121,8 +1125,8 @@ class WikiFormsMacro(WikiMacroBase,Component):
     		     updated_by,						        
     		     self.to_quote(resolved_name))				        
   
-    msg = "SQL %s=%s %s" % (resolved_name, value,set_sql)       		        
-    self.log.debug(msg) 							        
+    #msg = "1.set_tracform_field(%s,%s,%s)=>%s" % (resolved_name, value, authname, set_sql)       		        
+    #self.log.debug(msg) 							        
 
     cursor.execute(set_sql)							        
   
@@ -1136,8 +1140,8 @@ class WikiFormsMacro(WikiMacroBase,Component):
     		       updated_by						        
     		      ) 	   						        
   
-      msg = "SQL %s=%s %s" % (resolved_name, value,set_sql)	 
-      self.log.debug(msg)							        
+      #msg = "2.set_tracform_field(%s,%s,%s)=>%s" % (resolved_name, value, authname, set_sql)       		        
+      #self.log.debug(msg)							        
 
       cursor.execute(set_sql)
       
@@ -1155,6 +1159,9 @@ class WikiFormsMacro(WikiMacroBase,Component):
     		 WHERE  field='%s'
     	      """ % (self.to_quote(resolved_name))    
 
+    #msg = "delete_tracform_field(%s)=>%s" % (resolved_name, del_sql)	 
+    #self.log.debug(msg)							        
+
     cursor.execute(del_sql)			      
 
     db.commit() 				      
@@ -1165,7 +1172,7 @@ class WikiFormsMacro(WikiMacroBase,Component):
 
   def get_placeholder_id(self):
     WikiFormsMacro.placeholder_cnt += 1 						  
-    return "CNT%s:VAL%s" % (WikiFormsMacro.placeholder_cnt,random.randint(0,1000000000))  
+    return "CNT/%s/:VAL/%s/" % (WikiFormsMacro.placeholder_cnt,random.randint(0,1000000000))  
 
   # --------------------------------------------------------------------------------------------------------------------------
 

@@ -15,7 +15,7 @@ setup(
 This plugin provides forms on any page with a wiki.
 Based on ideas from TracFormsPlugin.
 """,
-    version="0.1",
+    version="0.2",
     author='Verigy (Singapore) Pte. Ltd., Klaus.Welch@verigy.com',
     license='BSD',
     packages=['wikiforms'],
