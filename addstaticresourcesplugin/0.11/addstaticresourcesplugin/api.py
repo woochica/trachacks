@@ -26,7 +26,7 @@ class AddStaticResourcesComponent (Component):
     resources = c.options(srkey)
     for regex, value in resources:
       self.log.debug("AddStaticResourceComponent: Regex:'%s' matched:%s" %(regex,re.search(regex, req.path_info)))
-      if re.search(regex, req.path_info):
+      if re.search(regex, req.path_info, re.IGNORECASE):
         paths = c.getlist(srkey, regex)
         for p in paths:
           if p.endswith("js"):
