@@ -125,7 +125,7 @@ class Backlog(object):
         try:
             cursor = self.db.cursor()
             #get name
-            columns = ['id', 'summary', 'component', 'description', 'version', 'type', 'milestone', 'owner', 'status', 'time', 'tkt_order' ]
+            columns = ['id', 'summary', 'component', 'description', 'version', 'type', 'milestone', 'owner', 'status', 'time', 'tkt_order', 'keywords' ]
             sql = """SELECT %s,tc.value as hard_deadline
                      FROM  backlog_ticket b, ticket t  
                      LEFT OUTER JOIN ticket_custom tc 

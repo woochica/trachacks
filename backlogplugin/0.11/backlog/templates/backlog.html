@@ -32,15 +32,16 @@
 		    	<ul id="backloghdr" >
 		    		<li>
 		    			<table width="100%">		    				
-		    				<th style="width: 60px;">position</th>
+		    				<th style="width: 20px;">#</th>
 		    				<th style="width: 60px;">ticket</th>
 		    				<th style="width: 300px;"><div style="width: 280px; height: 1.2em; overflow: hidden;">summary</div></th>
-		    				<th style="width: 100px;">owner</th>
+		    				<th style="width: 120px;">owner</th>
 		    				<th style="width: 90px;">type</th>		    				
-		    				<th style="width: 100px;">milestone</th>
-		    				<th style="width: 70px;">status</th>
-		    				<th style="width: 70px;">time open</th>
-		    				<th style="width: 80px;">deadline</th>		    						    				
+		    				<th style="width: 60px;">milestone</th>
+		    				<th style="width: 60px;">status</th>
+		    				<th style="width: 60px;">time open</th>
+		    				<th style="width: 80px;">deadline</th>
+                            <th style="width: 100px;"><div style="width: 90px; height: 1.2em; overflow: hidden;">keywords</div></th>		    						    				
 		    			</table>
 		    		</li>
 		    	</ul>
@@ -49,19 +50,20 @@
 					<li py:for="ticket in tickets" id="ticket_${ticket.id}" class="ticket_${ticket.status}" >
 					<!--  -->
 						<table width="100%">							
-							<td style="width: 60px;"><py:if test="ticket.tkt_order is not None">${ticket.tkt_order}</py:if></td>		
+							<td style="width: 20px;"><py:if test="ticket.tkt_order is not None">${ticket.tkt_order}</py:if></td>		
 		    				<td style="width: 60px;"><a href="${href.ticket(ticket.id)}"> #${ticket.id}</a></td>		    
 		    				<td style="width: 300px"> <div style="width: 280px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.summary}">${ticket.summary}</a></div></td>	
-		    				<td style="width: 100px;">${ticket.owner}</td>
+		    				<td style="width: 120px;">${ticket.owner}</td>
 		    				<td style="width: 90px;">${ticket.type}</td>					    				    	
-		    				<td style="width: 100px;">${ticket.milestone}</td>			
-		    				<td style="width: 70px;">${ticket.status}</td>	
-		    				<td style="width: 70px;">${str(datetime.now() - datetime.fromtimestamp(ticket.time)).split(',')[0].split('.')[0]}</td>
+		    				<td style="width: 60px;">${ticket.milestone}</td>			
+		    				<td style="width: 60px;">${ticket.status}</td>	
+		    				<td style="width: 60px;">${str(datetime.now() - datetime.fromtimestamp(ticket.time)).split(',')[0].split('.')[0]}</td>
 		    				
 							<py:choose>								
 								 <td py:when="ticket.hard_deadline is None or ticket.hard_deadline.strip()== '' " style="width: 80px;"></td>								 								 
 								 <td py:otherwise="" style="width: 80px;" class="hard_deadline">${ticket.hard_deadline}</td>																
 		    				</py:choose>
+                            <td style="width: 100px"> <div style="width: 90px; height: 1.5em; overflow: hidden;">${ticket.keywords}</div></td>
 		    
 		    				
 		    			</table>
@@ -86,15 +88,16 @@
 			    	<ul id="backloghdr" >
 			    		<li>
 			    			<table width="100%">
-			    				<th style="width: 60px;"></th>				    			    			
+			    				<th style="width: 20px;"></th>				    			    			
 			    				<th style="width: 60px;">ticket</th>
 			    				<th style="width: 300px;"><div style="width: 280px; height: 1.2em; overflow: hidden;">summary</div></th>
-			    				<th style="width: 100px;">owner</th>
-			    				<th style="width: 90px;">type</th>		    				
-			    				<th style="width: 100px;">milestone</th>
-			    				<th style="width: 70px;">status</th>
-			    				<th style="width: 70px;">time open</th>
-			    				<th style="width: 80px;">deadline</th>		    						    				
+			    				<th style="width: 120px;">owner</th>
+			    				<th style="width: 80px;">type</th>		    				
+			    				<th style="width: 60px;">milestone</th>
+			    				<th style="width: 60px;">status</th>
+			    				<th style="width: 60px;">time open</th>
+			    				<th style="width: 80px;">deadline</th>
+                                <th style="width: 100px;"><div style="width: 90px; height: 1.2em; overflow: hidden;">keywords</div></th>		    						    				
 			    			</table>
 			    		</li>
 			    	</ul>
@@ -102,20 +105,21 @@
 						<li py:for="ticket in tickets2" id="ticket_${ticket.id}" class="ticket_${ticket.status}" >
 						
 							<table width="100%">
-								<td style="width: 60px;"></td>		
+								<td style="width: 20px;"></td>		
 			
 			    				<td style="width: 60px;"><a href="${href.ticket(ticket.id)}"> #${ticket.id}</a></td>		    
 			    				<td style="width: 300px"><div style="width: 280px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.summary}">${ticket.summary}</a></div></td>	
-			    				<td style="width: 100px;">${ticket.owner}</td>
-			    				<td style="width: 90px;">${ticket.type}</td>					    				    	
-			    				<td style="width: 100px;">${ticket.milestone}</td>			
-			    				<td style="width: 70px;">${ticket.status}</td>	
-			    				<td style="width: 70px;">${str(datetime.now() - datetime.fromtimestamp(ticket.time)).split(',')[0].split('.')[0]}</td>
+			    				<td style="width: 120px;">${ticket.owner}</td>
+			    				<td style="width: 80px;">${ticket.type}</td>					    				    	
+			    				<td style="width: 60px;">${ticket.milestone}</td>			
+			    				<td style="width: 60px;">${ticket.status}</td>	
+			    				<td style="width: 60px;">${str(datetime.now() - datetime.fromtimestamp(ticket.time)).split(',')[0].split('.')[0]}</td>
 			    				
 								<py:choose>								
 									 <td py:when="ticket.hard_deadline is None or ticket.hard_deadline.strip()== '' " style="width: 80px;"></td>								 								 
 									 <td py:otherwise="" style="width: 80px;" class="hard_deadline">${ticket.hard_deadline}</td>																
 			    				</py:choose>
+                                <td style="width: 100px"> <div style="width: 90px; height: 1.5em; overflow: hidden;">${ticket.keywords}</div></td>
 			    
 			    				
 			    			</table>
