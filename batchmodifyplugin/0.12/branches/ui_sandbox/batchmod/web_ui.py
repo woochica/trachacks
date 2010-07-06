@@ -124,8 +124,8 @@ class BatchModifier:
         modify_changetime = bool(req.args.get('batchmod_modify_changetime', False))
         
         values = self._get_new_ticket_values(req, env) 
-        values = self._check_for_resolution(values)
-        values = self._remove_resolution_if_not_closed(values)
+        self._check_for_resolution(values)
+        self._remove_resolution_if_not_closed(values)
 
         selectedTickets = req.args.get('selectedTickets')
         log.debug('BatchModifyPlugin: selected tickets: %s', selectedTickets)
@@ -171,13 +171,11 @@ class BatchModifier:
         """If a resolution has been set the status is automatically set to closed."""
         if values.has_key('resolution'):
             values['status'] = 'closed'
-        return values
     
     def _remove_resolution_if_not_closed(self, values):
         """If the status is set to something other than closed the resolution should be removed."""
         if values.has_key('status') and values['status'] is not 'closed':
             values['resolution'] = ''
-        return values
 
     def _merge_keywords(self, original_keywords, new_keywords, log):
         """
