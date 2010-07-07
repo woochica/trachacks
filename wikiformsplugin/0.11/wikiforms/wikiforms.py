@@ -1116,38 +1116,55 @@ class WikiFormsMacro(WikiMacroBase,Component):
     updated_on     = int(time.time())						        
     updated_by     = authname							        
 
-    set_sql = """								        
-    		 UPDATE  wikiforms_fields
-    		 SET	 value='%s', updated_on='%s', updated_by='%s'
-    		 WHERE   field='%s'
-    	      """ % (self.to_quote(value),
-    		     updated_on,						        
-    		     updated_by,						        
-    		     self.to_quote(resolved_name))				        
-  
-    #msg = "1.set_tracform_field(%s,%s,%s)=>%s" % (resolved_name, value, authname, set_sql)       		        
+    sql = """						      
+    	     SELECT  value
+    	     FROM    wikiforms_fields
+    	     WHERE   field='%s' 			      
+    	  """ % (self.to_quote(resolved_name))
+    	  							  
+    #msg = "1.set_tracform_field(%s,%s,%s)=>%s" % (resolved_name, value, authname, sql)       		        
     #self.log.debug(msg) 							        
 
-    cursor.execute(set_sql)							        
+    cursor.execute(sql)					  
+
+    row = cursor.fetchone()
+
+    if not row:
+      # does not exist => insert...
+      sql = """ 						       
+    	       INSERT INTO  wikiforms_fields (field,value,updated_on,updated_by)  
+    	       VALUES			     ('%s' ,'%s' ,'%s'      ,'%s'      )	    
+    	    """ % (self.to_quote(resolved_name),
+    	    	   self.to_quote(value),					    
+    	    	   updated_on,  						    
+    	    	   updated_by							    
+    	    	  )								    
   
-    if not cursor.rowcount:							        
-      set_sql = """							   
-    		   INSERT INTO  wikiforms_fields (field,value,updated_on,updated_by)  
-    		   VALUES			 ('%s' ,'%s' ,'%s'	,'%s'	   )  	  	
-    		""" % (self.to_quote(resolved_name),
-    		       self.to_quote(value),					        
-    		       updated_on,						        
-    		       updated_by						        
-    		      ) 	   						        
-  
-      #msg = "2.set_tracform_field(%s,%s,%s)=>%s" % (resolved_name, value, authname, set_sql)       		        
+      #msg = "2.set_tracform_field(%s,%s,%s)=>%s" % (resolved_name, value, authname, sql)       		        
       #self.log.debug(msg)							        
 
-      cursor.execute(set_sql)
-      
-    db.commit() 								        
-    										       
-    return set_sql								        
+      cursor.execute(sql)
+      db.commit() 								        
+    elif (value != row[0]):
+      # new value => update...
+      sql = """ 						  
+               UPDATE  wikiforms_fields
+               SET     value='%s', updated_on='%s', updated_by='%s'
+               WHERE   field='%s'				     		 
+            """ % (self.to_quote(value),
+        	   updated_on,  				  
+        	   updated_by,  				  
+        	   self.to_quote(resolved_name))		  
+      #msg = "3.set_tracform_field(%s,%s,%s)=>%s" % (resolved_name, value, authname, sql)       		        
+      #self.log.debug(msg)							        
+
+      cursor.execute(sql)
+      db.commit() 								        
+    else:
+      # unmodified => do nothing...
+      sql = ''; 		    
+
+    return sql								        
 
   # --------------------------------------------------------------------------------------------------------------------------
 
