@@ -1,0 +1,73 @@
+<html xmlns="http://www.w3.org/1999/xhtml" 
+       xmlns:py="http://genshi.edgewall.org/" 
+       xmlns:xi="http://www.w3.org/2001/XInclude"
+       py:strip=""> 
+<xi:include href="layout.html" />
+
+<head>
+<style>
+form .field { margin-top: 10px; }
+form .field em { color: #888; font-size: smaller }
+form .field input[type=text] {
+    width: 450px;
+    height: 1.2em;
+}
+
+form .field textarea {
+    width: 450px;
+    height: 1.2em;
+    padding-top: 0.25em;
+    padding-right: 0.5em;
+    padding-bottom: 0.25em;
+    padding-left: 0.5em;
+}
+
+form .field textarea:focus {
+    height: 12em
+
+}
+
+
+</style>
+</head>
+
+<body>
+<div id="content" class="newpage">
+
+    <h1>Create new page from template</h1>
+    <fieldset id="preview">
+        <legend>Template preview (<a href="#fields">skip</a>)</legend>
+        <div class="wikipage" xml:space="preserve">
+        ${wiki_to_html(context(template_page.resource), template_page.text)}
+        </div>
+    </fieldset>
+
+    
+    <h2>Template parameters</h2>
+    <form id="fields" method="post">
+
+        <py:for each="field in fields">
+        <div class="field">
+            <label for="field_${field[0]}">${field[1]}:</label><br/>
+            <py:choose test="">
+                <textarea py:when="field[2] == 'textarea'" name="field_${field[0]}" id="field_${field[0]}" class="template_textarea" value=""/>
+                <input py:otherwise="" type="text" name="field_${field[0]}" id="field_${field[0]}" class="template_text" value=""/>
+            </py:choose>
+            <em>${field[0]}</em>
+        </div>
+        </py:for>
+
+
+        <input type="hidden" name="page" value="${page.name}"/>
+        <input type="hidden" name="template" value="${template}"/>
+        <div class="field">
+        <input type="submit" name="create" value="Create Page" />
+        </div>
+    </form>
+
+   
+</div>
+</body>
+
+</html>
+
