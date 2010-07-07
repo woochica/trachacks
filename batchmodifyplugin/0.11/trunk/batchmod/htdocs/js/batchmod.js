@@ -1,6 +1,38 @@
 // Copyright (C) 2010 Brian Meeker
 
 jQuery(document).ready(function($){
+    //NOTE: Backported from trac.js in Trac 0.12
+    $.htmlEscape = function(value) {
+        if (typeof value != "string")
+            return value;
+        return value.replace(/[&<>"]/g, function(c) { return quote[c]; });
+    }
+
+    //NOTE: Backported from trac.js in Trac 0.12
+    function format(str, args, escape) {
+        var kwargs = args[args.length - 1];
+        return str.replace(/\${?(\w+)}?/g, function(_, k) {
+            var result;
+            if (k.length == 1 && k >= '0' && k <= '9')
+                result = args[k - '0'];
+            else
+                result = kwargs[k];
+            return escape ? escape(result) : result;
+        }); 
+    }
+    
+    // Expand positional ($1 .. $9) and keyword ($name) arguments in a string.
+    // The htmlFormat() version HTML-escapes arguments prior to substitution.
+    //NOTE: Backported from trac.js in Trac 0.12
+    $.format = function(str) {
+        return format(str, arguments);
+    }
+
+    //NOTE: Backported from trac.js in Trac 0.12
+    $.htmlFormat = function(str) {
+        return format(str, arguments, $.htmlEscape);
+    }
+
     // Convenience function for creating a <label>
     function createLabel(text, htmlFor) {
         var label = $($.htmlFormat("<label>$1</label>", text));
