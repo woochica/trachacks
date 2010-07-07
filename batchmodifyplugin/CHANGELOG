@@ -1,3 +1,21 @@
+****************************************************
+** BatchModifyPlugin 0.7.0 - r8120 (July 7, 2010) **
+****************************************************
+
+This release is a complete rewrite of the UI to make it more closely match how filters are added to queries.
+In addition new validation has been added to prevent tickets from being put in a bad state.
+
+Eggs can be found at:
+ * Trac 0.11 - http://trac-hacks.org/browser/batchmodifyplugin/0.11/tags
+ * Trac 0.12 - http://trac-hacks.org/browser/batchmodifyplugin/0.12/tags
+
+Bug Fixes
+ * #6972 - Batch modification of status results in deleted status on ticket (http://trac-hacks.org/ticket/6972)
+ * #4899 - Option to remove resolution (http://trac-hacks.org/ticket/4899)
+
+Enhancements
+ * #7303 - UI should be consistent with custom query filters (http://trac-hacks.org/ticket/7303)
+
 *****************************************************
 ** BatchModifyPlugin 0.6.0 - r8120 (June 18, 2010) **
 *****************************************************
