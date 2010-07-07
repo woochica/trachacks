@@ -1145,7 +1145,7 @@ class WikiFormsMacro(WikiMacroBase,Component):
 
       cursor.execute(sql)
       db.commit() 								        
-    elif (value != row[0]):
+    elif (self.to_quote(value) != row[0]):
       # new value => update...
       sql = """ 						  
                UPDATE  wikiforms_fields
