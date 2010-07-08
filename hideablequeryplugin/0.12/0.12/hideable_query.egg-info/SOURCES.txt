@@ -1,9 +1,0 @@
-setup.py
-hideable_query/__init__.py
-hideable_query/hideable_query.py
-hideable_query.egg-info/PKG-INFO
-hideable_query.egg-info/SOURCES.txt
-hideable_query.egg-info/dependency_links.txt
-hideable_query.egg-info/entry_points.txt
-hideable_query.egg-info/requires.txt
-hideable_query.egg-info/top_level.txt

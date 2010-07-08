@@ -1,3 +1,0 @@
-[trac.plugins]
-hideable_query = hideable_query
-
