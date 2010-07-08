@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: hideable-query
+Version: 0.1
+Summary: A trac plugin that lets you hide the query site
+Home-page: UNKNOWN
+Author: Michael Henke
+Author-email: michael.henke@she.de
+License: GPL
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Framework :: Trac
