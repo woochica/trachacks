@@ -10,6 +10,7 @@ from trac.core import *
 from trac.perm import IPermissionPolicy, IPermissionRequestor
 from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.model import Ticket
+from trac.resource import ResourceNotFound
 
 class SensitiveTicketsPolicy(Component):
     """Prevent public access to security sensitive tickets.
@@ -45,8 +46,11 @@ class SensitiveTicketsPolicy(Component):
             resource = resource.parent
 
         if resource and resource.realm == 'ticket' and resource.id is not None:
-            ticket = Ticket(self.env, int(resource.id))
-            sensitive = ticket['sensitive']
+            try:
+                ticket = Ticket(self.env, int(resource.id))
+                sensitive = ticket['sensitive']
+            except ResourceNotFound:
+                sensitive = 1  # Fail safe to prevent a race condition.
 
             if sensitive and int(sensitive):
                 if 'SENSITIVE_VIEW' not in perm:
