@@ -38,7 +38,7 @@ class LoomingClouds(Component):
         See the Genshi documentation for more information.
         """
 
-        if filename == 'ticket.html':
+        if filename in ('ticket.html', 'agilo_ticket_new.html',):
 
             add_stylesheet(req, 'tags/css/tractags.css')
             add_stylesheet(req, 'loomingclouds/css/tagcloud.css')
