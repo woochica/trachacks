@@ -69,7 +69,7 @@ class HideableQuery(Component):
 		return stream | Transformer('//div[@id="ctxtnav" and @class="nav"]') \
 		.copy(buffer) \
 		.replace(replace_query_link).end() \
-		.select('//form[@id="query" and @method="post" and @action="/query"]') \
+		.select('//form[@id="query" and @method="post" and @action]') \
 		.copy(buffer) \
 		.replace(replace_filter_box)
 		
