@@ -31,7 +31,10 @@ def getTicketChanges(conn):
 		else:
 			comment_id = row[1][find+1:]
 			
-		comment_id = int(comment_id)	
+		try:
+			comment_id = int(comment_id)	
+		except:
+			continue
 		
 		ticket_changes.append((row[0],comment_id))
 		
