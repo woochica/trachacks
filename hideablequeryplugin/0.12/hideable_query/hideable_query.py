@@ -47,7 +47,7 @@ class HideableQuery(Component):
 		
 	# ITemplateStreamFilter methods
 	def filter_stream(self, req, method, filename, stream, data):
-		if filename != 'report_list.html' and filename != 'report_view.html':
+		if filename != 'query.html' and filename != 'report_list.html' and filename != 'report_view.html':
 			return stream
 		
 		hasquerypermission = self.query_permission in PermissionSystem(self.env).get_user_permissions(req.authname)
