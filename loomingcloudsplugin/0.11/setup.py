@@ -30,7 +30,7 @@
 
 from setuptools import find_packages, setup
 
-version='0.11r1'
+version='0.11r2'
 
 setup(name='LoomingClouds',
       version=version,
