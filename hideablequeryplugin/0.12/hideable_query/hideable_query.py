@@ -36,7 +36,10 @@ class HideableQuery(Component):
 		if self.query_permission in PermissionSystem(self.env).get_user_permissions(req.authname):
 			return handler
 		else:
-			req.redirect(self.env.href(self.query_hidden_redirect))
+			if self.query_hidden_redirect == '':
+				return handler
+			else:
+				req.redirect(self.env.href(self.query_hidden_redirect))
 			return None
 	
 	def post_process_request(self, req, template, data, content_type):
