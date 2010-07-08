@@ -59,8 +59,17 @@ class HideableQuery(Component):
 				return buffer
 			else:
 				return HTML('<div id="ctxtnav" class="nav"></div>')
+				
+		def replace_filter_box():
+			if hasquerypermission:
+				return buffer
+			else:
+				return HTML('')
 		
 		return stream | Transformer('//div[@id="ctxtnav" and @class="nav"]') \
 		.copy(buffer) \
-		.replace(replace_query_link)
+		.replace(replace_query_link).end() \
+		.select('//form[@id="query" and @method="post" and @action="/query"]') \
+		.copy(buffer) \
+		.replace(replace_filter_box)
 		
