@@ -1,4 +1,13 @@
 ****************************************************
+** BatchModifyPlugin 0.7.1 - r8249 (July 9, 2010) **
+****************************************************
+
+Fixed a bug that prevented checkbox fields from being added on Trac 0.11.x.
+
+Bug Fixes
+ * #7360 - Checkbox fields do not work in Trac 0.11 (http://trac-hacks.org/ticket/7360)
+
+****************************************************
 ** BatchModifyPlugin 0.7.0 - r8120 (July 7, 2010) **
 ****************************************************
 
