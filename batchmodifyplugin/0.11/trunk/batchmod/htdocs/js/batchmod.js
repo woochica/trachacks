@@ -96,10 +96,10 @@ jQuery(document).ready(function($){
                 break;
             case 'checkbox':
                 td.append(createRadio(inputName, "1", inputName + "_on"))
-                    .append(" ").append(createLabel(_("yes"), inputName + "_on"))
+                    .append(" ").append(createLabel(("yes"), inputName + "_on"))
                     .append(" ")
                     .append(createRadio(inputName, "0", inputName + "_off"))
-                    .append(" ").append(createLabel(_("no"), inputName + "_off"));
+                    .append(" ").append(createLabel(("no"), inputName + "_off"));
                 break;
             case 'text':
                 td.append(createText(inputName, 42));
