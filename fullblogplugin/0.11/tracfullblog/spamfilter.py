@@ -9,6 +9,7 @@ License: BSD
 
 from trac.core import *
 from trac.resource import Resource
+from trac.util import arity
 from trac.util.compat import set
 from trac.util.text import to_unicode
 from tracspamfilter.api import FilterSystem
@@ -45,7 +46,12 @@ class BlogSpamFilterAdapter(Component):
             if new and old != new:
                 changes.append((old, new))
         author = fields.get('author', '')
-        FilterSystem(self.env).test(req, author, changes)
+        if arity(FilterSystem.test) == 4:
+            # 0.11 compatible method signature
+            FilterSystem(self.env).test(req, author, changes)
+        else:
+            # 0.12+ compatible that adds an 'ip' argument
+            FilterSystem(self.env).test(req, author, changes, req.remote_addr)
         return []
 
     def validate_blog_comment(self, req, postname, fields):
@@ -59,5 +65,10 @@ class BlogSpamFilterAdapter(Component):
         author = fields.get('author', '')
         changes = [(None, fields.get('comment', '')),
                    (None, author)]
-        FilterSystem(self.env).test(req, author, changes)
+        if arity(FilterSystem.test) == 4:
+            # 0.11 compatible method signature
+            FilterSystem(self.env).test(req, author, changes)
+        else:
+            # 0.12+ compatible that adds an 'ip' argument
+            FilterSystem(self.env).test(req, author, changes, req.remote_addr)
         return []
