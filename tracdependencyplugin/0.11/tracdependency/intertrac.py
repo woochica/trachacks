@@ -90,31 +90,25 @@ class InterTrac:
             intertrac = intertracs0[prefix]
             path = intertrac.get('path', '')
             try:
-                project = open_environment(path, use_cache=True)
-                db = project.get_db_cnx()
-                cursor = db.cursor();
-                cursor.execute(sql)
+                if self.get_project_name() == intertrac['label']:
+                    cursor = self.env.get_db_cnx().cursor()
+                    cursor.execute(sql_i + " union " + sql)
+                    # cursor.execute(sql_i)
+                else:
+                    cursor = open_environment(path, use_cache=True).get_db_cnx().cursor()
+                    cursor.execute(sql)
+                if self.get_project_name() == intertrac['label']:
+                    id_prefix = '#'
+                else:
+                    id_prefix = intertrac['label'] + ':#' + str(id)
                 for id, type, summary, owner, description, status in cursor:
                     url = intertrac.get('url', '') + '/ticket/' + str(id)
                     dep_url = intertrac.get('url', '') + '/dependency/ticket/' + str(id)
-                    ticket = intertrac['name'] + ':#' + str(id)
+                    ticket = id_prefix + str(id)
                     links.append({'ticket':ticket, 'title':summary, 'url':url, 'dep_url':dep_url, 'status':status})
             except Exception, e:
                 pass
             # オープンできない場合もあるのでエラー処理が必要
-        try:
-            # チケット番号のみの指定のサブチケットと後続チケットを探します．
-            db = self.env.get_db_cnx()
-            cursor = db.cursor();
-            cursor.execute(sql_i)
-            intertrac = intertracs0[self.get_project_name().lower()]
-            for id, type, summary, owner, description, status in cursor:
-                url = intertrac.get('url', '') + '/ticket/' + str(id)
-                dep_url = intertrac.get('url', '') + '/dependency/ticket/' + str(id)
-                ticket = self.get_project_name() + ':#' + str(id)
-                links.append({'ticket':ticket, 'title':summary, 'url':url, 'dep_url':dep_url, 'status':status})
-        except Exception, e:
-            pass
         return links
 
     def create_ticket_links(self, tkt_id, log):
