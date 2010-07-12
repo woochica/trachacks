@@ -57,6 +57,9 @@ class CustomFields(Component):
         # Only alphanumeric characters (and [-_]) allowed for custom fieldname
         if re.search('^[a-z0-9-_]+$', customfield['name']) == None:
            raise TracError("Only alphanumeric characters allowed for custom field name (a-z or 0-9 or -_).")
+        # Name must begin with a character - anything else not supported by Trac
+        if not customfield['name'][0].isalpha():
+            raise TracError("Custom field name must begin with a character (a-z).")
         # Check that it is a valid field type
         if not customfield['type'] in ['text', 'checkbox', 'select', 'radio', 'textarea']:
             raise TracError("%s is not a valid field type" % customfield['type'])
@@ -125,6 +128,7 @@ class CustomFields(Component):
         env.config.remove('ticket-custom', customfield['name'] + '.cols')
         env.config.remove('ticket-custom', customfield['name'] + '.rows')
         env.config.remove('ticket-custom', customfield['name'] + '.order')
+        env.config.remove('ticket-custom', customfield['name'] + '.format')
         # Persist permanent deletes
         if not modify:
             env.config.save()
