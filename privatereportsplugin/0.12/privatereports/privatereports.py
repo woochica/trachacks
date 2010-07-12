@@ -2,7 +2,7 @@ from types import ListType, StringTypes
 
 from trac.core import *
 
-from trac.perm import PermissionSystem, IPermissionPolicy
+from trac.perm import PermissionSystem, IPermissionPolicy, IPermissionGroupProvider
 from trac.env import IEnvironmentSetupParticipant
 from trac.admin import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider
@@ -16,6 +16,8 @@ from genshi.input import HTML
 from pkg_resources import resource_filename
 
 class PrivateReports(Component):
+
+	group_providers = ExtensionPoint(IPermissionGroupProvider)
 
 	implements(ITemplateStreamFilter, IEnvironmentSetupParticipant, IAdminPanelProvider, ITemplateProvider, IRequestFilter)
 
@@ -192,7 +194,7 @@ class PrivateReports(Component):
 	# Internal
 	def _has_permission(self, user, report_id):
 		report_permissions = self._get_report_permissions(report_id)
-
+		
 		if report_permissions == None or report_permissions == []:
 			return True
 			
@@ -200,10 +202,31 @@ class PrivateReports(Component):
 
 		report_permissions = set(report_permissions)
 		user_perm = set(perms.get_user_permissions(user))
+		groups = set(self._get_user_groups(user))
+		
+		user_perm.update(groups)
+		
 		if report_permissions.intersection(user_perm) != set([]):
 			return True
 			
 		return False
+		
+	def _get_user_groups(self, user):
+		subjects = set([user])
+		for provider in self.group_providers:
+			subjects.update(provider.get_permission_groups(user) or [])
+
+		groups = []
+		db = self.env.get_db_cnx()
+		cursor = db.cursor()
+		sql = "SELECT action FROM permission WHERE username = \'%s\'" % (user)
+		cursor.execute(sql)
+		rows = cursor.fetchall()
+		for action in rows:
+			if action[0].islower():
+				groups.append(action[0])
+			
+		return groups
 	
 	def _get_reports(self):
 		db = self.env.get_db_cnx()
