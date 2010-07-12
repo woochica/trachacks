@@ -32,8 +32,7 @@
       <td colspan="2" >
             <div class="minorsection">
 	    <div class="label" >Billing Status:</div>
-              <label for="billable">Billable: </label>
-              <input id="billable" name="billable" type="checkbox" checked="true" /> 
+              <label for="billable">Billable: </label>              <input id="billable" name="billable" type="checkbox" checked="true" /> 
 
             &nbsp;&nbsp;|&nbsp;&nbsp;
               <label for="unbillable">Not Billable: </label>
@@ -55,7 +54,9 @@
 
       </td>
     </tr><tr class="minorsection">
-      <td class="minorsectionleft" valign="top"><label for="startdate" >Start Date:</label></td>
+      <td class="minorsectionleft" valign="top">
+	<label for="startdate" >Start Date:</label>
+	<span class="note">Times are only used for billing reports</span></td>
       <td class="minorsectionright"><input id="startdate" name="startdate" type="text" /> or:<br />
           <label for="startbilling" >Choose an old billing date:</label><br />
           <select id="startbilling" name="startbilling" >
@@ -83,6 +84,7 @@
   <ul id="reportlinks">
   <py:for each="key in reports" >
     <li>${reports[key]["title"]}
+      <h6 class="description">${reports[key]["description"]}</h6>
       <ul>
         <py:for each="report in reports[key]['reports']">
           <li><a href="" onmouseover="linkify(this, '$billing_info.report_base_href/$report.id')"  >

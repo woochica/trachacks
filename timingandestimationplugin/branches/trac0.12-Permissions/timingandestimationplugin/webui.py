@@ -16,6 +16,7 @@ from reportmanager import CustomReportManager
 from statuses import get_statuses
 import datetime
 import trac.util.datefmt
+import reports
 
 
 
@@ -98,6 +99,15 @@ class TimingEstimationAndBillingPage(Component):
         data["is_time_admin"] = req.perm.has_permission("TIME_ADMIN")
         data["statuses"] = get_statuses(self.env)
         data["reports"] = mgr.get_reports_by_group(CustomReportManager.TimingAndEstimationKey);
+        # Handle pulling in report_descriptions
+        # Could be added to custom report stuff, but that requires 
+        # coordinating with too many people for me to care right now
+        report_descriptions = {}
+        for h in reports.all_reports:
+            report_descriptions[h["title"]] = h["description"]
+        for key in data["reports"]:
+            if report_descriptions.has_key(key):
+                data["reports"][key]["description"] = report_descriptions[key]
         #self.log.debug("DEBUG got %s, %s" % (data["reports"], type(data["reports"])));
         data["billing_info"] = {"messages":         messages,
                                 "href":             req.href.Billing(),

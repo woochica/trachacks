@@ -669,7 +669,9 @@ ORDER BY __milestone__, _ord ASC, ticket
 
 all_reports = [
     {"title":"Billing Reports",
+     "description": "Currently the billing reports are the only time based reports, and are therefore useful for getting an idea of what tickets had times (and totals), and which developers spent their time where. ",
      "reports":billing_reports},
     {"title":"Ticket/Hour Reports",
+     "description": "These reports are useful for reviewing estimates on a large scale or getting an idea of the project at large. These reports currently ignore the start/end dates. ",
      "reports": ticket_hours_reports}
     ]

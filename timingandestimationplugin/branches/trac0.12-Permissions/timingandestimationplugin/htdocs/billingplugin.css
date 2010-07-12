@@ -9,6 +9,8 @@
   border:1px solid #eee; 
  }
 .minorsectionleft{ 
+  text-align:right;
+  width:130px;
   padding:5px;
   border-width:1px 0px 1px 1px;
   border-style: solid;
@@ -20,6 +22,7 @@
   border-style: solid;
   border-color: #eee; 
  }
-label,.label{ 
-  font-weight:bold;
-} 
+label,.label{ font-weight:bold; } 
+.note{display:block; color:#666; font-size:small;}
+
+h6.description{color:#666;}

@@ -110,21 +110,22 @@
 		 ? "UNBILLABLE=0" : "UNBILLABLE=1");
 
       for(var i=0, f = null ; f = statusfields[i] ; i++){
-	 val = f.name.toUpperCase().replace("_","", "g").replace(" ","","g")+"=";
+	 var val = f.name.toUpperCase().replace("_","", "g").replace(" ","","g")+"=";
 	 if(f.getval()){
-	    val += f.name
+	    val += f.name;
 	 }
 	 addToQuery(val);
       }
 
       //startdate the date in the text box or the date in the dropdown or the first time
-      startdate = billingfields["startdate"].getval() || billingfields["startbilling"].getval() || 0;
+      var startdate = billingfields["startdate"].getval() || billingfields["startbilling"].getval() || 0;
       addToQuery("STARTDATE="+startdate);
       //the date in the enddate text box or the date in the enddate billing box or real close to the end of integer unix epoch time
       // this will need a patch to continue working  past this point
-      enddate = billingfields["enddate"].getval() || billingfields["endbilling"].getval() || 2000000000;
+      var enddate = billingfields["enddate"].getval() || billingfields["endbilling"].getval() ||
+         2000000000000000;
       addToQuery("ENDDATE="+enddate);
 
       atag.href = basehref+query;
-   }
+   };
 //})()
