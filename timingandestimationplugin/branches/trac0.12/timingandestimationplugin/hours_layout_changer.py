@@ -16,3 +16,16 @@ class HoursLayoutChanger(Component):
             add_script(req, "Billing/change_layout.js")
         return (template, data, content_type)
  
+
+class TicketPropsLayoutChanger(Component):
+    """This removes extra whitespace rendered to the ticket properties box
+    """
+    implements(IRequestFilter)
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if template == 'ticket.html':
+            add_script(req, "Billing/whitespace_remover.js")
+        return (template, data, content_type)
+ 

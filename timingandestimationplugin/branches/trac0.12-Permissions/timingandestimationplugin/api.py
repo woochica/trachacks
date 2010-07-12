@@ -19,7 +19,7 @@ from reportmanager import CustomReportManager
 from statuses import *
 from reports import all_reports
 from stopwatch import *
-from hours_layout_changer import HoursLayoutChanger
+from hours_layout_changer import HoursLayoutChanger, TicketPropsLayoutChanger
 
 ## report columns
 ## id|author|title|query|description

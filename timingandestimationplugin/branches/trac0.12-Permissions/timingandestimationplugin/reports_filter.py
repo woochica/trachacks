@@ -2,6 +2,7 @@ from trac.web.api import ITemplateStreamFilter
 from trac.core import *
 from genshi.core import *
 from genshi.builder import tag
+from trac.perm import PermissionError
 try: 
     set 
 except NameError: 
@@ -180,45 +181,14 @@ def report_id_from_filename(text):
             return int(m.groupdict()["reportid"])
     return -1;
 
-
+unwrapped_send_csv = ReportModule._send_csv
 def _send_csv(self, req, cols, rows, sep=',', mimetype='text/plain',
               filename=None):
-    req.send_response(200)
-    req.send_header('Content-Type', mimetype + ';charset=utf-8')
-    if filename:
-        req.send_header('Content-Disposition', 'filename=' + filename)
-    req.end_headers()
-    
+    self.env.log.debug("T&E: In Wrapped _send_csv")
     id = report_id_from_filename(filename)
     reports = get_billing_reports(self)
     if id in reports and not req.perm.has_permission("TIME_VIEW"):
-        raise RequestDone
+        raise PermissionError("You must have TIME_VIEW permission in order to view this report")
+    unwrapped_send_csv(self, req, cols, rows, sep, mimetype, filename)
     
-    def iso_time(t):
-        return format_time(t, 'iso8601')
-
-    def iso_datetime(dt):
-        return format_datetime(dt, 'iso8601')
-
-    col_conversions = {
-        'time': iso_time,
-        'datetime': iso_datetime,
-        'changetime': iso_datetime,
-        'date': iso_datetime,
-        'created': iso_datetime,
-        'modified': iso_datetime,
-        }
-    
-    converters = [col_conversions.get(c.strip('_'), unicode) for c in cols]
-    
-    writer = csv.writer(req, delimiter=sep)
-    writer.writerow([unicode(c).encode('utf-8') for c in cols])
-    for row in rows:
-        row = list(row)
-        for i in xrange(len(row)):
-            row[i] = converters[i](row[i]).encode('utf-8')
-        writer.writerow(row)
-
-    raise RequestDone
-
 ReportModule._send_csv = _send_csv

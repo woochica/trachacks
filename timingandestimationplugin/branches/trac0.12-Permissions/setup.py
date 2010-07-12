@@ -7,7 +7,7 @@ PACKAGE = 'timingandestimationplugin'
 setup(name=PACKAGE,
       description='Plugin to make Trac support time estimation and tracking with permissions',
       keywords='trac plugin estimation timetracking permissions',
-      version='1.0.4b',
+      version='1.0.5b',
       url='http://www.trac-hacks.org/wiki/TimingAndEstimationPlugin',
       license='http://www.opensource.org/licenses/mit-license.php',
       author='Russ Tyndall at Acceleration.net',
@@ -71,3 +71,6 @@ setup(name=PACKAGE,
 ## Tay Ray Chuan
 ##
 ## Added a stopwatch to the ticket pages
+
+## Josh Godsiff, for www.oxideinteractive.com.au
+## added props table client reformatting to remove extra whitespace
