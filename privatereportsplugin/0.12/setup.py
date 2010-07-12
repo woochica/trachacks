@@ -11,7 +11,7 @@ setup(
 	license="GPL",
 
 	keywords='trac plugin security report group user',
-	url='',
+	url='http://trac-hacks.org/wiki/PrivateReportsPlugin',
 	
 	classifiers = [
 		'Framework :: Trac',
