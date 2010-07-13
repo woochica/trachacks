@@ -28,6 +28,9 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  changes suggested by delsauce@gmail.com
  * better milestone query to match not on full time stamp by whole day
 
+
+# 0.11 branch from here #
+
 0.1.2 - bugfix release provided by Michael Comb (09-Feb-2008)
  (was: WikiTicketCalendarMacro.py)
  changes by Vladislav Naumov for compatibility with Trac 0.11.1
@@ -131,6 +134,22 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  changes suggested by David Byrne
  * correct year switch test condition for 3-months-back nav link
 
+0.8.4 - maintenance revision for 0.11/0.12 branch (13-Jul-2010)
+ by Steffen Hoffmann
+ merging all but i18n related development done in 1.1.5 + 1.1.6, especially
+ * use Genshi's tag() for sane HTML code construction, building markup
+   from Genshi calls only, overcoming old string serialization
+ * extend use of to_unicode() to further prevent encoding issues
+ * replace re-definition of config options (bad) with config read calls
+ * correct another flaw in 3-months-back nav link with year calculation
+ * change ticket description tooltip to pure CSS style pop-up box
+   with some tweaks to work around IE render bugs and other CSS updates
+ * wrap calender in div section with own style
+ * code cleanup
+
+
+# 0.12 branch from here #
+
 1.0.0 - 1st release for Trac 0.12 imported to SVN by Ryan J Ollos (27-Apr-2010)  
  changes by Steffen Hoffmann
  * inherits changes 0.6.0 - 0.7.0
@@ -169,3 +188,25 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
 1.1.4 - maintenance revision for 0.12 branch (09-Jun-2010)
  changes suggested by David Byrne
  * correct year switch test condition for 3-months-back nav link
+
+1.1.5 - development version for 0.12 branch (02-Jul-2010)
+ changes by Steffen Hoffmann
+ * sanitize untrusted input before adding to calendar
+ * use Genshi's tag() for sane HTML code construction
+ * extend use of to_unicode() to further prevent encoding issues
+ * correct another flaw in 3-months-back nav link with year calculation
+ * change ticket description tooltip to pure CSS style pop-up box
+   with some tweaks to work around IE render bugs
+ * wrap calender in div section with own style
+
+1.1.6 - development version for 0.12 branch (03-Jul-2010)
+ changes by Steffen Hoffmann
+ * replace re-definition of config options (bad) with config read calls
+ * build markup from Genshi calls only, overcoming old string serialization
+ * code cleanup
+
+1.1.7 - maintenance revision for 0.12 branch (13-Jul-2010)
+ by Steffen Hoffmann
+ bringing in all development done in 1.1.5 + 1.1.6 and
+ * set proper license for package (correction, dual licensing now)
+ * more code cleanup

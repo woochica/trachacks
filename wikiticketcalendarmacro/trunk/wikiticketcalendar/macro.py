@@ -316,7 +316,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
             # add buttons for going to previous months and year
             buff(nav_pvY, nav_frM, nav_pvM)
-        
+
         # The caption will always be there.
         self.date[0:2] = [year, month]
         buff(tag.strong(to_unicode(time.strftime('%B %Y', tuple(self.date)))))

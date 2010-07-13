@@ -4,8 +4,15 @@ End-of-life note
 valuable piece of open source code.
 
 After Trac 0.11 introduced different ExtensionPoints this has been 
-adapted and imporved a lot. Now there's even a native 0.12 version 
+adapted and improved a lot. Now there's even a native 0.12 version 
 supporting localized text, if Babel is installed at your sytem as well.
 
-Please, seriously consider upgrading your Trac before creating tickets 
+#7239 at trac-hacks.org raised serious concerns about adding ticket contents 
+unchecked to HTML output, so it MIGHT BE possible to DISCLOSE SENSITIVE 
+INFORMATION from the server. A solution is done now to sanitize all user 
+edited strings with Genshi. Porting this to the 0.10 branch as well 
+would require to replace most of current code and this seems not worth 
+the effort anymore.
+
+Please, thoroughly consider upgrading your Trac before creating tickets 
 for this old branch, that might be closed as 'wontfix' anyway.

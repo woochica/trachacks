@@ -32,7 +32,7 @@
 from setuptools     import find_packages, setup
 
 PACKAGE = "WikiTicketCalendarMacro"
-VERSION = "1.1.6"
+VERSION = "1.1.7"
 
 setup(
     name = PACKAGE,
@@ -53,10 +53,11 @@ setup(
            use page template (if exist) for that new page
         """,
     license = """
-        Copyright (c), Matthew Good.
-        See cangelog in source for contributors.
+        Copyright (c), 2010.
         All rights reserved.
-        Released under the 3-clause BSD license.
+        Released under the 3-clause BSD license after initially being under
+        THE BEER-WARE LICENSE, Copyright (c) Matthew Good.
+        See cangelog in source for contributors.
         """,
     install_requires = ['Trac >= 0.12dev'],
 
