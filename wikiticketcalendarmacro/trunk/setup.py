@@ -31,8 +31,22 @@
 
 from setuptools     import find_packages, setup
 
+extra = {}
+
+# run a 'compile_catalog' before 'bdist_egg' (copied from Trac)
+from distutils.command.build            import build
+build.sub_commands.insert(0, ('compile_catalog', lambda x: True))
+
+# 'bdist_egg' isn't that nice, all it does is an 'install_lib'
+from setuptools.command.install_lib     import install_lib as _install_lib
+class install_lib(_install_lib): # playing setuptools' own tricks ;-)
+    def run(self):
+        self.run_command('compile_catalog')
+        _install_lib.run(self)
+extra['cmdclass'] = {'install_lib': install_lib}
+
 PACKAGE = "WikiTicketCalendarMacro"
-VERSION = "1.1.7"
+VERSION = "1.1.8"
 
 setup(
     name = PACKAGE,
@@ -45,21 +59,23 @@ setup(
     url = "http://trac-hacks.org/wiki/WikiTicketCalendarMacro",
     classifiers = ['Framework :: Trac'],
     description = "Full page Milestone and Ticket calendar for Trac wiki.",
-    long_description = """Display Milestones and Tickets in a calendar view, 
-        the days link to:
-         - milestones (day in bold) if there is one on that day
-         - a wiki page that has wiki_page_format (if exist)
-         - create that wiki page, if it does not exist and
-           use page template (if exist) for that new page
-        """,
+    long_description = """
+Display Milestones and Tickets in a calendar view, the days link to:
+ - milestones (day in bold) if there is one on that day
+ - a wiki page that has wiki_page_format (if exist)
+ - create that wiki page, if it does not exist and
+use page template (if exist) for that new page
+""",
     license = """
         Copyright (c), 2010.
-        All rights reserved.
         Released under the 3-clause BSD license after initially being under
         THE BEER-WARE LICENSE, Copyright (c) Matthew Good.
-        See cangelog in source for contributors.
+        See changelog in source for contributors.
         """,
-    install_requires = ['Trac >= 0.12dev'],
+    install_requires = [
+        'Babel>= 0.9.5',
+        'Trac >= 0.12dev',
+        ],
 
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
@@ -68,9 +84,11 @@ setup(
             'locale/*/LC_MESSAGES/*.mo',
         ],
     },
+    zip_safe = True,
     entry_points = {
         'trac.plugins': [
             'wikiticketcalendar = wikiticketcalendar.macro',
         ],
     },
+    **extra
 )

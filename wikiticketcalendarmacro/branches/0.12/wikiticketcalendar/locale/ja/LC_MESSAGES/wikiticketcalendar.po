@@ -6,7 +6,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: WikiTicketCalendarMacro 1.1.0\n"
+"Project-Id-Version: WikiTicketCalendarMacro 1.1.7\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-07-02 14:46+0200\n"
 "PO-Revision-Date: 2010-06-08 05:40+0900\n"
@@ -27,7 +27,4 @@ msgstr "ページ %s へ移動"
 #, python-format
 msgid "Create page %s"
 msgstr "ページ %s の作成"
-
-#~ msgid "Turn up %s"
-#~ msgstr "%s を参照"
 

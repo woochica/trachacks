@@ -210,3 +210,8 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  bringing in all development done in 1.1.5 + 1.1.6 and
  * set proper license for package (correction, dual licensing now)
  * more code cleanup
+
+1.1.8 - maintenance revision for 0.12 branch (14-Jul-2010)
+ changes by Steffen Hoffmann
+ * ensure compile_catalog command is called before build command
+ * code cleanup, especially in message catalog files
