@@ -26,7 +26,7 @@ LABEL_SUBSEQUENT = 'Successors: '
 
 TICKET_CUSTOM = "ticket-custom"
 
-class TracDependency(Component):
+class TracDependency(Component, InterTrac):
     implements(IRequestHandler, IRequestFilter, ITemplateProvider, 
         ITemplateStreamFilter, ITicketManipulator)
 
@@ -40,7 +40,7 @@ class TracDependency(Component):
             if intertrac_project_label:
                 self.project_label = intertrac_project_label
                 # self.log.debug("label from intertrac setting = %s", self.project_label)
-        self.intertrac = InterTrac(self.config, self.env, self.project_label)
+        self.load_intertrac_setting()
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -55,9 +55,9 @@ class TracDependency(Component):
         # tkt_idから該当するチケットの情報を取得する
         tkt = Ticket(self.env, tkt_id)
         # チケットの情報から取得できる親チケットと依存関係のリンクを作る
-        summary_ticket = self.intertrac.get_link(tkt['summary_ticket'], self.log)
-        dependencies = self.intertrac.get_link(tkt['dependencies'], self.log)
-        sub_ticket, subsequentticket = self.intertrac.create_ticket_links(tkt_id, self.log)
+        summary_ticket = self.get_link(tkt['summary_ticket'])
+        dependencies = self.get_link(tkt['dependencies'])
+        sub_ticket, subsequentticket = self.get_info_tickets_point_to(tkt_id)
         summary_ticket_enabled = not not ( self.config.get( TICKET_CUSTOM, "summary_ticket" ))
         dependencies_enabled = not not ( self.config.get( TICKET_CUSTOM, "dependencies"))
         custom_field = False
@@ -81,11 +81,11 @@ class TracDependency(Component):
             add_ctxtnav(req, LABEL_DEPEND_PAGE, href)
             # このページのデータを置き換えるためのでデータを作成します．
             tkt = data['ticket'] # チケットのid
-            sub_ticket, subsequentticket = self.intertrac.create_ticket_links(str(tkt.id), self.log)
+            sub_ticket, subsequentticket = self.get_info_tickets_point_to(str(tkt.id))
             data['tracdependency'] = {
                 'field_values': {
-                    'summary_ticket': self.intertrac.linkify_ids(tkt['summary_ticket'],LABEL_SUMMARY ,LABEL_SUB ,sub_ticket, self.log),
-                    'dependencies': self.intertrac.linkify_ids(tkt['dependencies'],LABEL_PRECEDING ,LABEL_SUBSEQUENT , subsequentticket, self.log),
+                    'summary_ticket': self.linkify_ids(tkt['summary_ticket'],LABEL_SUMMARY ,LABEL_SUB ,sub_ticket),
+                    'dependencies': self.linkify_ids(tkt['dependencies'],LABEL_PRECEDING ,LABEL_SUBSEQUENT , subsequentticket),
                 },
             }
         return template, data, content_type
@@ -122,13 +122,13 @@ class TracDependency(Component):
         if self.config.get( TICKET_CUSTOM, "summary_ticket"): # カスタムフィールドが有効な場合
             # 親チケットが存在しているかとか指定方法に間違いがないかを確認する．
             label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
-            errors.extend(self.intertrac.validate_ticket(ticket['summary_ticket'], label, False, self.log))
+            errors.extend(self.validate_ticket(ticket['summary_ticket'], label, False))
             # 親チケットがループしていないか確認する
-            errors.extend(self.intertrac.validate_outline(ticket['summary_ticket'], ticket.id, self.log))
+            errors.extend(self.validate_outline(ticket['summary_ticket'], ticket.id))
         if self.config.get( TICKET_CUSTOM, "dependencies"): # カスタムフィールドが有効な場合
             # 依存関係チケットが存在しているかとか指定方法に間違いがないかを確認する．
             label = self.config.get(TICKET_CUSTOM,"dependencies.label")
-            errors.extend(self.intertrac.validate_ticket(ticket['dependencies'], label, True, self.log))
+            errors.extend(self.validate_ticket(ticket['dependencies'], label, True))
         return errors
 
 #    # ITicketChangeListener methods
@@ -141,6 +141,3 @@ class TracDependency(Component):
 #    def ticket_deleted(self, tkt):
 #        #このチケットを指定しているチケットにコメントをつける
 #        pass
-
-    def get_project_name(self):
-        return self.project_label
