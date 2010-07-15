@@ -1,0 +1,2 @@
+from MathCaptcha import *
+
