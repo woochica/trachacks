@@ -34,7 +34,7 @@ from genshi.input           import HTMLParser, ParseError
 
 from trac.config            import Configuration
 from trac.core              import implements
-from trac.util.datefmt      import to_utimestamp, FixedOffset
+from trac.util.datefmt      import format_date, to_utimestamp, FixedOffset
 from trac.util.text         import to_unicode
 from trac.util.translation  import domain_functions
 from trac.web.href          import Href
@@ -98,15 +98,17 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
-        # Read options from trac.ini's [datafield] section, if existing
-        # The format to use for dates. Valid values are dmy, mdy, and ymd.
-        self.date_format = self.config.get('datefield', 'format') or 'ymd'
-        # The separator character to use for dates.
-        self.date_sep = self.config.get('datefield', 'separator') or '-'
-
+        # Read options from Trac configuration system, adjustable in trac.ini.
+        #  [wiki] section
         self.sanitize = True
         if self.config.getbool('wiki', 'render_unsafe_content') is True:
             self.sanitize = False
+
+        #  [wikiticketcalendar] section
+        self.due_field_name = self.config.get('wikiticketcalendar',
+                                  'ticket.due_field.name') or 'due_close'
+        self.due_field_fmt = self.config.get('wikiticketcalendar',
+                                  'ticket.due_field.format') or '%y-%m-%d'
 
     # ITemplateProvider methods
     # Returns additional path where stylesheets are placed.
@@ -358,20 +360,18 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     duedatestamp = t = to_utimestamp(datetime(year, month,
                                            day, 0, 0, 0, 0, tzinfo=utc))
                     duedatestamp_eod = t + 86399999999
-
-                    dayString = "%02d" % day
-                    monthString = "%02d" % month
-                    yearString = "%04d" % year
+                    duedate = format_date(duedatestamp, self.due_field_fmt)
 
                     # check for wikipage with name specified in
                     # 'wiki_page_format'
                     self.date[0:3] = [year, month, day]
+                    wiki = time.strftime(wiki_page_format, tuple(self.date))
+                    url = self.env.href.wiki(wiki)
                     if day == curr_day:
                         td_class = 'today'
                     else:
                         td_class = 'day'
-                    wiki = time.strftime(wiki_page_format, tuple(self.date))
-                    url = self.env.href.wiki(wiki)
+
                     if WikiSystem(self.env).has_page(wiki):
                         a_class = "day_haspage"
                         title = _("Go to page %s") % wiki
@@ -387,18 +387,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     cell(class_=a_class, title_=title)
                     cell = tag.td(cell)
                     cell(class_=td_class, valign='top')
-
-                    # Use get to handle default format
-                    duedate = { 'dmy': '%(dd)s%(sep)s%(mm)s%(sep)s%(yy)s',
-                                'mdy': '%(mm)s%(sep)s%(dd)s%(sep)s%(yy)s',
-                                'ymd': '%(yy)s%(sep)s%(mm)s%(sep)s%(dd)s'
-                    }.get(self.date_format,
-                    '%(yy)s%(sep)s%(mm)s%(sep)s%(dd)s') % {
-                        'dd': dayString,
-                        'mm': monthString,
-                        'yy': yearString,
-                        'sep': self.date_sep
-                    }
 
                     # at first check for milestone on that day
                     cursor.execute("""
@@ -424,8 +412,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     cursor.execute("""
                         SELECT t.id,t.summary,t.owner,t.status,t.description
                           FROM ticket t, ticket_custom tc
-                         WHERE tc.ticket=t.id and tc.name='due_close' and
-                               tc.value=%s
+                         WHERE tc.ticket=t.id and
+                               tc.name=self.due_field_name and tc.value=%s
                     """, (duedate, ))
                     while (1):
                         row = cursor.fetchone()
