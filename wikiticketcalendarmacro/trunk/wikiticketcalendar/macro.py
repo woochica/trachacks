@@ -34,12 +34,14 @@ from genshi.input           import HTMLParser, ParseError
 
 from trac.config            import Configuration
 from trac.core              import implements
+from trac.ticket.query      import Query
 from trac.util.datefmt      import format_date, to_utimestamp, FixedOffset
 from trac.util.text         import to_unicode
 from trac.util.translation  import domain_functions
 from trac.web.href          import Href
 from trac.web.chrome        import add_stylesheet, ITemplateProvider
-from trac.wiki.api          import IWikiMacroProvider, WikiSystem
+from trac.wiki.api          import parse_args, IWikiMacroProvider, \
+                                   WikiSystem
 from trac.wiki.formatter    import format_to_html
 from trac.wiki.macros       import WikiMacroBase
 
@@ -128,6 +130,54 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     def get_macro_description(self, name):
         return getdoc(self.__class__)
 
+    # Ticket Query provider
+    def _ticket_query(self, formatter, content):
+        """
+        A custom TicketQuery macro implementation.
+
+        Most lines were taken directly from that code.
+        *** Original Comments as follows (shortend)***
+        Macro that lists tickets that match certain criteria.
+
+        This macro accepts a comma-separated list of keyed parameters,
+        in the form "key=value".
+
+        If the key is the name of a field, the value must use the syntax
+        of a filter specifier as defined in TracQuery#QueryLanguage.
+        Note that this is ''not'' the same as the simplified URL syntax
+        used for `query:` links starting with a `?` character.
+
+        In addition to filters, several other named parameters can be used
+        to control how the results are presented. All of them are optional.
+
+        Also, using "&" as a field separator still works but is deprecated.
+        """
+        # Parse args and kwargs.
+        argv, kwargs = parse_args(content, strict=False)
+
+        # Define minimal set of values.
+        std_fields = ['description', 'owner', 'status', 'summary']
+        kwargs['col'] = "|".join(std_fields)
+
+        # Construct the querystring.
+        query_string = '&'.join(['%s=%s' %
+            item for item in kwargs.iteritems()])
+
+        # Get the Query Object.
+        query = Query.from_string(self.env, query_string)
+
+        # Get the tickets.
+        tickets = self._get_tickets(query, formatter.req)
+        return tickets
+
+    def _get_tickets(self, query, req):
+        '''Returns a list of ticket objects.'''
+        rawtickets = query.execute(req) # Get all tickets
+        # Do permissions check on tickets
+        tickets = [t for t in rawtickets 
+                   if 'TICKET_VIEW' in req.perm('ticket', t['id'])]
+        return tickets
+
     def _mknav(self, label, a_class, month, year):
         """The calendar nav button builder.
 
@@ -187,6 +237,51 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
         return ticket
 
+    def _gen_ticket_entry_ng(self, t, a_class=''):
+        id = str(t.get('id'))
+        status = t.get('status')
+        summary = to_unicode(t.get('summary'))
+        owner = to_unicode(t.get('owner'))
+        description = to_unicode(t.get('description')[:1024])
+        #url = self.env.href.ticket(id)
+        url = t.get('href')
+
+        if status == 'closed':
+            a_class = a_class + 'closed'
+        else:
+            a_class = a_class + 'open'
+        markup = format_to_html(self.env, self.ref.context, description)
+        # Escape, if requested
+        if self.sanitize is True:
+            try:
+                description = HTMLParser(StringIO(markup)
+                                           ).parse() | HTMLSanitizer()
+            except ParseError:
+                description = escape(markup)
+        else:
+            description = markup
+
+        # Replace tags that destruct tooltips too much
+        desc = self.end_RE.sub(']', Markup(description))
+        desc = self.del_RE.sub('', desc)
+        # need 2nd run after purging newline in table cells in 1st run
+        desc = self.del_RE.sub('', desc)
+        desc = self.item_RE.sub('X', desc)
+        desc = self.tab_RE.sub('[|||]', desc)
+        description = self.open_RE.sub('[', desc)
+
+        tip = tag.span(Markup(description))
+        ticket = '#' + id
+        ticket = tag.a(ticket, href=url)
+        ticket(tip, class_='tip', target='_blank')
+        ticket = tag.div(ticket)
+        ticket(class_=a_class, align='left')
+        # fix stripping of regular leading space in IE
+        blank = '&nbsp;'
+        ticket(Markup(blank), summary, ' (', owner, ')')
+
+        return ticket
+
     # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
 
@@ -198,10 +293,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
 
         # Parse arguments from macro invocation
-        if arguments == "":
-            args = []
-        else:
-            args = arguments.split(',')
+        args, kwargs = parse_args(arguments, strict=False)
 
         # Find out whether use http param, current or macro param year/month
         http_param_year = formatter.req.args.get('year','')
@@ -233,12 +325,18 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             month = int(http_param_month)
 
         showbuttons = True
-        if len(args) >= 3:
-            showbuttons = args[2] in ["True", "true", "yes", "1"]
+        if len(args) >= 3 or kwargs.has_key('nav'):
+            try:
+                showbuttons = kwargs['nav'] in ["True", "true", "yes", "1"]
+            except KeyError:
+                showbuttons = args[2] in ["True", "true", "yes", "1"]
 
         wiki_page_format = "%Y-%m-%d"
-        if len(args) >= 4 and args[3] != "*":
-            wiki_page_format = args[3]
+        if len(args) >= 4 and args[3] != "*" or kwargs.has_key('wikipage'):
+            try:
+                wiki_page_format = kwargs['wikipage']
+            except KeyError:
+                wiki_page_format = args[3]
 
         show_ticket_open_dates = True
         if len(args) >= 5:
@@ -247,9 +345,21 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         # template name tried to create new pages
         # optional, default (empty page) is used, if name is invalid
         wiki_page_template = ""
-        if len(args) >= 6:
-            wiki_page_template = args[5]
+        if len(args) >= 6 or kwargs.has_key('template'):
+            try:
+                wiki_page_template = kwargs['template']
+            except KeyError:
+                wiki_page_template = args[5]
 
+        # TracQuery support for ticket selection
+        query_args = "id!=0"
+        if len(args) >= 7 or kwargs.has_key('query'):
+            # prefer query arguments provided by kwargs
+            try:
+                query_args = kwargs['query']
+            except KeyError:
+                query_args = args[6]
+        self.tickets = self._ticket_query(formatter, query_args)
 
         # Can use this to change the day the week starts on,
         # but this is a system-wide setting.
@@ -357,10 +467,14 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
                     utc = FixedOffset(0, 'UTC')
-                    duedatestamp = t = to_utimestamp(datetime(year, month,
-                                           day, 0, 0, 0, 0, tzinfo=utc))
-                    duedatestamp_eod = t + 86399999999
-                    duedate = format_date(duedatestamp, self.due_field_fmt)
+                    t = datetime(year, month, day, 0, 0, 0, 0, tzinfo=utc)
+                    duedatestamp = to_utimestamp(t)
+                    duedatestamp_eod = duedatestamp + 86399999999
+                    if self.due_field_fmt == 'ts':
+                        duedate = duedatestamp
+                    else:
+                        duedate = format_date(t, self.due_field_fmt)
+                    self.env.log.debug(duedate)
 
                     # check for wikipage with name specified in
                     # 'wiki_page_format'
@@ -412,9 +526,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     cursor.execute("""
                         SELECT t.id,t.summary,t.owner,t.status,t.description
                           FROM ticket t, ticket_custom tc
-                         WHERE tc.ticket=t.id and
-                               tc.name=self.due_field_name and tc.value=%s
-                    """, (duedate, ))
+                         WHERE tc.ticket=t.id and tc.name=%s and tc.value=%s
+                    """, (self.due_field_name, duedate, ))
                     while (1):
                         row = cursor.fetchone()
                         if row is None:
@@ -425,24 +538,15 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             cell(ticket)
 
                     if show_ticket_open_dates is True:
-                        # get tickets created on day
-                        cursor.execute("""
-                            SELECT t.id,t.summary,t.owner,t.status,
-                                   t.description,t.time
-                              FROM ticket t
-                        """)
-                        while (1):
-                            row = cursor.fetchone()
-                            if row is None:
-                                break
-
-                            ticket_time = int(row[5])
+                        for t in self.tickets:
+                            # get tickets created on day
+                            ticket_time = to_utimestamp(t.get('time'))
                             if ticket_time < duedatestamp or \
                                     ticket_time > duedatestamp_eod:
                                 continue
 
                             a_class = 'opendate_'
-                            ticket = self._gen_ticket_entry(row, a_class)
+                            ticket = self._gen_ticket_entry_ng(t, a_class)
 
                             cell(ticket)
 
