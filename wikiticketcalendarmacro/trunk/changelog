@@ -215,3 +215,9 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  changes by Steffen Hoffmann
  * ensure compile_catalog command is called before build command
  * code cleanup, especially in message catalog files
+
+1.2.0 - development version for 0.12 branch (18-Jul-2010)
+ changes by Steffen Hoffmann
+ * replace old SQL for ticket selection with powerful TracQuery support
+ * make custom due date field name configurable
+ * code cleanup in argument parser and time stamp creation

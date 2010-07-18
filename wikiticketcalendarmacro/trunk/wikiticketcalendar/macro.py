@@ -18,11 +18,11 @@
 
 
 import calendar
+import datetime
 import re
 import sys
 import time
 
-from datetime               import datetime
 from inspect                import getdoc
 from pkg_resources          import resource_filename
 from StringIO               import StringIO
@@ -111,6 +111,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                   'ticket.due_field.name') or 'due_close'
         self.due_field_fmt = self.config.get('wikiticketcalendar',
                                   'ticket.due_field.format') or '%y-%m-%d'
+        self.due_utcoff = self.config.get('wikiticketcalendar',
+                                  'ticket.due_field.utcoffset') or '0'
 
     # ITemplateProvider methods
     # Returns additional path where stylesheets are placed.
@@ -157,7 +159,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
         # Define minimal set of values.
         std_fields = ['description', 'owner', 'status', 'summary']
-        kwargs['col'] = "|".join(std_fields)
+        kwargs['col'] = "|".join(std_fields + [self.due_field_name])
 
         # Construct the querystring.
         query_string = '&'.join(['%s=%s' %
@@ -193,57 +195,12 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
         return markup
 
-    def _gen_ticket_entry(self, row, a_class=''):
-        id = str(row[0])
-        url = self.env.href.ticket(id)
-        summary = to_unicode(row[1][0:100])
-        owner = to_unicode(row[2])
-        status = row[3]
-        description = to_unicode(row[4][:1024])
-
-        if status == 'closed':
-            a_class = a_class + 'closed'
-        else:
-            a_class = a_class + 'open'
-        markup = format_to_html(self.env, self.ref.context, description)
-        # Escape, if requested
-        if self.sanitize is True:
-            try:
-                description = HTMLParser(StringIO(markup)
-                                           ).parse() | HTMLSanitizer()
-            except ParseError:
-                description = escape(markup)
-        else:
-            description = markup
-
-        # Replace tags that destruct tooltips too much
-        desc = self.end_RE.sub(']', Markup(description))
-        desc = self.del_RE.sub('', desc)
-        # need 2nd run after purging newline in table cells in 1st run
-        desc = self.del_RE.sub('', desc)
-        desc = self.item_RE.sub('X', desc)
-        desc = self.tab_RE.sub('[|||]', desc)
-        description = self.open_RE.sub('[', desc)
-
-        tip = tag.span(Markup(description))
-        ticket = '#' + id
-        ticket = tag.a(ticket, href=url)
-        ticket(tip, class_='tip', target='_blank')
-        ticket = tag.div(ticket)
-        ticket(class_=a_class, align='left')
-        # fix stripping of regular leading space in IE
-        blank = '&nbsp;'
-        ticket(Markup(blank), summary, ' (', owner, ')')
-
-        return ticket
-
-    def _gen_ticket_entry_ng(self, t, a_class=''):
+    def _gen_ticket_entry(self, t, a_class=''):
         id = str(t.get('id'))
         status = t.get('status')
         summary = to_unicode(t.get('summary'))
         owner = to_unicode(t.get('owner'))
         description = to_unicode(t.get('description')[:1024])
-        #url = self.env.href.ticket(id)
         url = t.get('href')
 
         if status == 'closed':
@@ -467,14 +424,13 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
                     utc = FixedOffset(0, 'UTC')
-                    t = datetime(year, month, day, 0, 0, 0, 0, tzinfo=utc)
+                    t = datetime.datetime(year, month, day,
+                                                0, 0, 0, 0, tzinfo=utc)
                     duedatestamp = to_utimestamp(t)
                     duedatestamp_eod = duedatestamp + 86399999999
-                    if self.due_field_fmt == 'ts':
-                        duedate = duedatestamp
-                    else:
+                    duedate = None
+                    if not self.due_field_fmt == 'ts':
                         duedate = format_date(t, self.due_field_fmt)
-                    self.env.log.debug(duedate)
 
                     # check for wikipage with name specified in
                     # 'wiki_page_format'
@@ -523,30 +479,35 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             cell(milestone)
 
                     # get tickets with due date set to day
-                    cursor.execute("""
-                        SELECT t.id,t.summary,t.owner,t.status,t.description
-                          FROM ticket t, ticket_custom tc
-                         WHERE tc.ticket=t.id and tc.name=%s and tc.value=%s
-                    """, (self.due_field_name, duedate, ))
-                    while (1):
-                        row = cursor.fetchone()
-                        if row is None:
-                            break
+                    for t in self.tickets:
+                        due = t.get(self.due_field_name)
+                        if duedate is None:
+                            if not isinstance(due, datetime.datetime):
+                                continue
+                            else:
+                                due_ts = to_utimestamp(due) + \
+                                         int(self.due_utcoff) * 3600000000
+                                if due_ts < duedatestamp or \
+                                        due_ts > duedatestamp_eod:
+                                    continue
                         else:
-                            ticket = self._gen_ticket_entry(row)
+                            if not due == duedate:
+                                continue
 
-                            cell(ticket)
+                        ticket = self._gen_ticket_entry(t)
 
+                        cell(ticket)
+
+                    # get tickets created on day
                     if show_ticket_open_dates is True:
                         for t in self.tickets:
-                            # get tickets created on day
                             ticket_time = to_utimestamp(t.get('time'))
                             if ticket_time < duedatestamp or \
                                     ticket_time > duedatestamp_eod:
                                 continue
 
                             a_class = 'opendate_'
-                            ticket = self._gen_ticket_entry_ng(t, a_class)
+                            ticket = self._gen_ticket_entry(t, a_class)
 
                             cell(ticket)
 
