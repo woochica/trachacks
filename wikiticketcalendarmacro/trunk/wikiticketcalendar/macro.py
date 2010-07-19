@@ -73,8 +73,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     Simple Usage
     ------------
-    WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format,
-        [show_ticket_open_dates,[wiki_page_template]]]]])
+    [[WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format,
+        [show_ticket_open_dates,[wiki_page_template]]]]])]]
 
     Arguments
     ---------
@@ -89,8 +89,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     Advanced Use
     ------------
-    WikiTicketCalendar([nav=(0|1)],[wiki=<strftime-expression>],
-        [cdate=(0|1)],[draft=<wiki_page_template>],[query=<TracQuery-expr])
+    [[WikiTicketCalendar([nav=(0|1)],[wiki=<strftime-expression>],
+        [cdate=(0|1)],[draft=<wiki_page_template>],[query=<TracQuery-expr])]]
 
      - equivalent keyword-argument available for all but first two arguments
      - mixed use of keyword-arguments with simple arguments permitted,
@@ -101,15 +101,15 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     Examples
     --------
-    WikiTicketCalendar(2006,07)
-    WikiTicketCalendar(2006,07,false)
-    WikiTicketCalendar(*,*,true,Meeting-%Y-%m-%d)
-    WikiTicketCalendar(2006,07,false,Meeting-%Y-%m-%d)
-    WikiTicketCalendar(2006,07,true,*,true)
-    WikiTicketCalendar(2006,07,true,Meeting-%Y-%m-%d,true,Meeting)
-    WikiTicketCalendar(wiki=Meeting-%Y-%m-%d,draft=Meeting)
-     equivalent to WikiTicketCalendar(*,*,true,Meeting-%Y-%m-%d,true,Meeting)
-    WikiTicketCalendar(wiki=Meeting-%Y-%m-%d,query=type=task&owner=wg1)
+    [[WikiTicketCalendar(2006,07)]]
+    [[WikiTicketCalendar(2006,07,false)]]
+    [[WikiTicketCalendar(*,*,true,Meeting-%Y-%m-%d)]]
+    [[WikiTicketCalendar(2006,07,false,Meeting-%Y-%m-%d)]]
+    [[WikiTicketCalendar(2006,07,true,*,true)]]
+    [[WikiTicketCalendar(2006,07,true,Meeting-%Y-%m-%d,true,Meeting)]]
+    [[WikiTicketCalendar(wiki=Talk-%Y-%m-%d,draft=Talk)]]
+     equivalent to [[WikiTicketCalendar(*,*,true,Talk-%Y-%m-%d,true,Talk)]]
+    [[WikiTicketCalendar(wiki=Meeting-%Y-%m-%d,query=type=task&owner=wg1)]]
     """
 
     implements(IWikiMacroProvider, ITemplateProvider)
