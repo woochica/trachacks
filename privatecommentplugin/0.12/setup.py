@@ -6,7 +6,7 @@ setup(
 	packages=['privatecomments'],
 
 	author='Michael Henke',
-	author_email='michael.henke@she.de',
+	author_email='michael.henke@she.net',
 	description="A trac plugin that lets you create comments which are only visible for users with a special permission",
 	license="GPL",
 
