@@ -1,0 +1,153 @@
+Index: 0.11/tracdependency/intertrac.py
+===================================================================
+--- 0.11/tracdependency/intertrac.py	(revision 8279)
++++ 0.11/tracdependency/intertrac.py	(working copy)
+@@ -13,21 +13,21 @@
+ 
+ from trac.env import open_environment
+ 
+-LABEL_SUMMARY = u'Summary: '
+-LABEL_SUB = u'Sub: '
+-LABEL_PRECEDING = u'Predecessors: '
+-LABEL_SUBSEQUENT = u'Successors: '
+-ERROE_MSG1 = u' project %s does not exist.'
+-ERROE_MSG2 = u'Unknown type of dependency.'
+-ERROE_MSG3 = u'Ticket(%s)\'s summary ticket is this ticket'
+-ERROE_MSG4 = u'There is no ticket %s(prj=%s,id=%s).'
+-ERROE_MSG5 = u'Many comma are in this field.'
+-ERROE_MSG6 = u'Ticekt not exists'
+-ERROE_MSG7 = u'This field can not have dependency.'
+-IT_ERROR_MSG1 = u"Project(%s) is normal type intertrac project."
+-IT_ERROR_MSG2 = u"Can not open project db %s."
+-IT_ERROR_MSG3 = u"Project(%s) has not url."
+-IT_ERROR_MSG4 = u"Project(%s) has no label, so automaticaly set this projects label to %s."
++LABEL_SUMMARY = u'親: '
++LABEL_SUB = u'子: '
++LABEL_PRECEDING = u'先行: '
++LABEL_SUBSEQUENT = u'後続: '
++ERROE_MSG1 = u'%sプロジェクトは存在しません'
++ERROE_MSG2 = u'未知の依存タイプです'
++ERROE_MSG3 = u'チケット(%s)はこのチケット自身の親です'
++ERROE_MSG4 = u'チケット%s(prj=%s,id=%s)は存在しません'
++ERROE_MSG5 = u'カンマの数が多いです'
++ERROE_MSG6 = u'チケットが存在しません'
++ERROE_MSG7 = u'このフィールドは依存タイプを指定できません'
++IT_ERROR_MSG1 = u"プロジェクト(%s)は通常のInterTracプロジェクトです."
++IT_ERROR_MSG2 = u"プロジェクト(%s)DBをオープンできませんでした."
++IT_ERROR_MSG3 = u"プロジェクト(%s)はurlの設定がありません."
++IT_ERROR_MSG4 = u"プロジェクト(%s)はlabelの設定がありませんので,%sに設定しました."
+ 
+ TICKET_CUSTOM = "ticket-custom"
+ 
+Index: 0.11/tracdependency/templates/trac_dependency.html
+===================================================================
+--- 0.11/tracdependency/templates/trac_dependency.html	(revision 8279)
++++ 0.11/tracdependency/templates/trac_dependency.html	(working copy)
+@@ -7,36 +7,36 @@
+   <xi:include href="layout.html" />
+   <xi:include href="macros.html" />
+   <head>
+-    <title>Ticket Dependencies</title>
++    <title>チケットの依存関係</title>
+   </head>
+ 
+   <body>
+     <py:if test="summary_ticket_enabled">
+-      <h2>Summary Ticket</h2>
++      <h2>親</h2>
+       <form id="project_table" method="post" action="">
+         <table class="listing" border="2">
+           <thead>
+             <th>ID（Link）</th>
+-            <th>Title</th>
+-            <th>Status</th>
++            <th>概要</th>
++            <th>ステータス</th>
+           </thead>
+           <tr py:for="m in summary_ticket">
+-            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">Dependencies</a>)</td>
++            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">依存</a>)</td>
+             <td class="title">${m.get('title','')}</td>
+             <td class="status">${m.get('status','')}</td>
+           </tr>
+         </table>
+       </form>
+-      <h2>Sub Tickets</h2>
++      <h2>子チケット</h2>
+       <form id="project_table" method="post" action="">
+         <table class="listing" border="2">
+           <thead>
+             <th>ID（Link）</th>
+-            <th>Title</th>
+-            <th>Status</th>
++            <th>概要</th>
++            <th>ステータス</th>
+           </thead>
+           <tr py:for="m in sub_ticket">
+-            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">Dependencies</a>)</td>
++            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">依存</a>)</td>
+             <td class="title">${m.get('title','')}</td>
+             <td class="status">${m.get('status','')}</td>
+           </tr>
+@@ -45,31 +45,31 @@
+       </form>
+     </py:if>
+     <py:if test="dependencies_enabled">
+-      <h2>Predecessors</h2>
++      <h2>先行</h2>
+       <form id="project_table" method="post" action="">
+         <table class="listing" border="2">
+           <thead>
+             <th>ID（link）</th>
+-            <th>Title</th>
+-            <th>Status</th>
++            <th>概要</th>
++            <th>ステータス</th>
+           </thead>
+           <tr py:for="m in dependencies">
+-            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">Dependencies</a>)</td>
++            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">依存</a>)</td>
+             <td class="title">${m.get('title','')}</td>
+             <td class="status">${m.get('status','')}</td>
+           </tr>
+         </table>
+         </form>
+-      <h2>Successors</h2>
++      <h2>後続</h2>
+       <form id="project_table" method="post" action="">
+         <table class="listing" border="2">
+           <thead>
+             <th>ID（link）</th>
+-            <th>Title</th>
+-            <th>Status</th>
++            <th>概要</th>
++            <th>ステータス</th>
+           </thead>
+           <tr py:for="m in subsequentticket">
+-            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">Dependencies</a>)</td>
++            <td class="name"><a href="${m.get('url','')}">${m.get('ticket','')}</a>(<a href="${m.get('dep_url','')}">依存</a>)</td>
+             <td class="title">${m.get('title','')}</td>
+             <td class="status">${m.get('status','')}</td>
+           </tr>
+@@ -83,7 +83,7 @@
+         <table class="listing" border="2">
+           <thead>
+               <th>Projects</th>
+-              <th>Title</th>
++              <th>概要</th>
+               <th>URL</th>
+               <th>Path</th>
+           </thead>
+Index: 0.11/tracdependency/tracdependency.py
+===================================================================
+--- 0.11/tracdependency/tracdependency.py	(revision 8279)
++++ 0.11/tracdependency/tracdependency.py	(working copy)
+@@ -18,7 +18,7 @@
+ 
+ from intertrac import InterTrac
+ 
+-LABEL_DEPEND_PAGE = u'Dependencies'
++LABEL_DEPEND_PAGE = u'依存関係'
+ 
+ TICKET_CUSTOM = "ticket-custom"
+ 
