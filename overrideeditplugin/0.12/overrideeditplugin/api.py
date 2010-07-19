@@ -50,9 +50,11 @@ def _validate_ticket(self, req, ticket, force_collision_check=False):
     #if ticket.exists and (ticket._old or comment or force_collision_check):
     #  if req.args.get('ts') != str(ticket['changetime']):
     old_ticket_changetime = ticket['changetime']
-    ticket.values['changetime'] = iso8601.parse_date(req.args.get('ts'))
+    if not req.args.get('ts'):
+        return original_validate_ticket(self, req, ticket, force_collision_check);
     comment = req.args.get('comment')
     try:
+        ticket.values['changetime'] = iso8601.parse_date(req.args.get('ts'))
         valid = original_validate_ticket(self, req, ticket, force_collision_check)
         self.env.log.debug("Override edit plugin: original validation (without"
                            " midair collision check): %s, ts:%s, changetime:%s, collision?:%s " % 
