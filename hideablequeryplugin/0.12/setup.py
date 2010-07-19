@@ -6,12 +6,12 @@ setup(
 	packages=['hideable_query'],
 
 	author='Michael Henke',
-	author_email='michael.henke@she.de',
+	author_email='michael.henke@she.net',
 	description="A trac plugin that lets you hide the query site and the links to it",
 	license="GPL",
 
 	keywords='trac plugin security hide query report',
-	url='',
+	url='http://trac-hacks.org/wiki/HideableQueryPlugin',
 	
 	classifiers = [
         'Framework :: Trac',
