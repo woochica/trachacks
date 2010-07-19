@@ -8,6 +8,7 @@ from trac.web.chrome import add_link, add_script, add_stylesheet, \
 from trac.util.translation import _
 from trac.versioncontrol.diff import get_diff_options, diff_blocks
 from genshi.template import TemplateLoader
+import iso8601
 
 def get_diffs(self, req, title, old_text, new_text):
     diff_style, diff_options, diff_data = get_diff_options(req)
@@ -42,57 +43,33 @@ def get_diffs(self, req, title, old_text, new_text):
     stream = tmpl.generate(**data)
     return stream.render()
 
+original_validate_ticket = web.TicketModule._validate_ticket
+
 def _validate_ticket(self, req, ticket, force_collision_check=False):
-    valid = True
-    resource = ticket.resource
-
-    # If the ticket has been changed, check the proper permissions
-    if ticket.exists and ticket._old:
-        # Status and resolution can be modified by the workflow even
-        # without having TICKET_CHGPROP
-        changed = set(ticket._old) - set(['status', 'resolution'])
-        if 'description' in changed \
-                and 'TICKET_EDIT_DESCRIPTION' not in req.perm(resource):
-            add_warning(req, _("No permission to edit the ticket "
-                               "description."))
-            valid = False
-        changed.discard('description')
-        if 'reporter' in changed \
-                and 'TICKET_ADMIN' not in req.perm(resource):
-            add_warning(req, _("No permission to change the ticket "
-                               "reporter."))
-            valid = False
-        changed.discard('reporter')
-        if changed and 'TICKET_CHGPROP' not in req.perm(resource):
-            add_warning(req, _("No permission to change ticket fields."))
-            valid = False
-        if not valid:
-            ticket.values.update(ticket._old)
-
+    # Make sure mid air collisions dont trigger the underlying validation
+    #if ticket.exists and (ticket._old or comment or force_collision_check):
+    #  if req.args.get('ts') != str(ticket['changetime']):
+    old_ticket_changetime = ticket['changetime']
+    ticket.values['changetime'] = iso8601.parse_date(req.args.get('ts'))
     comment = req.args.get('comment')
-    if comment:
-        if not ('TICKET_CHGPROP' in req.perm(resource) or \
-                'TICKET_APPEND' in req.perm(resource)):
-            add_warning(req, _("No permissions to add a comment."))
-            valid = False
+    try:
+        valid = original_validate_ticket(self, req, ticket, force_collision_check)
+        self.env.log.debug("Override edit plugin: original validation (without"
+                           " midair collision check): %s, ts:%s, changetime:%s, collision?:%s " % 
+                           (valid, req.args.get('ts'),old_ticket_changetime,
+                            ticket.exists and (ticket._old or comment) and
+                            req.args.get('ts') != str(ticket['changetime'])))
+    finally:
+        ticket.values['changetime'] = old_ticket_changetime
 
-    # Mid air collision?
-    if ticket.exists and (ticket._old or comment or force_collision_check):
-        if req.args.get('ts') != str(ticket['changetime']):
-            add_warning(req, _("Sorry, can not save your changes. "
-                          "This ticket has been modified by someone else "
-                          "since you started"))
-            valid = False
-    ###############################################################################
-
-
-    # Mid air collision?
+    # Avoidable mid air collision checks
     if ticket.exists and (ticket._old or comment):
         skey = "warning-"+req.args['id']+'-'+req.args.get('ts')
-        if req.args.get('ts') != str(ticket.time_changed) and not req.session.has_key(skey):
+        if req.args.get('ts') != str(ticket['changetime']) and not req.session.has_key(skey):
             req.session[skey] = True;
             add_warning(req, _("This ticket has been modified by someone else since you started."
-                          " If you are sure your change doesnt break theirs, you can go ahead and save again."))
+                               " If you are sure your change doesnt break theirs, you can go"
+                               " ahead and save again."))
 
             changes, problems = self.get_ticket_changes(req, ticket, req.args.get('action'))
             if changes.has_key('description'):
@@ -111,69 +88,6 @@ def _validate_ticket(self, req, ticket, force_collision_check=False):
 
         elif req.session.has_key(skey):
             del(req.session[skey])
-
-    ###############################################################################
-
-    # Always require a summary
-    if not ticket['summary']:
-        add_warning(req, _("Tickets must contain a summary."))
-        valid = False
-
-    # Always validate for known values
-    for field in ticket.fields:
-        if 'options' not in field:
-            continue
-        if field['name'] == 'status':
-            continue
-        name = field['name']
-        if name in ticket.values and name in ticket._old:
-            value = ticket[name]
-            if value:
-                if value not in field['options']:
-                    add_warning(req, '"%s" is not a valid value for '
-                                'the %s field.' % (value, name))
-                    valid = False
-            elif not field.get('optional', False):
-                add_warning(req, _("field %(name)s must be set",
-                                   name=name))
-                valid = False
-
-    # Validate description length
-    if len(ticket['description'] or '') > self.max_description_size:
-        add_warning(req, _("Ticket description is too long (must be less "
-                           "than %(num)s characters)",
-                           num=self.max_description_size))
-        valid = False
-
-    # Validate comment length
-    if len(comment or '') > self.max_comment_size:
-        add_warning(req, _("Ticket comment is too long (must be less "
-                           "than %(num)s characters)",
-                           num=self.max_comment_size))
-        valid = False
-
-    # Validate comment numbering
-    try:
-        # comment index must be a number
-        int(req.args.get('cnum') or 0)
-        # replyto must be 'description' or a number
-        replyto = req.args.get('replyto')
-        if replyto != 'description':
-            int(replyto or 0)
-    except ValueError:
-        # Shouldn't happen in "normal" circumstances, hence not a warning
-        raise InvalidTicket(_("Invalid comment threading identifier"))
-
-    # Custom validation rules
-    for manipulator in self.ticket_manipulators:
-        for field, message in manipulator.validate_ticket(req, ticket):
-            valid = False
-            if field:
-                add_warning(req, _("The ticket field '%(field)s' is "
-                                   "invalid: %(message)s",
-                                   field=field, message=message))
-            else:
-                add_warning(req, message)
     return valid
 
 
