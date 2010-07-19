@@ -66,8 +66,13 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     [components]
     wikiticketcalendar.* = enabled
 
-    Usage
-    -----
+    [wikiticketcalendar]
+     - optional configuration section
+     - for use with a custom due date field
+       (see WikiTicketCalendarMacro home at trac-hacks.org for details)
+
+    Simple Usage
+    ------------
     WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format,
         [show_ticket_open_dates,[wiki_page_template]]]]])
 
@@ -77,11 +82,22 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                   ('*' for current year/month)
     showbuttons = true/false, show prev/next buttons
     wiki_page_format = strftime format for wiki pages to display as link
-                       (if there is not a milestone placed on that day)
                        (if exist, otherwise link to create page)
                        default is "%Y-%m-%d", '*' for default
     show_ticket_open_dates = true/false, show also when a ticket was opened
     wiki_page_template = wiki template tried to create new page
+
+    Advanced Use
+    ------------
+    WikiTicketCalendar([nav=(0|1)],[wiki=<strftime-expression>],
+        [cdate=(0|1)],[draft=<wiki_page_template>],[query=<TracQuery-expr])
+
+     - equivalent keyword-argument available for all but first two arguments
+     - mixed use of keyword-arguments with simple arguments permitted,
+       but strikt order of simple arguments (see above) still applies while
+       keyword-arguments in-between do not count for that positional mapping,
+     - query evaluates valid TracQuery expression based on any ticket field
+       including multiple expressions grouped by 'and' and 'or' 
 
     Examples
     --------
@@ -91,6 +107,9 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     WikiTicketCalendar(2006,07,false,Meeting-%Y-%m-%d)
     WikiTicketCalendar(2006,07,true,*,true)
     WikiTicketCalendar(2006,07,true,Meeting-%Y-%m-%d,true,Meeting)
+    WikiTicketCalendar(wiki=Meeting-%Y-%m-%d,draft=Meeting)
+     equivalent to WikiTicketCalendar(*,*,true,Meeting-%Y-%m-%d,true,Meeting)
+    WikiTicketCalendar(wiki=Meeting-%Y-%m-%d,query=type=task&owner=wg1)
     """
 
     implements(IWikiMacroProvider, ITemplateProvider)
@@ -176,7 +195,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         '''Returns a list of ticket objects.'''
         rawtickets = query.execute(req) # Get all tickets
         # Do permissions check on tickets
-        tickets = [t for t in rawtickets 
+        tickets = [t for t in rawtickets
                    if 'TICKET_VIEW' in req.perm('ticket', t['id'])]
         return tickets
 
@@ -289,22 +308,26 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 showbuttons = args[2] in ["True", "true", "yes", "1"]
 
         wiki_page_format = "%Y-%m-%d"
-        if len(args) >= 4 and args[3] != "*" or kwargs.has_key('wikipage'):
+        if len(args) >= 4 and args[3] != "*" or kwargs.has_key('wiki'):
             try:
-                wiki_page_format = kwargs['wikipage']
+                wiki_page_format = kwargs['wiki']
             except KeyError:
                 wiki_page_format = args[3]
 
-        show_ticket_open_dates = True
-        if len(args) >= 5:
-            show_ticket_open_dates = args[4] in ["True", "true", "yes", "1"]
+        show_t_open_dates = True
+        if len(args) >= 5 or kwargs.has_key('cdate'):
+            try:
+                show_t_open_dates = kwargs['cdate'] in \
+                                               ["True", "true", "yes", "1"]
+            except KeyError:
+                show_t_open_dates = args[4] in ["True", "true", "yes", "1"]
 
         # template name tried to create new pages
         # optional, default (empty page) is used, if name is invalid
         wiki_page_template = ""
-        if len(args) >= 6 or kwargs.has_key('template'):
+        if len(args) >= 6 or kwargs.has_key('draft'):
             try:
-                wiki_page_template = kwargs['template']
+                wiki_page_template = kwargs['draft']
             except KeyError:
                 wiki_page_template = args[5]
 
@@ -317,6 +340,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             except KeyError:
                 query_args = args[6]
         self.tickets = self._ticket_query(formatter, query_args)
+
 
         # Can use this to change the day the week starts on,
         # but this is a system-wide setting.
@@ -338,7 +362,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         self.item_RE = re.compile('(?:<img .*?>)')
         self.open_RE = re.compile('(?:<a .*?>)')
         self.tab_RE  = re.compile('(?:<table .*?>)')
-
 
         # for prev/next navigation links
         prevMonth = month - 1
@@ -499,7 +522,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                         cell(ticket)
 
                     # get tickets created on day
-                    if show_ticket_open_dates is True:
+                    if show_t_open_dates is True:
                         for t in self.tickets:
                             ticket_time = to_utimestamp(t.get('time'))
                             if ticket_time < duedatestamp or \
