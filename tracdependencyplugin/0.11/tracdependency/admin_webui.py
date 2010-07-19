@@ -30,7 +30,6 @@ class TracDependencyAdminWebUI(Component):
 
     def __init__(self):
         self.project_label = self.config.get( "tracdependency", "label")
-        self.log.debug("[tracdependency]:label = %s", self.project_label)
         if not self.project_label:
             self.project_label=os.path.basename(self.env.path)
             # self.log.debug("base name of env_path = %s", self.project_label)

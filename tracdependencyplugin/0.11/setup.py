@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 PACKAGE = 'tracdependency'
 
 setup(
-    name = 'TracDependencyPlugin', version = '0.11.1.23.3',
+    name = 'TracDependencyPlugin', version = '0.11.1.23.6',
     packages=find_packages(exclude=['*.tests*']),
     author = 'Yuji OKAZAKI',
     author_email = 'u-z@users.sourceforge.jp',

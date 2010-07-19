@@ -13,6 +13,22 @@ from trac.ticket.model import Ticket
 
 from trac.env import open_environment
 
+LABEL_SUMMARY = u'Summary: '
+LABEL_SUB = u'Sub: '
+LABEL_PRECEDING = u'Predecessors: '
+LABEL_SUBSEQUENT = u'Successors: '
+ERROE_MSG1 = u' project %s does not exist.'
+ERROE_MSG2 = u'Unknown type of dependency.'
+ERROE_MSG3 = u'Ticket(%s)\'s summary ticket is this ticket'
+ERROE_MSG4 = u'There is no ticket %s(prj=%s,id=%s).'
+ERROE_MSG5 = u'Many comma are in this field.'
+ERROE_MSG6 = u'Ticekt not exists'
+ERROE_MSG7 = u'This field can not have dependency.'
+IT_ERROR_MSG1 = u"Project(%s) is normal type intertrac project."
+IT_ERROR_MSG2 = u"Can not open project db %s."
+IT_ERROR_MSG3 = u"Project(%s) has not url."
+IT_ERROR_MSG4 = u"Project(%s) has no label, so automaticaly set this projects label to %s."
+
 TICKET_CUSTOM = "ticket-custom"
 
 class InterTrac:
@@ -35,6 +51,30 @@ class InterTrac:
                 intertrac[attribute] = value
                 # プロジェクト名を設定します．(注：すべて小文字になっている) 
                 intertrac['name'] = prefix
+        keys = self.intertracs0.keys()
+        for key in keys:
+            intertrac = self.intertracs0[key]
+            path = intertrac.get('path', '')
+            label = intertrac.get('label', '')
+            url = intertrac.get('url', '')
+            if path == '':
+                self.log.debug(IT_ERROR_MSG1, key)
+                del self.intertracs0[key]
+            elif url == '':
+                self.log.debug(IT_ERROR_MSG3, key)
+                del self.intertracs0[key]
+            elif label == '':
+                label = os.path.basename(self.env.path)
+                self.log.debug(IT_ERROR_MSG4, key, label)
+                self.config.set('intertrac', key + '.label', label)
+            else:
+                # trac.iniをオープンする
+                try:
+                    if self.__get_project_name() != label:
+                        project = open_environment(path, use_cache=True)
+                except Exception, e:
+                    self.log.error(IT_ERROR_MSG2, key)
+                    del self.intertracs0[key]
 
     def __get_projects(self):
         return self.intertracs0
@@ -107,41 +147,6 @@ class InterTrac:
             # オープンできない場合もあるのでエラー処理が必要
         return links
 
-    def get_info_tickets_point_to(self, tkt_id):
-        # 自分自身を指定しているチケットを検索する
-        # tkt_idはチケット番号
-        tkt_id_l = self.__get_project_name() + ':#' + tkt_id
-        sub_ticket = self.__get_tickets_point_to(self.__get_subticket_other_prj(tkt_id_l), self.__get_subticket(tkt_id)) 
-        subsequentticket = self.__get_tickets_point_to(self.__get_subsequentticket_other_prj(tkt_id_l), self.__get_subsequentticket(tkt_id)) 
-        return sub_ticket, subsequentticket
-
-    def __linkify_ids_b(self, ids, label1):
-        # チケットの表示のページでinterTracリンクの表示するための元を作る
-        # 先行、親など指定しているidを検索する
-        data = []
-        if ids is None:
-            return data
-        tickets = ids.split(',') #なにもない場合はエラーになるのでifが必要
-        data.append(label1)
-        for ticket in tickets:
-            t = self.__get_intertrac_ticket(ticket, True)
-            error = t['error']
-            if error is None:
-                tkt = t['ticket']
-                status = tkt['status']
-                title1 = tkt['summary']
-                u = t['url']
-                id = t['id']
-                url = u + u'/ticket/' + id
-                data.append(tag.a('%s'%ticket, href=url, class_='%s ticket'%status, title=title1))
-                # 複数ある場合は", "を追加する
-                data.append(', ')
-        if data:
-            # 最後のカンマを削除する．
-            del data[-1]
-        data.append(tag.br())
-        return data
-
     def __get_intertrac_ticket(self, ticket, dep_en):
         # 指定されたInterTrac形式のチケット名から情報を取得する
         # 問題があった場合はエラーを返す．
@@ -157,7 +162,7 @@ class InterTrac:
                 try:
                     intertrac = intertracs0[project_name.lower()]
                 except Exception, e: # 存在していない場合は例外が発生する
-                    return {'error':' project %s does not exist.'% project_name}
+                    return {'error' : ERROE_MSG1 % project_name}
             else: # This ticket is in same project.
                 current_project = True
                 project_name = current_project_name
@@ -172,11 +177,11 @@ class InterTrac:
                     # 指定されていたならそれはidに含まない
                     if dep_en == False:
                         #依存関係を使用しない場合でカッコがあった場合は
-                        return {'error':'This field can not have dependency.'}
+                        return {'error' : ERROE_MSG7}
                     id, dep = id[:idx], id[idx+1:]
                     #依存関係に問題がないかの確認が必要
                     if dep.startswith('FF')==False and dep.startswith('FS')==False and dep.startswith('SF')==False and dep.startswith('SS')==False:
-                        return {'error':'Unknown type of dependency.'}
+                        return {'error' : ERROE_MSG2}
                 else:
                     dep = ''
                 try:
@@ -185,25 +190,26 @@ class InterTrac:
                     path = intertrac.get('path', '')
                     project = open_environment(path, use_cache=True)
                     tkt = Ticket(project, id)
+                    url = intertrac.get('url', '') + '/ticket/' + id
+                    dep_url = intertrac.get('url', '') + '/dependency/ticket/' + id
                 except Exception, e:
-                    return {'error':'There is no ticket %s(%s,%s).'%(ticket, project_name, id)}
+                    return {'error' : ERROE_MSG4 % (ticket, project_name, id)}
             else: #チケットに何も入っていない
-                return {'error':'Many comma are in this field.'}
-            return {'name':project_name+':#'+id, 'id':id, 'project':project, 'url':intertrac.get('url', ''), 'project_name':project_name, 'dependency':dep, 'error':None, 'ticket':tkt}
+                return {'error' : ERROE_MSG5}
+            return {'name':project_name+':#'+id, 'url':url, 'dep_url':dep_url, 'error':None, 'ticket':tkt}
         else:
-            return {'error': 'Ticekt    not exists'}
+            return {'error': ERROE_MSG6}
 
     def __validate_outline_b(self, ticket, sub_ticket, leaf_id):
         # tkt:InterTrac形式のチケット名
         # project_name:葉チケットのプロジェクト名
         # leaf_id:葉チケットのID
         # 戻り値:エラー文字列
-        self.log.debug("__validate_outline_b0010 ticket=%s, sub_ticket=%s, leaf_id=%s" , ticket, sub_ticket, leaf_id)
         error = []
         if ticket:
             ticket = ticket.strip() # 前後の空白を削除します
         if ticket == leaf_id:
-            return 'Ticket(%s)\'s summary ticket is this ticket'%sub_ticket
+            return ERROE_MSG3 % sub_ticket
         t = self.__get_intertrac_ticket(ticket, False)
         error = t['error']
         if error is None:
@@ -218,19 +224,16 @@ class InterTrac:
                     return self.__validate_outline_b(ticket, t['name'],leaf_id)
         return None
 
-    def validate_outline(self, tkt, id):
+    def __validate_outline(self, tkt, id):
         # tkt:InterTrac形式のチケット名
-        # project_name:葉チケットのプロジェクト名
         # id:チケットのID
         # 戻り値:エラー文字列のリスト
         errors = []
         project_name = self.__get_project_name()
-        self.log.debug("validate_outline0010 project_name=%s tkt=%s id=%s" , project_name, tkt, id)
         t = self.__get_intertrac_ticket(tkt, False)
         error = t['error']
         if error is None:
-            leaf_id = project_name + u':#' + str(id)
-            self.log.debug("validate_outline0020 leaf_id=%s" , leaf_id)
+            leaf_id = project_name + ':#' + str(id)
             e = self.__validate_outline_b(tkt, leaf_id, leaf_id)
             if e is None:
                 pass
@@ -238,7 +241,7 @@ class InterTrac:
                 errors.append((self.summary_label, e))
         return errors
 
-    def validate_ticket(self, ids, field_name, dep_en):
+    def __validate_ticket(self, ids, field_name, dep_en):
         # ids:カスタムフィールドに入っている値そのままです．
         # field_name: エラーを表示するためのフィールド名
         # dep_en: 親チケットを指定している場合はTrueになります．
@@ -248,7 +251,6 @@ class InterTrac:
             return errors
         if ids == '': #idになにも入ってない場合はエラーになるのでifが必要
             return errors
-        # self.log.debug("test_link = %s" % ids)
         # カンマで分割します．
         tickets = ids.split(',')
         for ticket in tickets: # 分割した文字列でループをまわります．
@@ -260,10 +262,44 @@ class InterTrac:
                 continue
         return errors
 
-    def linkify_ids(self, ids, label1, label2, tickets2):
+    def validate_ticket_b(self, ticket):
+        self.load_intertrac_setting()
+        errors = []
+        if self.config.get( TICKET_CUSTOM, "summary_ticket"): # カスタムフィールドが有効な場合
+            # 親チケットが存在しているかとか指定方法に間違いがないかを確認する．
+            label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
+            errors.extend(self.__validate_ticket(ticket['summary_ticket'], label, False))
+            # 親チケットがループしていないか確認する
+            errors.extend(self.__validate_outline(ticket['summary_ticket'], ticket.id))
+        if self.config.get( TICKET_CUSTOM, "dependencies"): # カスタムフィールドが有効な場合
+            # 依存関係チケットが存在しているかとか指定方法に間違いがないかを確認する．
+            label = self.config.get(TICKET_CUSTOM,"dependencies.label")
+            errors.extend(self.__validate_ticket(ticket['dependencies'], label, True))
+        return errors
+
+    def __linkify_ids_p(self, ids, data):
         # チケットの表示のページでinterTracリンクの表示するための元を作る
-        data = self.__linkify_ids_b(ids, label1)
-        data.append(label2)
+        # 先行、親など指定しているidを検索する
+        if ids is None:
+            del data[-1]
+        tickets = ids.split(',') #なにもない場合はエラーになるのでifが必要
+        for ticket in tickets:
+            t = self.__get_intertrac_ticket(ticket, True)
+            error = t['error']
+            if error is None:
+                tkt = t['ticket']
+                status = tkt['status']
+                title1 = tkt['summary']
+                data.append(tag.a(ticket, href=t['url'], class_='%s ticket'%status, title=title1))
+                # 複数ある場合は", "を追加する
+                data.append(', ')
+        if data:
+            # 最後のカンマを削除する．
+            del data[-1]
+        data.append(tag.br())
+
+    def __linkify_ids_n(self, tickets2, data):
+        # チケットの表示のページでinterTracリンクの表示するための元を作る
         for ticket in tickets2:
             tkt = ticket['ticket']
             url = ticket['url']
@@ -274,9 +310,8 @@ class InterTrac:
         if data:
             # リストになにもない場合はラベル，ある場合は最後のカンマを削除する．
             del data[-1]
-        return tag.span(*data)
 
-    def get_link(self, ids):
+    def __get_info_tickets(self, ids):
         links = []
         if ids is None: #idになにも入ってない場合はエラーになるのでifが必要
             return links
@@ -288,13 +323,54 @@ class InterTrac:
                 tkt = t['ticket']
                 status = tkt['status']
                 title = tkt['summary']
-                url = t['url'] + '/ticket/' + t['id']
-                dep_url = t['url'] + '/dependency/ticket/' + t['id']
-                links.append({'ticket':ticket, 'title':title, 'url':url, 'dep_url':dep_url, 'status':status})
-                # link = links.append({'title':title, 'url':url, 'dep_url':dep_url, 'status':status})
+                links.append({'ticket':ticket, 'title':title, 'url':t['url'], 'dep_url':t['url'], 'status':status})
             else:
                 continue
         return links
+
+    def get_dependency_info(self, tkt_id):
+        # 依存関係表示ページ用のデータを作る
+        self.load_intertrac_setting()
+        tkt = Ticket(self.env, tkt_id)
+        # チケットの情報から取得できる親チケットと依存関係のリンクを作る
+        summary_ticket = self.__get_info_tickets(tkt['summary_ticket'])
+        dependencies = self.__get_info_tickets(tkt['dependencies'])
+        tkt_id_l = self.__get_project_name() + ':#' + tkt_id
+        sub_ticket = self.__get_tickets_point_to(self.__get_subticket_other_prj(tkt_id_l), self.__get_subticket(tkt_id)) 
+        subsequentticket = self.__get_tickets_point_to(self.__get_subsequentticket_other_prj(tkt_id_l), self.__get_subsequentticket(tkt_id)) 
+        summary_ticket_enabled = not not ( self.config.get( TICKET_CUSTOM, "summary_ticket" ))
+        dependencies_enabled = not not ( self.config.get( TICKET_CUSTOM, "dependencies"))
+        custom_field = False
+        return {'custom_field':custom_field,
+                'summary_ticket': summary_ticket, 'dependencies': dependencies,
+                'sub_ticket': sub_ticket, 'subsequentticket': subsequentticket,
+                'summary_ticket_enabled': summary_ticket_enabled,
+                'project_list_enabled': False,
+                'dependencies_enabled':dependencies_enabled }
+
+    def get_dependency_field_values(self, tkt):
+        # post_process_requestから呼ばれる
+        # 通常のチケット表示ページに使われる．
+        self.load_intertrac_setting()
+        tkt_id = str(tkt.id)
+        tkt_id_l = self.__get_project_name() + ':#' + tkt_id
+        sub_ticket = self.__get_tickets_point_to(self.__get_subticket_other_prj(tkt_id_l), self.__get_subticket(tkt_id)) 
+        subsequentticket = self.__get_tickets_point_to(self.__get_subsequentticket_other_prj(tkt_id_l), self.__get_subsequentticket(tkt_id)) 
+        
+        data_summary = []
+        data_depend = []
+        
+        data_summary.append(LABEL_SUMMARY)
+        self.__linkify_ids_p(tkt['summary_ticket'], data_summary)
+        data_summary.append(LABEL_SUB)
+        self.__linkify_ids_n(sub_ticket, data_summary)
+        
+        data_depend.append(LABEL_PRECEDING)
+        self.__linkify_ids_p(tkt['dependencies'], data_depend)
+        data_depend.append(LABEL_SUBSEQUENT)
+        self.__linkify_ids_n(subsequentticket, data_depend)
+        
+        return {'summary_ticket': tag.span(*data_summary), 'dependencies': tag.span(*data_depend)}
 
     def __get_project_name(self):
         return self.project_label

@@ -19,10 +19,6 @@ from trac.env import open_environment
 from intertrac import InterTrac
 
 LABEL_DEPEND_PAGE = u'Dependencies'
-LABEL_SUMMARY = 'Summary: '
-LABEL_SUB = 'Sub: '
-LABEL_PRECEDING = 'Predecessors: '
-LABEL_SUBSEQUENT = 'Successors: '
 
 TICKET_CUSTOM = "ticket-custom"
 
@@ -32,15 +28,12 @@ class TracDependency(Component, InterTrac):
 
     def __init__(self):
         self.project_label = self.config.get( "tracdependency", "label")
-        # self.log.debug("[tracdependency]:label = %s", self.project_label)
         if not self.project_label:
             self.project_label=os.path.basename(self.env.path)
-            # self.log.debug("base name of env_path = %s", self.project_label)
             intertrac_project_label = self.config.get( "intertrac", self.project_label+".label")
             if intertrac_project_label:
                 self.project_label = intertrac_project_label
-                # self.log.debug("label from intertrac setting = %s", self.project_label)
-        self.load_intertrac_setting()
+        # self.load_intertrac_setting()
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -51,22 +44,7 @@ class TracDependency(Component, InterTrac):
         # 依存関係の表示ページの処理
         # tkt_idは単純な数値
         tkt_id = req.path_info.split('/')[3] # '/dependency/ticket/1'のようなアドレス指定でくる．
-
-        # tkt_idから該当するチケットの情報を取得する
-        tkt = Ticket(self.env, tkt_id)
-        # チケットの情報から取得できる親チケットと依存関係のリンクを作る
-        summary_ticket = self.get_link(tkt['summary_ticket'])
-        dependencies = self.get_link(tkt['dependencies'])
-        sub_ticket, subsequentticket = self.get_info_tickets_point_to(tkt_id)
-        summary_ticket_enabled = not not ( self.config.get( TICKET_CUSTOM, "summary_ticket" ))
-        dependencies_enabled = not not ( self.config.get( TICKET_CUSTOM, "dependencies"))
-        custom_field = False
-        return 'trac_dependency.html', {'custom_field':custom_field,
-                                        'summary_ticket': summary_ticket, 'dependencies': dependencies,
-                                        'sub_ticket': sub_ticket, 'subsequentticket': subsequentticket,
-                                        'summary_ticket_enabled': summary_ticket_enabled,
-                                        'project_list_enabled': False,
-                                        'dependencies_enabled':dependencies_enabled }, None
+        return 'trac_dependency.html', self.get_dependency_info(tkt_id), None
    
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
@@ -79,14 +57,9 @@ class TracDependency(Component, InterTrac):
             # 依存ページへのリンクを作成し，このページで処理するには時間がかかるものは次のページで表示します
             href = req.href.dependency(req.path_info)
             add_ctxtnav(req, LABEL_DEPEND_PAGE, href)
-            # このページのデータを置き換えるためのでデータを作成します．
-            tkt = data['ticket'] # チケットのid
-            sub_ticket, subsequentticket = self.get_info_tickets_point_to(str(tkt.id))
+            field_values = self.get_dependency_field_values(data['ticket']) #dataに代入する必要ある？
             data['tracdependency'] = {
-                'field_values': {
-                    'summary_ticket': self.linkify_ids(tkt['summary_ticket'],LABEL_SUMMARY ,LABEL_SUB ,sub_ticket),
-                    'dependencies': self.linkify_ids(tkt['dependencies'],LABEL_PRECEDING ,LABEL_SUBSEQUENT , subsequentticket),
-                },
+                'field_values': field_values
             }
         return template, data, content_type
 
@@ -115,21 +88,10 @@ class TracDependency(Component, InterTrac):
     # ITicketManipulator methods
     def prepare_ticket(self, req, ticket, fields, actions):
         pass
-        
+
     def validate_ticket(self, req, ticket):
         """チケット番号の指定に問題がないかを確認します．"""
-        errors = []
-        if self.config.get( TICKET_CUSTOM, "summary_ticket"): # カスタムフィールドが有効な場合
-            # 親チケットが存在しているかとか指定方法に間違いがないかを確認する．
-            label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
-            errors.extend(self.validate_ticket(ticket['summary_ticket'], label, False))
-            # 親チケットがループしていないか確認する
-            errors.extend(self.validate_outline(ticket['summary_ticket'], ticket.id))
-        if self.config.get( TICKET_CUSTOM, "dependencies"): # カスタムフィールドが有効な場合
-            # 依存関係チケットが存在しているかとか指定方法に間違いがないかを確認する．
-            label = self.config.get(TICKET_CUSTOM,"dependencies.label")
-            errors.extend(self.validate_ticket(ticket['dependencies'], label, True))
-        return errors
+        return self.validate_ticket_b(ticket)
 
 #    # ITicketChangeListener methods
 #    def ticket_created(self, tkt):
