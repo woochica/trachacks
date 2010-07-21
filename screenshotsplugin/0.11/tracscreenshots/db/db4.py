@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os, Image
 
 from trac.core import *
@@ -42,7 +44,7 @@ def do_upgrade(env, cursor, incremental):
     context = Context('screenshots-update')
     context.cursor = cursor
 
-    # Access API component.
+    # Access API component.
     api = env[ScreenshotsApi]
 
     if incremental:

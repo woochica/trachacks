@@ -15,8 +15,8 @@ from genshi.core import Markup
 from genshi.builder import tag
 
 from trac.core import *
-from trac.mimeview import Mimeview, Context
 from trac.config import Option, ListOption, PathOption
+from trac.mimeview import Mimeview, Context
 from trac.web.chrome import add_stylesheet, add_script, format_to_oneliner, \
   pretty_timedelta
 from trac.util.text import to_unicode
@@ -262,7 +262,7 @@ class ScreenshotsCore(Component):
 
                     # Send file to request.
                     context.req.send_header('Content-Disposition',
-                      'attachment;filename=%s' % (base_name))
+                      'attachment;filename="%s"' % (base_name))
                     context.req.send_header('Content-Description',
                       screenshot['description'])
                     context.req.send_file(filename.encode('utf-8'), mime_type)
@@ -310,15 +310,48 @@ class ScreenshotsCore(Component):
                             # Screenshots must be identified by timestamp.
                             timestamp += 1
 
+                            # Create image object.
+                            image = Image.open(file)
+
+                            # Construct screenshot dictionary from form values.
+                            screenshot = {'name' :  context.req.args.get('name'),
+                              'description' : context.req.args.get('description'),
+                              'time' : timestamp,
+                              'author' : context.req.authname,
+                              'tags' : context.req.args.get('tags'),
+                              'file' : filename,
+                              'width' : image.size[0],
+                              'height' : image.size[1],
+                              'priority' : int(context.req.args.get('priority')
+                              or '0')}
+                            self.log.debug('screenshot: %s' % (screenshot,))
+
                             # Save screenshot file and add DB entry.
-                            self._add_screenshot(context, api, file, filename,
-                              timestamp)
+                            self._add_screenshot(context, api, screenshot, file)
 
                     zip_file.close()
                 else:
+                    # Create image object.
+                    image = Image.open(file)
+
+                    # Construct screenshot dictionary from form values.
+                    screenshot = {'name' :  context.req.args.get('name'),
+                      'description' : context.req.args.get('description'),
+                      'time' : to_timestamp(datetime.now(utc)),
+                      'author' : context.req.authname,
+                      'tags' : context.req.args.get('tags'),
+                      'file' : filename,
+                      'width' : image.size[0],
+                      'height' : image.size[1],
+                      'priority' : int(context.req.args.get('priority')
+                      or '0')}
+                    self.log.debug('screenshot: %s' % (screenshot,))
+
                     # Add single image.
-                    self._add_screenshot(context, api, file, filename,
-                      to_timestamp(datetime.now(utc)))
+                    self._add_screenshot(context, api, screenshot, file)
+
+                # Close input file.
+                file.close()
 
                 # Clear ID to prevent display of edit and delete button.
                 context.req.args['id'] = None
@@ -531,6 +564,8 @@ class ScreenshotsCore(Component):
                     enabled_versions = [version['name'] for version in
                     versions]
 
+                self.log.debug('components: %s' % (components,))
+                self.log.debug('versions: %s' % (versions,))
                 self.log.debug('enabled_components: %s' % (enabled_components,))
                 self.log.debug('enabled_versions: %s' % (enabled_versions,))
                 self.log.debug('filter_relation: %s' % (relation,))
@@ -575,51 +610,18 @@ class ScreenshotsCore(Component):
                 screenshot = api.get_screenshot(context, self.id)
                 self.log.debug('screenshot: %s' % (screenshot,))
 
-    def _add_screenshot(self, context, api, file, filename, time):
-        # Create image object.
-        image = Image.open(file)
+    """ Full implementation of screenshot addition. It creates DB entry for
+    screenshot <screenshot> and stores screenshot file <file> to file system.
+    """
+    def _add_screenshot(self, context, api, screenshot, file):
 
-        # Construct screenshot dictionary from form values.
-        screenshot = {'name' :  context.req.args.get('name'),
-                      'description' : context.req.args.get('description'),
-                      'time' : time,
-                      'author' : context.req.authname,
-                      'tags' : context.req.args.get('tags'),
-                      'file' : filename,
-                      'width' : image.size[0],
-                      'height' : image.size[1],
-                      'priority' : int(context.req.args.get('priority')
-                        or '0')}
-
-        # Add new screenshot.
+        # Add new screenshot to DB.
         api.add_screenshot(context, screenshot)
 
         # Get inserted screenshot to with new id.
         screenshot = api.get_screenshot_by_time(context, screenshot['time'])
 
-        # Add components to screenshot.
-        components = context.req.args.get('components') or []
-        if not isinstance(components, list):
-            components = [components]
-        for component in components:
-            component = {'screenshot' : screenshot['id'],
-                         'component' : component}
-            api.add_component(context, component)
-        screenshot['components'] = components
-
-        # Add versions to screenshots
-        versions = context.req.args.get('versions') or []
-        if not isinstance(versions, list):
-            versions = [versions]
-        for version in versions:
-            version = {'screenshot' : screenshot['id'],
-                       'version' : version}
-            api.add_version(context, version)
-        screenshot['versions'] = versions
-
-        self.log.debug('screenshot: %s' % (screenshot,))
-
-        # Prepare file paths
+        # Prepare file paths.
         name, ext = os.path.splitext(screenshot['file'])
         path = os.path.normpath(os.path.join(self.path, to_unicode(
           screenshot['id'])))
@@ -637,7 +639,12 @@ class ScreenshotsCore(Component):
             shutil.copyfileobj(file, out_file)
             out_file.close()
         except Exception, error:
+            self.log.debug(error)
+
+            # Delete screenshot.
             api.delete_screenshot(context, screenshot['id'])
+
+            # Remove screenshot image and directory.
             try:
                 os.remove(filepath.encode('utf-8'))
             except:
@@ -650,9 +657,27 @@ class ScreenshotsCore(Component):
               ' config option in [screenshots] section of trac.ini existing?' \
               ' Original message was: %s' % (to_unicode(error),))
 
+        # Add components to screenshot to DB.
+        components = context.req.args.get('components') or []
+        if not isinstance(components, list):
+            components = [components]
+        for component in components:
+            component = {'screenshot' : screenshot['id'],
+                         'component' : component}
+            api.add_component(context, component)
+        screenshot['components'] = components
+
+        # Add versions to screenshots to DB
+        versions = context.req.args.get('versions') or []
+        if not isinstance(versions, list):
+            versions = [versions]
+        for version in versions:
+            version = {'screenshot' : screenshot['id'],
+                       'version' : version}
+            api.add_version(context, version)
+        screenshot['versions'] = versions
+
         # Notify change listeners.
-        self.log.debug("screenshot created listeners: %s" % (
-          self.change_listeners,))
         for listener in self.change_listeners:
             listener.screenshot_created(context.req, screenshot)
 
