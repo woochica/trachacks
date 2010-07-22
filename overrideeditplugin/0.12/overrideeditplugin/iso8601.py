@@ -1,4 +1,7 @@
-"""ISO 8601 date time string parsing http://pypi.python.org/pypi/iso8601/0.1.4
+"""ISO 8601 date time string parsing
+
+http://pypi.python.org/pypi/iso8601/0.1.4
+http://code.google.com/p/pyiso8601
 
 Basic usage:
 >>> import iso8601
@@ -96,7 +99,8 @@ def parse_date(datestring, default_timezone=UTC):
     if groups["fraction"] is None:
         groups["fraction"] = 0
     else:
-        groups["fraction"] = int(float("0.%s" % groups["fraction"]) * 1e6)
+        #Ensure we get a single 6 digit integer to represent usec
+        groups["fraction"] = int(groups["fraction"].ljust(6,"0")[0:6])
     return datetime(int(groups["year"]), int(groups["month"]), int(groups["day"]),
         int(groups["hour"]), int(groups["minute"]), int(groups["second"]),
         int(groups["fraction"]), tz)
