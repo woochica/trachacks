@@ -304,19 +304,6 @@ $.fn.extend({
             
         }
 
-        function onFormSubmit(evt) { 
-            if (evt.type == "submit"){
-                // confirm to save
-                if ($("#ticket_status").length == 0 || $.trim($("#ticket_status").text()) == "${_('New')}") {
-                    var answer = confirm("${_('Submit ticket?')}");
-                    if (!answer) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-
         function onTypeChanged(evt) { 
             var tt_name = $("#field-type").val();
             if (! tt_name){
@@ -354,9 +341,6 @@ $.fn.extend({
 
         $("#field-type").change(onTypeChanged);
         
-        // tag
-        $("#propertyform").submit(onFormSubmit);
-
         // requery
         if ($("#warning").get(0))
         {
