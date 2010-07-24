@@ -15,6 +15,8 @@ setup(
     author='Aurelien Bompard',
     author_email='aurelien@bompard.org',
     description='A plugin to use Gitorious as the source code hosting provider',
+    license='Trac license',
+    url='http://trac-hacks.org/wiki/GitoriousPlugin',
     entry_points = """
 [trac.plugins]
 gitorious = gitoriousplugin
