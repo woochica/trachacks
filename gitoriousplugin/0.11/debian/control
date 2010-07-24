@@ -1,0 +1,19 @@
+Source: trac-gitoriousplugin
+Section: python
+Priority: optional
+Maintainer: Aurélien Bompard <aurelien@bompard.org>
+Build-Depends: debhelper (>= 5), cdbs (>= 0.4.43), python, python-support (>= 0.4), python-setuptools
+Standards-Version: 3.8.4
+Homepage: http://trac-hacks.org/wiki/GitoriousPlugin
+
+Package: trac-gitoriousplugin
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}, trac (>= 0.11)
+Description: Use Gitorious as the source code hosting provider
+ This plugin is useful if the source code is hosted on Gitorious, instead of
+ locally in Trac.
+ .
+ The plugin changes the links to point to Gitorious instead of the built-in
+ browser. It does not require the GitPlugin, but uses it if it's available. In
+ this case, you should setup a local clone of your Gitorious repository, and
+ keep it updated. 
