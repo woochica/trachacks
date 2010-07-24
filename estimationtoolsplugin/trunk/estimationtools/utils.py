@@ -5,6 +5,14 @@ from trac.core import TracError
 from trac.wiki.api import parse_args
 from trac.ticket.query import Query
 
+# 0.12 stores timestamps as microseconds. Pre-0.12 stores as seconds.
+from trac.util.datefmt import utc
+try:
+    from trac.util.datefmt import from_utimestamp as from_timestamp
+except ImportError:
+    def from_timestamp(ts):
+        return datetime.fromtimestamp(ts, utc)
+
 AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 
                      'color', 'bgcolor', 'wecolor', 'weekends', 'gridlines',
                      'expected', 'colorexpected']
@@ -53,9 +61,9 @@ def parse_options(db, content, options):
         if not row:
             raise TracError("Couldn't find milestone %s" % (milestone))
         if row[0]:
-            options['enddate'] = datetime.fromtimestamp(row[0]).date()
+            options['enddate'] = from_timestamp(row[0]).date()
         elif row[1]:
-            options['enddate'] = datetime.fromtimestamp(row[1]).date()
+            options['enddate'] = from_timestamp(row[1]).date()
 
     if not options['enddate']:
             options['enddate'] = datetime.now().date()

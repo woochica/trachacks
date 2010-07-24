@@ -1,10 +1,9 @@
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from datetime import datetime
 from datetime import timedelta
-from estimationtools.utils import parse_options, execute_query, get_estimation_field, get_closed_states
+from estimationtools.utils import parse_options, execute_query, get_estimation_field, get_closed_states, \
+        from_timestamp
 from trac.core import TracError
 from trac.util.html import Markup
-from trac.util.datefmt import utc
 from trac.wiki.macros import WikiMacroBase
 import copy
 
@@ -185,7 +184,7 @@ class BurndownChart(WikiMacroBase):
 
             for row in history_cursor:
                 row_field, row_time, row_old, row_new = row
-                event_date = datetime.fromtimestamp(row_time, utc).date()
+                event_date = from_timestamp(row_time).date()
                 if row_field == self.estimation_field:
                     new_value = self._cast_estimate(row_new)
                     if new_value is not None:
