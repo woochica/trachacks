@@ -2,6 +2,9 @@
 $(document).ready(function(){
   // display modify ticket by default
   // window.setTimeout(function(){$("#modify").parent().removeClass("collapsed");}, 25);
+
+  // Couldnt find the comment box, lets just abort
+  if ($('#comment').length == 0) return;
   var tbl, hours, colClass, tr, replacement;
   tbl = $('<table style="border:1px solid #D7D7D7;" border="0" cellpadding="3" cellspacing="0"><tbody><tr></tr></tbody></table>');
   $('#comment').parent().append(tbl);
