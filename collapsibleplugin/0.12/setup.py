@@ -78,7 +78,7 @@ ENTRY_POINTS = r"""
 setup(
 	name=DIST_NM,
 	version=latest,
-	description='This plugin allows one to embed text in a foldable structure in the style of trac ticket attachments',
+	description='Embed wiki-text in a foldable structure, trac ticket attachment style',
 	author='Matthew Noyes',
 	author_email='thecodingking@gmail.com',
 	maintainer='Matthew Noyes',
