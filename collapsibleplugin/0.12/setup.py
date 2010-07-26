@@ -79,6 +79,7 @@ setup(
 	name=DIST_NM,
 	version=latest,
 	description='Embed wiki-text in a foldable structure, trac ticket attachment style',
+        license = 'Apache v2',
 	author='Matthew Noyes',
 	author_email='thecodingking@gmail.com',
 	maintainer='Matthew Noyes',
