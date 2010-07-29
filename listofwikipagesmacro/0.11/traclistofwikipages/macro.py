@@ -267,7 +267,7 @@ The wildcards '`*`' (matches everything) and '`?`' (matches a single character) 
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.log = self.env.log
+        #cursor.log = self.env.log
 
         sql_wikis = ''
         if largs:
@@ -381,7 +381,7 @@ This macro prints a table similar to the `[[ListOfWikiPages]]` only with the
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.log = self.env.log
+        #cursor.log = self.env.log
 
         if kwargs.get('order','normal') == 'reverse':
           order = " "
