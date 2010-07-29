@@ -249,6 +249,7 @@ class DiscussionApi(Component):
         context.req.session['visited-forums'] = to_unicode(context.visited_forums)
 
         # Fill up template data structure.
+        context.data['authname'] = context.req.authname
         context.data['authemail'] = context.authemail
         context.data['moderator'] = context.moderator
         context.data['forum_subscriber'] = context.forum_subscriber
