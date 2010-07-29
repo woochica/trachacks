@@ -31,7 +31,7 @@ class ListOfWikiPagesComponent(Component):
 
     long_format = False
     default_format = Option('listofwikipages', 'default_format', 'short', 'Default format, either "long" or "short" (default).')
-    ignore_users   = ListOption('listofwikipages', 'ignore_users', ['trac'], doc='List of users which wiki pages should be ignored (like "trac").')
+    ignore_users   = ListOption('listofwikipages', 'ignore_users', 'trac', doc='List of users which wiki pages should be ignored (like "trac").')
 
     tunits = {
         's': 1,
@@ -155,7 +155,7 @@ class ListOfWikiPagesComponent(Component):
       if not names and not patterns:
         return ""
       if names and not patterns:
-        return " AND name NOT IN ('%s') " % names
+        return " AND name NOT IN ('%s') " % "','".join(names)
       if not names and patterns:
         return " AND ( " + ' AND '.join([" name NOT LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
       if names and patterns:
@@ -166,7 +166,7 @@ class ListOfWikiPagesComponent(Component):
       if not names and not patterns:
         return ""
       if names and not patterns:
-        return " AND name IN ('%s') " % names
+        return " AND name IN ('%s') " % "','".join(names)
       if not names and patterns:
         return " AND ( " + ' OR '.join([" name LIKE '%s' " % pattern for pattern in patterns])  + ' ) '
       if names and patterns:
@@ -393,7 +393,7 @@ This macro prints a table similar to the `[[ListOfWikiPages]]` only with the
               FROM wiki AS w1 WHERE author = %s """ + sql_time + sql_exclude + """
               AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name)
               ORDER BY time
-          """ + order + " LIMIT 0,%s ", (author, str(count)) )
+          """ + order + " LIMIT 0,%d " % count, (author,) )
 
         rows = [ self.formatrow(n,name,time,version,comment) for
               n,[name,time,version,comment] in enumerate(cursor) if n < count ]
