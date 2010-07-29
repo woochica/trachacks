@@ -267,6 +267,7 @@ The wildcards '`*`' (matches everything) and '`?`' (matches a single character) 
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+        cursor.log = self.env.log
 
         sql_wikis = ''
         if largs:
@@ -296,7 +297,6 @@ The wildcards '`*`' (matches everything) and '`?`' (matches a single character) 
             "author NOT IN ('%s') "  % "','".join( self.ignore_users ) + sql_wikis + sql_exclude + \
             "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) ORDER BY time " + \
             order
-        self.log.debug(sqlcmd)
         cursor.execute(sqlcmd)
 
         rows = [ self.formatrow(n,name,time,version,comment,author)
@@ -381,6 +381,7 @@ This macro prints a table similar to the `[[ListOfWikiPages]]` only with the
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+        cursor.log = self.env.log
 
         if kwargs.get('order','normal') == 'reverse':
           order = " "
