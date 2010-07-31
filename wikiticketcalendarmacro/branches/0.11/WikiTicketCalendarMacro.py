@@ -49,7 +49,7 @@ except ImportError:
     from trac.util.datefmt  import to_timestamp
 
 revision = "$Rev$"
-version = "0.8.5"
+version = "0.8.6"
 url = "$URL$"
 
 
@@ -78,7 +78,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     Simple Usage
     ------------
     [[WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format,
-        [show_ticket_open_dates,[wiki_page_template]]]]])]]
+                          [show_ticket_open_dates,[wiki_page_template,
+                          [query_expression,[list_condense]]]]]]])]]
 
     Arguments
     ---------
@@ -90,17 +91,19 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                        default is "%Y-%m-%d", '*' for default
     show_ticket_open_dates = true/false, show also when a ticket was opened
     wiki_page_template = wiki template tried to create new page
+    list_condense = ticket count limit to switch off ticket summary display
 
     Advanced Use
     ------------
     [[WikiTicketCalendar([nav=(0|1)],[wiki=<strftime-expression>],
-        [cdate=(0|1)],[base=<wiki_page_template>],[query=<TracQuery-expr])]]
+        [cdate=(0|1)],[base=<wiki_page_template>],[query=<TracQuery-expr],
+        [short=<integer-value>])]]
 
      - equivalent keyword-argument available for all but first two arguments
      - mixed use of keyword-arguments with simple arguments permitted,
        but strikt order of simple arguments (see above) still applies while
        keyword-arguments in-between do not count for that positional mapping,
-     - query evaluates valid TracQuery expression based on any ticket field
+     - query evaluates a valid TracQuery expression based on any ticket field
        including multiple expressions grouped by 'and' and 'or' 
 
     Examples
@@ -114,6 +117,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     [[WikiTicketCalendar(wiki=Talk-%Y-%m-%d,base=Talk)]]
      equivalent to [[WikiTicketCalendar(*,*,true,Talk-%Y-%m-%d,true,Talk)]]
     [[WikiTicketCalendar(wiki=Meeting-%Y-%m-%d,query=type=task&owner=wg1)]]
+    [[WikiTicketCalendar(wiki=Meeting_%Y/%m/%d,short=6)]]
     """
 
     def __init__(self):
@@ -236,7 +240,14 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         blank = '&nbsp;'
         ticket(Markup(blank), summary, ' (', owner, ')')
 
-        return ticket
+        summary = tag(summary, ' (', owner, ')')
+        ticket_short = '#' + id
+        ticket_short = tag.a(ticket_short, href=url)
+        ticket_short(target='_blank', title_=summary)
+        ticket_short = tag.span(ticket_short)
+        ticket_short(class_=a_class)
+
+        return ticket,ticket_short
 
     # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
@@ -315,6 +326,15 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             except KeyError:
                 query_args = args[6]
         self.tickets = self._ticket_query(formatter, query_args)
+
+        # compress long ticket lists
+        list_condense = 0
+        if len(args) >= 8 or kwargs.has_key('short'):
+            # prefer query arguments provided by kwargs
+            try:
+                list_condense = int(kwargs['short'])
+            except KeyError:
+                list_condense = int(args[7])
 
 
         # Can use this to change the day the week starts on,
@@ -409,18 +429,20 @@ table.wikiTicketCalendar a.day_haspage {
 table.wikiTicketCalendar a.day:hover {
     border-color: #eee; background-color: #eee; color: #000;
     }
-table.wikiTicketCalendar div.open   {
+table.wikiTicketCalendar div.open, span.open   {
     font-size: 9px; color: #000000;
     }
-table.wikiTicketCalendar div.closed {
+table.wikiTicketCalendar div.closed, span.closed {
     font-size: 9px; color: #777777; text-decoration: line-through;
     }
-table.wikiTicketCalendar div.opendate_open {
+table.wikiTicketCalendar div.opendate_open, span.opendate_open {
     font-size: 9px; color: #000077;
     }
-table.wikiTicketCalendar div.opendate_closed {
+table.wikiTicketCalendar div.opendate_closed, span.opendate_closed {
     font-size: 9px; color: #000077; text-decoration: line-through;
     }
+table.wikiTicketCalendar div.condense { background-color: #e5e5e5; }
+table.wikiTicketCalendar div.opendate_condense { background-color: #cdcdfa; }
 
 /* pure CSS style tooltip */
 a.tip {
@@ -435,9 +457,10 @@ a.tip:hover span {
     border: 1px solid #000; background-color: #fff; padding: 5px;
     }
 -->
-</style>
 """
-        styles = tag.style(styles)
+
+        # create inline style definition as Genshi fragment
+        styles = tag.style(Markup(styles))
         styles(type='text/css')
 
         # Build caption and optional navigation links
@@ -493,6 +516,7 @@ a.tip:hover span {
                 if not day:
                     cell = tag.td('')
                     cell(class_='fill')
+                    line(cell)
                 else:
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
@@ -555,6 +579,12 @@ a.tip:hover span {
 
                             cell(milestone)
 
+                    match = []
+                    match_od = []
+                    ticket_heap = tag('')
+                    ticket_list = tag.div('')
+                    ticket_list(align='left', class_='condense')
+
                     # get tickets with due date set to day
                     for t in self.tickets:
                         due = t.get(self.due_field_name)
@@ -575,12 +605,21 @@ a.tip:hover span {
                             if not due == duedate:
                                 continue
 
-                        ticket = self._gen_ticket_entry(t)
-
-                        cell(ticket)
+                        id = t.get('id')
+                        ticket, short = self._gen_ticket_entry(t)
+                        ticket_heap(ticket)
+                        if not id in match:
+                            if len(match) == 0:
+                                ticket_list(short)
+                            else:
+                                ticket_list(', ', short)
+                            match.append(id)
 
                     # get tickets created on day
                     if show_t_open_dates is True:
+                        ticket_od_list = tag.div('')
+                        ticket_od_list(align='left', class_='opendate_condense')
+
                         for t in self.tickets:
                             if uts:
                                 ticket_time = to_utimestamp(t.get('time'))
@@ -591,11 +630,26 @@ a.tip:hover span {
                                 continue
 
                             a_class = 'opendate_'
-                            ticket = self._gen_ticket_entry(t, a_class)
+                            id = t.get('id')
+                            ticket, short = self._gen_ticket_entry(t, a_class)
+                            ticket_heap(ticket)
+                            if not id in match:
+                                if len(match_od) == 0:
+                                    ticket_od_list(short)
+                                else:
+                                    ticket_od_list(', ', short)
+                                match_od.append(id)
 
-                            cell(ticket)
+                    matches = len(match) + len(match_od)
+                    if list_condense > 0 and matches >= list_condense:
+                        if len(match_od) > 0:
+                            if len(match) > 0:
+                                ticket_list(', ')
+                            ticket_list = tag(ticket_list, ticket_od_list)
+                        line(cell(ticket_list))
+                    else:
+                        line(cell(ticket_heap))
 
-                line(cell)
             buff(line)
 
         buff = tag.div(heading(buff))

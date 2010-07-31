@@ -46,7 +46,7 @@ class install_lib(_install_lib): # playing setuptools' own tricks ;-)
 extra['cmdclass'] = {'install_lib': install_lib}
 
 PACKAGE = "WikiTicketCalendarMacro"
-VERSION = "1.1.8"
+VERSION = "1.2.1"
 
 setup(
     name = PACKAGE,

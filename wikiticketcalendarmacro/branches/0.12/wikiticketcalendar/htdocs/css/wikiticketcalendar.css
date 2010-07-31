@@ -41,18 +41,20 @@ table.wikiTicketCalendar a.day_haspage {
 table.wikiTicketCalendar a.day:hover {
     border-color: #eee; background-color: #eee; color: #000;
     }
-table.wikiTicketCalendar div.open   {
+table.wikiTicketCalendar div.open, span.open   {
     font-size: 9px; color: #000000;
     }
-table.wikiTicketCalendar div.closed {
+table.wikiTicketCalendar div.closed, span.closed {
     font-size: 9px; color: #777777; text-decoration: line-through;
     }
-table.wikiTicketCalendar div.opendate_open {
+table.wikiTicketCalendar div.opendate_open, span.opendate_open {
     font-size: 9px; color: #000077;
     }
-table.wikiTicketCalendar div.opendate_closed {
+table.wikiTicketCalendar div.opendate_closed, span.opendate_closed {
     font-size: 9px; color: #000077; text-decoration: line-through;
     }
+table.wikiTicketCalendar div.condense { background-color: #e5e5e5; }
+table.wikiTicketCalendar div.opendate_condense { background-color: #cdcdfa; }
 
 /* pure CSS style tooltip */
 a.tip {

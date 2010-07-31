@@ -154,6 +154,13 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * make custom due date field name configurable
  * code cleanup in argument parser and time stamp creation
 
+0.8.6 - feature release for 0.11/0.12 branch (31-Jul-2010)
+ by Steffen Hoffmann
+ backporting development done for 1.2.1
+ * fixed bad inline CSS style creation with Genshi introduced in 0.8.4
+ * suppress ticket summary display depending on user configurable 
+   ticket count per day
+
 
 # 0.12 branch from here #
 
