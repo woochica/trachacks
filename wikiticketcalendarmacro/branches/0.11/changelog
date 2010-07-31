@@ -147,6 +147,13 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * wrap calender in div section with own style
  * code cleanup
 
+0.8.5 - maintenance revision for 0.11/0.12 branch (31-Jul-2010)
+ by Steffen Hoffmann
+ backporting all development done for 1.2.0
+ * replace old SQL for ticket selection with powerful TracQuery support
+ * make custom due date field name configurable
+ * code cleanup in argument parser and time stamp creation
+
 
 # 0.12 branch from here #
 
@@ -215,3 +222,14 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  changes by Steffen Hoffmann
  * ensure compile_catalog command is called before build command
  * code cleanup, especially in message catalog files
+
+1.2.0 - development version for 0.12 branch (18-Jul-2010)
+ changes by Steffen Hoffmann
+ * replace old SQL for ticket selection with powerful TracQuery support
+ * make custom due date field name configurable
+ * code cleanup in argument parser and time stamp creation
+
+1.2.1 - development version for 0.12 branch (28-Jul-2010)
+ changes by Steffen Hoffmann
+ * suppress ticket summary display depending on user configurable 
+   ticket count per day

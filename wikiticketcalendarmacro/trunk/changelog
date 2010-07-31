@@ -147,7 +147,7 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * wrap calender in div section with own style
  * code cleanup
 
-0.8.5 - maintenance revision for 0.11/0.12 branch (WiP)
+0.8.5 - maintenance revision for 0.11/0.12 branch (31-Jul-2010)
  by Steffen Hoffmann
  backporting all development done for 1.2.0
  * replace old SQL for ticket selection with powerful TracQuery support
