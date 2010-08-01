@@ -102,7 +102,7 @@ $(document).ready(function() {
             url += '/gridmod/update';
             var data = {'ticket': ticket_number};
             data[ticket_field] = new_value;
-            var chromePath = $("script[src~='gridmod']").attr("src").replace("gridmod.js", "");
+            var chromePath = $("script[src*='gridmod']").attr("src").replace("gridmod.js", "");
             var image = $(this).parent().find("img").get(0) || document.createElement('img');
             image.src = chromePath + 'loading.gif';
             $(image).insertAfter(this);

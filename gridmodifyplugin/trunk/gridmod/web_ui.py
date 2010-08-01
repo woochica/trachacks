@@ -116,6 +116,7 @@ class GridModifyModule(Component):
         except Exception, e:
             req.send_response(500)
             req.send_header('Content-Type', 'text/plain')
+            req.send_header('Content-Length', 8)
             req.end_headers()
             req.write("Oops...\n");
             import traceback;
@@ -123,6 +124,7 @@ class GridModifyModule(Component):
         else:
             req.send_response(200)
             req.send_header('Content-Type', 'text/plain')
+            req.send_header('Content-Length', 2)
             req.end_headers()
             req.write('OK')
 
