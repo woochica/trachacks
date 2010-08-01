@@ -11,6 +11,7 @@ setup(
     name=PACKAGE, version=VERSION,
     description='Allows grid modification of tickets',
     author="Abbywinters.com", author_email="trac-dev@abbywinters.com",
+    maintainer = "Björn Harrtell", maintainer_email = "bjorn@wololo.org",
     license='BSD', url='http://trac-hacks.org/wiki/GridModifyPlugin',
     packages = ['gridmod'],
     package_data={
