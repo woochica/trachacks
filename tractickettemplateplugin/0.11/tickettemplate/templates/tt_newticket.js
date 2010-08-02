@@ -321,7 +321,7 @@ $.fn.extend({
                 }
             }
 
-            if ($("#preview").length && isLoad) {
+            if ($("#ticket.ticketdraft").length && isLoad) {
                 // reset isLoad
                 isLoad = false;
                 return;
