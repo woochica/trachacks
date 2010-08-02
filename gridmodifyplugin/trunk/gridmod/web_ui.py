@@ -49,7 +49,7 @@ class GridModifyModule(Component):
             if(req.perm.has_permission('TICKET_ADMIN') or req.perm.has_permission('TICKET_GRID_MODIFY')):            
 
                 self.log.debug("GridModifyModule: process_request: permissions OK")
-                self.log.debug("GridModifyModule: process_request: req.args:" + str(req.args))
+                self.log.debug("GridModifyModule: process_request: req.args: %s", req.args)
 
                 now = datetime.now(utc)
                 id = req.args.get('ticket')
@@ -63,34 +63,34 @@ class GridModifyModule(Component):
                 for field in TicketSystem(self.env).get_ticket_fields():
                     field_name = field['name']
 
-                    self.log.debug("  looking at field: '" + field_name + "'")
-                    self.log.debug("        type: " + field['type'])
-                    self.log.debug("        label: " + field['label'])
-                    self.log.debug("        ticket value['" + field_name + "']: " + str(ticket[field_name]))
+                    self.log.debug("  looking at field: '%s'", field_name)
+                    self.log.debug("        type: %s", field['type'])
+                    self.log.debug("        label: %s", field['label'])
+                    self.log.debug("        ticket value['%s']: ", ticket[field_name])
 
                     if (not field_name in req.args):
                         continue;
-                    self.log.debug("  field '" + field_name + "' in REQUEST")
+                    self.log.debug("  field '%s' in REQUEST", field_name)
 
                     val = req.args.get(field_name)
-                    self.log.debug("        request value['" + field_name + "']: " + str(val))
+                    self.log.debug("        request value['%s']: %s", field_name, val)
 
                     if (field['type'] == 'select'):
                         if ((val in field['options']) or (val == '')):
-                            self.log.debug("GridModifyModule: process_request: SELECT TAG: setting '" + field_name + "' to '" + str(val) + "'.")
+                            self.log.debug("GridModifyModule: process_request: SELECT TAG: setting '%s' to '%s'.", field_name, val)
                             ticket[field_name] = val
                     elif (field['type'] == 'text'):
-                        self.log.debug("GridModifyModule: process_request: INPUT TEXT TAG: setting '" + field_name + "' to '" + str(val) + "'.")
+                        self.log.debug("GridModifyModule: process_request: INPUT TEXT TAG: setting '%s' to '%s'.", field_name, val)
                         ticket[field_name] = val
                     elif (field['type'] == 'checkbox'):
                         if (val == 'True' or val == '1'):
                             val = '1';
                         else:
                             val = '0';
-                        self.log.debug("GridModifyModule: process_request: INPUT CHECKBOX TAG: setting '" + field_name + "' to '" + str(val) + "'.")
+                        self.log.debug("GridModifyModule: process_request: INPUT CHECKBOX TAG: setting '%s' to '%s'.", field_name, val)
                         ticket[field_name] = val
                     elif (field['type'] == 'radio'):
-                        self.log.debug("GridModifyModule: process_request: INPUT RADIO TAG: setting '" + field_name + "' to '" + str(val) + "'.")
+                        self.log.debug("GridModifyModule: process_request: INPUT RADIO TAG: setting '%s' to '%s'.", field_name, val)
                         ticket[field_name] = val
 
                     # Note: We are ignoring TextArea for now, as there are several complications including:
@@ -156,7 +156,7 @@ class GridModifyModule(Component):
                 affected_fields_raw = affected_fields_str.split(',');
                 for field in affected_fields_raw:
                     affected_fields.append(field)
-                self.log.debug("filter_stream: trac.ini listed fields: " + str(affected_fields) + "")
+                self.log.debug("filter_stream: trac.ini listed fields: %s", affected_fields)
             if len(affected_fields) == 0:
                 self.log.debug("filter_stream: trac.ini does not specify any fields, only SELECTs will be processed")
 
@@ -169,9 +169,9 @@ class GridModifyModule(Component):
                 # SELECT tags
                 if (field['type'] == 'select') and ((field['name'] in affected_fields) or (len(affected_fields) == 0)):
                     select = tag.select(name=field['name'], class_="gridmod_form")
-                    self.log.debug("SELECT INPUT '" + field['name'] + "' (" + field['label'] + ")")
+                    self.log.debug("SELECT INPUT '%s' (%s)", field['name'], field['label'])
                     if (field.has_key('value')):
-                        self.log.debug("          SELECT HAS DEFAULT VALUE '" + field['value'] + "'")
+                        self.log.debug("          SELECT HAS DEFAULT VALUE '%s'", field['value'])
                     else:
                         self.log.debug("          SELECT HAS NO DEFAULT VALUE")
                     # HACK: For some reason custom fields that have a blank value
@@ -191,7 +191,7 @@ class GridModifyModule(Component):
                 elif ((field['type'] == 'text') and (field['name'] in affected_fields)):
                     text = tag.input(type='text', name=field['name'], class_='gridmod_form')
                     if(field.has_key('value')):
-                        self.log.debug("TEXT INPUT '" + field['name'] + "' (" + field['label'] + ") HAS DEFAULT VALUE '" + field['value'] + "'")
+                        self.log.debug("TEXT INPUT '%s' (%s) HAS DEFAULT VALUE '%s'", field['name'], field['label'], field['value'])
                         text.append(field['value'])
                     else:
                         text.append('')
@@ -202,7 +202,7 @@ class GridModifyModule(Component):
                 elif ((field['type'] == 'checkbox') and (field['name'] in affected_fields)):
                     checkbox = tag.input(type='checkbox', name=field['name'], class_='gridmod_form')
                     if(field.has_key('value')):
-                        self.log.debug("CHECKBOX INPUT '" + field['name'] + "' (" + field['label'] + ") HAS DEFAULT VALUE '" + field['value'] + "'")
+                        self.log.debug("CHECKBOX INPUT '%s' (%s) HAS DEFAULT VALUE '%s'", field['name'], field['label'], field['value'])
                         checkbox.append(field['value'])
                         if (field['value'] == 1 or field['value'] == True):
                             checkbox(checked="checked")
@@ -221,14 +221,14 @@ class GridModifyModule(Component):
                     default_decided = False;
                     radio_select = tag.select(name=field['name'], class_="gridmod_form")
                     if(field.has_key('value')):
-                        self.log.debug("RADIO INPUT '" + field['name'] + "' (" + field['label'] + ") HAS DEFAULT VALUE '" + field['value'] + "'")
+                        self.log.debug("RADIO INPUT '%s' (%s) HAS DEFAULT VALUE '%s'", field['name'], field['label'], field['value'])
                         default_val = field['value']
                         default_decided = True;
                     for option in field['options']:
-                        self.log.debug("   doing radio option '" + option + "'");
+                        self.log.debug("   doing radio option '%s'", option);
                         select_option = tag.option(option, value=option)
                         if (option == default_val) or (not default_decided):
-                            self.log.debug("   SELECTED '" + option + "'");
+                            self.log.debug("   SELECTED '%s'", option);
                             select_option(selected="selected")
                             default_decided = True;
                         radio_select.append(select_option)
