@@ -35,8 +35,6 @@ from trac.wiki.formatter import Formatter
 from trac.util.html import html, Markup
 from trac.util.compat import set, sorted, partial
 
-from depgraph import DepGraphMacro
-
 from mastertickets.web_ui import MasterTicketsModule
 
 class DepGraphSidebar(MasterTicketsModule):
@@ -62,4 +60,4 @@ class DepGraphSidebar(MasterTicketsModule):
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        return [('depgraph', resource_filename(__name__, 'htdocs'))]
+        return []
