@@ -42,7 +42,7 @@ class WikiCssPlugin (Component):
             if not wiki.exists:
                 raise Exception("WikiCss: Configured wiki page '%s' doesn't exits." % self.wikipage)
 
-            req.send( wiki.text, content_type='text/css', status=200)
+            req.send( wiki.text.encode("utf-8"), content_type='text/css', status=200)
         except RequestDone:
             pass
         except Exception, e:
