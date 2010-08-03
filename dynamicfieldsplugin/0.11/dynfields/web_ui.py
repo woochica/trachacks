@@ -49,7 +49,7 @@ class DynamicFieldsModule(Component):
         """Converts trac.ini config to dict of triggers with rule specs."""
         triggers = {}
         opts = Options(self.env)
-        for key, val in opts.items():
+        for key in opts:
             # extract the target field
             target_re = re.compile(r"(?P<target>[^.]+).*")
             target = target_re.match(key).groupdict()['target']

@@ -185,8 +185,7 @@ class HideRule(Component, Rule):
         
         spec_re = re.compile(r"%s.(?P<op>(show|hide))_when_%s" \
                              % (target,trigger))
-        match = spec_re.match(key)
-        spec['op'] = match.groupdict()['op']
+        spec['op'] = spec_re.match(key).groupdict()['op']
         spec['trigger_value'] = opts[key]
         spec['clear_on_hide'] = opts.get(target+'.clear_on_hide','true')
 
@@ -194,13 +193,14 @@ class HideRule(Component, Rule):
         spec = {'trigger':trigger,'target':target}
         self.update_spec(req, key, opts, spec)
         # "Show/Hide target when trigger = value"
+        trigval = spec['trigger_value'].replace('|',' or ')
         pref['label'] = "%s %s when %s = %s" % (self._capitalize(spec['op']),
-                                        target, trigger, spec['trigger_value'])
+                                                target, trigger, trigval)
         
         # special case when trigger value is not a select option
         _,options = opts.get_value_and_options(req, trigger, key)
         value = spec['trigger_value']
-        if options and value and value not in options:
+        if options and value and value not in options and '|' not in value:
             # "Always hide/show target"
             if spec['op'] == 'hide':
                 opp = 'show'

@@ -38,10 +38,10 @@ clearrule.apply = function(input, spec){
 /*
  * CopyRule implementation
  */
-var clearrule = new Rule('CopyRule'); // must match python class name exactly
+var copyrule = new Rule('CopyRule'); // must match python class name exactly
 
 // apply
-clearrule.apply = function(input, spec){
+copyrule.apply = function(input, spec){
     var target = spec.target;
 
     if (spec.value == undefined)
@@ -126,10 +126,12 @@ hiderule.setup = function(input, spec){
 hiderule.apply = function(input, spec){
     var trigger = spec.trigger;
     var target = spec.target;
-
-    // process show-hide rule
-    if ((input.val() == spec.trigger_value && spec.op == 'hide') ||
-        (input.val() != spec.trigger_value && spec.op == 'show')){
+    
+    // process hide rule
+    var v = input.val();
+    var l = spec.trigger_value.split('|'); // supports list of trigger values
+    if ((jQuery.inArray(v,l) != -1 && spec.op == 'hide') ||
+        (jQuery.inArray(v,l) == -1 && spec.op == 'show')){
         
         // we want to hide the input fields's td and related th
         var td = jQuery('#field-'+target).parents('td:first');
@@ -162,3 +164,4 @@ hiderule.complete = function(input, spec){
     });
     jQuery('.dynfields-hide').hide();
 };
+
