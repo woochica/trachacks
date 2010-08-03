@@ -4,7 +4,7 @@
 
 from setuptools import setup, find_packages
 
-PACKAGE = 'Whiteboard'
+PACKAGE = 'whiteboard'
 VERSION = '0.1.0-trac0.12'
 
 setup(

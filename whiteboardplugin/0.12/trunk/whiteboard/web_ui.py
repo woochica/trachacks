@@ -5,6 +5,9 @@ from trac.core import *
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script, \
                               add_stylesheet, add_ctxtnav
+from trac.ticket.query import Query
+
+__all__ = ['WhiteboardModule']
 
 class WhiteboardModule(Component):
     
@@ -27,10 +30,12 @@ class WhiteboardModule(Component):
     def get_templates_dirs(self):
         return []
     
-    # IRequestFilter methods
+    # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, formdata):
-        if filename == 'query.html':
+        if req.path_info == '/query':
             add_script(req, 'whiteboard/js/whiteboard.js')
             add_stylesheet(req, 'whiteboard/css/whiteboard.css')
-            add_ctxtnav(req, "Whiteboard", "#")
+            
+            query = Query.from_string(self.env, req.query_string())
+            add_script_data(req, {"tickets" : query.execute(req)} );
         return stream

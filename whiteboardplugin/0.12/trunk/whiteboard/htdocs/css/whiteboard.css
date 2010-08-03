@@ -1,0 +1,13 @@
+#view_toggle .not_current {
+	text-decoration: none;
+ 	color: #b00;
+ 	border-bottom: 1px dotted #bbb;
+}
+
+#view_toggle .not_current:hover {
+	cursor: pointer;
+}
+
+ul#index_cards {
+	margin-top:50px;
+}
