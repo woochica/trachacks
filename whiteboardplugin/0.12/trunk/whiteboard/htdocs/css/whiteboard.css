@@ -8,6 +8,50 @@
 	cursor: pointer;
 }
 
-ul#index_cards {
-	margin-top:50px;
+/**************
+ * Whiteboard *
+ **************/
+
+#whiteboard {
+	float: left;
+	width: 100%;
+	border: 1px solid black;
+}
+
+#whiteboard h2 {
+	width: 100%;
+	border-bottom: 1px solid black;
+}
+
+.board_column {
+	border: 1px solid red;
+	padding: 5px;
+	float: left;
+}
+
+.board_column ul {
+	margin: 0;
+	padding: 0;
+}
+
+/***********
+ * Tickets *
+ ***********/
+
+li.board_ticket {
+	border: 1px solid green;
+	list-style-type: none;
+	margin: 5px 0px;
+	background
+}
+
+li.board_ticket ul {
+	margin: 0;
+	padding: 0;
+	background: url("../images/card_bg.jpg");
+}
+
+li.board_ticket ul li {
+	list-style-type: none;
+	height: 28px;
 }

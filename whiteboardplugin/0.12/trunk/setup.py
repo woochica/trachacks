@@ -15,8 +15,10 @@ setup(
     packages = ['whiteboard'],
     package_data={
         'whiteboard': [
+            'templates/*.html',
             'htdocs/js/*.js',
             'htdocs/css/*.css',
+            'htdocs/images/*.jpg',
         ]
     },
     entry_points = {

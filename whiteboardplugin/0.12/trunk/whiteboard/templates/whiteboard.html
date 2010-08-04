@@ -1,0 +1,37 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:py="http://genshi.edgewall.org/"
+    xmlns:xi="http://www.w3.org/2001/XInclude">
+<body>
+    <div id="whiteboard">
+      <py:for each="group_index, (groupname, results) in enumerate(groups)">
+        <div class="board_column">
+            <h2 py:if="groupname">
+                ${fields[query.group].label}:
+                ${query.group in ['owner', 'reporter'] and authorinfo(groupname) or groupname}
+            </h2>
+            <ul>
+              <py:for each="idx, result in enumerate(results)">
+                <py:with vars="ticket_context = context('ticket', result.id)">
+                  <py:if test="'TICKET_VIEW' in perm(ticket_context.resource)">
+                    <li class="board_ticket">
+                        <ul>
+                          <py:for each="idx, header in enumerate(headers)" py:choose="">
+                            <py:with vars="name = header.name; value = result[name]">
+                                <li>${name}: $value</li>
+                            </py:with>
+                          </py:for>
+                        </ul>
+                    </li>
+                  </py:if>
+                </py:with>
+              </py:for>
+            </ul>
+        </div>
+      </py:for>
+    </div>
+</body>
+
+</html>

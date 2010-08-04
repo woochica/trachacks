@@ -4,8 +4,8 @@ from pkg_resources import resource_filename
 from trac.core import *
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script, \
-                              add_stylesheet, add_ctxtnav
-from trac.ticket.query import Query
+                              add_stylesheet, add_ctxtnav, Chrome
+from genshi.filters.transform import Transformer
 
 __all__ = ['WhiteboardModule']
 
@@ -28,14 +28,20 @@ class WhiteboardModule(Component):
         return [('whiteboard', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        return []
+        return [resource_filename(__name__, 'templates')]
     
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, formdata):
-        if req.path_info == '/query':
+        # Don't check for req.path_info == '/query'. This will cause an infinite
+        # loop. I think it is matching when the actual QueryModule component then.
+        if filename == 'query.html':
+            self.log.debug("WhiteboardPlugin: rendering template")
             add_script(req, 'whiteboard/js/whiteboard.js')
             add_stylesheet(req, 'whiteboard/css/whiteboard.css')
+            add_ctxtnav(req, "Whiteboard", "/#whiteboard")
             
-            query = Query.from_string(self.env, req.query_string())
-            add_script_data(req, {"tickets" : query.execute(req)} );
+            whiteboard_stream = Chrome(self.env).render_template(req, 
+                'whiteboard.html', formdata, fragment=True)
+            return stream | Transformer('//div[@id="help"]'). \
+                before(whiteboard_stream.select('//div[@id="whiteboard"]'))
         return stream
