@@ -7,7 +7,7 @@
 <body>
     <div id="whiteboard">
       <py:for each="group_index, (groupname, results) in enumerate(groups)">
-        <div class="board_column">
+        <div class="board_column" style="width: ${100/len(groups) - 1}%;">
             <h2 py:if="groupname">
                 ${fields[query.group].label}:
                 ${query.group in ['owner', 'reporter'] and authorinfo(groupname) or groupname}
@@ -17,7 +17,7 @@
                 <py:with vars="ticket_context = context('ticket', result.id)">
                   <py:if test="'TICKET_VIEW' in perm(ticket_context.resource)">
                     <li class="board_ticket">
-                        <ul>
+                        <ul class="prio${result.priority_value}">
                           <py:for each="idx, header in enumerate(headers)" py:choose="">
                             <py:with vars="name = header.name; value = result[name]">
                                 <li>${name}: $value</li>
