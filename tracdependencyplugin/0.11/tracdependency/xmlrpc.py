@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import xmlrpclib
 import posixpath
 
@@ -38,8 +39,8 @@ class WorkHoursRPC(Component):
 
     def executeQuery(self, req, query, sort):
         """Returns results of query"""
-        ##ƒNƒGƒŠ[‚ğÀs‚µ‚Ü‚·D
-        ##ORDER BY‚ÍŸ‚Ì‚æ‚¤‚Éw’è‚·‚éDƒtƒB[ƒ‹ƒh–¼‚¾‚¯‚Å‚È‚­”Ô†‚Å‚à–â‘è‚È‚¢D"ƒtƒB[ƒ‹ƒhˆê" [ASC, DESC], "ƒtƒB[ƒ‹ƒh“ñ" [ASC, DESC]
+        ##ã‚¯ã‚¨ãƒªãƒ¼ã‚’å®Ÿè¡Œã—ã¾ã™ï¼
+        ##ORDER BYã¯æ¬¡ã®ã‚ˆã†ã«æŒ‡å®šã™ã‚‹ï¼ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰åã ã‘ã§ãªãç•ªå·ã§ã‚‚å•é¡Œãªã„ï¼"ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ä¸€" [ASC, DESC], "ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰äºŒ" [ASC, DESC]
 
         #if query == "":
         #    query = "t.id>0"
@@ -127,7 +128,7 @@ class WorkHoursRPC(Component):
 
     def getWorkHourChangeTimes(self, req, id):
         """Returns a list of changetimes"""
-        #ŠÔŠÖ˜A‚ÌƒtƒB[ƒ‹ƒh‚ª•ÏX‚³‚ê‚½ŠÔ‚Ìˆê——‚ğ•Ô‚µ‚Ü‚·D
+        #æ™‚é–“é–¢é€£ã®ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ãŒå¤‰æ›´ã•ã‚ŒãŸæ™‚é–“ã®ä¸€è¦§ã‚’è¿”ã—ã¾ã™ï¼
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         if id == 0:
@@ -143,7 +144,7 @@ class WorkHoursRPC(Component):
 
     def getWorkHourChanges(self, req, id):
         """Returns a list of changetime records"""
-        #ticket_change‚ÌŠÔŠÖ˜A‚Ì‚·‚×‚Ä‚ÌƒŒƒR[ƒh‚ğ•Ô‚µ‚Ü‚·D
+        #ticket_changeã®æ™‚é–“é–¢é€£ã®ã™ã¹ã¦ã®ãƒ¬ã‚³ãƒ¼ãƒ‰ã‚’è¿”ã—ã¾ã™ï¼
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         if id == 0:
@@ -165,7 +166,7 @@ class WorkHoursRPC(Component):
 
     def getWorkHoursPriod(self, req, id):
         """Returns a list of changetime records"""
-        #ŠÔŠÖ˜A‚Ì’l‚ª•ÏX‚Ì‚ ‚Á‚½Å‰‚ÆÅŒã‚ÌŠÔ‚ğ•Ô‚µ‚Ü‚·D
+        #æ™‚é–“é–¢é€£ã®å€¤ãŒå¤‰æ›´ã®ã‚ã£ãŸæœ€åˆã¨æœ€å¾Œã®æ™‚é–“ã‚’è¿”ã—ã¾ã™ï¼
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         if id == 0:
