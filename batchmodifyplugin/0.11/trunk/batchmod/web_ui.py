@@ -193,7 +193,7 @@ class BatchModifier:
                 t.save_changes(req.authname, comment)
 
                 if not modify_changetime:
-                    self._rest_changetime(env, original_changetime, t)
+                    self._reset_changetime(env, original_changetime, t)
                     log_msg = "(changetime not modified)"
 
                 log.debug('BatchModifyPlugin: saved changes to #%s %s' % 
