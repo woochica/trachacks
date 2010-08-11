@@ -49,7 +49,7 @@ except ImportError:
     from trac.util.datefmt  import to_timestamp
 
 revision = "$Rev$"
-version = "0.8.6"
+version = "0.8.7"
 url = "$URL$"
 
 
@@ -388,7 +388,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         # Prepending inline CSS definitions
         styles = """ \
 <!--
-.wikiTicketCalendar div, table { width: 100%; }
+table.wikiTicketCalendar table { width: 100%; }
 table.wikiTicketCalendar th { font-weight: bold; }
 table.wikiTicketCalendar th.workday { width: 17%; }
 table.wikiTicketCalendar th.weekend { width: 7%; }

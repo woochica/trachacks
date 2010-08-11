@@ -161,6 +161,10 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * suppress ticket summary display depending on user configurable 
    ticket count per day
 
+0.8.7 - maintenance revision for 0.11/0.12 branch (11-Aug-2010)
+ changes by Steffen Hoffmann
+ * remove CSS definition, that may disturb surrounding wiki page layout
+
 
 # 0.12 branch from here #
 
@@ -240,3 +244,7 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  changes by Steffen Hoffmann
  * suppress ticket summary display depending on user configurable 
    ticket count per day
+
+1.2.2 - maintenance revision for 0.12 branch (11-Aug-2010)
+ changes by Steffen Hoffmann
+ * remove CSS definition, that may disturb surrounding wiki page layout
