@@ -164,6 +164,7 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
 0.8.7 - maintenance revision for 0.11/0.12 branch (11-Aug-2010)
  changes by Steffen Hoffmann
  * remove CSS definition, that may disturb surrounding wiki page layout
+ * use cleaner code with 'datetime' objects for date/time variables
 
 
 # 0.12 branch from here #
@@ -248,3 +249,4 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
 1.2.2 - maintenance revision for 0.12 branch (11-Aug-2010)
  changes by Steffen Hoffmann
  * remove CSS definition, that may disturb surrounding wiki page layout
+ * use cleaner code with 'datetime' objects for date/time variables

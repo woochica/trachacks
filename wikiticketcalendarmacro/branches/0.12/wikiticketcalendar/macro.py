@@ -21,7 +21,6 @@ import calendar
 import datetime
 import re
 import sys
-import time
 
 from inspect                import getdoc
 from pkg_resources          import resource_filename
@@ -35,7 +34,7 @@ from genshi.input           import HTMLParser, ParseError
 from trac.config            import Configuration
 from trac.core              import implements
 from trac.ticket.query      import Query
-from trac.util.datefmt      import format_date, to_utimestamp, FixedOffset
+from trac.util.datefmt      import format_date, to_utimestamp
 from trac.util.text         import to_unicode
 from trac.util.translation  import domain_functions
 from trac.web.href          import Href
@@ -80,8 +79,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                   'ticket.due_field.name') or 'due_close'
         self.due_field_fmt = self.config.get('wikiticketcalendar',
                                   'ticket.due_field.format') or '%y-%m-%d'
-        self.due_utcoff = self.config.get('wikiticketcalendar',
-                                  'ticket.due_field.utcoffset') or '0'
 
     # ITemplateProvider methods
     # Returns additional path where stylesheets are placed.
@@ -149,13 +146,21 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                    if 'TICKET_VIEW' in req.perm('ticket', t['id'])]
         return tickets
 
+    def _mkdatetime(self, year, month, day=1):
+        """A custom 'datetime' object builder.
+
+        This is a convenience module for shortening function calls.
+        """
+        dt = datetime.datetime(year, month, day, tzinfo=self.tz_info)
+        return dt
+
     def _mknav(self, label, a_class, month, year):
         """The calendar nav button builder.
 
         This is a convenience module for shorter and better serviceable code.
         """
-        self.date[0:2] = [year, month]
-        tip = to_unicode(time.strftime('%B %Y', tuple(self.date)))
+        tip = to_unicode(format_date(self._mkdatetime(year, month),
+                                                              '%B %Y'))
         # URL to the current page
         thispageURL = Href(self.ref.req.base_path + self.ref.req.path_info)
         url = thispageURL(month=month, year=year)
@@ -219,6 +224,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, arguments):
 
         self.ref = formatter
+        self.tz_info = formatter.req.tz
+        self.thistime = datetime.datetime.now(self.tz_info)
 
         # Add CSS stylesheet
         add_stylesheet(self.ref.req,
@@ -231,7 +238,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         # Find out whether use http param, current or macro param year/month
         http_param_year = formatter.req.args.get('year','')
         http_param_month = formatter.req.args.get('month','')
-        today = time.localtime()
 
         if http_param_year == "":
             # not clicked on a prev or next button
@@ -240,7 +246,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 year = int(args[0])
             else:
                 # use current year
-                year = today.tm_year
+                year = self.thistime.year
         else:
             # year in http params (clicked by user) overrides everything
             year = int(http_param_year)
@@ -252,7 +258,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 month = int(args[1])
             else:
                 # use current month
-                month = today.tm_mon
+                month = self.thistime.month
         else:
             # month in http params (clicked by user) overrides everything
             month = int(http_param_month)
@@ -267,9 +273,9 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         wiki_page_format = "%Y-%m-%d"
         if len(args) >= 4 and args[3] != "*" or kwargs.has_key('wiki'):
             try:
-                wiki_page_format = kwargs['wiki']
+                wiki_page_format = str(kwargs['wiki'])
             except KeyError:
-                wiki_page_format = args[3]
+                wiki_page_format = str(args[3])
 
         show_t_open_dates = True
         if len(args) >= 5 or kwargs.has_key('cdate'):
@@ -314,10 +320,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         cal = calendar.monthcalendar(year, month)
 
         curr_day = None
-        if year == today.tm_year and month == today.tm_mon:
-            curr_day = today.tm_mday
-
-        self.date = [year, month + 1] + [1] * 7
+        if year == self.thistime.year and month == self.thistime.month:
+            curr_day = self.thistime.day
 
         # Compile regex pattern before use for better performance
         pattern_del  = '(?:<span .*?>)|(?:</span>)'
@@ -376,8 +380,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             buff(nav_pvY, nav_frM, nav_pvM)
 
         # The caption will always be there.
-        self.date[0:2] = [year, month]
-        buff(tag.strong(to_unicode(time.strftime('%B %Y', tuple(self.date)))))
+        buff(tag.strong(to_unicode(format_date(self._mkdatetime(
+                                               year, month), '%B %Y'))))
 
         if showbuttons is True:
             # add buttons for going to next months and year
@@ -413,25 +417,19 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 else:
                     db = self.env.get_db_cnx()
                     cursor = db.cursor()
-                    utc = FixedOffset(0, 'UTC')
-                    t = datetime.datetime(year, month, day,
-                                                0, 0, 0, 0, tzinfo=utc)
+                    t = self._mkdatetime(year, month, day)
                     duedatestamp = to_utimestamp(t)
                     duedatestamp_eod = duedatestamp + 86399999999
                     duedate = None
                     if not self.due_field_fmt == 'ts':
-                        duedate = format_date(t, self.due_field_fmt)
+                        duedate = format_date(t, self.due_field_fmt,
+                                                             self.tz_info)
 
                     # check for wikipage with name specified in
                     # 'wiki_page_format'
-                    self.date[0:3] = [year, month, day]
-                    wiki = time.strftime(wiki_page_format, tuple(self.date))
+                    wiki = format_date(self._mkdatetime(year, month, day),
+                                                         wiki_page_format)
                     url = self.env.href.wiki(wiki)
-                    if day == curr_day:
-                        td_class = 'today'
-                    else:
-                        td_class = 'day'
-
                     if WikiSystem(self.env).has_page(wiki):
                         a_class = "day_haspage"
                         title = _("Go to page %s") % wiki
@@ -442,6 +440,10 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                         if wiki_page_template != "":
                             url += "&template=" + wiki_page_template
                         title = _("Create page %s") % wiki
+                    if day == curr_day:
+                        td_class = 'today'
+                    else:
+                        td_class = 'day'
 
                     cell = tag.a(tag.b(day), href=url)
                     cell(class_=a_class, title_=title)
@@ -481,8 +483,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                             if not isinstance(due, datetime.datetime):
                                 continue
                             else:
-                                due_ts = to_utimestamp(due) + \
-                                         int(self.due_utcoff) * 3600000000
+                                due_ts = to_utimestamp(due)
                                 if due_ts < duedatestamp or \
                                         due_ts > duedatestamp_eod:
                                     continue
