@@ -77,8 +77,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     Simple Usage
     ------------
     [[WikiTicketCalendar([year,month,[showbuttons,[wiki_page_format,
-                          [show_ticket_open_dates,[wiki_page_template,
-                          [query_expression,[list_condense]]]]]]])]]
+                        [show_ticket_open_dates,[wiki_page_template,
+                        [query_expression,[list_condense,[cal_width]]]]]]]])]]
 
     Arguments
     ---------
@@ -91,12 +91,14 @@ class WikiTicketCalendarMacro(WikiMacroBase):
     show_ticket_open_dates = true/false, show also when a ticket was opened
     wiki_page_template = wiki template tried to create new page
     list_condense = ticket count limit to switch off ticket summary display
+    cal_width = set calendar table 'min-width', and optionally 'width'
+                for surrounding div triggered by prepending '+' to value
 
     Advanced Use
     ------------
     [[WikiTicketCalendar([nav=(0|1)],[wiki=<strftime-expression>],
         [cdate=(0|1)],[base=<wiki_page_template>],[query=<TracQuery-expr],
-        [short=<integer-value>])]]
+        [short=<integer-value>],[width=[+]<valid-CSS-size>])]]
 
      - equivalent keyword-argument available for all but first two arguments
      - mixed use of keyword-arguments with simple arguments permitted,
@@ -117,6 +119,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
      equivalent to [[WikiTicketCalendar(*,*,true,Talk-%Y-%m-%d,true,Talk)]]
     [[WikiTicketCalendar(wiki=Meeting-%Y-%m-%d,query=type=task&owner=wg1)]]
     [[WikiTicketCalendar(wiki=Meeting_%Y/%m/%d,short=6)]]
+    [[WikiTicketCalendar(*,*,true,Meeting-%Y%m%d,width=+75%;)]]
     """
 
     def __init__(self):
@@ -342,6 +345,15 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             except KeyError:
                 list_condense = int(args[7])
 
+        # control calendar display width
+        cal_width = "100%;"
+        if len(args) >= 9 or kwargs.has_key('width'):
+            # prefer query arguments provided by kwargs
+            try:
+                cal_width = kwargs['width']
+            except KeyError:
+                cal_width = args[8]
+
 
         # Can use this to change the day the week starts on,
         # but this is a system-wide setting.
@@ -392,7 +404,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         # Prepending inline CSS definitions
         styles = """ \
 <!--
-table.wikiTicketCalendar table { width: 100%; }
 table.wikiTicketCalendar th { font-weight: bold; }
 table.wikiTicketCalendar th.workday { width: 17%; }
 table.wikiTicketCalendar th.weekend { width: 7%; }
@@ -495,7 +506,8 @@ a.tip:hover span {
             buff(nav_nxM, nav_ffM, nav_nxY)
 
         buff = tag.table(buff)
-        buff(class_='wikiTicketCalendar')
+        width=":".join(['min-width', cal_width]) 
+        buff(class_='wikiTicketCalendar', style=width)
 
         heading = tag.tr()
         heading(align='center')
@@ -653,7 +665,11 @@ a.tip:hover span {
             buff(line)
 
         buff = tag.div(heading(buff))
-        buff(class_='wikiTicketCalendar')
+        if cal_width.startswith('+') is True:
+            width=":".join(['width', cal_width]) 
+            buff(class_='wikiTicketCalendar', style=width)
+        else:
+            buff(class_='wikiTicketCalendar')
 
         # Finally prepend prepared CSS styles
         buff = tag(styles, buff) 

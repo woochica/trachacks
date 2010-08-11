@@ -1,6 +1,5 @@
 /* WikiTicketCalendar styles */
 
-table.wikiTicketCalendar table { width: 100%; }
 table.wikiTicketCalendar th { font-weight: bold; }
 table.wikiTicketCalendar th.workday { width: 17%; }
 table.wikiTicketCalendar th.weekend { width: 7%; }

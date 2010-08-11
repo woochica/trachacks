@@ -165,6 +165,7 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  changes by Steffen Hoffmann
  * remove CSS definition, that may disturb surrounding wiki page layout
  * use cleaner code with 'datetime' objects for date/time variables
+ * re-apply calendar display width control as more flexible macro argument
 
 
 # 0.12 branch from here #
@@ -250,3 +251,4 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  changes by Steffen Hoffmann
  * remove CSS definition, that may disturb surrounding wiki page layout
  * use cleaner code with 'datetime' objects for date/time variables
+ * re-apply calendar display width control as more flexible macro argument

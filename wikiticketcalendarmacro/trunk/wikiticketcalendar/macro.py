@@ -313,6 +313,15 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             except KeyError:
                 list_condense = int(args[7])
 
+        # control calendar display width
+        cal_width = "100%;"
+        if len(args) >= 9 or kwargs.has_key('width'):
+            # prefer query arguments provided by kwargs
+            try:
+                cal_width = kwargs['width']
+            except KeyError:
+                cal_width = args[8]
+
 
         # Can use this to change the day the week starts on,
         # but this is a system-wide setting.
@@ -388,7 +397,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             buff(nav_nxM, nav_ffM, nav_nxY)
 
         buff = tag.table(buff)
-        buff(class_='wikiTicketCalendar')
+        width=":".join(['min-width', cal_width]) 
+        buff(class_='wikiTicketCalendar', style=width)
 
         heading = tag.tr()
         heading(align='center')
@@ -536,6 +546,10 @@ class WikiTicketCalendarMacro(WikiMacroBase):
             buff(line)
 
         buff = tag.div(heading(buff))
-        buff(class_='wikiTicketCalendar')
+        if cal_width.startswith('+') is True:
+            width=":".join(['width', cal_width]) 
+            buff(class_='wikiTicketCalendar', style=width)
+        else:
+            buff(class_='wikiTicketCalendar')
 
         return buff
