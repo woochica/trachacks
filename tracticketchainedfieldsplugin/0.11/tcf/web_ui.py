@@ -194,7 +194,6 @@ class TracTicketChainedFieldsModule(Component):
                         target_field = tcf_define_target.keys()[0]
                     break
                 else:
-                    
                     field = tcf_define_target.keys()[0]
                     field_value = req.args.get("field-" + field, "")
                     
@@ -203,14 +202,19 @@ class TracTicketChainedFieldsModule(Component):
                     else:
                         tcf_define_target = tcf_define_target.values()[0].get(field_value, {})
                         
+            targets = []
             if tcf_define_target:
-                target_field = tcf_define_target.keys()[0]
-                target_options = [target_option for target_option in tcf_define_target.values()[0].keys() if target_option]
+                for k, v in tcf_define_target.items():
+                    target_field = k
+                    target_options = [target_option for target_option in v.keys() if target_option]
+                    target_options.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
+                    
+                    targets.append({
+                        "target_field": target_field, 
+                        "target_options": target_options, 
+                    })
             
-            target_options.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
-            
-            result["target_field"] = target_field
-            result["target_options"] = target_options
+            result["targets"] = targets
             
             if req.args.has_key("warning"):
                 result["warning"] = "1"

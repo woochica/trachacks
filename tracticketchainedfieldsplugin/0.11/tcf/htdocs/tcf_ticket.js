@@ -68,27 +68,31 @@ $(document).ready(function() {
                 alert("Error occurs.");
             }
             
-            $("#field-" + result.target_field).empty();
-            for (var i in result.target_options){
-                var field_option = result.target_options[i];
-                $("#field-" + result.target_field).append("<option>"+field_option+"</option>");
+            for (var j=0; j<result.targets.length; j++) {
+                var target = result.targets[j];
+                var target_field = target["target_field"];
+                var target_options = target["target_options"];
+                
+                $("#field-" + target_field).empty();
+                for (var i=0; i<target_options.length; i++){
+                    var field_option = target_options[i];
+                    $("#field-" + target_field).append("<option>"+field_option+"</option>");
+                }
+                $("#field-" + target_field).append("<option></option>");
+                
+                if (result.hide_empty_fields && 
+                    (target_options.length == 0 && target_field || 
+                    $(this).css("display") == "none")
+                   ){
+                    $("#field-"+target_field).parent().prev().find("label").hide();
+                    $("#field-"+target_field).hide();
+                } else {
+                    $("#field-"+target_field).parent().prev().find("label").show();
+                    $("#field-"+target_field).show();
+                }
+                
+                $("#field-" + target_field).change();
             }
-            $("#field-" + result.target_field).append("<option></option>");
-            
-            
-            if (result.hide_empty_fields && 
-                (result.target_options.length == 0 && result.target_field || 
-                $(this).css("display") == "none")
-               ){
-                $("#field-"+result.target_field).parent().prev().find("label").hide();
-                $("#field-"+result.target_field).hide();
-            } else {
-                $("#field-"+result.target_field).parent().prev().find("label").show();
-                $("#field-"+result.target_field).show();
-            }
-            
-            $("#field-" + result.target_field).change();
-            
         });
         
         for (var field in tcf_define) {
