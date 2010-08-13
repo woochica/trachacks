@@ -37,6 +37,7 @@ a, :link, :visited {
 
 #custom-metanav {
 	color: white;
+	height: 16px;
 	}
 	#custom-metanav ul {
 		margin-right: 45px;
@@ -52,6 +53,7 @@ a, :link, :visited {
 }
 
 #custom-mainnav {
+	height: 30px;
 	text-align: right;
 	margin-right: 30px;
 	}
@@ -106,16 +108,20 @@ a, :link, :visited {
 #main-content {
 	background: white;
 	padding: 20px;
-	-moz-border-radius-topleft: 10px;
-	-moz-border-radius-topright: 10px;
 	min-height: 350px;
+
+	-webkit-border-top-left-radius: 10px;		/* Webkit based */
+	-webkit-border-top-right-radius: 10px;
+	-moz-border-radius-topleft: 10px;		/* Gecko based */
+	-moz-border-radius-topright: 10px;
+	border-top-left-radius: 10px;			/* Standard CSS3 */
+	border-top-right-radius: 10px;
 }
 
 #custom-footer {
 	border-radius: 0 0 10px 10px;			/* Standard CSS3 */
 	-moz-border-radius: 0 0 10px 10px;		/* Gecko based */
-	-ms-border-radius: 0 0 10px 10px;		/* IE/Trident */
-	-webkit-border-radius: 0 0 10px 10px;	/* Webkit based */
+	-webkit-border-radius: 0 0 10px 10px;		/* Webkit based */
 		
 	background: #FF7E00;
 	text-align: center;
@@ -126,6 +132,7 @@ a, :link, :visited {
 
 .custom-nav {
 	font-size: 10px;
+	line-height: 14px;
 	}
 	.custom-nav ul {
 		display: inline;
@@ -134,9 +141,8 @@ a, :link, :visited {
 		display: table-cell;
 	}
 	.custom-nav ul li a {
-		border-radius: 2px;					/* Standard CSS3 */
+		border-radius: 2px;				/* Standard CSS3 */
 		-moz-border-radius: 2px;			/* Gecko based */
-		-ms-border-radius: 2px;				/* IE/Trident */
 		-webkit-border-radius: 2px;			/* Webkit based */
 	
 		display: block;
