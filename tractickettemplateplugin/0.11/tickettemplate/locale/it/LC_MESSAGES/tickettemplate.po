@@ -1,0 +1,93 @@
+# Italian (Italy) translations for TracTicketTemplate.
+# Copyright (C) 2010
+# This file is distributed under the same license as the
+# TracTicketTemplate project.
+# Roberto Longobardi <seccanj@gmail.com>, 2010.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TracTicketTemplate 0.7\n"
+"Report-Msgid-Bugs-To: richard.liao.i@gmail.com\n"
+"POT-Creation-Date: 2010-05-24 09:49+0800\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: Roberto Longobardi seccanj@gmail.com\n"
+"Language-Team: Italian it_IT <trac-dev@googlegroups.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r14358\n"
+
+#: tickettemplate/ttadmin.py:137
+msgid "Ticket System"
+msgstr "Segnalazioni"
+
+#: tickettemplate/ttadmin.py:137
+msgid "Ticket Template"
+msgstr "Modello di Segnalazione"
+
+#: tickettemplate/templates/admin_tickettemplate.html:12
+msgid "Available Projects"
+msgstr "Progetti Disponibili"
+
+#: tickettemplate/templates/admin_tickettemplate.html:15
+msgid "Ticket: Template"
+msgstr "Segnalazione: Modello"
+
+#: tickettemplate/templates/admin_tickettemplate.html:20
+msgid "Type:"
+msgstr "Tipo:"
+
+#: tickettemplate/templates/admin_tickettemplate.html:28
+msgid "Load"
+msgstr "Carica"
+
+#: tickettemplate/templates/admin_tickettemplate.html:29
+msgid "Apply change"
+msgstr "Applica le modifiche"
+
+#: tickettemplate/templates/admin_tickettemplate.html:30
+msgid "Reset"
+msgstr "Resetta"
+
+#: tickettemplate/templates/admin_tickettemplate.html:35
+msgid "Description:"
+msgstr "Descrizione:"
+
+#: tickettemplate/templates/tt_newticket.js:9
+msgid "My Template"
+msgstr "Modello Personalizzato"
+
+#: tickettemplate/templates/tt_newticket.js:10
+msgid "Create"
+msgstr "Crea"
+
+#: tickettemplate/templates/tt_newticket.js:11
+msgid "Delete"
+msgstr "Elimina"
+
+#: tickettemplate/templates/tt_newticket.js:12
+msgid "Save template success: "
+msgstr "Risultato del salvataggio: "
+
+#: tickettemplate/templates/tt_newticket.js:13
+msgid "Delete template success: "
+msgstr "Risultato dell'eliminazione: "
+
+#: tickettemplate/templates/tt_newticket.js:14
+msgid "Please input template name (overwriting existing one with equal name)."
+msgstr ""
+"Inserisci il nome del modello (sovrascriverai un eventuale modello con lo "
+"stesso nome)."
+
+#: tickettemplate/templates/tt_newticket.js:15
+msgid "Sure to restore the last edited content?"
+msgstr "Sei sicuro di voler ripristinare il precedente contenuto?"
+
+#: tickettemplate/templates/tt_newticket.js:16
+msgid "Submit ticket?"
+msgstr "Sottomettere la segnalazione?"
+
+#: tickettemplate/templates/tt_newticket.js:17
+msgid "Replace ticket content with template?"
+msgstr "Sostituire il testo della segnalazione con il modello?"
