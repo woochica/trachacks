@@ -188,8 +188,12 @@ class BibAddMacro(WikiMacroBase):
         raise TracError('No wiki page named \'' + whom[1] + '\' found.')
     else:
       raise TracError('Unknown location \''+ whom[0] +'\'')
-
-    entries = extract_entries(string)
+    try:
+        # handle all data as unicode objects
+        u = unicode(string,"utf-8")
+        entries = extract_entries(u)
+    except UnicodeDecodeError:
+        raise TracError("A UnicodeDecodeError occured while loading the data. Try to save the file in UTF-8 encoding.")
     if entries == None:
       raise TracError('No entries from file \''+ args[0] +'\' loaded.')
     
