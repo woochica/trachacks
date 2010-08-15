@@ -31,17 +31,20 @@ DEFAULT_FORMAT = {
 
 #----------------------------------------------------------------------------
 
-def formatField(config, tt_value, user):
+def formatField(config, tt_value, user, req_args):
     """ format field value
     """
     # generate format dict
     mapping = {}
+    
     t = int(time.time())
     for k, v in DEFAULT_FORMAT.items():
         format = config.get("tickettemplate", k + "_format", v)
         mapping[k] = time.strftime(format, time.localtime(t))
 
     mapping["user"] = user
+    
+    mapping.update(req_args)
 
     try:
         return tt_value % mapping

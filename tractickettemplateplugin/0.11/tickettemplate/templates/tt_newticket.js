@@ -118,7 +118,20 @@ $.fn.extend({
             if (isLoad == true) {
                 var evt = {"type": "change"};
                 // trigger type change
-                $("#field-type").change();
+                var params = location.search.slice(1).split("&");
+                var ticket_preset = false;
+                for (var i=0; i<params.length; i++) {
+                    var param = params[i];
+                    var param_name = param.split("=")[0];
+                    if (param_name == "description") {
+                        ticket_preset = true;
+                        break;
+                    }
+                }
+                
+                if (!ticket_preset) {
+                    $("#field-type").change();
+                }
                 
                 if (result["warning"] == "1") {
                     // apply template if first loaded
@@ -321,6 +334,7 @@ $.fn.extend({
                 }
             }
 
+            
             if ($("#ticket.ticketdraft").length && isLoad) {
                 // reset isLoad
                 isLoad = false;
@@ -344,9 +358,9 @@ $.fn.extend({
         // requery
         if ($("#warning").get(0))
         {
-            $.getJSON("tt/query?warning=1", handleResponseQuery);
+            $.getJSON("tt/query"+location.search+"warning=1", handleResponseQuery);
         } else {
-            $.getJSON("tt/query", handleResponseQuery);
+            $.getJSON("tt/query"+location.search, handleResponseQuery);
         }
 	}
 });

@@ -243,6 +243,7 @@ class TicketTemplateModule(Component):
         
         if req.path_info.startswith('/tt/query'):
             # handle XMLHTTPRequest
+            data["req_args"] = req.args
                 
             data.update({"tt_user": req.authname})
             result = TT_Template.fetchAll(self.env, data)

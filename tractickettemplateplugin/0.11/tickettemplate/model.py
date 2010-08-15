@@ -115,6 +115,7 @@ class TT_Template(object):
         cursor = db.cursor()
 
         real_user = data.get("tt_user")
+        req_args = data.get("req_args")
 
         field_value_mapping = {}
         field_value_mapping_custom = {}
@@ -131,7 +132,7 @@ class TT_Template(object):
             if not field_value_mapping_custom.has_key(tt_name):
                 field_value_mapping_custom[tt_name] = {}
             if tt_value:
-                tt_value = formatField(env.config, tt_value, real_user)
+                tt_value = formatField(env.config, tt_value, real_user, req_args)
                 field_value_mapping_custom[tt_name][tt_field] = tt_value
 
 
@@ -162,7 +163,7 @@ class TT_Template(object):
                 if not field_value_mapping.has_key(tt_name):
                     field_value_mapping[tt_name] = {}
                 if tt_value:
-                    tt_value = formatField(env.config, tt_value, real_user)
+                    tt_value = formatField(env.config, tt_value, real_user, req_args)
                     field_value_mapping[tt_name][tt_field] = tt_value
 
         result = {}
