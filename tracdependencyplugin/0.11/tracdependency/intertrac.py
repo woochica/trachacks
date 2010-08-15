@@ -42,15 +42,10 @@ class InterTrac:
         for key, value in self.config.options('intertrac'):
             # オプションの数のループを回り，左辺値の.を探します．
             idx = key.rfind('.')  
-            if idx > 0: # .が無い場合はショートカットですが無視します
-                # .があった場合の処理
-                # 左辺値を分割します
+            if idx > 0: 
                 prefix, attribute = key[:idx], key[idx+1:]
-                # すでにあるものをとってきます無ければ新規で作成
                 intertrac = self.intertracs0.setdefault(prefix, {})
-                # 左辺値のピリオド以降をキーで右辺値を登録
                 intertrac[attribute] = value
-                # プロジェクト名を設定します．(注：すべて小文字になっている) 
                 intertrac['name'] = prefix
             else:
                 self.aliases[key] = value.lower()
@@ -96,7 +91,7 @@ class InterTrac:
         # for key in keys:
         #    self.log.debug(u"alias %s = %s" ,key, alias)
 
-    def __get_projects(self):
+    def get_projects(self):
         return self.intertracs0
 
     def __get_intertrac_ticket_fullname(self, ticket_name):
@@ -110,47 +105,49 @@ class InterTrac:
 
     def __get_subsequentticket_other_prj(self,id):
         sql = ("SELECT id, type, summary, owner, description, status from ticket t "
-                    "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
-                    "WHERE (c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
-                    " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
-                    " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
-                    " c.value like '%%, %s' or c.value like '%%,%s')" % (id, id, id, id, id, id, id, id, id))
+                "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
+                "WHERE (c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
+                " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
+                " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
+                " c.value like '%%, %s' or c.value like '%%,%s')" % \
+                (id, id, id, id, id, id, id, id, id))
         return sql
 
     def __get_subsequentticket(self,id):
         sql = ("SELECT id, type, summary, owner, description, status from ticket t "
-                    "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
-                    "WHERE "
-                    "(c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
-                    " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
-                    " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
-                    " c.value like '%%, %s' or c.value like '%%,%s' or "
-                    " c.value = '#%s' or c.value like '#%s(%%' or c.value like '#%s,%%' or "
-                    " c.value like '%%, #%s(%%' or c.value like '%%, #%s,%%' or "
-                    " c.value like '%%,#%s(%%' or c.value like '%%,#%s,%%' or "
-                    " c.value like '%%, #%s' or c.value like '%%,#%s')" % (id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id))
+                "JOIN ticket_custom c ON c.ticket = t.id AND c.name = 'dependencies' "
+                "WHERE "
+                "(c.value = '%s' or c.value like '%s(%%' or c.value like '%s,%%' or "
+                " c.value like '%%, %s(%%' or c.value like '%%, %s,%%' or "
+                " c.value like '%%,%s(%%' or c.value like '%%,%s,%%' or "
+                " c.value like '%%, %s' or c.value like '%%,%s' or "
+                " c.value = '#%s' or c.value like '#%s(%%' or c.value like '#%s,%%' or "
+                " c.value like '%%, #%s(%%' or c.value like '%%, #%s,%%' or "
+                " c.value like '%%,#%s(%%' or c.value like '%%,#%s,%%' or "
+                " c.value like '%%, #%s' or c.value like '%%,#%s')" % \
+                (id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id, id))
         return sql
         
     def __get_subticket_other_prj(self, id_l):
         # InterTrac形式で指定したidを親に指定しているチケットのクエリ文字列を返す
         # id_l InterTrac形式のチケットid
         sql = ("SELECT id, type, summary, owner, description, status from ticket t "
-                    "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
-                    "WHERE a.value = '%s'" % id_l)
+                "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
+                "WHERE a.value = '%s'" % id_l)
         return sql
 
     def __get_subticket(self, id_num):
         # 自プロジェクト内で指定したidを親に指定しているチケットのクエリ文字列を返す
         # id_num チケットのid（数値）
         sql = ("SELECT id, type, summary, owner, description, status from ticket t "
-                    "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
-                    "WHERE a.value = '#%s' or  a.value = '%s'" % (id_num, id_num))
+                "JOIN ticket_custom a ON a.ticket = t.id AND a.name = 'summary_ticket' "
+                "WHERE a.value = '#%s' or  a.value = '%s'" % (id_num, id_num))
         return sql
 
     def __get_subsequentticket_other_prj_alias(self,prj_name, id):
         sql = self.__get_subsequentticket_other_prj(prj_name + ":#" + id)
         try:
-            intertrac = self.__get_projects()[prj_name.lower()]
+            intertrac = self.get_projects()[prj_name.lower()]
             alias_list = intertrac['alias']
             for a in alias_list:
                 sql = sql + ' union ' + self.__get_subsequentticket_other_prj(a + ":#" + id)
@@ -161,7 +158,7 @@ class InterTrac:
     def __get_subticket_other_prj_alias(self, prj_name, id):
         sql = self.__get_subticket_other_prj(prj_name + ":#" + id)
         try:
-            intertrac = self.__get_projects()[prj_name.lower()]
+            intertrac = self.get_projects()[prj_name.lower()]
             alias_list = intertrac['alias']
             for a in alias_list:
                 sql = sql + ' union ' + self.__get_subticket_other_prj(a + ":#" + id)
@@ -173,8 +170,7 @@ class InterTrac:
         # InterTrac設定しているプロジェクトすべてを検索する必要がある,
         # 後続チケットまたは，子チケットへのリンクを作ります．
         links = []
-        intertracs0 = self.__get_projects()
-        # すべてのinterTrc設定を回りサブチケットまたは後続チケットを探します．まずはInterTrac形式の指定のもの
+        intertracs0 = self.get_projects()
         for prefix in intertracs0:
             intertrac = intertracs0[prefix]
             path = intertrac.get('path', '')
@@ -192,18 +188,16 @@ class InterTrac:
                     dep_url = intertrac.get('url', '') + '/dependency/ticket/' + str(id)
                     ticket = id_prefix + str(id)
                     links.append({'ticket':ticket, 'title':summary, 'url':url, 'dep_url':dep_url, 'status':status})
-                    # links.append({'title':summary, 'url':url, 'dep_url':dep_url, 'status':status})
             except Exception, e:
                 pass
-            # オープンできない場合もあるのでエラー処理が必要
         return links
 
     def __split_itertrac_ticket_string(self, ticket):
         id= ''
         dep = ''
-        intertracs0 = self.__get_projects()
-        ticket = ticket.strip() # 前後の空白を削除します
-        idx = ticket.rfind(':#') # プロジェクト名とチケット番号に分割します
+        intertracs0 = self.get_projects()
+        ticket = ticket.strip() 
+        idx = ticket.rfind(':#') 
         if idx > 0: # InterTrac ticket
             project_name, id = ticket[:idx], ticket[idx+2:]
         else: # This ticket is in same project.
@@ -213,7 +207,7 @@ class InterTrac:
             else:
                 id = ticket
         idx = id.rfind('(')
-        if idx > 0: # 指定されていたならそれはidに含まない
+        if idx > 0: 
             # 最後のカッコは今のところつけたまま
             id, dep = id[:idx], id[idx+1:]
         return project_name, id, dep
@@ -227,7 +221,7 @@ class InterTrac:
         intertrac = self.__get_project_info(project_name)
         if intertrac is None:
             return {'error' : ERROE_MSG1 % project_name}
-        if id == "": #チケットに何も入っていない
+        if id == "": 
             return {'error' : ERROE_MSG5}
         # 依存関係を指定しているか確認する 例:(FF)
         idx = id.rfind('(')
@@ -235,7 +229,10 @@ class InterTrac:
             if dep_en == False:
                 #依存関係を使用しない場合でカッコがあった場合は
                 return {'error' : ERROE_MSG7}
-            if dep.startswith('FF')==False and dep.startswith('FS')==False and dep.startswith('SF')==False and dep.startswith('SS')==False:
+            if          dep.startswith('FF')==False \
+                    and dep.startswith('FS')==False \
+                    and dep.startswith('SF')==False \
+                    and dep.startswith('SS')==False:
                 return {'error' : ERROE_MSG2}
         try:
             if self.__get_current_project_name() == project_name:
@@ -254,20 +251,18 @@ class InterTrac:
         # ticket:検索するチケットのid
         # leaf_id:葉チケットのID
         # 戻り値:エラー文字列
-        if ticket:
-            ticket = ticket.strip() # 前後の空白を削除します
+        if not ticket:
+            return None
+        ticket = ticket.strip() 
         if self.__get_intertrac_ticket_fullname(ticket) == leaf_id:
-            return ERROE_MSG3 % sub_id #修正する場所を示す
+            return ERROE_MSG3 % sub_id 
         t = self.__get_intertrac_ticket(ticket, False)
         error = t['error']
         if error is None:
             tkt = t['ticket']
             ticket = tkt['summary_ticket']
-            if ticket is None: #このifいらなくないか
-                pass
-            else:
-                if ticket != '':
-                    return self.__validate_outline_b(ticket, t['name'],leaf_id)
+            if ticket:
+                return self.__validate_outline_b(ticket, t['name'],leaf_id)
         return error
 
     def __validate_outline(self, summary_tkt, id):
@@ -276,16 +271,14 @@ class InterTrac:
         # 戻り値:エラー文字列のリスト
         errors = []
         project_name = self.__get_current_project_name()
-        if (not summary_tkt):
+        if not summary_tkt:
             return []
         t = self.__get_intertrac_ticket(summary_tkt, False)
         error = t['error']
         if error is None:
             leaf_id = project_name + ':#' + str(id)
             e = self.__validate_outline_b(summary_tkt, leaf_id, leaf_id)
-            if e is None:
-                pass
-            else:
+            if e:
                 errors.append((self.summary_label, e))
         return errors
 
@@ -294,20 +287,15 @@ class InterTrac:
         # field_name: エラーを表示するためのフィールド名
         # dep_en: 親チケットを指定している場合はTrueになります．
         errors = []
-        #リンクが正しいか確認します．
-        if ids is None: #idになにも入ってない場合はエラーになるのでifが必要
+        if not ids: 
             return errors
-        if ids == '': #idになにも入ってない場合はエラーになるのでifが必要
-            return errors
-        # カンマで分割します．
         tickets = ids.split(',')
-        for ticket in tickets: # 分割した文字列でループをまわります．
-            # 一つ一つのチケットのリンクに問題がないか確認します．
-            if (not ticket):
+        for ticket in tickets: 
+            if not ticket:
                 continue
             t = self.__get_intertrac_ticket(ticket, dep_en)
             error = t['error']
-            if error: # エラーがなければ
+            if error: 
                 errors.append((field_name, error))
                 continue
         return errors
@@ -315,13 +303,15 @@ class InterTrac:
     def validate_ticket_b(self, ticket):
         self.load_intertrac_setting()
         errors = []
-        if self.config.get( TICKET_CUSTOM, "summary_ticket"): # カスタムフィールドが有効な場合
+        if self.config.get( TICKET_CUSTOM, "summary_ticket"): 
+            # カスタムフィールドが有効な場合
             # 親チケットが存在しているかとか指定方法に間違いがないかを確認する．
             label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
             errors.extend(self.__validate_ticket(ticket['summary_ticket'], label, False))
             # 親チケットがループしていないか確認する
             errors.extend(self.__validate_outline(ticket['summary_ticket'], ticket.id))
-        if self.config.get( TICKET_CUSTOM, "dependencies"): # カスタムフィールドが有効な場合
+        if self.config.get( TICKET_CUSTOM, "dependencies"): 
+            # カスタムフィールドが有効な場合
             # 依存関係チケットが存在しているかとか指定方法に間違いがないかを確認する．
             label = self.config.get(TICKET_CUSTOM,"dependencies.label")
             errors.extend(self.__validate_ticket(ticket['dependencies'], label, True))
@@ -330,11 +320,13 @@ class InterTrac:
     def __linkify_ids_p(self, ids, data):
         # チケットの表示のページでinterTracリンクの表示するための元を作る
         # 先行、親など指定しているidを検索する
-        if ids is None:
+        if not ids:
             del data[-1]
-        tickets = ids.split(',') #なにもない場合はエラーになるのでifが必要
+            return
+        tickets = ids.split(',') 
+        #なにもない場合はエラーになるのでifが必要
         for ticket in tickets:
-            if (not ticket):
+            if not ticket:
                 continue
             t = self.__get_intertrac_ticket(ticket, True)
             error = t['error']
@@ -343,7 +335,6 @@ class InterTrac:
                 status = tkt['status']
                 title1 = tkt['summary']
                 data.append(tag.a(ticket, href=t['url'], class_='%s ticket'%status, title=title1))
-                # 複数ある場合は", "を追加する
                 data.append(', ')
         if data:
             # 最後のカンマを削除する．
@@ -365,11 +356,11 @@ class InterTrac:
 
     def __get_info_tickets(self, ids):
         links = []
-        if ids is None: #idになにも入ってない場合はエラーになるのでifが必要
+        if not ids:
             return links
         tickets = ids.split(',')
         for ticket in tickets:
-            if (not ticket):
+            if not ticket:
                 continue
             t = self.__get_intertrac_ticket(ticket, True)
             error = t['error']
@@ -377,7 +368,7 @@ class InterTrac:
                 tkt = t['ticket']
                 status = tkt['status']
                 title = tkt['summary']
-                links.append({'ticket':ticket, 'title':title, 'url':t['url'], 'dep_url':t['url'], 'status':status})
+                links.append({'ticket':ticket, 'title':title, 'url':t['url'], 'dep_url':t['dep_url'], 'status':status})
             else:
                 continue
         return links
@@ -390,8 +381,14 @@ class InterTrac:
         summary_ticket = self.__get_info_tickets(tkt['summary_ticket'])
         dependencies = self.__get_info_tickets(tkt['dependencies'])
         tkt_id_l = self.__get_current_project_name() + ':#' + tkt_id
-        sub_ticket = self.__get_tickets_point_to(self.__get_subticket_other_prj_alias(self.__get_current_project_name(), tkt_id), self.__get_subticket(tkt_id)) 
-        subsequentticket = self.__get_tickets_point_to(self.__get_subsequentticket_other_prj_alias(self.__get_current_project_name(), tkt_id), self.__get_subsequentticket(tkt_id)) 
+        sub_ticket = self.__get_tickets_point_to( \
+            self.__get_subticket_other_prj_alias(
+                self.__get_current_project_name(), tkt_id), \
+            self.__get_subticket(tkt_id) ) 
+        subsequentticket = self.__get_tickets_point_to(
+            self.__get_subsequentticket_other_prj_alias \
+                (self.__get_current_project_name(), tkt_id), \
+            self.__get_subsequentticket(tkt_id)) 
         summary_ticket_enabled = not not ( self.config.get( TICKET_CUSTOM, "summary_ticket" ))
         dependencies_enabled = not not ( self.config.get( TICKET_CUSTOM, "dependencies"))
         custom_field = False
@@ -408,8 +405,14 @@ class InterTrac:
         self.load_intertrac_setting()
         tkt_id = str(tkt.id)
         tkt_id_l = self.__get_current_project_name() + ':#' + tkt_id
-        sub_ticket = self.__get_tickets_point_to(self.__get_subticket_other_prj_alias(self.__get_current_project_name(), tkt_id), self.__get_subticket(tkt_id)) 
-        subsequentticket = self.__get_tickets_point_to(self.__get_subsequentticket_other_prj_alias(self.__get_current_project_name(), tkt_id), self.__get_subsequentticket(tkt_id)) 
+        sub_ticket = self.__get_tickets_point_to( \
+                self.__get_subticket_other_prj_alias \
+                    (self.__get_current_project_name(), tkt_id), \
+                self.__get_subticket(tkt_id) )
+        subsequentticket = self.__get_tickets_point_to( \
+                self.__get_subsequentticket_other_prj_alias( \
+                    self.__get_current_project_name(), tkt_id), \
+                self.__get_subsequentticket(tkt_id) ) 
         
         data_summary = []
         data_depend = []
@@ -430,13 +433,15 @@ class InterTrac:
         return self.project_label
 
     def __get_project_info(self, project_name):
-        intertracs0 = self.__get_projects()
+        intertracs0 = self.get_projects()
         try:
             intertrac = intertracs0[project_name.lower()]
-        except Exception, e: # 存在していない場合は例外が発生する
+        except Exception, e: 
             try:
-                alias = self.aliases[project_name] # ここで小文字に変換すると面倒になる
+                alias = self.aliases[project_name] 
+                # ここで小文字に変換すると面倒になる
                 intertrac = intertracs0[alias]
-            except Exception, e: # 存在していない場合は例外が発生する
+            except Exception, e: 
+                # 存在していない場合は例外が発生する
                 intertrac = None
         return intertrac

@@ -1,12 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 from setuptools import find_packages, setup
 PACKAGE = 'tracdependency'
 
 setup(
-    name = 'TracDependencyPlugin', version = '0.11.1.24.1',
-    packages=find_packages(exclude=['*.tests*']),
+    name = 'TracDependencyPlugin', version = '0.11.2.1',
+    packages = find_packages(exclude=['*.tests*']),
     author = 'Yuji OKAZAKI',
     author_email = 'u-z@users.sourceforge.jp',
     description = 'Provides support for ticket dependencies and summary tickets.',
@@ -17,5 +16,6 @@ setup(
         [trac.plugins]
         tracdependency = tracdependency
     """,
-    package_data= {'tracdependency': ['templates/*.html', 'htdocs/*.css', 'htdocs/*.png', 'htdocs/*.js']}
+    test_suite = 'tracdependency.tests',
+    package_data= {'tracdependency': ['templates/*.html', 'htdocs/*.css', 'htdocs/*.png', 'htdocs/*.js']},
 )
