@@ -43,7 +43,8 @@ class TracDependency(Component, InterTrac):
     def process_request(self, req):
         # 依存関係の表示ページの処理
         # tkt_idは単純な数値
-        tkt_id = req.path_info.split('/')[3] # '/dependency/ticket/1'のようなアドレス指定でくる．
+        # '/dependency/ticket/1'のようなアドレス指定でくる．
+        tkt_id = req.path_info.split('/')[3]
         return 'trac_dependency.html', self.get_dependency_info(tkt_id), None
    
     # IRequestFilter methods
@@ -57,7 +58,7 @@ class TracDependency(Component, InterTrac):
             # 依存ページへのリンクを作成し，このページで処理するには時間がかかるものは次のページで表示します
             href = req.href.dependency(req.path_info)
             add_ctxtnav(req, LABEL_DEPEND_PAGE, href)
-            field_values = self.get_dependency_field_values(data['ticket']) #dataに代入する必要ある？
+            field_values = self.get_dependency_field_values(data['ticket'])
             data['tracdependency'] = {
                 'field_values': field_values
             }
@@ -90,7 +91,6 @@ class TracDependency(Component, InterTrac):
         pass
 
     def validate_ticket(self, req, ticket):
-        """チケット番号の指定に問題がないかを確認します．"""
         return self.validate_ticket_b(ticket)
 
 #    # ITicketChangeListener methods

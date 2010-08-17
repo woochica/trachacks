@@ -36,8 +36,6 @@ class InterTrac:
     def load_intertrac_setting(self):
         # interTracの設定を取得します．
         self.intertracs0 = {}
-        self.summary_label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
-        # self.dependencies_label = self.config.get(TICKET_CUSTOM,"dependencies.label")
         self.aliases = {}
         for key, value in self.config.options('intertrac'):
             # オプションの数のループを回り，左辺値の.を探します．
@@ -76,6 +74,7 @@ class InterTrac:
             intertrac = self.intertracs0.get(alias, None)
             if intertrac is None:
                 del self.aliases[key]
+                # TODO:エラー出力
         # keys = self.intertracs0.keys()
         # for key in keys:
         #     intertrac = self.intertracs0[key]
@@ -96,7 +95,7 @@ class InterTrac:
 
     def __get_intertrac_ticket_fullname(self, ticket_name):
         prj_name, id, dep = self.__split_itertrac_ticket_string(ticket_name)
-        intertrac = self.__get_project_info(project_name)
+        intertrac = self.__get_project_info(prj_name)
         if intertrac is None:
             # エラーが発生するので情報を出力する
             self.log.debug(u'intertrac001')
@@ -279,7 +278,8 @@ class InterTrac:
             leaf_id = project_name + ':#' + str(id)
             e = self.__validate_outline_b(summary_tkt, leaf_id, leaf_id)
             if e:
-                errors.append((self.summary_label, e))
+                summary_label = self.config.get(TICKET_CUSTOM,"summary_ticket.label")
+                errors.append((summary_label, e))
         return errors
 
     def __validate_ticket(self, ids, field_name, dep_en):
