@@ -15,7 +15,7 @@
 #whiteboard {
 	float: left;
 	width: 100%;
-	border: 1px solid black;
+	border-left: 1px solid black;
 }
 
 #whiteboard h2 {
@@ -24,9 +24,13 @@
 }
 
 .board_column {
-	border: 1px solid red;
+	height: 100%;
 	padding: 5px;
+	border-top: 1px solid black;
+	border-right: 1px solid black;
+	border-bottom: 1px solid black;
 	float: left;
+	min-width: 150px;
 }
 
 .board_column ul {
@@ -39,25 +43,43 @@
  ***********/
 
 li.board_ticket {
-	border: 1px solid green;
+	border: 1px solid black;
 	list-style-type: none;
 	margin: 5px 0px;
-	width: 150px;
+	width: 100%;
 }
 
-li.board_ticket ul {
+li.board_ticket h3 {
+	margin: .3em;
+	width: 99%;
+	border-bottom: 1px solid black;
+}
+
+li.board_ticket dl {
 	margin: 0;
-	padding: 0;
+	padding: 0 0 0 .3em;
 }
 
-li.board_ticket ul li {
-	list-style-type: none;
-	padding-left: 5px;
+li.board_ticket dl dt {
+	float: left; 
+	clear: left;
+	width: 120px;
+	text-align: left; 
+	font-weight: bold;
 }
 
-li.board_ticket ul.prio1 { background: #fdc; border-color: #e88 }
-li.board_ticket ul.prio2 { background: #ffb; border-color: #eea }
-li.board_ticket ul.prio3 { background: #fbfbfb; border-color: #ddd }
-li.board_ticket ul.prio4 { background: #e7ffff; border-color: #cee }
-li.board_ticket ul.prio5 { background: #e7eeff; border-color: #cde }
-li.board_ticket ul.prio6 { background: #f0f0f0; border-color: #ddd }
+li.board_ticket dl dt:after { 
+	content: ":"; 
+}
+
+li.board_ticket dl dd { 
+	margin: 0 0 0 130px; 
+	padding: 0 0 0 .3em;
+}
+
+li.prio1 { background: #fdc; border-color: #e88 }
+li.prio2 { background: #ffb; border-color: #eea }
+li.prio3 { background: #fbfbfb; border-color: #ddd }
+li.prio4 { background: #e7ffff; border-color: #cee }
+li.prio5 { background: #e7eeff; border-color: #cde }
+li.prio6 { background: #f0f0f0; border-color: #ddd }

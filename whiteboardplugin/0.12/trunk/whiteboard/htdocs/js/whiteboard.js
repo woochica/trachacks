@@ -2,6 +2,8 @@
 
 jQuery(document).ready(function($){
     
+    $('.board_column').equalHeights()
+    
     var viewToggle = $('<div id="view_toggle" class="nav">').append($('<ul>')
         .append('<li id="view_grid" class="first">Grid</li><li id="view_whiteboard" class="not_current last">Whiteboard</li>')
     );

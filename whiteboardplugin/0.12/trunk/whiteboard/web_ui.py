@@ -37,6 +37,7 @@ class WhiteboardModule(Component):
         if filename == 'query.html':
             self.log.debug("WhiteboardPlugin: rendering template")
             add_script(req, 'whiteboard/js/whiteboard.js')
+            add_script(req, 'whiteboard/js/jquery.equalheights.js')
             add_stylesheet(req, 'whiteboard/css/whiteboard.css')
             add_ctxtnav(req, "Whiteboard", "/#whiteboard")
             
