@@ -147,7 +147,7 @@ class BatchModifier:
             raise TracError, 'No tickets selected'
         
         self._save_ticket_changes(req, env, log, selectedTickets, tickets, 
-                                  values, comment)
+                                  values, comment, modify_changetime)
 
     def _get_new_ticket_values(self, req, env):
         """Pull all of the new values out of the post data."""
@@ -172,8 +172,8 @@ class BatchModifier:
         if values.has_key('status') and values['status'] is not 'closed':
             values['resolution'] = ''
 
-    def _save_ticket_changes(self, req, env, log, selected_tickets, tickets,
-                             new_values, comment):
+    def _save_ticket_changes(self, req, env, log, selectedTickets, tickets,
+                             values, comment, modify_changetime):
         for id in selectedTickets:
             if id in tickets:
                 t = Ticket(env, int(id))
