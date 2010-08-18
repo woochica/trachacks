@@ -177,19 +177,47 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	if page is None:
     	    raise HTTPBadRequest('__PAGE is required')
 
-    	fields_to_be_stored  = {}
-    	fields_to_be_deleted = []							         
+    	fields_to_be_stored = {}
+	checkbox_state      = {}
+	unprocessed         = {}
     											         
+        # first step : extract hidden fields to find all checkboxes...
     	for name,value in args.iteritems():
-          #self.log.debug("name>%s<     value>%s<" % (name,value));
-    	  if (re.match('CNT/[0-9]+/:VAL/[0-9]+/$',name)):					         
+    	  m=re.match('^hidden_(.+)$',name)														   
+
+    	  if (m is not None):					         
     	    # there is a checkbutton...
-    	    #self.log.debug("checkbox >%s<  >%s<" % (name,value));
-    	    if (value not in args):							         
-    	      # ...which is unchecked => remove database entry...			         
-    	      fields_to_be_deleted.append(value)					         
-    	      #self.log.debug("delete >%s<  >%s<" % (name,value));
-    	  else: 									         
+	    checkbox_name                 = m.group(1)
+	    checkbox_state[checkbox_name] = value
+	  else:
+	    unprocessed   [name         ] = value
+	    
+
+        # process checkboxes first (as they have a different logic)...
+	# an unchecked checkbox has no response => the absence of a response has to be interpreted as 'off'.
+	# In addition, even for checkboxes in 'on' state nothing is responded if they're disabled (read-only)...	
+    	for name,state in checkbox_state.iteritems():
+          if (state == 'enabled_off'):
+	    # checkbox was 'off' at time when form was rendered.
+	    # => the only possible transition is to 'on'
+	    if (name in unprocessed):
+	      # state change ('off' -> 'on') => update database...
+    	      fields_to_be_stored[name]=unprocessed[name]
+    	      #self.log.debug("cb off2on >%s<  >%s<" % (name,unprocessed[name]));
+          elif (state == 'enabled_on'):
+	    # checkbox was 'on' at time when form was rendered.
+	    # => the only possible transition is to 'off'
+	    if (name not in unprocessed):
+	      # interprete no response as 'off'...
+	      # state change ('on' -> 'off') => update database...
+    	      fields_to_be_stored[name]=''						         
+    	      #self.log.debug("cb on2off >%s<  >%s<" % (name,''));
+
+	# third step : process all non-checkbox fields...
+    	for name,value in unprocessed.iteritems():
+	  if (name not in checkbox_state):
+	    # it's not a checkbox...
+	    # might be compared against current database state to log changes, only...
     	    fields_to_be_stored[name]=value						         
     	    #self.log.debug("store >%s<  >%s<" % (name,value));
 
@@ -201,10 +229,6 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	  										         
     	  msg = self.set_tracform_field(db,name,value,authname)
 
-    	# remove obsolete fields (unchecked checkboxes)...
-    	for resolved_name in fields_to_be_deleted:
-    	  msg = self.delete_tracform_field(db,resolved_name)
-    	  										         
     	# set form modification date...  						         
     	msg = self.set_tracform_field(db,page,'',authname)				         
 
@@ -559,6 +583,7 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	  result += unprocessed 									    								   
     	unprocessed  = ''											 							   
 
+    #result = '{{{\n'+result+'\n}}}';
     # wikify structure of document...																	   
     result = self.wiki_to_html(formatter,result)															   
 
@@ -607,17 +632,23 @@ class WikiFormsMacro(WikiMacroBase,Component):
     		str(checkbox_def['xtra']),									         
     		str(entry),permission)  									            
 
-    # map flag to html needs... 										         
-    if (checkbox_def['cfg']['checked']==True):  								         
-      checkbox_def['cfg']['checked'] = 'checked="checked"'							         
-    else:													         
-      checkbox_def['cfg']['checked'] = ''									         
-      														         
+    # map flag to html needs...
+    hidden_value = ""
+     										         
     if (permission['w'] == False):										         
-      access_flag = 'DISABLED'											         
+      access_flag  = 'DISABLED'											         
+      hidden_value = 'disabled'							         
     else:									        			         
-      access_flag = ''												         
+      access_flag  = ''												         
+      hidden_value = 'enabled'							         
     														         
+    if (checkbox_def['cfg']['checked']==True):  								         
+      checkbox_def['cfg']['checked']  = 'checked="checked"'
+      hidden_value                   += '_on'							         
+    else:													         
+      checkbox_def['cfg']['checked']  = ''									         
+      hidden_value                   += '_off'							         
+      														         
     # when submitting the form, checked checkboxes are transmitted, only.					         
     # => the update-processor will not know about unchecked ones.						         
     # => send a hidden field for all checkboxes to allow to find those. 					         
@@ -632,20 +663,27 @@ class WikiFormsMacro(WikiMacroBase,Component):
     		    %s
     		    %s  											         
     		   >												         
-    		   <INPUT											         
-    		    type="hidden"										         
-    		    name='%s'											         
-    		    value='%s'  										         
-    		   >												         
     		""" % (checkbox_def['cfg']['name'   ],  							         
     		       checkbox_def['cfg']['id'     ],  							         
     		       checkbox_def['cfg']['class'  ],  							         
     		       checkbox_def['cfg']['value'  ],  							         
     		       checkbox_def['cfg']['checked'],								         
-    		       access_flag		     ,  							         
-    		       placeholder_id,  									         
-    		       checkbox_def['cfg']['name'   ]								         
+    		       access_flag
     		       )											         
+
+    result += """			      	   								 
+    		 <INPUT 		      	   									
+    		  type="hidden" 	      	   									
+    		  name='hidden_%s'		      	   									
+    		  value='%s'		      	   									
+    		 >			      	   									
+    	      """ % ( checkbox_def['cfg']['name']
+	             ,hidden_value								
+    		    )  		      	   									
+
+
+
+
     return result												         
 
   # --------------------------------------------------------------------------------------------------------------------------
