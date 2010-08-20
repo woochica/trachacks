@@ -31,9 +31,6 @@ class AllAttachmentsMacro(WikiMacroBase):
        ''Created by Daan van Etten (http://stuq.nl/software/trac/AllAttachmentsMacro)''
     """
 
-    revison = "$Rev$"
-    url = "$URL$"
-
     def expand_macro(self, formatter, name, content):
         attachment_type = ""
         if content:
