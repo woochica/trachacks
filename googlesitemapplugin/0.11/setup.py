@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from tracgooglesitemap.plugin import __revision__ as codereva
-from tracgooglesitemap.notify import __revision__ as coderevb
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
@@ -13,7 +11,7 @@ rev = max(__revision__, codereva, coderevb)
 
 setup(
     name = 'TracGoogleSitemapPlugin',
-    version = '1.0.' + rev,
+    version = '1.0',
     packages = ['tracgooglesitemap'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
