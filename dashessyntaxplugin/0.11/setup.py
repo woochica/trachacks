@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from tracdashessyntax.plugin import __revision__ as coderev
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
