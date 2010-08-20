@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from tracgooglestaticmap.macro import __revision__ as coderev
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
@@ -12,7 +11,7 @@ rev = str( max( coderev, __revision__ ) )
 
 setup(
     name = 'TracGoogleStaticMapMacro',
-    version = '0.3.' + rev,
+    version = '0.4',
     packages = ['tracgooglestaticmap'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
