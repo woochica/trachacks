@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from tracextracturl.extracturl import __revision__ as coderev
-from tracextracturl.macro      import __revision__ as macrorev
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
@@ -13,7 +11,7 @@ rev = str( max( coderev, macrorev, __revision__ ) )
 
 setup(
     name         = 'TracExtractUrl',
-    version      = '0.2.' + rev,
+    version      = '0.3',
     packages     = ['tracextracturl'],
     author       = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
