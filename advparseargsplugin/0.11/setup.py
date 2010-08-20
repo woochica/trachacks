@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from tracadvparseargs.parseargs import __revision__ as pluginrev
-from tracadvparseargs.macro     import __revision__ as macrorev
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
@@ -13,7 +11,7 @@ rev = str( max( pluginrev, macrorev, __revision__ ) )
 
 setup(
     name         = 'TracAdvParseArgsPlugin',
-    version      = '0.3.' + rev,
+    version      = '0.4',
     packages     = ['tracadvparseargs'],
     author       = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
