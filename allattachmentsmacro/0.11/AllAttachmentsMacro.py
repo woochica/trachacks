@@ -10,6 +10,9 @@ from trac.wiki.macros import WikiMacroBase, parse_args
 from genshi.builder import tag
 from trac.util.text import pretty_size
 
+revison = "$Rev$"
+url = "$URL$"
+
 class AllAttachmentsMacro(WikiMacroBase):
     """Shows all attachments on the Trac site
 
@@ -28,8 +31,8 @@ class AllAttachmentsMacro(WikiMacroBase):
        ''Created by Daan van Etten (http://stuq.nl/software/trac/AllAttachmentsMacro)''
     """
 
-    revision = "1.0"
-    url = "http://stuq.nl/software/trac/AllAttachments"
+    revison = "$Rev$"
+    url = "$URL$"
 
     def expand_macro(self, formatter, name, content):
         attachment_type = ""
