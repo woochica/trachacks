@@ -1,10 +1,10 @@
-#view_toggle .not_current {
+.not_current {
 	text-decoration: none;
  	color: #b00;
  	border-bottom: 1px dotted #bbb;
 }
 
-#view_toggle .not_current:hover {
+.not_current:hover {
 	cursor: pointer;
 }
 

@@ -43,6 +43,6 @@ class WhiteboardModule(Component):
             
             whiteboard_stream = Chrome(self.env).render_template(req, 
                 'whiteboard.html', formdata, fragment=True)
-            return stream | Transformer('//div[@id="help"]'). \
+            return stream | Transformer('//h2[@class="report-result"]..'). \
                 before(whiteboard_stream.select('//div[@id="whiteboard"]'))
         return stream
