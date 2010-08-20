@@ -100,7 +100,8 @@ class CodeReviewSystem(Component):
         return "The macro is used to display given file content."
 
     def render_macro(self, req, name, content):
-        path, start_line, end_line, rev = [arg.strip() for arg in content.split(',')][:4]
+        path, start_line, end_line, rev = [arg.strip() for arg in \
+                                           content.split(',')][:4]
         start_line = int(start_line)
         end_line = int(end_line)
         repos = self.env.get_repository()

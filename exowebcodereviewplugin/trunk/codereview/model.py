@@ -31,11 +31,13 @@ class CodeReviewPool(object):
         return int(self.cursor.fetchone()[0])
 
     def get_codereviews_by_time(self, start_time, stop_time):
-        self.cursor.execute("SELECT c.time, c.author, c.text, c.id, c.status, " \
-                          "c.version, r.message FROM codereview c " \
-                          "LEFT OUTER JOIN revision r ON(c.id=CAST(r.rev AS integer)) " \
-                          "WHERE c.time>=%s AND c.time<=%s ORDER BY c.time", \
-                          (start_time, stop_time))
+        self.cursor.execute("SELECT c.time, c.author, c.text, c.id, " \
+                            "c.status, c.version, r.message FROM " \
+                            "codereview c LEFT OUTER JOIN revision r " \
+                            "ON(c.id=CAST(r.rev AS integer)) " \
+                            "WHERE c.time>=%s AND c.time<=%s " \
+                            "ORDER BY c.time", \
+                            (start_time, stop_time))
         for record in self.cursor:
             yield record
 
@@ -46,22 +48,24 @@ class CodeReviewPool(object):
         elif status == "Undergoing":
             status_list = [str_status["UndergoingReview"], ]
         if status != "Awaiting":
-           self.cursor.execute("SELECT c.id, c.priority FROM review_current r " \
-                            "LEFT OUTER JOIN codereview c ON " \
-                            "r.id=c.id and r.version=c.version " \
-                            "WHERE c.status IN (" \
-                            + ','.join(["%s"] * len(status_list)) + \
-                            ") AND %s>=c.id AND c.id>=%s " \
-                            "ORDER BY c.id DESC", \
-                            status_list + [last_rev, start_rev])
+           self.cursor.execute("SELECT c.id, c.priority " \
+                               "FROM review_current r " \
+                               "LEFT OUTER JOIN codereview c ON " \
+                               "r.id=c.id and r.version=c.version " \
+                               "WHERE c.status IN (" \
+                               + ','.join(["%s"] * len(status_list)) + \
+                               ") AND %s>=c.id AND c.id>=%s " \
+                               "ORDER BY c.id DESC", \
+                               status_list + [last_rev, start_rev])
 
         else:
             self.cursor.execute("SELECT rev FROM revision " \
-                        "WHERE CAST(rev AS integer) NOT IN " \
-                        "(SELECT id FROM codereview) " \
-                        " AND %s>=CAST(rev AS integer) AND CAST(rev AS integer)>=%s " \
-                        "ORDER by rev DESC", \
-                        (last_rev, start_rev))
+                                "WHERE CAST(rev AS integer) NOT IN " \
+                                "(SELECT id FROM codereview) " \
+                                "AND %s>=CAST(rev AS integer) " \
+                                "AND CAST(rev AS integer)>=%s " \
+                                "ORDER by rev DESC", \
+                                (last_rev, start_rev))
 
 
         id_cs = []
@@ -108,7 +112,8 @@ class CodeReviewPool(object):
             item['rev'] = str(item['rev'])
             codereviews_items.append(item)
         if status == "Awaiting":
-            codereviews_items.sort(lambda x, y: cmp(int(y['rev']), int(x['rev'])))
+            codereviews_items.sort(lambda x, y: cmp(int(y['rev']), \
+                                   int(x['rev'])))
         return codereviews_items
 
     def _is_match(self, key, author, msg, ctime):
@@ -147,15 +152,14 @@ class CodeReviewPool(object):
     def changeset_info(self, revisions):
         ret = []
         if self.env.config.get("trac", "database", "").lower().startswith("sqlite"):
-            self.cursor.execute("SELECT r.rev, author, message, path, time FROM revision r " \
-                           "  LEFT OUTER JOIN rev_path p ON (p.rev=r.rev) " \
-                           "  ORDER BY r.rev+0  DESC " \
-                           )
+            self.cursor.execute("SELECT r.rev, author, message, path, time " \
+                                "FROM revision r LEFT OUTER JOIN rev_path p " \
+                                "ON (p.rev=r.rev) ORDER BY r.rev+0 DESC ")
         else:
-            self.cursor.execute("SELECT r.rev, author, message, path, time FROM revision r " \
-                           "  LEFT OUTER JOIN rev_path p ON (p.rev=r.rev) " \
-                           "  ORDER BY CAST(r.rev AS integer)  DESC " \
-                           )
+            self.cursor.execute("SELECT r.rev, author, message, path, time " \
+                                "FROM revision r LEFT OUTER JOIN rev_path p " \
+                                "ON (p.rev=r.rev) ORDER BY CAST(r.rev AS " \
+                                "integer) DESC ")
         result = self.cursor.fetchall()
 
         for r, author, message, common_path, ctime in result:
@@ -201,14 +205,16 @@ class CodeReview(object):
             return value
 
     def is_existent_rev(self):
-        self.cursor.execute("SELECT rev FROM revision WHERE rev=%s::int", (self.id, ))
+        self.cursor.execute("SELECT rev FROM revision WHERE rev=%s", \
+                            (self.id, ))
         if not self.cursor.fetchone():
             return False
         else:
             return True
 
     def get_current_ver(self):
-        self.cursor.execute("SELECT version FROM review_current WHERE id=%s::int", (self.id, ))
+        self.cursor.execute("SELECT version FROM review_current WHERE id=%s", \
+                            (self.id, ))
         ver = self.cursor.fetchone()
         if ver:
             return ver[0]
@@ -237,8 +243,9 @@ class CodeReview(object):
             req_ver = self.get_current_ver()
         item = {}
         if self.is_existent():
-            self.cursor.execute("SELECT status,time,text,priority,author FROM codereview " \
-                           "WHERE id=%s and version=%s", (self.id, req_ver))
+            self.cursor.execute("SELECT status,time,text,priority,author " \
+                                "FROM codereview WHERE id=%s and version=%s", \
+                                (self.id, req_ver))
             item['status'], item['time'], item['text'], item['priority'], item['author'] = self.cursor.fetchone()
         else:
             item['status'] = str_status['AwaitingReview']
@@ -254,8 +261,11 @@ class CodeReview(object):
     def get_reviewers(self):
         # modify the select statement, or there will be an Error like this:
         # ERROR:  for SELECT DISTINCT, ORDER BY expressions must appear in select list.
-        self.cursor.execute("SELECT author FROM codereview WHERE id = %s GROUP BY author ORDER BY MIN(version)", (self.id, ))
-        return [reviewer[0] for reviewer in self.cursor if reviewer[0] and reviewer[0] != 'anonymous']
+        self.cursor.execute("SELECT author FROM codereview WHERE id = %s " \
+                            "GROUP BY author ORDER BY MIN(version)", \
+                            (self.id, ))
+        return [reviewer[0] for reviewer in self.cursor if reviewer[0] and \
+                reviewer[0] != 'anonymous']
 
     def set_item(self, item):
         for key in item.keys():
@@ -274,13 +284,15 @@ class CodeReview(object):
         keys = self.item.keys()
         values = [self.item[key] for key in keys]
         
-        self.cursor.execute("INSERT INTO codereview (%s) VALUES (%s)" % (','.join(keys), ','.join(['%s' for key in keys])), values)
+        self.cursor.execute("INSERT INTO codereview (%s) VALUES (%s)" % \
+                            (','.join(keys), ','.join(['%s' for key in keys])), values)
         self.db.commit()
 
     def delete(self):
         if not self.is_existent():
             return
-        self.cursor.execute("DELETE FROM codereview WHERE id=%s AND version=%s", \
+        self.cursor.execute("DELETE FROM codereview WHERE id=%s " \
+                            "AND version=%s", \
                             (self.id, self.get_current_ver()))
         self.db.commit()
 
@@ -303,7 +315,9 @@ class CodeReview(object):
             return
 
     def get_all_items(self):
-        self.cursor.execute("SELECT " + ','.join(self.fields) + " FROM codereview WHERE id=%s ORDER BY version", (self.id,))
+        self.cursor.execute("SELECT " + ','.join(self.fields) + \
+                            " FROM codereview WHERE id=%s ORDER BY version", \
+                            (self.id, ))
         for record in self.cursor:
             item = {}
             for i in range(len(self.fields)):
@@ -326,7 +340,8 @@ class CommitPath(object):
         self.cursor = self.db.cursor()
 
     def get_path(self, rev):
-        self.cursor.execute("SELECT path FROM rev_path WHERE rev=%s::int", (rev,))
+        self.cursor.execute("SELECT path FROM rev_path "
+                            "WHERE rev=%s", (rev, ))
         path = self.cursor.fetchone()
         if path:
             return path[0]
@@ -334,9 +349,8 @@ class CommitPath(object):
             return self._render_path(rev)
 
     def _render_path(self, rev):
-
         self.cursor.execute("SELECT path FROM node_change " \
-                           "WHERE rev=%s", (rev, ))
+                            "WHERE rev=%s", (rev, ))
         try:
             paths = [row[0] for row in self.cursor]
             common_path = row[0]
@@ -357,6 +371,7 @@ class CommitPath(object):
             common_path = common_path.split("/")[0]
         if len(common_path) >= 30:
             common_path = common_path[:30] + ' ...'
-        self.cursor.execute("INSERT INTO rev_path (rev, path) VALUES (%s, %s)", (rev, common_path))
+        self.cursor.execute("INSERT INTO rev_path (rev, path) " \
+                            "VALUES (%s, %s)", (rev, common_path))
         self.db.commit()
         return common_path
