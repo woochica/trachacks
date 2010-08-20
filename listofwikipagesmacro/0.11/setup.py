@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from setuptools import setup
-from traclistofwikipages.macro import __revision__ as macrorev
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
@@ -12,7 +11,7 @@ rev = max(__revision__, macrorev)
 
 setup(
     name = 'TracListOfWikiPagesMacro',
-    version = '0.3.' + rev,
+    version = '0.4',
     packages = ['traclistofwikipages'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
