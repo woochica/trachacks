@@ -114,6 +114,8 @@ import sha
 
 from trac.wiki.macros import WikiMacroBase
 
+revison = "$Rev$"
+url = "$URL$" 
 
 def render(env, texData, density, fleqnMode, mathMode):
     # gets paths from configuration
@@ -212,7 +214,6 @@ def render(env, texData, density, fleqnMode, mathMode):
         margin = ""
         
     html = "<img src='%s' border='0' style='vertical-align: middle;%s' alt='formula' />" % (env.href.chrome('site','formulas/%s.%s'%(name, imageFormat)), margin)
-
     # Uncomment this for debugging purposes
     #html += "<h1>log</h1>"
     #html += log
