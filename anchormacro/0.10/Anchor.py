@@ -25,9 +25,6 @@ Example:
 }}}
 """
 
-revison="$Rev$"
-url="$URL$"
-
 def execute(hdf, args, env):
     args = tuple(args.split(","))
     print args
