@@ -451,7 +451,12 @@ class GVRenderer(RenderImpl):
     if macroenv.macroid.upper() == 'NONE' or macroenv.macroid == None or macroenv.macroid == '':
       macroenv.macroid = self.DEFAULT_GVRENDER_MACROID
     
-    if str(macroenv.macroid) == '3':
+    try:
+      milestone_style = macroenv.macrokw.get('milestones').upper()
+    except:
+      milestone_style = 'ON'
+    
+    if str(macroenv.macroid) == '3' or (  milestone_style == 'OFF' ) :  # first: deprecated configuration
       macroenv.tracenv.log.warning('GVRenderer: overwrite _writeMilestoneClusterHeader _writeMilestoneClusterFooter')
       self._writeMilestoneClusterHeader = dummy
       self._writeMilestoneClusterFooter = dummy
@@ -1088,12 +1093,11 @@ class GVCollapsedHRenderer( GVRenderer ):
         self.cmapxgen += '%s->%s [style="setlinewidth(%s)"%s];' % (
           tdep, ddep, str(scale_linewidth( hdepmap[tdep][ddep]['count'] )), edgecolstmt )
 
+
 RenderRegister.add( GVCollapsedHRenderer, 'gvhierarchical' )
 #RenderRegister.add( GVCollapsedHRenderer, 'default' )
-
-
 RenderRegister.add( BurndownChartTickets, 'burndowntickets' )
-
+#RenderRegister.add( HierarchicalRenderer2, 'hiera')
 
 class ppRender():
   '''
@@ -1110,6 +1114,7 @@ class ppRender():
     self.macroenv = macroenv
     renderer = macroenv.macrokw.get('renderer')
     if ( renderer == '' ) or ( renderer not in RenderRegister.keys() ):
+      macroenv.tracenv.log.warning('Unknown or no renderer given: %s ' % (renderer, ) )
       renderer = 'default'
     ConcreteRenderer = RenderRegister.get( renderer )
     self.concreteRenderer = ConcreteRenderer( self.macroenv )

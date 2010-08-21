@@ -132,10 +132,18 @@
 
 /* ******************** jquery.tablesorter ******************** */
 th.headerSortUp { 
+    cursor: pointer; 
+    background-repeat: no-repeat; 
+    background-position: center right; 
+    padding-right: 20px !important;
     background-image: url(asc.gif); 
 } 
 
 th.headerSortDown { 
+    cursor: pointer; 
+    background-repeat: no-repeat; 
+    background-position: center right; 
+    padding-right: 20px !important;
     background-image: url(desc.gif); 
 } 
 

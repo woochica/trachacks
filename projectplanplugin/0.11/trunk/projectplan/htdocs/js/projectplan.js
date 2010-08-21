@@ -140,14 +140,13 @@
 						
 			/* parsers utils */
 			function buildParserCache(table,$headers) {
+				var list = [];
 				
 				if(table.config.debug) { var parsersDebug = ""; }
 				
-				var rows = table.tBodies[0].rows;
-				
-				if(table.tBodies[0].rows[0]) {
-
-					var list = [], cells = rows[0].cells, l = cells.length;
+				if(table.tBodies[0].rows && table.tBodies[0].rows[0]) {
+					var rows = table.tBodies[0].rows;
+					var cells = rows[0].cells, l = cells.length;
 					
 					for (var i=0;i < l; i++) {
 						var p = false;

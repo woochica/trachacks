@@ -473,10 +473,11 @@ class BurndownChart(ChartRenderer):
     changes = self.aggregateDates(changes)
     #self.macroenv.tracenv.log.debug('changes='+repr(changes)) # DEBUG
     
-    outer2 = tag.table( class_="invisible data" , border = "1", style = 'width:auto;')
+    outer2 = tag.table( class_="invisibleX data" , border = "1", style = 'width:auto;')
     keys = changes.keys()
     keys.sort() # sort by time
     self.macroenv.tracenv.log.debug('aggregated keys='+repr(keys)) # DEBUG
+    self.macroenv.tracenv.log.debug('changes='+repr(changes)) # DEBUG
     
     (firstday, lastday) = self.getBoundaries( changes )
     firstsegment = firstday

@@ -535,7 +535,8 @@ class TicketNodePrototype( NodePrototype ):
       start a frame, purpose: hightlight of this ticket
     '''
     # TODO: choose better colors
-    if self.macroenv.macrokw.get('highlightticket', '0') == self.ticketid:
+    
+    if self.ticketid in self.macroenv.macrokw.get('highlightticket', '0').split(';') :
       self.entertable(border = 0, bgcolor = '#FFFFD7', cellspacing = 2, cellpadding = 0)
       self.entertr()
       self.entertd()
@@ -829,10 +830,14 @@ class GVRenderProto():
     '''
     # choose between the different implementations
     #macroenv.tracenv.log.warning("ticket_gen_markup %s", macroenv.macroid )
+    try:
+      ticketstyle = macroenv.macrokw.get('ticketstyle').lower()
+    except:
+      ticketstyle = ''
     
-    if str(macroenv.macroid) in ['3'] :
+    if (str(macroenv.macroid) in ['3']) or (  ticketstyle == 'small') : # first: deprecated style
       return TicketSimpleNodePrototype( macroenv, ticket ).render()
-    else :
+    else : # style = normal
       return TicketNodePrototype( macroenv, ticket ).render()
 
   @classmethod

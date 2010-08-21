@@ -121,6 +121,18 @@ class ppTicketSet():
     '''
     self.__tickets[ ticket['id'] ] = ppTicket(ticket,self)
 
+  def deleteTicket(self,ticket):
+    '''
+      remove a new ticket with ticket data <ticket>
+    '''
+    self.deleteTicketId(ticket['id'])
+
+  def deleteTicketId(self, tid):
+    try:
+      del self.__tickets[ tid ]
+    except:
+      pass
+
   @classmethod
   def getfielddefs( self ):
     return [ f['name'] for f in TicketSystem( self.macroenv.tracenv ).get_ticket_fields() ]
