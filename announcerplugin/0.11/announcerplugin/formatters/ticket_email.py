@@ -2,13 +2,18 @@ from announcerplugin.api import IAnnouncementFormatter
 from genshi import HTML
 from genshi.template import NewTextTemplate, MarkupTemplate
 from genshi.template import TemplateLoader
+
 from trac.config import Option, IntOption, ListOption
-from trac.core import Component, implements
-from trac.util.text import wrap, to_unicode
+from trac.core import *
+from trac.mimeview import Context
+from trac.test import Mock, MockPerm
 from trac.ticket.api import TicketSystem
+from trac.util.text import wrap, to_unicode, exception_to_unicode
 from trac.versioncontrol.diff import diff_blocks
 from trac.web.chrome import Chrome
 from trac.web.href import Href
+from trac.wiki.formatter import HtmlFormatter
+
 import difflib
 
 def diff_cleanup(gen):
@@ -80,8 +85,8 @@ class TicketEmailFormatter(Component):
                     if 'status' in event.changes:
                         action = 'Status -> %s' % (event.target['status'])
                 template = NewTextTemplate(self.ticket_email_subject)
-                return template.generate(ticket=event.target, event=event, 
-                        action=action).render()
+                return to_unicode(template.generate(ticket=event.target, event=event,
+                        action=action).render())
                 
     def format(self, transport, realm, style, event):
         if transport == "email":
@@ -109,7 +114,7 @@ class TicketEmailFormatter(Component):
             ticket = ticket,
             author = event.author,
             comment = event.comment,
-            header = self._header_fields(ticket),
+            fields = self._header_fields(ticket),
             category = event.category,
             ticket_link = self.env.abs_href('ticket', ticket.id),
             project_name = self.env.project_name,
@@ -134,11 +139,13 @@ class TicketEmailFormatter(Component):
 
     def _header_fields(self, ticket):
         headers = self.ticket_email_header_fields
-        if len(headers) and headers[0].strip() == '*':
-            tsystem = TicketSystem(self.env)
-            headers = map(lambda x: x['name'], tsystem.get_ticket_fields())
-        return headers 
-        
+        fields = TicketSystem(self.env).get_ticket_fields()
+        if len(headers) and headers[0].strip() != '*':
+            def _filter(i):
+                return i['name'] in headers
+            fields = filter(_filter, fields)
+        return fields
+
     def _format_html(self, event):
         ticket = event.target
         short_changes = {}
@@ -164,11 +171,30 @@ class TicketEmailFormatter(Component):
 
             else:
                 short_changes[field.capitalize()] = (old_value, new_value)
+
+        try:
+            req = Mock(
+                href=Href(self.env.abs_href()),
+                abs_href=self.env.abs_href(),
+                authname=event.author, 
+                perm=MockPerm(),
+                chrome=dict(
+                    warnings=[],
+                    notices=[]
+                ),
+                args={}
+            )
+            context = Context.from_request(req, event.realm, event.target.id)
+            formatter = HtmlFormatter(self.env, context, event.comment)
+            temp = formatter.generate(True)
+        except Exception, e:
+            self.log.error(exception_to_unicode(e, traceback=True))
+            temp = 'Comment in plain text: %s'%event.comment
         data = dict(
             ticket = ticket,
             author = event.author,
-            header = self._header_fields(ticket),
-            comment = event.comment,
+            fields = self._header_fields(ticket),
+            comment = temp,
             category = event.category,
             ticket_link = self.env.abs_href('ticket', ticket.id),
             project_name = self.env.project_name,
@@ -177,7 +203,8 @@ class TicketEmailFormatter(Component):
             has_changes = short_changes or long_changes,
             long_changes = long_changes,
             short_changes = short_changes,
-            attachment= event.attachment
+            attachment = event.attachment,
+            attachment_link = self.env.abs_href('attachment/ticket',ticket.id)
         )
         chrome = Chrome(self.env)
         dirs = []

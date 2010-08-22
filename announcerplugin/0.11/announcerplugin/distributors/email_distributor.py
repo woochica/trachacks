@@ -1,7 +1,8 @@
 from trac.core import Component, implements, ExtensionPoint
 from trac.util.compat import set, sorted
 from trac.config import Option, BoolOption, IntOption, OrderedExtensionsOption
-from trac.util import get_pkginfo
+from trac.util import get_pkginfo, md5
+from trac.util.datefmt import to_timestamp
 from trac.util.text import to_unicode
 from trac.util.translation import _
 
@@ -65,6 +66,9 @@ class EmailDistributor(Component):
 
     smtp_from = Option('announcer', 'smtp_from', 'trac@localhost',
         """Sender address to use in notification emails.""")
+        
+    smtp_ssl = BoolOption('announcer', 'smtp_ssl', 'false',
+        doc="""Use ssl for smtp connection.""")
         
     smtp_from_name = Option('announcer', 'smtp_from_name', '',
         """Sender name to use in notification emails.""")
@@ -169,47 +173,71 @@ class EmailDistributor(Component):
         return formats
         
     def distribute(self, transport, recipients, event):
-        if not self.smtp_enabled or transport != self.get_distribution_transport():
+        if not self.smtp_enabled or \
+                transport != self.get_distribution_transport():
+            self.log.debug("EmailDistributer smtp_enabled set to false")
             return
         fmtdict = self.formats(transport, event.realm)
         if not fmtdict:
+            self.log.error(
+                "EmailDistributer No formats found for %s %s"%(
+                    transport, event.realm))
             return
         msgdict = {}
         for name, authed, addr in recipients:
             fmt = name and \
                 self._get_preferred_format(event.realm, name, authed) or \
                 self._get_default_format()
-                
+            if fmt not in fmtdict:
+                self.log.debug(("EmailDistributer format %s not available" +
+                    "for %s %s, looking for an alternative")%(
+                        fmt, transport, event.realm))
+                # If the fmt is not available for this realm, then try to find
+                # an alternative
+                oldfmt = fmt
+                fmt = None
+                for f in fmtdict.values():
+                    fmt = f.get_format_alternative(
+                            transport, event.realm, oldfmt)
+                    if fmt: break
+            if not fmt:
+                self.log.error(
+                    "EmailDistributer was unable to find a formatter " +
+                    "for format %s"%k
+                )
+                continue
+            rslvr = None
             if name and not addr:
+                # figure out what the addr should be if it's not defined
                 for rslvr in self.resolvers:
                     addr = rslvr.get_address_for_name(name, authed)
-                    if addr:
-                        self.log.debug("EmailDistributor found the " \
-                                "address '%s' for '%s (%s)' via: %s"%(
-                                addr, name, authed and \
-                                'authenticated' or 'not authenticated', 
-                                rslvr.__class__.__name__))
-                        break
+                    if addr: break
             if addr:
+                self.log.debug("EmailDistributor found the " \
+                        "address '%s' for '%s (%s)' via: %s"%(
+                        addr, name, authed and \
+                        'authenticated' or 'not authenticated', 
+                        rslvr.__class__.__name__))
+                # ok, we found an addr, add the message
                 msgdict.setdefault(fmt, set()).add((name, authed, addr))
             else:
                 self.log.debug("EmailDistributor was unable to find an " \
                         "address for: %s (%s)"%(name, authed and \
                         'authenticated' or 'not authenticated'))
-        for msgset, fmtr, fmt in [
-                (msgdict[f], fmtdict[f], f) for f in msgdict.keys()
-                ]:
-            if not msgset:
+        for k, v in msgdict.items():
+            if not v or not fmtdict.get(k):
                 continue
             self.log.debug(
                 "EmailDistributor is sending event as '%s' to: %s"%(
-                    fmt, ', '.join(x[2] for x in msgset)))
-            self._do_send(transport, event, fmt, msgset, fmtr)
+                    fmt, ', '.join(x[2] for x in v)))
+            self._do_send(transport, event, k, v, fmtdict[k])
                     
     def _get_default_format(self):
         return self.default_email_format
         
     def _get_preferred_format(self, realm, sid, authenticated):
+        if authenticated is None:
+            authenticated = 0
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("""
@@ -254,6 +282,25 @@ class EmailDistributor(Component):
         else:
             raise TracError(_('Invalid email encoding setting: %s'%pref))
 
+    def _message_id(self, realm, id, modtime=None):
+        """Generate a predictable, but sufficiently unique message ID."""
+        s = '%s.%s.%d.%s' % (self.env.project_url, 
+                               id, to_timestamp(modtime),
+                               realm.encode('ascii', 'ignore'))
+        dig = md5(s).hexdigest()
+        host = self.smtp_from[self.smtp_from.find('@') + 1:]
+        msgid = '<%03d.%s@%s>' % (len(s), dig, host)
+        return msgid
+
+    def _event_id(self, event):
+        "FIXME: badly needs improvement"
+        if hasattr(event.target, 'id'):
+            return "%08d"%event.target.id
+        elif hasattr(event.target, 'name'):
+            return event.target.name
+        else:
+            return str(event.target)
+
     def _do_send(self, transport, event, format, recipients, formatter):
         output = formatter.format(transport, event.realm, format, event)
         subject = formatter.format_subject(transport, event.realm, format, 
@@ -266,6 +313,7 @@ class EmailDistributor(Component):
         else:
             alternate_output = None
         rootMessage = MIMEMultipart("related")
+        rootMessage.set_charset(self._charset)
         proj_name = self.env.project_name
         trac_version = get_pkginfo(trac.core).get('version', trac.__version__)
         announcer_version = get_pkginfo(announcerplugin).get('version', 
@@ -275,6 +323,13 @@ class EmailDistributor(Component):
         rootMessage['X-Trac-Version'] = trac_version
         rootMessage['X-Announcer-Version'] = announcer_version
         rootMessage['X-Trac-Project'] = proj_name
+        rootMessage['X-Trac-Announcement-Realm'] = event.realm
+        rootMessage['X-Trac-Announcement-ID'] = self._event_id(event)
+        msgid = self._message_id(event.realm, self._event_id(event))
+        rootMessage['Message-ID'] = msgid
+        if event.category is not 'created':
+            rootMessage['In-Reply-To'] = msgid
+            rootMessage['References'] = msgid
         rootMessage['Precedence'] = 'bulk'
         rootMessage['Auto-Submitted'] = 'auto-generated'
         provided_headers = formatter.format_headers(transport, event.realm, 
@@ -286,11 +341,18 @@ class EmailDistributor(Component):
         # sanity check
         if not self._charset.body_encoding:
             try:
-                dummy = body.encode('ascii')
+                dummy = output.encode('ascii')
             except UnicodeDecodeError:
                 raise TracError(_("Ticket contains non-ASCII chars. " \
                                   "Please change encoding setting"))
 
+        prefix = self.smtp_subject_prefix
+        if prefix == '__default__': 
+            prefix = '[%s]' % self.env.project_name
+        if event.category is not 'created':
+            prefix = 'Re: %s'%prefix
+        if prefix:
+            subject = "%s %s"%(prefix, subject)
         rootMessage['Subject'] = Header(subject, self._charset) 
         from_header = '"%s" <%s>'%(
             Header(self.smtp_from_name or proj_name, self._charset),
@@ -332,10 +394,16 @@ class EmailDistributor(Component):
 
     def _transmit(self, smtpfrom, addresses, message):
         # use defaults to make sure connect() is called in the constructor
-        smtp = smtplib.SMTP(
-            host=self.smtp_server,
-            port=self.smtp_port
-        )
+        if self.smtp_ssl:
+            smtp = smtplib.SMTP_SSL(
+                host=self.smtp_server,
+                port=self.smtp_port
+            )
+        else:
+            smtp = smtplib.SMTP(
+                host=self.smtp_server,
+                port=self.smtp_port
+            )
         if self.smtp_debuglevel:
             smtp.set_debuglevel(self.smtp_debuglevel)
         if self.use_tls:

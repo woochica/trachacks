@@ -1,4 +1,5 @@
 # Copyright (c) 2008, Stephen Hansen
+# Copyright (c) 2009, Robert Corsaro
 # 
 # All rights reserved.
 # 
@@ -33,12 +34,12 @@ from setuptools import find_packages, setup
 
 setup(
     name = 'AnnouncerPlugin', 
-    version = '0.2',
-    author = 'Stephen Hansen',
-    author_email = 'shansen@advpubtech.com',
+    version = '1.0-a1',
+    author = 'Robert Corsaro',
+    author_email = 'doki_pen@doki-pen.org',
     description = 'Customizable notification system',
     license = \
-    """Copyright (c) 2008, Stephen Hansen. All rights reserved. Released under the 3-clause BSD license. """,
+    """Copyright (c) 2008, Stephen Hansen. Copyright (c) 2009, Robert Corsaro.  All rights reserved. Released under the 3-clause BSD license. """,
     url = "http://www.trac-hacks.org/wiki/AnnouncerPlugin",
     packages = find_packages(exclude=['*.tests*']),
     package_data = {'announcerplugin': ['templates/*.html', 'templates/*.txt', 'htdocs/*.*', 'htdocs/css/*.*']},
@@ -47,7 +48,25 @@ setup(
     ],
     entry_points = {
         'trac.plugins': [
-            'announcerplugin = announcerplugin',
+            'announcerplugin.api = announcerplugin.api',
+            'announcerplugin.distributors.email_distributor = announcerplugin.distributors.email_distributor',
+            'announcerplugin.formatters.ticket_email = announcerplugin.formatters.ticket_email',
+            'announcerplugin.formatters.wiki_email = announcerplugin.formatters.wiki_email',
+            'announcerplugin.pref = announcerplugin.pref',
+            'announcerplugin.producers.attachment = announcerplugin.producers.attachment',
+            'announcerplugin.producers.ticket = announcerplugin.producers.ticket',
+            'announcerplugin.producers.wiki = announcerplugin.producers.wiki',
+            'announcerplugin.resolvers.defaultdomain = announcerplugin.resolvers.defaultdomain',
+            'announcerplugin.resolvers.sessionemail = announcerplugin.resolvers.sessionemail',
+            'announcerplugin.resolvers.specified = announcerplugin.resolvers.specified',
+    #        'announcerplugin.subscribers.rulefilters = announcerplugin.subscribers.rulefilters',
+            'announcerplugin.subscribers.ticket_compat = announcerplugin.subscribers.ticket_compat',
+            'announcerplugin.subscribers.ticket_components = announcerplugin.subscribers.ticket_components',
+            'announcerplugin.subscribers.ticket_custom = announcerplugin.subscribers.ticket_custom',
+            'announcerplugin.subscribers.ticket_groups = announcerplugin.subscribers.ticket_groups',
+            'announcerplugin.subscribers.watchers = announcerplugin.subscribers.watchers',
+            'announcerplugin.subscribers.watch_users = announcerplugin.subscribers.watch_users',
+            'announcerplugin.subscribers.wiki = announcerplugin.subscribers.wiki',
         ]    
     },
     test_suite = 'announcerplugin.tests',
