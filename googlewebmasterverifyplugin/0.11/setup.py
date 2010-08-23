@@ -7,8 +7,6 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + r"$Rev$"[6:-2])
 __date__     = r"$Date$"[7:-2]
 
-rev = str( max( coderev, __revision__ ) )
-
 setup(
     name = 'TracGoogleWebmasterVerifyPlugin',
     version = '0.2',
