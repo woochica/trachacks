@@ -2,7 +2,7 @@ Author: Michael Comb <mcomb@mac.com>
 Maintainer: Ryan J Ollos <rjollos@gmail.com>
 
 Note: Because of a history of undocumented forks and merges log might still
-be incomplete, so notify the maintainer, if you know more details, please.)
+be incomplete, so notify the maintainer, if you know more details, please.
 
 
 WikiTicketCalendar inherits history of WikiCalendarMacro before 2008,
@@ -167,6 +167,10 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * use cleaner code with 'datetime' objects for date/time variables
  * re-apply calendar display width control as more flexible macro argument
 
+0.8.8 - maintenance revision for 0.11/0.12 branch (13-Aug-2010)
+ changes by Steffen Hoffmann
+ * rewrite time stamp generation and handling
+
 
 # 0.12 branch from here #
 
@@ -252,3 +256,7 @@ most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
  * remove CSS definition, that may disturb surrounding wiki page layout
  * use cleaner code with 'datetime' objects for date/time variables
  * re-apply calendar display width control as more flexible macro argument
+
+1.2.3 - maintenance revision for 0.12 branch (13-Aug-2010)
+ changes by Steffen Hoffmann
+ * rewrite time stamp generation and handling

@@ -150,6 +150,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         """A custom 'datetime' object builder.
 
         This is a convenience module for shortening function calls.
+        It uses Trac's timezone setting.
         """
         dt = datetime.datetime(year, month, day, tzinfo=self.tz_info)
         return dt
@@ -159,8 +160,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
         This is a convenience module for shorter and better serviceable code.
         """
-        tip = to_unicode(format_date(self._mkdatetime(year, month),
-                                                              '%B %Y'))
+        tip = to_unicode(format_date(self._mkdatetime(year, month), '%B %Y'))
         # URL to the current page
         thispageURL = Href(self.ref.req.base_path + self.ref.req.path_info)
         url = thispageURL(month=month, year=year)
@@ -425,16 +425,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     cell(class_='fill')
                     line(cell)
                 else:
-                    db = self.env.get_db_cnx()
-                    cursor = db.cursor()
-                    t = self._mkdatetime(year, month, day)
-                    duedatestamp = to_utimestamp(t)
-                    duedatestamp_eod = duedatestamp + 86399999999
-                    duedate = None
-                    if not self.due_field_fmt == 'ts':
-                        duedate = format_date(t, self.due_field_fmt,
-                                                             self.tz_info)
-
                     # check for wikipage with name specified in
                     # 'wiki_page_format'
                     wiki = format_date(self._mkdatetime(year, month, day),
@@ -460,12 +450,18 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     cell = tag.td(cell)
                     cell(class_=td_class, valign='top')
 
-                    # at first check for milestone on that day
+                    day_dt = self._mkdatetime(year, month, day)
+                    day_ts = to_utimestamp(day_dt)
+                    day_ts_eod = day_ts + 86399999999
+
+                    # check for milestone(s) on that day
+                    db = self.env.get_db_cnx()
+                    cursor = db.cursor()
                     cursor.execute("""
                         SELECT name
                           FROM milestone
-                         WHERE due >= %s and due < %s
-                    """, (duedatestamp, duedatestamp_eod))
+                         WHERE due >= %s and due <= %s
+                    """, (day_ts, day_ts_eod))
                     while (1):
                         row = cursor.fetchone()
                         if row is None:
@@ -489,17 +485,21 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                     # get tickets with due date set to day
                     for t in self.tickets:
                         due = t.get(self.due_field_name)
-                        if duedate is None:
-                            if not isinstance(due, datetime.datetime):
-                                continue
-                            else:
-                                due_ts = to_utimestamp(due)
-                                if due_ts < duedatestamp or \
-                                        due_ts > duedatestamp_eod:
-                                    continue
+                        if due is None or due in ['', '--']:
+                            continue
                         else:
-                            if not due == duedate:
-                                continue
+                            if self.due_field_fmt == 'ts':
+                                if not isinstance(due, datetime.datetime):
+                                    continue
+                                due_ts = to_utimestamp(due)
+                                if due_ts < day_ts or \
+                                    due_ts > day_ts_eod:
+                                    continue
+                            else:
+                                duedate = format_date(day_dt,
+                                                      self.due_field_fmt)
+                                if not due == duedate:
+                                    continue
 
                         id = t.get('id')
                         ticket, short = self._gen_ticket_entry(t)
@@ -511,15 +511,15 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                 ticket_list(', ', short)
                             match.append(id)
 
-                    # get tickets created on day
+                    # optionally get tickets created on day
                     if show_t_open_dates is True:
                         ticket_od_list = tag.div('')
-                        ticket_od_list(align='left', class_='opendate_condense')
+                        ticket_od_list(align='left',
+                                       class_='opendate_condense')
 
                         for t in self.tickets:
-                            ticket_time = to_utimestamp(t.get('time'))
-                            if ticket_time < duedatestamp or \
-                                    ticket_time > duedatestamp_eod:
+                            ticket_ts = to_utimestamp(t.get('time'))
+                            if ticket_ts < day_ts or ticket_ts > day_ts_eod:
                                 continue
 
                             a_class = 'opendate_'
