@@ -83,3 +83,12 @@ li.prio3 { background: #fbfbfb; border-color: #ddd }
 li.prio4 { background: #e7ffff; border-color: #cee }
 li.prio5 { background: #e7eeff; border-color: #cde }
 li.prio6 { background: #f0f0f0; border-color: #ddd }
+
+/***********
+ * Sorting *
+ ***********/
+.ticket_placeholder {
+	background: #FFD;
+	border: 1px solid #996;
+	height: 100px;
+}

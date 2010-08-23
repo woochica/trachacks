@@ -12,7 +12,7 @@
                 ${fields[query.group].label}:
                 ${query.group in ['owner', 'reporter'] and authorinfo(groupname) or groupname}
             </h2>
-            <ul>
+            <ul id="${groupname}" class="column_tickets">
               <py:for each="idx, result in enumerate(results)">
                 <py:with vars="ticket_context = context('ticket', result.id)">
                   <py:if test="'TICKET_VIEW' in perm(ticket_context.resource)">

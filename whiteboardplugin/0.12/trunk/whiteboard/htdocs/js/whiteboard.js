@@ -38,4 +38,11 @@ jQuery(document).ready(function($){
         return false;
     });
     
+    //Sorting
+    $(".column_tickets").sortable({
+        connectWith: '.column_tickets',
+        placeholder: 'ticket_placeholder',
+        forcePlaceholderSize: true
+    });
+    
 });
