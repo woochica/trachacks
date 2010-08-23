@@ -24,6 +24,7 @@ class ChartRenderer(RenderImpl):
   '''
   fielddefault = 'status'
   weekdays = ['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su' ]
+  FRAME_LABEL = 'Burn-down Chart'
   
   def __init__(self,macroenv):
     '''
@@ -32,7 +33,11 @@ class ChartRenderer(RenderImpl):
     self.macroenv = macroenv
 
   def getHeadline( self ):
-    return('Burn-down Chart')
+    title = self.getTitle()
+    if title != None:
+      return('%s: %s' % (self.FRAME_LABEL,title))
+    else:
+      return('%s' % (self.FRAME_LABEL,))
 
  
   def getField( self ):

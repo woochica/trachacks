@@ -835,7 +835,10 @@ class GVRenderProto():
     except:
       ticketstyle = ''
     
-    if (str(macroenv.macroid) in ['3']) or (  ticketstyle == 'small') : # first: deprecated style
+    if (str(macroenv.macroid) in ['3']) or ( ticketstyle == 'small') : # first: deprecated style
+      return TicketSimpleNodePrototype( macroenv, ticket ).render()
+    elif ( ticketstyle == 'smallifclosed') and ( ticket.getfield('status') == 'closed' ) : # small visualization if ticket is closed
+      macroenv.tracenv.log.debug("smallifclosed: #%s %s" % (repr(ticket.getfield('id')),repr(ticket.getfield('status'))) )
       return TicketSimpleNodePrototype( macroenv, ticket ).render()
     else : # style = normal
       return TicketNodePrototype( macroenv, ticket ).render()

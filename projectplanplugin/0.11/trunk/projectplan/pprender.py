@@ -448,6 +448,11 @@ class GVRenderer(RenderImpl):
     if macroenv.get_args('ppforcereload') == '1' :
       self.ppforcereload = True
     
+    # TODO: move this to the renderer implementation
+    if macroenv.macrokw.get('title') != None:# title of the visualization
+      #macroenv.tracenv.log.debug('title=%s' % (macroenv.macrokw.get('title'),))
+      self.FRAME_LABEL = macroenv.macrokw.get('title')
+    
     if macroenv.macroid.upper() == 'NONE' or macroenv.macroid == None or macroenv.macroid == '':
       macroenv.macroid = self.DEFAULT_GVRENDER_MACROID
     
@@ -456,10 +461,20 @@ class GVRenderer(RenderImpl):
     except:
       milestone_style = 'ON'
     
-    if str(macroenv.macroid) == '3' or (  milestone_style == 'OFF' ) :  # first: deprecated configuration
-      macroenv.tracenv.log.warning('GVRenderer: overwrite _writeMilestoneClusterHeader _writeMilestoneClusterFooter')
+    if str(macroenv.macroid) == '3' or ( milestone_style == 'OFF' ) :  # first: deprecated configuration
+      macroenv.tracenv.log.warning('GVRenderer: milestone_style -> overwrite _writeMilestoneClusterHeader _writeMilestoneClusterFooter')
       self._writeMilestoneClusterHeader = dummy
       self._writeMilestoneClusterFooter = dummy
+    
+    try:
+      version_style = macroenv.macrokw.get('versions').upper()
+    except:
+      version_style = 'ON'
+    
+    if ( version_style == 'OFF' ) :  # show no milestone box
+      macroenv.tracenv.log.warning('GVRenderer: version_style -> overwrite _writeVersionClusterHeader _writeVersionClusterFooter')
+      self._writeVersionClusterHeader = dummy
+      self._writeVersionClusterFooter = dummy
 
   def isForceReload(self):
     return self.ppforcereload
@@ -490,6 +505,12 @@ class GVRenderer(RenderImpl):
       self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png')+'"></IMG>'
       self.cmapxgen += '</TD><TD>'+myversion+'</TD></TR></TABLE>>; '+"\n"
 
+  def _writeVersionClusterFooter( self ):
+    '''
+      closes the version cluster 
+    '''
+    self.cmapxgen += " } \n";
+ 
   def _writeMilestoneClusterHeader( self, mstring, mnum, mhref=None, mtitle=None ):
     '''
       Write a Milestone Cluster Header (GV subgraph and attributes)
@@ -591,7 +612,8 @@ class GVRenderer(RenderImpl):
           self._writeticket( t )
         #self.cmapxgen += '}'
         self._writeMilestoneClusterFooter()
-      self.cmapxgen += '}'
+      #self.cmapxgen += '}'
+      self._writeVersionClusterFooter()
 
     # if end/start ticket is given, put them in the toplevel cluster (frame cluster)
     if self.betickets!=False:
@@ -989,7 +1011,7 @@ class GVCollapsedHRenderer( GVRenderer ):
             self.cmapxgen += GVRenderProto.milestone_gen_markup( self.macroenv, version, milestone, ticketlist, href )
             self.cmapxgen += ">] " + msnodeid + ";"
           mcount += 1
-        self.cmapxgen += '}'
+        self._writeVersionClusterFooter()
       else:
         vernodeid = "Version"+str(vcount)
         vnodemap[ version ] = vernodeid

@@ -31,7 +31,7 @@ pppackagedataglobs = pphtdocsglob + pptemplatesglob
 # create setup instance - done
 setup(
   name = u'ProjectPlan',
-  version = u'0.82',
+  version = u'0.83',
   description = u'ProjectPlanPlugin for Trac 0.11',
   long_description = u"""
     ProjectPlan Plugin basicaly adds the possibility for fast and
@@ -43,7 +43,7 @@ setup(
       3. render (generate the output), controlled by user arguments, additional arguments are output dependend
     Additional information can be found at the Trac-Hacks Projectpage for this Plugin.
   """,
-  author = u'makadev & anbo',
+  author = u'anbo & makadev',
   author_email = u'makadev at googlemail dot com',
   url = u'http://trac-hacks.org/wiki/ProjectPlanPlugin',
   download_url = u'http://trac-hacks.org/svn/projectplanplugin',
@@ -53,6 +53,6 @@ setup(
   keywords = u'project plan visualization',
   #package_dir={ pppackage: pppackagedir , },
   package_data = { pppackage: pppackagedataglobs },
-  install_requires = ( u'Trac >=0.11, <0.12' ),
+  install_requires = ( u'Trac >=0.11, <=0.12' ),
   entry_points = { u'trac.plugins': u'projectplan = projectplan.projectplan' }
 )
