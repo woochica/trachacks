@@ -7,8 +7,6 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = r"$Rev$"[6:-2]
 __date__     = r"$Date$"[7:-2]
 
-rev = max(__revision__, macrorev)
-
 setup(
     name = 'TracListOfWikiPagesMacro',
     version = '0.4',
