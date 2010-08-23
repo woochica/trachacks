@@ -10,8 +10,6 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + ur"$Rev$"[6:-2])
 __date__     = ur"$Date$"[7:-2]
 
-rev = str( max( coderev, __revision__ ) )
-
 setup(
     name = 'TracNumberedHeadlinesPlugin',
     version = '0.4',
