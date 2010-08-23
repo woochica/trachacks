@@ -1,0 +1,14 @@
+setup.py
+Tracticketstats.egg-info/PKG-INFO
+Tracticketstats.egg-info/SOURCES.txt
+Tracticketstats.egg-info/dependency_links.txt
+Tracticketstats.egg-info/entry_points.txt
+Tracticketstats.egg-info/top_level.txt
+Tracticketstats.egg-info/trac_plugin.txt
+ticketstats/__init__.py
+ticketstats/ticketstats.py
+ticketstats/ticketstats.py.orig
+ticketstats/htdocs/content.html
+ticketstats/templates/greensauce.html
+ticketstats/templates/greensauce.html.sav
+ticketstats/templates/jsondata.html
