@@ -1,4 +1,4 @@
-""" Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
+""" Copyright (c) 2008-2010 Martin Scharrer <martin@scharrer-online.de>
     $Id$
     $HeadURL$
 
