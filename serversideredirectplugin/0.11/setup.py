@@ -7,8 +7,6 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = ur"$Rev$"[6:-2]
 __date__     = ur"$Date$"[7:-2]
 
-rev = max(coderev, __revision__)
-
 setup(
     name         = 'TracServerSideRedirectPlugin',
     version      = '0.4',
