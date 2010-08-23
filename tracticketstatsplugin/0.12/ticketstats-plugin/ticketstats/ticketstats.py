@@ -22,7 +22,7 @@ from trac.ticket import Milestone
 
 from datetime import date, datetime, time, timedelta
 from time import strptime
-from trac.util.datefmt import to_timestamp, utc
+from trac.util.datefmt import to_utimestamp, utc
 
 # ************************
 DEFAULT_DAYS_BACK = 30*6 
@@ -80,7 +80,7 @@ class TicketStatsPlugin(Component):
       cursor = db.cursor()
    
       # TODO clean up this query
-      cursor.execute("SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority FROM ticket_change tc, enum p INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > %s AND tc.time <= %s WHERE p.name = t.priority AND p.type = 'priority' %s ORDER BY tc.time" % (to_timestamp(from_date), to_timestamp(at_date), ma_milestone_str))
+      cursor.execute("SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority FROM ticket_change tc, enum p INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > %s AND tc.time <= %s WHERE p.name = t.priority AND p.type = 'priority' %s ORDER BY tc.time" % (to_utimestamp(from_date), to_utimestamp(at_date), ma_milestone_str))
 
       for id, field, time, old, status, priority in cursor:
          if field == 'status':
@@ -111,13 +111,13 @@ class TicketStatsPlugin(Component):
       cursor = db.cursor()
    
       # TODO clean up this query
-      cursor.execute("SELECT t.type AS type, owner, status, time AS created FROM ticket t, enum p WHERE p.name = t.priority AND p.type = 'priority' AND created <= %s %s" % (to_timestamp(at_date), ma_milestone_str))
+      cursor.execute("SELECT t.type AS type, owner, status, time AS created FROM ticket t, enum p WHERE p.name = t.priority AND p.type = 'priority' AND created <= %s %s" % (to_utimestamp(at_date), ma_milestone_str))
 
       for rows in cursor:
          count += 1
 
       # TODO clean up this query
-      cursor.execute("SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority FROM ticket_change tc, enum p INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > 0 AND tc.time <= %s WHERE p.name = t.priority AND p.type = 'priority' %s ORDER BY tc.time" % (to_timestamp(at_date), ma_milestone_str))
+      cursor.execute("SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority FROM ticket_change tc, enum p INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > 0 AND tc.time <= %s WHERE p.name = t.priority AND p.type = 'priority' %s ORDER BY tc.time" % (to_utimestamp(at_date), ma_milestone_str))
 
       for id, field, time, old, status, priority in cursor:
          if field == 'status':
@@ -219,7 +219,7 @@ class TicketStatsPlugin(Component):
             jsdstr += ' "closed": %s,' % x['closed']
             jsdstr += ' "open": %s},\n' % x['open']
          jsdstr = jsdstr[:-2] +'\n]}'
-         req.write(jsdstr)
+         req.send(jsdstr.encode('utf-8'))
          return 
       else:
          db = self.env.get_db_cnx()
