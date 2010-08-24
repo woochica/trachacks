@@ -1,0 +1,69 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+
+      <div id="wikis">
+        <div>
+          <span class="showhide"></span>
+          <h2>Wikis</h2>
+        </div>
+      <py:choose test="">
+      <div class="system-message" py:when="'WIKI_VIEW' not in perm">You lack permission to view wikis.</div>
+      <div id="wikilist-plusadd">
+      <py:choose test="" py:otherwise="">
+      <div id="wikilist-parent" py:when="wikilist">
+      ${tablepager("wikipager")}
+      <table class="wikilist" id="wikilist">
+          <thead>
+              <tr>
+                  <th py:for="head in (['Page&nbsp;&nbsp;&nbsp;','name'],['Last Changed
+                      At','datetime'], ['By&nbsp;&nbsp;&nbsp;','author'],
+                      ['Version&nbsp;&nbsp;&nbsp;', 'version'], ['Diff','diff'],
+                      ['History','history'], ['U','unwatch'])"
+                      class="${head[1]}">${head[0]}</th>
+                  <th py:if="notify"
+                      class="notify">Notify&nbsp;&nbsp;&nbsp;</th>
+                  <th py:for="head in (['Comment&nbsp;&nbsp;&nbsp;','comment'],)"
+                      class="${head[1]}">${head[0]}</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr py:for="page in wikilist">
+                  <td class="name">${link('wiki',page.name,text=page.name)}</td>
+                  <td class="datetime">$page.datetime
+                      <py:if test="page.timedelta"> (<a
+                          href="$page.timeline_link">$page.timedelta</a> ago)</py:if></td>
+                  <td class="author">$page.author</td>
+                  <td class="version"><a py:if="not page.deleted"
+                          href="${href('wiki',page.name,version=page.version)}">$page.version</a></td>
+                  <td class="diff"><a py:if="not page.deleted"
+                      href="${href('wiki',page.name,action='diff',version=page.version)}">
+                        <img src="${href.chrome('watchlist/ico/diff.png')}" width="16px"
+                          height="16px" title="Diff" alt="Diff" />
+                      </a></td>
+                  <td class="history"><a py:if="not page.deleted"
+                      href="${href('wiki',page.name,action='history')}">
+                        <img src="${href.chrome('watchlist/ico/history.png')}" width="16px"
+                          height="16px" title="History" alt="History" />
+                      </a></td>
+                  <td class="unwatch"><a class="plainlink"
+                      href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">
+                      ${unwatchicon()}</a></td>
+                  <td class="notify"
+                    py:if="notify">${notifybox('wiki',page.name,page.notify)}</td>
+                  <td class="comment">$page.comment</td>
+              </tr>
+          </tbody>
+      </table>
+      </div>
+      <div py:otherwise=""><span>No wikis are currently watched.</span></div>
+      </py:choose>
+      ${modify_form('wiki')}
+      </div>
+      </py:choose>
+    </div>
+</html>

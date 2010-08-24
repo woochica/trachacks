@@ -1,0 +1,44 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="">
+
+      <div id="example">
+        <div>
+          <span class="showhide"></span>
+          <h2>Example</h2>
+        </div>
+      <py:choose test="">
+      <div id="examplelist-parent" py:when="examplelist">
+      ${tablepager("examplepager")}
+      <table class="examplelist" id="examplelist">
+          <thead>
+              <tr>
+                <th> Name </th>
+                <th> Unwatch </th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr py:for="example in examplelist">
+                  <td class="name">${link('example',example.name,text=example.name)}</td>
+                  <td class="unwatch"><a class="plainlink"
+                      href="${href.watchlist(action='unwatch',realm='example',resid=example.name)}">
+                      ${unwatchicon()}</a></td>
+              </tr>
+          </tbody>
+      </table>
+      </div>
+      <div py:otherwise=""><span>No examples are currently watched.</span></div>
+      </py:choose>
+      <form method="get" action="" class="addtowatch">
+        <div>
+          Add Example: <input type="text" name="resid" />
+          <input type="hidden" name="realm" value="example" />
+          <input type="hidden" name="action" value="watch" />
+        </div>
+      </form>
+      </div>
+</html>
