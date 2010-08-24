@@ -2,6 +2,20 @@
 
 jQuery(document).ready(function($){
     
+    //Toggle between the whiteboard and grid being visible.
+    function toggleView(visible, hidden){
+        //Toggle the whiteboard
+        $("#whiteboard").toggle();
+        
+        //Toggle the grid
+        $(".report-result").toggle();
+        $(".tickets").toggle();
+        
+        //Toggle the view list styles.
+        visible.addClass("not_current");
+        hidden.removeClass("not_current");
+    }
+    
     //Resizes each column to equal heights.
     function resizeColumnTickets(){
         var maxHeight = 0;
@@ -21,32 +35,12 @@ jQuery(document).ready(function($){
     $("#whiteboard").hide();
     
     whiteboardLink.click(function(){
-        //Show the whiteboard
-        $("#whiteboard").show();
-        
-        //Hide the grid.
-        $(".report-result").hide();
-        $(".tickets").hide();
-        
-        //Toggle the view list styles.
-        customQueryLink.addClass("not_current");
-        $(this).removeClass("not_current");
-        
+        toggleView(customQueryLink, whiteboardLink)
         return false;
     });
     
     customQueryLink.click(function(){
-        //Hide the whiteboard.
-        $("#whiteboard").hide();
-        
-        //Redisplay the grid.
-        $(".report-result").show();
-        $(".tickets").show();
-        
-        //Toggle the view list styles.
-        $(this).addClass("not_current");
-        whiteboardLink.removeClass("not_current");
-        
+        toggleView(whiteboardLink, customQueryLink)
         return false;
     });
     
