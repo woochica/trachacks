@@ -2,6 +2,18 @@
 
 jQuery(document).ready(function($){
     
+    //Resizes each column to equal heights.
+    function resizeColumnTickets(){
+        var maxHeight = 0;
+        $(".column_tickets").each(function(){
+            if($(this).height() > maxHeight){
+                maxHeight = $(this).height();
+            }
+        });
+        
+        $('.board_column').equalHeights(maxHeight + 60)
+    }
+    
     var customQueryLink = $('#ctxtnav ul li:contains("Custom Query")');
     var whiteboardLink = $('#ctxtnav ul li:contains("Whiteboard")');
     
@@ -43,6 +55,10 @@ jQuery(document).ready(function($){
         connectWith: '.column_tickets',
         placeholder: 'ticket_placeholder',
         forcePlaceholderSize: true
+    });
+    
+    $(".column_tickets").bind("sortover", function(event, ui){
+        resizeColumnTickets();
     });
     
 });
