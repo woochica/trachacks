@@ -89,22 +89,25 @@ class FootNoteMacro(WikiMacroBase):
             # Dump all accumulated notes
             footnotes = formatter._footnotes[:]
             formatter._footnotes = [(content, None) for content, markup in footnotes]
-            return tag.div(
-                tag.hr(),
-                tag.ol(
-                    [tag.li(
-                        tag.a(
-                            '%s.'%(i+1),
-                            href='#FootNoteRef%s'%(i+1),
-                            class_='sigil',
-                        ),
-                        ' ',
-                        markup,
-                        id='FootNote%s'%(i+1),
-                    ) for i, (content, markup) in enumerate(footnotes) if markup],
-                ),
-                class_='footnotes',
-            )
+            if formatter._footnotes:
+                return tag.div(
+                    tag.hr(),
+                    tag.ol(
+                        [tag.li(
+                            tag.a(
+                                '%s.'%(i+1),
+                                href='#FootNoteRef%s'%(i+1),
+                                class_='sigil',
+                            ),
+                            ' ',
+                            markup,
+                            id='FootNote%s'%(i+1),
+                        ) for i, (content, markup) in enumerate(footnotes) if markup],
+                    ),
+                    class_='footnotes',
+                )
+            else:
+                return []
 
     # ITemplateProvider methods
     def get_htdocs_dirs(self):

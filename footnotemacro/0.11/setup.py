@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'FootNoteMacro',
-    version = '1.02',
+    version = '1.03',
     packages = ['footnotemacro'],
     package_data = { 'footnotemacro': ['htdocs/*.css',
                                        'htdocs/*.js'] },
