@@ -28,6 +28,7 @@ jQuery(document).ready(function($){
         $('.board_column').equalHeights(maxHeight + 60)
     }
     
+    var actions = new Array();
     var customQueryLink = $('#ctxtnav ul li:contains("Custom Query")');
     var whiteboardLink = $('#ctxtnav ul li:contains("Whiteboard")');
     
@@ -53,6 +54,33 @@ jQuery(document).ready(function($){
     
     $(".column_tickets").bind("sortover", function(event, ui){
         resizeColumnTickets();
+    });
+    
+    //Keeps track of every action performed.
+    $(".column_tickets").bind("sortreceive", function(event, ui){
+        actions.push({
+            "ticket": ui.item.attr("id"),
+            "from": ui.sender.context,
+            "to": event.target
+        });
+        
+        console.log(actions);
+    });
+    
+    //Submit event
+    $("#whiteboard_form").submit(function(){
+        var changes = new Array();
+        //Get the ticket and the new value for every change.
+        for(var i=changes.length; i>0; i--){
+            actions[i]
+        }
+        var valid = true;
+        
+        if(changes.length == 0){
+            valid = false;
+        }
+        
+        return valid;
     });
     
 });
