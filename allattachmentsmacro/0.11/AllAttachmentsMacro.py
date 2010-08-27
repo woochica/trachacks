@@ -47,9 +47,12 @@ class AllAttachmentsMacro(WikiMacroBase):
         cursor = db.cursor()
 
         if attachment_type == None or attachment_type == "":
-            cursor.execute("SELECT type,id,filename,size,time,description,author,ipnr FROM attachment")
+            cursor.execute("SELECT type,id,filename,size,time,"
+                           "description,author,ipnr FROM attachment")
         else:
-            cursor.execute("SELECT type,id,filename,size,time,description,author,ipnr FROM attachment WHERE type=%s", (attachment_type,))
+            cursor.execute("SELECT type,id,filename,size,time,"
+                           "description,author,ipnr FROM attachment "
+                           "WHERE type=%s", (attachment_type, ))
         
         formatters={"wiki": formatter.href.wiki, "ticket": formatter.href.ticket}
         types={"wiki": "", "ticket": "ticket "}
@@ -63,3 +66,4 @@ class AllAttachmentsMacro(WikiMacroBase):
                     for type,id,filename,size,time,description,author,ipnr in cursor])
 
         return attachmentFormattedList
+    
