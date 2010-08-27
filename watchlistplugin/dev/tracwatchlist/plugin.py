@@ -562,25 +562,34 @@ class WatchlistPlugin(Component):
 
         realm, resid = parts[:2]
 
-        if realm not in self.realms or not self.realm_handler[realm].has_perm(realm, req.perm):
+        if realm not in self.realms or not \
+                self.realm_handler[realm].has_perm(realm, req.perm):
             return (template, data, content_type)
 
         href = Href(req.base_path)
         user = req.authname
         if user and user != "anonymous":
             if self.is_watching(realm, resid, user):
-                add_ctxtnav(req, "Unwatch", href=href('watchlist', action='unwatch',
-                    resid=resid, realm=realm), title="Remove %s from watchlist" % realm)
+                add_ctxtnav(req, "Unwatch",
+                    href=req.href('watchlist', action='unwatch',
+                    resid=resid, realm=realm),
+                    title="Remove %s from watchlist" % realm)
             else:
-                add_ctxtnav(req, "Watch", href=href('watchlist', action='watch',
-                    resid=resid, realm=realm), title="Add %s to watchlist" % realm)
+                add_ctxtnav(req, "Watch",
+                    href=req.href('watchlist', action='watch',
+                    resid=resid, realm=realm),
+                    title="Add %s to watchlist" % realm)
             if self.gnotify and self.notifyctxtnav:
               if self.is_notify(req, realm, resid):
-                add_ctxtnav(req, "Do not Notify me", href=href('watchlist', action='notifyoff',
-                    resid=resid, realm=realm), title="No not notify me if %s changes" % realm)
+                add_ctxtnav(req, "Do not Notify me",
+                    href=req.href('watchlist', action='notifyoff',
+                    resid=resid, realm=realm),
+                    title="No not notify me if %s changes" % realm)
               else:
-                add_ctxtnav(req, "Notify me", href=href('watchlist', action='notifyon',
-                    resid=resid, realm=realm), title="Notify me if %s changes" % realm)
+                add_ctxtnav(req, "Notify me",
+                    href=req.href('watchlist', action='notifyon',
+                    resid=resid, realm=realm),
+                    title="Notify me if %s changes" % realm)
 
         return (template, data, content_type)
 
@@ -721,7 +730,8 @@ class TicketWatchlist(BasicWatchlist):
                   return strng
               elif field == 'description':
                   return fieldtag + tag(" modified (", tag.a("diff",
-                      href=href('ticket',id,action='diff',version=self.commentnum)), ")")
+                      href=req.href('ticket',id,action='diff',
+                                version=self.commentnum)), ")")
               elif field == 'comment':
                   self.commentnum = oldvalue
                   self.comment    = newvalue
