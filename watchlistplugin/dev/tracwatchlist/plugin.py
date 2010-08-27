@@ -353,9 +353,7 @@ class WatchlistPlugin(Component):
             action = "view"
 
         if async:
-          req.send_response(200)
-          req.send_header('content-type', 'text/plain')
-          req.end_headers()
+          req.send("",'text/plain', 200)
           raise RequestDone
 
         if action == "view":
