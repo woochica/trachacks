@@ -42,7 +42,9 @@
                 </ul>
             </div>
           </py:for>
-        </div>    
+        </div>
+        <input type="hidden" id="whiteboard_group_by" name="whiteboard_group_by" value="${fields[query.group].name}" />
+        <input type="hidden" id="whiteboard_changes" name="whiteboard_changes" value="" />
         <input type="submit" id="whiteboard_submit" name="whiteboard_submit" value="Save Changes" />
     </form>
 </body>

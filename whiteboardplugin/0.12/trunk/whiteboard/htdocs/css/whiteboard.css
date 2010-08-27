@@ -63,7 +63,7 @@ li.board_ticket dl {
 li.board_ticket dl dt {
 	float: left; 
 	clear: left;
-	width: 120px;
+	width: 110px;
 	text-align: left; 
 	font-weight: bold;
 }
@@ -73,7 +73,7 @@ li.board_ticket dl dt:after {
 }
 
 li.board_ticket dl dd { 
-	margin: 0 0 0 130px; 
+	margin: 0 0 0 120px; 
 	padding: 0 0 0 .3em;
 }
 

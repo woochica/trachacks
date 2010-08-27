@@ -59,28 +59,40 @@ jQuery(document).ready(function($){
     //Keeps track of every action performed.
     $(".column_tickets").bind("sortreceive", function(event, ui){
         actions.push({
-            "ticket": ui.item.attr("id"),
+            "ticket": /(board_ticket_)(\d)/.exec(ui.item.attr("id"))[2],
             "from": ui.sender.context,
             "to": event.target
         });
-        
-        console.log(actions);
     });
     
     //Submit event
     $("#whiteboard_form").submit(function(){
-        var changes = new Array();
-        //Get the ticket and the new value for every change.
-        for(var i=changes.length; i>0; i--){
-            actions[i]
+        try{
+            var valid = true;
+            var changes = new Array();
+            //Get the ticket and the new value for every change.
+            for(var i=actions.length-1; i>=0; i--){
+                changes.push($.format("$1:$2", actions[i].ticket, actions[i].to.id));
+            }
+            
+            //You must make some changes to be able to save.
+            if(changes.length == 0){
+                valid = false;
+            } else {
+                var changesValue = "";
+                for(var i=0; i<changes.length; i++){
+                    changesValue += changes[i] + ",";
+                }
+                $("#whiteboard_changes").value = changesValue
+                console.log(changesValue);
+            }
+            
+            return false;
         }
-        var valid = true;
-        
-        if(changes.length == 0){
-            valid = false;
+        catch(e){
+            alert(e);
+            return false;
         }
-        
-        return valid;
     });
     
 });
