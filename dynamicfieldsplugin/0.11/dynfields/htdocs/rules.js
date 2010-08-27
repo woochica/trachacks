@@ -48,8 +48,10 @@ copyrule.apply = function(input, spec){
         return;
         
     var fld = jQuery('#field-'+target);
-    if (fld.val() != '' || fld.is(":hidden"))
-        return;
+    if (spec.overwrite.toLowerCase() == 'false'){
+        if (fld.val() != '' || fld.is(":hidden"))
+            return;
+    }
     
     if (fld.hasClass('copyable')){
         // only do effect if value is changing
