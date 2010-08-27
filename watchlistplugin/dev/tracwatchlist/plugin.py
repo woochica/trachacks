@@ -168,17 +168,28 @@ class WatchlistPlugin(Component):
 
         settingsstr = "&".join([ "=".join(kv) for kv in settings.items()])
 
-        cursor.execute( """
-          SELECT count(*) FROM watchlist_settings WHERE wluser=%s LIMIT 0,1""", (user,) )
+        cursor.execute("""
+          SELECT count(*)
+            FROM watchlist_settings
+           WHERE wluser=%s
+           LIMIT 0,1
+        """, (user,)
+        )
         ex = cursor.fetchone()
         if not ex or not int(ex[0]):
-          cursor.execute(
-              "INSERT INTO watchlist_settings VALUES (%s,%s)",
-              (user, settingsstr) )
+          cursor.execute("""
+            INSERT
+              INTO watchlist_settings
+            VALUES (%s,%s)
+          """, (user, settingsstr)
+          )
         else:
-          cursor.execute(
-              "UPDATE watchlist_settings SET settings=%s WHERE wluser=%s ",
-              (settingsstr, user) )
+          cursor.execute("""
+            UPDATE watchlist_settings
+               SET settings=%s
+             WHERE wluser=%s
+          """, (settingsstr, user)
+          )
 
         db.commit()
         return True
@@ -186,9 +197,12 @@ class WatchlistPlugin(Component):
     def _get_user_settings(self, user):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute(
-            "SELECT settings FROM watchlist_settings WHERE wluser = %s",
-            (user,) )
+        cursor.execute("""
+          SELECT settings
+            FROM watchlist_settings
+           WHERE wluser = %s
+        """, (user,)
+        )
 
         try:
           (settingsstr,) = cursor.fetchone()
@@ -245,8 +259,12 @@ class WatchlistPlugin(Component):
           if names:
             reses = list(handler.res_list_exists(realm, names))
 
-            sql = "SELECT resid FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
-                  + ",".join( ("%s",) * len(names) ) + ")"
+            sql = """
+              SELECT resid
+                FROM watchlist
+               WHERE wluser=%s AND realm=%s AND
+                     resid IN (
+            """ + ",".join(("%s",) * len(names)) + ")"
             cursor.execute( sql, [user,realm] + names)
             alw_res = [ res[0] for res in cursor.fetchall() ]
             new_res.extend(set(reses).difference(alw_res))
@@ -257,18 +275,24 @@ class WatchlistPlugin(Component):
             if not reses:
               err_pat.append(self._sql_pattern_unescape(pattern))
             else:
-              cursor.execute(
-                "SELECT resid FROM watchlist WHERE wluser=%s AND realm=%s AND resid LIKE (%s)",
-                (user,realm,pattern) )
+              cursor.execute("""
+                SELECT resid
+                  FROM watchlist
+                 WHERE wluser=%s AND realm=%s AND resid LIKE (%s)
+              """, (user,realm,pattern)
+              )
               watched_res = [ res[0] for res in cursor.fetchall() ]
               alw_res.extend(set(reses).intersection(watched_res))
               new_res.extend(set(reses).difference(alw_res))
 
           if new_res:
             cursor.log = self.env.log
-            cursor.executemany(
-                "INSERT INTO watchlist (wluser, realm, resid) "
-                "VALUES (%s,%s,%s)", [ (user, realm, res) for res in new_res ] )
+            cursor.executemany("""
+              INSERT
+                INTO watchlist (wluser, realm, resid)
+              VALUES (%s,%s,%s)
+            """, [(user, realm, res) for res in new_res]
+            )
             db.commit()
 
           action = "view"
@@ -284,28 +308,42 @@ class WatchlistPlugin(Component):
 
         elif action == "unwatch":
           if names:
-            sql = "SELECT resid FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
-                  + ",".join( ("%s",) * len(names) ) + ")"
+            sql = """
+              SELECT resid
+                FROM watchlist
+               WHERE wluser=%s AND realm=%s AND
+                     resid IN (
+            """ + ",".join(("%s",) * len(names)) + ")"
             cursor.execute( sql, [user,realm] + names)
             reses = [ res[0] for res in cursor.fetchall() ]
             del_res.extend(reses)
             err_res.extend(set(names).difference(reses))
 
-            sql = "DELETE FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
-                  + ",".join( ("%s",) * len(names) ) + ")"
+            sql = """
+              DELETE
+                FROM watchlist
+               WHERE wluser=%s AND realm=%s AND
+                     resid IN (
+              """ + ",".join(("%s",) * len(names)) + ")"
             cursor.execute( sql, [user,realm] + names)
           for pattern in patterns:
-            cursor.execute(
-                "SELECT resid FROM watchlist "
-                "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
+            cursor.execute("""
+              SELECT resid
+                FROM watchlist
+               WHERE wluser=%s AND realm=%s AND resid LIKE %s
+            """, (user,realm,pattern)
+            )
             reses = [ res[0] for res in cursor.fetchall() ]
             if not reses:
               err_pat.append(self._sql_pattern_unescape(pattern))
             else:
               del_res.extend(reses)
-              cursor.execute(
-                  "DELETE FROM watchlist "
-                  "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
+              cursor.execute("""
+                DELETE
+                  FROM watchlist
+                 WHERE wluser=%s AND realm=%s AND resid LIKE %s
+              """, (user,realm,pattern)
+              )
           db.commit()
 
           action = "view"
@@ -428,9 +466,11 @@ class WatchlistPlugin(Component):
                         "Selected resource %s:%s doesn't exists!" % (realm,resid) )
                   redirectback = False
               else:
-                  cursor.execute(
-                      "INSERT INTO watchlist (wluser, realm, resid) "
-                      "VALUES (%s,%s,%s);", (user, realm, resid) )
+                  cursor.execute("""
+                    INSERT INTO watchlist (wluser, realm, resid)
+                    VALUES (%s,%s,%s);
+                  """, (user, realm, resid)
+                  )
                   db.commit()
             if not onwatchlistpage and redirectback and msgrespage:
                   req.session['watchlist_message'] = (
@@ -444,12 +484,18 @@ class WatchlistPlugin(Component):
               action = "view"
         elif action == "unwatch":
             for pattern in patterns:
-              cursor.execute(
-                  "DELETE FROM watchlist "
-                  "WHERE wluser=%s AND realm=%s AND resid LIKE %s", (user,realm,pattern) )
+              cursor.execute("""
+                DELETE
+                  FROM watchlist
+                 WHERE wluser=%s AND realm=%s AND resid LIKE %s
+              """, (user,realm,pattern)
+              )
             if names:
-              sql = "DELETE FROM watchlist WHERE wluser=%s AND realm=%s AND resid IN (" \
-                    + ",".join( ("%s",) * len(names) ) + ")"
+              sql = """
+                DELETE
+                 FROM watchlist
+                WHERE wluser=%s AND realm=%s AND resid IN (
+              """ + ",".join(("%s",) * len(names)) + ")"
               self.env.log.debug(sql)
               cursor.execute( sql, [user,realm] + names)
               db.commit()
@@ -514,8 +560,11 @@ class WatchlistPlugin(Component):
         """Checks if user has a non-empty watchlist."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute(
-            "SELECT count(*) FROM watchlist WHERE wluser=%s;", (user,)
+        cursor.execute("""
+          SELECT count(*)
+            FROM watchlist
+           WHERE wluser=%s;
+        """, (user,)
         )
         count = cursor.fetchone()
         if not count or not count[0]:
@@ -530,9 +579,11 @@ class WatchlistPlugin(Component):
         """Checks if user watches the given element."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute(
-            "SELECT count(*) FROM watchlist WHERE realm=%s and resid=%s "
-            "and wluser=%s;", (realm, to_unicode(resid), user)
+        cursor.execute("""
+          SELECT count(*)
+            FROM watchlist
+           WHERE realm=%s AND resid=%s AND wluser=%s;
+        """, (realm, to_unicode(resid), user)
         )
         count = cursor.fetchone()
         if not count or not count[0]:
@@ -617,7 +668,13 @@ class WikiWatchlist(BasicWatchlist):
     def res_pattern_exists(self, realm, pattern):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
-      cursor.execute( "SELECT name FROM wiki WHERE name LIKE (%s)", (pattern,) )
+      cursor.execute("""
+        SELECT name
+          FROM wiki
+         WHERE name
+          LIKE (%s)
+      """, (pattern,)
+      )
       return [ vals[0] for vals in cursor.fetchall() ]
 
     def get_list(self, realm, wl, req):
@@ -626,9 +683,16 @@ class WikiWatchlist(BasicWatchlist):
       user = req.authname
       wikilist = []
       # Watched wikis which got deleted:
-      cursor.execute(
-          "SELECT resid FROM watchlist WHERE realm='wiki' AND wluser=%s "
-          "AND resid NOT IN (SELECT DISTINCT name FROM wiki);", (user,) )
+      cursor.execute("""
+        SELECT resid
+          FROM watchlist
+         WHERE realm='wiki' AND wluser=%s AND
+               resid NOT IN (
+          SELECT DISTINCT name
+                     FROM wiki
+          );
+        """, (user,)
+        )
 
       for (name,) in cursor.fetchall():
           notify = False
@@ -643,11 +707,22 @@ class WikiWatchlist(BasicWatchlist):
               'deleted' : True,
           })
       # Existing watched wikis:
-      cursor.execute(
-          "SELECT name,author,time,version,comment FROM wiki AS w1 WHERE name IN "
-          "(SELECT resid FROM watchlist WHERE wluser=%s AND realm='wiki') "
-          "AND version=(SELECT MAX(version) FROM wiki AS w2 WHERE w1.name=w2.name) "
-          "ORDER BY time DESC;", (user,) )
+      cursor.execute("""
+        SELECT name,author,time,version,comment
+          FROM wiki AS w1
+         WHERE name IN (
+           SELECT resid
+             FROM watchlist
+            WHERE wluser=%s AND realm='wiki'
+           )
+               AND version=(
+           SELECT MAX(version)
+             FROM wiki AS w2
+            WHERE w1.name=w2.name
+           )
+         ORDER BY time DESC;
+      """, (user,)
+      )
 
       wikis = cursor.fetchall()
       for name,author,time,version,comment in wikis:
@@ -681,7 +756,11 @@ class TicketWatchlist(BasicWatchlist):
       if pattern == '%':
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute( "SELECT id FROM ticket" )
+        cursor.execute("""
+          SELECT id
+            FROM ticket
+        """
+        )
         return [ vals[0] for vals in cursor.fetchall() ]
       else:
         return []
@@ -691,11 +770,18 @@ class TicketWatchlist(BasicWatchlist):
       cursor = db.cursor()
       user = req.authname
       ticketlist = []
-      cursor.execute(
-          "SELECT id,type,time,changetime,summary,reporter FROM ticket WHERE id IN "
-          "(SELECT CAST(resid AS decimal) FROM watchlist WHERE wluser=%s AND realm='ticket') "
-          "GROUP BY id,type,time,changetime,summary,reporter "
-          "ORDER BY changetime DESC;", (user,) )
+      cursor.execute("""
+        SELECT id,type,time,changetime,summary,reporter
+          FROM ticket
+         WHERE id IN (
+           SELECT CAST(resid AS decimal)
+             FROM watchlist
+            WHERE wluser=%s AND realm='ticket'
+           )
+         GROUP BY id,type,time,changetime,summary,reporter
+         ORDER BY changetime DESC;
+      """, (user,)
+      )
       tickets = cursor.fetchall()
       for id,type,time,changetime,summary,reporter in tickets:
           self.commentnum = 0
@@ -705,11 +791,12 @@ class TicketWatchlist(BasicWatchlist):
           if wl.gnotify:
             notify = wl.is_notify(req, 'ticket', id)
 
-          cursor.execute(
-              "SELECT author,field,oldvalue,newvalue FROM ticket_change "
-              "WHERE ticket=%s and time=%s "
-              "ORDER BY field DESC;",
-              (id, changetime )
+          cursor.execute("""
+            SELECT author,field,oldvalue,newvalue
+              FROM ticket_change
+             WHERE ticket=%s and time=%s
+             ORDER BY field DESC;
+          """, (id, changetime)
           )
 
           def format_change(field,oldvalue,newvalue):
@@ -796,8 +883,12 @@ class ExampleWatchlist(Component):
       cursor = db.cursor()
       user = req.authname
       examplelist = []
-      cursor.execute(
-          "SELECT resid FROM watchlist WHERE wluser=%s AND realm='example'", (user,))
+      cursor.execute("""
+        SELECT resid
+          FROM watchlist
+         WHERE wluser=%s AND realm='example'
+      """, (user,)
+      )
       examples = cursor.fetchall()
       for (name,) in examples:
         examplelist.append({'name':name})
