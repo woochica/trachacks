@@ -17,7 +17,6 @@ class DailyLolMacro(WikiMacroBase):
 
         website = urllib2.urlopen("http://icanhascheezburger.com/")
         website_html = website.read()
-        print website_html
 
         beg_pos = -1
         beg_pos = website_html.find('<img src="', beg_pos+1)
