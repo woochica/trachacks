@@ -15,7 +15,7 @@ class Poll(object):
         self.vote_defs = vote_defs
         self.title = title
         # Perhaps the Wiki page name should be included?
-        self.key = ''.join(re.findall(r'(\w+)', title)).lower()
+        self.key = ''.join(re.findall(r'(\w+)', title ,re.UNICODE)).lower()
         self.store = os.path.join(base_dir, self.key + '.poll')
         self.load()
 
@@ -102,11 +102,11 @@ class PollMacro(WikiMacroBase):
     new-line (if used as a processor). The first argument is the title of the
     poll, which is also the identifier for each poll.
     
-    Usage: `[[TicketPoll(<title>; <arg> [; <arg>] ...)]]`
+    Usage: `[[Poll(<title>; <arg> [; <arg>] ...)]]`
 
     Where <arg> conforms to the following:
 
-        || '''<arg>'''         || '''Description''' ||
+        || '''<arg>'''            || '''Description''' ||
         || `query:<ticket-query>` || Add tickets from a query to the poll. ||
         || `#<n>`                 || Add an individual ticket to the poll. ||
         || `<text>`               || A poll question. ||
@@ -132,8 +132,7 @@ class PollMacro(WikiMacroBase):
         from trac.ticket.model import Ticket, Priority
         from trac.ticket.query import Query
         add_stylesheet(req, 'poll/css/poll.css')
-        if not req.perm.has_permission('POLL_VIEW') or \
-                not req.perm.has_permission('TICKET_VIEW'):
+        if not req.perm.has_permission('POLL_VIEW'):
             return ''
 
         all_votes = []
