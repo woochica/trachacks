@@ -99,7 +99,7 @@ class WatchlistDataBase(Component):
             cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
             version = cursor.fetchone()
             if not version or int(version[0]) < __DB_VERSION__:
-                self.env.log.info("Watchlist table version to old")
+                self.env.log.info("Watchlist table version (%s) to old" % (version))
                 return True
         except Exception, e:
             cursor.connection.rollback()

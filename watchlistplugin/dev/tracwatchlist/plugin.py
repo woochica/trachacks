@@ -22,20 +22,24 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
-from trac.core import *
+from  trac.core          import  *
 
 from  genshi.builder     import  tag, Markup
 from  trac.config        import  BoolOption
 from  trac.db            import  Table, Column, Index, DatabaseManager
+from  trac.env           import  IEnvironmentSetupParticipant
 from  trac.ticket.model  import  Ticket
+from  trac.util.datefmt  import  from_utimestamp, to_utimestamp
 from  trac.util          import  format_datetime, pretty_timedelta
 from  trac.util.text     import  to_unicode
+from  tracwatchlist.api  import  BasicWatchlist, IWatchlistProvider
 from  trac.web.api       import  IRequestFilter, IRequestHandler, RequestDone
+from  trac.web.chrome    import  INavigationContributor
 from  trac.web.chrome    import  ITemplateProvider, add_ctxtnav, add_link, add_script, add_notice
 from  trac.web.href      import  Href
 from  trac.wiki.model    import  WikiPage
 from  urllib             import  quote_plus
-from  tracwatchlist.api  import  BasicWatchlist, IWatchlistProvider
+
 
 __DB_VERSION__ = 3
 
@@ -643,13 +647,14 @@ class WikiWatchlist(BasicWatchlist):
           notify = False
           if wl.gnotify:
             notify = wl.is_notify(req, 'wiki', name)
+          t = from_utimestamp( time )
           wikilist.append({
               'name' : name,
               'author' : author,
               'version' : version,
-              'datetime' : format_datetime( time ),
-              'timedelta' : pretty_timedelta( time ),
-              'timeline_link' : req.href.timeline(precision='seconds', from_=format_datetime (time,'iso8601')),
+              'datetime' : format_datetime( t, "%F %T %Z" ),
+              'timedelta' : pretty_timedelta( t ),
+              'timeline_link' : req.href.timeline(precision='seconds', from_=format_datetime ( t, 'iso8601')),
               'comment' : comment,
               'notify'  : notify,
           })
@@ -741,15 +746,16 @@ class TicketWatchlist(BasicWatchlist):
           # returns an empty tag, so we skip the first two elements
           # [tag(''), tag('; ')] and remove the last tag('; '):
           changes = changes and tag(changes[2:-1]) or tag()
+          ct = from_utimestamp( changetime )
           ticketlist.append({
               'id' : to_unicode(id),
               'type' : type,
               'author' : author,
               'commentnum': to_unicode(self.commentnum),
               'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
-              'datetime' : format_datetime( changetime ),
-              'timedelta' : pretty_timedelta( changetime ),
-              'timeline_link' : req.href.timeline(precision='seconds', from_=format_datetime (time,'iso8601')),
+              'datetime' : format_datetime( ct, "%F %T %Z" ),
+              'timedelta' : pretty_timedelta( ct ),
+              'timeline_link' : req.href.timeline(precision='seconds', from_=format_datetime ( ct, 'iso8601')),
               'changes' : changes,
               'summary' : summary,
               'notify'  : notify,

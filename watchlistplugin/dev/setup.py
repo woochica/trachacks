@@ -24,7 +24,7 @@ setup(
             'templates/*.html',
         ],
     },
-    description = "Watchlist Plugin for Trac",
+    description = "Watchlist Plugin for Trac v0.12",
     url = 'http://www.trac-hacks.org/wiki/WatchlistPlugin',
     download_url = 'http://trac-hacks.org/svn/watchlistplugin/releases/',
     license      = 'GPLv3',
