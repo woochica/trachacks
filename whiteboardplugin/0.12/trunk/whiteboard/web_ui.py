@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2010 Brian Meeker
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 from pkg_resources import resource_filename
 from trac.core import *
 from trac.db.api import with_transaction
