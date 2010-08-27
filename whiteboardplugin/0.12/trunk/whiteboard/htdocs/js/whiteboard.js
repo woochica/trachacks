@@ -65,7 +65,7 @@ jQuery(document).ready(function($){
         });
     });
     
-    //Submit event
+    //Submit changes made with the whiteboard.
     $("#whiteboard_form").submit(function(){
         try{
             var valid = true;
@@ -83,11 +83,11 @@ jQuery(document).ready(function($){
                 for(var i=0; i<changes.length; i++){
                     changesValue += changes[i] + ",";
                 }
-                $("#whiteboard_changes").value = changesValue
+                $("#whiteboard_changes").val(changesValue);
                 console.log(changesValue);
             }
             
-            return false;
+            return valid;
         }
         catch(e){
             alert(e);
