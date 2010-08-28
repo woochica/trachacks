@@ -11,11 +11,11 @@ import string
 from trac.core import *
 from trac.wiki.formatter import format_to_html
 
+revision = "$Rev$"
+url = "$URL$"
+
 class StatusIndicatorMacro(WikiMacroBase):
     """Inserts a square dot in the give color, white if no color given"""
-
-    revision = "$Rev$"
-    url = "$URL$"
 
     def expand_macro(self, formatter, name, args):
 	if args:
