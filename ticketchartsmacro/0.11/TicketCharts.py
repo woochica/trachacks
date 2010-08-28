@@ -83,6 +83,9 @@ from trac.wiki.macros import WikiMacroBase
 from trac.db.api import get_column_names
 from trac.web.href import Href
 
+revison = "$Rev$"
+url = "$URL$"
+
 PLUGIN_CONFIG_NAME = 'ticket-charts'
 
 # TODO: Fill more colours
