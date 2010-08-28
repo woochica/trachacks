@@ -9,7 +9,7 @@ from trac.util.html import html as tag
 class OhlohBadgeMacro(WikiMacroBase):
     """A small maco for showing Ohloh (http://ohloh.net) statistics badges."""
     
-    SCRIPT_LOCATION = 'http://www.ohloh.net/projects/%s;badge_js'
+    SCRIPT_LOCATION = 'http://www.ohloh.net/p/%s/widgets/project_thin_badge'
     
     def render_macro(self, req, name, content):
         content = content.strip()
