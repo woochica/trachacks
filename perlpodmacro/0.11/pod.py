@@ -5,6 +5,9 @@ from trac.wiki import Formatter
 from StringIO import StringIO
 from subprocess import Popen, PIPE
 
+revison="$Rev$"
+url="$URL$"
+
 class PodMacro(WikiMacroBase):
     """Converts from Perl Plain Old Documentation format (POD) to HTML"""
 
