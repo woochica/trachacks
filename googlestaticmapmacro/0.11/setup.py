@@ -9,7 +9,7 @@ __date__     = r"$Date$"[7:-2]
 
 setup(
     name = 'TracGoogleStaticMapMacro',
-    version = '0.4',
+    version = '0.5',
     packages = ['tracgooglestaticmap'],
     author = 'Martin Scharrer',
     author_email = 'martin@scharrer-online.de',
