@@ -80,14 +80,14 @@ will result in the following map image:
     """
     implements ( IWikiMacroProvider )
 
-    key  = Option('googlestaticmap', 'api_key', None, 'Google Maps API key')
-    size = Option('googlestaticmap', 'default_size', "300x300", 'Default size for map')
-    hl   = Option('googlestaticmap', 'default_language', 'Default language for map')
+    key  = Option('googlestaticmap', 'api_key', None, "Google Maps API key")
+    size = Option('googlestaticmap', 'default_size', "300x300", "Default size for map")
+    hl   = Option('googlestaticmap', 'default_language', "en", "Default language for map")
 
     allowed_args = ['center','zoom','size','format','maptype',
-            'markers','path','span','frame','hl','key']
+            'markers','path','span','frame','hl','key','sensor']
 
-    google_url = Href("http://maps.google.com/staticmap")
+    google_url = Href('http://maps.google.com/maps/api/staticmap')
 
     def get_macros(self):
         yield 'GoogleStaticMap'
@@ -105,6 +105,7 @@ will result in the following map image:
               'key'    : self.key,
               'size'   : self.size,
               'hl'     : self.hl,
+              'sensor' : 'false',
             }
 
         # Delete default zoom if user provides 'span' argument:
