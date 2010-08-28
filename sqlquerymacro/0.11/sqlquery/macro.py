@@ -101,5 +101,5 @@ class SqlQueryMacro(Component):
 		return []
 		
 	def get_htdocs_dirs(self):
-		from pkg_resources import resource_filename
-		return [("sqlquery", resource_filename(__name__, "htdocs"))]
+		return []
+	
