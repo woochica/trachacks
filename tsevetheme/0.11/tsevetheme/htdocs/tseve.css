@@ -39,9 +39,9 @@ a, :link, :visited {
 	float: right;
 	color: white;
 	height: 16px;
+	margin-bottom: 10px;
 	}
 	#custom-metanav ul {
-		margin-right: 45px;
 	}
 	#custom-metanav ul li {
 	}
@@ -92,8 +92,7 @@ a, :link, :visited {
 
 #custom-contextnav {
 	float: right;
-	margin-right: 20px;
-	margin-top: 10px;
+	margin-top: -10px;
 	}
 	#custom-contextnav ul {
 	}
@@ -136,7 +135,7 @@ a, :link, :visited {
 	line-height: 14px;
 	}
 	.custom-nav ul {
-		display: inline;
+		margin: 0px;
 	}
 	.custom-nav ul li {
 		display: table-cell;
