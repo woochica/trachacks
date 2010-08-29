@@ -191,6 +191,15 @@ table.pplisting tbody td.ppimagecol {
 	border-right: 1px solid #9baff1;
 	border-left: 1px solid #9baff1;
 }
+
+
+.ticketsperuserday table tfoot td
+{
+/* 	font-size: 13px; */
+	color: #039;
+	background: #b9c9fe;
+}
+
 .ticketsperuserday table td
 {
 	color: #669;
@@ -207,6 +216,12 @@ table.pplisting tbody td.ppimagecol {
 	background: #d0dafd;
 	color: #339;
 }
+
+.ticketsperuserday h4, .ticketsperuserday h5 {
+  margin:0;
+  padding:0;
+}
+
 
 /* table with black header */
 .blacktable table
