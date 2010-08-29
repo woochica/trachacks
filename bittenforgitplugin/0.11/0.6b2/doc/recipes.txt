@@ -1,0 +1,127 @@
+.. -*- mode: rst; encoding: utf-8 -*-
+
+=============
+Build Recipes
+=============
+
+A build recipe tells a build slave how a project is to be built. It consists of
+multiple build steps, each defining a command to execute, and where artifacts
+can be found after that command has successfully completed.
+
+Build recipes are intended to supplement existing project build files (such as
+Makefiles), not to replace them. In general, a recipe will be much simpler than
+the build file itself, because it doesn't deal with all the details of the
+build. It just automates the execution of the build and lets the build slave
+locate any artifacts and metrics data generated in the course of the build.
+
+A recipe can and should split the build into multiple separate steps so that the
+build slave can provide better status reporting to the build master while the
+build is still in progress. This is important for builds that might take long to
+execute. In addition, build steps help organize the build results for a more
+structured presentation.
+
+.. contents:: Contents
+   :depth: 2
+.. sectnum::
+
+
+File Format
+===========
+
+Build recipes are stored internally in an XML-based format. Recipe documents
+have a single ``<build>`` root element with one or more ``<step>`` child
+elements. The steps are executed in the order they appear in the recipe.
+
+A ``<step>`` element will consist of any number of commands and reports. Most of
+these elements are declared in XML namespaces, where the namespace URI defines
+a collection of related commands.
+
+A ``<step>`` element can additionally have an ``onerror`` attribute with
+value of ``fail`` (terminate after step, default behaviour) or ``ignore``
+(fail, but run next step).
+
+Commonly, the first step of any build recipe will perform the checkout from the
+repository.
+
+.. code-block:: xml
+
+  <build xmlns:python="http://bitten.edgewall.org/tools/python"
+         xmlns:svn="http://bitten.edgewall.org/tools/svn">
+  
+    <step id="checkout" description="Checkout source from repository">
+      <svn:checkout url="http://svn.example.org/repos/foo"
+          path="${path}" revision="${revision}" />
+    </step>
+  
+    <step id="build" description="Compile to byte code">
+      <python:distutils command="build"/>
+    </step>
+  
+    <step id="test" description="Run unit tests">
+      <python:distutils command="unittest"/>
+      <python:unittest file="build/test-results.xml"/>
+      <python:trace summary="build/test-coverage.txt" 
+          coverdir="build/coverage" include="trac*" exclude="*.tests.*"/>
+    </step>
+  
+  </build>
+
+See `Build Recipe Commands`_ for a comprehensive reference of the commands
+available by default.
+
+.. _`build recipe commands`: commands.html
+
+Recipes supports variables that can be interpolated into recipes, and using
+`Slave Configuration`_ further custom properties can be used. Bitten supports
+these pre-defined properties:
+
+.. _`slave configuration`: configure.html
+
++-----------------+----------------------------------------------------------+
+| Constant        | Value                                                    |
++=================+==========================================================+
+| ``${path}``     | Repository path from the build configuration             |
++-----------------+----------------------------------------------------------+
+| ``${config}``   | The build configuration name                             |
++-----------------+----------------------------------------------------------+
+| ``${build}``    | The index of this build request                          |
++-----------------+----------------------------------------------------------+
+| ``${revision}`` | The repository revision being tested                     |
++-----------------+----------------------------------------------------------+
+| ``${platform}`` | The name of the target platform being built              |
++-----------------+----------------------------------------------------------+
+| ``${name}``     | The name of the build slave                              |
++-----------------+----------------------------------------------------------+
+| ``${basedir}``  | The absolute path of the build location, joining         |
+|                 | ``work-dir`` (absolute) with ``build-dir`` (relative)    |
++-----------------+----------------------------------------------------------+
+
+As the recipe needs to be valid XML, any reserved characters in attributes must
+be quoted using regular XML entities:
+
++-----------+------------+
+| Character | Quoted     |
++===========+============+
+| ``"``     | ``&quot;`` |
++-----------+------------+
+| ``<``     | ``&lt;``   |
++-----------+------------+  
+| ``>``     | ``&gt;``   |
++-----------+------------+
+| ``&``     | ``&amp;``  |
++-----------+------------+
+| ``'``     | ``&apos;`` |
++-----------+------------+
+
+If needed, most commands use regular shell rules to split parts of the input -
+typically like ``args`` input for ``sh:exec`` command. Double-quotes
+(``&quot;``) can be used to mark the start and end if any sub-parts contain
+whitespace, alternatively ``'\'`` can be used to escape whitespace or any other
+character that carries meaning as part of input - including double-quotes and
+backslash itself:
+
+.. code-block:: xml
+
+  <sh:exec file="echo" args="o\\ne &quot;4 2&quot; \&quot;hi\ there\&quot;"/>
+
+This will pass 3 arguments: ``o\ne`` + ``4 2`` + ``"hi there"``.
