@@ -1066,7 +1066,8 @@ function ppInitializeTablesorter() {
 }
 
 $(document).ready(function () {
-	ppAddTooltip(".project_image .ticket_inner a"); // project image
+ 	ppAddTooltip(".project_image .ticket_inner a"); // project image, @deprecated
+	ppAddTooltip(".projectplanrender .ticket_inner a"); // project plan general
 	// remove all title values
 //  	$(".project_image .ticket_inner a").each(function() { this.title = "";});
 	ppAddTooltip(".properties a.ticket_inner"); // ticket view

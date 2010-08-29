@@ -165,3 +165,126 @@ table.pplisting tbody td.ppimagecol {
   background-color:#BBB;
   padding:1ex;
 }
+
+
+
+/* ************ DESIGNS FOR RENDERER TicketPerUserDay *************** */
+
+/* like on http://www.smashingmagazine.com/2008/08/13/top-10-css-table-designs/ */
+.ticketsperuserday table
+{
+	font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+	border-collapse: collapse;
+	border:0;
+	border-bottom: 1px solid #9baff1;
+}
+.ticketsperuserday table th
+{
+/* 	font-size: 13px; */
+	color: #039;
+	text-align:center;
+	font-weight: normal;
+	padding: 0.75ex;
+	background: #b9c9fe;
+	border-top: 4px solid #aabcfe;
+	border-bottom: 1px solid   #9baff1;
+	border-right: 1px solid #9baff1;
+	border-left: 1px solid #9baff1;
+}
+.ticketsperuserday table td
+{
+	color: #669;
+	padding: 0.75ex;
+	text-align:center;
+	background: #e8edff; 
+	border-right: 1px solid #9baff1;
+	border-left: 1px solid #9baff1;
+	border-bottom: 1px solid   #9baff1;
+	border-top: 1px solid transparent;
+}
+.ticketsperuserday table tr:hover td
+{
+	background: #d0dafd;
+	color: #339;
+}
+
+/* table with black header */
+.blacktable table
+{
+	font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+	border-collapse: collapse;
+	border:1px solid #EEE;
+	color: #111;
+/* 	border-bottom: 1px solid #9baff1; */
+}
+.blacktable table th, .blacktable table tfoot td
+{
+	color: #DDD;
+	text-align:center;
+	font-weight: normal;
+	padding: 0.75ex;
+	background: #b9c9fe;
+	border: 1px solid #000;
+	background-color: #333;
+	background-image:url('black_gradient2.png');
+	background-position:center center;
+}
+.blacktable table td
+{
+	color: #111;
+	padding: 0.75ex;
+	text-align:center;
+	border: 1px solid #EEE;
+}
+
+.blacktable table tr.odd
+{
+  background-color: #F5F5F5;
+}
+
+.blacktable table tr.even
+{
+  background-color: #FCFCFC;
+}
+
+.blacktable table td.sunday
+{
+    background-image:url(hatch5x5light.gif);
+}
+.blacktable table td.saturday
+{
+    background-image:url(hatch5x5light.gif);
+}
+
+.blacktable table tbody tr:hover
+{
+	background: #FFFFE0; /* light yellow */
+	color: #000;
+}
+
+.blacktable table tbody h4 
+{
+  font-size:100%;
+  font-weight:bold;
+  margin:0;
+  padding:0;
+}
+
+.blacktable table thead h4 
+{
+  font-size:100%;
+  color: #EEE;
+  margin:0;
+  padding:0;
+  font-weight:bold;
+}
+.blacktable table thead h5, .blacktable table tfoot h5
+{
+  font-size:80%;
+  color: #CCC;
+  margin:0;
+  padding:0;
+  font-weight:normal;
+}
+
+

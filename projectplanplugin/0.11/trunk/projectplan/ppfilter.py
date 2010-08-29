@@ -291,6 +291,7 @@ class ppFilter():
     
     #ticketset = ppTicketSet() # OR
     # get tickets for "Parameter based Filters" using macrokw
+    global_filtered = False # was there every a filter applied
     for ( k, v ) in self.macroenv.macrokw.items():
       filtered = False
       if k in query_filters:
@@ -308,6 +309,7 @@ class ppFilter():
         filtered = True
       
       if filtered:
+        global_filtered = True
         self.macroenv.tracenv.log.debug('currentTickets: '+repr(ticketset.getIDList()))
         # adapt ticket set
         if operator == self.OPERATOR_AND:
@@ -319,6 +321,12 @@ class ppFilter():
         else: # OR
           for t in f.get_tickets():
             ticketset.addTicket( t )
+    
+    # Fallback, so no filter means all tickets
+    if global_filtered == False and operator == self.OPERATOR_OR:
+      ticketlist = NullFilter( self.macroenv ).get_tickets() #  all tickets
+      for t in ticketlist:
+        ticketset.addTicket(t)
     
     self.macroenv.tracenv.log.debug('result ids: ticketset:'+repr(ticketset.getIDList()))
     return ticketset

@@ -2,4 +2,5 @@
 
 
 from ppchartrenderer import *
+from ppticketsperuserday import *
 #from pphierarchicalrenderer import *

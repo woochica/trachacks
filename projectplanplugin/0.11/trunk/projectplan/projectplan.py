@@ -318,6 +318,8 @@ class ProjectPlanMacro(WikiMacroBase):
         # needed because of ajax call while showing ticket details
         add_stylesheet( formatter.req, 'common/css/ticket.css' )
         
+        if content == None:
+          content = ''
         macroenv = PPEnv( self.env, formatter.req, content )
         ts = ppFilter( macroenv ).get_tickets()
         

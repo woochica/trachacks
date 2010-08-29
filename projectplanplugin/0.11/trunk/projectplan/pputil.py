@@ -32,6 +32,7 @@ def addExternFiles(req):
   # include jquery tooltips
   add_script( req, 'projectplan/js/jquery-tooltip/lib/jquery.dimensions.js' )
   add_script( req, 'projectplan/js/jquery-tooltip/jquery.tooltip.js' )
+  add_stylesheet( req, 'projectplan/css/projectplan.css' )
   
   # include jquery tablesorter
   # TODO: now included in projectplan.js to prevent errors
@@ -42,7 +43,6 @@ def addExternFiles(req):
   add_stylesheet( req, 'projectplan/js/jquery-tooltip/jquery.tooltip.css' )
 
   # PP css and js
-  add_stylesheet( req, 'projectplan/css/projectplan.css' )
   add_script( req, 'projectplan/js/projectplan.js' )
 
  

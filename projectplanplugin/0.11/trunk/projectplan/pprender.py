@@ -875,6 +875,7 @@ class GVRenderer(RenderImpl):
 
 RenderRegister.add( GVRenderer, 'gvrender' )
 RenderRegister.add( GVRenderer, 'default' )
+RenderRegister.add( TicketsPerUserDay, 'tableticketperuserday' )
 
 
 class GVCollapsedHRenderer( GVRenderer ):
