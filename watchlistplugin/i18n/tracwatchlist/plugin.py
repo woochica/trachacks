@@ -28,7 +28,8 @@ from  genshi.builder     import  tag, Markup
 from  trac.config        import  BoolOption
 from  trac.db            import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model  import  Ticket
-from  trac.util          import  format_datetime, pretty_timedelta
+from  trac.util.datefmt  import  format_datetime, pretty_timedelta, \
+                                 from_utimestamp
 from  trac.util.text     import  to_unicode
 from  trac.web.api       import  IRequestFilter, IRequestHandler, RequestDone
 from  trac.web.chrome    import  ITemplateProvider, add_ctxtnav, add_link, add_script, add_notice
@@ -647,9 +648,10 @@ class WikiWatchlist(BasicWatchlist):
               'name' : name,
               'author' : author,
               'version' : version,
-              'datetime' : format_datetime( time ),
-              'timedelta' : pretty_timedelta( time ),
-              'timeline_link' : req.href.timeline(precision='seconds', from_=format_datetime (time,'iso8601')),
+              'datetime' : format_datetime(from_utimestamp(time)),
+              'timedelta' : pretty_timedelta(from_utimestamp(time)),
+              'timeline_link' : req.href.timeline(precision='seconds',
+                  from_=format_datetime(from_utimestamp(time),'iso8601')),
               'comment' : comment,
               'notify'  : notify,
           })
@@ -747,9 +749,10 @@ class TicketWatchlist(BasicWatchlist):
               'author' : author,
               'commentnum': to_unicode(self.commentnum),
               'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
-              'datetime' : format_datetime( changetime ),
-              'timedelta' : pretty_timedelta( changetime ),
-              'timeline_link' : req.href.timeline(precision='seconds', from_=format_datetime (time,'iso8601')),
+              'datetime' : format_datetime(from_utimestamp(changetime)),
+              'timedelta' : pretty_timedelta(from_utimestamp(changetime)),
+              'timeline_link' : req.href.timeline(precision='seconds',
+                  from_=format_datetime(from_utimestamp(time),'iso8601')),
               'changes' : changes,
               'summary' : summary,
               'notify'  : notify,
