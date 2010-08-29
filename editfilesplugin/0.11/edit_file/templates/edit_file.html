@@ -1,0 +1,24 @@
+<!DOCTYPE HTML PUBLIC
+      "-//W3C//DTD XHTML 1.0 Strict//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/" >
+  <xi:include href="admin.html" />
+<head>
+  <title>Edit File</title>
+</head>
+<body>
+  <h2>Subversion: Permissions</h2>
+  <form id="saveauthzfile" method="post">
+    <div class="field">
+      <textarea rows="20" style="width:63%" name="current">${file_data}</textarea>
+    </div>
+    <div class="buttons">
+      <input type="submit" name="savefile" value=" Apply changes " />
+      <input type="reset" value=" Reset " />
+    </div>
+  </form>
+  <br />
+</body>
+</html>
