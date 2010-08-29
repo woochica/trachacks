@@ -156,12 +156,15 @@ class TracpastePlugin(Component):
 
                 if self._download_allowed(mimetype):
                     self.env.log.info("*** serving download")
+                    content = paste.data
                     req.send_response(200)
                     req.send_header('Content-Type', mimetype)
-                    req.send_header('Content-Length', len(paste.data))
+                    req.send_header('Content-Length', len(content))
                     req.send_header('Last-Modified', http_date(paste.time))
                     req.end_headers()
-                    req.write(paste.data)
+                    if isinstance(content, unicode):
+                        content = content.encode('utf-8')
+                    req.write(content)
                     return
                 else:
                     self.env.log.info("*** download denied")

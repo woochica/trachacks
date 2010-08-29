@@ -1,0 +1,12 @@
+Metadata-Version: 1.0
+Name: TracPaste
+Version: 0.2
+Summary: Pastebin plugin for Trac
+Home-page: http://trac-hacks.org/wiki/TracPastePlugin
+Author: Michael Renzmann
+Author-email: mrenzmann@otaku42.de
+License: BSD
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Framework :: Trac
+Classifier: License :: OSI Approved :: BSD License
