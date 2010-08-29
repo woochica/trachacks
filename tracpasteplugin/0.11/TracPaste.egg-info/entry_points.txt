@@ -1,5 +1,0 @@
-[trac.plugins]
-tracpaste.model = tracpaste.model
-tracpaste.web_ui = tracpaste.web_ui
-tracpaste.db = tracpaste.db
-
