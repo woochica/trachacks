@@ -48,26 +48,26 @@
 			</div>
 
 			<div style="clear: both;" />
-
-			<!-- Metanav (Login, Preferences, Help/Guide, etc) -->
-			${navigation('metanav')}
-
 		</div>
+
+		<!-- Metanav (Login, Preferences, Help/Guide, etc) -->
+		${navigation('metanav')}
 
 		<!-- Mainnav (Wiki, Timeline, Roadmap, Browse Source, View Tickets, New Ticket, Admin, etc) -->
 		${navigation('mainnav')}
-
-		<!-- Contextnav (Start Page, Index, History, Last Change, etc) -->
-		<div id="custom-contextnav" class="custom-nav">
-			<!-- <ul py:if="chrome.ctxtnav"> -->
-			<ul>
-				<li py:for="i, elm in enumerate(chrome.ctxtnav)" 
-				    class="${i == 0 and 'first ' or None}${i+1 == len(chrome.ctxtnav) and 'last' or None}">$elm</li>
-			</ul>
-		</div>
 	
 		<!-- Main content -->
 		<div id="main-content">
+
+			<!-- Contextnav (Start Page, Index, History, Last Change, etc) -->
+			<div id="custom-contextnav" class="custom-nav">
+				<!-- <ul py:if="chrome.ctxtnav"> -->
+				<ul>
+					<li py:for="i, elm in enumerate(chrome.ctxtnav)" 
+					    class="${i == 0 and 'first ' or None}${i+1 == len(chrome.ctxtnav) and 'last' or None}">$elm</li>
+				</ul>
+			</div>
+
 			${select('*|text()')}
 			<div style="clear: both;" />
 		</div>
