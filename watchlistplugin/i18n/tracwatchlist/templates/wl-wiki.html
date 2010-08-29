@@ -4,66 +4,74 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="watchlist"
       py:strip="">
 
-      <div id="wikis">
-        <div>
-          <span class="showhide"></span>
-          <h2>Wikis</h2>
-        </div>
-      <py:choose test="">
-      <div class="system-message" py:when="'WIKI_VIEW' not in perm">You lack permission to view wikis.</div>
+  <div id="wikis">
+    <div>
+      <span class="showhide"></span>
+      <h2>Wikis</h2>
+    </div>
+    <py:choose test="">
+      <div class="system-message" py:when="'WIKI_VIEW' not in perm">
+        You lack permission to view wikis.</div>
       <div id="wikilist-plusadd">
-      <py:choose test="" py:otherwise="">
-      <div id="wikilist-parent" py:when="wikilist">
-      ${tablepager("wikipager")}
-      <table class="wikilist" id="wikilist">
-          <thead>
-              <tr>
-                  <th py:for="head in (['Page&nbsp;&nbsp;&nbsp;','name'],['Last Changed
-                      At','datetime'], ['By&nbsp;&nbsp;&nbsp;','author'],
-                      ['Version&nbsp;&nbsp;&nbsp;', 'version'], ['Diff','diff'],
-                      ['History','history'], ['U','unwatch'])"
-                      class="${head[1]}">${head[0]}</th>
-                  <th py:if="notify"
-                      class="notify">Notify&nbsp;&nbsp;&nbsp;</th>
-                  <th py:for="head in (['Comment&nbsp;&nbsp;&nbsp;','comment'],)"
-                      class="${head[1]}">${head[0]}</th>
-              </tr>
-          </thead>
-          <tbody>
-              <tr py:for="page in wikilist">
-                  <td class="name">${link('wiki',page.name,text=page.name)}</td>
+        <py:choose test="" py:otherwise="">
+          <div id="wikilist-parent" py:when="wikilist">
+            ${tablepager("wikipager")}
+            <table class="wikilist" id="wikilist">
+              <thead>
+                <tr>
+                  <th py:for="k in ['name', 'datetime', 'author', 'version']"
+                      class="${k}">${th.get(k)}&nbsp;&nbsp;&nbsp;</th>
+                  <th py:for="k in ['diff', 'history', 'unwatch']"
+                      class="${k}">${th.get(k)}</th>
+                  <th py:if="notify" class="${'notify'}">
+                      ${th['notify']}&nbsp;&nbsp;&nbsp;</th>
+                  <th class="${'comment'}">
+                      ${th['comment']}&nbsp;&nbsp;&nbsp;</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr py:for="page in wikilist">
+                  <td class="name">${link('wiki',page.name,
+                      text=page.name)}</td>
                   <td class="datetime">$page.datetime
-                      <py:if test="page.timedelta"> (<a
-                          href="$page.timeline_link">$page.timedelta</a> ago)</py:if></td>
+                      <span py:if="page.timedelta"
+                        i18n:msg="timeline_link, timedelta"> (<a
+                        href="$page.timeline_link">
+                        $page.timedelta</a> ago)</span></td>
                   <td class="author">$page.author</td>
                   <td class="version"><a py:if="not page.deleted"
-                          href="${href('wiki',page.name,version=page.version)}">$page.version</a></td>
+                      href="${href('wiki',page.name,
+                      version=page.version)}">$page.version</a></td>
                   <td class="diff"><a py:if="not page.deleted"
-                      href="${href('wiki',page.name,action='diff',version=page.version)}">
-                        <img src="${href.chrome('watchlist/ico/diff.png')}" width="16px"
-                          height="16px" title="Diff" alt="Diff" />
-                      </a></td>
+                      href="${href('wiki',page.name,action='diff',
+                        version=page.version)}">
+                        <img src="${href.chrome('watchlist/ico/diff.png')}"
+                          width="16px" height="16px" title="Diff"
+                          alt="Diff" /></a></td>
                   <td class="history"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,action='history')}">
-                        <img src="${href.chrome('watchlist/ico/history.png')}" width="16px"
-                          height="16px" title="History" alt="History" />
-                      </a></td>
+                        <img src="${href.chrome('watchlist/ico/history.png')}"
+                          width="16px" height="16px" title="History"
+                          alt="History" /></a></td>
                   <td class="unwatch"><a class="plainlink"
-                      href="${href.watchlist(action='unwatch',realm='wiki',resid=page.name)}">
-                      ${unwatchicon()}</a></td>
-                  <td class="notify"
-                    py:if="notify">${notifybox('wiki',page.name,page.notify)}</td>
+                      href="${href.watchlist(action='unwatch',realm='wiki',
+                      resid=page.name)}">${unwatchicon()}</a></td>
+                  <td class="notify" py:if="notify">
+                      ${notifybox('wiki',page.name,page.notify)}</td>
                   <td class="comment">$page.comment</td>
-              </tr>
-          </tbody>
-      </table>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div py:otherwise="">
+            <span>No wikis are currently watched.</span></div>
+        </py:choose>
+        ${modify_form('wiki')}
       </div>
-      <div py:otherwise=""><span>No wikis are currently watched.</span></div>
-      </py:choose>
-      ${modify_form('wiki')}
-      </div>
-      </py:choose>
-    </div>
+    </py:choose>
+  </div>
 </html>

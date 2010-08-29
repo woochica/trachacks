@@ -1,15 +1,26 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude" 
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="watchlist">
   <xi:include href="layout.html"/>
   <head>
-    <link type="text/css" href="${href.chrome('watchlist','css','style.css')}" rel="stylesheet" />
-    <link type="text/css" href="${href.chrome('watchlist','css','tablesorter.css')}" rel="stylesheet" />
+    <link type="text/css"
+      href="${href.chrome('watchlist','css','style.css')}"
+      rel="stylesheet" />
+    <link type="text/css"
+      href="${href.chrome('watchlist','css','tablesorter.css')}"
+      rel="stylesheet" />
     <title>Watchlist</title>
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
     <script type="text/javascript" 
-      src="${href.chrome('watchlist','js','jquery.tablesorter.min.js')}"></script>
+      src="${href.chrome('watchlist','js','jquery.tablesorter.min.js')}">
+    </script>
     <script type="text/javascript" 
-      src="${href.chrome('watchlist','js','jquery.tablesorter.pager.js')}"></script>
+      src="${href.chrome('watchlist','js','jquery.tablesorter.pager.js')}">
+    </script>
     <script type="text/javascript" 
       src="${href.chrome('watchlist','js','watchlist.js')}"></script>
     <script type="text/javascript">
@@ -33,14 +44,16 @@
       <div class="modwatch">
       <form method="get" action="" class="addtowatch">
         <span>
-          Add ${label or (realm.capitalize() + 's')}: <input type="text" name="resid" />
+          Add ${label or (realm.capitalize() + 's')}:
+          <input type="text" name="resid" />
           <input type="hidden" name="realm" value="$realm" />
           <input type="hidden" name="action" value="watch" />
         </span>
       </form>
       <form method="get" action="" class="remfromwatch">
         <span>
-          Remove ${label or (realm.capitalize() + 's')}: <input type="text" name="resid" />
+          Remove ${label or (realm.capitalize() + 's')}:
+          <input type="text" name="resid" />
           <input type="hidden" name="realm" value="$realm" />
           <input type="hidden" name="action" value="unwatch" />
         </span>
@@ -74,11 +87,15 @@
           <div class="tablesorterPager" id="$name">
             <form action="">
               <div>
-              <img class="first" alt="|&lt;" src="${href.chrome('watchlist/ico/first.png')}"/>
-              <img class="prev" alt="&lt;&lt;" src="${href.chrome('watchlist/ico/prev.png')}"/>
+              <img class="first" alt="|&lt;"
+                src="${href.chrome('watchlist/ico/first.png')}"/>
+              <img class="prev" alt="&lt;&lt;"
+                src="${href.chrome('watchlist/ico/prev.png')}"/>
               <input type="text" class="pagedisplay"/>
-              <img class="next" alt="&gt;&gt;" src="${href.chrome('watchlist/ico/next.png')}"/>
-              <img class="last" alt="&gt;|" src="${href.chrome('watchlist/ico/last.png')}"/>
+              <img class="next" alt="&gt;&gt;"
+                src="${href.chrome('watchlist/ico/next.png')}"/>
+              <img class="last" alt="&gt;|"
+                src="${href.chrome('watchlist/ico/last.png')}"/>
               <select class="pagesize">
                 <option value="10" selected="selected">10</option>
                 <option value="20">20</option>
@@ -94,38 +111,51 @@
         </py:def>
 
         <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>
-        <div py:if="show_messages and action" py:choose="action" id="message-box">
+        <div py:if="show_messages and action"
+          py:choose="action" id="message-box">
             <py:when test="'watch'">
-                <div class="system-message" id="error" py:if="err_res or err_pat">
+                <div class="system-message" id="error"
+                  py:if="err_res or err_pat">
                     <h3 class="system-message-title">Not found</h3>
                     <div py:if="err_res" class="err_res">
-                      <p>The following selected ${realm}s where not found and could therefore not be added to the watchlist:</p>
+                      <p>The following selected ${realm}s where not found
+                        and could therefore not be added to the watchlist:
+                      </p>
                       <ul><li py:for="res in err_res">$res</li></ul>
                     </div>
                     <div py:if="err_pat" class="err_pat">
-                      <p>The following patterns did not result in any matches:</p>
+                      <p>The following patterns did not result in any matches:
+                      </p>
                       <ul><li py:for="pat in err_pat">$pat</li></ul>
                     </div>
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
-                <div class="system-message" id="warning" py:if="len(alw_res)==1">
+                <div class="system-message" id="warning"
+                  py:if="len(alw_res)==1">
                     <h3 class="system-message-title">Already watched</h3>
                     <p>Selected ${link(realm,alw_res[0])} is already watched.
-                    (<a href="${href.watchlist(action='unwatch',realm=realm,resid=alw_res[0])}">Unwatch it?</a>)
-                    ${ackmsg()}
+                      (<a href="${href.watchlist(action='unwatch',realm=realm,resid=alw_res[0])}">Unwatch it?</a>)
+                      ${ackmsg()}
                     </p>
                 </div>
-                <div class="system-message" id="warning" py:if="len(alw_res)>1">
+                <div class="system-message" id="warning"
+                  py:if="len(alw_res)>1">
                     <h3 class="system-message-title">Already on Watchlist</h3>
-                    <p>The following selected ${realm}s where already on the watchlist:</p>
-                    <ul><li py:for="res in alw_res">${slink(realm,res)}</li></ul>
+                    <p>The following selected ${realm}s where already
+                      on the watchlist:
+                    </p>
+                    <ul>
+                      <li py:for="res in alw_res">${slink(realm,res)}</li>
+                    </ul>
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
-                <div class="system-message" id="notice" py:if="len(new_res)==1">
+                <div class="system-message" id="notice"
+                  py:if="len(new_res)==1">
                     <h3 class="system-message-title">Added to Watchlist</h3>
-                    <p>The selected ${link(realm,new_res[0])} was added to the watchlist.
-                    (<a href="${href.watchlist(action='unwatch',realm=realm,resid=new_res[0])}">Remove again</a>)
-                    ${ackmsg()}
+                    <p>The selected ${link(realm,new_res[0])} was added
+                      to the watchlist.
+                      (<a href="${href.watchlist(action='unwatch',realm=realm,resid=new_res[0])}">Remove again</a>)
+                      ${ackmsg()}
                     </p>
                 </div>
                 <div class="system-message" id="notice" py:if="len(new_res)>1">
@@ -133,34 +163,49 @@
                     <p>The following selected ${realm}s where added to the watchlist:
                       (<a href="${href.watchlist(action='unwatch',realm=realm,resid=new_res)}">Remove them again</a>)
                     </p>
-                    <ul><li py:for="res in new_res">${slink(realm,res)}</li></ul>
+                    <ul>
+                      <li py:for="res in new_res">${slink(realm,res)}</li>
+                    </ul>
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
             </py:when>
             <py:when test="'unwatch'">
-                <div class="system-message" id="notice" py:if="len(del_res)==1">
+                <div class="system-message" id="notice"
+                  py:if="len(del_res)==1">
                     <h3 class="system-message-title">Removed from Watchlist</h3>
-                    <p>The selected ${link(realm,del_res[0])} was removed to the watchlist.
-                    (<a href="${href.watchlist(action='watch',realm=realm,resid=del_res[0])}">Add again</a>)
-                    ${ackmsg()}
+                    <p>The selected ${link(realm,del_res[0])} was removed
+                      from the watchlist.
+                      (<a href="${href.watchlist(action='watch',realm=realm,resid=del_res[0])}">Add again</a>)
+                      ${ackmsg()}
                     </p>
                 </div>
-                <div class="system-message" id="notice" py:if="len(del_res)>1">
+                <div class="system-message" id="notice"
+                  py:if="len(del_res)>1">
                     <h3 class="system-message-title">Removed from Watchlist</h3>
-                    <p>The following selected ${realm}s where removed from the watchlist:
+                    <p>The following selected ${realm}s where removed
+                      from the watchlist:
                       (<a href="${href.watchlist(action='watch',realm=realm,resid=del_res)}">Add them again</a>)
                     </p>
-                    <ul><li py:for="res in del_res">${slink(realm,res)}</li></ul>
+                    <ul>
+                      <li py:for="res in del_res">${slink(realm,res)}</li>
+                    </ul>
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
-                <div class="system-message" id="warning" py:if="err_res or err_pat">
+                <div class="system-message" id="warning"
+                  py:if="err_res or err_pat">
                     <h3 class="system-message-title">Not on Watchlist</h3>
                     <div py:if="err_res" class="err_res">
-                      <p>The following to-be-deleted ${realm}s where not on the watchlist:</p>
-                      <ul><li py:for="res in err_res">${slink(realm,res)}</li></ul>
+                      <p>The following to-be-deleted ${realm}s
+                        where not on the watchlist:
+                      </p>
+                      <ul>
+                        <li py:for="res in err_res">${slink(realm,res)}</li>
+                      </ul>
                     </div>
                     <div py:if="err_pat" class="err_pat">
-                      <p>The following patterns did not result in any matches in the watchlist:</p>
+                      <p>The following patterns did not result
+                        in any matches in the watchlist:
+                      </p>
                       <ul><li py:for="res in err_pat">$res</li></ul>
                     </div>
                     <p class="ackmsg">${ackmsg()}</p>

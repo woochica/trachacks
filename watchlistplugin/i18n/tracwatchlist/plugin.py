@@ -22,23 +22,33 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
-from trac.core import *
+from  pkg_resources          import  resource_filename
+from  urllib                 import  quote_plus
 
-from  genshi.builder     import  tag, Markup
-from  trac.config        import  Configuration
-from  trac.db            import  Table, Column, Index, DatabaseManager
-from  trac.ticket.model  import  Ticket
-from  trac.util.datefmt  import  format_datetime, pretty_timedelta, \
-                                 from_utimestamp
-from  trac.util.text     import  to_unicode
-from  trac.web.api       import  IRequestFilter, IRequestHandler, RequestDone
-from  trac.web.chrome    import  ITemplateProvider, add_ctxtnav, add_link, add_script, add_notice
-from  trac.web.href      import  Href
-from  trac.wiki.model    import  WikiPage
-from  urllib             import  quote_plus
-from  tracwatchlist.api  import  BasicWatchlist, IWatchlistProvider
+from  genshi.builder         import  tag, Markup
+from  trac.config            import  Configuration
+from  trac.core              import  *
+from  trac.db                import  Table, Column, Index, DatabaseManager
+from  trac.ticket.model      import  Ticket
+from  trac.util.translation  import  domain_functions
+from  trac.util.datefmt      import  format_datetime, pretty_timedelta, \
+                                     from_utimestamp
+from  trac.util.text         import  to_unicode
+from  trac.web.api           import  IRequestFilter, IRequestHandler, \
+                                     RequestDone
+from  trac.web.chrome        import  ITemplateProvider, add_ctxtnav, \
+                                     add_link, add_script, add_notice
+from  trac.web.href          import  Href
+from  trac.wiki.model        import  WikiPage
+
+from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
+
 
 __DB_VERSION__ = 3
+
+add_domain, _, tag_ = \
+    domain_functions('watchlist', ('add_domain', '_', 'tag_'))
+
 
 class WatchlistError(TracError):
     show_traceback = False
@@ -49,54 +59,59 @@ class WatchlistPlugin(Component):
     """For documentation see http://trac-hacks.org/wiki/WatchlistPlugin"""
     providers = ExtensionPoint(IWatchlistProvider)
 
-
     implements( IRequestHandler, IRequestFilter, ITemplateProvider )
 
-    # Enables notification features
-    gnotifyu = self.config.getbool('watchlist', 'notifications', False)
-    # Enables notification navigation items
-    gnotifyctxtnav = self.config.getbool(
-                         'watchlist', 'display_notify_navitems', False)
-    # Enables notification column in watchlist tables
-    gnotifycolumn = self.config.getbool(
-                            'watchlist', 'display_notify_column', True)
-    # Enables notifications by default for all watchlist entries
-    gnotifybydefault = self.config.getbool(
-                               'watchlist', 'notify_by_default', False)
-    # The user stays at the resource after a watch/unwatch operation
-    # and the watchlist page is not displayed.
-    gredirectback = self.config.getbool(
-                                'watchlist', 'stay_at_resource', False)
-    # The user stays at the resource after a notify/do-not-notify operation
-    # and the watchlist page is not displayed.
-    gredirectback_notify = self.config.getbool(
-                          'watchlist', 'stay_at_resource_notify', True)
-
-    # Enables action messages on resource pages.
-    gmsgrespage = self.config.getbool(
-                   'watchlist', 'show_messages_on_resource_page', True)
-    # Enables action messages when going to the watchlist page.
-    gmsgwlpage  = self.config.getbool(
-                  'watchlist', 'show_messages_on_watchlist_page', True)
-    # Enables action messages while on watchlist page.
-    gmsgwowlpage = self.config.getbool(
-            'watchlist', 'show_messages_while_on_watchlist_page', True)
-
-
     gnotify = False
-
-    # Per user setting # FTTB FIXME
-    notifyctxtnav = gnotifyctxtnav
 
     def __init__(self):
       self.realms = []
       self.realm_handler = {}
+
+      # Enables notification features.
+      self.gnotifyu = self.config.getbool('watchlist', 'notifications', False)
+      # Enables notification navigation items.
+      self.gnotifyctxtnav = self.config.getbool(
+                                'watchlist', 'display_notify_navitems', False)
+      # Enables notification column in watchlist tables.
+      self.gnotifycolumn = self.config.getbool(
+                                   'watchlist', 'display_notify_column', True)
+      # Enables notifications by default for all watchlist entries.
+      self.gnotifybydefault = self.config.getbool(
+                                      'watchlist', 'notify_by_default', False)
+      # The user stays at the resource after a watch/unwatch operation
+      # and the watchlist page is not displayed.
+      self.gredirectback = self.config.getbool(
+                                       'watchlist', 'stay_at_resource', False)
+      # The user stays at the resource after a notify/do-not-notify operation
+      # and the watchlist page is not displayed.
+      self.gredirectback_notify = self.config.getbool(
+                                 'watchlist', 'stay_at_resource_notify', True)
+
+      # Enables action messages on resource pages.
+      self.gmsgrespage = self.config.getbool(
+                          'watchlist', 'show_messages_on_resource_page', True)
+      # Enables action messages when going to the watchlist page.
+      self.gmsgwlpage = self.config.getbool(
+                         'watchlist', 'show_messages_on_watchlist_page', True)
+      # Enables action messages while on watchlist page.
+      self.gmsgwowlpage = self.config.getbool(
+                   'watchlist', 'show_messages_while_on_watchlist_page', True)
+
+      # Per user setting # FTTB FIXME
+      self.notifyctxtnav = self.gnotifyctxtnav
+
+
+      # bind the 'watchlist' catalog to the specified locale directory
+      locale_dir = resource_filename(__name__, 'locale')
+      add_domain(self.env.path, locale_dir)
+
       for provider in self.providers:
         for realm in provider.get_realms():
           assert realm not in self.realms
           self.realms.append(realm)
           self.realm_handler[realm] = provider
           self.env.log.debug("realm: %s %s" % (realm, str(provider)))
+
       if self.gnotifyu:
         try:
           # Import methods from WatchSubscriber of the AnnouncerPlugin
@@ -121,6 +136,7 @@ class WatchlistPlugin(Component):
             self.env.log.debug("WS! " + str(e))
             self.env.log.debug("WS! " + str(ee))
             self.gnotify = False
+
 
     def is_notify(self, req, realm, resid):
       try:
@@ -219,7 +235,7 @@ class WatchlistPlugin(Component):
         cursor.execute("""
           SELECT settings
             FROM watchlist_settings
-           WHERE wluser = %s
+           WHERE wluser=%s
         """, (user,)
         )
 
@@ -249,8 +265,10 @@ class WatchlistPlugin(Component):
 
         if not user or user == 'anonymous':
             raise WatchlistError(
-                    tag( "Please ", tag.a("log in", href=req.href('login')),
-                        " to view or change your watchlist!" ) )
+                    tag(_("Please "), tag.a(_("log in"),
+                         href=req.href('login')),
+                         _(" to view or change your watchlist!"))
+            )
 
         wldict = req.args.copy()
         wldict['perm']   = req.perm
@@ -259,7 +277,8 @@ class WatchlistPlugin(Component):
         wldict['notify'] = self.gnotify and self.gnotifycolumn
         wldict['user_settings'] = self._get_user_settings(user)
 
-        onwatchlistpage = req.environ.get('HTTP_REFERER','').find(req.href.watchlist()) != -1
+        onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
+                          req.href.watchlist()) != -1
         redirectback = self.gredirectback and single and not onwatchlistpage
         redirectback_notify = self.gredirectback_notify and single and not \
                               onwatchlistpage
@@ -279,12 +298,13 @@ class WatchlistPlugin(Component):
           if names:
             reses = list(handler.res_list_exists(realm, names))
 
-            sql = """
+            sql = ("""
               SELECT resid
                 FROM watchlist
                WHERE wluser=%s AND realm=%s AND
                      resid IN (
             """ + ",".join(("%s",) * len(names)) + ")"
+            )
             cursor.execute( sql, [user,realm] + names)
             alw_res = [ res[0] for res in cursor.fetchall() ]
             new_res.extend(set(reses).difference(alw_res))
@@ -317,7 +337,9 @@ class WatchlistPlugin(Component):
 
           action = "view"
           if self.gmsgrespage and not onwatchlistpage and redirectback:
-            req.session['watchlist_message'] = 'You are now watching this resource.'
+            req.session['watchlist_message'] = _(
+              "You are now watching this resource."
+            )
           if self.gnotify and self.gnotifybydefault:
             for res in new_res:
               self.set_notify(req, realm, res)
@@ -328,23 +350,25 @@ class WatchlistPlugin(Component):
 
         elif action == "unwatch":
           if names:
-            sql = """
+            sql = ("""
               SELECT resid
                 FROM watchlist
                WHERE wluser=%s AND realm=%s AND
                      resid IN (
             """ + ",".join(("%s",) * len(names)) + ")"
+            )
             cursor.execute( sql, [user,realm] + names)
             reses = [ res[0] for res in cursor.fetchall() ]
             del_res.extend(reses)
             err_res.extend(set(names).difference(reses))
 
-            sql = """
+            sql = ("""
               DELETE
                 FROM watchlist
                WHERE wluser=%s AND realm=%s AND
                      resid IN (
-              """ + ",".join(("%s",) * len(names)) + ")"
+            """ + ",".join(("%s",) * len(names)) + ")"
+            )
             cursor.execute( sql, [user,realm] + names)
           for pattern in patterns:
             cursor.execute("""
@@ -368,7 +392,9 @@ class WatchlistPlugin(Component):
 
           action = "view"
           if self.gmsgrespage and not onwatchlistpage and redirectback:
-            req.session['watchlist_message'] = 'You are no longer watching this resource.'
+            req.session['watchlist_message'] = _(
+              "You are no longer watching this resource."
+            )
           if self.gnotify and self.gnotifybydefault:
             for res in del_res:
               self.unset_notify(req, realm, res)
@@ -390,9 +416,12 @@ class WatchlistPlugin(Component):
               db.commit()
             if redirectback_notify and not async:
               if self.gmsgrespage:
-                req.session['watchlist_notify_message'] = (
-                  'You are now receiving '
-                  'change notifications about this resource.')
+                req.session['watchlist_notify_message'] = _(
+                  """
+                  You are now receiving change notifications
+                  about this resource.
+                  """
+                )
               req.redirect(req.href(realm,resids[0]))
               raise RequestDone
             action = "view"
@@ -403,26 +432,39 @@ class WatchlistPlugin(Component):
               db.commit()
             if redirectback_notify and not async:
               if self.gmsgrespage:
-                req.session['watchlist_notify_message'] = (
-                  'You are no longer receiving '
-                  'change notifications about this resource.')
+                req.session['watchlist_notify_message'] = _(
+                  """
+                  You are no longer receiving
+                  change notifications about this resource.
+                  """
+                )
               req.redirect(req.href(realm,resids[0]))
               raise RequestDone
+
             action = "view"
 
         if async:
           req.send("",'text/plain', 200)
           raise RequestDone
 
+        wldict['th'] = {
+          'name': _("Page"), 'datetime': _("Last Changed At"),
+          'author': _("By"), 'version': _("Version"), 'diff': _("Diff"),
+          'history': _("History"), 'unwatch': _("U"), 'notify': _("Notify"),
+          'comment': _("Comment"), 'id': _("Ticket"),
+          'commentnum': _("Comment #"), 'changes': _("Changes")
+        }
+
         if action == "view":
             for (xrealm,handler) in self.realm_handler.iteritems():
               if handler.has_perm(xrealm, req.perm):
                 wldict[xrealm + 'list'] = handler.get_list(xrealm, self, req)
                 name = handler.get_realm_label(xrealm, plural=True)
-                add_ctxtnav(req, "Watched " + name.capitalize(), href=req.href('watchlist#' + name))
+                add_ctxtnav(req, _("Watched ") + name.capitalize(),
+                            href=req.href('watchlist#' + name))
             return ("watchlist.html", wldict, "text/html")
         else:
-            raise WatchlistError("Invalid watchlist action '%s'!" % action)
+            raise WatchlistError(_("Invalid watchlist action '%s'!") % action)
 
 
     def has_watchlist(self, user):
@@ -490,26 +532,26 @@ class WatchlistPlugin(Component):
         user = req.authname
         if user and user != "anonymous":
             if self.is_watching(realm, resid, user):
-                add_ctxtnav(req, "Unwatch",
+                add_ctxtnav(req, _("Unwatch"),
                     href=req.href('watchlist', action='unwatch',
                     resid=resid, realm=realm),
-                    title="Remove %s from watchlist" % realm)
+                    title=_("Remove %s from watchlist") % realm)
             else:
-                add_ctxtnav(req, "Watch",
+                add_ctxtnav(req, _("Watch"),
                     href=req.href('watchlist', action='watch',
                     resid=resid, realm=realm),
-                    title="Add %s to watchlist" % realm)
+                    title=_("Add %s to watchlist") % realm)
             if self.gnotify and self.notifyctxtnav:
               if self.is_notify(req, realm, resid):
-                add_ctxtnav(req, "Do not Notify me",
+                add_ctxtnav(req, _("Do not Notify me"),
                     href=req.href('watchlist', action='notifyoff',
                     resid=resid, realm=realm),
-                    title="Do not notify me if %s changes" % realm)
+                    title=_("Do not notify me if %s changes") % realm)
               else:
-                add_ctxtnav(req, "Notify me",
+                add_ctxtnav(req, _("Notify me"),
                     href=req.href('watchlist', action='notifyon',
                     resid=resid, realm=realm),
-                    title="Notify me if %s changes" % realm)
+                    title=_("Notify me if %s changes") % realm)
 
         return (template, data, content_type)
 
@@ -519,11 +561,9 @@ class WatchlistPlugin(Component):
 
     # ITemplateProvider methods:
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
         return [('watchlist', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
         return [ resource_filename(__name__, 'templates') ]
 
 
@@ -571,7 +611,7 @@ class WikiWatchlist(BasicWatchlist):
               'name' : name,
               'author' : '?',
               'datetime' : '?',
-              'comment' : tag.strong("DELETED!", class_='deleted'),
+              'comment' : tag.strong(_("DELETED!"), class_='deleted'),
               'notify'  : notify,
               'deleted' : True,
           })
@@ -678,33 +718,35 @@ class TicketWatchlist(BasicWatchlist):
                   removed = oldvalues.difference(newvalues)
                   strng = fieldtag
                   if added:
-                      strng += tag(" ", tag.em(', '.join(added)), " added")
+                      strng += tag(" ", tag.em(', '.join(added)),
+                                   _(" added"))
                   if removed:
                       if added:
                           strng += tag(', ')
-                      strng += tag(" ", tag.em(', '.join(removed)), " removed")
+                      strng += tag(" ", tag.em(', '.join(removed)),
+                                   _(" removed"))
                   return strng
               elif field == 'description':
-                  return fieldtag + tag(" modified (", tag.a("diff",
+                  return fieldtag + tag(_(" modified"), "(", tag.a(_("diff"),
                       href=req.href('ticket',id,action='diff',
-                                version=self.commentnum)), ")")
+                      version=self.commentnum)), ")")
               elif field == 'comment':
                   self.commentnum = oldvalue
                   self.comment    = newvalue
                   return tag("")
               elif not oldvalue:
-                  return fieldtag + tag(" ", tag.em(newvalue), " added")
+                  return fieldtag + tag(" ", tag.em(newvalue), _(" added"))
               elif not newvalue:
-                  return fieldtag + tag(" ", tag.em(oldvalue), " deleted")
+                  return fieldtag + tag(" ", tag.em(oldvalue), _(" deleted"))
               else:
-                  return fieldtag + tag(" changed from ", tag.em(oldvalue),
-                                        " to ", tag.em(newvalue))
+                  return fieldtag + tag(_(" changed from "), tag.em(oldvalue),
+                                        _(" to "), tag.em(newvalue))
 
           changes = []
           author  = reporter
           for author_,field,oldvalue,newvalue in cursor.fetchall():
               author = author_
-              changes.extend( [format_change(field,oldvalue,newvalue), tag("; ") ])
+              changes.extend([format_change(field,oldvalue,newvalue), tag("; ")])
           # changes holds list of formatted changes interleaved with
           # tag('; '). The first change is always the comment which
           # returns an empty tag, so we skip the first two elements

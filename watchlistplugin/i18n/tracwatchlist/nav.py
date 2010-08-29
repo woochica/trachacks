@@ -22,9 +22,10 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
-from  trac.core        import  *
-from  trac.web.chrome  import  INavigationContributor
-from  genshi.builder   import  tag
+from  genshi.builder        import  tag
+from  trac.core             import  *
+from  trac.web.chrome       import  INavigationContributor
+from  tracwatchlist.plugin  import  _
 
 class WatchlistNavigation(Component):
     """ Navigation entry for watchlist. """
@@ -39,5 +40,6 @@ class WatchlistNavigation(Component):
     def get_navigation_items(self, req):
         user = req.authname
         if user and user != 'anonymous':
-            yield ('mainnav', 'watchlist', tag.a( "Watchlist", href=req.href("watchlist") ) )
+            yield ('mainnav', 'watchlist', tag.a(_("Watchlist"),
+                   href=req.href("watchlist")))
 
