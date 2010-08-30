@@ -5,8 +5,8 @@ from setuptools import setup, find_packages
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
-__revision__ = int("0" + r"$Rev$"[6:-2])
-__date__     = r"$Date$"[7:-2]
+__revision__ = int("0" + ur"$Rev$"[6:-2])
+__date__     = ur"$Date$"[7:-2]
 
 setup(
     name         = 'TracExtLinksNewWindow',

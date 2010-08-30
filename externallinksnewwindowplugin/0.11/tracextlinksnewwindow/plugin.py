@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Copyright (c) 2008-2009 Martin Scharrer <martin@scharrer-online.de>
     $Id$
     $URL$
@@ -7,8 +8,8 @@
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
-__revision__ = int("0" + r"$Rev$"[6:-2])
-__date__     = r"$Date$"[7:-2]
+__revision__ = int("0" + ur"$Rev$"[6:-2])
+__date__     = ur"$Date$"[7:-2]
 
 from  trac.core        import  Component, implements
 from  trac.web.api     import  IRequestFilter
