@@ -69,6 +69,8 @@ from string import ascii_uppercase
 from genshi.builder import tag
 from trac.wiki.macros import WikiMacroBase
 
+revison = "$Rev$"
+url = "$URL$"
 
 class javadocMacro(WikiMacroBase):
 
