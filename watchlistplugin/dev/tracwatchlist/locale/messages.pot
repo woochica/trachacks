@@ -1,0 +1,403 @@
+# Translations template for TracWatchlistPlugin.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the
+# TracWatchlistPlugin project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TracWatchlistPlugin 0.5\n"
+"Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
+"POT-Creation-Date: 2010-08-29 23:48+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#: tracwatchlist/nav.py:43 tracwatchlist/templates/watchlist.html:16
+#: tracwatchlist/templates/watchlist.html:113
+msgid "Watchlist"
+msgstr ""
+
+#: tracwatchlist/plugin.py:268
+msgid "Please "
+msgstr ""
+
+#: tracwatchlist/plugin.py:268
+msgid "log in"
+msgstr ""
+
+#: tracwatchlist/plugin.py:270
+msgid " to view or change your watchlist!"
+msgstr ""
+
+#: tracwatchlist/plugin.py:340
+msgid "You are now watching this resource."
+msgstr ""
+
+#: tracwatchlist/plugin.py:395
+msgid "You are no longer watching this resource."
+msgstr ""
+
+#: tracwatchlist/plugin.py:419
+msgid ""
+"\n"
+"                  You are now receiving change notifications\n"
+"                  about this resource.\n"
+"                  "
+msgstr ""
+
+#: tracwatchlist/plugin.py:435
+msgid ""
+"\n"
+"                  You are no longer receiving\n"
+"                  change notifications about this resource.\n"
+"                  "
+msgstr ""
+
+#: tracwatchlist/plugin.py:451
+msgid "Page"
+msgstr ""
+
+#: tracwatchlist/plugin.py:451
+msgid "Last Changed At"
+msgstr ""
+
+#: tracwatchlist/plugin.py:452
+msgid "By"
+msgstr ""
+
+#: tracwatchlist/plugin.py:452
+msgid "Version"
+msgstr ""
+
+#: tracwatchlist/plugin.py:452 tracwatchlist/templates/wl-wiki.html:52
+msgid "Diff"
+msgstr ""
+
+#: tracwatchlist/plugin.py:453 tracwatchlist/templates/wl-wiki.html:57
+msgid "History"
+msgstr ""
+
+#: tracwatchlist/plugin.py:453
+msgid "U"
+msgstr ""
+
+#: tracwatchlist/plugin.py:453
+msgid "Notify"
+msgstr ""
+
+#: tracwatchlist/plugin.py:454
+msgid "Comment"
+msgstr ""
+
+#: tracwatchlist/plugin.py:454
+msgid "Ticket"
+msgstr ""
+
+#: tracwatchlist/plugin.py:455
+msgid "Comment #"
+msgstr ""
+
+#: tracwatchlist/plugin.py:455
+msgid "Changes"
+msgstr ""
+
+#: tracwatchlist/plugin.py:463
+msgid "Watched "
+msgstr ""
+
+#: tracwatchlist/plugin.py:467
+#, python-format
+msgid "Invalid watchlist action '%s'!"
+msgstr ""
+
+#: tracwatchlist/plugin.py:535 tracwatchlist/templates/watchlist.html:71
+#: tracwatchlist/templates/wl-example.html:21
+msgid "Unwatch"
+msgstr ""
+
+#: tracwatchlist/plugin.py:538
+#, python-format
+msgid "Remove %s from watchlist"
+msgstr ""
+
+#: tracwatchlist/plugin.py:540
+msgid "Watch"
+msgstr ""
+
+#: tracwatchlist/plugin.py:543
+#, python-format
+msgid "Add %s to watchlist"
+msgstr ""
+
+#: tracwatchlist/plugin.py:546
+msgid "Do not Notify me"
+msgstr ""
+
+#: tracwatchlist/plugin.py:549
+#, python-format
+msgid "Do not notify me if %s changes"
+msgstr ""
+
+#: tracwatchlist/plugin.py:551
+msgid "Notify me"
+msgstr ""
+
+#: tracwatchlist/plugin.py:554
+#, python-format
+msgid "Notify me if %s changes"
+msgstr ""
+
+#: tracwatchlist/plugin.py:614
+msgid "DELETED!"
+msgstr ""
+
+#: tracwatchlist/plugin.py:722 tracwatchlist/plugin.py:738
+msgid " added"
+msgstr ""
+
+#: tracwatchlist/plugin.py:727
+msgid " removed"
+msgstr ""
+
+#: tracwatchlist/plugin.py:730
+msgid " modified"
+msgstr ""
+
+#: tracwatchlist/plugin.py:730
+msgid "diff"
+msgstr ""
+
+#: tracwatchlist/plugin.py:740
+msgid " deleted"
+msgstr ""
+
+#: tracwatchlist/plugin.py:742
+msgid " changed from "
+msgstr ""
+
+#: tracwatchlist/plugin.py:743
+msgid " to "
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:46
+msgid "Add"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:54
+msgid "Remove"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:90
+msgid "|<"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:92
+msgid "<<"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:95
+msgid ">>"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:97
+msgid ">|"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:106
+msgid "All"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:119
+msgid "Not found"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:121
+#: tracwatchlist/templates/watchlist.html:144
+#: tracwatchlist/templates/watchlist.html:163
+#: tracwatchlist/templates/watchlist.html:185
+msgid "The following selected"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:121
+msgid ""
+"s where not found\n"
+"                        and could therefore not be added to the "
+"watchlist:"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:127
+msgid "The following patterns did not result in any matches:"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:135
+msgid "Already watched"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:136
+msgid "Selected"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:136
+msgid ""
+"is already watched.\n"
+"                      ("
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:137
+msgid "Unwatch it?"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:143
+msgid "Already on Watchlist"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:144
+msgid ""
+"s where already\n"
+"                      on the watchlist:"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:154
+#: tracwatchlist/templates/watchlist.html:162
+msgid "Added to Watchlist"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:155
+#: tracwatchlist/templates/watchlist.html:176
+msgid "The selected"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:155
+msgid ""
+"was added\n"
+"                      to the watchlist.\n"
+"                      ("
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:157
+msgid "Remove again"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:163
+msgid ""
+"s where added to the watchlist:\n"
+"                      ("
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:164
+msgid "Remove them again"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:175
+#: tracwatchlist/templates/watchlist.html:184
+msgid "Removed from Watchlist"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:176
+msgid ""
+"was removed\n"
+"                      from the watchlist.\n"
+"                      ("
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:178
+msgid "Add again"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:185
+msgid ""
+"s where removed\n"
+"                      from the watchlist:\n"
+"                      ("
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:187
+msgid "Add them again"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:196
+msgid "Not on Watchlist"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:198
+msgid "The following to-be-deleted"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:198
+msgid ""
+"s\n"
+"                        where not on the watchlist:"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:206
+msgid ""
+"The following patterns did not result\n"
+"                        in any matches in the watchlist:"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:221
+msgid "Settings"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:226
+msgid "Auto Notify ("
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:229
+msgid "Notifications"
+msgstr ""
+
+#: tracwatchlist/templates/wl-example.html:12
+msgid "Example"
+msgstr ""
+
+#: tracwatchlist/templates/wl-example.html:20
+msgid "Name"
+msgstr ""
+
+#: tracwatchlist/templates/wl-example.html:34
+msgid "No examples are currently watched."
+msgstr ""
+
+#: tracwatchlist/templates/wl-example.html:37
+msgid "Add Example:"
+msgstr ""
+
+#: tracwatchlist/templates/wl-ticket.html:14
+msgid "Tickets"
+msgstr ""
+
+#: tracwatchlist/templates/wl-ticket.html:17
+msgid "You lack permission to view tickets."
+msgstr ""
+
+#: tracwatchlist/templates/wl-ticket.html:40
+#: tracwatchlist/templates/wl-wiki.html:41
+#, python-format
+msgid ""
+"([1:\n"
+"                        %(timeline_link)s] ago)"
+msgstr ""
+
+#: tracwatchlist/templates/wl-ticket.html:61
+msgid "No tickets are currently watched."
+msgstr ""
+
+#: tracwatchlist/templates/wl-wiki.html:14
+msgid "Wikis"
+msgstr ""
+
+#: tracwatchlist/templates/wl-wiki.html:17
+msgid "You lack permission to view wikis."
+msgstr ""
+
+#: tracwatchlist/templates/wl-wiki.html:71
+msgid "No wikis are currently watched."
+msgstr ""
+
