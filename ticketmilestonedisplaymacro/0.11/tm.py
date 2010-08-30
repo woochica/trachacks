@@ -8,6 +8,9 @@ import time
 import re
 from StringIO import StringIO
 
+revison = "$Rev$"
+url = "$URL$"
+
 def execute(hdf, args, env):
     db = env.get_db_cnx()
     cursor = db.cursor()
