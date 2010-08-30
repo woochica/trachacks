@@ -31,6 +31,8 @@ from trac.util.datefmt import format_datetime, utc
 from trac.wiki.macros import WikiMacroBase
 from trac.resource import get_resource_name
 
+revison = "$Rev$"
+url = "$URL$"
 
 class LastModifiedMacro(WikiMacroBase):
 
