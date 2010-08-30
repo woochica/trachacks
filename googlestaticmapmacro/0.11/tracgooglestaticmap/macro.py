@@ -84,11 +84,16 @@ will result in the following map image:
     key  = Option('googlestaticmap', 'api_key', None, "Google Maps API key")
     size = Option('googlestaticmap', 'default_size', "300x300", "Default size for map")
     hl   = Option('googlestaticmap', 'default_language', "en", "Default language for map")
+    api  = Option('googlestaticmap', 'default_api_version', "2", "Default version of Google Static Map API to be used")
 
     allowed_args = ['center','zoom','size','format','maptype',
             'markers','path','span','frame','hl','key','sensor']
 
-    google_url = Href('http://maps.google.com/maps/api/staticmap')
+    google_url = {
+        '1' : 'http://maps.google.com/staticmap',
+        '2' : 'http://maps.google.com/maps/api/staticmap',
+    }
+
 
     def get_macros(self):
         yield 'GoogleStaticMap'
@@ -109,6 +114,15 @@ will result in the following map image:
               'sensor' : 'false',
             }
 
+        # Set API version
+        if 'api' in kwargs:
+            api = hargs['api']
+            del hargs['api']
+            if api not in self.google_url:
+              api = self.api
+        else:
+            api = self.api
+
         # Delete default zoom if user provides 'span' argument:
         if 'span' in kwargs:
             del hargs['zoom']
@@ -119,7 +133,7 @@ will result in the following map image:
                 hargs[k] = v
 
         # Check if API key exists
-        if not 'key' in hargs:
+        if not 'key' in hargs and api == '1':  # TODO: check if old API still needs the key
             raise TracError("No Google Maps API key given!\n")
 
         # Get height and width
@@ -142,7 +156,7 @@ will result in the following map image:
             hargs['markers'] = hargs['markers'].replace(':',',')
 
         # Build URL
-        src = self.google_url(**hargs)
+        src = Href(self.google_url.get(api,''))(**hargs)
 
         title = alt = "Google Static Map at %s" % hargs['center']
         # TODO: provide sane alternative text and image title
