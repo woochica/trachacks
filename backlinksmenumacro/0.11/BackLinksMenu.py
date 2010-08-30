@@ -15,6 +15,8 @@ from trac.util import TracError
 from trac.util.text import to_unicode
 from trac.wiki.model import WikiPage
 
+revison = "$Rev$"
+url = "$URL$"
 
 class BackLinksMenuMacro(WikiMacroBase):
     """Backlinks
