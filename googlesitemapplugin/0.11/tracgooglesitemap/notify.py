@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
  Copyright (c) 2010 by Martin Scharrer <martin@scharrer-online.de>
 """
