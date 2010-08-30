@@ -1,6 +1,13 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from setuptools import setup
+
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = int("0" + ur"$Rev$"[6:-2])
+__date__     = ur"$Date$"[7:-2]
+
 
 extra = {}
 
@@ -15,12 +22,6 @@ if cmdclass:
     extra['message_extractors'] = {
         'tracwatchlist': extractors,
     }
-
-
-__url__      = ur"$URL$"[6:-2]
-__author__   = ur"$Author$"[9:-2]
-__revision__ = int("0" + ur"$Rev$"[6:-2].strip('M') )
-__date__     = ur"$Date$"[7:-2]
 
 setup(
     name = 'TracWatchlistPlugin',

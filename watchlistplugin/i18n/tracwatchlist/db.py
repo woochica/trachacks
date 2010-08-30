@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
  Watchlist Plugin for Trac
  Copyright (c) 2008-2009  Martin Scharrer <martin@scharrer-online.de>
