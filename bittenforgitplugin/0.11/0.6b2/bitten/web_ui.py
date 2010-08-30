@@ -723,31 +723,32 @@ class SourceFileLinkFormatter(Component):
         cache = {}
 
         def _replace(m):
-            filepath = posixpath.normpath(m.group('path').replace('\\', '/'))
-            if not cache.get(filepath) is True:
-                parts = filepath.split('/')
-                path = ''
-                for part in parts:
-                    path = posixpath.join(path, part)
-                    if path not in cache:
-                        try:
-                            full_path = posixpath.join(config.path, path)
-                            full_path = posixpath.normpath(full_path)
-                            if full_path.startswith(config.path + "/") \
-                                        or full_path == config.path:
-                                repos.get_node(full_path,
-                                               build.rev)
-                                cache[path] = True
-                            else:
-                                cache[path] = False
-                        except TracError:
-                            cache[path] = False
-                    if cache[path] is False:
-                        return m.group(0)
-            link = href(config.branch, filepath)
-            if m.group('line'):
-                link += '#L' + m.group('line')[1:]
-            return Markup(tag.a(m.group(0), href=link))
+	    return m.group(0)
+#            filepath = posixpath.normpath(m.group('path').replace('\\', '/'))
+#            if not cache.get(filepath) is True:
+#                parts = filepath.split('/')
+#                path = ''
+#                for part in parts:
+#                    path = posixpath.join(path, part)
+#                    if path not in cache:
+#                        try:
+#                            full_path = posixpath.join(config.path, path)
+#                            full_path = posixpath.normpath(full_path)
+#                            if full_path.startswith(config.path + "/") \
+#                                        or full_path == config.path:
+#                                repos.get_node(full_path,
+#                                               build.rev)
+#                                cache[path] = True
+#                            else:
+#                                cache[path] = False
+#                        except TracError:
+#                            cache[path] = False
+#                    if cache[path] is False:
+#                        return m.group(0)
+#            link = href(config.branch, filepath)
+#            if m.group('line'):
+#                link += '#L' + m.group('line')[1:]
+#            return Markup(tag.a(m.group(0), href=link#))
 
         def _formatter(step, type, level, message):
             buf = []

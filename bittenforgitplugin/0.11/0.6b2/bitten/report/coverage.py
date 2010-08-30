@@ -112,7 +112,7 @@ ORDER BY item_name.value""", (build.id, step.name))
             if loc:
                 d = {'name': unit, 'loc': loc, 'cov': int(cov)}
                 if file:
-                    d['href'] = req.href.browser(config.path, file, rev=build.rev, annotate='coverage')
+                    d['href'] = req.href.browser(config.branch, file, rev=build.rev, annotate='coverage')
                 units.append(d)
                 total_loc += loc
                 total_cov += loc * cov
@@ -205,14 +205,14 @@ class TestCoverageAnnotator(Component):
         reports = []
         for build in builds:
             config = BuildConfig.fetch(self.env, build.config)
-            if not resource.id.startswith('/' + config.path.lstrip('/')):
+            if not resource.id.startswith(config.branch):
                 continue
             reports = Report.select(self.env, build=build.id,
                                     category='coverage')
-            path_in_config = resource.id[len(config.path)+1:].lstrip('/')
+            branch_in_config = resource.id[len(config.branch):]
             for report in reports:
                 for item in report.items:
-                    if item.get('file') == path_in_config:
+                    if item.get('file') == branch_in_config:
                         coverage = item.get('line_hits', '').split()
                         if coverage:
                             # Return first result with line data
