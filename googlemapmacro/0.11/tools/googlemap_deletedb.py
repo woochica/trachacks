@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #! /usr/bin/env python
 #
 # This python script removes the Google Map Macro cache table
