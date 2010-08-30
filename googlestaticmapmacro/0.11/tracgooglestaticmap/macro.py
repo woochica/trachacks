@@ -115,12 +115,8 @@ will result in the following map image:
             }
 
         # Set API version
-        if 'api' in kwargs:
-            api = hargs['api']
-            del hargs['api']
-            if api not in self.google_url:
-              api = self.api
-        else:
+        api = kwargs.get('api', self.api)
+        if api not in self.google_url:
             api = self.api
 
         # Delete default zoom if user provides 'span' argument:
