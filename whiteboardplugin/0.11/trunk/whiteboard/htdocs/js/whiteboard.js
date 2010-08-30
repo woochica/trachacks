@@ -66,8 +66,8 @@ jQuery(document).ready(function($){
     $(".column_tickets").bind("sortreceive", function(event, ui){
         actions.push({
             "ticket": /(board_ticket_)(\d)/.exec(ui.item.attr("id"))[2],
-            "from": ui.sender.context,
-            "to": event.target
+            "from": ui.sender[0],
+            "to": ui.item[0].parentElement
         });
     });
     
@@ -90,7 +90,6 @@ jQuery(document).ready(function($){
                     changesValue += changes[i] + ",";
                 }
                 $("#whiteboard_changes").val(changesValue);
-                console.log(changesValue);
             }
             
             return valid;
