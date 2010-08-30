@@ -1,6 +1,9 @@
 from trac.wiki.macros import WikiMacroBase
 import shlex
 
+revison = "$Rev$"
+url = "$URL$"
+
 class InsertElementMacro(WikiMacroBase):
     """
     This macro allows you to insert HTML elements with a class or id without having to use a HTML preprocessor.
