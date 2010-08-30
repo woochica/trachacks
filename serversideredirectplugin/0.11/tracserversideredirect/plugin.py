@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ ServerSideRedirectPlugin for Trac
 
     Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
@@ -7,8 +8,8 @@
 
 __url__      = ur"$URL$"[6:-2]
 __author__   = ur"$Author$"[9:-2]
-__revision__ = r"$Rev$"[6:-2]
-__date__     = r"$Date$"[7:-2]
+__revision__ = ur"$Rev$"[6:-2]
+__date__     = ur"$Date$"[7:-2]
 
 from  trac.core          import  *
 from  trac.web.api       import  IRequestHandler, IRequestFilter, RequestDone
