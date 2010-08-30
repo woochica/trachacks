@@ -1,8 +1,5 @@
 """Inserts the current time (in seconds) into the wiki page."""
 
-revision = "$Rev$"
-url = "$URL$"
-
 from genshi.builder import tag
 from StringIO import StringIO
 from trac.util.html import escape,html,plaintext
@@ -10,6 +7,8 @@ from trac.wiki.macros import WikiMacroBase
 from genshi.core import Markup
 from trac.wiki.formatter import Formatter
 
+revison = "$Rev$"
+url = "$URL$"
 
 class TicketMacro(WikiMacroBase):
 
