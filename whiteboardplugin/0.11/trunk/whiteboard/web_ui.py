@@ -6,7 +6,6 @@
 # you should have received as part of this distribution.
 from pkg_resources import resource_filename
 from trac.core import *
-from trac.db.api import with_transaction
 from trac.ticket import Ticket
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script, \
@@ -85,15 +84,15 @@ class WhiteboardModule(Component):
         self.log.debug('WhiteboardModule: field=%s', field)
         self.log.debug('WhiteboardModule: changes=%s', changes)
         
-        @with_transaction(self.env)
-        def _implementation(db):
-            """Apply each change to the ticket and save it."""
-            for change in changes.strip(',').split(','):
-                change_items = change.split(':')
-                self.log.debug('WhiteboardModule: change_items=%s', change_items)
-                t = Ticket(self.env, int(change_items[0]))
-                values = {}
-                values[field] = change_items[1]
-                
-                t.populate(values)
-                t.save_changes(req.authname)
+        db = env.get_db_cnx()
+        for change in changes.strip(',').split(','):
+            change_items = change.split(':')
+            self.log.debug('WhiteboardModule: change_items=%s', change_items)
+            t = Ticket(self.env, int(change_items[0]))
+            values = {}
+            values[field] = change_items[1]
+            
+            t.populate(values)
+            t.save_changes(req.authname)        
+        db.commit()
+        
