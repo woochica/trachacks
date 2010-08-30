@@ -1,0 +1,10 @@
+****************************************************
+** WhiteboardPlugin 0.1.0 - r8468 (2010-8-27) **
+****************************************************
+
+Initial release. Current functionality includes
+
+ * Displays query results in a whiteboard format. Tickets are colored by priority.
+ * Switching between grid and whiteboard views.
+ * Drag & drop between columns and the saving of these changes.
+ 
