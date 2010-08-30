@@ -84,7 +84,7 @@ class WhiteboardModule(Component):
         self.log.debug('WhiteboardModule: field=%s', field)
         self.log.debug('WhiteboardModule: changes=%s', changes)
         
-        db = env.get_db_cnx()
+        db = self.env.get_db_cnx()
         for change in changes.strip(',').split(','):
             change_items = change.split(':')
             self.log.debug('WhiteboardModule: change_items=%s', change_items)
@@ -93,6 +93,6 @@ class WhiteboardModule(Component):
             values[field] = change_items[1]
             
             t.populate(values)
-            t.save_changes(req.authname)        
+            t.save_changes(req.authname, '')        
         db.commit()
         

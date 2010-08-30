@@ -53,7 +53,7 @@ jQuery(document).ready(function($){
     
     //Sorting
     $(".column_tickets").sortable({
-        connectWith: '.column_tickets',
+        connectWith: ['.column_tickets'],
         placeholder: 'ticket_placeholder',
         forcePlaceholderSize: true
     });
