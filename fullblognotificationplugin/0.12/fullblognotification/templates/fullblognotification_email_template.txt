@@ -1,0 +1,40 @@
+#if action == 'post_created' or action == 'post_updated'
+#if action == 'post_created'
+Added post "${name}" by ${author} at ${time}
+#end
+#if action == 'post_updated'
+Changed post "${name}" by ${author} at ${time}. 
+Revision: ${version} 
+#end
+Page URL: ${link}
+
+Content:
+
+Title: ${title}
+
+${body}
+
+
+
+#if comment
+Comment: ${comment}
+#end
+#end
+
+#if action == 'post_deleted'
+Deleted post "${name}" by ${author} at ${time}
+#end
+#if action == 'post_deleted_version'
+Page URL: ${link}
+Deleted version "${version}" of post "${name}" by ${author} at ${time}
+#end
+
+#if action == 'post_comment_added'
+Comment added to post "${name}" by ${author} at ${time}
+Page URL: ${link}
+
+Content:
+
+${comment}
+
+#end
