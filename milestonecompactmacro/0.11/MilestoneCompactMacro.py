@@ -12,6 +12,10 @@ from trac.core import Component, implements
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import format_to_html
 
+revison = "$Rev$"
+url = "$URL$"
+
+
 class MilestoneCompactProcessor(Component):
     implements(IWikiMacroProvider)
 
