@@ -9,10 +9,7 @@
       py:strip="">
 
   <div id="tickets">
-    <div>
-      <span class="showhide"></span>
-      <h2>Tickets</h2>
-    </div>
+    <h2 class="foldable">Tickets</h2>
     <py:choose test="">
       <div class="system-message" py:when="'TICKET_VIEW' not in perm">
         You lack permission to view tickets.</div>

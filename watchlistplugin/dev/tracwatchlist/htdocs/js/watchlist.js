@@ -42,6 +42,8 @@ jQuery(document).ready(function() {
   $("#settings span.showhide").text("(Show)").disableTextSelect();
   $("#settings form").hide();
 
+  $(".foldable").enableFolding(false, false);
+
   $("#wikis span.showhide").click(function() {
      wlshowhide(this, "#wikilist-parent");
      return true;
