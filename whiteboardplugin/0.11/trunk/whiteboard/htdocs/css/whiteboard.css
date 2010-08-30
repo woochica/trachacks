@@ -1,0 +1,102 @@
+/*
+ * Copyright (C) 2010 Brian Meeker
+ * All rights reserved.
+ *
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.
+ */
+
+.not_current {
+	text-decoration: none;
+ 	color: #b00;
+ 	border-bottom: 1px dotted #bbb;
+}
+
+.not_current:hover {
+	cursor: pointer;
+}
+
+/**************
+ * Whiteboard *
+ **************/
+
+#whiteboard {
+	float: left;
+	width: 100%;
+	border-left: 1px solid black;
+}
+
+#whiteboard h2 {
+	width: 100%;
+	border-bottom: 1px solid black;
+}
+
+.board_column {
+	height: 100%;
+	padding: 5px;
+	border-top: 1px solid black;
+	border-right: 1px solid black;
+	border-bottom: 1px solid black;
+	float: left;
+	min-width: 150px;
+}
+
+.board_column ul {
+	margin: 0;
+	padding: 0;
+}
+
+/***********
+ * Tickets *
+ ***********/
+
+li.board_ticket {
+	border: 1px solid black;
+	list-style-type: none;
+	margin: 5px 0px;
+	width: 100%;
+}
+
+li.board_ticket h3 {
+	margin: .3em;
+	width: 99%;
+	border-bottom: 1px solid black;
+}
+
+li.board_ticket dl {
+	margin: 0;
+	padding: 0 0 0 .3em;
+}
+
+li.board_ticket dl dt {
+	float: left; 
+	clear: left;
+	width: 110px;
+	text-align: left; 
+	font-weight: bold;
+}
+
+li.board_ticket dl dt:after { 
+	content: ":"; 
+}
+
+li.board_ticket dl dd { 
+	margin: 0 0 0 120px; 
+	padding: 0 0 0 .3em;
+}
+
+li.prio1 { background: #fdc; border-color: #e88 }
+li.prio2 { background: #ffb; border-color: #eea }
+li.prio3 { background: #fbfbfb; border-color: #ddd }
+li.prio4 { background: #e7ffff; border-color: #cee }
+li.prio5 { background: #e7eeff; border-color: #cde }
+li.prio6 { background: #f0f0f0; border-color: #ddd }
+
+/***********
+ * Sorting *
+ ***********/
+.ticket_placeholder {
+	background: #FFD;
+	border: 1px solid #996;
+	height: 100px;
+}

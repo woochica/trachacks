@@ -1,0 +1,61 @@
+<!--
+# Copyright (C) 2010 Brian Meeker
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+-->
+
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:py="http://genshi.edgewall.org/"
+    xmlns:xi="http://www.w3.org/2001/XInclude">
+<body>
+    <form id="whiteboard_form" method="post">
+        <div id="whiteboard">
+          <py:for each="group_index, (groupname, results) in enumerate(groups)">
+            <div class="board_column" style="width: ${100/len(groups) - 1}%;">
+                <h2 py:if="groupname">
+                    ${fields[query.group].label}:
+                    ${query.group in ['owner', 'reporter'] and authorinfo(groupname) or groupname}
+                </h2>
+                <ul id="${groupname}" class="column_tickets">
+                  <py:for each="idx, result in enumerate(results)">
+                    <py:with vars="ticket_context = context('ticket', result.id)">
+                      <py:if test="'TICKET_VIEW' in perm(ticket_context.resource)">
+                        <li id="board_ticket_${result['id']}" class="board_ticket prio${result.priority_value}">
+                            <h3>#${result['id']}: ${result['summary']}</h3>
+                            <dl>
+                              <py:for each="idx, header in enumerate(headers)">
+                                <py:if test="header.name not in ('id', 'summary', fields[query.group].name)">
+                                  <py:with vars="label = header.label; value = result[header.name]">
+                                      <dt>${label}</dt>
+                                      <dd>
+                                        <py:choose>
+                                          <py:when test="value == ''">&nbsp;</py:when>
+                                          <py:otherwise>${value}</py:otherwise>
+                                        </py:choose>
+                                      </dd>
+                                  </py:with>
+                                </py:if>
+                              </py:for>
+                              <span>&nbsp;</span>
+                            </dl>
+                        </li>
+                      </py:if>
+                    </py:with>
+                  </py:for>
+                </ul>
+            </div>
+          </py:for>
+        </div>
+        <input type="hidden" name="query_href" value="${query_href}"/>
+        <input type="hidden" id="whiteboard_group_by" name="whiteboard_group_by" value="${fields[query.group].name}" />
+        <input type="hidden" id="whiteboard_changes" name="whiteboard_changes" value="" />
+        <input type="submit" id="whiteboard_submit" name="whiteboard_submit" value="Save Changes" />
+    </form>
+</body>
+
+</html>

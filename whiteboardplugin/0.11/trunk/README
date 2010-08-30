@@ -1,0 +1,12 @@
+About WhiteboardPlugin
+======================
+
+WhiteboardPlugin is a Trac plugin that provides an alternative view of custom
+query results in a whiteboard format. It also allows users to drag & drop
+tickets to make changes.
+
+WhiteboardPlugin is distributed using the modified BSD License.
+
+More information can be found at:
+    
+    http://trac-hacks.org/wiki/WhiteboardPlugin
