@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Copyright (c) 2008 Martin Scharrer <martin@scharrer-online.de>
     $Id$
     $URL$
