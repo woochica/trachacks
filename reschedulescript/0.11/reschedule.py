@@ -11,6 +11,9 @@ import datetime
 from datetime import date
 from optparse import OptionParser
 
+revison = "$Rev$"
+url = "$URL$"
+
 def makeParser():
     parser = OptionParser(description="""Fit Trac milestone due dates into a new time range, preserving relative spacing""")
     parser.add_option("-D", "--dbtype", default="sqlite",
