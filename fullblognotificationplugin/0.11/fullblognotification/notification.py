@@ -59,7 +59,7 @@ class FullBlogNotificationEmail(NotifyEmail):
         self.data['version']= version
         self.data['author']= author
         self.data['action']= action
-        self.data['time'] = time
+        self.data['time'] = format_datetime(time, '%Y-%m-%d %H:%M')
         self.data['link']= self.env.abs_href.blog(blog.name)
         
         subject = self.format_subject()
@@ -74,7 +74,7 @@ class FullBlogNotificationEmail(NotifyEmail):
 
     def send(self, torcpts, ccrcpts, mime_headers={}):
         """
-        his method is based NotifyEmail in trac/notification.py
+        this method is based NotifyEmail in trac/notification.py
 
         As the default trac NotifyEmail class assumes alot, and will overwrite headers
         we do not call our ancestor class method here, but send the mail direct
