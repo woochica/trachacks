@@ -12,10 +12,11 @@ __revision__ = int("0" + ur"$Rev$"[6:-2])
 __date__     = ur"$Date$"[7:-2]
 
 from  trac.core         import  *
-from  trac.wiki.api     import  IWikiMacroProvider, parse_args
+from  trac.wiki.api     import  IWikiMacroProvider
 from  trac.web.href     import  Href
 from  trac.config       import  Option
 from  genshi.builder    import  tag
+from  tracadvparseargs  import  parse_args
 
 class GoogleStaticMapMacro(Component):
     """ Provides a static Google Map as HTML image.
@@ -87,7 +88,7 @@ will result in the following map image:
     api  = Option('googlestaticmap', 'default_api_version', "2", "Default version of Google Static Map API to be used")
 
     allowed_args = ['center','zoom','size','format','maptype',
-            'markers','path','span','frame','hl','key','sensor']
+            'markers','path','span','frame','hl','key','sensor','visible']
 
     google_url = {
         '1' : 'http://maps.google.com/staticmap',
@@ -102,12 +103,12 @@ will result in the following map image:
         return self.__doc__
 
     def expand_macro(self, formatter, name, content):
-        args, kwargs = parse_args(content)
+        args, kwargs = parse_args(content, multi=['markers','path','visible'])
 
         # HTML arguments used in Google Maps URL
         hargs = {
               'center' : "50.805935,10.349121",
-              'zoom'   : "6",
+              #'zoom'   : "6",
               'key'    : self.key,
               'size'   : self.size,
               'hl'     : self.hl,
@@ -125,7 +126,7 @@ will result in the following map image:
 
         # Copy given macro arguments to the HTML arguments
         for k,v in kwargs.iteritems():
-            if k in self.allowed_args:
+            if k in self.allowed_args and v:
                 hargs[k] = v
 
         # Check if API key exists
@@ -133,23 +134,29 @@ will result in the following map image:
             raise TracError("No Google Maps API key given!\n")
 
         # Get height and width
-        (width,height) = hargs['size'].split('x')
-        if int(height) < 1:
-            height = "1"
-        elif int(height) > 640:
-            height = "640"
-        if int(width) < 1:
-            width = "1"
-        elif int(width) > 640:
-            width = "640"
-        hargs['size'] = "%sx%s" % (width,height)
+        try:
+            if 'x' not in hargs['size']:
+                hargs['size'] = hargs['size'] + 'x' + hargs['size'];
+            (width,height) = hargs['size'].split('x')
+            if int(height) < 1:
+                height = "1"
+            elif int(height) > 640:
+                height = "640"
+            if int(width) < 1:
+                width = "1"
+            elif int(width) > 640:
+                width = "640"
+            hargs['size'] = "%sx%s" % (width,height)
+        except:
+            raise TracError("Invalid `size` argument. Should be `<width>x<height>`.")
 
         # Correct separator for 'center' argument because comma isn't allowed in
         # macro arguments
         hargs['center'] = hargs['center'].replace(':',',')
 
-        if 'markers' in hargs:
-            hargs['markers'] = hargs['markers'].replace(':',',')
+        if api == '1' and 'markers' in hargs:
+            for marker in hargs['markers']:
+              marker = marker.replace(':',',')
 
         # Build URL
         src = Href(self.google_url.get(api,''))(**hargs)
