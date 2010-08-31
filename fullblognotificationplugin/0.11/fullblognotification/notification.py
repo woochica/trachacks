@@ -23,16 +23,28 @@ class FullBlogNotificationEmail(NotifyEmail):
         NotifyEmail.__init__(self, env)
         self.from_name = self.config.get('fullblog-notification', 'from_name')
         self.from_email = self.config.get('fullblog-notification', 'from_email')
+        self.notification_actions = self.config.getlist('fullblog-notification', 
+                                                        'notification_actions')  
+        self.no_notification_categories = self.config.getlist('fullblog-notification',
+                                                              'no_notification_categories')
 
     def notify(self, blog, action, version=None, time=None, comment=None,
                author=None):
 
-        notification_actions = self.config.getlist('fullblog-notification', 
-                                                   'notification_actions')
-
-        # Don't notify if action is explicitly omited from notification_actions
-        if notification_actions != [] and action not in notification_actions:
+        # Don't notify if action is explicitly omitted from notification_actions
+        if self.notification_actions != [] and \
+           action not in self.notification_actions:
+            self.env.log.info('No notification sent because action is omitted ' \
+                              'from notification_actions option list')
             return
+        
+        # Don't notify if post has one of the specified categories
+        for category in blog.category_list:
+            if category in self.no_notification_categories:
+                self.env.log.info('No notification sent because there are one ' \
+                                  'or more matches between post\'s categories list ' \
+                                  'and no_notification_categories option list')
+                return
         
         self.blog = blog
         self.change_author = author
