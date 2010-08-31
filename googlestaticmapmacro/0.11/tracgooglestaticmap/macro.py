@@ -156,8 +156,7 @@ will result in the following map image:
             # macro arguments
             hargs['center'] = hargs['center'].replace(':',',')
             if 'markers' in hargs:
-                for marker in hargs['markers']:
-                    marker = marker.replace(':',',')
+                hargs['markers'] = [ marker.replace(':',',') for marker in hargs['markers'] ]
 
         # Build URL
         src = Href(self.google_url.get(api,''))(**hargs)
