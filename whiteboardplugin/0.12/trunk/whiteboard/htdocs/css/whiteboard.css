@@ -54,7 +54,7 @@ li.board_ticket {
 	border: 1px solid black;
 	list-style-type: none;
 	margin: 5px 0px;
-	width: 100%;
+	width: 98%;
 }
 
 li.board_ticket h3 {
@@ -99,4 +99,5 @@ li.prio6 { background: #f0f0f0; border-color: #ddd }
 	background: #FFD;
 	border: 1px solid #996;
 	height: 100px;
+	width: 98%
 }
