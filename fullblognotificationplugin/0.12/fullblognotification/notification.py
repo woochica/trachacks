@@ -62,11 +62,11 @@ class FullBlogNotificationEmail(NotifyEmail):
         self.data['version']= version
         self.data['author']= author
         self.data['action']= action
-        self.data['time'] = format_datetime(time)
+        self.data['time'] = format_datetime(time, '%Y-%m-%d %H:%M')
         self.data['url']= self.env.abs_href.blog(blog.name)
         self.data['project'] = {'name': self.env.project_name,
                                 'url': self.env.project_url,
-                                'description': self.env.project_description} 
+                                'description': self.env.project_description}
         
         subject = self.format_subject()
 
@@ -80,14 +80,13 @@ class FullBlogNotificationEmail(NotifyEmail):
 
     def send(self, torcpts, ccrcpts, mime_headers={}):
         """
-        his method is based NotifyEmail in trac/notification.py
+        this method is based NotifyEmail in trac/notification.py
 
         As the default trac NotifyEmail class assumes alot, and will overwrite headers
         we do not call our ancestor class method here, but send the mail direct
         """
         from email.MIMEText import MIMEText
         from email.Utils import formatdate
-
         stream = self.template.generate(**self.data)
         # don't translate the e-mail stream 
         t = deactivate()

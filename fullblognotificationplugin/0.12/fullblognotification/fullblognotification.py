@@ -36,7 +36,7 @@ class FullBlogNotificationPlugin(Component):
 
     notification_actions = ListOption(
         'fullblog-notification', 'notification_actions',
-        'post_created, post_updated, post_comment_added, post_deleted',
+        'post_created, post_updated, post_comment_added, post_deleted, post_deleted_version',
         doc="""Actions for which notification emails are sent. Defaults to 'all'.
         """)
     
@@ -64,25 +64,27 @@ class FullBlogNotificationPlugin(Component):
 
     # IBlogChangeListener methods
     def blog_post_changed(self, postname, version):
-        action = 'post_created'        
-        blog_post = BlogPost(self.env, postname, version)
-        notifier = FullBlogNotificationEmail(self.env)
         if version > 1:
             action = 'post_updated' 
+        else:                
+            action = 'post_created'        
+        blog_post = BlogPost(self.env, postname, version)
+        notifier = FullBlogNotificationEmail(self.env)
         notifier.notify(blog_post, action, version, blog_post.version_time, blog_post.version_comment, blog_post.version_author)
 
     def blog_post_deleted(self, postname, version, fields):
-        action = 'post_deleted'
+        if version > 0:
+            action = 'post_deleted_version'
+        else:                
+            action = 'post_deleted'
         blog_post = BlogPost(self.env, postname, version)
         # the post has already been deleted, so populate from fields
         # this is just so we can say which page was deleted
         blog_post.title = fields['title']
+        blog_post.author = fields['author']
+        author = fields['version_author']
+        time = datetime.datetime.now(utc)        
         notifier = FullBlogNotificationEmail(self.env)
-        author = fields['author']
-        time = datetime.datetime.now(utc)
-        if version > 0:
-            action = 'post_deleted_version'
-            author = fields['version_author']            
         notifier.notify(blog_post, action, version, time, '', author)
 
     def blog_comment_added(self, postname, number):
