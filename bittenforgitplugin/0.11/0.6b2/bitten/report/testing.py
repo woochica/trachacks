@@ -124,7 +124,7 @@ ORDER BY fixture""", (build.id, step.name))
             total_failure += num_failure
             total_error += num_error
             if file:
-                fixtures[-1]['href'] = req.href.browser(config.path, file)
+                fixtures[-1]['href'] = req.href.browser(file, rev=build.rev)
 
         # For each fixture, get a list of tests that don't succeed
         for fixture in fixtures:

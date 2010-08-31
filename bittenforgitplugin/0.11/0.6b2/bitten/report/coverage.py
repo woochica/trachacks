@@ -112,7 +112,7 @@ ORDER BY item_name.value""", (build.id, step.name))
             if loc:
                 d = {'name': unit, 'loc': loc, 'cov': int(cov)}
                 if file:
-                    d['href'] = req.href.browser(config.branch, file, rev=build.rev, annotate='coverage')
+                    d['href'] = req.href.browser(file, rev=build.rev, annotate='coverage')
                 units.append(d)
                 total_loc += loc
                 total_cov += loc * cov
