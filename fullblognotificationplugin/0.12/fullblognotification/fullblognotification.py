@@ -69,7 +69,6 @@ class FullBlogNotificationPlugin(Component):
 
     def blog_post_deleted(self, postname, version, fields):
         action = 'post_deleted'
-        print 'DELETING POST !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!' 
         blog_post = BlogPost(self.env, postname, version)
         # the post has already been deleted, so populate from fields
         # this is just so we can say which page was deleted
