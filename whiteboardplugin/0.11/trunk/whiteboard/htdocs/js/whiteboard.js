@@ -11,7 +11,7 @@ jQuery(document).ready(function($){
     //Toggle between the whiteboard and grid being visible.
     function toggleView(visible, hidden){
         //Toggle the whiteboard
-        $("#whiteboard").toggle();
+        $("#whiteboard_form").toggle();
         
         //Toggle the grid
         $(".report-result").toggle();
@@ -39,7 +39,7 @@ jQuery(document).ready(function($){
     var whiteboardLink = $('#ctxtnav ul li:contains("Whiteboard")');
     
     $('.board_column').equalHeights()
-    $("#whiteboard").hide();
+    $("#whiteboard_form").hide();
     
     whiteboardLink.click(function(){
         toggleView(customQueryLink, whiteboardLink)
