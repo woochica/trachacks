@@ -19,7 +19,7 @@
             <div class="board_column" style="width: ${100/len(groups) - 1}%;">
                 <h2 py:if="groupname">
                     ${fields[query.group].label}:
-                    ${query.group in ['owner', 'reporter'] and authorinfo(groupname) or groupname}
+                    ${groupname}
                 </h2>
                 <ul id="${groupname}" class="column_tickets">
                   <py:for each="idx, result in enumerate(results)">
