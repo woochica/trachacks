@@ -37,8 +37,12 @@ class FullBlogNotificationPlugin(Component):
     notification_actions = ListOption(
         'fullblog-notification', 'notification_actions',
         'post_created, post_updated, post_comment_added, post_deleted',
-        doc="""Actions for which notification emails are sent. Defaults to 'all'
+        doc="""Actions for which notification emails are sent. Defaults to 'all'.
         """)
+    
+    no_notification_categories = ListOption(
+        'fullblog-notification', 'no_notification_categories', '',
+        doc="""Categories for which no notification is sent.""")
 
     smtp_always_cc = ListOption(
         'fullblog-notification', 'smtp_always_cc', [],

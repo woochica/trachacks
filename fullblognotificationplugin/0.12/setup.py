@@ -1,8 +1,8 @@
 from setuptools import find_packages, setup
 
 setup(name='TracFullBlogNotificationPlugin',
-      version = '0.2',
-      description = "Notification of blog changes",
+      version = '0.2.1',
+      description = "Notification of changes from FullBlogPlugin",
       author = 'Nick Loeve',
       author_email = 'nick@hyves.nl',
       maintainer = 'Ryan J Ollos',
