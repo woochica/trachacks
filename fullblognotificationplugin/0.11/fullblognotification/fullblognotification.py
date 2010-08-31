@@ -8,11 +8,13 @@ Copyright Nick Loeve 2008
 import datetime
 
 from notification import FullBlogNotificationEmail
-from trac.config import Option, ListOption, BoolOption
-from trac.core import *
-from trac.web.chrome import ITemplateProvider
 from tracfullblog.api import IBlogChangeListener
 from tracfullblog.model import BlogPost, BlogComment
+
+from trac.config import Option, ListOption, BoolOption
+from trac.core import *
+from trac.util.datefmt import utc
+from trac.web.chrome import ITemplateProvider
 
 class FullBlogNotificationPlugin(Component):
     

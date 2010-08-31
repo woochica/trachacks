@@ -14,6 +14,7 @@ setup(name='TracFullBlogNotificationPlugin',
       include_package_data = True,
       package_data = { 'fullblognotification': ['templates/*', 'htdocs/*'] },
       zip_safe = False,
+      install_requires = ['Trac >= 0.11', 'Genshi >= 0.4'],       
       entry_points = {'trac.plugins': [
           'fullblognotification = fullblognotification']},
       extras_require = {'fullblogplugin': "TracFullBlogPlugin>=0.1"}

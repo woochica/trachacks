@@ -6,13 +6,15 @@ Copyright Nick Loeve 2008
 import re
 import hashlib
 
+from tracfullblog.model import BlogPost, BlogComment
+
 from genshi.template.text import TextTemplate
 from trac import __version__
 from trac.config import Option, ListOption, BoolOption
 from trac.core import *
 from trac.notification import NotifyEmail
+from trac.util.datefmt import format_datetime 
 from trac.util.text import CRLF
-from tracfullblog.model import BlogPost, BlogComment
 
 class FullBlogNotificationEmail(NotifyEmail):
 
@@ -60,7 +62,10 @@ class FullBlogNotificationEmail(NotifyEmail):
         self.data['author']= author
         self.data['action']= action
         self.data['time'] = format_datetime(time, '%Y-%m-%d %H:%M')
-        self.data['link']= self.env.abs_href.blog(blog.name)
+        self.data['url']= self.env.abs_href.blog(blog.name)
+        self.data['project'] = {'name': self.env.project_name, 
+                                'url': self.env.project_url, 
+                                'description': self.env.project_description}          
         
         subject = self.format_subject()
 
@@ -90,7 +95,7 @@ class FullBlogNotificationEmail(NotifyEmail):
         headers['X-Mailer'] = 'Trac %s, by Edgewall Software' % __version__
         headers['X-Trac-Version'] =  __version__
         headers['X-Trac-Project'] =  projname
-        headers['X-URL'] = self.config.get('project', 'url')
+        headers['X-URL'] = self.env.project_url
         headers['Precedence'] = 'bulk'
         headers['Auto-Submitted'] = 'auto-generated'
         headers['Subject'] = self.subject

@@ -1,40 +1,40 @@
-#if action == 'post_created' or action == 'post_updated'
-#if action == 'post_created'
-Added post "${name}" by ${author} at ${time}
-#end
-#if action == 'post_updated'
-Changed post "${name}" by ${author} at ${time}. 
-Revision: ${version} 
-#end
-Page URL: ${link}
-
-Content:
-
 Title: ${title}
-
-${body}
-
-
-
-#if comment
-Comment: ${comment}
-#end
+#if version > 1
+Revision: ${version}
 #end
 
-#if action == 'post_deleted'
-Deleted post "${name}" by ${author} at ${time}
-#end
-#if action == 'post_deleted_version'
-Page URL: ${link}
-Deleted version "${version}" of post "${name}" by ${author} at ${time}
+#choose action
+  #when 'post_created'
+Created by ${author} at ${time}
+  #end
+  #when 'post_updated'
+Changed by ${author} at ${time}
+  #end
+  #when 'post_comment_added'
+Comment added by ${author} at ${time}
+  #end
+  #when 'post_deleted'
+Deleted by ${author} at ${time}
+  #end
+  #when 'post_deleted_version'
+Version ${version} deleted by ${author} at ${time}
+  #end
 #end
 
-#if action == 'post_comment_added'
-Comment added to post "${name}" by ${author} at ${time}
-Page URL: ${link}
-
-Content:
+#if len(comment) != 0
+Comment:
 
 ${comment}
 
 #end
+#if action == 'post_created' or action == 'post_updated'
+
+Content:
+
+${body}
+#end
+
+--
+Blog URL: <${url}>
+${project.name} <${project.url}>
+$project.description
