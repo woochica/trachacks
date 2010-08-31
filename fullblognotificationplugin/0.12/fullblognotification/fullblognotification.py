@@ -8,11 +8,13 @@ Copyright Nick Loeve 2008
 import datetime
 
 from notification import FullBlogNotificationEmail
-from trac.config import Option, ListOption, BoolOption
-from trac.core import *
-from trac.web.chrome import ITemplateProvider
 from tracfullblog.api import IBlogChangeListener
 from tracfullblog.model import BlogPost, BlogComment
+
+from trac.config import Option, ListOption, BoolOption
+from trac.core import *
+from trac.util.datefmt import utc
+from trac.web.chrome import ITemplateProvider
 
 class FullBlogNotificationPlugin(Component):
     
@@ -58,25 +60,27 @@ class FullBlogNotificationPlugin(Component):
 
     # IBlogChangeListener methods
     def blog_post_changed(self, postname, version):
+        action = 'post_created'        
         blog_post = BlogPost(self.env, postname, version)
         notifier = FullBlogNotificationEmail(self.env)
-        action = 'post_created'
         if version > 1:
             action = 'post_updated' 
         notifier.notify(blog_post, action, version, blog_post.version_time, blog_post.version_comment, blog_post.version_author)
 
     def blog_post_deleted(self, postname, version, fields):
+        action = 'post_deleted'
+        print 'DELETING POST !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!' 
         blog_post = BlogPost(self.env, postname, version)
         # the post has already been deleted, so populate from fields
         # this is just so we can say which page was deleted
         blog_post.title = fields['title']
         notifier = FullBlogNotificationEmail(self.env)
-        action = 'post_deleted'
         author = fields['author']
+        time = datetime.datetime.now(utc)
         if version > 0:
             action = 'post_deleted_version'
-            author = fields['version_author']
-        notifier.notify(blog_post, action, version, datetime.datetime.utcnow(), '', author)
+            author = fields['version_author']            
+        notifier.notify(blog_post, action, version, time, '', author)
 
     def blog_comment_added(self, postname, number):
         action = 'post_comment_added'
