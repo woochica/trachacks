@@ -151,13 +151,13 @@ will result in the following map image:
         except:
             raise TracError("Invalid `size` argument. Should be `<width>x<height>`.")
 
-        # Correct separator for 'center' argument because comma isn't allowed in
-        # macro arguments
-        hargs['center'] = hargs['center'].replace(':',',')
-
-        if api == '1' and 'markers' in hargs:
-            for marker in hargs['markers']:
-              marker = marker.replace(':',',')
+        if api == '1':
+            # Correct separator for 'center' argument because comma isn't allowed in
+            # macro arguments
+            hargs['center'] = hargs['center'].replace(':',',')
+            if 'markers' in hargs:
+                for marker in hargs['markers']:
+                    marker = marker.replace(':',',')
 
         # Build URL
         src = Href(self.google_url.get(api,''))(**hargs)
