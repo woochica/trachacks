@@ -102,7 +102,8 @@ will result in the following map image:
     def get_macro_description(self, name):
         return self.__doc__
 
-    def expand_macro(self, formatter, name, content):
+    def expand_macro(self, formatter, name, content, args=None):
+        content = content.replace('\n',',')
         args, kwargs = parse_args(content, multi=['markers','path','visible'])
 
         # HTML arguments used in Google Maps URL
