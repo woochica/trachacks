@@ -1,4 +1,4 @@
-${_('Title: %(title)s', name = name, title=title)}
+${_('Title: %(title)s', title=title)}
 {% if version > 1 %}\
 ${_('Revision: %(version)s', version=version)}
 {% end %}\
