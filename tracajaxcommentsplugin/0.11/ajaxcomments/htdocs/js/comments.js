@@ -1,6 +1,6 @@
 // settings
 var refresh_interval = 5000; // ms
-var request_timeout = 6000; // ms
+var request_timeout = 9000; // ms
 
 var ticket_url;
 var warning_sel = '#warning.system-message', form_sel = '#propertyform';
