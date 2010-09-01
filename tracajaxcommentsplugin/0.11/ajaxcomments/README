@@ -14,7 +14,6 @@ Features
  
 TODO
 ----
- * Fix bug on timeout (often there is timeout, but really comment is posted - so we should check that comment with the same text from the same author has just arrived, and remove the error message)
  * Indicator of updates (maybe floating somewhere near the top, linke in gmail)
  * Configuration in trac.ini (turn off comment polling and change polling interval)
  * Test in IE
