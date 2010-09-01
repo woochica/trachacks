@@ -129,7 +129,7 @@ class FullBlogModule(Component):
             # Request for just root (display latest)
             data['blog_post_list'] = []
             count = 0
-            maxcount = self.env.config.getint('fullblog', 'num_items_front')
+            maxcount = self.num_items
             blog_posts = get_blog_posts(self.env)
             for post in blog_posts:
                 bp = BlogPost(self.env, post[0], post[1])
