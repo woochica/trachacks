@@ -37,7 +37,7 @@ class FullBlogAdminPanel(Component):
         if req.method == "POST":
             if req.args.get('savesettings'):
                 self.env.config.set('fullblog', 'num_items_front',
-                    req.args.get(int('numpostsfront')))
+                    int(req.args.get('numpostsfront')))
                 self.env.config.set('fullblog', 'default_postname',
                     req.args.get('defaultpostname'))
                 self.env.config.save()
