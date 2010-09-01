@@ -6,6 +6,9 @@ Includes a UML diagram as an image using the http://yuml.me API.
 
 from trac.wiki.macros import WikiMacroBase
 
+revison = "$Rev$"
+url = "$URL$"
+
 class YumlUseCaseMacro(WikiMacroBase):
     '''
     Includes a UML diagram as an image using the http://yuml.me API.
