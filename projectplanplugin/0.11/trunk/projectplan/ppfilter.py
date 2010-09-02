@@ -72,7 +72,8 @@ class NullFilter( BaseFilter ):
     '''
       Return all Tickets using trac.ticket.query.Query
     '''
-    return Query( self.macroenv.tracenv, order='id', cols=self.cols ).execute( self.macroenv.tracreq )
+    # TODO: add max to the configuration
+    return Query( self.macroenv.tracenv, order='id', cols=self.cols, max='1000' ).execute( self.macroenv.tracreq )
 
 class QueryFilter( ParamFilter ):
   '''
@@ -328,7 +329,7 @@ class ppFilter():
       for t in ticketlist:
         ticketset.addTicket(t)
     
-    self.macroenv.tracenv.log.debug('result ids: ticketset:'+repr(ticketset.getIDList()))
+    self.macroenv.tracenv.log.warning('filter: result ids: ticketset ('+str(len(ticketset.getIDList()))+'):'+repr(ticketset.getIDList()))
     return ticketset
 
 
