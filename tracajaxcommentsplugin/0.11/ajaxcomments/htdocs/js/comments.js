@@ -1,6 +1,6 @@
 // settings
 var refresh_interval = 5000; // 5 s
-var request_timeout = 12000; // 12 s
+var request_timeout = 26000; // 26 s
 
 var ticket_url;
 var warning_sel = '#warning.system-message', form_sel = '#propertyform';
@@ -111,7 +111,7 @@ function refresh() {
 function on_ajax_error(request, error, exception) {
     $(buttons_sel).before($('<div id="warning" class="system-message">' +
 			    'Connect to server failed: "' + error +
-			    '". Please, try again later</div>'));
+			    '". Trying to fetch comments</div>'));
     reset_submit_button();
 }
 
