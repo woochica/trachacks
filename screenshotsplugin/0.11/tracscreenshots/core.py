@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import sys, re, os, os.path, shutil, mimetypes, unicodedata, Image, ImageOps
+# Standard imports.
+import sys, re, os, os.path, shutil, mimetypes, unicodedata
+
 from datetime import *
 from zipfile import *
+from PIL import Image, ImageOps
 from StringIO import *
 
 # Deprecated as for Python 2.6.
@@ -11,21 +14,22 @@ try:
 except:
     pass
 
+# Genshi imports.
 from genshi.core import Markup
 from genshi.builder import tag
 
-from trac.core import *
+# Trac imports
 from trac.config import Option, ListOption, PathOption
+from trac.core import *
 from trac.mimeview import Mimeview, Context
-from trac.web.chrome import add_stylesheet, add_script, format_to_oneliner, \
-  pretty_timedelta
-from trac.util.text import to_unicode
-from trac.util.datefmt import to_timestamp
-
-from trac.web.main import IRequestHandler
 from trac.perm import IPermissionRequestor
-from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.util.datefmt import to_timestamp
+from trac.util.text import to_unicode
+from trac.web.main import IRequestHandler
+from trac.web.chrome import add_script, add_stylesheet, format_to_oneliner, \
+  pretty_timedelta, INavigationContributor, ITemplateProvider
 
+# Local imports.
 from tracscreenshots.api import *
 
 no_screenshot = {'id' : 0}

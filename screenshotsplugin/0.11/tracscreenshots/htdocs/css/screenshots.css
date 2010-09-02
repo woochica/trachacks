@@ -76,14 +76,14 @@ span.thumbnail span.description
   margin-top: 0.5em;
 }
 
-span.thumbnail-left, span.thumbnail-righ
+span.thumbnail-left, span.thumbnail-right
 {
   display: block;
   margin: 0em 2em;
   padding: 0em;
 }
 
-span.thumbnail-left span.aux, span.thumbnail-righ span.aux
+span.thumbnail-left span.aux, span.thumbnail-right span.aux
 {
   display: block;
   margin: 0.5em 0em;
