@@ -101,13 +101,6 @@ div.watchlist div#message-box div {
     clear:both;
 }
 
-span.showhide {
-  position: absolute;
-  left: 6em;
-  font-size: small;
-  color: gray;
-}
-
 .ackmsg {
   clear:both;
 }

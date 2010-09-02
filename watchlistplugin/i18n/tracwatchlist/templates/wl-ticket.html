@@ -9,16 +9,13 @@
       py:strip="">
 
   <div id="tickets">
-    <div>
-      <span class="showhide"></span>
-      <h2>Tickets</h2>
-    </div>
     <py:choose test="">
       <div class="system-message" py:when="'TICKET_VIEW' not in perm">
         You lack permission to view tickets.</div>
       <div id="ticketlist-plusadd">
         <py:choose test="" py:otherwise="">
           <div id="ticketlist-parent" py:when="ticketlist">
+            <h2 class="foldable">Tickets</h2>
             ${tablepager("ticketpager")}
             <table class="ticketlist" id="ticketlist">
               <thead>
@@ -58,9 +55,10 @@
             </table>
           </div>
           <div py:otherwise="">
+            <h2>Tickets</h2>
             <span>No tickets are currently watched.</span></div>
+          ${modify_form('ticket')}
         </py:choose>
-        ${modify_form('ticket')}
       </div>
     </py:choose>
   </div>

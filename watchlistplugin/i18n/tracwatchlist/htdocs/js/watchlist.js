@@ -1,5 +1,5 @@
 /*! Javsscript code for Trac Watchlist Plugin 
- * $Id: watchlist.dev.js 8023 2010-05-28 19:45:13Z martin_s $
+ * $Id: watchlist.js $
  * */
 
 
@@ -33,30 +33,8 @@ function wlshowhide(ref, tag) {
     return true;
 }
 
+
 jQuery(document).ready(function() {
-
-  $("div#wlsettings").hide();
-
-  $("#wikis span.showhide").text("(Hide)").disableTextSelect();
-  $("#tickets span.showhide").text("(Hide)").disableTextSelect();
-  $("#settings span.showhide").text("(Show)").disableTextSelect();
-  $("#settings form").hide();
-
-  $("#wikis span.showhide").click(function() {
-     wlshowhide(this, "#wikilist-parent");
-     return true;
-  });
-
-  $("#tickets span.showhide").click(function() {
-     wlshowhide(this, "#ticketlist-parent");
-     return true;
-  });
-
-  $("#settings span.showhide").click(function() {
-     wlshowhide(this, "#settings form");
-     return true;
-  });
-
 
   $("input.ackmsg").each(function() {
     $(this).disableTextSelect().click(function() {

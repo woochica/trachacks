@@ -9,16 +9,13 @@
       py:strip="">
 
   <div id="wikis">
-    <div>
-      <span class="showhide"></span>
-      <h2>Wikis</h2>
-    </div>
     <py:choose test="">
       <div class="system-message" py:when="'WIKI_VIEW' not in perm">
         You lack permission to view wikis.</div>
       <div id="wikilist-plusadd">
         <py:choose test="" py:otherwise="">
           <div id="wikilist-parent" py:when="wikilist">
+            <h2 class="foldable">Wikis</h2>
             ${tablepager("wikipager")}
             <table class="wikilist" id="wikilist">
               <thead>
@@ -68,9 +65,10 @@
             </table>
           </div>
           <div py:otherwise="">
+            <h2>Wikis</h2>
             <span>No wikis are currently watched.</span></div>
+          ${modify_form('wiki')}
         </py:choose>
-        ${modify_form('wiki')}
       </div>
     </py:choose>
   </div>
