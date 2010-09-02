@@ -24,14 +24,20 @@ jQuery(document).ready(function($){
     
     //Resizes each column to equal heights.
     function resizeColumnTickets(){
-        var maxHeight = 0;
+        //Find the largest list.
+        var largestList = 0;
         $(".column_tickets").each(function(){
-            if($(this).height() > maxHeight){
-                maxHeight = $(this).height();
+            var size = $(this).children("li").size();
+            if(size > largestList){
+                largestList = size;
             }
         });
         
-        $('.board_column').equalHeights(maxHeight + 60)
+        //Find the height of each ticket.
+        var ticketHeight = $('li.board_ticket:first').height() + 10;
+        
+        $('.board_column').height(ticketHeight * largestList + 50);
+        $('.column_tickets').height(ticketHeight * largestList );
     }
     
     var actions = new Array();
