@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from genshi.builder import tag
 
@@ -48,7 +48,7 @@ class ScreenshotsTimeline(Component):
 
         # Return apropriate content.
         if field == 'url':
-           return context.req.href.screenshots(id)
+           return context.href.screenshots(id)
         elif field == 'title':
            return tag('New screenshot ', tag.em(name), ' created')
         elif field == 'description':
