@@ -35,7 +35,7 @@
         $("#content").find(".wikianchor").each(function() {
           $(this).addAnchor(babel.format(_("Link to #%(id)s"), {id: $(this).attr('id')}));
         });
-        $(".foldable").enableFolding(true, true);
+        $(".foldable").enableFolding(false, false, true);
       });
       // ]]>
     </script>
