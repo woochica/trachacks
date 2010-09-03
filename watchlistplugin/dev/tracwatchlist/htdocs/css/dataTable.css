@@ -536,3 +536,10 @@ div.box {
 	border: 1px solid #8080FF;
 
 }
+
+.ui-state-default {
+  border: thin solid;
+  padding: 2pt;
+}
+
+

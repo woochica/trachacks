@@ -45,7 +45,10 @@ jQuery(document).ready(function() {
   $("td.unwatch a.plainlink").each(function() {
     $(this).click(function() {
         tr = $(this).parents('tr');
-        $.ajax({ url: $(this).attr('href') + '&async=true', success: function (data, textStatus) { $(tr).remove(); } } );
+        $.ajax({ url: $(this).attr('href') + '&async=true', success: function (data, textStatus) {
+            $(tr).parents('table').dataTable().fnDeleteRow(tr);
+          }
+        } );
         return false;
     });
   });
@@ -64,7 +67,13 @@ jQuery(document).ready(function() {
     });
   });
 
-  $("table.watchlist").dataTable();
+  $("table.watchlist").dataTable({
+    "bStateSave": true,
+    //"bJQueryUI": true,
+    "sPaginationType": "full_numbers",
+    "bPaginate": true,
+    //"sPaginationType": "full_numbers",
+  });
   /*
   $("#wikilist").tablesorter({widthFixed:true,headers: {
     4: {sorter:false}, 5: {sorter:false}, 6: {sorter:false}
