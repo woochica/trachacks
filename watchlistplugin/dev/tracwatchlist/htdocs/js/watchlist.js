@@ -64,6 +64,8 @@ jQuery(document).ready(function() {
     });
   });
 
+  $("table.watchlist").dataTable();
+  /*
   $("#wikilist").tablesorter({widthFixed:true,headers: {
     4: {sorter:false}, 5: {sorter:false}, 6: {sorter:false}
   }
@@ -72,6 +74,9 @@ jQuery(document).ready(function() {
     4: {sorter:false}
   }
   }).tablesorterPager({container:$("#ticketpager")});
+  */
+
+
 });
 
 

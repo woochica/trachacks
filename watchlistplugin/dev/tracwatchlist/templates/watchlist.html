@@ -11,15 +11,12 @@
       href="${href.chrome('watchlist','css','style.css')}"
       rel="stylesheet" />
     <link type="text/css"
-      href="${href.chrome('watchlist','css','tablesorter.css')}"
+      href="${href.chrome('watchlist','css','dataTable.css')}"
       rel="stylesheet" />
     <title>Watchlist</title>
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
     <script type="text/javascript" 
-      src="${href.chrome('watchlist','js','jquery.tablesorter.min.js')}">
-    </script>
-    <script type="text/javascript" 
-      src="${href.chrome('watchlist','js','jquery.tablesorter.pager.js')}">
+      src="${href.chrome('watchlist','js','jquery.dataTables.min.js')}">
     </script>
     <script type="text/javascript" 
       src="${href.chrome('common','js','folding.js')}">
@@ -91,30 +88,6 @@
           </py:choose>
         </py:def>
         <py:def function="tablepager(name)">
-          <div class="tablesorterPager" id="$name">
-            <form action="">
-              <div>
-              <img class="first" alt="|&lt;"
-                src="${href.chrome('watchlist/ico/first.png')}"/>
-              <img class="prev" alt="&lt;&lt;"
-                src="${href.chrome('watchlist/ico/prev.png')}"/>
-              <input type="text" class="pagedisplay"/>
-              <img class="next" alt="&gt;&gt;"
-                src="${href.chrome('watchlist/ico/next.png')}"/>
-              <img class="last" alt="&gt;|"
-                src="${href.chrome('watchlist/ico/last.png')}"/>
-              <select class="pagesize">
-                <option value="10" selected="selected">10</option>
-                <option value="20">20</option>
-                <option value="30">30</option>
-                <option value="40">40</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="1000000">All</option>
-              </select>
-              </div>
-            </form>
-          </div>
         </py:def>
 
         <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>

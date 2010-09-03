@@ -19,12 +19,16 @@ th.comment, th.changes {
     text-align: left;
 }
 
-table.wikilist td.comment {
+table.watchlist {
+    clear: both;
+}
+
+table#wikilist td.comment {
     width: 100%;
     white-space: normal;
 }
 
-table.ticketlist td.comment, table.ticketlist td.changes {
+table#ticketlist td.comment, table.ticketlist td.changes {
     white-space: normal;
 }
 
@@ -71,6 +75,7 @@ td.history img {
 
 div.modwatch {
   padding-top: 1ex;
+  clear: both;
 }
 
 form.addtowatch, form.remfromwatch {
