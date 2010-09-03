@@ -4,17 +4,16 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="watchlist"
       py:strip="">
 
       <div id="example">
-        <div>
-          <span class="showhide"></span>
-          <h2>Example</h2>
-        </div>
       <py:choose test="">
       <div id="examplelist-parent" py:when="examplelist">
-      ${tablepager("examplepager")}
-      <table class="examplelist" id="examplelist">
+        <h2 class="foldable">Example</h2>
+        ${tablepager("examplepager")}
+        <table class="examplelist" id="examplelist">
           <thead>
               <tr>
                 <th> Name </th>
@@ -23,15 +22,19 @@
           </thead>
           <tbody>
               <tr py:for="example in examplelist">
-                  <td class="name">${link('example',example.name,text=example.name)}</td>
+                  <td class="name">${link('example',example.name,
+                      text=example.name)}</td>
                   <td class="unwatch"><a class="plainlink"
-                      href="${href.watchlist(action='unwatch',realm='example',resid=example.name)}">
+                      href="${href.watchlist(action='unwatch',
+                      realm='example',resid=example.name)}">
                       ${unwatchicon()}</a></td>
               </tr>
           </tbody>
       </table>
       </div>
-      <div py:otherwise=""><span>No examples are currently watched.</span></div>
+      <div py:otherwise="">
+        <h2>Example</h2>
+        <span>No examples are currently watched.</span></div>
       </py:choose>
       <form method="get" action="" class="addtowatch">
         <div>

@@ -53,7 +53,7 @@ add_domain, _, tag_ = \
 
 class WatchlistError(TracError):
     show_traceback = False
-    title = 'Watchlist Error'
+    title = _("Watchlist Error")
 
 
 class WatchlistPlugin(Component):
@@ -460,7 +460,7 @@ class WatchlistPlugin(Component):
               if handler.has_perm(xrealm, req.perm):
                 wldict[xrealm + 'list'] = handler.get_list(xrealm, self, req)
                 name = handler.get_realm_label(xrealm, plural=True)
-                add_ctxtnav(req, _("Watched ") + name.capitalize(),
+                add_ctxtnav(req, _("Watched %s") % name.capitalize(),
                             href=req.href('watchlist#' + name))
             return ("watchlist.html", wldict, "text/html")
         else:
@@ -728,7 +728,7 @@ class TicketWatchlist(BasicWatchlist):
                                    _(" removed"))
                   return strng
               elif field == 'description':
-                  return fieldtag + tag(_(" modified"), "(", tag.a(_("diff"),
+                  return fieldtag + tag(_(" modified"), " (", tag.a(_("diff"),
                       href=req.href('ticket',id,action='diff',
                       version=self.commentnum)), ")")
               elif field == 'comment':

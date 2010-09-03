@@ -22,19 +22,22 @@
       src="${href.chrome('watchlist','js','jquery.tablesorter.pager.js')}">
     </script>
     <script type="text/javascript" 
+      src="${href.chrome('common','js','folding.js')}">
+    </script>
+    <script type="text/javascript" 
       src="${href.chrome('watchlist','js','watchlist.js')}"></script>
     <script type="text/javascript" 
       src="${href.chrome('common','js','folding.js')}"></script>
     <script type="text/javascript">
-       // <![CDATA[
-      jQuery(document).ready(function($) {
-        $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
-        });
-      jQuery(document).ready(function() {
-          $("#wikilist").tablesorter({ widthFixed: true, headers: { 4: { sorter: false }, 5: { sorter: false }, 6: { sorter: false } } }).tablesorterPager({container: $("#wikipager")}); 
-          $("#ticketlist").tablesorter({ widthFixed: true, headers: { 4: { sorter: false } } }).tablesorterPager({container: $("#ticketpager")});
-        });
-       // ]]>
+      // <![CDATA[
+         jQuery(document).ready(function($) {
+            $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor(_("Link to this section"));
+            $("#content").find(".wikianchor").each(function() {
+              $(this).addAnchor(babel.format(_("Link to #%(id)s"), {id: $(this).attr('id')}));
+            });
+            $(".foldable").enableFolding(true, true);
+          }); 
+      // ]]>
     </script>
     <py:def function="link(realm, resid, text='')">
         <a href="${href(realm,resid)}">${text or ":".join([realm,resid])}</a>
@@ -76,11 +79,13 @@
         <py:def function="notifybox(realm,name,notifyon)">
           <py:choose test="">
             <a class="notifyon plainlink" py:when="notifyon" 
-              href="${href.watchlist(action='notifyoff',realm=realm,resid=name)}">
+              href="${href.watchlist(action='notifyoff',realm=realm,
+              resid=name)}">
               <input checked="checked" type="checkbox" name="$name" />
             </a>
             <a class="notifyoff plainlink" py:otherwise="" 
-              href="${href.watchlist(action='notifyon',realm=realm,resid=name)}">
+              href="${href.watchlist(action='notifyon',realm=realm,
+              resid=name)}">
               <input type="checkbox" name="$name" />
             </a>
           </py:choose>
@@ -120,7 +125,8 @@
                   py:if="err_res or err_pat">
                     <h3 class="system-message-title">Not found</h3>
                     <div py:if="err_res" class="err_res">
-                      <p>The following selected ${realm}s where not found
+                      <p i18n:msg="realm">
+                        The following selected ${realm}s where not found
                         and could therefore not be added to the watchlist:
                       </p>
                       <ul><li py:for="res in err_res">$res</li></ul>
@@ -133,17 +139,19 @@
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
                 <div class="system-message" id="warning"
-                  py:if="len(alw_res)==1">
-                    <h3 class="system-message-title">Already watched</h3>
-                    <p>Selected ${link(realm,alw_res[0])} is already watched.
-                      (<a href="${href.watchlist(action='unwatch',realm=realm,resid=alw_res[0])}">Unwatch it?</a>)
-                      ${ackmsg()}
+                  py:if="len(alw_res)==1" py:with="resid=alw_res[0]">
+                    <h3 class="system-message-title">Already on Watchlist</h3>
+                    <p i18n:msg="realm, resid">
+                      Selected ${link(realm,resid)} is already watched.
+                      (<a href="${href.watchlist(action='unwatch',realm=realm,
+                      resid=resid)}">Unwatch it?</a>)${ackmsg()}
                     </p>
                 </div>
                 <div class="system-message" id="warning"
                   py:if="len(alw_res)>1">
                     <h3 class="system-message-title">Already on Watchlist</h3>
-                    <p>The following selected ${realm}s where already
+                    <p i18n:msg="realm">
+                      The following selected ${realm}s where already
                       on the watchlist:
                     </p>
                     <ul>
@@ -152,18 +160,22 @@
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
                 <div class="system-message" id="notice"
-                  py:if="len(new_res)==1">
+                  py:if="len(new_res)==1" py:with="resid=new_res[0]">
                     <h3 class="system-message-title">Added to Watchlist</h3>
-                    <p>The selected ${link(realm,new_res[0])} was added
+                    <p i18n:msg="realm, resid">
+                      The selected ${link(realm,resid)} was added
                       to the watchlist.
-                      (<a href="${href.watchlist(action='unwatch',realm=realm,resid=new_res[0])}">Remove again</a>)
-                      ${ackmsg()}
+                      (<a href="${href.watchlist(action='unwatch',realm=realm,
+                      resid=resid)}">Remove again</a>)${ackmsg()}
                     </p>
                 </div>
                 <div class="system-message" id="notice" py:if="len(new_res)>1">
                     <h3 class="system-message-title">Added to Watchlist</h3>
-                    <p>The following selected ${realm}s where added to the watchlist:
-                      (<a href="${href.watchlist(action='unwatch',realm=realm,resid=new_res)}">Remove them again</a>)
+                    <p i18n:msg="realm, new_res">
+                      The following selected ${realm}s where added
+                      to the watchlist:
+                      (<a href="${href.watchlist(action='unwatch',realm=realm,
+                      resid=new_res)}">Remove them again</a>)
                     </p>
                     <ul>
                       <li py:for="res in new_res">${slink(realm,res)}</li>
@@ -173,20 +185,25 @@
             </py:when>
             <py:when test="'unwatch'">
                 <div class="system-message" id="notice"
-                  py:if="len(del_res)==1">
-                    <h3 class="system-message-title">Removed from Watchlist</h3>
-                    <p>The selected ${link(realm,del_res[0])} was removed
+                  py:if="len(del_res)==1" py:with="resid=del_res[0]">
+                    <h3 class="system-message-title">Removed from Watchlist
+                    </h3>
+                    <p i18n:msg="realm, resid">
+                      The selected ${link(realm,resid)} was removed
                       from the watchlist.
-                      (<a href="${href.watchlist(action='watch',realm=realm,resid=del_res[0])}">Add again</a>)
-                      ${ackmsg()}
+                      (<a href="${href.watchlist(action='watch',realm=realm,
+                      resid=resid)}">Add again</a>)${ackmsg()}
                     </p>
                 </div>
                 <div class="system-message" id="notice"
                   py:if="len(del_res)>1">
-                    <h3 class="system-message-title">Removed from Watchlist</h3>
-                    <p>The following selected ${realm}s where removed
+                    <h3 class="system-message-title">Removed from Watchlist
+                    </h3>
+                    <p i18n:msg="realm, del_res">
+                      The following selected ${realm}s where removed
                       from the watchlist:
-                      (<a href="${href.watchlist(action='watch',realm=realm,resid=del_res)}">Add them again</a>)
+                      (<a href="${href.watchlist(action='watch',realm=realm,
+                      resid=del_res)}">Add them again</a>)
                     </p>
                     <ul>
                       <li py:for="res in del_res">${slink(realm,res)}</li>
@@ -197,7 +214,8 @@
                   py:if="err_res or err_pat">
                     <h3 class="system-message-title">Not on Watchlist</h3>
                     <div py:if="err_res" class="err_res">
-                      <p>The following to-be-deleted ${realm}s
+                      <p i18n:msg="realm">
+                        The following to-be-deleted ${realm}s
                         where not on the watchlist:
                       </p>
                       <ul>
@@ -218,9 +236,8 @@
 
 
     <div id="settings">
+      <h2 class="foldable">Settings</h2>
       <div>
-        <h2 class="foldable collapsed">Settings</h2>
-        <div>
         <form action="${href.watchlist()}" method="get">
           <div>
             <input type="hidden" name="action" value="settings" />
@@ -230,8 +247,8 @@
             <input type="checkbox" name="notifications" value="1"
             checked="${user_settings.get('notifications')}" />
             Notifications <br />
-            <br />
             ${str(user_settings)}
+            <br />
             <input type="submit" value="Save" />
             <input type="reset" />
           </div>
