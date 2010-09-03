@@ -13,11 +13,11 @@
     <py:choose test="">
       <div class="system-message" py:when="'WIKI_VIEW' not in perm">
         You lack permission to view wikis.</div>
-      <div id="wikilist-plusadd">
+      <div class="watchlist-main" id="wikilist-main">
         <py:choose test="" py:otherwise="">
-          <div id="wikilist-parent" py:when="wikilist">
+          <div class="watchlist-parent" id="wikilist-parent" py:when="wikilist">
             ${tablepager("wikipager")}
-            <table class="wikilist" id="wikilist">
+            <table class="watchlist" id="wikilist">
               <thead>
                 <tr>
                   <th py:for="k in ['name', 'datetime', 'author', 'version']"

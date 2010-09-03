@@ -13,11 +13,11 @@
     <py:choose test="">
       <div class="system-message" py:when="'TICKET_VIEW' not in perm">
         You lack permission to view tickets.</div>
-      <div id="ticketlist-plusadd">
+      <div class="watchlist-main" id="ticketlist-main">
         <py:choose test="" py:otherwise="">
-          <div id="ticketlist-parent" py:when="ticketlist">
+          <div class="watchlist-parent" id="ticketlist-parent" py:when="ticketlist">
             ${tablepager("ticketpager")}
-            <table class="ticketlist" id="ticketlist">
+            <table class="watchlist" id="ticketlist">
               <thead>
                 <tr>
                   <th py:for="k in ['id', 'datetime', 'author', 'commentnum']"
