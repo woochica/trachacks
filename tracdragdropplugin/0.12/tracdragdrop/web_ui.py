@@ -117,12 +117,12 @@ class TracDragDropModule(Component):
             except RedirectListened:
                 req.send('', status=200)
             except TracError, e:
-                self._send_message_on_except(req, unicode(e), 500)
+                self._send_message_on_except(req, e, 500)
             except PermissionError, e:
-                self._send_message_on_except(req, unicode(e), 403)
+                self._send_message_on_except(req, e, 403)
             except Exception, e:
                 self.log.error('AttachmentModule.process_request failed', exc_info=True)
-                self._send_message_on_except(req, unicode(e), 500)
+                self._send_message_on_except(req, e, 500)
             req.send('', status=500)
 
     def _render_attachments(self, req):
@@ -149,6 +149,8 @@ class TracDragDropModule(Component):
             return 'list_of_attachments.html', data, None
 
     def _send_message_on_except(self, req, message, status):
+        if not isinstance(message, basestring):
+            message = str(message).decode('utf-8')
         req.send_header(_HEADER, unicode_quote(message))
         req.send(message.encode('utf-8'), status=status)
 
