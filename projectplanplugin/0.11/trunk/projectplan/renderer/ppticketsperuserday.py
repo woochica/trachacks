@@ -46,7 +46,7 @@ class TicketsPerUserDay(RenderImpl):
     
     cssclass = self.macroenv.macrokw.get('cssclass')
     if cssclass == None:
-      self.cssclass = 'ticketsperuserday' # fallback
+      self.cssclass = 'blacktable' # fallback
     else:
       self.cssclass = cssclass.strip()
     
@@ -103,23 +103,40 @@ class TicketsPerUserDay(RenderImpl):
     
     calendar = {}
     counttickets = {}
+    currentDate = datetime.date.today()
     
-    self.macroenv.tracenv.log.warning(repr(orderedtickets))
+    self.macroenv.tracenv.log.debug(repr(orderedtickets))
     table = tag.table( class_="data" , border = "1", style = 'width:auto;')
     
     # table header
     tr = tag.tr()
     tr(tag.th('Ticket Owner'))
+    # TODO: add today css class
     for segment in self.segments:
+      mystyle = ''
+      mytitle = ''
+      myclass = ''
       try:
-        calendar[segment] = self.getDateOfSegment(segment).isocalendar()
-        subtitle = weekdays[calendar[segment][2]] + ', week '+str(calendar[segment][1])
-        tr(tag.th(tag.h4(segment), tag.h5( subtitle))) # week day and number
+        consideredDate = self.getDateOfSegment(segment)
+        calendar[segment] = {}
+        calendar[segment]['isocalendar'] = consideredDate.isocalendar()
+        calendar[segment]['date'] = consideredDate
+        subtitle = weekdays[calendar[segment]['isocalendar'][2]] + ', week '+str(calendar[segment]['isocalendar'][1])
+        if consideredDate == currentDate:
+          self.macroenv.tracenv.log.error('th.today')
+          myclass = 'today'
+        else:
+          self.macroenv.tracenv.log.error('NO th.today')
+        #tr(tag.th(tag.h4(segment), tag.h5( subtitle))) # week day and number
       except Exception,e:
         self.macroenv.tracenv.log.error(str(e)+' '+segment)
-        calendar[segment] = (None, None, None)
+        calendar[segment]['isocalendar'] = (None, None, None)
+        calendar[segment]['date'] = None
         subtitle = "--"
-        tr(tag.th(tag.h4(segment), tag.h5( subtitle, style = 'color:#000;', title = 'date could not be resolved' ))) # HACK
+        mystyle = 'color:#000;'
+        mytitle = 'date could not be resolved'
+        #tr(tag.th(tag.h4(segment), tag.h5( subtitle, style = 'color:#000;', title = 'date could not be resolved' ))) # HACK
+      tr(tag.th(tag.h4(segment, class_ = myclass ), tag.h5( subtitle, style = mystyle, title = mytitle, class_ = myclass  ))) 
       counttickets[segment] = 0
     table(tag.thead(tr))
     
@@ -137,9 +154,11 @@ class TicketsPerUserDay(RenderImpl):
       tr( tag.td(tag.h4(o)))
       for segment in self.segments:
         class_ = ''
-        if calendar[segment][2] == 6: # Saturday
+        if calendar[segment]['date'] == currentDate: # Today
+          class_ = 'today'
+        elif calendar[segment]['isocalendar'][2] == 6: # Saturday
           class_ = 'saturday'
-        elif calendar[segment][2] == 7: # Saturday
+        elif calendar[segment]['isocalendar'][2] == 7: # Saturday
           class_ = 'sunday'
         td = tag.td(class_ = class_)
         

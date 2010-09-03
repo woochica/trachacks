@@ -264,11 +264,25 @@ table.pplisting tbody td.ppimagecol {
 
 .blacktable table td.sunday
 {
-    background-image:url(hatch5x5light.gif);
+    background-image:url(hatch10x10light.gif);
 }
 .blacktable table td.saturday
 {
-    background-image:url(hatch5x5light.gif);
+    background-image:url(hatch10x10light.gif);
+}
+
+
+.blacktable table thead .today 
+{
+  /* yellow */
+  color:#fdfbd5; 
+/*   color:#FFD;  */
+}
+
+.blacktable table td.today
+{
+/*     background-image:url(hatch5x5yellow.gif); */
+    background-image:url(hatch10x10yellow.gif);
 }
 
 .blacktable table tbody tr:hover
@@ -295,11 +309,12 @@ table.pplisting tbody td.ppimagecol {
 }
 .blacktable table thead h5, .blacktable table tfoot h5
 {
-  font-size:80%;
+  font-size:70%;
   color: #CCC;
   margin:0;
   padding:0;
   font-weight:normal;
+  white-space:nowrap;
 }
 
 

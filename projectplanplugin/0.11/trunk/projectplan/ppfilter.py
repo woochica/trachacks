@@ -72,8 +72,13 @@ class NullFilter( BaseFilter ):
     '''
       Return all Tickets using trac.ticket.query.Query
     '''
-    # TODO: add max to the configuration
-    return Query( self.macroenv.tracenv, order='id', cols=self.cols, max='1000' ).execute( self.macroenv.tracreq )
+    
+    # max_ticket_number_at_filters can be attached to trac.ini
+    try:
+      max_ticket_number_at_filters = self.macroenv.conf.get('max_ticket_number_at_filters')
+    except:
+      max_ticket_number_at_filters = '1000' # fallback, Trac default was 100
+    return Query( self.macroenv.tracenv, order='id', cols=self.cols, max=max_ticket_number_at_filters ).execute( self.macroenv.tracreq )
 
 class QueryFilter( ParamFilter ):
   '''
