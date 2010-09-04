@@ -152,7 +152,7 @@ class PDashboard(Component):
     def get_navigation_items(self, req):
         if 'ROADMAP_VIEW' in req.perm:
             yield ('mainnav', 'pdashboard',
-                   tag.a('Dashboard', href=req.href.pdashboard()))
+                   tag.a('Metrics', href=req.href.pdashboard()))
 
     # IPermissionRequestor methods
 

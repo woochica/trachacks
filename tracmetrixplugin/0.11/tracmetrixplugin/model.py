@@ -28,7 +28,6 @@ os.environ[ 'HOME' ] = '/tmp/'
 
 from bisect import bisect
 import matplotlib
-matplotlib.use('Agg') # disable interactive option
 from pylab import *
 from matplotlib.dates import DayLocator, HourLocator, DateFormatter, drange
 
