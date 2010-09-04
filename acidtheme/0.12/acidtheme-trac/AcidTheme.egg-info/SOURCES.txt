@@ -1,9 +1,0 @@
-setup.py
-AcidTheme.egg-info/PKG-INFO
-AcidTheme.egg-info/SOURCES.txt
-AcidTheme.egg-info/dependency_links.txt
-AcidTheme.egg-info/entry_points.txt
-AcidTheme.egg-info/requires.txt
-AcidTheme.egg-info/top_level.txt
-acidtheme/__init__.py
-acidtheme/theme.py
