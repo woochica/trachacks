@@ -1,0 +1,12 @@
+Metadata-Version: 1.0
+Name: AcidTheme
+Version: 0.1
+Summary: Acid Theme for Trac
+Home-page: UNKNOWN
+Author: AcIdBuRnZ
+Author-email: acidburnz@xmail.net
+License: Apache2.0
+Description: UNKNOWN
+Keywords: trac plugin theme acid
+Platform: UNKNOWN
+Classifier: Framework :: Trac
