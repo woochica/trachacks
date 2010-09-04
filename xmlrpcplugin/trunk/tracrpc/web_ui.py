@@ -67,7 +67,8 @@ class RPCWeb(Component):
             self.log.debug("RPC incoming request of content type '%s' " \
                     "dispatched to %s" % (content_type, repr(protocol)))
             self._rpc_process(req, protocol, content_type)
-        elif accepts_mimetype(req, 'text/html'):
+        elif accepts_mimetype(req, 'text/html') \
+                    or content_type.startswith('text/html'):
             return self._dump_docs(req)
         else:
             # Attempt at API call gone wrong. Raise a plain-text 415 error
