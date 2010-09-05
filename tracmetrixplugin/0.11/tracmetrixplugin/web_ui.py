@@ -18,7 +18,7 @@ from genshi.builder import tag
 from genshi.filters.transform import StreamBuffer, Transformer
 
 from trac import mimeview
-from trac.config import ExtensionOption
+from trac.config import ExtensionOption, Option
 from trac.mimeview import Context
 from trac.core import Component, implements
 from trac.perm import IPermissionRequestor
@@ -137,6 +137,11 @@ class MilestoneMetrixIntegrator(Component):
 class PDashboard(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler, ITemplateProvider)
+    
+    yui_base_url = Option('pdashboard', 'yui_base_url', 
+                          default='http://yui.yahooapis.com/2.7.0',
+                          doc='Location of YUI API')
+    
     stats_provider = ExtensionOption('pdashboard', 'stats_provider',
                                      ITicketGroupStatsProvider,
                                      'ProgressTicketGroupStatsProvider',
@@ -173,9 +178,6 @@ class PDashboard(Component):
 
         db = self.env.get_db_cnx()
         
-        self.env.log.info("request mdashboard")
-        add_stylesheet(req, 'pd/css/dashboard.css')  
-        
         return self._render_view(req, db) 
         
 
@@ -208,7 +210,8 @@ class PDashboard(Component):
             'queries': queries,
             'showall': showall,
             'showmetrics': showmetrics,
-            'project' : project
+            'project' : project,
+            'yui_base_url': self.yui_base_url 
         }
         
         self.env.log.info("getting project statistics")
@@ -276,7 +279,7 @@ class PDashboard(Component):
         add_stylesheet(req, 'pd/css/dashboard.css')        
         add_stylesheet(req, 'common/css/report.css')
         
-        return 'pdashboard.html', data, None
+        return ('pdashboard.html', data, None)
    
     # ITemplateProvider methods
     # Used to add the plugin's templates and htdocs 
