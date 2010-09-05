@@ -240,6 +240,7 @@ class TicketStatsPlugin(Component):
          data['baseurl'] = req.base_url
          data['milestones'] = milestone_list
          data['cmilestone'] = milestone_num
+         data['yui_base_url'] = self.yui_base_url
          return 'greensauce.html', data, None
  
    def get_htdocs_dirs(self):
