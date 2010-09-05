@@ -30,5 +30,5 @@ setup(
     package_data={'tracmetrixplugin': ['templates/*.html', 
                                        'htdocs/css/*.css', 
                                        'htdocs/images/*']},
-    install_requires = ['Trac >= 0.11.6'],
+    install_requires = ['Trac >= 0.12'],
 )
