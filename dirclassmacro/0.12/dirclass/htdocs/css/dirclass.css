@@ -1,0 +1,3 @@
+/* Styles related to RTL support */
+.rtl { direction: rtl }
+.rtl div.wiki-toc { float: left }
