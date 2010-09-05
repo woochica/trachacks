@@ -9,23 +9,20 @@
   <head>
     <title>Milestone Dashboard: ${milestone.name}</title>
     <!-- Dependencies --> 
-	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/yahoo-dom-event/yahoo-dom-event.js"></script> 
-	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/element/element-min.js"></script> 
-	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/datasource/datasource-min.js"></script> 
-	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/json/json-min.js"></script> 
-	  <!-- OPTIONAL: Connection (enables XHR) --> 
-	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/connection/connection-min.js"></script> 
-	  <!-- Source files --> 
-	  <script type="text/javascript" src="http://yui.yahooapis.com/2.7.0/build/charts/charts-min.js"></script> 
-	  <script type="text/javascript">YAHOO.widget.Chart.SWFURL = "http://yui.yahooapis.com/2.7.0/build/charts/assets/charts.swf"; </script>
-	  
+	<script type="text/javascript" src="${yui_base_url}/build/yahoo-dom-event/yahoo-dom-event.js"></script> 
+	<script type="text/javascript" src="${yui_base_url}/build/element/element-min.js"></script> 
+	<script type="text/javascript" src="${yui_base_url}/build/datasource/datasource-min.js"></script> 
+	<script type="text/javascript" src="${yui_base_url}/build/json/json-min.js"></script> 
+	<!-- OPTIONAL: Connection (enables XHR) --> 
+	<script type="text/javascript" src="${yui_base_url}/build/connection/connection-min.js"></script> 
+	<!-- Source files --> 
+	<script type="text/javascript" src="${yui_base_url}/build/charts/charts-min.js"></script> 
+	<script type="text/javascript">YAHOO.widget.Chart.SWFURL = "${yui_base_url}/build/charts/assets/charts.swf"; </script>
     <script type="text/javascript">
       $(document).ready(function() {
         $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
       });
-    </script>
-    
-    
+    </script>    
   </head>
 
   <body>
@@ -112,12 +109,5 @@
 		</table>
 	  </div>
     </div>
-
-
-    <div id="help"><strong>Note:</strong> See
-      <a href="${href.wiki('TracRoadmap')}">TracRoadmap</a> for help on using
-      the roadmap.
-    </div>
-
   </body>
 </html>

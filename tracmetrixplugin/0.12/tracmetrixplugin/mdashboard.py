@@ -279,6 +279,10 @@ class MDashboard(Component):
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
                IWikiSyntaxProvider, ITemplateProvider, ITicketGroupStatsProvider)
  
+    yui_base_url = Option('pdashboard', 'yui_base_url', 
+                          default='http://yui.yahooapis.com/2.7.0',
+                          doc='Location of YUI API')
+ 
     stats_provider = ExtensionOption('mdashboard', 'stats_provider',
                                      ITicketGroupStatsProvider,
                                      'ProgressTicketGroupStatsProvider',
@@ -402,7 +406,8 @@ class MDashboard(Component):
                 'milestone': milestone,
                 'tickethistory' : [],
                 'dates' : [],
-                'ticketstat' : {}
+                'ticketstat' : {},
+                'yui_base_url': self.yui_base_url 
                 }
             
         data.update(milestone_stats_data(self.env, req, stat, milestone.name))
