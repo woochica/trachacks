@@ -63,8 +63,17 @@ class LastModifiedMacro(WikiMacroBase):
             out = StringIO('cannot find "' + page_name + '"')
             return Markup(out.getvalue())
 
-        author   = row[0]
+        username   = row[0]
         time_int = row[1]
+        
+        # see if there's a fullname associated with username
+        cursor.execute("SELECT value FROM session_attribute "
+                       "WHERE sid = '%s' AND name = 'name'" % username)
+        row = cursor.fetchone()
+        if not row:
+            author = username
+        else:
+            author = row[0]        
 
         last_mod = datetime.fromtimestamp(time_int, utc)
         now      = datetime.now(utc)
