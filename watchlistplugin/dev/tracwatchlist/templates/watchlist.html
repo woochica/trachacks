@@ -7,24 +7,26 @@
       i18n:domain="watchlist">
   <xi:include href="layout.html"/>
   <head>
+    <title>Watchlist</title>
     <link type="text/css"
       href="${href.chrome('watchlist','css','style.css')}"
       rel="stylesheet" />
     <link type="text/css"
       href="${href.chrome('watchlist','css','dataTable.css')}"
       rel="stylesheet" />
-    <title>Watchlist</title>
+    <link type="text/css"
+      href="${href.chrome('watchlist','css','jquery.autocomplete.css')}"
+      rel="stylesheet" />
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
     <script type="text/javascript" 
       src="${href.chrome('watchlist','js','jquery.dataTables.min.js')}">
     </script>
     <script type="text/javascript" 
-      src="${href.chrome('common','js','folding.js')}">
-    </script>
-    <script type="text/javascript" 
       src="${href.chrome('watchlist','js','watchlist.js')}"></script>
     <script type="text/javascript" 
       src="${href.chrome('common','js','folding.js')}"></script>
+    <script type="text/javascript" 
+      src="${href.chrome('watchlist','js','jquery.autocomplete.js')}"></script>
     <py:def function="link(realm, resid, text='')">
         <a href="${href(realm,resid)}">${text or ":".join([realm,resid])}</a>
     </py:def>
