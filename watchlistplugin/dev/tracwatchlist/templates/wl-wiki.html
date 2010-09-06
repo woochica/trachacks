@@ -38,8 +38,7 @@
                   <td class="datetime">$page.datetime
                       <span py:if="page.timedelta"
                         i18n:msg="timeline_link, timedelta"> (<a
-                        href="$page.timeline_link">
-                        $page.timedelta</a> ago)</span></td>
+                        href="$page.timeline_link">$page.timedelta</a> ago)</span></td>
                   <td class="author">$page.author</td>
                   <td class="version"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,

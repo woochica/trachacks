@@ -681,7 +681,7 @@ class TicketWatchlist(BasicWatchlist):
       user = req.authname
       ticketlist = []
       cursor.execute("""
-        SELECT id,type,time,changetime,summary,reporter
+        SELECT id,type,time,changetime,summary,reporter,status
           FROM ticket
          WHERE id IN (
            SELECT CAST(resid AS decimal)
@@ -693,7 +693,7 @@ class TicketWatchlist(BasicWatchlist):
       """, (user,)
       )
       tickets = cursor.fetchall()
-      for id,type,time,changetime,summary,reporter in tickets:
+      for id,type,time,changetime,summary,reporter,status in tickets:
           self.commentnum = 0
           self.comment    = ''
 
@@ -766,6 +766,7 @@ class TicketWatchlist(BasicWatchlist):
                   from_=format_datetime ( ct, 'iso8601')),
               'changes' : changes,
               'summary' : summary,
+              'status'  : status,
               'notify'  : notify,
           })
       return ticketlist

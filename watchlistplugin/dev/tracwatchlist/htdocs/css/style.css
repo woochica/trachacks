@@ -3,6 +3,7 @@ table {
     border-top: medium solid;
     width: 100%;
     table-layout: auto;
+    margin: 0.5ex 0ex;
 }
 
 thead, th {
@@ -69,7 +70,7 @@ td.history img {
 .watchlist a:link:hover, .watchlist a:visited:hover {
   background-color: none;
   color: none;
-  text-decoration: none;
+/*  text-decoration: none; */
   border: none;
 }
 
