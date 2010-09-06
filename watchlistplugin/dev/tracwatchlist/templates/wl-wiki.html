@@ -15,7 +15,8 @@
         You lack permission to view wikis.
       </div>
       <div class="watchlist-main" id="wikilist-main" py:otherwise="">
-            <h2 class="foldable">Wikis</h2>
+          <div>
+          <h2 class="${wikilist and 'foldable' or ''}">Wikis</h2>
           <div class="watchlist-parent" id="wikilist-parent" py:if="wikilist">
             <table class="watchlist" id="wikilist">
               <thead>
@@ -66,7 +67,8 @@
           </div>
           <p class="noentrymessage" style="${wikilist or 'display:block'}">
             No wikis are currently watched.
-          </p>
+            </p>
+          </div>
           ${modify_form('wiki')}
       </div>
     </py:choose>

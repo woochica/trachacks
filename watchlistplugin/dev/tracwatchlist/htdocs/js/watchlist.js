@@ -20,23 +20,30 @@ $(function(){
 });
 /*! */
 
-
-function wlshowhide(ref, tag) {
-    $(tag).toggle("normal");
-
-    if ($(ref).text() == "(Show)") {
-      $(ref).text("(Hide)");
-    }
-    else {
-      $(ref).text("(Show)");
-    }
-    return true;
+function wlremoveempty( tdiv ) {
+    pdiv = $(tdiv).parent("div");
+    $(tdiv).remove();
+    $(pdiv).find('h2').removeClass('foldable');
+    $(pdiv).find('p.noentrymessage').css('display','block');
+    wlremmsgbox();
 }
 
+function wldeleterow(tr, table) {
+  $(tr).remove();
+}
+
+function wldeleterow(tr, table) {
+  $(table).dataTable().fnDeleteRow(tr);
+}
+
+function wlremmsgbox() {
+  $('#message-box').remove();
+}
 
 jQuery(document).ready(function() {
   $("input.ackmsg").each(function() {
-    $(this).disableTextSelect().click(function() {
+    $(this).disableTextSelect();
+    $(this).click(function() {
       $('#message-box').hide(5).remove();
       return false;
     });
@@ -44,11 +51,12 @@ jQuery(document).ready(function() {
 
   $("td.unwatch a.plainlink").each(function() {
     $(this).click(function() {
-        tr = $(this).parents('tr');
+        tr    = $(this).parents('tr').get(0);
+        table = $(tr).parents('table').get(0);
         $.ajax({ url: $(this).attr('href') + '&async=true', success: function (data, textStatus) {
-            $(tr).parents('table').dataTable().fnDeleteRow(tr);
+            wldeleterow(tr, table);
           }
-        } );
+        });
         return false;
     });
   });
@@ -73,6 +81,12 @@ jQuery(document).ready(function() {
     "sPaginationType": "full_numbers",
     "bPaginate": true,
     //"sPaginationType": "full_numbers",
+    "fnHeaderCallback": function ( nRow, aaData, iStart, iEnd, aiDisplay ) {
+         if (aaData.length == 0) {
+            pdiv = $(nRow).parents('div.watchlist-parent').get(0);
+            wlremoveempty( pdiv );
+         }
+    },
   });
   /*
   $("#wikilist").tablesorter({widthFixed:true,headers: {
@@ -86,6 +100,7 @@ jQuery(document).ready(function() {
   */
 
 
+//  $("table.watchlist").each(function() { wlchecktable(this); });
 });
 
 

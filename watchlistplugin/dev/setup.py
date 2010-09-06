@@ -40,9 +40,8 @@ setup(
         'tracwatchlist' : [
             'htdocs/ico/*',
             'htdocs/css/style.css',
-            'htdocs/css/tablesorter.css',
-            'htdocs/js/jquery.tablesorter.min.js',
-            'htdocs/js/jquery.tablesorter.pager.js',
+            'htdocs/css/dataTable.css',
+            'htdocs/js/jquery.dataTables.min.js',
             'htdocs/js/watchlist.js',
             'locale/*/LC_MESSAGES/*.mo',
             'templates/*.html',
