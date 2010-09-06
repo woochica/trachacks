@@ -133,6 +133,8 @@ class DiscussionNotifyEmail(NotifyEmail):
         # Send e-mail.
         self.template = Chrome(self.env).load_template(self.template_name,
           method = 'text')
+        self.env.log.debug('to_recipients: %s cc_recipients: %s' % (
+          to_recipients, cc_recipients))
         NotifyEmail.send(self, to_recipients, cc_recipients, header)
 
     def get_recipients(self, item_id):

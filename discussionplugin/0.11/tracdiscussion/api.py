@@ -732,6 +732,8 @@ class DiscussionApi(Component):
                 context.forum = self.get_forum_by_time(context, forum['time'])
 
                 # Notify change listeners.
+                self.log.debug("forum_change_listeners: %s" % (
+                  self.forum_change_listeners))
                 for listener in self.forum_change_listeners:
                     listener.forum_created(context, context.forum)
 
@@ -960,7 +962,9 @@ class DiscussionApi(Component):
                 # Get inserted topic with new ID.
                 context.topic = self.get_topic_by_time(context, topic['time'])
 
-                # Notify change listeners.
+                # Notify change listeners.
+                self.log.debug("topic_change_listeners: %s" % (
+                  self.topic_change_listeners))
                 for listener in self.topic_change_listeners:
                     listener.topic_created(context, context.topic)
 
@@ -1185,6 +1189,8 @@ class DiscussionApi(Component):
                   message['time'])
 
                 # Notify change listeners.
+                self.log.debug("message_change_listeners: %s" % (
+                  self.message_change_listeners))
                 for listener in self.message_change_listeners:
                     listener.message_created(context, context.message)
 
