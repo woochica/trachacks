@@ -443,6 +443,23 @@ class WatchlistPlugin(Component):
 
             action = "view"
 
+        if action == "search":
+          query = req.args.get('q', u'')
+          handler = self.realm_handler[realm]
+          found = handler.res_pattern_exists(realm, query + '%')
+          db = self.env.get_db_cnx()
+          cursor = db.cursor()
+          cursor.execute("""
+            SELECT resid
+              FROM watchlist
+            WHERE realm=%s AND wluser=%s
+          """, (realm, user)
+          )
+          watched = [a[0] for a in cursor.fetchall()]
+          notwatched = set(found).difference(set(watched))
+          req.send( unicode('\n'.join(notwatched) + '\n').encode("utf-8"), 'text/plain', 200 )
+          raise RequestDone
+
         if async:
           req.send("",'text/plain', 200)
           raise RequestDone
