@@ -461,7 +461,7 @@ class WatchlistPlugin(Component):
                 wldict[xrealm + 'list'] = handler.get_list(xrealm, self, req)
                 name = handler.get_realm_label(xrealm, plural=True)
                 add_ctxtnav(req, _("Watched %s") % name.capitalize(),
-                            href=req.href('watchlist#' + name))
+                            href=req.href('watchlist') + '#' + name)
             return ("watchlist.html", wldict, "text/html")
         else:
             raise WatchlistError(_("Invalid watchlist action '%s'!") % action)
