@@ -90,6 +90,7 @@ jQuery(document).ready(function() {
     //"bJQueryUI": true,
     "sPaginationType": "full_numbers",
     "bPaginate": true,
+    "aLengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "&#8734;"]],
     //"sPaginationType": "full_numbers",
     "fnHeaderCallback": function ( nRow, aaData, iStart, iEnd, aiDisplay ) {
          if (aaData.length == 0) {
