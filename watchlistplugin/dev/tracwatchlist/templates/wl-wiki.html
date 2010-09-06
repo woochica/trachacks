@@ -24,7 +24,7 @@
                   <th py:for="k in ['name', 'datetime', 'author', 'version']"
                       class="${k}">${th.get(k)}&nbsp;&nbsp;&nbsp;</th>
                   <th py:for="k in ['diff', 'history', 'unwatch']"
-                      class="${k}">${th.get(k)}</th>
+                      class="${k} nosorting">${th.get(k)}</th>
                   <th py:if="notify" class="${'notify'}">
                       ${th['notify']}&nbsp;&nbsp;&nbsp;</th>
                   <th class="${'comment'}">

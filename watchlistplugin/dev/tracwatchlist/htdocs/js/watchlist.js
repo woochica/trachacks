@@ -75,8 +75,18 @@ jQuery(document).ready(function() {
     });
   });
 
-  $("table.watchlist").dataTable({
+  $("table.watchlist").each(function(){
+    var aoColumns = [];
+    $(this).find('thead th').each( function () {
+      if ( $(this).hasClass( 'nosorting' ) ) {
+        aoColumns.push( { "bSortable": false } );
+      } else {
+        aoColumns.push( null );
+      }
+    });
+    $(this).dataTable({
     "bStateSave": true,
+    "aoColumns": aoColumns,
     //"bJQueryUI": true,
     "sPaginationType": "full_numbers",
     "bPaginate": true,
@@ -87,6 +97,7 @@ jQuery(document).ready(function() {
             wlremoveempty( pdiv );
          }
     },
+   });
   });
   /*
   $("#wikilist").tablesorter({widthFixed:true,headers: {

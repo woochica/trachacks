@@ -23,8 +23,8 @@
                 <tr>
                   <th py:for="k in ['id', 'datetime', 'author', 'commentnum']"
                       class="${k}">${th.get(k)}&nbsp;&nbsp;&nbsp;</th>
-                  <th class="${'unwatch'}">${th.get('unwatch')}</th>
-                  <th py:if="notify" class="notify">
+                  <th class="unwatch nosorting">${th.get('unwatch')}</th>
+                  <th py:if="notify" class="notify nosorting">
                       ${th['notify']}&nbsp;&nbsp;&nbsp;</th>
                   <th py:for="k in ['changes', 'comment']"
                       class="${k}">${th.get(k)}&nbsp;&nbsp;&nbsp;</th>
