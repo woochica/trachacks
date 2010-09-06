@@ -1,0 +1,6 @@
+
+/* To make it work inside a TicketSidebar */
+div.tracgooglemap img {
+  max-width: none;
+}
+

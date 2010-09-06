@@ -15,7 +15,7 @@ setup(
     packages = ['tracgooglemap'],
     author = 'Martin Scharrer',
     package_data = {
-        'tracgooglemap' : [ 'htdocs/*.js' ],
+        'tracgooglemap' : [ 'htdocs/*.js', 'htdocs/*.css' ],
     },
     author_email = 'martin@scharrer-online.de',
     description = "GoogleMap Trac Macro.",

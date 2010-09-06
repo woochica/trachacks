@@ -20,7 +20,7 @@ from tracadvparseargs import parse_args
 from trac.wiki.formatter import extract_link
 from trac.wiki.macros import WikiMacroBase
 from trac.web.api import IRequestFilter
-from trac.web.chrome import ITemplateProvider, add_link, add_script
+from trac.web.chrome import ITemplateProvider, add_link, add_script, add_stylesheet
 from trac.env import IEnvironmentSetupParticipant
 from genshi.builder import Element
 from urllib import urlopen,quote_plus
@@ -295,6 +295,7 @@ The same with hyperlinked markers:
         # Add Google Map API key using a link tag:
         if self.api_key:
             add_link (req, rel='google-key', href='', title=self.api_key, classname='google-key')
+            add_stylesheet  (req, 'googlemap/tracgooglemap.css')
             add_script (req, 'googlemap/tracgooglemap.js')
         return (template, data, content_type)
 
