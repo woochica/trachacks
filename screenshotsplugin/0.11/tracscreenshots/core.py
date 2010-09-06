@@ -2,8 +2,8 @@
 
 # Standard imports.
 import sys, re, os, os.path, shutil, mimetypes, unicodedata
-
 from datetime import *
+from pkg_resources import resource_filename
 from zipfile import *
 from PIL import Image, ImageOps
 from StringIO import *
@@ -19,20 +19,22 @@ from genshi.core import Markup
 from genshi.builder import tag
 
 # Trac imports
-from trac.config import Option, ListOption, PathOption
+from trac.config import Configuration, ListOption, Option
 from trac.core import *
 from trac.mimeview import Mimeview, Context
-from trac.perm import IPermissionRequestor
 from trac.util.datefmt import to_timestamp
 from trac.util.text import to_unicode
-from trac.web.main import IRequestHandler
 from trac.web.chrome import add_script, add_stylesheet, format_to_oneliner, \
-  pretty_timedelta, INavigationContributor, ITemplateProvider
+  pretty_timedelta
+
+# Trac interfaces.
+from trac.perm import IPermissionRequestor
+from trac.web.main import IRequestHandler
+from trac.web.chrome import INavigationContributor, ITemplateProvider
 
 # Local imports.
 from tracscreenshots.api import *
 
-no_screenshot = {'id' : 0}
 
 class ScreenshotsCore(Component):
     """
@@ -48,40 +50,40 @@ class ScreenshotsCore(Component):
     # Screenshot change listeners.
     change_listeners = ExtensionPoint(IScreenshotChangeListener)
 
-    # Items for not specified component and version.
-    none_component = {'name' : 'none',
-                      'description' : 'none'}
-    none_version = {'name' : 'none',
-                    'description' : 'none'}
-
     # Configuration options.
-    mainnav_title = Option('screenshots', 'mainnav_title', 'Screenshots',
-      doc = 'Main navigation bar button title.')
-    metanav_title = Option('screenshots', 'metanav_title', '',
-      doc = 'Meta navigation bar link title.')
-    path = PathOption('screenshots', 'path', '../screenshots',
-      doc = 'Path where to store uploaded screenshots.')
-    ext = ListOption('screenshots', 'ext', 'jpg,png',
-      doc = 'List of screenshot file extensions that can be uploaded. Must be'
-      ' supported by PIL.')
-    formats = ListOption('screenshots', 'formats', 'raw,html,jpg,png',
-      doc = 'List of allowed formats for screenshot download.')
-    default_format = Option('screenshots', 'default_format', 'html',
-      doc = 'Default format for screenshot download links.')
+    mainnav_title = Option('screenshots', 'mainnav_title', 'Screenshots', doc =
+      'Main navigation bar button title.')
+    metanav_title = Option('screenshots', 'metanav_title', '', doc = 'Meta '
+      'navigation bar link title.')
+    ext = ListOption('screenshots', 'ext', 'jpg,png', doc = 'List of '
+      'screenshot file extensions that can be uploaded. Must be supported by '
+      'PIL.')
+    formats = ListOption('screenshots', 'formats', 'raw,html,jpg,png', doc =
+      'List of allowed formats for screenshot download.')
+    default_format = Option('screenshots', 'default_format', 'html', doc =
+      'Default format for screenshot download links.')
     default_components = ListOption('screenshots', 'default_components', 'all',
       doc = 'List of components enabled by default.')
     default_versions = ListOption('screenshots', 'default_versions', 'all',
       doc = 'List of versions enabled by default.')
     default_filter_relation = Option('screenshots', 'default_filter_relation',
-      'or', doc = 'Logical relation between component and version part of'
-      ' screenshots filter.')
-    default_orders = ListOption('screenshots', 'default_orders',
-      'id', doc = 'List of names of database fields that are used to'
-      ' sort screenshots.')
+      'or', doc = 'Logical relation between component and version part of '
+      'screenshots filter.')
+    default_orders = ListOption('screenshots', 'default_orders', 'id', doc =
+      'List of names of database fields that are used to sort screenshots.')
     default_order_directions = ListOption('screenshots',
-      'default_order_directions', 'asc', doc = 'List of ordering '
-      'directions for fields specified in default_orders configuration '
-      'options.')
+      'default_order_directions', 'asc', doc = 'List of ordering directions '
+      'for fields specified in {{{default_orders}}} configuration option.')
+
+    def __init__(self):
+        # Path where to store uploaded screenshots, see init.py.
+        self.path = self.config.getpath(
+          'screenshots', 'path') or '../screenshots'
+
+        # Items for not specified component and version.
+        self.none_component = {'name' : 'none', 'description' : 'none'}
+        self.none_version = {'name' : 'none', 'description' : 'none'}
+
 
     # IPermissionRequestor methods.
 
@@ -100,11 +102,9 @@ class ScreenshotsCore(Component):
     # ITemplateProvider methods.
 
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
         return [('screenshots', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     # INavigationContributor methods.
@@ -245,7 +245,7 @@ class ScreenshotsCore(Component):
                       % (name, screenshot['width'], screenshot['height'], ext)))
                     base_name = os.path.normpath(os.path.basename(filename))
 
-                    self.log.debug('filemame: %s' % (filename,))
+                    self.log.debug('filename: %s' % (filename,))
 
                     # Create requested file from original if not exists.
                     if not os.path.isfile(filename.encode('utf-8')):

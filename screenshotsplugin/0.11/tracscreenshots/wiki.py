@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 
+# Standard includes.
 import re
 
+# Trac includes.
 from trac.core import *
 from trac.config import Option
-from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.web.chrome import add_stylesheet, add_script, format_datetime
+from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.html import html
 from trac.util.text import to_unicode
 
+# Trac interfaces.
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 
+# Local includes.
 from tracscreenshots.api import *
 
 class ScreenshotsWiki(Component):
@@ -19,9 +23,17 @@ class ScreenshotsWiki(Component):
     """
     implements(IWikiSyntaxProvider, IWikiMacroProvider)
 
-    screenshot_macro_doc = """Allows embed screenshot image in wiki page.
-First mandatory argument is ID of the screenshot. Number or image attributes
-can be specified next:
+    # Configuration options.
+    default_description = Option('screenshots', 'default_description',
+      '$description', doc = 'Template for embended image description.')
+    default_list_item = Option('screenshots', 'default_list_item', '$id - '
+      '$name - $description',  doc = 'Default format of list item description '
+      'of ![[ScreenshotsList()]] macro.')
+
+    def __init__(self):
+        self.screenshot_macro_doc = """Allows embed screenshot image in
+wiki page. First mandatory argument is ID of the screenshot. Number or
+image attributes can be specified next:
 
  * {{{align}}} - Specifies image alignment in wiki page. Possible values are:
    {{{left}}}, {{{right}}} and {{{center}}}.
@@ -58,9 +70,9 @@ Example:
  [[Screenshot(2,width=400,height=300,description=The $name by $author: $description,align=left)]]
 }}}"""
 
-    screenshots_list_macro_doc = """Displays list of all available screenshots
-on wiki page. Accepts one argument which is template for list items fromatting.
-Possible variables in this template are:
+        self.screenshots_list_macro_doc = """Displays list of all available
+screenshots on wiki page. Accepts one argument which is template for
+list items formatting. Possible variables in this template are:
 
  * {{{$id}}} - ID of image.
  * {{{$name}}} - Name of image.
@@ -80,19 +92,12 @@ Example:
  [[ScreenshotsList($name - $description ($widthx$height))]]
 }}}"""
 
-    # [screenshot] macro id regular expression.
-    id_re = re.compile('^(\d+)($|.+$)')
+        # [screenshot:<id>] macro id regular expression.
+        self.id_re = re.compile('^(\d+)($|.+$)')
 
-    # [[Screenshot()]] macro attributes regular expression.
-    attributes_re = re.compile('(align|alt|border|class|description|format|' \
-      'height|id|longdesc|title|usemap|width)=(.*)')
-
-    # Configuration options.
-    default_description = Option('screenshots', 'default_description',
-      '$description', 'Template for embended image description.')
-    default_list_item = Option('screenshots', 'default_list_item', '$id - $name - $description',
-      doc = 'Default format of list item description of ![[ScreenshotsList()]]' \
-      ' macro.')
+        # [[Screenshot()]] macro attributes regular expression.
+        self.attributes_re = re.compile('(align|alt|border|class|description|'
+          'format|height|id|longdesc|title|usemap|width)=(.*)')
 
     # IWikiSyntaxProvider
 
@@ -144,7 +149,7 @@ Example:
             # Try to get screenshots of that ID.
             screenshot = api.get_screenshot(context, screenshot_id)
 
-            # Build and return macro content.
+            # Build and return macro content.
             if screenshot:
                 # Set default values of image attributes.
                 attributes = {'align' : 'none',

@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
+# Standard imports.
 import time
 
+# Trac imports.
 from trac.core import *
 from trac.mimeview import Context
-from trac.config import Option
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_datetime, utc, pretty_timedelta
+from trac.util.text import to_unicode
+
 
 class IScreenshotChangeListener(Interface):
     """Extension point interface for components that require notification
@@ -45,8 +48,12 @@ class ScreenshotsApi(Component):
     # Get list functions
 
     def _get_items(self, context, table, columns, where = '', values = ()):
-        sql = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + (where
-          and (' WHERE ' + where) or '')
+        sql_values =  {'columns' : ', '.join(columns),
+          'table' : table,
+          'where' : (' WHERE ' + where) if where else ''}
+        sql = ("""SELECT %(columns)s
+                  FROM %(table)s
+                  %(where)s""" % (sql_values))
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
         items = []
@@ -94,15 +101,29 @@ class ScreenshotsApi(Component):
           field, direction in orders])
 
         # Join them.
-        sql = 'SELECT DISTINCT ' + ', '.join(columns) + ' FROM screenshot s ' \
-          'LEFT JOIN (SELECT screenshot, version FROM screenshot_version) v ' \
-          'ON s.id = v.screenshot LEFT JOIN (SELECT screenshot, component ' \
-          'FROM screenshot_component) c ON s.id = c.screenshot WHERE ' \
-          '(v.version IN (' + versions_str + ')' + (('none' in versions) and \
-          ' OR v.version IS NULL) ' or ') ') + ((relation == 'and') and 'AND' or \
-          'OR') + ' (c.component IN (' + components_str + ')' + (('none' in
-          components) and ' OR c.component IS NULL) ' or ') ') + 'ORDER BY ' + \
-          orders_str
+        sql_values = {'columns' : ', '.join(columns),
+          'versions_str' : versions_str,
+          'none_version_exp' : ' OR v.version IS NULL ' if 'none' in versions
+            else '',
+          'relation' : 'AND' if (relation == 'and') else 'OR',
+          'components_str' : components_str,
+          'none_components_exp' : ' OR c.component IS NULL ' if 'none' in
+            components else '',
+          'orders_str' : orders_str}
+        sql = ("""SELECT DISTINCT %(columns)s
+                  FROM screenshot s
+                  LEFT JOIN
+                    (SELECT screenshot, version
+                    FROM screenshot_version) v
+                  ON s.id = v.screenshot
+                  LEFT JOIN
+                    (SELECT screenshot, component
+                    FROM screenshot_component) c
+                  ON s.id = c.screenshot
+                  WHERE (v.version IN (%(versions_str)s) %(none_version_exp)s)
+                    %(relation)s (c.component IN (%(components_str)s)
+                      %(none_components_exp)s)
+                  ORDER BY %(orders_str)s""" % (sql_values))
         self.log.debug(sql % tuple(versions + components))
         context.cursor.execute(sql, versions + components)
         screenshots = []
@@ -114,22 +135,30 @@ class ScreenshotsApi(Component):
     def get_new_screenshots(self, context, start, stop):
         columns = ('id', 'name', 'description', 'time', 'author', 'tags',
           'file', 'width', 'height')
-        sql = "SELECT " + ', '.join(columns) + " FROM screenshot WHERE time" \
-          "  BETWEEN %s AND %s"
-        self.log.debug(sql % (start, stop))
-        context.cursor.execute(sql, (start, stop))
+        sql_values = {'columns' : ', '.join(columns),
+          'start' : start,
+          'stop' : stop}
+        sql = ("""SELECT %(columns)s
+                  FROM screenshot
+                  WHERE time
+                  BETWEEN %(start)s AND %(stop)s""" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
         screenshots = []
         for row in context.cursor:
             row = dict(zip(columns, row))
             screenshots.append(row)
         return screenshots
 
-
     # Get one item functions
 
     def _get_item(self, context, table, columns, where = '', values = ()):
-        sql = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + (where
-          and (' WHERE ' + where) or '')
+        sql_values = {'columns' : ', '.join(columns),
+          'table' : table,
+          'where' : (' WHERE ' + where) if where else ''}
+        sql = ("""SELECT %(columns)s
+                  FROM %(table)s
+                  %(where)s""" % (sql_values))
         self.log.debug(sql, values)
         context.cursor.execute(sql, values)
         for row in context.cursor:
@@ -186,18 +215,24 @@ class ScreenshotsApi(Component):
             return None
 
     def get_screenshot_components(self, context, id):
-        sql = 'SELECT component FROM screenshot_component WHERE screenshot = %s'
-        self.log.debug(sql % (id,))
-        context.cursor.execute(sql, (id,))
+        sql_values = {'id' : id}
+        sql = ("""SELECT component
+                  FROM screenshot_component
+                  WHERE screenshot = %(id)s""" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
         components = []
         for row in context.cursor:
             components.append(row[0])
         return components
 
     def get_screenshot_versions(self, context, id):
-        sql = 'SELECT version FROM screenshot_version WHERE screenshot = %s'
-        self.log.debug(sql % (id,))
-        context.cursor.execute(sql, (id,))
+        sql_values = {'id' : id}
+        sql = ("""SELECT version
+                  FROM screenshot_version
+                  WHERE screenshot = %(id)s""" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
         versions = []
         for row in context.cursor:
             versions.append(row[0])
@@ -208,8 +243,12 @@ class ScreenshotsApi(Component):
     def _add_item(self, context, table, item):
         fields = item.keys()
         values = item.values()
-        sql = "INSERT INTO %s (" % (table,) + ", ".join(fields) + ") VALUES (" \
-          + ", ".join(["%s" for I in xrange(len(fields))]) + ")"
+        sql_values = {'table' : table,
+          'fields' : ', '.join(fields),
+          'values' : ', '.join(["%s" for I in range(len(fields))])}
+        sql = ("""INSERT INTO %(table)s
+                  (%(fields)s)
+                  VALUES (%(values)s)""" % (sql_values))
         self.log.debug(sql % tuple(values))
         context.cursor.execute(sql, tuple(values))
 
@@ -227,10 +266,14 @@ class ScreenshotsApi(Component):
     def _edit_item(self, context, table, id, item):
         fields = item.keys()
         values = item.values()
-        sql = "UPDATE %s SET " % (table,) + ", ".join([("%s = %%s" % (field))
-          for field in fields]) + " WHERE id = %s"
-        self.log.debug(sql % tuple(values + [id]))
-        context.cursor.execute(sql, tuple(values + [id]))
+        sql_values = {'table' : table,
+           'fields' : ', '.join([("%s = %%s" % field) for field in fields]),
+           'id' : id}
+        sql = ("""UPDATE %(table)s
+                  SET %(fields)s
+                  WHERE id = %(id)s""" % (sql_values))
+        self.log.debug(sql % tuple(values))
+        context.cursor.execute(sql, tuple(values))
 
     def edit_screenshot(self, context, id, screenshot):
         # Replace components.
@@ -257,29 +300,37 @@ class ScreenshotsApi(Component):
 
     def delete_screenshot(self, context, id):
         # Delete screenshot.
-        sql = "DELETE FROM screenshot WHERE id = %s"
-        self.log.debug(sql % (id,))
-        context.cursor.execute(sql, (id,))
+        sql_values = {'id' : id}
+        sql = ("""DELETE FROM screenshot
+                  WHERE id = %(id)s""" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
 
         # Delete versions and components.
         self.delete_versions(context, id)
         self.delete_components(context, id)
 
     def delete_versions(self, context, id):
-        sql = "DELETE FROM screenshot_version WHERE screenshot = %s"
-        self.log.debug(sql % (id,))
-        context.cursor.execute(sql, (id,))
+        sql_values = {'id' : id}
+        sql = ("""DELETE FROM screenshot_version
+                  WHERE screenshot = %(id)s""" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
 
     def delete_components(self, context, id):
-        sql = "DELETE FROM screenshot_component WHERE screenshot = %s"
-        self.log.debug(sql % (id,))
-        context.cursor.execute(sql, (id,))
+        sql_values = {'id' : id}
+        sql = ("""DELETE FROM screenshot_component
+                  WHERE screenshot = %(id)s""" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
 
     # Other methods.
 
     def set_version(self, context, version):
         # Check if version item exists.
-        sql = "SELECT value FROM system WHERE name = 'screenshots_version'"
+        sql = ("""SELECT value
+                  FROM system
+                  WHERE name = 'screenshots_version'""")
         self.log.debug(sql)
         context.cursor.execute(sql)
         in_db = False
@@ -289,10 +340,14 @@ class ScreenshotsApi(Component):
 
         # Insert of update version.
         if in_db:
-            sql = "UPDATE system SET value = %s WHERE name = 'screenshots_" \
-              "version'"
+            sql_values = {'version' : version}
+            sql = ("""UPDATE system
+                      SET value = %(version)s
+                      WHERE name = 'screenshots_version'""" % (sql_values))
         else:
-            sql = "INSERT INTO system (name, value) VALUES ('screenshots_" \
-              "version', %s)"
-        self.log.debug(sql % (version,))
-        context.cursor.execute(sql, (version,))
+            sql_values = {'version' : version}
+            sql = ("""INSERT INTO system (name, value)
+                      VALUES ('screenshots_version', %(version)s)""" % (
+                     sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)

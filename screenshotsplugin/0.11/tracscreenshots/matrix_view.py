@@ -1,25 +1,32 @@
 # -*- coding: utf8 -*-
 
 from trac.core import *
-from trac.config import Option, IntOption
+from trac.config import IntOption
 from trac.web.chrome import add_stylesheet
 
 from tracscreenshots.api import *
 from tracscreenshots.core import *
 
+
 class ScreenshotsMatrixView(Component):
 
     implements(ITemplateProvider, IScreenshotsRenderer)
 
-    # Configuration options.
-    rows = IntOption('screenshots-matrix', 'rows', 3, 'Number of screenshot preview rows.')
-    columns = IntOption('screenshots-matrix', 'columns', 3, 'Number of screenshot columns.')
-    width = IntOption('screenshots-matrix', 'width', 160, 'Width of screenshot preview.')
-    height = IntOption('screenshots-matrix', 'height', 120, 'Height of screenshot preview.')
+    # Configuration options.
+    rows = IntOption('screenshots-matrix', 'rows', 3, doc =
+      'Number of screenshot preview rows.')
+    columns = IntOption('screenshots-matrix', 'columns', 3, doc =
+      'Number of screenshot columns.')
+    width = IntOption('screenshots-matrix', 'width', 160, doc =
+      'Width of screenshot preview.')
+    height = IntOption('screenshots-matrix', 'height', 120, doc =
+      'Height of screenshot preview.')
 
-    null_screenshot = {'id' : -1,
-                       'name' : '',
-                       'description' : ''}
+    def __init__(self):
+        # Items for not specified screenshot.
+        self.null_screenshot = {'id' : -1,
+                                'name' : '',
+                                'description' : ''}
 
     # ITemplateProvider methods.
 

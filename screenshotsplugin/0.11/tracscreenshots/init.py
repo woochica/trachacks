@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 
+# Standard includes.
 import os, os.path
 
+# Trac includes.
 from trac.core import *
-from trac.config import PathOption
 from trac.db import *
+from trac.config import PathOption
+
+# Trac interfaces.
 from trac.env import IEnvironmentSetupParticipant
 
-# Last screenshots database shcema version
+# Last screenshots database schema version.
 last_db_version = 4
 
 class ScreenshotsInit(Component):
@@ -58,7 +62,9 @@ class ScreenshotsInit(Component):
 
     def _get_db_version(self, cursor):
         try:
-            sql = "SELECT value FROM system WHERE name='screenshots_version'"
+            sql = ("""SELECT value
+                      FROM system
+                      WHERE name='screenshots_version'""")
             self.log.debug(sql)
             cursor.execute(sql)
             for row in cursor:

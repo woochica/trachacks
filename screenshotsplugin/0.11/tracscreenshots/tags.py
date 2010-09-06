@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 
+# Standard imports.
 import sets
 
-from tracscreenshots.api import *
+# Trac imports.
 from trac.core import *
-from trac.config import ListOption
 from trac.resource import *
+from trac.config import ListOption
 
+# TracTags imports.
 from tractags.api import DefaultTagProvider, TagSystem
+
+# Local imports.
+from tracscreenshots.api import *
 
 class ScreenshotsTagProvider(DefaultTagProvider):
     """
@@ -30,13 +35,13 @@ class ScreenshotsTags(Component):
     """
     implements(IScreenshotChangeListener)
 
-    # Configuration options.
+    # Configuration options.
     additional_tags = ListOption('screenshots', 'additional_tags',
       'author,components,versions,name', doc = 'Additional tags that will be '
       'created for submitted screenshots. Possible values are: author, '
       'components, versions, name, description.')
 
-    # IScreenshotChangeListener methods.
+    # IScreenshotChangeListener methods.
 
     def screenshot_created(self, req, screenshot):
         # Create temporary resource.
