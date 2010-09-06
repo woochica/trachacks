@@ -55,25 +55,23 @@
 }
 
 .dataTables_length {
-	width: 40%;
 	float: left;
 }
 
 .dataTables_filter {
-	width: 50%;
 	float: right;
 	text-align: right;
 }
 
 .dataTables_info {
-	width: 60%;
 	float: left;
+	padding: 5px 5px;
+	margin: 0 3px;
 }
 
 .dataTables_paginate {
-	width: 44px;
 	* width: 50px;
-	float: right;
+	float: left;
 	text-align: right;
 }
 
@@ -285,9 +283,9 @@ td.details {
 }
 
 .paging_full_numbers {
-	width: 400px;
-	height: 22px;
-	line-height: 22px;
+	float: left;
+	padding: 5px 5px;
+	margin: 0 3px;
 }
 
 .paging_full_numbers span.paginate_button,
@@ -310,7 +308,7 @@ td.details {
 }
 
 .paging_full_numbers span.paginate_active {
-
+	font-weight: bold;
 }
 
 table.display tr.even.row_selected td {

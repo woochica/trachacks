@@ -90,6 +90,8 @@ jQuery(document).ready(function() {
     //"bJQueryUI": true,
     "sPaginationType": "full_numbers",
     "bPaginate": true,
+    "sDom": 'ilpfrt',
+    "sPagePrevious": "&lt;",
     "aLengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "&#8734;"]],
     //"sPaginationType": "full_numbers",
     "fnHeaderCallback": function ( nRow, aaData, iStart, iEnd, aiDisplay ) {
@@ -97,6 +99,24 @@ jQuery(document).ready(function() {
             pdiv = $(nRow).parents('div.watchlist-parent').get(0);
             wlremoveempty( pdiv );
          }
+    },
+    "oLanguage": {
+      "sLengthMenu": "_MENU_",
+      "sZeroRecords": "./.",
+      "sInfo": "_START_-_END_ / _TOTAL_",
+      "sInfoEmpty": "./.",
+      "sInfoFiltered": "(_MAX_)",
+      "sProcessing": "...",
+      "sInfoPostFix": "",
+      "sSearch": "",
+      "sUrl": "",
+      "oPaginate": {
+        "sFirst":    "|&lt;",
+        "sPrevious": "&lt;",
+        "sNext":     "&gt;",
+        "sLast":     "&gt;|"
+      },
+      "fnInfoCallback": null
     },
    });
   });
