@@ -11,12 +11,12 @@
   <div id="wikis">
     <py:choose test="">
       <div class="system-message" py:when="'WIKI_VIEW' not in perm">
-        You lack permission to view wikis.</div>
-      <div class="watchlist-main" id="wikilist-main">
-        <py:choose test="" py:otherwise="">
-          <div class="watchlist-parent" id="wikilist-parent" py:when="wikilist">
+        <h2>Wikis</h2>
+        You lack permission to view wikis.
+      </div>
+      <div class="watchlist-main" id="wikilist-main" py:otherwise="">
             <h2 class="foldable">Wikis</h2>
-            ${tablepager("wikipager")}
+          <div class="watchlist-parent" id="wikilist-parent" py:if="wikilist">
             <table class="watchlist" id="wikilist">
               <thead>
                 <tr>
@@ -64,11 +64,10 @@
               </tbody>
             </table>
           </div>
-          <div py:otherwise="">
-            <h2>Wikis</h2>
-            <span>No wikis are currently watched.</span></div>
+          <p class="noentrymessage" style="${wikilist or 'display:block'}">
+            No wikis are currently watched.
+          </p>
           ${modify_form('wiki')}
-        </py:choose>
       </div>
     </py:choose>
   </div>
