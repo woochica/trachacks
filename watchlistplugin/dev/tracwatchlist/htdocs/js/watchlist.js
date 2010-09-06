@@ -99,7 +99,7 @@ jQuery(document).ready(function() {
   }).tablesorterPager({container:$("#ticketpager")});
   */
 
-
+  $(".foldable").enableFolding(false, false, true);
 //  $("table.watchlist").each(function() { wlchecktable(this); });
 });
 

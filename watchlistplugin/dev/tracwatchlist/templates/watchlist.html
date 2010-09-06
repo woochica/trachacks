@@ -25,17 +25,6 @@
       src="${href.chrome('watchlist','js','watchlist.js')}"></script>
     <script type="text/javascript" 
       src="${href.chrome('common','js','folding.js')}"></script>
-    <script type="text/javascript">
-      // <![CDATA[
-      jQuery(document).ready(function($) {
-        $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor(_("Link to this section"));
-        $("#content").find(".wikianchor").each(function() {
-          $(this).addAnchor(babel.format(_("Link to #%(id)s"), {id: $(this).attr('id')}));
-        });
-        $(".foldable").enableFolding(false, false, true);
-      });
-      // ]]>
-    </script>
     <py:def function="link(realm, resid, text='')">
         <a href="${href(realm,resid)}">${text or ":".join([realm,resid])}</a>
     </py:def>
