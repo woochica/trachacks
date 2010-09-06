@@ -28,7 +28,7 @@ table#wikilist td.comment {
     white-space: normal;
 }
 
-table#ticketlist td.comment, table.ticketlist td.changes {
+table#ticketlist td.comment, table#ticketlist td.changes {
     white-space: normal;
 }
 
@@ -118,4 +118,9 @@ input#ackmsg {
 #settings {
   display: none;
 }
+
+.noentrymessage {
+  display: none;
+}
+
 
