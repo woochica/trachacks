@@ -350,7 +350,8 @@ The same with hyperlinked markers:
 
         return (lon, lat, acc)
 
-    def expand_macro(self, formatter, name, content):
+    def expand_macro(self, formatter, name, content, args=None):
+        content = content.replace('\n',',')
         largs, kwargs = parse_args(content, multi=['marker','to'])
         if len(largs) > 0:
             arg = unicode(largs[0])
