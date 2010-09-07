@@ -42,6 +42,8 @@ from  trac.web.chrome        import  ITemplateProvider, add_ctxtnav, \
 from  trac.web.href          import  Href
 from  trac.wiki.model        import  WikiPage
 
+from  trac.prefs.api         import  IPreferencePanelProvider
+
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 
 
@@ -61,37 +63,29 @@ class WatchlistPlugin(Component):
     """For documentation see http://trac-hacks.org/wiki/WatchlistPlugin"""
     providers = ExtensionPoint(IWatchlistProvider)
 
+    implements( IRequestHandler, IRequestFilter, ITemplateProvider, IPreferencePanelProvider )
 
-    implements( IRequestHandler, IRequestFilter, ITemplateProvider )
-    gnotifyu = BoolOption('watchlist', 'notifications', False,
-                "Enables notification features")
-    gnotifyctxtnav = BoolOption('watchlist', 'display_notify_navitems', False,
-                "Enables notification navigation items")
-    gnotifycolumn = BoolOption('watchlist', 'display_notify_column', True,
-                "Enables notification column in watchlist tables")
-    gnotifybydefault = BoolOption('watchlist', 'notify_by_default', False,
-                "Enables notifications by default for all watchlist entries")
-    gredirectback = BoolOption('watchlist', 'stay_at_resource', False,
-                "The user stays at the resource after a watch/unwatch operation "
-                "and the watchlist page is not displayed.")
-    gredirectback_notify = BoolOption('watchlist', 'stay_at_resource_notify', True,
-                "The user stays at the resource after a notify/do-not-notify operation "
-                "and the watchlist page is not displayed.")
-    gmsgrespage = BoolOption('watchlist', 'show_messages_on_resource_page', True, 
-                "Enables action messages on resource pages.")
-    gmsgwlpage  = BoolOption('watchlist', 'show_messages_on_watchlist_page', True, 
-                "Enables action messages when going to the watchlist page.")
-    gmsgwowlpage = BoolOption('watchlist', 'show_messages_while_on_watchlist_page', True, 
-                "Enables action messages while on watchlist page.")
-    gautocomplete = BoolOption('watchlist', 'autocomplete_inputs', True, 
-                "Enabled autocompletion of input fields (add/remove resources).")
-    gdynamictable = BoolOption('watchlist', 'dynamic_tables', True, 
-                "Enabled dynamic sortable watchlist tables.")
+
+    options = [
+        ('notifications', False, "Enables notification features"),
+        ('display_notify_navitems', False, "Enables notification navigation items"),
+        ('display_notify_column', True, "Enables notification column in watchlist tables"),
+        ('notify_by_default', False, "Enables notifications by default for all watchlist entries"),
+        ('stay_at_resource', False, "The user stays at the resource after a watch/unwatch operation and the watchlist page is not displayed."),
+        ('stay_at_resource_notify', True, "The user stays at the resource after a notify/do-not-notify operation and the watchlist page is not displayed."),
+        ('show_messages_on_resource_page', True, "Enables action messages on resource pages."),
+        ('show_messages_on_watchlist_page', True, "Enables action messages when going to the watchlist page."),
+        ('show_messages_while_on_watchlist_page', True, "Enables action messages while on watchlist page."),
+        ('autocomplete_inputs', True, "Enabled autocompletion of input fields (add/remove resources)."),
+        ('dynamic_tables', True, "Enabled dynamic sortable watchlist tables."),
+    ]
+
+    gsettings = dict( [ (name, BoolOption('watchlist',name,value,doc) ) for (name,value,doc) in options ] )
 
     gnotify = False
 
     # Per user setting # FTTB FIXME
-    notifyctxtnav = gnotifyctxtnav
+    notifyctxtnav = gsettings['display_notify_navitems']
 
     def __init__(self):
       self.realms = []
@@ -108,7 +102,7 @@ class WatchlistPlugin(Component):
           self.realm_handler[realm] = provider
           self.env.log.debug("realm: %s %s" % (realm, str(provider)))
 
-      if self.gnotifyu:
+      if self.gsettings['notifications']:
         try:
           # Import methods from WatchSubscriber of the AnnouncerPlugin
           from  announcerplugin.subscribers.watchers  import  WatchSubscriber
@@ -132,6 +126,47 @@ class WatchlistPlugin(Component):
             self.env.log.debug("WS! " + str(e))
             self.env.log.debug("WS! " + str(ee))
             self.gnotify = False
+
+    # IPreferencePanelProvider methods
+    def get_preference_panels(self, req):
+        """Return a list of available preference panels.
+        
+        The items returned by this function must be tuple of the form
+        `(panel, label)`.
+        """
+        user  = to_unicode( req.authname )
+        if not user or user == 'anonymous':
+          return []
+        return [('watchlist',_("Watchlist"))]
+
+    def render_preference_panel(self, req, panel):
+        """Process a request for a preference panel.
+        
+        This function should return a tuple of the form `(template, data)`,
+        where `template` is the name of the template to use and `data` is the
+        data to be passed to the template.
+        """
+        user  = to_unicode( req.authname )
+        settings = {}
+        #settings.update( [ (name,value) for (name,value,doc) in self.options ] )
+        settings.update( [ ( name,option.__get__(self,None) ) for name,option in self.gsettings.iteritems() ] )
+        settings.update( self._get_user_settings(user) )
+
+        self.env.log.debug("WL STORED: " + unicode(settings))
+        if req.method == 'POST':
+            args = req.args.copy()
+            #del args['__FORM_TOKEN']
+            #del args['panel_id']
+            #del args['action']
+            #settings.update(args)
+            newoptions = req.args.get('options',[])
+            for k in settings.keys():
+              settings[k] = k in newoptions and "True" or "False"
+            self.env.log.debug("WL NEW: " + unicode(settings))
+            self._save_user_settings(user,settings)
+            req.redirect(req.href.prefs(panel))
+
+        return ('watchlist_prefs.html', { 'settings': settings })
 
 
     def is_notify(self, req, realm, resid):
@@ -269,21 +304,21 @@ class WatchlistPlugin(Component):
         wldict['perm']   = req.perm
         wldict['realms'] = self.realms
         wldict['error']  = False
-        wldict['notify'] = self.gnotify and self.gnotifycolumn
+        wldict['notify'] = self.gnotify and self.gsettings['display_notify_column']
         wldict['user_settings'] = self._get_user_settings(user)
-        wldict['autocomplete'] = self.gautocomplete
-        wldict['dynamictable'] = self.gdynamictable
+        wldict['autocomplete'] = self.gsettings['autocomplete_inputs']
+        wldict['dynamictable'] = self.gsettings['dynamic_tables']
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1
-        redirectback = self.gredirectback and single and not onwatchlistpage
-        redirectback_notify = self.gredirectback_notify and single and not \
+        redirectback = self.gsettings['stay_at_resource'] and single and not onwatchlistpage
+        redirectback_notify = self.gsettings['stay_at_resource_notify'] and single and not \
                               onwatchlistpage
 
         if onwatchlistpage:
-          wldict['show_messages'] = self.gmsgwowlpage
+          wldict['show_messages'] = self.gsettings['show_messages_while_on_watchlist_page']
         else:
-          wldict['show_messages'] = self.gmsgwlpage
+          wldict['show_messages'] = self.gsettings['show_messages_on_watchlist_page']
 
         new_res = []
         del_res = []
@@ -333,11 +368,11 @@ class WatchlistPlugin(Component):
             db.commit()
 
           action = "view"
-          if self.gmsgrespage and not onwatchlistpage and redirectback:
+          if self.gsettings['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
             req.session['watchlist_message'] = _(
               "You are now watching this resource."
             )
-          if self.gnotify and self.gnotifybydefault:
+          if self.gnotify and self.gsettings['notify_by_default']:
             for res in new_res:
               self.set_notify(req, realm, res)
             db.commit()
@@ -388,11 +423,11 @@ class WatchlistPlugin(Component):
           db.commit()
 
           action = "view"
-          if self.gmsgrespage and not onwatchlistpage and redirectback:
+          if self.gsettings['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
             req.session['watchlist_message'] = _(
               "You are no longer watching this resource."
             )
-          if self.gnotify and self.gnotifybydefault:
+          if self.gnotify and self.gsettings['notify_by_default']:
             for res in del_res:
               self.unset_notify(req, realm, res)
             db.commit()
@@ -412,7 +447,7 @@ class WatchlistPlugin(Component):
                 self.set_notify(req, realm, res)
               db.commit()
             if redirectback_notify and not async:
-              if self.gmsgrespage:
+              if self.gsettings['show_messages_on_resource_page']:
                 req.session['watchlist_notify_message'] = _(
                   """
                   You are now receiving change notifications
@@ -428,7 +463,7 @@ class WatchlistPlugin(Component):
                 self.unset_notify(req, realm, res)
               db.commit()
             if redirectback_notify and not async:
-              if self.gmsgrespage:
+              if self.gsettings['show_messages_on_resource_page']:
                 req.session['watchlist_notify_message'] = _(
                   """
                   You are no longer receiving
