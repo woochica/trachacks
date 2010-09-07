@@ -44,7 +44,7 @@ jQuery(document).ready(function() {
   $("input.ackmsg").each(function() {
     $(this).disableTextSelect();
     $(this).click(function() {
-      $('#message-box').hide(5).remove();
+      $(this).parents('div.system-message').hide(5).remove();
       return false;
     });
   });
@@ -81,8 +81,10 @@ jQuery(document).ready(function() {
         asWikiNames.push( $(this).text().replace(/^\s*|\s*$/g,'') );
       });
   });
-  $("#wikis .remfromwatch input[name=resid]").autocomplete(asWikiNames);
-  $("#wikis .addtowatch input[name=resid]").autocomplete("./watchlist?action=search&realm=wiki");
+  $("#wikis .remfromwatch input[name=resid]")
+      .autocomplete(asWikiNames);
+  $("#wikis .addtowatch input[name=resid]")
+      .autocomplete("./watchlist?action=search&realm=wiki");
 
   var asTicketIds = [];
   $("table#ticketlist").each(function(){
@@ -90,8 +92,10 @@ jQuery(document).ready(function() {
         asTicketIds.push( $(this).text().replace(/^\s*#|\s*$/g,'') );
       });
   });
-  $("#tickets .remfromwatch input[name=resid]").autocomplete(asTicketIds);
-  $("#tickets .addtowatch input[name=resid]").autocomplete("./watchlist?action=search&realm=ticket");
+  $("#tickets .remfromwatch input[name=resid]")
+      .autocomplete(asTicketIds);
+  $("#tickets .addtowatch input[name=resid]")
+      .autocomplete("./watchlist?action=search&realm=ticket");
   asWikiNames = [];
   asTicketIds = [];
 
@@ -100,14 +104,21 @@ jQuery(document).ready(function() {
     var aoColumns = [];
     $(this).find('thead th').each( function () {
       if ( $(this).hasClass( 'nosorting' ) ) {
-        aoColumns.push( { "bSortable": false } );
+        aoColumns.push( { "bSortable": false, "bSearchable": false } );
       } else {
         aoColumns.push( null );
       }
     });
+    /*
+    if (aoColumns[0] == null) {
+      aoColumns[0] = {};
+    }
+    aoColumns[0]['sWidth'] = $(this).find('thead th.name').css('width');
+    */
     $(this).dataTable({
     "bStateSave": true,
     "aoColumns": aoColumns,
+    //"bAutoWidth": false,
     //"bJQueryUI": true,
     "sPaginationType": "full_numbers",
     "bPaginate": true,
