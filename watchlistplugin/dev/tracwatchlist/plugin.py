@@ -447,7 +447,8 @@ class WatchlistPlugin(Component):
           """, (realm, user)
           )
           watched = [a[0] for a in cursor.fetchall()]
-          notwatched = set(found).difference(set(watched))
+          notwatched = list(set(found).difference(set(watched)))
+          notwatched.sort()
           req.send( unicode('\n'.join(notwatched) + '\n').encode("utf-8"), 'text/plain', 200 )
           raise RequestDone
 
