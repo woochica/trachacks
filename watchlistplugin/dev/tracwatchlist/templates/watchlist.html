@@ -203,27 +203,6 @@
         </div>
     <xi:include href="wl-${realm}.html" py:for="realm in realms" />
 
-
-    <div id="settings">
-      <h2 class="foldable">Settings</h2>
-      <div>
-        <form action="${href.watchlist()}" method="get">
-          <div>
-            <input type="hidden" name="action" value="settings" />
-            <input type="checkbox" name="autonotify" value="1"
-            checked="${user_settings.get('autonotify')}" />
-            Auto Notify (${user_settings.autonotify})<br />
-            <input type="checkbox" name="notifications" value="1"
-            checked="${user_settings.get('notifications')}" />
-            Notifications <br />
-            ${str(user_settings)}
-            <br />
-            <input type="submit" value="Save" />
-            <input type="reset" />
-          </div>
-        </form>
-        </div>
-      </div>
     </div>
   </body>
 </html>

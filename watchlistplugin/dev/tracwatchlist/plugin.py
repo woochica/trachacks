@@ -140,10 +140,7 @@ class WatchlistPlugin(Component):
         data to be passed to the template.
         """
         user  = to_unicode( req.authname )
-        settings = {}
-        #settings.update( [ (name,value) for (name,value,doc) in self.options ] )
-        settings.update( [ ( name,self.config.getbool('watchlist',name) ) for name,option,_ in self.options ] )
-        settings.update( self._get_user_settings(user) )
+        settings = self.get_settings(user)
 
         self.env.log.debug("WL STORED: " + unicode(settings))
         if req.method == 'POST':
@@ -161,6 +158,17 @@ class WatchlistPlugin(Component):
 
         return ('watchlist_prefs.html', { 'settings': settings })
 
+    def get_settings(self, user):
+        settings = {}
+        settings.update( [ ( name,self.config.getbool('watchlist',name) ) for name,option,_ in self.options ] )
+        self.env.log.debug("WL SETTINGS OLD: " + unicode(settings))
+        usersettings = self._get_user_settings(user)
+        self.env.log.debug("WL USER SETTINGS: " + unicode(usersettings))
+        settings.update( usersettings )
+        self.env.log.debug("WL SETTINGS NEW: " + unicode(settings))
+        if not self.wsub:
+          settings['notifications'] = False
+        return settings
 
     def is_notify(self, req, realm, resid):
       try:
@@ -264,13 +272,20 @@ class WatchlistPlugin(Component):
 
         try:
           (settingsstr,) = cursor.fetchone()
-          return dict([ kv.split('=') for kv in settingsstr.split("&") ])
-        except:
+          self.env.log.debug("WL SET: " + settingsstr)
+          d = dict([
+              (k,v == 'True') for k,v in [ kv.split('=') for kv in settingsstr.split("&") ]
+          ])
+          self.env.log.debug("WL SETd: " + unicode(d))
+          return d
+        except Exception, e:
+          self.env.log.debug("WL get user settings: " + unicode(e))
           return dict()
 
 
     def process_request(self, req):
         user  = to_unicode( req.authname )
+        settings = self.get_settings( user )
         realm = to_unicode( req.args.get('realm', u'') )
         resid = req.args.get('resid', u'')
         resids = []
@@ -297,21 +312,21 @@ class WatchlistPlugin(Component):
         wldict['perm']   = req.perm
         wldict['realms'] = self.realms
         wldict['error']  = False
-        wldict['notify'] = self.wsub and self.gsettings['display_notify_column']
-        wldict['user_settings'] = self._get_user_settings(user)
-        wldict['autocomplete'] = self.gsettings['autocomplete_inputs']
-        wldict['dynamictable'] = self.gsettings['dynamic_tables']
+        wldict['notify'] = settings['notifications'] and settings['notifications'] and settings['display_notify_column']
+        wldict['settings'] = settings
+        wldict['autocomplete'] = settings['autocomplete_inputs'] # TODO: remove
+        wldict['dynamictable'] = settings['dynamic_tables'] # TODO: remove
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1
-        redirectback = self.gsettings['stay_at_resource'] and single and not onwatchlistpage
-        redirectback_notify = self.gsettings['stay_at_resource_notify'] and single and not \
+        redirectback = settings['stay_at_resource'] and single and not onwatchlistpage
+        redirectback_notify = settings['stay_at_resource_notify'] and single and not \
                               onwatchlistpage
 
         if onwatchlistpage:
-          wldict['show_messages'] = self.gsettings['show_messages_while_on_watchlist_page']
+          wldict['show_messages'] = settings['show_messages_while_on_watchlist_page']
         else:
-          wldict['show_messages'] = self.gsettings['show_messages_on_watchlist_page']
+          wldict['show_messages'] = settings['show_messages_on_watchlist_page']
 
         new_res = []
         del_res = []
@@ -361,11 +376,11 @@ class WatchlistPlugin(Component):
             db.commit()
 
           action = "view"
-          if self.gsettings['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
+          if settings['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
             req.session['watchlist_message'] = _(
               "You are now watching this resource."
             )
-          if self.wsub and self.gsettings['notify_by_default']:
+          if settings['notifications'] and settings['notify_by_default']:
             for res in new_res:
               self.set_notify(req, realm, res)
             db.commit()
@@ -416,11 +431,11 @@ class WatchlistPlugin(Component):
           db.commit()
 
           action = "view"
-          if self.gsettings['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
+          if settings['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
             req.session['watchlist_message'] = _(
               "You are no longer watching this resource."
             )
-          if self.wsub and self.gsettings['notify_by_default']:
+          if settings['notifications'] and settings['notify_by_default']:
             for res in del_res:
               self.unset_notify(req, realm, res)
             db.commit()
@@ -435,12 +450,12 @@ class WatchlistPlugin(Component):
         wldict['alw_res'] = alw_res
 
         if action == "notifyon":
-            if self.wsub:
+            if settings['notifications']:
               for res in resids:
                 self.set_notify(req, realm, res)
               db.commit()
             if redirectback_notify and not async:
-              if self.gsettings['show_messages_on_resource_page']:
+              if settings['show_messages_on_resource_page']:
                 req.session['watchlist_notify_message'] = _(
                   """
                   You are now receiving change notifications
@@ -451,12 +466,12 @@ class WatchlistPlugin(Component):
               raise RequestDone
             action = "view"
         elif action == "notifyoff":
-            if self.wsub:
+            if settings['notifications']:
               for res in resids:
                 self.unset_notify(req, realm, res)
               db.commit()
             if redirectback_notify and not async:
-              if self.gsettings['show_messages_on_resource_page']:
+              if settings['show_messages_on_resource_page']:
                 req.session['watchlist_notify_message'] = _(
                   """
                   You are no longer receiving
@@ -547,6 +562,10 @@ class WatchlistPlugin(Component):
 
     ### methods for IRequestFilter
     def post_process_request(self, req, template, data, content_type):
+        user  = to_unicode( req.authname )
+        settings = self.get_settings(user) # FIXME: suboptimal to reload settings here
+        # TODO: Move to request handler?
+
         msg = req.session.get('watchlist_message',[])
         if msg:
           add_notice(req, msg)
@@ -584,7 +603,7 @@ class WatchlistPlugin(Component):
                     href=req.href('watchlist', action='watch',
                     resid=resid, realm=realm),
                     title=_("Add %s to watchlist") % realm)
-            if self.wsub and self.notifyctxtnav:
+            if settings['notifications'] and settings['display_notify_navitems']:
               if self.is_notify(req, realm, resid):
                 add_ctxtnav(req, _("Do not Notify me"),
                     href=req.href('watchlist', action='notifyoff',

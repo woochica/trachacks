@@ -57,7 +57,7 @@ setup(
         'tracwatchlist = tracwatchlist',
         'tracwatchlist.plugin = tracwatchlist.plugin',
         'tracwatchlist.db = tracwatchlist.db',
-        'tracwatchlist.nav = tracwatchlist.nav'
+        'tracwatchlist.nav = tracwatchlist.nav',
       ]},
     **extra
 )
