@@ -1,0 +1,95 @@
+/* Images matrix style. */
+div.screenshots div.images
+{
+  margin: 1em 2em;
+  padding: 1em 2em;
+  border: 1px solid #d7d7d7;
+  background-color: #f7f7f7;
+  overflow: auto;
+}
+
+div.screenshots div.images table
+{
+  margin-left: auto;
+  margin-right: auto;
+}
+
+div.screenshots div.tr, div.screenshots div.td
+{
+  margin: 0em;
+  padding: 0em;
+}
+
+
+div.screenshots div.images div.image
+{
+  border: 2px solid #b00;
+  margin: 0em;
+  padding: 0em;
+  text-align: center;
+}
+
+div.screenshots div.images div.image a
+{
+  display: block;
+  padding: 0em;
+  margin: 0em;
+  border: none;
+  vertical-align: middle;
+}
+
+div.screenshots div.images div.image img
+{
+  vertical-align: middle;
+}
+
+div.screenshots div.images div.noimage
+{
+  border: 2px solid #f7f7f7;
+}
+
+div.screenshots div.images div.name
+{
+  font-size: 75%;
+  text-align: center;
+}
+
+/* Global controls style. */
+div.screenshots div.controls
+{
+  text-align: center;
+}
+
+div.screenshots div.images div.controls
+{
+  margin-bottom: 0.5em;
+}
+
+div.screenshots div.controls div.position
+{
+  font-weight: bold;
+  margin: 1em;
+}
+
+/* Go to form style. */
+div.screenshots div.goto
+{
+  display: inline;
+}
+
+div.screenshots form.goto
+{
+  display: inline;
+  margin: 0em;
+}
+
+div.screenshots div.goto input[type="text"]
+{
+  width: 2em;
+  margin: 0em;
+}
+
+div.screenshots form.goto input[type="submit"]
+{
+  margin: 0em;
+}
