@@ -11,10 +11,10 @@
     <link type="text/css"
       href="${href.chrome('watchlist','css','style.css')}"
       rel="stylesheet" />
-    <link type="text/css"
+    <link type="text/css" py:if="dynamictable"
       href="${href.chrome('watchlist','css','dataTable.css')}"
       rel="stylesheet" />
-    <link type="text/css"
+    <link type="text/css" py:if="autocomplete"
       href="${href.chrome('watchlist','css','jquery.autocomplete.css')}"
       rel="stylesheet" />
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
@@ -23,6 +23,10 @@
     </script>
     <script type="text/javascript" 
       src="${href.chrome('watchlist','js','watchlist.js')}"></script>
+    <script type="text/javascript" py:if="autocomplete"
+      src="${href.chrome('watchlist','js','autocomplete.js')}"></script>
+    <script type="text/javascript" py:if="dynamictable"
+      src="${href.chrome('watchlist','js','dynamictables.js')}"></script>
     <script type="text/javascript" 
       src="${href.chrome('common','js','folding.js')}"></script>
     <script type="text/javascript" 

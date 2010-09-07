@@ -83,6 +83,10 @@ class WatchlistPlugin(Component):
                 "Enables action messages when going to the watchlist page.")
     gmsgwowlpage = BoolOption('watchlist', 'show_messages_while_on_watchlist_page', True, 
                 "Enables action messages while on watchlist page.")
+    gautocomplete = BoolOption('watchlist', 'autocomplete_inputs', True, 
+                "Enabled autocompletion of input fields (add/remove resources).")
+    gdynamictable = BoolOption('watchlist', 'dynamic_tables', True, 
+                "Enabled dynamic sortable watchlist tables.")
 
     gnotify = False
 
@@ -267,6 +271,8 @@ class WatchlistPlugin(Component):
         wldict['error']  = False
         wldict['notify'] = self.gnotify and self.gnotifycolumn
         wldict['user_settings'] = self._get_user_settings(user)
+        wldict['autocomplete'] = self.gautocomplete
+        wldict['dynamictable'] = self.gdynamictable
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1

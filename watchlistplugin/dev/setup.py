@@ -44,6 +44,8 @@ setup(
             'htdocs/css/jquery.autocomplete.css',
             'htdocs/js/jquery.dataTables.min.js',
             'htdocs/js/jquery.autocomplete.js',
+            'htdocs/js/dynamictables.js',
+            'htdocs/js/autocomplete.js',
             'htdocs/js/watchlist.js',
             'locale/*/LC_MESSAGES/*.mo',
             'templates/*.html',
