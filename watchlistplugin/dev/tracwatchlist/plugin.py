@@ -139,33 +139,24 @@ class WatchlistPlugin(Component):
         where `template` is the name of the template to use and `data` is the
         data to be passed to the template.
         """
-        user  = to_unicode( req.authname )
-        settings = self.get_settings(user)
+        settings = self.get_settings( req.authname )
 
-        self.env.log.debug("WL STORED: " + unicode(settings))
         if req.method == 'POST':
-            args = req.args.copy()
-            #del args['__FORM_TOKEN']
-            #del args['panel_id']
-            #del args['action']
-            #settings.update(args)
-            newoptions = req.args.get('options',[])
-            for k in settings.keys():
-              settings[k] = k in newoptions and "True" or "False"
-            self.env.log.debug("WL NEW: " + unicode(settings))
-            self._save_user_settings(user,settings)
+            self._handle_settings();
             req.redirect(req.href.prefs(panel))
 
-        return ('watchlist_prefs.html', { 'settings': settings })
+        return ('watchlist_prefs_main.html', { 'settings': settings })
+
+    def _handle_settings(self, req, settings):
+        newoptions = req.args.get('options',[])
+        for k in settings.keys():
+          settings[k] = k in newoptions
+        self._save_user_settings(req.authname, settings)
 
     def get_settings(self, user):
         settings = {}
         settings.update( [ ( name,self.config.getbool('watchlist',name) ) for name,option,_ in self.options ] )
-        self.env.log.debug("WL SETTINGS OLD: " + unicode(settings))
-        usersettings = self._get_user_settings(user)
-        self.env.log.debug("WL USER SETTINGS: " + unicode(usersettings))
-        settings.update( usersettings )
-        self.env.log.debug("WL SETTINGS NEW: " + unicode(settings))
+        settings.update( self._get_user_settings(user) )
         if not self.wsub:
           settings['notifications'] = False
         return settings
@@ -233,7 +224,7 @@ class WatchlistPlugin(Component):
         cursor = db.cursor()
         #cursor.log = self.env.log
 
-        settingsstr = "&".join([ "=".join(kv) for kv in settings.items()])
+        settingsstr = "&".join([ "=".join([k,unicode(v)]) for k,v in settings.iteritems()])
 
         cursor.execute("""
           SELECT count(*)
@@ -309,10 +300,18 @@ class WatchlistPlugin(Component):
             )
 
         wldict = req.args.copy()
+        wldict['action'] = action
+
+        # Needed here to get updated settings
+        if action == "save":
+          self.env.log.debug("WL OPTIONS: " + unicode( req.args.get('options') ))
+          self._handle_settings(req, settings)
+          action = "view"
+
         wldict['perm']   = req.perm
         wldict['realms'] = self.realms
         wldict['error']  = False
-        wldict['notify'] = settings['notifications'] and settings['notifications'] and settings['display_notify_column']
+        wldict['notify'] = settings['notifications'] and settings['display_notify_column']
         wldict['settings'] = settings
         wldict['autocomplete'] = settings['autocomplete_inputs'] # TODO: remove
         wldict['dynamictable'] = settings['dynamic_tables'] # TODO: remove
@@ -500,6 +499,7 @@ class WatchlistPlugin(Component):
           notwatched.sort()
           req.send( unicode('\n'.join(notwatched) + '\n').encode("utf-8"), 'text/plain', 200 )
           raise RequestDone
+
 
         if async:
           req.send("",'text/plain', 200)

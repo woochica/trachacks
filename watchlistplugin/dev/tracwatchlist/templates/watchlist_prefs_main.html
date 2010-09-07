@@ -5,13 +5,12 @@
       xmlns:py="http://genshi.edgewall.org/"
       xmlns:i18n="http://genshi.edgewall.org/i18n"
       i18n:domain="watchlist">
-      <fieldset>
-      <legend>General</legend>
-      <py:for each="k in sorted(settings.keys())">
-        <input type="checkbox" name="options" id="${k}" value="${k}" checked="${settings[k] and 'checked' or None}" />
-        <label for="${k}">${k}</label>
-        <br />
-      </py:for>
-      </fieldset>
+  <xi:include href="prefs.html" />
+  <head>
+    <title>Watchlist</title>
+  </head>
+  <body>
+  <xi:include href="watchlist_prefs.html" />
+  </body>
 </html>
 

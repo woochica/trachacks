@@ -203,6 +203,18 @@
         </div>
     <xi:include href="wl-${realm}.html" py:for="realm in realms" />
 
+    <div id="settings" class="${action == 'save' or 'collapsed'}">
+      <h2 class="foldable">Settings</h2>
+      <div>
+      <form action="" method="post">
+        <xi:include href="watchlist_prefs.html" />
+        <div class="buttons">
+              <input type="hidden" value="save" name="action" />
+              <input type="submit" value="Save changes" />
+        </div>
+      </form>
+      </div>
+    </div>
     </div>
   </body>
 </html>

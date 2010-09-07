@@ -115,11 +115,6 @@ input#ackmsg {
   font-size: medium;
 }
 
-/* Disabled for the time being */
-#settings {
-  display: none;
-}
-
 .noentrymessage {
   display: none;
 }
