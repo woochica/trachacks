@@ -27,7 +27,7 @@ from  pkg_resources          import  resource_filename
 from  urllib                 import  quote_plus
 
 from  genshi.builder         import  tag, Markup
-from  trac.config            import  Configuration
+from  trac.config            import  BoolOption
 from  trac.core              import  *
 from  trac.db                import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model      import  Ticket
@@ -45,6 +45,7 @@ from  trac.wiki.model        import  WikiPage
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 
 
+ 
 __DB_VERSION__ = 3
 
 add_domain, _, tag_ = \
@@ -60,47 +61,37 @@ class WatchlistPlugin(Component):
     """For documentation see http://trac-hacks.org/wiki/WatchlistPlugin"""
     providers = ExtensionPoint(IWatchlistProvider)
 
+
     implements( IRequestHandler, IRequestFilter, ITemplateProvider )
+    gnotifyu = BoolOption('watchlist', 'notifications', False,
+                "Enables notification features")
+    gnotifyctxtnav = BoolOption('watchlist', 'display_notify_navitems', False,
+                "Enables notification navigation items")
+    gnotifycolumn = BoolOption('watchlist', 'display_notify_column', True,
+                "Enables notification column in watchlist tables")
+    gnotifybydefault = BoolOption('watchlist', 'notify_by_default', False,
+                "Enables notifications by default for all watchlist entries")
+    gredirectback = BoolOption('watchlist', 'stay_at_resource', False,
+                "The user stays at the resource after a watch/unwatch operation "
+                "and the watchlist page is not displayed.")
+    gredirectback_notify = BoolOption('watchlist', 'stay_at_resource_notify', True,
+                "The user stays at the resource after a notify/do-not-notify operation "
+                "and the watchlist page is not displayed.")
+    gmsgrespage = BoolOption('watchlist', 'show_messages_on_resource_page', True, 
+                "Enables action messages on resource pages.")
+    gmsgwlpage  = BoolOption('watchlist', 'show_messages_on_watchlist_page', True, 
+                "Enables action messages when going to the watchlist page.")
+    gmsgwowlpage = BoolOption('watchlist', 'show_messages_while_on_watchlist_page', True, 
+                "Enables action messages while on watchlist page.")
 
     gnotify = False
+
+    # Per user setting # FTTB FIXME
+    notifyctxtnav = gnotifyctxtnav
 
     def __init__(self):
       self.realms = []
       self.realm_handler = {}
-
-      # Enables notification features.
-      self.gnotifyu = self.config.getbool('watchlist', 'notifications', False)
-      # Enables notification navigation items.
-      self.gnotifyctxtnav = self.config.getbool(
-                                'watchlist', 'display_notify_navitems', False)
-      # Enables notification column in watchlist tables.
-      self.gnotifycolumn = self.config.getbool(
-                                   'watchlist', 'display_notify_column', True)
-      # Enables notifications by default for all watchlist entries.
-      self.gnotifybydefault = self.config.getbool(
-                                      'watchlist', 'notify_by_default', False)
-      # The user stays at the resource after a watch/unwatch operation
-      # and the watchlist page is not displayed.
-      self.gredirectback = self.config.getbool(
-                                       'watchlist', 'stay_at_resource', False)
-      # The user stays at the resource after a notify/do-not-notify operation
-      # and the watchlist page is not displayed.
-      self.gredirectback_notify = self.config.getbool(
-                                 'watchlist', 'stay_at_resource_notify', True)
-
-      # Enables action messages on resource pages.
-      self.gmsgrespage = self.config.getbool(
-                          'watchlist', 'show_messages_on_resource_page', True)
-      # Enables action messages when going to the watchlist page.
-      self.gmsgwlpage = self.config.getbool(
-                         'watchlist', 'show_messages_on_watchlist_page', True)
-      # Enables action messages while on watchlist page.
-      self.gmsgwowlpage = self.config.getbool(
-                   'watchlist', 'show_messages_while_on_watchlist_page', True)
-
-      # Per user setting # FTTB FIXME
-      self.notifyctxtnav = self.gnotifyctxtnav
-
 
       # bind the 'watchlist' catalog to the specified locale directory
       locale_dir = resource_filename(__name__, 'locale')
