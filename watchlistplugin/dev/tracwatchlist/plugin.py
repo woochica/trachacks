@@ -82,7 +82,7 @@ class WatchlistPlugin(Component):
 
     gsettings = dict( [ (name, BoolOption('watchlist',name,value,doc) ) for (name,value,doc) in options ] )
 
-    gnotify = False
+    wsub = None
 
     # Per user setting # FTTB FIXME
     notifyctxtnav = gsettings['display_notify_navitems']
@@ -102,30 +102,23 @@ class WatchlistPlugin(Component):
           self.realm_handler[realm] = provider
           self.env.log.debug("realm: %s %s" % (realm, str(provider)))
 
-      if self.gsettings['notifications']:
-        try:
+      try:
           # Import methods from WatchSubscriber of the AnnouncerPlugin
           from  announcerplugin.subscribers.watchers  import  WatchSubscriber
           self.wsub = self.env[WatchSubscriber]
-          if not self.wsub:
-            self.gnotify = False
-          else:
-            self.gnotify = True
+          if self.wsub:
             self.env.log.debug("WS: WatchSubscriber found in announcerplugin")
-        except Exception, e:
+      except Exception, e:
           try:
             # Import fallback methods for AnnouncerPlugin's dev version
             from  announcer.subscribers.watchers  import  WatchSubscriber
             self.wsub = self.env[WatchSubscriber]
-            if not self.wsub:
-              self.gnotify = False
-            else:
-              self.gnotify = True
+            if self.wsub:
               self.env.log.debug("WS: WatchSubscriber found in announcer")
           except Exception, ee:
             self.env.log.debug("WS! " + str(e))
             self.env.log.debug("WS! " + str(ee))
-            self.gnotify = False
+            self.wsub = None
 
     # IPreferencePanelProvider methods
     def get_preference_panels(self, req):
@@ -149,7 +142,7 @@ class WatchlistPlugin(Component):
         user  = to_unicode( req.authname )
         settings = {}
         #settings.update( [ (name,value) for (name,value,doc) in self.options ] )
-        settings.update( [ ( name,option.__get__(self,None) ) for name,option in self.gsettings.iteritems() ] )
+        settings.update( [ ( name,self.config.getbool('watchlist',name) ) for name,option,_ in self.options ] )
         settings.update( self._get_user_settings(user) )
 
         self.env.log.debug("WL STORED: " + unicode(settings))
@@ -304,7 +297,7 @@ class WatchlistPlugin(Component):
         wldict['perm']   = req.perm
         wldict['realms'] = self.realms
         wldict['error']  = False
-        wldict['notify'] = self.gnotify and self.gsettings['display_notify_column']
+        wldict['notify'] = self.wsub and self.gsettings['display_notify_column']
         wldict['user_settings'] = self._get_user_settings(user)
         wldict['autocomplete'] = self.gsettings['autocomplete_inputs']
         wldict['dynamictable'] = self.gsettings['dynamic_tables']
@@ -372,7 +365,7 @@ class WatchlistPlugin(Component):
             req.session['watchlist_message'] = _(
               "You are now watching this resource."
             )
-          if self.gnotify and self.gsettings['notify_by_default']:
+          if self.wsub and self.gsettings['notify_by_default']:
             for res in new_res:
               self.set_notify(req, realm, res)
             db.commit()
@@ -427,7 +420,7 @@ class WatchlistPlugin(Component):
             req.session['watchlist_message'] = _(
               "You are no longer watching this resource."
             )
-          if self.gnotify and self.gsettings['notify_by_default']:
+          if self.wsub and self.gsettings['notify_by_default']:
             for res in del_res:
               self.unset_notify(req, realm, res)
             db.commit()
@@ -442,7 +435,7 @@ class WatchlistPlugin(Component):
         wldict['alw_res'] = alw_res
 
         if action == "notifyon":
-            if self.gnotify:
+            if self.wsub:
               for res in resids:
                 self.set_notify(req, realm, res)
               db.commit()
@@ -458,7 +451,7 @@ class WatchlistPlugin(Component):
               raise RequestDone
             action = "view"
         elif action == "notifyoff":
-            if self.gnotify:
+            if self.wsub:
               for res in resids:
                 self.unset_notify(req, realm, res)
               db.commit()
@@ -591,7 +584,7 @@ class WatchlistPlugin(Component):
                     href=req.href('watchlist', action='watch',
                     resid=resid, realm=realm),
                     title=_("Add %s to watchlist") % realm)
-            if self.gnotify and self.notifyctxtnav:
+            if self.wsub and self.notifyctxtnav:
               if self.is_notify(req, realm, resid):
                 add_ctxtnav(req, _("Do not Notify me"),
                     href=req.href('watchlist', action='notifyoff',
@@ -655,7 +648,7 @@ class WikiWatchlist(BasicWatchlist):
 
       for (name,) in cursor.fetchall():
           notify = False
-          if wl.gnotify:
+          if wl.wsub:
             notify = wl.is_notify(req, 'wiki', name)
           wikilist.append({
               'name' : name,
@@ -686,7 +679,7 @@ class WikiWatchlist(BasicWatchlist):
       wikis = cursor.fetchall()
       for name,author,time,version,comment in wikis:
           notify = False
-          if wl.gnotify:
+          if wl.wsub:
             notify = wl.is_notify(req, 'wiki', name)
           t = from_utimestamp( time )
           wikilist.append({
@@ -748,7 +741,7 @@ class TicketWatchlist(BasicWatchlist):
           self.comment    = ''
 
           notify = False
-          if wl.gnotify:
+          if wl.wsub:
             notify = wl.is_notify(req, 'ticket', id)
 
           cursor.execute("""
