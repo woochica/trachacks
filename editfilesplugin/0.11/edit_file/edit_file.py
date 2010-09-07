@@ -5,6 +5,7 @@ import os
 from trac.core import *
 from trac.web.chrome import ITemplateProvider
 from trac.admin.api import IAdminPanelProvider
+from trac.util.text import to_unicode
 
 CUT_OFF = 10
 
@@ -37,21 +38,20 @@ class TracEditPlugin(Component):
         files = self.config.get('edit_file', 'files').split(',')
         index=int(index)
 
-        edit_file = files[index]
+        edit_file = files[index].strip()
 
-        # check whether file exists and is writable
+        # check whether file exists and is writable.
+        # or, on failure, try a path somewhere relative to the location of trac.ini
         if not os.access(edit_file, os.W_OK|os.R_OK):
-            file_arg=('file' in req.args)
-            if file_arg:
-                edit_file = req.args['file']
-                if not os.access(edit_file, os.W_OK|os.R_OK):
-                    err = "In GET request, can't access edit_file parameter: " + str(edit_file)
+                conf_file_dir = os.path.split(self.config.filename)[0]
+                instance_root  = os.path.split(conf_file_dir)[0]
+                relative_edit_file = os.path.join(instance_root.strip(),edit_file)
+                if not os.access(relative_edit_file, os.W_OK|os.R_OK):
+                    err = "Can't access edit_file parameter@'" + str([edit_file,relative_edit_file])+"'.  (Tried using absolute and relative paths.)"
                     raise TracError(err)
-            else:
-                err = "Can't access edit_file parameter: " + str(edit_file)
-                raise TracError(err)
+                else:
+                    edit_file = relative_edit_file
 
-        #print '\n'*4,,cat,page,path_info
         # evaluate forms
         if req.method == 'POST':
             current=req.args.get('current').strip().replace('\r', '')
@@ -77,7 +77,7 @@ class TracEditPlugin(Component):
             pass
 
         return 'edit_file.html', {'edit_file':edit_file,
-                                 'file_data':current}
+                                 'file_data':to_unicode(current)}
 
 
     # ITemplateProvider methods
@@ -91,4 +91,3 @@ class TracEditPlugin(Component):
         """
         """
         return []
-
