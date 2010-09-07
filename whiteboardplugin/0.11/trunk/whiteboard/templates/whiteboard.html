@@ -29,7 +29,7 @@
                             <h3>#${result['id']}: ${result['summary']}</h3>
                             <dl>
                               <py:for each="idx, header in enumerate(headers)">
-                                <py:if test="header.name not in ('id', 'summary', fields[query.group].name)">
+                                <py:if test="header.name not in ('id', 'summary', groupname)">
                                   <py:with vars="label = header.label; value = result[header.name]">
                                       <dt>${label}</dt>
                                       <dd>
