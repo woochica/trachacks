@@ -1,0 +1,441 @@
+# Czech translations for TracScreenshots.
+# Copyright (C) 2010
+# This file is distributed under the same license as the TracScreenshots
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TracScreenshots 0.8\n"
+"Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
+"POT-Creation-Date: 2010-09-07 22:52+0200\n"
+"PO-Revision-Date: 2010-09-08 14:53+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: cs <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#: tracscreenshots/core.py:58 tracscreenshots/templates/screenshot-add.html:14
+#: tracscreenshots/templates/screenshot.html:14
+#: tracscreenshots/templates/screenshots.html:14
+msgid "Screenshots"
+msgstr ""
+
+#: tracscreenshots/core.py:59
+msgid "Main navigation bar button title."
+msgstr ""
+
+#: tracscreenshots/core.py:60
+msgid "Meta navigation bar link title."
+msgstr ""
+
+#: tracscreenshots/core.py:62
+msgid ""
+"List of screenshot file extensions that can be uploaded. Must be "
+"supported by PIL."
+msgstr ""
+
+#: tracscreenshots/core.py:66
+msgid "List of allowed formats for screenshot download."
+msgstr ""
+
+#: tracscreenshots/core.py:68
+msgid "Default format for screenshot download links."
+msgstr ""
+
+#: tracscreenshots/core.py:70
+msgid "List of components enabled by default."
+msgstr ""
+
+#: tracscreenshots/core.py:72
+msgid "List of versions enabled by default."
+msgstr ""
+
+#: tracscreenshots/core.py:74
+msgid "Logical relation between component and version part of screenshots filter."
+msgstr ""
+
+#: tracscreenshots/core.py:77
+msgid "List of names of database fields that are used to sort screenshots."
+msgstr ""
+
+#: tracscreenshots/core.py:79
+msgid ""
+"List of ordering directions for fields specified in {{{default_orders}}} "
+"configuration option."
+msgstr ""
+
+#: tracscreenshots/core.py:212
+msgid "Requested screenshot format that is not allowed."
+msgstr ""
+
+#: tracscreenshots/core.py:213
+msgid "Requested format not allowed."
+msgstr ""
+
+#: tracscreenshots/core.py:224 tracscreenshots/core.py:393
+#: tracscreenshots/core.py:489
+msgid "Screenshot not found."
+msgstr ""
+
+#: tracscreenshots/core.py:392
+msgid "Edited screenshot not found."
+msgstr ""
+
+#: tracscreenshots/core.py:450 tracscreenshots/core.py:505
+#, python-format
+msgid "Error deleting screenshot. Original error message was: %s"
+msgstr ""
+
+#: tracscreenshots/core.py:464 tracscreenshots/core.py:665
+#, python-format
+msgid ""
+"Error storing file. Is directory specified in path config option in "
+"[screenshots] section of trac.ini existing? Original error message was: "
+"%s"
+msgstr ""
+
+#: tracscreenshots/core.py:488
+msgid "Deleted screenshot not found."
+msgstr ""
+
+#: tracscreenshots/core.py:554
+msgid "No screenshots renderer enabled. Enable at least one."
+msgstr ""
+
+#: tracscreenshots/core.py:555
+msgid "No screenshots renderer enabled"
+msgstr ""
+
+#: tracscreenshots/core.py:705
+msgid "No file uploaded."
+msgstr ""
+
+#: tracscreenshots/core.py:715
+msgid "Can't upload empty file."
+msgstr ""
+
+#: tracscreenshots/core.py:731 tracscreenshots/core.py:733
+msgid "Unsupported uploaded file type."
+msgstr ""
+
+#: tracscreenshots/init.py:29
+msgid "Path where to store uploaded screenshots."
+msgstr ""
+
+#: tracscreenshots/matrix_view.py:19
+msgid "Number of screenshot preview rows."
+msgstr ""
+
+#: tracscreenshots/matrix_view.py:21
+msgid "Number of screenshot columns."
+msgstr ""
+
+#: tracscreenshots/matrix_view.py:23
+msgid "Width of screenshot preview."
+msgstr ""
+
+#: tracscreenshots/matrix_view.py:25
+msgid "Height of screenshot preview."
+msgstr ""
+
+#: tracscreenshots/matrix_view.py:95
+msgid "Matrix View"
+msgstr ""
+
+#: tracscreenshots/tags.py:41
+msgid ""
+"Additional tags that will be created for submitted screenshots. Possible "
+"values are: author, components, versions, name, description."
+msgstr ""
+
+#: tracscreenshots/timeline.py:29
+msgid "Screenshots changes"
+msgstr ""
+
+#: tracscreenshots/timeline.py:58
+#, python-format
+msgid "New screenshot %(name)s created"
+msgstr ""
+
+#: tracscreenshots/wiki.py:29
+msgid "Template for embended image description."
+msgstr ""
+
+#: tracscreenshots/wiki.py:31
+msgid "Default format of list item description of ![[ScreenshotsList()]] macro."
+msgstr ""
+
+#: tracscreenshots/wiki.py:35
+msgid ""
+"Allows embed screenshot image in\n"
+"wiki page. First mandatory argument is ID of the screenshot. Number or\n"
+"image attributes can be specified next:\n"
+"\n"
+" * {{{align}}} - Specifies image alignment in wiki page. Possible values "
+"are:\n"
+"   {{{left}}}, {{{right}}} and {{{center}}}.\n"
+" * {{{alt}}} - Alternative description of image.\n"
+" * {{{border}}} - Sets image border of specified width in pixels.\n"
+" * {{{class}}} - Class of image for CSS styling.\n"
+" * {{{description}}} - Brief description under the image. Accepts several"
+"\n"
+"   variables (see bellow).\n"
+" * {{{format}}} - Format of returned image or screenshot behind link.\n"
+" * {{{height}}} - Height of image. Set to 0 if you want original image "
+"height.\n"
+" * {{{id}}} - ID of image for CSS styling.\n"
+" * {{{longdesc}}} - Detailed description of image.\n"
+" * {{{title}}} - Title of image.\n"
+" * {{{usemap}}} - Image map for clickable images.\n"
+" * {{{width}}} - Width of image. Set to 0 if you want original image "
+"width.\n"
+"\n"
+"Attribute {{{description}}} displays several variables:\n"
+"\n"
+" * {{{$id}}} - ID of image.\n"
+" * {{{$name}}} - Name of image.\n"
+" * {{{$author}}} - User name who uploaded image.\n"
+" * {{{$time}}} - Time when image was uploaded.\n"
+" * {{{$file}}} - File name of image.\n"
+" * {{{$description}}} - Detailed description of image.\n"
+" * {{{$width}}} - Original width of image.\n"
+" * {{{$height}}} - Original height of image.\n"
+" * {{{$tags}}} - Comma separated list of screenshot tags.\n"
+" * {{{$components}}} - Comma separated list of screenshot components.\n"
+" * {{{$versions}}} - Comma separated list of screenshot versions.\n"
+"\n"
+"Example:\n"
+"\n"
+"{{{\n"
+" [[Screenshot(2,width=400,height=300,description=The $name by $author: "
+"$description,align=left)]]\n"
+"}}}"
+msgstr ""
+
+#: tracscreenshots/wiki.py:74
+msgid ""
+"Displays list of all available\n"
+"screenshots on wiki page. Accepts one argument which is template for\n"
+"list items formatting. Possible variables in this template are:\n"
+"\n"
+" * {{{$id}}} - ID of image.\n"
+" * {{{$name}}} - Name of image.\n"
+" * {{{$author}}} - User name who uploaded image.\n"
+" * {{{$time}}} - Time when image was uploaded.\n"
+" * {{{$file}}} - File name of image.\n"
+" * {{{$description}}} - Detailed description of image.\n"
+" * {{{$width}}} - Original width of image.\n"
+" * {{{$height}}} - Original height of image.\n"
+" * {{{$tags}}} - Comma separated list of screenshot tags.\n"
+" * {{{$components}}} - Comma separated list of screenshot components.\n"
+" * {{{$versions}}} - Comma separated list of screenshot versions.\n"
+"\n"
+"Example:\n"
+"\n"
+"{{{\n"
+" [[ScreenshotsList($name - $description ($widthx$height))]]\n"
+"}}}"
+msgstr ""
+
+#: tracscreenshots/wiki.py:138 tracscreenshots/wiki.py:238
+msgid "No permissions to see screenshots."
+msgstr ""
+
+#: tracscreenshots/wiki.py:148
+msgid "Missing screenshot ID in macro arguments."
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:26
+msgid "Add Screenshot"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:27
+msgid "Edit Screenshot"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:30
+msgid "Name:"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:34
+msgid "Description:"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:38
+msgid "Image File:"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:42
+msgid "Additional tags:"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:46
+#: tracscreenshots/templates/screenshot.html:33
+msgid "Components:"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:57
+#: tracscreenshots/templates/screenshot.html:41
+msgid "Versions:"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:68
+msgid "Priority (number 0..x):"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:72
+msgid "Submit"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot-add.html:73
+msgid "Cancel"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot.html:21
+#: tracscreenshots/templates/screenshots.html:81
+#: tracscreenshots/templates/screenshots.html:82
+msgid "Description"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot.html:24
+#, python-format
+msgid ""
+"%(name)s,\n"
+"              %(width)sx%(height)s\n"
+"              (added by %(author)s,\n"
+"              %(time)s ago)"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot.html:67
+#: tracscreenshots/templates/screenshots-matrix-view.html:45
+#: tracscreenshots/templates/screenshots.html:35
+msgid "Edit"
+msgstr ""
+
+#: tracscreenshots/templates/screenshot.html:74
+#: tracscreenshots/templates/screenshots-matrix-view.html:46
+#: tracscreenshots/templates/screenshots.html:43
+msgid "Delete"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots-matrix-view.html:62
+msgid "Page"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots-matrix-view.html:66
+#: tracscreenshots/templates/screenshots-matrix-view.html:68
+msgid "First Page"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots-matrix-view.html:75
+#: tracscreenshots/templates/screenshots-matrix-view.html:77
+msgid "Previous Page"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots-matrix-view.html:85
+msgid "Go"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots-matrix-view.html:91
+#: tracscreenshots/templates/screenshots-matrix-view.html:93
+msgid "Next Page"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots-matrix-view.html:100
+#: tracscreenshots/templates/screenshots-matrix-view.html:102
+msgid "Last Page"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:28
+msgid "Add"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:54
+msgid "Order"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:59
+#, python-format
+msgid "%(index)s. field"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:65
+#: tracscreenshots/templates/screenshots.html:66
+msgid "ID"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:69
+#: tracscreenshots/templates/screenshots.html:70
+msgid "Name"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:73
+#: tracscreenshots/templates/screenshots.html:74
+msgid "Author"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:77
+#: tracscreenshots/templates/screenshots.html:78
+msgid "Time"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:85
+#: tracscreenshots/templates/screenshots.html:86
+msgid "Priority"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:91
+#: tracscreenshots/templates/screenshots.html:92
+msgid "Ascending"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:95
+#: tracscreenshots/templates/screenshots.html:96
+msgid "Descending"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:102
+msgid "Apply order"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:113
+msgid "Display filter"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:118
+msgid "Components"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:131
+#: tracscreenshots/templates/screenshots.html:163
+msgid "All"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:132
+#: tracscreenshots/templates/screenshots.html:164
+msgid "None"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:139
+#: tracscreenshots/templates/screenshots.html:143
+msgid "AND"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:140
+#: tracscreenshots/templates/screenshots.html:144
+msgid "OR"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:150
+msgid "Versions"
+msgstr ""
+
+#: tracscreenshots/templates/screenshots.html:169
+msgid "Apply filter"
+msgstr ""
+
