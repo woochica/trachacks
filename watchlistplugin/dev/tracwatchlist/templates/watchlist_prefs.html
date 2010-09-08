@@ -9,7 +9,7 @@
       <legend>General</legend>
       <py:for each="k in sorted(settings.keys())">
         <input type="checkbox" name="options" id="${k}" value="${k}" checked="${settings[k] and 'checked' or None}" />
-        <label for="${k}">${k}</label>
+        <label for="${k}">${options.get(k,['',''])[1]}</label>
         <br />
       </py:for>
       </fieldset>

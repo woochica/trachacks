@@ -66,21 +66,21 @@ class WatchlistPlugin(Component):
     implements( IRequestHandler, IRequestFilter, ITemplateProvider, IPreferencePanelProvider )
 
 
-    options = [
-        ('notifications', False, _("Notifications")),
-        ('display_notify_navitems', False, _("Display notification navigation items")),
-        ('display_notify_column', True, _("Display notification column in watchlist tables")),
-        ('notify_by_default', False, _("Enable notifications by default for all watchlist entries")),
-        ('stay_at_resource', False, _("The user stays at the resource after a watch/unwatch operation and the watchlist page is not displayed.")),
-        ('stay_at_resource_notify', True, _("The user stays at the resource after a notify/do-not-notify operation and the watchlist page is not displayed.")),
-        ('show_messages_on_resource_page', True, _("Action messages are shown on resource pages.")),
-        ('show_messages_on_watchlist_page', True, _("Action messages are shown when going to the watchlist page.")),
-        ('show_messages_while_on_watchlist_page', True, _("Show action messages while on watchlist page.")),
-        ('autocomplete_inputs', True, _("Autocomplete input fields (add/remove resources).")),
-        ('dynamic_tables', True, _("Dynamic watchlist tables.")),
-    ]
+    options = {
+        'notifications': ( False, _("Notifications")),
+        'display_notify_navitems': ( False, _("Display notification navigation items")),
+        'display_notify_column': ( True, _("Display notification column in watchlist tables")),
+        'notify_by_default': ( False, _("Enable notifications by default for all watchlist entries")),
+        'stay_at_resource': ( False, _("The user stays at the resource after a watch/unwatch operation and the watchlist page is not displayed.")),
+        'stay_at_resource_notify': ( True, _("The user stays at the resource after a notify/do-not-notify operation and the watchlist page is not displayed.")),
+        'show_messages_on_resource_page': ( True, _("Action messages are shown on resource pages.")),
+        'show_messages_on_watchlist_page': ( True, _("Action messages are shown when going to the watchlist page.")),
+        'show_messages_while_on_watchlist_page': ( True, _("Show action messages while on watchlist page.")),
+        'autocomplete_inputs': ( True, _("Autocomplete input fields (add/remove resources).")),
+        'dynamic_tables': ( True, _("Dynamic watchlist tables.")),
+    }
 
-    gsettings = dict( [ (name, BoolOption('watchlist',name,value,doc) ) for (name,value,doc) in options ] )
+    gsettings = dict( [ (name, BoolOption('watchlist',name,data[0],data[1]) ) for (name,data) in options.iteritems() ] )
 
     wsub = None
 
@@ -145,7 +145,7 @@ class WatchlistPlugin(Component):
             self._handle_settings();
             req.redirect(req.href.prefs(panel))
 
-        return ('watchlist_prefs_main.html', { 'settings': settings })
+        return ('watchlist_prefs_main.html', { 'settings': settings, 'options': self.options })
 
     def _handle_settings(self, req, settings):
         newoptions = req.args.get('options',[])
@@ -155,7 +155,7 @@ class WatchlistPlugin(Component):
 
     def get_settings(self, user):
         settings = {}
-        settings.update( [ ( name,self.config.getbool('watchlist',name) ) for name,option,_ in self.options ] )
+        settings.update( [ ( name,self.config.getbool('watchlist',name) ) for name in self.options.keys() ] )
         settings.update( self._get_user_settings(user) )
         if not self.wsub:
           settings['notifications'] = False
@@ -304,7 +304,6 @@ class WatchlistPlugin(Component):
 
         # Needed here to get updated settings
         if action == "save":
-          self.env.log.debug("WL OPTIONS: " + unicode( req.args.get('options') ))
           self._handle_settings(req, settings)
           action = "view"
 
@@ -312,6 +311,7 @@ class WatchlistPlugin(Component):
         wldict['realms'] = self.realms
         wldict['error']  = False
         wldict['notify'] = settings['notifications'] and settings['display_notify_column']
+        wldict['options'] = self.options
         wldict['settings'] = settings
         wldict['autocomplete'] = settings['autocomplete_inputs'] # TODO: remove
         wldict['dynamictable'] = settings['dynamic_tables'] # TODO: remove
