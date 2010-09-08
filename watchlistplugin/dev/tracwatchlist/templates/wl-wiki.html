@@ -57,9 +57,10 @@
                     <py:def function="td_notify"/>
                   </py:if>
                   <td py:def="td_comment" class="comment">$page.comment</td>
+                  <py:def function="noop"/>
                 <tr py:for="page in wikilist">
                   <py:for each="k in active_columns[realm]">
-                      ${value_of('td_' + k)()}
+                      ${value_of('td_' + k,noop)()}
                   </py:for>
                 </tr>
               </tbody>

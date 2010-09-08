@@ -4,7 +4,7 @@
       xmlns:xi="http://www.w3.org/2001/XInclude" 
       xmlns:py="http://genshi.edgewall.org/"
       xmlns:i18n="http://genshi.edgewall.org/i18n"
-      >
+      i18n:domain="watchlist">
       <fieldset>
       <legend>General</legend>
       <py:for each="k in sorted(settings.keys())">
@@ -15,5 +15,7 @@
         </py:if>
       </py:for>
       </fieldset>
+      <div class="clear" />
+      <xi:include href="orderadd.html" py:for="realm in realms" />
 </html>
 

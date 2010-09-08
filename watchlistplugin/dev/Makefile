@@ -4,7 +4,7 @@ install:
 	sudo easy_install .
 
 setup:
-	sudo python setup.py develop --exclude-scripts
+	sudo python setup.py develop --exclude-scripts; sudo chown ${USER} . -R
 
 messages:
 	python ./setup.py extract_messages
