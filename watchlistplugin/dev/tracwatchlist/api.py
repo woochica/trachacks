@@ -55,10 +55,18 @@ class IWatchlistProvider(Interface):
     def get_abs_href(realm, resid=None):
       pass
 
+    def get_columns(realm):
+      """ Returns table columns
+        Format: ( {Names:Labels}, (DEFAULT list) )
+      """
+      pass
+
 
 class BasicWatchlist(Component):
     implements( IWatchlistProvider )
     realms = []
+    default_columns = {}
+    columns = {}
 
     def get_realms(self):
       return self.realms
@@ -99,4 +107,7 @@ class BasicWatchlist(Component):
         return self.env.abs_href.__get_attr__(realm)
       else:
         return self.env.abs_href(realm,resid,**kwargs)
+
+    def get_columns(realm):
+      return ( columns.get(realm,{}), default_columns.get(realm,[]) )
 

@@ -677,6 +677,20 @@ class WatchlistPlugin(Component):
 
 class WikiWatchlist(BasicWatchlist):
     realms = ['wiki']
+    columns = {'wiki':{
+        'name'      : _("Page"),
+        'datetime'  : _("Last Changed At"),
+        'author'    : _("By"),
+        'version'   : _("Version"),
+        'diff'      : _("Diff"),
+        'history'   : _("History"),
+        'unwatch'   : _("U"),
+        'notify'    : _("Notify"),
+        'comment'   : _("Comment"),
+    }}
+    default_columns = {'wiki':[
+        'name', 'datetime', 'author', 'version', 'diff', 'history', 'unwatch', 'notify', 'comment',
+    ]}
 
     def res_exists(self, realm, resid):
       return WikiPage(self.env, resid).exists
@@ -762,6 +776,19 @@ class WikiWatchlist(BasicWatchlist):
 
 class TicketWatchlist(BasicWatchlist):
     realms = ['ticket']
+    columns = {'ticket':{
+        'id'        : _("Ticket"),
+        'datetime'  : _("Last Changed At"),
+        'author'    : _("By"),
+        'changes'   : _("Changes"),
+        'commentnum': _("Comment #"),
+        'unwatch'   : _("U"),
+        'notify'    : _("Notify"),
+        'comment'   : _("Comment"),
+    }}
+    default_columns = {'tickets':[
+        'id', 'datetime', 'author', 'changes', 'commentnum', 'unwatch', 'notify', 'comment',
+    ]}
 
     def res_exists(self, realm, resid):
       try:
