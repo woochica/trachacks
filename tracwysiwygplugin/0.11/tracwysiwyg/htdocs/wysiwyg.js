@@ -201,6 +201,10 @@ TracWysiwyg.prototype.listenerToggleEditor = function(type) {
     }
 };
 
+TracWysiwyg.prototype.activeEditor = function() {
+    return this.textarea.style.position == "absolute" ? "wysiwyg" : "textarea";
+};
+
 TracWysiwyg.prototype.setupFormEvent = function() {
     var self = this;
 
@@ -3467,8 +3471,27 @@ else {
     TracWysiwyg.prototype.treeWalk = TracWysiwyg.prototype._treeWalkEmulation;
 }
 
+TracWysiwyg.instances = [];
 TracWysiwyg.count = 0;
 TracWysiwyg.tracPaths = null;
+
+TracWysiwyg.newInstance = function(textarea, options) {
+    var instance = new TracWysiwyg(textarea, options);
+    TracWysiwyg.instances.push(instance);
+    return instance;
+};
+
+TracWysiwyg.findInstance = function(textarea) {
+    var instances = TracWysiwyg.instances;
+    var length = instances.length;
+    for (var i = 0; i < length; i++) {
+        var instance = instances[i];
+        if (instance.textarea == textarea) {
+            return instance;
+        }
+    }
+    return null;
+};
 
 TracWysiwyg.getTracPaths = function() {
     var stylesheets = [];
@@ -3698,7 +3721,7 @@ TracWysiwyg.initialize = function() {
     for (var i = 0; i < textareas.length; i++) {
         var textarea = textareas[i];
         if (/\bwikitext\b/.test(textarea.className || "")) {
-            new TracWysiwyg(textarea, options);
+            TracWysiwyg.newInstance(textarea, options);
         }
     }
 };
