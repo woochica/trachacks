@@ -108,6 +108,6 @@ class BasicWatchlist(Component):
       else:
         return self.env.abs_href(realm,resid,**kwargs)
 
-    def get_columns(realm):
-      return ( columns.get(realm,{}), default_columns.get(realm,[]) )
+    def get_columns(self, realm):
+      return ( self.columns.get(realm,{}), self.default_columns.get(realm,[]) )
 
