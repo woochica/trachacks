@@ -27,40 +27,39 @@
                 </tr>
               </thead>
               <tbody>
-                  <td py:def="td_name" class="name">${link('wiki',page.name,
+                  <td py:def="wiki_name" class="name">${link('wiki',page.name,
                       text=page.name)}</td>
-                  <td py:def="td_datetime" class="datetime">$page.datetime
+                  <td py:def="wiki_datetime" class="datetime">$page.datetime
                       <span py:if="page.timedelta"
                         i18n:msg="timeline_link, timedelta"> (<a
                         href="$page.timeline_link">$page.timedelta</a> ago)</span></td>
-                  <td py:def="td_author" class="author">$page.author</td>
-                  <td py:def="td_version" class="version"><a py:if="not page.deleted"
+                  <td py:def="wiki_author" class="author">$page.author</td>
+                  <td py:def="wiki_version" class="version"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,
                       version=page.version)}">$page.version</a></td>
-                  <td py:def="td_diff" class="diff"><a py:if="not page.deleted"
+                  <td py:def="wiki_diff" class="diff"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,action='diff',
                         version=page.version)}">
                         <img src="${href.chrome('watchlist/ico/diff.png')}"
                           width="16px" height="16px" title="Diff"
                           alt="Diff" /></a></td>
-                  <td py:def="td_history" class="history"><a py:if="not page.deleted"
+                  <td py:def="wiki_history" class="history"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,action='history')}">
                         <img src="${href.chrome('watchlist/ico/history.png')}"
                           width="16px" height="16px" title="History"
                           alt="History" /></a></td>
-                  <td py:def="td_unwatch" class="unwatch"><a class="plainlink"
+                  <td py:def="wiki_unwatch" class="unwatch"><a class="plainlink"
                       href="${href.watchlist(action='unwatch',realm='wiki',
                       resid=page.name)}">${unwatchicon()}</a></td>
-                  <td py:def="td_notify" class="notify" py:if="notifications">
+                  <td py:def="wiki_notify" class="notify" py:if="notifications">
                       ${notifybox('wiki',page.name,page.notify)}</td>
                   <py:if test="not notifications">
-                    <py:def function="td_notify"/>
+                    <py:def function="wiki_notify"/>
                   </py:if>
-                  <td py:def="td_comment" class="comment">$page.comment</td>
-                  <py:def function="noop"/>
+                  <td py:def="wiki_comment" class="comment">$page.comment</td>
                 <tr py:for="page in wikilist">
                   <py:for each="k in active_columns[realm]">
-                      ${value_of('td_' + k,noop)()}
+                      ${value_of('wiki_' + k,noop)()}
                   </py:for>
                 </tr>
               </tbody>

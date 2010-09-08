@@ -764,7 +764,7 @@ class TicketWatchlist(BasicWatchlist):
         'notify'    : _("Notify"),
         'comment'   : _("Comment"),
     }}
-    default_columns = {'tickets':[
+    default_columns = {'ticket':[
         'id', 'datetime', 'author', 'changes', 'commentnum', 'unwatch', 'notify', 'comment',
     ]}
 

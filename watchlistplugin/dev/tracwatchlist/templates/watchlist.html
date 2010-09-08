@@ -35,6 +35,7 @@
     <py:def function="link(realm, resid, text='')">
         <a href="${href(realm,resid)}">${text or ":".join([realm,resid])}</a>
     </py:def>
+    <py:def function="noop(**args)"/>
     <py:def function="slink(realm, resid, text='')">
         <a href="${href(realm,resid)}">${text or resid}</a>
     </py:def>
