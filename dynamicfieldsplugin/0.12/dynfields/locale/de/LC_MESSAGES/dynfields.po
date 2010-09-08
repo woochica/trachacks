@@ -1,0 +1,131 @@
+# German (Germany) translations for TracDynamicFields.
+# Copyright (C) 2010
+# This file is distributed under the same license as the
+# TracDynamicFields project.
+# Steffen Hoffmann <hoff.st@web.de>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TracDynamicFields 2.0.0\n"
+"Report-Msgid-Bugs-To: hoff.st@web.de\n"
+"POT-Creation-Date: 2010-09-08 21:25+0200\n"
+"PO-Revision-Date: 2010-08-10 23:20+0200\n"
+"Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
+"Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#: dynfields/rules.py:103
+msgid "Clear Rules"
+msgstr "Bereinigungsregeln"
+
+#: dynfields/rules.py:108
+msgid "Clears one field when another changes."
+msgstr "Löscht ein Feld, wenn sich ein anderes ändert."
+
+#. TRANSLATOR: checkbox label text for clear rules
+#: dynfields/rules.py:123
+#, python-format
+msgid "Clear %s when %s changes"
+msgstr "Lösche %s, wenn sich %s ändert"
+
+#: dynfields/rules.py:146
+msgid "Copy Rules"
+msgstr "Kopiervorschrift"
+
+#: dynfields/rules.py:151
+msgid ""
+"Copies field content (when changed) to another field (if empty and "
+"visible)."
+msgstr ""
+"Übertrage den Feldinhalt (wenn geändert) auf ein anderes Feld (wenn leer "
+"und sichtbar)."
+
+#. TRANSLATOR: checkbox label text for copy rules
+#: dynfields/rules.py:166
+#, python-format
+msgid "Copy %s to %s"
+msgstr "Kopiere %s nach %s"
+
+#: dynfields/rules.py:182
+msgid "Default Value Rules"
+msgstr "Standardwertregeln"
+
+#: dynfields/rules.py:187
+msgid "Defaults a field to a user-specified value."
+msgstr "Setzt für ein Feld einen benutzerdefinierten Standardwert."
+
+#. TRANSLATOR: checkbox label text for default value rules
+#: dynfields/rules.py:201
+#, python-format
+msgid "Default %s to"
+msgstr "Setze den Standardwert für %s auf"
+
+#: dynfields/rules.py:221
+msgid "Hide Rules"
+msgstr "Ausblendregeln"
+
+#: dynfields/rules.py:226
+msgid "Hides a field based on another field's value (or always)."
+msgstr "Verbirgt ein Feld abhängig vom Wert eines anderen Feldes (oder immer)."
+
+#. TRANSLATOR: action name for conditional show/hide rules
+#: dynfields/rules.py:252
+msgid "Hide"
+msgstr "Verberge"
+
+#. TRANSLATOR: action name for conditional show/hide rules
+#: dynfields/rules.py:255
+msgid "Show"
+msgstr "Zeige"
+
+#. TRANSLATOR: char/word to replace '|' = logic OR in 'value|value'
+#: dynfields/rules.py:258
+msgid " or "
+msgstr " oder "
+
+#. TRANSLATOR: checkbox label text for conditional show/hide rules
+#: dynfields/rules.py:260
+#, python-format
+msgid "%s %s when %s = %s"
+msgstr "%s %s, wenn %s = %s"
+
+#. TRANSLATOR: action name for always-hide/show rules
+#: dynfields/rules.py:270
+msgid "show"
+msgstr "Zeige"
+
+#. TRANSLATOR: action name for always-hide/show rules
+#: dynfields/rules.py:273
+msgid "hide"
+msgstr "Verberge"
+
+#. TRANSLATOR: checkbox label text for always-hide/show rules
+#: dynfields/rules.py:275
+#, python-format
+msgid "Always %s %s"
+msgstr "%s %s immer"
+
+#. TRANSLATOR: the preferences tab label
+#: dynfields/web_ui.py:86
+msgid "Dynamic Fields"
+msgstr "Feldänderungen"
+
+#. browser window title
+#: dynfields/templates/prefs_panel.html:11
+msgid "Dynamic Fields Options"
+msgstr "Feldveränderungsmöglichkeiten"
+
+#: dynfields/templates/prefs_panel.html:16
+msgid "Your preferences have been saved."
+msgstr "Ihre Einstellungen wurden gespeichert."
+
+#: dynfields/templates/prefs_panel.html:19
+msgid "Enable/disable a rule below by checking/unchecking its checkbox."
+msgstr ""
+"Aktivieren/deaktivieren Sie eine der folgenden Regeln durch Wahl/Abwahl "
+"des entspechenden Ankreuzfeldes."
+

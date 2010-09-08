@@ -1,0 +1,127 @@
+# Translations template for TracDynamicFields.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the
+# TracDynamicFields project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TracDynamicFields 2.0.0\n"
+"Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
+"POT-Creation-Date: 2010-09-08 21:25+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#: dynfields/rules.py:103
+msgid "Clear Rules"
+msgstr ""
+
+#: dynfields/rules.py:108
+msgid "Clears one field when another changes."
+msgstr ""
+
+#. TRANSLATOR: checkbox label text for clear rules
+#: dynfields/rules.py:123
+#, python-format
+msgid "Clear %s when %s changes"
+msgstr ""
+
+#: dynfields/rules.py:146
+msgid "Copy Rules"
+msgstr ""
+
+#: dynfields/rules.py:151
+msgid ""
+"Copies field content (when changed) to another field (if empty and "
+"visible)."
+msgstr ""
+
+#. TRANSLATOR: checkbox label text for copy rules
+#: dynfields/rules.py:166
+#, python-format
+msgid "Copy %s to %s"
+msgstr ""
+
+#: dynfields/rules.py:182
+msgid "Default Value Rules"
+msgstr ""
+
+#: dynfields/rules.py:187
+msgid "Defaults a field to a user-specified value."
+msgstr ""
+
+#. TRANSLATOR: checkbox label text for default value rules
+#: dynfields/rules.py:201
+#, python-format
+msgid "Default %s to"
+msgstr ""
+
+#: dynfields/rules.py:221
+msgid "Hide Rules"
+msgstr ""
+
+#: dynfields/rules.py:226
+msgid "Hides a field based on another field's value (or always)."
+msgstr ""
+
+#. TRANSLATOR: action name for conditional show/hide rules
+#: dynfields/rules.py:252
+msgid "Hide"
+msgstr ""
+
+#. TRANSLATOR: action name for conditional show/hide rules
+#: dynfields/rules.py:255
+msgid "Show"
+msgstr ""
+
+#. TRANSLATOR: char/word to replace '|' = logic OR in 'value|value'
+#: dynfields/rules.py:258
+msgid " or "
+msgstr ""
+
+#. TRANSLATOR: checkbox label text for conditional show/hide rules
+#: dynfields/rules.py:260
+#, python-format
+msgid "%s %s when %s = %s"
+msgstr ""
+
+#. TRANSLATOR: action name for always-hide/show rules
+#: dynfields/rules.py:270
+msgid "show"
+msgstr ""
+
+#. TRANSLATOR: action name for always-hide/show rules
+#: dynfields/rules.py:273
+msgid "hide"
+msgstr ""
+
+#. TRANSLATOR: checkbox label text for always-hide/show rules
+#: dynfields/rules.py:275
+#, python-format
+msgid "Always %s %s"
+msgstr ""
+
+#. TRANSLATOR: the preferences tab label
+#: dynfields/web_ui.py:86
+msgid "Dynamic Fields"
+msgstr ""
+
+#. browser window title
+#: dynfields/templates/prefs_panel.html:11
+msgid "Dynamic Fields Options"
+msgstr ""
+
+#: dynfields/templates/prefs_panel.html:16
+msgid "Your preferences have been saved."
+msgstr ""
+
+#: dynfields/templates/prefs_panel.html:19
+msgid "Enable/disable a rule below by checking/unchecking its checkbox."
+msgstr ""
+
