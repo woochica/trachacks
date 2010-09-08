@@ -1,8 +1,15 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude" 
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="tracscreenshots">
   <xi:include href="layout.html"/>
   <xi:include href="macros.html"/>
+  <?python
+    from tracscreenshots.core import _
+  ?>
   <head>
     <title>Screenshots</title>
   </head>
@@ -14,8 +21,11 @@
       <table id="info" summary="Description">
         <tbody>
           <tr>
-            <th scope="col">
-              ${screenshots.screenshot.name}, ${screenshots.screenshot.width}x${screenshots.screenshot.height} (added by ${screenshots.screenshot.author}, ${screenshots.screenshot.time} ago)
+            <th scope="col" i18n:msg="name, width, height, author, time">
+              ${screenshots.screenshot.name},
+              ${screenshots.screenshot.width}x${screenshots.screenshot.height}
+              (added by ${screenshots.screenshot.author},
+              ${screenshots.screenshot.time} ago)
             </th>
           </tr>
           <tr>
@@ -54,14 +64,14 @@
       <div py:if="('SCREENSHOTS_EDIT' in perm) or ('SCREENSHOTS_DELETE' in perm)" class="buttons">
         <form method="post" action="${href.screenshots()}">
           <div py:if="'SCREENSHOTS_EDIT' in perm">
-            <input type="submit" name="edit" value="Edit"/>
+            <input type="submit" name="edit" value="${_('Edit')}"/>
             <input type="hidden" name="action" value="edit"/>
             <input type="hidden" name="id" value="${screenshots.screenshot.id}"/>
           </div>
         </form>
         <form method="post" action="${href.screenshots()}">
           <div py:if="'SCREENSHOTS_DELETE' in perm">
-            <input type="submit" name="delete" value="Delete"/>
+            <input type="submit" name="delete" value="${_('Delete')}"/>
             <input type="hidden" name="id" value="${screenshots.screenshot.id}"/>
             <input type="hidden" name="action" value="delete"/>
           </div>

@@ -16,6 +16,7 @@ from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 
 # Local includes.
 from tracscreenshots.api import *
+from tracscreenshots.core import _
 
 class ScreenshotsWiki(Component):
     """
@@ -25,13 +26,13 @@ class ScreenshotsWiki(Component):
 
     # Configuration options.
     default_description = Option('screenshots', 'default_description',
-      '$description', doc = 'Template for embended image description.')
+      '$description', doc = _("Template for embended image description."))
     default_list_item = Option('screenshots', 'default_list_item', '$id - '
-      '$name - $description',  doc = 'Default format of list item description '
-      'of ![[ScreenshotsList()]] macro.')
+      '$name - $description',  doc = _("Default format of list item "
+      "description of ![[ScreenshotsList()]] macro."))
 
     def __init__(self):
-        self.screenshot_macro_doc = """Allows embed screenshot image in
+        self.screenshot_macro_doc = _("""Allows embed screenshot image in
 wiki page. First mandatory argument is ID of the screenshot. Number or
 image attributes can be specified next:
 
@@ -68,9 +69,9 @@ Example:
 
 {{{
  [[Screenshot(2,width=400,height=300,description=The $name by $author: $description,align=left)]]
-}}}"""
+}}}""")
 
-        self.screenshots_list_macro_doc = """Displays list of all available
+        self.screenshots_list_macro_doc = _("""Displays list of all available
 screenshots on wiki page. Accepts one argument which is template for
 list items formatting. Possible variables in this template are:
 
@@ -90,7 +91,7 @@ Example:
 
 {{{
  [[ScreenshotsList($name - $description ($widthx$height))]]
-}}}"""
+}}}""")
 
         # [screenshot:<id>] macro id regular expression.
         self.id_re = re.compile('^(\d+)($|.+$)')
@@ -134,7 +135,7 @@ Example:
         if name == 'Screenshot':
             # Check permission.
             if not formatter.req.perm.has_permission('SCREENSHOTS_VIEW'):
-               return html.div('No permissions to see screenshots.',
+               return html.div(_("No permissions to see screenshots."),
                class_ = 'system-message')
 
             # Get macro arguments.
@@ -144,14 +145,14 @@ Example:
             try:
                screenshot_id = int(arguments[0])
             except:
-                 raise TracError("Missing screenshot ID in macro arguments.")
+                 raise TracError(_("Missing screenshot ID in macro arguments."))
 
             # Try to get screenshots of that ID.
             screenshot = api.get_screenshot(context, screenshot_id)
 
             # Build and return macro content.
             if screenshot:
-                # Set default values of image attributes.
+                # Set default values of image attributes.
                 attributes = {'align' : 'none',
                               'border' : '1',
                               'format' : 'raw',
@@ -234,7 +235,7 @@ Example:
         elif name == 'ScreenshotsList':
             # Check permission.
             if not formatter.req.perm.has_permission('SCREENSHOTS_VIEW'):
-               return html.div('No permissions to see screenshots.',
+               return html.div(_("No permissions to see screenshots."),
                class_ = 'system-message')
 
             # Get desired list item description
@@ -310,4 +311,3 @@ Example:
           ', '.join(screenshot['versions']))
 
         return format_to_oneliner(self.env, context, description)
-

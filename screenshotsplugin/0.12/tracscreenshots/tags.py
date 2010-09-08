@@ -13,6 +13,7 @@ from tractags.api import DefaultTagProvider, TagSystem
 
 # Local imports.
 from tracscreenshots.api import *
+from tracscreenshots.core import _
 
 class ScreenshotsTagProvider(DefaultTagProvider):
     """
@@ -21,7 +22,7 @@ class ScreenshotsTagProvider(DefaultTagProvider):
     realm = 'screenshots'
 
     def check_permission(self, perm, operation):
-        # Permission table for screenshot tags.
+        # Permission table for screenshot tags.
         permissions = {'view' : 'WIKI_VIEW', 'modify' : 'WIKI_ADMIN'}
 
         # First check permissions in default provider then for screenshots.
@@ -37,9 +38,9 @@ class ScreenshotsTags(Component):
 
     # Configuration options.
     additional_tags = ListOption('screenshots', 'additional_tags',
-      'author,components,versions,name', doc = 'Additional tags that will be '
-      'created for submitted screenshots. Possible values are: author, '
-      'components, versions, name, description.')
+      'author,components,versions,name', doc = _("Additional tags that will be "
+      "created for submitted screenshots. Possible values are: author, "
+      "components, versions, name, description."))
 
     # IScreenshotChangeListener methods.
 

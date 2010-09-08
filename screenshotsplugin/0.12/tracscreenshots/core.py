@@ -24,6 +24,7 @@ from trac.core import *
 from trac.mimeview import Mimeview, Context
 from trac.util.datefmt import to_timestamp
 from trac.util.text import to_unicode
+from trac.util.translation import domain_functions
 from trac.web.chrome import add_script, add_stylesheet, format_to_oneliner, \
   pretty_timedelta
 
@@ -35,6 +36,9 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider
 # Local imports.
 from tracscreenshots.api import *
 
+# Bring in dedicated Trac plugin i18n helper.
+add_domain, _, tag_ = domain_functions('tracscreenshots', ('add_domain', '_',
+  'tag_'))
 
 class ScreenshotsCore(Component):
     """
@@ -50,30 +54,30 @@ class ScreenshotsCore(Component):
     # Screenshot change listeners.
     change_listeners = ExtensionPoint(IScreenshotChangeListener)
 
-    # Configuration options.
-    mainnav_title = Option('screenshots', 'mainnav_title', 'Screenshots', doc =
-      'Main navigation bar button title.')
-    metanav_title = Option('screenshots', 'metanav_title', '', doc = 'Meta '
-      'navigation bar link title.')
-    ext = ListOption('screenshots', 'ext', 'jpg,png', doc = 'List of '
-      'screenshot file extensions that can be uploaded. Must be supported by '
-      'PIL.')
+    # Configuration options.
+    mainnav_title = Option('screenshots', 'mainnav_title', _("Screenshots"),
+      doc = _("Main navigation bar button title."))
+    metanav_title = Option('screenshots', 'metanav_title', '', doc = _("Meta "
+      "navigation bar link title."))
+    ext = ListOption('screenshots', 'ext', 'jpg,png', doc = _("List of "
+      "screenshot file extensions that can be uploaded. Must be supported by "
+      "PIL."))
     formats = ListOption('screenshots', 'formats', 'raw,html,jpg,png', doc =
-      'List of allowed formats for screenshot download.')
+      _("List of allowed formats for screenshot download."))
     default_format = Option('screenshots', 'default_format', 'html', doc =
-      'Default format for screenshot download links.')
+      _("Default format for screenshot download links."))
     default_components = ListOption('screenshots', 'default_components', 'all',
-      doc = 'List of components enabled by default.')
+      doc = _("List of components enabled by default."))
     default_versions = ListOption('screenshots', 'default_versions', 'all',
-      doc = 'List of versions enabled by default.')
+      doc = _("List of versions enabled by default."))
     default_filter_relation = Option('screenshots', 'default_filter_relation',
-      'or', doc = 'Logical relation between component and version part of '
-      'screenshots filter.')
+      'or', doc = _("Logical relation between component and version part of "
+      "screenshots filter."))
     default_orders = ListOption('screenshots', 'default_orders', 'id', doc =
-      'List of names of database fields that are used to sort screenshots.')
+      _("List of names of database fields that are used to sort screenshots."))
     default_order_directions = ListOption('screenshots',
-      'default_order_directions', 'asc', doc = 'List of ordering directions '
-      'for fields specified in {{{default_orders}}} configuration option.')
+      'default_order_directions', 'asc', doc = _("List of ordering directions "
+      "for fields specified in {{{default_orders}}} configuration option."))
 
     def __init__(self):
         # Path where to store uploaded screenshots, see init.py.
@@ -83,6 +87,10 @@ class ScreenshotsCore(Component):
         # Items for not specified component and version.
         self.none_component = {'name' : 'none', 'description' : 'none'}
         self.none_version = {'name' : 'none', 'description' : 'none'}
+
+        # Bind the 'tracscreenshots' catalog to the specified locale directory.
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
 
 
     # IPermissionRequestor methods.
@@ -201,8 +209,8 @@ class ScreenshotsCore(Component):
 
                 # Check if requested format is allowed.
                 if not format in self.formats:
-                    raise TracError('Requested screenshot format that is not'
-                      ' allowed.', 'Requested format not allowed.')
+                    raise TracError(_("Requested screenshot format that is not "
+                      "allowed."), _("Requested format not allowed."))
 
                 # Get screenshot.
                 screenshot = api.get_screenshot(context, screenshot_id)
@@ -213,7 +221,7 @@ class ScreenshotsCore(Component):
                         context.req.redirect(context.req.href.screenshots(
                           action = 'add'))
                     else:
-                        raise TracError('Screenshot not found.')
+                        raise TracError(_("Screenshot not found."))
 
                 # Set missing dimensions.
                 width = width or screenshot['width']
@@ -381,8 +389,8 @@ class ScreenshotsCore(Component):
 
                 # Check if requested screenshot exits.
                 if not old_screenshot:
-                    raise TracError('Edited screenshot not found.',
-                      'Screenshot not found.')
+                    raise TracError(_("Edited screenshot not found."),
+                      _("Screenshot not found."))
 
                 # Get image file from request.
                 image = context.req.args['image']
@@ -395,16 +403,12 @@ class ScreenshotsCore(Component):
 
                 # Construct screenshot dictionary from form values.
                 screenshot = {'name' :  context.req.args.get('name'),
-                              'description' : context.req.args.get(
-                                'description'),
-                              'author' : context.req.authname,
-                              'tags' : context.req.args.get('tags'),
-                              'components' : context.req.args.get(
-                                'components') or [],
-                              'versions' : context.req.args.get('versions') or \
-                                [],
-                              'priority' : int(context.req.args.get('priority')
-                                or '0')}
+                  'description' : context.req.args.get('description'),
+                  'author' : context.req.authname,
+                  'tags' : context.req.args.get('tags'),
+                  'components' : context.req.args.get('components') or [],
+                  'versions' : context.req.args.get('versions') or [],
+                  'priority' : int(context.req.args.get('priority') or '0')}
 
                 # Update dimensions and filename if image file is updated.
                 if filename:
@@ -443,8 +447,8 @@ class ScreenshotsCore(Component):
                               to_unicode(file)))
                             os.remove(file.encode('utf-8'))
                     except Exception, error:
-                        raise TracError('Error deleting screenshot. Original' \
-                          ' message was: %s' % (to_unicode(error),))
+                        raise TracError(_("Error deleting screenshot. Original "
+                          "error message was: %s""") % (to_unicode(error),))
 
                     # Store uploaded image.
                     try:
@@ -457,10 +461,10 @@ class ScreenshotsCore(Component):
                             os.remove(filepath.encode('utf-8'))
                         except:
                             pass
-                        raise TracError('Error storing file. Is directory' \
-                          ' specified in path config option in [screenshots]' \
-                          ' section of trac.ini existing? Original message was: %s' \
-                          % (to_unicode(error),))
+                        raise TracError(_("Error storing file. Is directory "
+                          "specified in path config option in [screenshots] "
+                          "section of trac.ini existing? Original error "
+                          "message was: %s") % (to_unicode(error),))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
@@ -481,8 +485,8 @@ class ScreenshotsCore(Component):
 
                 # Check if requested screenshot exits.
                 if not screenshot:
-                    raise TracError('Deleted screenshot not found.',
-                      'Screenshot not found.')
+                    raise TracError(_("Deleted screenshot not found."),
+                      _("Screenshot not found."))
 
                 # Delete screenshot.
                 api.delete_screenshot(context, screenshot['id'])
@@ -498,8 +502,8 @@ class ScreenshotsCore(Component):
                         os.remove(file.encode('utf-8'))
                     os.rmdir(path.encode('utf-8'))
                 except Exception, error:
-                    raise TracError('Error deleting screenshot. Original' \
-                      ' message was: %s' % (to_unicode(error),))
+                    raise TracError(_("Error deleting screenshot. Original "
+                      "error message was: %s") % (to_unicode(error),))
 
                 # Notify change listeners.
                 for listener in self.change_listeners:
@@ -547,10 +551,11 @@ class ScreenshotsCore(Component):
 
                 # Check that at least one IScreenshotsRenderer is enabled.
                 if len(self.renderers) == 0:
-                    raise TracError('No screenshots renderer enabled. Enable'
-                      ' at least one.', 'No screenshots renderer enabled')
+                    raise TracError(_("No screenshots renderer enabled. "
+                      "Enable at least one."), _("No screenshots renderer "
+                      "enabled"))
 
-                # Get all available components and versions.
+                # Get all available components and versions.
                 components = [self.none_component] + api.get_components(
                   context.cursor)
                 versions = [self.none_version] + api.get_versions(
@@ -574,7 +579,7 @@ class ScreenshotsCore(Component):
                 self.log.debug('enabled_versions: %s' % (enabled_versions,))
                 self.log.debug('filter_relation: %s' % (relation,))
 
-                # Get order fields of screenshots.
+                # Get order fields of screenshots.
                 orders = self._get_orders(context.req)
 
                 # Filter screenshots.
@@ -657,9 +662,9 @@ class ScreenshotsCore(Component):
                 os.rmdir(path.encode('utf-8'))
             except:
                 pass
-            raise TracError('Error storing file. Is directory specified in path' \
-              ' config option in [screenshots] section of trac.ini existing?' \
-              ' Original message was: %s' % (to_unicode(error),))
+            raise TracError(_("Error storing file. Is directory specified in "
+              "path config option in [screenshots] section of trac.ini "
+              "existing? Original error message was: %s") % (to_unicode(error),))
 
         # Add components to screenshot to DB.
         components = context.req.args.get('components') or []
@@ -697,7 +702,7 @@ class ScreenshotsCore(Component):
 
         # Test if file is uploaded.
         if not hasattr(image, 'filename') or not image.filename:
-            raise TracError('No file uploaded.')
+            raise TracError(_("No file uploaded."))
 
         # Get file size.
         if hasattr(image.file, 'fileno'):
@@ -707,7 +712,7 @@ class ScreenshotsCore(Component):
             size = image.file.tell()
             image.file.seek(0)
         if size == 0:
-            raise TracError('Can\'t upload empty file.')
+            raise TracError(_("Can't upload empty file."))
 
         # Try to normalize the filename to unicode NFC if we can.
         # Files uploaded from OS X might be in NFD.
@@ -723,9 +728,9 @@ class ScreenshotsCore(Component):
         result = reg.match(filename)
         if result:
             if not result.group(2).lower() in self.ext:
-                raise TracError('Unsupported uploaded file type.')
+                raise TracError(_("Unsupported uploaded file type."))
         else:
-            raise TracError('Unsupported uploaded file type.')
+            raise TracError(_("Unsupported uploaded file type."))
 
         return image.file, filename
 

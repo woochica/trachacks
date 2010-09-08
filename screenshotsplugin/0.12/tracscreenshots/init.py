@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 
-# Standard includes.
+# Standard imports.
 import os, os.path
 
-# Trac includes.
+# Trac imports.
 from trac.core import *
 from trac.db import *
 from trac.config import PathOption
 
 # Trac interfaces.
 from trac.env import IEnvironmentSetupParticipant
+
+# Local imports.
+from tracscreenshots.core import _
 
 # Last screenshots database schema version.
 last_db_version = 4
@@ -21,9 +24,9 @@ class ScreenshotsInit(Component):
     """
     implements(IEnvironmentSetupParticipant)
 
-    # Configuration options.
+    # Configuration options.
     path = PathOption('screenshots', 'path', '../screenshots',
-      doc = 'Path where to store uploaded screenshots.')
+      doc = _("Path where to store uploaded screenshots."))
 
     # IEnvironmentSetupParticipanttr
     def environment_created(self):

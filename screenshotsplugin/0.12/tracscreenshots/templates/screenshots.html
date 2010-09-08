@@ -2,9 +2,14 @@
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:xi="http://www.w3.org/2001/XInclude"
-      xmlns:py="http://genshi.edgewall.org/">
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="tracscreenshots">
   <xi:include href="layout.html"/>
   <xi:include href="macros.html"/>
+  <?python
+    from tracscreenshots.core import _
+  ?>
   <head>
     <title>Screenshots</title>
   </head>
@@ -20,14 +25,14 @@
       <div py:if="('SCREENSHOTS_ADD' in perm) or ('SCREENSHOTS_EDIT' in perm) or ('SCREENSHOTS_DELETE' in perm)" class="buttons screenshot_buttons">
         <form py:if="'SCREENSHOTS_ADD' in perm" method="post" action="${href.screenshots()}">
           <div>
-            <input type="submit" name="add" value="Add"></input>
+            <input type="submit" name="add" value="${_('Add')}"></input>
             <input type="hidden" name="action" value="add"></input>
             <input type="hidden" name="index" value="${screenshots.index}"></input>
           </div>
         </form>
         <form py:if="('SCREENSHOTS_EDIT' in perm) and (len(screenshots) > 0) and index" method="post" action="${href.screenshots()}">
           <div>
-            <input type="submit" name="edit" value="Edit"></input>
+            <input type="submit" name="edit" value="${_('Edit')}"></input>
             <input type="hidden" name="action" value="edit"></input>
             <input type="hidden" name="id" value="${screenshots.id}"></input>
             <input type="hidden" name="index" value="${screenshots.index}"></input>
@@ -35,7 +40,7 @@
         </form>
         <form py:if="('SCREENSHOTS_DELETE' in perm) and (len(screenshots) > 0) and index" method="post" action="${href.screenshots()}">
           <div>
-            <input type="submit" name="delete" value="Delete"></input>
+            <input type="submit" name="delete" value="${_('Delete')}"></input>
             <input type="hidden" name="id" value="${screenshots.id}"></input>
             <input type="hidden" name="index" value="${screenshots.index}"></input>
             <input type="hidden" name="action" value="delete"></input>
@@ -51,7 +56,7 @@
             </legend>
 
             <fieldset py:for="index, order in enumerate(screenshots.orders)" class="order">
-              <legend>
+              <legend i18n:msg="index">
                  ${index + 1}. field
               </legend>
 
@@ -94,7 +99,7 @@
             </fieldset>
 
             <div class="buttons">
-              <input type="submit" name="filter" value="Apply order"/>
+              <input type="submit" name="filter" value="${_('Apply order')}"/>
               <input type="hidden" name="action" value="order"/>
             </div>
 
@@ -123,8 +128,8 @@
                     ${component.name}
                   </input>
                 </py:choose>
-                <input type="button" name="all" value="All" onclick="checkAll('components', true)"/>
-                <input type="button" name="none" value="None" onclick="checkAll('components', false)"/>
+                <input type="button" name="all" value="${_('All')}" onclick="checkAll('components', true)"/>
+                <input type="button" name="none" value="${_('None')}" onclick="checkAll('components', false)"/>
               </div>
             </fieldset>
 
@@ -155,13 +160,13 @@
                     ${version.name}
                   </input>
                 </py:choose>
-                <input type="button" name="all" value="All" onclick="checkAll('versions', true)"/>
-                <input type="button" name="none" value="None" onclick="checkAll('versions', false)"/>
+                <input type="button" name="all" value="${_('All')}" onclick="checkAll('versions', true)"/>
+                <input type="button" name="none" value="${_('None')}" onclick="checkAll('versions', false)"/>
               </div>
             </fieldset>
 
             <div class="buttons">
-              <input type="submit" name="filter" value="Apply filter"/>
+              <input type="submit" name="filter" value="${_('Apply filter')}"/>
               <input type="hidden" name="action" value="filter"/>
             </div>
 

@@ -1,12 +1,14 @@
 # -*- coding: utf8 -*-
 
+# Trac imports.
 from trac.core import *
 from trac.config import IntOption
 from trac.web.chrome import add_stylesheet
 
+# Local imports.
 from tracscreenshots.api import *
 from tracscreenshots.core import *
-
+from tracscreenshots.core import _
 
 class ScreenshotsMatrixView(Component):
 
@@ -14,19 +16,19 @@ class ScreenshotsMatrixView(Component):
 
     # Configuration options.
     rows = IntOption('screenshots-matrix', 'rows', 3, doc =
-      'Number of screenshot preview rows.')
+      _("Number of screenshot preview rows."))
     columns = IntOption('screenshots-matrix', 'columns', 3, doc =
-      'Number of screenshot columns.')
+      _("Number of screenshot columns."))
     width = IntOption('screenshots-matrix', 'width', 160, doc =
-      'Width of screenshot preview.')
+      _("Width of screenshot preview."))
     height = IntOption('screenshots-matrix', 'height', 120, doc =
-      'Height of screenshot preview.')
+      _("Height of screenshot preview."))
 
     def __init__(self):
         # Items for not specified screenshot.
         self.null_screenshot = {'id' : -1,
-                                'name' : '',
-                                'description' : ''}
+          'name' : '',
+          'description' : ''}
 
     # ITemplateProvider methods.
 
@@ -90,7 +92,7 @@ class ScreenshotsMatrixView(Component):
         return ('screenshots-matrix-view.html', None)
 
     def get_screenshots_view(req):
-        yield ('matrix', 'Matrix View')
+        yield ('matrix', _("Matrix View"))
 
     # Private methods.
 

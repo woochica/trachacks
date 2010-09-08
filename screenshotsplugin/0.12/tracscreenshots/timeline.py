@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 
+# Genshi imports.
 from genshi.builder import tag
 
+# Trac imports.
 from trac.core import *
 from trac.mimeview import Context
 from trac.util.datefmt import to_timestamp
 
+# Trac interfaces.
 from trac.timeline import ITimelineEventProvider
 
+# Local imports.
 from tracscreenshots.api import *
+from tracscreenshots.core import _, tag_
 
 class ScreenshotsTimeline(Component):
     """
@@ -21,7 +26,7 @@ class ScreenshotsTimeline(Component):
 
     def get_timeline_filters(self, req):
         if 'SCREENSHOTS_VIEW' in req.perm:
-            yield ('screenshots', 'Screenshots changes')
+            yield ('screenshots', _("Screenshots changes"))
 
     def get_timeline_events(self, req, start, stop, filters):
         self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop,
@@ -50,6 +55,6 @@ class ScreenshotsTimeline(Component):
         if field == 'url':
            return context.href.screenshots(id)
         elif field == 'title':
-           return tag('New screenshot ', tag.em(name), ' created')
+           return tag_("New screenshot %(name)s created", name = tag.em(name))
         elif field == 'description':
-           return tag('%s' % (description,))
+           return tag(description)
