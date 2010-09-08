@@ -3,6 +3,7 @@ table {
     border-top: medium solid;
     width: 100%;
     table-layout: auto;
+    margin: 0.5ex 0ex;
 }
 
 thead, th {
@@ -19,12 +20,16 @@ th.comment, th.changes {
     text-align: left;
 }
 
-table.wikilist td.comment {
+table.watchlist {
+    clear: both;
+}
+
+table#wikilist td.comment {
     width: 100%;
     white-space: normal;
 }
 
-table.ticketlist td.comment, table.ticketlist td.changes {
+table#ticketlist td.comment, table#ticketlist td.changes {
     white-space: normal;
 }
 
@@ -65,12 +70,13 @@ td.history img {
 .watchlist a:link:hover, .watchlist a:visited:hover {
   background-color: none;
   color: none;
-  text-decoration: none;
+/*  text-decoration: none; */
   border: none;
 }
 
 div.modwatch {
   padding-top: 1ex;
+  clear: both;
 }
 
 form.addtowatch, form.remfromwatch {
@@ -109,8 +115,22 @@ input#ackmsg {
   font-size: medium;
 }
 
-/* Disabled for the time being */
-#settings {
+.noentrymessage {
   display: none;
 }
+
+div#preferences {
+  margin-top: 4ex;
+}
+
+div#preferences fieldset {
+  float: left;
+  margin-right: 2ex;
+}
+
+div#preferences .buttons {
+  clear: both;
+}
+
+
 

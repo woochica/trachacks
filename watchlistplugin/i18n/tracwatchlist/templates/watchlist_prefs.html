@@ -1,0 +1,17 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude" 
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      >
+      <fieldset>
+      <legend>General</legend>
+      <py:for each="k in sorted(settings.keys())">
+        <input type="checkbox" name="options" id="${k}" value="${k}" checked="${settings[k] and 'checked' or None}" />
+        <label for="${k}">${options.get(k,['',''])[1]}</label>
+        <br />
+      </py:for>
+      </fieldset>
+</html>
+

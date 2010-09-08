@@ -9,21 +9,22 @@
       py:strip="">
 
   <div id="tickets">
-    <py:choose test="">
-      <div class="system-message" py:when="'TICKET_VIEW' not in perm">
-        You lack permission to view tickets.</div>
-      <div id="ticketlist-plusadd">
-        <py:choose test="" py:otherwise="">
-          <div id="ticketlist-parent" py:when="ticketlist">
-            <h2 class="foldable">Tickets</h2>
-            ${tablepager("ticketpager")}
-            <table class="ticketlist" id="ticketlist">
+        <py:choose test="">
+          <div class="system-message" py:when="'TICKET_VIEW' not in perm">
+            <h2>Tickets</h2>
+            You lack permission to view tickets.
+          </div>
+          <div class="ticketlist-main" id="ticketlist-main" py:otherwise="">
+            <div>
+            <h2 class="${ticketlist and 'foldable' or ''}">Tickets</h2>
+            <div class="watchlist-parent" id="ticketlist-parent" py:if="ticketlist">
+            <table class="watchlist" id="ticketlist">
               <thead>
                 <tr>
                   <th py:for="k in ['id', 'datetime', 'author', 'commentnum']"
                       class="${k}">${th.get(k)}&nbsp;&nbsp;&nbsp;</th>
-                  <th class="${'unwatch'}">${th.get('unwatch')}</th>
-                  <th py:if="notify" class="notify">
+                  <th class="unwatch nosorting">${th.get('unwatch')}</th>
+                  <th py:if="notify" class="notify nosorting">
                       ${th['notify']}&nbsp;&nbsp;&nbsp;</th>
                   <th py:for="k in ['changes', 'comment']"
                       class="${k}">${th.get(k)}&nbsp;&nbsp;&nbsp;</th>
@@ -31,13 +32,14 @@
               </thead>
               <tbody>
                 <tr py:for="ticket in ticketlist">
-                  <td class="id"><a href="${href('ticket', ticket.id)}"
-                      title="${ticket.summary}">#${ticket.id}</a></td>
+                  <td class="id">
+                    <a href="${href('ticket', ticket.id)}"
+                      title="${ticket.summary}" class="${ticket.status == 'closed' and 'closed'} ticket">#${ticket.id}</a>
+                  </td>
                   <td class="datetime">$ticket.datetime
                       <span py:if="ticket.timedelta"
                         i18n:msg="timeline_link, timedelta"> (<a
-                        href="$ticket.timeline_link">
-                        $ticket.timedelta</a> ago)</span></td>
+                        href="$ticket.timeline_link">$ticket.timedelta</a> ago)</span></td>
                   <td class="author">$ticket.author</td>
                   <td class="commentnum"><a href="${href('ticket',ticket.id)
                       + ((ticket.commentnum != '0') and ('#comment:'
@@ -54,12 +56,12 @@
               </tbody>
             </table>
           </div>
-          <div py:otherwise="">
-            <h2>Tickets</h2>
-            <span>No tickets are currently watched.</span></div>
+          <p class="noentrymessage" style="${ticketlist or 'display:block'}">
+            No tickets are currently watched.
+          </p>
+          </div>
           ${modify_form('ticket')}
+          </div>
         </py:choose>
-      </div>
-    </py:choose>
   </div>
 </html>

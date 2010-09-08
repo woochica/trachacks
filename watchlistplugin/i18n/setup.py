@@ -41,9 +41,12 @@ setup(
         'tracwatchlist' : [
             'htdocs/ico/*',
             'htdocs/css/style.css',
-            'htdocs/css/tablesorter.css',
-            'htdocs/js/jquery.tablesorter.min.js',
-            'htdocs/js/jquery.tablesorter.pager.js',
+            'htdocs/css/dataTable.css',
+            'htdocs/css/jquery.autocomplete.css',
+            'htdocs/js/jquery.dataTables.min.js',
+            'htdocs/js/jquery.autocomplete.js',
+            'htdocs/js/dynamictables.js',
+            'htdocs/js/autocomplete.js',
             'htdocs/js/watchlist.js',
             'locale/*/LC_MESSAGES/*.mo',
             'templates/*.html',
@@ -55,7 +58,7 @@ setup(
         'tracwatchlist = tracwatchlist',
         'tracwatchlist.plugin = tracwatchlist.plugin',
         'tracwatchlist.db = tracwatchlist.db',
-        'tracwatchlist.nav = tracwatchlist.nav'
+        'tracwatchlist.nav = tracwatchlist.nav',
       ]},
     **extra
 )

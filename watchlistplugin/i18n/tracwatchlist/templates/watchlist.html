@@ -7,45 +7,30 @@
       i18n:domain="watchlist">
   <xi:include href="layout.html"/>
   <head>
+    <title>Watchlist</title>
     <link type="text/css"
       href="${href.chrome('watchlist','css','style.css')}"
       rel="stylesheet" />
-    <link type="text/css"
-      href="${href.chrome('watchlist','css','tablesorter.css')}"
+    <link type="text/css" py:if="dynamictable"
+      href="${href.chrome('watchlist','css','dataTable.css')}"
       rel="stylesheet" />
-    <title>Watchlist</title>
+    <link type="text/css" py:if="autocomplete"
+      href="${href.chrome('watchlist','css','jquery.autocomplete.css')}"
+      rel="stylesheet" />
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
     <script type="text/javascript" 
-      src="${href.chrome('watchlist','js','jquery.tablesorter.min.js')}">
-    </script>
-    <script type="text/javascript" 
-      src="${href.chrome('watchlist','js','jquery.tablesorter.pager.js')}">
-    </script>
-    <script type="text/javascript" 
-      src="${href.chrome('common','js','folding.js')}">
+      src="${href.chrome('watchlist','js','jquery.dataTables.min.js')}">
     </script>
     <script type="text/javascript" 
       src="${href.chrome('watchlist','js','watchlist.js')}"></script>
-    <script type="text/javascript">
-      // <![CDATA[
-        jQuery(document).ready(function($) {
-          $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor(
-          _("Link to this section"));
-          $(".foldable").enableFolding(false, false, true);
-        });
-        jQuery(document).ready(function() {
-          $("#wikilist").tablesorter({widthFixed:true,headers: {
-            4: {sorter:false}, 5: {sorter:false}, 6: {sorter:false}
-          }
-          }).tablesorterPager({container:$("#wikipager")}); 
-          $("#ticketlist").tablesorter({widthFixed:true,headers: {
-            4: {sorter:false}
-          }
-          }).tablesorterPager({container:$("#ticketpager")});
-          $("#settings").toggleClass("collapsed");
-        });
-      // ]]>
-    </script>
+    <script type="text/javascript" py:if="autocomplete"
+      src="${href.chrome('watchlist','js','autocomplete.js')}"></script>
+    <script type="text/javascript" py:if="dynamictable"
+      src="${href.chrome('watchlist','js','dynamictables.js')}"></script>
+    <script type="text/javascript" 
+      src="${href.chrome('common','js','folding.js')}"></script>
+    <script type="text/javascript" 
+      src="${href.chrome('watchlist','js','jquery.autocomplete.js')}"></script>
     <py:def function="link(realm, resid, text='')">
         <a href="${href(realm,resid)}">${text or ":".join([realm,resid])}</a>
     </py:def>
@@ -98,30 +83,7 @@
           </py:choose>
         </py:def>
         <py:def function="tablepager(name)">
-          <div class="tablesorterPager" id="$name">
-            <form action="">
-              <div>
-              <img class="first" alt="|&lt;"
-                src="${href.chrome('watchlist/ico/first.png')}"/>
-              <img class="prev" alt="&lt;&lt;"
-                src="${href.chrome('watchlist/ico/prev.png')}"/>
-              <input type="text" class="pagedisplay"/>
-              <img class="next" alt="&gt;&gt;"
-                src="${href.chrome('watchlist/ico/next.png')}"/>
-              <img class="last" alt="&gt;|"
-                src="${href.chrome('watchlist/ico/last.png')}"/>
-              <select class="pagesize">
-                <option value="10" selected="selected">10</option>
-                <option value="20">20</option>
-                <option value="30">30</option>
-                <option value="40">40</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="1000000">All</option>
-              </select>
-              </div>
-            </form>
-          </div>
+          <!-- Deprecated -->
         </py:def>
 
         <h1 id="top"><a href="${href.watchlist()}">Watchlist</a></h1>
@@ -241,28 +203,19 @@
         </div>
     <xi:include href="wl-${realm}.html" py:for="realm in realms" />
 
-
-    <div id="settings">
-      <h2 class="foldable">Settings</h2>
+    <div id="preferences" class="${action == 'save' or 'collapsed'}" i18n:domain="">
+      <h3 class="foldable">Preferences</h3>
       <div>
-        <form action="${href.watchlist()}" method="get">
-          <div>
-            <input type="hidden" name="action" value="settings" />
-            <input type="checkbox" name="autonotify" value="1"
-            checked="${user_settings.get('autonotify')}" />
-            Auto Notify (${user_settings.autonotify})<br />
-            <input type="checkbox" name="notifications" value="1"
-            checked="${user_settings.get('notifications')}" />
-            Notifications <br />
-            ${str(user_settings)}
-            <br />
-            <input type="submit" value="Save" />
-            <input type="reset" />
-          </div>
-        </form>
+      <form action="" method="post">
+        <xi:include href="watchlist_prefs.html" />
+        <div class="buttons">
+              <input type="hidden" value="save" name="action" />
+              <input type="submit" value="${_('Save changes')}" />
+              <input type="reset"  value="${_('Reset')}" />
+        </div>
+      </form>
       </div>
     </div>
-
     </div>
   </body>
 </html>
