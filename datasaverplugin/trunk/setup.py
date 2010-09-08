@@ -30,11 +30,11 @@ setup(
     license='GPL', url='http://trac-hacks.org/wiki/DataSaverPlugin',
     install_requires = ['Babel>= 0.9.5', 'Trac >= 0.12dev'],
     packages=find_packages(exclude=['*.tests*']),
-    package_data={'datasaver': ['js/*.js', 'css/*.css',
-                                'locale/*/LC_MESSAGES/*.mo']},
+    package_data={'datasaver': ['htdocs/*.js', 'htdocs/lang_js/*.js',
+                                'htdocs/*.css', 'locale/*/LC_MESSAGES/*.mo']},
     entry_points="""
         [trac.plugins]
-        datasaver = datasaver
+        datasaver = datasaver.datasaver
     """,
     **extra
 )

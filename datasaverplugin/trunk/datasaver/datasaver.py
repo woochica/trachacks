@@ -6,15 +6,15 @@ from genshi.builder        import tag
 from trac.core             import Component, implements
 from trac.util.translation import domain_functions
 from trac.web              import IRequestFilter
-from trac.web.chrome       import add_script, add_stylesheet, \
-                                  ITemplateProvider, INavigationContributor
+from trac.web.chrome       import add_script, add_stylesheet, add_ctxtnav, \
+                                  ITemplateProvider
 
 
 add_domain, _ = \
     domain_functions('datasaver', ('add_domain', '_'))
 
 class DataSaverModule(Component):
-    implements(IRequestFilter, ITemplateProvider, INavigationContributor)
+    implements(IRequestFilter, ITemplateProvider)
 
     def __init__(self):
     # bind the 'datasaver' catalog to the specified locale directory
@@ -25,25 +25,17 @@ class DataSaverModule(Component):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        add_script(req, 'js/datasaver.js')
+        add_script(req, 'htdocs/datasaver.js')
         if req.locale is not None: 
  	    add_script(req, 'htdocs/lang_js/%s.js' % req.locale)
-        add_stylesheet(req, 'css/datasaver.css')
+        add_stylesheet(req, 'htdocs/datasaver.css')
+        add_ctxtnav(req, tag.a(_('Restore Form') , id='datasaver_restorer',
+                    href='javascript:datasaver_restore()'))
         return (template, data, content_type)
 
     def get_templates_dirs(self):
         return []
 
     def get_htdocs_dirs(self):
-        return [('js', resource_filename(__name__, 'js')),
-                ('css', resource_filename(__name__, 'css'))]
-
-    def get_active_navigation_item(self, req):
-        return 'datasaver'
-
-    def get_navigation_items(self, req):
-        # TRANSLATOR: metanav button label
-        yield ('metanav', 'datasaver',
-            tag.a(_('Restore Form'), id='datasaver_restorer',
-                    href='javascript:datasaver_restore()'))
+        return [('htdocs', resource_filename(__name__, 'htdocs'))]
 
