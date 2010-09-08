@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-08-31 21:31+0200\n"
-"PO-Revision-Date: 2010-09-07 22:23+0100\n"
+"PO-Revision-Date: 2010-09-08 01:06+0100\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -18,10 +18,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.5\n"
 
-#: tracwatchlist/nav.py:44 tracwatchlist/plugin.py:133 tracwatchlist/pref.py:73
+#: tracwatchlist/nav.py:44 tracwatchlist/plugin.py:133
 #: tracwatchlist/templates/watchlist.html:10
 #: tracwatchlist/templates/watchlist.html:89
-#: tracwatchlist/templates/watchlist_prefs.html:10
+#: tracwatchlist/templates/watchlist_prefs_main.html:10
 msgid "Watchlist"
 msgstr "Beobachtungsliste"
 
@@ -29,27 +29,87 @@ msgstr "Beobachtungsliste"
 msgid "Watchlist Error"
 msgstr "Beobachtungslistenfehler"
 
-#: tracwatchlist/plugin.py:306
+#: tracwatchlist/plugin.py:70
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: tracwatchlist/plugin.py:71
+msgid "Display notification navigation items"
+msgstr "Navigationselemente für Benachrichtungen einblenden"
+
+#: tracwatchlist/plugin.py:72
+msgid "Display notification column in watchlist tables"
+msgstr "Spalte für Benachrichtungen einblenden"
+
+#: tracwatchlist/plugin.py:73
+msgid "Enable notifications by default for all watchlist entries"
+msgstr "Benachrichtigungen für alle beobachteten Dokumente aktivieren"
+
+#: tracwatchlist/plugin.py:74
+msgid ""
+"The user stays at the resource after a watch/unwatch operation and the "
+"watchlist page is not displayed."
+msgstr ""
+"Nach 'Beobachten'/'Nicht mehr beobachten' Aktionen verbleibt der Benutzer"
+" auf dem Dokument.\"\n"
+"\"Die Beobachtungsliste wird nicht angezeigen."
+
+#: tracwatchlist/plugin.py:75
+msgid ""
+"The user stays at the resource after a notify/do-not-notify operation and"
+" the watchlist page is not displayed."
+msgstr ""
+"Nachdem Benachrichtigungen ein oder ausgeschaltet wurden verbleibt der "
+"Benutzer auf dem Dokument.\"\n"
+"\"Die Beobachtungsliste wird nicht angezeigen."
+
+#: tracwatchlist/plugin.py:76
+msgid "Action messages are shown on resource pages."
+msgstr "Aktionsnachrichten werden auf dem jeweiligen Dokument angezeigt."
+
+#: tracwatchlist/plugin.py:77
+msgid "Action messages are shown when going to the watchlist page."
+msgstr ""
+"Aktionsnachrichten werden angezeigt wenn auf die Beobachtungsliste "
+"gewechselt wird."
+
+#: tracwatchlist/plugin.py:78
+msgid "Show action messages while on watchlist page."
+msgstr ""
+"Aktionsnachrichten werden angezeigt wenn man sich auf der "
+"Beobachtungsliste befindet."
+
+#: tracwatchlist/plugin.py:79
+msgid "Autocomplete input fields (add/remove resources)."
+msgstr ""
+"Automatische Vervollständigung von Eingabefeldern ('Weitere X'/'Entferne "
+"X')."
+
+#: tracwatchlist/plugin.py:80
+msgid "Dynamic watchlist tables."
+msgstr "Dynamische Tabellen."
+
+#: tracwatchlist/plugin.py:297
 msgid "Please "
 msgstr "Bitte "
 
-#: tracwatchlist/plugin.py:306
+#: tracwatchlist/plugin.py:297
 msgid "log in"
 msgstr "melden Sie sich an"
 
-#: tracwatchlist/plugin.py:308
+#: tracwatchlist/plugin.py:299
 msgid " to view or change your watchlist!"
 msgstr ", um Ihre Beobachtungsliste anzusehen oder zu verändern!"
 
-#: tracwatchlist/plugin.py:380
+#: tracwatchlist/plugin.py:379
 msgid "You are now watching this resource."
 msgstr "Sie beobachten jetzt dieses Dokument."
 
-#: tracwatchlist/plugin.py:435
+#: tracwatchlist/plugin.py:434
 msgid "You are no longer watching this resource."
 msgstr "Jetzt beobachten Sie dieses Dokument nicht mehr."
 
-#: tracwatchlist/plugin.py:459
+#: tracwatchlist/plugin.py:458
 msgid ""
 "\n"
 "                  You are now receiving change notifications\n"
@@ -59,7 +119,7 @@ msgstr ""
 "\n"
 "Sie erhalten jetzt Änderungsbenachrichtigungen zu diesem Dokument."
 
-#: tracwatchlist/plugin.py:475
+#: tracwatchlist/plugin.py:474
 msgid ""
 "\n"
 "                  You are no longer receiving\n"
@@ -363,12 +423,15 @@ msgstr "Ihnen fehlt die Leseberechtigung für Wiki-Seiten."
 msgid "No wikis are currently watched."
 msgstr "Momentan werden keine Wiki-Seiten beobachtet."
 
-#~ msgid "Settings"
-#~ msgstr "Einstellungen"
+#~ msgid "Preferences"
+#~ msgstr ""
 
-#~ msgid "Auto Notify ("
-#~ msgstr "Automatische Benachrichtigung ("
+#~ msgid "Save changes"
+#~ msgstr "Änderungen"
 
-#~ msgid "Notifications"
-#~ msgstr "Benachrichtigungen"
+#~ msgid "Reset"
+#~ msgstr ""
+
+#~ msgid "General"
+#~ msgstr ""
 

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.6\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-07 22:23+0100\n"
+"POT-Creation-Date: 2010-09-08 01:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,9 +19,9 @@ msgstr ""
 "Generated-By: Babel 0.9.5\n"
 
 #: tracwatchlist/nav.py:44 tracwatchlist/plugin.py:133
-#: tracwatchlist/pref.py:73 tracwatchlist/templates/watchlist.html:10
+#: tracwatchlist/templates/watchlist.html:10
 #: tracwatchlist/templates/watchlist.html:89
-#: tracwatchlist/templates/watchlist_prefs.html:10
+#: tracwatchlist/templates/watchlist_prefs_main.html:10
 msgid "Watchlist"
 msgstr ""
 
@@ -29,27 +29,75 @@ msgstr ""
 msgid "Watchlist Error"
 msgstr ""
 
-#: tracwatchlist/plugin.py:306
+#: tracwatchlist/plugin.py:70
+msgid "Notifications"
+msgstr ""
+
+#: tracwatchlist/plugin.py:71
+msgid "Display notification navigation items"
+msgstr ""
+
+#: tracwatchlist/plugin.py:72
+msgid "Display notification column in watchlist tables"
+msgstr ""
+
+#: tracwatchlist/plugin.py:73
+msgid "Enable notifications by default for all watchlist entries"
+msgstr ""
+
+#: tracwatchlist/plugin.py:74
+msgid ""
+"The user stays at the resource after a watch/unwatch operation and "
+"the watchlist page is not displayed."
+msgstr ""
+
+#: tracwatchlist/plugin.py:75
+msgid ""
+"The user stays at the resource after a notify/do-not-notify operation"
+" and the watchlist page is not displayed."
+msgstr ""
+
+#: tracwatchlist/plugin.py:76
+msgid "Action messages are shown on resource pages."
+msgstr ""
+
+#: tracwatchlist/plugin.py:77
+msgid "Action messages are shown when going to the watchlist page."
+msgstr ""
+
+#: tracwatchlist/plugin.py:78
+msgid "Show action messages while on watchlist page."
+msgstr ""
+
+#: tracwatchlist/plugin.py:79
+msgid "Autocomplete input fields (add/remove resources)."
+msgstr ""
+
+#: tracwatchlist/plugin.py:80
+msgid "Dynamic watchlist tables."
+msgstr ""
+
+#: tracwatchlist/plugin.py:297
 msgid "Please "
 msgstr ""
 
-#: tracwatchlist/plugin.py:306
+#: tracwatchlist/plugin.py:297
 msgid "log in"
 msgstr ""
 
-#: tracwatchlist/plugin.py:308
+#: tracwatchlist/plugin.py:299
 msgid " to view or change your watchlist!"
 msgstr ""
 
-#: tracwatchlist/plugin.py:380
+#: tracwatchlist/plugin.py:379
 msgid "You are now watching this resource."
 msgstr ""
 
-#: tracwatchlist/plugin.py:435
+#: tracwatchlist/plugin.py:434
 msgid "You are no longer watching this resource."
 msgstr ""
 
-#: tracwatchlist/plugin.py:459
+#: tracwatchlist/plugin.py:458
 msgid ""
 "\n"
 "                  You are now receiving change notifications\n"
@@ -57,7 +105,7 @@ msgid ""
 "                  "
 msgstr ""
 
-#: tracwatchlist/plugin.py:475
+#: tracwatchlist/plugin.py:474
 msgid ""
 "\n"
 "                  You are no longer receiving\n"

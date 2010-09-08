@@ -119,4 +119,18 @@ input#ackmsg {
   display: none;
 }
 
+div#preferences {
+  margin-top: 4ex;
+}
+
+div#preferences fieldset {
+  float: left;
+  margin-right: 2ex;
+}
+
+div#preferences .buttons {
+  clear: both;
+}
+
+
 

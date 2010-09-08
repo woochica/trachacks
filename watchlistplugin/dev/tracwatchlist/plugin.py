@@ -67,17 +67,17 @@ class WatchlistPlugin(Component):
 
 
     options = [
-        ('notifications', False, "Enables notification features"),
-        ('display_notify_navitems', False, "Enables notification navigation items"),
-        ('display_notify_column', True, "Enables notification column in watchlist tables"),
-        ('notify_by_default', False, "Enables notifications by default for all watchlist entries"),
-        ('stay_at_resource', False, "The user stays at the resource after a watch/unwatch operation and the watchlist page is not displayed."),
-        ('stay_at_resource_notify', True, "The user stays at the resource after a notify/do-not-notify operation and the watchlist page is not displayed."),
-        ('show_messages_on_resource_page', True, "Enables action messages on resource pages."),
-        ('show_messages_on_watchlist_page', True, "Enables action messages when going to the watchlist page."),
-        ('show_messages_while_on_watchlist_page', True, "Enables action messages while on watchlist page."),
-        ('autocomplete_inputs', True, "Enabled autocompletion of input fields (add/remove resources)."),
-        ('dynamic_tables', True, "Enabled dynamic sortable watchlist tables."),
+        ('notifications', False, _("Notifications")),
+        ('display_notify_navitems', False, _("Display notification navigation items")),
+        ('display_notify_column', True, _("Display notification column in watchlist tables")),
+        ('notify_by_default', False, _("Enable notifications by default for all watchlist entries")),
+        ('stay_at_resource', False, _("The user stays at the resource after a watch/unwatch operation and the watchlist page is not displayed.")),
+        ('stay_at_resource_notify', True, _("The user stays at the resource after a notify/do-not-notify operation and the watchlist page is not displayed.")),
+        ('show_messages_on_resource_page', True, _("Action messages are shown on resource pages.")),
+        ('show_messages_on_watchlist_page', True, _("Action messages are shown when going to the watchlist page.")),
+        ('show_messages_while_on_watchlist_page', True, _("Show action messages while on watchlist page.")),
+        ('autocomplete_inputs', True, _("Autocomplete input fields (add/remove resources).")),
+        ('dynamic_tables', True, _("Dynamic watchlist tables.")),
     ]
 
     gsettings = dict( [ (name, BoolOption('watchlist',name,value,doc) ) for (name,value,doc) in options ] )
