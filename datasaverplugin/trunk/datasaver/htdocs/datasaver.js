@@ -83,6 +83,7 @@ function datasaver_capture()
             var element = form.elements[elemidx];
             if (element.type != 'submit' && 
                 element.type != 'hidden' &&
+                element.type != 'password' &&
                 element.value)
             {
                 formdata.push(
