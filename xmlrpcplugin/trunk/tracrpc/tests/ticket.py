@@ -10,6 +10,7 @@ import unittest
 import xmlrpclib
 import os
 import shutil
+import datetime
 import time
 
 from tracrpc.tests import rpc_testenv, TracRpcTestCase
@@ -128,8 +129,31 @@ class RpcTicketTestCase(TracRpcTestCase):
             self.admin.ticket.delete(tid1)
             self.admin.ticket.delete(tid2)
 
+class RpcTicketVersionTestCase(TracRpcTestCase):
+    
+    def setUp(self):
+        TracRpcTestCase.setUp(self)
+        self.anon = xmlrpclib.ServerProxy(rpc_testenv.url_anon)
+        self.user = xmlrpclib.ServerProxy(rpc_testenv.url_user)
+        self.admin = xmlrpclib.ServerProxy(rpc_testenv.url_admin)
+
+    def tearDown(self):
+        TracRpcTestCase.tearDown(self)
+
+    def test_create(self):
+        dt = xmlrpclib.DateTime(datetime.datetime.utcnow())
+        desc = "test version"
+        v = self.admin.ticket.version.create('9.99',
+                            {'time': dt, 'description': desc})
+        self.failUnless('9.99' in self.admin.ticket.version.getAll())
+        self.assertEquals({'time': dt, 'description': desc, 'name': '9.99'},
+                           self.admin.ticket.version.get('9.99'))
+
 def test_suite():
-    return unittest.makeSuite(RpcTicketTestCase)
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(unittest.makeSuite(RpcTicketTestCase))
+    test_suite.addTest(unittest.makeSuite(RpcTicketVersionTestCase))
+    return test_suite
 
 if __name__ == '__main__':
     unittest.main(defaultTest='test_suite')
