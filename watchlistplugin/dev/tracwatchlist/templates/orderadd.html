@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude" 
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="watchlist">
+  <fieldset id="${realm}_columns" class="orderadd">
+    <legend>${realm.capitalize()} Columns</legend>
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            Active columns
+          </td>
+          <td>
+          </td>
+          <td>
+            Available columns
+          </td>
+        </tr>
+        <tr>
+          <td rowspan="5">
+            <select class="active_columns" size="8" 
+              multiple="multiple" style="min-width:12em">
+              <py:for each="column in active_columns.get(realm)">
+                <option value="${column}">${th.get(column,column)}</option>
+              </py:for>
+            </select>
+          </td>
+          <td>
+            <button type="button" name="up">&#8593;</button>
+          </td>
+          <td rowspan="5">
+            <select class="available_columns" size="8" multiple="multiple" style="min-width:12em">
+              <py:for each="
+              column in 
+              [ c for c in available_columns.get(realm) if c not in active_columns.get(realm) ]
+              ">
+                <option value="${column}">${th.get(column,column)}</option>
+              </py:for>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <button type="button" name="down">&#8595;</button>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <button type="button" name="right">&#8594;</button>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <button type="button" name="left">&#8592;</button>
+          </td>
+        </tr>
+        <tr>
+          <td>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <input type="hidden" class="choosen_columns" name="${realm}_columns" value="" />
+  </fieldset>
+</html>

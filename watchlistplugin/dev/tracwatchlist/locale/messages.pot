@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.6\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-08 01:21+0100\n"
+"POT-Creation-Date: 2010-09-08 18:47+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,8 +20,8 @@ msgstr ""
 
 #: tracwatchlist/nav.py:44 tracwatchlist/plugin.py:133
 #: tracwatchlist/templates/watchlist.html:10
-#: tracwatchlist/templates/watchlist.html:89
-#: tracwatchlist/templates/watchlist_prefs_main.html:10
+#: tracwatchlist/templates/watchlist.html:90
+#: tracwatchlist/templates/watchlist_prefs_main.html:9
 msgid "Watchlist"
 msgstr ""
 
@@ -89,15 +89,15 @@ msgstr ""
 msgid " to view or change your watchlist!"
 msgstr ""
 
-#: tracwatchlist/plugin.py:379
+#: tracwatchlist/plugin.py:402
 msgid "You are now watching this resource."
 msgstr ""
 
-#: tracwatchlist/plugin.py:434
+#: tracwatchlist/plugin.py:457
 msgid "You are no longer watching this resource."
 msgstr ""
 
-#: tracwatchlist/plugin.py:458
+#: tracwatchlist/plugin.py:481
 msgid ""
 "\n"
 "                  You are now receiving change notifications\n"
@@ -105,7 +105,7 @@ msgid ""
 "                  "
 msgstr ""
 
-#: tracwatchlist/plugin.py:474
+#: tracwatchlist/plugin.py:497
 msgid ""
 "\n"
 "                  You are no longer receiving\n"
@@ -113,146 +113,158 @@ msgid ""
 "                  "
 msgstr ""
 
-#: tracwatchlist/plugin.py:509
+#: tracwatchlist/plugin.py:532
 msgid "Page"
 msgstr ""
 
-#: tracwatchlist/plugin.py:509
+#: tracwatchlist/plugin.py:532
 msgid "Last Changed At"
 msgstr ""
 
-#: tracwatchlist/plugin.py:510
+#: tracwatchlist/plugin.py:533
 msgid "By"
 msgstr ""
 
-#: tracwatchlist/plugin.py:510
+#: tracwatchlist/plugin.py:533
 msgid "Version"
 msgstr ""
 
-#: tracwatchlist/plugin.py:510 tracwatchlist/templates/wl-wiki.html:49
+#: tracwatchlist/plugin.py:533 tracwatchlist/templates/wl-wiki.html:49
 msgid "Diff"
 msgstr ""
 
-#: tracwatchlist/plugin.py:511 tracwatchlist/templates/wl-wiki.html:54
+#: tracwatchlist/plugin.py:534 tracwatchlist/templates/wl-wiki.html:54
 msgid "History"
 msgstr ""
 
-#: tracwatchlist/plugin.py:511
+#: tracwatchlist/plugin.py:534
 msgid "U"
 msgstr ""
 
-#: tracwatchlist/plugin.py:511
+#: tracwatchlist/plugin.py:534
 msgid "Notify"
 msgstr ""
 
-#: tracwatchlist/plugin.py:512
+#: tracwatchlist/plugin.py:535
 msgid "Comment"
 msgstr ""
 
-#: tracwatchlist/plugin.py:512
+#: tracwatchlist/plugin.py:535
 msgid "Ticket"
 msgstr ""
 
-#: tracwatchlist/plugin.py:513
+#: tracwatchlist/plugin.py:536
 msgid "Comment #"
 msgstr ""
 
-#: tracwatchlist/plugin.py:513
+#: tracwatchlist/plugin.py:536
 msgid "Changes"
 msgstr ""
 
-#: tracwatchlist/plugin.py:521
+#: tracwatchlist/plugin.py:544
 #, python-format
 msgid "Watched %s"
 msgstr ""
 
-#: tracwatchlist/plugin.py:525
+#: tracwatchlist/plugin.py:548
 #, python-format
 msgid "Invalid watchlist action '%s'!"
 msgstr ""
 
-#: tracwatchlist/plugin.py:597 tracwatchlist/templates/watchlist.html:68
+#: tracwatchlist/plugin.py:620 tracwatchlist/templates/watchlist.html:69
 #: tracwatchlist/templates/wl-example.html:20
 msgid "Unwatch"
 msgstr ""
 
-#: tracwatchlist/plugin.py:600
+#: tracwatchlist/plugin.py:623
 #, python-format
 msgid "Remove %s from watchlist"
 msgstr ""
 
-#: tracwatchlist/plugin.py:602
+#: tracwatchlist/plugin.py:625
 msgid "Watch"
 msgstr ""
 
-#: tracwatchlist/plugin.py:605
+#: tracwatchlist/plugin.py:628
 #, python-format
 msgid "Add %s to watchlist"
 msgstr ""
 
-#: tracwatchlist/plugin.py:608
+#: tracwatchlist/plugin.py:631
 msgid "Do not Notify me"
 msgstr ""
 
-#: tracwatchlist/plugin.py:611
+#: tracwatchlist/plugin.py:634
 #, python-format
 msgid "Do not notify me if %s changes"
 msgstr ""
 
-#: tracwatchlist/plugin.py:613
+#: tracwatchlist/plugin.py:636
 msgid "Notify me"
 msgstr ""
 
-#: tracwatchlist/plugin.py:616
+#: tracwatchlist/plugin.py:639
 #, python-format
 msgid "Notify me if %s changes"
 msgstr ""
 
-#: tracwatchlist/plugin.py:676
+#: tracwatchlist/plugin.py:699
 msgid "DELETED!"
 msgstr ""
 
-#: tracwatchlist/plugin.py:785 tracwatchlist/plugin.py:801
+#: tracwatchlist/plugin.py:808 tracwatchlist/plugin.py:824
 msgid " added"
 msgstr ""
 
-#: tracwatchlist/plugin.py:790
+#: tracwatchlist/plugin.py:813
 msgid " removed"
 msgstr ""
 
-#: tracwatchlist/plugin.py:793
+#: tracwatchlist/plugin.py:816
 msgid " modified"
 msgstr ""
 
-#: tracwatchlist/plugin.py:793
+#: tracwatchlist/plugin.py:816
 msgid "diff"
 msgstr ""
 
-#: tracwatchlist/plugin.py:803
+#: tracwatchlist/plugin.py:826
 msgid " deleted"
 msgstr ""
 
-#: tracwatchlist/plugin.py:805
+#: tracwatchlist/plugin.py:828
 msgid " changed from "
 msgstr ""
 
-#: tracwatchlist/plugin.py:806
+#: tracwatchlist/plugin.py:829
 msgid " to "
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:43
+#: tracwatchlist/templates/orderadd.html:9
+msgid "Columns"
+msgstr ""
+
+#: tracwatchlist/templates/orderadd.html:13
+msgid "Active columns"
+msgstr ""
+
+#: tracwatchlist/templates/orderadd.html:18
+msgid "Available columns"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:44
 msgid "Add"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:51
+#: tracwatchlist/templates/watchlist.html:52
 msgid "Remove"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:95
+#: tracwatchlist/templates/watchlist.html:96
 msgid "Not found"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:97
+#: tracwatchlist/templates/watchlist.html:98
 #, python-format
 msgid ""
 "The following selected %(realm)ss where not found\n"
@@ -260,35 +272,35 @@ msgid ""
 "watchlist:"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:104
+#: tracwatchlist/templates/watchlist.html:105
 msgid "The following patterns did not result in any matches:"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:112
-#: tracwatchlist/templates/watchlist.html:121
+#: tracwatchlist/templates/watchlist.html:113
+#: tracwatchlist/templates/watchlist.html:122
 msgid "Already on Watchlist"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:113
+#: tracwatchlist/templates/watchlist.html:114
 #, python-format
 msgid ""
 "Selected %(realm)s is already watched.\n"
 "                      ([1:Unwatch it?])%(resid)s"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:122
+#: tracwatchlist/templates/watchlist.html:123
 #, python-format
 msgid ""
 "The following selected %(realm)ss where already\n"
 "                      on the watchlist:"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:133
-#: tracwatchlist/templates/watchlist.html:142
+#: tracwatchlist/templates/watchlist.html:134
+#: tracwatchlist/templates/watchlist.html:143
 msgid "Added to Watchlist"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:134
+#: tracwatchlist/templates/watchlist.html:135
 #, python-format
 msgid ""
 "The selected %(realm)s was added\n"
@@ -296,7 +308,7 @@ msgid ""
 "                      ([1:Remove again])%(resid)s"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:143
+#: tracwatchlist/templates/watchlist.html:144
 #, python-format
 msgid ""
 "The following selected %(realm)ss where added\n"
@@ -304,12 +316,12 @@ msgid ""
 "                      ([1:Remove them again])"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:158
-#: tracwatchlist/templates/watchlist.html:169
+#: tracwatchlist/templates/watchlist.html:159
+#: tracwatchlist/templates/watchlist.html:170
 msgid "Removed from Watchlist"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:160
+#: tracwatchlist/templates/watchlist.html:161
 #, python-format
 msgid ""
 "The selected %(realm)s was removed\n"
@@ -317,7 +329,7 @@ msgid ""
 "                      ([1:Add again])%(resid)s"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:171
+#: tracwatchlist/templates/watchlist.html:172
 #, python-format
 msgid ""
 "The following selected %(realm)ss where removed\n"
@@ -325,32 +337,32 @@ msgid ""
 "                      ([1:Add them again])"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:184
+#: tracwatchlist/templates/watchlist.html:185
 msgid "Not on Watchlist"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:186
+#: tracwatchlist/templates/watchlist.html:187
 #, python-format
 msgid ""
 "The following to-be-deleted %(realm)ss\n"
 "                        where not on the watchlist:"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:195
+#: tracwatchlist/templates/watchlist.html:196
 msgid ""
 "The following patterns did not result\n"
 "                        in any matches in the watchlist:"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:207
+#: tracwatchlist/templates/watchlist.html:208
 msgid "Preferences"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:213
+#: tracwatchlist/templates/watchlist.html:216
 msgid "Save changes"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist.html:214
+#: tracwatchlist/templates/watchlist.html:217
 msgid "Reset"
 msgstr ""
 

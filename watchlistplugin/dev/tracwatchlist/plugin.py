@@ -315,6 +315,29 @@ class WatchlistPlugin(Component):
         wldict['settings'] = settings
         wldict['autocomplete'] = settings['autocomplete_inputs'] # TODO: remove
         wldict['dynamictable'] = settings['dynamic_tables'] # TODO: remove
+        wldict['available_columns'] = { # FIXME: make this dynamic
+            'wiki': [
+                'name',
+                'datetime',
+                'author',
+                'version',
+                'diff',
+                'history',
+                'unwatch',
+                'notify',
+                'comment',
+                ],
+            'ticket': [
+                'id',
+                'datetime',
+                'author',
+                'commentnum',
+                'unwatch',
+                'changes',
+                'comment',
+                ],
+        }
+        wldict['active_columns'] = wldict['available_columns'] # FIXME
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1

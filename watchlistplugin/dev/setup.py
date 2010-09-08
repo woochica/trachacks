@@ -47,6 +47,7 @@ setup(
             'htdocs/js/dynamictables.js',
             'htdocs/js/autocomplete.js',
             'htdocs/js/watchlist.js',
+            'htdocs/js/orderadd.js',
             'locale/*/LC_MESSAGES/*.mo',
             'templates/*.html',
         ],
