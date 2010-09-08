@@ -20,10 +20,15 @@
           <div class="watchlist-parent" id="wikilist-parent" py:if="wikilist">
             <table class="watchlist" id="wikilist">
               <thead>
-                <tr>
+                <tr py:with="attr = {
+                    'history': { 'class':'nosorting' },
+                    'diff': { 'class':'nosorting' },
+                    'unwatch': { 'class':'nosorting' },
+                    'notify': { 'class':'nosorting' },
+                  }">
                   <th py:for="k in active_columns[realm]"
                       py:if="k != 'notify' or notifications"
-                      class="${k}">${available_columns[realm][k]}</th>
+                      class="${k}" py:attrs="attr.get(k,{})">${available_columns[realm][k]}</th>
                 </tr>
               </thead>
               <tbody>

@@ -20,10 +20,13 @@
             <div class="watchlist-parent" id="ticketlist-parent" py:if="ticketlist">
             <table class="watchlist" id="ticketlist">
               <thead>
-                <tr>
+                <tr py:with="attr = {
+                    'unwatch': { 'class':'nosorting' },
+                    'notify': { 'class':'nosorting' },
+                  }">
                   <th py:for="k in active_columns[realm]"
                       py:if="k != 'notify' or notifications"
-                      class="${k}">${available_columns[realm][k]}</th>
+                      class="${k}" py:attrs="attr.get(k,{})">${available_columns[realm][k]}</th>
                 </tr>
               </thead>
               <tbody>
