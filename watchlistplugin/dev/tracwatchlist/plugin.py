@@ -151,6 +151,11 @@ class WatchlistPlugin(Component):
         newoptions = req.args.get('options',[])
         for k in settings.keys():
           settings[k] = k in newoptions
+        for realm in self.realms:
+          try:
+            settings[realm + '_columns'] = req.args.get(realm + '_columns')
+          except:
+            pass
         self._save_user_settings(req.authname, settings)
 
     def get_settings(self, user):
@@ -222,7 +227,7 @@ class WatchlistPlugin(Component):
     def _save_user_settings(self, user, settings):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        #cursor.log = self.env.log
+        #cursor.log = self.log
 
         settingsstr = "&".join([ "=".join([k,unicode(v)]) for k,v in settings.iteritems()])
 
@@ -262,15 +267,22 @@ class WatchlistPlugin(Component):
         """, (user,))
 
         try:
+          def strtoval (val):
+            if   val == 'True':
+              return True
+            elif val == 'False':
+              return False
+            else:
+              return val
           (settingsstr,) = cursor.fetchone()
-          self.env.log.debug("WL SET: " + settingsstr)
+          self.log.debug("WL SET: " + settingsstr)
           d = dict([
-              (k,v == 'True') for k,v in [ kv.split('=') for kv in settingsstr.split("&") ]
+              (k,strtoval(v)) for k,v in [ kv.split('=') for kv in settingsstr.split("&") ]
           ])
-          self.env.log.debug("WL SETd: " + unicode(d))
+          self.log.debug("WL SETd: " + unicode(d))
           return d
         except Exception, e:
-          self.env.log.debug("WL get user settings: " + unicode(e))
+          self.log.debug("WL get user settings: " + unicode(e))
           return dict()
 
 
@@ -337,7 +349,17 @@ class WatchlistPlugin(Component):
                 'comment',
                 ],
         }
-        wldict['active_columns'] = wldict['available_columns'] # FIXME
+        wldict['default_columns'] = wldict['available_columns'] # FIXME
+        wldict['active_columns'] = {}
+        for realm in self.realms:
+            cols = settings.get(realm + '_columns','').split(',')
+            self.log.debug( "WL SC = " + unicode(cols) )
+            if not cols or cols == ['']:
+                cols = wldict['default_columns'].get(realm,[])
+                self.log.debug( "WL EC = " + unicode(cols) )
+            wldict['active_columns'][realm] = cols
+        self.log.debug( "WL DC = " + unicode(wldict['default_columns']) )
+        self.log.debug( "WL AC = " + unicode(wldict['active_columns']) )
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1
@@ -388,7 +410,7 @@ class WatchlistPlugin(Component):
               new_res.extend(set(reses).difference(alw_res))
 
           if new_res:
-            cursor.log = self.env.log
+            #cursor.log = self.env.log
             cursor.executemany("""
               INSERT
                 INTO watchlist (wluser, realm, resid)
