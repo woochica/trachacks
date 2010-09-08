@@ -63,7 +63,8 @@ class WatchlistPlugin(Component):
     """For documentation see http://trac-hacks.org/wiki/WatchlistPlugin"""
     providers = ExtensionPoint(IWatchlistProvider)
 
-    implements( IRequestHandler, IRequestFilter, ITemplateProvider, IPreferencePanelProvider )
+    implements( IRequestHandler, IRequestFilter, ITemplateProvider ) 
+    #, IPreferencePanelProvider ) # Disabled for now. Needs code dublication and isn't really necessary 
 
 
     options = {
@@ -83,9 +84,6 @@ class WatchlistPlugin(Component):
     gsettings = dict( [ (name, BoolOption('watchlist',name,data[0],data[1]) ) for (name,data) in options.iteritems() ] )
 
     wsub = None
-
-    # Per user setting # FTTB FIXME
-    notifyctxtnav = gsettings['display_notify_navitems']
 
     def __init__(self):
       self.realms = []
@@ -142,10 +140,10 @@ class WatchlistPlugin(Component):
         settings = self.get_settings( req.authname )
 
         if req.method == 'POST':
-            self._handle_settings();
+            self._handle_settings(req, settings);
             req.redirect(req.href.prefs(panel))
 
-        return ('watchlist_prefs_main.html', { 'settings': settings, 'options': self.options })
+        return ('watchlist_prefs_main.html', { 'settings': settings, 'options': self.options, 'realms': self.realms })
 
     def _handle_settings(self, req, settings):
         newoptions = req.args.get('options',[])
@@ -162,8 +160,6 @@ class WatchlistPlugin(Component):
         settings = {}
         settings.update( [ ( name,self.config.getbool('watchlist',name) ) for name in self.options.keys() ] )
         settings.update( self._get_user_settings(user) )
-        if not self.wsub:
-          settings['notifications'] = False
         return settings
 
     def is_notify(self, req, realm, resid):
@@ -288,7 +284,6 @@ class WatchlistPlugin(Component):
 
     def process_request(self, req):
         user  = to_unicode( req.authname )
-        settings = self.get_settings( user )
         realm = to_unicode( req.args.get('realm', u'') )
         resid = req.args.get('resid', u'')
         resids = []
@@ -314,31 +309,33 @@ class WatchlistPlugin(Component):
         wldict = req.args.copy()
         wldict['action'] = action
 
+        settings = self.get_settings( user )
         # Needed here to get updated settings
         if action == "save":
           self._handle_settings(req, settings)
           action = "view"
 
+        settings = self.get_settings( user )
         wldict['perm']   = req.perm
         wldict['realms'] = self.realms
         wldict['error']  = False
-        wldict['notifications'] = settings['notifications'] and settings['display_notify_column']
+        wldict['notifications'] = bool(self.wsub and settings['notifications'] and settings['display_notify_column'])
         wldict['options'] = self.options
         wldict['settings'] = settings
         wldict['autocomplete'] = settings['autocomplete_inputs'] # TODO: remove
         wldict['dynamictable'] = settings['dynamic_tables'] # TODO: remove
         wldict['available_columns'] = {}
         wldict['default_columns'] = {}
-        for realm in self.realms:
-            wldict['available_columns'][realm],wldict['default_columns'][realm] = self.realm_handler[realm].get_columns(realm)
+        for r in self.realms:
+            wldict['available_columns'][r],wldict['default_columns'][r] = self.realm_handler[r].get_columns(r)
         wldict['active_columns'] = {}
-        for realm in self.realms:
-            cols = settings.get(realm + '_columns','').split(',')
+        for r in self.realms:
+            cols = settings.get(r + '_columns','').split(',')
             self.log.debug( "WL SC = " + unicode(cols) )
             if not cols or cols == ['']:
-                cols = wldict['default_columns'].get(realm,[])
+                cols = wldict['default_columns'].get(r,[])
                 self.log.debug( "WL EC = " + unicode(cols) )
-            wldict['active_columns'][realm] = cols
+            wldict['active_columns'][r] = cols
         self.log.debug( "WL DC = " + unicode(wldict['default_columns']) )
         self.log.debug( "WL AC = " + unicode(wldict['active_columns']) )
 
@@ -405,7 +402,7 @@ class WatchlistPlugin(Component):
             req.session['watchlist_message'] = _(
               "You are now watching this resource."
             )
-          if settings['notifications'] and settings['notify_by_default']:
+          if self.wsub and settings['notifications'] and settings['notify_by_default']:
             for res in new_res:
               self.set_notify(req, realm, res)
             db.commit()
@@ -460,7 +457,7 @@ class WatchlistPlugin(Component):
             req.session['watchlist_message'] = _(
               "You are no longer watching this resource."
             )
-          if settings['notifications'] and settings['notify_by_default']:
+          if self.wsub and settings['notifications'] and settings['notify_by_default']:
             for res in del_res:
               self.unset_notify(req, realm, res)
             db.commit()
@@ -475,7 +472,7 @@ class WatchlistPlugin(Component):
         wldict['alw_res'] = alw_res
 
         if action == "notifyon":
-            if settings['notifications']:
+            if self.wsub and settings['notifications']:
               for res in resids:
                 self.set_notify(req, realm, res)
               db.commit()
@@ -491,7 +488,7 @@ class WatchlistPlugin(Component):
               raise RequestDone
             action = "view"
         elif action == "notifyoff":
-            if settings['notifications']:
+            if self.wsub and settings['notifications']:
               for res in resids:
                 self.unset_notify(req, realm, res)
               db.commit()
@@ -629,7 +626,7 @@ class WatchlistPlugin(Component):
                     href=req.href('watchlist', action='watch',
                     resid=resid, realm=realm),
                     title=_("Add %s to watchlist") % realm)
-            if settings['notifications'] and settings['display_notify_navitems']:
+            if self.wsub and settings['notifications'] and settings['display_notify_navitems']:
               if self.is_notify(req, realm, resid):
                 add_ctxtnav(req, _("Do not Notify me"),
                     href=req.href('watchlist', action='notifyoff',
