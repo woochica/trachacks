@@ -21,10 +21,10 @@
             <table class="watchlist" id="wikilist">
               <thead>
                 <tr py:with="attr = {
-                    'history': { 'class':'nosorting' },
-                    'diff': { 'class':'nosorting' },
-                    'unwatch': { 'class':'nosorting' },
-                    'notify': { 'class':'nosorting' },
+                    'history': { 'class':'history sorting_disabled' },
+                    'diff': { 'class':'diff sorting_disabled' },
+                    'unwatch': { 'class':'unwatch sorting_disabled' },
+                    'notify': { 'class':'notify sorting_disabled' },
                   }">
                   <th py:for="k in active_columns[realm]"
                       py:if="k != 'notify' or notifications"

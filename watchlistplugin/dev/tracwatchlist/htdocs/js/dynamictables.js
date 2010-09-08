@@ -12,7 +12,7 @@ jQuery(document).ready(function() {
     // Disabled sorting of marked columns (unwatch, notify, etc.)
     var aoColumns = [];
     $(this).find('thead th').each( function () {
-      if ( $(this).hasClass( 'nosorting' ) ) {
+      if ( $(this).hasClass( 'sorting_disabled' ) ) {
         aoColumns.push( { "bSortable": false, "bSearchable": false } );
       } else {
         aoColumns.push( null );
