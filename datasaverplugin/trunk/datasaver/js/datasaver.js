@@ -43,8 +43,8 @@ function datasaver_check()
     var formdough = datasaver_load()
     if (formdough)
     {
-        if (confirm("There is previous form data present for this page.  " +
-                    "Do you wnat to restore it?"))
+        if (confirm(_("There is previous form data present " +
+                      "for this page. Do you want to restore it?")))
         {
             datasaver_restore(formdough);
         }
@@ -134,8 +134,8 @@ function datasaver_restore(formdough)
     formdough = formdough || datasaver_loaded
     if (formdough)
     {
-        if (confirm("Are you sure you want to restore?  Anything unsaved "+
-                    "on this page will be lost!"))
+        if (confirm(_("Are you sure you want to restore? " +
+                      "Anything unsaved on this page will be lost!")))
         {
             // Break up dough at &'s
             var formdata = []
@@ -157,7 +157,7 @@ function datasaver_restore(formdough)
     }
     else
     {
-        alert("No form data is available for restoration.")
+        alert(_("No form data is available for restoration."))
     }
 }
 
