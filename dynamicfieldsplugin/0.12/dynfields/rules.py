@@ -113,9 +113,13 @@ class CopyRule(Component, Rule):
     
       [ticket-custom]
       captain.copy_from = owner
+      captain.overwrite = true
       
     In this example, if the owner value changes, then the captain field's
-    value gets set to that value if the captain field is empty and visible.
+    value gets set to that value, if the captain field is empty and visible
+    (the default). If overwrite is true, then the captain field's value
+    will get over-written, even if it already has a value (and even if it's
+    hidden).
     """
     
     implements(IRule)
@@ -127,6 +131,7 @@ class CopyRule(Component, Rule):
         
     def update_spec(self, req, key, opts, spec):
         spec['op'] = 'copy'
+        spec['overwrite'] = opts.get(spec['target']+'.overwrite','false')
 
     def update_pref(self, req, trigger, target, key, opts, pref):
         pref['label'] = "Copy %s to %s" % (trigger, target)
