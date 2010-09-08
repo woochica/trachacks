@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-08-31 21:31+0200\n"
-"PO-Revision-Date: 2010-09-08 01:06+0100\n"
+"PO-Revision-Date: 2010-09-08 01:23+0100\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -43,47 +43,46 @@ msgstr "Spalte für Benachrichtungen einblenden"
 
 #: tracwatchlist/plugin.py:73
 msgid "Enable notifications by default for all watchlist entries"
-msgstr "Benachrichtigungen für alle beobachteten Dokumente aktivieren"
+msgstr ""
+"Benachrichtigungen für alle beobachteten Dokumente standardmäßig "
+"aktivieren"
 
 #: tracwatchlist/plugin.py:74
 msgid ""
 "The user stays at the resource after a watch/unwatch operation and the "
-"watchlist page is not displayed."
+"watchlist page is not displayed"
 msgstr ""
 "Nach 'Beobachten'/'Nicht mehr beobachten' Aktionen verbleibt der Benutzer"
-" auf dem Dokument.\"\n"
-"\"Die Beobachtungsliste wird nicht angezeigen."
+" auf dem Dokument, d.h. die Beobachtungsliste wird nicht angezeigen"
 
 #: tracwatchlist/plugin.py:75
 msgid ""
 "The user stays at the resource after a notify/do-not-notify operation and"
-" the watchlist page is not displayed."
+" the watchlist page is not displayed"
 msgstr ""
-"Nachdem Benachrichtigungen ein oder ausgeschaltet wurden verbleibt der "
-"Benutzer auf dem Dokument.\"\n"
-"\"Die Beobachtungsliste wird nicht angezeigen."
+"Nachdem Benachrichtigungen ein- oder ausgeschaltet wurden verbleibt der "
+"Benutzer auf dem Dokument, d.h. die Beobachtungsliste wird nicht "
+"angezeigen"
 
 #: tracwatchlist/plugin.py:76
-msgid "Action messages are shown on resource pages."
-msgstr "Aktionsnachrichten werden auf dem jeweiligen Dokument angezeigt."
+msgid "Action messages are shown on resource pages"
+msgstr "Aktionsnachrichten werden auf dem jeweiligen Dokument angezeigt"
 
 #: tracwatchlist/plugin.py:77
-msgid "Action messages are shown when going to the watchlist page."
+msgid "Action messages are shown when going to the watchlist page"
 msgstr ""
 "Aktionsnachrichten werden angezeigt wenn auf die Beobachtungsliste "
-"gewechselt wird."
+"gewechselt wird"
 
 #: tracwatchlist/plugin.py:78
-msgid "Show action messages while on watchlist page."
+msgid "Show action messages while on watchlist page"
 msgstr ""
 "Aktionsnachrichten werden angezeigt wenn man sich auf der "
-"Beobachtungsliste befindet."
+"Beobachtungsliste befindet"
 
 #: tracwatchlist/plugin.py:79
-msgid "Autocomplete input fields (add/remove resources)."
-msgstr ""
-"Automatische Vervollständigung von Eingabefeldern ('Weitere X'/'Entferne "
-"X')."
+msgid "Autocomplete input fields (add/remove resources)"
+msgstr "Automatische Vervollständigung von Eingabefeldern ('Weitere'/'Entferne')"
 
 #: tracwatchlist/plugin.py:80
 msgid "Dynamic watchlist tables."
@@ -374,6 +373,23 @@ msgid ""
 "                        in any matches in the watchlist:"
 msgstr "Die folgenden Ausdrücke waren auf die Beobachtungsliste nicht zutreffend:"
 
+#: tracwatchlist/templates/watchlist.html:207
+msgid "Preferences"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:213
+#, fuzzy
+msgid "Save changes"
+msgstr "Änderungen"
+
+#: tracwatchlist/templates/watchlist.html:214
+msgid "Reset"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist_prefs.html:9
+msgid "General"
+msgstr ""
+
 #: tracwatchlist/templates/wl-example.html:14
 #: tracwatchlist/templates/wl-example.html:36
 msgid "Example"
@@ -402,7 +418,7 @@ msgstr "Ihnen fehlt die Leseberechtigung für Tickets."
 
 #: tracwatchlist/templates/wl-ticket.html:40
 #: tracwatchlist/templates/wl-wiki.html:39
-#, fuzzy, python-format
+#, python-format
 msgid "([1:%(timeline_link)s] ago)"
 msgstr "(vor [1:%(timeline_link)s])"
 
@@ -422,16 +438,4 @@ msgstr "Ihnen fehlt die Leseberechtigung für Wiki-Seiten."
 #: tracwatchlist/templates/wl-wiki.html:67
 msgid "No wikis are currently watched."
 msgstr "Momentan werden keine Wiki-Seiten beobachtet."
-
-#~ msgid "Preferences"
-#~ msgstr ""
-
-#~ msgid "Save changes"
-#~ msgstr "Änderungen"
-
-#~ msgid "Reset"
-#~ msgstr ""
-
-#~ msgid "General"
-#~ msgstr ""
 

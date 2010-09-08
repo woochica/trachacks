@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.6\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-08 01:03+0100\n"
+"POT-Creation-Date: 2010-09-08 01:21+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -48,29 +48,29 @@ msgstr ""
 #: tracwatchlist/plugin.py:74
 msgid ""
 "The user stays at the resource after a watch/unwatch operation and "
-"the watchlist page is not displayed."
+"the watchlist page is not displayed"
 msgstr ""
 
 #: tracwatchlist/plugin.py:75
 msgid ""
 "The user stays at the resource after a notify/do-not-notify operation"
-" and the watchlist page is not displayed."
+" and the watchlist page is not displayed"
 msgstr ""
 
 #: tracwatchlist/plugin.py:76
-msgid "Action messages are shown on resource pages."
+msgid "Action messages are shown on resource pages"
 msgstr ""
 
 #: tracwatchlist/plugin.py:77
-msgid "Action messages are shown when going to the watchlist page."
+msgid "Action messages are shown when going to the watchlist page"
 msgstr ""
 
 #: tracwatchlist/plugin.py:78
-msgid "Show action messages while on watchlist page."
+msgid "Show action messages while on watchlist page"
 msgstr ""
 
 #: tracwatchlist/plugin.py:79
-msgid "Autocomplete input fields (add/remove resources)."
+msgid "Autocomplete input fields (add/remove resources)"
 msgstr ""
 
 #: tracwatchlist/plugin.py:80
@@ -340,6 +340,22 @@ msgstr ""
 msgid ""
 "The following patterns did not result\n"
 "                        in any matches in the watchlist:"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:207
+msgid "Preferences"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:213
+msgid "Save changes"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:214
+msgid "Reset"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist_prefs.html:9
+msgid "General"
 msgstr ""
 
 #: tracwatchlist/templates/wl-example.html:14
