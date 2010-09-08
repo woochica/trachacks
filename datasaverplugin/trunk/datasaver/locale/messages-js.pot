@@ -1,0 +1,36 @@
+# Translations template for DataSaverPlugin.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the DataSaverPlugin
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: DataSaverPlugin 2.0\n"
+"Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
+"POT-Creation-Date: 2010-08-16 00:46+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#: datasaver/js/datasaver.js:46
+msgid ""
+"There is previous form data present for this page. Do you want to restore"
+" it?"
+msgstr ""
+
+#: datasaver/js/datasaver.js:137
+msgid ""
+"Are you sure you want to restore? Anything unsaved on this page will be "
+"lost!"
+msgstr ""
+
+#: datasaver/js/datasaver.js:160
+msgid "No form data is available for restoration."
+msgstr ""
+
