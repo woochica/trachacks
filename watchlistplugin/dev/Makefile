@@ -10,3 +10,6 @@ messages:
 	python ./setup.py extract_messages
 	python ./setup.py update_catalog
 
+upload:
+	python setup.py bdist_egg upload
+
