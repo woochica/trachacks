@@ -24,7 +24,7 @@
                   <th py:for="k in ['id', 'datetime', 'author', 'commentnum']"
                       class="${k}">${th.get(k)}&nbsp;&nbsp;&nbsp;</th>
                   <th class="unwatch nosorting">${th.get('unwatch')}</th>
-                  <th py:if="notify" class="notify nosorting">
+                  <th py:if="notifications" class="notify nosorting">
                       ${th['notify']}&nbsp;&nbsp;&nbsp;</th>
                   <th py:for="k in ['changes', 'comment']"
                       class="${k}">${th.get(k)}&nbsp;&nbsp;&nbsp;</th>
@@ -48,7 +48,7 @@
                   <td class="unwatch"><a class="plainlink"
                       href="${href.watchlist(action='unwatch',realm='ticket',
                       resid=ticket.id)}">${unwatchicon()}</a></td>
-                  <td class="notify" py:if="notify">
+                  <td class="notify" py:if="notifications">
                       ${notifybox('ticket',ticket.id,ticket.notify)}</td>
                   <td class="changes">$ticket.changes</td>
                   <td class="comment">$ticket.comment</td>

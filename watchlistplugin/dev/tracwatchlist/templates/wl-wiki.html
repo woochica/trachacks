@@ -21,45 +21,46 @@
             <table class="watchlist" id="wikilist">
               <thead>
                 <tr>
-                  <th py:for="k in ['name', 'datetime', 'author', 'version']"
-                      class="${k}">${th.get(k)}&nbsp;&nbsp;&nbsp;</th>
-                  <th py:for="k in ['diff', 'history', 'unwatch']"
-                      class="${k} nosorting">${th.get(k)}</th>
-                  <th py:if="notify" class="notify">
-                      ${th['notify']}&nbsp;&nbsp;&nbsp;</th>
-                  <th class="comment">
-                      ${th['comment']}&nbsp;&nbsp;&nbsp;</th>
+                  <th py:for="k in active_columns[realm]"
+                      py:if="k != 'notify' or notifications"
+                      class="${k}">${available_columns[realm][k]}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr py:for="page in wikilist">
-                  <td class="name">${link('wiki',page.name,
+                  <td py:def="td_name" class="name">${link('wiki',page.name,
                       text=page.name)}</td>
-                  <td class="datetime">$page.datetime
+                  <td py:def="td_datetime" class="datetime">$page.datetime
                       <span py:if="page.timedelta"
                         i18n:msg="timeline_link, timedelta"> (<a
                         href="$page.timeline_link">$page.timedelta</a> ago)</span></td>
-                  <td class="author">$page.author</td>
-                  <td class="version"><a py:if="not page.deleted"
+                  <td py:def="td_author" class="author">$page.author</td>
+                  <td py:def="td_version" class="version"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,
                       version=page.version)}">$page.version</a></td>
-                  <td class="diff"><a py:if="not page.deleted"
+                  <td py:def="td_diff" class="diff"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,action='diff',
                         version=page.version)}">
                         <img src="${href.chrome('watchlist/ico/diff.png')}"
                           width="16px" height="16px" title="Diff"
                           alt="Diff" /></a></td>
-                  <td class="history"><a py:if="not page.deleted"
+                  <td py:def="td_history" class="history"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,action='history')}">
                         <img src="${href.chrome('watchlist/ico/history.png')}"
                           width="16px" height="16px" title="History"
                           alt="History" /></a></td>
-                  <td class="unwatch"><a class="plainlink"
+                  <td py:def="td_unwatch" class="unwatch"><a class="plainlink"
                       href="${href.watchlist(action='unwatch',realm='wiki',
                       resid=page.name)}">${unwatchicon()}</a></td>
-                  <td class="notify" py:if="notify">
+                  <td py:def="td_notify" class="notify" py:if="notifications">
                       ${notifybox('wiki',page.name,page.notify)}</td>
-                  <td class="comment">$page.comment</td>
+                  <py:if test="not notifications">
+                    <py:def function="td_notify"/>
+                  </py:if>
+                  <td py:def="td_comment" class="comment">$page.comment</td>
+                <tr py:for="page in wikilist">
+                  <py:for each="k in active_columns[realm]">
+                      ${value_of('td_' + k)()}
+                  </py:for>
                 </tr>
               </tbody>
             </table>

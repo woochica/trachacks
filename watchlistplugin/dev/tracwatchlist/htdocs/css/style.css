@@ -1,7 +1,7 @@
 table {
     border-bottom: medium solid;
     border-top: medium solid;
-    width: 100%;
+    /* width: 100%; */
     table-layout: auto;
     margin: 0.5ex 0ex;
 }
@@ -25,7 +25,7 @@ table.watchlist {
 }
 
 table#wikilist td.comment {
-    width: 100%;
+    /* width: 100%; */
     white-space: normal;
 }
 
@@ -37,11 +37,12 @@ td.version, td.commentnum, td.id, td.notify, td.unwatch, td.diff, td.history {
     text-align: center;
 }
 
-th.version, th.datetime, th.author, th.commentnum, th.id, th.notify, th.unwatch, th.diff, th.history,
-td.version, td.datetime, td.author, td.commentnum, td.id, td.notify, td.unwatch, td.diff, td.history {
-   /* Hold width minimal */
+/*
+th.name, th.version, th.datetime, th.author, th.commentnum, th.id, th.notify, th.unwatch, th.diff, th.history,
+td.name, td.version, td.datetime, td.author, td.commentnum, td.id, td.notify, td.unwatch, td.diff, td.history {
     width: 1%;
 }
+*/
 
 span.notifyon {
     color:green;

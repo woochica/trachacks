@@ -322,34 +322,15 @@ class WatchlistPlugin(Component):
         wldict['perm']   = req.perm
         wldict['realms'] = self.realms
         wldict['error']  = False
-        wldict['notify'] = settings['notifications'] and settings['display_notify_column']
+        wldict['notifications'] = settings['notifications'] and settings['display_notify_column']
         wldict['options'] = self.options
         wldict['settings'] = settings
         wldict['autocomplete'] = settings['autocomplete_inputs'] # TODO: remove
         wldict['dynamictable'] = settings['dynamic_tables'] # TODO: remove
-        wldict['available_columns'] = { # FIXME: make this dynamic
-            'wiki': [
-                'name',
-                'datetime',
-                'author',
-                'version',
-                'diff',
-                'history',
-                'unwatch',
-                'notify',
-                'comment',
-                ],
-            'ticket': [
-                'id',
-                'datetime',
-                'author',
-                'commentnum',
-                'unwatch',
-                'changes',
-                'comment',
-                ],
-        }
-        wldict['default_columns'] = wldict['available_columns'] # FIXME
+        wldict['available_columns'] = {}
+        wldict['default_columns'] = {}
+        for realm in self.realms:
+            wldict['available_columns'][realm],wldict['default_columns'][realm] = self.realm_handler[realm].get_columns(realm)
         wldict['active_columns'] = {}
         for realm in self.realms:
             cols = settings.get(realm + '_columns','').split(',')
