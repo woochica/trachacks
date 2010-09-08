@@ -2,18 +2,22 @@
     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/"
-      xmlns:xi="http://www.w3.org/2001/XInclude">
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="dynfields">
   <xi:include href="prefs.html" />
   <head>
-    <title>Dynamic Fields Options</title>
+    <title i18n:comment="browser window title" i18n:msg="">
+      Dynamic Fields Options
+    </title>
   </head>
   <body>
     <div py:if="saved" class="system-message" id="notice">
       Your preferences have been saved.
     </div>
-    <p class="hint">
-    Enable/disable a rule below by checking/unchecking its checkbox.
+    <p class="hint" i18n:msg="">
+      Enable/disable a rule below by checking/unchecking its checkbox.
     </p>
     <fieldset py:for="title in data">
       <legend>${title}</legend>
@@ -27,7 +31,8 @@
             ${pref['label']}
           </label>
           <select py:if="pref['type']=='select'" name="${pref['id']}.value">
-            <option py:for="option in pref['options']" value="${option}" selected="${(option==pref['value'] and 'selected') or None}">
+            <option py:for="option in pref['options']" value="${option}"
+                selected="${(option==pref['value'] and 'selected') or None}">
                 ${option}
             </option>
           </select>

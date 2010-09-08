@@ -1,11 +1,16 @@
 import re
+from pkg_resources import resource_filename
+
 from trac.core import *
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.config import ListOption
 from trac.prefs.api import IPreferencePanelProvider
-from rules import *
-from options import Options
+from trac.util.translation import domain_functions
+
+from dynfields.options import Options
+from dynfields.rules import add_domain, _, IRule
+
 
 class DynamicFieldsModule(Component):
     """A module that dynamically alters ticket fields based an extensible
@@ -13,16 +18,19 @@ class DynamicFieldsModule(Component):
     
     implements(IRequestFilter, IRequestHandler, ITemplateProvider,
                IPreferencePanelProvider)
-    
+
     rules = ExtensionPoint(IRule)
     
+    def __init__(self):
+    # bind the 'dynfields' catalog to the specified locale directory
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
+
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
         return [('dynfields', resource_filename(__name__, 'htdocs'))]
     
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     # IRequestFilter methods
@@ -74,7 +82,8 @@ class DynamicFieldsModule(Component):
     # IPreferencePanelProvider methods
     def get_preference_panels(self, req):
         if self._get_prefs_data(req): # only show if there are preferences
-            yield 'dynfields', 'Dynamic Fields'
+            # TRANSLATOR: the preferences tab label
+            yield 'dynfields', _("Dynamic Fields")
 
     def render_preference_panel(self, req, panel):
         opts = Options(self.env)

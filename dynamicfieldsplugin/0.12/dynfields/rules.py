@@ -1,5 +1,11 @@
 import re
 from trac.core import *
+from trac.util.translation import domain_functions
+
+
+add_domain, _, tag_ = \
+    domain_functions('dynfields', ('add_domain', '_', 'tag_'))
+
 
 class IRule(Interface):
     """An extension point interface for adding rules.  Rule processing
@@ -91,7 +97,17 @@ class ClearRule(Component, Rule):
     """
     
     implements(IRule)
-    
+
+    @property
+    def title(self):
+        title = _("Clear Rules")
+        return title
+
+    @property
+    def desc(self):
+        desc = _("Clears one field when another changes.")
+        return desc
+ 
     def get_trigger(self, target, key, opts):
         if key == '%s.clear_on_change_of' % target:
             return opts[key]
@@ -103,7 +119,8 @@ class ClearRule(Component, Rule):
         spec['clear_on_change'] = opts.get(target+'.clear_on_change','true')
 
     def update_pref(self, req, trigger, target, key, opts, pref):
-        pref['label'] = "Clear %s when %s changes" % (target, trigger)
+        # TRANSLATOR: checkbox label text for clear rules
+        pref['label'] = _("Clear %s when %s changes") % (target, trigger)
 
 
 class CopyRule(Component, Rule):
@@ -124,6 +141,17 @@ class CopyRule(Component, Rule):
     
     implements(IRule)
     
+    @property
+    def title(self):
+        title = _("Copy Rules")
+        return title
+
+    @property
+    def desc(self):
+        desc = _("Copies field content (when changed) to another field " \
+                 "(if empty and visible).")
+        return desc
+ 
     def get_trigger(self, target, key, opts):
         if key == '%s.copy_from' % target:
             return opts[key]
@@ -134,7 +162,8 @@ class CopyRule(Component, Rule):
         spec['overwrite'] = opts.get(spec['target']+'.overwrite','false')
 
     def update_pref(self, req, trigger, target, key, opts, pref):
-        pref['label'] = "Copy %s to %s" % (trigger, target)
+        # TRANSLATOR: checkbox label text for copy rules
+        pref['label'] = _("Copy %s to %s") % (trigger, target)
 
 
 class DefaultValueRule(Component, Rule):
@@ -148,6 +177,16 @@ class DefaultValueRule(Component, Rule):
     
     implements(IRule)
     
+    @property
+    def title(self):
+        title = _("Default Value Rules")
+        return title
+
+    @property
+    def desc(self):
+        desc = _("Defaults a field to a user-specified value.")
+        return desc
+ 
     def get_trigger(self, target, key, opts):
         if key == '%s.default_value' % target:
             return target
@@ -158,7 +197,8 @@ class DefaultValueRule(Component, Rule):
     
     def update_pref(self, req, trigger, target, key, opts, pref):
         # "Default trigger to <select options>"
-        pref['label'] = "Default %s to" % target
+        # TRANSLATOR: checkbox label text for default value rules
+        pref['label'] = _("Default %s to") % target
         pref['type'] = 'select'
 
 
@@ -176,6 +216,16 @@ class HideRule(Component, Rule):
     
     implements(IRule)
     
+    @property
+    def title(self):
+        title = _("Hide Rules")
+        return title
+
+    @property
+    def desc(self):
+        desc = _("Hides a field based on another field's value (or always).")
+        return desc
+ 
     def get_trigger(self, target, key, opts):
         rule_re = re.compile(r"%s.(?P<op>(show|hide))_when_(?P<trigger>.*)" \
                              % target)
@@ -197,18 +247,29 @@ class HideRule(Component, Rule):
     def update_pref(self, req, trigger, target, key, opts, pref):
         spec = {'trigger':trigger,'target':target}
         self.update_spec(req, key, opts, spec)
+        if spec['op'] == 'hide':
+            # TRANSLATOR: action name for conditional show/hide rules
+            opp = _("Hide")
+        else:
+            # TRANSLATOR: action name for conditional show/hide rules
+            opp = _("Show")
         # "Show/Hide target when trigger = value"
-        trigval = spec['trigger_value'].replace('|',' or ')
-        pref['label'] = "%s %s when %s = %s" % (self._capitalize(spec['op']),
-                                                target, trigger, trigval)
+        # TRANSLATOR: char/word to replace '|' = logic OR in 'value|value'
+        trigval = spec['trigger_value'].replace('|',_(" or "))
+        # TRANSLATOR: checkbox label text for conditional show/hide rules
+        pref['label'] = _("%s %s when %s = %s") \
+            % (opp, target, trigger, trigval)
         
         # special case when trigger value is not a select option
-        _,options = opts.get_value_and_options(req, trigger, key)
+        v,options = opts.get_value_and_options(req, trigger, key)
         value = spec['trigger_value']
         if options and value and value not in options and '|' not in value:
             # "Always hide/show target"
             if spec['op'] == 'hide':
-                opp = 'show'
+                # TRANSLATOR: action name for always-hide/show rules
+                opp = _("show")
             else:
-                opp = 'hide'
-            pref['label'] = "Always %s %s" % (opp, target)
+                # TRANSLATOR: action name for always-hide/show rules
+                opp = _("hide")
+            # TRANSLATOR: checkbox label text for always-hide/show rules
+            pref['label'] = _("Always %s %s") % (opp, target)
