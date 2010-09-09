@@ -31,7 +31,8 @@ from  trac.config            import  BoolOption
 from  trac.core              import  *
 from  trac.db                import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model      import  Ticket
-from  trac.util.datefmt      import  format_datetime, pretty_timedelta
+from  trac.util.datefmt      import  format_datetime, pretty_timedelta, \
+                                     to_datetime
 from  trac.util.text         import  to_unicode
 from  trac.web.api           import  IRequestFilter, IRequestHandler, \
                                      RequestDone
@@ -49,7 +50,7 @@ try:
     from  trac.util.datefmt  import  from_utimestamp
 except:
     def from_utimestamp( t ):
-        return t
+        return to_datetime( t )
 
 # Import translation functions. Fallbacks are provided for Trac 0.11.
 try:
@@ -764,15 +765,15 @@ class WikiWatchlist(BasicWatchlist):
           notify = False
           if wl.wsub:
             notify = wl.is_notify(req, 'wiki', name)
-          t = from_utimestamp( time )
+          dt = from_utimestamp( time )
           wikilist.append({
               'name' : name,
               'author' : author,
               'version' : version,
-              'datetime' : format_datetime( t, "%F %T %Z" ),
-              'timedelta' : pretty_timedelta( t ),
+              'datetime' : format_datetime( dt, "%F %T %Z" ),
+              'timedelta' : pretty_timedelta( dt ),
               'timeline_link' : req.href.timeline(precision='seconds',
-                  from_=format_datetime ( t, 'iso8601')),
+                  from_=format_datetime ( dt, 'iso8601')),
               'comment' : comment,
               'notify'  : notify,
           })
