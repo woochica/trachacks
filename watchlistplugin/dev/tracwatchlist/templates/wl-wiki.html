@@ -58,13 +58,14 @@
                       resid=page.name)}">${unwatchicon()}</a></td>
                   <td py:def="wiki_notify" class="notify" py:if="notifications">
                       ${notifybox('wiki',page.name,page.notify)}</td>
+                  <td py:def="wiki_generic" class="${k}">${page.get(k,'')}</td>
                   <py:if test="not notifications">
                     <py:def function="wiki_notify"/>
                   </py:if>
                   <td py:def="wiki_comment" class="comment">$page.comment</td>
                 <tr py:for="page in wikilist">
                   <py:for each="k in active_columns[realm]">
-                      ${value_of('wiki_' + k,empty_td)()}
+                      ${value_of('wiki_' + k,wiki_generic)()}
                   </py:for>
                 </tr>
               </tbody>

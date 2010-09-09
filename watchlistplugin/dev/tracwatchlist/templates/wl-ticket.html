@@ -50,9 +50,10 @@
                       ${notifybox('ticket',ticket.id,ticket.notify)}</td>
                   <td py:def="ticket_changes" class="changes">$ticket.changes</td>
                   <td py:def="ticket_comment" class="comment">$ticket.comment</td>
+                  <td py:def="ticket_generic" class="${k}">${ticket.get(k,'')}</td>
                 <tr py:for="ticket in ticketlist">
                   <py:for each="k in active_columns[realm]">
-                      ${value_of('ticket_' + k,empty_td)()}
+                      ${value_of('ticket_' + k,ticket_generic)()}
                   </py:for>
                 </tr>
               </tbody>
