@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-# General includes.
+# Standard imports.
 from datetime import *
 from copy import deepcopy
 
-# Trac includes.
+# Trac imports.
 from trac.core import *
 from trac.config import Option, IntOption
 from trac.mimeview import Context
@@ -22,12 +22,12 @@ from trac.util.html import html
 from trac.util.text import to_unicode
 from trac.util.presentation import Paginator
 
-# Trac interfaces includes.
+# Trac interfaces
 from trac.resource import IResourceManager
 from trac.perm import IPermissionRequestor
 from trac.attachment import ILegacyAttachmentPolicyDelegate
 
-# Genshi includes.
+# Genshi imports.
 from genshi.input import HTML
 from genshi.core import Markup
 from genshi.filters import Transformer
@@ -731,7 +731,7 @@ class DiscussionApi(Component):
                 # Get inserted forum with new ID.
                 context.forum = self.get_forum_by_time(context, forum['time'])
 
-                # Notify change listeners.
+                # Notify change listeners.
                 self.log.debug("forum_change_listeners: %s" % (
                   self.forum_change_listeners))
                 for listener in self.forum_change_listeners:
@@ -762,7 +762,7 @@ class DiscussionApi(Component):
                 # Perform forum edit.
                 self.edit_forum(context, context.forum['id'], forum)
 
-                # Notify change listeners.
+                # Notify change listeners.
                 for listener in self.forum_change_listeners:
                     listener.forum_changed(context, forum, context.forum)
 
@@ -775,7 +775,7 @@ class DiscussionApi(Component):
                 # Delete forum.
                 self.delete_forum(context, context.forum['id'])
 
-                # Notify change listeners.
+                # Notify change listeners.
                 for listener in self.forum_change_listeners:
                     listener.forum_deleted(context, context.forum)
 
@@ -796,7 +796,7 @@ class DiscussionApi(Component):
                         # Delete forum.
                         self.delete_forum(context, int(forum_id))
 
-                        # Notify change listeners.
+                        # Notify change listeners.
                         for listener in self.forum_change_listeners:
                             listener.forum_deleted(context, context.forum)
 
@@ -824,7 +824,7 @@ class DiscussionApi(Component):
                 # Edit topic.
                 self.edit_forum(context, context.forum['id'], forum)
 
-                # Notify change listeners.
+                # Notify change listeners.
                 for listener in self.forum_change_listeners:
                     listener.forum_changed(context, forum, context.forum)
 
@@ -845,7 +845,7 @@ class DiscussionApi(Component):
                     # Edit topic.
                     self.edit_forum(context, context.forum['id'], forum)
 
-                    # Notify change listeners.
+                    # Notify change listeners.
                     for listener in self.forum_change_listeners:
                         listener.forum_changed(context, forum, context.forum)
 
@@ -866,7 +866,7 @@ class DiscussionApi(Component):
                     # Edit topic.
                     self.edit_forum(context, context.forum['id'], forum)
 
-                    # Notify change listeners.
+                    # Notify change listeners.
                     for listener in self.forum_change_listeners:
                         listener.forum_changed(context, forum, context.forum)
 
@@ -941,7 +941,7 @@ class DiscussionApi(Component):
                            ' ').split()],
                          'body' : context.req.args.get('body')}
 
-                # Add user e-mail if subscription checked.
+                # Add user e-mail if subscription checked.
                 if context.req.args.get('subscribe') and context.authemail and \
                   not (context.authemail in topic['subscribers']):
                     topic['subscribers'].append(context.authemail)
@@ -999,7 +999,7 @@ class DiscussionApi(Component):
                 # Edit topic.
                 self.edit_topic(context, context.topic['id'], topic)
 
-                # Notify change listeners.
+                # Notify change listeners.
                 for listener in self.topic_change_listeners:
                     listener.topic_changed(context, topic, context.topic)
 
@@ -1036,7 +1036,7 @@ class DiscussionApi(Component):
                 # Delete topic.
                 self.delete_topic(context, context.topic['id'])
 
-                # Notify change listeners.
+                # Notify change listeners.
                 for listener in self.topic_change_listeners:
                     listener.topic_deleted(context, context.topic)
 
@@ -1069,7 +1069,7 @@ class DiscussionApi(Component):
                 # Edit topic.
                 self.edit_topic(context, context.topic['id'], topic)
 
-                # Notify change listeners.
+                # Notify change listeners.
                 for listener in self.topic_change_listeners:
                     listener.topic_changed(context, topic, context.topic)
 
@@ -1090,7 +1090,7 @@ class DiscussionApi(Component):
                 # Edit topic.
                 self.edit_topic(context, context.topic['id'], topic)
 
-                # Notify change listeners.
+                # Notify change listeners.
                 for listener in self.topic_change_listeners:
                     listener.topic_changed(context, topic, context.topic)
 
@@ -1111,7 +1111,7 @@ class DiscussionApi(Component):
                     # Edit topic.
                     self.edit_topic(context, context.topic['id'], topic)
 
-                    # Notify change listeners.
+                    # Notify change listeners.
                     for listener in self.topic_change_listeners:
                         listener.topic_changed(context, topic, context.topic)
 
@@ -1132,7 +1132,7 @@ class DiscussionApi(Component):
                     # Edit topic.
                     self.edit_topic(context, context.topic['id'], topic)
 
-                    # Notify change listeners.
+                    # Notify change listeners.
                     for listener in self.topic_change_listeners:
                         listener.topic_changed(context, topic, context.topic)
 
@@ -1219,7 +1219,7 @@ class DiscussionApi(Component):
                 # Edit message.
                 self.edit_message(context, context.message['id'], message)
 
-                # Notify change listeners.
+                # Notify change listeners.
                 for listener in self.message_change_listeners:
                     listener.message_changed(context, message, context.message)
 
@@ -1235,7 +1235,7 @@ class DiscussionApi(Component):
                 # Delete message.
                 self.delete_message(context, context.message['id'])
 
-                # Notify change listeners.
+                # Notify change listeners.
                 for listener in self.message_change_listeners:
                     listener.message_deleted(context, context.message)
 
@@ -1257,7 +1257,7 @@ class DiscussionApi(Component):
         # Update this topic visit time.
         context.visited_topics[topic['id']] = to_timestamp(datetime.now(utc))
 
-        # Get topic messages for the current page.
+        # Get topic messages for the current page.
         display = context.req.session.get('message-list-display') or \
           self.default_message_display
         if display == 'flat-asc':
@@ -1329,8 +1329,12 @@ class DiscussionApi(Component):
     # Get one item functions.
 
     def _get_item(self, context, table, columns, where = '', values = ()):
-        sql = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + (where
-          and (' WHERE ' + where) or '')
+        sql_values = {'columns' : ', '.join(columns),
+          'table' : table,
+          'where' : 'WHERE ' + where if where else ''}
+        sql = ("SELECT %(columns)s "
+               "FROM %(table)s "
+               "%(where)s" % (sql_values))
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
         for row in context.cursor:
@@ -1339,12 +1343,12 @@ class DiscussionApi(Component):
         return None
 
     def get_message(self, context, id):
-        # Get message by ID.
+        # Get message by ID.
         return self._get_item(context, 'message', ('id', 'forum', 'topic',
           'replyto', 'time', 'author', 'body'), 'id = %s', (id,))
 
     def get_message_by_time(self, context, time):
-        # Get message by time of creation.
+        # Get message by time of creation.
         return self._get_item(context, 'message', ('id', 'forum', 'topic',
           'replyto', 'time', 'author', 'body'), 'time = %s', (time,))
 
@@ -1410,7 +1414,7 @@ class DiscussionApi(Component):
         return forum
 
     def get_group(self, context, id):
-        # Get forum group or none group.
+        # Get forum group or none group.
         return self._get_item(context, 'forum_group', ('id', 'name',
           'description'), 'id = %s', (id,)) or {'id' : 0, 'name': 'None',
           'description': 'No Group'}
@@ -1425,8 +1429,11 @@ class DiscussionApi(Component):
     # Get items count functions.
 
     def _get_items_count(self, context, table, where = '', values = ()):
-        sql = 'SELECT COUNT(id) FROM ' + table + (where and (' WHERE ' +
-          where) or '')
+        sql_values = {'table' : table,
+          'where' : 'WHERE ' + where if where else ''}
+        sql = ("SELECT COUNT(id) "
+               "FROM %(table)s "
+               "%(where)s" % (sql_values))
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
         for row in context.cursor:
@@ -1445,11 +1452,19 @@ class DiscussionApi(Component):
 
     def _get_items(self, context, table, columns, where = '', values = (),
       order_by = '', desc = False, limit = 0, offset = 0):
-        sql = 'SELECT ' + ', '.join(columns) + ' FROM ' + table + (where
-          and (' WHERE ' + where) or '') + (order_by and (' ORDER BY ' +
-          order_by + (' ASC', ' DESC')[bool(desc)]) or '') + (limit and (
-          ' LIMIT ' + to_unicode(limit)) or '') + (offset and (' OFFSET ' +
-          to_unicode(offset)) or '')
+        sql_values = {'columns' : ', '.join(columns),
+          'table' : table,
+          'where' : 'WHERE ' + where if where else '',
+          'order_by' : 'ORDER BY ' + order_by + (' ASC', ' DESC')[bool(desc)]
+            if order_by else '',
+          'limit' : 'LIMIT ' + to_unicode(limit) if limit else '',
+          'offset' : ' OFFSET ' + to_unicode(offset) if offset else ''}
+        sql = ("SELECT %(columns)s "
+               "FROM %(table)s "
+               "%(where)s "
+               "%(order_by)s "
+               "%(limit)s "
+               "%(offset)s" % (sql_values))
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
         items = []
@@ -1460,7 +1475,9 @@ class DiscussionApi(Component):
 
     def get_groups(self, context, order_by = 'id', desc = False):
         # Get count of forums without group.
-        sql = "SELECT COUNT(f.id) FROM forum f WHERE f.forum_group = 0"
+        sql = ("SELECT COUNT(f.id) "
+               "FROM forum f "
+               "WHERE f.forum_group = 0")
         self.env.log.debug(sql)
         context.cursor.execute(sql)
         no_group_forums = 0
@@ -1473,11 +1490,16 @@ class DiscussionApi(Component):
         if order_by != 'forum':
             order_by = 'g.' + order_by
         columns = ('id', 'name', 'description', 'forums')
-        sql = "SELECT g.id, g.name, g.description, f.forums FROM " \
-          " forum_group g LEFT JOIN (SELECT COUNT(id) AS forums, " \
-          " forum_group FROM forum GROUP BY forum_group) f ON g.id = " \
-          " f.forum_group ORDER BY " + order_by + (" ASC",
-          " DESC")[bool(desc)]
+        sql_values = {'order_by' : 'ORDER BY ' + order_by +
+          (' ASC', ' DESC')[bool(desc)] if order_by else ''}
+        sql = ("SELECT g.id, g.name, g.description, f.forums "
+               "FROM forum_group g "
+               "LEFT JOIN "
+                 "(SELECT COUNT(id) AS forums, forum_group "
+                 "FROM forum "
+                 "GROUP BY forum_group) f "
+               "ON g.id = f.forum_group "
+               "%(order_by)s" % (sql_values))
         self.env.log.debug(sql)
         context.cursor.execute(sql)
         for row in context.cursor:
@@ -1488,53 +1510,74 @@ class DiscussionApi(Component):
     def get_forums(self, context, order_by = 'subject', desc = False):
 
         def _get_new_topic_count(context, forum_id):
-           time = int(context.visited_forums.has_key(forum_id) and
-             (context.visited_forums[forum_id] or 0))
-           sql = "SELECT COUNT(id) FROM topic t WHERE t.forum = %s AND t.time > %s"
-
-           self.env.log.debug(sql % (forum_id, time))
-           context.cursor.execute(sql, (forum_id, time))
+           sql_values = {'forum_id' : forum_id,
+             'time' : int(context.visited_forums.has_key(forum_id) and
+               (context.visited_forums[forum_id] or 0))}
+           sql = ("SELECT COUNT(id) "
+                  "FROM topic t "
+                  "WHERE t.forum = %(forum_id)s AND t.time > %(time)s" %
+                    (sql_values))
+           self.env.log.debug(sql)
+           context.cursor.execute(sql)
            for row in context.cursor:
               return int(row[0])
            return 0
 
         def _get_new_replies_count(context, forum_id):
-           sql = "SELECT id FROM topic t WHERE t.forum = %s"
-           self.env.log.debug(sql % (forum_id,))
-           context.cursor.execute(sql, (forum_id,))
+            sql_values = {'forum_id' : forum_id}
+            sql = ("SELECT id "
+                   "FROM topic t "
+                   "WHERE t.forum = %(forum_id)s" % (sql_values))
+            self.env.log.debug(sql)
+            context.cursor.execute(sql)
 
-           # Get IDs of topics in this forum.
-           topics = []
-           for row in context.cursor:
-               topics.append(row[0])
+            # Get IDs of topics in this forum.
+            topics = []
+            for row in context.cursor:
+                topics.append(row[0])
 
-           # Count unseen messages.
-           count = 0
-           for topic_id in topics:
-               time = int(context.visited_topics.has_key(topic_id) and
-                 (context.visited_topics[topic_id] or 0))
-               sql = "SELECT COUNT(id) FROM message m WHERE m.topic = %s AND m.time > %s"
-               self.env.log.debug(sql % (topic_id, time))
-               context.cursor.execute(sql, (topic_id, time))
-               for row in context.cursor:
+            #Count unseen messages.
+            count = 0
+            for topic_id in topics:
+                sql_values = {'topic_id' : topic_id,
+                  'time' : int(context.visited_topics.has_key(topic_id) and
+                    (context.visited_topics[topic_id] or 0))}
+                sql = ("SELECT COUNT(id) "
+                       "FROM message m "
+                       "WHERE m.topic = %(topic_id)s AND m.time > %(time)s" %
+                       (sql_values))
+                self.env.log.debug(sql)
+                context.cursor.execute(sql)
+                for row in context.cursor:
                    count += int(row[0])
 
-           return count
+            return count
 
         if not order_by in ('topics', 'replies', 'lasttopic', 'lastreply'):
             order_by = 'f.' + order_by
         columns = ('id', 'name', 'author', 'time', 'moderators', 'subscribers',
           'forum_group', 'subject', 'description', 'topics', 'replies',
           'lasttopic', 'lastreply')
-        sql = "SELECT f.id, f.name, f.author, f.time, f.moderators, " \
-          "f.subscribers, f.forum_group, f.subject, f.description, ta.topics, " \
-          "ta.replies, ta.lasttopic, ta.lastreply FROM forum f LEFT JOIN " \
-          "(SELECT COUNT(t.id) AS topics, MAX(t.time) AS lasttopic, " \
-          "SUM(ma.replies) AS replies, MAX(ma.lastreply) AS lastreply, t.forum " \
-          " AS forum FROM topic t LEFT JOIN (SELECT COUNT(m.id) AS replies, " \
-          "MAX(m.time) AS lastreply, m.topic AS topic FROM message m GROUP BY " \
-          "m.topic) ma ON t.id = ma.topic GROUP BY forum) ta ON f.id = ta.forum " \
-          " ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
+        sql_values = {'order_by' : 'ORDER BY ' + order_by + (' ASC',
+          ' DESC')[bool(desc)] if order_by else ''}
+        sql = ("SELECT f.id, f.name, f.author, f.time, f.moderators, "
+                 "f.subscribers, f.forum_group, f.subject, f.description, "
+                 "ta.topics, ta.replies, ta.lasttopic, ta.lastreply "
+               "FROM forum f "
+               "LEFT JOIN "
+                 "(SELECT COUNT(t.id) AS topics, MAX(t.time) AS lasttopic, "
+                   "SUM(ma.replies) AS replies, MAX(ma.lastreply) AS "
+                   "lastreply, t.forum AS forum "
+                 "FROM topic t "
+                 "LEFT JOIN "
+                   "(SELECT COUNT(m.id) AS replies, MAX(m.time) AS lastreply, "
+                     "m.topic AS topic "
+                   "FROM message m "
+                   "GROUP BY m.topic) ma "
+                 "ON t.id = ma.topic "
+                 "GROUP BY forum) ta "
+               "ON f.id = ta.forum "
+               "%(order_by)s" %(sql_values))
         self.env.log.debug(sql)
         context.cursor.execute(sql)
 
@@ -1555,12 +1598,15 @@ class DiscussionApi(Component):
       limit = 0, offset = 0, with_body = True):
 
         def _get_new_replies_count(context, topic_id):
-            time = int(context.visited_topics.has_key(topic_id) and
-              (context.visited_topics[topic_id] or 0))
-            sql = "SELECT COUNT(id) FROM message m WHERE m.topic = %s AND m.time > %s"
-
-            self.env.log.debug(sql % (topic_id, time))
-            context.cursor.execute(sql, (topic_id, time))
+            sql_values = {'topic_id' : topic_id,
+              'time' : int(context.visited_topics.has_key(topic_id) and
+                (context.visited_topics[topic_id] or 0))}
+            sql = ("SELECT COUNT(id) "
+                   "FROM message m "
+                   "WHERE m.topic = %(topic_id)s AND m.time > %(time)s" %
+                     (sql_values))
+            self.env.log.debug(sql)
+            context.cursor.execute(sql)
             for row in context.cursor:
                return int(row[0])
             return 0
@@ -1573,15 +1619,26 @@ class DiscussionApi(Component):
         else:
             columns = ('id', 'forum', 'time', 'subject', 'author', 'replies',
               'lastreply')
-        sql = "SELECT t.id, t.forum, t.time, t.subject, " + (with_body and
-          "t.body, " or "") + "t.author, m.replies, m.lastreply FROM topic t" \
-          " LEFT JOIN (SELECT COUNT(id) AS replies, MAX(time) AS lastreply," \
-          " topic FROM message GROUP BY topic) m ON t.id = m.topic WHERE" \
-          " t.forum = %s ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)] \
-          + (limit and (' LIMIT ' + to_unicode(limit)) or '') + (offset and (
-          ' OFFSET ' + to_unicode(offset)) or '')
-        self.env.log.debug(sql % (to_unicode(forum_id),))
-        context.cursor.execute(sql, (to_unicode(forum_id),))
+        sql_values = {'with_body' : 't.body, ' if with_body else '',
+          'forum_id' : to_unicode(forum_id),
+          'order_by' : 'ORDER BY ' + order_by + (' ASC', ' DESC')[bool(desc)]
+            if order_by else '',
+          'limit' : 'LIMIT ' + to_unicode(limit) if limit else '',
+          'offset' : 'OFFSET ' + to_unicode(offset) if offset else ''}
+        sql = ("SELECT t.id, t.forum, t.time, t.subject, %(with_body)s"
+                 "t.author, m.replies, m.lastreply "
+               "FROM topic t "
+               "LEFT JOIN "
+                 "(SELECT COUNT(id) AS replies, MAX(time) AS lastreply, topic "
+                 "FROM message "
+                 "GROUP BY topic) m "
+               "ON t.id = m.topic "
+               "WHERE t.forum = %(forum_id)s "
+               "%(order_by)s "
+               "%(limit)s "
+               "%(offset)s" % (sql_values))
+        self.env.log.debug(sql)
+        context.cursor.execute(sql)
 
         # Convert certain topic attributes.
         topics = []
@@ -1598,10 +1655,15 @@ class DiscussionApi(Component):
     def get_messages(self, context, topic_id, order_by = 'time', desc = False):
         order_by = 'm.' + order_by
         columns = ('id', 'replyto', 'time', 'author', 'body')
-        sql = "SELECT m.id, m.replyto, m.time, m.author, m.body FROM message m WHERE" \
-          " m.topic = %s ORDER BY " + order_by + (" ASC", " DESC")[bool(desc)]
-        self.env.log.debug(sql % (to_unicode(topic_id),))
-        context.cursor.execute(sql, (to_unicode(topic_id),))
+        sql_values = {'topic_id' : to_unicode(topic_id),
+          'order_by' : 'ORDER BY ' + order_by + (' ASC',' DESC')[bool(desc)]
+            if order_by else ''}
+        sql = ("SELECT m.id, m.replyto, m.time, m.author, m.body "
+               "FROM message m "
+               "WHERE m.topic = %(topic_id)s "
+               "%(order_by)s" % (sql_values))
+        self.env.log.debug(sql)
+        context.cursor.execute(sql)
         messagemap = {}
         messages = []
         for row in context.cursor:
@@ -1652,10 +1714,15 @@ class DiscussionApi(Component):
     def _add_item(self, context, table, item):
         fields = item.keys()
         values = item.values()
-        sql = "INSERT INTO %s (" % (table,) + ", ".join(fields) + ") VALUES (" \
-          + ", ".join(["%s" for I in xrange(len(fields))]) + ")"
-        self.log.debug(sql % tuple(values))
-        context.cursor.execute(sql, tuple(values))
+        sql_values = {'table' : table,
+         'fields' : ', '.join(fields),
+         'values' : ', '.join(["\"%s\"" % to_unicode(value) for value in
+           values])}
+        sql = ("INSERT INTO %(table)s "
+               "(%(fields)s) "
+               "VALUES (%(values)s)" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
 
     def add_group(self, context, group):
         self._add_item(context, 'forum_group', group)
@@ -1684,12 +1751,15 @@ class DiscussionApi(Component):
     # Delete items functions.
 
     def _delete_item(self, context, table, where = '', values = ()):
-        sql = 'DELETE FROM ' + table + (where and (' WHERE ' + where) or '')
+        sql_values = {'table' : table,
+          'where' : ' WHERE ' + where if where else ''}
+        sql = ("DELETE FROM %(table)s "
+               "%(where)s" % (sql_values))
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
 
     def delete_group(self, context, id):
-        # Delete group.
+        # Delete group.
         self._delete_item(context, 'forum_group', 'id = %s', (id,))
 
         # Assing forums of this group to none group.
@@ -1697,7 +1767,7 @@ class DiscussionApi(Component):
           (id,))
 
     def delete_forum(self, context, id):
-        # Delete all messages of this forum.
+        # Delete all messages of this forum.
         self._delete_item(context, 'message', 'forum = %s', (id,))
 
         # Delete all topics of this forum.
@@ -1707,7 +1777,7 @@ class DiscussionApi(Component):
         self._delete_item(context, 'forum', 'id = %s', (id,))
 
     def delete_topic(self, context, id):
-        # Delete all messages of this topic.
+        # Delete all messages of this topic.
         self._delete_item(context, 'message', 'topic = %s', (id,))
 
         # Delete topic itself.
@@ -1724,13 +1794,18 @@ class DiscussionApi(Component):
     # Set item functions.
 
     def _set_item(self, context, table, column, value, where = '', values = ()):
-        sql = 'UPDATE ' + table + ' SET ' + column + ' = "' + to_unicode(value) \
-          + '"' + (where and (' WHERE ' + where) or '')
+        sql_values = {'table' : table,
+          'column' : column,
+          'value' : to_unicode(value),
+          'where' : 'WHERE ' + where if where else ''}
+        sql = ("UPDATE %(table)s "
+               "SET %(column)s = \"%(value)s\" "
+               "%(where)s" % (sql_values))
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
 
     def set_group(self, context, forum_id, group_id):
-        # Change group of specified forum.
+        # Change group of specified forum.
         self._set_item(context, 'forum', 'forum_group', group_id or '0',
           'id = %s', (forum_id,))
 
@@ -1746,10 +1821,15 @@ class DiscussionApi(Component):
     def _edit_item(self, context, table, id, item):
         fields = item.keys()
         values = item.values()
-        sql = "UPDATE %s SET " % (table,) + ", ".join([("%s = %%s" % (field))
-          for field in fields]) + " WHERE id = %s"
-        self.log.debug(sql % tuple(values + [id]))
-        context.cursor.execute(sql, tuple(values + [id]))
+        sql_values = {'table' : table,
+         'fields' : ", ".join([("%s = \"%s\"" % (fields[I], to_unicode(
+           values[I]))) for I in range(len(fields))]),
+         'id' : id}
+        sql = ("UPDATE %(table)s "
+               "SET %(fields)s "
+               "WHERE id = %(id)s" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
 
     def edit_group(self, context, id, group):
         # Edit froum group.
@@ -1778,7 +1858,7 @@ class DiscussionApi(Component):
         self._edit_item(context, 'topic', id, tmp_topic)
 
     def edit_message(self, context, id, message):
-        # Edit message,
+        # Edit message,
         self._edit_item(context, 'message', id, message)
 
 # Formats wiki text to signle line HTML but removes all links.

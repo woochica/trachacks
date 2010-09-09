@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 
+# Trac imports.
 from trac.core import *
 from trac.db import *
+
+# Trac interfaces.
 from trac.env import IEnvironmentSetupParticipant
 
 # Last discussion database shcema version.
 last_db_version = 4
 
 class DiscussionInit(Component):
-    """ Initialise database and environment for discussion component. """
+    """
+        Initialise database and environment for discussion component.
+    """
     implements(IEnvironmentSetupParticipant)
 
     # IEnvironmentSetupParticipant.
@@ -39,7 +44,9 @@ class DiscussionInit(Component):
 
     def _get_db_version(self, cursor):
         try:
-            sql = "SELECT value FROM system WHERE name='discussion_version'"
+            sql = ("SELECT value "
+                   "FROM system "
+                   "WHERE name='discussion_version'")
             self.log.debug(sql)
             cursor.execute(sql)
             for row in cursor:

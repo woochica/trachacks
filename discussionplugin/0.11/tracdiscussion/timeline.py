@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from genshi.builder import tag
-
+# Trac imports.
 from trac.core import *
 from trac.mimeview import Context
-from trac.config import Option
 from trac.web.chrome import add_stylesheet
 from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util.datefmt import to_timestamp, to_datetime, utc
 from trac.util.text import to_unicode
 
+# Trac interfaces.
 from trac.timeline import ITimelineEventProvider
+
+# Genshi imports.
+from genshi.builder import tag
 
 class DiscussionTimeline(Component):
     """
@@ -19,13 +21,11 @@ class DiscussionTimeline(Component):
     """
     implements(ITimelineEventProvider)
 
-    title = Option('discussion', 'title', 'Discussion',
-      'Main navigation bar button title.')
-
     # ITimelineEventProvider
     def get_timeline_filters(self, req):
         if 'DISCUSSION_VIEW' in req.perm:
-            yield ('discussion', self.title + ' changes')
+            yield ('discussion', self.config.get('discussion', 'title') +
+              ' changes')
 
     def get_timeline_events(self, req, start, stop, filters):
         self.log.debug("start: %s, stop: %s, filters: %s" % (start, stop,
@@ -84,12 +84,16 @@ class DiscussionTimeline(Component):
            return tag(description)
 
     # Internal methods.
+
     def _get_changed_forums(self, context, start, stop):
         columns = ('id', 'name', 'author', 'subject', 'description', 'time')
-        sql = "SELECT f.id, f.name, f.author, f.subject, f.description," \
-          " f.time FROM forum f WHERE f.time BETWEEN %s AND %s"
-        self.log.debug(sql % (start, stop))
-        context.cursor.execute(sql, (to_timestamp(start), to_timestamp(stop)))
+        sql_values = {'start' : to_timestamp(start),
+          'stop' : to_timestamp(stop)}
+        sql = ("SELECT f.id, f.name, f.author, f.subject, f.description, f.time "
+               "FROM forum f "
+               "WHERE f.time BETWEEN %(start)s AND %(stop)s" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
         for row in context.cursor:
             row = dict(zip(columns, row))
             row['time'] = to_datetime(row['time'], utc)
@@ -102,11 +106,18 @@ class DiscussionTimeline(Component):
     def _get_changed_topics(self, context, start, stop):
         columns = ('id', 'subject', 'body', 'author', 'time', 'forum',
           'forum_name')
-        sql = "SELECT t.id, t.subject, t.body, t.author, t.time, t.forum," \
-          " f.name FROM topic t LEFT JOIN (SELECT id, name FROM forum)" \
-          " f ON t.forum = f.id WHERE t.time BETWEEN %s AND %s"
-        self.log.debug(sql % (start, stop))
-        context.cursor.execute(sql, (to_timestamp(start), to_timestamp(stop)))
+        sql_values = {'start' : to_timestamp(start),
+          'stop' : to_timestamp(stop)}
+        sql = ("SELECT t.id, t.subject, t.body, t.author, t.time, t.forum, "
+                 "f.name "
+               "FROM topic t "
+               "LEFT JOIN "
+                 "(SELECT id, name "
+                 "FROM forum) f "
+               "ON t.forum = f.id "
+               "WHERE t.time BETWEEN %(start)s AND %(stop)s" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
         for row in context.cursor:
             row = dict(zip(columns, row))
             row['time'] = to_datetime(row['time'], utc)
@@ -117,12 +128,19 @@ class DiscussionTimeline(Component):
     def _get_changed_messages(self, context, start, stop):
         columns = ('id', 'author', 'time', 'forum', 'topic', 'body', 'forum_name',
           'topic_subject')
-        sql = "SELECT m.id, m.author, m.time, m.forum, m.topic, m.body, f.name," \
-          " t.subject FROM message m, (SELECT id, name FROM forum) f, (SELECT" \
-          " id, subject FROM topic) t WHERE t.id = m.topic AND f.id = m.forum" \
-          " AND time BETWEEN %s AND %s"
-        self.log.debug(sql % (start, stop))
-        context.cursor.execute(sql, (to_timestamp(start), to_timestamp(stop)))
+        sql_values = {'start' : to_timestamp(start),
+          'stop' : to_timestamp(stop)}
+        sql = ("SELECT m.id, m.author, m.time, m.forum, m.topic, m.body, "
+                 "f.name, t.subject "
+               "FROM message m, "
+                 "(SELECT id, name "
+                 "FROM forum) f, "
+                 "(SELECT id, subject "
+                 "FROM topic) t "
+               "WHERE t.id = m.topic AND f.id = m.forum AND time BETWEEN "
+               "%(start)s AND %(stop)s" % (sql_values))
+        self.log.debug(sql)
+        context.cursor.execute(sql)
         for row in context.cursor:
             row = dict(zip(columns, row))
             row['time'] = to_datetime(row['time'], utc)

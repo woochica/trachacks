@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 
+# Standard imports.
 import time
 
+# Trac imports.
 from trac.core import *
 from trac.mimeview import Context
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 
+# Trac interfaces.
 from trac.perm import IPermissionRequestor
 from trac.admin import IAdminPanelProvider
 
+# Local imports.
 from tracdiscussion.api import *
 
 class DiscussionWebAdmin(Component):

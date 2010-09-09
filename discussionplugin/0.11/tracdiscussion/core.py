@@ -1,18 +1,23 @@
 # -*- coding: utf-8 -*-
 
+# Standard imports.
 import re
+from pkg_resources import resource_filename
 
+# Trac imports.
 from trac.core import *
-from trac.mimeview.api import Mimeview, IContentConverter, Context
+from trac.mimeview.api import Mimeview, Context
 from trac.config import Option
 from trac.util.html import html
 from trac.util.translation import _
 from trac.resource import Resource
 
+# Trac interfaces.
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.main import IRequestHandler
 from trac.mimeview.api import IContentConverter
 
+# Local imports.
 from tracdiscussion.api import *
 
 class DiscussionCore(Component):
@@ -30,11 +35,9 @@ class DiscussionCore(Component):
     # ITemplateProvider methods.
 
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
         return [('discussion', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     # INavigationContributor methods.

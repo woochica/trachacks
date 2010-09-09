@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 
+# Trac imports.
 from trac.core import *
 from trac.mimeview import Context
-from trac.config import Option
-from trac.search import ISearchSource, shorten_result, search_to_sql
+from trac.search import shorten_result, search_to_sql
 from trac.util import shorten_line
 from trac.util.datefmt import to_datetime, utc
+
+# Trac interfaces.
+from trac.search import ISearchSource
 
 class DiscussionSearch(Component):
     """
@@ -13,14 +16,11 @@ class DiscussionSearch(Component):
     """
     implements(ISearchSource)
 
-    title = Option('discussion', 'title', 'Discussion',
-      'Main navigation bar button title.')
-
     # ISearchSource methods.
 
     def get_search_filters(self, req):
         if 'DISCUSSION_VIEW' in req.perm:
-            yield ('discussion', self.title)
+            yield ('discussion', self.config.get('discussion', 'title'))
 
     def get_search_results(self, req, terms, filters):
         if not 'discussion' in filters:
@@ -37,8 +37,9 @@ class DiscussionSearch(Component):
         # Search in topics.
         query, args = search_to_sql(db, ['author', 'subject', 'body'], terms)
         columns = ('id', 'forum', 'time', 'subject', 'body', 'author')
-        sql = "SELECT id, forum, time, subject, body, author FROM topic" \
-          " WHERE " + query
+        sql = ("SELECT id, forum, time, subject, body, author "
+               "FROM topic "
+               " WHERE %s" % (query,))
         self.log.debug(sql)
         cursor.execute(sql, args)
         for row in cursor:
@@ -52,9 +53,14 @@ class DiscussionSearch(Component):
         query, args = search_to_sql(db, ['m.author', 'm.body',
           't.subject'],  terms)
         columns = ('id', 'forum', 'topic', 'time', 'author', 'body', 'subject')
-        sql = "SELECT m.id, m.forum, m.topic, m.time, m.author, m.body," \
-          " t.subject FROM message m LEFT JOIN (SELECT subject, id FROM" \
-          " topic) t ON t.id = m.topic WHERE " + query
+        sql = ("SELECT m.id, m.forum, m.topic, m.time, m.author, m.body, "
+                 "t.subject "
+               "FROM message m "
+               "LEFT JOIN "
+                 "(SELECT subject, id "
+                 "FROM topic) t "
+               "ON t.id = m.topic "
+               "WHERE %s" % (query))
         self.log.debug(sql)
         cursor.execute(sql, args)
         for row in cursor:

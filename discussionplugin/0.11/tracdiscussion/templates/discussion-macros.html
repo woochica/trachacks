@@ -93,12 +93,12 @@
             <py:choose>
               <py:when test="('DISCUSSION_MODERATE' in perm and discussion.moderator)">
                 <input type="text" name="subscribers" value="${' '.join(discussion.topic.subscribers)}"/>
-                <input type="submit" name="editsubscribers" value="Edit Subscribers"/>
+                <input type="submit" name="editsubscribers" value="Edit subscribers"/>
                 <input type="hidden" name="discussion_action" value="subscriptions-post-edit"/>
               </py:when>
               <py:otherwise>
                 <input type="text" name="subscribers" value=""/>
-                <input type="submit" name="addsubscribers" value="Add Subscribers"/>
+                <input type="submit" name="addsubscribers" value="Add subscribers"/>
                 <input type="hidden" name="discussion_action" value="subscriptions-post-add"/>
               </py:otherwise>
             </py:choose>

@@ -39,7 +39,7 @@
           <h3>Subscriptions</h3>
           <form method="post" action="${href.discussion('forum', discussion.forum.id)}">
             <input type="text" name="subscribers" value="${' '.join(discussion.forum.subscribers)}"/>
-            <input type="submit" name="editsubscribers" value="Edit Subscribers"/>
+            <input type="submit" name="editsubscribers" value="Edit subscribers"/>
             <input type="hidden" name="discussion_action" value="subscriptions-post-edit"/>
           </form>
           <form py:if="discussion.authemail" method="post" action="${href.discussion('forum', discussion.forum.id)}">
@@ -59,14 +59,14 @@
         <div class="buttons">
           <form py:if="'DISCUSSION_APPEND' in perm" method="post" action="${href.discussion('forum', discussion.forum.id)}">
             <div>
-              <input type="submit" name="newtopic" value="New Topic"/>
+              <input type="submit" name="newtopic" value="New topic"/>
               <input type="hidden" name="forum" value="${discussion.forum.id}"/>
               <input type="hidden" name="discussion_action" value="add"/>
             </div>
           </form>
           <form py:if="'DISCUSSION_ADMIN' in perm" method="post" action="${href.discussion()}">
             <div>
-              <input type="submit" name="deleteforum" value="Delete Forum" onclick="return confirm('Do you realy want to delete this forum?')"/>
+              <input type="submit" name="deleteforum" value="Delete forum" onclick="return confirm('Do you realy want to delete this forum?')"/>
               <input type="hidden" name="forum" value="${discussion.forum.id}"/>
               <input type="hidden" name="discussion_action" value="delete"/>
             </div>

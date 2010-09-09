@@ -39,5 +39,6 @@ def do_upgrade(env, cursor):
             cursor.execute(statement)
 
     # Set database schema version.
-    cursor.execute("INSERT INTO system (name, value) VALUES"
-      " ('discussion_version', '1')")
+    cursor.execute("INSERT INTO system "
+                   "(name, value) "
+                   "VALUES ('discussion_version', '1')")

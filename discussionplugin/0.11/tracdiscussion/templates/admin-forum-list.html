@@ -17,7 +17,7 @@
       <form id="${is_edit and 'edit-forum-form' or 'add-forum-form'}" class="addnew" method="post" action="${panel_href()}">
         <fieldset>
           <legend>
-            ${is_edit and 'Edit Forum:' or 'Add Forum:'}
+            ${is_edit and 'Edit Forum' or 'Add Forum'}
           </legend>
 
           <div class="field">
@@ -57,7 +57,7 @@
 
           <py:choose>
             <div py:when="len(discussion.groups) > 1" class="group">
-              <label for="group">Forum Group:</label><br/>
+              <label for="group">Forum group:</label><br/>
               <select id="group" name="group">
                 <py:for each="group in discussion.groups">
                   <py:choose>

@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
+# Standard imports.
 from datetime import datetime
 
+# Trac imports.
 from trac.core import *
 from trac.resource import Resource
 from trac.web.chrome import Chrome
@@ -10,10 +12,13 @@ from trac.util import md5, format_datetime
 from trac.util.datefmt import to_timestamp
 from trac.util.text import to_unicode
 
+# Trac interfaces.
 from trac.web.chrome import ITemplateProvider
 
+# Genshi imports.
 from genshi.template import TemplateLoader, TextTemplate
 
+# Local imports.
 from tracdiscussion.api import *
 
 class DiscussionNotifyEmail(NotifyEmail):
@@ -91,7 +96,7 @@ class DiscussionNotifyEmail(NotifyEmail):
             self.template_name = 'forum-invite-body.txt'
 
         # Send e-mail to all subscribers.
-        self.to_recipients = recipients
+        self.cc_recipients = recipients
 
         # Render subject template and send notification.
         subject = (to_unicode(Chrome(self.env).render_template(context.req,

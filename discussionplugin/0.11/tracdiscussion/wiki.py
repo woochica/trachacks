@@ -1,23 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from tracdiscussion.api import *
-from tracdiscussion.core import *
+# Standard imports.
+import time, re
+
+# Trac imports.
 from trac.core import *
-from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 from trac.wiki.web_ui import WikiModule
 from trac.wiki.formatter import format_to_html, format_to_oneliner
-from trac.web.main import IRequestFilter
+from trac.web.href import Href
 from trac.web.chrome import Chrome, add_stylesheet
 from trac.util import format_datetime
 from trac.util.html import html
 from trac.util.text import to_unicode
-import time, re
 
-from trac.web.href import Href
+# Trac interfaces.
+from trac.web.main import IRequestFilter
+from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider
 
-view_topic_doc = """Displays content of discussion topic. If no argument passed
-tries to find topic with same name as name of current wiki page. If topic name
-passed displays that topic. """
+# Local imports.
+from tracdiscussion.api import *
+from tracdiscussion.core import *
 
 class DiscussionWiki(Component):
     """
@@ -25,6 +27,11 @@ class DiscussionWiki(Component):
         referencing.
     """
     implements(IWikiSyntaxProvider, IWikiMacroProvider, IRequestFilter)
+
+    # Wiki macro documentations.
+    view_topic_doc = ("Displays content of a discussion topic. If no argument "
+      "passed tries to find the topic with the same name as is the name of the "
+      "current wiki page. If the topic name is passed, displays that topic. ")
 
     # IWikiSyntaxProvider methods
 
@@ -127,9 +134,12 @@ class DiscussionWiki(Component):
 
         if namespace == 'forum':
             columns = ('subject',)
-            sql = "SELECT f.subject FROM forum f WHERE f.id = %s"
-            self.log.debug(sql % (id,))
-            cursor.execute(sql, (id,))
+            sql_values = {'id' : id}
+            sql = ("SELECT f.subject "
+                   "FROM forum f "
+                   "WHERE f.id = %(id)s" % (sql_values))
+            self.log.debug(sql)
+            cursor.execute(sql)
             for row in cursor:
                 row = dict(zip(columns, row))
                 return html.a(label, href = formatter.href.discussion('forum',
@@ -138,10 +148,13 @@ class DiscussionWiki(Component):
               title = label, class_ = 'missing')
         elif namespace == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
-            sql = "SELECT t.forum, f.subject, t.subject FROM topic t LEFT" \
-              " JOIN forum f ON t.forum = f.id WHERE t.id = %s"
-            self.log.debug(sql % (id,))
-            cursor.execute(sql, (id,))
+            sql_values = {'id' : id}
+            sql = ("SELECT t.forum, f.subject, t.subject "
+                   "FROM topic t "
+                   "LEFT JOIN forum f "
+                   "ON t.forum = f.id WHERE t.id = %(id)s" % (sql_values))
+            self.log.debug(sql)
+            cursor.execute(sql)
             for row in cursor:
                 row = dict(zip(columns, row))
                 return html.a(label, href = '%s#-1' % \
@@ -152,12 +165,17 @@ class DiscussionWiki(Component):
               title = label.replace('"', ''), class_ = 'missing')
         elif namespace == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
-            sql = "SELECT m.forum, m.topic, f.subject, t.subject FROM" \
-              " message m, (SELECT subject, id FROM forum) f," \
-              " (SELECT subject, id FROM topic) t WHERE" \
-              " m.forum = f.id AND m.topic = t.id AND m.id = %s"
-            self.log.debug(sql % (id,))
-            cursor.execute(sql, (id,))
+            sql_values = {'id' : id}
+            sql = ("SELECT m.forum, m.topic, f.subject, t.subject "
+              "FROM message m, "
+                "(SELECT subject, id "
+                "FROM forum) f, "
+                "(SELECT subject, id "
+                "FROM topic) t "
+              "WHERE m.forum = f.id AND m.topic = t.id AND m.id = %(id)s" %
+                (sql_values))
+            self.log.debug(sql)
+            cursor.execute(sql)
             for row in cursor:
                 row = dict(zip(columns, row))
                 return html.a(label, href = '%s#%s' % \

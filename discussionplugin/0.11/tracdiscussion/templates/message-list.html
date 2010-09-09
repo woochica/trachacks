@@ -30,13 +30,13 @@
         <div py:if="'DISCUSSION_MODERATE' in perm and discussion.moderator" class="buttons">
           <form method="post" action="${href.discussion('topic', discussion.topic.id)}">
             <div>
-              <input type="submit" name="deletetopic" value="Delete Topic" onclick="return confirm('Do you realy want to delete this topic?')"/>
+              <input type="submit" name="deletetopic" value="Delete topic" onclick="return confirm('Do you realy want to delete this topic?')"/>
               <input type="hidden" name="discussion_action" value="delete"/>
             </div>
           </form>
           <form method="post" action="${href.discussion('topic', discussion.topic.id)}">
             <div >
-              <input type="submit" name="movetopic" value="Move Topic"/>
+              <input type="submit" name="movetopic" value="Move topic"/>
               <input type="hidden" name="discussion_action" value="move"/>
             </div>
           </form>

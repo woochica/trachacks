@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Trac includes.
-
-# Spamfilter includes.
+# Spamfilter imports.
 from tracspamfilter.api import FilterSystem, RejectContent
 
-# Local includes.
+# Local imports.
 from tracdiscussion.api import *
 
 class DiscussionSpamFilter(Component):

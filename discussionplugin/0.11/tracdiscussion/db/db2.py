@@ -24,7 +24,9 @@ def do_upgrade(env, cursor):
     db_connector, _ = DatabaseManager(env)._get_connector()
 
     # Backup old forum table.
-    cursor.execute("CREATE TEMPORARY TABLE forum_old AS SELECT * FROM forum")
+    cursor.execute("CREATE TEMPORARY TABLE forum_old AS "
+                   "SELECT * "
+                   "FROM forum")
     cursor.execute("DROP TABLE forum")
 
     # Create tables.
@@ -33,11 +35,13 @@ def do_upgrade(env, cursor):
             cursor.execute(statement)
 
     # Copy old forums.
-    cursor.execute("INSERT INTO forum (id, name, time, moderators, subject," \
-      " description) SELECT id, name, time, moderators, subject, description" \
-      " FROM forum_old")
+    cursor.execute("INSERT INTO forum "
+                   "(id, name, time, moderators, subject, description) "
+                   "SELECT id, name, time, moderators, subject, description "
+                   "FROM forum_old")
     cursor.execute("DROP TABLE forum_old")
 
     # Set database schema version.
-    cursor.execute("UPDATE system SET value = '2' WHERE" \
-      " name = 'discussion_version'")
+    cursor.execute("UPDATE system "
+                   "SET value = '2' "
+                   "WHERE name = 'discussion_version'")
