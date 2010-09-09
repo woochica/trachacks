@@ -155,6 +155,11 @@ class WatchlistPlugin(Component):
           except:
             pass
         self._save_user_settings(req.authname, settings)
+        # Clear session cache for nav items
+        try:
+            del req.session['watchlist_display_notify_navitems']
+        except:
+            pass
 
     def get_settings(self, user):
         settings = {}
@@ -584,8 +589,16 @@ class WatchlistPlugin(Component):
     ### methods for IRequestFilter
     def post_process_request(self, req, template, data, content_type):
         user  = to_unicode( req.authname )
-        settings = self.get_settings(user) # FIXME: suboptimal to reload settings here
-        # TODO: Move to request handler?
+
+        notify = 'False'
+        try:
+            notify = req.session['watchlist_display_notify_navitems']
+            self.log.debug("WL: Reusing settings for navitems.")
+        except:
+            self.log.debug("WL: Rereading settings for navitems.")
+            settings = self.get_settings(user)
+            notify = (self.wsub and settings['notifications'] and settings['display_notify_navitems']) and 'True' or 'False'
+            req.session['watchlist_display_notify_navitems'] = notify
 
         msg = req.session.get('watchlist_message',[])
         if msg:
@@ -624,7 +637,7 @@ class WatchlistPlugin(Component):
                     href=req.href('watchlist', action='watch',
                     resid=resid, realm=realm),
                     title=_("Add %s to watchlist") % realm)
-            if self.wsub and settings['notifications'] and settings['display_notify_navitems']:
+            if notify == 'True':
               if self.is_notify(req, realm, resid):
                 add_ctxtnav(req, _("Do not Notify me"),
                     href=req.href('watchlist', action='notifyoff',
