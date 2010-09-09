@@ -547,14 +547,6 @@ class WatchlistPlugin(Component):
           req.send("",'text/plain', 200)
           raise RequestDone
 
-        wldict['th'] = {
-          'name': _("Page"), 'changetime': _("Last Changed At"),
-          'author': _("By"), 'version': _("Version"), 'diff': _("Diff"),
-          'history': _("History"), 'unwatch': _("U"), 'notify': _("Notify"),
-          'comment': _("Comment"), 'id': _("Ticket"),
-          'commentnum': _("Comment #"), 'changes': _("Changes")
-        }
-
         if action == "view":
             for (xrealm,handler) in self.realm_handler.iteritems():
               if handler.has_perm(xrealm, req.perm):
@@ -694,7 +686,7 @@ class WikiWatchlist(BasicWatchlist):
         'notify'    : _("Notify"),
         'comment'   : _("Comment"),
 
-        'readonly'  : _("Read-Only"),
+        'readonly'  : _("read-only"),
         'ipnr'      : _("IP"),
     }}
     default_columns = {'wiki':[
@@ -798,13 +790,13 @@ class TicketWatchlist(BasicWatchlist):
         'comment'   : _("Comment"),
 
         'type'      : _("Type"),
-        'time'      : _("Creation time"),
+        'time'      : _("Created"),
         'component' : _("Component"),
         'severity'  : _("Severity"),
         'priority'  : _("Priority"),
         'owner'     : _("Owner"),
         'reporter'  : _("Reporter"),
-        'cc'        : _("CC"),
+        'cc'        : _("Cc"),
         'version'   : _("Version"),
         'milestone' : _("Milestone"),
         'status'    : _("Status"),

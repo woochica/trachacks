@@ -25,7 +25,9 @@
             <select class="active_columns" size="8" 
               multiple="multiple" style="min-width:12em">
               <py:for each="column in active_columns.get(realm)">
-                <option value="${column}">${th.get(column,column)}</option>
+                <option value="${column}">
+                    ${available_columns[realm][column]}
+                </option>
               </py:for>
             </select>
           </td>
@@ -38,7 +40,9 @@
               column in 
               [ c for c in available_columns.get(realm) if c not in active_columns.get(realm) ]
               ">
-                <option value="${column}">${th.get(column,column)}</option>
+                <option value="${column}">
+                    ${available_columns[realm][column]}
+                </option>
               </py:for>
             </select>
           </td>

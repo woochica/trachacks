@@ -52,7 +52,7 @@
                   <td py:def="ticket_comment" class="comment">$ticket.comment</td>
                 <tr py:for="ticket in ticketlist">
                   <py:for each="k in active_columns[realm]">
-                      ${value_of('ticket_' + k,noop)()}
+                      ${value_of('ticket_' + k,empty_td)()}
                   </py:for>
                 </tr>
               </tbody>

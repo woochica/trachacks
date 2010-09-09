@@ -64,7 +64,7 @@
                   <td py:def="wiki_comment" class="comment">$page.comment</td>
                 <tr py:for="page in wikilist">
                   <py:for each="k in active_columns[realm]">
-                      ${value_of('wiki_' + k,noop)()}
+                      ${value_of('wiki_' + k,empty_td)()}
                   </py:for>
                 </tr>
               </tbody>
