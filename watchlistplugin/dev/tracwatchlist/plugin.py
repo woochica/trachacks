@@ -31,9 +31,7 @@ from  trac.config            import  BoolOption
 from  trac.core              import  *
 from  trac.db                import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model      import  Ticket
-from  trac.util.translation  import  domain_functions
-from  trac.util.datefmt      import  format_datetime, pretty_timedelta, \
-                                     from_utimestamp
+from  trac.util.datefmt      import  format_datetime, pretty_timedelta
 from  trac.util.text         import  to_unicode
 from  trac.web.api           import  IRequestFilter, IRequestHandler, \
                                      RequestDone
@@ -46,12 +44,23 @@ from  trac.prefs.api         import  IPreferencePanelProvider
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 
+# Import microsecond timestamp function. A fallback is provided for Trac 0.11.
+try:
+    from  trac.util.datefmt  import  from_utimestamp
+except:
+    def from_utimestamp( t ):
+        return t
 
- 
-__DB_VERSION__ = 3
-
-add_domain, _, tag_ = \
-    domain_functions('watchlist', ('add_domain', '_', 'tag_'))
+# Import translation functions. Fallbacks are provided for Trac 0.11.
+try:
+    from  trac.util.translation  import  domain_functions
+    add_domain, _, tag_ = \
+        domain_functions('watchlist', ('add_domain', '_', 'tag_'))
+except ImportError:
+    from  trac.util.translation  import  gettext
+    _, tag_  = gettext, tag
+    def add_domain(a,b,c=None):
+        pass
 
 
 class WatchlistError(TracError):

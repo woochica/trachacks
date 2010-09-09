@@ -11,17 +11,20 @@ __date__     = ur"$Date$"[7:-2]
 
 extra = {}
 
-from trac.util.dist  import  get_l10n_cmdclass
-cmdclass = get_l10n_cmdclass()
-if cmdclass:
-    extra['cmdclass'] = cmdclass
-    extractors = [
-        ('**.py',                'python', None),
-        ('**/templates/**.html', 'genshi', None),
-    ]
-    extra['message_extractors'] = {
-        'tracwatchlist': extractors,
-    }
+try:
+    from trac.util.dist  import  get_l10n_cmdclass
+    cmdclass = get_l10n_cmdclass()
+    if cmdclass:
+        extra['cmdclass'] = cmdclass
+        extractors = [
+            ('**.py',                'python', None),
+            ('**/templates/**.html', 'genshi', None),
+        ]
+        extra['message_extractors'] = {
+            'tracwatchlist': extractors,
+        }
+except ImportError:
+    pass
 
 setup(
     name = 'TracWatchlistPlugin',
@@ -34,7 +37,7 @@ setup(
     download_url = 'http://trac-hacks.org/svn/watchlistplugin/releases/',
     license      = 'GPLv3',
     classifiers = ['Framework :: Trac'],
-    install_requires = ['Babel>= 0.9.5', 'Trac >= 0.12dev'],
+    install_requires = ['Babel>= 0.9.5', 'Trac >= 0.11'],
     packages = ['tracwatchlist'],
     package_data = {
         'tracwatchlist' : [
