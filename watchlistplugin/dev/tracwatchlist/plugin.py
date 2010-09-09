@@ -693,9 +693,13 @@ class WikiWatchlist(BasicWatchlist):
         'unwatch'   : _("U"),
         'notify'    : _("Notify"),
         'comment'   : _("Comment"),
+
+        'readonly'  : _("Read-Only"),
+        'ipnr'      : _("IP"),
     }}
     default_columns = {'wiki':[
-        'name', 'changetime', 'author', 'version', 'diff', 'history', 'unwatch', 'notify', 'comment',
+        'name', 'changetime', 'author', 'version', 'diff',
+        'history', 'unwatch', 'notify', 'comment',
     ]}
 
     def res_exists(self, realm, resid):
@@ -792,9 +796,25 @@ class TicketWatchlist(BasicWatchlist):
         'unwatch'   : _("U"),
         'notify'    : _("Notify"),
         'comment'   : _("Comment"),
+
+        'type'      : _("Type"),
+        'time'      : _("Creation time"),
+        'component' : _("Component"),
+        'severity'  : _("Severity"),
+        'priority'  : _("Priority"),
+        'owner'     : _("Owner"),
+        'reporter'  : _("Reporter"),
+        'cc'        : _("CC"),
+        'version'   : _("Version"),
+        'milestone' : _("Milestone"),
+        'status'    : _("Status"),
+        'resolution': _("Resolution"),
+        'keywords'  : _("Keywords"),
+
     }}
     default_columns = {'ticket':[
-        'id', 'changetime', 'author', 'changes', 'commentnum', 'unwatch', 'notify', 'comment',
+        'id', 'changetime', 'author', 'changes', 'commentnum',
+        'unwatch', 'notify', 'comment',
     ]}
 
     def res_exists(self, realm, resid):
