@@ -98,24 +98,24 @@ class WatchlistPlugin(Component):
           assert realm not in self.realms
           self.realms.append(realm)
           self.realm_handler[realm] = provider
-          self.env.log.debug("realm: %s %s" % (realm, str(provider)))
+          self.log.debug("realm: %s %s" % (realm, str(provider)))
 
       try:
           # Import methods from WatchSubscriber of the AnnouncerPlugin
           from  announcerplugin.subscribers.watchers  import  WatchSubscriber
           self.wsub = self.env[WatchSubscriber]
           if self.wsub:
-            self.env.log.debug("WS: WatchSubscriber found in announcerplugin")
+            self.log.debug("WS: WatchSubscriber found in announcerplugin")
       except Exception, e:
           try:
             # Import fallback methods for AnnouncerPlugin's dev version
             from  announcer.subscribers.watchers  import  WatchSubscriber
             self.wsub = self.env[WatchSubscriber]
             if self.wsub:
-              self.env.log.debug("WS: WatchSubscriber found in announcer")
+              self.log.debug("WS: WatchSubscriber found in announcer")
           except Exception, ee:
-            self.env.log.debug("WS! " + str(e))
-            self.env.log.debug("WS! " + str(ee))
+            self.log.debug("WS! " + str(e))
+            self.log.debug("WS! " + str(ee))
             self.wsub = None
 
     # IPreferencePanelProvider methods
@@ -166,20 +166,20 @@ class WatchlistPlugin(Component):
       try:
         return self.wsub.is_watching(req.session.sid, True, realm, resid)
       except Exception, e:
-        self.env.log.debug("is_notify error: " + str(e))
+        self.log.debug("is_notify error: " + str(e))
         return False
 
     def set_notify(self, req, realm, resid):
       try:
         self.wsub.set_watch(req.session.sid, True, realm, resid)
       except Exception, e:
-        self.env.log.debug("set_notify error: " + str(e))
+        self.log.debug("set_notify error: " + str(e))
 
     def unset_notify(self, req, realm, resid):
       try:
         self.wsub.set_unwatch(req.session.sid, True, realm, resid)
       except Exception, e:
-        self.env.log.debug("unset_notify error: " + str(e))
+        self.log.debug("unset_notify error: " + str(e))
 
     def _get_sql_names_and_patterns(self, nameorpatternlist):
       import re
@@ -388,7 +388,7 @@ class WatchlistPlugin(Component):
               new_res.extend(set(reses).difference(alw_res))
 
           if new_res:
-            #cursor.log = self.env.log
+            #cursor.log = self.log
             cursor.executemany("""
               INSERT
                 INTO watchlist (wluser, realm, resid)
