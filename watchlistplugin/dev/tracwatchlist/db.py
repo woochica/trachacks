@@ -30,7 +30,8 @@ from  trac.env   import  IEnvironmentSetupParticipant
 __DB_VERSION__ = 3
 
 class WatchlistDataBase(Component):
-    """For documentation see http://trac-hacks.org/wiki/WatchlistPlugin"""
+    """DataBase module for the Trac WatchlistPlugin.
+       Handles creation and upgrading of watchlist DB tables."""
 
     implements( IEnvironmentSetupParticipant )
 

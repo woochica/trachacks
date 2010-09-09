@@ -26,6 +26,7 @@ __date__     = ur"$Date$"[7:-2]
 from trac.core import *
 
 class IWatchlistProvider(Interface):
+    """Interface for watchlist providers."""
     def get_realms():
       """ Must return list or tuple of realms provided. """
       pass
@@ -63,6 +64,10 @@ class IWatchlistProvider(Interface):
 
 
 class BasicWatchlist(Component):
+    """Base class for watchlist providers.
+    This class provides default implementations of all interface methods.
+    Watchlist provider can inherit from it to simply their implementation.
+    """
     implements( IWatchlistProvider )
     realms = []
     default_columns = {}

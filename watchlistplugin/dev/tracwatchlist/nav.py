@@ -29,7 +29,7 @@ from  trac.web.chrome       import  INavigationContributor
 from  tracwatchlist.plugin  import  _
 
 class WatchlistNavigation(Component):
-    """ Navigation entry for watchlist. """
+    """Navigation entries for the Trac WatchlistPlugin."""
     implements( INavigationContributor )
 
     ### methods for INavigationContributor

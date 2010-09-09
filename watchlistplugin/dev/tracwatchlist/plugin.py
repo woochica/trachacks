@@ -64,12 +64,18 @@ except ImportError:
 
 
 class WatchlistError(TracError):
+    """Special version of TracError raised by WatchlistPlugin"""
     show_traceback = False
     title = _("Watchlist Error")
 
 
 class WatchlistPlugin(Component):
-    """For documentation see http://trac-hacks.org/wiki/WatchlistPlugin"""
+    """Main class of the Trac WatchlistPlugin.
+
+    Displays watchlist for wiki pages, ticket and possible other Trac realms.
+
+    For documentation see http://trac-hacks.org/wiki/WatchlistPlugin.
+    """
     providers = ExtensionPoint(IWatchlistProvider)
 
     implements( IRequestHandler, IRequestFilter, ITemplateProvider ) 
@@ -674,6 +680,7 @@ class WatchlistPlugin(Component):
 
 
 class WikiWatchlist(BasicWatchlist):
+    """Watchlist entry for wiki pages."""
     realms = ['wiki']
     columns = {'wiki':{
         'name'      : _("Page"),
@@ -773,6 +780,7 @@ class WikiWatchlist(BasicWatchlist):
 
 
 class TicketWatchlist(BasicWatchlist):
+    """Watchlist entry for tickets."""
     realms = ['ticket']
     columns = {'ticket':{
         'id'        : _("Ticket"),
@@ -904,6 +912,7 @@ class TicketWatchlist(BasicWatchlist):
       return ticketlist
 
 class ExampleWatchlist(Component):
+    """Example watchlist provider."""
     #implements( IWatchlistProvider )
 
     def get_realms(self):
