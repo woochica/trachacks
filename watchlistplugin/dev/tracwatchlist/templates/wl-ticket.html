@@ -34,7 +34,7 @@
                     <a href="${href('ticket', ticket.id)}"
                       title="${ticket.summary}" class="${ticket.status == 'closed' and 'closed'}">#${ticket.id}</a>
                   </td>
-                  <td py:def="ticket_datetime" class="datetime">$ticket.datetime
+                  <td py:def="ticket_changetime" class="changetime">$ticket.changetime
                       <span py:if="ticket.timedelta"
                         i18n:msg="timeline_link, timedelta"> (<a
                         href="$ticket.timeline_link">$ticket.timedelta</a> ago)</span></td>

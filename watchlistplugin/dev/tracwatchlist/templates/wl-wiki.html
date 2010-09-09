@@ -34,7 +34,7 @@
               <tbody>
                   <td py:def="wiki_name" class="name">${link('wiki',page.name,
                       text=page.name)}</td>
-                  <td py:def="wiki_datetime" class="datetime">$page.datetime
+                  <td py:def="wiki_changetime" class="changetime">$page.changetime
                       <span py:if="page.timedelta"
                         i18n:msg="timeline_link, timedelta"> (<a
                         href="$page.timeline_link">$page.timedelta</a> ago)</span></td>

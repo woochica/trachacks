@@ -548,7 +548,7 @@ class WatchlistPlugin(Component):
           raise RequestDone
 
         wldict['th'] = {
-          'name': _("Page"), 'datetime': _("Last Changed At"),
+          'name': _("Page"), 'changetime': _("Last Changed At"),
           'author': _("By"), 'version': _("Version"), 'diff': _("Diff"),
           'history': _("History"), 'unwatch': _("U"), 'notify': _("Notify"),
           'comment': _("Comment"), 'id': _("Ticket"),
@@ -685,7 +685,7 @@ class WikiWatchlist(BasicWatchlist):
     realms = ['wiki']
     columns = {'wiki':{
         'name'      : _("Page"),
-        'datetime'  : _("Last Changed At"),
+        'changetime': _("Last Changed At"),
         'author'    : _("By"),
         'version'   : _("Version"),
         'diff'      : _("Diff"),
@@ -695,7 +695,7 @@ class WikiWatchlist(BasicWatchlist):
         'comment'   : _("Comment"),
     }}
     default_columns = {'wiki':[
-        'name', 'datetime', 'author', 'version', 'diff', 'history', 'unwatch', 'notify', 'comment',
+        'name', 'changetime', 'author', 'version', 'diff', 'history', 'unwatch', 'notify', 'comment',
     ]}
 
     def res_exists(self, realm, resid):
@@ -737,7 +737,7 @@ class WikiWatchlist(BasicWatchlist):
           wikilist.append({
               'name' : name,
               'author' : '?',
-              'datetime' : '?',
+              'changetime' : '?',
               'comment' : tag.strong(_("DELETED!"), class_='deleted'),
               'notify'  : notify,
               'deleted' : True,
@@ -770,7 +770,7 @@ class WikiWatchlist(BasicWatchlist):
               'name' : name,
               'author' : author,
               'version' : version,
-              'datetime' : format_datetime( dt, "%F %T %Z" ),
+              'changetime' : format_datetime( dt, "%F %T %Z" ),
               'timedelta' : pretty_timedelta( dt ),
               'timeline_link' : req.href.timeline(precision='seconds',
                   from_=format_datetime ( dt, 'iso8601')),
@@ -785,7 +785,7 @@ class TicketWatchlist(BasicWatchlist):
     realms = ['ticket']
     columns = {'ticket':{
         'id'        : _("Ticket"),
-        'datetime'  : _("Last Changed At"),
+        'changetime': _("Last Changed At"),
         'author'    : _("By"),
         'changes'   : _("Changes"),
         'commentnum': _("Comment #"),
@@ -794,7 +794,7 @@ class TicketWatchlist(BasicWatchlist):
         'comment'   : _("Comment"),
     }}
     default_columns = {'ticket':[
-        'id', 'datetime', 'author', 'changes', 'commentnum', 'unwatch', 'notify', 'comment',
+        'id', 'changetime', 'author', 'changes', 'commentnum', 'unwatch', 'notify', 'comment',
     ]}
 
     def res_exists(self, realm, resid):
@@ -901,7 +901,7 @@ class TicketWatchlist(BasicWatchlist):
               'author' : author,
               'commentnum': to_unicode(self.commentnum),
               'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
-              'datetime' : format_datetime( ct, "%F %T %Z" ),
+              'changetime' : format_datetime( ct, "%F %T %Z" ),
               'timedelta' : pretty_timedelta( ct ),
               'timeline_link' : req.href.timeline(precision='seconds',
                   from_=format_datetime ( ct, 'iso8601')),

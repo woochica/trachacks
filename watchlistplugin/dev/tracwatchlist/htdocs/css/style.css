@@ -38,8 +38,8 @@ td.version, td.commentnum, td.id, td.notify, td.unwatch, td.diff, td.history {
 }
 
 /*
-th.name, th.version, th.datetime, th.author, th.commentnum, th.id, th.notify, th.unwatch, th.diff, th.history,
-td.name, td.version, td.datetime, td.author, td.commentnum, td.id, td.notify, td.unwatch, td.diff, td.history {
+th.name, th.version, th.changetime, th.author, th.commentnum, th.id, th.notify, th.unwatch, th.diff, th.history,
+td.name, td.version, td.changetime, td.author, td.commentnum, td.id, td.notify, td.unwatch, td.diff, td.history {
     width: 1%;
 }
 */
