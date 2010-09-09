@@ -608,22 +608,21 @@ class WatchlistPlugin(Component):
         notify = 'False'
         try:
             notify = req.session['watchlist_display_notify_navitems']
-            self.log.debug("WL: Reusing settings for navitems.")
-        except:
-            self.log.debug("WL: Rereading settings for navitems.")
+        except KeyError:
             settings = self.get_settings(user)
             notify = (self.wsub and settings['notifications'] and settings['display_notify_navitems']) and 'True' or 'False'
             req.session['watchlist_display_notify_navitems'] = notify
 
-        msg = req.session.get('watchlist_message',[])
-        if msg:
-          add_notice(req, msg)
-          del req.session['watchlist_message']
-        msg = req.session.get('watchlist_notify_message',[])
-        if msg:
-          add_notice(req, msg)
-          del req.session['watchlist_notify_message']
-
+        try:
+            add_notice(req, req.session['watchlist_message'])
+            del req.session['watchlist_message']
+        except KeyError:
+            pass
+        try:
+            add_notice(req, req.session['watchlist_notify_message'])
+            del req.session['watchlist_notify_message']
+        except KeyError:
+            pass
 
         href = Href(req.base_path)
         user = req.authname
