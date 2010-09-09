@@ -38,7 +38,6 @@
                       <span py:if="page.timedelta"
                         i18n:msg="timeline_link, timedelta"> (<a
                         href="$page.timeline_link">$page.timedelta</a> ago)</span></td>
-                  <td py:def="wiki_author" class="author">$page.author</td>
                   <td py:def="wiki_version" class="version"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,
                       version=page.version)}">$page.version</a></td>
