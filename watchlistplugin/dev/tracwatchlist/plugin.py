@@ -78,7 +78,7 @@ class WatchlistPlugin(Component):
         'show_messages_on_watchlist_page': ( True, _("Action messages are shown when going to the watchlist page")),
         'show_messages_while_on_watchlist_page': ( True, _("Show action messages while on watchlist page")),
         'autocomplete_inputs': ( True, _("Autocomplete input fields (add/remove resources)")),
-        'dynamic_tables': ( True, _("Dynamic watchlist tables.")),
+        'dynamic_tables': ( True, _("Dynamic watchlist tables")),
     }
 
     gsettings = dict( [ (name, BoolOption('watchlist',name,data[0],data[1]) ) for (name,data) in options.iteritems() ] )
@@ -322,8 +322,6 @@ class WatchlistPlugin(Component):
         wldict['notifications'] = bool(self.wsub and settings['notifications'] and settings['display_notify_column'])
         wldict['options'] = self.options
         wldict['settings'] = settings
-        wldict['autocomplete'] = settings['autocomplete_inputs'] # TODO: remove
-        wldict['dynamictable'] = settings['dynamic_tables'] # TODO: remove
         wldict['available_columns'] = {}
         wldict['default_columns'] = {}
         for r in self.realms:
