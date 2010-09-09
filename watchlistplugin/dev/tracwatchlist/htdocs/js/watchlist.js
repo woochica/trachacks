@@ -61,7 +61,6 @@ jQuery(document).ready(function() {
     $(this).click(function() {
         a = this;
         chkbox = $(this).children('input');
-        url = $(this).attr('href') + '&async=true';
         $.ajax({ url: $(this).attr('href') + '&async=true', success: function (data, textStatus) {
           if ($(chkbox).attr('checked')) {
             $(a).attr('href', $(a).attr('href').replace('action=notifyoff', 'action=notifyon') )
@@ -78,6 +77,10 @@ jQuery(document).ready(function() {
 
   $(".foldable").enableFolding(false, false, true);
 //  $("table.watchlist").each(function() { wlchecktable(this); });
-});
 
+  $("a.newwindow").click(function(){
+      window.open(this.href);
+      return false;
+  });
+});
 
