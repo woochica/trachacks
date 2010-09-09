@@ -7,18 +7,17 @@
 # Steffen Hoffmann <hoff.st@web.de>, 2010.
 msgid ""
 msgstr ""
-"Project-Id-Version: Trac 0.12\\n"
+"Project-Id-Version: Trac 0.12\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-09-07 22:52+0200\n"
-"PO-Revision-Date: 2010-09-07 23:25+0200\n"
+"PO-Revision-Date: 2010-09-09 08:59+0200\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 1.0dev-r482\n"
-"X-Generator: KBabel 1.11.4\n"
+"Generated-By: Babel 0.9.4\n"
 
 #: tracscreenshots/core.py:58 tracscreenshots/templates/screenshot-add.html:14
 #: tracscreenshots/templates/screenshot.html:14
@@ -447,22 +446,4 @@ msgstr "Versionen"
 #: tracscreenshots/templates/screenshots.html:169
 msgid "Apply filter"
 msgstr "Filter übernehmen"
-
-#~ msgid ""
-#~ "\n"
-#~ "                        Requested screenshot format"
-#~ " that is not allowed.\n"
-#~ "                    "
-#~ msgstr ""
-#~ "Es wurde ein Bildschirmfoto-Format "
-#~ "angefordert, dass nicht zugelassen ist."
-
-#~ msgid ""
-#~ "\n"
-#~ "                        No screenshots renderer enabled.\n"
-#~ "                        Enable at least one.\n"
-#~ "                    "
-#~ msgstr ""
-#~ "Es ist kein Bildschirmfoto-Darsteller "
-#~ "aktiviert. Aktivieren Sie mindestens einen."
 

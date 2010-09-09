@@ -2,94 +2,98 @@
 # Copyright (C) 2010
 # This file is distributed under the same license as the TracScreenshots
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
-#
+# Radek Bartoň, 2010.
 msgid ""
 msgstr ""
 "Project-Id-Version: TracScreenshots 0.8\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-09-07 22:52+0200\n"
-"PO-Revision-Date: 2010-09-08 14:53+0200\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: cs <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"PO-Revision-Date: 2010-09-09 09:38+0200\n"
+"Last-Translator: Radek Bartoň\n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 "
+"&& (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=utf-8\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 1.0dev-r482\n"
+"Generated-By: Babel 0.9.4\n"
+"X-Generator: Lokalize 1.1\n"
 
 #: tracscreenshots/core.py:58 tracscreenshots/templates/screenshot-add.html:14
 #: tracscreenshots/templates/screenshot.html:14
 #: tracscreenshots/templates/screenshots.html:14
 msgid "Screenshots"
-msgstr ""
+msgstr "Screenshoty"
 
 #: tracscreenshots/core.py:59
 msgid "Main navigation bar button title."
-msgstr ""
+msgstr "Titulek hlavního navigačního menu."
 
 #: tracscreenshots/core.py:60
 msgid "Meta navigation bar link title."
-msgstr ""
+msgstr "Titulek kontextového navigačního menu."
 
 #: tracscreenshots/core.py:62
 msgid ""
 "List of screenshot file extensions that can be uploaded. Must be "
 "supported by PIL."
 msgstr ""
+"Seznam přípon souborů, které mohou být nahrány. Musí být "
+"podporovány knihovnou PIL."
 
 #: tracscreenshots/core.py:66
 msgid "List of allowed formats for screenshot download."
-msgstr ""
+msgstr "Seznam formátů, ve kterých mohou být screenshoty staženy."
 
 #: tracscreenshots/core.py:68
 msgid "Default format for screenshot download links."
-msgstr ""
+msgstr "Výchozí formát pro odkazy na stažení screenshotů."
 
 #: tracscreenshots/core.py:70
 msgid "List of components enabled by default."
-msgstr ""
+msgstr "Seznam komponent zobrazených jako výchozí."
 
 #: tracscreenshots/core.py:72
 msgid "List of versions enabled by default."
-msgstr ""
+msgstr "Seznam verzí zobrazených jako výchozí."
 
 #: tracscreenshots/core.py:74
 msgid "Logical relation between component and version part of screenshots filter."
-msgstr ""
+msgstr "Výchozí logická operace mezi filtrem komponent a verzí."
 
 #: tracscreenshots/core.py:77
 msgid "List of names of database fields that are used to sort screenshots."
-msgstr ""
+msgstr "Seznam názvů databázových sloupců použitých pro řazení screenshotů."
 
 #: tracscreenshots/core.py:79
 msgid ""
 "List of ordering directions for fields specified in {{{default_orders}}} "
 "configuration option."
 msgstr ""
+"Seznam směrů řazení pro databázové sloupce definované v konfigurační volbě "
+"{{{default_orders}}}."
 
 #: tracscreenshots/core.py:212
 msgid "Requested screenshot format that is not allowed."
-msgstr ""
+msgstr "Požadovaný formát screenshotu není povolen."
 
 #: tracscreenshots/core.py:213
 msgid "Requested format not allowed."
-msgstr ""
+msgstr "Požadovaný formát není povolen."
 
 #: tracscreenshots/core.py:224 tracscreenshots/core.py:393
 #: tracscreenshots/core.py:489
 msgid "Screenshot not found."
-msgstr ""
+msgstr "Screenshot nenalezen."
 
 #: tracscreenshots/core.py:392
 msgid "Edited screenshot not found."
-msgstr ""
+msgstr "Editovaný screenshot nenalezen."
 
 #: tracscreenshots/core.py:450 tracscreenshots/core.py:505
 #, python-format
 msgid "Error deleting screenshot. Original error message was: %s"
-msgstr ""
+msgstr "Chyba při mazání screenshotu. Původní chybová zpráva byla: %s"
 
 #: tracscreenshots/core.py:464 tracscreenshots/core.py:665
 #, python-format
@@ -98,77 +102,84 @@ msgid ""
 "[screenshots] section of trac.ini existing? Original error message was: "
 "%s"
 msgstr ""
+"Chyba při ukládání souboru. Existuje adresář definovaný v konfigurační volbě "
+"path v sekci [screenshots] souboru trac.ini? Původní chybová zpráva byla:"
 
 #: tracscreenshots/core.py:488
 msgid "Deleted screenshot not found."
-msgstr ""
+msgstr "Screenshot pro smazání nenalezen."
 
 #: tracscreenshots/core.py:554
 msgid "No screenshots renderer enabled. Enable at least one."
 msgstr ""
+"Není povolena žádná komponenta zobrazující screenshoty. Zapněte alespoň jednu."
 
 #: tracscreenshots/core.py:555
 msgid "No screenshots renderer enabled"
-msgstr ""
+msgstr "Není povolena žádná komponenta zobrazující screenshoty."
 
 #: tracscreenshots/core.py:705
 msgid "No file uploaded."
-msgstr ""
+msgstr "Žádný soubor nebyl nahrán."
 
 #: tracscreenshots/core.py:715
 msgid "Can't upload empty file."
-msgstr ""
+msgstr "Nelze nahrát prázdný soubor."
 
 #: tracscreenshots/core.py:731 tracscreenshots/core.py:733
 msgid "Unsupported uploaded file type."
-msgstr ""
+msgstr "Nahraný soubor je nepodporovaného typu."
 
 #: tracscreenshots/init.py:29
 msgid "Path where to store uploaded screenshots."
-msgstr ""
+msgstr "Cesta, kde se mají ukládat nahrané screenshoty."
 
 #: tracscreenshots/matrix_view.py:19
 msgid "Number of screenshot preview rows."
-msgstr ""
+msgstr "Počet řádků s náhledy screenshotů."
 
 #: tracscreenshots/matrix_view.py:21
 msgid "Number of screenshot columns."
-msgstr ""
+msgstr "Počet sloupců s náhledy screenshotů."
 
 #: tracscreenshots/matrix_view.py:23
 msgid "Width of screenshot preview."
-msgstr ""
+msgstr "Šířka náhledu screenshotu."
 
 #: tracscreenshots/matrix_view.py:25
 msgid "Height of screenshot preview."
-msgstr ""
+msgstr "Výška náhledu screenshotu."
 
 #: tracscreenshots/matrix_view.py:95
 msgid "Matrix View"
-msgstr ""
+msgstr "Maticové zobrazení"
 
 #: tracscreenshots/tags.py:41
 msgid ""
 "Additional tags that will be created for submitted screenshots. Possible "
 "values are: author, components, versions, name, description."
 msgstr ""
+"Seznam přídavných tagů, které budou přidány odeslaným screenshotům. Možné "
+"hodnoty jsou: author, components, versions, name, description."
 
 #: tracscreenshots/timeline.py:29
 msgid "Screenshots changes"
-msgstr ""
+msgstr "Screenshot byl změněn."
 
 #: tracscreenshots/timeline.py:58
 #, python-format
 msgid "New screenshot %(name)s created"
-msgstr ""
+msgstr "Byl vytvořen nový screenshot %(name)s"
 
 #: tracscreenshots/wiki.py:29
 msgid "Template for embended image description."
-msgstr ""
+msgstr "Šablona pro popis vloženého obrázku se screenshotem."
 
 #: tracscreenshots/wiki.py:31
 msgid "Default format of list item description of ![[ScreenshotsList()]] macro."
 msgstr ""
+"Výchozí formát pro zobrazení popisů v seznamu screenshotů makrem "
+"![[ScreenshotsList()]]."
 
 #: tracscreenshots/wiki.py:35
 msgid ""
@@ -216,6 +227,45 @@ msgid ""
 "$description,align=left)]]\n"
 "}}}"
 msgstr ""
+"Umožňuje vložit obrázek se screenshotem na stránku wiki. První, povinný "
+"parametr je ID screenshotu. Pak mohou následovat tyto další parametry:"
+"\n"
+" * {{{align}}} - Definuje zarovnání obrázku na stránce wiki. Možné hodnoty "
+"jsou:\n"
+"   {{{left}}}, {{{right}}} and {{{center}}}.\n"
+" * {{{alt}}} - Alternativní popis obrázku.\n"
+" * {{{border}}} - Nastaví šířku okraje obrázku v pixelech.\n"
+" * {{{class}}} - CSS třída obrázku pro další stylování.\n"
+" * {{{description}}} - Krátký popis pod obrázkem. Je možno použít několik "
+"proměnných (viz. níže).\n"
+" * {{{format}}} - Formát pro obrázek za odkazem.\n"
+" * {{{height}}} - Výška obrázku. Natavte 0, pokud chcete původní velikost.\n"
+" * {{{id}}} - ID of image for CSS styling.\n"
+" * {{{longdesc}}} - Detailní popis obrázku.\n"
+" * {{{title}}} - Titulek obrázku.\n"
+" * {{{usemap}}} - Obrázková mapa pro interaktivní obrázky.\n"
+" * {{{width}}} - Šířka obrázku. Nastavte 0, pokud chcete původní velikost.\n"
+"\n"
+"Parametr {{{description}}} umožňuje zobrazit několik proměnných:\n"
+"\n"
+" * {{{$id}}} - ID screenshotu.\n"
+" * {{{$name}}} - Jméno screenshotu.\n"
+" * {{{$author}}} - Jméno uživatele, který screenshot nahrál.\n"
+" * {{{$time}}} - Čas, kdy byl screenshot nahrán.\n"
+" * {{{$file}}} - Název souboru obrázku screenshotu.\n"
+" * {{{$description}}} - Detailní popis screenshotu.\n"
+" * {{{$width}}} - Původní šířka obrázku screenshotu.\n"
+" * {{{$height}}} - Původní výška obrázku screenshotu.\n"
+" * {{{$tags}}} - Seznam tagů screenshotu oddělených čárkami.\n"
+" * {{{$components}}} - Seznam komponent screenshotu oddělených čárkami.\n"
+" * {{{$versions}}} - Seznam verzí screenshotu oddělených čárkami.\n"
+"\n"
+"Příklad:\n"
+"\n"
+"{{{\n"
+" [[Screenshot(2,width=400,height=300,description=Obrázek $name od $author: "
+"$description,align=left)]]\n"
+"}}}"
 
 #: tracscreenshots/wiki.py:74
 msgid ""
@@ -241,66 +291,87 @@ msgid ""
 " [[ScreenshotsList($name - $description ($widthx$height))]]\n"
 "}}}"
 msgstr ""
+"Zobrazí seznam všech dostupných screenshotů na stránce wiki. Jediný parametr "
+"makra je šablona pro formát zobrazení popisu screenshotu V šabloně lze použít "
+"tyto proměnné:\n"
+"\n"
+" * {{{$id}}} - ID screenshotu.\n"
+" * {{{$name}}} - Jméno screenshotu.\n"
+" * {{{$author}}} - Jméno uživatele, který screenshot nahrál.\n"
+" * {{{$time}}} - Čas, kdy byl screenshot nahrán.\n"
+" * {{{$file}}} - Název souboru obrázku screenshotu.\n"
+" * {{{$description}}} - Detailní popis screenshotu.\n"
+" * {{{$width}}} - Původní šířka obrázku screenshotu.\n"
+" * {{{$height}}} - Původní výška obrázku screenshotu.\n"
+" * {{{$tags}}} - Seznam tagů screenshotu oddělených čárkami.\n"
+" * {{{$components}}} - Seznam komponent screenshotu oddělených čárkami.\n"
+" * {{{$versions}}} - Seznam verzí screenshotu oddělených čárkami.\n"
+"\n"
+"Příklad:\n"
+"\n"
+"{{{\n"
+" [[ScreenshotsList($name - $description ($widthx$height))]]\n"
+"}}}"
 
 #: tracscreenshots/wiki.py:138 tracscreenshots/wiki.py:238
 msgid "No permissions to see screenshots."
-msgstr ""
+msgstr "Nemáte oprávnění vidět screenshoty."
 
 #: tracscreenshots/wiki.py:148
 msgid "Missing screenshot ID in macro arguments."
-msgstr ""
+msgstr "V parametrech makra chybí ID screenshotu."
 
 #: tracscreenshots/templates/screenshot-add.html:26
 msgid "Add Screenshot"
-msgstr ""
+msgstr "Přidat screenshot"
 
 #: tracscreenshots/templates/screenshot-add.html:27
 msgid "Edit Screenshot"
-msgstr ""
+msgstr "Upravit screenshot"
 
 #: tracscreenshots/templates/screenshot-add.html:30
 msgid "Name:"
-msgstr ""
+msgstr "Jméno:"
 
 #: tracscreenshots/templates/screenshot-add.html:34
 msgid "Description:"
-msgstr ""
+msgstr "Popis:"
 
 #: tracscreenshots/templates/screenshot-add.html:38
 msgid "Image File:"
-msgstr ""
+msgstr "Soubor s obrázkem:"
 
 #: tracscreenshots/templates/screenshot-add.html:42
 msgid "Additional tags:"
-msgstr ""
+msgstr "Přídavné tagy:"
 
 #: tracscreenshots/templates/screenshot-add.html:46
 #: tracscreenshots/templates/screenshot.html:33
 msgid "Components:"
-msgstr ""
+msgstr "Komponenty:"
 
 #: tracscreenshots/templates/screenshot-add.html:57
 #: tracscreenshots/templates/screenshot.html:41
 msgid "Versions:"
-msgstr ""
+msgstr "Verze:"
 
 #: tracscreenshots/templates/screenshot-add.html:68
 msgid "Priority (number 0..x):"
-msgstr ""
+msgstr "Priorita (číslo 0..x):"
 
 #: tracscreenshots/templates/screenshot-add.html:72
 msgid "Submit"
-msgstr ""
+msgstr "Odeslat"
 
 #: tracscreenshots/templates/screenshot-add.html:73
 msgid "Cancel"
-msgstr ""
+msgstr "Zrušit"
 
 #: tracscreenshots/templates/screenshot.html:21
 #: tracscreenshots/templates/screenshots.html:81
 #: tracscreenshots/templates/screenshots.html:82
 msgid "Description"
-msgstr ""
+msgstr "Popis"
 
 #: tracscreenshots/templates/screenshot.html:24
 #, python-format
@@ -310,132 +381,137 @@ msgid ""
 "              (added by %(author)s,\n"
 "              %(time)s ago)"
 msgstr ""
+"%(name)s,\n"
+"              %(width)sx%(height)s\n"
+"              (přidal %(author)s,\n"
+"              před %(time)s)"
 
 #: tracscreenshots/templates/screenshot.html:67
 #: tracscreenshots/templates/screenshots-matrix-view.html:45
 #: tracscreenshots/templates/screenshots.html:35
 msgid "Edit"
-msgstr ""
+msgstr "Upravit"
 
 #: tracscreenshots/templates/screenshot.html:74
 #: tracscreenshots/templates/screenshots-matrix-view.html:46
 #: tracscreenshots/templates/screenshots.html:43
 msgid "Delete"
-msgstr ""
+msgstr "Smazat"
 
 #: tracscreenshots/templates/screenshots-matrix-view.html:62
 msgid "Page"
-msgstr ""
+msgstr "Strana"
 
 #: tracscreenshots/templates/screenshots-matrix-view.html:66
 #: tracscreenshots/templates/screenshots-matrix-view.html:68
 msgid "First Page"
-msgstr ""
+msgstr "První stránka"
 
 #: tracscreenshots/templates/screenshots-matrix-view.html:75
 #: tracscreenshots/templates/screenshots-matrix-view.html:77
 msgid "Previous Page"
-msgstr ""
+msgstr "Předchozí stránka"
 
 #: tracscreenshots/templates/screenshots-matrix-view.html:85
 msgid "Go"
-msgstr ""
+msgstr "Přejít"
 
 #: tracscreenshots/templates/screenshots-matrix-view.html:91
 #: tracscreenshots/templates/screenshots-matrix-view.html:93
 msgid "Next Page"
-msgstr ""
+msgstr "Další stránka"
 
 #: tracscreenshots/templates/screenshots-matrix-view.html:100
 #: tracscreenshots/templates/screenshots-matrix-view.html:102
 msgid "Last Page"
-msgstr ""
+msgstr "Poslední stránka"
 
 #: tracscreenshots/templates/screenshots.html:28
 msgid "Add"
-msgstr ""
+msgstr "Přidat"
 
 #: tracscreenshots/templates/screenshots.html:54
 msgid "Order"
-msgstr ""
+msgstr "Řazení"
 
 #: tracscreenshots/templates/screenshots.html:59
 #, python-format
 msgid "%(index)s. field"
-msgstr ""
+msgstr "%(index)s. sloupec"
 
 #: tracscreenshots/templates/screenshots.html:65
 #: tracscreenshots/templates/screenshots.html:66
 msgid "ID"
-msgstr ""
+msgstr "ID"
 
 #: tracscreenshots/templates/screenshots.html:69
 #: tracscreenshots/templates/screenshots.html:70
 msgid "Name"
-msgstr ""
+msgstr "Jméno"
 
 #: tracscreenshots/templates/screenshots.html:73
 #: tracscreenshots/templates/screenshots.html:74
 msgid "Author"
-msgstr ""
+msgstr "Autor"
 
 #: tracscreenshots/templates/screenshots.html:77
 #: tracscreenshots/templates/screenshots.html:78
 msgid "Time"
-msgstr ""
+msgstr "Čas"
 
 #: tracscreenshots/templates/screenshots.html:85
 #: tracscreenshots/templates/screenshots.html:86
 msgid "Priority"
-msgstr ""
+msgstr "Priorita"
 
 #: tracscreenshots/templates/screenshots.html:91
 #: tracscreenshots/templates/screenshots.html:92
 msgid "Ascending"
-msgstr ""
+msgstr "Vzestupně"
 
 #: tracscreenshots/templates/screenshots.html:95
 #: tracscreenshots/templates/screenshots.html:96
 msgid "Descending"
-msgstr ""
+msgstr "Sestupně"
 
 #: tracscreenshots/templates/screenshots.html:102
 msgid "Apply order"
-msgstr ""
+msgstr "Aplikovat řazení"
 
 #: tracscreenshots/templates/screenshots.html:113
 msgid "Display filter"
-msgstr ""
+msgstr "Filtr zobrazení"
 
 #: tracscreenshots/templates/screenshots.html:118
 msgid "Components"
-msgstr ""
+msgstr "Komponenty"
 
 #: tracscreenshots/templates/screenshots.html:131
 #: tracscreenshots/templates/screenshots.html:163
 msgid "All"
-msgstr ""
+msgstr "Vše"
 
 #: tracscreenshots/templates/screenshots.html:132
 #: tracscreenshots/templates/screenshots.html:164
 msgid "None"
-msgstr ""
+msgstr "Žádná"
 
 #: tracscreenshots/templates/screenshots.html:139
 #: tracscreenshots/templates/screenshots.html:143
 msgid "AND"
-msgstr ""
+msgstr "A"
 
 #: tracscreenshots/templates/screenshots.html:140
 #: tracscreenshots/templates/screenshots.html:144
 msgid "OR"
-msgstr ""
+msgstr "NEBO"
 
 #: tracscreenshots/templates/screenshots.html:150
 msgid "Versions"
-msgstr ""
+msgstr "Verze"
 
 #: tracscreenshots/templates/screenshots.html:169
 msgid "Apply filter"
-msgstr ""
+msgstr "Aplikovat filtr"
+
 
