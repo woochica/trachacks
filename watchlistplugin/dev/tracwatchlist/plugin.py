@@ -588,6 +588,21 @@ class WatchlistPlugin(Component):
 
     ### methods for IRequestFilter
     def post_process_request(self, req, template, data, content_type):
+        # Extract realm and resid from path:
+        parts = req.path_info[1:].split('/',1)
+
+        # Handle special case for '/' and '/wiki'
+        if len(parts) == 0 or not parts[0]:
+            parts = ["wiki", "WikiStart"]
+        elif len(parts) == 1:
+            parts.append("WikiStart")
+
+        realm, resid = parts[:2]
+
+        if realm not in self.realms or not \
+                self.realm_handler[realm].has_perm(realm, req.perm):
+            return (template, data, content_type)
+
         user  = to_unicode( req.authname )
 
         notify = 'False'
@@ -609,20 +624,6 @@ class WatchlistPlugin(Component):
           add_notice(req, msg)
           del req.session['watchlist_notify_message']
 
-        # Extract realm and resid from path:
-        parts = req.path_info[1:].split('/',1)
-
-        # Handle special case for '/' and '/wiki'
-        if len(parts) == 0 or not parts[0]:
-            parts = ["wiki", "WikiStart"]
-        elif len(parts) == 1:
-            parts.append("WikiStart")
-
-        realm, resid = parts[:2]
-
-        if realm not in self.realms or not \
-                self.realm_handler[realm].has_perm(realm, req.perm):
-            return (template, data, content_type)
 
         href = Href(req.base_path)
         user = req.authname
