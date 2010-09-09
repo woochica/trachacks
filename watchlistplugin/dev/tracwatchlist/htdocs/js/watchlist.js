@@ -59,12 +59,16 @@ jQuery(document).ready(function() {
   });
   $("td.notify a.plainlink").each(function() {
     $(this).click(function() {
+        a = this;
         chkbox = $(this).children('input');
+        url = $(this).attr('href') + '&async=true';
         $.ajax({ url: $(this).attr('href') + '&async=true', success: function (data, textStatus) {
           if ($(chkbox).attr('checked')) {
+            $(a).attr('href', $(a).attr('href').replace('action=notifyoff', 'action=notifyon') )
             $(chkbox).removeAttr('checked');
           }
           else {
+            $(a).attr('href', $(a).attr('href').replace('action=notifyon', 'action=notifyoff') )
             $(chkbox).attr('checked','checked');
           }
         } } );
