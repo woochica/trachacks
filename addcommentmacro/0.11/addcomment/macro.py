@@ -173,6 +173,7 @@ class AddCommentMacro(WikiMacroBase):
                                     for_="authoraddcomment"),
                             tag.input(id="authoraddcomment", type="text",
                                     size=30, value=authname,
+                                    name="authoraddcomment",
                                     disabled=(not cancomment and "disabled" or None))
                         ) or None),
                         tag.input(type="hidden", name="__FORM_TOKEN",
