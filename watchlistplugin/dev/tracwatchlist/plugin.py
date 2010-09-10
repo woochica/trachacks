@@ -322,11 +322,11 @@ class WatchlistPlugin(Component):
         cursor = db.cursor()
 
         if not user or user == 'anonymous':
+            log_in=tag.a(_("log in"), href=req.href('login'))
             raise WatchlistError(
-                    tag(_("Please "), tag.a(_("log in"),
-                         href=req.href('login')),
-                         _(" to view or change your watchlist!"))
-            )
+                tag_("Please %(log_in)s to view or change your watchlist",
+                    log_in=log_in
+                ))
 
         wldict = req.args.copy()
         wldict['action'] = action

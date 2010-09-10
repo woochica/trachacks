@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.6\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-10 17:55+0100\n"
+"POT-Creation-Date: 2010-09-10 21:53+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -81,16 +81,13 @@ msgstr ""
 msgid "Individual column filtering"
 msgstr ""
 
-#: tracwatchlist/plugin.py:326
-msgid "Please "
-msgstr ""
-
-#: tracwatchlist/plugin.py:326
+#: tracwatchlist/plugin.py:325
 msgid "log in"
 msgstr ""
 
-#: tracwatchlist/plugin.py:328
-msgid " to view or change your watchlist!"
+#: tracwatchlist/plugin.py:327
+#, python-format
+msgid "Please %(log_in)s to view or change your watchlist"
 msgstr ""
 
 #: tracwatchlist/plugin.py:422
