@@ -68,6 +68,20 @@
                   </py:for>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr py:with="attr = {
+                    'history': { 'class':'history sorting_disabled' },
+                    'diff': { 'class':'diff sorting_disabled' },
+                    'unwatch': { 'class':'unwatch sorting_disabled' },
+                    'notify': { 'class':'notify sorting_disabled' },
+                  }">
+                  <th py:for="k in active_columns[realm]"
+                      py:if="k != 'notify' or notifications"
+                      class="${k}">
+                      <input py:if="k not in attr" name="${k}" type="text" size="4" />
+                  </th>
+                </tr>
+              </tfoot>
             </table>
           </div>
           <p class="noentrymessage" style="${wikilist or 'display:block'}">

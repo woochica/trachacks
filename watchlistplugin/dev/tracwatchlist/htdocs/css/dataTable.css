@@ -31,6 +31,7 @@
  */
 
 .dataTables_wrapper {
+  float: left; /* to wrap tight around table */
 	position: relative;
 	min-height: 302px;
 	clear: both;
@@ -261,9 +262,14 @@ tr.even {
 	text-align: center;
 }
 
-tfoot input {
-	margin: 0.5em 0;
-	width: 100%;
+tfoot th {
+  text-align: left;
+}
+
+tfoot input[type=text] {
+  width: 90%;
+  padding-left: 0px;
+  padding-right: 0px;
 	color: #444;
 }
 

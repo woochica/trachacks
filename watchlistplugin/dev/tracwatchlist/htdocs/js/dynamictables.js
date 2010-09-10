@@ -62,6 +62,22 @@ jQuery(document).ready(function() {
     },
    });
   });
+
+  /* Per-column filter input fields in footer */
+  $("tfoot input").keyup( function () {
+    oTable = $(this).parents('table').dataTable();
+    index = $("tfoot th").index( $(this).parent("th") );
+    oTable.fnFilter( this.value, index );
+  });
+
+  /* Restore per-column input values after page reload */
+  $("table.watchlist").each( function () {
+    oTable = $(this).dataTable();
+    var oSettings = oTable.fnSettings();
+    $(this).find("tfoot th").each( function (i) {
+      $(this).find("input").val( oSettings.aoPreSearchCols[i].sSearch );
+    });
+  });
 });
 
 

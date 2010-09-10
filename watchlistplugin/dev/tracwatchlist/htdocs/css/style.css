@@ -6,8 +6,17 @@ table {
     margin: 0.5ex 0ex;
 }
 
-thead, th {
+thead th {
     border-bottom: thin solid;
+    font-weight: bold;
+}
+
+tfoot {
+/*    display: none; */
+}
+
+tfoot th {
+    border-top: thin solid;
     font-weight: bold;
 }
 
