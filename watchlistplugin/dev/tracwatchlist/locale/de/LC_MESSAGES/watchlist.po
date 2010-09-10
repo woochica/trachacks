@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-08-31 21:31+0200\n"
-"PO-Revision-Date: 2010-09-10 01:40+0100\n"
+"PO-Revision-Date: 2010-09-10 01:57+0100\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -494,12 +494,12 @@ msgstr "Ihnen fehlt die Leseberechtigung für Tickets."
 #: tracwatchlist/templates/wl-ticket.html:39
 #, python-format
 msgid "([1:%(changetime_link)s] ago)"
-msgstr "(vor [1:%(timeline_link)s])"
+msgstr "(vor [1:%(changetime_link)s])"
 
 #: tracwatchlist/templates/wl-ticket.html:43
 #, python-format
 msgid "([1:%(time_link)s] ago)"
-msgstr "(vor [1:%(timeline_link)s])"
+msgstr "(vor [1:%(time_link)s])"
 
 #: tracwatchlist/templates/wl-ticket.html:64
 msgid "No tickets are currently watched."
@@ -522,13 +522,4 @@ msgstr "(vor [1:%(timeline_link)s])"
 #: tracwatchlist/templates/wl-wiki.html:73
 msgid "No wikis are currently watched."
 msgstr "Momentan werden keine Wiki-Seiten beobachtet."
-
-#~ msgid "Read-Only"
-#~ msgstr ""
-
-#~ msgid "Creation time"
-#~ msgstr ""
-
-#~ msgid "CC"
-#~ msgstr ""
 
