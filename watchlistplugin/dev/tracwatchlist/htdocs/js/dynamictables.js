@@ -63,17 +63,19 @@ jQuery(document).ready(function() {
    });
   });
 
-  /* Per-column filter input fields in footer */
-  $("tfoot input").keyup( function () {
-    table = $(this).parents('table');
-    oTable = table.dataTable();
-    index = $(table).find("tfoot th").index( $(this).parent("th") );
-    oTable.fnFilter( this.value, index );
-  });
 
-  /* Restore per-column input values after page reload */
+  /* Per-column filters */
   $("table.watchlist").each( function () {
-    oTable = $(this).dataTable();
+    var table  = this;
+    var oTable = $(this).dataTable();
+
+    /* Per-column filter input fields in footer */
+    $(this).find("tfoot input").keyup( function () {
+      var index = $(table).find("tfoot th").index( $(this).parent("th") );
+      oTable.fnFilter( this.value, index );
+    });
+
+    /* Restore per-column input values after page reload */
     var oSettings = oTable.fnSettings();
     $(this).find("tfoot th").each( function (i) {
       $(this).find("input").val( oSettings.aoPreSearchCols[i].sSearch );
