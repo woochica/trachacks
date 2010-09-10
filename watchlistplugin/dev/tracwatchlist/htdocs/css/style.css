@@ -44,6 +44,10 @@ td.name, td.version, td.changetime, td.author, td.commentnum, td.id, td.notify, 
 }
 */
 
+.itime {
+    display:none;
+}
+
 span.notifyon {
     color:green;
 }

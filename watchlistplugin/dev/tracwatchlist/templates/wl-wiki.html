@@ -35,7 +35,7 @@
                   <td py:def="wiki_name" class="name">${link('wiki',page.name,
                       text=page.name)}</td>
                   <td py:def="wiki_changetime" class="changetime">
-                        $page.changetime
+                        <span class="itime">$page.ichangetime</span>$page.changetime
                         ${print_timedelta(page.timedelta, page.timeline_link)}
                   </td>
                   <td py:def="wiki_version" class="version"><a py:if="not page.deleted"

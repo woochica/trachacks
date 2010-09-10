@@ -36,11 +36,11 @@
                       class="${ticket.status == 'closed' and 'closed'}">#${ticket.id}</a>
                   </td>
                   <td py:def="ticket_changetime" class="changetime">
-                        $ticket.changetime
+                        <span class="itime">$ticket.ichangetime</span>$ticket.changetime
                         ${print_timedelta(ticket.changetime_delta, ticket.changetime_link)}
                   </td>
                   <td py:def="ticket_time" class="time">
-                        $ticket.time
+                        <span class="itime">$ticket.itime</span>$ticket.time
                         ${print_timedelta(ticket.time_delta, ticket.time_link)}
                   </td>
                   <td py:def="ticket_commentnum" class="commentnum"><a href="${href('ticket',ticket.id)
