@@ -1,8 +1,8 @@
-from estimationtools.utils import get_estimation_field, execute_query
+from estimationtools.utils import get_closed_states, execute_query, EstimationToolsBase
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.api import parse_args
 
-class HoursRemaining(WikiMacroBase):
+class HoursRemaining(EstimationToolsBase, WikiMacroBase):
     """Calculates remaining estimated hours for the queried tickets.
 
     The macro accepts a comma-separated list of query parameters for the ticket selection, 
@@ -14,14 +14,17 @@ class HoursRemaining(WikiMacroBase):
     }}}
     """
         
-    estimation_field = get_estimation_field()
+    closed_states = get_closed_states()
     
     def render_macro(self, req, name, content):
-        _, options = parse_args(content, strict=False)
+        _ignore, options = parse_args(content, strict=False)
 
         # we have to add custom estimation field to query so that field is added to
         # resulting ticket list
         options[self.estimation_field + "!"] = None
+
+        # ignore closed tickets
+        options['status!'] = "|".join(self.closed_states)
 
         tickets = execute_query(self.env, req, options)
         
@@ -32,5 +35,5 @@ class HoursRemaining(WikiMacroBase):
             except:
                 pass
 
-        return "%s" % int(sum)
+        return "%g" % round(sum, 2)
         

@@ -1,12 +1,14 @@
 from datetime import timedelta
-from estimationtools.utils import parse_options, execute_query, get_estimation_field, get_estimation_suffix, get_closed_states
-from trac.util.html import Markup
+from estimationtools.utils import parse_options, execute_query, get_estimation_suffix, get_closed_states, \
+                get_serverside_charts, EstimationToolsBase
+from genshi.builder import tag
+from trac.util.text import unicode_quote, unicode_urlencode, obfuscate_email_address
 from trac.wiki.macros import WikiMacroBase
 import copy
 
 DEFAULT_OPTIONS = {'width': '400', 'height': '100', 'color': 'ff9900'}
 
-class WorkloadChart(WikiMacroBase):
+class WorkloadChart(EstimationToolsBase, WikiMacroBase):
     """Creates workload chart for the selected tickets.
 
     This macro creates a pie chart that shows the remaining estimated workload per ticket owner,
@@ -25,9 +27,9 @@ class WorkloadChart(WikiMacroBase):
     }}}
     """
 
-    estimation_field = get_estimation_field()
     estimation_suffix = get_estimation_suffix()
     closed_states = get_closed_states()
+    serverside_charts = get_serverside_charts()
 
     def render_macro(self, req, name, content):
         db = self.env.get_db_cnx()
@@ -56,7 +58,12 @@ class WorkloadChart(WikiMacroBase):
         estimations_string = []
         labels = []
         for owner, estimation in estimations.iteritems():
-            labels.append("%s %s%s" % (owner, str(int(estimation)), self.estimation_suffix))
+            # Note: Unconditional obfuscation of owner in case it represents
+            # an email adress, and as the chart API doesn't support SSL
+            # (plain http transfer only, from either client or server).
+            labels.append("%s %g%s" % (obfuscate_email_address(owner),
+                            round(estimation, 2),
+                            self.estimation_suffix))
             estimations_string.append(str(int(estimation)))
 
         # Title
@@ -71,16 +78,21 @@ class WorkloadChart(WikiMacroBase):
                 if currentdate.weekday() < 5:
                     days_remaining += 1
                 currentdate += day
-            title += ' %s%s (%s workdays left)' % (int(sum), self.estimation_suffix, days_remaining)
+            title += ' %g%s (~%s workdays left)' % (round(sum, 2),
+                                    self.estimation_suffix, days_remaining)
 
-        return Markup("<img src=\"http://chart.apis.google.com/chart?"
-               "chs=%sx%s"
-               "&amp;chf=bg,s,00000000"
-               "&amp;chd=t:%s"
-               "&amp;cht=p3"
-               "&amp;chtt=%s"
-               "&amp;chl=%s"
-               "&amp;chco=%s\" "
-               "alt=\'Workload Chart\' />"
-               % (options['width'], options['height'], ",".join(estimations_string),
-                  title, "|".join(labels), options['color']))
+        chart_args = unicode_urlencode({'chs': '%sx%s' % (options['width'], options['height']),
+                      'chf': 'bg,s,00000000',
+                      'chd': 't:%s' % ",".join(estimations_string),
+                      'cht': 'p3',
+                      'chtt': title,
+                      'chl': "|".join(labels),
+                      'chco': options['color']})
+        self.log.debug("WorkloadChart data: %s" % repr(chart_args))
+        if self.serverside_charts:
+            return tag.image(src="%s?data=%s" % (req.href.estimationtools('chart'),
+                                    unicode_quote(chart_args)),
+                             alt="Workload Chart (server)")
+        else:
+            return tag.image(src="http://chart.apis.google.com/chart?%s" % chart_args,
+                             alt="Workload Chart (client)")

@@ -1,16 +1,18 @@
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from datetime import timedelta
+from genshi.builder import tag
 from estimationtools.utils import parse_options, execute_query, get_estimation_field, get_closed_states, \
-        from_timestamp
+        from_timestamp, get_serverside_charts, EstimationToolsBase
 from trac.core import TracError
 from trac.util.html import Markup
+from trac.util.text import unicode_quote, unicode_urlencode
 from trac.wiki.macros import WikiMacroBase
 import copy
 
 DEFAULT_OPTIONS = {'width': '800', 'height': '200', 'color': 'ff9900', 'expected': '0',
                    'bgcolor': 'ffffff00', 'wecolor':'ccccccaa', 'colorexpected': 'ffddaa', 'weekends':'true', 'gridlines' : '0'}
 
-class BurndownChart(WikiMacroBase):
+class BurndownChart(EstimationToolsBase, WikiMacroBase):
     """Creates burn down chart for selected tickets.
 
     This macro creates a chart that can be used to visualize the progress in a milestone (e.g., sprint or
@@ -23,6 +25,7 @@ class BurndownChart(WikiMacroBase):
      * `enddate`: end date of the period. If omitted, it defaults to either the milestones (if given) `completed' date,
        or `due` date, or today (in that order) (ISO8601 format)
      * `weekends`: include weekends in chart. Defaults to `true` 
+     * `title`: chart title. Defaults to first milestone or 'Burndown Chart'
      * `expected`: show expected progress in chart, 0 or any number to define initial expected hours (defaults to 0).
      * `gridlines`: show gridlines in chart, 0 or any number to define hour steps (defaults to 0)
      * `width`: width of resulting diagram (defaults to 800)
@@ -44,8 +47,8 @@ class BurndownChart(WikiMacroBase):
     }}}
     """
 
-    estimation_field = get_estimation_field()
     closed_states = get_closed_states()
+    serverside_charts = get_serverside_charts()
 
     def render_macro(self, req, name, content):
 
@@ -111,28 +114,31 @@ class BurndownChart(WikiMacroBase):
         if len(dates) > 0 and dates[ - 1].weekday() == 5:
             weekends.append("R,%s,0,%s,1.0" % (options['wecolor'], Decimal(1) - halfday))
 
-        title = ''
-        if options.get('milestone'):
+        # chart title
+        title = options.get('title', None)
+        if title is None and options.get('milestone'):
             title = options['milestone'].split('|')[0]
 
-        return Markup("<img src=\"http://chart.apis.google.com/chart?"
-               "chs=%sx%s"
-               "&amp;chf=c,s,%s|bg,s,00000000"
-               "&amp;chd=t:%s|%s%s"
-               "&amp;cht=lxy"
-               "&amp;chxt=x,x,y"
-               "&amp;chxl=%s"
-               "&amp;chxr=%s"
-               "&amp;chm=%s"
-               "&amp;chg=%s"
-               "&amp;chco=%s,%s"
-               "&amp;chtt=%s\" "
-               "alt=\'Burndown Chart\' />"
-               % (options['width'], options['height'],
-                  options['bgcolor'],
-                  ",".join(xdata), ",".join(ydata), expecteddata, bottomaxis, leftaxis,
-                  "|".join(weekends), gridlinesdata, 
-                  options['color'], options['colorexpected'], title))
+        chart_args = unicode_urlencode(
+                    {'chs': '%sx%s' % (options['width'], options['height']),
+                     'chf': 'c,s,%s|bg,s,00000000' % options['bgcolor'],
+                     'chd': 't:%s|%s%s' % (",".join(xdata), ",".join(ydata), expecteddata),
+                     'cht': 'lxy',
+                     'chxt': 'x,x,y',
+                     'chxl': bottomaxis,
+                     'chxr': leftaxis,
+                     'chm': "|".join(weekends),
+                     'chg': gridlinesdata,
+                     'chco': '%s,%s' % (options['color'], options['colorexpected']),
+                     'chtt': title})
+        self.log.debug("BurndownChart data: %s" % repr(chart_args))
+        if self.serverside_charts:
+            return tag.image(src="%s?data=%s" % (req.href.estimationtools('chart'),
+                                    unicode_quote(chart_args)),
+                             alt="Burndown Chart (server)")
+        else:
+            return tag.image(src="http://chart.apis.google.com/chart?%s" % chart_args,
+                             alt="Burndown Chart (client)")
 
     def _calculate_timetable(self, options, query_args, req):
         db = self.env.get_db_cnx()

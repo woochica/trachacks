@@ -1,10 +1,10 @@
-from estimationtools.utils import get_estimation_field
+from estimationtools.utils import EstimationToolsBase
 from pkg_resources import resource_filename
 from trac.core import implements, Component
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_script
 
-class HoursInPlaceEditor(Component):
+class HoursInPlaceEditor(EstimationToolsBase):
     """A filter to implement in-place editing for estimated hours field in query page.
     
     Requires Trac XML-RPC Plug-in.
@@ -12,11 +12,9 @@ class HoursInPlaceEditor(Component):
 
     implements(IRequestFilter, IRequestHandler, ITemplateProvider)
     
-    estimation_field = get_estimation_field()
-    
     # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info.startswith('/estimationtools')
+        return req.path_info == '/estimationtools/edithours.js'
 
     def process_request(self, req):
         data = {}
@@ -28,7 +26,12 @@ class HoursInPlaceEditor(Component):
         return handler
             
     def post_process_request(self, req, template, data, content_type):
-        if (req.path_info.startswith('/query') or req.path_info.startswith('/report')
+        try:
+            realm = data['context'].resource.realm
+        except:
+            realm = None
+        if (realm in ('query', 'report', 'wiki', 'milestone')
+            and (not 'preview' in req.args)
             and req.perm.has_permission('TICKET_MODIFY')
             and req.perm.has_permission('XML_RPC')):
             # add_script(req, 'estimationtools/jquery-1.2.3.min.js')

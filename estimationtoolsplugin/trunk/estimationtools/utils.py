@@ -1,9 +1,12 @@
+import urllib2
 from datetime import datetime
 from time import strptime
-from trac.config import Option, ListOption
-from trac.core import TracError
+from trac.config import Option, ListOption, BoolOption
+from trac.core import TracError, Component, implements
+from trac.web.api import IRequestFilter, IRequestHandler, RequestDone
 from trac.wiki.api import parse_args
 from trac.ticket.query import Query
+from trac.util.text import unicode_urlencode
 
 # 0.12 stores timestamps as microseconds. Pre-0.12 stores as seconds.
 from trac.util.datefmt import utc
@@ -15,7 +18,7 @@ except ImportError:
 
 AVAILABLE_OPTIONS = ['startdate', 'enddate', 'today', 'width', 'height', 
                      'color', 'bgcolor', 'wecolor', 'weekends', 'gridlines',
-                     'expected', 'colorexpected']
+                     'expected', 'colorexpected', 'title']
 
 def get_estimation_field():
     return Option('estimation-tools', 'estimation_field', 'estimatedhours',
@@ -31,6 +34,43 @@ def get_closed_states():
 def get_estimation_suffix():
     return Option('estimation-tools', 'estimation_suffix', 'h',
         doc="""Suffix used for estimations. Defaults to 'h'""")
+
+def get_serverside_charts():
+    return BoolOption('estimation-tools', 'serverside_charts', 'false',
+        doc="""Generate charts links internally and fetch charts server-side
+        before returning to client, instead of generating Google links that the
+        users browser fetches directly. Particularly useful for sites served behind SSL.
+        Defaults to false.""")
+
+class EstimationToolsBase(Component):
+    """ Base class EstimationTools components that auto-disables if
+    estimation field is not properly configured. """
+    abstract = True
+    estimation_field = get_estimation_field()
+    def __init__(self, *args, **kwargs):
+        if not self.env.config.has_option('ticket-custom', self.estimation_field):
+            # No estimation field configured. Disable plugin and log error.
+            self.log.error("EstimationTools (%s): " \
+                        "Estimation field not configured. Component disabled." \
+                        % (self.__class__.__name__,))
+            self.env.disable_component(self)
+
+class GoogleChartProxy(EstimationToolsBase):
+    """ A Google Chart API proxy handler that moves chart fetching server-side.
+    Implemented to allow serving the charts under SSL encryption between client
+    and server - without the nagging error messages."""
+    implements(IRequestHandler)
+    def match_request(self, req):
+        return req.path_info == '/estimationtools/chart'
+    def process_request(self, req):
+        req.perm.require('TICKET_VIEW')
+        url = 'http://chart.apis.google.com/chart?%s' % req.args.get('data', '')
+        self.log.debug("Fetching chart using url: %s" % repr(url))
+        chart = urllib2.urlopen(url.encode('utf-8'))
+        for header, value in chart.headers.items():
+            req.send_header(header, value)
+        req.write(chart.read())
+        raise RequestDone
 
 def parse_options(db, content, options):
     """Parses the parameters, makes some sanity checks, and creates default values
@@ -84,7 +124,9 @@ def parse_options(db, content, options):
 def execute_query(env, req, query_args):
     # set maximum number of returned tickets to 0 to get all tickets at once
     query_args['max'] = 0
-    query_string = '&'.join(['%s=%s' % item for item in query_args.iteritems()])
+    # urlencode the args, converting back a few vital exceptions:
+    query_string = unicode_urlencode(query_args).replace('%21=', '!=').replace('%7C', '|').replace('+', ' ')
+    env.log.debug("query_string: %s" % query_string)
     query = Query.from_string(env, query_string)
 
     tickets = query.execute(req)
