@@ -35,9 +35,13 @@
                       title="${ticket.summary}" class="${ticket.status == 'closed' and 'closed'}">#${ticket.id}</a>
                   </td>
                   <td py:def="ticket_changetime" class="changetime">$ticket.changetime
-                      <span py:if="ticket.timedelta"
-                        i18n:msg="timeline_link, timedelta"> (<a
-                        href="$ticket.timeline_link">$ticket.timedelta</a> ago)</span></td>
+                      <span py:if="ticket.changetime_delta"
+                        i18n:msg="changetime_link, changetime_delta"> (<a
+                        href="$ticket.changetime_link">$ticket.changetime_delta</a> ago)</span></td>
+                  <td py:def="ticket_time" class="time">$ticket.time
+                      <span py:if="ticket.time_delta"
+                        i18n:msg="time_link, time_delta"> (<a
+                        href="$ticket.time_link">$ticket.time_delta</a> ago)</span></td>
                   <td py:def="ticket_commentnum" class="commentnum"><a href="${href('ticket',ticket.id)
                       + ((ticket.commentnum != '0') and ('#comment:'
                       + ticket.commentnum) or

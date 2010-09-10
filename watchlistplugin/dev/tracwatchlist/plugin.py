@@ -910,6 +910,7 @@ class TicketWatchlist(BasicWatchlist):
           # returns an empty tag, so we skip the first two elements
           # [tag(''), tag('; ')] and remove the last tag('; '):
           changes = changes and tag(changes[2:-1]) or tag()
+          dt = from_utimestamp( time )
           ct = from_utimestamp( changetime )
           ticketlist.append({
               'id' : to_unicode(id),
@@ -918,15 +919,18 @@ class TicketWatchlist(BasicWatchlist):
               'commentnum': to_unicode(self.commentnum),
               'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
               'changetime' : format_datetime( ct, "%F %T %Z" ),
-              'timedelta' : pretty_timedelta( ct ),
-              'timeline_link' : req.href.timeline(precision='seconds',
+              'changetime_delta' : pretty_timedelta( ct ),
+              'changetime_link' : req.href.timeline(precision='seconds',
                   from_=format_datetime ( ct, 'iso8601')),
+              'time' : format_datetime( dt, "%F %T %Z" ),
+              'time_delta' : pretty_timedelta( dt ),
+              'time_link' : req.href.timeline(precision='seconds',
+                  from_=format_datetime ( dt, 'iso8601')),
               'changes' : changes,
               'summary' : summary,
               'status'  : status,
               'notify'  : notify,
             'type'      : type,
-            'time'      : time,
             'component' : component,
             'severity'  : severity,
             'priority'  : priority,
