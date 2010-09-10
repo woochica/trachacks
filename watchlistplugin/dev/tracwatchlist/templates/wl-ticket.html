@@ -32,7 +32,8 @@
               <tbody>
                   <td py:def="ticket_id" class="id">
                     <a href="${href('ticket', ticket.id)}"
-                      title="${ticket.summary}" class="${ticket.status == 'closed' and 'closed'}">#${ticket.id}</a>
+                        title="${ticket.type}: ${ticket.summary} (${ticket.status}${ticket.status == 'closed' and ': ' + ticket.resolution or ''})"
+                      class="${ticket.status == 'closed' and 'closed'}">#${ticket.id}</a>
                   </td>
                   <td py:def="ticket_changetime" class="changetime">$ticket.changetime
                       <span py:if="ticket.changetime_delta"
