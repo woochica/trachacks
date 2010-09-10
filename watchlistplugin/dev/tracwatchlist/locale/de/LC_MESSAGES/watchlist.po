@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-08-31 21:31+0200\n"
-"PO-Revision-Date: 2010-09-10 21:53+0100\n"
+"PO-Revision-Date: 2010-09-10 22:25+0100\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -293,33 +293,39 @@ msgstr ""
 msgid "Keywords"
 msgstr ""
 
-#: tracwatchlist/plugin.py:882 tracwatchlist/plugin.py:898
-msgid " added"
-msgstr " hinzugefügt"
+#: tracwatchlist/plugin.py:881 tracwatchlist/plugin.py:898
+#, python-format
+msgid " %(value)s added"
+msgstr ""
 
-#: tracwatchlist/plugin.py:887
-msgid " removed"
-msgstr " entferne"
-
-#: tracwatchlist/plugin.py:890
-msgid " modified"
-msgstr " geändert"
+#: tracwatchlist/plugin.py:886
+#, python-format
+msgid " %(value)s removed"
+msgstr " %(value)s entfernt"
 
 #: tracwatchlist/plugin.py:890
 msgid "diff"
 msgstr "Diff"
 
+#: tracwatchlist/plugin.py:892
+#, python-format
+msgid "%(field)s modified (%(diff)s)"
+msgstr "%(field)s geändert (%(diff)s)"
+
 #: tracwatchlist/plugin.py:900
-msgid " deleted"
-msgstr " gelöscht"
+#, python-format
+msgid " %(value)s deleted"
+msgstr " %(value)s gelöscht"
 
-#: tracwatchlist/plugin.py:902
-msgid " changed from "
-msgstr " geändert von "
+#: tracwatchlist/plugin.py:904
+#, python-format
+msgid " changed from %(oldvalue)s to %(newvalue)s"
+msgstr " geändert von %(oldvalue)s zu %(newvalue)s"
 
-#: tracwatchlist/plugin.py:903
-msgid " to "
-msgstr " zu "
+#: tracwatchlist/plugin.py:929
+#, python-format
+msgid "%F %T %Z"
+msgstr "%F %T %Z"
 
 #: tracwatchlist/templates/orderadd.html:10
 msgid "Columns"
@@ -470,23 +476,6 @@ msgstr ""
 #: tracwatchlist/templates/watchlist_prefs.html:10
 msgid "General"
 msgstr ""
-
-#: tracwatchlist/templates/wl-example.html:14
-#: tracwatchlist/templates/wl-example.html:36
-msgid "Example"
-msgstr "Beispiel"
-
-#: tracwatchlist/templates/wl-example.html:19
-msgid "Name"
-msgstr "Name"
-
-#: tracwatchlist/templates/wl-example.html:37
-msgid "No examples are currently watched."
-msgstr "Momentan werden keine Beispiele beobachtet."
-
-#: tracwatchlist/templates/wl-example.html:40
-msgid "Add Example:"
-msgstr "Füge Beispiel hinzu:"
 
 #: tracwatchlist/templates/wl-ticket.html:14
 #: tracwatchlist/templates/wl-ticket.html:19

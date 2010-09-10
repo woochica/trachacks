@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.6\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-10 21:53+0100\n"
+"POT-Creation-Date: 2010-09-10 22:19+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -277,32 +277,38 @@ msgstr ""
 msgid "Keywords"
 msgstr ""
 
-#: tracwatchlist/plugin.py:882 tracwatchlist/plugin.py:898
-msgid " added"
+#: tracwatchlist/plugin.py:881 tracwatchlist/plugin.py:898
+#, python-format
+msgid " %(value)s added"
 msgstr ""
 
-#: tracwatchlist/plugin.py:887
-msgid " removed"
-msgstr ""
-
-#: tracwatchlist/plugin.py:890
-msgid " modified"
+#: tracwatchlist/plugin.py:886
+#, python-format
+msgid " %(value)s removed"
 msgstr ""
 
 #: tracwatchlist/plugin.py:890
 msgid "diff"
 msgstr ""
 
+#: tracwatchlist/plugin.py:892
+#, python-format
+msgid "%(field)s modified (%(diff)s)"
+msgstr ""
+
 #: tracwatchlist/plugin.py:900
-msgid " deleted"
+#, python-format
+msgid " %(value)s deleted"
 msgstr ""
 
-#: tracwatchlist/plugin.py:902
-msgid " changed from "
+#: tracwatchlist/plugin.py:904
+#, python-format
+msgid " changed from %(oldvalue)s to %(newvalue)s"
 msgstr ""
 
-#: tracwatchlist/plugin.py:903
-msgid " to "
+#: tracwatchlist/plugin.py:929
+#, python-format
+msgid "%F %T %Z"
 msgstr ""
 
 #: tracwatchlist/templates/orderadd.html:10

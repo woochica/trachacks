@@ -878,29 +878,30 @@ class TicketWatchlist(BasicWatchlist):
                   removed = oldvalues.difference(newvalues)
                   strng = fieldtag
                   if added:
-                      strng += tag(" ", tag.em(', '.join(added)),
-                                   _(" added"))
+                      strng += tag(_(" %(value)s added"), 
+                              value=tag.em(', '.join(added)))
                   if removed:
                       if added:
                           strng += tag(', ')
-                      strng += tag(" ", tag.em(', '.join(removed)),
-                                   _(" removed"))
+                      strng += tag(_(" %(value)s removed"),
+                              value=tag.em(', '.join(removed)))
                   return strng
               elif field == 'description':
-                  return fieldtag + tag(_(" modified"), " (", tag.a(_("diff"),
-                      href=req.href('ticket',id,action='diff',
-                      version=self.commentnum)), ")")
+                  diff =tag.a(_("diff"), href=req.href('ticket',id,action='diff',
+                      version=self.commentnum))
+                  return tag_("%(field)s modified (%(diff)s)", field=fieldtag, diff=diff)
               elif field == 'comment':
                   self.commentnum = oldvalue
                   self.comment    = newvalue
                   return tag("")
               elif not oldvalue:
-                  return fieldtag + tag(" ", tag.em(newvalue), _(" added"))
+                  return fieldtag + tag_(" %(value)s added", value=tag.em(newvalue))
               elif not newvalue:
-                  return fieldtag + tag(" ", tag.em(oldvalue), _(" deleted"))
+                  return fieldtag + tag_(" %(value)s deleted", value=tag.em(oldvalue))
               else:
-                  return fieldtag + tag(_(" changed from "), tag.em(oldvalue),
-                                        _(" to "), tag.em(newvalue))
+                  return fieldtag + tag(_(" changed from %(oldvalue)s to %(newvalue)s",
+                                            oldvalue=tag.em(oldvalue),
+                                            newvalue=tag.em(newvalue)))
 
           changes = []
           author  = reporter
@@ -925,7 +926,7 @@ class TicketWatchlist(BasicWatchlist):
               'changetime_delta' : pretty_timedelta( ct ),
               'changetime_link' : req.href.timeline(precision='seconds',
                   from_=format_datetime ( ct, 'iso8601')),
-              'time' : format_datetime( dt, "%F %T %Z" ),
+              'time' : format_datetime( dt, _("%F %T %Z") ),
               'itime' : time,
               'time_delta' : pretty_timedelta( dt ),
               'time_link' : req.href.timeline(precision='seconds',
