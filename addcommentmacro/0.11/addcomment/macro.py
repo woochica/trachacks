@@ -63,7 +63,8 @@ class AddCommentMacro(WikiMacroBase):
         elif appendonly and 'WIKI_VIEW' in req.perm(resource):
             cancomment = True
         else:
-            raise TracError('Error: Insufficient privileges to AddComment')
+            self.log.debug('Insufficient privileges for %s to AddComment to %s',
+                                   req.authname, resource.id)
         
         # Get the data from the POST
         comment = req.args.get("addcomment", "")
@@ -171,7 +172,8 @@ class AddCommentMacro(WikiMacroBase):
                             tag.label("Your email or username:",
                                     for_="authoraddcomment"),
                             tag.input(id="authoraddcomment", type="text",
-                                    size=30, value=authname)
+                                    size=30, value=authname,
+                                    disabled=(not cancomment and "disabled" or None))
                         ) or None),
                         tag.input(type="hidden", name="__FORM_TOKEN",
                                         value=req.form_token),
