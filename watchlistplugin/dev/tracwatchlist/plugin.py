@@ -740,7 +740,7 @@ class WikiWatchlist(BasicWatchlist):
           })
       # Existing watched wikis:
       cursor.execute("""
-        SELECT name,author,time,version,comment
+        SELECT name,author,time,version,comment,readonly,ipnr
           FROM wiki AS w1
          WHERE name IN (
            SELECT resid
@@ -752,12 +752,13 @@ class WikiWatchlist(BasicWatchlist):
              FROM wiki AS w2
             WHERE w1.name=w2.name
            )
+         GROUP BY name,author,time,version,comment,readonly,ipnr
          ORDER BY time DESC;
       """, (user,)
       )
 
       wikis = cursor.fetchall()
-      for name,author,time,version,comment in wikis:
+      for name,author,time,version,comment,readonly,ipnr in wikis:
           notify = False
           if wl.wsub:
             notify = wl.is_notify(req, 'wiki', name)
@@ -770,8 +771,10 @@ class WikiWatchlist(BasicWatchlist):
               'timedelta' : pretty_timedelta( dt ),
               'timeline_link' : req.href.timeline(precision='seconds',
                   from_=format_datetime ( dt, 'iso8601')),
-              'comment' : comment,
-              'notify'  : notify,
+              'comment'  : comment,
+              'notify'   : notify,
+              'readonly' : readonly and _("yes") or _("no"),
+              'ipnr'     : ipnr,
           })
       return wikilist
 
@@ -834,19 +837,20 @@ class TicketWatchlist(BasicWatchlist):
       user = req.authname
       ticketlist = []
       cursor.execute("""
-        SELECT id,type,time,changetime,summary,reporter,status
+        SELECT id,type,time,changetime,summary,time,component,severity,priority,owner,reporter,cc,version,milestone,status,resolution,keywords
           FROM ticket
          WHERE id IN (
            SELECT CAST(resid AS decimal)
              FROM watchlist
             WHERE wluser=%s AND realm='ticket'
            )
-         GROUP BY id,type,time,changetime,summary,reporter
+         GROUP BY id,type,time,changetime,summary,time,component,severity,priority,owner,reporter,cc,version,milestone,status,resolution,keywords
          ORDER BY changetime DESC;
       """, (user,)
       )
       tickets = cursor.fetchall()
-      for id,type,time,changetime,summary,reporter,status in tickets:
+      for id,type,time,changetime,summary,time,component,severity,priority,owner,\
+            reporter,cc,version,milestone,status,resolution,keywords in tickets:
           self.commentnum = 0
           self.comment    = ''
 
@@ -921,6 +925,19 @@ class TicketWatchlist(BasicWatchlist):
               'summary' : summary,
               'status'  : status,
               'notify'  : notify,
+            'type'      : type,
+            'time'      : time,
+            'component' : component,
+            'severity'  : severity,
+            'priority'  : priority,
+            'owner'     : owner,
+            'reporter'  : reporter,
+            'cc'        : cc,
+            'version'   : version,
+            'milestone' : milestone,
+            'status'    : status,
+            'resolution': resolution,
+            'keywords'  : keywords,
           })
       return ticketlist
 
