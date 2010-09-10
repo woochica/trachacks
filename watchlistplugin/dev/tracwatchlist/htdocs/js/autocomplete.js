@@ -15,11 +15,21 @@ jQuery(document).ready(function() {
   $("#wikis .addtowatch input[name=resid]")
       .autocomplete("./watchlist?action=search&realm=wiki");
   ///
-  var asAuthors = new Object();
+  
+  // Wiki author names
+  var osAuthorsHash = new Object();
+  var asAuthors = new Array();
   $("table#wikilist tbody td.author").each(function () {
-      asAuthors[ $(this).text().replace(/^\s*|\s*$/g,'') ] = 1;
+      osAuthorsHash[ $(this).text().replace(/^\s*|\s*$/g,'') ] = 1;
   });
-  alert( asAuthors.keys() );
+  for (key in osAuthorsHash) {
+    asAuthors.push(key);
+  }
+  $("#wikis tfoot th.author input")
+      .autocomplete(asAuthors);
+  osAuthorsHash = 0;
+  asAuthors     = 0;
+  ///
 
   // Autocomplete Ticket Ids
   var asTicketIds = [];
@@ -30,8 +40,8 @@ jQuery(document).ready(function() {
       .autocomplete(asTicketIds);
   $("#tickets .addtowatch input[name=resid]")
       .autocomplete("./watchlist?action=search&realm=ticket");
-  asWikiNames = [];
-  asTicketIds = [];
+  asWikiNames = 0;
+  asTicketIds = 0;
   ///
 });
 
