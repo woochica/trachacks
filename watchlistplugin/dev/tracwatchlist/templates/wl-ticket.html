@@ -18,12 +18,13 @@
             <div>
             <h2 class="${ticketlist and 'foldable' or ''}">Tickets</h2>
             <div class="watchlist-parent" id="ticketlist-parent" py:if="ticketlist">
-            <table class="watchlist" id="ticketlist">
-              <thead>
-                <tr py:with="attr = {
+            <table class="watchlist" id="ticketlist"
+                   py:with="attr = {
                     'unwatch': { 'class':'unwatch sorting_disabled' },
                     'notify': { 'class':'notify sorting_disabled' },
                   }">
+              <thead>
+                <tr>
                   <th py:for="k in active_columns[realm]"
                       py:if="k != 'notify' or notifications"
                       class="${k}" py:attrs="attr.get(k,{})">${available_columns[realm][k]}</th>
@@ -59,6 +60,15 @@
                   </py:for>
                 </tr>
               </tbody>
+              <tfoot>
+                <tr>
+                  <th py:for="k in active_columns[realm]"
+                      py:if="k != 'notify' or notifications"
+                      class="${k}">
+                      <input py:if="k not in attr" name="${k}" type="text" size="4" />
+                  </th>
+                </tr>
+              </tfoot>
             </table>
           </div>
           <p class="noentrymessage" style="${ticketlist or 'display:block'}">

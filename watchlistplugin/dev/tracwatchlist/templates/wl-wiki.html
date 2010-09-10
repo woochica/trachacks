@@ -18,14 +18,15 @@
           <div>
           <h2 class="${wikilist and 'foldable' or ''}">Wikis</h2>
           <div class="watchlist-parent" id="wikilist-parent" py:if="wikilist">
-            <table class="watchlist" id="wikilist">
-              <thead>
-                <tr py:with="attr = {
+            <table class="watchlist" id="wikilist"
+                   py:with="attr = {
                     'history': { 'class':'history sorting_disabled' },
                     'diff': { 'class':'diff sorting_disabled' },
                     'unwatch': { 'class':'unwatch sorting_disabled' },
                     'notify': { 'class':'notify sorting_disabled' },
                   }">
+              <thead>
+                <tr>
                   <th py:for="k in active_columns[realm]"
                       py:if="k != 'notify' or notifications"
                       class="${k}" py:attrs="attr.get(k,{})">${available_columns[realm][k]}</th>
@@ -69,12 +70,7 @@
                 </tr>
               </tbody>
               <tfoot>
-                <tr py:with="attr = {
-                    'history': { 'class':'history sorting_disabled' },
-                    'diff': { 'class':'diff sorting_disabled' },
-                    'unwatch': { 'class':'unwatch sorting_disabled' },
-                    'notify': { 'class':'notify sorting_disabled' },
-                  }">
+                <tr>
                   <th py:for="k in active_columns[realm]"
                       py:if="k != 'notify' or notifications"
                       class="${k}">

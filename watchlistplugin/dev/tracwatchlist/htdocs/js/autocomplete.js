@@ -38,6 +38,8 @@ jQuery(document).ready(function() {
   });
   $("#tickets .remfromwatch input[name=resid]")
       .autocomplete(asTicketIds);
+  $("#tickets tfoot th.id input")
+      .autocomplete(asTicketIds);
   $("#tickets .addtowatch input[name=resid]")
       .autocomplete("./watchlist?action=search&realm=ticket");
   asWikiNames = 0;

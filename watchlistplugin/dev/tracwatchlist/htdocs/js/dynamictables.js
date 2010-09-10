@@ -65,8 +65,9 @@ jQuery(document).ready(function() {
 
   /* Per-column filter input fields in footer */
   $("tfoot input").keyup( function () {
-    oTable = $(this).parents('table').dataTable();
-    index = $("tfoot th").index( $(this).parent("th") );
+    table = $(this).parents('table');
+    oTable = table.dataTable();
+    index = $(table).find("tfoot th").index( $(this).parent("th") );
     oTable.fnFilter( this.value, index );
   });
 
