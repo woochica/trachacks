@@ -87,11 +87,16 @@ jQuery(document).ready(function() {
  * This is because the column order could have changed.
  * */
 function wlprefsubmit(){
-  $("table.watchlist").each( function () {
-    var oTable = $(this).dataTable();
-    $(this).find("tfoot th").each( function (i) {
-      oTable.fnFilter("",i);
-    });
+  $("fieldset.orderadd").each( function () {
+    if ($(this).data('modified')) {
+      realm = $(this).data('realm');
+      table = $("table#" + realm + "list");
+      var oTable = $(table).dataTable();
+      a = $(table).find("tfoot th");
+      $(table).find("tfoot th").each( function (i) {
+          oTable.fnFilter("",i);
+      });
+    }
   });
 }
 
