@@ -37,6 +37,11 @@
     </py:def>
     <py:def function="noop(**args)"/>
     <td py:def="empty_td" />
+    <py:def function="print_timedelta(timedelta, link)">
+        <span py:if="timedelta" i18n:msg="timedelta">
+            (<a href="$link">$timedelta</a> ago)
+        </span>
+    </py:def>
     <py:def function="slink(realm, resid, text='')">
         <a href="${href(realm,resid)}">${text or resid}</a>
     </py:def>
