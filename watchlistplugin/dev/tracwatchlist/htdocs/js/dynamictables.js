@@ -83,4 +83,15 @@ jQuery(document).ready(function() {
   });
 });
 
+/* Remove column sorting input when preferences are updated.
+ * This is because the column order could have changed.
+ * */
+function wlprefsubmit(){
+  $("table.watchlist").each( function () {
+    var oTable = $(this).dataTable();
+    $(this).find("tfoot th").each( function (i) {
+      oTable.fnFilter("",i);
+    });
+  });
+}
 

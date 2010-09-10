@@ -18,6 +18,9 @@ function orderadd_buttons(orderadd, select1, select2 ) {
     $(select1).append( $(select2).find("option:selected") );
   });
 }
+
+function wlprefsubmit(){}
+
 $(document).ready(function(){
   $("#preferences form").submit(function(){
     $(".orderadd").each(function(){
@@ -27,6 +30,7 @@ $(document).ready(function(){
       });
       $(this).find("input.choosen_columns").val( text.join(',') );
     });
+    wlprefsubmit();
     return true;
   });
   $(".orderadd").each(function(){
