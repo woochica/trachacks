@@ -156,22 +156,27 @@ table.display td.center {
  */
 
 .sorting_asc {
+    padding-right: 20px;
 	background: url('../ico/asc.gif') no-repeat center right;
 }
 
 .sorting_desc {
+    padding-right: 20px;
 	background: url('../ico/desc.gif') no-repeat center right;
 }
 
 .sorting {
+    padding-right: 20px;
 	background: url('../ico/bg.gif') no-repeat center right;
 }
 
 .sorting_asc_disabled {
+    padding-right: 20px;
 	background: url('../ico/asc_disabled.gif') no-repeat center right;
 }
 
 .sorting_desc_disabled {
+    padding-right: 20px;
 	background: url('../ico/desc_disabled.gif') no-repeat center right;
 }
 
