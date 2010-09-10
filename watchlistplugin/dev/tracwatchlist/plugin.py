@@ -95,6 +95,7 @@ class WatchlistPlugin(Component):
         'show_messages_while_on_watchlist_page': ( True, _("Show action messages while on watchlist page")),
         'autocomplete_inputs': ( True, _("Autocomplete input fields (add/remove resources)")),
         'dynamic_tables': ( True, _("Dynamic watchlist tables")),
+        'individual_column_filtering': ( True, _("Individual column filtering")),
     }
 
     gsettings = dict( [ (name, BoolOption('watchlist',name,data[0],data[1]) ) for (name,data) in options.iteritems() ] )

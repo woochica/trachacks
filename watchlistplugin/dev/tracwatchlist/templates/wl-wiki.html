@@ -69,7 +69,7 @@
                   </py:for>
                 </tr>
               </tbody>
-              <tfoot>
+              <tfoot py:if="settings['individual_column_filtering']">
                 <tr>
                   <th py:for="k in active_columns[realm]"
                       py:if="k != 'notify' or notifications"
