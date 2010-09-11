@@ -58,6 +58,12 @@ except:
     def from_utimestamp( t ):
         return to_datetime( t )
 
+def DATETIME_FORMAT():
+    # Must be a function to allow for dynamic localisation.
+    # TRANSLATOR: Format of date/time stamps.
+    # See http://docs.python.org/library/datetime.html#strftime-and-strptime-behavior
+    # for a list of usable directives.
+    return _("%Y-%m-%d %H:%M:%S %Z")
 
 class WatchlistError(TracError):
     """Special version of TracError raised by WatchlistPlugin"""
@@ -317,6 +323,8 @@ class WatchlistPlugin(Component):
         cursor = db.cursor()
 
         if not user or user == 'anonymous':
+            # TRANSLATOR: Link part of
+            # "Please %(log_in)s to view or change your watchlist"
             log_in=tag.a(_("log in"), href=req.href('login'))
             raise WatchlistError(
                 tag_("Please %(log_in)s to view or change your watchlist",
@@ -339,6 +347,7 @@ class WatchlistPlugin(Component):
         wldict['notifications'] = bool(self.wsub and settings['notifications'] and settings['display_notify_column'])
         wldict['options'] = self.options
         wldict['wlgettext'] = gettext
+        wldict['t_'] = t_
         wldict['settings'] = settings
         wldict['available_columns'] = {}
         wldict['default_columns'] = {}
@@ -549,11 +558,13 @@ class WatchlistPlugin(Component):
               if handler.has_perm(xrealm, req.perm):
                 wldict[xrealm + 'list'] = handler.get_list(xrealm, self, req)
                 name = handler.get_realm_label(xrealm, plural=True)
-                add_ctxtnav(req, _("Watched %s") % name.capitalize(),
+                # TRANSLATOR: Navigation link to point to watchlist section of this realm
+                # (e.g. 'Wikis', 'Tickets').
+                add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name.capitalize()),
                             href=req.href('watchlist') + '#' + name)
             return ("watchlist.html", wldict, "text/html")
         else:
-            raise WatchlistError(_("Invalid watchlist action '%s'!") % action)
+            raise WatchlistError(_("Invalid watchlist action '%(action)s'!", action=action))
 
 
     def has_watchlist(self, user):
@@ -636,23 +647,23 @@ class WatchlistPlugin(Component):
                 add_ctxtnav(req, _("Unwatch"),
                     href=req.href('watchlist', action='unwatch',
                     resid=resid, realm=realm),
-                    title=_("Remove %s from watchlist") % realm)
+                    title=_("Remove %(document)s from watchlist", document=realm))
             else:
                 add_ctxtnav(req, _("Watch"),
                     href=req.href('watchlist', action='watch',
                     resid=resid, realm=realm),
-                    title=_("Add %s to watchlist") % realm)
+                    title=_("Add %(document)s to watchlist", document=realm))
             if notify == 'True':
               if self.is_notify(req, realm, resid):
                 add_ctxtnav(req, _("Do not Notify me"),
                     href=req.href('watchlist', action='notifyoff',
                     resid=resid, realm=realm),
-                    title=_("Do not notify me if %s changes") % realm)
+                    title=_("Do not notify me if %(document)s changes", document=realm))
               else:
                 add_ctxtnav(req, _("Notify me"),
                     href=req.href('watchlist', action='notifyon',
                     resid=resid, realm=realm),
-                    title=_("Notify me if %s changes") % realm)
+                    title=_("Notify me if %(document)s changes", realm))
 
         return (template, data, content_type)
 
@@ -679,11 +690,17 @@ class WikiWatchlist(BasicWatchlist):
         'version'   : T_("Version"),
         'diff'      : T_("Diff"),
         'history'   : T_("History"),
+        # TRANSLATOR: Abbreviated label for 'unwatch' column header.
+        # Should be a single character to not widen the column.
         'unwatch'   : N_("U"),
+        # TRANSLATOR: Label for 'notify' column header.
+        # Should tell the user that notifications can be switched on or off
+        # with the check-boxes in this column.
         'notify'    : N_("Notify"),
         'comment'   : T_("Comment"),
 
         'readonly'  : N_("read-only"),
+        # TRANSLATOR: IP = Internet Protocol (address)
         'ipnr'      : N_("IP"),
     }}
     default_columns = {'wiki':[
@@ -731,7 +748,7 @@ class WikiWatchlist(BasicWatchlist):
               'name' : name,
               'author' : '?',
               'changetime' : '?',
-              'comment' : tag.strong(_("DELETED!"), class_='deleted'),
+              'comment' : tag.strong(t_("deleted"), class_='deleted'),
               'notify'  : notify,
               'deleted' : True,
           })
@@ -769,7 +786,8 @@ class WikiWatchlist(BasicWatchlist):
               'name' : name,
               'author' : render_elt(author),
               'version' : version,
-              'changetime' : format_datetime( dt, "%F %T %Z" ),
+              # TRANSLATOR: Format for date/time stamp. strftime
+              'changetime' : format_datetime( dt, DATETIME_FORMAT() ),
               'ichangetime' : time,
               'timedelta' : pretty_timedelta( dt ),
               'timeline_link' : req.href.timeline(precision='seconds',
@@ -790,6 +808,9 @@ class TicketWatchlist(BasicWatchlist):
         'id'        : T_("Ticket"),
         'author'    : N_("By"),
         'changes'   : N_("Changes"),
+        # TRANSLATOR: '#' stands for 'number'.
+        # This is the header label for a column showing the number
+        # of the latest comment.
         'commentnum': N_("Comment #"),
         'unwatch'   : N_("U"),
         'notify'    : N_("Notify"),
@@ -894,12 +915,12 @@ class TicketWatchlist(BasicWatchlist):
               'author' : render_elt(author),
               'commentnum': to_unicode(self.commentnum),
               'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
-              'changetime' : format_datetime( ct, "%F %T %Z" ),
+              'changetime' : format_datetime( ct, DATETIME_FORMAT() ),
               'ichangetime' : changetime,
               'changetime_delta' : pretty_timedelta( ct ),
               'changetime_link' : req.href.timeline(precision='seconds',
                   from_=format_datetime ( ct, 'iso8601')),
-              'time' : format_datetime( dt, _("%F %T %Z") ),
+              'time' : format_datetime( dt, DATETIME_FORMAT() ),
               'itime' : time,
               'time_delta' : pretty_timedelta( dt ),
               'time_link' : req.href.timeline(precision='seconds',

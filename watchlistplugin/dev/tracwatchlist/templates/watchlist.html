@@ -212,14 +212,14 @@
     <xi:include href="wl-${realm}.html" py:for="realm in realms" />
 
     <div id="preferences" class="${action == 'save' or 'collapsed'}" i18n:domain="">
-      <h3 class="foldable">Preferences</h3>
+      <h3 class="foldable">${t_("Preferences")}</h3>
       <div>
       <form action="" method="post">
         <xi:include href="watchlist_prefs.html" />
         <div class="buttons clear">
               <input type="hidden" value="save" name="action" />
-              <input type="submit" value="${_('Save changes')}" />
-              <input type="reset"  value="${_('Reset')}" />
+              <input type="submit" value="${t_('Save changes')}" />
+              <input type="reset"  value="${t_('Cancel')}" />
         </div>
       </form>
       </div>
