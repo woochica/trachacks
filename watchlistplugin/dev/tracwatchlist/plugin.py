@@ -109,7 +109,7 @@ class WatchlistPlugin(Component):
           assert realm not in self.realms
           self.realms.append(realm)
           self.realm_handler[realm] = provider
-          self.log.debug("realm: %s %s" % (realm, str(provider)))
+          #self.log.debug("realm: %s %s" % (realm, str(provider)))
 
       try:
           # Import methods from WatchSubscriber of the AnnouncerPlugin
@@ -182,20 +182,20 @@ class WatchlistPlugin(Component):
       try:
         return self.wsub.is_watching(req.session.sid, True, realm, resid)
       except Exception, e:
-        self.log.debug("is_notify error: " + str(e))
+        self.log.error("is_notify error: " + str(e))
         return False
 
     def set_notify(self, req, realm, resid):
       try:
         self.wsub.set_watch(req.session.sid, True, realm, resid)
       except Exception, e:
-        self.log.debug("set_notify error: " + str(e))
+        self.log.error("set_notify error: " + str(e))
 
     def unset_notify(self, req, realm, resid):
       try:
         self.wsub.set_unwatch(req.session.sid, True, realm, resid)
       except Exception, e:
-        self.log.debug("unset_notify error: " + str(e))
+        self.log.error("unset_notify error: " + str(e))
 
     def _get_sql_names_and_patterns(self, nameorpatternlist):
       import re
@@ -287,14 +287,14 @@ class WatchlistPlugin(Component):
             else:
               return val
           (settingsstr,) = cursor.fetchone()
-          self.log.debug("WL SET: " + settingsstr)
+          #self.log.debug("WL SET: " + settingsstr)
           d = dict([
               (k,strtoval(v)) for k,v in [ kv.split('=') for kv in settingsstr.split("&") ]
           ])
-          self.log.debug("WL SETd: " + unicode(d))
+          #self.log.debug("WL SETd: " + unicode(d))
           return d
         except Exception, e:
-          self.log.debug("WL get user settings: " + unicode(e))
+          #self.log.debug("WL get user settings: " + unicode(e))
           return dict()
 
 
@@ -345,13 +345,13 @@ class WatchlistPlugin(Component):
         wldict['active_columns'] = {}
         for r in self.realms:
             cols = settings.get(r + '_columns','').split(',')
-            self.log.debug( "WL SC = " + unicode(cols) )
+            #self.log.debug( "WL SC = " + unicode(cols) )
             if not cols or cols == ['']:
                 cols = wldict['default_columns'].get(r,[])
-                self.log.debug( "WL EC = " + unicode(cols) )
+                #self.log.debug( "WL EC = " + unicode(cols) )
             wldict['active_columns'][r] = cols
-        self.log.debug( "WL DC = " + unicode(wldict['default_columns']) )
-        self.log.debug( "WL AC = " + unicode(wldict['active_columns']) )
+        #self.log.debug( "WL DC = " + unicode(wldict['default_columns']) )
+        #self.log.debug( "WL AC = " + unicode(wldict['active_columns']) )
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1
@@ -867,7 +867,6 @@ class TicketWatchlist(BasicWatchlist):
                   self.comment    = newvalue
                   return ()
               rendered = render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
-              self.log.debug("WL RENDERED: " + unicode(rendered) )
 
               return [ tag(tag.strong(field_labels[field]), ' ', rendered), tag('; ') ]
 
