@@ -48,7 +48,7 @@ from  trac.wiki.model        import  WikiPage
 from  trac.prefs.api         import  IPreferencePanelProvider
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
-from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_
+from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext
 
 # Import microsecond timestamp function. A fallback is provided for Trac 0.11.
 try:
@@ -78,21 +78,21 @@ class WatchlistPlugin(Component):
 
 
     options = {
-        'notifications': ( False, _("Notifications")),
-        'display_notify_navitems': ( False, _("Display notification navigation items")),
-        'display_notify_column': ( True, _("Display notification column in watchlist tables")),
-        'notify_by_default': ( False, _("Enable notifications by default for all watchlist entries")),
-        'stay_at_resource': ( False, _("The user stays at the resource after a watch/unwatch operation and the watchlist page is not displayed")),
-        'stay_at_resource_notify': ( True, _("The user stays at the resource after a notify/do-not-notify operation and the watchlist page is not displayed")),
-        'show_messages_on_resource_page': ( True, _("Action messages are shown on resource pages")),
-        'show_messages_on_watchlist_page': ( True, _("Action messages are shown when going to the watchlist page")),
-        'show_messages_while_on_watchlist_page': ( True, _("Show action messages while on watchlist page")),
-        'autocomplete_inputs': ( True, _("Autocomplete input fields (add/remove resources)")),
-        'dynamic_tables': ( True, _("Dynamic watchlist tables")),
-        'individual_column_filtering': ( True, _("Individual column filtering")),
+        'notifications': ( False, N_("Notifications")),
+        'display_notify_navitems': ( False, N_("Display notification navigation items")),
+        'display_notify_column': ( True, N_("Display notification column in watchlist tables")),
+        'notify_by_default': ( False, N_("Enable notifications by default for all watchlist entries")),
+        'stay_at_resource': ( False, N_("The user stays at the resource after a watch/unwatch operation and the watchlist page is not displayed")),
+        'stay_at_resource_notify': ( True, N_("The user stays at the resource after a notify/do-not-notify operation and the watchlist page is not displayed")),
+        'show_messages_on_resource_page': ( True, N_("Action messages are shown on resource pages")),
+        'show_messages_on_watchlist_page': ( True, N_("Action messages are shown when going to the watchlist page")),
+        'show_messages_while_on_watchlist_page': ( True, N_("Show action messages while on watchlist page")),
+        'autocomplete_inputs': ( True, N_("Autocomplete input fields (add/remove resources)")),
+        'dynamic_tables': ( True, N_("Dynamic watchlist tables")),
+        'individual_column_filtering': ( True, N_("Individual column filtering")),
     }
 
-    gsettings = dict( [ (name, BoolOption('watchlist',name,data[0],data[1]) ) for (name,data) in options.iteritems() ] )
+    gsettings = dict( [ (name, BoolOption('watchlist',name,data[0],doc=data[1]) ) for (name,data) in options.iteritems() ] )
 
     wsub = None
 
@@ -337,6 +337,7 @@ class WatchlistPlugin(Component):
         wldict['error']  = False
         wldict['notifications'] = bool(self.wsub and settings['notifications'] and settings['display_notify_column'])
         wldict['options'] = self.options
+        wldict['wlgettext'] = gettext
         wldict['settings'] = settings
         wldict['available_columns'] = {}
         wldict['default_columns'] = {}

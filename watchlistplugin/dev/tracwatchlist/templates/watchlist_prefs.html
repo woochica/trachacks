@@ -11,7 +11,7 @@
       <py:for each="k in sorted(settings.keys())">
         <py:if test="isinstance(settings[k],bool)">
           <input type="checkbox" name="options" id="${k}" value="${k}" checked="${settings[k] and 'checked' or None}" />
-          <label for="${k}">${options.get(k,['',''])[1]}</label>
+          <label for="${k}">${wlgettext(options.get(k,['',''])[1])}</label>
           <br />
         </py:if>
       </py:for>
