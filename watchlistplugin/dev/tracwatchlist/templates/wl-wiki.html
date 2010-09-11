@@ -45,14 +45,16 @@
                   <td py:def="wiki_diff" class="diff"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,action='diff',
                         version=page.version)}">
-                        <img src="${href.chrome('watchlist/ico/diff.png')}"
-                          width="16px" height="16px" title="Diff"
-                          alt="Diff" /></a></td>
+                        <img py:with="label=available_columns[realm]['diff']"
+                            src="${href.chrome('watchlist/ico/diff.png')}"
+                            width="16px" height="16px" title="$label"
+                            alt="$label" /></a></td>
                   <td py:def="wiki_history" class="history"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,action='history')}">
-                        <img src="${href.chrome('watchlist/ico/history.png')}"
-                          width="16px" height="16px" title="History"
-                          alt="History" /></a></td>
+                        <img py:with="label=available_columns[realm]['history']"
+                            src="${href.chrome('watchlist/ico/history.png')}"
+                            width="16px" height="16px" title="$label"
+                            alt="$label" /></a></td>
                   <td py:def="wiki_unwatch" class="unwatch"><a class="plainlink"
                       href="${href.watchlist(action='unwatch',realm='wiki',
                       resid=page.name)}">${unwatchicon()}</a></td>
