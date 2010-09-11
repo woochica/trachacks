@@ -39,7 +39,9 @@ from  trac.util.text         import  to_unicode
 from  trac.web.api           import  IRequestFilter, IRequestHandler, \
                                      RequestDone
 from  trac.web.chrome        import  ITemplateProvider, add_ctxtnav, \
-                                     add_link, add_script, add_notice
+                                     add_link, add_script, add_notice, \
+                                     Chrome
+from  trac.util.text         import  obfuscate_email_address
 from  trac.web.href          import  Href
 from  trac.wiki.model        import  WikiPage
 
@@ -786,6 +788,7 @@ class WikiWatchlist(BasicWatchlist):
 class TicketWatchlist(BasicWatchlist):
     """Watchlist entry for tickets."""
     realms = ['ticket']
+    # FIXME: Labels need to be reloaded after locale changes
     columns = {'ticket':{
         'id'        : _("Ticket"),
         'author'    : _("By"),
@@ -873,6 +876,12 @@ class TicketWatchlist(BasicWatchlist):
 
               return [ tag(tag.strong(field_labels[field]), ' ', rendered), tag('; ') ]
 
+          render_elt = lambda x: x
+          if not (Chrome(self.env).show_email_addresses or 
+              'EMAIL_VIEW' in req.perm(ticket.resource)):
+              render_elt = obfuscate_email_address
+              cc = ', '.join([ render_elt(c) for c in cc.split(', ') ])
+
           changes = []
           author  = reporter
           for author_,field,oldvalue,newvalue in cursor.fetchall():
@@ -882,10 +891,12 @@ class TicketWatchlist(BasicWatchlist):
           changes = changes and tag(changes[0:-1]) or tag()
           dt = from_utimestamp( time )
           ct = from_utimestamp( changetime )
+
+
           ticketlist.append({
               'id' : to_unicode(id),
               'type' : type,
-              'author' : author,
+              'author' : render_elt(author),
               'commentnum': to_unicode(self.commentnum),
               'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
               'changetime' : format_datetime( ct, "%F %T %Z" ),
@@ -906,8 +917,8 @@ class TicketWatchlist(BasicWatchlist):
             'component' : component,
             'severity'  : severity,
             'priority'  : priority,
-            'owner'     : owner,
-            'reporter'  : reporter,
+            'owner'     : render_elt(owner),
+            'reporter'  : render_elt(reporter),
             'cc'        : cc,
             'version'   : version,
             'milestone' : milestone,

@@ -20,7 +20,8 @@ from  trac.util.translation  import  _, tag_, tagn_
 from  trac.resource          import  get_resource_url
 from  trac.web.chrome        import  Chrome
 from  genshi.builder         import  tag
-from  trac.util.presentation import separated
+from  trac.util.presentation import  separated
+from  trac.util.text         import  obfuscate_email_address
 
 def render_property_diff(env, req, ticket, field, old, new, 
                               resource_new=None):
@@ -67,6 +68,7 @@ def render_property_diff(env, req, ticket, field, old, new,
                                     len(remvd), items=separated(remvd, sep))
             if added or remvd:
                 rendered = tag(added, added and remvd and _("; "), remvd)
+                return rendered
         if field in ('reporter', 'owner'):
             if not (Chrome(env).show_email_addresses or 
                     'EMAIL_VIEW' in req.perm(resource_new or ticket.resource)):
