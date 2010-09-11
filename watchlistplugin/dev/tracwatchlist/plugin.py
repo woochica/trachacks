@@ -48,7 +48,7 @@ from  trac.wiki.model        import  WikiPage
 from  trac.prefs.api         import  IPreferencePanelProvider
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
-from  tracwatchlist.translation import  add_domain, _, N_, tag_
+from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_
 
 # Import microsecond timestamp function. A fallback is provided for Trac 0.11.
 try:
@@ -672,14 +672,14 @@ class WikiWatchlist(BasicWatchlist):
     realms = ['wiki']
     columns = {'wiki':{
         'name'      : N_("Page"),
-        'changetime': N_("Last Changed At"),
+        'changetime': T_("Modified"),
         'author'    : N_("By"),
-        'version'   : N_("Version"),
-        'diff'      : N_("Diff"),
-        'history'   : N_("History"),
+        'version'   : T_("Version"),
+        'diff'      : T_("Diff"),
+        'history'   : T_("History"),
         'unwatch'   : N_("U"),
         'notify'    : N_("Notify"),
-        'comment'   : N_("Comment"),
+        'comment'   : T_("Comment"),
 
         'readonly'  : N_("read-only"),
         'ipnr'      : N_("IP"),
@@ -774,7 +774,7 @@ class WikiWatchlist(BasicWatchlist):
                   from_=format_datetime ( dt, 'iso8601')),
               'comment'  : comment,
               'notify'   : notify,
-              'readonly' : readonly and _("yes") or _("no"),
+              'readonly' : readonly and t_("yes") or t_("no"),
               'ipnr'     : ipnr,
           })
       return wikilist
@@ -785,13 +785,13 @@ class TicketWatchlist(BasicWatchlist):
     realms = ['ticket']
     # FIXME: Labels need to be reloaded after locale changes
     columns = {'ticket':{
-        'id'        : N_("Ticket"),
+        'id'        : T_("Ticket"),
         'author'    : N_("By"),
         'changes'   : N_("Changes"),
         'commentnum': N_("Comment #"),
         'unwatch'   : N_("U"),
         'notify'    : N_("Notify"),
-        'comment'   : N_("Comment"),
+        'comment'   : T_("Comment"),
         # Plus further pairs imported at __init__.
     }}
 
