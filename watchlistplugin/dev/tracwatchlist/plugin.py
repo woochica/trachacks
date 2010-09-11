@@ -49,6 +49,7 @@ from  trac.prefs.api         import  IPreferencePanelProvider
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext
+from  tracwatchlist.render   import  render_property_diff
 
 # Import microsecond timestamp function. A fallback is provided for Trac 0.11.
 try:
@@ -862,7 +863,6 @@ class TicketWatchlist(BasicWatchlist):
 
           field_labels = TicketSystem(self.env).get_ticket_field_labels()
           def format_change(field,oldvalue,newvalue):
-              from ex.render import render_property_diff
               if field == 'comment':
                   self.commentnum = oldvalue
                   self.comment    = newvalue
