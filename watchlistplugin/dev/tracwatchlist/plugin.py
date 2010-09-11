@@ -879,39 +879,42 @@ class TicketWatchlist(BasicWatchlist):
           """, (id, changetime)
           )
 
-          field_labels = TicketSystem(self.env).get_ticket_field_labels()
-          def format_change(field,oldvalue,newvalue):
-              if field == 'comment':
-                  self.commentnum = oldvalue
-                  self.comment    = newvalue
-                  return ()
-              rendered = render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
-
-              return [ tag(tag.strong(field_labels[field]), ' ', rendered), tag('; ') ]
-
           render_elt = lambda x: x
-          if not (Chrome(self.env).show_email_addresses or 
-              'EMAIL_VIEW' in req.perm(ticket.resource)):
+          if not (Chrome(self.env).show_email_addresses or \
+                  'EMAIL_VIEW' in req.perm(ticket.resource)):
               render_elt = obfuscate_email_address
               cc = ', '.join([ render_elt(c) for c in cc.split(', ') ])
 
           changes = []
           author  = reporter
+          commentnum = u"0"
+          comment = u""
+          field_labels = TicketSystem(self.env).get_ticket_field_labels()
           for author_,field,oldvalue,newvalue in cursor.fetchall():
               author = author_
-              changes.extend(format_change(field,oldvalue,newvalue))
+              if field == 'comment':
+                  commentnum = to_unicode(oldvalue)
+                  comment    = to_unicode(newvalue)
+              else:
+                  changes.extend(
+                      [ tag(tag.strong(field_labels[field]), ' ',
+                          render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
+                          ), tag('; ') ])
           # Remove the last tag('; '):
           changes = changes and tag(changes[0:-1]) or tag()
           dt = from_utimestamp( time )
           ct = from_utimestamp( changetime )
+
+          if len(comment) > 250:
+              comment = comment[:250] + '...'
 
           locale = req.session.get('language')
           ticketlist.append({
               'id' : to_unicode(id),
               'type' : type,
               'author' : render_elt(author),
-              'commentnum': to_unicode(self.commentnum),
-              'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
+              'commentnum': commentnum,
+              'comment' : comment,
               'changetime' : format_datetime( ct, locale=locale ),
               'ichangetime' : changetime,
               'changetime_delta' : pretty_timedelta( ct ),
