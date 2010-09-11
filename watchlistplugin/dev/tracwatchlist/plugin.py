@@ -665,7 +665,7 @@ class WatchlistPlugin(Component):
                 add_ctxtnav(req, _("Notify me"),
                     href=req.href('watchlist', action='notifyon',
                     resid=resid, realm=realm),
-                    title=_("Notify me if %(document)s changes", realm))
+                    title=_("Notify me if %(document)s changes", document=realm))
 
         return (template, data, content_type)
 
