@@ -862,7 +862,7 @@ class TicketWatchlist(BasicWatchlist):
 
           field_labels = TicketSystem(self.env).get_ticket_field_labels()
           def format_change(field,oldvalue,newvalue):
-              from render import render_property_diff
+              from ex.render import render_property_diff
               if field == 'comment':
                   self.commentnum = oldvalue
                   self.comment    = newvalue
