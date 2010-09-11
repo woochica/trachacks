@@ -33,8 +33,7 @@ from  trac.db                import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model      import  Ticket
 #from  trac.ticket.web_ui     import  TicketModule
 from  trac.ticket.api        import  TicketSystem
-from  trac.util.datefmt      import  format_datetime, pretty_timedelta, \
-                                     to_datetime
+from  trac.util.datefmt      import  pretty_timedelta, to_datetime
 from  trac.util.text         import  to_unicode
 from  trac.web.api           import  IRequestFilter, IRequestHandler, \
                                      RequestDone
@@ -51,19 +50,22 @@ from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext
 from  tracwatchlist.render   import  render_property_diff
 
+# Try to use babels format_datetime to localise date-times if possible.
+# A fall back to tracs implementation strips the unsupported `locale` argument.
+try:
+    from  babel.dates        import  format_datetime
+except ImportError:
+    from  trac.util.datefmt  import  format_datetime as _format_datetime
+    def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
+        return _format_datetime(t, format, tzinfo)
+
 # Import microsecond timestamp function. A fallback is provided for Trac 0.11.
 try:
     from  trac.util.datefmt  import  from_utimestamp
-except:
+except ImportError:
     def from_utimestamp( t ):
         return to_datetime( t )
 
-def DATETIME_FORMAT():
-    # Must be a function to allow for dynamic localisation.
-    # TRANSLATOR: Format of date/time stamps.
-    # See http://docs.python.org/library/datetime.html#strftime-and-strptime-behavior
-    # for a list of usable directives.
-    return _("%Y-%m-%d %H:%M:%S %Z")
 
 class WatchlistError(TracError):
     """Special version of TracError raised by WatchlistPlugin"""
@@ -776,6 +778,7 @@ class WikiWatchlist(BasicWatchlist):
             'EMAIL_VIEW' in req.perm): # FIXME: Needed?: (wiki.resource)):
           render_elt = obfuscate_email_address
 
+      locale = req.session.get('language')
       wikis = cursor.fetchall()
       for name,author,time,version,comment,readonly,ipnr in wikis:
           notify = False
@@ -787,7 +790,7 @@ class WikiWatchlist(BasicWatchlist):
               'author' : render_elt(author),
               'version' : version,
               # TRANSLATOR: Format for date/time stamp. strftime
-              'changetime' : format_datetime( dt, DATETIME_FORMAT() ),
+              'changetime' : format_datetime( dt, locale=locale ),
               'ichangetime' : time,
               'timedelta' : pretty_timedelta( dt ),
               'timeline_link' : req.href.timeline(precision='seconds',
@@ -908,19 +911,19 @@ class TicketWatchlist(BasicWatchlist):
           dt = from_utimestamp( time )
           ct = from_utimestamp( changetime )
 
-
+          locale = req.session.get('language')
           ticketlist.append({
               'id' : to_unicode(id),
               'type' : type,
               'author' : render_elt(author),
               'commentnum': to_unicode(self.commentnum),
               'comment' : len(self.comment) <= 250 and self.comment or self.comment[:250] + '...',
-              'changetime' : format_datetime( ct, DATETIME_FORMAT() ),
+              'changetime' : format_datetime( ct, locale=locale ),
               'ichangetime' : changetime,
               'changetime_delta' : pretty_timedelta( ct ),
               'changetime_link' : req.href.timeline(precision='seconds',
                   from_=format_datetime ( ct, 'iso8601')),
-              'time' : format_datetime( dt, DATETIME_FORMAT() ),
+              'time' : format_datetime( dt, locale=locale ),
               'itime' : time,
               'time_delta' : pretty_timedelta( dt ),
               'time_link' : req.href.timeline(precision='seconds',
