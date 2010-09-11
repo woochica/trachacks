@@ -48,6 +48,7 @@ from  trac.wiki.model        import  WikiPage
 from  trac.prefs.api         import  IPreferencePanelProvider
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
+from  tracwatchlist.translation import  add_domain, _, N_, tag_
 
 # Import microsecond timestamp function. A fallback is provided for Trac 0.11.
 try:
@@ -55,17 +56,6 @@ try:
 except:
     def from_utimestamp( t ):
         return to_datetime( t )
-
-# Import translation functions. Fallbacks are provided for Trac 0.11.
-try:
-    from  trac.util.translation  import  domain_functions
-    add_domain, _, tag_ = \
-        domain_functions('watchlist', ('add_domain', '_', 'tag_'))
-except ImportError:
-    from  trac.util.translation  import  gettext
-    _, tag_  = gettext, tag
-    def add_domain(a,b,c=None):
-        pass
 
 
 class WatchlistError(TracError):
@@ -681,18 +671,18 @@ class WikiWatchlist(BasicWatchlist):
     """Watchlist entry for wiki pages."""
     realms = ['wiki']
     columns = {'wiki':{
-        'name'      : _("Page"),
-        'changetime': _("Last Changed At"),
-        'author'    : _("By"),
-        'version'   : _("Version"),
-        'diff'      : _("Diff"),
-        'history'   : _("History"),
-        'unwatch'   : _("U"),
-        'notify'    : _("Notify"),
-        'comment'   : _("Comment"),
+        'name'      : N_("Page"),
+        'changetime': N_("Last Changed At"),
+        'author'    : N_("By"),
+        'version'   : N_("Version"),
+        'diff'      : N_("Diff"),
+        'history'   : N_("History"),
+        'unwatch'   : N_("U"),
+        'notify'    : N_("Notify"),
+        'comment'   : N_("Comment"),
 
-        'readonly'  : _("read-only"),
-        'ipnr'      : _("IP"),
+        'readonly'  : N_("read-only"),
+        'ipnr'      : N_("IP"),
     }}
     default_columns = {'wiki':[
         'name', 'changetime', 'author', 'version', 'diff',
@@ -795,13 +785,13 @@ class TicketWatchlist(BasicWatchlist):
     realms = ['ticket']
     # FIXME: Labels need to be reloaded after locale changes
     columns = {'ticket':{
-        'id'        : _("Ticket"),
-        'author'    : _("By"),
-        'changes'   : _("Changes"),
-        'commentnum': _("Comment #"),
-        'unwatch'   : _("U"),
-        'notify'    : _("Notify"),
-        'comment'   : _("Comment"),
+        'id'        : N_("Ticket"),
+        'author'    : N_("By"),
+        'changes'   : N_("Changes"),
+        'commentnum': N_("Comment #"),
+        'unwatch'   : N_("U"),
+        'notify'    : N_("Notify"),
+        'comment'   : N_("Comment"),
         # Plus further pairs imported at __init__.
     }}
 

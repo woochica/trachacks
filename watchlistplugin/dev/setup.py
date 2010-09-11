@@ -63,6 +63,7 @@ setup(
         'tracwatchlist.db = tracwatchlist.db',
         'tracwatchlist.nav = tracwatchlist.nav',
         'tracwatchlist.render = tracwatchlist.render',
+        'tracwatchlist.translation = tracwatchlist.translation',
       ]},
     **extra
 )

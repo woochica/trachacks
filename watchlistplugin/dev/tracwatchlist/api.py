@@ -23,7 +23,9 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
+import copy
 from trac.core import *
+from  tracwatchlist.translation import  gettext
 
 class IWatchlistProvider(Interface):
     """Interface for watchlist providers."""
@@ -114,5 +116,12 @@ class BasicWatchlist(Component):
         return self.env.abs_href(realm,resid,**kwargs)
 
     def get_columns(self, realm):
-      return ( self.columns.get(realm,{}), self.default_columns.get(realm,[]) )
+      # Needed to re-localise after locale changed:
+      # See also ticket.api: get_ticket_fields
+      self.log.debug("WL columns:" + unicode( (self.columns.get(realm,{})) ))
+      columns = copy.deepcopy(self.columns.get(realm,{}))
+      col = 'col' # workaround gettext extraction bug
+      for col in columns:
+          columns[col] = gettext(columns[col])
+      return ( columns, self.default_columns.get(realm,[]) )
 
