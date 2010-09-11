@@ -56,7 +56,7 @@ from trac.web.api import *
 from trac.web.chrome import Chrome
 from trac.web.clearsilver import HDFWrapper
 from trac.web.href import Href
-from trac.web.session import Session
+from djangointegration.trac.web.session import Session
 
 def populate_hdf(hdf, env, req=None):
     """Populate the HDF data set with various information, such as common URLs,
