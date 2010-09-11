@@ -36,7 +36,7 @@ from  trac.ticket.api        import  TicketSystem
 from  trac.util.datefmt      import  pretty_timedelta, to_datetime
 from  trac.util.text         import  to_unicode
 from  trac.web.api           import  IRequestFilter, IRequestHandler, \
-                                     RequestDone
+                                     RequestDone, HTTPNotFound, HTTPBadRequest
 from  trac.web.chrome        import  ITemplateProvider, add_ctxtnav, \
                                      add_link, add_script, add_notice, \
                                      Chrome
@@ -65,12 +65,6 @@ try:
 except ImportError:
     def from_utimestamp( t ):
         return to_datetime( t )
-
-
-class WatchlistError(TracError):
-    """Special version of TracError raised by WatchlistPlugin"""
-    show_traceback = False
-    title = _("Watchlist Error")
 
 
 class WatchlistPlugin(Component):
@@ -328,10 +322,10 @@ class WatchlistPlugin(Component):
             # TRANSLATOR: Link part of
             # "Please %(log_in)s to view or change your watchlist"
             log_in=tag.a(_("log in"), href=req.href('login'))
-            raise WatchlistError(
+            raise HTTPNotFound((
                 tag_("Please %(log_in)s to view or change your watchlist",
                     log_in=log_in
-                ))
+                )))
 
         wldict = req.args.copy()
         wldict['action'] = action
@@ -566,7 +560,7 @@ class WatchlistPlugin(Component):
                             href=req.href('watchlist') + '#' + name)
             return ("watchlist.html", wldict, "text/html")
         else:
-            raise WatchlistError(_("Invalid watchlist action '%(action)s'!", action=action))
+            raise HTTPBadRequest(_("Invalid watchlist action '%(action)s'!", action=action))
 
 
     def has_watchlist(self, user):
