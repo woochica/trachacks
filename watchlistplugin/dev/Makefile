@@ -9,6 +9,7 @@ setup:
 messages:
 	python ./setup.py extract_messages
 	python ./setup.py update_catalog
+	python ./setup.py compile_catalog
 
 upload:
 	python setup.py bdist_egg upload
