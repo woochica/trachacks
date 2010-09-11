@@ -17,7 +17,7 @@ try:
     if cmdclass:
         extra['cmdclass'] = cmdclass
         extractors = [
-            ('**.py',                'python', None),
+            ('*.py',                 'python', None),
             ('**/templates/**.html', 'genshi', None),
         ]
         extra['message_extractors'] = {
