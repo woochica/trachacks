@@ -923,41 +923,4 @@ class TicketWatchlist(BasicWatchlist):
           })
       return ticketlist
 
-class ExampleWatchlist(Component):
-    """Example watchlist provider."""
-    #implements( IWatchlistProvider )
-
-    def get_realms(self):
-      return ('example',)
-
-    def get_realm_label(self, realm, plural=False):
-      return plural and 'examples' or 'example'
-
-    def res_exists(self, realm, resid):
-      return True
-
-    def res_list_exists(self, realm, reslist):
-      return []
-
-    def res_pattern_exists(self, realm, pattern):
-      return True
-
-    def has_perm(self, realm, perm):
-      return True
-
-    def get_list(self, realm, wl, req):
-      db = self.env.get_db_cnx()
-      cursor = db.cursor()
-      user = req.authname
-      examplelist = []
-      cursor.execute("""
-        SELECT resid
-          FROM watchlist
-         WHERE wluser=%s AND realm='example'
-      """, (user,)
-      )
-      examples = cursor.fetchall()
-      for (name,) in examples:
-        examplelist.append({'name':name})
-      return examplelist
 
