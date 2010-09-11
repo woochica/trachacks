@@ -31,6 +31,8 @@ from  trac.config            import  BoolOption
 from  trac.core              import  *
 from  trac.db                import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model      import  Ticket
+#from  trac.ticket.web_ui     import  TicketModule
+from  trac.ticket.api        import  TicketSystem
 from  trac.util.datefmt      import  format_datetime, pretty_timedelta, \
                                      to_datetime
 from  trac.util.text         import  to_unicode
@@ -786,33 +788,22 @@ class TicketWatchlist(BasicWatchlist):
     realms = ['ticket']
     columns = {'ticket':{
         'id'        : _("Ticket"),
-        'changetime': _("Last Changed At"),
         'author'    : _("By"),
         'changes'   : _("Changes"),
         'commentnum': _("Comment #"),
         'unwatch'   : _("U"),
         'notify'    : _("Notify"),
         'comment'   : _("Comment"),
-
-        'type'      : _("Type"),
-        'time'      : _("Created"),
-        'component' : _("Component"),
-        'severity'  : _("Severity"),
-        'priority'  : _("Priority"),
-        'owner'     : _("Owner"),
-        'reporter'  : _("Reporter"),
-        'cc'        : _("Cc"),
-        'version'   : _("Version"),
-        'milestone' : _("Milestone"),
-        'status'    : _("Status"),
-        'resolution': _("Resolution"),
-        'keywords'  : _("Keywords"),
-
+        # Plus further pairs imported at __init__.
     }}
+
     default_columns = {'ticket':[
         'id', 'changetime', 'author', 'changes', 'commentnum',
         'unwatch', 'notify', 'comment',
     ]}
+
+    def __init__(self):
+        self.columns['ticket'].update( TicketSystem(self.env).get_ticket_field_labels() )
 
     def res_exists(self, realm, resid):
       try:
@@ -834,6 +825,7 @@ class TicketWatchlist(BasicWatchlist):
         return []
 
     def get_list(self, realm, wl, req):
+      #ticket_module = self.env[TicketModule]
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       user = req.authname
@@ -850,15 +842,16 @@ class TicketWatchlist(BasicWatchlist):
          ORDER BY changetime DESC;
       """, (user,)
       )
-      tickets = cursor.fetchall()
       for id,type,time,changetime,summary,time,component,severity,priority,owner,\
-            reporter,cc,version,milestone,status,resolution,keywords in tickets:
+            reporter,cc,version,milestone,status,resolution,keywords in cursor.fetchall():
           self.commentnum = 0
-          self.comment    = ''
+          self.comment    = u''
 
           notify = False
           if wl.wsub:
             notify = wl.is_notify(req, 'ticket', id)
+
+          ticket = Ticket(self.env, id, db)
 
           cursor.execute("""
             SELECT author,field,oldvalue,newvalue
@@ -868,51 +861,25 @@ class TicketWatchlist(BasicWatchlist):
           """, (id, changetime)
           )
 
+          field_labels = TicketSystem(self.env).get_ticket_field_labels()
           def format_change(field,oldvalue,newvalue):
-              """Formats tickets changes."""
-              fieldtag = tag.strong(field)
-              if field == 'cc':
-                  oldvalues = set(oldvalue and oldvalue.split(', ') or [])
-                  newvalues = set(newvalue and newvalue.split(', ') or [])
-                  added   = newvalues.difference(oldvalues)
-                  removed = oldvalues.difference(newvalues)
-                  strng = [fieldtag,]
-                  if added:
-                      strng.append( tag_(" %(value)s added", 
-                              value=tag.em(', '.join(added))) )
-                  if removed:
-                      if added:
-                          strng.append( tag(', ') )
-                      strng.append( tag_(" %(value)s removed",
-                              value=tag.em(', '.join(removed))) )
-                  return tag(strng)
-              elif field == 'description':
-                  diff = tag.a(_("diff"), href=req.href('ticket',id,action='diff',
-                      version=self.commentnum))
-                  return tag_("%(field)s modified (%(diff)s)", field=fieldtag, diff=diff)
-              elif field == 'comment':
+              from render import render_property_diff
+              if field == 'comment':
                   self.commentnum = oldvalue
                   self.comment    = newvalue
-                  return tag("")
-              elif not oldvalue:
-                  return tag(fieldtag, tag_(" %(value)s added", value=tag.em(newvalue)))
-              elif not newvalue:
-                  return tag(fieldtag, tag_(" %(value)s deleted", value=tag.em(oldvalue)))
-              else:
-                  return tag(fieldtag, tag_(" changed from %(oldvalue)s to %(newvalue)s",
-                                            oldvalue=tag.em(oldvalue),
-                                            newvalue=tag.em(newvalue)) )
+                  return ()
+              rendered = render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
+              self.log.debug("WL RENDERED: " + unicode(rendered) )
+
+              return [ tag(tag.strong(field_labels[field]), ' ', rendered), tag('; ') ]
 
           changes = []
           author  = reporter
           for author_,field,oldvalue,newvalue in cursor.fetchall():
               author = author_
-              changes.extend([format_change(field,oldvalue,newvalue), tag("; ")])
-          # changes holds list of formatted changes interleaved with
-          # tag('; '). The first change is always the comment which
-          # returns an empty tag, so we skip the first two elements
-          # [tag(''), tag('; ')] and remove the last tag('; '):
-          changes = changes and tag(changes[2:-1]) or tag()
+              changes.extend(format_change(field,oldvalue,newvalue))
+          # Remove the last tag('; '):
+          changes = changes and tag(changes[0:-1]) or tag()
           dt = from_utimestamp( time )
           ct = from_utimestamp( changetime )
           ticketlist.append({
