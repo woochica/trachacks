@@ -762,6 +762,11 @@ class WikiWatchlist(BasicWatchlist):
       """, (user,)
       )
 
+      render_elt = lambda x: x
+      if not (Chrome(self.env).show_email_addresses or 
+            'EMAIL_VIEW' in req.perm): # FIXME: Needed?: (wiki.resource)):
+          render_elt = obfuscate_email_address
+
       wikis = cursor.fetchall()
       for name,author,time,version,comment,readonly,ipnr in wikis:
           notify = False
@@ -770,7 +775,7 @@ class WikiWatchlist(BasicWatchlist):
           dt = from_utimestamp( time )
           wikilist.append({
               'name' : name,
-              'author' : author,
+              'author' : render_elt(author),
               'version' : version,
               'changetime' : format_datetime( dt, "%F %T %Z" ),
               'ichangetime' : time,
