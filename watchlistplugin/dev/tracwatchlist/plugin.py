@@ -863,7 +863,6 @@ class TicketWatchlist(BasicWatchlist):
           if not (Chrome(self.env).show_email_addresses or \
                   'EMAIL_VIEW' in req.perm(ticket.resource)):
               render_elt = obfuscate_email_address
-              cc = ', '.join([ render_elt(c) for c in cc.split(', ') ]) # FIXME !!!
 
           ticketdict = {}
           # Copy all requested fields from ticket
@@ -910,6 +909,9 @@ class TicketWatchlist(BasicWatchlist):
           locale = getattr( req, 'locale', LC_TIME)
           if 'id' in fields:
               ticketdict['id'] = sid
+          if 'cc' in fields:
+              if render_elt == obfuscate_email_address:
+                ticketdict['cc'] = ', '.join([ render_elt(c) for c in ticketdict['cc'].split(', ') ])
           if 'author' in fields:
               ticketdict['author'] = render_elt(author),
           if 'changetime' in fields:
