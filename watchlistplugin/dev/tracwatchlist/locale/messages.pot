@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.6\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-11 17:43+0100\n"
+"POT-Creation-Date: 2010-09-12 11:06+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,85 +18,72 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.5\n"
 
-#: tracwatchlist/nav.py:44 tracwatchlist/plugin.py:149
+#: tracwatchlist/nav.py:44 tracwatchlist/plugin.py:145
 #: tracwatchlist/templates/watchlist.html:10
 #: tracwatchlist/templates/watchlist.html:97
 #: tracwatchlist/templates/watchlist_prefs_main.html:9
 msgid "Watchlist"
 msgstr ""
 
-#. TRANSLATOR: Format of date/time stamps.
-#. See
-#. http://docs.python.org/library/datetime.html#strftime-and-strptime-behavior
-#. for a list of usable directives.
-#: tracwatchlist/plugin.py:66
-#, python-format
-msgid "%Y-%m-%d %H:%M:%S %Z"
-msgstr ""
-
-#: tracwatchlist/plugin.py:71
-msgid "Watchlist Error"
-msgstr ""
-
-#: tracwatchlist/plugin.py:88
+#: tracwatchlist/plugin.py:84
 msgid "Notifications"
 msgstr ""
 
-#: tracwatchlist/plugin.py:89
+#: tracwatchlist/plugin.py:85
 msgid "Display notification navigation items"
 msgstr ""
 
-#: tracwatchlist/plugin.py:90
+#: tracwatchlist/plugin.py:86
 msgid "Display notification column in watchlist tables"
 msgstr ""
 
-#: tracwatchlist/plugin.py:91
+#: tracwatchlist/plugin.py:87
 msgid "Enable notifications by default for all watchlist entries"
 msgstr ""
 
-#: tracwatchlist/plugin.py:92
+#: tracwatchlist/plugin.py:88
 msgid ""
 "The user stays at the resource after a watch/unwatch operation and "
 "the watchlist page is not displayed"
 msgstr ""
 
-#: tracwatchlist/plugin.py:93
+#: tracwatchlist/plugin.py:89
 msgid ""
 "The user stays at the resource after a notify/do-not-notify operation"
 " and the watchlist page is not displayed"
 msgstr ""
 
-#: tracwatchlist/plugin.py:94
+#: tracwatchlist/plugin.py:90
 msgid "Action messages are shown on resource pages"
 msgstr ""
 
-#: tracwatchlist/plugin.py:95
+#: tracwatchlist/plugin.py:91
 msgid "Action messages are shown when going to the watchlist page"
 msgstr ""
 
-#: tracwatchlist/plugin.py:96
+#: tracwatchlist/plugin.py:92
 msgid "Show action messages while on watchlist page"
 msgstr ""
 
-#: tracwatchlist/plugin.py:97
+#: tracwatchlist/plugin.py:93
 msgid "Autocomplete input fields (add/remove resources)"
 msgstr ""
 
-#: tracwatchlist/plugin.py:98
+#: tracwatchlist/plugin.py:94
 msgid "Dynamic watchlist tables"
 msgstr ""
 
-#: tracwatchlist/plugin.py:99
+#: tracwatchlist/plugin.py:95
 msgid "Individual column filtering"
 msgstr ""
 
 #. TRANSLATOR: Link part of
 #. "Please %(log_in)s to view or change your watchlist"
-#: tracwatchlist/plugin.py:328
+#: tracwatchlist/plugin.py:323
 msgid "log in"
 msgstr ""
 
-#: tracwatchlist/plugin.py:330
+#: tracwatchlist/plugin.py:325
 #, python-format
 msgid "Please %(log_in)s to view or change your watchlist"
 msgstr ""
@@ -177,20 +164,20 @@ msgstr ""
 msgid "Page"
 msgstr ""
 
-#: tracwatchlist/plugin.py:689 tracwatchlist/plugin.py:809
+#: tracwatchlist/plugin.py:689 tracwatchlist/plugin.py:814
 msgid "By"
 msgstr ""
 
 #. TRANSLATOR: Abbreviated label for 'unwatch' column header.
 #. Should be a single character to not widen the column.
-#: tracwatchlist/plugin.py:695 tracwatchlist/plugin.py:815
+#: tracwatchlist/plugin.py:695 tracwatchlist/plugin.py:820
 msgid "U"
 msgstr ""
 
 #. TRANSLATOR: Label for 'notify' column header.
 #. Should tell the user that notifications can be switched on or off
 #. with the check-boxes in this column.
-#: tracwatchlist/plugin.py:699 tracwatchlist/plugin.py:816
+#: tracwatchlist/plugin.py:699 tracwatchlist/plugin.py:821
 msgid "Notify"
 msgstr ""
 
@@ -203,16 +190,28 @@ msgstr ""
 msgid "IP"
 msgstr ""
 
-#: tracwatchlist/plugin.py:810
+#: tracwatchlist/plugin.py:712
+msgid "Wiki Page"
+msgid_plural "Wiki Pages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: tracwatchlist/plugin.py:815
 msgid "Changes"
 msgstr ""
 
 #. TRANSLATOR: '#' stands for 'number'.
 #. This is the header label for a column showing the number
 #. of the latest comment.
-#: tracwatchlist/plugin.py:814
+#: tracwatchlist/plugin.py:819
 msgid "Comment #"
 msgstr ""
+
+#: tracwatchlist/plugin.py:835
+msgid "Ticket"
+msgid_plural "Tickets"
+msgstr[0] ""
+msgstr[1] ""
 
 #: tracwatchlist/templates/orderadd.html:10
 msgid "Columns"
@@ -334,21 +333,11 @@ msgid ""
 msgstr ""
 
 #: tracwatchlist/templates/wl-ticket.html:14
-#: tracwatchlist/templates/wl-ticket.html:19
-msgid "Tickets"
-msgstr ""
-
-#: tracwatchlist/templates/wl-ticket.html:14
 msgid "You lack permission to view tickets."
 msgstr ""
 
 #: tracwatchlist/templates/wl-ticket.html:74
 msgid "No tickets are currently watched."
-msgstr ""
-
-#: tracwatchlist/templates/wl-wiki.html:14
-#: tracwatchlist/templates/wl-wiki.html:19
-msgid "Wikis"
 msgstr ""
 
 #: tracwatchlist/templates/wl-wiki.html:14
