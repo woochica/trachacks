@@ -82,5 +82,14 @@ jQuery(document).ready(function() {
       window.open(this.href);
       return false;
   });
+  $("td a.more").click(function(){
+      $(this).hide();
+      $(this).parent().find(".moretext,.less").show();
+  });
+  $("td a.less").click(function(){
+      $(this).hide();
+      $(this).parent().find(".moretext").hide();
+      $(this).parent().find(".more").show();
+  });
 });
 

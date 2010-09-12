@@ -27,6 +27,8 @@ th, td {
 
 th.comment, th.changes {
     text-align: left;
+    min-width: 15em;
+    max-width: 100%;
 }
 
 table.watchlist {
@@ -166,4 +168,7 @@ div#preferences fieldset {
   min-width: 12em;
 }
 
+td .moretext, td .less {
+  display: none;
+}
 

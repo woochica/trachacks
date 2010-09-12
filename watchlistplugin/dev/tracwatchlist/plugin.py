@@ -901,12 +901,17 @@ class TicketWatchlist(BasicWatchlist):
                           render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
                           ), tag('; ') ])
           # Remove the last tag('; '):
-          changes = changes and tag(changes[0:-1]) or tag()
+          if changes:
+              changes.pop()
+          def moreless(text, length):
+              return tag(tag.span(text[:length]),tag.a(' [', tag.strong(Markup('&hellip;')), ']', class_="more"),
+                     tag.span(text[length:],class_="moretext"),tag.a(' [', tag.strong('-'), ']', class_="less"))
+          if len(comment) > 200:
+              comment = moreless(comment, 200)
+          if len(changes) > 5:
+              changes = moreless(changes, 5)
           dt = from_utimestamp( time )
           ct = from_utimestamp( changetime )
-
-          if len(comment) > 250:
-              comment = comment[:250] + '...'
 
           locale = req.session.get('language')
           ticketlist.append({
@@ -914,7 +919,7 @@ class TicketWatchlist(BasicWatchlist):
               'type' : type,
               'author' : render_elt(author),
               'commentnum': commentnum,
-              'comment' : comment,
+              'comment' : tag.div(comment),
               'changetime' : format_datetime( ct, locale=locale ),
               'ichangetime' : changetime,
               'changetime_delta' : pretty_timedelta( ct ),
@@ -925,7 +930,7 @@ class TicketWatchlist(BasicWatchlist):
               'time_delta' : pretty_timedelta( dt ),
               'time_link' : req.href.timeline(precision='seconds',
                   from_=format_datetime ( dt, 'iso8601')),
-              'changes' : changes,
+              'changes' : tag(changes),
               'summary' : summary,
               'status'  : status,
               'notify'  : notify,
