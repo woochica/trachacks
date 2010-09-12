@@ -885,38 +885,26 @@ class TicketWatchlist(BasicWatchlist):
 
           locale = getattr( req, 'locale', LC_TIME)
           # TODO: Copy only data for columns the actually requested.
-          ticketlist.append({
-              'id' : sid,
-              'type' : ticket.values['type'],
-              'author' : render_elt(author),
-              'commentnum': commentnum,
-              'comment' : tag.div(comment),
-              'changetime' : format_datetime( changetime, locale=locale ),
-              'ichangetime' : to_timestamp( changetime ),
+          ticketdict = ticket.values.copy()
+          ticketdict.update({
+              'id'               : sid,
+              'author'           : render_elt(author),
+              'commentnum'       : commentnum,
+              'comment'          : tag.div(comment),
+              'changetime'       : format_datetime( changetime, locale=locale ),
+              'ichangetime'      : to_timestamp( changetime ),
               'changetime_delta' : pretty_timedelta( changetime ),
-              'changetime_link' : req.href.timeline(precision='seconds',
-                  from_=trac_format_datetime ( changetime, 'iso8601')),
-              'time' : format_datetime( time, locale=locale ),
-              'itime' : to_timestamp( time ),
-              'time_delta' : pretty_timedelta( time ),
-              'time_link' : req.href.timeline(precision='seconds',
-                  from_=trac_format_datetime ( time, 'iso8601')),
-              'changes' : tag(changes),
-              'summary' : ticket.values['summary'],
-              'status'  : ticket.values['status'],
-              'notify'  : notify,
-            'component' : ticket.values['component'],
-            'severity'  : ticket.values['severity'],
-            'priority'  : ticket.values['priority'],
-            'owner'     : render_elt(ticket.values['owner']),
-            'reporter'  : render_elt(ticket.values['reporter']),
-            'cc'        : ticket.values['cc'],
-            'version'   : ticket.values['version'],
-            'milestone' : ticket.values['milestone'],
-            'status'    : ticket.values['status'],
-            'resolution': ticket.values['resolution'],
-            'keywords'  : ticket.values['keywords'],
+              'changetime_link'  : req.href.timeline(precision='seconds', from_=trac_format_datetime ( changetime, 'iso8601')),
+              'time'             : format_datetime( time, locale=locale ),
+              'itime'            : to_timestamp( time ),
+              'time_delta'       : pretty_timedelta( time ),
+              'time_link'        : req.href.timeline(precision='seconds', from_=trac_format_datetime ( time, 'iso8601')),
+              'changes'          : tag(changes),
+              'notify'           : notify,
+              'owner'            : render_elt(ticket.values['owner']),
+              'reporter'         : render_elt(ticket.values['reporter']),
           })
+          ticketlist.append(ticketdict)
       return ticketlist
 
 
