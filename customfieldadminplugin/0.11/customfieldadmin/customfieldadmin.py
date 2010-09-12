@@ -51,17 +51,17 @@ class CustomFieldAdminPage(Component):
         
         # Detail view?
         if customfield:
-            exists = [True for cf in cfapi.get_custom_fields(self.env) if cf['name'] == customfield]
+            exists = [True for cf in cfapi.get_custom_fields() if cf['name'] == customfield]
             if not exists:
                 raise TracError("Custom field %s does not exist." % customfield)
             if req.method == 'POST':
                 if req.args.get('save'):
                     cfdict = _customfield_from_req(self, req) 
-                    cfapi.update_custom_field(self.env, cfdict)
+                    cfapi.update_custom_field(cfdict)
                     req.redirect(req.href.admin(cat, page))
                 elif req.args.get('cancel'):
                     req.redirect(req.href.admin(cat, page))
-            currentcf = cfapi.get_custom_fields(self.env, {'name': customfield})
+            currentcf = cfapi.get_custom_fields({'name': customfield})
             if currentcf.has_key('options'):
                 optional_line = ''
                 if currentcf.get('optional', False):
@@ -74,7 +74,7 @@ class CustomFieldAdminPage(Component):
                 # Add Custom Field
                 if req.args.get('add') and req.args.get('name'):
                     cfdict = _customfield_from_req(self, req)
-                    cfapi.update_custom_field(self.env, cfdict, create=True)
+                    cfapi.update_custom_field(cfdict, create=True)
                     req.redirect(req.href.admin(cat, page))
                          
                 # Remove Custom Field
@@ -85,7 +85,7 @@ class CustomFieldAdminPage(Component):
                         raise TracError, 'No custom field selected'
                     for name in sel:
                         cfdict =  {'name': name}
-                        cfapi.delete_custom_field(self.env, cfdict)
+                        cfapi.delete_custom_field(cfdict)
                     req.redirect(req.href.admin(cat, page))
 
                 elif req.args.get('apply'):
@@ -94,14 +94,14 @@ class CustomFieldAdminPage(Component):
                                   in req.args.keys()
                                   if key.startswith('order_')])
                     values = dict([(val, True) for val in order.values()])
-                    cf = cfapi.get_custom_fields(self.env)
+                    cf = cfapi.get_custom_fields()
                     for cur_cf in cf:
                         cur_cf['order'] = order[cur_cf['name']]
-                        cfapi.update_custom_field(self.env, cur_cf)
+                        cfapi.update_custom_field(cur_cf)
                     req.redirect(req.href.admin(cat, page))
 
             cf_list = []
-            for item in cfapi.get_custom_fields(self.env):
+            for item in cfapi.get_custom_fields():
                 item['href'] = req.href.admin(cat, page, item['name'])
                 item['registry'] = ('ticket-custom', 
                                             item['name']) in Option.registry
