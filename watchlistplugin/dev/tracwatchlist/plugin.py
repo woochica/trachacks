@@ -816,7 +816,6 @@ class WikiWatchlist(BasicWatchlist):
 class TicketWatchlist(BasicWatchlist):
     """Watchlist entry for tickets."""
     realms = ['ticket']
-    # FIXME: Labels need to be reloaded after locale changes
     columns = {'ticket':{
         'author'    : T_("Author"),
         'changes'   : N_("Changes"),
@@ -893,14 +892,6 @@ class TicketWatchlist(BasicWatchlist):
 
           ticket = Ticket(self.env, id, db)
 
-          cursor.execute("""
-            SELECT author,field,oldvalue,newvalue
-              FROM ticket_change
-             WHERE ticket=%s and time=%s
-             ORDER BY field DESC;
-          """, (id, changetime)
-          )
-
           render_elt = lambda x: x
           if not (Chrome(self.env).show_email_addresses or \
                   'EMAIL_VIEW' in req.perm(ticket.resource)):
@@ -911,8 +902,8 @@ class TicketWatchlist(BasicWatchlist):
           author  = reporter
           commentnum = u"0"
           comment = u""
-          for author_,field,oldvalue,newvalue in cursor.fetchall():
-              author = author_
+          for date,cauthor,field,oldvalue,newvalue,permanent in ticket.get_changelog(ticket.time_changed,db):
+              author = cauthor
               if field == 'comment':
                   commentnum = to_unicode(oldvalue)
                   comment    = to_unicode(newvalue)
@@ -931,8 +922,6 @@ class TicketWatchlist(BasicWatchlist):
               comment = moreless(comment, 200)
           if len(changes) > 5:
               changes = moreless(changes, 5)
-          dt = from_utimestamp( time )
-          ct = from_utimestamp( changetime )
 
           locale = getattr( req, 'locale', LC_TIME)
           ticketlist.append({
@@ -941,16 +930,16 @@ class TicketWatchlist(BasicWatchlist):
               'author' : render_elt(author),
               'commentnum': commentnum,
               'comment' : tag.div(comment),
-              'changetime' : format_datetime( ct, locale=locale ),
+              'changetime' : format_datetime( changetime, locale=locale ),
               'ichangetime' : changetime,
-              'changetime_delta' : pretty_timedelta( ct ),
+              'changetime_delta' : pretty_timedelta( changetime ),
               'changetime_link' : req.href.timeline(precision='seconds',
-                  from_=format_datetime ( ct, 'iso8601')),
-              'time' : format_datetime( dt, locale=locale ),
+                  from_=format_datetime ( changetime, 'iso8601')),
+              'time' : format_datetime( time, locale=locale ),
               'itime' : time,
-              'time_delta' : pretty_timedelta( dt ),
+              'time_delta' : pretty_timedelta( time ),
               'time_link' : req.href.timeline(precision='seconds',
-                  from_=format_datetime ( dt, 'iso8601')),
+                  from_=format_datetime ( time, 'iso8601')),
               'changes' : tag(changes),
               'summary' : summary,
               'status'  : status,
