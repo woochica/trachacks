@@ -518,9 +518,12 @@ class WatchlistPlugin(Component):
         wldict['alw_res'] = alw_res
 
         if action == "notifyon":
+            if single and not self.res_exists(realm, resids[0]):
+                raise HTTPNotFound(t_("Page %(name)s not found", name=resids[0]))
             if self.wsub and settings['notifications']:
               for res in resids:
-                self.set_notify(req, realm, res)
+                if self.res_exists(realm, res):
+                  self.set_notify(req, realm, res)
               db.commit()
             if redirectback_notify and not async:
               if settings['show_messages_on_resource_page']:
@@ -552,8 +555,8 @@ class WatchlistPlugin(Component):
             action = "view"
 
         if action == "search":
-          query = req.args.get('q', u'')
           handler = self.realm_handler[realm]
+          query = req.args.get('q', u'')
           found = handler.res_pattern_exists(realm, query + '%')
 
           watched = self.get_watched_resources( realm, user )
@@ -568,10 +571,10 @@ class WatchlistPlugin(Component):
           raise RequestDone
 
         if action == "view":
-            for (xrealm,handler) in self.realm_handler.iteritems():
-              if handler.has_perm(xrealm, req.perm):
-                wldict[xrealm + 'list'] = handler.get_list(xrealm, self, req, set(wldict['active_fields'][xrealm]))
-                name = handler.get_realm_label(xrealm, n_plural=1000)
+            for (xrealm,xhandler) in self.realm_handler.iteritems():
+              if xhandler.has_perm(xrealm, req.perm):
+                wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, set(wldict['active_fields'][xrealm]))
+                name = xhandler.get_realm_label(xrealm, n_plural=1000)
                 # TRANSLATOR: Navigation link to point to watchlist section of this realm
                 # (e.g. 'Wikis', 'Tickets').
                 add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name),
