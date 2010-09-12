@@ -49,7 +49,7 @@ class IWatchlistProvider(Interface):
     def has_perm(realm, perm):
       pass
 
-    def get_list(realm, wl, req):
+    def get_list(realm, wl, req, fields=None):
       pass
 
     def get_href(realm, resid=None):
@@ -100,7 +100,7 @@ class BasicWatchlist(Component):
         return False
       return realm.upper() + '_VIEW' in perm
 
-    def get_list(self, realm, wl, req):
+    def get_list(self, realm, wl, req, fields=None):
       return []
 
     def get_href(self, realm, resid=None, **kwargs):

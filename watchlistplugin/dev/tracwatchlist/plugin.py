@@ -570,7 +570,7 @@ class WatchlistPlugin(Component):
         if action == "view":
             for (xrealm,handler) in self.realm_handler.iteritems():
               if handler.has_perm(xrealm, req.perm):
-                wldict[xrealm + 'list'] = handler.get_list(xrealm, self, req)
+                wldict[xrealm + 'list'] = handler.get_list(xrealm, self, req, set(wldict['active_fields'][xrealm]))
                 name = handler.get_realm_label(xrealm, n_plural=1000)
                 # TRANSLATOR: Navigation link to point to watchlist section of this realm
                 # (e.g. 'Wikis', 'Tickets').
@@ -742,7 +742,7 @@ class WikiWatchlist(BasicWatchlist):
       )
       return [ vals[0] for vals in cursor.fetchall() ]
 
-    def get_list(self, realm, wl, req):
+    def get_list(self, realm, wl, req, fields=None):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       user = req.authname
@@ -839,76 +839,101 @@ class TicketWatchlist(BasicWatchlist):
       else:
         return []
 
-    def get_list(self, realm, wl, req):
+    def get_list(self, realm, wl, req, fields=None):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       ticketlist = []
       for id in wl.get_watched_resources( 'ticket', req.authname ):
           sid = unicode(id)
-          notify = wl.is_notify(req, 'ticket', sid)
-
           ticket = Ticket(self.env, id, db)
 
           render_elt = lambda x: x
           if not (Chrome(self.env).show_email_addresses or \
                   'EMAIL_VIEW' in req.perm(ticket.resource)):
               render_elt = obfuscate_email_address
-              cc = ', '.join([ render_elt(c) for c in cc.split(', ') ])
+              cc = ', '.join([ render_elt(c) for c in cc.split(', ') ]) # FIXME !!!
 
-          changes = []
-          author  = ticket.values['reporter']
-          commentnum = u"0"
-          comment = u""
-          for date,cauthor,field,oldvalue,newvalue,permanent in ticket.get_changelog(ticket.time_changed,db):
-              author = cauthor
-              if field == 'comment':
-                  commentnum = to_unicode(oldvalue)
-                  comment    = to_unicode(newvalue)
-              else:
-                  changes.extend(
-                      [ tag(tag.strong(self.fields['ticket'][field]), ' ',
-                          render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
-                          ), tag('; ') ])
-          # Remove the last tag('; '):
-          if changes:
-              changes.pop()
-          def moreless(text, length):
-              return tag(tag.span(text[:length]),tag.a(' [', tag.strong(Markup('&hellip;')), ']', class_="more"),
-                     tag.span(text[length:],class_="moretext"),tag.a(' [', tag.strong('-'), ']', class_="less"))
-          if len(comment) > 200:
-              comment = moreless(comment, 200)
-          if len(changes) > 5:
-              changes = moreless(changes, 5)
-          description = ticket.values['description']
-          if len(description) > 200:
-              description = moreless(description, 200)
+          ticketdict = {}
+          # Copy all requested fields from ticket
+          if fields:
+              for f in fields:
+                  ticketdict[f] = ticket.values.get(f,u'')
+          else:
+              ticketdict = ticket.values.copy()
 
-          changetime = ticket.time_changed
-          time = ticket.time_created
+          # Changes are special. Comment, commentnum and last author are included in them.
+          if 'changes' in fields or 'comment' in fields or 'commentnum' in fields or 'author' in fields:
+            changes = []
+            # If there are now changes the reporter is the last author
+            author  = ticket.values['reporter']
+            commentnum = u"0"
+            comment = u""
+            want_changes = 'changes' in fields
+            for date,cauthor,field,oldvalue,newvalue,permanent in ticket.get_changelog(ticket.time_changed,db):
+                author = cauthor
+                if field == 'comment':
+                    if 'commentnum' in fields:
+                        ticketdict['commentnum'] = to_unicode(oldvalue)
+                    if 'comment' in fields:
+                        comment = to_unicode(newvalue)
+                        if len(comment) > 200:
+                            comment = moreless(comment, 200)
+                        ticketdict['comment'] = comment
+                    if not want_changes:
+                        break
+                else:
+                    if want_changes:
+                      changes.extend(
+                        [ tag(tag.strong(self.fields['ticket'][field]), ' ',
+                            render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
+                            ), tag('; ') ])
+            if want_changes:
+                # Remove the last tag('; '):
+                if changes:
+                    changes.pop()
+                if len(changes) > 5:
+                    changes = moreless(changes, 5)
+                ticketdict['changes'] = tag(changes)
 
           locale = getattr( req, 'locale', LC_TIME)
-          # TODO: Copy only data for columns the actually requested.
-          ticketdict = ticket.values.copy()
-          ticketdict.update({
-              'id'               : sid,
-              'author'           : render_elt(author),
-              'commentnum'       : commentnum,
-              'comment'          : tag.div(comment),
-              'changetime'       : format_datetime( changetime, locale=locale ),
-              'ichangetime'      : to_timestamp( changetime ),
-              'changetime_delta' : pretty_timedelta( changetime ),
-              'changetime_link'  : req.href.timeline(precision='seconds', from_=trac_format_datetime ( changetime, 'iso8601')),
-              'time'             : format_datetime( time, locale=locale ),
-              'itime'            : to_timestamp( time ),
-              'time_delta'       : pretty_timedelta( time ),
-              'time_link'        : req.href.timeline(precision='seconds', from_=trac_format_datetime ( time, 'iso8601')),
-              'changes'          : tag(changes),
-              'notify'           : notify,
-              'owner'            : render_elt(ticket.values['owner']),
-              'reporter'         : render_elt(ticket.values['reporter']),
-              'description'      : description,
-          })
+          if 'id' in fields:
+              ticketdict['id'] = sid
+          if 'author' in fields:
+              ticketdict['author'] = render_elt(author),
+          if 'changetime' in fields:
+              changetime = ticket.time_changed
+              ticketdict.update(
+                  changetime       = format_datetime( changetime, locale=locale ),
+                  ichangetime      = to_timestamp( changetime ),
+                  changetime_delta = pretty_timedelta( changetime ),
+                  changetime_link  = req.href.timeline(precision='seconds',
+                                     from_=trac_format_datetime ( changetime, 'iso8601')))
+          if 'time' in fields:
+              time = ticket.time_created
+              ticketdict.update(
+                  time             = format_datetime( time, locale=locale ),
+                  itime            = to_timestamp( time ),
+                  time_delta       = pretty_timedelta( time ),
+                  time_link        = req.href.timeline(precision='seconds',
+                                     from_=trac_format_datetime ( time, 'iso8601')))
+          if 'description' in fields:
+              description = ticket.values['description']
+              if len(description) > 200:
+                  description = moreless(description, 200)
+              ticketdict['description'] = description
+          if 'notify' in fields:
+              ticketdict['notify'] = wl.is_notify(req, 'ticket', sid)
+          if 'owner' in fields:
+              ticketdict['owner'] = render_elt(ticket.values['owner'])
+          if 'reporter' in fields:
+              ticketdict['reporter'] = render_elt(ticket.values['reporter'])
+
           ticketlist.append(ticketdict)
       return ticketlist
+
+
+def moreless(text, length):
+    return tag(tag.span(text[:length]),tag.a(' [', tag.strong(Markup('&hellip;')), ']', class_="more"),
+        tag.span(text[length:],class_="moretext"),tag.a(' [', tag.strong('-'), ']', class_="less"))
 
 
