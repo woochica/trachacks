@@ -25,9 +25,9 @@
                   }">
               <thead>
                 <tr>
-                  <th py:for="k in active_columns[realm]"
+                  <th py:for="k in active_fields[realm]"
                       py:if="k != 'notify' or notifications"
-                      class="${k}" py:attrs="attr.get(k,{})">${available_columns[realm][k]}</th>
+                      class="${k}" py:attrs="attr.get(k,{})">${available_fields[realm][k]}</th>
                 </tr>
               </thead>
               <tbody>
@@ -55,14 +55,14 @@
                       ${notifybox('ticket',ticket.id,ticket.notify)}</td>
                   <td py:def="ticket_generic" class="${k}">${ticket.get(k,'')}</td>
                 <tr py:for="ticket in ticketlist">
-                  <py:for each="k in active_columns[realm]">
+                  <py:for each="k in active_fields[realm]">
                       ${value_of('ticket_' + k,ticket_generic)()}
                   </py:for>
                 </tr>
               </tbody>
               <tfoot py:if="settings['dynamic_tables'] and settings['individual_column_filtering']">
                 <tr>
-                  <th py:for="k in active_columns[realm]"
+                  <th py:for="k in active_fields[realm]"
                       py:if="k != 'notify' or notifications"
                       class="${k}">
                       <input py:if="k not in attr" name="${k}" type="text" size="4" />

@@ -58,9 +58,9 @@ class IWatchlistProvider(Interface):
     def get_abs_href(realm, resid=None):
       pass
 
-    def get_columns(realm):
-      """ Returns table columns
-        Format: ( {Names:Labels}, (DEFAULT list) )
+    def get_fields(realm):
+      """ Returns fields (table columns)
+        Format: ( {Field:Label, Field:Label, ...}, (DEFAULT list) )
       """
       pass
 
@@ -72,8 +72,8 @@ class BasicWatchlist(Component):
     """
     implements( IWatchlistProvider )
     realms = []
-    default_columns = {}
-    columns = {}
+    default_fields = {}
+    fields = {}
 
     def get_realms(self):
       return self.realms
@@ -115,13 +115,12 @@ class BasicWatchlist(Component):
       else:
         return self.env.abs_href(realm,resid,**kwargs)
 
-    def get_columns(self, realm):
+    def get_fields(self, realm):
       # Needed to re-localise after locale changed:
       # See also ticket.api: get_ticket_fields
-      self.log.debug("WL columns:" + unicode( (self.columns.get(realm,{})) ))
-      columns = copy.deepcopy(self.columns.get(realm,{}))
+      fields = copy.deepcopy(self.fields.get(realm,{}))
       col = 'col' # workaround gettext extraction bug
-      for col in columns:
-          columns[col] = gettext(columns[col])
-      return ( columns, self.default_columns.get(realm,[]) )
+      for col in fields:
+          fields[col] = gettext(fields[col])
+      return ( fields, self.default_fields.get(realm,[]) )
 

@@ -161,7 +161,7 @@ class WatchlistPlugin(Component):
           settings[k] = k in newoptions
         for realm in self.realms:
           try:
-            settings[realm + '_columns'] = req.args.get(realm + '_columns')
+            settings[realm + '_fields'] = req.args.get(realm + '_fields')
           except:
             pass
         self._save_user_settings(req.authname, settings)
@@ -365,25 +365,25 @@ class WatchlistPlugin(Component):
         wldict['wlgettext'] = gettext
         wldict['t_'] = t_
         wldict['settings'] = settings
-        wldict['available_columns'] = {}
-        wldict['default_columns'] = {}
+        wldict['available_fields'] = {}
+        wldict['default_fields'] = {}
         #wldict['label'] = dict([ self.realm_handler for r in self.realms ])
         def get_label(realm, n_plural=1):
             return self.realm_handler[realm].get_realm_label(realm, n_plural)
         wldict['get_label'] = get_label
 
         for r in self.realms:
-            wldict['available_columns'][r],wldict['default_columns'][r] = self.realm_handler[r].get_columns(r)
-        wldict['active_columns'] = {}
+            wldict['available_fields'][r],wldict['default_fields'][r] = self.realm_handler[r].get_fields(r)
+        wldict['active_fields'] = {}
         for r in self.realms:
-            cols = settings.get(r + '_columns','').split(',')
+            cols = settings.get(r + '_fields','').split(',')
             #self.log.debug( "WL SC = " + unicode(cols) )
             if not cols or cols == ['']:
-                cols = wldict['default_columns'].get(r,[])
+                cols = wldict['default_fields'].get(r,[])
                 #self.log.debug( "WL EC = " + unicode(cols) )
-            wldict['active_columns'][r] = cols
-        #self.log.debug( "WL DC = " + unicode(wldict['default_columns']) )
-        #self.log.debug( "WL AC = " + unicode(wldict['active_columns']) )
+            wldict['active_fields'][r] = cols
+        #self.log.debug( "WL DC = " + unicode(wldict['default_fields']) )
+        #self.log.debug( "WL AC = " + unicode(wldict['active_fields']) )
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1
@@ -697,7 +697,7 @@ class WatchlistPlugin(Component):
 class WikiWatchlist(BasicWatchlist):
     """Watchlist entry for wiki pages."""
     realms = ['wiki']
-    columns = {'wiki':{
+    fields = {'wiki':{
         'changetime': T_("Modified"),
         'author'    : T_("Author"),
         'version'   : T_("Version"),
@@ -716,13 +716,13 @@ class WikiWatchlist(BasicWatchlist):
         # T#RANSLATOR: IP = Internet Protocol (address)
         #'ipnr'      : N_("IP"), # Note: not supported by Trac 0.12 WikiPage class
     }}
-    default_columns = {'wiki':[
+    default_fields = {'wiki':[
         'name', 'changetime', 'author', 'version', 'diff',
         'history', 'unwatch', 'notify', 'comment',
     ]}
 
     def __init__(self):
-        self.columns['wiki']['name'] = self.get_realm_label('wiki')
+        self.fields['wiki']['name'] = self.get_realm_label('wiki')
 
     def get_realm_label(self, realm, n_plural=1):
       return ngettext("Wiki Page", "Wiki Pages", n_plural)
@@ -792,7 +792,7 @@ class WikiWatchlist(BasicWatchlist):
 class TicketWatchlist(BasicWatchlist):
     """Watchlist entry for tickets."""
     realms = ['ticket']
-    columns = {'ticket':{
+    fields = {'ticket':{
         'author'    : T_("Author"),
         'changes'   : N_("Changes"),
         # TRANSLATOR: '#' stands for 'number'.
@@ -805,17 +805,17 @@ class TicketWatchlist(BasicWatchlist):
         # Plus further pairs imported at __init__.
     }}
 
-    default_columns = {'ticket':[
+    default_fields = {'ticket':[
         'id', 'changetime', 'author', 'changes', 'commentnum',
         'unwatch', 'notify', 'comment',
     ]}
 
     def __init__(self):
         try: # Only works for Trac 0.12, but is not needed for Trac 0.11 anyway
-            self.columns['ticket'].update( TicketSystem(self.env).get_ticket_field_labels() )
+            self.fields['ticket'].update( TicketSystem(self.env).get_ticket_field_labels() )
         except AttributeError:
             pass
-        self.columns['ticket']['id'] = self.get_realm_label('ticket')
+        self.fields['ticket']['id'] = self.get_realm_label('ticket')
 
     def get_realm_label(self, realm, n_plural=1):
         return ngettext("Ticket", "Tickets", n_plural)
@@ -866,7 +866,7 @@ class TicketWatchlist(BasicWatchlist):
                   comment    = to_unicode(newvalue)
               else:
                   changes.extend(
-                      [ tag(tag.strong(self.columns['ticket'][field]), ' ',
+                      [ tag(tag.strong(self.fields['ticket'][field]), ' ',
                           render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
                           ), tag('; ') ])
           # Remove the last tag('; '):

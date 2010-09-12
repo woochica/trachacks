@@ -27,9 +27,9 @@
                   }">
               <thead>
                 <tr>
-                  <th py:for="k in active_columns[realm]"
+                  <th py:for="k in active_fields[realm]"
                       py:if="k != 'notify' or notifications"
-                      class="${k}" py:attrs="attr.get(k,{})">${available_columns[realm][k]}</th>
+                      class="${k}" py:attrs="attr.get(k,{})">${available_fields[realm][k]}</th>
                 </tr>
               </thead>
               <tbody>
@@ -45,13 +45,13 @@
                   <td py:def="wiki_diff" class="diff"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,action='diff',
                         version=page.version)}">
-                        <img py:with="label=available_columns[realm]['diff']"
+                        <img py:with="label=available_fields[realm]['diff']"
                             src="${href.chrome('watchlist/ico/diff.png')}"
                             width="16px" height="16px" title="$label"
                             alt="$label" /></a></td>
                   <td py:def="wiki_history" class="history"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,action='history')}">
-                        <img py:with="label=available_columns[realm]['history']"
+                        <img py:with="label=available_fields[realm]['history']"
                             src="${href.chrome('watchlist/ico/history.png')}"
                             width="16px" height="16px" title="$label"
                             alt="$label" /></a></td>
@@ -66,14 +66,14 @@
                   </py:if>
                   <td py:def="wiki_comment" class="comment">$page.comment</td>
                 <tr py:for="page in wikilist">
-                  <py:for each="k in active_columns[realm]">
+                  <py:for each="k in active_fields[realm]">
                       ${value_of('wiki_' + k,wiki_generic)()}
                   </py:for>
                 </tr>
               </tbody>
               <tfoot py:if="settings['dynamic_tables'] and settings['individual_column_filtering']">
                 <tr>
-                  <th py:for="k in active_columns[realm]"
+                  <th py:for="k in active_fields[realm]"
                       py:if="k != 'notify' or notifications"
                       class="${k}">
                       <input py:if="k not in attr" name="${k}" type="text" size="4" />
