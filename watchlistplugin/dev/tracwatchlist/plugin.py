@@ -185,6 +185,8 @@ class WatchlistPlugin(Component):
     def is_notify(self, req, realm, resid):
       try:
         return self.wsub.is_watching(req.session.sid, True, realm, resid)
+      except AttributeError:
+        return False
       except Exception, e:
         self.log.error("is_notify error: " + str(e))
         return False
@@ -192,12 +194,16 @@ class WatchlistPlugin(Component):
     def set_notify(self, req, realm, resid):
       try:
         self.wsub.set_watch(req.session.sid, True, realm, resid)
+      except AttributeError:
+        return False
       except Exception, e:
         self.log.error("set_notify error: " + str(e))
 
     def unset_notify(self, req, realm, resid):
       try:
         self.wsub.set_unwatch(req.session.sid, True, realm, resid)
+      except AttributeError:
+        return False
       except Exception, e:
         self.log.error("unset_notify error: " + str(e))
 
@@ -712,8 +718,8 @@ class WikiWatchlist(BasicWatchlist):
         'comment'   : T_("Comment"),
 
         'readonly'  : N_("read-only"),
-        # TRANSLATOR: IP = Internet Protocol (address)
-        'ipnr'      : N_("IP"),
+        # T#RANSLATOR: IP = Internet Protocol (address)
+        #'ipnr'      : N_("IP"), # Note: not supported by Trac 0.12 WikiPage class
     }}
     default_columns = {'wiki':[
         'name', 'changetime', 'author', 'version', 'diff',
@@ -745,76 +751,44 @@ class WikiWatchlist(BasicWatchlist):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       user = req.authname
+      locale = getattr( req, 'locale', LC_TIME)
       wikilist = []
-      # Watched wikis which got deleted:
-      cursor.execute("""
-        SELECT resid
-          FROM watchlist
-         WHERE realm='wiki' AND wluser=%s AND
-               resid NOT IN (
-          SELECT DISTINCT name
-                     FROM wiki
-          );
-        """, (user,)
-        )
 
-      for (name,) in cursor.fetchall():
-          notify = False
-          if wl.wsub:
-            notify = wl.is_notify(req, 'wiki', name)
-          wikilist.append({
+      for name in wl.get_watched_resources( 'wiki', req.authname ):
+          wikipage = WikiPage(self.env, name, db=db)
+
+          notify = wl.is_notify(req, 'wiki', name)
+
+          if not wikipage.exists:
+            wikilist.append({
               'name' : name,
               'author' : '?',
               'changetime' : '?',
               'comment' : tag.strong(t_("deleted"), class_='deleted'),
               'notify'  : notify,
               'deleted' : True,
-          })
-      # Existing watched wikis:
-      cursor.execute("""
-        SELECT name,author,time,version,comment,readonly,ipnr
-          FROM wiki AS w1
-         WHERE name IN (
-           SELECT resid
-             FROM watchlist
-            WHERE wluser=%s AND realm='wiki'
-           )
-               AND version=(
-           SELECT MAX(version)
-             FROM wiki AS w2
-            WHERE w1.name=w2.name
-           )
-         GROUP BY name,author,time,version,comment,readonly,ipnr
-         ORDER BY time DESC;
-      """, (user,)
-      )
+            })
+            continue
 
-      render_elt = lambda x: x
-      if not (Chrome(self.env).show_email_addresses or 
-            'EMAIL_VIEW' in req.perm): # FIXME: Needed?: (wiki.resource)):
-          render_elt = obfuscate_email_address
+          render_elt = lambda x: x
+          if not (Chrome(self.env).show_email_addresses or 
+                  'EMAIL_VIEW' in req.perm): # FIXME: Needed?: (wiki.resource)):
+              render_elt = obfuscate_email_address
 
-      locale = getattr( req, 'locale', LC_TIME)
-      wikis = cursor.fetchall()
-      for name,author,time,version,comment,readonly,ipnr in wikis:
-          notify = False
-          if wl.wsub:
-            notify = wl.is_notify(req, 'wiki', name)
-          dt = from_utimestamp( time )
           wikilist.append({
               'name' : name,
-              'author' : render_elt(author),
-              'version' : version,
+              'author' : render_elt(wikipage.author),
+              'version' : unicode(wikipage.version),
               # TRANSLATOR: Format for date/time stamp. strftime
-              'changetime' : format_datetime( dt, locale=locale ),
-              'ichangetime' : time,
-              'timedelta' : pretty_timedelta( dt ),
+              'changetime' : format_datetime( wikipage.time, locale=locale ),
+              'ichangetime' : wikipage.time,
+              'timedelta' : pretty_timedelta( wikipage.time ),
               'timeline_link' : req.href.timeline(precision='seconds',
-                  from_=trac_format_datetime ( dt, 'iso8601')),
-              'comment'  : comment,
+                  from_=trac_format_datetime ( wikipage.time, 'iso8601')),
+              'comment'  : wikipage.comment,
               'notify'   : notify,
-              'readonly' : readonly and t_("yes") or t_("no"),
-              'ipnr'     : ipnr,
+              'readonly' : wikipage.readonly and t_("yes") or t_("no"),
+              #'ipnr'     : wikipage.ipnr,  # Note: Not supported by Trac 0.12
           })
       return wikilist
 
@@ -876,9 +850,7 @@ class TicketWatchlist(BasicWatchlist):
       ticketlist = []
       for id in wl.get_watched_resources( 'ticket', req.authname ):
           sid = unicode(id)
-          notify = False
-          if wl.wsub:
-            notify = wl.is_notify(req, 'ticket', sid)
+          notify = wl.is_notify(req, 'ticket', sid)
 
           ticket = Ticket(self.env, id, db)
 
