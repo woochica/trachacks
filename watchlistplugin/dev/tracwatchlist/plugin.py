@@ -43,6 +43,7 @@ from  trac.web.chrome        import  ITemplateProvider, add_ctxtnav, \
 from  trac.util.text         import  obfuscate_email_address
 from  trac.web.href          import  Href
 from  trac.wiki.model        import  WikiPage
+from  trac.util.datefmt      import  to_timestamp
 
 from  trac.prefs.api         import  IPreferencePanelProvider
 
@@ -60,12 +61,6 @@ except ImportError:
     def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
         return trac_format_datetime(t, format, tzinfo)
 
-# Import microsecond timestamp function. A fallback is provided for Trac 0.11.
-try:
-    from  trac.util.datefmt  import  from_utimestamp
-except ImportError:
-    def from_utimestamp( t ):
-        return to_datetime( t )
 
 
 class WatchlistPlugin(Component):
@@ -781,7 +776,7 @@ class WikiWatchlist(BasicWatchlist):
               'version' : unicode(wikipage.version),
               # TRANSLATOR: Format for date/time stamp. strftime
               'changetime' : format_datetime( wikipage.time, locale=locale ),
-              'ichangetime' : wikipage.time,
+              'ichangetime' : to_timestamp( wikipage.time ),
               'timedelta' : pretty_timedelta( wikipage.time ),
               'timeline_link' : req.href.timeline(precision='seconds',
                   from_=trac_format_datetime ( wikipage.time, 'iso8601')),
@@ -897,12 +892,12 @@ class TicketWatchlist(BasicWatchlist):
               'commentnum': commentnum,
               'comment' : tag.div(comment),
               'changetime' : format_datetime( changetime, locale=locale ),
-              'ichangetime' : changetime,
+              'ichangetime' : to_timestamp( changetime ),
               'changetime_delta' : pretty_timedelta( changetime ),
               'changetime_link' : req.href.timeline(precision='seconds',
                   from_=trac_format_datetime ( changetime, 'iso8601')),
               'time' : format_datetime( time, locale=locale ),
-              'itime' : time,
+              'itime' : to_timestamp( time ),
               'time_delta' : pretty_timedelta( time ),
               'time_link' : req.href.timeline(precision='seconds',
                   from_=trac_format_datetime ( time, 'iso8601')),
