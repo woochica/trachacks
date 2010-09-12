@@ -266,12 +266,18 @@ tfoot th {
   text-align: left;
 }
 
-tfoot input[type=text] {
+tfoot input.filter {
   width: 100%;
   padding-left: 0px;
   padding-right: 0px;
 	color: #444;
 }
+
+tfoot .time       input.filter,
+tfoot .changetime input.filter {
+  width: 40%;
+}
+
 
 tfoot input.search_init {
 	color: #999;

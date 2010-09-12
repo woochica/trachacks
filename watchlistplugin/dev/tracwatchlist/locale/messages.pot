@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.6\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-12 11:06+0100\n"
+"POT-Creation-Date: 2010-09-13 00:11+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,85 +18,85 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.5\n"
 
-#: tracwatchlist/nav.py:44 tracwatchlist/plugin.py:145
+#: tracwatchlist/nav.py:44 tracwatchlist/plugin.py:141
 #: tracwatchlist/templates/watchlist.html:10
 #: tracwatchlist/templates/watchlist.html:97
 #: tracwatchlist/templates/watchlist_prefs_main.html:9
 msgid "Watchlist"
 msgstr ""
 
-#: tracwatchlist/plugin.py:84
+#: tracwatchlist/plugin.py:80
 msgid "Notifications"
 msgstr ""
 
-#: tracwatchlist/plugin.py:85
+#: tracwatchlist/plugin.py:81
 msgid "Display notification navigation items"
 msgstr ""
 
-#: tracwatchlist/plugin.py:86
+#: tracwatchlist/plugin.py:82
 msgid "Display notification column in watchlist tables"
 msgstr ""
 
-#: tracwatchlist/plugin.py:87
+#: tracwatchlist/plugin.py:83
 msgid "Enable notifications by default for all watchlist entries"
 msgstr ""
 
-#: tracwatchlist/plugin.py:88
+#: tracwatchlist/plugin.py:84
 msgid ""
 "The user stays at the resource after a watch/unwatch operation and "
 "the watchlist page is not displayed"
 msgstr ""
 
-#: tracwatchlist/plugin.py:89
+#: tracwatchlist/plugin.py:85
 msgid ""
 "The user stays at the resource after a notify/do-not-notify operation"
 " and the watchlist page is not displayed"
 msgstr ""
 
-#: tracwatchlist/plugin.py:90
+#: tracwatchlist/plugin.py:86
 msgid "Action messages are shown on resource pages"
 msgstr ""
 
-#: tracwatchlist/plugin.py:91
+#: tracwatchlist/plugin.py:87
 msgid "Action messages are shown when going to the watchlist page"
 msgstr ""
 
-#: tracwatchlist/plugin.py:92
+#: tracwatchlist/plugin.py:88
 msgid "Show action messages while on watchlist page"
 msgstr ""
 
-#: tracwatchlist/plugin.py:93
+#: tracwatchlist/plugin.py:89
 msgid "Autocomplete input fields (add/remove resources)"
 msgstr ""
 
-#: tracwatchlist/plugin.py:94
+#: tracwatchlist/plugin.py:90
 msgid "Dynamic watchlist tables"
 msgstr ""
 
-#: tracwatchlist/plugin.py:95
+#: tracwatchlist/plugin.py:91
 msgid "Individual column filtering"
 msgstr ""
 
 #. TRANSLATOR: Link part of
 #. "Please %(log_in)s to view or change your watchlist"
-#: tracwatchlist/plugin.py:323
+#: tracwatchlist/plugin.py:339
 msgid "log in"
 msgstr ""
 
-#: tracwatchlist/plugin.py:325
+#: tracwatchlist/plugin.py:347
 #, python-format
 msgid "Please %(log_in)s to view or change your watchlist"
 msgstr ""
 
-#: tracwatchlist/plugin.py:427
+#: tracwatchlist/plugin.py:448
 msgid "You are now watching this resource."
 msgstr ""
 
-#: tracwatchlist/plugin.py:482
+#: tracwatchlist/plugin.py:503
 msgid "You are no longer watching this resource."
 msgstr ""
 
-#: tracwatchlist/plugin.py:506
+#: tracwatchlist/plugin.py:530
 msgid ""
 "\n"
 "                  You are now receiving change notifications\n"
@@ -104,7 +104,7 @@ msgid ""
 "                  "
 msgstr ""
 
-#: tracwatchlist/plugin.py:522
+#: tracwatchlist/plugin.py:546
 msgid ""
 "\n"
 "                  You are no longer receiving\n"
@@ -114,115 +114,102 @@ msgstr ""
 
 #. TRANSLATOR: Navigation link to point to watchlist section of this realm
 #. (e.g. 'Wikis', 'Tickets').
-#: tracwatchlist/plugin.py:563
+#: tracwatchlist/plugin.py:580
 #, python-format
 msgid "Watched %(realm_plural)s"
 msgstr ""
 
-#: tracwatchlist/plugin.py:567
+#: tracwatchlist/plugin.py:584
 #, python-format
 msgid "Invalid watchlist action '%(action)s'!"
 msgstr ""
 
-#: tracwatchlist/plugin.py:647 tracwatchlist/templates/watchlist.html:76
+#: tracwatchlist/plugin.py:664 tracwatchlist/templates/watchlist.html:82
 msgid "Unwatch"
 msgstr ""
 
-#: tracwatchlist/plugin.py:650
+#: tracwatchlist/plugin.py:667
 #, python-format
 msgid "Remove %(document)s from watchlist"
 msgstr ""
 
-#: tracwatchlist/plugin.py:652
+#: tracwatchlist/plugin.py:669
 msgid "Watch"
 msgstr ""
 
-#: tracwatchlist/plugin.py:655
+#: tracwatchlist/plugin.py:672
 #, python-format
 msgid "Add %(document)s to watchlist"
 msgstr ""
 
-#: tracwatchlist/plugin.py:658
+#: tracwatchlist/plugin.py:675
 msgid "Do not Notify me"
 msgstr ""
 
-#: tracwatchlist/plugin.py:661
+#: tracwatchlist/plugin.py:678
 #, python-format
 msgid "Do not notify me if %(document)s changes"
 msgstr ""
 
-#: tracwatchlist/plugin.py:663
+#: tracwatchlist/plugin.py:680
 msgid "Notify me"
 msgstr ""
 
-#: tracwatchlist/plugin.py:666
+#: tracwatchlist/plugin.py:683
 #, python-format
 msgid "Notify me if %(document)s changes"
 msgstr ""
 
-#: tracwatchlist/plugin.py:687
-msgid "Page"
-msgstr ""
-
-#: tracwatchlist/plugin.py:689 tracwatchlist/plugin.py:814
-msgid "By"
-msgstr ""
-
 #. TRANSLATOR: Abbreviated label for 'unwatch' column header.
 #. Should be a single character to not widen the column.
-#: tracwatchlist/plugin.py:695 tracwatchlist/plugin.py:820
+#: tracwatchlist/plugin.py:711 tracwatchlist/plugin.py:817
 msgid "U"
 msgstr ""
 
 #. TRANSLATOR: Label for 'notify' column header.
 #. Should tell the user that notifications can be switched on or off
 #. with the check-boxes in this column.
-#: tracwatchlist/plugin.py:699 tracwatchlist/plugin.py:821
+#: tracwatchlist/plugin.py:715 tracwatchlist/plugin.py:818
 msgid "Notify"
 msgstr ""
 
-#: tracwatchlist/plugin.py:702
+#: tracwatchlist/plugin.py:718
 msgid "read-only"
 msgstr ""
 
-#. TRANSLATOR: IP = Internet Protocol (address)
-#: tracwatchlist/plugin.py:704
-msgid "IP"
-msgstr ""
-
-#: tracwatchlist/plugin.py:712
+#: tracwatchlist/plugin.py:731
 msgid "Wiki Page"
 msgid_plural "Wiki Pages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: tracwatchlist/plugin.py:815
+#: tracwatchlist/plugin.py:812
 msgid "Changes"
 msgstr ""
 
 #. TRANSLATOR: '#' stands for 'number'.
 #. This is the header label for a column showing the number
 #. of the latest comment.
-#: tracwatchlist/plugin.py:819
+#: tracwatchlist/plugin.py:816
 msgid "Comment #"
 msgstr ""
 
-#: tracwatchlist/plugin.py:835
+#: tracwatchlist/plugin.py:836
 msgid "Ticket"
 msgid_plural "Tickets"
 msgstr[0] ""
 msgstr[1] ""
 
 #: tracwatchlist/templates/orderadd.html:10
-msgid "Columns"
+msgid "Fields"
 msgstr ""
 
 #: tracwatchlist/templates/orderadd.html:14
-msgid "Active columns"
+msgid "Active fields"
 msgstr ""
 
 #: tracwatchlist/templates/orderadd.html:19
-msgid "Available columns"
+msgid "Available fields"
 msgstr ""
 
 #: tracwatchlist/templates/watchlist.html:41
@@ -236,6 +223,10 @@ msgstr ""
 
 #: tracwatchlist/templates/watchlist.html:59
 msgid "Remove"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:74
+msgid "Since last visit of the watchlist page"
 msgstr ""
 
 #: tracwatchlist/templates/watchlist.html:103
@@ -336,7 +327,7 @@ msgstr ""
 msgid "You lack permission to view tickets."
 msgstr ""
 
-#: tracwatchlist/templates/wl-ticket.html:74
+#: tracwatchlist/templates/wl-ticket.html:83
 msgid "No tickets are currently watched."
 msgstr ""
 
@@ -344,7 +335,7 @@ msgstr ""
 msgid "You lack permission to view wikis."
 msgstr ""
 
-#: tracwatchlist/templates/wl-wiki.html:85
+#: tracwatchlist/templates/wl-wiki.html:93
 msgid "No wikis are currently watched."
 msgstr ""
 

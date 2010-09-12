@@ -69,6 +69,12 @@
 
   <body>
     <div id="content" class="watchlist">
+        <input type="hidden" name="lastvisit" value="${settings.get(lastvisit,'0')}"/>
+        <py:def function="datetimefilter">
+            <input type="checkbox" name="sincelastvisit" value="" title="${_('Since last visit of the watchlist page')}" />
+            <input name="from-${k}" type="text" size="4" class="filter"
+            />-<input name="to-${k}" type="text" size="4" class="filter" />
+        </py:def>
         <py:def function="ackmsg">
               <input class="ackmsg" type="button" value="Ok" />
         </py:def>

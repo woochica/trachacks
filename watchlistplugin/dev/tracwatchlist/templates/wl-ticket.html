@@ -65,7 +65,16 @@
                   <th py:for="k in active_fields[realm]"
                       py:if="k != 'notify' or notifications"
                       class="${k}">
-                      <input py:if="k not in attr" name="${k}" type="text" size="4" />
+                      <py:choose test="">
+                      <py:when test="k in ('time','changetime')">
+                        ${datetimefilter()}
+                      </py:when>
+                      <py:otherwise>
+                        <input py:if="k not in attr" name="${k}" type="text" size="4"
+                        class="filter ${k in ('id','commentnum') and 'numeric' or ''}
+                            ${k in ('version','milestone') and 'maybenumeric' or ''}" />
+                      </py:otherwise>
+                      </py:choose>
                   </th>
                 </tr>
               </tfoot>

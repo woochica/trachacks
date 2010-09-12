@@ -70,7 +70,7 @@ jQuery(document).ready(function() {
     var oTable = $(this).dataTable();
 
     /* Per-column filter input fields in footer */
-    $(this).find("tfoot input").keyup( function () {
+    $(this).find("tfoot input.filter").keyup( function () {
       var index = $(table).find("tfoot th").index( $(this).parent("th") );
       oTable.fnFilter( this.value, index );
     });
@@ -78,7 +78,7 @@ jQuery(document).ready(function() {
     /* Restore per-column input values after page reload */
     var oSettings = oTable.fnSettings();
     $(this).find("tfoot th").each( function (i) {
-      $(this).find("input").val( oSettings.aoPreSearchCols[i].sSearch );
+      $(this).find("input.filter").val( oSettings.aoPreSearchCols[i].sSearch );
     });
   });
 });
