@@ -52,13 +52,13 @@ from  tracwatchlist.render   import  render_property_diff
 
 # Try to use babels format_datetime to localise date-times if possible.
 # A fall back to tracs implementation strips the unsupported `locale` argument.
+from  trac.util.datefmt      import  format_datetime as trac_format_datetime
 try:
     from  babel.dates        import  format_datetime, LC_TIME
 except ImportError:
-    from  trac.util.datefmt  import  format_datetime as _format_datetime
     LC_TIME = None
     def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
-        return _format_datetime(t, format, tzinfo)
+        return trac_format_datetime(t, format, tzinfo)
 
 # Import microsecond timestamp function. A fallback is provided for Trac 0.11.
 try:
@@ -810,7 +810,7 @@ class WikiWatchlist(BasicWatchlist):
               'ichangetime' : time,
               'timedelta' : pretty_timedelta( dt ),
               'timeline_link' : req.href.timeline(precision='seconds',
-                  from_=format_datetime ( dt, 'iso8601')),
+                  from_=trac_format_datetime ( dt, 'iso8601')),
               'comment'  : comment,
               'notify'   : notify,
               'readonly' : readonly and t_("yes") or t_("no"),
@@ -917,6 +917,7 @@ class TicketWatchlist(BasicWatchlist):
           time = ticket.time_created
 
           locale = getattr( req, 'locale', LC_TIME)
+          # TODO: Copy only data for columns the actually requested.
           ticketlist.append({
               'id' : sid,
               'type' : ticket.values['type'],
@@ -927,12 +928,12 @@ class TicketWatchlist(BasicWatchlist):
               'ichangetime' : changetime,
               'changetime_delta' : pretty_timedelta( changetime ),
               'changetime_link' : req.href.timeline(precision='seconds',
-                  from_=format_datetime ( changetime, 'iso8601')),
+                  from_=trac_format_datetime ( changetime, 'iso8601')),
               'time' : format_datetime( time, locale=locale ),
               'itime' : time,
               'time_delta' : pretty_timedelta( time ),
               'time_link' : req.href.timeline(precision='seconds',
-                  from_=format_datetime ( time, 'iso8601')),
+                  from_=trac_format_datetime ( time, 'iso8601')),
               'changes' : tag(changes),
               'summary' : ticket.values['summary'],
               'status'  : ticket.values['status'],
