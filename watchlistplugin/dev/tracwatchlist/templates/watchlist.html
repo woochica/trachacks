@@ -76,19 +76,13 @@
           <img src="${href.chrome('watchlist/ico/unwatch.png')}" width="14px"
             height="14px" title="Unwatch" alt="Unwatch" />
         </py:def>
-        <py:def function="notifybox(realm,name,notifyon)">
-          <py:choose test="">
-            <a class="notifyon plainlink" py:when="notifyon" 
-              href="${href.watchlist(action='notifyoff',realm=realm,
-              resid=name)}">
-              <input checked="checked" type="checkbox" name="$name" />
+        <py:def function="notifybox(realm,name,notifyon,disabled=0)">
+            <a class="notifyon plainlink"
+              href="${href.watchlist(action=notifyon and 'notifyoff' or 'notifyon',realm=realm,
+              resid=name)}" py:strip="disabled">
+              <input checked="${notifyon and 'checked' or None}" 
+                     disabled="${disabled and 'disabled' or None}" type="checkbox" name="$name" />
             </a>
-            <a class="notifyoff plainlink" py:otherwise="" 
-              href="${href.watchlist(action='notifyon',realm=realm,
-              resid=name)}">
-              <input type="checkbox" name="$name" />
-            </a>
-          </py:choose>
         </py:def>
         <py:def function="tablepager(name)">
           <!-- Deprecated -->

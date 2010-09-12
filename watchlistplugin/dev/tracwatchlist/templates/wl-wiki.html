@@ -59,7 +59,7 @@
                       href="${href.watchlist(action='unwatch',realm='wiki',
                       resid=page.name)}">${unwatchicon()}</a></td>
                   <td py:def="wiki_notify" class="notify" py:if="notifications">
-                      ${notifybox('wiki',page.name,page.notify)}</td>
+                      ${notifybox('wiki',page.name,page.notify,page.deleted and not page.notify)}</td>
                   <td py:def="wiki_generic" class="${k}">${page.get(k,'')}</td>
                   <py:if test="not notifications">
                     <py:def function="wiki_notify"/>
