@@ -28,7 +28,7 @@ clearrule.apply = function(input, spec){
     
     var fld = jQuery('#field-'+target);
     if (fld.hasClass('clearable')){
-        fld.val('');
+        fld.val('').change();
     } else {
         fld.addClass('clearable');
     }
@@ -67,7 +67,7 @@ copyrule.apply = function(input, spec){
         } 
         if (doit){
             fld.hide();
-            fld.val(input.val());
+            fld.val(input.val()).change();
             fld.fadeIn('slow');
         }
     } else {
@@ -99,7 +99,7 @@ defaultrule.apply = function(input, spec){
             }
         } 
         if (doit){
-            fld.val(spec.value);
+            fld.val(spec.value).change(); // cascade rules
         }
         
         fld.addClass('defaulted');
@@ -114,13 +114,10 @@ var hiderule = new Rule('HideRule'); // must match python class name exactly
 
 // setup
 hiderule.setup = function(input, spec){
-    // show and reset elements controlled by this input field and derived nodes
+    // show and reset elements controlled by this input field
     var trigger = input.attr('id').substring(6); // ids start with 'field-'
     jQuery('.dynfields-'+trigger)
         .removeClass('dynfields-hide dynfields-'+trigger)
-        .show();
-    jQuery('.dynfields-derived')
-        .removeClass('dynfields-hide dynfields-derived')
         .show();
 };
 
@@ -136,16 +133,18 @@ hiderule.apply = function(input, spec){
         (jQuery.inArray(v,l) == -1 && spec.op == 'show')){
         
         // we want to hide the input fields's td and related th
-        var td = jQuery('#field-'+target).parents('td:first');
+        var field = jQuery('#field-'+target);
+        var td = field.parents('td:first');
         var th = td.siblings('th')
                    .find('label[for=field-'+target+']')
                    .parents('th:first');
         td.addClass('dynfields-hide dynfields-'+trigger);
         th.addClass('dynfields-hide dynfields-'+trigger);
             
-        // let's also clear out the field value to avoid confusion
+        // let's also clear out the field's value to avoid confusion
         if (spec.clear_on_hide.toLowerCase() == 'true'){
-            jQuery('#field-'+target).val('');
+            if (field.val().length)
+                field.val('').change(); // cascade rules
                 
             // assume we now also want to hide field in the header
             th = jQuery('#h_'+target);
@@ -158,12 +157,9 @@ hiderule.apply = function(input, spec){
 
 // complete
 hiderule.complete = function(input, spec){
-    // if all cells in row are marked hidden, then hide whole row, too!
-    jQuery('.dynfields-hide').each(function(i){
-        if (jQuery(this).siblings().size() == jQuery(this).siblings('.dynfields-hide').size()){
-            jQuery(this).parents('tr:first').addClass('dynfields-hide dynfields-derived');
-        };
-    });
     jQuery('.dynfields-hide').hide();
+    
+    // update layout (see layout.js)
+    inputs_layout.update(spec);
+    header_layout.update(spec);
 };
-
