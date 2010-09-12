@@ -236,6 +236,20 @@ class WatchlistPlugin(Component):
         # needs more work, excape sequences, etc.
         return pattern.replace('*','%').replace('?','_')
 
+    def get_watched_resources(self, realm, user, db=None):
+        """Yields list of resourses watch by the given user in the given realm."""
+        if not db:
+            db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+        SELECT resid
+            FROM watchlist
+        WHERE realm=%s AND wluser=%s
+        """, (realm, user)
+        )
+        for values in cursor.fetchall():
+            yield values[0]
+
     ### methods for IRequestHandler
     def match_request(self, req):
         return req.path_info.startswith("/watchlist")
@@ -540,15 +554,8 @@ class WatchlistPlugin(Component):
           query = req.args.get('q', u'')
           handler = self.realm_handler[realm]
           found = handler.res_pattern_exists(realm, query + '%')
-          db = self.env.get_db_cnx()
-          cursor = db.cursor()
-          cursor.execute("""
-            SELECT resid
-              FROM watchlist
-            WHERE realm=%s AND wluser=%s
-          """, (realm, user)
-          )
-          watched = [a[0] for a in cursor.fetchall()]
+
+          watched = self.get_watched_resources( realm, user )
           notwatched = list(set(found).difference(set(watched)))
           notwatched.sort()
           req.send( unicode('\n'.join(notwatched) + '\n').encode("utf-8"), 'text/plain', 200 )
@@ -864,31 +871,14 @@ class TicketWatchlist(BasicWatchlist):
         return []
 
     def get_list(self, realm, wl, req):
-      #ticket_module = self.env[TicketModule]
       db = self.env.get_db_cnx()
       cursor = db.cursor()
-      user = req.authname
       ticketlist = []
-      cursor.execute("""
-        SELECT id,type,time,changetime,summary,time,component,severity,priority,owner,reporter,cc,version,milestone,status,resolution,keywords
-          FROM ticket
-         WHERE id IN (
-           SELECT CAST(resid AS decimal)
-             FROM watchlist
-            WHERE wluser=%s AND realm='ticket'
-           )
-         GROUP BY id,type,time,changetime,summary,time,component,severity,priority,owner,reporter,cc,version,milestone,status,resolution,keywords
-         ORDER BY changetime DESC;
-      """, (user,)
-      )
-      for id,type,time,changetime,summary,time,component,severity,priority,owner,\
-            reporter,cc,version,milestone,status,resolution,keywords in cursor.fetchall():
-          self.commentnum = 0
-          self.comment    = u''
-
+      for id in wl.get_watched_resources( 'ticket', req.authname ):
+          sid = unicode(id)
           notify = False
           if wl.wsub:
-            notify = wl.is_notify(req, 'ticket', id)
+            notify = wl.is_notify(req, 'ticket', sid)
 
           ticket = Ticket(self.env, id, db)
 
@@ -899,7 +889,7 @@ class TicketWatchlist(BasicWatchlist):
               cc = ', '.join([ render_elt(c) for c in cc.split(', ') ])
 
           changes = []
-          author  = reporter
+          author  = ticket.values['reporter']
           commentnum = u"0"
           comment = u""
           for date,cauthor,field,oldvalue,newvalue,permanent in ticket.get_changelog(ticket.time_changed,db):
@@ -923,10 +913,13 @@ class TicketWatchlist(BasicWatchlist):
           if len(changes) > 5:
               changes = moreless(changes, 5)
 
+          changetime = ticket.time_changed
+          time = ticket.time_created
+
           locale = getattr( req, 'locale', LC_TIME)
           ticketlist.append({
-              'id' : to_unicode(id),
-              'type' : type,
+              'id' : sid,
+              'type' : ticket.values['type'],
               'author' : render_elt(author),
               'commentnum': commentnum,
               'comment' : tag.div(comment),
@@ -941,21 +934,20 @@ class TicketWatchlist(BasicWatchlist):
               'time_link' : req.href.timeline(precision='seconds',
                   from_=format_datetime ( time, 'iso8601')),
               'changes' : tag(changes),
-              'summary' : summary,
-              'status'  : status,
+              'summary' : ticket.values['summary'],
+              'status'  : ticket.values['status'],
               'notify'  : notify,
-            'type'      : type,
-            'component' : component,
-            'severity'  : severity,
-            'priority'  : priority,
-            'owner'     : render_elt(owner),
-            'reporter'  : render_elt(reporter),
-            'cc'        : cc,
-            'version'   : version,
-            'milestone' : milestone,
-            'status'    : status,
-            'resolution': resolution,
-            'keywords'  : keywords,
+            'component' : ticket.values['component'],
+            'severity'  : ticket.values['severity'],
+            'priority'  : ticket.values['priority'],
+            'owner'     : render_elt(ticket.values['owner']),
+            'reporter'  : render_elt(ticket.values['reporter']),
+            'cc'        : ticket.values['cc'],
+            'version'   : ticket.values['version'],
+            'milestone' : ticket.values['milestone'],
+            'status'    : ticket.values['status'],
+            'resolution': ticket.values['resolution'],
+            'keywords'  : ticket.values['keywords'],
           })
       return ticketlist
 
