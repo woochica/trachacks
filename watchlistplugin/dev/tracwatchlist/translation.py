@@ -4,8 +4,8 @@ try:
     add_domain, _, N_, tag_, gettext, ngettext = \
         domain_functions('watchlist', ('add_domain', '_', 'N_', 'tag_', 'gettext', 'ngettext'))
 except ImportError:
-    from  trac.util.translation  import  gettext
-    _, N_, tag_  = gettext, gettext, tag
+    from  trac.util.translation  import  gettext, ngettext
+    _, N_, tag_  = gettext, gettext, None
     def add_domain(a,b,c=None):
         pass
 

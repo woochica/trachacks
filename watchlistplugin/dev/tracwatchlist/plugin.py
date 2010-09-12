@@ -53,9 +53,10 @@ from  tracwatchlist.render   import  render_property_diff
 # Try to use babels format_datetime to localise date-times if possible.
 # A fall back to tracs implementation strips the unsupported `locale` argument.
 try:
-    from  babel.dates        import  format_datetime
+    from  babel.dates        import  format_datetime, LC_TIME
 except ImportError:
     from  trac.util.datefmt  import  format_datetime as _format_datetime
+    LC_TIME = None
     def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
         return _format_datetime(t, format, tzinfo)
 
@@ -321,10 +322,15 @@ class WatchlistPlugin(Component):
             # TRANSLATOR: Link part of
             # "Please %(log_in)s to view or change your watchlist"
             log_in=tag.a(_("log in"), href=req.href('login'))
-            raise HTTPNotFound((
-                tag_("Please %(log_in)s to view or change your watchlist",
-                    log_in=log_in
-                )))
+            if tag_ == None:
+                # For Trac 0.11
+                raise HTTPNotFound(
+                        tag("Please ", log_in, " to view or change your watchlist"))
+            else:
+                # For Trac 0.12
+                raise HTTPNotFound(
+                        tag_("Please %(log_in)s to view or change your watchlist",
+                            log_in=log_in))
 
         wldict = req.args.copy()
         wldict['action'] = action
@@ -781,7 +787,7 @@ class WikiWatchlist(BasicWatchlist):
             'EMAIL_VIEW' in req.perm): # FIXME: Needed?: (wiki.resource)):
           render_elt = obfuscate_email_address
 
-      locale = getattr( req, 'locale', None)
+      locale = getattr( req, 'locale', LC_TIME)
       wikis = cursor.fetchall()
       for name,author,time,version,comment,readonly,ipnr in wikis:
           notify = False
@@ -830,7 +836,10 @@ class TicketWatchlist(BasicWatchlist):
     ]}
 
     def __init__(self):
-        self.columns['ticket'].update( TicketSystem(self.env).get_ticket_field_labels() )
+        try: # Only works for Trac 0.12, but is not needed for Trac 0.11 anyway
+            self.columns['ticket'].update( TicketSystem(self.env).get_ticket_field_labels() )
+        except AttributeError:
+            pass
         self.columns['ticket']['id'] = self.get_realm_label('ticket')
 
     def get_realm_label(self, realm, n_plural=1):
@@ -902,7 +911,6 @@ class TicketWatchlist(BasicWatchlist):
           author  = reporter
           commentnum = u"0"
           comment = u""
-          field_labels = TicketSystem(self.env).get_ticket_field_labels()
           for author_,field,oldvalue,newvalue in cursor.fetchall():
               author = author_
               if field == 'comment':
@@ -910,7 +918,7 @@ class TicketWatchlist(BasicWatchlist):
                   comment    = to_unicode(newvalue)
               else:
                   changes.extend(
-                      [ tag(tag.strong(field_labels[field]), ' ',
+                      [ tag(tag.strong(self.columns['ticket'][field]), ' ',
                           render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
                           ), tag('; ') ])
           # Remove the last tag('; '):
@@ -926,7 +934,7 @@ class TicketWatchlist(BasicWatchlist):
           dt = from_utimestamp( time )
           ct = from_utimestamp( changetime )
 
-          locale = getattr( req, 'locale', None)
+          locale = getattr( req, 'locale', LC_TIME)
           ticketlist.append({
               'id' : to_unicode(id),
               'type' : type,

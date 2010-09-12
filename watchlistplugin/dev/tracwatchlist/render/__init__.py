@@ -16,15 +16,19 @@
 """
 
 from  trac.core              import  *
-from  trac.util.translation  import  _, tag_, tagn_
 from  trac.resource          import  get_resource_url
 from  trac.web.chrome        import  Chrome
 from  genshi.builder         import  tag
 from  trac.util.presentation import  separated
 from  trac.util.text         import  obfuscate_email_address
+from  trac.util.translation  import  _
 
-def render_property_diff(env, req, ticket, field, old, new, 
+try:
+    from  trac.util.translation  import  tag_, tagn_
+
+    def render_property_diff(env, req, ticket, field, old, new, 
                               resource_new=None):
+        "Version for Trac 0.12"
         rendered = None
         # per type special rendering of diffs
         type_ = None
@@ -81,5 +85,64 @@ def render_property_diff(env, req, ticket, field, old, new,
         elif old and new:
             rendered = tag_("changed from %(old)s to %(new)s",
                             old=tag.em(old), new=tag.em(new))
+        return rendered
+
+except ImportError:
+
+    def render_property_diff(self, req, ticket, field, old, new, 
+                              resource_new=None):
+        "Version for Trac 0.11"
+        rendered = None
+        # per type special rendering of diffs
+        type_ = None
+        for f in ticket.fields:
+            if f['name'] == field:
+                type_ = f['type']
+                break
+        if type_ == 'checkbox':
+            rendered = new == '1' and "set" or "unset"
+        elif type_ == 'textarea':
+            if not resource_new:
+                rendered = _('modified')
+            else:
+                href = get_resource_url(self.env, resource_new, req.href,
+                                        action='diff')
+                rendered = tag('modified (', tag.a('diff', href=href), ')')
+
+        # per name special rendering of diffs
+        old_list, new_list = None, None
+        render_elt = lambda x: x
+        sep = ', '
+        if field == 'cc':
+            chrome = Chrome(self.env)
+            old_list, new_list = chrome.cc_list(old), chrome.cc_list(new)
+            if not (Chrome(self.env).show_email_addresses or 
+                    'EMAIL_VIEW' in req.perm(resource_new or ticket.resource)):
+                render_elt = obfuscate_email_address
+        elif field == 'keywords':
+            old_list, new_list = (old or '').split(), new.split()
+            sep = ' '
+        if (old_list, new_list) != (None, None):
+            added = [tag.em(render_elt(x)) for x in new_list 
+                     if x not in old_list]
+            remvd = [tag.em(render_elt(x)) for x in old_list
+                     if x not in new_list]
+            added = added and tag(separated(added, sep), " added")
+            remvd = remvd and tag(separated(remvd, sep), " removed")
+            if added or remvd:
+                rendered = tag(added, added and remvd and '; ', remvd)
+                return rendered
+        if field in ('reporter', 'owner'):
+            if not (Chrome(self.env).show_email_addresses or 
+                    'EMAIL_VIEW' in req.perm(resource_new or ticket.resource)):
+                old = obfuscate_email_address(old)
+                new = obfuscate_email_address(new)
+        if old and not new:
+            rendered = tag(tag.em(old), " deleted")
+        elif new and not old:
+            rendered = tag("set to ", tag.em(new))
+        elif old and new:
+            rendered = tag("changed from ", tag.em(old),
+                            " to ", tag.em(new))
         return rendered
 
