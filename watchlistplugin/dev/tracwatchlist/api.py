@@ -33,7 +33,7 @@ class IWatchlistProvider(Interface):
       """ Must return list or tuple of realms provided. """
       pass
 
-    def get_realm_label(realm, plural=False):
+    def get_realm_label(realm, n_plural=1):
       pass
 
     def res_exists(realm, resid):
