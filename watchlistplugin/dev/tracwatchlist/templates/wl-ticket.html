@@ -11,12 +11,12 @@
   <div id="tickets">
         <py:choose test="">
           <div class="system-message" py:when="'TICKET_VIEW' not in perm">
-            <h2>Tickets</h2>
+          <h2>${get_label(realm,1000)}</h2>
             You lack permission to view tickets.
           </div>
           <div class="ticketlist-main" id="ticketlist-main" py:otherwise="">
             <div>
-            <h2 class="${ticketlist and 'foldable' or ''}">Tickets</h2>
+            <h2 class="${ticketlist and 'foldable' or ''}">${get_label(realm,1000)}</h2>
             <div class="watchlist-parent" id="ticketlist-parent" py:if="ticketlist">
             <table class="watchlist" id="ticketlist"
                    py:with="attr = {
@@ -60,7 +60,7 @@
                   </py:for>
                 </tr>
               </tbody>
-              <tfoot py:if="settings['individual_column_filtering']">
+              <tfoot py:if="settings['dynamic_tables'] and settings['individual_column_filtering']">
                 <tr>
                   <th py:for="k in active_columns[realm]"
                       py:if="k != 'notify' or notifications"

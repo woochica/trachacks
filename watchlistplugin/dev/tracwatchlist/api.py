@@ -78,11 +78,11 @@ class BasicWatchlist(Component):
     def get_realms(self):
       return self.realms
 
-    def get_realm_label(self, realm, plural=False):
-      if plural:
-        return realm + 's'
+    def get_realm_label(self, realm, n_plural=1):
+      if n_plural == 1:
+        return realm.capitalize()
       else:
-        return realm
+        return realm.capitalize() + 's'
 
     def res_exists(self, realm, resid):
       return False

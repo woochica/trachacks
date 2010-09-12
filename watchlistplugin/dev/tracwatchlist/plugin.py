@@ -47,7 +47,7 @@ from  trac.wiki.model        import  WikiPage
 from  trac.prefs.api         import  IPreferencePanelProvider
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
-from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext
+from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
 from  tracwatchlist.render   import  render_property_diff
 
 # Try to use babels format_datetime to localise date-times if possible.
@@ -300,7 +300,6 @@ class WatchlistPlugin(Component):
           #self.log.debug("WL get user settings: " + unicode(e))
           return dict()
 
-
     def process_request(self, req):
         user  = to_unicode( req.authname )
         realm = to_unicode( req.args.get('realm', u'') )
@@ -347,6 +346,11 @@ class WatchlistPlugin(Component):
         wldict['settings'] = settings
         wldict['available_columns'] = {}
         wldict['default_columns'] = {}
+        #wldict['label'] = dict([ self.realm_handler for r in self.realms ])
+        def get_label(realm, n_plural=1):
+            return self.realm_handler[realm].get_realm_label(realm, n_plural)
+        wldict['get_label'] = get_label
+
         for r in self.realms:
             wldict['available_columns'][r],wldict['default_columns'][r] = self.realm_handler[r].get_columns(r)
         wldict['active_columns'] = {}
@@ -553,10 +557,10 @@ class WatchlistPlugin(Component):
             for (xrealm,handler) in self.realm_handler.iteritems():
               if handler.has_perm(xrealm, req.perm):
                 wldict[xrealm + 'list'] = handler.get_list(xrealm, self, req)
-                name = handler.get_realm_label(xrealm, plural=True)
+                name = handler.get_realm_label(xrealm, n_plural=1000)
                 # TRANSLATOR: Navigation link to point to watchlist section of this realm
                 # (e.g. 'Wikis', 'Tickets').
-                add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name.capitalize()),
+                add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name),
                             href=req.href('watchlist') + '#' + name)
             return ("watchlist.html", wldict, "text/html")
         else:
@@ -704,6 +708,9 @@ class WikiWatchlist(BasicWatchlist):
         'history', 'unwatch', 'notify', 'comment',
     ]}
 
+    def get_realm_label(self, realm, n_plural=1):
+      return ngettext("Wiki Page", "Wiki Pages", n_plural)
+
     def res_exists(self, realm, resid):
       return WikiPage(self.env, resid).exists
 
@@ -797,6 +804,7 @@ class WikiWatchlist(BasicWatchlist):
       return wikilist
 
 
+
 class TicketWatchlist(BasicWatchlist):
     """Watchlist entry for tickets."""
     realms = ['ticket']
@@ -822,6 +830,9 @@ class TicketWatchlist(BasicWatchlist):
 
     def __init__(self):
         self.columns['ticket'].update( TicketSystem(self.env).get_ticket_field_labels() )
+
+    def get_realm_label(self, realm, n_plural=1):
+        return ngettext("Ticket", "Tickets", n_plural)
 
     def res_exists(self, realm, resid):
       try:

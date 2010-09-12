@@ -1,8 +1,8 @@
 # Import translation functions. Fallbacks are provided for Trac 0.11.
 try:
     from  trac.util.translation  import  domain_functions
-    add_domain, _, N_, tag_, gettext = \
-        domain_functions('watchlist', ('add_domain', '_', 'N_', 'tag_', 'gettext'))
+    add_domain, _, N_, tag_, gettext, ngettext = \
+        domain_functions('watchlist', ('add_domain', '_', 'N_', 'tag_', 'gettext', 'ngettext'))
 except ImportError:
     from  trac.util.translation  import  gettext
     _, N_, tag_  = gettext, gettext, tag
