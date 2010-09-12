@@ -37,7 +37,8 @@ setup(
     download_url = 'http://trac-hacks.org/svn/watchlistplugin/releases/',
     license      = 'GPLv3',
     classifiers = ['Framework :: Trac'],
-    install_requires = ['Babel>= 0.9.5', 'Trac >= 0.11'],
+    #install_requires = ['Babel>= 0.9.5', 'Trac >= 0.11'],
+    install_requires = ['Trac >= 0.11'],
     packages = ['tracwatchlist'],
     package_data = {
         'tracwatchlist' : [

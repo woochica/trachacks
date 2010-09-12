@@ -684,9 +684,8 @@ class WikiWatchlist(BasicWatchlist):
     """Watchlist entry for wiki pages."""
     realms = ['wiki']
     columns = {'wiki':{
-        'name'      : N_("Page"),
         'changetime': T_("Modified"),
-        'author'    : N_("By"),
+        'author'    : T_("Author"),
         'version'   : T_("Version"),
         'diff'      : T_("Diff"),
         'history'   : T_("History"),
@@ -707,6 +706,9 @@ class WikiWatchlist(BasicWatchlist):
         'name', 'changetime', 'author', 'version', 'diff',
         'history', 'unwatch', 'notify', 'comment',
     ]}
+
+    def __init__(self):
+        self.columns['wiki']['name'] = self.get_realm_label('wiki')
 
     def get_realm_label(self, realm, n_plural=1):
       return ngettext("Wiki Page", "Wiki Pages", n_plural)
@@ -779,7 +781,7 @@ class WikiWatchlist(BasicWatchlist):
             'EMAIL_VIEW' in req.perm): # FIXME: Needed?: (wiki.resource)):
           render_elt = obfuscate_email_address
 
-      locale = req.session.get('language')
+      locale = getattr( req, 'locale', None)
       wikis = cursor.fetchall()
       for name,author,time,version,comment,readonly,ipnr in wikis:
           notify = False
@@ -810,8 +812,7 @@ class TicketWatchlist(BasicWatchlist):
     realms = ['ticket']
     # FIXME: Labels need to be reloaded after locale changes
     columns = {'ticket':{
-        'id'        : T_("Ticket"),
-        'author'    : N_("By"),
+        'author'    : T_("Author"),
         'changes'   : N_("Changes"),
         # TRANSLATOR: '#' stands for 'number'.
         # This is the header label for a column showing the number
@@ -830,6 +831,7 @@ class TicketWatchlist(BasicWatchlist):
 
     def __init__(self):
         self.columns['ticket'].update( TicketSystem(self.env).get_ticket_field_labels() )
+        self.columns['ticket']['id'] = self.get_realm_label('ticket')
 
     def get_realm_label(self, realm, n_plural=1):
         return ngettext("Ticket", "Tickets", n_plural)
@@ -924,7 +926,7 @@ class TicketWatchlist(BasicWatchlist):
           dt = from_utimestamp( time )
           ct = from_utimestamp( changetime )
 
-          locale = req.session.get('language')
+          locale = getattr( req, 'locale', None)
           ticketlist.append({
               'id' : to_unicode(id),
               'type' : type,
