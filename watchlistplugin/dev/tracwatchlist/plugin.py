@@ -879,6 +879,9 @@ class TicketWatchlist(BasicWatchlist):
               comment = moreless(comment, 200)
           if len(changes) > 5:
               changes = moreless(changes, 5)
+          description = ticket.values['description']
+          if len(description) > 200:
+              description = moreless(description, 200)
 
           changetime = ticket.time_changed
           time = ticket.time_created
@@ -903,6 +906,7 @@ class TicketWatchlist(BasicWatchlist):
               'notify'           : notify,
               'owner'            : render_elt(ticket.values['owner']),
               'reporter'         : render_elt(ticket.values['reporter']),
+              'description'      : description,
           })
           ticketlist.append(ticketdict)
       return ticketlist

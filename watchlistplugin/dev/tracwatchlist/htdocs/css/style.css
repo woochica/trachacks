@@ -25,7 +25,7 @@ th, td {
     white-space: nowrap;
 }
 
-th.comment, th.changes {
+th.comment, th.changes, th.description {
     text-align: left;
     min-width: 15em;
     max-width: 100%;
@@ -40,7 +40,10 @@ table#wikilist td.comment {
     white-space: normal;
 }
 
-table#ticketlist td.comment, table#ticketlist td.changes {
+table#ticketlist td.comment,
+table#ticketlist td.changes,
+table#ticketlist td.cc,
+table#ticketlist td.description {
     white-space: normal;
 }
 
