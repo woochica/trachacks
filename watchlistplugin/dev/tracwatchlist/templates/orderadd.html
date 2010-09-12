@@ -6,27 +6,27 @@
       xmlns:i18n="http://genshi.edgewall.org/i18n"
       i18n:domain="watchlist"
       py:strip="">
-  <fieldset id="${realm}_columns" class="orderadd">
-    <legend>${realm.capitalize()} Columns</legend>
+  <fieldset id="${realm}_fields" class="orderadd">
+    <legend>${realm.capitalize()} Fields</legend>
     <table>
       <tbody>
         <tr>
           <td>
-            Active columns
+            Active fields
           </td>
           <td>
           </td>
           <td>
-            Available columns
+            Available fields
           </td>
         </tr>
         <tr>
           <td rowspan="5">
-            <select class="active_columns" size="8" 
+            <select class="active_fields" size="8" 
               multiple="multiple" style="min-width:12em">
-              <py:for each="column in active_columns.get(realm)">
-                <option value="${column}">
-                    ${available_columns[realm][column]}
+              <py:for each="field in active_fields.get(realm)">
+                <option value="${field}">
+                    ${available_fields[realm][field]}
                 </option>
               </py:for>
             </select>
@@ -35,13 +35,13 @@
             <button type="button" name="up">&#8593;</button>
           </td>
           <td rowspan="5">
-            <select class="available_columns" size="8" multiple="multiple" style="min-width:12em">
+            <select class="available_fields" size="8" multiple="multiple" style="min-width:12em">
               <py:for each="
-              column in 
-              [ c for c in available_columns.get(realm) if c not in active_columns.get(realm) ]
+              field in 
+              [ c for c in available_fields.get(realm) if c not in active_fields.get(realm) ]
               ">
-                <option value="${column}">
-                    ${available_columns[realm][column]}
+                <option value="${field}">
+                    ${available_fields[realm][field]}
                 </option>
               </py:for>
             </select>
@@ -68,6 +68,6 @@
         </tr>
       </tbody>
     </table>
-    <input type="hidden" class="choosen_columns" name="${realm}_columns" value="" />
+    <input type="hidden" class="choosen_fields" name="${realm}_fields" value="" />
   </fieldset>
 </html>

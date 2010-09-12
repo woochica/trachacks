@@ -29,19 +29,19 @@ $(document).ready(function(){
   $("#preferences form").submit(function(){
     $(".orderadd").each(function(){
       var text = [];
-      $(this).find("select.active_columns option").each(function(){
+      $(this).find("select.active_fields option").each(function(){
         text.push( $(this).val() );
       });
-      $(this).find("input.choosen_columns").val( text.join(',') );
+      $(this).find("input.choosen_fields").val( text.join(',') );
     });
     wlprefsubmit();
     return true;
   });
   $(".orderadd").each(function(){
-    realm = $(this).attr("id").replace("_columns","");
+    realm = $(this).attr("id").replace("_fields","");
     $(this).data('realm', realm);
-    select1 = $(this).find("select.active_columns");
-    select2 = $(this).find("select.available_columns");
+    select1 = $(this).find("select.active_fields");
+    select2 = $(this).find("select.available_fields");
     orderadd_buttons(this, select1, select2 );
   });
 });
