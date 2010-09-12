@@ -751,40 +751,52 @@ class WikiWatchlist(BasicWatchlist):
 
       for name in wl.get_watched_resources( 'wiki', req.authname ):
           wikipage = WikiPage(self.env, name, db=db)
-
-          notify = wl.is_notify(req, 'wiki', name)
+          wikidict = {}
 
           if not wikipage.exists:
-            wikilist.append({
-              'name' : name,
-              'author' : '?',
-              'changetime' : '?',
-              'comment' : tag.strong(t_("deleted"), class_='deleted'),
-              'notify'  : notify,
-              'deleted' : True,
-            })
+            wikidict['deleted'] = True
+            if 'name' in fields:
+                wikidict['name'] = name
+            if 'author' in fields:
+                wikidict['author'] = '?'
+            if 'changetime' in fields:
+                wikidict['changetime'] = '?'
+                wikidict['ichangetime'] = 0
+            if 'comment' in fields:
+                wikidict['comment'] = tag.strong(t_("deleted"), class_='deleted')
+            if 'notify' in fields:
+                wikidict['notify'] =  wl.is_notify(req, 'wiki', name)
+            wikilist.append(wikidict)
             continue
 
-          render_elt = lambda x: x
-          if not (Chrome(self.env).show_email_addresses or 
-                  'EMAIL_VIEW' in req.perm): # FIXME: Needed?: (wiki.resource)):
-              render_elt = obfuscate_email_address
-
-          wikilist.append({
-              'name' : name,
-              'author' : render_elt(wikipage.author),
-              'version' : unicode(wikipage.version),
-              # TRANSLATOR: Format for date/time stamp. strftime
-              'changetime' : format_datetime( wikipage.time, locale=locale ),
-              'ichangetime' : to_timestamp( wikipage.time ),
-              'timedelta' : pretty_timedelta( wikipage.time ),
-              'timeline_link' : req.href.timeline(precision='seconds',
-                  from_=trac_format_datetime ( wikipage.time, 'iso8601')),
-              'comment'  : wikipage.comment,
-              'notify'   : notify,
-              'readonly' : wikipage.readonly and t_("yes") or t_("no"),
-              #'ipnr'     : wikipage.ipnr,  # Note: Not supported by Trac 0.12
-          })
+          if 'name' in fields:
+              wikidict['name'] = name
+          if 'author' in fields:
+              if not (Chrome(self.env).show_email_addresses or 
+                      'EMAIL_VIEW' in req.perm(wikipage.resource)):
+                  wikidict['author'] = obfuscate_email_address(wikipage.author)
+              else:
+                  wikidict['author'] = wikipage.author
+          if 'version' in fields:
+              wikidict['version'] = unicode(wikipage.version)
+          if 'changetime' in fields:
+              wikidict['changetime'] = format_datetime( wikipage.time, locale=locale )
+              wikidict['ichangetime'] = to_timestamp( wikipage.time )
+              wikidict['timedelta'] = pretty_timedelta( wikipage.time )
+              wikidict['timeline_link'] = req.href.timeline(precision='seconds',
+                  from_=trac_format_datetime ( wikipage.time, 'iso8601'))
+          if 'comment' in fields:
+              comment = wikipage.comment or ""
+              if len(comment) > 200:
+                  comment = moreless(comment, 200)
+              wikidict['comment'] = comment
+          if 'notify' in fields:
+              wikidict['notify']   = wl.is_notify(req, 'wiki', name)
+          if 'readonly' in fields:
+              wikidict['readonly'] = wikipage.readonly and t_("yes") or t_("no")
+          #if 'ipnr' in fields:
+          #    wikidict['ipnr'] = wikipage.ipnr,  # Note: Not supported by Trac 0.12
+          wikilist.append(wikidict)
       return wikilist
 
 
