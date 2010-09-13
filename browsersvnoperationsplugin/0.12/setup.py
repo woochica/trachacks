@@ -17,7 +17,17 @@ setup(
     classifiers=[],
     license='',
     
-    packages=find_packages(exclude=['*.tests*']),
+    packages=['trac_browser_svn_ops'],
+    package_data={
+        'trac_browser_svn_ops': [
+            'templates/*.html',
+            'htdocs/js/*.js',
+            'htdocs/css/*.css',
+            'htdocs/css/smoothness/*.css',
+            'htdocs/css/smoothness/images/*.png',
+            ]
+        },
+            
     entry_points = """
         [trac.plugins]
         browserops = trac_browser_svn_ops.browser
