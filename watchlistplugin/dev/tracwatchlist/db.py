@@ -31,7 +31,10 @@ from  trac.env   import  IEnvironmentSetupParticipant
 def delete_watchlist_tables(envpath):
     """Deletes all watchlist DB entries => Uninstaller"""
     from  trac.env   import  Environment
-    env = Environment(envpath)
+    try:
+        env = Environment(envpath)
+    except IOError:
+        raise Exception("Given path seems not to be a Trac environment.")
     db = env.get_db_cnx()
 
     cursor = db.cursor()
@@ -46,7 +49,7 @@ def delete_watchlist_tables(envpath):
         cursor.execute("DROP TABLE watchlist_settings")
         print "Deleted 'watchlist_settings' table."
     except:
-        print "No watchlist for deletion found."
+        print "No 'watchlist_settings' table for deletion found."
 
     cursor.execute("DELETE FROM system WHERE name='watchlist_values'")
     print "Deleted watchlist version entry from system table."
@@ -79,7 +82,7 @@ class WatchlistDataBase(Component):
         db = self.env.get_db_cnx()
         self.create_watchlist_table(db)
         self.create_settings_table(db)
-        self.set_version(latest_version, db)
+        self.set_version(self.latest_version, db)
         return
 
 
@@ -100,13 +103,13 @@ class WatchlistDataBase(Component):
     def upgrade_environment(self, db):
         """Upgrades all watchlist tables to current version."""
         old_version = self.get_version(db)
-        self.upgrade_watchlist_table(old_version, self.lastest_version, db)
-        self.upgrade_settings_table (old_version, self.lastest_version, db)
-        self.set_version(latest_version, db)
+        self.upgrade_watchlist_table(old_version, self.latest_version, db)
+        self.upgrade_settings_table (old_version, self.latest_version, db)
+        self.set_version(self.latest_version, db)
         return
 
 
-    def upgrade_watchlist_table(old_version, new_version, db=None):
+    def upgrade_watchlist_table(self, old_version, new_version, db=None):
         """Upgrades watchlist table to current version."""
         self.log.info("Attempting upgrade of watchlist table from v%i to v%i" % (old_version,new_version))
         db = db or self.env.get_db_cnx()
@@ -123,7 +126,7 @@ class WatchlistDataBase(Component):
         return
 
 
-    def upgrade_settings_table(old_version, new_version, db=None):
+    def upgrade_settings_table(self, old_version, new_version, db=None):
         """Upgrades watchlist_settings table to current version."""
         self.log.info("Attempting upgrade of watchlist table from v%i to v%i" % (old_version,new_version))
         db = db or self.env.get_db_cnx()
@@ -237,24 +240,24 @@ class WatchlistDataBase(Component):
 
 
     def upgrade_watchlist_table_from_v0_to_v4(self, db=None):
-        self._upgrade_watchlist_table_to_v4('*', db)
+        self.upgrade_watchlist_table_to_v4('*', db)
         return
 
 
     def upgrade_watchlist_table_from_v1_to_v4(self, db=None):
-        self._upgrade_watchlist_table_to_v4('*', db)
+        self.upgrade_watchlist_table_to_v4('*', db)
         return
 
 
     def upgrade_watchlist_table_from_v2_to_v4(self, db=None):
         """Upgrades watchlist table from v2 which has four columns.
            The forth was 'notify' which was dropped again quickly."""
-        self._upgrade_watchlist_table_to_v4('(wluser,realm,resid)', db)
+        self.upgrade_watchlist_table_to_v4('wluser,realm,resid', db)
         return
 
 
-    def upgrade_watchlist_table_from_v3_to_v4(self, db=None):1G1G
-        self._upgrade_watchlist_table_to_v4('*', db)
+    def upgrade_watchlist_table_from_v3_to_v4(self, db=None):
+        self.upgrade_watchlist_table_to_v4('*', db)
         return
 
 
@@ -268,6 +271,13 @@ class WatchlistDataBase(Component):
         # Temporary name for new watchlist table
         new_table = self.watchlist_table
         new_table.name = 'watchlist_new'
+
+        # Delete new table if it should exists because of a aborted previous upgrade attempt
+        try:
+            cursor.execute("DROP TABLE watchlist_new")
+        except:
+            # Get new cursor
+            cursor = db.cursor()
 
         # Create new table
         for statement in db_connector.to_sql(new_table):
@@ -288,8 +298,8 @@ class WatchlistDataBase(Component):
 
         # Rename table
         cursor.execute("""
-            ALTER     watchlist_new
-            RENAME TO watchlist
+            ALTER TABLE watchlist_new
+              RENAME TO watchlist
         """)
 
         self.log.info("Upgraded 'watchlist' table to version 4")
@@ -304,6 +314,13 @@ class WatchlistDataBase(Component):
         cursor = db.cursor()
         db_connector, _ = DatabaseManager(self.env)._get_connector()
 
+        # Delete new table if it should exists because of a aborted previous upgrade attempt
+        try:
+            cursor.execute("DROP TABLE watchlist_settings_new")
+        except:
+            # Get new cursor
+            cursor = db.cursor()
+
         # Temporary name for new watchlist_settings table
         new_table = self.settings_table
         new_table.name = 'watchlist_settings_new'
@@ -316,7 +333,7 @@ class WatchlistDataBase(Component):
         cursor.execute("""
             INSERT
               INTO watchlist_settings_new (wluser,settings)
-            SELECT DISTINCT (wluser,settings)
+            SELECT DISTINCT wluser,settings
               FROM watchlist_settings
         """)
 
@@ -327,8 +344,8 @@ class WatchlistDataBase(Component):
 
         # Rename table
         cursor.execute("""
-            ALTER     watchlist_settings_new
-            RENAME TO watchlist_settings
+            ALTER TABLE watchlist_settings_new
+              RENAME TO watchlist_settings
         """)
 
         # Set new columns to default value
