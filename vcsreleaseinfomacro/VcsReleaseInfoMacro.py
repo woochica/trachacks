@@ -90,8 +90,8 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 % {
                     'path': path,
                     'date': cur['time'].strftime('%Y-%m-%d'),
-                    'rev' : cur['rev'],
-                    'stop_rev' : next['rev'],
+                    'rev' : prev['rev'],
+                    'stop_rev' : cur['rev'],
                     'old_tag' : cur['version'],
                     'new_tag' : prev['version'],
                     'author': cur['author'],
