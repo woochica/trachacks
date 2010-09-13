@@ -28,6 +28,32 @@ from  trac.db    import  Table, Column, Index, DatabaseManager
 from  trac.env   import  IEnvironmentSetupParticipant
 
 
+def delete_watchlist_tables(envpath):
+    """Deletes all watchlist DB entries => Uninstaller"""
+    from  trac.env   import  Environment
+    env = Environment(envpath)
+    db = env.get_db_cnx()
+
+    cursor = db.cursor()
+    try:
+        cursor.execute("DROP TABLE watchlist")
+        print "Deleted 'watchlist' table."
+    except:
+        print "No 'watchlist' table for deletion found."
+
+    cursor = db.cursor()
+    try:
+        cursor.execute("DROP TABLE watchlist_settings")
+        print "Deleted 'watchlist_settings' table."
+    except:
+        print "No watchlist for deletion found."
+
+    cursor.execute("DELETE FROM system WHERE name='watchlist_values'")
+    print "Deleted watchlist version entry from system table."
+    print "Finished."
+
+
+
 class WatchlistDataBase(Component):
     """DataBase module for the Trac WatchlistPlugin.
        Handles creation and upgrading of watchlist DB tables."""
