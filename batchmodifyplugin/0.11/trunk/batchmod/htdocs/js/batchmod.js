@@ -2,6 +2,8 @@
 
 jQuery(document).ready(function($){
     //NOTE: Backported from trac.js in Trac 0.12
+    // Escape special HTML characters (&<>")
+    var quote = {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"};
     $.htmlEscape = function(value) {
         if (typeof value != "string")
             return value;
