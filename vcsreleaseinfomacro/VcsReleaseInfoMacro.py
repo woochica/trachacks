@@ -71,11 +71,15 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 items.append(
                     " * "
                     " [/log/%(path)s/trunk trunk]"
-                    " ([/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/trunk changes])"
+                    " ("
+                    "[/log/%(path)s/trunk?stop_rev=%(stop_rev)s changes]"
+                    " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/trunk diffs]"
+                    ")"
                 % {
                     'path': path,
                     'date': cur['time'].strftime('%Y-%m-%d'),
                     'old_tag' : cur['version'],
+                    'stop_rev' : cur['rev'],
                 })
             elif next != None:
                 # regular releases
