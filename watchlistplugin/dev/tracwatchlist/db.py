@@ -26,6 +26,7 @@ __date__     = ur"$Date$"[7:-2]
 from  trac.core  import  *
 from  trac.db    import  Table, Column, Index, DatabaseManager
 from  trac.env   import  IEnvironmentSetupParticipant
+from  tracwatchlist.translation  import  _
 
 __DB_VERSION__ = 3
 
@@ -34,6 +35,144 @@ class WatchlistDataBase(Component):
        Handles creation and upgrading of watchlist DB tables."""
 
     implements( IEnvironmentSetupParticipant )
+
+    ################ NEW CODE #########################
+    # Will be overwritten by the old code until finished
+
+    latest_version = 4
+
+    watchlist_table = Table('watchlist', key=['wluser','realm','resid'])[
+        Column('wluser'),
+        Column('realm'),
+        Column('resid'),
+    ]
+    settings_table = Table('watchlist_settings', key=['wluser','type'])[
+        Column('wluser'),
+        Column('type'),
+        Column('settings'),
+    ]
+
+    def environment_created(self):
+        """Creates watchlist tables when a new Trac environment is created."""
+        db = self.env.get_db_cnx()
+        self.create_watchlist_table(db)
+        self.create_settings_table(db)
+        self.set_version(latest_version, db)
+        return
+
+    def environment_needs_upgrade(self, db):
+        """Tests if watchlist tables must be upgraded."""
+        if not self.watchlist_table_exists(db):
+            return True
+        if not self.settings_table_exists(db):
+            return True
+        version = self.get_version(db)
+        if version < self.latest_version:
+            return True
+        elif version > self.latest_version:
+            raise TracError("Watchlist DB table version newer than plug-in version")
+        return False
+
+    def upgrade_environment(self, db):
+        """Upgrades all watchlist tables to current version."""
+        old_version = self.get_version(db)
+        self.upgrade_watchlist_table(old_version, self.lastest_version, db)
+        self.upgrade_settings_table (old_version, self.lastest_version, db)
+        self.set_version(latest_version, db)
+        return
+
+    def upgrade_watchlist_table(old_version, new_version, db=None):
+        """Upgrades watchlist table to current version."""
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        if not self.watchlist_table_exists(db):
+            self.create_watchlist_table(db)
+            return
+        raise NotImplemented
+
+    def upgrade_settings_table(old_version, new_version, db=None):
+        """Upgrades watchlist_settings table to current version."""
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        if not self.settings_table_exists(db):
+            self.create_settings_table(db)
+            return
+        raise NotImplemented
+
+    def get_version(self, db=None):
+        """Returns watchlist table version from system table or 0 if not present."""
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT value
+              FROM system
+             WHERE name='watchlist_version'
+        """)
+        valuelist = cursor.fetchone()
+        try:
+            return int(valuelist[0])
+        except AttributeError:
+            self.log.info(
+                _("No value for '%(entry)s' found in $(table)s table.",
+                entry='watchlist_version', table='system'))
+            return 0
+        except ValueError, e:
+            self.log.error(
+                _("Invalid value found for '%(entry)s' found in $(table)s table: ",
+                entry='watchlist_version', table='system') + unicode(e))
+            self.log.info(
+                _("Value for '%(entry)s' will be set to %(value)s.",
+                entry='watchlist_version', table='system'))
+            self.set_version(0, db)
+            return 0
+
+    def set_version(self, version, db=None):
+        """Sets watchlist table version in the system table."""
+        try:
+            version = int(version)
+        except ValueError:
+            raise ValueError(_("Version must be an integer"))
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+            DELETE
+              FROM system
+             WHERE name='watchlist_version'
+        """);
+        cursor.execute("""
+            INSERT
+              INTO system (name,value)
+            VALUES ('watchlist_version',%s)
+        """, (unicode(version),) );
+        return
+
+
+    def create_watchlist_table(self, db=None):
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        db_connector, _ = DatabaseManager(self.env)._get_connector()
+        self.log.info(
+            _("Creating '%(name)s' table in version %(version)s."),
+            name='watchlist', version=unicode(self.latest_version))
+
+        for statement in db_connector.to_sql(self.watchlist_table):
+            cursor.execute(statement)
+        return
+
+    def create_settings_table(self, db=None):
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        db_connector, _ = DatabaseManager(self.env)._get_connector()
+        self.log.info(
+            _("Creating '%(name)s' table in version %(version)s."),
+            name='watchlist_settings', version=unicode(self.latest_version))
+
+        for statement in db_connector.to_sql(self.settings_table):
+            cursor.execute(statement)
+        return
+
+
+    ################ OLD CODE #########################
 
     # IEnvironmentSetupParticipant methods:
     def _create_db_table(self, db=None, name='watchlist'):
