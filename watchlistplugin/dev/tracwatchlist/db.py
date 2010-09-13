@@ -88,7 +88,15 @@ class WatchlistDataBase(Component):
         if not self.watchlist_table_exists(db):
             self.create_watchlist_table(db)
             return
-        raise NotImplemented
+        try:
+            upgrader = getattr(self, 'upgrade_watchlist_table_from_v%i_to_v%i' % (old_version, new_version))
+        except AttributeError:
+            raise TracError(
+                _("Requested watchlist table version %(version)s not supported for upgrade.",
+                version=new_version))
+
+        upgrader(db)
+        return
 
     def upgrade_settings_table(old_version, new_version, db=None):
         """Upgrades watchlist_settings table to current version."""
@@ -171,6 +179,27 @@ class WatchlistDataBase(Component):
             cursor.execute(statement)
         return
 
+    def watchlist_table_exists(self, db=None):
+        raise NotImplemented
+
+    def settings_table_exists(self, db=None):
+        raise NotImplemented
+
+    def upgrade_watchlist_table_from_v0_to_v4(self, db=None):
+        self.upgrade_watchlist_table_from_v3_to_v4(db)
+        return
+
+    def upgrade_watchlist_table_from_v1_to_v4(self, db=None):
+        self.upgrade_watchlist_table_from_v3_to_v4(db)
+        return
+
+    def upgrade_watchlist_table_from_v2_to_v4(self, db=None):
+        """Upgrades watchlist table from v2 which has four columns."""
+        raise NotImplemented
+
+    def upgrade_watchlist_table_from_v3_to_v4(self, db=None):
+        """Upgrades watchlist table from all versions with three columns."""
+        raise NotImplemented
 
     ################ OLD CODE #########################
 
