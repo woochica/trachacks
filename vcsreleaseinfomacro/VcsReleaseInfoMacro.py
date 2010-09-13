@@ -6,6 +6,7 @@ from trac.wiki.formatter import wiki_to_html
 from trac.util import format_datetime
 from StringIO import StringIO
 from operator import itemgetter, attrgetter
+from trac.versioncontrol import Node
 
 class VcsReleaseInfoMacro(WikiMacroBase):
     """ Provides the macro VcsReleaseInfoMacro to display latest releases from VCS path.
@@ -23,6 +24,9 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         # http://trac.edgewall.org/wiki/TracDev/VersionControlApi
         # http://trac.edgewall.org/browser/trunk/trac/versioncontrol/api.py#latest
         for node in tagsnode.get_entries():
+            if node.kind != Node.DIRECTORY:
+                continue
+
             cs = repo.get_changeset(node.rev)
             releases.append({
                 'version' : node.get_name(),
