@@ -32,7 +32,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 'message' : cs.message,
             })
 
-        return sorted(releases, key=itemgetter('version'), reverse=True)
+        return sorted(releases, key=itemgetter('time'), reverse=True)
 
     def expand_macro(self, formatter, name, content):
         req = formatter.req
