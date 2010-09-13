@@ -8,13 +8,12 @@ from StringIO import StringIO
 from operator import itemgetter, attrgetter
 
 class VcsReleaseInfoMacro(WikiMacroBase):
-    """ Provides the macro
+    """ Provides the macro VcsReleaseInfoMacro to display latest releases from VCS path.
 
+    Usage:
     {{{
        [[VcsReleaseInfoMacro(path[,limit[,rev]])]]
     }}}
-
-    which dumps the release matrix
 
     """
 
@@ -43,7 +42,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         if 'CHANGESET_VIEW' not in req.perm:
             return Markup('<i>Releases not available</i>')
 
-        repo = self.env.get_repository(req.authname)
+        repo = self.env.get_repository()
 
         if rev is None:
             rev = repo.get_youngest_rev()
