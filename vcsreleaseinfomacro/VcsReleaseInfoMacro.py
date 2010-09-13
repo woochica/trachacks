@@ -62,14 +62,14 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         rev = repo.normalize_rev(rev)
         path = repo.normalize_path(path)
         if limit is None:
-            limit = 10
+            limit = 20
         else:
             limit = int(limit)
 
         releases = self.get_releases(repo, path, rev)
 
         # limit the releases after they have been sorted
-        releases = releases[:limit]
+        releases = releases[:1+limit]
         items = []
         releases = [None] + releases + [None]
         for i in xrange(len(releases) - 2):
