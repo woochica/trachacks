@@ -28,7 +28,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 'version' : node.get_name(),
                 'time' : node.get_last_modified(),
                 'rev' : node.rev,
-                'author' : cs.author,
+                'author' : cs.author or 'anonymous',
                 'message' : cs.message,
             })
 
