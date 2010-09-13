@@ -32,7 +32,17 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 'message' : cs.message,
             })
 
-        return sorted(releases, key=itemgetter('time'), reverse=True)
+        releases = sorted(releases, key=itemgetter('time'), reverse=True)
+
+        # insert trunk info
+        node = repo.get_node(path + "/trunk", rev)
+        releases.insert(0, {
+            'version' : node.get_name(),
+            'time' : node.get_last_modified(),
+            'rev' : node.rev,
+        })
+
+        return releases
 
     def expand_macro(self, formatter, name, content):
         req = formatter.req
@@ -60,7 +70,6 @@ class VcsReleaseInfoMacro(WikiMacroBase):
 
         # limit the releases after they have been sorted
         releases = releases[:limit]
-
         items = []
         releases = [None] + releases + [None]
         for i in xrange(len(releases) - 2):
@@ -77,9 +86,8 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     ")"
                 % {
                     'path': path,
-                    'date': cur['time'].strftime('%Y-%m-%d'),
-                    'old_tag' : cur['version'],
-                    'stop_rev' : cur['rev'],
+                    'old_tag' : next['version'],
+                    'stop_rev' : next['rev'],
                 })
             elif next != None:
                 # regular releases
@@ -94,10 +102,10 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 % {
                     'path': path,
                     'date': cur['time'].strftime('%Y-%m-%d'),
-                    'rev' : prev['rev'],
-                    'stop_rev' : cur['rev'],
-                    'old_tag' : cur['version'],
-                    'new_tag' : prev['version'],
+                    'rev' : cur['rev'],
+                    'stop_rev' : next['rev'],
+                    'old_tag' : next['version'],
+                    'new_tag' : cur['version'],
                     'author': cur['author'],
                 })
             else:
@@ -110,8 +118,6 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     'path': path,
                     'date': cur['time'].strftime('%Y-%m-%d'),
                     'rev' : cur['rev'],
-                    'stop_rev' : '',
-                    'old_tag' : cur['version'],
                     'new_tag' : cur['version'],
                     'author': cur['author'],
                 })
