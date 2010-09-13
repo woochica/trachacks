@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 setup(
     name='TracBrowserSvnOperations', 
@@ -28,8 +28,9 @@ setup(
             ]
         },
             
-    entry_points = """
-        [trac.plugins]
-        browserops = trac_browser_svn_ops.browser
-    """,
+    entry_points = {
+        'trac.plugins' : [
+            'trac_browser_svn_ops.web_ui = trac_browser_svn_ops.web_ui',
+            ],
+        },
 )
