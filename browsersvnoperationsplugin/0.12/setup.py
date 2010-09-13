@@ -5,6 +5,7 @@ from setuptools import find_packages, setup
 setup(
     name='TracBrowserSvnOperations', 
     version='0.1',
+    #install_requires='Trac >= 0.12',
     description='Perform certain operations to the Subversion repository from '
                 'within the Trac code browser',
     long_description='',
@@ -19,6 +20,6 @@ setup(
     packages=find_packages(exclude=['*.tests*']),
     entry_points = """
         [trac.plugins]
-        helloworld = trac_browser_svn_ops.helloworld
+        browserops = trac_browser_svn_ops.browser
     """,
 )
