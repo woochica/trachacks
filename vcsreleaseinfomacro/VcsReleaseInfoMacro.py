@@ -23,10 +23,13 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         # http://trac.edgewall.org/wiki/TracDev/VersionControlApi
         # http://trac.edgewall.org/browser/trunk/trac/versioncontrol/api.py#latest
         for node in tagsnode.get_entries():
+            cs = repo.get_changeset(node.rev)
             releases.append({
                 'version' : node.get_name(),
                 'time' : node.get_last_modified(),
                 'rev' : node.rev,
+                'author' : cs.author,
+                'message' : cs.message,
             })
 
         return sorted(releases, key=itemgetter('version'), reverse=True)
@@ -62,11 +65,12 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         releases = [None] + releases + [None]
         for i in xrange(len(releases) - 2):
             prev, cur, next = releases[i : i + 3]
+
             if prev == None:
                 # first entry = trunk
                 items.append(
                     " * "
-                    " [log:%(path)s/trunk trunk]"
+                    " [/log/%(path)s/trunk trunk]"
                     " ([/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/trunk changes])"
                 % {
                     'path': path,
@@ -77,8 +81,12 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 # regular releases
                 items.append(
                     " * '''%(date)s'''"
-                    " [/log/%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s %(new_tag)s release]"
-                    " ([/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/tags/%(new_tag)s changes])"
+                    " [/log/%(path)s/tags/%(new_tag)s %(new_tag)s]"
+                    " by %(author)s"
+                    " ("
+                    "[/log/%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s changes]"
+                    " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/tags/%(new_tag)s diffs]"
+                    ")"
                 % {
                     'path': path,
                     'date': cur['time'].strftime('%Y-%m-%d'),
@@ -86,12 +94,14 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     'stop_rev' : next['rev'],
                     'old_tag' : cur['version'],
                     'new_tag' : prev['version'],
+                    'author': cur['author'],
                 })
             else:
                 # last release
                 items.append(
                     " * '''%(date)s'''"
-                    " [log:%(path)s/tags/%(new_tag)s %(new_tag)s release]"
+                    " [/log/%(path)s/tags/%(new_tag)s?rev=%(rev)s&mode=follow_copy %(new_tag)s]"
+                    " by %(author)s"
                 % {
                     'path': path,
                     'date': cur['time'].strftime('%Y-%m-%d'),
@@ -99,6 +109,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     'stop_rev' : '',
                     'old_tag' : cur['version'],
                     'new_tag' : cur['version'],
+                    'author': cur['author'],
                 })
 
         return '<div class="releases">\n' + str(wiki_to_html("\n".join(items), self.env, req))  + '</div>\n'
