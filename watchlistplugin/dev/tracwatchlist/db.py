@@ -219,7 +219,7 @@ class WatchlistDataBase(Component):
         self._upgrade_watchlist_table_to_v4('(wluser,realm,resid)', db)
         return
 
-    def upgrade_watchlist_table_from_v3_to_v4(self, db=None):
+    def upgrade_watchlist_table_from_v3_to_v4(self, db=None):1G1G
         self._upgrade_watchlist_table_to_v4('*', db)
         return
 
@@ -230,20 +230,18 @@ class WatchlistDataBase(Component):
         cursor = db.cursor()
         db_connector, _ = DatabaseManager(self.env)._get_connector()
 
-        # Temporary version of watchlist tables without keys
-        temp_table = self.watchlist_table
-        temp_table.name = 'watchlist_temp'
-        temp_table.key  = []
+        # Temporary name for new watchlist table
+        new_table = self.watchlist_table
+        new_table.name = 'watchlist_new'
 
-        # Create temporary table
-        for statement in db_connector.to_sql(temp_table):
-            statement = statement.replace("CREATE TABLE","CREATE TEMPORARY TABLE")
+        # Create new table
+        for statement in db_connector.to_sql(new_table):
             cursor.execute(statement)
 
         # Copy existing data to it
         cursor.execute("""
             INSERT
-              INTO watchlist_temp
+              INTO watchlist_new
             SELECT DISTINCT %s
               FROM watchlist
         """ % selection)
@@ -253,21 +251,10 @@ class WatchlistDataBase(Component):
             DROP TABLE watchlist
         """)
 
-        # Create new table
-        for statement in db_connector.to_sql(self.watchlist_table):
-            cursor.execute(statement)
-
-        # Copy data back into new table
+        # Rename table
         cursor.execute("""
-            INSERT
-              INTO watchlist
-            SELECT DISTINCT *
-              FROM watchlist_temp
-        """)
-
-        # Delete temporary table
-        cursor.execute("""
-            DROP TABLE watchlist_temp
+            ALTER     watchlist_new
+            RENAME TO watchlist
         """)
 
         self.log.info("Upgraded 'watchlist' table to version 4")
@@ -281,20 +268,18 @@ class WatchlistDataBase(Component):
         cursor = db.cursor()
         db_connector, _ = DatabaseManager(self.env)._get_connector()
 
-        # Temporary version of watchlist tables without keys
-        temp_table = self.settings_table
-        temp_table.name = 'watchlist_settings_temp'
-        temp_table.key  = []
+        # Temporary name for new watchlist_settings table
+        new_table = self.settings_table
+        new_table.name = 'watchlist_settings_new'
 
-        # Create temporary table
-        for statement in db_connector.to_sql(temp_table):
-            statement = statement.replace("CREATE TABLE","CREATE TEMPORARY TABLE")
+        # Create new table
+        for statement in db_connector.to_sql(new_table):
             cursor.execute(statement)
 
         # Copy existing data to it
         cursor.execute("""
             INSERT
-              INTO watchlist_settings_temp (wluser,settings)
+              INTO watchlist_settings_new (wluser,settings)
             SELECT DISTINCT (wluser,settings)
               FROM watchlist_settings
         """)
@@ -304,21 +289,10 @@ class WatchlistDataBase(Component):
             DROP TABLE watchlist_settings
         """)
 
-        # Create new table
-        for statement in db_connector.to_sql(self.watchlist_settings_table):
-            cursor.execute(statement)
-
-        # Copy data back into new table
+        # Rename table
         cursor.execute("""
-            INSERT
-              INTO watchlist_settings
-            SELECT DISTINCT *
-              FROM watchlist_settings_temp
-        """)
-
-        # Delete temporary table
-        cursor.execute("""
-            DROP TABLE watchlist_settings_temp
+            ALTER     watchlist_settings_new
+            RENAME TO watchlist_settings
         """)
 
         # Set new columns to default value
