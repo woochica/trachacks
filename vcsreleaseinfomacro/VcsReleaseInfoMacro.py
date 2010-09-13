@@ -77,7 +77,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 # regular releases
                 items.append(
                     " * '''%(date)s'''"
-                    " [log:%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s %(new_tag)s release]"
+                    " [/log/%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s %(new_tag)s release]"
                     " ([/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/tags/%(new_tag)s changes])"
                 % {
                     'path': path,
