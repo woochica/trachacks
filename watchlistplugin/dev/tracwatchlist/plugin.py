@@ -137,7 +137,7 @@ class WatchlistPlugin(Component):
           settings['useroptions'][k] = k in newoptions
         for realm in self.realms:
           try:
-            settings['useroptions'][realm + '_fields'] = req.args.get(realm + '_fields')
+            settings[realm + '_fields'] = req.args.get(realm + '_fields')
           except:
             pass
         self._save_user_settings(req.authname, settings)
@@ -155,6 +155,7 @@ class WatchlistPlugin(Component):
         settings['useroptions'].update( usersettings['useroptions'] )
         del usersettings['useroptions']
         settings.update( usersettings )
+        self.log.debug("WL ABC = " + unicode(settings))
         return settings
 
     def is_notify(self, req, realm, resid):
@@ -242,32 +243,31 @@ class WatchlistPlugin(Component):
         cursor = db.cursor()
         cursor.log = self.log
         options = settings['useroptions']
+        self.log.debug("WL settings.keys: " + unicode(settings.keys()))
         self.log.debug("WL options: " + unicode(options))
+        cursor.log = self.log
 
-        settingsstr = "&".join([ "=".join([k,unicode(v)]) for k,v in options.iteritems()])
+        settingsstr = "&".join([ "=".join([k,unicode(v)])
+                            for k,v in options.iteritems()])
 
         cursor.execute("""
-          SELECT count(*)
+          DELETE
             FROM watchlist_settings
            WHERE wluser=%s
-           LIMIT 0,1
-        """, (user,)
-        )
-        ex = cursor.fetchone()
-        if not ex or not int(ex[0]):
-          cursor.execute("""
-            INSERT
-              INTO watchlist_settings (wluser,name,type,settings)
-            VALUES (%s,'useroptions','ListOfBool',%s)
-          """, (user, settingsstr)
-          )
-        else:
-          cursor.execute("""
-            UPDATE watchlist_settings
-               SET settings=%s,name='useroptions',type='ListOfBool'
-             WHERE wluser=%s
-          """, (settingsstr, user)
-          )
+        """, (user,))
+
+        cursor.execute("""
+          INSERT
+            INTO watchlist_settings (wluser,name,type,settings)
+          VALUES (%s,'useroptions','ListOfBool',%s)
+          """, (user, settingsstr) )
+
+        cursor.executemany("""
+          INSERT
+            INTO watchlist_settings (wluser,name,type,settings)
+          VALUES (%s,%s,'ListOfStrings',%s)
+          """, [(user, realm + '_fields', settings[realm + '_fields'])
+                for realm in self.realms if realm + '_fields' in settings ] )
 
         db.commit()
         return True
@@ -276,29 +276,22 @@ class WatchlistPlugin(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("""
-          SELECT settings
+          SELECT name,type,settings
             FROM watchlist_settings
-           WHERE wluser=%s AND name='useroptions'
+           WHERE wluser=%s
         """, (user,))
 
-        try:
-          def strtoval (val):
-            if   val == 'True':
-              return True
-            elif val == 'False':
-              return False
+        settings = dict()
+        for name,type,settingsstr in cursor.fetchall():
+            if type == 'ListOfBool':
+                settings[name] = dict([
+                    (k,v=='True') for k,v in
+                        [ kv.split('=') for kv in settingsstr.split("&") ] ])
+            elif type == 'ListOfStrings':
+                settings[name] = filter(None,settingsstr.split(','))
             else:
-              return val
-          (settingsstr,) = cursor.fetchone()
-          #self.log.debug("WL SET: " + settingsstr)
-          d = dict([
-              (k,strtoval(v)) for k,v in [ kv.split('=') for kv in settingsstr.split("&") ]
-          ])
-          #self.log.debug("WL SETd: " + unicode(d))
-          return dict(useroptions=d)
-        except Exception, e:
-          #self.log.debug("WL get user settings: " + unicode(e))
-          return dict(useroptions=dict())
+                settings[name] = settingsstr
+        return settings
 
     def process_request(self, req):
         user  = to_unicode( req.authname )
@@ -363,14 +356,10 @@ class WatchlistPlugin(Component):
             wldict['available_fields'][r],wldict['default_fields'][r] = self.realm_handler[r].get_fields(r)
         wldict['active_fields'] = {}
         for r in self.realms:
-            cols = options.get(r + '_fields','').split(',')
-            #self.log.debug( "WL SC = " + unicode(cols) )
-            if not cols or cols == ['']:
+            cols = settings.get(r + '_fields',[])
+            if not cols:
                 cols = wldict['default_fields'].get(r,[])
-                #self.log.debug( "WL EC = " + unicode(cols) )
             wldict['active_fields'][r] = cols
-        #self.log.debug( "WL DC = " + unicode(wldict['default_fields']) )
-        #self.log.debug( "WL AC = " + unicode(wldict['active_fields']) )
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1
