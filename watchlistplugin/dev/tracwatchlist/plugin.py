@@ -76,7 +76,7 @@ class WatchlistPlugin(Component):
     #, IPreferencePanelProvider ) # Disabled for now. Needs code dublication and isn't really necessary 
 
 
-    options = {
+    OPTIONS = {
         'notifications': ( False, N_("Notifications")),
         'display_notify_navitems': ( False, N_("Display notification navigation items")),
         'display_notify_column': ( True, N_("Display notification column in watchlist tables")),
@@ -91,7 +91,7 @@ class WatchlistPlugin(Component):
         'individual_column_filtering': ( True, N_("Individual column filtering")),
     }
 
-    gsettings = dict( [ (name, BoolOption('watchlist',name,data[0],doc=data[1]) ) for (name,data) in options.iteritems() ] )
+    global_options = [ BoolOption('watchlist',name,data[0],doc=data[1]) for (name,data) in OPTIONS.iteritems() ]
 
     wsub = None
 
@@ -153,15 +153,15 @@ class WatchlistPlugin(Component):
             self._handle_settings(req, settings);
             req.redirect(req.href.prefs(panel))
 
-        return ('watchlist_prefs_main.html', { 'settings': settings, 'options': self.options, 'realms': self.realms })
+        return ('watchlist_prefs_main.html', { 'settings': settings['useroptions'], 'options': self.OPTIONS, 'realms': self.realms })
 
     def _handle_settings(self, req, settings):
         newoptions = req.args.get('options',[])
-        for k in settings.keys():
-          settings[k] = k in newoptions
+        for k in settings['useroptions'].keys():
+          settings['useroptions'][k] = k in newoptions
         for realm in self.realms:
           try:
-            settings[realm + '_fields'] = req.args.get(realm + '_fields')
+            settings['useroptions'][realm + '_fields'] = req.args.get(realm + '_fields')
           except:
             pass
         self._save_user_settings(req.authname, settings)
@@ -173,8 +173,14 @@ class WatchlistPlugin(Component):
 
     def get_settings(self, user):
         settings = {}
-        settings.update( [ ( name,self.config.getbool('watchlist',name) ) for name in self.options.keys() ] )
-        settings.update( self._get_user_settings(user) )
+        settings['useroptions'] = dict([
+            ( name,self.config.getbool('watchlist',name) ) for name in self.OPTIONS.keys() ])
+        self.log.debug("BEFORE: " + unicode(settings) )
+        usersettings = self._get_user_settings(user)
+        settings['useroptions'].update( usersettings['useroptions'] )
+        del usersettings['useroptions']
+        settings.update( usersettings )
+        self.log.debug("AFTER: " + unicode(settings) )
         return settings
 
     def is_notify(self, req, realm, resid):
@@ -258,9 +264,11 @@ class WatchlistPlugin(Component):
     def _save_user_settings(self, user, settings):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        #cursor.log = self.log
+        cursor.log = self.log
+        options = settings['useroptions']
+        self.log.debug("WL options: " + unicode(options))
 
-        settingsstr = "&".join([ "=".join([k,unicode(v)]) for k,v in settings.iteritems()])
+        settingsstr = "&".join([ "=".join([k,unicode(v)]) for k,v in options.iteritems()])
 
         cursor.execute("""
           SELECT count(*)
@@ -294,7 +302,7 @@ class WatchlistPlugin(Component):
         cursor.execute("""
           SELECT settings
             FROM watchlist_settings
-           WHERE wluser=%s
+           WHERE wluser=%s AND name='useroptions'
         """, (user,))
 
         try:
@@ -311,10 +319,10 @@ class WatchlistPlugin(Component):
               (k,strtoval(v)) for k,v in [ kv.split('=') for kv in settingsstr.split("&") ]
           ])
           #self.log.debug("WL SETd: " + unicode(d))
-          return d
+          return dict(useroptions=d)
         except Exception, e:
           #self.log.debug("WL get user settings: " + unicode(e))
-          return dict()
+          return dict(useroptions=dict())
 
     def process_request(self, req):
         user  = to_unicode( req.authname )
@@ -351,20 +359,22 @@ class WatchlistPlugin(Component):
         wldict['action'] = action
 
         settings = self.get_settings( user )
+        options = settings['useroptions']
         # Needed here to get updated settings
         if action == "save":
           self._handle_settings(req, settings)
           action = "view"
 
         settings = self.get_settings( user )
+        options = settings['useroptions']
         wldict['perm']   = req.perm
         wldict['realms'] = self.realms
         wldict['error']  = False
-        wldict['notifications'] = bool(self.wsub and settings['notifications'] and settings['display_notify_column'])
-        wldict['options'] = self.options
+        wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
+        wldict['options'] = self.OPTIONS
         wldict['wlgettext'] = gettext
         wldict['t_'] = t_
-        wldict['settings'] = settings
+        wldict['settings'] = options
         wldict['available_fields'] = {}
         wldict['default_fields'] = {}
         #wldict['label'] = dict([ self.realm_handler for r in self.realms ])
@@ -376,7 +386,7 @@ class WatchlistPlugin(Component):
             wldict['available_fields'][r],wldict['default_fields'][r] = self.realm_handler[r].get_fields(r)
         wldict['active_fields'] = {}
         for r in self.realms:
-            cols = settings.get(r + '_fields','').split(',')
+            cols = options.get(r + '_fields','').split(',')
             #self.log.debug( "WL SC = " + unicode(cols) )
             if not cols or cols == ['']:
                 cols = wldict['default_fields'].get(r,[])
@@ -387,14 +397,14 @@ class WatchlistPlugin(Component):
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1
-        redirectback = settings['stay_at_resource'] and single and not onwatchlistpage
-        redirectback_notify = settings['stay_at_resource_notify'] and single and not \
+        redirectback = options['stay_at_resource'] and single and not onwatchlistpage
+        redirectback_notify = options['stay_at_resource_notify'] and single and not \
                               onwatchlistpage
 
         if onwatchlistpage:
-          wldict['show_messages'] = settings['show_messages_while_on_watchlist_page']
+          wldict['show_messages'] = options['show_messages_while_on_watchlist_page']
         else:
-          wldict['show_messages'] = settings['show_messages_on_watchlist_page']
+          wldict['show_messages'] = options['show_messages_on_watchlist_page']
 
         new_res = []
         del_res = []
@@ -444,11 +454,11 @@ class WatchlistPlugin(Component):
             db.commit()
 
           action = "view"
-          if settings['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
+          if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
             req.session['watchlist_message'] = _(
               "You are now watching this resource."
             )
-          if self.wsub and settings['notifications'] and settings['notify_by_default']:
+          if self.wsub and options['notifications'] and options['notify_by_default']:
             for res in new_res:
               self.set_notify(req, realm, res)
             db.commit()
@@ -499,11 +509,11 @@ class WatchlistPlugin(Component):
           db.commit()
 
           action = "view"
-          if settings['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
+          if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
             req.session['watchlist_message'] = _(
               "You are no longer watching this resource."
             )
-          if self.wsub and settings['notifications'] and settings['notify_by_default']:
+          if self.wsub and options['notifications'] and options['notify_by_default']:
             for res in del_res:
               self.unset_notify(req, realm, res)
             db.commit()
@@ -520,13 +530,13 @@ class WatchlistPlugin(Component):
         if action == "notifyon":
             if single and not self.res_exists(realm, resids[0]):
                 raise HTTPNotFound(t_("Page %(name)s not found", name=resids[0]))
-            if self.wsub and settings['notifications']:
+            if self.wsub and options['notifications']:
               for res in resids:
                 if self.res_exists(realm, res):
                   self.set_notify(req, realm, res)
               db.commit()
             if redirectback_notify and not async:
-              if settings['show_messages_on_resource_page']:
+              if options['show_messages_on_resource_page']:
                 req.session['watchlist_notify_message'] = _(
                   """
                   You are now receiving change notifications
@@ -537,12 +547,12 @@ class WatchlistPlugin(Component):
               raise RequestDone
             action = "view"
         elif action == "notifyoff":
-            if self.wsub and settings['notifications']:
+            if self.wsub and options['notifications']:
               for res in resids:
                 self.unset_notify(req, realm, res)
               db.commit()
             if redirectback_notify and not async:
-              if settings['show_messages_on_resource_page']:
+              if options['show_messages_on_resource_page']:
                 req.session['watchlist_notify_message'] = _(
                   """
                   You are no longer receiving
@@ -643,7 +653,8 @@ class WatchlistPlugin(Component):
             notify = req.session['watchlist_display_notify_navitems']
         except KeyError:
             settings = self.get_settings(user)
-            notify = (self.wsub and settings['notifications'] and settings['display_notify_navitems']) and 'True' or 'False'
+            options = settings['useroptions']
+            notify = (self.wsub and options['notifications'] and options['display_notify_navitems']) and 'True' or 'False'
             req.session['watchlist_display_notify_navitems'] = notify
 
         try:
