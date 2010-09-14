@@ -1,15 +1,14 @@
 $(function() {
 	
-	var name = $("#name"),
-		email = $("#email"),
-		password = $("#password"),
-		allFields = $([]).add(name).add(email).add(password),
+	var up_file = $("#bsop_upload_file"),
+		up_commit = $("#bsop_upload_commit"),
+		allFields = $([]).add(up_file).add(up_commit),
 		tips = $(".validateTips");
 	
 	$("#dialog-bsop_upload").dialog({
 		autoOpen: false,
-		height: 500,
-		width: 350,
+		height: 350,
+		width: 500,
 		modal: true,
 		buttons: {
 			'Upload file': function() {

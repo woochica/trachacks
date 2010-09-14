@@ -23,6 +23,7 @@ class TracBrowserOps(Component):
         if filename == 'browser.html':
             self.log.debug('Extending TracBrowser')
             
+            add_stylesheet(req, 'trac_browser_svn_ops/css/smoothness/jquery-ui.css')
             add_stylesheet(req, 'trac_browser_svn_ops/css/trac_browser_ops.css')
             
             # TODO Add jquery-ui conditionally
