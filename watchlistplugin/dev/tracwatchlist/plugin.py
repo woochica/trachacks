@@ -347,10 +347,11 @@ class WatchlistPlugin(Component):
         wldict['realms'] = self.realms
         wldict['error']  = False
         wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
-        wldict['options'] = self.OPTIONS
+        wldict['OPTIONS'] = self.OPTIONS
+        wldict['options'] = options
+        wldict['lastvisit'] = 0
         wldict['wlgettext'] = gettext
         wldict['t_'] = t_
-        wldict['settings'] = options
         wldict['available_fields'] = {}
         wldict['default_fields'] = {}
         #wldict['label'] = dict([ self.realm_handler for r in self.realms ])

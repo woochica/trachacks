@@ -8,10 +8,10 @@
       py:strip="">
       <fieldset>
       <legend>${t_("General")}</legend>
-      <py:for each="k in sorted(settings.keys())">
-        <py:if test="isinstance(settings[k],bool)">
-          <input type="checkbox" name="options" id="${k}" value="${k}" checked="${settings[k] and 'checked' or None}" />
-          <label for="${k}">${wlgettext(options.get(k,['',''])[1])}</label>
+      <py:for each="k in sorted(OPTIONS.keys())">
+        <py:if test="isinstance(options[k],bool)">
+          <input type="checkbox" name="options" id="${k}" value="${k}" checked="${options[k] and 'checked' or None}" />
+          <label for="${k}">${wlgettext(OPTIONS.get(k,['',''])[1])}</label>
           <br />
         </py:if>
       </py:for>

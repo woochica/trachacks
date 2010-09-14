@@ -71,7 +71,7 @@
                   </py:for>
                 </tr>
               </tbody>
-              <tfoot py:if="settings['dynamic_tables'] and settings['individual_column_filtering']">
+              <tfoot py:if="options['dynamic_tables'] and options['individual_column_filtering']">
                 <tr>
                   <th py:for="k in active_fields[realm]"
                       py:if="k != 'notify' or notifications"

@@ -11,10 +11,10 @@
     <link type="text/css"
       href="${href.chrome('watchlist','css','style.css')}"
       rel="stylesheet" />
-    <link type="text/css" py:if="settings['dynamic_tables']"
+    <link type="text/css" py:if="options['dynamic_tables']"
       href="${href.chrome('watchlist','css','dataTable.css')}"
       rel="stylesheet" />
-    <link type="text/css" py:if="settings['autocomplete_inputs']"
+    <link type="text/css" py:if="options['autocomplete_inputs']"
       href="${href.chrome('watchlist','css','jquery.autocomplete.css')}"
       rel="stylesheet" />
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
@@ -24,9 +24,9 @@
     </script>
     <script type="text/javascript" 
       src="${href.chrome('watchlist','js','watchlist.js')}"></script>
-    <script type="text/javascript" py:if="settings['autocomplete_inputs']"
+    <script type="text/javascript" py:if="options['autocomplete_inputs']"
       src="${href.chrome('watchlist','js','autocomplete.js')}"></script>
-    <script type="text/javascript" py:if="settings['dynamic_tables']"
+    <script type="text/javascript" py:if="options['dynamic_tables']"
       src="${href.chrome('watchlist','js','dynamictables.js')}"></script>
     <script type="text/javascript" 
       src="${href.chrome('common','js','folding.js')}"></script>
@@ -69,7 +69,7 @@
 
   <body>
     <div id="content" class="watchlist">
-        <input type="hidden" name="lastvisit" value="${settings.get(lastvisit,'0')}"/>
+        <input type="hidden" name="lastvisit" value="$lastvisit"/>
         <py:def function="datetimefilter">
             <input type="checkbox" name="sincelastvisit" value="" title="${_('Since last visit of the watchlist page')}" />
             <input name="from-${k}" type="text" size="4" class="filter"
