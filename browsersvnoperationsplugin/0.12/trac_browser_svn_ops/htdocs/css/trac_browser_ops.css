@@ -4,13 +4,13 @@ td input.name {
     }
 
 /* Upload file form */
-div#bsop_upload .bsop_upload_ctl {
+div#dialog-bsop_upload .bsop_upload_ctl {
     display: block;
     margin-bottom:12px;
     padding: .4em;
     }
 
-div#bsop_upload fieldset {
+div#dialog-bsop_upload fieldset {
     padding: 0; 
     border: 0; 
     margin-top: 25px;

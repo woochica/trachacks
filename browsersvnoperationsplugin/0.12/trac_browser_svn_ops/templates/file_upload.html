@@ -17,7 +17,7 @@
 	$('#show_upload')
 		.button()
 		.click(function() {
-			$('#dialog-bsop_open').dialog('open');
+			$('#dialog-bsop_upload').dialog('open');
 		});
 </script>
 </head>
@@ -25,7 +25,7 @@
 <body>
 
 <div id="dialog-bsop_upload" title="Upload a file to the repository">
-  <p>Choose a file to upload to the Trac repository. It will be placed in the current directory.
+  <p>Choose a file to upload to the Trac repository. It will be placed in the current directory.</p>
   <form id="bsop_upload_form" method="post" enctype="multipart/form-data">
   <fieldset>
     <label for="bsop_upload_file">File</label>
@@ -33,8 +33,9 @@
         class="bsop_upload_ctl" />
     <label for="bsop_upload_commit">Commit message</label>
     <textarea name="bsop_upload_commit" id="bsop_upload_commit"
-        cols="50" rows="2" class="bsop_upload_ctl" />
+        cols="50" rows="2" class="bsop_upload_ctl"></textarea>
   </fieldset>
+  </form>
 </div>
 
 <button id="show_upload">Show upload</button>

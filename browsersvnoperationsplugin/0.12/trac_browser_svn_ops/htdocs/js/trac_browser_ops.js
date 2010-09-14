@@ -6,7 +6,7 @@ $(function() {
 		allFields = $([]).add(name).add(email).add(password),
 		tips = $(".validateTips");
 	
-	$("#dialog-bsop_open").dialog({
+	$("#dialog-bsop_upload").dialog({
 		autoOpen: false,
 		height: 500,
 		width: 350,
@@ -32,12 +32,8 @@ $(function() {
 		}
 	});
 	
-	
-	
-	$('#show_upload')
-		.button()
-		.click(function() {
-			$('#dialog-form').dialog('open');
-		});
+	$('#ctxtnav ul li:contains("Upload")').click(function() {
+		$('#dialog-bsop_upload').dialog('open');
+	});
 
 });
