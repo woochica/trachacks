@@ -1,0 +1,44 @@
+<!DOCTYPE html
+	    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	    xmlns:py="http://genshi.edgewall.org/"
+	    xmlns:xi="http://www.w3.org/2001/XInclude">
+
+<!-- Only the bsop_upload div is transmitted to the client, the rest serves
+     as a convenience during development
+     -->
+<head>
+<title>Trac Browser Operations file upload</title>
+<link rel="stylesheet" href="../htdocs/css/trac_browser_ops.css" type="text/css" />
+<script type="text/javascript" src="../htdocs/js/jquery-ui.js"></script>
+<script type="text/javascript" src="../htdocs/js/trac_browser_ops.js"></script>
+<script type="text/javascript">
+	$('#show_upload')
+		.button()
+		.click(function() {
+			$('#dialog-bsop_open').dialog('open');
+		});
+</script>
+</head>
+
+<body>
+
+<div id="dialog-bsop_upload" title="Upload a file to the repository">
+  <p>Choose a file to upload to the Trac repository. It will be placed in the current directory.
+  <form id="bsop_upload_form" method="post" enctype="multipart/form-data">
+  <fieldset>
+    <label for="bsop_upload_file">File</label>
+    <input type="file" name="bsop_upload_file" id="bsop_upload_file" 
+        class="bsop_upload_ctl" />
+    <label for="bsop_upload_commit">Commit message</label>
+    <textarea name="bsop_upload_commit" id="bsop_upload_commit"
+        cols="50" rows="2" class="bsop_upload_ctl" />
+  </fieldset>
+</div>
+
+<button id="show_upload">Show upload</button>
+
+</body>
+</html>
+    
