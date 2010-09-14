@@ -59,7 +59,13 @@ except ImportError:
     def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
         return trac_format_datetime(t, format, tzinfo)
 
-
+def ensure_tuple( var ):
+    """Ensures that variable is a tuple, even if its a scalar"""
+    if isinstance(var,tuple):
+        return var
+    if getattr(var, '__iter__', False):
+        return tuple(var)
+    return (var,)
 
 class WatchlistPlugin(Component):
     """Main class of the Trac WatchlistPlugin.
@@ -71,8 +77,6 @@ class WatchlistPlugin(Component):
     providers = ExtensionPoint(IWatchlistProvider)
 
     implements( IRequestHandler, IRequestFilter, ITemplateProvider ) 
-    #, IPreferencePanelProvider ) # Disabled for now. Needs code dublication and isn't really necessary 
-
 
     OPTIONS = {
         'notifications': ( False, N_("Notifications")),
@@ -147,12 +151,10 @@ class WatchlistPlugin(Component):
         settings = {}
         settings['useroptions'] = dict([
             ( name,self.config.getbool('watchlist',name) ) for name in self.OPTIONS.keys() ])
-        self.log.debug("BEFORE: " + unicode(settings) )
         usersettings = self._get_user_settings(user)
         settings['useroptions'].update( usersettings['useroptions'] )
         del usersettings['useroptions']
         settings.update( usersettings )
-        self.log.debug("AFTER: " + unicode(settings) )
         return settings
 
     def is_notify(self, req, realm, resid):
@@ -234,6 +236,8 @@ class WatchlistPlugin(Component):
         return req.path_info.startswith("/watchlist")
 
     def _save_user_settings(self, user, settings):
+        """Saves user settings in 'watchlist_settings' table.
+           Only saving of all user settings is supported at the moment."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.log = self.log
@@ -621,6 +625,8 @@ class WatchlistPlugin(Component):
         user  = to_unicode( req.authname )
 
         notify = 'False'
+        # The notification setting is stored in the session to avoid rereading the whole
+        # user settings for every page displayed
         try:
             notify = req.session['watchlist_display_notify_navitems']
         except KeyError:
