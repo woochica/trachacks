@@ -122,10 +122,12 @@ class WatchlistDataBase(Component):
         if not self.watchlist_table_exists(db):
             self.create_watchlist_table(db)
             return
+        if old_version == new_version:
+            return
         try:
             upgrader = getattr(self, 'upgrade_watchlist_table_from_v%i_to_v%i' % (old_version, new_version))
         except AttributeError:
-            raise TracError("Requested watchlist table version " + new_version + " not supported for upgrade")
+            raise TracError("Requested watchlist table version " + unicode(new_version) + " not supported for upgrade")
 
         upgrader(db)
         return
@@ -141,6 +143,9 @@ class WatchlistDataBase(Component):
             self.create_settings_table(db)
             return
 
+        if old_version == new_version:
+            return
+
         if old_version < 4:
             self.upgrade_settings_table_to_v4(db)
             old_version = 4
@@ -151,7 +156,7 @@ class WatchlistDataBase(Component):
         try:
             upgrader = getattr(self, 'upgrade_settings_table_from_v%i_to_v%i' % (old_version, new_version))
         except AttributeError:
-            raise TracError("Requested settings table version " + new_version + " not supported for upgrade")
+            raise TracError("Requested settings table version " + unicode(new_version) + " not supported for upgrade")
 
         upgrader(db)
         raise NotImplemented
