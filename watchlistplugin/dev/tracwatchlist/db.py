@@ -70,8 +70,9 @@ class WatchlistDataBase(Component):
         Column('realm'),
         Column('resid'),
     ]
-    settings_table = Table('watchlist_settings', key=['wluser','type'])[
+    settings_table = Table('watchlist_settings', key=['wluser','name'])[
         Column('wluser'),
+        Column('name'),
         Column('type'),
         Column('settings'),
     ]
@@ -351,7 +352,7 @@ class WatchlistDataBase(Component):
         # Set new columns to default value
         cursor.execute("""
             UPDATE watchlist_settings
-               SET type='user options'
+               SET name='useroptions', type='ListOfBool'
         """)
 
         self.log.info("Upgraded 'watchlist_settings' table to version 4")
