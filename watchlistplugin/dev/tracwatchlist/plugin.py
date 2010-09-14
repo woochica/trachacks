@@ -273,14 +273,14 @@ class WatchlistPlugin(Component):
         if not ex or not int(ex[0]):
           cursor.execute("""
             INSERT
-              INTO watchlist_settings
-            VALUES (%s,%s)
+              INTO watchlist_settings (wluser,name,type,settings)
+            VALUES (%s,'useroptions','ListOfBool',%s)
           """, (user, settingsstr)
           )
         else:
           cursor.execute("""
             UPDATE watchlist_settings
-               SET settings=%s
+               SET settings=%s,name='useroptions',type='ListOfBool'
              WHERE wluser=%s
           """, (settingsstr, user)
           )
