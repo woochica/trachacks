@@ -549,7 +549,7 @@ class WatchlistPlugin(Component):
         if action == "view":
             for (xrealm,xhandler) in self.realm_handler.iteritems():
               if xhandler.has_perm(xrealm, req.perm):
-                wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, set(wldict['active_fields'][xrealm]))
+                wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
                 name = xhandler.get_realm_label(xrealm, n_plural=1000)
                 # TRANSLATOR: Navigation link to point to watchlist section of this realm
                 # (e.g. 'Wikis', 'Tickets').
@@ -730,6 +730,10 @@ class WikiWatchlist(BasicWatchlist):
       user = req.authname
       locale = getattr( req, 'locale', LC_TIME)
       wikilist = []
+      if not fields:
+          fields = set(self.default_fields['wiki'])
+      else:
+          fields = set(fields)
 
       for name in wl.get_watched_resources( 'wiki', req.authname ):
           wikipage = WikiPage(self.env, name, db=db)
@@ -837,6 +841,11 @@ class TicketWatchlist(BasicWatchlist):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       ticketlist = []
+      if not fields:
+          fields = set(self.default_fields['ticket'])
+      else:
+          fields = set(fields)
+
       for id in wl.get_watched_resources( 'ticket', req.authname ):
           sid = unicode(id)
           ticket = Ticket(self.env, id, db)
