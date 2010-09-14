@@ -28,7 +28,7 @@ from  trac.db    import  Table, Column, Index, DatabaseManager
 from  trac.env   import  IEnvironmentSetupParticipant
 
 
-def delete_watchlist_tables(envpath):
+def delete_watchlist_tables(envpath, tables=('watchlist','watchlist_settings','system')):
     """Deletes all watchlist DB entries => Uninstaller"""
     from  trac.env   import  Environment
     try:
@@ -37,22 +37,26 @@ def delete_watchlist_tables(envpath):
         raise Exception("Given path seems not to be a Trac environment.")
     db = env.get_db_cnx()
 
-    cursor = db.cursor()
-    try:
-        cursor.execute("DROP TABLE watchlist")
-        print "Deleted 'watchlist' table."
-    except:
-        print "No 'watchlist' table for deletion found."
+    if 'watchlist' in tables:
+        cursor = db.cursor()
+        try:
+            cursor.execute("DROP TABLE watchlist")
+            print "Deleted 'watchlist' table."
+        except:
+            print "No 'watchlist' table for deletion found."
 
-    cursor = db.cursor()
-    try:
-        cursor.execute("DROP TABLE watchlist_settings")
-        print "Deleted 'watchlist_settings' table."
-    except:
-        print "No 'watchlist_settings' table for deletion found."
+    if 'watchlist_settings' in tables:
+        cursor = db.cursor()
+        try:
+            cursor.execute("DROP TABLE watchlist_settings")
+            print "Deleted 'watchlist_settings' table."
+        except:
+            print "No 'watchlist_settings' table for deletion found."
 
-    cursor.execute("DELETE FROM system WHERE name='watchlist_values'")
-    print "Deleted watchlist version entry from system table."
+    if 'system' in tables:
+        cursor.execute("DELETE FROM system WHERE name='watchlist_values'")
+        print "Deleted watchlist version entry from system table."
+
     print "Finished."
 
 
