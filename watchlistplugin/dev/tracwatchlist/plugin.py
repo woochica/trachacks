@@ -45,8 +45,6 @@ from  trac.web.href          import  Href
 from  trac.wiki.model        import  WikiPage
 from  trac.util.datefmt      import  to_timestamp
 
-from  trac.prefs.api         import  IPreferencePanelProvider
-
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
 from  tracwatchlist.render   import  render_property_diff
@@ -128,32 +126,6 @@ class WatchlistPlugin(Component):
             self.log.debug("WS! " + str(ee))
             self.wsub = None
 
-    # IPreferencePanelProvider methods
-    def get_preference_panels(self, req):
-        """Return a list of available preference panels.
-        
-        The items returned by this function must be tuple of the form
-        `(panel, label)`.
-        """
-        user  = to_unicode( req.authname )
-        if not user or user == 'anonymous':
-          return []
-        return [('watchlist',_("Watchlist"))]
-
-    def render_preference_panel(self, req, panel):
-        """Process a request for a preference panel.
-        
-        This function should return a tuple of the form `(template, data)`,
-        where `template` is the name of the template to use and `data` is the
-        data to be passed to the template.
-        """
-        settings = self.get_settings( req.authname )
-
-        if req.method == 'POST':
-            self._handle_settings(req, settings);
-            req.redirect(req.href.prefs(panel))
-
-        return ('watchlist_prefs_main.html', { 'settings': settings['useroptions'], 'options': self.OPTIONS, 'realms': self.realms })
 
     def _handle_settings(self, req, settings):
         newoptions = req.args.get('options',[])
