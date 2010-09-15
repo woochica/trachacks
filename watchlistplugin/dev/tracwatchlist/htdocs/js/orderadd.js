@@ -47,6 +47,7 @@ $(document).ready(function(){
   $("#preferences form #resettodefault").click(function(){
     form = $("#preferences form");
     $(form).find("input[name=action]").val("defaultsettings");
+    wlprefsubmit(1);
     $(form).submit();
     return false;
   });
