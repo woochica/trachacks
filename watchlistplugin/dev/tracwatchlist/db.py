@@ -174,11 +174,16 @@ class WatchlistDataBase(Component):
         valuelist = cursor.fetchone()
         try:
             return int(valuelist[0])
-        except AttributeError:
+        except (AttributeError, TypeError):
             self.log.info("No value for 'watchlist_version' found in 'system' table")
             return 0
         except ValueError, e:
             self.log.error("Invalid value found for 'watchlist_version' found in system table: " + unicode(e))
+            self.log.info("Value for 'watchlist_version' will be set to 0")
+            self.set_version(0, db)
+            return 0
+        except Exception, e:
+            self.log.info("Unknown error when trying to read 'watchlist_version' from 'system' table: " + unicode(e))
             self.log.info("Value for 'watchlist_version' will be set to 0")
             self.set_version(0, db)
             return 0
