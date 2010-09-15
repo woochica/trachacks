@@ -110,7 +110,6 @@ class WatchlistPlugin(Component):
           assert realm not in self.realms
           self.realms.append(realm)
           self.realm_handler[realm] = provider
-          #self.log.debug("realm: %s %s" % (realm, str(provider)))
 
       try:
           # Import methods from WatchSubscriber of the AnnouncerPlugin
@@ -139,7 +138,6 @@ class WatchlistPlugin(Component):
             settings['useroptions'].update( usersettings['useroptions'] )
             del usersettings['useroptions']
         settings.update( usersettings )
-        self.log.debug("WL ABC = " + unicode(settings))
         return settings
 
     def is_notify(self, req, realm, resid):
@@ -225,11 +223,7 @@ class WatchlistPlugin(Component):
            Only saving of all user settings is supported at the moment."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.log = self.log
         options = settings['useroptions']
-        self.log.debug("WL settings.keys: " + unicode(settings.keys()))
-        self.log.debug("WL options: " + unicode(options))
-        cursor.log = self.log
 
         settingsstr = "&".join([ "=".join([k,unicode(v)])
                             for k,v in options.iteritems()])
@@ -407,7 +401,6 @@ class WatchlistPlugin(Component):
               new_res.extend(set(reses).difference(alw_res))
 
           if new_res:
-            #cursor.log = self.log
             cursor.executemany("""
               INSERT
                 INTO watchlist (wluser, realm, resid)
