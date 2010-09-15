@@ -8,7 +8,8 @@ from trac.versioncontrol.api import RepositoryManager
 
 from genshi.filters.transform import Transformer
 
-    
+from trac_browser_svn_ops.svn_fs import SubversionWriter
+
 class TracBrowserOps(Component):
     implements(ITemplateProvider, ITemplateStreamFilter, IRequestFilter)
     
@@ -66,15 +67,23 @@ class TracBrowserOps(Component):
             filename = req.args.get('bsop_upload_file').filename
             file_data = req.args.get('bsop_upload_file').value # or .file for fo
             commit_msg = req.args.get('bsop_upload_commit')
-            repos = RepositoryManager(self.env).get_repository(None)
-            repos_path = '/' + req.args.get('path') + filename
+            self.log.debug('Received file %s, %i bytes', 
+                           filename, len(file_data))
             
+            repos = RepositoryManager(self.env).get_repository(None)
+            #repos_path = '/' + req.args.get('path') + '/' + filename
+            repos_path=filename
+            self.log.debug('repos_path %s', repos_path)
             try:
-                node = repos.get_node(repos_path.encode('utf-8'), None)
-                self.log.debug('Node %s:%s', node.created_path, node.created_rev)
-                rev = node.set_content(file_data, commit_msg.encode('utf-8'))
-                repo.sync()
+                self.log.debug('Writing file %s to repository %s', 
+                              filename, repos)
+                svn_writer = SubversionWriter(repos)
+                rev = svn_writer.put_content(repos_path, file_data, filename,
+                                             commit_msg)
+                #self.log.debug('Syncing repository')
+                #repos.sync()
             finally:
+                self.log.debug('Closing repository')
                 repos.close()
                 
         return handler
