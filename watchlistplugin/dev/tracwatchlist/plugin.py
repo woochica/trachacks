@@ -33,7 +33,7 @@ from  trac.db                import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model      import  Ticket
 #from  trac.ticket.web_ui     import  TicketModule
 from  trac.ticket.api        import  TicketSystem
-from  trac.util.datefmt      import  pretty_timedelta, to_datetime
+from  trac.util.datefmt      import  pretty_timedelta, to_datetime, datetime, utc
 from  trac.util.text         import  to_unicode
 from  trac.web.api           import  IRequestFilter, IRequestHandler, \
                                      RequestDone, HTTPNotFound, HTTPBadRequest
@@ -58,6 +58,15 @@ except ImportError:
     LC_TIME = None
     def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
         return trac_format_datetime(t, format, tzinfo)
+
+try:
+    from  trac.util.datefmt  import  to_utimestamp
+    def current_timestamp():
+        return to_utimestamp( datetime.now(utc) )
+except ImportError:
+    from  trac.util.datefmt  import  to_timestamp
+    def current_timestamp():
+        return to_timestamp( datetime.now(utc) )
 
 def ensure_tuple( var ):
     """Ensures that variable is a tuple, even if its a scalar"""
@@ -559,6 +568,26 @@ class WatchlistPlugin(Component):
           raise RequestDone
 
         if action == "view":
+            # = Last visited and viewed timestamps =
+            # == Legend ==
+            #  ''last viewed'':: The last time the watchlist was viewed, which
+            #      can happen several times in a row e.g. when the user changes
+            #      preferences or adds/deletes new resources.
+            #  ''last visited'':: The last time the watchlist was visited, i.e.
+            #      was browsed to from a different location.
+            if not onwatchlistpage:
+                # If coming to the watchlist page the last visit is the last time the 
+                # watchlist was viewed
+                req.session['watchlist_last_visit'] = req.session.get('watchlist_last_view', u'0')
+            # The watchlist got last viewed: NOW!
+            req.session['watchlist_last_view'] = unicode(current_timestamp())
+            # Get last visit, defaults to 0 (start of the epoch)
+            try:
+                wldict['last_visit'] = int(req.session['watchlist_last_visit'])
+            except:
+                wldict['last_visit'] = 0
+            ###
+
             for (xrealm,xhandler) in self.realm_handler.iteritems():
               if xhandler.has_perm(xrealm, req.perm):
                 wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
