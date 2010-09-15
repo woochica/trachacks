@@ -18,8 +18,7 @@ $(function() {
 				/* TODO Validation */
 				
 				if (bValid) {
-					// TODO Actually send the file 
-					$(this).dialog('close');
+					$('#bsop_upload_form').trigger('submit');
 				}
 			},
 			Cancel: function() {
