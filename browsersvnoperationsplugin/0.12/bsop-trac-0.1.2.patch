@@ -1,0 +1,76 @@
+Index: trac/versioncontrol/api.py
+===================================================================
+--- trac/versioncontrol/api.py	(revision 10103)
++++ trac/versioncontrol/api.py	(working copy)
+@@ -709,6 +709,11 @@
+                     msg=msg, path=path, rev=rev)
+         ResourceNotFound.__init__(self, msg, _('No such node'))
+ 
++class WrongNode(TracError):
++    def __init__(self, path, rev):
++        TracError.__init__(self, _('Node %(path)s %(rev)s could not be used',
++                                   path=path, rev=rev),
++                                 _('Node inapplicable'))
+ 
+ class Repository(object):
+     """Base class for a repository provided by a version control system."""
+@@ -966,6 +971,9 @@
+         """
+         raise NotImplementedError
+ 
++    def set_entries(self, content, commit_msg):
++        raise NotImplementedError
++
+     def get_entries(self):
+         """Generator that yields the immediate child entries of a directory.
+ 
+Index: trac/versioncontrol/svn_fs.py
+===================================================================
+--- trac/versioncontrol/svn_fs.py	(revision 10103)
++++ trac/versioncontrol/svn_fs.py	(working copy)
+@@ -680,7 +680,12 @@
+         else:
+             self.root = fs.revision_root(self.fs_ptr, rev, self.pool())
+         node_type = fs.check_path(self.root, self._scoped_path_utf8, pool)
+-        if not node_type in _kindmap:
++        if node_type == core.svn_node_none:
++            self.created_rev = 0
++            self.created_path = self._scoped_path_utf8
++            self.rev = self.created_rev
++            node_type = core.svn_node_file
++        elif not node_type in _kindmap:
+             raise NoSuchNode(path, rev)
+         cp_utf8 = fs.node_created_path(self.root, self._scoped_path_utf8, pool)
+         cp = _from_svn(cp_utf8)
+@@ -711,6 +716,31 @@
+         s._pool = self.pool
+         return s
+ 
++    def set_content(self, content, commit_msg):
++        # TODO Permissions
++
++        rev = fs.youngest_rev(repos.fs(self.repos), self.pool())
++        
++        # TODO Hardcoded username
++        txn = repos.fs_begin_txn_for_commit(self.repos, rev, 'alex',
++                                            commit_msg, self.pool())
++        root = fs.txn_root(txn, self.pool())
++        
++        kind = fs.check_path(root, self._scoped_path_utf8, self.pool())
++        
++        if kind == core.svn_node_none:
++            fs.make_file(root, fname)
++        elif kind == core.svn_node_file:
++            pass
++        else:
++            raise NodeError(self._scoped_path_utf8, rev)
++        
++        handler, baton = fs.apply_textdelta(root, self._scoped_path_utf8, 
++                                            None, None, self.pool())
++        delta.svn_txdelta_send_string(content, handler, baton, self.pool())
++        
++        return repos.fs_commit_txn(self.repos, txn, self.pool())
++
+     def get_entries(self):
+         if self.isfile:
+             return
