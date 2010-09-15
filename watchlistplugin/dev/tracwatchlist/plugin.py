@@ -33,7 +33,8 @@ from  trac.db                import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model      import  Ticket
 #from  trac.ticket.web_ui     import  TicketModule
 from  trac.ticket.api        import  TicketSystem
-from  trac.util.datefmt      import  pretty_timedelta, to_datetime, datetime, utc
+from  trac.util.datefmt      import  pretty_timedelta, to_datetime, \
+                                     datetime, utc, to_timestamp
 from  trac.util.text         import  to_unicode
 from  trac.web.api           import  IRequestFilter, IRequestHandler, \
                                      RequestDone, HTTPNotFound, HTTPBadRequest
@@ -43,7 +44,6 @@ from  trac.web.chrome        import  ITemplateProvider, add_ctxtnav, \
 from  trac.util.text         import  obfuscate_email_address
 from  trac.web.href          import  Href
 from  trac.wiki.model        import  WikiPage
-from  trac.util.datefmt      import  to_timestamp
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
@@ -59,14 +59,8 @@ except ImportError:
     def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
         return trac_format_datetime(t, format, tzinfo)
 
-try:
-    from  trac.util.datefmt  import  to_utimestamp
-    def current_timestamp():
-        return to_utimestamp( datetime.now(utc) )
-except ImportError:
-    from  trac.util.datefmt  import  to_timestamp
-    def current_timestamp():
-        return to_timestamp( datetime.now(utc) )
+def current_timestamp():
+    return to_timestamp( datetime.now(utc) )
 
 def ensure_tuple( var ):
     """Ensures that variable is a tuple, even if its a scalar"""

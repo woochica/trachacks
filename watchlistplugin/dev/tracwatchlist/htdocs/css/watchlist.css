@@ -57,8 +57,10 @@ td.name, td.version, td.changetime, td.author, td.commentnum, td.id, td.notify, 
 }
 */
 
+/* Switched on for ungoing tested */
 .itime {
-    display:none;
+    margin-right: 1ex;
+    /* display:none; */
 }
 
 span.notifyon {

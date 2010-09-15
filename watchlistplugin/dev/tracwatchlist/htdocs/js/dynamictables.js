@@ -41,85 +41,37 @@ function eraseCookie(name) {
 /// End of Cookie Code
 
 
-// Store datetime filter inputs on unload
-jQuery(window).unload(function() {
-    $(".datetimefilter").each(function(){
-        dtid = $(this).attr('id');
-        $(this).find("input").each(function(){
-            var name = dtid + '/' + $(this).attr('name');
-            var value = $(this).val();
-            if ($(this).is("input[type=checkbox]")) {
-                value = $(this).is(":checked") ? 'checked' : '';
-            }
-            createCookie(name,value,90,window.location.pathname);
-        });
-    });
-});
-
-// Restore datetime filter inputs on load
-jQuery(document).ready(function() {
-    $(".datetimefilter").each(function(){
-        dtid = $(this).attr('id');
-        $(this).find("input").each(function(){
-            var name = dtid + '/' + $(this).attr('name');
-            var value = readCookie(name);
-            if ($(this).is("input[type=checkbox]")) {
-                $(this).attr('checked', value =='checked' );
-                $(this).change();
-            }
-            else {
-                $(this).val(value);
-                $(this).keyup();
-            }
-        });
-    });
-});
-
 $.fn.dataTableExt.afnFiltering.push(
     function( oSettings, aData, iDataIndex ) {
+        var iColumn = 1;
         var table = $('#'+ oSettings.sTableId);
         var checked = $(table).find('input[name=sincelastvisit]').is(':checked');
-        if ( !checked ) {
-            return true;
-        }
 
-        var iColumn = 1;
         var n = document.createElement('div');
         n.innerHTML = aData[iColumn];
-        timestamp = $(n).find('span.itime').text();
+        timestamp = $(n).find('span.itime').text() * 1;
+
         if ( !timestamp ) {
             return true;
         }
-        lastvisit = $('#last_visit').val();
-        if ( timestamp < lastvisit ) {
+        if ( checked && timestamp < $('#last_visit').val() ) {
             return false;
         }
 
-        return true;
-
-
-        var iMin = $(table).find('input[name=from-datetime]').val();
-        var iMax = $(table).find('input[name=to-datetime]').val();
-        alert( "iMin = " + iMin + ", iMax = " + iMax )
+        var iMin = $(table).find('input[name=from-datetime]').val() * 1;
+        var iMax = $(table).find('input[name=to-datetime]').val() * 1;
         if ( !iMin && !iMax ) {
             return true;
         }
-        return false;
-        var iColumn = 1;
-        var iMin = document.getElementById('min').value * 1;
-        var iMax = document.getElementById('max').value * 1;
-        
-        var iVersion = aData[iColumn] == "-" ? 0 : aData[iColumn]*1;
-        if (0) { }
-        else if ( iMin == "" && iVersion < iMax )
+        else if ( !iMin && timestamp < iMax )
         {
             return true;
         }
-        else if ( iMin < iVersion && "" == iMax )
+        else if ( iMin < timestamp && !iMax )
         {
             return true;
         }
-        else if ( iMin < iVersion && iVersion < iMax )
+        else if ( iMin < timestamp && timestamp < iMax )
         {
             return true;
         }
@@ -204,10 +156,39 @@ jQuery(document).ready(function() {
       $(this).find("input.filter").val( oSettings.aoPreSearchCols[i].sSearch );
     });
 
-    $(this).find("input[name=sincelastvisit]").change( function () {
-      oTable.fnDraw();
+    $(this).find("span.datetimefilter").each( function () {
+        var dtfilter = this;
+        $(this).find("input[name=sincelastvisit]").change( function () {
+            if ( $(this).is(':checked') ) {
+                $(dtfilter).find("input[type=text]").attr('disabled','disabled');
+            } else {
+                $(dtfilter).find("input[type=text]").removeAttr('disabled');
+            }
+            oTable.fnDraw();
+        });
+        $(this).find("input[type=text]").keyup( function () {
+            oTable.fnDraw();
+        });
     });
   });
+
+    // Restore datetime filter inputs on load
+    // Must be after 'datetimefilter' handler are in place
+    $(".datetimefilter").each(function(){
+        dtid = $(this).attr('id');
+        $(this).find("input").each(function(){
+            var name = dtid + '/' + $(this).attr('name');
+            var value = readCookie(name);
+            if ($(this).is("input[type=checkbox]")) {
+                $(this).attr('checked', value =='checked' );
+                $(this).change();
+            }
+            else {
+                $(this).val(value);
+                $(this).keyup();
+            }
+        });
+    });
 });
 
 /* Remove column sorting input when preferences are updated.
@@ -228,4 +209,19 @@ function wlprefsubmit(force){
 }
 
 
+
+// Store datetime filter inputs on unload
+jQuery(window).unload(function() {
+    $(".datetimefilter").each(function(){
+        dtid = $(this).attr('id');
+        $(this).find("input").each(function(){
+            var name = dtid + '/' + $(this).attr('name');
+            var value = $(this).val();
+            if ($(this).is("input[type=checkbox]")) {
+                value = $(this).is(":checked") ? 'checked' : '';
+            }
+            createCookie(name,value,90,window.location.pathname);
+        });
+    });
+});
 
