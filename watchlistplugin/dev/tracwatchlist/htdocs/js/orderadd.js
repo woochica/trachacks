@@ -37,6 +37,16 @@ $(document).ready(function(){
     wlprefsubmit();
     return true;
   });
+  $("#preferences form :reset").click(function(){
+    $(".orderadd select").each(function(){
+        $(this).empty();
+        $(this).append( $(this).data('original options') );
+    });
+    return true;
+  });
+  $(".orderadd select").each(function(){
+      $(this).data('original options', $(this).find("option").clone() );
+  });
   $(".orderadd").each(function(){
     realm = $(this).attr("id").replace("_fields","");
     $(this).data('realm', realm);
