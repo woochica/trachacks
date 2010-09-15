@@ -78,7 +78,7 @@
                       class="${k}">
                       <py:choose test="">
                       <py:when test="k == 'changetime'">
-                        ${datetimefilter()}
+                        ${datetimefilter('wiki_' + k)}
                       </py:when>
                       <py:otherwise>
                         <input py:if="k not in attr" name="${k}" type="text" size="4"

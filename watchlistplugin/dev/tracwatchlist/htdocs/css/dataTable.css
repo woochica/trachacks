@@ -273,8 +273,8 @@ tfoot input.filter {
 	color: #444;
 }
 
-tfoot .time       input.filter,
-tfoot .changetime input.filter {
+tfoot .time       input[type=text],
+tfoot .changetime input[type=text] {
   width: 40%;
 }
 

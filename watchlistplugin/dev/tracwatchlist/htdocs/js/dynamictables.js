@@ -6,6 +6,74 @@ function wldeleterow(tr, table) {
   $(table).dataTable().fnDeleteRow(tr);
 }
 
+// Cookie Code taken from http://www.quirksmode.org/js/cookies.html
+// 15th Sep 2010
+// Changes: added path argument
+function createCookie(name,value,days,path) {
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime()+(days*24*60*60*1000));
+        var expires = "; expires="+date.toGMTString();
+    }
+    else var expires = "";
+    if ( !path ) {
+        path = "/";
+    }
+    document.cookie = name+"="+value+expires+"; path=" + path;
+}
+
+function readCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0;i < ca.length;i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ')
+            c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0)
+            return c.substring(nameEQ.length,c.length);
+    }
+    return null;
+}
+
+function eraseCookie(name) {
+    createCookie(name,"",-1);
+}
+/// End of Cookie Code
+
+
+// Store datetime filter inputs on unload
+jQuery(window).unload(function() {
+    $(".datetimefilter").each(function(){
+        dtid = $(this).attr('id');
+        $(this).find("input").each(function(){
+            var name = dtid + '/' + $(this).attr('name');
+            var value = $(this).val();
+            if ($(this).is("input[type=checkbox]")) {
+                value = $(this).is(":checked") ? 'checked' : '';
+            }
+            createCookie(name,value,90,window.location.pathname);
+        });
+    });
+});
+
+// Restore datetime filter inputs on load
+jQuery(document).ready(function() {
+    $(".datetimefilter").each(function(){
+        dtid = $(this).attr('id');
+        $(this).find("input").each(function(){
+            var name = dtid + '/' + $(this).attr('name');
+            var value = readCookie(name);
+            if ($(this).is("input[type=checkbox]")) {
+                $(this).attr('checked', value =='checked' );
+                $(this).change();
+            }
+            else {
+                $(this).val(value);
+                $(this).keyup();
+            }
+        });
+    });
+});
 
 $.fn.dataTableExt.afnFiltering.push(
     function( oSettings, aData, iDataIndex ) {
@@ -58,6 +126,8 @@ $.fn.dataTableExt.afnFiltering.push(
         return false;
     }
 );
+
+
 
 jQuery(document).ready(function() {
   // Dynamic Table
@@ -134,7 +204,7 @@ jQuery(document).ready(function() {
       $(this).find("input.filter").val( oSettings.aoPreSearchCols[i].sSearch );
     });
 
-    $(this).find("input[name=sincelastvisit]").click( function () {
+    $(this).find("input[name=sincelastvisit]").change( function () {
       oTable.fnDraw();
     });
   });

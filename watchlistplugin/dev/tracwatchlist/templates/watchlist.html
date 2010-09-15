@@ -70,10 +70,12 @@
   <body>
     <div id="content" class="watchlist">
         <input type="text" id="last_visit" name="last_visit" value="$last_visit"/>
-        <py:def function="datetimefilter">
+        <py:def function="datetimefilter(id=None)">
+          <span id="$id" class="datetimefilter">
             <input type="checkbox" name="sincelastvisit" value="" title="${_('Since last visit of the watchlist page')}" />
-            <input name="from-datetime" type="text" size="4" class="filter"
-            />-<input name="to-datetime" type="text" size="4" class="filter" />
+            <input name="from-datetime" type="text" size="4"
+            />-<input name="to-datetime" type="text" size="4" />
+          </span>
         </py:def>
         <py:def function="ackmsg">
               <input class="ackmsg" type="button" value="Ok" />
