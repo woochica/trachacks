@@ -1,0 +1,33 @@
+/* overwrite padding-left rules from browser.css */
+div.context-menu div a {
+  padding-left: 0 !important;
+}
+div.context-menu {
+  float: right;
+}
+div.context-menu span {
+  display: block;
+  cursor: pointer;
+  padding: 0 10px;
+}
+div.context-menu > div {
+  width: 200px;
+  margin: 0;
+  padding: 1ex;
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  white-space: nowrap !important;
+}
+div.context-menu > div > div > a {
+  display: block;
+}
+div.context-menu > div a:hover {
+  background-color: #eee !important;
+}
+div.context-menu .separator {
+  padding-top: .5ex;
+  margin-bottom: .5ex;
+  border-bottom: 1px inset #555;
+}
