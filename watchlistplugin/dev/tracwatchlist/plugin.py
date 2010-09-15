@@ -130,23 +130,6 @@ class WatchlistPlugin(Component):
             self.log.debug("WS! " + str(ee))
             self.wsub = None
 
-
-    def _handle_settings(self, req, settings):
-        newoptions = req.args.get('options',[])
-        for k in settings['useroptions'].keys():
-          settings['useroptions'][k] = k in newoptions
-        for realm in self.realms:
-          try:
-            settings[realm + '_fields'] = req.args.get(realm + '_fields')
-          except:
-            pass
-        self._save_user_settings(req.authname, settings)
-        # Clear session cache for nav items
-        try:
-            del req.session['watchlist_display_notify_navitems']
-        except:
-            pass
-
     def get_settings(self, user):
         settings = {}
         settings['useroptions'] = dict([
@@ -331,8 +314,21 @@ class WatchlistPlugin(Component):
         options = settings['useroptions']
         # Needed here to get updated settings
         if action == "save":
-          self._handle_settings(req, settings)
-          action = "view"
+            newoptions = req.args.get('options',[])
+            for k in settings['useroptions'].keys():
+                settings['useroptions'][k] = k in newoptions
+            for realm in self.realms:
+                settings[realm + '_fields'] = req.args.get(realm + '_fields', tuple())
+            self._save_user_settings(req.authname, settings)
+
+            # Clear session cache for nav items
+            try:
+                # Clear session cache for nav items, so that the post processor
+                # rereads the settings
+                del req.session['watchlist_display_notify_navitems']
+            except:
+                pass
+            action = "view"
 
         settings = self.get_settings( user )
         options = settings['useroptions']
