@@ -2,7 +2,7 @@ import pkg_resources
 from trac.core import *
 from trac.perm import PermissionSystem
 
-from trac.util import get_pkginfo, get_module_path, sorted
+from trac.util import sorted
 from trac.config import Option
 from trac.admin.api import IAdminPanelProvider
 
