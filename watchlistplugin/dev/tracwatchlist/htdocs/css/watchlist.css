@@ -174,3 +174,7 @@ td .moretext, td .less {
   display: none;
 }
 
+input#resettodefault {
+  margin-left: 5em;
+}
+

@@ -44,6 +44,12 @@ $(document).ready(function(){
     });
     return true;
   });
+  $("#preferences form #resettodefault").click(function(){
+    form = $("#preferences form");
+    $(form).find("input[name=action]").val("defaultsettings");
+    $(form).submit();
+    return false;
+  });
   $(".orderadd select").each(function(){
       $(this).data('original options', $(this).find("option").clone() );
   });

@@ -218,6 +218,22 @@ class WatchlistPlugin(Component):
     def match_request(self, req):
         return req.path_info.startswith("/watchlist")
 
+    def _delete_user_settings(self, user):
+        """Deletes all user settings in 'watchlist_settings' table.
+           This can be done to reset all settings to the default values
+           and to resolve possible errors with wrongly stored settings.
+           This can happen while using the develop version of this plugin."""
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        cursor.execute("""
+          DELETE
+            FROM watchlist_settings
+           WHERE wluser=%s
+        """, (user,))
+        db.commit()
+        return
+
     def _save_user_settings(self, user, settings):
         """Saves user settings in 'watchlist_settings' table.
            Only saving of all user settings is supported at the moment."""
@@ -305,6 +321,9 @@ class WatchlistPlugin(Component):
         wldict = req.args.copy()
         wldict['action'] = action
 
+        onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
+                          req.href.watchlist()) != -1
+
         settings = self.get_settings( user )
         options = settings['useroptions']
         # Needed here to get updated settings
@@ -323,6 +342,11 @@ class WatchlistPlugin(Component):
                 del req.session['watchlist_display_notify_navitems']
             except:
                 pass
+            action = "view"
+        elif action == "defaultsettings":
+            # Only execute if sent using the watchlist preferences form
+            if onwatchlistpage and req.method == 'POST':
+                self._delete_user_settings(req.authname)
             action = "view"
 
         settings = self.get_settings( user )
@@ -352,8 +376,6 @@ class WatchlistPlugin(Component):
                 cols = wldict['default_fields'].get(r,[])
             wldict['active_fields'][r] = cols
 
-        onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
-                          req.href.watchlist()) != -1
         redirectback = options['stay_at_resource'] and single and not onwatchlistpage
         redirectback_notify = options['stay_at_resource_notify'] and single and not \
                               onwatchlistpage
