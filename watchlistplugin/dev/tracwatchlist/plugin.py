@@ -135,8 +135,9 @@ class WatchlistPlugin(Component):
         settings['useroptions'] = dict([
             ( name,self.config.getbool('watchlist',name) ) for name in self.OPTIONS.keys() ])
         usersettings = self._get_user_settings(user)
-        settings['useroptions'].update( usersettings['useroptions'] )
-        del usersettings['useroptions']
+        if 'useroptions' in usersettings:
+            settings['useroptions'].update( usersettings['useroptions'] )
+            del usersettings['useroptions']
         settings.update( usersettings )
         self.log.debug("WL ABC = " + unicode(settings))
         return settings
