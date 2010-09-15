@@ -67,25 +67,27 @@ class TracBrowserOps(Component):
             filename = req.args.get('bsop_upload_file').filename
             file_data = req.args.get('bsop_upload_file').value # or .file for fo
             commit_msg = req.args.get('bsop_upload_commit')
-            self.log.debug('Received file %s, %i bytes', 
+            self.log.debug('Received file %s with %i bytes', 
                            filename, len(file_data))
+            repos_path = '/'.join([req.args.get('path'), filename])
             
             repos = RepositoryManager(self.env).get_repository(None)
-            #repos_path = '/' + req.args.get('path') + '/' + filename
-            repos_path=filename
-            self.log.debug('repos_path %s', repos_path)
+            
             try:
-                self.log.debug('Writing file %s to repository %s', 
-                              filename, repos)
+                repos_path = repos.normalize_path(repos_path)
+                self.log.debug('Writing file %s to %s in %s', 
+                               filename, repos_path, repos)
                 svn_writer = SubversionWriter(repos)
                 rev = svn_writer.put_content(repos_path, file_data, filename,
                                              commit_msg)
-                #self.log.debug('Syncing repository')
-                #repos.sync()
             finally:
                 self.log.debug('Closing repository')
                 repos.close()
-                
+            
+            # Perform http redirect back to this page in order to rerender
+            # template according to new repository state
+            req.redirect(req.href(req.path_info))
+            
         return handler
 
     def post_process_request(self, req, template, data, content_type):
