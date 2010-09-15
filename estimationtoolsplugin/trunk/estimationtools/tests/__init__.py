@@ -9,4 +9,6 @@ def test_suite():
     suite.addTest(makeSuite(estimationtools.tests.hoursremaining.HoursRemainingTestCase))
     import estimationtools.tests.workloadchart
     suite.addTest(makeSuite(estimationtools.tests.workloadchart.WorkloadChartTestCase))
+    import estimationtools.tests.utils
+    suite.addTest(makeSuite(estimationtools.tests.utils.EstimationToolsBaseTestCase))
     return suite

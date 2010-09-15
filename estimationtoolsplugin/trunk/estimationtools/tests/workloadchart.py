@@ -48,3 +48,9 @@ class WorkloadChartTestCase(unittest.TestCase):
                 'chd=t%3A10%2C30%2C20&amp;chf=bg%2Cs%2C00000000&amp;'
                 'chco=ff9900&amp;chl=A+10h%7CC+30h%7CB+20h&amp;chs=400x100&amp;'
                 'cht=p3&amp;chtt=Workload+60h+%28%7E1+workdays+left%29" alt="Workload Chart (client)"/>')
+
+    def test_username_obfuscation(self):
+        workload_chart = WorkloadChart(self.env)
+        self._insert_ticket('10', 'user@example.org')
+        result = workload_chart.render_macro(self.req, "", "milestone=milestone1")
+        self.failUnless("&amp;chl=user%40%E2%80%A6+10h&amp;" in str(result))

@@ -179,3 +179,13 @@ class BurndownChartTestCase(unittest.TestCase):
         self._change_ticket_estimations(ticket1, {day2: 'IGNOREME', day3:'5'})
         timetable = chart._calculate_timetable(options, query_args, self.req)
         self.assertEqual(timetable, {day1: Decimal(10), day2: Decimal(10), day3: Decimal(5)})
+
+    def test_url_encode(self):
+        chart = BurndownChart(self.env)
+        t = Ticket(self.env, self._insert_ticket('12'))
+        result = chart.render_macro(self.req, 'BurndownChart',
+                        "milestone=milestone1, startdate=2010-09-15, enddate=2010-09-20")
+        self.failUnless("&amp;chtt=milestone1&amp;" in str(result))
+        result = chart.render_macro(self.req, 'BurndownChart',
+                        "milestone=One & Two, startdate=2010-09-15, enddate=2010-09-20")
+        self.failUnless("&amp;chtt=One+%26+Two&amp;" in str(result))
