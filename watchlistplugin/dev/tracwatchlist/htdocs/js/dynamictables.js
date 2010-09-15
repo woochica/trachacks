@@ -6,6 +6,59 @@ function wldeleterow(tr, table) {
   $(table).dataTable().fnDeleteRow(tr);
 }
 
+
+$.fn.dataTableExt.afnFiltering.push(
+    function( oSettings, aData, iDataIndex ) {
+        var table = $('#'+ oSettings.sTableId);
+        var checked = $(table).find('input[name=sincelastvisit]').is(':checked');
+        if ( !checked ) {
+            return true;
+        }
+
+        var iColumn = 1;
+        var n = document.createElement('div');
+        n.innerHTML = aData[iColumn];
+        timestamp = $(n).find('span.itime').text();
+        if ( !timestamp ) {
+            return true;
+        }
+        lastvisit = $('#last_visit').val();
+        if ( timestamp < lastvisit ) {
+            return false;
+        }
+
+        return true;
+
+
+        var iMin = $(table).find('input[name=from-datetime]').val();
+        var iMax = $(table).find('input[name=to-datetime]').val();
+        alert( "iMin = " + iMin + ", iMax = " + iMax )
+        if ( !iMin && !iMax ) {
+            return true;
+        }
+        return false;
+        var iColumn = 1;
+        var iMin = document.getElementById('min').value * 1;
+        var iMax = document.getElementById('max').value * 1;
+        
+        var iVersion = aData[iColumn] == "-" ? 0 : aData[iColumn]*1;
+        if (0) { }
+        else if ( iMin == "" && iVersion < iMax )
+        {
+            return true;
+        }
+        else if ( iMin < iVersion && "" == iMax )
+        {
+            return true;
+        }
+        else if ( iMin < iVersion && iVersion < iMax )
+        {
+            return true;
+        }
+        return false;
+    }
+);
+
 jQuery(document).ready(function() {
   // Dynamic Table
   $("table.watchlist").each(function(){
@@ -80,15 +133,19 @@ jQuery(document).ready(function() {
     $(this).find("tfoot th").each( function (i) {
       $(this).find("input.filter").val( oSettings.aoPreSearchCols[i].sSearch );
     });
+
+    $(this).find("input[name=sincelastvisit]").click( function () {
+      oTable.fnDraw();
+    });
   });
 });
 
 /* Remove column sorting input when preferences are updated.
  * This is because the column order could have changed.
  * */
-function wlprefsubmit(){
+function wlprefsubmit(force){
   $("fieldset.orderadd").each( function () {
-    if ($(this).data('modified')) {
+    if (force || $(this).data('modified')) {
       realm = $(this).data('realm');
       table = $("table#" + realm + "list");
       var oTable = $(table).dataTable();
@@ -99,4 +156,6 @@ function wlprefsubmit(){
     }
   });
 }
+
+
 
