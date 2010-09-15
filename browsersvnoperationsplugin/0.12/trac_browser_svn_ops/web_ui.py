@@ -67,11 +67,11 @@ class TracBrowserOps(Component):
             file_data = req.args.get('bsop_upload_file').value # or .file for fo
             commit_msg = req.args.get('bsop_upload_commit')
             repos = RepositoryManager(self.env).get_repository(None)
-            repos_path = req.args.get('path').rstrip('/') + filename
+            repos_path = '/' + req.args.get('path') + filename
             
             try:
                 node = repos.get_node(repos_path.encode('utf-8'), None)
-                self.log.debug('Node %s', node)
+                self.log.debug('Node %s:%s', node.created_path, node.created_rev)
                 rev = node.set_content(file_data, commit_msg.encode('utf-8'))
                 repo.sync()
             finally:

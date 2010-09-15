@@ -28,21 +28,52 @@ Index: trac/versioncontrol/svn_fs.py
 ===================================================================
 --- trac/versioncontrol/svn_fs.py	(revision 10103)
 +++ trac/versioncontrol/svn_fs.py	(working copy)
-@@ -680,7 +680,12 @@
+@@ -680,23 +680,29 @@
          else:
              self.root = fs.revision_root(self.fs_ptr, rev, self.pool())
          node_type = fs.check_path(self.root, self._scoped_path_utf8, pool)
 -        if not node_type in _kindmap:
 +        if node_type == core.svn_node_none:
 +            self.created_rev = 0
-+            self.created_path = self._scoped_path_utf8
-+            self.rev = self.created_rev
++            self.created_path = _from_svn(self._scoped_path_utf8)
 +            node_type = core.svn_node_file
 +        elif not node_type in _kindmap:
              raise NoSuchNode(path, rev)
-         cp_utf8 = fs.node_created_path(self.root, self._scoped_path_utf8, pool)
-         cp = _from_svn(cp_utf8)
-@@ -711,6 +716,31 @@
+-        cp_utf8 = fs.node_created_path(self.root, self._scoped_path_utf8, pool)
+-        cp = _from_svn(cp_utf8)
+-        cr = fs.node_created_rev(self.root, self._scoped_path_utf8, pool)
+-        # Note: `cp` differs from `path` if the last change was a copy,
+-        #        In that case, `path` doesn't even exist at `cr`.
+-        #        The only guarantees are:
+-        #          * this node exists at (path,rev)
+-        #          * the node existed at (created_path,created_rev)
+-        # Also, `cp` might well be out of the scope of the repository,
+-        # in this case, we _don't_ use the ''create'' information.
+-        if _is_path_within_scope(self.scope, cp):
+-            self.created_rev = cr
+-            self.created_path = _path_within_scope(self.scope, cp)
+         else:
+-            self.created_rev, self.created_path = rev, path
++            cp_utf8 = fs.node_created_path(self.root, 
++                                           self._scoped_path_utf8, pool)
++            cp = _from_svn(cp_utf8)
++            cr = fs.node_created_rev(self.root, self._scoped_path_utf8, pool)
++            # Note: `cp` differs from `path` if the last change was a copy,
++            #        In that case, `path` doesn't even exist at `cr`.
++            #        The only guarantees are:
++            #          * this node exists at (path,rev)
++            #          * the node existed at (created_path,created_rev)
++            # Also, `cp` might well be out of the scope of the repository,
++            # in this case, we _don't_ use the ''create'' information.
++            if _is_path_within_scope(self.scope, cp):
++                self.created_rev = cr
++                self.created_path = _path_within_scope(self.scope, cp)
++            else:
++                self.created_rev, self.created_path = rev, path
+         self.rev = self.created_rev
+         # TODO: check node id
+         Node.__init__(self, repos, path, self.rev, _kindmap[node_type])
+@@ -711,6 +717,31 @@
          s._pool = self.pool
          return s
  
