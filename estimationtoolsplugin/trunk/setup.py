@@ -16,5 +16,7 @@ setup(
         'trac.plugins': [
             'estimationtools = estimationtools'
         ]
-    }
+    },
+    test_suite = 'estimationtools.tests.test_suite',
+    tests_require = []
 )
