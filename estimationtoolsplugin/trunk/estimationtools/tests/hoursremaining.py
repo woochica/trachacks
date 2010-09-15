@@ -38,7 +38,7 @@ class HoursRemainingTestCase(unittest.TestCase):
         self._insert_ticket('20.1')
         self._insert_ticket('30')
         result = hoursRemaining.render_macro(self.req, "", "milestone=milestone1")
-        self.assertEqual(result, '60')
+        self.assertEqual(result, '60.1')
 
     def test_invalid(self):
         hoursRemaining = HoursRemaining(self.env)
@@ -56,7 +56,7 @@ class HoursRemainingTestCase(unittest.TestCase):
         self._insert_ticket('30')
         self._insert_ticket('30', status='closed')
         result = hoursRemaining.render_macro(self.req, "", "status!=closed, milestone=milestone1")
-        self.assertEqual(result, '60')
+        self.assertEqual(result, '60.1')
 
     def test_to_many_tickets(self):
         hoursRemaining = HoursRemaining(self.env)

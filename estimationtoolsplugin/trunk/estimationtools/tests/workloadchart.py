@@ -1,4 +1,5 @@
 from estimationtools.workloadchart import WorkloadChart
+from genshi.builder import tag
 from trac.test import EnvironmentStub, Mock, MockPerm
 from trac.ticket.model import Ticket
 from trac.web.href import Href
@@ -30,9 +31,10 @@ class WorkloadChartTestCase(unittest.TestCase):
         self._insert_ticket('20', 'B')
         self._insert_ticket('30', 'C')
         result = workload_chart.render_macro(self.req, "", "milestone=milestone1")
-        self.assertEqual(result, u'<img src="http://chart.apis.google.com/chart?chs=400x100&amp;'\
-                         'chf=bg,s,00000000&amp;chd=t:10,30,20&amp;cht=p3&amp;chtt=Workload 60h (1 workdays left)&amp;'\
-                         'chl=A 10h|C 30h|B 20h&amp;chco=ff9900" alt=\'Workload Chart\' />')
+        self.assertEqual(str(result), '<image src="http://chart.apis.google.com/chart?'
+                'chd=t%3A10%2C30%2C20&amp;chf=bg%2Cs%2C00000000&amp;chco=ff9900&amp;'
+                'chl=A+10h%7CC+30h%7CB+20h&amp;chs=400x100&amp;cht=p3&amp;'
+                'chtt=Workload+60h+%28%7E1+workdays+left%29" alt="Workload Chart (client)"/>')
 
     def test_invalid_value(self):
         workload_chart = WorkloadChart(self.env)
@@ -42,6 +44,7 @@ class WorkloadChartTestCase(unittest.TestCase):
         self._insert_ticket('30', 'C')
         self._insert_ticket('xxx', 'D')
         result = workload_chart.render_macro(self.req, "", "milestone=milestone1")
-        self.assertEqual(result, u'<img src="http://chart.apis.google.com/chart?chs=400x100&amp;'\
-                         'chf=bg,s,00000000&amp;chd=t:10,30,20&amp;cht=p3&amp;chtt=Workload 60h (1 workdays left)&amp;'\
-                         'chl=A 10h|C 30h|B 20h&amp;chco=ff9900" alt=\'Workload Chart\' />' )
+        self.assertEqual(str(result), '<image src="http://chart.apis.google.com/chart?'
+                'chd=t%3A10%2C30%2C20&amp;chf=bg%2Cs%2C00000000&amp;'
+                'chco=ff9900&amp;chl=A+10h%7CC+30h%7CB+20h&amp;chs=400x100&amp;'
+                'cht=p3&amp;chtt=Workload+60h+%28%7E1+workdays+left%29" alt="Workload Chart (client)"/>')
