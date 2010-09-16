@@ -75,6 +75,8 @@ class IniAdminPlugin(Component):
             value = self.env.config.get(page, option.name)
             # We assume the classes all end in "Option"
             type = option.__class__.__name__.lower()[:-6] or 'text'
+            if type == 'list' and not isinstance(value,basestring):
+                value = unicode(option.sep).join(list(value))
             option_data  = {'name': option.name, 'default': option.default,
                            'doc': Markup(doc), 'value': value, 'type': type}
             if type == 'extension':
