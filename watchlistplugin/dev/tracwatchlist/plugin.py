@@ -950,9 +950,11 @@ class TicketWatchlist(BasicWatchlist):
               ticketdict['author'] = render_elt(author),
           if 'changetime' in fields:
               changetime = ticket.time_changed
+              ichangetime = to_timestamp( changetime )
               ticketdict.update(
                   changetime       = format_datetime( changetime, locale=locale ),
-                  ichangetime      = to_timestamp( changetime ),
+                  ichangetime      = ichangetime,
+                  changedsincelastvisit = (last_visit < ichangetime and 1 or 0),
                   changetime_delta = pretty_timedelta( changetime ),
                   changetime_link  = req.href.timeline(precision='seconds',
                                      from_=trac_format_datetime ( changetime, 'iso8601')))

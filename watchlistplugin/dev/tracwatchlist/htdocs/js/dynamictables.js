@@ -116,9 +116,11 @@ jQuery(document).ready(function() {
     // Disabled sorting of marked columns (unwatch, notify, etc.)
     var aoColumns = [];
     $(this).find('thead th').each( function () {
+        /*
       if ( $(this).hasClass( 'hidden' ) ) {
         aoColumns.push( { "bSortable": false, "bSearchable": false, "bVisible": false } );
-      } else if ( $(this).hasClass( 'sorting_disabled' ) ) {
+      } else */
+      if ( $(this).hasClass( 'sorting_disabled' ) ) {
         aoColumns.push( { "bSortable": false, "bSearchable": false } );
       } else {
         aoColumns.push( null );

@@ -8,7 +8,7 @@
       i18n:domain="watchlist"
       py:strip="">
 
-  <div id="tickets">
+      <div id="tickets">
         <py:choose test="">
           <div class="system-message" py:when="'TICKET_VIEW' not in perm">
           <h2>${get_label(realm,1000)}</h2>
@@ -25,21 +25,32 @@
                   }">
               <thead>
                 <tr>
-                  <th py:for="k in active_fields[realm]"
-                      py:if="k != 'notify' or notifications"
+                  <py:for each="k in active_fields[realm]">
+                  <py:if test="k == 'changetime'">
+                    <th class="changedsincelastvisit hidden" />
+                  </py:if>
+                  <th py:if="k != 'notify' or notifications"
                       class="${k}" py:attrs="attr.get(k,{})">${available_fields[realm][k]}</th>
+                  <py:if test="k in ('changetime','time')">
+                    <th class="i${k} hidden" />
+                  </py:if>
+                  </py:for>
                 </tr>
               </thead>
               <tbody>
                   <td py:def="ticket_id" class="id">
                     <a href="${href('ticket', ticket.id)}"
                         title="${ticket.type}: ${ticket.summary} (${ticket.status}${ticket.status == 'closed' and ': ' + ticket.resolution or ''})"
-                      class="${ticket.status == 'closed' and 'closed'}">#${ticket.id}</a>
+                      class="${ticket.status == 'closed' and 'closed' or ''}">#${ticket.id}</a>
                   </td>
-                  <td py:def="ticket_changetime" class="changetime">
-                        <span class="itime">$ticket.ichangetime</span>$ticket.changetime
+                  <py:def function="ticket_changetime">
+                    <td class="changedsincelastvisit hidden">$ticket.changedsincelastvisit</td>
+                    <td class="changetime">
+                        $ticket.changetime
                         ${print_timedelta(ticket.changetime_delta, ticket.changetime_link)}
-                  </td>
+                    </td>
+                    <td class="ichangetime hidden">$ticket.ichangetime</td>
+                  </py:def>
                   <td py:def="ticket_time" class="time">
                         <span class="itime">$ticket.itime</span>$ticket.time
                         ${print_timedelta(ticket.time_delta, ticket.time_link)}
@@ -62,20 +73,27 @@
               </tbody>
               <tfoot py:if="options['dynamic_tables'] and options['individual_column_filtering']">
                 <tr>
-                  <th py:for="k in active_fields[realm]"
-                      py:if="k != 'notify' or notifications"
+                  <py:for each="k in active_fields[realm]">
+                  <py:if test="k == 'changetime'">
+                    <th class="changedsincelastvisit hidden" />
+                  </py:if>
+                  <th py:if="k != 'notify' or notifications"
                       class="${k}">
                       <py:choose test="">
-                      <py:when test="k in ('time','changetime')">
+                      <py:when test="k in ('changetime','time')">
                         ${datetimefilter(k,'ticket_' + k)}
                       </py:when>
                       <py:otherwise>
                         <input py:if="k not in attr" name="${k}" type="text" size="4"
-                        class="filter ${k in ('id','commentnum') and 'numeric' or ''}
-                            ${k in ('version','milestone') and 'maybenumeric' or ''}" />
+                            class="filter ${k in ('id','commentnum') and 'numeric' or ''}
+                                ${k in ('version','milestone') and 'maybenumeric' or ''}" />
                       </py:otherwise>
                       </py:choose>
                   </th>
+                  <py:if test="k in ('changetime','time')">
+                    <th class="i${k} hidden" />
+                  </py:if>
+                  </py:for>
                 </tr>
               </tfoot>
             </table>
