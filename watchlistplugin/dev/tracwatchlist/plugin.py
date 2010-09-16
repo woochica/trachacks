@@ -781,6 +781,7 @@ class WikiWatchlist(BasicWatchlist):
             if 'author' in fields:
                 wikidict['author'] = '?'
             if 'changetime' in fields:
+                wikidict['changedsincelastvisit'] = 1
                 wikidict['changetime'] = '?'
                 wikidict['ichangetime'] = 0
             if 'comment' in fields:
@@ -801,6 +802,7 @@ class WikiWatchlist(BasicWatchlist):
           if 'version' in fields:
               wikidict['version'] = unicode(wikipage.version)
           if 'changetime' in fields:
+              wikidict['changedsincelastvisit'] = 1
               wikidict['changetime'] = format_datetime( wikipage.time, locale=locale )
               wikidict['ichangetime'] = to_timestamp( wikipage.time )
               wikidict['timedelta'] = pretty_timedelta( wikipage.time )

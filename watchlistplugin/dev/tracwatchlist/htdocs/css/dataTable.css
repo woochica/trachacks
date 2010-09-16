@@ -561,3 +561,7 @@ tfoot input.search_init {
   color: #999999;
 }
 
+.hidden {
+  display: none;
+}
+

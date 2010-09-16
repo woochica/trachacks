@@ -75,12 +75,12 @@
   <body>
     <div id="content" class="watchlist">
         <input type="text" id="last_visit" name="last_visit" value="$last_visit"/>
-        <py:def function="datetimefilter(id=None)">
+        <py:def function="datetimefilter(colname,id=None)">
           <span id="$id" class="datetimefilter">
-            <input type="checkbox" name="sincelastvisit" value="" title="${_('Since last visit of the watchlist page')}" />
-            <input id="${id}_from" name="from-datetime" type="text" size="4" value="from" class="search_init"
+            <input py:if="colname == 'changetime'" type="checkbox" name="sincelastvisit" value="" title="${_('Since last visit of the watchlist page')}" />
+            <input id="${id}_from" name="from-datetime" type="text" size="4" value="from"
             /><input name="from-datetime-ts" type="hidden" 
-            />-<input id="${id}_to" name="to-datetime" type="text" size="4" value="to" class="search_init"
+            />-<input id="${id}_to" name="to-datetime" type="text" size="4" value="to"
             /><input name="to-datetime-ts" type="hidden" />
           </span>
         </py:def>

@@ -27,18 +27,29 @@
                   }">
               <thead>
                 <tr>
-                  <th py:for="k in active_fields[realm]"
-                      py:if="k != 'notify' or notifications"
+                  <py:for each="k in active_fields[realm]">
+                  <py:if test="k == 'changetime'">
+                    <th class="changedsincelastvisit hidden" />
+                  </py:if>
+                  <th py:if="k != 'notify' or notifications"
                       class="${k}" py:attrs="attr.get(k,{})">${available_fields[realm][k]}</th>
+                  <py:if test="k in ('changetime','time')">
+                    <th class="i${k} hidden" />
+                  </py:if>
+                  </py:for>
                 </tr>
               </thead>
               <tbody>
                   <td py:def="wiki_name" class="name">${link('wiki',page.name,
                       text=page.name)}</td>
-                  <td py:def="wiki_changetime" class="changetime">
-                        <span class="itime">$page.ichangetime</span>$page.changetime
+                  <py:def function="wiki_changetime">
+                    <td class="changedsincelastvisit hidden">$page.changedsincelastvisit</td>
+                    <td class="changetime">
+                        $page.changetime
                         ${print_timedelta(page.timedelta, page.timeline_link)}
-                  </td>
+                    </td>
+                    <td class="ichangetime hidden">$page.ichangetime</td>
+                  </py:def>
                   <td py:def="wiki_version" class="version"><a py:if="not page.deleted"
                       href="${href('wiki',page.name,
                       version=page.version)}">$page.version</a></td>
@@ -73,12 +84,16 @@
               </tbody>
               <tfoot py:if="options['dynamic_tables'] and options['individual_column_filtering']">
                 <tr>
-                  <th py:for="k in active_fields[realm]"
-                      py:if="k != 'notify' or notifications"
+                </tr>
+                  <py:for each="k in active_fields[realm]">
+                  <py:if test="k == 'changetime'">
+                    <th class="changedsincelastvisit hidden" />
+                  </py:if>
+                  <th py:if="k != 'notify' or notifications"
                       class="${k}">
                       <py:choose test="">
                       <py:when test="k == 'changetime'">
-                        ${datetimefilter('wiki_' + k)}
+                        ${datetimefilter(k,'wiki_' + k)}
                       </py:when>
                       <py:otherwise>
                         <input py:if="k not in attr" name="${k}" type="text" size="4"
@@ -86,7 +101,10 @@
                       </py:otherwise>
                       </py:choose>
                   </th>
-                </tr>
+                  <py:if test="k in ('changetime','time')">
+                    <th class="i${k} hidden" />
+                  </py:if>
+                  </py:for>
               </tfoot>
             </table>
           </div>
