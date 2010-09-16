@@ -1,6 +1,98 @@
-/*! Javsscript code for Trac Watchlist Plugin 
+/*! Javsscript code for Trac Watchlist Plugin
  * $Id: watchlist.js $
  * */
+
+/*
+ *  TypeWatch 2.0 - Original by Denny Ferrassoli / Refactored by Charles Christolini
+ *
+ *  Examples/Docs: www.dennydotnet.com
+ *
+ *  Copyright(c) 2007 Denny Ferrassoli - DennyDotNet.com
+ *  Coprright(c) 2008 Charles Christolini - BinaryPie.com
+ *
+ *  Dual licensed under the MIT and GPL licenses:
+ *  http://www.opensource.org/licenses/mit-license.php
+ *  http://www.gnu.org/licenses/gpl.html
+ *
+ *  Modified by Martin Scharrer Sep 2010 to suit the Trac WatchlistPlugin.
+ *  Changes: Default values, removed 'captureLength' code, arguments to callback
+ *  function.
+*/
+
+(function(jQuery) {
+    jQuery.fn.typeWatch = function(o){
+        // Options
+        var options = jQuery.extend({
+            wait : 400,
+            callback : function() { },
+            highlight : true,
+        }, o);
+
+        function checkElement(timer, override) {
+            var elTxt = jQuery(timer.el).val();
+
+            // Fire if text > options.captureLength AND text != saved txt OR if override AND text > options.captureLength
+            if (elTxt != timer.text || override) {
+                timer.text = elTxt;
+                timer.cb(timer.el,elTxt);
+            }
+        };
+
+        function watchElement(elem) {
+            // Must be text or textarea
+            if (elem.type.toUpperCase() == "TEXT" || elem.nodeName.toUpperCase() == "TEXTAREA") {
+
+                // Allocate timer element
+                var timer = {
+                    timer : null,
+                    text : jQuery(elem).val().toUpperCase(),
+                    cb : options.callback,
+                    el : elem,
+                    wait : options.wait
+                };
+
+                // Set focus action (highlight)
+                if (options.highlight) {
+                    jQuery(elem).focus(
+                        function() {
+                            this.select();
+                        });
+                }
+
+                // Key watcher / clear and reset the timer
+                var startWatch = function(evt) {
+                    var timerWait = timer.wait;
+                    var overrideBool = false;
+
+                    if (evt.keyCode == 13 && this.type.toUpperCase() == "TEXT") {
+                        timerWait = 1;
+                        overrideBool = true;
+                    }
+
+                    var timerCallbackFx = function()
+                    {
+                        checkElement(timer, overrideBool)
+                    }
+
+                    // Clear timer
+                    clearTimeout(timer.timer);
+                    timer.timer = setTimeout(timerCallbackFx, timerWait);
+
+                };
+
+                jQuery(elem).keydown(startWatch);
+            }
+        };
+
+        // Watch Each Element
+        return this.each(function(index){
+            watchElement(this);
+        });
+
+    };
+
+})(jQuery);
+///////////////
 
 function wldeleterow(tr, table) {
   $(table).dataTable().fnDeleteRow(tr);
@@ -120,7 +212,7 @@ $.fn.dataTableExt.afnFiltering.push(
         $(table).find("input.numericfilter").each( function () {
             if (!show) { return; }
             var index = $(this).data('index');
-            var value = aData[index].replace(/<[^>]+>/g,'');
+            var value = aData[index].replace(/<[^>]+>/g,'').replace('#','');
             var func  = $(this).data('filterfunction');
             if (func && !func(value)) {
                 show = false;
@@ -227,10 +319,10 @@ jQuery(document).ready(function() {
     $(this).find("tfoot input.filter").keyup( function () {
       oTable.fnFilter( this.value, $(this).data('index') );
     });
-    $(this).find("tfoot input.numericfilter").keyup( function () {
-      $(this).data('filterfunction', wlgetfilterfunctions( $(this).val() ));
+    $(this).find("tfoot input.numericfilter").typeWatch({callback:function (elem,text) {
+      $(elem).data('filterfunction', wlgetfilterfunctions( text ));
       oTable.fnDraw();
-    });
+    }});
 
 
     /* Restore per-column input values after page reload */
@@ -387,6 +479,9 @@ function wlgetfilterfunctions(str) {
     for (s in parts) {
         afunc.push( wlgetfilterfunction( parts[s] ) );
     }
+    if (afunc.length == 1) {
+        return afunc[0];
+    }
     return function (i) {
         var n;
         for (n in afunc) {
@@ -397,4 +492,5 @@ function wlgetfilterfunctions(str) {
         return false;
     };
 }
+
 
