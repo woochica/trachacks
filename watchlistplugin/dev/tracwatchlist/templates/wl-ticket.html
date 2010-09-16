@@ -39,9 +39,7 @@
               </thead>
               <tbody>
                   <td py:def="ticket_id" class="id">
-                    <a py:strip="ticket.deleted" href="${href('ticket', ticket.id)}"
-                        title="${ticket.type}: ${ticket.summary} (${ticket.status}${ticket.status == 'closed' and ': ' + ticket.resolution or ''})"
-                      class="${ticket.status == 'closed' and 'closed' or ''}">#${ticket.id}</a>
+                      ${ticket.ID}
                   </td>
                   <py:def function="ticket_changetime">
                     <td class="changedsincelastvisit hidden">$ticket.changedsincelastvisit</td>

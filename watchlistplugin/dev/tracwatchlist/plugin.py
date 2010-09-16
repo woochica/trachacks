@@ -44,6 +44,8 @@ from  trac.web.chrome        import  ITemplateProvider, add_ctxtnav, \
 from  trac.util.text         import  obfuscate_email_address
 from  trac.web.href          import  Href
 from  trac.wiki.model        import  WikiPage
+from  trac.wiki.formatter    import  format_to_oneliner
+from  trac.mimeview.api      import  Context
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
@@ -883,6 +885,8 @@ class TicketWatchlist(BasicWatchlist):
     def get_list(self, realm, wl, req, fields=None):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
+      context = Context.from_request(req)
+
       ticketlist = []
       if not fields:
           fields = set(self.default_fields['ticket'])
@@ -901,6 +905,7 @@ class TicketWatchlist(BasicWatchlist):
             ticketdict['deleted'] = True
             if 'id' in fields:
                 ticketdict['id'] = sid
+                ticketdict['ID'] = '#' + sid
             if 'author' in fields:
                 ticketdict['author'] = '?'
             if 'changetime' in fields:
@@ -972,6 +977,7 @@ class TicketWatchlist(BasicWatchlist):
           locale = getattr( req, 'locale', LC_TIME)
           if 'id' in fields:
               ticketdict['id'] = sid
+              ticketdict['ID'] = format_to_oneliner(self.env, context, '#' + sid, shorten=True)
           if 'cc' in fields:
               if render_elt == obfuscate_email_address:
                 ticketdict['cc'] = ', '.join([ render_elt(c) for c in ticketdict['cc'].split(', ') ])
