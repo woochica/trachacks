@@ -94,11 +94,11 @@ $.fn.dataTableExt.afnFiltering.push(
 
 $.fn.dataTableExt.afnFiltering.push(
     function( oSettings, aData, iDataIndex ) {
-        var iColumn = 1;
         var table = $('#'+ oSettings.sTableId);
 
         var show = true;
         $(table).find("span.datetimefilter").each( function () {
+            if (!show) { return; }
             var index = $(this).data('index');
             var checked = $(this).find('input[name=sincelastvisit]').is(':checked');
             if ( checked && aData[index-1] != '1' ) {
@@ -116,6 +116,17 @@ $.fn.dataTableExt.afnFiltering.push(
                 else { show = false; }
             }
         });
+        if (!show) { return false; }
+        $(table).find("input.numericfilter").each( function () {
+            if (!show) { return; }
+            var index = $(this).data('index');
+            var value = aData[index].replace(/<[^>]+>/g,'');
+            var func  = $(this).data('filterfunction');
+            if (func && !func(value)) {
+                show = false;
+            }
+        });
+
         return show;
     }
 );
@@ -137,8 +148,11 @@ jQuery(document).ready(function() {
       if ( $(this).hasClass( 'sorting_disabled' ) ) {
         aoColumns.push( { "bSortable": false, "bSearchable": false } );
       } else {
+      if ( $(this).hasClass( 'filtering_disabled' ) ) {
+        aoColumns.push( { "bSearchable": false } );
+      } else {
         aoColumns.push( null );
-      }}
+      }}}
     });
     /* // Fixed width for name column (nonfunctional)
     if (aoColumns[0] == null) {
@@ -152,7 +166,7 @@ jQuery(document).ready(function() {
         var index = $(this).parents('tfoot').find('th').index( $(this).parent("th") );
         $(this).data('index', index);
     });
-    $(this).find("tfoot input.filter").each( function () {
+    $(this).find("tfoot input.filter,tfoot input.numericfilter").each( function () {
       var index = $(table).find("tfoot th").index( $(this).parent("th") );
       $(this).data('index', index);
     });
@@ -165,7 +179,7 @@ jQuery(document).ready(function() {
     //"bJQueryUI": true,
     "sPaginationType": "full_numbers",
     "bPaginate": true,
-    "sDom": 'ilp<"resetfilters">frt',
+    "sDom": 'ilp<"resetfilters">rt',
     "sPagePrevious": "&lt;",
     "aLengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "&#8734;"]],
     //"sPaginationType": "full_numbers",
@@ -213,6 +227,11 @@ jQuery(document).ready(function() {
     $(this).find("tfoot input.filter").keyup( function () {
       oTable.fnFilter( this.value, $(this).data('index') );
     });
+    $(this).find("tfoot input.numericfilter").keyup( function () {
+      $(this).data('filterfunction', wlgetfilterfunction( $(this).val() ));
+      oTable.fnDraw();
+    });
+
 
     /* Restore per-column input values after page reload */
     var oSettings = oTable.fnSettings();
@@ -326,4 +345,41 @@ function wlresettodefault(){
     // Remove all old cookies
     wldeletecookies();
 }
+
+
+var wlequal = function (a,b) { return a == b; };
+var f = {
+    '>'  : function (a,b) { return a > b; },
+    '<'  : function (a,b) { return a < b; },
+    '>=' : function (a,b) { return a >= b; },
+    '<=' : function (a,b) { return a <= b; },
+    '==' : wlequal,
+    '='  : wlequal,
+    ''   : wlequal
+};
+var rx = /^<=?|^>=?|^=/;
+
+function wlgetfilterfunction(str) {
+    str = str.replace(/^\s+|\s+$/g,'');
+    var op = rx.exec(str);
+
+    if (op)
+        { op = op[0]; }
+    else
+        { op = ''; }
+
+    var snum = str.substr( op.length ) * 1;
+    if (!snum){
+        return function (num) { return true; };
+    }
+    var func = f[op];
+    if (!func) {
+        return function (num) { return false; };
+    } else {
+        return function (num) { return func(num.replace(/#/,''),snum); };
+    }
+}
+
+
+
 

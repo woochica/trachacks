@@ -24,6 +24,7 @@
                     'diff': { 'class':'diff sorting_disabled' },
                     'unwatch': { 'class':'unwatch sorting_disabled' },
                     'notify': { 'class':'notify sorting_disabled' },
+                    'version': { 'class':'version filtering_disabled' },
                   }">
               <thead>
                 <tr>
@@ -96,8 +97,8 @@
                         ${datetimefilter(k,'wiki_' + k)}
                       </py:when>
                       <py:otherwise>
-                        <input py:if="k not in attr" name="${k}" type="text" size="4"
-                            class="filter ${k == 'version' and 'numeric' or ''}" />
+                        <input py:if="k not in ('history','diff','unwatch','notify')" name="${k}" type="text" size="4"
+                            class="${k == 'version' and 'numericfilter' or 'filter'}" />
                       </py:otherwise>
                       </py:choose>
                   </th>

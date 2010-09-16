@@ -83,8 +83,7 @@
                       </py:when>
                       <py:otherwise>
                         <input py:if="k not in attr" name="${k}" type="text" size="4"
-                            class="filter ${k in ('id','commentnum') and 'numeric' or ''}
-                                ${k in ('version','milestone') and 'maybenumeric' or ''}" />
+                            class="${k in ('id','commentnum') and 'numericfilter' or 'filter'}"/>
                       </py:otherwise>
                       </py:choose>
                   </th>
