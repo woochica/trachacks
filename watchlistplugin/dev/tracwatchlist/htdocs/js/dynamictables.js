@@ -152,6 +152,10 @@ jQuery(document).ready(function() {
         var index = $(this).parents('tfoot').find('th').index( $(this).parent("th") );
         $(this).data('index', index);
     });
+    $(this).find("tfoot input.filter").each( function () {
+      var index = $(table).find("tfoot th").index( $(this).parent("th") );
+      $(this).data('index', index);
+    });
     // Activate dataTable
     $(this).dataTable({
     "bStateSave": true,
@@ -207,8 +211,7 @@ jQuery(document).ready(function() {
 
     /* Per-column filter input fields in footer */
     $(this).find("tfoot input.filter").keyup( function () {
-      var index = $(table).find("tfoot th").index( $(this).parent("th") );
-      oTable.fnFilter( this.value, index );
+      oTable.fnFilter( this.value, $(this).data('index') );
     });
 
     /* Restore per-column input values after page reload */
