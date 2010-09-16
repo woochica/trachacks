@@ -557,4 +557,7 @@ div.box {
   padding: 2pt;
 }
 
+tfoot input.search_init {
+  color: #999999;
+}
 

@@ -14,6 +14,9 @@
     <link type="text/css" py:if="options['dynamic_tables']"
       href="${href.chrome('watchlist','css','dataTable.css')}"
       rel="stylesheet" />
+    <link type="text/css" py:if="options['dynamic_tables']"
+      href="${href.chrome('watchlist','css','anytime.css')}"
+      rel="stylesheet" />
     <link type="text/css" py:if="options['autocomplete_inputs']"
       href="${href.chrome('watchlist','css','jquery.autocomplete.css')}"
       rel="stylesheet" />
@@ -26,6 +29,8 @@
       src="${href.chrome('watchlist','js','watchlist.js')}"></script>
     <script type="text/javascript" py:if="options['autocomplete_inputs']"
       src="${href.chrome('watchlist','js','autocomplete.js')}"></script>
+    <script type="text/javascript" py:if="options['dynamic_tables']"
+      src="${href.chrome('watchlist','js','anytime.js')}"></script>
     <script type="text/javascript" py:if="options['dynamic_tables']"
       src="${href.chrome('watchlist','js','dynamictables.js')}"></script>
     <script type="text/javascript" 
@@ -73,8 +78,10 @@
         <py:def function="datetimefilter(id=None)">
           <span id="$id" class="datetimefilter">
             <input type="checkbox" name="sincelastvisit" value="" title="${_('Since last visit of the watchlist page')}" />
-            <input name="from-datetime" type="text" size="4"
-            />-<input name="to-datetime" type="text" size="4" />
+            <input id="${id}_from" name="from-datetime" type="text" size="4" value="from" class="search_init"
+            /><input name="from-datetime-ts" type="hidden" 
+            />-<input id="${id}_to" name="to-datetime" type="text" size="4" value="to" class="search_init"
+            /><input name="to-datetime-ts" type="hidden" />
           </span>
         </py:def>
         <py:def function="ackmsg">

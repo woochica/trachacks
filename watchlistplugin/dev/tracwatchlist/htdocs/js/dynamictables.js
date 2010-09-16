@@ -40,7 +40,7 @@ function eraseCookie(name) {
 }
 /// End of Cookie Code
 
-
+/*
 $.fn.dataTableExt.afnFiltering.push(
     function( oSettings, aData, iDataIndex ) {
         var iColumn = 1;
@@ -76,6 +76,31 @@ $.fn.dataTableExt.afnFiltering.push(
             return true;
         }
         return false;
+    }
+);
+*/
+
+$.fn.dataTableExt.afnFiltering.push(
+    function( oSettings, aData, iDataIndex ) {
+        var iColumn = 1;
+        var table = $('#'+ oSettings.sTableId);
+
+        var show = true;
+        $(table).find("span.datetimefilter").each( function () {
+            var index = $(this).data('index');
+            var n = document.createElement('div');
+            n.innerHTML = aData[index];
+            timestamp = $(n).find('span.itime').text() * 1;
+            if ( !timestamp ) { return true; }
+            var iMin = $(this).find('input[name=from-datetime-ts]').val() * 1;
+            var iMax = $(this).find('input[name=to-datetime-ts]').val() * 1;
+            if ( !iMin && !iMax ) { }
+            else if ( !iMin && timestamp < iMax ) { }
+            else if ( iMin < timestamp && !iMax ) { }
+            else if ( iMin < timestamp && timestamp < iMax ) { }
+            else { show = false; }
+        });
+        return show;
     }
 );
 
@@ -156,6 +181,20 @@ jQuery(document).ready(function() {
       $(this).find("input.filter").val( oSettings.aoPreSearchCols[i].sSearch );
     });
 
+    // Find index of column
+    $(this).find("span.datetimefilter").each( function () {
+        var index = $(this).parents('tfoot').find('th').index( $(this).parent("th") );
+        $(this).data('index', index);
+    });
+    $(this).find("span.datetimefilter input[type=text]").each( function () {
+        $(this).AnyTime_picker({ format: "%Y-%m-%d %H:%i:%s" });
+        $(this).change(function(){
+            var c = new AnyTime.Converter({ format: "%Y-%m-%d %H:%i:%s" });
+            $(this).next("input[type=hidden]").val( c.parse( $(this).val() ).getTime() / 1000 );
+            oTable.fnDraw();
+        });
+    });
+    /*
     $(this).find("span.datetimefilter").each( function () {
         var dtfilter = this;
         $(this).find("input[name=sincelastvisit]").change( function () {
@@ -170,8 +209,10 @@ jQuery(document).ready(function() {
             oTable.fnDraw();
         });
     });
+    */
   });
 
+  /*
     // Restore datetime filter inputs on load
     // Must be after 'datetimefilter' handler are in place
     $(".datetimefilter").each(function(){
@@ -189,6 +230,14 @@ jQuery(document).ready(function() {
             }
         });
     });
+  */
+
+    $("tfoot input").focus( function () {
+        if ( this.className == "search_init" ) {
+            this.removeClass("search_init");
+            this.value = "";
+        }
+    } );
 });
 
 /* Remove column sorting input when preferences are updated.
@@ -209,7 +258,7 @@ function wlprefsubmit(force){
 }
 
 
-
+/*
 // Store datetime filter inputs on unload
 jQuery(window).unload(function() {
     $(".datetimefilter").each(function(){
@@ -224,4 +273,7 @@ jQuery(window).unload(function() {
         });
     });
 });
+*/
+
+
 
