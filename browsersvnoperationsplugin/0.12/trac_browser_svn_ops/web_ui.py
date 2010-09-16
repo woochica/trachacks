@@ -39,14 +39,16 @@ class TracBrowserOps(Component):
             add_script(req, 'trac_browser_svn_ops/js/trac_browser_ops.js')
             
             # Insert link to show upload form
-            add_ctxtnav(req, 'Upload file', '#upload')
-            
-            # Insert upload dialog into div#main
-            upload_stream = Chrome(self.env).render_template(req,
-                    'file_upload.html', data, fragment=True)
-            upload_transf = Transformer('//div[@id="main"]')
-            stream |=  upload_transf.append(
-                    upload_stream.select('//div[@id="dialog-bsop_upload"]'))
+            if data['dir']:
+                add_ctxtnav(req, 'Upload file', '#upload')
+                
+                # Insert upload dialog into div#main
+                upload_stream = Chrome(self.env).render_template(req,
+                        'file_upload.html', data, fragment=True)
+                upload_transf = Transformer('//div[@id="main"]')
+                stream |=  upload_transf.append(
+                        upload_stream.select('//div[@id="dialog-bsop_upload"]')
+                        )
             
             # Add a radio button to each row of the file/folder list, 
             # in the name column
