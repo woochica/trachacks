@@ -889,16 +889,45 @@ class TicketWatchlist(BasicWatchlist):
       else:
           fields = set(fields)
 
-      for id,last_visit in wl.get_watched_resources( 'ticket', req.authname ):
-          sid = unicode(id)
-          ticket = Ticket(self.env, id, db)
+      for sid,last_visit in wl.get_watched_resources( 'ticket', req.authname ):
+          ticketdict = {}
+          try:
+            ticket = Ticket(self.env, sid, db)
+            exists = ticket.exists
+          except:
+            exists = False
+
+          if not exists:
+            ticketdict['deleted'] = True
+            if 'id' in fields:
+                ticketdict['id'] = sid
+            if 'author' in fields:
+                ticketdict['author'] = '?'
+            if 'changetime' in fields:
+                ticketdict['changedsincelastvisit'] = 1
+                ticketdict['changetime'] = '?'
+                ticketdict['ichangetime'] = 0
+            if 'time' in fields:
+                ticketdict['time'] = '?'
+                ticketdict['itime'] = 0
+            if 'comment' in fields:
+                ticketdict['comment'] = tag.strong(t_("deleted"), class_='deleted')
+            if 'notify' in fields:
+                ticketdict['notify'] =  wl.is_notify(req, 'ticket', sid)
+            if 'description' in fields:
+                ticketdict['description'] = ''
+            if 'owner' in fields:
+                ticketdict['owner'] = ''
+            if 'reporter' in fields:
+                ticketdict['reporter'] = ''
+            ticketlist.append(ticketdict)
+            continue
 
           render_elt = lambda x: x
           if not (Chrome(self.env).show_email_addresses or \
                   'EMAIL_VIEW' in req.perm(ticket.resource)):
               render_elt = obfuscate_email_address
 
-          ticketdict = {}
           # Copy all requested fields from ticket
           if fields:
               for f in fields:

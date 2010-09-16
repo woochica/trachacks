@@ -39,7 +39,7 @@
               </thead>
               <tbody>
                   <td py:def="ticket_id" class="id">
-                    <a href="${href('ticket', ticket.id)}"
+                    <a py:strip="ticket.deleted" href="${href('ticket', ticket.id)}"
                         title="${ticket.type}: ${ticket.summary} (${ticket.status}${ticket.status == 'closed' and ': ' + ticket.resolution or ''})"
                       class="${ticket.status == 'closed' and 'closed' or ''}">#${ticket.id}</a>
                   </td>
@@ -55,7 +55,7 @@
                         <span class="itime">$ticket.itime</span>$ticket.time
                         ${print_timedelta(ticket.time_delta, ticket.time_link)}
                   </td>
-                  <td py:def="ticket_commentnum" class="commentnum"><a href="${href('ticket',ticket.id)
+                  <td py:def="ticket_commentnum" class="commentnum"><a py:if="not ticket.deleted" href="${href('ticket',ticket.id)
                       + ((ticket.commentnum != '0') and ('#comment:'
                       + ticket.commentnum) or
                       '')}">$ticket.commentnum</a></td>
