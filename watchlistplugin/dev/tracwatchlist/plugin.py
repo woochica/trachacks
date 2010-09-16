@@ -59,8 +59,14 @@ except ImportError:
     def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
         return trac_format_datetime(t, format, tzinfo)
 
-def current_timestamp():
-    return to_timestamp( datetime.now(utc) )
+try:
+    from  trac.util.datefmt  import  to_utimestamp
+    def current_timestamp():
+        return to_utimestamp( datetime.now(utc) )
+except ImportError:
+    def current_timestamp():
+        return to_timestamp( datetime.now(utc) )
+
 
 def ensure_tuple( var ):
     """Ensures that variable is a tuple, even if its a scalar"""
@@ -631,8 +637,27 @@ class WatchlistPlugin(Component):
         else:
             return True
 
+    def visiting(self, realm, resid, user, db=None):
+        """Checks if user watches the given element."""
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        now = current_timestamp()
+        cursor.log = self.log
+        cursor.execute("""
+          UPDATE watchlist
+             SET lastvisit=%s
+           WHERE realm=%s AND resid=%s AND wluser=%s;
+        """, (now, realm, to_unicode(resid), user)
+        )
+        db.commit()
+        return
+
     ### methods for IRequestFilter
     def post_process_request(self, req, template, data, content_type):
+        user = req.authname
+        if not user or user == "anonymous":
+            return (template, data, content_type)
+
         # Extract realm and resid from path:
         parts = req.path_info[1:].split('/',1)
 
@@ -640,6 +665,7 @@ class WatchlistPlugin(Component):
         if len(parts) == 0 or not parts[0]:
             parts = ["wiki", "WikiStart"]
         elif len(parts) == 1:
+            # FIXME: add handler check, could be different than WikiHandler
             parts.append("WikiStart")
 
         realm, resid = parts[:2]
@@ -673,25 +699,24 @@ class WatchlistPlugin(Component):
             pass
 
         href = Href(req.base_path)
-        user = req.authname
-        if user and user != "anonymous":
-            if self.is_watching(realm, resid, user):
-                add_ctxtnav(req, _("Unwatch"),
-                    href=req.href('watchlist', action='unwatch',
-                    resid=resid, realm=realm),
-                    title=_("Remove %(document)s from watchlist", document=realm))
-            else:
-                add_ctxtnav(req, _("Watch"),
-                    href=req.href('watchlist', action='watch',
-                    resid=resid, realm=realm),
-                    title=_("Add %(document)s to watchlist", document=realm))
-            if notify == 'True':
-              if self.is_notify(req, realm, resid):
+        if self.is_watching(realm, resid, user):
+            add_ctxtnav(req, _("Unwatch"),
+                href=req.href('watchlist', action='unwatch',
+                resid=resid, realm=realm),
+                title=_("Remove %(document)s from watchlist", document=realm))
+            self.visiting(realm, resid, user)
+        else:
+            add_ctxtnav(req, _("Watch"),
+                href=req.href('watchlist', action='watch',
+                resid=resid, realm=realm),
+                title=_("Add %(document)s to watchlist", document=realm))
+        if notify == 'True':
+            if self.is_notify(req, realm, resid):
                 add_ctxtnav(req, _("Do not Notify me"),
                     href=req.href('watchlist', action='notifyoff',
                     resid=resid, realm=realm),
                     title=_("Do not notify me if %(document)s changes", document=realm))
-              else:
+            else:
                 add_ctxtnav(req, _("Notify me"),
                     href=req.href('watchlist', action='notifyon',
                     resid=resid, realm=realm),
