@@ -65,6 +65,8 @@ class SubversionWriter(object):
         svn_repos = self._get_svn_handle()
         repos_path_utf8 = repos_path.encode('utf-8')
         commit_msg_utf8 = commit_msg.encode('utf-8')
+        username_utf8 = self.username.encode('utf-8')
+        rev = self.repos.get_youngest_rev()
         
         pool = core.Pool()
         
@@ -95,6 +97,6 @@ class SubversionWriter(object):
         else:
             raise TracError('Repository type %s is not supported' 
                             % type(self.repos))
-        log.debug('svn_repos %i type %s', svn_repos, type(svn_repos))
+        self.log.debug('svn_repos %i type %s', svn_repos, type(svn_repos))
         return svn_repos
 

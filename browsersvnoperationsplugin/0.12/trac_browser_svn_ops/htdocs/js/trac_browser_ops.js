@@ -52,8 +52,7 @@ $(function() {
         $('#bsop_mvdel_base').val(mvdel_base);
         $('#bsop_mvdel_path').val(mvdel_path);
         
-        // TODO Actually submit the form
-        
+        $('#bsop_move_delete_form').trigger('submit');
 	});
 
 });
