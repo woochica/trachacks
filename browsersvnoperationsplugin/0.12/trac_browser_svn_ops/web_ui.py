@@ -68,7 +68,7 @@ class TracBrowserOps(Component):
     def pre_process_request(self, req, handler):
         if req.path_info.startswith('/browser') and req.method == 'POST' \
                 and 'bsop_upload_file' in req.args:
-            self._process_request(req, handler)
+            self._upload_request(req, handler)
         else:
             return handler
 
@@ -76,7 +76,7 @@ class TracBrowserOps(Component):
         return (template, data, content_type)
     
     # Private methods
-    def _process_request(self, req, handler):
+    def _upload_request(self, req, handler):
         self.log.debug('Handling file upload %s %s',
                        req.authname, req.args)
         filename = req.args.get('bsop_upload_file').filename
