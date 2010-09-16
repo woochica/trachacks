@@ -15,18 +15,22 @@
  *  http://www.gnu.org/licenses/gpl.html
  *
  *  Modified by Martin Scharrer Sep 2010 to suit the Trac WatchlistPlugin.
- *  Changes: Default values, removed 'captureLength' code, arguments to callback
- *  function.
+ *  Changes:
+ *      o Default values
+ *      o Removed 'captureLength' code
+ *      o Changed arguments to callback function.
+ *      o Changed argument to typeWatch function from hash to callback function
+ *        only
 */
 
 (function(jQuery) {
     jQuery.fn.typeWatch = function(o){
         // Options
-        var options = jQuery.extend({
+        var options = {
             wait : 400,
-            callback : function() { },
+            callback : o,
             highlight : true,
-        }, o);
+        };
 
         function checkElement(timer, override) {
             var elTxt = jQuery(timer.el).val();
@@ -319,10 +323,10 @@ jQuery(document).ready(function() {
     $(this).find("tfoot input.filter").keyup( function () {
       oTable.fnFilter( this.value, $(this).data('index') );
     });
-    $(this).find("tfoot input.numericfilter").typeWatch({callback:function (elem,text) {
+    $(this).find("tfoot input.numericfilter").typeWatch(function (elem,text) {
       $(elem).data('filterfunction', wlgetfilterfunctions( text ));
       oTable.fnDraw();
-    }});
+    });
 
 
     /* Restore per-column input values after page reload */
