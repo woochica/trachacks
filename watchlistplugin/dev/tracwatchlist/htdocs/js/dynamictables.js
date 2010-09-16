@@ -228,7 +228,7 @@ jQuery(document).ready(function() {
       oTable.fnFilter( this.value, $(this).data('index') );
     });
     $(this).find("tfoot input.numericfilter").keyup( function () {
-      $(this).data('filterfunction', wlgetfilterfunction( $(this).val() ));
+      $(this).data('filterfunction', wlgetfilterfunctions( $(this).val() ));
       oTable.fnDraw();
     });
 
@@ -347,22 +347,16 @@ function wlresettodefault(){
 }
 
 
-var wlequal = function (a,b) { return a == b; };
-var f = {
-    '>'  : function (a,b) { return a > b; },
-    '<'  : function (a,b) { return a < b; },
-    '>=' : function (a,b) { return a >= b; },
-    '<=' : function (a,b) { return a <= b; },
-    '==' : wlequal,
-    '='  : wlequal,
-    ''   : wlequal
-};
-var rx = /^<=?|^>=?|^=/;
-
+// Creates a function which tests if the argument lies in the range by str.
+// Examples:
+//   'a-b' -> between a and b (both inclusive)
+//   ' -b' -> lesser or equal than b  (identical to '0-b')
+//   'a- ' -> greater or equal than a (identical to 'a-MAX_VALUE')
+//   ' - ' -> all (identical to '0-MAX_VALUE')
+//
 function wlgetfilterfunction(str) {
     var i = str.indexOf ('-');
     var a; var b;
-    console.log( 'index = ' + i );
     if (i == -1) {
         a = str;
         b = a;
@@ -371,7 +365,6 @@ function wlgetfilterfunction(str) {
         a = str.substring (0, i);
         b = str.substring (i + 1);
     }
-    console.log( a + '|' + b );
 
     if (a=='' || isNaN(a)) {
         a = 0;
@@ -381,8 +374,26 @@ function wlgetfilterfunction(str) {
     }
     a = a * 1;
     b = b * 1;
-    console.log( a + '|' + b );
     return function (i) { return ((i >= a) && (b >= i)); };
 }
 
+// Returns a function with an array of the above functions.
+// It returns true if any of them return true.
+// Example: 'a-b,c-d' -> between a and b OR between c and d
+function wlgetfilterfunctions(str) {
+    var afunc = new Array();
+    var parts = str.split(',')
+    for (s in parts) {
+        afunc.push( wlgetfilterfunction( parts[s] ) );
+    }
+    return function (i) {
+        var n;
+        for (n in afunc) {
+            if (afunc[n](i)) {
+                return true;
+            }
+        }
+        return false;
+    };
+}
 
