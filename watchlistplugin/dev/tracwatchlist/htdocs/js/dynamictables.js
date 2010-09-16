@@ -131,15 +131,14 @@ jQuery(document).ready(function() {
     // Disabled sorting of marked columns (unwatch, notify, etc.)
     var aoColumns = [];
     $(this).find('thead th').each( function () {
-        /*
       if ( $(this).hasClass( 'hidden' ) ) {
         aoColumns.push( { "bSortable": false, "bSearchable": false, "bVisible": false } );
-      } else */
+      } else {
       if ( $(this).hasClass( 'sorting_disabled' ) ) {
         aoColumns.push( { "bSortable": false, "bSearchable": false } );
       } else {
         aoColumns.push( null );
-      }
+      }}
     });
     /* // Fixed width for name column (nonfunctional)
     if (aoColumns[0] == null) {
@@ -147,6 +146,12 @@ jQuery(document).ready(function() {
     }
     aoColumns[0]['sWidth'] = $(this).find('thead th.name').css('width');
     */
+    // Find index of column (must be done before .dataTable() so all hidden
+    // columns are still in the DOM
+    $(this).find("span.datetimefilter").each( function () {
+        var index = $(this).parents('tfoot').find('th').index( $(this).parent("th") );
+        $(this).data('index', index);
+    });
     // Activate dataTable
     $(this).dataTable({
     "bStateSave": true,
@@ -211,11 +216,6 @@ jQuery(document).ready(function() {
       $(this).find("input.filter").val( oSettings.aoPreSearchCols[i].sSearch );
     });
 
-    // Find index of column
-    $(this).find("span.datetimefilter").each( function () {
-        var index = $(this).parents('tfoot').find('th').index( $(this).parent("th") );
-        $(this).data('index', index);
-    });
     $(this).find("span.datetimefilter").each( function () {
         var dtfilter = this;
         $(this).find("input[name=sincelastvisit]").change( function () {
