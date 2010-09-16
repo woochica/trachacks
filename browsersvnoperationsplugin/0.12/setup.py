@@ -17,6 +17,11 @@ setup(
     classifiers=[],
     license='',
     
+    install_requires = [
+        'Trac>=0.12',
+        'ContextMenuPlugin',
+        ]
+    
     packages=['trac_browser_svn_ops'],
     package_data={
         'trac_browser_svn_ops': [

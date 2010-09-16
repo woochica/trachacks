@@ -1,0 +1,36 @@
+<!DOCTYPE html
+	    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	    xmlns:py="http://genshi.edgewall.org/"
+	    xmlns:xi="http://www.w3.org/2001/XInclude">
+
+<!-- Only the bsop_move_delete div is transmitted to the client, 
+     the rest serves as a convenience during development
+     -->
+
+<head>
+<title>Trac Browser Operations file upload</title>
+
+<link rel="stylesheet" href="../htdocs/css/theme/smoothness/jquery-ui.css"
+    type="text/css" />
+<link rel="stylesheet" href="../htdocs/css/trac_browser_ops.css" 
+    type="text/css" />
+
+<script type="text/javascript" src="../htdocs/js/jquery-ui.js"></script>
+<script type="text/javascript" src="../htdocs/js/trac_browser_ops.js"></script>
+
+</head>
+
+<body>
+
+<div id="bsop_move_delete">
+  <form id="bsop_move_delete_form" method="post">
+    <input type="hidden" id="bsop_mvdel_op" value="" />
+    <input type="hidden" id="bsop_mvdel_path" value="" />
+  </form>
+</div>
+
+</body>
+</html>
+    

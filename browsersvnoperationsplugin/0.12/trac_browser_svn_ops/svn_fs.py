@@ -19,16 +19,8 @@ class SubversionWriter(object):
         
         # TODO Permissions
 
-        # Retrieve the libsvn repository handle from the Trac repository object
-        if isinstance(self.repos, SubversionRepository):
-            svn_repos = self.repos.repos
-        elif isinstance(self.repos, CachedRepository):
-            svn_repos = self.repos.repos.repos
-        else:
-            raise TracError('Repository type %s is not supported' 
-                            % type(self.repos))
-        log.debug('svn_repos %i type %s', svn_repos, type(svn_repos))
-        
+        svn_repos = self._get_svn_handle()
+                
         fs_path_utf8 = repos_path.encode('utf-8')
         filename_utf8 = filename.encode('utf-8')
         username_utf8 = self.username.encode('utf-8')
@@ -65,4 +57,44 @@ class SubversionWriter(object):
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
         
         return new_rev
+
+    def delete(self, repos_path, commit_msg):
+        from svn import core, fs, repos
+        
+        log = self.log
+        svn_repos = self._get_svn_handle()
+        repos_path_utf8 = repos_path.encode('utf-8')
+        commit_msg_utf8 = commit_msg.encode('utf-8')
+        
+        pool = core.Pool()
+        
+        log.debug('btfc')
+        fs_txn = repos.fs_begin_txn_for_commit(svn_repos, rev, username_utf8,
+                                               commit_msg_utf8, pool)
+        log.debug('tr')
+        fs_root = fs.txn_root(fs_txn, pool)
+            
+        log.debug('cp')
+        kind = fs.check_path(fs_root, repos_path_utf8, pool)
+        
+        if kind == core.svn_node_none:
+            raise TracError('Delete', repos_path)
+        else:
+            fs.delete(fs_root, repos_path_utf8)
+         
+        log.debug('ct')                                     
+        new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
+        
+    def _get_svn_handle(self):
+        '''Retrieve the libsvn repository handle from the Trac object.
+        '''
+        if isinstance(self.repos, SubversionRepository):
+            svn_repos = self.repos.repos
+        elif isinstance(self.repos, CachedRepository):
+            svn_repos = self.repos.repos.repos
+        else:
+            raise TracError('Repository type %s is not supported' 
+                            % type(self.repos))
+        log.debug('svn_repos %i type %s', svn_repos, type(svn_repos))
+        return svn_repos
 

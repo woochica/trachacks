@@ -8,6 +8,8 @@ from trac.versioncontrol.api import RepositoryManager
 
 from genshi.filters.transform import Transformer
 
+from contextmenu.contextmenu import ISourceBrowserContextMenuProvider
+
 from trac_browser_svn_ops.svn_fs import SubversionWriter
 
 class TracBrowserOps(Component):
@@ -50,14 +52,14 @@ class TracBrowserOps(Component):
                         upload_stream.select('//div[@id="dialog-bsop_upload"]')
                         )
             
-            # Add a radio button to each row of the file/folder list, 
-            # in the name column
-            #transf = Transformer('//table[@id="dirlist"]//td[@class="name"]')
-            #stream |= transf.append(
-            #        tag.span(tag.input(type_='radio', name='name', 
-            #                           class_='name'), 
-            #                 style='text-align:right;'))
-
+            # Insert move/delete form
+            if data['dir']:
+                mvdel_stream = Chrome(self.env).render_template(req,
+                        'move_delete.html', data, fragment=True)
+                mvdel_transf = Transformer('//div[@id="main"]')
+                stream |= mvdel_transf.append(
+                        mvdel_stream.select('//div[@id="bsop_move_delete"]')
+                        )
         return stream
     
     # IRequestFilter methods
@@ -98,3 +100,33 @@ class TracBrowserOps(Component):
         # Perform http redirect back to this page in order to rerender
         # template according to new repository state
         req.redirect(req.href(req.path_info))
+
+class SvnDeleteMenu(Component):
+    '''Generate context menu items for deleting subversion items
+    '''
+    implements(ISourceBrowserContextMenuProvider)
+    
+    # IContextMenuProvider methods
+    def get_order(self, req):
+        return 5
+
+    def get_draw_separator(self, req):
+        return True
+    
+    def get_content(self, req, entry, stream, data):
+        return tag.a('Delete %s %s' % (entry.name, entry.path), href='#')
+
+class SvnMoveMenu(Component):
+    '''Generate context menu items for moving subversion items
+    '''
+    implements(ISourceBrowserContextMenuProvider)
+    
+    # IContextMenuProvider methods
+    def get_order(self, req):
+        return 6
+
+    def get_draw_separator(self, req):
+        return True
+    
+    def get_content(self, req, entry, stream, data):
+        return tag.a('Move %s %s' % (entry.name, entry.path), href='#')
