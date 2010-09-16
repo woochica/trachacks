@@ -360,26 +360,29 @@ var f = {
 var rx = /^<=?|^>=?|^=/;
 
 function wlgetfilterfunction(str) {
-    str = str.replace(/^\s+|\s+$/g,'');
-    var op = rx.exec(str);
-
-    if (op)
-        { op = op[0]; }
-    else
-        { op = ''; }
-
-    var snum = str.substr( op.length ) * 1;
-    if (!snum){
-        return function (num) { return true; };
+    var i = str.indexOf ('-');
+    var a; var b;
+    console.log( 'index = ' + i );
+    if (i == -1) {
+        a = str;
+        b = a;
     }
-    var func = f[op];
-    if (!func) {
-        return function (num) { return false; };
-    } else {
-        return function (num) { return func(num.replace(/#/,''),snum); };
+    else {
+        a = str.substring (0, i);
+        b = str.substring (i + 1);
     }
+    console.log( a + '|' + b );
+
+    if (a=='' || isNaN(a)) {
+        a = 0;
+    }
+    if (b=='' || isNaN(b)) {
+        b = Number.MAX_VALUE;
+    }
+    a = a * 1;
+    b = b * 1;
+    console.log( a + '|' + b );
+    return function (i) { return ((i >= a) && (b >= i)); };
 }
-
-
 
 
