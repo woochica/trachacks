@@ -45,13 +45,13 @@ class TracBrowserOps(Component):
             upload_stream = Chrome(self.env).render_template(req,
                     'file_upload.html', data, fragment=True)
             upload_transf = Transformer('//div[@id="main"]')
-            stream = stream | upload_transf.append(
+            stream |=  upload_transf.append(
                     upload_stream.select('//div[@id="dialog-bsop_upload"]'))
             
             # Add a radio button to each row of the file/folder list, 
             # in the name column
             #transf = Transformer('//table[@id="dirlist"]//td[@class="name"]')
-            #stream = stream | transf.append(
+            #stream |= transf.append(
             #        tag.span(tag.input(type_='radio', name='name', 
             #                           class_='name'), 
             #                 style='text-align:right;'))
@@ -62,33 +62,37 @@ class TracBrowserOps(Component):
     def pre_process_request(self, req, handler):
         if req.path_info.startswith('/browser') and req.method == 'POST' \
                 and 'bsop_upload_file' in req.args:
-            self.log.debug('Handling file upload %s %s',
-                           req.authname, req.args)
-            filename = req.args.get('bsop_upload_file').filename
-            file_data = req.args.get('bsop_upload_file').value # or .file for fo
-            commit_msg = req.args.get('bsop_upload_commit')
-            self.log.debug('Received file %s with %i bytes', 
-                           filename, len(file_data))
-            repos_path = '/'.join([req.args.get('path'), filename])
-            
-            repos = RepositoryManager(self.env).get_repository(None)
-            
-            try:
-                repos_path = repos.normalize_path(repos_path)
-                self.log.debug('Writing file %s to %s in %s', 
-                               filename, repos_path, repos)
-                svn_writer = SubversionWriter(repos)
-                rev = svn_writer.put_content(repos_path, file_data, filename,
-                                             commit_msg)
-            finally:
-                self.log.debug('Closing repository')
-                repos.close()
-            
-            # Perform http redirect back to this page in order to rerender
-            # template according to new repository state
-            req.redirect(req.href(req.path_info))
-            
-        return handler
+            self._process_request(req, handler)
+        else:
+            return handler
 
     def post_process_request(self, req, template, data, content_type):
         return (template, data, content_type)
+    
+    # Private methods
+    def _process_request(self, req, handler):
+        self.log.debug('Handling file upload %s %s',
+                       req.authname, req.args)
+        filename = req.args.get('bsop_upload_file').filename
+        file_data = req.args.get('bsop_upload_file').value # or .file for fo
+        commit_msg = req.args.get('bsop_upload_commit')
+        self.log.debug('Received file %s with %i bytes', 
+                       filename, len(file_data))
+        repos_path = '/'.join([req.args.get('path'), filename])
+        
+        repos = RepositoryManager(self.env).get_repository(None)
+        
+        try:
+            repos_path = repos.normalize_path(repos_path)
+            self.log.debug('Writing file %s to %s in %s', 
+                           filename, repos_path, repos)
+            svn_writer = SubversionWriter(repos)
+            rev = svn_writer.put_content(repos_path, file_data, filename,
+                                         commit_msg)
+        finally:
+            self.log.debug('Closing repository')
+            repos.close()
+        
+        # Perform http redirect back to this page in order to rerender
+        # template according to new repository state
+        req.redirect(req.href(req.path_info))
