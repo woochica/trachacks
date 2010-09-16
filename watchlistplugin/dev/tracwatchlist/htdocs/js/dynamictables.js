@@ -111,8 +111,11 @@ $.fn.dataTableExt.afnFiltering.push(
 
 
 jQuery(document).ready(function() {
+  // Copy reset filter button (hidden in HTML code to avoid JS localisation)
+  var resetfilters = $('#resetfilters').removeAttr('Id').removeAttr('style').detach();
   // Dynamic Table
   $("table.watchlist").each(function(){
+    var table = this;
     // Disabled sorting of marked columns (unwatch, notify, etc.)
     var aoColumns = [];
     $(this).find('thead th').each( function () {
@@ -140,7 +143,7 @@ jQuery(document).ready(function() {
     //"bJQueryUI": true,
     "sPaginationType": "full_numbers",
     "bPaginate": true,
-    "sDom": 'ilpfrt',
+    "sDom": 'ilp<"resetfilters">frt',
     "sPagePrevious": "&lt;",
     "aLengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "&#8734;"]],
     //"sPaginationType": "full_numbers",
@@ -169,7 +172,15 @@ jQuery(document).ready(function() {
       "fnInfoCallback": null
     },
    });
+    var rfb = $(resetfilters).clone();
+    $(rfb).click(function(){
+        wldelfilters(table);
+        $(table).dataTable().fnDraw();
+        return false;
+    });
+    $(table).parent().find("div.resetfilters").append( rfb );
   });
+  $(resetfilters).remove();
 
 
   /* Per-column filters */
@@ -235,6 +246,17 @@ jQuery(document).ready(function() {
 /* Remove column sorting input when preferences are updated.
  * This is because the column order could have changed.
  * */
+function wldelfilters(table) {
+    var a = $(table).find('input[type=text],input[type=hidden]');
+    a.val('');
+    a.keyup();
+    var b = $(table).parent().find('.dataTables_filter input');
+    b.val('');
+    b.keyup();
+    $(table).find('input[type=checkbox]').removeAttr('checked').change();
+    return true;
+}
+
 function wlprefsubmit(force){
   $("fieldset.orderadd").each( function () {
     if (force || $(this).data('modified')) {
@@ -248,7 +270,6 @@ function wlprefsubmit(force){
     }
   });
 }
-
 
 // Store datetime filter inputs on unload
 jQuery(window).unload(function() {

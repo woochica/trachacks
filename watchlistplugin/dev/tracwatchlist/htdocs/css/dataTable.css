@@ -59,6 +59,10 @@
 	float: left;
 }
 
+.resetfilters {
+	float: left;
+}
+
 .dataTables_filter {
 	float: right;
 	text-align: right;
