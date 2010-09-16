@@ -179,7 +179,7 @@ jQuery(document).ready(function() {
     //"bJQueryUI": true,
     "sPaginationType": "full_numbers",
     "bPaginate": true,
-    "sDom": 'ilp<"resetfilters">rt',
+    "sDom": 'ilp<"resetfilters">frt',
     "sPagePrevious": "&lt;",
     "aLengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "&#8734;"]],
     //"sPaginationType": "full_numbers",
@@ -283,6 +283,7 @@ jQuery(document).ready(function() {
 function wldelfilters(table) {
     var oTable = $(table).dataTable();
     $(table).find('tfoot input[type=text],tfoot input[type=hidden]').removeAttr('disabled').val('');
+    $(table).find('tfoot input.numericfilter').data('filterfunction','');
     $(table).parent().find('.dataTables_filter input').val('');
     $(table).find('tfoot input[type=checkbox]').removeAttr('checked');
     fnResetAllFilters(oTable);
