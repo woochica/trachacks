@@ -54,6 +54,8 @@ class TracBrowserOps(Component):
             
             # Insert move/delete form
             if data['dir']:
+                data['bsop_base_path'] = req.args.get('path')
+                
                 mvdel_stream = Chrome(self.env).render_template(req,
                         'move_delete.html', data, fragment=True)
                 mvdel_transf = Transformer('//div[@id="main"]')
@@ -114,7 +116,8 @@ class SvnDeleteMenu(Component):
         return True
     
     def get_content(self, req, entry, stream, data):
-        return tag.a('Delete %s %s' % (entry.name, entry.path), href='#')
+        return tag.a('Delete %s' % (entry.name), href='#', 
+                     class_='bsop_delete')
 
 class SvnMoveMenu(Component):
     '''Generate context menu items for moving subversion items
@@ -129,4 +132,5 @@ class SvnMoveMenu(Component):
         return True
     
     def get_content(self, req, entry, stream, data):
-        return tag.a('Move %s %s' % (entry.name, entry.path), href='#')
+        return tag.a('Move %s' % (entry.name), href='#',
+                     class_='bsop_move')
