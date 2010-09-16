@@ -204,18 +204,19 @@ class WatchlistPlugin(Component):
         return pattern.replace('*','%').replace('?','_')
 
     def get_watched_resources(self, realm, user, db=None):
-        """Yields list of resourses watch by the given user in the given realm."""
+        """Returns list of resources watched by the given user in the given realm.
+           The list contains a list with the resource id and the last time it
+           got visited."""
         if not db:
             db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("""
-        SELECT resid
+        SELECT resid,lastvisit
             FROM watchlist
         WHERE realm=%s AND wluser=%s
         """, (realm, user)
         )
-        for values in cursor.fetchall():
-            yield values[0]
+        return cursor.fetchall()
 
     ### methods for IRequestHandler
     def match_request(self, req):
@@ -428,8 +429,8 @@ class WatchlistPlugin(Component):
           if new_res:
             cursor.executemany("""
               INSERT
-                INTO watchlist (wluser, realm, resid)
-              VALUES (%s,%s,%s)
+                INTO watchlist (wluser, realm, resid, lastvisit)
+              VALUES (%s,%s,%s,0)
             """, [(user, realm, res) for res in new_res]
             )
             db.commit()
@@ -770,7 +771,7 @@ class WikiWatchlist(BasicWatchlist):
       else:
           fields = set(fields)
 
-      for name in wl.get_watched_resources( 'wiki', req.authname ):
+      for name, last_visit in wl.get_watched_resources( 'wiki', req.authname ):
           wikipage = WikiPage(self.env, name, db=db)
           wikidict = {}
 
@@ -802,9 +803,9 @@ class WikiWatchlist(BasicWatchlist):
           if 'version' in fields:
               wikidict['version'] = unicode(wikipage.version)
           if 'changetime' in fields:
-              wikidict['changedsincelastvisit'] = 1
               wikidict['changetime'] = format_datetime( wikipage.time, locale=locale )
               wikidict['ichangetime'] = to_timestamp( wikipage.time )
+              wikidict['changedsincelastvisit'] = last_visit < wikidict['ichangetime'] and 1 or 0
               wikidict['timedelta'] = pretty_timedelta( wikipage.time )
               wikidict['timeline_link'] = req.href.timeline(precision='seconds',
                   from_=trac_format_datetime ( wikipage.time, 'iso8601'))
@@ -883,7 +884,7 @@ class TicketWatchlist(BasicWatchlist):
       else:
           fields = set(fields)
 
-      for id in wl.get_watched_resources( 'ticket', req.authname ):
+      for id,last_visit in wl.get_watched_resources( 'ticket', req.authname ):
           sid = unicode(id)
           ticket = Ticket(self.env, id, db)
 

@@ -73,6 +73,7 @@ class WatchlistDataBase(Component):
         Column('wluser'),
         Column('realm'),
         Column('resid'),
+        Column('lastvisit', type='int64'),
     ]
     settings_table = Table('watchlist_settings', key=['wluser','name'])[
         Column('wluser'),
