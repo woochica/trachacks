@@ -25,6 +25,7 @@ class BurndownChartTestCase(unittest.TestCase):
         ticket['summary'] = 'Test Ticket'
         ticket['hours_remaining'] = estimation
         ticket['milestone'] = 'milestone1'
+        ticket['status'] = 'new'
         return ticket.insert()
 
     def _change_ticket_estimations(self, id, history):

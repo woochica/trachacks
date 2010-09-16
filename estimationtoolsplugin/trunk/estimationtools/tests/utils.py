@@ -7,6 +7,8 @@ from estimationtools.utils import EstimationToolsBase
 class EstimationToolsBaseTestCase(unittest.TestCase):
     
     def test_disabled_without_estimation_field(self):
+        if not hasattr(EnvironmentStub, 'is_enabled'):
+            return # 0.12+ feature of mock env
         class TestTool(EstimationToolsBase):
             pass
         env = EnvironmentStub(enable=['estimationtools.*'])
@@ -18,6 +20,8 @@ class EstimationToolsBaseTestCase(unittest.TestCase):
                 ['EstimationTools (TestTool): Estimation field not configured. Component disabled.'])
 
     def test_enabled_with_estimation_field(self):
+        if not hasattr(EnvironmentStub, 'is_enabled'):
+            return # 0.12+ feature of mock env
         class TestTool(EstimationToolsBase):
             pass
         env = EnvironmentStub()
