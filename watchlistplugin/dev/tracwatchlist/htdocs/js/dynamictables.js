@@ -6,6 +6,18 @@ function wldeleterow(tr, table) {
   $(table).dataTable().fnDeleteRow(tr);
 }
 
+// Taken from http://datatables.net/forums/comments.php?DiscussionID=997
+// Changes: TODO: also reset global filter
+function fnResetAllFilters(oTable) {
+    var oSettings = oTable.fnSettings();
+    for(iCol = 0; iCol < oSettings.aoPreSearchCols.length; iCol++) {
+        oSettings.aoPreSearchCols[ iCol ].sSearch = '';
+    }
+    oSettings.oPreviousSearch.sSearch = '';
+    oTable.fnDraw();
+}
+///
+
 // Cookie Code taken from http://www.quirksmode.org/js/cookies.html
 // 15th Sep 2010
 // Changes: added path argument
@@ -175,7 +187,6 @@ jQuery(document).ready(function() {
     var rfb = $(resetfilters).clone();
     $(rfb).click(function(){
         wldelfilters(table);
-        $(table).dataTable().fnDraw();
         return false;
     });
     $(table).parent().find("div.resetfilters").append( rfb );
@@ -247,13 +258,11 @@ jQuery(document).ready(function() {
  * This is because the column order could have changed.
  * */
 function wldelfilters(table) {
-    var a = $(table).find('input[type=text],input[type=hidden]');
-    a.val('');
-    a.keyup();
-    var b = $(table).parent().find('.dataTables_filter input');
-    b.val('');
-    b.keyup();
-    $(table).find('input[type=checkbox]').removeAttr('checked').change();
+    var oTable = $(table).dataTable();
+    $(table).find('tfoot input[type=text],tfoot input[type=hidden]').removeAttr('disabled').val('');
+    $(table).parent().find('.dataTables_filter input').val('');
+    $(table).find('tfoot input[type=checkbox]').removeAttr('checked');
+    fnResetAllFilters(oTable);
     return true;
 }
 
@@ -263,10 +272,7 @@ function wlprefsubmit(force){
       realm = $(this).data('realm');
       table = $("table#" + realm + "list");
       var oTable = $(table).dataTable();
-      a = $(table).find("tfoot th");
-      $(table).find("tfoot th").each( function (i) {
-          oTable.fnFilter("",i);
-      });
+      fnResetAllFilters(oTable);
     }
   });
 }
