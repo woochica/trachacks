@@ -30,7 +30,8 @@
     <script type="text/javascript" py:if="options['autocomplete_inputs']"
       src="${href.chrome('watchlist','js','autocomplete.js')}"></script>
     <script type="text/javascript" py:if="options['dynamic_tables']"
-      src="${href.chrome('watchlist','js','anytime.js')}"></script>
+        src="${href.chrome('watchlist','js','anytime.js')}"></script>
+    <!-- dynamictables.js must be loaded after watchlist.js and orderadd.js ! -->
     <script type="text/javascript" py:if="options['dynamic_tables']"
       src="${href.chrome('watchlist','js','dynamictables.js')}"></script>
     <script type="text/javascript" 

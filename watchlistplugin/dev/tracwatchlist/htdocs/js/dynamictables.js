@@ -29,9 +29,9 @@ function createCookie(name,value,days,path) {
     }
     else var expires = "";
     if ( !path ) {
-        path = "/";
+        path = "";
     }
-    document.cookie = name+"="+value+expires+"; path=" + path;
+    document.cookie = name+"="+value+expires+"; path=" + path + '/';
 }
 
 function readCookie(name) {
@@ -47,8 +47,8 @@ function readCookie(name) {
     return null;
 }
 
-function eraseCookie(name) {
-    createCookie(name,"",-1);
+function eraseCookie(name,path) {
+    createCookie(name,"",-1,path);
 }
 /// End of Cookie Code
 
@@ -155,6 +155,7 @@ jQuery(document).ready(function() {
     // Activate dataTable
     $(this).dataTable({
     "bStateSave": true,
+    "sCookiePrefix": 'tracwatchlist_',
     "aoColumns": aoColumns,
     //"bAutoWidth": false,
     //"bJQueryUI": true,
@@ -278,7 +279,7 @@ function wlprefsubmit(force){
 }
 
 // Store datetime filter inputs on unload
-jQuery(window).unload(function() {
+function wlstoredatetime() {
     $(".datetimefilter").each(function(){
         dtid = $(this).attr('id');
         $(this).find("input").each(function(){
@@ -290,6 +291,36 @@ jQuery(window).unload(function() {
             createCookie(name,value,90,window.location.pathname);
         });
     });
-});
+};
+jQuery(window).unload(wlstoredatetime);
 
+function wldeletecookies() {
+    // Delete all datetime filter cookies
+    $(".datetimefilter").each(function(){
+        dtid = $(this).attr('id');
+        $(this).find("input").each(function(){
+            var name = dtid + '/' + $(this).attr('name');
+            eraseCookie(name,window.location.pathname);
+        });
+    });
+    // Delete all dataTable cookies
+    // This might break if dataTables changes the internal names
+    // of the cookie (last part of path is attached at the moment).
+    // Some code copied from dataTables.js.
+    $(".watchlist").each(function(){
+        var id = $(this).attr('id');
+        var aParts = window.location.pathname.split('/');
+        var name = 'tracwatchlist_' + id + '_' + aParts.pop().replace(/[\/:]/g,"").toLowerCase();
+        eraseCookie(name,aParts.join('/'));
+    })
+
+};
+
+function wlresettodefault(){
+    wlprefsubmit(1);
+    // Disable storing of new cookies
+    jQuery(window).unbind('unload',wlstoredatetime);
+    // Remove all old cookies
+    wldeletecookies();
+}
 

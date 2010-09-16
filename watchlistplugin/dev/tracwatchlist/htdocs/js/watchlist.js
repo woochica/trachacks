@@ -29,9 +29,13 @@ function wlremoveempty( child ) {
     wlremmsgbox();
 }
 
+// The following functions will be overwritten by 'dynamictables.js' if loaded
 function wldeleterow(tr, table) {
   $(tr).remove();
 }
+
+function wlresettodefault() {}
+///
 
 function wlremmsgbox() {
   $('#message-box').remove();

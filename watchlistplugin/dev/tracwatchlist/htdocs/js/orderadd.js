@@ -23,7 +23,10 @@ function orderadd_buttons(orderadd, select1, select2 ) {
   });
 }
 
+// The following functions will be overwritten by 'dynamictables.js' if loaded
 function wlprefsubmit(){}
+function wlresettodefault(){}
+///
 
 $(document).ready(function(){
   $("#preferences form").submit(function(){
@@ -47,7 +50,7 @@ $(document).ready(function(){
   $("#preferences form #resettodefault").click(function(){
     form = $("#preferences form");
     $(form).find("input[name=action]").val("defaultsettings");
-    wlprefsubmit(1);
+    wlresettodefault();
     $(form).submit();
     return false;
   });
