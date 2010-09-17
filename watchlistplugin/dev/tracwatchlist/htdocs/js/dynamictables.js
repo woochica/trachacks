@@ -189,14 +189,14 @@ $.fn.dataTableExt.afnFiltering.push(
 */
 
 jQuery.fn.dataTableExt.oSort['html-numeric-asc']  = function(x,y) {
-    var a = x.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') * 1;
-    var b = y.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') * 1;
+    var a = parseFloat( x.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') );
+    var b = parseFloat( y.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') );
     return ((a < b) ? -1 : ((a > b) ?  1 : 0));
 };
 
 jQuery.fn.dataTableExt.oSort['html-numeric-desc'] = function(x,y) {
-    var a = x.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') * 1;
-    var b = y.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') * 1;
+    var a = parseFloat( x.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') );
+    var b = parseFloat( y.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') );
     return ((a < b) ?  1 : ((a > b) ? -1 : 0));
 };
 
@@ -468,23 +468,21 @@ function wlgetfilterfunction(str) {
     var i = str.indexOf ('-');
     var a; var b;
     if (i == -1) {
-        a = str;
+        a = parseFloat(str);
         b = a;
     }
     else {
-        a = str.substring (0, i);
-        b = str.substring (i + 1);
+        a = parseFloat( str.substring (0, i) );
+        b = parseFloat( str.substring (i + 1) );
     }
 
-    if (a=='' || isNaN(a)) {
+    if (isNaN(a)) {
         a = 0;
     }
-    if (b=='' || isNaN(b)) {
+    if (isNaN(b)) {
         b = Number.MAX_VALUE;
     }
-    a = a * 1;
-    b = b * 1;
-    return function (i) { return ((i >= a) && (b >= i)); };
+    return function (num) { return ((num >= a) && (b >= num)); };
 }
 
 // Returns a function with an array of the above functions.
@@ -499,10 +497,10 @@ function wlgetfilterfunctions(str) {
     if (afunc.length == 1) {
         return afunc[0];
     }
-    return function (i) {
-        var n;
-        for (n in afunc) {
-            if (afunc[n](i)) {
+    return function (num) {
+        var i;
+        for (i in afunc) {
+            if (afunc[i](num)) {
                 return true;
             }
         }
