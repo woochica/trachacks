@@ -43,4 +43,3 @@ class WatchlistNavigation(Component):
         if user and user != 'anonymous':
             yield ('mainnav', 'watchlist', tag.a(_("Watchlist"),
                    href=req.href("watchlist")))
-

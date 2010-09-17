@@ -87,7 +87,7 @@ class WatchlistPlugin(Component):
     """
     providers = ExtensionPoint(IWatchlistProvider)
 
-    implements( IRequestHandler, IRequestFilter, ITemplateProvider ) 
+    implements( IRequestHandler, IRequestFilter, ITemplateProvider )
 
     OPTIONS = {
         'notifications': ( False, N_("Notifications")),
@@ -109,36 +109,36 @@ class WatchlistPlugin(Component):
     wsub = None
 
     def __init__(self):
-      self.realms = []
-      self.realm_handler = {}
+        self.realms = []
+        self.realm_handler = {}
 
-      # bind the 'watchlist' catalog to the specified locale directory
-      locale_dir = resource_filename(__name__, 'locale')
-      add_domain(self.env.path, locale_dir)
+        # bind the 'watchlist' catalog to the specified locale directory
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
 
-      for provider in self.providers:
-        for realm in provider.get_realms():
-          assert realm not in self.realms
-          self.realms.append(realm)
-          self.realm_handler[realm] = provider
+        for provider in self.providers:
+            for realm in provider.get_realms():
+                assert realm not in self.realms
+                self.realms.append(realm)
+                self.realm_handler[realm] = provider
 
-      try:
-          # Import methods from WatchSubscriber of the AnnouncerPlugin
-          from  announcerplugin.subscribers.watchers  import  WatchSubscriber
-          self.wsub = self.env[WatchSubscriber]
-          if self.wsub:
-            self.log.debug("WS: WatchSubscriber found in announcerplugin")
-      except Exception, e:
-          try:
-            # Import fallback methods for AnnouncerPlugin's dev version
-            from  announcer.subscribers.watchers  import  WatchSubscriber
+        try:
+                # Import methods from WatchSubscriber of the AnnouncerPlugin
+            from  announcerplugin.subscribers.watchers  import  WatchSubscriber
             self.wsub = self.env[WatchSubscriber]
             if self.wsub:
-              self.log.debug("WS: WatchSubscriber found in announcer")
-          except Exception, ee:
-            self.log.debug("WS! " + str(e))
-            self.log.debug("WS! " + str(ee))
-            self.wsub = None
+                self.log.debug("WS: WatchSubscriber found in announcerplugin")
+        except Exception, e:
+            try:
+                # Import fallback methods for AnnouncerPlugin's dev version
+                from  announcer.subscribers.watchers  import  WatchSubscriber
+                self.wsub = self.env[WatchSubscriber]
+                if self.wsub:
+                    self.log.debug("WS: WatchSubscriber found in announcer")
+            except Exception, ee:
+                self.log.debug("WS! " + str(e))
+                self.log.debug("WS! " + str(ee))
+                self.wsub = None
 
     def get_settings(self, user):
         settings = {}
@@ -152,63 +152,63 @@ class WatchlistPlugin(Component):
         return settings
 
     def is_notify(self, req, realm, resid):
-      try:
-        return self.wsub.is_watching(req.session.sid, True, realm, resid)
-      except AttributeError:
-        return False
-      except Exception, e:
-        self.log.error("is_notify error: " + str(e))
-        return False
+        try:
+            return self.wsub.is_watching(req.session.sid, True, realm, resid)
+        except AttributeError:
+            return False
+        except Exception, e:
+            self.log.error("is_notify error: " + str(e))
+            return False
 
     def set_notify(self, req, realm, resid):
-      try:
-        self.wsub.set_watch(req.session.sid, True, realm, resid)
-      except AttributeError:
-        return False
-      except Exception, e:
-        self.log.error("set_notify error: " + str(e))
+        try:
+            self.wsub.set_watch(req.session.sid, True, realm, resid)
+        except AttributeError:
+            return False
+        except Exception, e:
+            self.log.error("set_notify error: " + str(e))
 
     def unset_notify(self, req, realm, resid):
-      try:
-        self.wsub.set_unwatch(req.session.sid, True, realm, resid)
-      except AttributeError:
-        return False
-      except Exception, e:
-        self.log.error("unset_notify error: " + str(e))
+        try:
+            self.wsub.set_unwatch(req.session.sid, True, realm, resid)
+        except AttributeError:
+            return False
+        except Exception, e:
+            self.log.error("unset_notify error: " + str(e))
 
     def _get_sql_names_and_patterns(self, nameorpatternlist):
-      import re
-      if not nameorpatternlist:
-        return [], []
-      star  = re.compile(r'(?<!\\)\*')
-      ques  = re.compile(r'(?<!\\)\?')
-      names = []
-      patterns = []
-      for norp in nameorpatternlist:
-        norp = norp.strip()
-        pattern = norp.replace('%',r'\%').replace('_',r'\_')
-        pattern_unsub = pattern
-        pattern = star.sub('%', pattern)
-        pattern = ques.sub('_', pattern)
-        if pattern == pattern_unsub:
-          names.append(norp)
-        else:
-          pattern = pattern.replace('\*','*').replace('\?','?')
-          patterns.append(pattern)
-      return names, patterns
+        import re
+        if not nameorpatternlist:
+            return [], []
+        star  = re.compile(r'(?<!\\)\*')
+        ques  = re.compile(r'(?<!\\)\?')
+        names = []
+        patterns = []
+        for norp in nameorpatternlist:
+            norp = norp.strip()
+            pattern = norp.replace('%',r'\%').replace('_',r'\_')
+            pattern_unsub = pattern
+            pattern = star.sub('%', pattern)
+            pattern = ques.sub('_', pattern)
+            if pattern == pattern_unsub:
+                names.append(norp)
+            else:
+                pattern = pattern.replace('\*','*').replace('\?','?')
+                patterns.append(pattern)
+        return names, patterns
 
     def _sql_pattern_unescape(self, pattern):
-      import re
-      percent    = re.compile(r'(?<!\\)%')
-      underscore = re.compile(r'(?<!\\)_')
-      pattern = pattern.replace('*','\*').replace('?','\?')
-      pattern = percent.sub('*', pattern)
-      pattern = underscore.sub('?', pattern)
-      pattern = pattern.replace('\%','%').replace('\_','_')
-      return pattern
+        import re
+        percent    = re.compile(r'(?<!\\)%')
+        underscore = re.compile(r'(?<!\\)_')
+        pattern = pattern.replace('*','\*').replace('?','\?')
+        pattern = percent.sub('*', pattern)
+        pattern = underscore.sub('?', pattern)
+        pattern = pattern.replace('\%','%').replace('\_','_')
+        return pattern
 
     def _convert_pattern(self, pattern):
-        # needs more work, excape sequences, etc.
+            # needs more work, excape sequences, etc.
         return pattern.replace('*','%').replace('?','_')
 
     def get_watched_resources(self, realm, user, db=None):
@@ -389,9 +389,9 @@ class WatchlistPlugin(Component):
                               onwatchlistpage
 
         if onwatchlistpage:
-          wldict['show_messages'] = options['show_messages_while_on_watchlist_page']
+            wldict['show_messages'] = options['show_messages_while_on_watchlist_page']
         else:
-          wldict['show_messages'] = options['show_messages_on_watchlist_page']
+            wldict['show_messages'] = options['show_messages_on_watchlist_page']
 
         new_res = []
         del_res = []
@@ -399,113 +399,113 @@ class WatchlistPlugin(Component):
         err_res = []
         err_pat = []
         if action == "watch":
-          handler = self.realm_handler[realm]
-          if names:
-            reses = list(handler.res_list_exists(realm, names))
+            handler = self.realm_handler[realm]
+            if names:
+                reses = list(handler.res_list_exists(realm, names))
 
-            sql = ("""
-              SELECT resid
-                FROM watchlist
-               WHERE wluser=%s AND realm=%s AND
-                     resid IN (
-            """ + ",".join(("%s",) * len(names)) + ")"
-            )
-            cursor.execute( sql, [user,realm] + names)
-            alw_res = [ res[0] for res in cursor.fetchall() ]
-            new_res.extend(set(reses).difference(alw_res))
-            err_res.extend(set(names).difference(reses))
-          for pattern in patterns:
-            reses = list(handler.res_pattern_exists(realm, pattern))
+                sql = ("""
+                  SELECT resid
+                    FROM watchlist
+                   WHERE wluser=%s AND realm=%s AND
+                         resid IN (
+                """ + ",".join(("%s",) * len(names)) + ")"
+                )
+                cursor.execute( sql, [user,realm] + names)
+                alw_res = [ res[0] for res in cursor.fetchall() ]
+                new_res.extend(set(reses).difference(alw_res))
+                err_res.extend(set(names).difference(reses))
+            for pattern in patterns:
+                reses = list(handler.res_pattern_exists(realm, pattern))
 
-            if not reses:
-              err_pat.append(self._sql_pattern_unescape(pattern))
-            else:
-              cursor.execute("""
-                SELECT resid
-                  FROM watchlist
-                 WHERE wluser=%s AND realm=%s AND resid LIKE (%s)
-              """, (user,realm,pattern)
-              )
-              watched_res = [ res[0] for res in cursor.fetchall() ]
-              alw_res.extend(set(reses).intersection(watched_res))
-              new_res.extend(set(reses).difference(alw_res))
+                if not reses:
+                    err_pat.append(self._sql_pattern_unescape(pattern))
+                else:
+                    cursor.execute("""
+                      SELECT resid
+                        FROM watchlist
+                       WHERE wluser=%s AND realm=%s AND resid LIKE (%s)
+                    """, (user,realm,pattern)
+                    )
+                    watched_res = [ res[0] for res in cursor.fetchall() ]
+                    alw_res.extend(set(reses).intersection(watched_res))
+                    new_res.extend(set(reses).difference(alw_res))
 
-          if new_res:
-            cursor.executemany("""
-              INSERT
-                INTO watchlist (wluser, realm, resid, lastvisit)
-              VALUES (%s,%s,%s,0)
-            """, [(user, realm, res) for res in new_res]
-            )
-            db.commit()
+            if new_res:
+                cursor.executemany("""
+                  INSERT
+                    INTO watchlist (wluser, realm, resid, lastvisit)
+                  VALUES (%s,%s,%s,0)
+                """, [(user, realm, res) for res in new_res]
+                )
+                db.commit()
 
-          action = "view"
-          if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
-            req.session['watchlist_message'] = _(
-              "You are now watching this resource."
-            )
-          if self.wsub and options['notifications'] and options['notify_by_default']:
-            for res in new_res:
-              self.set_notify(req, realm, res)
-            db.commit()
-          if redirectback:
-            req.redirect(req.href(realm,names[0]))
-            raise RequestDone
+            action = "view"
+            if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
+                req.session['watchlist_message'] = _(
+                  "You are now watching this resource."
+                )
+            if self.wsub and options['notifications'] and options['notify_by_default']:
+                for res in new_res:
+                    self.set_notify(req, realm, res)
+                db.commit()
+            if redirectback:
+                req.redirect(req.href(realm,names[0]))
+                raise RequestDone
 
         elif action == "unwatch":
-          if names:
-            sql = ("""
-              SELECT resid
-                FROM watchlist
-               WHERE wluser=%s AND realm=%s AND
-                     resid IN (
-            """ + ",".join(("%s",) * len(names)) + ")"
-            )
-            cursor.execute( sql, [user,realm] + names)
-            reses = [ res[0] for res in cursor.fetchall() ]
-            del_res.extend(reses)
-            err_res.extend(set(names).difference(reses))
+            if names:
+                sql = ("""
+                  SELECT resid
+                    FROM watchlist
+                   WHERE wluser=%s AND realm=%s AND
+                         resid IN (
+                """ + ",".join(("%s",) * len(names)) + ")"
+                )
+                cursor.execute( sql, [user,realm] + names)
+                reses = [ res[0] for res in cursor.fetchall() ]
+                del_res.extend(reses)
+                err_res.extend(set(names).difference(reses))
 
-            sql = ("""
-              DELETE
-                FROM watchlist
-               WHERE wluser=%s AND realm=%s AND
-                     resid IN (
-            """ + ",".join(("%s",) * len(names)) + ")"
-            )
-            cursor.execute( sql, [user,realm] + names)
-          for pattern in patterns:
-            cursor.execute("""
-              SELECT resid
-                FROM watchlist
-               WHERE wluser=%s AND realm=%s AND resid LIKE %s
-            """, (user,realm,pattern)
-            )
-            reses = [ res[0] for res in cursor.fetchall() ]
-            if not reses:
-              err_pat.append(self._sql_pattern_unescape(pattern))
-            else:
-              del_res.extend(reses)
-              cursor.execute("""
-                DELETE
-                  FROM watchlist
-                 WHERE wluser=%s AND realm=%s AND resid LIKE %s
-              """, (user,realm,pattern)
-              )
-          db.commit()
-
-          action = "view"
-          if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
-            req.session['watchlist_message'] = _(
-              "You are no longer watching this resource."
-            )
-          if self.wsub and options['notifications'] and options['notify_by_default']:
-            for res in del_res:
-              self.unset_notify(req, realm, res)
+                sql = ("""
+                  DELETE
+                    FROM watchlist
+                   WHERE wluser=%s AND realm=%s AND
+                         resid IN (
+                """ + ",".join(("%s",) * len(names)) + ")"
+                )
+                cursor.execute( sql, [user,realm] + names)
+            for pattern in patterns:
+                cursor.execute("""
+                  SELECT resid
+                    FROM watchlist
+                   WHERE wluser=%s AND realm=%s AND resid LIKE %s
+                """, (user,realm,pattern)
+                )
+                reses = [ res[0] for res in cursor.fetchall() ]
+                if not reses:
+                    err_pat.append(self._sql_pattern_unescape(pattern))
+                else:
+                    del_res.extend(reses)
+                    cursor.execute("""
+                      DELETE
+                        FROM watchlist
+                       WHERE wluser=%s AND realm=%s AND resid LIKE %s
+                    """, (user,realm,pattern)
+                    )
             db.commit()
-          if redirectback:
-            req.redirect(req.href(realm,names[0]))
-            raise RequestDone
+
+            action = "view"
+            if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
+                req.session['watchlist_message'] = _(
+                  "You are no longer watching this resource."
+                )
+            if self.wsub and options['notifications'] and options['notify_by_default']:
+                for res in del_res:
+                    self.unset_notify(req, realm, res)
+                db.commit()
+            if redirectback:
+                req.redirect(req.href(realm,names[0]))
+                raise RequestDone
 
         wldict['del_res'] = del_res
         wldict['err_res'] = err_res
@@ -517,64 +517,64 @@ class WatchlistPlugin(Component):
             if single and not self.res_exists(realm, resids[0]):
                 raise HTTPNotFound(t_("Page %(name)s not found", name=resids[0]))
             if self.wsub and options['notifications']:
-              for res in resids:
-                if self.res_exists(realm, res):
-                  self.set_notify(req, realm, res)
-              db.commit()
+                for res in resids:
+                    if self.res_exists(realm, res):
+                        self.set_notify(req, realm, res)
+                db.commit()
             if redirectback_notify and not async:
-              if options['show_messages_on_resource_page']:
-                req.session['watchlist_notify_message'] = _(
-                  """
-                  You are now receiving change notifications
-                  about this resource.
-                  """
-                )
-              req.redirect(req.href(realm,resids[0]))
-              raise RequestDone
+                if options['show_messages_on_resource_page']:
+                    req.session['watchlist_notify_message'] = _(
+                      """
+                      You are now receiving change notifications
+                      about this resource.
+                      """
+                    )
+                req.redirect(req.href(realm,resids[0]))
+                raise RequestDone
             action = "view"
         elif action == "notifyoff":
             if self.wsub and options['notifications']:
-              for res in resids:
-                self.unset_notify(req, realm, res)
-              db.commit()
+                for res in resids:
+                    self.unset_notify(req, realm, res)
+                db.commit()
             if redirectback_notify and not async:
-              if options['show_messages_on_resource_page']:
-                req.session['watchlist_notify_message'] = _(
-                  """
-                  You are no longer receiving
-                  change notifications about this resource.
-                  """
-                )
-              req.redirect(req.href(realm,resids[0]))
-              raise RequestDone
+                if options['show_messages_on_resource_page']:
+                    req.session['watchlist_notify_message'] = _(
+                      """
+                      You are no longer receiving
+                      change notifications about this resource.
+                      """
+                    )
+                req.redirect(req.href(realm,resids[0]))
+                raise RequestDone
 
             action = "view"
 
         if action == "search":
-          handler = self.realm_handler[realm]
-          query = req.args.get('q', u'')
-          found = handler.res_pattern_exists(realm, query + '%')
+            handler = self.realm_handler[realm]
+            query = req.args.get('q', u'')
+            found = handler.res_pattern_exists(realm, query + '%')
 
-          watched = self.get_watched_resources( realm, user )
-          notwatched = list(set(found).difference(set(watched)))
-          notwatched.sort()
-          req.send( unicode('\n'.join(notwatched) + '\n').encode("utf-8"), 'text/plain', 200 )
-          raise RequestDone
+            watched = self.get_watched_resources( realm, user )
+            notwatched = list(set(found).difference(set(watched)))
+            notwatched.sort()
+            req.send( unicode('\n'.join(notwatched) + '\n').encode("utf-8"), 'text/plain', 200 )
+            raise RequestDone
 
 
         if async:
-          req.send("",'text/plain', 200)
-          raise RequestDone
+            req.send("",'text/plain', 200)
+            raise RequestDone
 
         if action == "view":
             for (xrealm,xhandler) in self.realm_handler.iteritems():
-              if xhandler.has_perm(xrealm, req.perm):
-                wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
-                name = xhandler.get_realm_label(xrealm, n_plural=1000)
-                # TRANSLATOR: Navigation link to point to watchlist section of this realm
-                # (e.g. 'Wikis', 'Tickets').
-                add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name),
-                            href='#' + xrealm + 's')
+                if xhandler.has_perm(xrealm, req.perm):
+                    wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
+                    name = xhandler.get_realm_label(xrealm, n_plural=1000)
+                    # TRANSLATOR: Navigation link to point to watchlist section of this realm
+                    # (e.g. 'Wikis', 'Tickets').
+                    add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name),
+                                href='#' + xrealm + 's')
             add_ctxtnav(req, t_("Preferences"), href='#preferences')
             return ("watchlist.html", wldict, "text/html")
         else:
@@ -747,85 +747,85 @@ class WikiWatchlist(BasicWatchlist):
         self.fields['wiki']['name'] = self.get_realm_label('wiki')
 
     def get_realm_label(self, realm, n_plural=1):
-      return ngettext("Wiki Page", "Wiki Pages", n_plural)
+        return ngettext("Wiki Page", "Wiki Pages", n_plural)
 
     def res_exists(self, realm, resid):
-      return WikiPage(self.env, resid).exists
+        return WikiPage(self.env, resid).exists
 
     def res_pattern_exists(self, realm, pattern):
-      db = self.env.get_db_cnx()
-      cursor = db.cursor()
-      cursor.execute("""
-        SELECT name
-          FROM wiki
-         WHERE name
-          LIKE (%s)
-      """, (pattern,)
-      )
-      return [ vals[0] for vals in cursor.fetchall() ]
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+          SELECT name
+            FROM wiki
+           WHERE name
+            LIKE (%s)
+        """, (pattern,)
+        )
+        return [ vals[0] for vals in cursor.fetchall() ]
 
     def get_list(self, realm, wl, req, fields=None):
-      db = self.env.get_db_cnx()
-      cursor = db.cursor()
-      user = req.authname
-      locale = getattr( req, 'locale', LC_TIME)
-      wikilist = []
-      if not fields:
-          fields = set(self.default_fields['wiki'])
-      else:
-          fields = set(fields)
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        user = req.authname
+        locale = getattr( req, 'locale', LC_TIME)
+        wikilist = []
+        if not fields:
+            fields = set(self.default_fields['wiki'])
+        else:
+            fields = set(fields)
 
-      for name, last_visit in wl.get_watched_resources( 'wiki', req.authname ):
-          wikipage = WikiPage(self.env, name, db=db)
-          wikidict = {}
+        for name, last_visit in wl.get_watched_resources( 'wiki', req.authname ):
+            wikipage = WikiPage(self.env, name, db=db)
+            wikidict = {}
 
-          if not wikipage.exists:
-            wikidict['deleted'] = True
+            if not wikipage.exists:
+                wikidict['deleted'] = True
+                if 'name' in fields:
+                    wikidict['name'] = name
+                if 'author' in fields:
+                    wikidict['author'] = '?'
+                if 'changetime' in fields:
+                    wikidict['changedsincelastvisit'] = 1
+                    wikidict['changetime'] = '?'
+                    wikidict['ichangetime'] = 0
+                if 'comment' in fields:
+                    wikidict['comment'] = tag.strong(t_("deleted"), class_='deleted')
+                if 'notify' in fields:
+                    wikidict['notify'] =  wl.is_notify(req, 'wiki', name)
+                wikilist.append(wikidict)
+                continue
+
             if 'name' in fields:
                 wikidict['name'] = name
             if 'author' in fields:
-                wikidict['author'] = '?'
+                if not (Chrome(self.env).show_email_addresses or
+                        'EMAIL_VIEW' in req.perm(wikipage.resource)):
+                    wikidict['author'] = obfuscate_email_address(wikipage.author)
+                else:
+                    wikidict['author'] = wikipage.author
+            if 'version' in fields:
+                wikidict['version'] = unicode(wikipage.version)
             if 'changetime' in fields:
-                wikidict['changedsincelastvisit'] = 1
-                wikidict['changetime'] = '?'
-                wikidict['ichangetime'] = 0
+                wikidict['changetime'] = format_datetime( wikipage.time, locale=locale )
+                wikidict['ichangetime'] = to_timestamp( wikipage.time )
+                wikidict['changedsincelastvisit'] = last_visit < wikidict['ichangetime'] and 1 or 0
+                wikidict['timedelta'] = pretty_timedelta( wikipage.time )
+                wikidict['timeline_link'] = req.href.timeline(precision='seconds',
+                    from_=trac_format_datetime ( wikipage.time, 'iso8601'))
             if 'comment' in fields:
-                wikidict['comment'] = tag.strong(t_("deleted"), class_='deleted')
+                comment = wikipage.comment or ""
+                if len(comment) > 200:
+                    comment = moreless(comment, 200)
+                wikidict['comment'] = comment
             if 'notify' in fields:
-                wikidict['notify'] =  wl.is_notify(req, 'wiki', name)
+                wikidict['notify']   = wl.is_notify(req, 'wiki', name)
+            if 'readonly' in fields:
+                wikidict['readonly'] = wikipage.readonly and t_("yes") or t_("no")
+            #if 'ipnr' in fields:
+            #    wikidict['ipnr'] = wikipage.ipnr,  # Note: Not supported by Trac 0.12
             wikilist.append(wikidict)
-            continue
-
-          if 'name' in fields:
-              wikidict['name'] = name
-          if 'author' in fields:
-              if not (Chrome(self.env).show_email_addresses or 
-                      'EMAIL_VIEW' in req.perm(wikipage.resource)):
-                  wikidict['author'] = obfuscate_email_address(wikipage.author)
-              else:
-                  wikidict['author'] = wikipage.author
-          if 'version' in fields:
-              wikidict['version'] = unicode(wikipage.version)
-          if 'changetime' in fields:
-              wikidict['changetime'] = format_datetime( wikipage.time, locale=locale )
-              wikidict['ichangetime'] = to_timestamp( wikipage.time )
-              wikidict['changedsincelastvisit'] = last_visit < wikidict['ichangetime'] and 1 or 0
-              wikidict['timedelta'] = pretty_timedelta( wikipage.time )
-              wikidict['timeline_link'] = req.href.timeline(precision='seconds',
-                  from_=trac_format_datetime ( wikipage.time, 'iso8601'))
-          if 'comment' in fields:
-              comment = wikipage.comment or ""
-              if len(comment) > 200:
-                  comment = moreless(comment, 200)
-              wikidict['comment'] = comment
-          if 'notify' in fields:
-              wikidict['notify']   = wl.is_notify(req, 'wiki', name)
-          if 'readonly' in fields:
-              wikidict['readonly'] = wikipage.readonly and t_("yes") or t_("no")
-          #if 'ipnr' in fields:
-          #    wikidict['ipnr'] = wikipage.ipnr,  # Note: Not supported by Trac 0.12
-          wikilist.append(wikidict)
-      return wikilist
+        return wikilist
 
 
 
@@ -861,161 +861,159 @@ class TicketWatchlist(BasicWatchlist):
         return ngettext("Ticket", "Tickets", n_plural)
 
     def res_exists(self, realm, resid):
-      try:
-        return Ticket(self.env, int(resid)).exists
-      except:
-        return False
+        try:
+            return Ticket(self.env, int(resid)).exists
+        except:
+            return False
 
     def res_pattern_exists(self, realm, pattern):
-      if pattern == '%':
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("""
-          SELECT id
-            FROM ticket
-        """
-        )
-        return [ unicode(vals[0]) for vals in cursor.fetchall() ]
-      else:
-        return []
+        if pattern == '%':
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("""
+              SELECT id
+                FROM ticket
+            """
+            )
+            return [ unicode(vals[0]) for vals in cursor.fetchall() ]
+        else:
+            return []
 
     def get_list(self, realm, wl, req, fields=None):
-      db = self.env.get_db_cnx()
-      cursor = db.cursor()
-      context = Context.from_request(req)
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        context = Context.from_request(req)
 
-      ticketlist = []
-      if not fields:
-          fields = set(self.default_fields['ticket'])
-      else:
-          fields = set(fields)
+        ticketlist = []
+        if not fields:
+            fields = set(self.default_fields['ticket'])
+        else:
+            fields = set(fields)
 
-      for sid,last_visit in wl.get_watched_resources( 'ticket', req.authname ):
-          ticketdict = {}
-          try:
-            ticket = Ticket(self.env, sid, db)
-            exists = ticket.exists
-          except:
-            exists = False
+        for sid,last_visit in wl.get_watched_resources( 'ticket', req.authname ):
+            ticketdict = {}
+            try:
+                ticket = Ticket(self.env, sid, db)
+                exists = ticket.exists
+            except:
+                exists = False
 
-          if not exists:
-            ticketdict['deleted'] = True
+            if not exists:
+                ticketdict['deleted'] = True
+                if 'id' in fields:
+                    ticketdict['id'] = sid
+                    ticketdict['ID'] = '#' + sid
+                if 'author' in fields:
+                    ticketdict['author'] = '?'
+                if 'changetime' in fields:
+                    ticketdict['changedsincelastvisit'] = 1
+                    ticketdict['changetime'] = '?'
+                    ticketdict['ichangetime'] = 0
+                if 'time' in fields:
+                    ticketdict['time'] = '?'
+                    ticketdict['itime'] = 0
+                if 'comment' in fields:
+                    ticketdict['comment'] = tag.strong(t_("deleted"), class_='deleted')
+                if 'notify' in fields:
+                    ticketdict['notify'] =  wl.is_notify(req, 'ticket', sid)
+                if 'description' in fields:
+                    ticketdict['description'] = ''
+                if 'owner' in fields:
+                    ticketdict['owner'] = ''
+                if 'reporter' in fields:
+                    ticketdict['reporter'] = ''
+                ticketlist.append(ticketdict)
+                continue
+
+            render_elt = lambda x: x
+            if not (Chrome(self.env).show_email_addresses or \
+                    'EMAIL_VIEW' in req.perm(ticket.resource)):
+                render_elt = obfuscate_email_address
+
+            # Copy all requested fields from ticket
+            if fields:
+                for f in fields:
+                    ticketdict[f] = ticket.values.get(f,u'')
+            else:
+                ticketdict = ticket.values.copy()
+
+            # Changes are special. Comment, commentnum and last author are included in them.
+            if 'changes' in fields or 'comment' in fields or 'commentnum' in fields or 'author' in fields:
+                changes = []
+                # If there are now changes the reporter is the last author
+                author  = ticket.values['reporter']
+                commentnum = u"0"
+                comment = u""
+                want_changes = 'changes' in fields
+                for date,cauthor,field,oldvalue,newvalue,permanent in ticket.get_changelog(ticket.time_changed,db):
+                    author = cauthor
+                    if field == 'comment':
+                        if 'commentnum' in fields:
+                            ticketdict['commentnum'] = to_unicode(oldvalue)
+                        if 'comment' in fields:
+                            comment = to_unicode(newvalue)
+                            if len(comment) > 200:
+                                comment = moreless(comment, 200)
+                            ticketdict['comment'] = comment
+                        if not want_changes:
+                            break
+                    else:
+                        if want_changes:
+                            changes.extend(
+                              [ tag(tag.strong(self.fields['ticket'][field]), ' ',
+                                  render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
+                                  ), tag('; ') ])
+                if want_changes:
+                    # Remove the last tag('; '):
+                    if changes:
+                        changes.pop()
+                    if len(changes) > 5:
+                        changes = moreless(changes, 5)
+                    ticketdict['changes'] = tag(changes)
+
+            locale = getattr( req, 'locale', LC_TIME)
             if 'id' in fields:
                 ticketdict['id'] = sid
-                ticketdict['ID'] = '#' + sid
+                ticketdict['ID'] = format_to_oneliner(self.env, context, '#' + sid, shorten=True)
+            if 'cc' in fields:
+                if render_elt == obfuscate_email_address:
+                    ticketdict['cc'] = ', '.join([ render_elt(c) for c in ticketdict['cc'].split(', ') ])
             if 'author' in fields:
-                ticketdict['author'] = '?'
+                ticketdict['author'] = render_elt(author),
             if 'changetime' in fields:
-                ticketdict['changedsincelastvisit'] = 1
-                ticketdict['changetime'] = '?'
-                ticketdict['ichangetime'] = 0
+                changetime = ticket.time_changed
+                ichangetime = to_timestamp( changetime )
+                ticketdict.update(
+                    changetime       = format_datetime( changetime, locale=locale ),
+                    ichangetime      = ichangetime,
+                    changedsincelastvisit = (last_visit < ichangetime and 1 or 0),
+                    changetime_delta = pretty_timedelta( changetime ),
+                    changetime_link  = req.href.timeline(precision='seconds',
+                                       from_=trac_format_datetime ( changetime, 'iso8601')))
             if 'time' in fields:
-                ticketdict['time'] = '?'
-                ticketdict['itime'] = 0
-            if 'comment' in fields:
-                ticketdict['comment'] = tag.strong(t_("deleted"), class_='deleted')
-            if 'notify' in fields:
-                ticketdict['notify'] =  wl.is_notify(req, 'ticket', sid)
+                time = ticket.time_created
+                ticketdict.update(
+                    time             = format_datetime( time, locale=locale ),
+                    itime            = to_timestamp( time ),
+                    time_delta       = pretty_timedelta( time ),
+                    time_link        = req.href.timeline(precision='seconds',
+                                       from_=trac_format_datetime ( time, 'iso8601')))
             if 'description' in fields:
-                ticketdict['description'] = ''
+                description = ticket.values['description']
+                if len(description) > 200:
+                    description = moreless(description, 200)
+                ticketdict['description'] = description
+            if 'notify' in fields:
+                ticketdict['notify'] = wl.is_notify(req, 'ticket', sid)
             if 'owner' in fields:
-                ticketdict['owner'] = ''
+                ticketdict['owner'] = render_elt(ticket.values['owner'])
             if 'reporter' in fields:
-                ticketdict['reporter'] = ''
+                ticketdict['reporter'] = render_elt(ticket.values['reporter'])
+
             ticketlist.append(ticketdict)
-            continue
-
-          render_elt = lambda x: x
-          if not (Chrome(self.env).show_email_addresses or \
-                  'EMAIL_VIEW' in req.perm(ticket.resource)):
-              render_elt = obfuscate_email_address
-
-          # Copy all requested fields from ticket
-          if fields:
-              for f in fields:
-                  ticketdict[f] = ticket.values.get(f,u'')
-          else:
-              ticketdict = ticket.values.copy()
-
-          # Changes are special. Comment, commentnum and last author are included in them.
-          if 'changes' in fields or 'comment' in fields or 'commentnum' in fields or 'author' in fields:
-            changes = []
-            # If there are now changes the reporter is the last author
-            author  = ticket.values['reporter']
-            commentnum = u"0"
-            comment = u""
-            want_changes = 'changes' in fields
-            for date,cauthor,field,oldvalue,newvalue,permanent in ticket.get_changelog(ticket.time_changed,db):
-                author = cauthor
-                if field == 'comment':
-                    if 'commentnum' in fields:
-                        ticketdict['commentnum'] = to_unicode(oldvalue)
-                    if 'comment' in fields:
-                        comment = to_unicode(newvalue)
-                        if len(comment) > 200:
-                            comment = moreless(comment, 200)
-                        ticketdict['comment'] = comment
-                    if not want_changes:
-                        break
-                else:
-                    if want_changes:
-                      changes.extend(
-                        [ tag(tag.strong(self.fields['ticket'][field]), ' ',
-                            render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
-                            ), tag('; ') ])
-            if want_changes:
-                # Remove the last tag('; '):
-                if changes:
-                    changes.pop()
-                if len(changes) > 5:
-                    changes = moreless(changes, 5)
-                ticketdict['changes'] = tag(changes)
-
-          locale = getattr( req, 'locale', LC_TIME)
-          if 'id' in fields:
-              ticketdict['id'] = sid
-              ticketdict['ID'] = format_to_oneliner(self.env, context, '#' + sid, shorten=True)
-          if 'cc' in fields:
-              if render_elt == obfuscate_email_address:
-                ticketdict['cc'] = ', '.join([ render_elt(c) for c in ticketdict['cc'].split(', ') ])
-          if 'author' in fields:
-              ticketdict['author'] = render_elt(author),
-          if 'changetime' in fields:
-              changetime = ticket.time_changed
-              ichangetime = to_timestamp( changetime )
-              ticketdict.update(
-                  changetime       = format_datetime( changetime, locale=locale ),
-                  ichangetime      = ichangetime,
-                  changedsincelastvisit = (last_visit < ichangetime and 1 or 0),
-                  changetime_delta = pretty_timedelta( changetime ),
-                  changetime_link  = req.href.timeline(precision='seconds',
-                                     from_=trac_format_datetime ( changetime, 'iso8601')))
-          if 'time' in fields:
-              time = ticket.time_created
-              ticketdict.update(
-                  time             = format_datetime( time, locale=locale ),
-                  itime            = to_timestamp( time ),
-                  time_delta       = pretty_timedelta( time ),
-                  time_link        = req.href.timeline(precision='seconds',
-                                     from_=trac_format_datetime ( time, 'iso8601')))
-          if 'description' in fields:
-              description = ticket.values['description']
-              if len(description) > 200:
-                  description = moreless(description, 200)
-              ticketdict['description'] = description
-          if 'notify' in fields:
-              ticketdict['notify'] = wl.is_notify(req, 'ticket', sid)
-          if 'owner' in fields:
-              ticketdict['owner'] = render_elt(ticket.values['owner'])
-          if 'reporter' in fields:
-              ticketdict['reporter'] = render_elt(ticket.values['reporter'])
-
-          ticketlist.append(ticketdict)
-      return ticketlist
+        return ticketlist
 
 
 def moreless(text, length):
     return tag(tag.span(text[:length]),tag.a(' [', tag.strong(Markup('&hellip;')), ']', class_="more"),
         tag.span(text[length:],class_="moretext"),tag.a(' [', tag.strong('-'), ']', class_="less"))
-
-

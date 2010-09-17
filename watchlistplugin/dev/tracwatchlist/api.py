@@ -30,39 +30,39 @@ from  tracwatchlist.translation import  gettext
 class IWatchlistProvider(Interface):
     """Interface for watchlist providers."""
     def get_realms():
-      """ Must return list or tuple of realms provided. """
-      pass
+        """ Must return list or tuple of realms provided. """
+        pass
 
     def get_realm_label(realm, n_plural=1):
-      pass
+        pass
 
     def res_exists(realm, resid):
-      """ Returns if resource given by `realm` and `resid` exists. """
-      pass
+        """ Returns if resource given by `realm` and `resid` exists. """
+        pass
 
     def res_list_exists(realm, reslist):
-      pass
+        pass
 
     def res_pattern_exists(realm, pattern):
-      pass
+        pass
 
     def has_perm(realm, perm):
-      pass
+        pass
 
     def get_list(realm, wl, req, fields=None):
-      pass
+        pass
 
     def get_href(realm, resid=None):
-      pass
+        pass
 
     def get_abs_href(realm, resid=None):
-      pass
+        pass
 
     def get_fields(realm):
-      """ Returns fields (table columns)
-        Format: ( {Field:Label, Field:Label, ...}, (DEFAULT list) )
-      """
-      pass
+        """ Returns fields (table columns)
+          Format: ( {Field:Label, Field:Label, ...}, (DEFAULT list) )
+        """
+        pass
 
 
 class BasicWatchlist(Component):
@@ -76,51 +76,50 @@ class BasicWatchlist(Component):
     fields = {}
 
     def get_realms(self):
-      return self.realms
+        return self.realms
 
     def get_realm_label(self, realm, n_plural=1):
-      if n_plural == 1:
-        return realm.capitalize()
-      else:
-        return realm.capitalize() + 's'
+        if n_plural == 1:
+            return realm.capitalize()
+        else:
+            return realm.capitalize() + 's'
 
     def res_exists(self, realm, resid):
-      return False
+        return False
 
     def res_list_exists(self, realm, reslist):
-      for res in reslist:
-        if self.res_exists(realm, res):
-          yield res
+        for res in reslist:
+            if self.res_exists(realm, res):
+                yield res
 
     def res_pattern_exists(self, realm, pattern):
-      return []
+        return []
 
     def has_perm(self, realm, perm):
-      if realm not in self.realms:
-        return False
-      return realm.upper() + '_VIEW' in perm
+        if realm not in self.realms:
+            return False
+        return realm.upper() + '_VIEW' in perm
 
     def get_list(self, realm, wl, req, fields=None):
-      return []
+        return []
 
     def get_href(self, realm, resid=None, **kwargs):
-      if resid is None:
-        return self.env.href.__get_attr__(realm)
-      else:
-        return self.env.href(realm,resid,**kwargs)
+        if resid is None:
+            return self.env.href.__get_attr__(realm)
+        else:
+            return self.env.href(realm,resid,**kwargs)
 
     def get_abs_href(self, realm, resid=None, **kwargs):
-      if resid is None:
-        return self.env.abs_href.__get_attr__(realm)
-      else:
-        return self.env.abs_href(realm,resid,**kwargs)
+        if resid is None:
+            return self.env.abs_href.__get_attr__(realm)
+        else:
+            return self.env.abs_href(realm,resid,**kwargs)
 
     def get_fields(self, realm):
-      # Needed to re-localise after locale changed:
-      # See also ticket.api: get_ticket_fields
-      fields = copy.deepcopy(self.fields.get(realm,{}))
-      col = 'col' # workaround gettext extraction bug
-      for col in fields:
-          fields[col] = gettext(fields[col])
-      return ( fields, self.default_fields.get(realm,[]) )
-
+        # Needed to re-localise after locale changed:
+        # See also ticket.api: get_ticket_fields
+        fields = copy.deepcopy(self.fields.get(realm,{}))
+        col = 'col' # workaround gettext extraction bug
+        for col in fields:
+            fields[col] = gettext(fields[col])
+        return ( fields, self.default_fields.get(realm,[]) )

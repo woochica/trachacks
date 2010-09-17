@@ -278,7 +278,7 @@ class WatchlistDataBase(Component):
 
 
     def upgrade_watchlist_table_to_v4(self, selection, db=None):
-        """Upgrade 'watchlist' table to v4. The data is copied into a temporary 
+        """Upgrade 'watchlist' table to v4. The data is copied into a temporary
            table and then back into the newly created table."""
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
@@ -372,4 +372,3 @@ class WatchlistDataBase(Component):
 
         self.log.info("Upgraded 'watchlist_settings' table to version 4")
         return
-

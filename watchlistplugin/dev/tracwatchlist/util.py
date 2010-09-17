@@ -27,7 +27,7 @@ from  trac.core  import  *
 
 
 def decode_range( str ):
-    """Decodes given string with integer ranges like `a-b,c-d` and yields a list 
+    """Decodes given string with integer ranges like `a-b,c-d` and yields a list
        of tuples: [(a,b),(c,d)] in this ranges."""
     for irange in unicode(str).split(','):
         try:
@@ -50,7 +50,7 @@ def decode_range( str ):
 
 
 def decode_range_sql( str ):
-    """Decodes given string with ranges like `a-b,c-d` and returns a SQL 
+    """Decodes given string with ranges like `a-b,c-d` and returns a SQL
        command fragment to much this ranges."""
     cmd = []
     for (a,b) in decode_range( str ):
@@ -63,5 +63,3 @@ def decode_range_sql( str ):
         else:
             cmd.append( ' ( %%(var)s BETWEEN %i AND %i ) ' % (a,b) )
     return ' OR '.join(cmd)
-
-
