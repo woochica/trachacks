@@ -11,16 +11,17 @@ import sys
 
 from svn import core, fs, repos, client
 
-def log_message_func(items, pool):
-    '''Return a commit log message
-    '''
-    return "Test log message"
-    
 def svn_move(src_path, dst_path, username='', commitmsg=''):
     '''Move src_path to dst_path, where each is the url to a file or directory
     in a Subversion repository. Apply the change as username, and log with 
     commitmsg.
     '''
+    
+    def log_message(items, pool):
+        '''Return a commit log message, use as a callback
+        '''
+        return commitmsg
+    
     src_path = core.svn_path_canonicalize(src_path)
     dst_path = core.svn_path_canonicalize(dst_path)
     
@@ -31,7 +32,7 @@ def svn_move(src_path, dst_path, username='', commitmsg=''):
     
     client_ctx = client.create_context()
     client_ctx.log_msg_func3 = client.svn_swig_py_get_commit_log_func
-    client_ctx.log_msg_baton3 = log_message_func
+    client_ctx.log_msg_baton3 = log_message
     auth_providers = [client.svn_client_get_simple_provider(),
                       client.svn_client_get_username_provider(),
                      ]
