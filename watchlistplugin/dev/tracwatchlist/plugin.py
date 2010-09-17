@@ -301,21 +301,6 @@ class WatchlistPlugin(Component):
 
     def process_request(self, req):
         user  = to_unicode( req.authname )
-        realm = to_unicode( req.args.get('realm', u'') )
-        resid = req.args.get('resid', u'')
-        resids = []
-        if not isinstance(resid,(list,tuple)):
-          resid = [resid]
-        for r in resid:
-          resids.extend(r.replace(',',' ').split())
-        action = req.args.get('action','view')
-        names,patterns = self._get_sql_names_and_patterns( resids )
-        single = len(names) == 1 and not patterns
-        async = req.args.get('async', 'false') == 'true'
-
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-
         if not user or user == 'anonymous':
             # TRANSLATOR: Link part of
             # "Please %(log_in)s to view or change your watchlist"
@@ -329,6 +314,15 @@ class WatchlistPlugin(Component):
                 raise HTTPNotFound(
                         tag_("Please %(log_in)s to view or change your watchlist",
                             log_in=log_in))
+
+        realm = to_unicode( req.args.get('realm', u'') )
+        resids = ensure_tuple( req.args.get('resid', u'') )
+        action = req.args.get('action','view')
+        async = req.args.get('async', 'false') == 'true'
+
+
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
 
         wldict = req.args.copy()
         wldict['action'] = action
@@ -388,6 +382,8 @@ class WatchlistPlugin(Component):
                 cols = wldict['default_fields'].get(r,[])
             wldict['active_fields'][r] = cols
 
+        names,patterns = self._get_sql_names_and_patterns( resids )
+        single = len(names) == 1 and not patterns
         redirectback = options['stay_at_resource'] and single and not onwatchlistpage
         redirectback_notify = options['stay_at_resource_notify'] and single and not \
                               onwatchlistpage
