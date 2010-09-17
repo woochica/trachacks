@@ -23,7 +23,24 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
-from  trac.core  import  *
+from  trac.core       import  *
+from  genshi.builder  import  tag
+
+
+def moreless(text, length):
+    """Turns `text` into HTML code where everything behind `length` can be uncovered using a ''show more'' link
+       and later covered again with a ''show less'' link."""
+    return tag(tag.span(text[:length]),tag.a(' [', tag.strong(Markup('&hellip;')), ']', class_="more"),
+        tag.span(text[length:],class_="moretext"),tag.a(' [', tag.strong('-'), ']', class_="less"))
+
+
+def ensure_tuple( var ):
+    """Ensures that variable is a tuple, even if its a scalar"""
+    if isinstance(var,tuple):
+        return var
+    if getattr(var, '__iter__', False):
+        return tuple(var)
+    return (var,)
 
 
 def decode_range( str ):

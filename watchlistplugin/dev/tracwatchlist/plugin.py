@@ -50,6 +50,7 @@ from  trac.mimeview.api      import  Context
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
 from  tracwatchlist.render   import  render_property_diff
+from  tracwatchlist.util     import  moreless, ensure_tuple
 
 # Try to use babels format_datetime to localise date-times if possible.
 # A fall back to tracs implementation strips the unsupported `locale` argument.
@@ -68,15 +69,6 @@ try:
 except ImportError:
     def current_timestamp():
         return to_timestamp( datetime.now(utc) )
-
-
-def ensure_tuple( var ):
-    """Ensures that variable is a tuple, even if its a scalar"""
-    if isinstance(var,tuple):
-        return var
-    if getattr(var, '__iter__', False):
-        return tuple(var)
-    return (var,)
 
 class WatchlistPlugin(Component):
     """Main class of the Trac WatchlistPlugin.
@@ -1013,7 +1005,3 @@ class TicketWatchlist(BasicWatchlist):
             ticketlist.append(ticketdict)
         return ticketlist
 
-
-def moreless(text, length):
-    return tag(tag.span(text[:length]),tag.a(' [', tag.strong(Markup('&hellip;')), ']', class_="more"),
-        tag.span(text[length:],class_="moretext"),tag.a(' [', tag.strong('-'), ']', class_="less"))
