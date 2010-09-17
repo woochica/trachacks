@@ -482,7 +482,11 @@ function wlgetfilterfunction(str) {
     if (isNaN(b)) {
         b = Number.MAX_VALUE;
     }
-    return function (num) { return ((num >= a) && (b >= num)); };
+    if (a==b) {
+        return function (num) { return (num == a); };
+    } else {
+        return function (num) { return ((num >= a) && (b >= num)); };
+    }
 }
 
 // Returns a function with an array of the above functions.
