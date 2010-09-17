@@ -27,6 +27,25 @@ from  trac.core       import  *
 from  genshi.builder  import  tag, Markup
 
 
+# Try to use babels format_datetime to localise date-times if possible.
+# A fall back to tracs implementation strips the unsupported `locale` argument.
+from  trac.util.datefmt      import  format_datetime as trac_format_datetime
+try:
+    from  babel.dates        import  format_datetime, LC_TIME
+except ImportError:
+    LC_TIME = None
+    def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
+        return trac_format_datetime(t, format, tzinfo)
+
+try:
+    from  trac.util.datefmt  import  to_utimestamp
+    def current_timestamp():
+        return to_utimestamp( datetime.now(utc) )
+except ImportError:
+    def current_timestamp():
+        return to_timestamp( datetime.now(utc) )
+
+
 def moreless(text, length):
     """Turns `text` into HTML code where everything behind `length` can be uncovered using a ''show more'' link
        and later covered again with a ''show less'' link."""

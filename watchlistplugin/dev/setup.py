@@ -55,6 +55,8 @@ setup(
       [
         'tracwatchlist = tracwatchlist',
         'tracwatchlist.plugin = tracwatchlist.plugin',
+        'tracwatchlist.ticket = tracwatchlist.ticket',
+        'tracwatchlist.wiki = tracwatchlist.wiki',
         'tracwatchlist.util = tracwatchlist.util',
         'tracwatchlist.db = tracwatchlist.db',
         'tracwatchlist.nav = tracwatchlist.nav',

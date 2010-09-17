@@ -1,0 +1,228 @@
+# -*- coding: utf-8 -*-
+"""
+ Watchlist Plugin for Trac
+ Copyright (c) 2008-2010  Martin Scharrer <martin@scharrer-online.de>
+ This is Free Software under the BSD license.
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+__url__      = ur"$URL$"[6:-2]
+__author__   = ur"$Author$"[9:-2]
+__revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
+__date__     = ur"$Date$"[7:-2]
+
+from  trac.core              import  *
+from  genshi.builder         import  tag, Markup
+from  trac.ticket.model      import  Ticket
+from  trac.ticket.api        import  TicketSystem
+from  trac.util.datefmt      import  pretty_timedelta, to_datetime, \
+                                     datetime, utc, to_timestamp
+from  trac.util.text         import  to_unicode, obfuscate_email_address
+from  trac.wiki.formatter    import  format_to_oneliner
+from  trac.mimeview.api      import  Context
+from  trac.web.chrome        import  Chrome
+
+from  trac.util.datefmt      import  format_datetime as trac_format_datetime
+
+from  tracwatchlist.api      import  BasicWatchlist
+from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
+from  tracwatchlist.render   import  render_property_diff
+from  tracwatchlist.util     import  moreless, format_datetime, LC_TIME
+
+
+class TicketWatchlist(BasicWatchlist):
+    """Watchlist entry for tickets."""
+    realms = ['ticket']
+    fields = {'ticket':{
+        'author'    : T_("Author"),
+        'changes'   : N_("Changes"),
+        # TRANSLATOR: '#' stands for 'number'.
+        # This is the header label for a column showing the number
+        # of the latest comment.
+        'commentnum': N_("Comment #"),
+        'unwatch'   : N_("U"),
+        'notify'    : N_("Notify"),
+        'comment'   : T_("Comment"),
+        # Plus further pairs imported at __init__.
+    }}
+
+    default_fields = {'ticket':[
+        'id', 'changetime', 'author', 'changes', 'commentnum',
+        'unwatch', 'notify', 'comment',
+    ]}
+
+    def __init__(self):
+        try: # Only works for Trac 0.12, but is not needed for Trac 0.11 anyway
+            self.fields['ticket'].update( TicketSystem(self.env).get_ticket_field_labels() )
+        except AttributeError:
+            pass
+        self.fields['ticket']['id'] = self.get_realm_label('ticket')
+
+    def get_realm_label(self, realm, n_plural=1):
+        return ngettext("Ticket", "Tickets", n_plural)
+
+    def res_exists(self, realm, resid):
+        try:
+            return Ticket(self.env, int(resid)).exists
+        except:
+            return False
+
+    def res_pattern_exists(self, realm, pattern):
+        if pattern == '%':
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("""
+              SELECT id
+                FROM ticket
+            """
+            )
+            return [ unicode(vals[0]) for vals in cursor.fetchall() ]
+        else:
+            return []
+
+    def get_list(self, realm, wl, req, fields=None):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        context = Context.from_request(req)
+
+        ticketlist = []
+        if not fields:
+            fields = set(self.default_fields['ticket'])
+        else:
+            fields = set(fields)
+
+        for sid,last_visit in wl.get_watched_resources( 'ticket', req.authname ):
+            ticketdict = {}
+            try:
+                ticket = Ticket(self.env, sid, db)
+                exists = ticket.exists
+            except:
+                exists = False
+
+            if not exists:
+                ticketdict['deleted'] = True
+                if 'id' in fields:
+                    ticketdict['id'] = sid
+                    ticketdict['ID'] = '#' + sid
+                if 'author' in fields:
+                    ticketdict['author'] = '?'
+                if 'changetime' in fields:
+                    ticketdict['changedsincelastvisit'] = 1
+                    ticketdict['changetime'] = '?'
+                    ticketdict['ichangetime'] = 0
+                if 'time' in fields:
+                    ticketdict['time'] = '?'
+                    ticketdict['itime'] = 0
+                if 'comment' in fields:
+                    ticketdict['comment'] = tag.strong(t_("deleted"), class_='deleted')
+                if 'notify' in fields:
+                    ticketdict['notify'] =  wl.is_notify(req, 'ticket', sid)
+                if 'description' in fields:
+                    ticketdict['description'] = ''
+                if 'owner' in fields:
+                    ticketdict['owner'] = ''
+                if 'reporter' in fields:
+                    ticketdict['reporter'] = ''
+                ticketlist.append(ticketdict)
+                continue
+
+            render_elt = lambda x: x
+            if not (chrome(self.env).show_email_addresses or \
+                    'EMAIL_VIEW' in req.perm(ticket.resource)):
+                render_elt = obfuscate_email_address
+
+            # Copy all requested fields from ticket
+            if fields:
+                for f in fields:
+                    ticketdict[f] = ticket.values.get(f,u'')
+            else:
+                ticketdict = ticket.values.copy()
+
+            # Changes are special. Comment, commentnum and last author are included in them.
+            if 'changes' in fields or 'comment' in fields or 'commentnum' in fields or 'author' in fields:
+                changes = []
+                # If there are now changes the reporter is the last author
+                author  = ticket.values['reporter']
+                commentnum = u"0"
+                comment = u""
+                want_changes = 'changes' in fields
+                for date,cauthor,field,oldvalue,newvalue,permanent in ticket.get_changelog(ticket.time_changed,db):
+                    author = cauthor
+                    if field == 'comment':
+                        if 'commentnum' in fields:
+                            ticketdict['commentnum'] = to_unicode(oldvalue)
+                        if 'comment' in fields:
+                            comment = to_unicode(newvalue)
+                            if len(comment) > 200:
+                                comment = moreless(comment, 200)
+                            ticketdict['comment'] = comment
+                        if not want_changes:
+                            break
+                    else:
+                        if want_changes:
+                            changes.extend(
+                              [ tag(tag.strong(self.fields['ticket'][field]), ' ',
+                                  render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
+                                  ), tag('; ') ])
+                if want_changes:
+                    # Remove the last tag('; '):
+                    if changes:
+                        changes.pop()
+                    if len(changes) > 5:
+                        changes = moreless(changes, 5)
+                    ticketdict['changes'] = tag(changes)
+
+            locale = getattr( req, 'locale', LC_TIME)
+            if 'id' in fields:
+                ticketdict['id'] = sid
+                ticketdict['ID'] = format_to_oneliner(self.env, context, '#' + sid, shorten=True)
+            if 'cc' in fields:
+                if render_elt == obfuscate_email_address:
+                    ticketdict['cc'] = ', '.join([ render_elt(c) for c in ticketdict['cc'].split(', ') ])
+            if 'author' in fields:
+                ticketdict['author'] = render_elt(author),
+            if 'changetime' in fields:
+                changetime = ticket.time_changed
+                ichangetime = to_timestamp( changetime )
+                ticketdict.update(
+                    changetime       = format_datetime( changetime, locale=locale ),
+                    ichangetime      = ichangetime,
+                    changedsincelastvisit = (last_visit < ichangetime and 1 or 0),
+                    changetime_delta = pretty_timedelta( changetime ),
+                    changetime_link  = req.href.timeline(precision='seconds',
+                                       from_=trac_format_datetime ( changetime, 'iso8601')))
+            if 'time' in fields:
+                time = ticket.time_created
+                ticketdict.update(
+                    time             = format_datetime( time, locale=locale ),
+                    itime            = to_timestamp( time ),
+                    time_delta       = pretty_timedelta( time ),
+                    time_link        = req.href.timeline(precision='seconds',
+                                       from_=trac_format_datetime ( time, 'iso8601')))
+            if 'description' in fields:
+                description = ticket.values['description']
+                if len(description) > 200:
+                    description = moreless(description, 200)
+                ticketdict['description'] = description
+            if 'notify' in fields:
+                ticketdict['notify'] = wl.is_notify(req, 'ticket', sid)
+            if 'owner' in fields:
+                ticketdict['owner'] = render_elt(ticket.values['owner'])
+            if 'reporter' in fields:
+                ticketdict['reporter'] = render_elt(ticket.values['reporter'])
+
+            ticketlist.append(ticketdict)
+        return ticketlist
+
