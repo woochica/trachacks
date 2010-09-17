@@ -27,7 +27,7 @@ from  pkg_resources          import  resource_filename
 from  urllib                 import  quote_plus
 
 from  genshi.builder         import  tag, Markup
-from  trac.config            import  BoolOption
+from  trac.config            import  BoolOption, ListOption
 from  trac.core              import  *
 from  trac.db                import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model      import  Ticket
@@ -81,6 +81,8 @@ class WatchlistPlugin(Component):
     }
 
     global_options = [ BoolOption('watchlist',name,data[0],doc=data[1]) for (name,data) in OPTIONS.iteritems() ]
+    realm_order = ListOption('watchlist','display_sections', 'wiki,ticket',
+            doc=N_("Display only the given watchlist sections in the given order"))
 
     wsub = None
 
@@ -335,7 +337,7 @@ class WatchlistPlugin(Component):
             req.redirect(req.href('watchlist'))
 
         wldict['perm']   = req.perm
-        wldict['realms'] = self.realms
+        wldict['realms'] = [ r for r in self.realm_order if r in self.realms ]
         wldict['error']  = False
         wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
         wldict['OPTIONS'] = self.OPTIONS
@@ -537,7 +539,8 @@ class WatchlistPlugin(Component):
         if async:
             req.send("",'text/plain', 200)
         elif action == "view":
-            for (xrealm,xhandler) in self.realm_handler.iteritems():
+            for xrealm in wldict['realms']:
+                xhandler = self.realm_handler[xrealm]
                 if xhandler.has_perm(xrealm, req.perm):
                     wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
                     name = xhandler.get_realm_label(xrealm, n_plural=1000)

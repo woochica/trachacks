@@ -139,7 +139,7 @@ class TicketWatchlist(BasicWatchlist):
                 continue
 
             render_elt = lambda x: x
-            if not (chrome(self.env).show_email_addresses or \
+            if not (Chrome(self.env).show_email_addresses or \
                     'EMAIL_VIEW' in req.perm(ticket.resource)):
                 render_elt = obfuscate_email_address
 
