@@ -95,5 +95,14 @@ jQuery(document).ready(function() {
       $(this).parent().find(".moretext").hide();
       $(this).parent().find(".more").show();
   });
+  // Unfold section if context navigation link to it was used:
+  $("div#ctxtnav a").click(function(){
+      $( $(this).attr("href") + ' div.collapsed' ).removeClass("collapsed");
+      return true;
+  });
+  // Unfold section if targeted directly by the URL
+  if ( location.hash ) {
+    $( location.hash + ' div.collapsed' ).removeClass("collapsed");
+  }
 });
 

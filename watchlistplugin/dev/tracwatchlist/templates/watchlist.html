@@ -221,7 +221,8 @@
         </div>
     <xi:include href="wl-${realm}.html" py:for="realm in realms" />
 
-    <div id="preferences" class="${action == 'save' or 'collapsed'}" i18n:domain="">
+    <div id="preferences" i18n:domain="">
+      <div class="${action == 'save' and '' or 'collapsed'}">
       <h3 class="foldable">${t_("Preferences")}</h3>
       <div>
       <form action="" method="post">
@@ -233,6 +234,7 @@
               <input type="button" value="${_('Reset to default')}" id="resettodefault" />
         </div>
       </form>
+      </div>
       </div>
     </div>
     </div>
