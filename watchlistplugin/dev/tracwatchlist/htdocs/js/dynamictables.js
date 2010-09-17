@@ -27,7 +27,7 @@
     jQuery.fn.typeWatch = function(o){
         // Options
         var options = {
-            wait : 400,
+            wait : 555,
             callback : o,
             highlight : true,
         };
@@ -188,6 +188,19 @@ $.fn.dataTableExt.afnFiltering.push(
 );
 */
 
+jQuery.fn.dataTableExt.oSort['html-numeric-asc']  = function(x,y) {
+    var a = x.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') * 1;
+    var b = y.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') * 1;
+    return ((a < b) ? -1 : ((a > b) ?  1 : 0));
+};
+
+jQuery.fn.dataTableExt.oSort['html-numeric-desc'] = function(x,y) {
+    var a = x.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') * 1;
+    var b = y.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') * 1;
+    return ((a < b) ?  1 : ((a > b) ? -1 : 0));
+};
+
+
 $.fn.dataTableExt.afnFiltering.push(
     function( oSettings, aData, iDataIndex ) {
         var table = $('#'+ oSettings.sTableId);
@@ -245,7 +258,7 @@ jQuery(document).ready(function() {
         aoColumns.push( { "bSortable": false, "bSearchable": false } );
       } else {
       if ( $(this).hasClass( 'filtering_disabled' ) ) {
-        aoColumns.push( { "bSearchable": false } );
+        aoColumns.push( { "bSearchable": false, "sType": "html-numeric" } );
       } else {
         aoColumns.push( null );
       }}}
