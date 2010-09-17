@@ -23,8 +23,6 @@ def svn_move(src_path, dst_path, username='', commitmsg=''):
     '''
     src_path = core.svn_path_canonicalize(src_path)
     dst_path = core.svn_path_canonicalize(dst_path)
-    print src_path
-    print dst_path
     
     force = False
     move_as_child = False
@@ -39,25 +37,15 @@ def svn_move(src_path, dst_path, username='', commitmsg=''):
                      ]
     client_ctx.auth_baton = core.svn_auth_open(auth_providers)
     
-    commit_info = client.svn_client_move3(src_path,
+    commit_info = client.svn_client_move5((src_path,),
                                           dst_path,
-                                          int(force), 
-                                          #move_as_child,
-                                          #make_parents,
-                                          #revprop_tbl,
+                                          force, 
+                                          move_as_child,
+                                          make_parents,
+                                          revprop_tbl,
                                           client_ctx,
                                           )
-    """
-    svn_client_move5(svn_commit_info_t commit_info_p, 
-        apr_array_header_t src_paths, 
-        char dst_path, 
-        svn_boolean_t force, 
-        svn_boolean_t move_as_child, 
-        svn_boolean_t make_parents, 
-        apr_hash_t revprop_table, 
-        svn_client_ctx_t ctx, 
-        apr_pool_t pool) -> svn_error_t
-    """
+    print commit_info.revision
 
 def usage(prog_name):
     print (__doc__ % prog_name).strip('\n')
