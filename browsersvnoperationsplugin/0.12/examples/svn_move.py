@@ -20,7 +20,11 @@ def svn_move(src_path, dst_path, username='', commitmsg=''):
     def log_message(items, pool):
         '''Return a commit log message, use as a callback
         '''
-        return commitmsg
+        def fname(s): return s.rstrip('/').rsplit('/', 1)[1]
+        src_fname = fname(items[1][2])
+        dst_fname = fname(items[0][2])
+        default_msg = 'Moved %s to %s' % (src_fname, dst_fname)
+        return commitmsg or default_msg
     
     src_path = core.svn_path_canonicalize(src_path)
     dst_path = core.svn_path_canonicalize(dst_path)
@@ -33,10 +37,15 @@ def svn_move(src_path, dst_path, username='', commitmsg=''):
     client_ctx = client.create_context()
     client_ctx.log_msg_func3 = client.svn_swig_py_get_commit_log_func
     client_ctx.log_msg_baton3 = log_message
+    
     auth_providers = [client.svn_client_get_simple_provider(),
                       client.svn_client_get_username_provider(),
-                     ]
+                      ]
     client_ctx.auth_baton = core.svn_auth_open(auth_providers)
+    
+    if username is not None:
+        core.svn_auth_set_parameter(client_ctx.auth_baton, 
+                core.SVN_AUTH_PARAM_DEFAULT_USERNAME, username)
     
     commit_info = client.svn_client_move5((src_path,),
                                           dst_path,
@@ -58,7 +67,7 @@ def main():
         usage(prog_name)
         sys.exit(1)
 
-    username = commitmsg = ""
+    username = commitmsg = None
 
     for name, value in opts:
         if name == '-u':
