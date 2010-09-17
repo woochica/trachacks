@@ -22,6 +22,8 @@
                    py:with="attr = {
                     'unwatch': { 'class':'unwatch sorting_disabled' },
                     'notify': { 'class':'notify sorting_disabled' },
+                    'id': { 'class':'id filtering_disabled html-numeric' },
+                    'commentnum': { 'class':'commentnum filtering_disabled html-numeric' },
                   }">
               <thead>
                 <tr>
@@ -49,10 +51,13 @@
                     </td>
                     <td class="ichangetime hidden">$ticket.ichangetime</td>
                   </py:def>
-                  <td py:def="ticket_time" class="time">
-                        <span class="itime">$ticket.itime</span>$ticket.time
+                  <py:def function="ticket_time">
+                    <td class="time">
+                        $ticket.time
                         ${print_timedelta(ticket.time_delta, ticket.time_link)}
-                  </td>
+                    </td>
+                    <td class="itime hidden">$ticket.itime</td>
+                  </py:def>
                   <td py:def="ticket_commentnum" class="commentnum"><a py:if="not ticket.deleted" href="${href('ticket',ticket.id)
                       + ((ticket.commentnum != '0') and ('#comment:'
                       + ticket.commentnum) or
@@ -82,7 +87,7 @@
                         ${datetimefilter(k,'ticket_' + k)}
                       </py:when>
                       <py:otherwise>
-                        <input py:if="k not in attr" name="${k}" type="text" size="4"
+                        <input py:if="k not in ('notify','unwatch')" name="${k}" type="text" size="4"
                             class="${k in ('id','commentnum') and 'numericfilter' or 'filter'}"/>
                       </py:otherwise>
                       </py:choose>
