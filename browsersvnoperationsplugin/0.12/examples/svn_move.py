@@ -29,27 +29,36 @@ def svn_move(src_path, dst_path, username='', commitmsg=''):
     src_path = core.svn_path_canonicalize(src_path)
     dst_path = core.svn_path_canonicalize(dst_path)
     
-    force = False
-    move_as_child = False
-    make_parents = False
-    revprop_tbl = None
+    force = False # Ignored for repository -> repository moves
+    move_as_child = False # If dst_path exists don't attempt to move src_path  
+                          # as it's child
+    make_parents = False # Make parents of dst_path as needed (like mkdir -p)
+    revprop_tbl = None # Use a dict of str prop: vals to set custom svn props 
     
+    # The move operation is coordinated by a client context, suitbly populated
+    # To set the commit message we provide a callback that returns commitmsg
     client_ctx = client.create_context()
     client_ctx.log_msg_func3 = client.svn_swig_py_get_commit_log_func
     client_ctx.log_msg_baton3 = log_message
     
+    # Configure minimal authentication, this is an example only
     auth_providers = [client.svn_client_get_simple_provider(),
                       client.svn_client_get_username_provider(),
                       ]
     client_ctx.auth_baton = core.svn_auth_open(auth_providers)
     
+    # libsvn normally infers the username from the environment the working copy
+    # and the configuration. If requested override all that.
     if username is not None:
         core.svn_auth_set_parameter(client_ctx.auth_baton, 
                 core.SVN_AUTH_PARAM_DEFAULT_USERNAME, username)
     
+    # Move one directory or file to another location in the same repository
+    # svn_client_move5 can mv a number of files/directories at once if dst_path
+    # is a directory, we ignore this and pass a 1-tuple
     commit_info = client.svn_client_move5((src_path,),
                                           dst_path,
-                                          force, 
+                                          force, # Ignored
                                           move_as_child,
                                           make_parents,
                                           revprop_tbl,
