@@ -24,7 +24,7 @@ __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
 from  trac.core       import  *
-from  genshi.builder  import  tag
+from  genshi.builder  import  tag, Markup
 
 
 def moreless(text, length):

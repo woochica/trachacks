@@ -293,6 +293,8 @@ class WatchlistPlugin(Component):
 
     def process_request(self, req):
         user  = to_unicode( req.authname )
+
+        # Reject anonymous users
         if not user or user == 'anonymous':
             # TRANSLATOR: Link part of
             # "Please %(log_in)s to view or change your watchlist"
@@ -307,12 +309,13 @@ class WatchlistPlugin(Component):
                         tag_("Please %(log_in)s to view or change your watchlist",
                             log_in=log_in))
 
+        # Get and format request arguments
         realm = to_unicode( req.args.get('realm', u'') )
         resids = ensure_tuple( req.args.get('resid', u'') )
         action = req.args.get('action','view')
         async = req.args.get('async', 'false') == 'true'
 
-
+        # DB cursor
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
@@ -340,15 +343,13 @@ class WatchlistPlugin(Component):
                 del req.session['watchlist_display_notify_navitems']
             except:
                 pass
-            action = "view"
+            req.redirect(req.href('watchlist'))
         elif action == "defaultsettings":
             # Only execute if sent using the watchlist preferences form
             if onwatchlistpage and req.method == 'POST':
                 self._delete_user_settings(req.authname)
-            action = "view"
+            req.redirect(req.href('watchlist'))
 
-        settings = self.get_settings( user )
-        options = settings['useroptions']
         wldict['perm']   = req.perm
         wldict['realms'] = self.realms
         wldict['error']  = False
@@ -394,16 +395,7 @@ class WatchlistPlugin(Component):
             handler = self.realm_handler[realm]
             if names:
                 reses = list(handler.res_list_exists(realm, names))
-
-                sql = ("""
-                  SELECT resid
-                    FROM watchlist
-                   WHERE wluser=%s AND realm=%s AND
-                         resid IN (
-                """ + ",".join(("%s",) * len(names)) + ")"
-                )
-                cursor.execute( sql, [user,realm] + names)
-                alw_res = [ res[0] for res in cursor.fetchall() ]
+                alw_res = self.is_watching(realm, reses, user)
                 new_res.extend(set(reses).difference(alw_res))
                 err_res.extend(set(names).difference(reses))
             for pattern in patterns:
@@ -431,7 +423,6 @@ class WatchlistPlugin(Component):
                 )
                 db.commit()
 
-            action = "view"
             if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
                 req.session['watchlist_message'] = _(
                   "You are now watching this resource."
@@ -442,7 +433,7 @@ class WatchlistPlugin(Component):
                 db.commit()
             if redirectback:
                 req.redirect(req.href(realm,names[0]))
-                raise RequestDone
+            req.redirect(req.href('watchlist'))
 
         elif action == "unwatch":
             if names:
@@ -485,19 +476,22 @@ class WatchlistPlugin(Component):
                     """, (user,realm,pattern)
                     )
             db.commit()
-
-            action = "view"
-            if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
-                req.session['watchlist_message'] = _(
-                  "You are no longer watching this resource."
-                )
+            # Unset notification
             if self.wsub and options['notifications'] and options['notify_by_default']:
                 for res in del_res:
                     self.unset_notify(req, realm, res)
                 db.commit()
+            # Send an empty response for asynchronous requests
+            if async:
+                req.send("",'text/plain', 200)
+            # Redirect back to resource if so configured:
             if redirectback:
+                if options['show_messages_on_resource_page'] and not onwatchlistpage:
+                    req.session['watchlist_message'] = _(
+                    "You are no longer watching this resource."
+                    )
                 req.redirect(req.href(realm,names[0]))
-                raise RequestDone
+            req.redirect(req.href('watchlist'))
 
         wldict['del_res'] = del_res
         wldict['err_res'] = err_res
@@ -543,6 +537,8 @@ class WatchlistPlugin(Component):
             action = "view"
 
         if action == "search":
+            """AJAX search request. At the moment only used to get list
+               of all not watched resources."""
             handler = self.realm_handler[realm]
             query = req.args.get('q', u'')
             found = handler.res_pattern_exists(realm, query + '%')
@@ -556,9 +552,7 @@ class WatchlistPlugin(Component):
 
         if async:
             req.send("",'text/plain', 200)
-            raise RequestDone
-
-        if action == "view":
+        elif action == "view":
             for (xrealm,xhandler) in self.realm_handler.iteritems():
                 if xhandler.has_perm(xrealm, req.perm):
                     wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
@@ -593,20 +587,32 @@ class WatchlistPlugin(Component):
         return self.realm_handler[realm].res_exists(realm, resid)
 
     def is_watching(self, realm, resid, user):
-        """Checks if user watches the given element."""
+        """Checks if user watches the given resource(s).
+           Returns True/False for a single resource or 
+           a list of watched resources."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("""
-          SELECT count(*)
-            FROM watchlist
-           WHERE realm=%s AND resid=%s AND wluser=%s;
-        """, (realm, to_unicode(resid), user)
-        )
-        count = cursor.fetchone()
-        if not count or not count[0]:
-            return False
+        if isinstance(resid,(list,tuple)):
+                cursor.execute("""
+                  SELECT resid
+                    FROM watchlist
+                   WHERE wluser=%s AND realm=%s AND
+                         resid IN (
+                """ + ",".join(("%s",) * len(resid)) + ")",
+                [user,realm] + resid)
+                return [ res[0] for res in cursor.fetchall() ]
         else:
-            return True
+            cursor.execute("""
+                SELECT count(*)
+                  FROM watchlist
+                 WHERE realm=%s AND resid=%s AND wluser=%s;
+            """, (realm, to_unicode(resid), user)
+            )
+            count = cursor.fetchone()
+            if not count or not count[0]:
+                return False
+            else:
+                return True
 
     def visiting(self, realm, resid, user, db=None):
         """Checks if user watches the given element."""
