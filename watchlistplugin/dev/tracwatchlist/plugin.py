@@ -631,37 +631,40 @@ class WatchlistPlugin(Component):
 
     ### methods for IRequestFilter
     def post_process_request(self, req, template, data, content_type):
-        user = req.authname
+        """Executed after EVERY request is processed.
+           Used to add navigation bars, display messages
+           and to note visits to watched resources."""
+        user = to_unicode( req.authname )
         if not user or user == "anonymous":
             return (template, data, content_type)
 
         # Extract realm and resid from path:
         parts = req.path_info[1:].split('/',1)
 
-        # Handle special case for '/' and '/wiki'
-        if len(parts) == 0 or not parts[0]:
-            parts = ["wiki", "WikiStart"]
-        elif len(parts) == 1:
-            # FIXME: add handler check, could be different than WikiHandler
-            parts.append("WikiStart")
-
-        realm, resid = parts[:2]
+        try:
+            realm, resid = parts[:2]
+        except:
+            # Handle special case for '/' and '/wiki'
+            if parts[0] == 'wiki' or (parts[0] == '' and
+               'WikiModule' == self.env.config.get('trac','default_handler') ):
+                realm, resid = 'wiki', 'WikiStart'
+            else:
+                realm, resid = parts[0], ''
 
         if realm not in self.realms or not \
                 self.realm_handler[realm].has_perm(realm, req.perm):
             return (template, data, content_type)
 
-        user  = to_unicode( req.authname )
-
         notify = 'False'
-        # The notification setting is stored in the session to avoid rereading the whole
-        # user settings for every page displayed
+        # The notification setting is stored in the session to avoid rereading
+        # the whole user settings for every page displayed
         try:
             notify = req.session['watchlist_display_notify_navitems']
         except KeyError:
             settings = self.get_settings(user)
             options = settings['useroptions']
-            notify = (self.wsub and options['notifications'] and options['display_notify_navitems']) and 'True' or 'False'
+            notify = (self.wsub and options['notifications']
+                  and options['display_notify_navitems']) and 'True' or 'False'
             req.session['watchlist_display_notify_navitems'] = notify
 
         try:
@@ -679,8 +682,9 @@ class WatchlistPlugin(Component):
         if self.is_watching(realm, resid, user):
             add_ctxtnav(req, _("Unwatch"),
                 href=req.href('watchlist', action='unwatch',
-                resid=resid, realm=realm),
-                title=_("Remove %(document)s from watchlist", document=realm))
+                    resid=resid, realm=realm),
+                title=_("Remove %(document)s from watchlist",
+                    document=realm))
             self.visiting(realm, resid, user)
         else:
             add_ctxtnav(req, _("Watch"),
@@ -691,13 +695,15 @@ class WatchlistPlugin(Component):
             if self.is_notify(req, realm, resid):
                 add_ctxtnav(req, _("Do not Notify me"),
                     href=req.href('watchlist', action='notifyoff',
-                    resid=resid, realm=realm),
-                    title=_("Do not notify me if %(document)s changes", document=realm))
+                        resid=resid, realm=realm),
+                    title=_("Do not notify me if %(document)s changes",
+                        document=realm))
             else:
                 add_ctxtnav(req, _("Notify me"),
                     href=req.href('watchlist', action='notifyon',
-                    resid=resid, realm=realm),
-                    title=_("Notify me if %(document)s changes", document=realm))
+                        resid=resid, realm=realm),
+                    title=_("Notify me if %(document)s changes",
+                        document=realm))
 
         return (template, data, content_type)
 
