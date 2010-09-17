@@ -878,7 +878,7 @@ class TicketWatchlist(BasicWatchlist):
             FROM ticket
         """
         )
-        return [ vals[0] for vals in cursor.fetchall() ]
+        return [ unicode(vals[0]) for vals in cursor.fetchall() ]
       else:
         return []
 
