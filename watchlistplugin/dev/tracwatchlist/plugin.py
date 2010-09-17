@@ -578,7 +578,8 @@ class WatchlistPlugin(Component):
                 # TRANSLATOR: Navigation link to point to watchlist section of this realm
                 # (e.g. 'Wikis', 'Tickets').
                 add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name),
-                            href=req.href('watchlist') + '#' + name)
+                            href='#' + xrealm + 's')
+            add_ctxtnav(req, t_("Preferences"), href='#preferences')
             return ("watchlist.html", wldict, "text/html")
         else:
             raise HTTPBadRequest(_("Invalid watchlist action '%(action)s'!", action=action))
