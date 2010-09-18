@@ -46,13 +46,13 @@ jQuery(document).ready(function() {
     }
     // Autocomplete Wiki Names
     $("#wikis .addtowatch input[name=resid]")
-        .autocomplete("./watchlist?action=search&realm=wiki", options);
+        .autocomplete("./watchlist?action=search&realm=wiki&group=notwatched", options);
     $("#wikis .remfromwatch input[name=resid],#wikis tfoot th.name input")
         .autocomplete("./watchlist?action=search&realm=wiki&group=watched", options);
     ///
     // Autocomplete Ticket Ids
     $("#tickets .addtowatch input[name=resid]")
-        .autocomplete("./watchlist?action=search&realm=ticket", options);
+        .autocomplete("./watchlist?action=search&realm=ticket&group=notwatched", options);
     $("#tickets .remfromwatch input[name=resid]")
         .autocomplete("./watchlist?action=search&realm=ticket&group=watched", options);
     ///

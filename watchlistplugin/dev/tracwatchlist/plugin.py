@@ -297,7 +297,6 @@ class WatchlistPlugin(Component):
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         now = current_timestamp()
-        cursor.log = self.log
         cursor.execute("""
           UPDATE watchlist
              SET lastvisit=%s
@@ -373,10 +372,10 @@ class WatchlistPlugin(Component):
                of all not watched resources."""
             handler = self.realm_handler[realm]
             query = to_unicode( req.args.get('q', u'') ).strip()
-            group = to_unicode( req.args.get('q', u'notwatched') )
+            group = to_unicode( req.args.get('group', u'notwatched') )
             if not query:
                 req.send('', 'text/plain', 200 )
-            found = set(handler.resources_exists(realm, query + '*'))
+            found = set(handler.resources_exists(realm, query, fuzzy=1))
             if not found:
                 req.send('', 'text/plain', 200 )
             watched = set([v[0] for v in self.get_watched_resources( realm, user )])
@@ -384,13 +383,8 @@ class WatchlistPlugin(Component):
                 result = list(found.difference(watched))
             else:
                 result = list(found.intersection(watched))
-            try:
-                result.sort(cmp=handler.get_sort_cmp(realm),
-                           key=handler.get_sort_key(realm))
-            except TypeError:
-                # Ignore conversion errors in `key` function.
-                # They will still abort the sorting.
-                pass
+            result.sort(cmp=handler.get_sort_cmp(realm),
+                        key=handler.get_sort_key(realm))
             req.send( unicode(u'\n'.join(result) + u'\n').encode("utf-8"),
                 'text/plain', 200 )
 
@@ -481,6 +475,11 @@ class WatchlistPlugin(Component):
             alw_res = set(self.is_watching(realm, reses, user))
             new_res.extend(reses.difference(alw_res))
             err_res.extend(reses.intersection(alw_res))
+            comp=handler.get_sort_cmp(realm)
+            key=handler.get_sort_key(realm)
+            wldict['alw_res'] = sorted(alw_res, cmp=comp, key=key)
+            wldict['new_res'] = sorted(new_res, cmp=comp, key=key)
+            wldict['err_res'] = sorted(err_res, cmp=comp, key=key)
 
             if new_res:
                 self.watch(realm, new_res, user, db=db)
@@ -504,6 +503,11 @@ class WatchlistPlugin(Component):
             alw_res = set(self.is_watching(realm, reses, user))
             del_res.extend(alw_res.intersection(reses))
             err_res.extend(reses.difference(alw_res))
+            comp=handler.get_sort_cmp(realm)
+            key=handler.get_sort_key(realm)
+            wldict['alw_res'] = sorted(alw_res, cmp=comp, key=key)
+            wldict['del_res'] = sorted(del_res, cmp=comp, key=key)
+            wldict['err_res'] = sorted(err_res, cmp=comp, key=key)
 
             if del_res:
                 self.unwatch(realm, del_res, user, db=db)
@@ -534,12 +538,6 @@ class WatchlistPlugin(Component):
         if action != "view":
             raise HTTPBadRequest(_("Invalid watchlist action '%(action)s'!", action=action))
         # Display watchlist page:
-
-        wldict['del_res'] = sorted(del_res)
-        wldict['err_res'] = sorted(err_res)
-        wldict['err_pat'] = sorted(err_pat)
-        wldict['new_res'] = sorted(new_res)
-        wldict['alw_res'] = sorted(alw_res)
 
         if onwatchlistpage:
             wldict['show_messages'] = options['show_messages_while_on_watchlist_page']

@@ -85,10 +85,12 @@ class WikiWatchlist(BasicWatchlist):
         return ngettext("Wiki Page", "Wiki Pages", n_plural)
 
 
-    def resources_exists(self, realm, resids):
+    def resources_exists(self, realm, resids, fuzzy=0):
         if not resids:
             return []
         if isinstance(resids,basestring):
+            if fuzzy:
+                resids += '*'
             resids = convert_to_sql_wildcards(resids).replace(',',' ').split()
             sql = ' OR '.join((' name LIKE %s ',) * len(resids))
         else:

@@ -89,7 +89,7 @@ class TicketWatchlist(BasicWatchlist):
         return ngettext("Ticket", "Tickets", n_plural)
 
 
-    def resources_exists(self, realm, resids):
+    def resources_exists(self, realm, resids, fuzzy=0):
         if not resids:
             return []
         if isinstance(resids,basestring):
