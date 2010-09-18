@@ -508,8 +508,7 @@ class WatchlistPlugin(Component):
                 req.redirect(req.href('watchlist'))
         elif action == "notifyoff":
             if self.wsub and options['notifications']:
-                for res in resids:
-                    self.unset_notify(req, realm, res)
+                self.unset_notify(req, realm, resid)
                 db.commit()
             if redirectback_notify:
                 if options['show_messages_on_resource_page']:
@@ -550,7 +549,7 @@ class WatchlistPlugin(Component):
         if async:
             req.send("",'text/plain', 200)
         elif action == "view":
-            for xrea lm in wldict['realms']:
+            for xrealm in wldict['realms']:
                 xhandler = self.realm_handler[xrealm]
                 if xhandler.has_perm(xrealm, req.perm):
                     wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
