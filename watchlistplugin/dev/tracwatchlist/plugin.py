@@ -378,7 +378,7 @@ class WatchlistPlugin(Component):
             found = set(handler.resources_exists(realm, query + '*'))
             if not found:
                 req.send('', 'text/plain', 200 )
-            watched = set(self.get_watched_resources( realm, user ))
+            watched = set([v[0] for v in self.get_watched_resources( realm, user )])
             notwatched = list(found.difference(watched))
             try:
                 notwatched.sort(cmp=handler.get_sort_cmp(realm),
