@@ -373,21 +373,25 @@ class WatchlistPlugin(Component):
                of all not watched resources."""
             handler = self.realm_handler[realm]
             query = to_unicode( req.args.get('q', u'') ).strip()
+            group = to_unicode( req.args.get('q', u'notwatched') )
             if not query:
                 req.send('', 'text/plain', 200 )
             found = set(handler.resources_exists(realm, query + '*'))
             if not found:
                 req.send('', 'text/plain', 200 )
             watched = set([v[0] for v in self.get_watched_resources( realm, user )])
-            notwatched = list(found.difference(watched))
+            if group == 'notwatched':
+                result = list(found.difference(watched))
+            else:
+                result = list(found.intersection(watched))
             try:
-                notwatched.sort(cmp=handler.get_sort_cmp(realm),
-                                key=handler.get_sort_key(realm))
+                result.sort(cmp=handler.get_sort_cmp(realm),
+                           key=handler.get_sort_key(realm))
             except TypeError:
                 # Ignore conversion errors in `key` function.
                 # They will still abort the sorting.
                 pass
-            req.send( unicode(u'\n'.join(notwatched) + u'\n').encode("utf-8"),
+            req.send( unicode(u'\n'.join(result) + u'\n').encode("utf-8"),
                 'text/plain', 200 )
 
         # DB cursor
