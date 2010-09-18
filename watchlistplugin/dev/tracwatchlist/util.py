@@ -63,6 +63,14 @@ def ensure_tuple( var ):
     return (var,)
 
 
+def ensure_string( var ):
+    """Ensures that variable is a string"""
+    if getattr(var, '__iter__', False):
+        return unicode(u','.join(var))
+    else:
+        return var
+
+
 def decode_range( str ):
     """Decodes given string with integer ranges like `a-b,c-d` and yields a list
        of tuples: [(a,b),(c,d)] in this ranges."""

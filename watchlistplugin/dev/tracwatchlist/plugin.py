@@ -50,7 +50,7 @@ from  trac.mimeview.api      import  Context
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
 from  tracwatchlist.render   import  render_property_diff
-from  tracwatchlist.util     import  moreless, ensure_tuple, format_datetime,\
+from  tracwatchlist.util     import  moreless, ensure_string, format_datetime,\
                                      current_timestamp
 
 
@@ -271,7 +271,7 @@ class WatchlistPlugin(Component):
 
 
     def visiting(self, realm, resid, user, db=None):
-        """Checks if user watches the given element."""
+        """Marks the given resource as visited just now."""
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         now = current_timestamp()
@@ -321,6 +321,7 @@ class WatchlistPlugin(Component):
 
 
     def process_request(self, req):
+        """Processes requests to the '/watchlist' path."""
         user  = to_unicode( req.authname )
 
         # Reject anonymous users
@@ -340,8 +341,7 @@ class WatchlistPlugin(Component):
 
         # Get and format request arguments
         realm = to_unicode( req.args.get('realm', u'') )
-        resids = ensure_tuple( req.args.get('resid', u'') )
-        resid = u','.join(resids)
+        resid = ensure_string( req.args.get('resid', u'') )
         action = req.args.get('action','view')
         async = req.args.get('async', 'false') == 'true'
 
@@ -406,11 +406,9 @@ class WatchlistPlugin(Component):
                 cols = wldict['default_fields'].get(r,[])
             wldict['active_fields'][r] = cols
 
-        names,patterns = [],[] #self._get_sql_names_and_patterns( resids )
-        single = len(names) == 1 and not patterns
-        redirectback = options['stay_at_resource'] and single and not onwatchlistpage
-        redirectback_notify = options['stay_at_resource_notify'] and single and not \
-                              onwatchlistpage
+        redirectback = options['stay_at_resource'] and not onwatchlistpage
+        redirectback_notify = options['stay_at_resource_notify'] and not \
+                              onwatchlistpage and not async
 
         if onwatchlistpage:
             wldict['show_messages'] = options['show_messages_while_on_watchlist_page']
@@ -490,14 +488,12 @@ class WatchlistPlugin(Component):
         wldict['alw_res'] = sorted(alw_res)
 
         if action == "notifyon":
-            if single and not self.res_exists(realm, resids[0]):
-                raise HTTPNotFound(t_("Page %(name)s not found", name=resids[0]))
-            if self.wsub and options['notifications']:
-                for res in resids:
-                    if self.res_exists(realm, res):
-                        self.set_notify(req, realm, res)
+            if not self.res_exists(realm, resid):
+                raise HTTPNotFound(t_("Page %(name)s not found", name=resid))
+            elif self.wsub and options['notifications']:
+                self.set_notify(req, realm, resid)
                 db.commit()
-            if redirectback_notify and not async:
+            if redirectback_notify:
                 if options['show_messages_on_resource_page']:
                     req.session['watchlist_notify_message'] = _(
                       """
@@ -506,14 +502,16 @@ class WatchlistPlugin(Component):
                       """
                     )
                 req.redirect(req.href(realm,resids[0]))
-                raise RequestDone
-            action = "view"
+            if async:
+                req.send("",'text/plain', 200)
+            else:
+                req.redirect(req.href('watchlist'))
         elif action == "notifyoff":
             if self.wsub and options['notifications']:
                 for res in resids:
                     self.unset_notify(req, realm, res)
                 db.commit()
-            if redirectback_notify and not async:
+            if redirectback_notify:
                 if options['show_messages_on_resource_page']:
                     req.session['watchlist_notify_message'] = _(
                       """
@@ -523,8 +521,10 @@ class WatchlistPlugin(Component):
                     )
                 req.redirect(req.href(realm,resids[0]))
                 raise RequestDone
-
-            action = "view"
+            if async:
+                req.send("",'text/plain', 200)
+            else:
+                req.redirect(req.href('watchlist'))
 
         if action == "search":
             """AJAX search request. At the moment only used to get list
@@ -543,13 +543,14 @@ class WatchlistPlugin(Component):
                                 key=handler.get_sort_key(realm))
             except TypeError:
                 pass
-            req.send( unicode(u'\n'.join(notwatched) + u'\n').encode("utf-8"), 'text/plain', 200 )
+            req.send( unicode(u'\n'.join(notwatched) + u'\n').encode("utf-8"),
+                'text/plain', 200 )
 
 
         if async:
             req.send("",'text/plain', 200)
         elif action == "view":
-            for xrealm in wldict['realms']:
+            for xrea lm in wldict['realms']:
                 xhandler = self.realm_handler[xrealm]
                 if xhandler.has_perm(xrealm, req.perm):
                     wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
