@@ -50,8 +50,8 @@ from  trac.mimeview.api      import  Context
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
 from  tracwatchlist.render   import  render_property_diff
-from  tracwatchlist.util     import  moreless, ensure_string, format_datetime,\
-                                     current_timestamp
+from  tracwatchlist.util     import  moreless, ensure_string, ensure_iter,\
+                                     format_datetime, current_timestamp
 
 
 class WatchlistPlugin(Component):
@@ -227,23 +227,21 @@ class WatchlistPlugin(Component):
         """Returns list of resources watched by the given user in the given realm.
            The list contains a list with the resource id and the last time it
            got visited."""
-        if not db:
-            db = self.env.get_db_cnx()
+        db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("""
-        SELECT resid,lastvisit
-            FROM watchlist
-        WHERE realm=%s AND wluser=%s
-        """, (realm, user)
-        )
+            SELECT resid,lastvisit
+                FROM watchlist
+            WHERE realm=%s AND wluser=%s
+        """, (realm, user))
         return cursor.fetchall()
 
 
-    def is_watching(self, realm, resid, user):
+    def is_watching(self, realm, resid, user, db=None):
         """Checks if user watches the given resource(s).
            Returns True/False for a single resource or
            a list of watched resources."""
-        db = self.env.get_db_cnx()
+        db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         if getattr(resid, '__iter__', False):
             reses = list(resid)
@@ -267,6 +265,31 @@ class WatchlistPlugin(Component):
                 return False
             else:
                 return True
+
+
+    def watch(self, realm, resid, user, lastvisit=0, db=None):
+        """Adds given resources to watchlist.
+           They must not be watched already."""
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.executemany("""
+            INSERT
+            INTO watchlist (wluser, realm, resid, lastvisit)
+            VALUES (%s,%s,%s,%s)
+        """, [(user, realm, res, lastvisit) for res in ensure_iter(resid)])
+
+
+    def unwatch(self, realm, resid, user, db=None):
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        reses = list(ensure_iter(resid))
+        cursor.execute("""
+            DELETE
+            FROM watchlist
+            WHERE wluser=%s AND realm=%s AND
+                    resid IN (
+        """ + ",".join(("%s",) * len(reses)) + ")",
+        [user,realm] + reses)
 
 
     def visiting(self, realm, resid, user, db=None):
@@ -456,12 +479,7 @@ class WatchlistPlugin(Component):
             err_res.extend(reses.intersection(alw_res))
 
             if new_res:
-                cursor.executemany("""
-                  INSERT
-                    INTO watchlist (wluser, realm, resid, lastvisit)
-                  VALUES (%s,%s,%s,0)
-                """, [(user, realm, res) for res in new_res]
-                )
+                self.watch(realm, new_res, user)
                 db.commit()
 
             if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
@@ -483,15 +501,10 @@ class WatchlistPlugin(Component):
             del_res.extend(alw_res.intersection(reses))
             err_res.extend(reses.difference(alw_res))
 
-            sql = ("""
-                DELETE
-                FROM watchlist
-                WHERE wluser=%s AND realm=%s AND
-                        resid IN (
-            """ + ",".join(("%s",) * len(del_res)) + ")"
-            )
-            cursor.execute( sql, [user,realm] + del_res)
-            db.commit()
+            if del_res:
+                self.unwatch(realm, del_res, user)
+                db.commit()
+
             # Unset notification
             if self.wsub and options['notifications'] and options['notify_by_default']:
                 for res in del_res:

@@ -54,10 +54,16 @@ def moreless(text, length):
         tag.span(text[length:],class_="moretext"),tag.a(' [', tag.strong('-'), ']', class_="less"))
 
 
+def ensure_iter( var ):
+    """Ensures that variable is iterable. If it's not by itself, return it
+       as an element of a tuple"""
+    if getattr(var, '__iter__', False):
+        return var
+    return (var,)
+
+
 def ensure_tuple( var ):
     """Ensures that variable is a tuple, even if its a scalar"""
-    if isinstance(var,tuple):
-        return var
     if getattr(var, '__iter__', False):
         return tuple(var)
     return (var,)
