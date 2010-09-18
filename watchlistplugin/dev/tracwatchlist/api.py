@@ -68,6 +68,20 @@ class IWatchlistProvider(Interface):
         """
         pass
 
+    def get_sort_key(realm):
+        """Returns a sort `key` function for the argument of the same name of 
+           `sorted` or `list.sort`. By default this can be `None` for normal 
+           sorting.
+           Providers with numeric resource ids should return `int` or a similar
+           function to enable numeric sorting.
+           """
+        pass
+
+    def get_sort_cmp(realm):
+        """Returns a sort `cmp` function for the argument of the same name of 
+           `sorted` or `list.sort`. By default this can be `None` for normal 
+           sorting. """
+        pass
 
 class BasicWatchlist(Component):
     """Base class for watchlist providers.
