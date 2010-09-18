@@ -529,21 +529,17 @@ class WatchlistPlugin(Component):
 
         wldict['perm']   = req.perm
         wldict['realms'] = [ r for r in self.realm_order if r in self.realms ]
-        wldict['error']  = False
         wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
         wldict['OPTIONS'] = self.OPTIONS
         wldict['options'] = options
-        wldict['lastvisit'] = 0
         wldict['wlgettext'] = gettext
         wldict['t_'] = t_
-        wldict['available_fields'] = {}
-        wldict['default_fields'] = {}
-        #wldict['label'] = dict([ self.realm_handler for r in self.realms ])
-
         def get_label(realm, n_plural=1):
             return self.realm_handler[realm].get_realm_label(realm, n_plural)
         wldict['get_label'] = get_label
 
+        wldict['available_fields'] = {}
+        wldict['default_fields'] = {}
         for r in self.realms:
             wldict['available_fields'][r],wldict['default_fields'][r] = self.realm_handler[r].get_fields(r)
         wldict['active_fields'] = {}
