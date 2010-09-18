@@ -86,14 +86,15 @@ class WatchlistPlugin(Component):
 
     wsub = None
 
-    def __init__(self):
-        self.realms = []
-        self.realm_handler = {}
 
+    def __init__(self):
         # bind the 'watchlist' catalog to the specified locale directory
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
+        # 
+        self.realms = []
+        self.realm_handler = {}
         for provider in self.providers:
             for realm in provider.get_realms():
                 assert realm not in self.realms
@@ -101,7 +102,7 @@ class WatchlistPlugin(Component):
                 self.realm_handler[realm] = provider
 
         try:
-                # Import methods from WatchSubscriber of the AnnouncerPlugin
+            # Import methods from WatchSubscriber of the AnnouncerPlugin
             from  announcerplugin.subscribers.watchers  import  WatchSubscriber
             self.wsub = self.env[WatchSubscriber]
             if self.wsub:
@@ -118,6 +119,8 @@ class WatchlistPlugin(Component):
                 self.log.debug("WS! " + str(ee))
                 self.wsub = None
 
+
+
     def get_settings(self, user):
         settings = {}
         settings['useroptions'] = dict([
@@ -129,6 +132,8 @@ class WatchlistPlugin(Component):
         settings.update( usersettings )
         return settings
 
+
+
     def is_notify(self, req, realm, resid):
         try:
             return self.wsub.is_watching(req.session.sid, True, realm, resid)
@@ -138,6 +143,7 @@ class WatchlistPlugin(Component):
             self.log.error("is_notify error: " + str(e))
             return False
 
+
     def set_notify(self, req, realm, resid):
         try:
             self.wsub.set_watch(req.session.sid, True, realm, resid)
@@ -145,6 +151,7 @@ class WatchlistPlugin(Component):
             return False
         except Exception, e:
             self.log.error("set_notify error: " + str(e))
+
 
     def unset_notify(self, req, realm, resid):
         try:
@@ -170,9 +177,6 @@ class WatchlistPlugin(Component):
         )
         return cursor.fetchall()
 
-    ### methods for IRequestHandler
-    def match_request(self, req):
-        return req.path_info.startswith("/watchlist")
 
     def _delete_user_settings(self, user):
         """Deletes all user settings in 'watchlist_settings' table.
@@ -189,6 +193,7 @@ class WatchlistPlugin(Component):
         """, (user,))
         db.commit()
         return
+
 
     def _save_user_settings(self, user, settings):
         """Saves user settings in 'watchlist_settings' table.
@@ -222,6 +227,7 @@ class WatchlistPlugin(Component):
         db.commit()
         return True
 
+
     def _get_user_settings(self, user):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -242,6 +248,12 @@ class WatchlistPlugin(Component):
             else:
                 settings[name] = settingsstr
         return settings
+
+
+    ### methods for IRequestHandler
+    def match_request(self, req):
+        return req.path_info.startswith("/watchlist")
+
 
     def process_request(self, req):
         user  = to_unicode( req.authname )
@@ -315,6 +327,7 @@ class WatchlistPlugin(Component):
         wldict['available_fields'] = {}
         wldict['default_fields'] = {}
         #wldict['label'] = dict([ self.realm_handler for r in self.realms ])
+
         def get_label(realm, n_plural=1):
             return self.realm_handler[realm].get_realm_label(realm, n_plural)
         wldict['get_label'] = get_label
@@ -502,8 +515,10 @@ class WatchlistPlugin(Component):
         else:
             return True
 
+
     def res_exists(self, realm, resid):
         return self.realm_handler[realm].res_exists(realm, resid)
+
 
     def is_watching(self, realm, resid, user):
         """Checks if user watches the given resource(s).
@@ -534,6 +549,7 @@ class WatchlistPlugin(Component):
             else:
                 return True
 
+
     def visiting(self, realm, resid, user, db=None):
         """Checks if user watches the given element."""
         db = db or self.env.get_db_cnx()
@@ -549,7 +565,12 @@ class WatchlistPlugin(Component):
         db.commit()
         return
 
+
     ### methods for IRequestFilter
+    def pre_process_request(self, req, handler):
+        return handler
+
+
     def post_process_request(self, req, template, data, content_type):
         """Executed after EVERY request is processed.
            Used to add navigation bars, display messages
@@ -628,14 +649,10 @@ class WatchlistPlugin(Component):
         return (template, data, content_type)
 
 
-    def pre_process_request(self, req, handler):
-        return handler
-
     # ITemplateProvider methods:
     def get_htdocs_dirs(self):
         return [('watchlist', resource_filename(__name__, 'htdocs'))]
 
+
     def get_templates_dirs(self):
         return [ resource_filename(__name__, 'templates') ]
-
-
