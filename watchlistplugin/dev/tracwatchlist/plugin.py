@@ -92,7 +92,7 @@ class WatchlistPlugin(Component):
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
-        # 
+        #
         self.realms = []
         self.realm_handler = {}
         for provider in self.providers:
@@ -120,7 +120,7 @@ class WatchlistPlugin(Component):
                 self.wsub = None
 
 
-
+    ## User settings ########################################################
     def get_settings(self, user):
         settings = {}
         settings['useroptions'] = dict([
@@ -131,51 +131,6 @@ class WatchlistPlugin(Component):
             del usersettings['useroptions']
         settings.update( usersettings )
         return settings
-
-
-
-    def is_notify(self, req, realm, resid):
-        try:
-            return self.wsub.is_watching(req.session.sid, True, realm, resid)
-        except AttributeError:
-            return False
-        except Exception, e:
-            self.log.error("is_notify error: " + str(e))
-            return False
-
-
-    def set_notify(self, req, realm, resid):
-        try:
-            self.wsub.set_watch(req.session.sid, True, realm, resid)
-        except AttributeError:
-            return False
-        except Exception, e:
-            self.log.error("set_notify error: " + str(e))
-
-
-    def unset_notify(self, req, realm, resid):
-        try:
-            self.wsub.set_unwatch(req.session.sid, True, realm, resid)
-        except AttributeError:
-            return False
-        except Exception, e:
-            self.log.error("unset_notify error: " + str(e))
-
-
-    def get_watched_resources(self, realm, user, db=None):
-        """Returns list of resources watched by the given user in the given realm.
-           The list contains a list with the resource id and the last time it
-           got visited."""
-        if not db:
-            db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("""
-        SELECT resid,lastvisit
-            FROM watchlist
-        WHERE realm=%s AND wluser=%s
-        """, (realm, user)
-        )
-        return cursor.fetchall()
 
 
     def _delete_user_settings(self, user):
@@ -250,7 +205,117 @@ class WatchlistPlugin(Component):
         return settings
 
 
-    ### methods for IRequestHandler
+    ## Change/access watch status ###########################################
+    def has_watchlist(self, user):
+        """Checks if user has a non-empty watchlist."""
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+          SELECT count(*)
+            FROM watchlist
+           WHERE wluser=%s;
+        """, (user,)
+        )
+        count = cursor.fetchone()
+        if not count or not count[0]:
+            return False
+        else:
+            return True
+
+
+    def get_watched_resources(self, realm, user, db=None):
+        """Returns list of resources watched by the given user in the given realm.
+           The list contains a list with the resource id and the last time it
+           got visited."""
+        if not db:
+            db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+        SELECT resid,lastvisit
+            FROM watchlist
+        WHERE realm=%s AND wluser=%s
+        """, (realm, user)
+        )
+        return cursor.fetchall()
+
+
+
+    def is_watching(self, realm, resid, user):
+        """Checks if user watches the given resource(s).
+           Returns True/False for a single resource or
+           a list of watched resources."""
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        if getattr(resid, '__iter__', False):
+            reses = list(resid)
+            cursor.execute("""
+                SELECT resid
+                FROM watchlist
+                WHERE wluser=%s AND realm=%s AND
+                        resid IN (
+            """ + ",".join(("%s",) * len(reses)) + ")",
+            [user,realm] + reses)
+            return [ res[0] for res in cursor.fetchall() ]
+        else:
+            cursor.execute("""
+                SELECT count(*)
+                  FROM watchlist
+                 WHERE realm=%s AND resid=%s AND wluser=%s;
+            """, (realm, to_unicode(resid), user)
+            )
+            count = cursor.fetchone()
+            if not count or not count[0]:
+                return False
+            else:
+                return True
+
+
+    def visiting(self, realm, resid, user, db=None):
+        """Checks if user watches the given element."""
+        db = db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        now = current_timestamp()
+        cursor.log = self.log
+        cursor.execute("""
+          UPDATE watchlist
+             SET lastvisit=%s
+           WHERE realm=%s AND resid=%s AND wluser=%s;
+        """, (now, realm, to_unicode(resid), user)
+        )
+        db.commit()
+        return
+
+
+    ## Change/access notification status ####################################
+    def is_notify(self, req, realm, resid):
+        try:
+            return self.wsub.is_watching(req.session.sid, True, realm, resid)
+        except AttributeError:
+            return False
+        except Exception, e:
+            self.log.error("is_notify error: " + str(e))
+            return False
+
+
+    def set_notify(self, req, realm, resid):
+        try:
+            self.wsub.set_watch(req.session.sid, True, realm, resid)
+        except AttributeError:
+            return False
+        except Exception, e:
+            self.log.error("set_notify error: " + str(e))
+
+
+    def unset_notify(self, req, realm, resid):
+        try:
+            self.wsub.set_unwatch(req.session.sid, True, realm, resid)
+        except AttributeError:
+            return False
+        except Exception, e:
+            self.log.error("unset_notify error: " + str(e))
+
+
+    ## Methods for IRequestHandler ##########################################
     def match_request(self, req):
         return req.path_info.startswith("/watchlist")
 
@@ -499,74 +564,7 @@ class WatchlistPlugin(Component):
             raise HTTPBadRequest(_("Invalid watchlist action '%(action)s'!", action=action))
 
 
-    def has_watchlist(self, user):
-        """Checks if user has a non-empty watchlist."""
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("""
-          SELECT count(*)
-            FROM watchlist
-           WHERE wluser=%s;
-        """, (user,)
-        )
-        count = cursor.fetchone()
-        if not count or not count[0]:
-            return False
-        else:
-            return True
-
-
-    def res_exists(self, realm, resid):
-        return self.realm_handler[realm].res_exists(realm, resid)
-
-
-    def is_watching(self, realm, resid, user):
-        """Checks if user watches the given resource(s).
-           Returns True/False for a single resource or 
-           a list of watched resources."""
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        if getattr(resid, '__iter__', False):
-            reses = list(resid)
-            cursor.execute("""
-                SELECT resid
-                FROM watchlist
-                WHERE wluser=%s AND realm=%s AND
-                        resid IN (
-            """ + ",".join(("%s",) * len(reses)) + ")",
-            [user,realm] + reses)
-            return [ res[0] for res in cursor.fetchall() ]
-        else:
-            cursor.execute("""
-                SELECT count(*)
-                  FROM watchlist
-                 WHERE realm=%s AND resid=%s AND wluser=%s;
-            """, (realm, to_unicode(resid), user)
-            )
-            count = cursor.fetchone()
-            if not count or not count[0]:
-                return False
-            else:
-                return True
-
-
-    def visiting(self, realm, resid, user, db=None):
-        """Checks if user watches the given element."""
-        db = db or self.env.get_db_cnx()
-        cursor = db.cursor()
-        now = current_timestamp()
-        cursor.log = self.log
-        cursor.execute("""
-          UPDATE watchlist
-             SET lastvisit=%s
-           WHERE realm=%s AND resid=%s AND wluser=%s;
-        """, (now, realm, to_unicode(resid), user)
-        )
-        db.commit()
-        return
-
-
-    ### methods for IRequestFilter
+    ## Methods for IRequestFilter ###########################################
     def pre_process_request(self, req, handler):
         return handler
 
@@ -649,10 +647,16 @@ class WatchlistPlugin(Component):
         return (template, data, content_type)
 
 
-    # ITemplateProvider methods:
+    def res_exists(self, realm, resid):
+        return self.realm_handler[realm].res_exists(realm, resid)
+
+
+    ## Methods for ITemplateProvider ########################################
     def get_htdocs_dirs(self):
         return [('watchlist', resource_filename(__name__, 'htdocs'))]
 
 
     def get_templates_dirs(self):
         return [ resource_filename(__name__, 'templates') ]
+
+# EOF
