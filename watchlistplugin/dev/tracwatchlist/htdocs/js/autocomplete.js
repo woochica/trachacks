@@ -12,8 +12,6 @@ jQuery(document).ready(function() {
       .autocomplete(asWikiNames);
   $("#wikis tfoot th.name input")
       .autocomplete(asWikiNames);
-  $("#wikis .addtowatch input[name=resid]")
-      .autocomplete("./watchlist?action=search&realm=wiki");
   ///
   
   // Wiki author names
@@ -40,10 +38,17 @@ jQuery(document).ready(function() {
       .autocomplete(asTicketIds);
   $("#tickets tfoot th.id input")
       .autocomplete(asTicketIds);
-  $("#tickets .addtowatch input[name=resid]")
-      .autocomplete("./watchlist?action=search&realm=ticket");
   asWikiNames = 0;
   asTicketIds = 0;
+  ///
+
+  // AJAX calls
+  var options = {delay:750, matchCase:true, matchSubset:true,
+        selectFirst:false, multiple:true, multipleSeparator:',', cacheLength:10, max:100 }
+  $("#tickets .addtowatch input[name=resid]")
+      .autocomplete("./watchlist?action=search&realm=ticket", options);
+  $("#wikis .addtowatch input[name=resid]")
+      .autocomplete("./watchlist?action=search&realm=wiki", options);
   ///
 });
 

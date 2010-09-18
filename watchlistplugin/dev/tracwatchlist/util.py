@@ -23,8 +23,9 @@ __author__   = ur"$Author$"[9:-2]
 __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
-from  trac.core       import  *
-from  genshi.builder  import  tag, Markup
+from  trac.core          import  *
+from  genshi.builder     import  tag, Markup
+from  trac.util.datefmt  import  datetime, utc
 
 
 # Try to use babels format_datetime to localise date-times if possible.
@@ -66,10 +67,14 @@ def decode_range( str ):
     """Decodes given string with integer ranges like `a-b,c-d` and yields a list
        of tuples: [(a,b),(c,d)] in this ranges."""
     for irange in unicode(str).split(','):
+        irange = irange.strip()
         try:
             index = irange.index('-')
         except:
-            a = b = irange
+            if irange == '*':
+                a, b = 0, None
+            else:
+                a = b = irange
         else:
             b = irange[index+1:]
             a = irange[:index]
@@ -99,3 +104,14 @@ def decode_range_sql( str ):
         else:
             cmd.append( ' ( %%(var)s BETWEEN %i AND %i ) ' % (a,b) )
     return ' OR '.join(cmd)
+
+
+import re
+star = re.compile(r'(?<!\\)\*')
+ques = re.compile(r'(?<!\\)\?')
+def convert_to_sql_wildcards( pattern ):
+    if not pattern:
+        return pattern
+    pattern = pattern.replace('%',r'\%').replace('_',r'\_')
+    pattern = star.sub('%', ques.sub('_', pattern) )
+    return pattern

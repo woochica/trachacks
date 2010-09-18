@@ -39,7 +39,8 @@ from  trac.util.datefmt      import  format_datetime as trac_format_datetime
 from  tracwatchlist.api      import  BasicWatchlist
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
 from  tracwatchlist.render   import  render_property_diff
-from  tracwatchlist.util     import  moreless, format_datetime, LC_TIME
+from  tracwatchlist.util     import  moreless, format_datetime, LC_TIME,\
+                                     decode_range_sql
 
 
 class TicketWatchlist(BasicWatchlist):
@@ -62,6 +63,7 @@ class TicketWatchlist(BasicWatchlist):
         'id', 'changetime', 'author', 'changes', 'commentnum',
         'unwatch', 'notify', 'comment',
     ]}
+    sort_key = {'ticket':int}
 
     def __init__(self):
         try: # Only works for Trac 0.12, but is not needed for Trac 0.11 anyway
@@ -73,24 +75,32 @@ class TicketWatchlist(BasicWatchlist):
     def get_realm_label(self, realm, n_plural=1):
         return ngettext("Ticket", "Tickets", n_plural)
 
-    def res_exists(self, realm, resid):
-        try:
-            return Ticket(self.env, int(resid)).exists
-        except:
-            return False
 
-    def res_pattern_exists(self, realm, pattern):
-        if pattern == '%':
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
-            cursor.execute("""
-              SELECT id
-                FROM ticket
-            """
-            )
-            return [ unicode(vals[0]) for vals in cursor.fetchall() ]
-        else:
+    def resources_exists(self, realm, resids):
+        if not resids:
             return []
+        if isinstance(resids,basestring):
+            sql = decode_range_sql( resids ) % {'var':'id'}
+            if not sql:
+                return []
+            args = []
+        else:
+            args = resids
+            if (len(resids) == 1):
+                sql = ' id=%s '
+            else:
+                sql = ' id IN (' + ','.join(('%s',) * len(resids)) + ') '
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.log = self.log
+        cursor.execute("""
+            SELECT id
+            FROM ticket
+            WHERE
+        """ + sql, args)
+        ret = [ unicode(v[0]) for v in cursor.fetchall() ]
+        return ret
+
 
     def get_list(self, realm, wl, req, fields=None):
         db = self.env.get_db_cnx()

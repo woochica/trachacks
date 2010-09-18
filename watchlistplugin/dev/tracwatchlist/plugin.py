@@ -154,40 +154,6 @@ class WatchlistPlugin(Component):
         except Exception, e:
             self.log.error("unset_notify error: " + str(e))
 
-    def _get_sql_names_and_patterns(self, nameorpatternlist):
-        import re
-        if not nameorpatternlist:
-            return [], []
-        star  = re.compile(r'(?<!\\)\*')
-        ques  = re.compile(r'(?<!\\)\?')
-        names = []
-        patterns = []
-        for norp in nameorpatternlist:
-            norp = norp.strip()
-            pattern = norp.replace('%',r'\%').replace('_',r'\_')
-            pattern_unsub = pattern
-            pattern = star.sub('%', pattern)
-            pattern = ques.sub('_', pattern)
-            if pattern == pattern_unsub:
-                names.append(norp)
-            else:
-                pattern = pattern.replace('\*','*').replace('\?','?')
-                patterns.append(pattern)
-        return names, patterns
-
-    def _sql_pattern_unescape(self, pattern):
-        import re
-        percent    = re.compile(r'(?<!\\)%')
-        underscore = re.compile(r'(?<!\\)_')
-        pattern = pattern.replace('*','\*').replace('?','\?')
-        pattern = percent.sub('*', pattern)
-        pattern = underscore.sub('?', pattern)
-        pattern = pattern.replace('\%','%').replace('\_','_')
-        return pattern
-
-    def _convert_pattern(self, pattern):
-            # needs more work, excape sequences, etc.
-        return pattern.replace('*','%').replace('?','_')
 
     def get_watched_resources(self, realm, user, db=None):
         """Returns list of resources watched by the given user in the given realm.
@@ -298,6 +264,7 @@ class WatchlistPlugin(Component):
         # Get and format request arguments
         realm = to_unicode( req.args.get('realm', u'') )
         resids = ensure_tuple( req.args.get('resid', u'') )
+        resid = u','.join(resids)
         action = req.args.get('action','view')
         async = req.args.get('async', 'false') == 'true'
 
@@ -361,7 +328,7 @@ class WatchlistPlugin(Component):
                 cols = wldict['default_fields'].get(r,[])
             wldict['active_fields'][r] = cols
 
-        names,patterns = self._get_sql_names_and_patterns( resids )
+        names,patterns = [],[] #self._get_sql_names_and_patterns( resids )
         single = len(names) == 1 and not patterns
         redirectback = options['stay_at_resource'] and single and not onwatchlistpage
         redirectback_notify = options['stay_at_resource_notify'] and single and not \
@@ -379,26 +346,10 @@ class WatchlistPlugin(Component):
         err_pat = []
         if action == "watch":
             handler = self.realm_handler[realm]
-            if names:
-                reses = list(handler.res_list_exists(realm, names))
-                alw_res = self.is_watching(realm, reses, user)
-                new_res.extend(set(reses).difference(alw_res))
-                err_res.extend(set(names).difference(reses))
-            for pattern in patterns:
-                reses = list(handler.res_pattern_exists(realm, pattern))
-
-                if not reses:
-                    err_pat.append(self._sql_pattern_unescape(pattern))
-                else:
-                    cursor.execute("""
-                      SELECT resid
-                        FROM watchlist
-                       WHERE wluser=%s AND realm=%s AND resid LIKE (%s)
-                    """, (user,realm,pattern)
-                    )
-                    watched_res = [ res[0] for res in cursor.fetchall() ]
-                    alw_res.extend(set(reses).intersection(watched_res))
-                    new_res.extend(set(reses).difference(alw_res))
+            reses = set(handler.resources_exists(realm, resid))
+            alw_res = set(self.is_watching(realm, reses, user))
+            new_res.extend(reses.difference(alw_res))
+            err_res.extend(reses.intersection(alw_res))
 
             if new_res:
                 cursor.executemany("""
@@ -422,45 +373,20 @@ class WatchlistPlugin(Component):
             req.redirect(req.href('watchlist'))
 
         elif action == "unwatch":
-            if names:
-                sql = ("""
-                  SELECT resid
-                    FROM watchlist
-                   WHERE wluser=%s AND realm=%s AND
-                         resid IN (
-                """ + ",".join(("%s",) * len(names)) + ")"
-                )
-                cursor.execute( sql, [user,realm] + names)
-                reses = [ res[0] for res in cursor.fetchall() ]
-                del_res.extend(reses)
-                err_res.extend(set(names).difference(reses))
+            handler = self.realm_handler[realm]
+            reses = set(handler.resources_exists(realm, resid))
+            alw_res = set(self.is_watching(realm, reses, user))
+            del_res.extend(alw_res.intersection(reses))
+            err_res.extend(reses.difference(alw_res))
 
-                sql = ("""
-                  DELETE
-                    FROM watchlist
-                   WHERE wluser=%s AND realm=%s AND
-                         resid IN (
-                """ + ",".join(("%s",) * len(names)) + ")"
-                )
-                cursor.execute( sql, [user,realm] + names)
-            for pattern in patterns:
-                cursor.execute("""
-                  SELECT resid
-                    FROM watchlist
-                   WHERE wluser=%s AND realm=%s AND resid LIKE %s
-                """, (user,realm,pattern)
-                )
-                reses = [ res[0] for res in cursor.fetchall() ]
-                if not reses:
-                    err_pat.append(self._sql_pattern_unescape(pattern))
-                else:
-                    del_res.extend(reses)
-                    cursor.execute("""
-                      DELETE
-                        FROM watchlist
-                       WHERE wluser=%s AND realm=%s AND resid LIKE %s
-                    """, (user,realm,pattern)
-                    )
+            sql = ("""
+                DELETE
+                FROM watchlist
+                WHERE wluser=%s AND realm=%s AND
+                        resid IN (
+            """ + ",".join(("%s",) * len(del_res)) + ")"
+            )
+            cursor.execute( sql, [user,realm] + del_res)
             db.commit()
             # Unset notification
             if self.wsub and options['notifications'] and options['notify_by_default']:
@@ -479,11 +405,11 @@ class WatchlistPlugin(Component):
                 req.redirect(req.href(realm,names[0]))
             req.redirect(req.href('watchlist'))
 
-        wldict['del_res'] = del_res
-        wldict['err_res'] = err_res
-        wldict['err_pat'] = err_pat
-        wldict['new_res'] = new_res
-        wldict['alw_res'] = alw_res
+        wldict['del_res'] = sorted(del_res)
+        wldict['err_res'] = sorted(err_res)
+        wldict['err_pat'] = sorted(err_pat)
+        wldict['new_res'] = sorted(new_res)
+        wldict['alw_res'] = sorted(alw_res)
 
         if action == "notifyon":
             if single and not self.res_exists(realm, resids[0]):
@@ -527,13 +453,19 @@ class WatchlistPlugin(Component):
                of all not watched resources."""
             handler = self.realm_handler[realm]
             query = req.args.get('q', u'')
-            found = handler.res_pattern_exists(realm, query + '%')
-
-            watched = self.get_watched_resources( realm, user )
-            notwatched = list(set(found).difference(set(watched)))
-            notwatched.sort()
-            req.send( unicode('\n'.join(notwatched) + '\n').encode("utf-8"), 'text/plain', 200 )
-            raise RequestDone
+            if not query:
+                req.send('', 'text/plain', 200 )
+            found = set(handler.resources_exists(realm, query + '*'))
+            if not found:
+                req.send('', 'text/plain', 200 )
+            watched = set(self.get_watched_resources( realm, user ))
+            notwatched = list(found.difference(watched))
+            try:
+                notwatched.sort(cmp=handler.get_sort_cmp(realm),
+                                key=handler.get_sort_key(realm))
+            except TypeError:
+                pass
+            req.send( unicode(u'\n'.join(notwatched) + u'\n').encode("utf-8"), 'text/plain', 200 )
 
 
         if async:
@@ -579,15 +511,16 @@ class WatchlistPlugin(Component):
            a list of watched resources."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        if isinstance(resid,(list,tuple)):
-                cursor.execute("""
-                  SELECT resid
-                    FROM watchlist
-                   WHERE wluser=%s AND realm=%s AND
-                         resid IN (
-                """ + ",".join(("%s",) * len(resid)) + ")",
-                [user,realm] + resid)
-                return [ res[0] for res in cursor.fetchall() ]
+        if getattr(resid, '__iter__', False):
+            reses = list(resid)
+            cursor.execute("""
+                SELECT resid
+                FROM watchlist
+                WHERE wluser=%s AND realm=%s AND
+                        resid IN (
+            """ + ",".join(("%s",) * len(reses)) + ")",
+            [user,realm] + reses)
+            return [ res[0] for res in cursor.fetchall() ]
         else:
             cursor.execute("""
                 SELECT count(*)

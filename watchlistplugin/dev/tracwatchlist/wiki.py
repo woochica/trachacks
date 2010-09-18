@@ -35,7 +35,8 @@ from  trac.web.chrome        import  Chrome
 
 from  tracwatchlist.api      import  BasicWatchlist
 from  tracwatchlist.translation import  _, N_, T_, t_, tag_, gettext, ngettext
-from  tracwatchlist.util     import  moreless, format_datetime, LC_TIME
+from  tracwatchlist.util     import  moreless, format_datetime, LC_TIME,\
+                                     convert_to_sql_wildcards
 
 
 class WikiWatchlist(BasicWatchlist):
@@ -71,20 +72,33 @@ class WikiWatchlist(BasicWatchlist):
     def get_realm_label(self, realm, n_plural=1):
         return ngettext("Wiki Page", "Wiki Pages", n_plural)
 
-    def res_exists(self, realm, resid):
-        return WikiPage(self.env, resid).exists
 
-    def res_pattern_exists(self, realm, pattern):
+    def resources_exists(self, realm, resids):
+        if not resids:
+            return []
+        if isinstance(resids,basestring):
+            self.log.debug ( "resids = " + unicode(resids) )
+            resids = convert_to_sql_wildcards(resids).replace(',',' ').split()
+            self.log.debug ( "resids = " + unicode(resids) )
+            sql = ' OR '.join((' name LIKE %s ',) * len(resids))
+        else:
+            resids = list(resids)
+            if (len(resids) == 1):
+                sql = ' name=%s '
+            else:
+                sql = ' name IN (' + ','.join(('%s',) * len(resids)) + ') '
         db = self.env.get_db_cnx()
         cursor = db.cursor()
+        cursor.log = self.log
         cursor.execute("""
-          SELECT name
+            SELECT DISTINCT name
             FROM wiki
-           WHERE name
-            LIKE (%s)
-        """, (pattern,)
-        )
-        return [ vals[0] for vals in cursor.fetchall() ]
+            WHERE
+        """ + sql, resids)
+        ret = [ unicode(v[0]) for v in cursor.fetchall() ]
+        self.log.debug("WL WIKI return: " + unicode(ret))
+        return ret
+
 
     def get_list(self, realm, wl, req, fields=None):
         db = self.env.get_db_cnx()

@@ -36,15 +36,19 @@ class IWatchlistProvider(Interface):
     def get_realm_label(realm, n_plural=1):
         pass
 
-    def res_exists(realm, resid):
-        """ Returns if resource given by `realm` and `resid` exists. """
+    def resources_exists(realm, resids):
+        """ Returns all existing resources described by `realm` and `resids`.
+            If `resids` is a list return all listed resources which exist.
+            If `resids` is a string, take it as a pattern and
+            list all resources which match it.
+            """
         pass
 
-    def res_list_exists(realm, reslist):
-        pass
+    #def res_list_exists(realm, reslist):
+    #    pass
 
-    def res_pattern_exists(realm, pattern):
-        pass
+    #def res_pattern_exists(realm, pattern):
+    #    pass
 
     def has_perm(realm, perm):
         pass
@@ -74,6 +78,14 @@ class BasicWatchlist(Component):
     realms = []
     default_fields = {}
     fields = {}
+    sort_key = {}
+    sort_cmp = {}
+
+    def get_sort_key(self, realm):
+        return self.sort_key.get(realm, None)
+
+    def get_sort_cmp(self, realm):
+        return self.sort_cmp.get(realm, None)
 
     def get_realms(self):
         return self.realms
@@ -84,16 +96,11 @@ class BasicWatchlist(Component):
         else:
             return realm.capitalize() + 's'
 
-    def res_exists(self, realm, resid):
-        return False
-
-    def res_list_exists(self, realm, reslist):
-        for res in reslist:
-            if self.res_exists(realm, res):
-                yield res
-
-    def res_pattern_exists(self, realm, pattern):
-        return []
+    def resources_exists(self, realm, resids):
+        if isinstance(resids,basestring):
+            return False
+        else:
+            return False
 
     def has_perm(self, realm, perm):
         if realm not in self.realms:
