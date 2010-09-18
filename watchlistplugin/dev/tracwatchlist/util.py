@@ -50,6 +50,8 @@ except ImportError:
 def moreless(text, length):
     """Turns `text` into HTML code where everything behind `length` can be uncovered using a ''show more'' link
        and later covered again with a ''show less'' link."""
+    if (len(text) <= length):
+        return tag(text)
     return tag(tag.span(text[:length]),tag.a(' [', tag.strong(Markup('&hellip;')), ']', class_="more"),
         tag.span(text[length:],class_="moretext"),tag.a(' [', tag.strong('-'), ']', class_="less"))
 
