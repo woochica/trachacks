@@ -444,9 +444,9 @@ class WatchlistPlugin(Component):
                 for res in new_res:
                     self.set_notify(req, realm, res)
                 db.commit()
-            if redirectback:
-                req.redirect(req.href(realm,names[0]))
-            req.redirect(req.href('watchlist'))
+            if redirectback and len(new_res) == 1:
+                req.redirect(req.href(realm,new_res[0]))
+            action = 'view'
 
         elif action == "unwatch":
             handler = self.realm_handler[realm]
@@ -473,13 +473,13 @@ class WatchlistPlugin(Component):
             if async:
                 req.send("",'text/plain', 200)
             # Redirect back to resource if so configured:
-            if redirectback:
-                if options['show_messages_on_resource_page'] and not onwatchlistpage:
+            if redirectback and len(del_res) == 1:
+                if options['show_messages_on_resource_page']:
                     req.session['watchlist_message'] = _(
                     "You are no longer watching this resource."
                     )
-                req.redirect(req.href(realm,names[0]))
-            req.redirect(req.href('watchlist'))
+                req.redirect(req.href(realm,del_res[0]))
+            action = 'view'
 
         wldict['del_res'] = sorted(del_res)
         wldict['err_res'] = sorted(err_res)
