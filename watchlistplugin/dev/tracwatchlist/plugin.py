@@ -362,6 +362,8 @@ class WatchlistPlugin(Component):
                 notwatched.sort(cmp=handler.get_sort_cmp(realm),
                                 key=handler.get_sort_key(realm))
             except TypeError:
+                # Ignore conversion errors in `key` function.
+                # They will still abort the sorting.
                 pass
             req.send( unicode(u'\n'.join(notwatched) + u'\n').encode("utf-8"),
                 'text/plain', 200 )
@@ -375,7 +377,6 @@ class WatchlistPlugin(Component):
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1
-
 
         settings = self.get_settings( user )
         options = settings['useroptions']
@@ -402,46 +403,52 @@ class WatchlistPlugin(Component):
                 self._delete_user_settings(req.authname)
             req.redirect(req.href('watchlist'))
 
-        wldict['perm']   = req.perm
-        wldict['realms'] = [ r for r in self.realm_order if r in self.realms ]
-        wldict['error']  = False
-        wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
-        wldict['OPTIONS'] = self.OPTIONS
-        wldict['options'] = options
-        wldict['lastvisit'] = 0
-        wldict['wlgettext'] = gettext
-        wldict['t_'] = t_
-        wldict['available_fields'] = {}
-        wldict['default_fields'] = {}
-        #wldict['label'] = dict([ self.realm_handler for r in self.realms ])
-
-        def get_label(realm, n_plural=1):
-            return self.realm_handler[realm].get_realm_label(realm, n_plural)
-        wldict['get_label'] = get_label
-
-        for r in self.realms:
-            wldict['available_fields'][r],wldict['default_fields'][r] = self.realm_handler[r].get_fields(r)
-        wldict['active_fields'] = {}
-        for r in self.realms:
-            cols = settings.get(r + '_fields',[])
-            if not cols:
-                cols = wldict['default_fields'].get(r,[])
-            wldict['active_fields'][r] = cols
-
-        redirectback = options['stay_at_resource'] and not onwatchlistpage
         redirectback_notify = options['stay_at_resource_notify'] and not \
                               onwatchlistpage and not async
-
-        if onwatchlistpage:
-            wldict['show_messages'] = options['show_messages_while_on_watchlist_page']
-        else:
-            wldict['show_messages'] = options['show_messages_on_watchlist_page']
+        if action == "notifyon":
+            if not self.res_exists(realm, resid):
+                raise HTTPNotFound(t_("Page %(name)s not found", name=resid))
+            elif self.wsub and options['notifications']:
+                self.set_notify(req, realm, resid)
+                db.commit()
+            if redirectback_notify:
+                if options['show_messages_on_resource_page']:
+                    req.session['watchlist_notify_message'] = _(
+                      """
+                      You are now receiving change notifications
+                      about this resource.
+                      """
+                    )
+                req.redirect(req.href(realm,resids[0]))
+            if async:
+                req.send("",'text/plain', 200)
+            else:
+                req.redirect(req.href('watchlist'))
+        elif action == "notifyoff":
+            if self.wsub and options['notifications']:
+                self.unset_notify(req, realm, resid)
+                db.commit()
+            if redirectback_notify:
+                if options['show_messages_on_resource_page']:
+                    req.session['watchlist_notify_message'] = _(
+                      """
+                      You are no longer receiving
+                      change notifications about this resource.
+                      """
+                    )
+                req.redirect(req.href(realm,resids[0]))
+                raise RequestDone
+            if async:
+                req.send("",'text/plain', 200)
+            else:
+                req.redirect(req.href('watchlist'))
 
         new_res = []
         del_res = []
         alw_res = []
         err_res = []
         err_pat = []
+        redirectback = options['stay_at_resource'] and not onwatchlistpage
         if action == "watch":
             handler = self.realm_handler[realm]
             reses = set(handler.resources_exists(realm, resid))
@@ -503,67 +510,60 @@ class WatchlistPlugin(Component):
                 req.redirect(req.href(realm,del_res[0]))
             action = 'view'
 
+        # Up to here all watchlist actions except 'view' got handled and
+        # either redirected the request or set the action to 'view'.
+        if action != "view":
+            raise HTTPBadRequest(_("Invalid watchlist action '%(action)s'!", action=action))
+        # Display watchlist page:
+
         wldict['del_res'] = sorted(del_res)
         wldict['err_res'] = sorted(err_res)
         wldict['err_pat'] = sorted(err_pat)
         wldict['new_res'] = sorted(new_res)
         wldict['alw_res'] = sorted(alw_res)
 
-        if action == "notifyon":
-            if not self.res_exists(realm, resid):
-                raise HTTPNotFound(t_("Page %(name)s not found", name=resid))
-            elif self.wsub and options['notifications']:
-                self.set_notify(req, realm, resid)
-                db.commit()
-            if redirectback_notify:
-                if options['show_messages_on_resource_page']:
-                    req.session['watchlist_notify_message'] = _(
-                      """
-                      You are now receiving change notifications
-                      about this resource.
-                      """
-                    )
-                req.redirect(req.href(realm,resids[0]))
-            if async:
-                req.send("",'text/plain', 200)
-            else:
-                req.redirect(req.href('watchlist'))
-        elif action == "notifyoff":
-            if self.wsub and options['notifications']:
-                self.unset_notify(req, realm, resid)
-                db.commit()
-            if redirectback_notify:
-                if options['show_messages_on_resource_page']:
-                    req.session['watchlist_notify_message'] = _(
-                      """
-                      You are no longer receiving
-                      change notifications about this resource.
-                      """
-                    )
-                req.redirect(req.href(realm,resids[0]))
-                raise RequestDone
-            if async:
-                req.send("",'text/plain', 200)
-            else:
-                req.redirect(req.href('watchlist'))
-
-
-        if async:
-            req.send("",'text/plain', 200)
-        elif action == "view":
-            for xrealm in wldict['realms']:
-                xhandler = self.realm_handler[xrealm]
-                if xhandler.has_perm(xrealm, req.perm):
-                    wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
-                    name = xhandler.get_realm_label(xrealm, n_plural=1000)
-                    # TRANSLATOR: Navigation link to point to watchlist section of this realm
-                    # (e.g. 'Wikis', 'Tickets').
-                    add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name),
-                                href='#' + xrealm + 's')
-            add_ctxtnav(req, t_("Preferences"), href='#preferences')
-            return ("watchlist.html", wldict, "text/html")
+        if onwatchlistpage:
+            wldict['show_messages'] = options['show_messages_while_on_watchlist_page']
         else:
-            raise HTTPBadRequest(_("Invalid watchlist action '%(action)s'!", action=action))
+            wldict['show_messages'] = options['show_messages_on_watchlist_page']
+
+        wldict['perm']   = req.perm
+        wldict['realms'] = [ r for r in self.realm_order if r in self.realms ]
+        wldict['error']  = False
+        wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
+        wldict['OPTIONS'] = self.OPTIONS
+        wldict['options'] = options
+        wldict['lastvisit'] = 0
+        wldict['wlgettext'] = gettext
+        wldict['t_'] = t_
+        wldict['available_fields'] = {}
+        wldict['default_fields'] = {}
+        #wldict['label'] = dict([ self.realm_handler for r in self.realms ])
+
+        def get_label(realm, n_plural=1):
+            return self.realm_handler[realm].get_realm_label(realm, n_plural)
+        wldict['get_label'] = get_label
+
+        for r in self.realms:
+            wldict['available_fields'][r],wldict['default_fields'][r] = self.realm_handler[r].get_fields(r)
+        wldict['active_fields'] = {}
+        for r in self.realms:
+            cols = settings.get(r + '_fields',[])
+            if not cols:
+                cols = wldict['default_fields'].get(r,[])
+            wldict['active_fields'][r] = cols
+
+        for xrealm in wldict['realms']:
+            xhandler = self.realm_handler[xrealm]
+            if xhandler.has_perm(xrealm, req.perm):
+                wldict[xrealm + 'list'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
+                name = xhandler.get_realm_label(xrealm, n_plural=1000)
+                # TRANSLATOR: Navigation link to point to watchlist section of this realm
+                # (e.g. 'Wikis', 'Tickets').
+                add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name),
+                            href='#' + xrealm + 's')
+        add_ctxtnav(req, t_("Preferences"), href='#preferences')
+        return ("watchlist.html", wldict, "text/html")
 
 
     ## Methods for IRequestFilter ###########################################
