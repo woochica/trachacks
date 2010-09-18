@@ -79,12 +79,10 @@ class TicketWatchlist(BasicWatchlist):
             from tractags.api import TagSystem
             self.tagsystem = self.env[TagSystem]
         except ImportError, e:
-            self.log.debug("tagsystem = " + unicode(e))
             pass
         else:
             if self.tagsystem:
                 self.fields['ticket']['tags'] = _("Tags")
-        self.log.debug("tagsystem = " + unicode(self.tagsystem))
 
 
     def get_realm_label(self, realm, n_plural=1):
@@ -107,7 +105,6 @@ class TicketWatchlist(BasicWatchlist):
                 sql = ' id IN (' + ','.join(('%s',) * len(resids)) + ') '
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.log = self.log
         cursor.execute("""
             SELECT id
             FROM ticket

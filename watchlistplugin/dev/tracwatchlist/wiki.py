@@ -89,9 +89,7 @@ class WikiWatchlist(BasicWatchlist):
         if not resids:
             return []
         if isinstance(resids,basestring):
-            self.log.debug ( "resids = " + unicode(resids) )
             resids = convert_to_sql_wildcards(resids).replace(',',' ').split()
-            self.log.debug ( "resids = " + unicode(resids) )
             sql = ' OR '.join((' name LIKE %s ',) * len(resids))
         else:
             resids = list(resids)
@@ -101,14 +99,12 @@ class WikiWatchlist(BasicWatchlist):
                 sql = ' name IN (' + ','.join(('%s',) * len(resids)) + ') '
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.log = self.log
         cursor.execute("""
             SELECT DISTINCT name
             FROM wiki
             WHERE
         """ + sql, resids)
         ret = [ unicode(v[0]) for v in cursor.fetchall() ]
-        self.log.debug("WL WIKI return: " + unicode(ret))
         return ret
 
 
