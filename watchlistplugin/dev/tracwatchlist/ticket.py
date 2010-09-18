@@ -33,6 +33,7 @@ from  trac.util.text         import  to_unicode, obfuscate_email_address
 from  trac.wiki.formatter    import  format_to_oneliner
 from  trac.mimeview.api      import  Context
 from  trac.web.chrome        import  Chrome
+from  trac.resource          import  Resource
 
 from  trac.util.datefmt      import  format_datetime as trac_format_datetime
 
@@ -65,12 +66,23 @@ class TicketWatchlist(BasicWatchlist):
     ]}
     sort_key = {'ticket':int}
 
+    tagsystem = None
+
     def __init__(self):
         try: # Only works for Trac 0.12, but is not needed for Trac 0.11 anyway
-            self.fields['ticket'].update( TicketSystem(self.env).get_ticket_field_labels() )
-        except AttributeError:
+            self.fields['ticket'].update( self.env[TicketSystem].get_ticket_field_labels() )
+        except KeyError, AttributeError:
             pass
         self.fields['ticket']['id'] = self.get_realm_label('ticket')
+
+        try: # Try to support the Tags Plugin
+            from tractags.api import TagSystem
+            tagsystem = self.env[TagSystem]
+        except ImportError, KeyError:
+            pass
+        else:
+            self.fields['ticket']['tags'] = _("Tags")
+
 
     def get_realm_label(self, realm, n_plural=1):
         return ngettext("Ticket", "Tickets", n_plural)
@@ -232,6 +244,9 @@ class TicketWatchlist(BasicWatchlist):
                 ticketdict['owner'] = render_elt(ticket.values['owner'])
             if 'reporter' in fields:
                 ticketdict['reporter'] = render_elt(ticket.values['reporter'])
+            if 'tags' in fields and self.tagsystem:
+                tags = self.tagsystem.get_tags(req, Resource('ticket', sid))
+                ticketdict['tags'] = moreless(tags, 5)
 
             ticketlist.append(ticketdict)
         return ticketlist
