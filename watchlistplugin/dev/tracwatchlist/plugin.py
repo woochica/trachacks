@@ -363,7 +363,7 @@ class WatchlistPlugin(Component):
 
         # Get and format request arguments
         realm = to_unicode( req.args.get('realm', u'') )
-        resid = ensure_string( req.args.get('resid', u'') )
+        resid = ensure_string( req.args.get('resid', u'') ).strip()
         action = req.args.get('action','view')
         async = req.args.get('async', 'false') == 'true'
 
@@ -483,7 +483,7 @@ class WatchlistPlugin(Component):
             err_res.extend(reses.intersection(alw_res))
 
             if new_res:
-                self.watch(realm, new_res, user)
+                self.watch(realm, new_res, user, db=db)
                 db.commit()
 
             if options['show_messages_on_resource_page'] and not onwatchlistpage and redirectback:
@@ -506,14 +506,17 @@ class WatchlistPlugin(Component):
             err_res.extend(reses.difference(alw_res))
 
             if del_res:
-                self.unwatch(realm, del_res, user)
-                db.commit()
+                self.unwatch(realm, del_res, user, db=db)
+            if len(reses) == 0:
+                # If there where no maches try to delete the given resid
+                # anyway. Might be a delete wiki page.
+                self.unwatch(realm, [resid], user, db=db)
 
             # Unset notification
             if self.wsub and options['notifications'] and options['notify_by_default']:
                 for res in del_res:
                     self.unset_notify(req, realm, res)
-                db.commit()
+            db.commit()
             # Send an empty response for asynchronous requests
             if async:
                 req.send("",'text/plain', 200)
