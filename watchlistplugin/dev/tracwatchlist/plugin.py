@@ -239,7 +239,6 @@ class WatchlistPlugin(Component):
         return cursor.fetchall()
 
 
-
     def is_watching(self, realm, resid, user):
         """Checks if user watches the given resource(s).
            Returns True/False for a single resource or
@@ -646,7 +645,7 @@ class WatchlistPlugin(Component):
 
 
     def res_exists(self, realm, resid):
-        return self.realm_handler[realm].res_exists(realm, resid)
+        return self.realm_handler[realm].resources_exists(realm, [resid])
 
 
     ## Methods for ITemplateProvider ########################################
