@@ -345,6 +345,27 @@ class WatchlistPlugin(Component):
         action = req.args.get('action','view')
         async = req.args.get('async', 'false') == 'true'
 
+        # Handle AJAX search early to speed up things
+        if action == "search":
+            """AJAX search request. At the moment only used to get list
+               of all not watched resources."""
+            handler = self.realm_handler[realm]
+            query = to_unicode( req.args.get('q', u'') ).strip()
+            if not query:
+                req.send('', 'text/plain', 200 )
+            found = set(handler.resources_exists(realm, query + '*'))
+            if not found:
+                req.send('', 'text/plain', 200 )
+            watched = set(self.get_watched_resources( realm, user ))
+            notwatched = list(found.difference(watched))
+            try:
+                notwatched.sort(cmp=handler.get_sort_cmp(realm),
+                                key=handler.get_sort_key(realm))
+            except TypeError:
+                pass
+            req.send( unicode(u'\n'.join(notwatched) + u'\n').encode("utf-8"),
+                'text/plain', 200 )
+
         # DB cursor
         db = self.env.get_db_cnx()
         cursor = db.cursor()
@@ -354,6 +375,7 @@ class WatchlistPlugin(Component):
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
                           req.href.watchlist()) != -1
+
 
         settings = self.get_settings( user )
         options = settings['useroptions']
@@ -524,26 +546,6 @@ class WatchlistPlugin(Component):
                 req.send("",'text/plain', 200)
             else:
                 req.redirect(req.href('watchlist'))
-
-        if action == "search":
-            """AJAX search request. At the moment only used to get list
-               of all not watched resources."""
-            handler = self.realm_handler[realm]
-            query = req.args.get('q', u'')
-            if not query:
-                req.send('', 'text/plain', 200 )
-            found = set(handler.resources_exists(realm, query + '*'))
-            if not found:
-                req.send('', 'text/plain', 200 )
-            watched = set(self.get_watched_resources( realm, user ))
-            notwatched = list(found.difference(watched))
-            try:
-                notwatched.sort(cmp=handler.get_sort_cmp(realm),
-                                key=handler.get_sort_key(realm))
-            except TypeError:
-                pass
-            req.send( unicode(u'\n'.join(notwatched) + u'\n').encode("utf-8"),
-                'text/plain', 200 )
 
 
         if async:
