@@ -57,6 +57,7 @@ class TicketWatchlist(BasicWatchlist):
         'unwatch'   : N_("U"),
         'notify'    : N_("Notify"),
         'comment'   : T_("Comment"),
+        'attachment': T_("Attachment"),
         # Plus further pairs imported at __init__.
     }}
 
@@ -194,10 +195,14 @@ class TicketWatchlist(BasicWatchlist):
                             break
                     else:
                         if want_changes:
-                            changes.extend(
-                              [ tag(tag.strong(self.fields['ticket'][field]), ' ',
-                                  render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
-                                  ), tag('; ') ])
+                            label = self.fields['ticket'].get(field,u'')
+                                render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
+                            ))
+                            if label:
+                                changes.extend(
+                                    [ tag(tag.strong(label), ' ',
+                                        render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
+                                        ), tag('; ') ])
                 if want_changes:
                     # Remove the last tag('; '):
                     if changes:
@@ -255,3 +260,6 @@ class TicketWatchlist(BasicWatchlist):
             ticketlist.append(ticketdict)
         return ticketlist
 
+_EXTRA_STRINGS = [ _("%(value)s added") ]
+
+# EOF

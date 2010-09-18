@@ -49,7 +49,6 @@ from  trac.mimeview.api      import  Context
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
-from  tracwatchlist.render   import  render_property_diff
 from  tracwatchlist.util     import  moreless, ensure_string, ensure_iter,\
                                      format_datetime, current_timestamp
 

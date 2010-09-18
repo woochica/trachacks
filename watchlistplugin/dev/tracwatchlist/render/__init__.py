@@ -22,6 +22,7 @@ from  genshi.builder         import  tag
 from  trac.util.presentation import  separated
 from  trac.util.text         import  obfuscate_email_address
 from  trac.util.translation  import  _
+from  tracwatchlist.translation  import  tag_ as wtag_
 
 try:
     from  trac.util.translation  import  tag_, tagn_
@@ -78,7 +79,9 @@ try:
                     'EMAIL_VIEW' in req.perm(resource_new or ticket.resource)):
                 old = obfuscate_email_address(old)
                 new = obfuscate_email_address(new)
-        if old and not new:
+        if field == 'attachment':
+            rendered = wtag_("%(value)s added", value=tag.em(new))
+        elif old and not new:
             rendered = tag_("%(value)s deleted", value=tag.em(old))
         elif new and not old:
             rendered = tag_("set to %(value)s", value=tag.em(new))
@@ -137,7 +140,9 @@ except ImportError:
                     'EMAIL_VIEW' in req.perm(resource_new or ticket.resource)):
                 old = obfuscate_email_address(old)
                 new = obfuscate_email_address(new)
-        if old and not new:
+        if field == 'attachment':
+            rendered = tag(tag.em(new), " added")
+        elif old and not new:
             rendered = tag(tag.em(old), " deleted")
         elif new and not old:
             rendered = tag("set to ", tag.em(new))
