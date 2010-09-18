@@ -61,7 +61,7 @@ def delete_watchlist_tables(envpath, tables=('watchlist','watchlist_settings','s
 
 
 
-class WatchlistDataBase(Component):
+class WatchlistDataBaseUpgrader(Component):
     """DataBase module for the Trac WatchlistPlugin.
        Handles creation and upgrading of watchlist DB tables."""
 
