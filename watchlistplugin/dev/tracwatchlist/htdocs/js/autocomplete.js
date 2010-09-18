@@ -35,7 +35,7 @@ jQuery(document).ready(function() {
 
     // AJAX calls
     var options = {
-        delay:750,
+        delay:555,
         matchCase:true,
         matchSubset:true,
         selectFirst:false,
