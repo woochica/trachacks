@@ -196,8 +196,6 @@ class TicketWatchlist(BasicWatchlist):
                     else:
                         if want_changes:
                             label = self.fields['ticket'].get(field,u'')
-                                render_property_diff(self.env, req, ticket, field, oldvalue, newvalue)
-                            ))
                             if label:
                                 changes.extend(
                                     [ tag(tag.strong(label), ' ',
