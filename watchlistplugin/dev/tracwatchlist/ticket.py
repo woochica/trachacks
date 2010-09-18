@@ -77,11 +77,14 @@ class TicketWatchlist(BasicWatchlist):
 
         try: # Try to support the Tags Plugin
             from tractags.api import TagSystem
-            tagsystem = self.env[TagSystem]
-        except ImportError, KeyError:
+            self.tagsystem = self.env[TagSystem]
+        except ImportError, e:
+            self.log.debug("tagsystem = " + unicode(e))
             pass
         else:
-            self.fields['ticket']['tags'] = _("Tags")
+            if self.tagsystem:
+                self.fields['ticket']['tags'] = _("Tags")
+        self.log.debug("tagsystem = " + unicode(self.tagsystem))
 
 
     def get_realm_label(self, realm, n_plural=1):
@@ -245,8 +248,12 @@ class TicketWatchlist(BasicWatchlist):
             if 'reporter' in fields:
                 ticketdict['reporter'] = render_elt(ticket.values['reporter'])
             if 'tags' in fields and self.tagsystem:
-                tags = self.tagsystem.get_tags(req, Resource('ticket', sid))
-                ticketdict['tags'] = moreless(tags, 5)
+                tags = []
+                for t in self.tagsystem.get_tags(req, Resource('ticket', sid)):
+                    tags.extend([tag.a(t,href=req.href('tags',q=t)), tag(', ')])
+                if tags:
+                    tags.pop()
+                ticketdict['tags'] = moreless(tags, 10)
 
             ticketlist.append(ticketdict)
         return ticketlist

@@ -32,6 +32,7 @@ from  trac.util.text         import  to_unicode, obfuscate_email_address
 
 from  trac.util.datefmt      import  format_datetime as trac_format_datetime
 from  trac.web.chrome        import  Chrome
+from  trac.resource          import  Resource
 
 from  tracwatchlist.api      import  BasicWatchlist
 from  tracwatchlist.translation import  _, N_, T_, t_, tag_, gettext, ngettext
@@ -65,9 +66,20 @@ class WikiWatchlist(BasicWatchlist):
         'name', 'changetime', 'author', 'version', 'diff',
         'history', 'unwatch', 'notify', 'comment',
     ]}
+    tagsystem = None
+
 
     def __init__(self):
         self.fields['wiki']['name'] = self.get_realm_label('wiki')
+        try: # Try to support the Tags Plugin
+            from tractags.api import TagSystem
+            self.tagsystem = self.env[TagSystem]
+        except ImportError, e:
+            pass
+        else:
+            if self.tagsystem:
+                self.fields['wiki']['tags'] = _("Tags")
+
 
     def get_realm_label(self, realm, n_plural=1):
         return ngettext("Wiki Page", "Wiki Pages", n_plural)
@@ -151,13 +163,19 @@ class WikiWatchlist(BasicWatchlist):
                     from_=trac_format_datetime ( wikipage.time, 'iso8601'))
             if 'comment' in fields:
                 comment = wikipage.comment or ""
-                if len(comment) > 200:
-                    comment = moreless(comment, 200)
+                comment = moreless(comment, 200)
                 wikidict['comment'] = comment
             if 'notify' in fields:
                 wikidict['notify']   = wl.is_notify(req, 'wiki', name)
             if 'readonly' in fields:
                 wikidict['readonly'] = wikipage.readonly and t_("yes") or t_("no")
+            if 'tags' in fields and self.tagsystem:
+                tags = []
+                for t in self.tagsystem.get_tags(req, Resource('wiki', name)):
+                    tags.extend([tag.a(t,href=req.href('tags',q=t)), tag(', ')])
+                if tags:
+                    tags.pop()
+                wikidict['tags'] = moreless(tags, 10)
             #if 'ipnr' in fields:
             #    wikidict['ipnr'] = wikipage.ipnr,  # Note: Not supported by Trac 0.12
             wikilist.append(wikidict)
