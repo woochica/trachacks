@@ -188,8 +188,7 @@ class TicketWatchlist(BasicWatchlist):
                             ticketdict['commentnum'] = to_unicode(oldvalue)
                         if 'comment' in fields:
                             comment = to_unicode(newvalue)
-                            if len(comment) > 200:
-                                comment = moreless(comment, 200)
+                            comment = moreless(comment, 200)
                             ticketdict['comment'] = comment
                         if not want_changes:
                             break
@@ -205,8 +204,7 @@ class TicketWatchlist(BasicWatchlist):
                     # Remove the last tag('; '):
                     if changes:
                         changes.pop()
-                    if len(changes) > 5:
-                        changes = moreless(changes, 5)
+                    changes = moreless(changes, 5)
                     ticketdict['changes'] = tag(changes)
 
             locale = getattr( req, 'locale', LC_TIME)
@@ -238,8 +236,7 @@ class TicketWatchlist(BasicWatchlist):
                                        from_=trac_format_datetime ( time, 'iso8601')))
             if 'description' in fields:
                 description = ticket.values['description']
-                if len(description) > 200:
-                    description = moreless(description, 200)
+                description = moreless(description, 200)
                 ticketdict['description'] = description
             if 'notify' in fields:
                 ticketdict['notify'] = wl.is_notify(req, 'ticket', sid)
