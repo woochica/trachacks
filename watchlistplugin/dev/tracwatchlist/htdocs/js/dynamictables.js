@@ -106,11 +106,13 @@ function wldeleterow(tr, table) {
 // Changes: TODO: also reset global filter
 function fnResetAllFilters(oTable) {
     var oSettings = oTable.fnSettings();
-    for(iCol = 0; iCol < oSettings.aoPreSearchCols.length; iCol++) {
-        oSettings.aoPreSearchCols[ iCol ].sSearch = '';
+    if (oSettings) {
+        for(iCol = 0; iCol < oSettings.aoPreSearchCols.length; iCol++) {
+            oSettings.aoPreSearchCols[ iCol ].sSearch = '';
+        }
+        oSettings.oPreviousSearch.sSearch = '';
+        oTable.fnDraw();
     }
-    oSettings.oPreviousSearch.sSearch = '';
-    oTable.fnDraw();
 }
 ///
 
