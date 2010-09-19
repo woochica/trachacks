@@ -552,6 +552,7 @@ class WatchlistPlugin(Component):
         wldict['OPTIONS'] = self.OPTIONS
         wldict['options'] = options
         wldict['wlgettext'] = gettext
+        wldict['_'] = _
         wldict['t_'] = t_
         def get_label(realm, n_plural=1):
             return self.realm_handler[realm].get_realm_label(realm, n_plural)
