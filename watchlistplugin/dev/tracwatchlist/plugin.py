@@ -77,7 +77,9 @@ class WatchlistPlugin(Component):
         'autocomplete_inputs': ( True, N_("Autocomplete input fields (add/remove resources)")),
         'dynamic_tables': ( True, N_("Dynamic watchlist tables")),
         'individual_column_filtering': ( True, N_("Individual column filtering")),
+        'attachment_changes': ( True, N_("Take attachment changes into account")),
     }
+
 
     global_options = [ BoolOption('watchlist',name,data[0],doc=data[1]) for (name,data) in OPTIONS.iteritems() ]
     realm_order = ListOption('watchlist','display_sections', 'wiki,ticket',
@@ -399,6 +401,7 @@ class WatchlistPlugin(Component):
 
         settings = self.get_settings( user )
         options = settings['useroptions']
+        self.options = options
         # Needed here to get updated settings
         if action == "save":
             newoptions = req.args.get('options',[])

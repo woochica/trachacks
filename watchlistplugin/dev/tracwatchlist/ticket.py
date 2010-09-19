@@ -34,6 +34,7 @@ from  trac.wiki.formatter    import  format_to_oneliner
 from  trac.mimeview.api      import  Context
 from  trac.web.chrome        import  Chrome
 from  trac.resource          import  Resource
+from  trac.attachment        import  Attachment
 
 from  trac.util.datefmt      import  format_datetime as trac_format_datetime
 
@@ -57,7 +58,7 @@ class TicketWatchlist(BasicWatchlist):
         'unwatch'   : N_("U"),
         'notify'    : N_("Notify"),
         'comment'   : T_("Comment"),
-        'attachment': T_("Attachment"),
+        'attachment': T_("Attachments"),
         # Plus further pairs imported at __init__.
     }}
 
@@ -68,7 +69,6 @@ class TicketWatchlist(BasicWatchlist):
     sort_key = {'ticket':int}
 
     tagsystem = None
-
 
     def __init__(self):
         try: # Only works for Trac 0.12, but is not needed for Trac 0.11 anyway
@@ -174,16 +174,30 @@ class TicketWatchlist(BasicWatchlist):
             else:
                 ticketdict = ticket.values.copy()
 
+            changetime = ticket.time_changed
+            if wl.options['attachment_changes']:
+                for attachment in Attachment.select(self.env, 'ticket', sid, db):
+                    if attachment.date > changetime:
+                        changetime = attachment.date
+            if 'attachment' in fields:
+                attachments = []
+                for attachment in Attachment.select(self.env, 'ticket', sid, db):
+                    wikitext = u'[attachment:"' + u':'.join([attachment.filename,'ticket',sid]) + u'" ' + attachment.filename  + u']'
+                    attachments.extend([tag(', '), format_to_oneliner(self.env, context, wikitext, shorten=False)])
+                if attachments:
+                    attachments.reverse()
+                    attachments.pop()
+                ticketdict['attachment'] = moreless(attachments, 5)
+
             # Changes are special. Comment, commentnum and last author are included in them.
-            if 'changes' in fields or 'author' in fields or 'comment' in fields or \
-               'commentnum' in fields or 'attachment' in fields:
+            if 'changes' in fields or 'author' in fields or 'comment' in fields or 'commentnum' in fields:
                 changes = []
                 # If there are now changes the reporter is the last author
                 author  = ticket.values['reporter']
                 commentnum = u"0"
                 comment = u""
                 want_changes = 'changes' in fields
-                for date,cauthor,field,oldvalue,newvalue,permanent in ticket.get_changelog(ticket.time_changed,db):
+                for date,cauthor,field,oldvalue,newvalue,permanent in ticket.get_changelog(changetime,db):
                     author = cauthor
                     if field == 'comment':
                         if 'commentnum' in fields:
@@ -217,9 +231,8 @@ class TicketWatchlist(BasicWatchlist):
                 if render_elt == obfuscate_email_address:
                     ticketdict['cc'] = ', '.join([ render_elt(c) for c in ticketdict['cc'].split(', ') ])
             if 'author' in fields:
-                ticketdict['author'] = render_elt(author),
+                ticketdict['author'] = render_elt(author)
             if 'changetime' in fields:
-                changetime = ticket.time_changed
                 ichangetime = to_timestamp( changetime )
                 ticketdict.update(
                     changetime       = format_datetime( changetime, locale=locale ),

@@ -26,13 +26,16 @@ __date__     = ur"$Date$"[7:-2]
 from  trac.core              import  *
 from  genshi.builder         import  tag, Markup
 from  trac.wiki.model        import  WikiPage
+from  trac.wiki.formatter    import  format_to_oneliner
 from  trac.util.datefmt      import  pretty_timedelta, to_datetime, \
                                      datetime, utc, to_timestamp
 from  trac.util.text         import  to_unicode, obfuscate_email_address
 
 from  trac.util.datefmt      import  format_datetime as trac_format_datetime
 from  trac.web.chrome        import  Chrome
+from  trac.mimeview.api      import  Context
 from  trac.resource          import  Resource
+from  trac.attachment        import  Attachment
 
 from  tracwatchlist.api      import  BasicWatchlist
 from  tracwatchlist.translation import  _, N_, T_, t_, tag_, gettext, ngettext
@@ -115,6 +118,7 @@ class WikiWatchlist(BasicWatchlist):
         cursor = db.cursor()
         user = req.authname
         locale = getattr( req, 'locale', LC_TIME)
+        context = Context.from_request(req)
         wikilist = []
         if not fields:
             fields = set(self.default_fields['wiki'])
@@ -142,26 +146,52 @@ class WikiWatchlist(BasicWatchlist):
                 wikilist.append(wikidict)
                 continue
 
+            comment = wikipage.comment
+            changetime = wikipage.time
+            author = wikipage.author
+            if wl.options['attachment_changes']:
+                latest_attachment = None
+                for attachment in Attachment.select(self.env, 'wiki', name, db):
+                    if attachment.date > changetime:
+                        latest_attachment = attachment
+                if latest_attachment:
+                    changetime = latest_attachment.date
+                    author = latest_attachment.author
+                    if 'comment' in fields:
+                        wikitext = '[attachment:"' + ':'.join([latest_attachment.filename,'wiki',name]) + \
+                                   '" ' + latest_attachment.filename  + ']'
+                        desc = latest_attachment.description
+                        comment = tag(tag_("Attachment %(attachment)s added",\
+                                attachment=format_to_oneliner(self.env, context, wikitext, shorten=False)),
+                                desc and ': ' or '.', moreless(desc,10))
+            if 'attachment' in fields:
+                attachments = []
+                for attachment in Attachment.select(self.env, 'wiki', name, db):
+                    wikitext = '[attachment:"' + ':'.join([attachment.filename,'wiki',name]) + '" ' + attachment.filename  + ']'
+                    attachments.extend([tag(', '), format_to_oneliner(self.env, context, wikitext, shorten=False)])
+                if attachments:
+                    attachments.reverse()
+                    attachments.pop()
+                ticketdict['attachment'] = moreless(attachments, 5)
             if 'name' in fields:
                 wikidict['name'] = name
             if 'author' in fields:
                 if not (Chrome(self.env).show_email_addresses or
                         'EMAIL_VIEW' in req.perm(wikipage.resource)):
-                    wikidict['author'] = obfuscate_email_address(wikipage.author)
+                    wikidict['author'] = obfuscate_email_address(author)
                 else:
-                    wikidict['author'] = wikipage.author
+                    wikidict['author'] = author
             if 'version' in fields:
                 wikidict['version'] = unicode(wikipage.version)
             if 'changetime' in fields:
-                wikidict['changetime'] = format_datetime( wikipage.time, locale=locale )
-                wikidict['ichangetime'] = to_timestamp( wikipage.time )
+                wikidict['changetime'] = format_datetime( changetime, locale=locale )
+                wikidict['ichangetime'] = to_timestamp( changetime )
                 wikidict['changedsincelastvisit'] = last_visit < wikidict['ichangetime'] and 1 or 0
-                wikidict['timedelta'] = pretty_timedelta( wikipage.time )
+                wikidict['timedelta'] = pretty_timedelta( changetime )
                 wikidict['timeline_link'] = req.href.timeline(precision='seconds',
-                    from_=trac_format_datetime ( wikipage.time, 'iso8601'))
+                    from_=trac_format_datetime ( changetime, 'iso8601'))
             if 'comment' in fields:
-                comment = wikipage.comment or ""
-                comment = moreless(comment, 200)
+                comment = moreless(comment or "", 200)
                 wikidict['comment'] = comment
             if 'notify' in fields:
                 wikidict['notify']   = wl.is_notify(req, 'wiki', name)
