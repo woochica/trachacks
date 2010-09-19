@@ -11,13 +11,13 @@
     <link type="text/css"
       href="${href.chrome('watchlist','css','watchlist.css')}"
       rel="stylesheet" />
-    <link type="text/css" py:if="options['dynamic_tables']"
+    <link type="text/css" py:if="booloptions['dynamic_tables']"
       href="${href.chrome('watchlist','css','dataTable.css')}"
       rel="stylesheet" />
-    <link type="text/css" py:if="options['dynamic_tables']"
+    <link type="text/css" py:if="booloptions['dynamic_tables']"
       href="${href.chrome('watchlist','css','anytime.css')}"
       rel="stylesheet" />
-    <link type="text/css" py:if="options['autocomplete_inputs']"
+    <link type="text/css" py:if="booloptions['autocomplete_inputs']"
       href="${href.chrome('watchlist','css','jquery.autocomplete.css')}"
       rel="stylesheet" />
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
@@ -27,12 +27,12 @@
     </script>
     <script type="text/javascript" 
       src="${href.chrome('watchlist','js','watchlist.js')}"></script>
-    <script type="text/javascript" py:if="options['autocomplete_inputs']"
+    <script type="text/javascript" py:if="booloptions['autocomplete_inputs']"
       src="${href.chrome('watchlist','js','autocomplete.js')}"></script>
-    <script type="text/javascript" py:if="options['dynamic_tables']"
+    <script type="text/javascript" py:if="booloptions['dynamic_tables']"
         src="${href.chrome('watchlist','js','anytime.js')}"></script>
     <!-- dynamictables.js must be loaded after watchlist.js and orderadd.js ! -->
-    <script type="text/javascript" py:if="options['dynamic_tables']"
+    <script type="text/javascript" py:if="booloptions['dynamic_tables']"
       src="${href.chrome('watchlist','js','dynamictables.js')}"></script>
     <script type="text/javascript" 
       src="${href.chrome('common','js','folding.js')}"></script>

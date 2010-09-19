@@ -74,7 +74,7 @@
                   </py:for>
                 </tr>
               </tbody>
-              <tfoot py:if="options['dynamic_tables'] and options['individual_column_filtering']">
+              <tfoot py:if="booloptions['dynamic_tables'] and booloptions['individual_column_filtering']">
                 <tr>
                   <py:for each="k in active_fields[realm]">
                   <py:if test="k == 'changetime'">

@@ -367,7 +367,7 @@ class WatchlistDataBaseUpgrader(Component):
         # Set new columns to default value
         cursor.execute("""
             UPDATE watchlist_settings
-               SET name='useroptions', type='ListOfBool'
+               SET name='booloptions', type='ListOfBool'
         """)
 
         self.log.info("Upgraded 'watchlist_settings' table to version 4")

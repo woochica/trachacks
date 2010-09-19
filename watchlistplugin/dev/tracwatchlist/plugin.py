@@ -27,7 +27,7 @@ from  pkg_resources          import  resource_filename
 from  urllib                 import  quote_plus
 
 from  genshi.builder         import  tag, Markup
-from  trac.config            import  BoolOption, ListOption
+from  trac.config            import  Option, BoolOption, ListOption
 from  trac.core              import  *
 from  trac.db                import  Table, Column, Index, DatabaseManager
 from  trac.ticket.model      import  Ticket
@@ -52,6 +52,21 @@ from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext
 from  tracwatchlist.util     import  ensure_string, ensure_iter,\
                                      format_datetime, current_timestamp
 
+class UserOption(object):
+    """User changeable option."""
+
+    def __init__(self, option, config, log=None):
+        self.name = option.name
+        self.__doc__ = option.__doc__
+        self.value = option.accessor(config[option.section],option.name,option.default)
+        self.log = log
+
+    def __get__(self, instance, owner):
+        self.log.debug('User Option INSTANCE = ' + unicode(instance))
+        self.log.debug('User Option OWNER    = ' + unicode(owner))
+        return self
+
+
 
 class WatchlistPlugin(Component):
     """Main class of the Trac WatchlistPlugin.
@@ -64,26 +79,25 @@ class WatchlistPlugin(Component):
 
     implements( IRequestHandler, IRequestFilter, ITemplateProvider )
 
-    OPTIONS = {
-        'notifications': ( False, N_("Notifications")),
-        'display_notify_navitems': ( False, N_("Display notification navigation items")),
-        'display_notify_column': ( True, N_("Display notification column in watchlist tables")),
-        'notify_by_default': ( False, N_("Enable notifications by default for all watchlist entries")),
-        'stay_at_resource': ( False, N_("The user stays at the resource after a watch/unwatch operation and the watchlist page is not displayed")),
-        'stay_at_resource_notify': ( True, N_("The user stays at the resource after a notify/do-not-notify operation and the watchlist page is not displayed")),
-        'show_messages_on_resource_page': ( True, N_("Action messages are shown on resource pages")),
-        'show_messages_on_watchlist_page': ( True, N_("Action messages are shown when going to the watchlist page")),
-        'show_messages_while_on_watchlist_page': ( True, N_("Show action messages while on watchlist page")),
-        'autocomplete_inputs': ( True, N_("Autocomplete input fields (add/remove resources)")),
-        'dynamic_tables': ( True, N_("Dynamic watchlist tables")),
-        'individual_column_filtering': ( True, N_("Individual column filtering")),
-        'attachment_changes': ( True, N_("Take attachment changes into account")),
-    }
+    bool_options = [
+        BoolOption('watchlist', 'notifications'                        , False, doc=N_("Notifications")),
+        BoolOption('watchlist', 'display_notify_navitems'              , False, doc=N_("Display notification navigation items")),
+        BoolOption('watchlist', 'display_notify_column'                , True , doc=N_("Display notification column in watchlist tables")),
+        BoolOption('watchlist', 'notify_by_default'                    , False, doc=N_("Enable notifications by default for all watchlist entries")),
+        BoolOption('watchlist', 'stay_at_resource'                     , False, doc=N_("The user stays at the resource after a watch/unwatch operation and the watchlist page is not displayed")),
+        BoolOption('watchlist', 'stay_at_resource_notify'              , True , doc=N_("The user stays at the resource after a notify/do-not-notify operation and the watchlist page is not displayed")),
+        BoolOption('watchlist', 'show_messages_on_resource_page'       , True , doc=N_("Action messages are shown on resource pages")),
+        BoolOption('watchlist', 'show_messages_on_watchlist_page'      , True , doc=N_("Action messages are shown when going to the watchlist page")),
+        BoolOption('watchlist', 'show_messages_while_on_watchlist_page', True , doc=N_("Show action messages while on watchlist page")),
+        BoolOption('watchlist', 'autocomplete_inputs'                  , True , doc=N_("Autocomplete input fields (add/remove resources)")),
+        BoolOption('watchlist', 'dynamic_tables'                       , True , doc=N_("Dynamic watchlist tables")),
+        BoolOption('watchlist', 'individual_column_filtering'          , True , doc=N_("Individual column filtering")),
+        BoolOption('watchlist', 'attachment_changes'                   , True , doc=N_("Take attachment changes into account")),
+    ]
 
-
-    global_options = [ BoolOption('watchlist',name,data[0],doc=data[1]) for (name,data) in OPTIONS.iteritems() ]
-    realm_order = ListOption('watchlist','display_sections', 'wiki,ticket',
-            doc=N_("Display only the given watchlist sections in the given order"))
+    list_options = [
+        ListOption('watchlist', 'realm_order', 'wiki,ticket', doc=N_("Display only the given watchlist sections in the given order"))
+    ]
 
     wsub = None
 
@@ -124,13 +138,25 @@ class WatchlistPlugin(Component):
     ## User settings ########################################################
     def get_settings(self, user):
         settings = {}
-        settings['useroptions'] = dict([
-            ( name,self.config.getbool('watchlist',name) ) for name in self.OPTIONS.keys() ])
+        settings['booloptions'] = dict([
+            ( option.name, self.config.getbool('watchlist',option.name,option.default) )
+                for option in self.bool_options ])
+        settings['booloptions_doc'] = dict([ (option.name,option.__doc__) for option in self.bool_options ])
+        settings['listoptions'] = dict([
+            ( option.name, self.config.getlist('watchlist',option.name,option.default) )
+                for option in self.list_options ])
+        settings['listoptions_doc'] = dict([ (option.name,option.__doc__) for option in self.list_options ])
         usersettings = self._get_user_settings(user)
-        if 'useroptions' in usersettings:
-            settings['useroptions'].update( usersettings['useroptions'] )
-            del usersettings['useroptions']
+        self.log.debug("WL usersettings = " + unicode(usersettings))
+        if 'booloptions' in usersettings:
+            settings['booloptions'].update( usersettings['booloptions'] )
+            del usersettings['booloptions']
+        for l in settings['listoptions'].keys():
+            if l in usersettings:
+                settings['listoptions'][l] = usersettings[l]
+                del usersettings[l]
         settings.update( usersettings )
+        self.log.debug("WL settings = " + unicode(settings))
         return settings
 
 
@@ -156,7 +182,7 @@ class WatchlistPlugin(Component):
            Only saving of all user settings is supported at the moment."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        options = settings['useroptions']
+        options = settings['booloptions']
 
         settingsstr = "&".join([ "=".join([k,unicode(v)])
                             for k,v in options.iteritems()])
@@ -170,15 +196,22 @@ class WatchlistPlugin(Component):
         cursor.execute("""
           INSERT
             INTO watchlist_settings (wluser,name,type,settings)
-          VALUES (%s,'useroptions','ListOfBool',%s)
+          VALUES (%s,'booloptions','ListOfBool',%s)
           """, (user, settingsstr) )
 
         cursor.executemany("""
           INSERT
             INTO watchlist_settings (wluser,name,type,settings)
           VALUES (%s,%s,'ListOfStrings',%s)
-          """, [(user, realm + '_fields', settings[realm + '_fields'])
+          """, [(user, realm + '_fields', ','.join(settings[realm + '_fields']))
                 for realm in self.realms if realm + '_fields' in settings ] )
+
+        cursor.executemany("""
+          INSERT
+            INTO watchlist_settings (wluser,name,type,settings)
+          VALUES (%s,%s,'ListOfStrings',%s)
+          """, [(user, name, ','.join(value))
+                for name,value in settings.get('listoptions',{}).iteritems() ])
 
         db.commit()
         return True
@@ -400,15 +433,18 @@ class WatchlistPlugin(Component):
                           req.href.watchlist()) != -1
 
         settings = self.get_settings( user )
-        options = settings['useroptions']
+        options = settings['booloptions']
         self.options = options
         # Needed here to get updated settings
         if action == "save":
-            newoptions = req.args.get('options',[])
-            for k in settings['useroptions'].keys():
-                settings['useroptions'][k] = k in newoptions
+            newoptions = req.args.get('booloptions',[])
+            for k in settings['booloptions'].keys():
+                settings['booloptions'][k] = k in newoptions
             for realm in self.realms:
-                settings[realm + '_fields'] = req.args.get(realm + '_fields', tuple())
+                settings[realm + '_fields'] = req.args.get(realm + '_fields', '').split(',')
+            for l in settings['listoptions']:
+                if l in req.args:
+                    settings['listoptions'][l] = [ e.strip() for e in req.args.get(l).split(',')]
             self._save_user_settings(req.authname, settings)
 
             # Clear session cache for nav items
@@ -547,10 +583,12 @@ class WatchlistPlugin(Component):
             wldict['show_messages'] = options['show_messages_on_watchlist_page']
 
         wldict['perm']   = req.perm
-        wldict['realms'] = [ r for r in self.realm_order if r in self.realms ]
+        wldict['realms'] = [ r for r in settings['listoptions']['realm_order'] if r in self.realms ]
         wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
-        wldict['OPTIONS'] = self.OPTIONS
-        wldict['options'] = options
+        wldict['booloptions'] = options
+        wldict['booloptions_doc'] = settings['booloptions_doc']
+        wldict['listoptions'] = settings['listoptions']
+        wldict['listoptions_doc'] = settings['listoptions_doc']
         wldict['wlgettext'] = gettext
         wldict['_'] = _
         wldict['t_'] = t_
@@ -619,7 +657,7 @@ class WatchlistPlugin(Component):
             notify = req.session['watchlist_display_notify_navitems']
         except KeyError:
             settings = self.get_settings(user)
-            options = settings['useroptions']
+            options = settings['booloptions']
             notify = (self.wsub and options['notifications']
                   and options['display_notify_navitems']) and 'True' or 'False'
             req.session['watchlist_display_notify_navitems'] = notify

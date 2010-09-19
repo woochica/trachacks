@@ -8,12 +8,20 @@
       py:strip="">
       <fieldset>
       <legend>${t_("General")}</legend>
-      <py:for each="k in sorted(OPTIONS.keys())">
-        <py:if test="isinstance(options[k],bool)">
-          <input type="checkbox" name="options" id="${k}" value="${k}" checked="${options[k] and 'checked' or None}" />
-          <label for="${k}">${wlgettext(OPTIONS.get(k,['',''])[1])}</label>
+      <py:for each="k in booloptions.keys()">
+          <input type="checkbox" name="booloptions" id="${k}" value="${k}"
+                 checked="${booloptions[k] and 'checked' or None}" />
+          <label for="${k}">${booloptions_doc[k]}</label>
           <br />
-        </py:if>
+      </py:for>
+      </fieldset>
+      <fieldset>
+      <legend>Watchlist sections</legend>
+      <py:for each="k in listoptions.keys()">
+          <input type="text" name="${k}" id="${k}"
+                 value="${','.join(listoptions[k])}" />
+          <label for="${k}">${listoptions_doc[k]}</label>
+          <br />
       </py:for>
       </fieldset>
       <div class="clear" />
