@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
  Watchlist Plugin for Trac
- Copyright (c) 2008-2009  Martin Scharrer <martin@scharrer-online.de>
+ Copyright (c) 2008-2010  Martin Scharrer <martin@scharrer-online.de>
  This is Free Software under the BSD license.
 
  This program is free software: you can redistribute it and/or modify
@@ -372,3 +372,5 @@ class WatchlistDataBaseUpgrader(Component):
 
         self.log.info("Upgraded 'watchlist_settings' table to version 4")
         return
+
+# EOF

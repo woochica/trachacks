@@ -69,6 +69,7 @@ class TicketWatchlist(BasicWatchlist):
 
     tagsystem = None
 
+
     def __init__(self):
         try: # Only works for Trac 0.12, but is not needed for Trac 0.11 anyway
             self.fields['ticket'].update( self.env[TicketSystem].get_ticket_field_labels() )
@@ -174,7 +175,8 @@ class TicketWatchlist(BasicWatchlist):
                 ticketdict = ticket.values.copy()
 
             # Changes are special. Comment, commentnum and last author are included in them.
-            if 'changes' in fields or 'comment' in fields or 'commentnum' in fields or 'author' in fields:
+            if 'changes' in fields or 'author' in fields or 'comment' in fields or \
+               'commentnum' in fields or 'attachment' in fields:
                 changes = []
                 # If there are now changes the reporter is the last author
                 author  = ticket.values['reporter']

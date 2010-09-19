@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
  Watchlist Plugin for Trac
- Copyright (c) 2008-2009  Martin Scharrer <martin@scharrer-online.de>
+ Copyright (c) 2008-2010  Martin Scharrer <martin@scharrer-online.de>
  This is Free Software under the BSD license.
 
  This program is free software: you can redistribute it and/or modify
@@ -24,8 +24,9 @@ __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
 import copy
-from trac.core import *
-from  tracwatchlist.translation import  gettext
+from  trac.core                  import  *
+from  tracwatchlist.translation  import  gettext
+
 
 class IWatchlistProvider(Interface):
     """Interface for watchlist providers."""
@@ -82,6 +83,7 @@ class IWatchlistProvider(Interface):
            `sorted` or `list.sort`. By default this can be `None` for normal 
            sorting. """
         pass
+
 
 class BasicWatchlist(Component):
     """Base class for watchlist providers.
@@ -144,3 +146,5 @@ class BasicWatchlist(Component):
         for col in fields:
             fields[col] = gettext(fields[col])
         return ( fields, self.default_fields.get(realm,[]) )
+
+# EOF

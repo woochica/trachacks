@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
  Watchlist Plugin for Trac
- Copyright (c) 2008-2009  Martin Scharrer <martin@scharrer-online.de>
+ Copyright (c) 2008-2010  Martin Scharrer <martin@scharrer-online.de>
  This is Free Software under the BSD license.
 
  This program is free software: you can redistribute it and/or modify
@@ -28,9 +28,11 @@ from  trac.core             import  *
 from  trac.web.chrome       import  INavigationContributor
 from  tracwatchlist.plugin  import  _
 
+
 class WatchlistNavigation(Component):
     """Navigation entries for the Trac WatchlistPlugin."""
     implements( INavigationContributor )
+
 
     ### methods for INavigationContributor
     def get_active_navigation_item(self, req):
@@ -38,8 +40,11 @@ class WatchlistNavigation(Component):
             return 'watchlist'
         return ''
 
+
     def get_navigation_items(self, req):
         user = req.authname
         if user and user != 'anonymous':
             yield ('mainnav', 'watchlist', tag.a(_("Watchlist"),
                    href=req.href("watchlist")))
+
+# EOF
