@@ -317,6 +317,16 @@ jQuery(document).ready(function() {
       $(this).find("input.filter").val( oSettings.aoPreSearchCols[i].sSearch );
     });
 
+    /* Restore special numeric filters */
+    var tid = $(table).attr('id');
+    $(table).find("tfoot input.numericfilter").each(function () {
+        var name = tid + '/' + $(this).attr('name');
+        var value = readCookie(name);
+        $(this).val(value);
+        $(this).data('filterfunction', wlgetfilterfunctions( value ));
+    });
+
+    /* Restore special datetime filters */
     $(this).find("span.datetimefilter").each( function () {
         var dtfilter = this;
         $(this).find("input[name=sincelastvisit]").change( function () {
@@ -380,9 +390,9 @@ function wlprefsubmit(force){
 }
 
 // Store datetime filter inputs on unload
-function wlstoredatetime() {
+function wlstorespecialfilters() {
     $(".datetimefilter").each(function(){
-        dtid = $(this).attr('id');
+        var dtid = $(this).attr('id');
         $(this).find("input").each(function(){
             var name = dtid + '/' + $(this).attr('name');
             var value = $(this).val();
@@ -392,8 +402,17 @@ function wlstoredatetime() {
             createCookie(name,value,90,window.location.pathname);
         });
     });
+    $("table.watchlist").each( function () {
+        table = this;
+        var tid = $(table).attr('id');
+        $(table).find("tfoot input.numericfilter").each(function () {
+            var value = $(this).val();
+            var name = tid + '/' + $(this).attr('name');
+            createCookie(name,value,90,window.location.pathname);
+        });
+    });
 };
-jQuery(window).unload(wlstoredatetime);
+jQuery(window).unload(wlstorespecialfilters);
 
 function wldeletecookies() {
     // Delete all datetime filter cookies
@@ -420,7 +439,7 @@ function wldeletecookies() {
 function wlresettodefault(){
     wlprefsubmit(1);
     // Disable storing of new cookies
-    jQuery(window).unbind('unload',wlstoredatetime);
+    jQuery(window).unbind('unload',wlstorespecialfilters);
     // Remove all old cookies
     wldeletecookies();
 }
