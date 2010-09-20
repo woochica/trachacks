@@ -204,7 +204,6 @@ $.fn.dataTableExt.afnFiltering.push(
 );
 
 
-
 jQuery(document).ready(function() {
   // Copy reset filter button (hidden in HTML code to avoid JS localisation)
   var resetfilters = $('#resetfilters').removeAttr('Id').removeAttr('style').detach();
@@ -213,18 +212,25 @@ jQuery(document).ready(function() {
     var table = this;
     // Disabled sorting of marked columns (unwatch, notify, etc.)
     var aoColumns = [];
-    $(this).find('thead th').each( function () {
+    $(this).find('thead th').each( function (i) {
+      var hash = new Object();
       if ( $(this).hasClass( 'hidden' ) ) {
-        aoColumns.push( { "bSortable": false, "bSearchable": false, "bVisible": false } );
-      } else {
+        hash["bVisible"] = false;
+        hash["bSortable"] = false;
+        hash["bSearchable"] = false;
+      }
       if ( $(this).hasClass( 'sorting_disabled' ) ) {
-        aoColumns.push( { "bSortable": false, "bSearchable": false } );
-      } else {
+        hash["bSortable"] = false;
+        hash["bSearchable"] = false;
+      }
       if ( $(this).hasClass( 'filtering_disabled' ) ) {
-        aoColumns.push( { "bSearchable": false, "sType": "html-numeric" } );
-      } else {
-        aoColumns.push( null );
-      }}}
+        hash["bSearchable"] = false;
+        hash["sType"] = "html-numeric"
+      }
+      if ( $(this).hasClass( 'sort_next' ) ) {
+        hash["iDataSort"] = i + 1;
+      }
+      aoColumns.push( hash );
     });
     /* // Fixed width for name column (nonfunctional)
     if (aoColumns[0] == null) {

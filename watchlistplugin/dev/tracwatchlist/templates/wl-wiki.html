@@ -25,6 +25,7 @@
                     'unwatch': { 'class':'unwatch sorting_disabled' },
                     'notify': { 'class':'notify sorting_disabled' },
                     'version': { 'class':'version filtering_disabled html-numeric' },
+                    'changetime': { 'class':'changetime sort_next' },
                   }">
               <thead>
                 <tr>
@@ -34,7 +35,7 @@
                   </py:if>
                   <th py:if="k != 'notify' or notifications"
                       class="${k}" py:attrs="attr.get(k,{})">${available_fields[realm][k]}</th>
-                  <py:if test="k in ('changetime','time')">
+                  <py:if test="k == 'changetime'">
                     <th class="i${k} hidden" />
                   </py:if>
                   </py:for>
