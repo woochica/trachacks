@@ -511,8 +511,8 @@ class WatchlistPlugin(Component):
             handler = self.realm_handler[realm]
             reses = set(handler.resources_exists(realm, resid))
             alw_res = set(self.is_watching(realm, reses, user))
-            new_res.extend(reses.difference(alw_res))
-            err_res.extend(reses.intersection(alw_res))
+            new_res = reses.difference(alw_res)
+            alw_res = reses.intersection(alw_res)
             comp=handler.get_sort_cmp(realm)
             key=handler.get_sort_key(realm)
             wldict['alw_res'] = sorted(alw_res, cmp=comp, key=key)
@@ -539,8 +539,8 @@ class WatchlistPlugin(Component):
             handler = self.realm_handler[realm]
             reses = set(handler.resources_exists(realm, resid))
             alw_res = set(self.is_watching(realm, reses, user))
-            del_res.extend(alw_res.intersection(reses))
-            err_res.extend(reses.difference(alw_res))
+            del_res = alw_res.intersection(reses)
+            err_res = reses.difference(alw_res)
             comp=handler.get_sort_cmp(realm)
             key=handler.get_sort_key(realm)
             wldict['alw_res'] = sorted(alw_res, cmp=comp, key=key)
