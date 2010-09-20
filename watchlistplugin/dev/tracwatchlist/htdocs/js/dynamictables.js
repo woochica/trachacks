@@ -300,6 +300,7 @@ jQuery(document).ready(function() {
   $("table.watchlist").each( function () {
     var table  = this;
     var oTable = $(this).dataTable();
+    var tid = $(table).attr('id');
 
     /* Per-column filter input fields in footer */
     $(this).find("tfoot input.filter").keyup( function () {
@@ -318,7 +319,6 @@ jQuery(document).ready(function() {
     });
 
     /* Restore special numeric filters */
-    var tid = $(table).attr('id');
     $(table).find("tfoot input.numericfilter").each(function () {
         var name = tid + '/' + $(this).attr('name');
         var value = readCookie(name);
@@ -362,6 +362,8 @@ jQuery(document).ready(function() {
         });
     });
     oTable.fnDraw();
+
+    jQuery(window).bind('unload.watchlist.table#'+tid,function(){wlstorespecialfilters('table#' + tid)});
   });
 });
 
@@ -382,75 +384,84 @@ function wlprefsubmit(force){
   $("fieldset.orderadd").each( function () {
     if (force || $(this).data('modified')) {
       realm = $(this).data('realm');
-      table = $("table#" + realm + "list");
-      var oTable = $(table).dataTable();
-      fnResetAllFilters(oTable);
+      table = "table#" + realm + "list";
+      wldeletecookies(table);
+      wldisablecookies(table);
     }
   });
 }
 
 // Store datetime filter inputs on unload
-function wlstorespecialfilters() {
-    $(".datetimefilter").each(function(){
-        var dtid = $(this).attr('id');
-        $(this).find("input").each(function(){
-            var name = dtid + '/' + $(this).attr('name');
-            var value = $(this).val();
-            if ($(this).is("input[type=checkbox]")) {
-                value = $(this).is(":checked") ? 'checked' : '';
-            }
-            createCookie(name,value,90,window.location.pathname);
-        });
-    });
-    $("table.watchlist").each( function () {
+function wlstorespecialfilters(tables) {
+    if (!tables) { tables = "table.watchlist"; }
+    $(tables).each( function () {
         table = this;
         var tid = $(table).attr('id');
         $(table).find("tfoot input.numericfilter").each(function () {
             var value = $(this).val();
             var name = tid + '/' + $(this).attr('name');
             createCookie(name,value,90,window.location.pathname);
+        });
+        $(table).find(".datetimefilter").each(function(){
+            var dtid = $(this).attr('id');
+            $(this).find("input").each(function(){
+                var name = dtid + '/' + $(this).attr('name');
+                var value = $(this).val();
+                if ($(this).is("input[type=checkbox]")) {
+                    value = $(this).is(":checked") ? 'checked' : '';
+                }
+                createCookie(name,value,90,window.location.pathname);
+            });
         });
     });
 };
-jQuery(window).unload(wlstorespecialfilters);
 
-function wldeletecookies() {
-    // Delete all datetime filter cookies
-    $(".datetimefilter").each(function(){
-        dtid = $(this).attr('id');
-        $(this).find("input").each(function(){
-            var name = dtid + '/' + $(this).attr('name');
-            eraseCookie(name,window.location.pathname);
+function wldeletecookies(tables) {
+    if (!tables) { tables = "table.watchlist"; }
+    $(tables).each( function () {
+        // Delete all datetime filter cookies
+        $(this).find(".datetimefilter").each(function(){
+            dtid = $(this).attr('id');
+            $(this).find("input").each(function(){
+                var name = dtid + '/' + $(this).attr('name');
+                eraseCookie(name,window.location.pathname);
+            });
         });
-    });
-    // Delete all numeric filter cookies
-    $("table.watchlist").each( function () {
-        table = this;
-        var tid = $(table).attr('id');
-        $(table).find("tfoot input.numericfilter").each(function () {
+        // Delete all numeric filter cookies
+        var tid = $(this).attr('id');
+        $(this).find("tfoot input.numericfilter").each(function () {
             var name = tid + '/' + $(this).attr('name');
             eraseCookie(name,window.location.pathname);
         });
-    });
-    // Delete all dataTable cookies
-    // This might break if dataTables changes the internal names
-    // of the cookie (last part of path is attached at the moment).
-    // Some code copied from dataTables.js.
-    $(".watchlist").each(function(){
-        var id = $(this).attr('id');
+        // Delete all dataTable cookies
+        // This might break if dataTables changes the internal names
+        // of the cookie (last part of path is attached at the moment).
+        // Some code copied from dataTables.js.
         var aParts = window.location.pathname.split('/');
-        var name = 'tracwatchlist_' + id + '_' + aParts.pop().replace(/[\/:]/g,"").toLowerCase();
+        var name = 'tracwatchlist_' + tid + '_' + aParts.pop().replace(/[\/:]/g,"").toLowerCase();
         eraseCookie(name,aParts.join('/'));
-    })
-
+    });
 };
+
+// Disable creation of new cookies
+function wldisablecookies(tables) {
+    if (!tables) {
+        tables = "table.watchlist";
+        namespace = '.watchlist';
+    }
+    else {
+        namespace = '.' + tables;
+    }
+    jQuery(window).unbind('unload' + namespace);
+    $(tables).each( function () {
+        var oTable = $(this).dataTable();
+        var oSettings = oTable.fnSettings();
+        oSettings.oFeatures.bStateSave = false;
+    });
+}
 
 function wlresettodefault(){
     wlprefsubmit(1);
-    // Disable storing of new cookies
-    jQuery(window).unbind('unload',wlstorespecialfilters);
-    // Remove all old cookies
-    wldeletecookies();
 }
 
 
@@ -491,6 +502,7 @@ function wlgetfilterfunction(str) {
 // Example: 'a-b,c-d' -> between a and b OR between c and d
 function wlgetfilterfunctions(str) {
     var afunc = new Array();
+    if (!str) { str = ''; }
     var parts = str.split(',')
     for (s in parts) {
         afunc.push( wlgetfilterfunction( parts[s] ) );
