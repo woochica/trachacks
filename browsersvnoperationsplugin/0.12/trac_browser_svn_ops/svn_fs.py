@@ -1,3 +1,5 @@
+import urllib
+
 from trac.core import Component, implements, Interface, TracError
 from trac.versioncontrol import Changeset, Node, Repository, \
                                 IRepositoryConnector, \
@@ -19,7 +21,7 @@ class SubversionWriter(object):
         
         # TODO Permissions
 
-        svn_repos = self._get_svn_handle()
+        svn_repos = self._get_libsvn_handle()
                 
         fs_path_utf8 = repos_path.encode('utf-8')
         filename_utf8 = filename.encode('utf-8')
@@ -62,7 +64,7 @@ class SubversionWriter(object):
         from svn import core, fs, repos
         
         log = self.log
-        svn_repos = self._get_svn_handle()
+        svn_repos = self._get_libsvn_handle()
         repos_path_utf8 = repos_path.encode('utf-8')
         commit_msg_utf8 = commit_msg.encode('utf-8')
         username_utf8 = self.username.encode('utf-8')
@@ -87,14 +89,19 @@ class SubversionWriter(object):
         log.debug('ct')                                     
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
     
-    def move(self, src_path, dst_path, commitmsg):
+    def move(self, src_path, dst_path, commit_msg):
         from svn import core, client
         
         def _log_message(item, pool):
             return commit_msg_utf8
-            
-        src_path_utf8 = core.svn_path_canonicalize(src_path.encode('utf-8'))
-        dst_path_utf8 = core.svn_path_canonicalize(dst_path.encode('utf-8'))
+                
+        src_url = self._path_to_url(src_path)
+        dst_url = self._path_to_url(dst_path)
+        self.log.debug('Source url: %s', src_url)
+        self.log.debug('Destination url: %s', dst_url)
+        
+        src_url_utf8 = src_url.encode('utf-8')
+        dst_url_utf8 = dst_url.encode('utf-8')
         commit_msg_utf8 = commit_msg.encode('utf-8')
         
         client_ctx = client.create_context()
@@ -114,21 +121,35 @@ class SubversionWriter(object):
         # Move file or dir from from src to dst. 
         # Don't force  place src in dst if dst exists, or create parent of dst.
         # Don't set additional revision properties
-        commit_info = client.svn_client_move5((src_path_utf8,), dst_path_utf8,
+        commit_info = client.svn_client_move5((src_url_utf8,), dst_url_utf8,
                                               False, False, False,
                                               None, client_ctx)
         return commit_info.revision
-        
-    def _get_svn_handle(self):
-        '''Retrieve the libsvn repository handle from the Trac object.
+    
+    def _get_repos_direct_object(self):
+        '''Retrieve the uncached, direct repository object.
         '''
         if isinstance(self.repos, SubversionRepository):
-            svn_repos = self.repos.repos
+            repos = self.repos
         elif isinstance(self.repos, CachedRepository):
-            svn_repos = self.repos.repos.repos
+            repos = self.repos.repos
         else:
-            raise TracError('Repository type %s is not supported' 
-                            % type(self.repos))
-        self.log.debug('svn_repos %i type %s', svn_repos, type(svn_repos))
-        return svn_repos
+            raise TracError('Repository type %s is not supported by %s' 
+                            % (type(self.repos), 'TracBrowserSvnOpsPlugin'))
+        return repos
+        
+    def _get_libsvn_handle(self):
+        '''Retrieve the libsvn repository handle from the Trac object.
+        '''
+        return self._get_repos_direct_object().repos
 
+    def _path_to_url(self, path):
+        '''Encode a path in the repos as a fully qualified URL.
+        '''
+        repos = self._get_repos_direct_object()
+        url_parts =  ['file:///', 
+                      urllib.quote(repos.path.lstrip('/')),
+                      '/',
+                      urllib.quote(path.lstrip('/')),
+                      ]
+        return ''.join(url_parts)

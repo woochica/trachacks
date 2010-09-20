@@ -60,7 +60,8 @@ class TracBrowserOps(Component):
                         'move_delete.html', data, fragment=True)
                 mvdel_transf = Transformer('//div[@id="main"]')
                 stream |= mvdel_transf.append(
-                        mvdel_stream.select('//div[@id="dialog-bsop_move_delete"]')
+                        mvdel_stream.select(
+                                '//div[@id="dialog-bsop_move_delete"]')
                         )
         return stream
     
@@ -110,22 +111,28 @@ class TracBrowserOps(Component):
         req.redirect(req.href(req.path_info))
 
     def _move_delete_request(self, req, handler):
-        self.log.debug('Handling delete for %s',
+        self.log.debug('Handling move/delete for %s',
                        req.authname)
         operation = req.args.get('bsop_mvdel_op')
         repos_path = req.args.get('bsop_mvdel_path')
-        commit_msg = '' # TODO Accept commit message for deletion/movement
+        repos_dest = req.args.get('bsop_mvdel_dest')
+        commit_msg = req.args.get('bsop_mvdel_commit')
         
-        self.log.debug('Opening repository')
+        self.log.debug('Opening repository for %s', operation)
         repos = RepositoryManager(self.env).get_repository(None)
         try:
             repos_path = repos.normalize_path(repos_path)
             svn_writer = SubversionWriter(repos)
             
             if operation == 'delete':
-                self.log.debug('Deleting %s from repository %s',
+                self.log.info('Deleting %s in repository %s',
                                repos_path, repos)
                 svn_writer.delete(repos_path, commit_msg)
+            
+            elif operation == 'move':
+                self.log.info('Moving %s to %s in repository %s',
+                              repos_path, repos_dest, repos)
+                svn_writer.move(repos_path, repos_dest, commit_msg)
                 
         finally:
             self.log.debug('Closing repository')

@@ -36,7 +36,7 @@ $(function() {
 		width: 500,
 		modal: true,
 		buttons: {
-			'Upload file': function() {
+			'Commit': function() {
 				var bValid = true;
 				allFields.removeClass('ui-state-error');
 
@@ -67,11 +67,15 @@ $(function() {
         var mvdel_base = $('#bsop_mvdel_base').val();
         var mvdel_path = mvdel_base.replace(/\/$/, '')
                                    .concat('/', mvdel_name);
+        var mvdel_dlg = $('#dialog-bsop_move_delete');
         
+        // Is this a move or a delete? Show the destination field
         if ($(this).hasClass('bsop_move')) {
             mvdel_op = 'move';
+            $('#bsop_mvdel_dest').show();
         } else if ($(this).hasClass('bsop_delete')) {
             mvdel_op = 'delete';
+            $('#bsop_mvdel_dest').hide();
         }
         
         $('#bsop_mvdel_op').val(mvdel_op);
