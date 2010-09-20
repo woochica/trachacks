@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-08-31 21:31+0200\n"
-"PO-Revision-Date: 2010-09-20 15:01+0100\n"
+"PO-Revision-Date: 2010-09-20 19:53+0100\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -272,120 +272,113 @@ msgstr ""
 "Nur Dokumente anzeigen die sich geändert haben seit sie zuletzt besucht "
 "wurden"
 
-#: tracwatchlist/templates/watchlist.html:114
+#: tracwatchlist/templates/watchlist.html:125
 msgid "Not found"
 msgstr "Nicht gefunden"
 
-#: tracwatchlist/templates/watchlist.html:116
+#: tracwatchlist/templates/watchlist.html:127
 #, python-format
 msgid ""
-"The following selected %(realm)ss where not found\n"
-"                        and could therefore not be added to the watchlist:"
-msgstr ""
-"Die folgenden ausgewählten %(realm)ss wurden nicht gefunden und konnten "
-"deshalb nicht zur Beobachtungsliste hinzugefügt werden:"
+"The selected [1:%(realm)s] [2:%(name)s]\n"
+"                            was not found and could therefore not be "
+"added to the watchlist."
+msgid_plural ""
+"The following selected [1:%(realm)s]\n"
+"                            where not found and could therefore not be "
+"added to the watchlist:"
+msgstr[0] ""
+"Die Auswahl [1:%(realm)s] [2:%(name)s] wurde nicht gefunden und konnte "
+"deshalb nicht zur Beobachtungsliste hinzugefügt werden."
+msgstr[1] ""
+"Die folgenden ausgewählten [1:%(realm)s] wurden nicht gefunden und "
+"konnten deshalb nicht zur Beobachtungsliste hinzugefügt werden:"
 
-#: tracwatchlist/templates/watchlist.html:123
-msgid "The following patterns did not result in any matches:"
-msgstr "Die folgenden Ausdrücke waren nicht zutreffend:"
-
-#: tracwatchlist/templates/watchlist.html:131
-#: tracwatchlist/templates/watchlist.html:140
-msgid "Already on Watchlist"
+#: tracwatchlist/templates/watchlist.html:143
+msgid "Already on watchlist"
 msgstr "Bereits auf der Beobachtungsliste"
 
-#: tracwatchlist/templates/watchlist.html:132
+#: tracwatchlist/templates/watchlist.html:144
 #, python-format
 msgid ""
-"Selected %(realm)s is already watched.\n"
-"                      ([1:Unwatch it?])%(resid)s"
-msgstr ""
-"Das ausgewählte %(realm)s wird bereits beobachtet. ([1:Beobachtung "
-"beenden?])%(resid)s"
+"The selected [1:%(realm)s] [2:%(name)s] is already watched.\n"
+"                      ([3:Unwatch it])"
+msgid_plural ""
+"The following selected [1:%(realm)s] where already\n"
+"                      on the watchlist:\n"
+"                      ([2:Unwatch them])"
+msgstr[0] ""
+"Das Dokument \"[1:%(realm)s] [2:%(name)s]\" wird bereits beobachtet. "
+"([3:Nicht mehr beobachten])"
+msgstr[1] ""
+"Die folgenden ausgewählten [1:%(realm)s] wurden bereits beobachtet: "
+"([2:Nicht mehr beobachten])"
 
-#: tracwatchlist/templates/watchlist.html:141
-#, python-format
-msgid ""
-"The following selected %(realm)ss where already\n"
-"                      on the watchlist:"
-msgstr ""
-"Die folgenden ausgewählten %(realm)ss waren bereits in der "
-"Beobachtungsliste:"
-
-#: tracwatchlist/templates/watchlist.html:152
-#: tracwatchlist/templates/watchlist.html:161
+#: tracwatchlist/templates/watchlist.html:162
 msgid "Added to Watchlist"
 msgstr "Zur Beobachtungsliste hinzugefügt"
 
-#: tracwatchlist/templates/watchlist.html:153
+#: tracwatchlist/templates/watchlist.html:163
 #, python-format
 msgid ""
-"The selected %(realm)s was added\n"
-"                      to the watchlist.\n"
-"                      ([1:Remove again])%(resid)s"
-msgstr ""
-"Das ausgewählte %(realm)s wurde zur Beobachtungsliste hinzugefügt. "
-"([1:Wieder entfernen])%(resid)s"
-
-#: tracwatchlist/templates/watchlist.html:162
-#, python-format
-msgid ""
-"The following selected %(realm)ss where added\n"
+"The selected [1:%(realm)s] [2:%(name)s]\n"
+"                      was added to the watched.\n"
+"                      ([3:Remove again])"
+msgid_plural ""
+"The following selected [1:%(realm)s] where added\n"
 "                      to the watchlist:\n"
-"                      ([1:Remove them again])"
-msgstr ""
-"Die folgenden ausgewählten %(realm)ss wurden zur Beobachtungsliste "
-"hinzugefügt: ([1:Wieder entfernen])"
+"                      ([2:Remove them again])"
+msgstr[0] ""
+"Das Dokument \"[1:%(realm)s] [2:%(name)s]\" wurde zur Beobachtungsliste "
+"hinzugefügt. ([3:Wieder entfernen])"
+msgstr[1] ""
+"Die ausgewählten [1:%(realm)s] wurden zur Beobachtungsliste hinzugefügt. "
+"([2:Wieder entfernen])"
 
-#: tracwatchlist/templates/watchlist.html:177
-#: tracwatchlist/templates/watchlist.html:188
+#: tracwatchlist/templates/watchlist.html:187
 msgid "Removed from Watchlist"
 msgstr "Von der Beobachtungsliste entfernt"
 
-#: tracwatchlist/templates/watchlist.html:179
+#: tracwatchlist/templates/watchlist.html:188
 #, python-format
 msgid ""
-"The selected %(realm)s was removed\n"
-"                      from the watchlist.\n"
-"                      ([1:Add again])%(resid)s"
-msgstr ""
-"Das ausgewählte %(realm)s wurde von der Beobachtungsliste entfernt. "
-"([1:Wieder hinzufügen])%(resid)s"
-
-#: tracwatchlist/templates/watchlist.html:190
-#, python-format
-msgid ""
-"The following selected %(realm)ss where removed\n"
+"The selected [1:%(realm)s] [2:%(name)s]\n"
+"                      was removed from the watchlist.\n"
+"                      ([3:Add again])"
+msgid_plural ""
+"The following selected [1:%(realm)s] where removed\n"
 "                      from the watchlist:\n"
-"                      ([1:Add them again])"
-msgstr ""
-"Die folgenden ausgewählten %(realm)s wurden von der Beobachtungsliste "
-"entfernt: ([1:Füge sie wieder hinzu])"
+"                      ([2:Add them again])"
+msgstr[0] ""
+"Das Dokument \"[1:%(realm)s] [2:%(name)s]\" wurde von der "
+"Beobachtungsliste entfernt. ([3:Wieder hinzufügen])"
+msgstr[1] ""
+"Die folgenden ausgewählten [1:%(realm)s] wurden von der Beobachtungsliste"
+" entfernt: ([2:Wieder hinzufügen])"
 
-#: tracwatchlist/templates/watchlist.html:203
+#: tracwatchlist/templates/watchlist.html:209
 msgid "Not on Watchlist"
 msgstr "Nicht auf der Beobachtungsliste"
 
-#: tracwatchlist/templates/watchlist.html:205
+#: tracwatchlist/templates/watchlist.html:211
 #, python-format
 msgid ""
-"The following to-be-deleted %(realm)ss\n"
+"The selected [1:%(realm)s] [2:%(name)s]\n"
+"                        was not on the watchlist."
+msgid_plural ""
+"The following to-be-deleted [1:%(realm)s]\n"
 "                        where not on the watchlist:"
-msgstr ""
-"Die folgenden zu löschenden %(realm)ss waren nicht auf der "
+msgstr[0] ""
+"Das zu löschende Dokument \"[1:%(realm)s] [2:%(name)s]\" war nicht auf "
+"der Beobachtungsliste."
+msgstr[1] ""
+"Die folgenden zu löschenden [1:%(realm)s] waren nicht auf der "
 "Beobachtungsliste:"
 
-#: tracwatchlist/templates/watchlist.html:214
-msgid ""
-"The following patterns did not result\n"
-"                        in any matches in the watchlist:"
-msgstr "Die folgenden Ausdrücke waren auf die Beobachtungsliste nicht zutreffend:"
-
-#: tracwatchlist/templates/watchlist.html:234
+#: tracwatchlist/templates/watchlist.html:240
 msgid "Reset changes"
 msgstr "Zurücksetzen"
 
-#: tracwatchlist/templates/watchlist.html:235
+#: tracwatchlist/templates/watchlist.html:241
 msgid "Reset to default"
 msgstr "Standardeinstellungen"
 
