@@ -86,6 +86,38 @@ class SubversionWriter(object):
          
         log.debug('ct')                                     
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
+    
+    def move(self, src_path, dst_path, commitmsg):
+        from svn import core, client
+        
+        def _log_message(item, pool):
+            return commit_msg_utf8
+            
+        src_path_utf8 = core.svn_path_canonicalize(src_path.encode('utf-8'))
+        dst_path_utf8 = core.svn_path_canonicalize(dst_path.encode('utf-8'))
+        commit_msg_utf8 = commit_msg.encode('utf-8')
+        
+        client_ctx = client.create_context()
+        client_ctx.log_msg_func3 = client.svn_swig_py_get_commit_log_func
+        client_ctx.log_msg_baton3 = _log_message
+        
+        auth_providers = [
+                client.svn_client_get_simple_provider(),
+                client.svn_client_get_username_provider(),
+                ]
+        client_ctx.auth_baton = core.svn_auth_open(auth_providers)
+        
+        core.svn_auth_set_parameter(client_ctx.auth_baton,
+                core.SVN_AUTH_PARAM_DEFAULT_USERNAME, 
+                self.username.encode('utf-8'))
+        
+        # Move file or dir from from src to dst. 
+        # Don't force  place src in dst if dst exists, or create parent of dst.
+        # Don't set additional revision properties
+        commit_info = client.svn_client_move5((src_path_utf8,), dst_path_utf8,
+                                              False, False, False,
+                                              None, client_ctx)
+        return commit_info.revision
         
     def _get_svn_handle(self):
         '''Retrieve the libsvn repository handle from the Trac object.
