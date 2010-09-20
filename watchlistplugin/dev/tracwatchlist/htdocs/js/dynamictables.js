@@ -2,7 +2,7 @@
  * $Id$
  * */
 
-/*
+/*!
  *  TypeWatch 2.0 - Original by Denny Ferrassoli / Refactored by Charles Christolini
  *
  *  Examples/Docs: www.dennydotnet.com
@@ -240,6 +240,9 @@ jQuery(document).ready(function() {
     */
     // Find index of column (must be done before .dataTable() so all hidden
     // columns are still in the DOM
+    $(this).find("tfoot th").each( function (index) {
+        $(this).data('index', index);
+    });
     $(this).find("span.datetimefilter").each( function () {
         var index = $(this).parents('tfoot').find('th').index( $(this).parent("th") );
         $(this).data('index', index);
@@ -314,8 +317,9 @@ jQuery(document).ready(function() {
 
     /* Restore per-column input values after page reload */
     var oSettings = oTable.fnSettings();
-    $(this).find("tfoot th").each( function (i) {
-      $(this).find("input.filter").val( oSettings.aoPreSearchCols[i].sSearch );
+    $(this).find("tfoot th").each( function () {
+      var index = $(this).data('index');
+      $(this).find("input.filter").val( oSettings.aoPreSearchCols[index].sSearch );
     });
 
     /* Restore special numeric filters */
