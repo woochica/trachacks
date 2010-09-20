@@ -74,6 +74,9 @@ class TracBrowserOps(Component):
             
             elif 'bsop_mvdel_path' in req.args:
                 self._move_delete_request(req, handler)
+            
+            elif 'bsop_create_folder_name' in req.args:
+                self._create_path_request(req, handler)
         else:
             return handler
 
@@ -139,6 +142,34 @@ class TracBrowserOps(Component):
         # Perform http redirect back to this page in order to rerender
         # template according to new repository state
         req.redirect(req.href(req.path_info))
+    
+    def _create_path_request(self, req, handler):
+        self.log.debug('Handling create folder for %s',
+                       req.authname)
+                       
+        repos_path = '/'.join([req.args.get('path'),
+                               req.args.get('bsop_create_folder_name'),
+                               ])
+        commit_msg = req.args.get('bsop_create_commit')
+        
+        self.log.debug('Opening repository to create folder')
+        repos = RepositoryManager(self.env).get_repository(None)
+        try:
+            repos_path = repos.normalize_path(repos_path)
+            svn_writer = SubversionWriter(repos)
+
+            self.log.info('Creating folder %s in repository %s',
+                          repos_path, repos)
+            svn_writer.make_dir(repos_path, commit_msg)
+        
+        finally:
+            self.log.debug('Closing repository')
+            repos.close()
+        
+        # Perform http redirect back to this page in order to rerender
+        # template according to new repository state
+        req.redirect(req.href(req.path_info))
+
 
 class SvnDeleteMenu(Component):
     '''Generate context menu items for deleting subversion items

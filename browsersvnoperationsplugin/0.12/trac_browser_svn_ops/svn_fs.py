@@ -89,6 +89,35 @@ class SubversionWriter(object):
         log.debug('ct')                                     
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
     
+    def make_dir(self, repos_path, commit_msg):
+        from svn import core, fs, repos
+        
+        log = self.log
+        svn_repos = self._get_libsvn_handle()
+        repos_path_utf8 = repos_path.encode('utf-8')
+        commit_msg_utf8 = commit_msg.encode('utf-8')
+        username_utf8 = self.username.encode('utf-8')
+        rev = self.repos.get_youngest_rev()
+        
+        pool = core.Pool()
+        
+        log.debug('btfc')
+        fs_txn = repos.fs_begin_txn_for_commit(svn_repos, rev, username_utf8,
+                                               commit_msg_utf8, pool)
+        log.debug('tr')
+        fs_root = fs.txn_root(fs_txn, pool)
+            
+        log.debug('cp')
+        kind = fs.check_path(fs_root, repos_path_utf8, pool)
+        
+        if kind != core.svn_node_none:
+            raise TracError('Make directory: %s already exists' % repos_path)
+        else:
+            fs.make_dir(fs_root, repos_path_utf8)
+         
+        log.debug('ct')                                     
+        new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
+        
     def move(self, src_path, dst_path, commit_msg):
         from svn import core, client
         

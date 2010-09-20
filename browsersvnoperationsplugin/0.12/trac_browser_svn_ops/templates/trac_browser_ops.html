@@ -46,6 +46,22 @@
   </form>
 </div>
 
+<div id="dialog-bsop_create_folder" class="bsop_dialog"
+    title="Create a folder in the repository">
+  <p>Please enter a name for the new folder, and a commit message.</p>
+  <form id="bsop_create_form" method="post"
+      class="bsop_form">
+  <fieldset>
+    <label for="bsop_create_folder_name">Folder name</label>
+    <input type="text" name="bsop_create_folder_name"
+        id="bsop_create_folder_name" class="bsop_ctl" />
+    <label for="bsop_create_commit">Commit message</label>
+    <textarea name="bsop_create_commit" id="bsop_create_commit"
+        cols="50" rows="2" class="bsop_ctl"></textarea>
+  </fieldset>
+  </form>
+</div>
+
 <div id="dialog-bsop_move_delete" class="bsop_dialog"
     title="Move or delete a file in the repository">
   <p>Please provide a commit message, and if you are moving a file or folder enter a destination</p>
