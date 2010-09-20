@@ -141,11 +141,11 @@ class WatchlistPlugin(Component):
         settings['booloptions'] = dict([
             ( option.name, self.config.getbool('watchlist',option.name,option.default) )
                 for option in self.bool_options ])
-        settings['booloptions_doc'] = dict([ (option.name,option.__doc__) for option in self.bool_options ])
+        settings['booloptions_doc'] = dict([ (option.name,gettext(option.__doc__)) for option in self.bool_options ])
         settings['listoptions'] = dict([
             ( option.name, self.config.getlist('watchlist',option.name,option.default) )
                 for option in self.list_options ])
-        settings['listoptions_doc'] = dict([ (option.name,option.__doc__) for option in self.list_options ])
+        settings['listoptions_doc'] = dict([ (option.name,gettext(option.__doc__)) for option in self.list_options ])
         usersettings = self._get_user_settings(user)
         self.log.debug("WL usersettings = " + unicode(usersettings))
         if 'booloptions' in usersettings:
