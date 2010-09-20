@@ -1,4 +1,4 @@
-/*! Javsscript code for Trac Watchlist Plugin 
+/*! Javascript code for Trac Watchlist Plugin 
  * $Id$
  * */
 

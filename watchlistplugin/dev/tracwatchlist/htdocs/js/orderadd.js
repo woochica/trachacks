@@ -1,3 +1,7 @@
+/*! Javascript code for Trac Watchlist Plugin
+ * $Id$
+ * */
+
 function orderadd_buttons(orderadd, select1, select2 ) {
   $(orderadd).find("button[name=up]").click(function(){
     $(orderadd).data('modified', 1);
