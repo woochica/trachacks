@@ -30,7 +30,8 @@
 
 <body>
 
-<div id="dialog-bsop_upload" title="Upload a file to the repository">
+<div id="dialog-bsop_upload"  class="bsop_dialog"
+    title="Upload a file to the repository">
   <p>Choose a file to upload to the Trac repository. It will be placed in the current directory.</p>
   <form id="bsop_upload_form" method="post" enctype="multipart/form-data"
       class="bsop_form">
@@ -41,6 +42,30 @@
     <label for="bsop_upload_commit">Commit message</label>
     <textarea name="bsop_upload_commit" id="bsop_upload_commit"
         cols="50" rows="2" class="bsop_ctl"></textarea>
+  </fieldset>
+  </form>
+</div>
+
+<div id="dialog-bsop_move_delete" class="bsop_dialog"
+    title="Move or delete a file in the repository">
+  <p>Please provide a commit message, and if you are moving a file or folder enter a destination</p>
+  <form id="bsop_move_delete_form" method="post"
+      class="bsop_form">
+  <fieldset>
+    <label for="bsop_mvdel_dest">Destination</label>
+    <input type="text" id="bsop_mvdel_dest" name="bsop_mvdel_dest"
+        value=""  class="bsop_ctl"/>
+    <label for="bsop_mvdel_commit">Commit message</label>
+    <textarea name="bsop_mvdel_commit" id="bsop_mvdel_commit"
+        cols="50" rows="2" class="bsop_ctl"></textarea>
+  </fieldset>
+  <fieldset style="display: none;">
+    <input type="hidden" id="bsop_mvdel_op" name="bsop_mvdel_op" 
+        value="" />
+    <input type="hidden" id="bsop_mvdel_base" name="bsop_mvdel_base"
+        value="${bsop_base_path}" />
+    <input type="hidden" id="bsop_mvdel_path" name="bsop_mvdel_path" 
+        value="" />
   </fieldset>
   </form>
 </div>

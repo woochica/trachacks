@@ -44,24 +44,15 @@ class TracBrowserOps(Component):
             if data['dir']:
                 add_ctxtnav(req, 'Upload file', '#upload')
                 
-                # Insert upload dialog into div#main
-                upload_stream = Chrome(self.env).render_template(req,
-                        'trac_browser_ops.html', data, fragment=True)
-                upload_transf = Transformer('//div[@id="main"]')
-                stream |=  upload_transf.append(
-                        upload_stream.select('//div[@id="dialog-bsop_upload"]')
-                        )
-            
-            # Insert move/delete form
-            if data['dir']:
+                # Provide current location within the repos for move/delete
                 data['bsop_base_path'] = req.args.get('path')
                 
-                mvdel_stream = Chrome(self.env).render_template(req,
-                        'move_delete.html', data, fragment=True)
-                mvdel_transf = Transformer('//div[@id="main"]')
-                stream |= mvdel_transf.append(
-                        mvdel_stream.select(
-                                '//div[@id="dialog-bsop_move_delete"]')
+                # Insert upload dialog and move/delete dialog into div#main
+                bsops_stream = Chrome(self.env).render_template(req,
+                        'trac_browser_ops.html', data, fragment=True)
+                bsops_transf = Transformer('//div[@id="main"]')
+                stream |=  bsops_transf.append(
+                        bsops_stream.select('//div[@class="bsop_dialog"]')
                         )
         return stream
     
