@@ -423,6 +423,15 @@ function wldeletecookies() {
             eraseCookie(name,window.location.pathname);
         });
     });
+    // Delete all numeric filter cookies
+    $("table.watchlist").each( function () {
+        table = this;
+        var tid = $(table).attr('id');
+        $(table).find("tfoot input.numericfilter").each(function () {
+            var name = tid + '/' + $(this).attr('name');
+            eraseCookie(name,window.location.pathname);
+        });
+    });
     // Delete all dataTable cookies
     // This might break if dataTables changes the internal names
     // of the cookie (last part of path is attached at the moment).
