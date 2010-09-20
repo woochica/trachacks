@@ -56,7 +56,7 @@ $(function() {
 	});
 	
 	// Show upload dialog on click of  Upload in the context nagivgation area
-	$('#ctxtnav ul li:contains("Upload")').click(function() {
+	$('#bsop_upload').click(function() {
 		$('#dialog-bsop_upload').dialog('open');
 	});
 	

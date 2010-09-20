@@ -15,3 +15,7 @@ td input.name {
     border: 0; 
     margin-top: 25px;
     }
+
+#bsop_buttons {
+    text-align: right;
+    }

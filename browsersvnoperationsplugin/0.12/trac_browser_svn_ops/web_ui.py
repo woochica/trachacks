@@ -40,10 +40,8 @@ class TracBrowserOps(Component):
             add_script(req, 'trac_browser_svn_ops/js/jquery-ui.js') 
             add_script(req, 'trac_browser_svn_ops/js/trac_browser_ops.js')
             
-            # Insert link to show upload form
+            # Insert browser operations elements when directory/file shown
             if data['dir']:
-                add_ctxtnav(req, 'Upload file', '#upload')
-                
                 # Provide current location within the repos for move/delete
                 data['bsop_base_path'] = req.args.get('path')
                 
@@ -54,6 +52,15 @@ class TracBrowserOps(Component):
                 stream |=  bsops_transf.append(
                         bsops_stream.select('//div[@class="bsop_dialog"]')
                         )
+                
+                # Insert button bar after file/directory table
+                bsops_stream = Chrome(self.env).render_template(req,
+                        'trac_browser_ops.html', data, fragment=True)
+                bsops_transf = Transformer('//table[@id="dirlist"]')
+                stream |=  bsops_transf.after(
+                        bsops_stream.select('//div[@id="bsop_buttons"]')
+                        )
+                
         return stream
     
     # IRequestFilter methods
