@@ -29,7 +29,33 @@ $(function() {
 			allFields.val('').removeClass('ui-state-error');
 		}
 	});
+
+	$("#dialog-bsop_move_delete").dialog({
+		autoOpen: false,
+		height: 350,
+		width: 500,
+		modal: true,
+		buttons: {
+			'Upload file': function() {
+				var bValid = true;
+				allFields.removeClass('ui-state-error');
+
+				/* TODO Validation */
+				
+				if (bValid) {
+					$('#bsop_move_delete_form').trigger('submit');
+				}
+			},
+			Cancel: function() {
+				$(this).dialog('close');
+			}
+		},
+		close: function() {
+			allFields.val('').removeClass('ui-state-error');
+		}
+	});
 	
+	// Show upload dialog on click of  Upload in the context nagivgation area
 	$('#ctxtnav ul li:contains("Upload")').click(function() {
 		$('#dialog-bsop_upload').dialog('open');
 	});
@@ -52,7 +78,7 @@ $(function() {
         $('#bsop_mvdel_base').val(mvdel_base);
         $('#bsop_mvdel_path').val(mvdel_path);
         
-        $('#bsop_move_delete_form').trigger('submit');
+        $('#dialog-bsop_move_delete').dialog('open');
 	});
 
 });

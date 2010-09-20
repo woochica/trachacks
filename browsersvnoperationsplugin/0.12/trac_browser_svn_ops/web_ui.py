@@ -60,7 +60,7 @@ class TracBrowserOps(Component):
                         'move_delete.html', data, fragment=True)
                 mvdel_transf = Transformer('//div[@id="main"]')
                 stream |= mvdel_transf.append(
-                        mvdel_stream.select('//div[@id="bsop_move_delete"]')
+                        mvdel_stream.select('//div[@id="dialog-bsop_move_delete"]')
                         )
         return stream
     

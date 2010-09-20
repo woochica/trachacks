@@ -32,14 +32,15 @@
 
 <div id="dialog-bsop_upload" title="Upload a file to the repository">
   <p>Choose a file to upload to the Trac repository. It will be placed in the current directory.</p>
-  <form id="bsop_upload_form" method="post" enctype="multipart/form-data">
+  <form id="bsop_upload_form" method="post" enctype="multipart/form-data"
+      class="bsop_form">
   <fieldset>
     <label for="bsop_upload_file">File</label>
     <input type="file" name="bsop_upload_file" id="bsop_upload_file" 
-        class="bsop_upload_ctl" />
+        class="bsop_ctl" />
     <label for="bsop_upload_commit">Commit message</label>
     <textarea name="bsop_upload_commit" id="bsop_upload_commit"
-        cols="50" rows="2" class="bsop_upload_ctl"></textarea>
+        cols="50" rows="2" class="bsop_ctl"></textarea>
   </fieldset>
   </form>
 </div>

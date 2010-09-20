@@ -24,14 +24,27 @@
 
 <body>
 
-<div id="bsop_move_delete">
-  <form id="bsop_move_delete_form" method="post">
+<div id="dialog-bsop_move_delete" 
+    title="Move or delete a file in the repository">
+  <p>Please provide a commit message, and if you are moving a file or folder enter a destination</p>
+  <form id="bsop_move_delete_form" method="post"
+      class="bsop_form">
+  <fieldset>
+    <label for="bsop_mvdel_dest">Destination</label>
+    <input type="text" id="bsop_mvdel_dest" name="bsop_mvdel_dest"
+        value=""  class="bsop_ctl"/>
+    <label for="bsop_mvdel_commit">Commit message</label>
+    <textarea name="bsop_mvdel_commit" id="bsop_mvdel_commit"
+        cols="50" rows="2" class="bsop_ctl"></textarea>
+  </fieldset>
+  <fieldset style="display: none;">
     <input type="hidden" id="bsop_mvdel_op" name="bsop_mvdel_op" 
         value="" />
     <input type="hidden" id="bsop_mvdel_base" name="bsop_mvdel_base"
         value="${bsop_base_path}" />
     <input type="hidden" id="bsop_mvdel_path" name="bsop_mvdel_path" 
         value="" />
+  </fieldset>
   </form>
 </div>
 
