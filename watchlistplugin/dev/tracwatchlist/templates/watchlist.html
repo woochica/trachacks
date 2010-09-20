@@ -79,7 +79,7 @@
         <py:def function="datetimefilter(colname,id=None)">
           <span id="$id" class="datetimefilter">
             <input py:if="colname == 'changetime'" type="checkbox" name="sincelastvisit" value=""
-                title="${_('Since last visit of the watchlist page')}"
+                title="${_('Only show resources which changed since they got last visited')}"
             /><input id="${id}_from" name="from-datetime" type="text" size="4" value="from"
             /><input name="from-datetime-ts" type="hidden" 
             />-<input id="${id}_to" name="to-datetime" type="text" size="4" value="to"
