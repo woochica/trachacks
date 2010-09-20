@@ -150,45 +150,6 @@ function eraseCookie(name,path) {
 }
 /// End of Cookie Code
 
-/*
-$.fn.dataTableExt.afnFiltering.push(
-    function( oSettings, aData, iDataIndex ) {
-        var iColumn = 1;
-        var table = $('#'+ oSettings.sTableId);
-        var checked = $(table).find('input[name=sincelastvisit]').is(':checked');
-
-        var n = document.createElement('div');
-        n.innerHTML = aData[iColumn];
-        timestamp = $(n).find('span.itime').text() * 1;
-
-        if ( !timestamp ) {
-            return true;
-        }
-        if ( checked && timestamp < $('#last_visit').val() ) {
-            return false;
-        }
-
-        var iMin = $(table).find('input[name=from-datetime]').val() * 1;
-        var iMax = $(table).find('input[name=to-datetime]').val() * 1;
-        if ( !iMin && !iMax ) {
-            return true;
-        }
-        else if ( !iMin && timestamp < iMax )
-        {
-            return true;
-        }
-        else if ( iMin < timestamp && !iMax )
-        {
-            return true;
-        }
-        else if ( iMin < timestamp && timestamp < iMax )
-        {
-            return true;
-        }
-        return false;
-    }
-);
-*/
 
 jQuery.fn.dataTableExt.oSort['html-numeric-asc']  = function(x,y) {
     var a = parseFloat( x.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') );
