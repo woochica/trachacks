@@ -56,6 +56,16 @@ jQuery(document).ready(function() {
     $("#tickets .remfromwatch input[name=resid]")
         .autocomplete("./watchlist?action=search&realm=ticket&group=watched", options);
     ///
+    //// For table filters:
+    options.multiple = false;
+    // Autocomplete Wiki Names
+    $("#wikis tfoot th.name input")
+        .autocomplete("./watchlist?action=search&realm=wiki&group=watched", options);
+    ///
+    // Autocomplete Ticket Ids
+    $("#tickets tfoot th.id input")
+        .autocomplete("./watchlist?action=search&realm=ticket&group=watched", options);
+    ///
 });
 
 
