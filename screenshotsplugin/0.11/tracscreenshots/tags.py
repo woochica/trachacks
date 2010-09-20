@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 
 # Standard imports.
-import sets
+
+# Deprecated as for Python 2.6.
+try:
+    import sets
+except:
+    pass
+
 
 # Trac imports.
 from trac.core import *
@@ -45,9 +51,7 @@ class ScreenshotsTags(Component):
 
     def screenshot_created(self, req, screenshot):
         # Create temporary resource.
-        resource = Resource()
-        resource.realm = 'screenshots'
-        resource.id = screenshot['id']
+        resource = Resource('screenshots', to_unicode(screenshot['id']))
 
         # Delete tags of screenshot with same ID for sure.
         tag_system = TagSystem(self.env)
@@ -62,9 +66,7 @@ class ScreenshotsTags(Component):
         old_screenshot.update(screenshot)
 
         # Create temporary resource.
-        resource = Resource()
-        resource.realm = 'screenshots'
-        resource.id = old_screenshot['id']
+        resource = Resource('screenshots', to_unicode(old_screenshot['id']))
 
         # Delete old tags.
         tag_system = TagSystem(self.env)
@@ -76,9 +78,7 @@ class ScreenshotsTags(Component):
 
     def screenshot_deleted(self, req, screenshot):
         # Create temporary resource.
-        resource = Resource()
-        resource.realm = 'screenshots'
-        resource.id = screenshot['id']
+        resource = Resource('screenshots', to_unicode(screenshot['id']))
 
         # Delete tags of screenshot.
         tag_system = TagSystem(self.env)
@@ -104,6 +104,6 @@ class ScreenshotsTags(Component):
 
     def _get_stored_tags(self, req, screenshot_id):
         tag_system = TagSystem(self.env)
-        resource = Resource('screenshots', screenshot_id)
+        resource = Resource('screenshots', to_unicode(screenshot_id))
         tags = tag_system.get_tags(req, resource)
         return sorted(tags)

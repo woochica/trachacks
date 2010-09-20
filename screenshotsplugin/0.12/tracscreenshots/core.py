@@ -81,8 +81,8 @@ class ScreenshotsCore(Component):
 
     def __init__(self):
         # Path where to store uploaded screenshots, see init.py.
-        self.path = self.config.getpath(
-          'screenshots', 'path') or '../screenshots'
+        self.path = self.config.getpath('screenshots', 'path') or \
+          '../screenshots'
 
         # Items for not specified component and version.
         self.none_component = {'name' : 'none', 'description' : 'none'}
@@ -91,7 +91,6 @@ class ScreenshotsCore(Component):
         # Bind the 'tracscreenshots' catalog to the specified locale directory.
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
-
 
     # IPermissionRequestor methods.
 

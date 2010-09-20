@@ -16,7 +16,7 @@ setup(
     'TracScreenshots.wiki = tracscreenshots.wiki',
     'TracScreenshots.timeline = tracscreenshots.timeline',
     'TracScreenshots.tags = tracscreenshots.tags [Tags]']},
-  install_requires = [],
+  install_requires = ['Trac >= 0.11.5'],
   extras_require = {'Tags' : ['TracTags']},
   keywords = 'trac screenshots',
   author = 'Radek Bartoň',

@@ -57,7 +57,7 @@ class ScreenshotsApi(Component):
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
         items = []
-        for row in context.cursor.rows:
+        for row in context.cursor:
             row = dict(zip(columns, row))
             items.append(row)
         return items
