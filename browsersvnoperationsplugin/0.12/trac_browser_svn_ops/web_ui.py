@@ -46,7 +46,7 @@ class TracBrowserOps(Component):
                 
                 # Insert upload dialog into div#main
                 upload_stream = Chrome(self.env).render_template(req,
-                        'browser_ops.html', data, fragment=True)
+                        'trac_browser_ops.html', data, fragment=True)
                 upload_transf = Transformer('//div[@id="main"]')
                 stream |=  upload_transf.append(
                         upload_stream.select('//div[@id="dialog-bsop_upload"]')
