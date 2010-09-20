@@ -1,5 +1,5 @@
 /*! Javsscript code for Trac Watchlist Plugin 
- * $Id: watchlist.js $
+ * $Id$
  * */
 
 
