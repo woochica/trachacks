@@ -92,6 +92,7 @@ class WatchlistPlugin(Component):
         BoolOption('watchlist', 'show_messages_while_on_watchlist_page', True , doc=N_("Show action messages while on watchlist page")),
         BoolOption('watchlist', 'autocomplete_inputs'                  , True , doc=N_("Autocomplete input fields (add/remove resources)")),
         BoolOption('watchlist', 'dynamic_tables'                       , True , doc=N_("Dynamic watchlist tables")),
+        BoolOption('watchlist', 'datetime_picker'                      , True , doc=N_("Provide date/time picker application")),
         BoolOption('watchlist', 'individual_column_filtering'          , True , doc=N_("Individual column filtering")),
         BoolOption('watchlist', 'attachment_changes'                   , True , doc=N_("Take attachment changes into account")),
     ]

@@ -31,7 +31,7 @@
       src="${href.chrome('watchlist','js','autocomplete.js')}"></script>
     <script type="text/javascript" py:if="booloptions['dynamic_tables']"
         src="${href.chrome('watchlist','js','jookie.js')}"></script>
-    <script type="text/javascript" py:if="booloptions['dynamic_tables']"
+    <script type="text/javascript" py:if="booloptions['dynamic_tables'] and booloptions['datetime_picker']"
         src="${href.chrome('watchlist','js','anytime.js')}"></script>
     <!-- dynamictables.js must be loaded after watchlist.js and orderadd.js ! -->
     <script type="text/javascript" py:if="booloptions['dynamic_tables']"
@@ -78,6 +78,7 @@
   <body>
     <div id="content" class="watchlist">
         <input style="display:none;" type="button" id="resetfilters" name="resetfilters" value="${_('Reset all filters')}"/>
+        <py:if test="booloptions['datetime_picker']">
         <input type="hidden" id="datetime_format" name="datetime_format" value="${datetime_format}"/>
         <input type="hidden" id="labelHour" name="labelHour" value="${_('Hour')}"/>
         <input type="hidden" id="labelMinute" name="labelMinute" value="${_('Minute')}"/>
@@ -89,6 +90,7 @@
         <input type="hidden" id="labelTitle" name="labelTitle" value="${_('Select a Date and Time')}"/>
         <input type="hidden" id="monthAbbreviations" name="monthAbbreviations" value="${_('Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec')}" />
         <input type="hidden" id="dayAbbreviations" name="dayAbbreviations" value="${_('Sun,Mon,Tue,Wed,Thu,Fri,Sat')}" />
+        </py:if>
         <py:def function="datetimefilter(colname,id=None)">
           <span id="$id" class="datetimefilter">
             <input py:if="colname == 'changetime'" type="checkbox" name="sincelastvisit" value=""

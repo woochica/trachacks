@@ -298,21 +298,24 @@ jQuery(document).ready(function() {
   });
   $(resetfilters).remove();
 
-  var datetime_format = $('#datetime_format').val();
-  var datetime_picker_options = {
-      'format' : datetime_format,
-      'labelHour' : $('#labelHour').val(),
-      'labelMinute' : $('#labelMinute').val(),
-      'labelSecond' : $('#labelSecond').val(),
-      'labelYear' : $('#labelYear').val(),
-      'labelMonth' : $('#labelMonth').val(),
-      'labelDayOfMonth' : $('#labelDayOfMonth').val(),
-      'labelTimeZone' : $('#labelTimeZone').val(),
-      'labelTitle' : $('#labelTitle').val(),
-      'monthAbbreviations' : $('#monthAbbreviations').val().split(','),
-      'dayAbbreviations' : $('#dayAbbreviations').val().split(','),
-  };
-  console.log(datetime_picker_options);
+  var use_datetime_picker = false;
+  if ($('#datetime_format').length != 0) {
+    use_datetime_picker = true;
+    var datetime_format = $('#datetime_format').val();
+    var datetime_picker_options = {
+        'format' : datetime_format,
+        'labelHour' : $('#labelHour').val(),
+        'labelMinute' : $('#labelMinute').val(),
+        'labelSecond' : $('#labelSecond').val(),
+        'labelYear' : $('#labelYear').val(),
+        'labelMonth' : $('#labelMonth').val(),
+        'labelDayOfMonth' : $('#labelDayOfMonth').val(),
+        'labelTimeZone' : $('#labelTimeZone').val(),
+        'labelTitle' : $('#labelTitle').val(),
+        'monthAbbreviations' : $('#monthAbbreviations').val().split(','),
+        'dayAbbreviations' : $('#dayAbbreviations').val().split(','),
+    };
+  }
 
   /* Per-column filters */
   $("table.watchlist").each( function () {
@@ -356,14 +359,23 @@ jQuery(document).ready(function() {
             }
             oTable.fnDraw();
         });
-        $(this).find("input[type=text]").each( function () {
-            $(this).AnyTime_picker(datetime_picker_options);
-            $(this).change(function(){
-                var c = new AnyTime.Converter({ format: datetime_format });
-                $(this).next("input[type=hidden]").val( c.parse( $(this).val() ).getTime() / 1000 );
+        if (use_datetime_picker) {
+            $(this).find("input[type=text]").each( function () {
+                $(this).AnyTime_picker(datetime_picker_options);
+                $(this).change(function(){
+                    var c = new AnyTime.Converter({ format: datetime_format });
+                    $(this).next("input[type=hidden]").val( c.parse( $(this).val() ).getTime() / 1000 );
+                    oTable.fnDraw();
+                });
+            });
+        }
+        else {
+            $(this).find("input[type=text]").typeWatch(function(elem,text){
+                var timestamp =  Date.parse( text );
+                $(elem).next("input[type=hidden]").val( timestamp / 1000 );
                 oTable.fnDraw();
             });
-        });
+        }
         // Restore datetime filter inputs on load
         // Must be after 'datetimefilter' handler are in place
         dtid = $(this).attr('id');

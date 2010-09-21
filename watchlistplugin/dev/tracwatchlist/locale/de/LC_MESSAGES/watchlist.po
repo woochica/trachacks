@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-08-31 21:31+0200\n"
-"PO-Revision-Date: 2010-09-21 02:09+0100\n"
+"PO-Revision-Date: 2010-09-21 12:19+0100\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Generated-By: Babel 0.9.5\n"
 
 #: tracwatchlist/nav.py:47 tracwatchlist/templates/watchlist.html:10
-#: tracwatchlist/templates/watchlist.html:119
+#: tracwatchlist/templates/watchlist.html:121
 #: tracwatchlist/templates/watchlist_prefs_main.html:9
 msgid "Watchlist"
 msgstr "Beobachtungsliste"
@@ -84,29 +84,33 @@ msgid "Dynamic watchlist tables"
 msgstr "Dynamische Tabellen"
 
 #: tracwatchlist/plugin.py:95
+msgid "Provide date/time picker application"
+msgstr "Anwendung für Auswahl von Datum und Uhrzeit zur Verfügung stellen"
+
+#: tracwatchlist/plugin.py:96
 msgid "Individual column filtering"
 msgstr "Spaltenweise filtern"
 
-#: tracwatchlist/plugin.py:96
+#: tracwatchlist/plugin.py:97
 msgid "Take attachment changes into account"
 msgstr "Neue Anhänge als Änderungen einzeigen"
 
-#: tracwatchlist/plugin.py:100
+#: tracwatchlist/plugin.py:101
 msgid "Display only the given watchlist sections in the given order"
 msgstr "Nur die folgenden Listenabschnitte in der gegebenen Reihenfolge anzeigen"
 
 #. TRANSLATOR: Link part of
 #. "Please %(log_in)s to view or change your watchlist"
-#: tracwatchlist/plugin.py:387
+#: tracwatchlist/plugin.py:388
 msgid "log in"
 msgstr "melden Sie sich an"
 
-#: tracwatchlist/plugin.py:395
+#: tracwatchlist/plugin.py:396
 #, python-format
 msgid "Please %(log_in)s to view or change your watchlist"
 msgstr "Bitte %(log_in)s um Ihre Beobachtungsliste anzusehen oder zu verändern!"
 
-#: tracwatchlist/plugin.py:475
+#: tracwatchlist/plugin.py:476
 msgid ""
 "\n"
 "                      You are now receiving change notifications\n"
@@ -116,7 +120,7 @@ msgstr ""
 "\n"
 "Sie erhalten jetzt Änderungsbenachrichtigungen zu diesem Dokument."
 
-#: tracwatchlist/plugin.py:492
+#: tracwatchlist/plugin.py:493
 msgid ""
 "\n"
 "                      You are no longer receiving\n"
@@ -127,58 +131,58 @@ msgstr ""
 "Zu diesem Dokument erhalten Sie jetzt keine Änderungsbenachrichtigungen "
 "mehr."
 
-#: tracwatchlist/plugin.py:528
+#: tracwatchlist/plugin.py:529
 msgid "You are now watching this resource."
 msgstr "Sie beobachten jetzt dieses Dokument."
 
-#: tracwatchlist/plugin.py:569
+#: tracwatchlist/plugin.py:570
 msgid "You are no longer watching this resource."
 msgstr "Jetzt beobachten Sie dieses Dokument nicht mehr."
 
-#: tracwatchlist/plugin.py:578
+#: tracwatchlist/plugin.py:579
 #, python-format
 msgid "Invalid watchlist action '%(action)s'!"
 msgstr "Ungültige Beobachtungaktion '%(action)s'!"
 
 #. TRANSLATOR: Navigation link to point to watchlist section of this realm
 #. (e.g. 'Wikis', 'Tickets').
-#: tracwatchlist/plugin.py:620
+#: tracwatchlist/plugin.py:621
 #, python-format
 msgid "Watched %(realm_plural)s"
 msgstr "Beobachtete %(realm_plural)s"
 
-#: tracwatchlist/plugin.py:681 tracwatchlist/templates/watchlist.html:104
+#: tracwatchlist/plugin.py:682 tracwatchlist/templates/watchlist.html:106
 msgid "Unwatch"
 msgstr "Nicht mehr beobachten"
 
-#: tracwatchlist/plugin.py:684
+#: tracwatchlist/plugin.py:685
 #, python-format
 msgid "Remove %(document)s from watchlist"
 msgstr "Entferne %(document)s aus der Beobachtungsliste"
 
-#: tracwatchlist/plugin.py:688
+#: tracwatchlist/plugin.py:689
 msgid "Watch"
 msgstr "Beobachten"
 
-#: tracwatchlist/plugin.py:691
+#: tracwatchlist/plugin.py:692
 #, python-format
 msgid "Add %(document)s to watchlist"
 msgstr "Füge %(document)s zur Beobachtungsliste hinzu"
 
-#: tracwatchlist/plugin.py:694
+#: tracwatchlist/plugin.py:695
 msgid "Do not Notify me"
 msgstr "Benachrichtigungen AUS"
 
-#: tracwatchlist/plugin.py:697
+#: tracwatchlist/plugin.py:698
 #, python-format
 msgid "Do not notify me if %(document)s changes"
 msgstr "Benachrichtige mich nicht mehr über Änderungen von %(document)s"
 
-#: tracwatchlist/plugin.py:700
+#: tracwatchlist/plugin.py:701
 msgid "Notify me"
 msgstr "Benachrichtigungen AN"
 
-#: tracwatchlist/plugin.py:703
+#: tracwatchlist/plugin.py:704
 #, python-format
 msgid "Notify me if %(document)s changes"
 msgstr "Benachrichtige mich über Änderungen von %(document)s"
@@ -249,74 +253,74 @@ msgstr "Aktive Felder"
 msgid "Available fields"
 msgstr "Verfügbare Felder"
 
-#: tracwatchlist/templates/watchlist.html:47
+#: tracwatchlist/templates/watchlist.html:49
 #, python-format
 msgid "([1:%(timedelta)s] ago)"
 msgstr "(vor [1:%(timedelta)s])"
 
-#: tracwatchlist/templates/watchlist.html:57
+#: tracwatchlist/templates/watchlist.html:59
 msgid "Add"
 msgstr "Weitere"
 
-#: tracwatchlist/templates/watchlist.html:65
+#: tracwatchlist/templates/watchlist.html:67
 msgid "Remove"
 msgstr "Entferne"
 
-#: tracwatchlist/templates/watchlist.html:78
+#: tracwatchlist/templates/watchlist.html:80
 msgid "Reset all filters"
 msgstr "Alle Filter zurücksetzen"
 
-#: tracwatchlist/templates/watchlist.html:80
+#: tracwatchlist/templates/watchlist.html:82
 msgid "Hour"
 msgstr "Stunde"
 
-#: tracwatchlist/templates/watchlist.html:81
+#: tracwatchlist/templates/watchlist.html:83
 msgid "Minute"
 msgstr "Minute"
 
-#: tracwatchlist/templates/watchlist.html:82
+#: tracwatchlist/templates/watchlist.html:84
 msgid "Second"
 msgstr "Sekunde"
 
-#: tracwatchlist/templates/watchlist.html:83
+#: tracwatchlist/templates/watchlist.html:85
 msgid "Year"
 msgstr "Jahr"
 
-#: tracwatchlist/templates/watchlist.html:84
+#: tracwatchlist/templates/watchlist.html:86
 msgid "Month"
 msgstr "Monat"
 
-#: tracwatchlist/templates/watchlist.html:85
+#: tracwatchlist/templates/watchlist.html:87
 msgid "Day of Month"
 msgstr "Tag"
 
-#: tracwatchlist/templates/watchlist.html:86
+#: tracwatchlist/templates/watchlist.html:88
 msgid "Time Zone"
 msgstr "Zeitzone"
 
-#: tracwatchlist/templates/watchlist.html:87
+#: tracwatchlist/templates/watchlist.html:89
 msgid "Select a Date and Time"
 msgstr "Datum und Zeit auswählen"
 
-#: tracwatchlist/templates/watchlist.html:88
+#: tracwatchlist/templates/watchlist.html:90
 msgid "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec"
 msgstr "Jan,Feb,Mär,Apr,Mai,Jun,Jul,Aug,Sep,Okt,Nov,Dez"
 
-#: tracwatchlist/templates/watchlist.html:89
+#: tracwatchlist/templates/watchlist.html:91
 msgid "Sun,Mon,Tue,Wed,Thu,Fri,Sat"
 msgstr "So,Mo,Di,Mi,Do,Fr,Sa"
 
-#: tracwatchlist/templates/watchlist.html:92
+#: tracwatchlist/templates/watchlist.html:94
 msgid "Only show resources which changed since they got last visited"
 msgstr ""
 "Nur Dokumente anzeigen die sich geändert haben seit sie zuletzt besucht "
 "wurden"
 
-#: tracwatchlist/templates/watchlist.html:136
+#: tracwatchlist/templates/watchlist.html:138
 msgid "Not found"
 msgstr "Nicht gefunden"
 
-#: tracwatchlist/templates/watchlist.html:138
+#: tracwatchlist/templates/watchlist.html:140
 #, python-format
 msgid ""
 "The selected [1:%(realm)s] [2:%(name)s]\n"
@@ -333,11 +337,11 @@ msgstr[1] ""
 "Die folgenden ausgewählten [1:%(realm)s] wurden nicht gefunden und "
 "konnten deshalb nicht zur Beobachtungsliste hinzugefügt werden:"
 
-#: tracwatchlist/templates/watchlist.html:154
+#: tracwatchlist/templates/watchlist.html:156
 msgid "Already on watchlist"
 msgstr "Bereits auf der Beobachtungsliste"
 
-#: tracwatchlist/templates/watchlist.html:155
+#: tracwatchlist/templates/watchlist.html:157
 #, python-format
 msgid ""
 "The selected [1:%(realm)s] [2:%(name)s] is already watched.\n"
@@ -353,11 +357,11 @@ msgstr[1] ""
 "Die folgenden ausgewählten [1:%(realm)s] wurden bereits beobachtet: "
 "([2:Nicht mehr beobachten])"
 
-#: tracwatchlist/templates/watchlist.html:173
+#: tracwatchlist/templates/watchlist.html:175
 msgid "Added to Watchlist"
 msgstr "Zur Beobachtungsliste hinzugefügt"
 
-#: tracwatchlist/templates/watchlist.html:174
+#: tracwatchlist/templates/watchlist.html:176
 #, python-format
 msgid ""
 "The selected [1:%(realm)s] [2:%(name)s]\n"
@@ -374,11 +378,11 @@ msgstr[1] ""
 "Die ausgewählten [1:%(realm)s] wurden zur Beobachtungsliste hinzugefügt. "
 "([2:Wieder entfernen])"
 
-#: tracwatchlist/templates/watchlist.html:198
+#: tracwatchlist/templates/watchlist.html:200
 msgid "Removed from Watchlist"
 msgstr "Von der Beobachtungsliste entfernt"
 
-#: tracwatchlist/templates/watchlist.html:199
+#: tracwatchlist/templates/watchlist.html:201
 #, python-format
 msgid ""
 "The selected [1:%(realm)s] [2:%(name)s]\n"
@@ -395,11 +399,11 @@ msgstr[1] ""
 "Die folgenden ausgewählten [1:%(realm)s] wurden von der Beobachtungsliste"
 " entfernt: ([2:Wieder hinzufügen])"
 
-#: tracwatchlist/templates/watchlist.html:220
+#: tracwatchlist/templates/watchlist.html:222
 msgid "Not on Watchlist"
 msgstr "Nicht auf der Beobachtungsliste"
 
-#: tracwatchlist/templates/watchlist.html:222
+#: tracwatchlist/templates/watchlist.html:224
 #, python-format
 msgid ""
 "The selected [1:%(realm)s] [2:%(name)s]\n"
@@ -414,11 +418,11 @@ msgstr[1] ""
 "Die folgenden zu löschenden [1:%(realm)s] waren nicht auf der "
 "Beobachtungsliste:"
 
-#: tracwatchlist/templates/watchlist.html:251
+#: tracwatchlist/templates/watchlist.html:253
 msgid "Reset changes"
 msgstr "Zurücksetzen"
 
-#: tracwatchlist/templates/watchlist.html:252
+#: tracwatchlist/templates/watchlist.html:254
 msgid "Reset to default"
 msgstr "Standardeinstellungen"
 
