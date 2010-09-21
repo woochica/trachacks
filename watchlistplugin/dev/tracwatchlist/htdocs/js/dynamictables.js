@@ -350,8 +350,10 @@ jQuery(document).ready(function() {
     $(table).find("tfoot input.numericfilter").each(function () {
         var name = tid + '/' + $(this).attr('name');
         var value = readCookie(name);
-        $(this).val(value);
-        $(this).data('filterfunction', wlgetfilterfunctions( value ));
+        if (value) {
+            $(this).val(value);
+            $(this).data('filterfunction', wlgetfilterfunctions( value ));
+        }
     });
 
     /* Restore special datetime filters */
@@ -388,13 +390,15 @@ jQuery(document).ready(function() {
         $(this).find("input").each(function(){
             var name = dtid + '/' + $(this).attr('name');
             var value = readCookie(name);
-            if ($(this).is("input[type=checkbox]")) {
+            if (value) {
+              if ($(this).is("input[type=checkbox]")) {
                 $(this).attr('checked', value =='checked' );
                 $(this).change();
-            }
-            else {
+              }
+              else {
                 $(this).val(value);
                 $(this).keyup();
+              }
             }
         });
     });
