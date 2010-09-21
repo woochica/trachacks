@@ -14,3 +14,6 @@ messages:
 upload:
 	python setup.py bdist_egg upload
 
+minify:
+	yuicompressfile tracwatchlist/htdocs/js/*.js tracwatchlist/htdocs/css/*.css
+
