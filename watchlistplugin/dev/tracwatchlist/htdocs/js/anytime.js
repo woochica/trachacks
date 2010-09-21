@@ -3034,7 +3034,7 @@ AnyTime.picker = function( id, options )
 		    if ( this.pop )
 		    {
 		      var off = this.inp.offset();
-		      var bodyWidth = $(document.body).outerWidth(true);
+		      var bodyWidth = $(document).width(); //$(document.body).outerWidth(true);
 		      var pickerWidth = this.div.outerWidth(true);
 		      var left = off.left + .5 * this.inp.outerWidth(true) - .5 * pickerWidth;
 		      if ( left + pickerWidth > bodyWidth - 20 )
