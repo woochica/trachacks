@@ -69,6 +69,8 @@ class TracBrowserOps(Component):
             self.log.debug('Intercepting browser POST req %s', 
                            req.args.keys())
             
+            path = req.args['path']
+            
             if 'bsop_upload_file' in req.args:
                 self._upload_request(req, handler)
             
@@ -84,20 +86,25 @@ class TracBrowserOps(Component):
         return (template, data, content_type)
     
     # Private methods
+    
     def _upload_request(self, req, handler):
-        self.log.debug('Handling file upload %s %s',
-                       req.authname, req.args)
+        self.log.debug('Handling file upload for "%s"', req.authname)
+        
+        # Retrieve uploaded fields
         filename = req.args.get('bsop_upload_file').filename
         file_data = req.args.get('bsop_upload_file').value # or .file for fo
         commit_msg = req.args.get('bsop_upload_commit')
         self.log.debug('Received file %s with %i bytes', 
                        filename, len(file_data))
-        repos_path = '/'.join([req.args.get('path'), filename])
         
-        repos = RepositoryManager(self.env).get_repository(None)
+        # From the path field identify and open the (named) repository
+        # removing reponame from path in the process
+        path = req.args.get('path')
+        repo_mgr = RepositoryManager(self.env)
+        reponame, repos, path = repo_mgr.get_repository_by_path(path)
         
         try:
-            repos_path = repos.normalize_path(repos_path)
+            repos_path = repos.normalize_path('/'.join([path, filename]))
             self.log.debug('Writing file %s to %s in %s', 
                            filename, repos_path, repos)
             svn_writer = SubversionWriter(repos)
