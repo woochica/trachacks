@@ -125,61 +125,49 @@
             <dl>
                 <dt>err_res</dt>
                 <dd><ul><li py:for="res in err_res">$res</li></ul></dd>
-                <dt>alw_res</dt>
-                <dd><ul><li py:for="res in alw_res">$res</li></ul></dd>
+                <dt>already_watched_res</dt>
+                <dd><ul><li py:for="res in already_watched_res">$res</li></ul></dd>
                 <dt>new_res</dt>
                 <dd><ul><li py:for="res in new_res">$res</li></ul></dd>
                 <dt>del_res</dt>
                 <dd><ul><li py:for="res in del_res">$res</li></ul></dd>
             </dl>
         </div -->
-        <div py:if="show_messages and action"
-          py:choose="action" id="message-box">
-          <py:when test="'watch'">
-                <div class="system-message" id="error" py:if="not new_res and not alw_res" py:with="resid = isinstance(resid,(tuple,list)) and ','.join(resid) or resid">
-                    <h3 class="system-message-title">No match</h3>
-                    <div class="no_new_res">
-                          <p i18n:msg="resid,realm">
-                            The given pattern(s) <em>${resid}</em>
-                            did not matched any <span>${get_label(realm,0)}</span>.
-                          </p>
-                    </div>
-                    <p class="ackmsg">${ackmsg()}</p>
-                </div>
-
-                <div class="system-message" id="error" py:if="err_res">
+        <div py:if="show_messages and action" id="message-box">
+                <div class="system-message" id="error" py:if="not_found_res">
                     <h3 class="system-message-title">Not found</h3>
-                    <div py:if="err_res" class="err_res" py:with="name = err_res[0]">
-                      <i18n:choose numeral="len(err_res)" params="realm,name">
+                    <div class="not_found_res" py:with="name = not_found_res[0]">
+                      <i18n:choose numeral="len(not_found_res)" params="name,realm">
                           <p i18n:singular="">
-                            The selected <span>${get_label(realm,1)}</span> <a href="${href(realm,name)}">$name</a>
-                            was not found and could therefore not be added to the watchlist.
+                            The pattern "<em>$name</em>"
+                            did not matched any <span>${get_label(realm,1)}</span>.
                           </p>
                           <p i18n:plural="">
-                            The following selected <span>${get_label(realm,len(err_res))}</span>
-                            where not found and could therefore not be added to the watchlist:
+                            The following patterns
+                            did not matched any <span>${get_label(realm,1000)}</span>:
                           </p>
                       </i18n:choose>
-                      <ul py:if="len(err_res)>1"><li py:for="res in err_res">$res</li></ul>
+                      <ul py:if="len(not_found_res)>1"><li py:for="res in not_found_res">$res</li></ul>
                     </div>
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
-
-                <div class="system-message" id="warning" py:if="alw_res" py:with="name=alw_res[0]">
+         <py:choose test="action">
+          <py:when test="'watch'">
+                <div class="system-message" id="warning" py:if="already_watched_res" py:with="name=already_watched_res[0]">
                     <h3 class="system-message-title">Already on watchlist</h3>
-                    <i18n:choose numeral="len(alw_res)" params="realm,name">
+                    <i18n:choose numeral="len(already_watched_res)" params="realm,name">
                     <p i18n:singular="">
                       The selected <span>${get_label(realm,1)}</span> <a href="${href(realm,name)}">$name</a> is already watched.
                       (<a href="${href.watchlist(action='unwatch',realm=realm,resid=name)}">Unwatch it</a>)
                     </p>
                     <p i18n:plural="">
-                      The following selected <span>${get_label(realm,len(alw_res))}</span> where already
+                      The following selected <span>${get_label(realm,len(already_watched_res))}</span> where already
                       on the watchlist:
-                      (<a href="${href.watchlist(action='unwatch',realm=realm,resid=alw_res)}">Unwatch them</a>)
+                      (<a href="${href.watchlist(action='unwatch',realm=realm,resid=already_watched_res)}">Unwatch them</a>)
                     </p>
                     </i18n:choose>
-                    <ul py:if="len(alw_res)>1">
-                      <li py:for="res in alw_res">${slink(realm,res)}</li>
+                    <ul py:if="len(already_watched_res)>1">
+                      <li py:for="res in already_watched_res">${slink(realm,res)}</li>
                     </ul>
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
@@ -208,17 +196,6 @@
             </py:when>
 
             <py:when test="'unwatch'">
-                <div class="system-message" id="error" py:if="not del_res and not err_res" py:with="resid = isinstance(resid,(tuple,list)) and ','.join(resid) or resid">
-                    <h3 class="system-message-title">No match</h3>
-                    <div class="no_new_res">
-                          <p i18n:msg="resid,realm">
-                            The given pattern(s) <em>${resid}</em>
-                            did not matched any <span>${get_label(realm,0)}</span>.
-                          </p>
-                    </div>
-                    <p class="ackmsg">${ackmsg()}</p>
-                </div>
-
                 <div class="system-message" id="notice"
                   py:if="del_res" py:with="name=del_res[0]">
                     <h3 class="system-message-title">Removed from Watchlist</h3>
@@ -242,26 +219,27 @@
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
 
-                <div class="system-message" id="warning" py:if="err_res" py:with="name=err_res[0]">
+                <div class="system-message" id="warning" py:if="not_watched_res" py:with="name=not_watched_res[0]">
                     <h3 class="system-message-title">Not on Watchlist</h3>
-                    <div class="err_res">
-                    <i18n:choose numeral="len(err_res)" params="realm,name">
+                    <div class="not_watched_res">
+                    <i18n:choose numeral="len(not_watched_res)" params="realm,name">
                       <p i18n:singular="">
                         The selected <span>${get_label(realm,1)}</span> <a href="${href(realm,name)}">$name</a>
                         was not on the watchlist.
                       </p>
                       <p i18n:plural="">
-                        The following to-be-deleted <span>${get_label(realm,len(err_res))}</span>
+                        The following to-be-deleted <span>${get_label(realm,len(not_watched_res))}</span>
                         where not on the watchlist:
                       </p>
                     </i18n:choose>
-                      <ul py:if="len(err_res)>1">
-                        <li py:for="res in err_res">${slink(realm,res)}</li>
+                      <ul py:if="len(not_watched_res)>1">
+                        <li py:for="res in not_watched_res">${slink(realm,res)}</li>
                       </ul>
                     </div>
                     <p class="ackmsg">${ackmsg()}</p>
                 </div>
             </py:when>
+         </py:choose>
         </div>
     <xi:include href="wl-${realm}.html" py:for="realm in realms" />
 

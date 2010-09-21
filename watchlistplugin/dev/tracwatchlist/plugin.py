@@ -506,14 +506,25 @@ class WatchlistPlugin(Component):
         redirectback = options['stay_at_resource'] and not onwatchlistpage
         if action == "watch":
             handler = self.realm_handler[realm]
-            reses = set(handler.resources_exists(realm, resid))
-            alw_res = set(self.is_watching(realm, reses, user))
-            new_res = reses.difference(alw_res)
-            alw_res = reses.intersection(alw_res)
+            not_found_res = list()
+            found_res = set()
+            for rid in resid.split(u','):
+                rid = rid.strip()
+                if not rid:
+                    continue
+                reses = set(handler.resources_exists(realm, rid))
+                if len(reses) == 0:
+                    not_found_res.append(rid)
+                else:
+                    found_res.update(reses)
+            watched_res = set(self.is_watching(realm, found_res, user))
+            new_res = found_res.difference(watched_res)
+            already_watched_res = found_res.intersection(watched_res)
             comp=handler.get_sort_cmp(realm)
             key=handler.get_sort_key(realm)
-            wldict['alw_res'] = sorted(alw_res, cmp=comp, key=key)
+            wldict['already_watched_res'] = sorted(already_watched_res, cmp=comp, key=key)
             wldict['new_res'] = sorted(new_res, cmp=comp, key=key)
+            wldict['not_found_res'] = not_found_res
 
             if new_res:
                 self.watch(realm, new_res, user, db=db)
@@ -533,14 +544,25 @@ class WatchlistPlugin(Component):
 
         elif action == "unwatch":
             handler = self.realm_handler[realm]
-            reses = set(handler.resources_exists(realm, resid))
-            alw_res = set(self.is_watching(realm, reses, user))
-            del_res = alw_res.intersection(reses)
-            err_res = reses.difference(alw_res)
+            not_found_res = list()
+            found_res = set()
+            for rid in resid.split(u','):
+                rid = rid.strip()
+                if not rid:
+                    continue
+                reses = set(handler.resources_exists(realm, rid))
+                if len(reses) == 0:
+                    not_found_res.append(rid)
+                else:
+                    found_res.update(reses)
+            alw_res = set(self.is_watching(realm, found_res, user))
+            del_res = alw_res.intersection(found_res)
+            not_watched_res = found_res.difference(alw_res)
             comp=handler.get_sort_cmp(realm)
             key=handler.get_sort_key(realm)
             wldict['del_res'] = sorted(del_res, cmp=comp, key=key)
-            wldict['err_res'] = sorted(err_res, cmp=comp, key=key)
+            wldict['not_watched_res'] = sorted(not_watched_res, cmp=comp, key=key)
+            wldict['not_found_res'] = not_found_res
 
             if del_res:
                 self.unwatch(realm, del_res, user, db=db)
