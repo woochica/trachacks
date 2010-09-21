@@ -1,4 +1,4 @@
-import urllib2
+import urllib, urllib2
 from datetime import datetime
 from time import strptime
 from trac.config import Option, ListOption, BoolOption
@@ -141,3 +141,16 @@ def parse_bool(s):
         return s
     s = str(s).strip().lower()
     return not s in ['false','f','n','0','']
+
+def urldecode(query):
+    # Adapted from example on Python mailing lists
+    d = {}
+    a = query.split('&')
+    for s in a:
+        if s.find('='):
+            k,v = map(urllib.unquote, s.split('='))
+            try:
+                d[k].append(v)
+            except KeyError:
+                d[k] = [v]
+    return d

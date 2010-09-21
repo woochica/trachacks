@@ -248,7 +248,7 @@ class BurndownChart(EstimationToolsBase, WikiMacroBase):
         dates = timetable.keys()
         dates.sort()
 
-        maxhours = max(timetable.values())
+        maxhours = max(timetable.values() + [int(options.get('expected', 0))])
 
         if maxhours <= Decimal(0):
             maxhours = Decimal(100)

@@ -1,12 +1,13 @@
 from decimal import Decimal
 from datetime import datetime, timedelta
 from estimationtools.burndownchart import BurndownChart
-from estimationtools.utils import parse_options
+from estimationtools.utils import parse_options, urldecode
 from trac.test import EnvironmentStub, MockPerm, Mock
 from trac.ticket.model import Ticket
 from trac.util.datefmt import utc
 from trac.web.href import Href
 import unittest
+from genshi.builder import QName
 
 
 class BurndownChartTestCase(unittest.TestCase):
@@ -44,6 +45,13 @@ class BurndownChartTestCase(unittest.TestCase):
             ticket['status'] = history[key]
             ticket.save_changes("me", "testing", datetime.combine(key, datetime.now(utc).timetz()))       
             
+    def _extract_query(self, image):
+        """ Parses <image/> element, urldecodes the query and returns it as dict. """
+        for t, v in image.attrib:
+            if t == QName('src'):
+                return urldecode(v.split('?')[1])
+        return {}
+
     def test_parse_options(self):
         db = self.env.get_db_cnx()
         options, query_args = parse_options(db, "milestone=milestone1, startdate=2008-02-20, enddate=2008-02-28", {})
@@ -190,3 +198,15 @@ class BurndownChartTestCase(unittest.TestCase):
         result = chart.render_macro(self.req, 'BurndownChart',
                         "milestone=One & Two, startdate=2010-09-15, enddate=2010-09-20")
         self.failUnless("&amp;chtt=One+%26+Two&amp;" in str(result))
+
+    def test_expected_y_axis(self):
+        chart = BurndownChart(self.env)
+        t = Ticket(self.env, self._insert_ticket('12'))
+        # Test without expected
+        result = chart.render_macro(self.req, 'BurndownChart',
+                        "startdate=2010-09-15, enddate=2010-09-20")
+        self.assertEquals(self._extract_query(result)['chxr'], [u'2,0,12'])
+        # Confirm Y axis changes with new higher expected
+        result = chart.render_macro(self.req, 'BurndownChart',
+                        "startdate=2010-09-15, enddate=2010-09-20, expected=200")
+        self.assertEquals(self._extract_query(result)['chxr'], [u'2,0,200'])
