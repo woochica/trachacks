@@ -42,9 +42,6 @@ class TracBrowserOps(Component):
             
             # Insert browser operations elements when directory/file shown
             if data['dir']:
-                # Provide current location within the repos for move/delete
-                data['bsop_base_path'] = req.args.get('path')
-                
                 # Insert upload dialog and move/delete dialog into div#main
                 bsops_stream = Chrome(self.env).render_template(req,
                         'trac_browser_ops.html', data, fragment=True)
@@ -74,7 +71,7 @@ class TracBrowserOps(Component):
             if 'bsop_upload_file' in req.args:
                 self._upload_request(req, handler)
             
-            elif 'bsop_mvdel_path' in req.args:
+            elif 'bsop_mvdel_op' in req.args:
                 self._move_delete_request(req, handler)
             
             elif 'bsop_create_folder_name' in req.args:
@@ -87,6 +84,15 @@ class TracBrowserOps(Component):
     
     # Private methods
     
+    def _get_repository(self, req):
+        '''From req identify and return (reponame, repository, path), removing 
+        reponame from path in the process.
+        '''
+        path = req.args.get('path')
+        repo_mgr = RepositoryManager(self.env)
+        reponame, repos, path = repo_mgr.get_repository_by_path(path)
+        return reponame, repos, path
+        
     def _upload_request(self, req, handler):
         self.log.debug('Handling file upload for "%s"', req.authname)
         
@@ -97,12 +103,8 @@ class TracBrowserOps(Component):
         self.log.debug('Received file %s with %i bytes', 
                        filename, len(file_data))
         
-        # From the path field identify and open the (named) repository
-        # removing reponame from path in the process
-        path = req.args.get('path')
-        repo_mgr = RepositoryManager(self.env)
-        reponame, repos, path = repo_mgr.get_repository_by_path(path)
-        
+        self.log.debug('Opening repository for file upload')
+        reponame, repos, path = self._get_repository(req)
         try:
             repos_path = repos.normalize_path('/'.join([path, filename]))
             self.log.debug('Writing file %s to %s in %s', 
@@ -111,6 +113,7 @@ class TracBrowserOps(Component):
             rev = svn_writer.put_content(repos_path, file_data, filename,
                                          commit_msg)
         finally:
+            repos.sync()
             self.log.debug('Closing repository')
             repos.close()
         
@@ -121,28 +124,30 @@ class TracBrowserOps(Component):
     def _move_delete_request(self, req, handler):
         self.log.debug('Handling move/delete for %s',
                        req.authname)
-        operation = req.args.get('bsop_mvdel_op')
-        repos_path = req.args.get('bsop_mvdel_path')
-        repos_dest = req.args.get('bsop_mvdel_dest')
+        operation = req.args.get('bsop_mvdel_op') #Moving or deleting?
+        src_name = req.args.get('bsop_mvdel_src_name') # Item to move or delete
+        dst_name = req.args.get('bsop_mvdel_dst_name') # Destination if move
         commit_msg = req.args.get('bsop_mvdel_commit')
         
         self.log.debug('Opening repository for %s', operation)
-        repos = RepositoryManager(self.env).get_repository(None)
+        reponame, repos, path = self._get_repository(req)
         try:
-            repos_path = repos.normalize_path(repos_path)
+            src_path = repos.normalize_path('/'.join([path, src_name]))
+            dst_path = repos.normalize_path('/'.join([path, dst_name]))
             svn_writer = SubversionWriter(repos)
             
             if operation == 'delete':
                 self.log.info('Deleting %s in repository %s',
-                               repos_path, repos)
+                              src_path, reponame)
                 svn_writer.delete(repos_path, commit_msg)
             
             elif operation == 'move':
                 self.log.info('Moving %s to %s in repository %s',
-                              repos_path, repos_dest, repos)
-                svn_writer.move(repos_path, repos_dest, commit_msg)
+                              src_path, dst_path, reponame)
+                svn_writer.move(src_path, dst_path, commit_msg)
                 
         finally:
+            repos.sync()
             self.log.debug('Closing repository')
             repos.close()
         
@@ -154,22 +159,21 @@ class TracBrowserOps(Component):
         self.log.debug('Handling create folder for %s',
                        req.authname)
                        
-        repos_path = '/'.join([req.args.get('path'),
-                               req.args.get('bsop_create_folder_name'),
-                               ])
+        create_name = req.args.get('bsop_create_folder_name')
         commit_msg = req.args.get('bsop_create_commit')
         
         self.log.debug('Opening repository to create folder')
-        repos = RepositoryManager(self.env).get_repository(None)
+        reponame, repos, path = self._get_repository(req)
         try:
-            repos_path = repos.normalize_path(repos_path)
+            create_path = repos.normalize_path('/'.join([path, create_name]))
             svn_writer = SubversionWriter(repos)
 
             self.log.info('Creating folder %s in repository %s',
-                          repos_path, repos)
-            svn_writer.make_dir(repos_path, commit_msg)
+                          create_path, reponame)
+            svn_writer.make_dir(create_path, commit_msg)
         
         finally:
+            repos.sync()
             self.log.debug('Closing repository')
             repos.close()
         

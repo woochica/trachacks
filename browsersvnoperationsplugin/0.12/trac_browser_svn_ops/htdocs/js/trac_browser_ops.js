@@ -91,25 +91,20 @@ $(function() {
     
 	$('.bsop_move, .bsop_delete').click(function() {
 	    var mvdel_op = '';
-	    var mvdel_name = $(this).closest('td.name') 
-                                .find('a.dir, a.file').text();
-        var mvdel_base = $('#bsop_mvdel_base').val();
-        var mvdel_path = mvdel_base.replace(/\/$/, '')
-                                   .concat('/', mvdel_name);
-        var mvdel_dlg = $('#dialog-bsop_move_delete');
+	    var mvdel_src_name = $(this).closest('td.name') 
+                                    .find('a.dir, a.file').text();
         
         // Is this a move or a delete? Show the destination field
         if ($(this).hasClass('bsop_move')) {
             mvdel_op = 'move';
-            $('#bsop_mvdel_dest').show();
+            $('#bsop_mvdel_dst_name').show();
         } else if ($(this).hasClass('bsop_delete')) {
             mvdel_op = 'delete';
-            $('#bsop_mvdel_dest').hide();
+            $('#bsop_mvdel_dst_name').hide();
         }
         
         $('#bsop_mvdel_op').val(mvdel_op);
-        $('#bsop_mvdel_base').val(mvdel_base);
-        $('#bsop_mvdel_path').val(mvdel_path);
+        $('#bsop_mvdel_src_name').val(mvdel_src_name);
         
         $('#dialog-bsop_move_delete').dialog('open');
 	});

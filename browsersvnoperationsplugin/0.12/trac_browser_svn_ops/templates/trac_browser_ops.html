@@ -68,8 +68,8 @@
   <form id="bsop_move_delete_form" method="post"
       class="bsop_form">
   <fieldset>
-    <label for="bsop_mvdel_dest">Destination</label>
-    <input type="text" id="bsop_mvdel_dest" name="bsop_mvdel_dest"
+    <label for="bsop_mvdel_dst_name">Destination</label>
+    <input type="text" id="bsop_mvdel_dst_name" name="bsop_mvdel_dst_name"
         value=""  class="bsop_ctl"/>
     <label for="bsop_mvdel_commit">Commit message</label>
     <textarea name="bsop_mvdel_commit" id="bsop_mvdel_commit"
@@ -78,9 +78,7 @@
   <fieldset style="display: none;">
     <input type="hidden" id="bsop_mvdel_op" name="bsop_mvdel_op" 
         value="" />
-    <input type="hidden" id="bsop_mvdel_base" name="bsop_mvdel_base"
-        value="${bsop_base_path}" />
-    <input type="hidden" id="bsop_mvdel_path" name="bsop_mvdel_path" 
+    <input type="hidden" id="bsop_mvdel_src_name" name="bsop_mvdel_src_name" 
         value="" />
   </fieldset>
   </form>
