@@ -107,8 +107,9 @@ class TracBrowserOps(Component):
         try:
             repos_path = repos.normalize_path('/'.join([path, filename]))
             self.log.debug('Writing file %s to %s in %s', 
-                           filename, repos_path, repos)
-            svn_writer = SubversionWriter(repos)
+                           filename, repos_path, reponame)
+            svn_writer = SubversionWriter(repos, req.authname)
+            
             rev = svn_writer.put_content(repos_path, file_data, filename,
                                          commit_msg)
         finally:
@@ -133,7 +134,7 @@ class TracBrowserOps(Component):
         try:
             src_path = repos.normalize_path('/'.join([path, src_name]))
             dst_path = repos.normalize_path('/'.join([path, dst_name]))
-            svn_writer = SubversionWriter(repos)
+            svn_writer = SubversionWriter(repos, req.authname)
             
             if operation == 'delete':
                 self.log.info('Deleting %s in repository %s',
@@ -165,7 +166,7 @@ class TracBrowserOps(Component):
         reponame, repos, path = self._get_repository(req)
         try:
             create_path = repos.normalize_path('/'.join([path, create_name]))
-            svn_writer = SubversionWriter(repos)
+            svn_writer = SubversionWriter(repos, self.authname)
 
             self.log.info('Creating folder %s in repository %s',
                           create_path, reponame)

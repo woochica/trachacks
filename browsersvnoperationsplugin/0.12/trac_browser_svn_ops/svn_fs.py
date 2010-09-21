@@ -8,11 +8,10 @@ from trac.versioncontrol.svn_fs import SubversionRepository, SubversionNode
 from trac.versioncontrol.cache import CachedRepository
 
 class SubversionWriter(object):
-    def __init__(self, repos):
+    def __init__(self, repos, username):
         self.repos = repos
         self.log = repos.log
-        # TODO Hardcoded username
-        self.username = 'alex'
+        self.username = username
         
     def put_content(self, repos_path, content, filename, commit_msg):
         from svn import core, fs, repos
