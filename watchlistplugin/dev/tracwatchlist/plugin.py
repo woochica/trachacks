@@ -503,11 +503,6 @@ class WatchlistPlugin(Component):
             else:
                 req.redirect(req.href('watchlist'))
 
-        new_res = []
-        del_res = []
-        alw_res = []
-        err_res = []
-        err_pat = []
         redirectback = options['stay_at_resource'] and not onwatchlistpage
         if action == "watch":
             handler = self.realm_handler[realm]
@@ -519,7 +514,6 @@ class WatchlistPlugin(Component):
             key=handler.get_sort_key(realm)
             wldict['alw_res'] = sorted(alw_res, cmp=comp, key=key)
             wldict['new_res'] = sorted(new_res, cmp=comp, key=key)
-            wldict['err_res'] = sorted(err_res, cmp=comp, key=key)
 
             if new_res:
                 self.watch(realm, new_res, user, db=db)
@@ -545,7 +539,6 @@ class WatchlistPlugin(Component):
             err_res = reses.difference(alw_res)
             comp=handler.get_sort_cmp(realm)
             key=handler.get_sort_key(realm)
-            wldict['alw_res'] = sorted(alw_res, cmp=comp, key=key)
             wldict['del_res'] = sorted(del_res, cmp=comp, key=key)
             wldict['err_res'] = sorted(err_res, cmp=comp, key=key)
 

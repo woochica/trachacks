@@ -136,6 +136,17 @@
         <div py:if="show_messages and action"
           py:choose="action" id="message-box">
           <py:when test="'watch'">
+                <div class="system-message" id="error" py:if="not new_res and not alw_res" py:with="resid = isinstance(resid,(tuple,list)) and ','.join(resid) or resid">
+                    <h3 class="system-message-title">No match</h3>
+                    <div class="no_new_res">
+                          <p i18n:msg="resid,realm">
+                            The given pattern(s) <em>${resid}</em>
+                            did not matched any <span>${get_label(realm,0)}</span>.
+                          </p>
+                    </div>
+                    <p class="ackmsg">${ackmsg()}</p>
+                </div>
+
                 <div class="system-message" id="error" py:if="err_res">
                     <h3 class="system-message-title">Not found</h3>
                     <div py:if="err_res" class="err_res" py:with="name = err_res[0]">
@@ -197,6 +208,17 @@
             </py:when>
 
             <py:when test="'unwatch'">
+                <div class="system-message" id="error" py:if="not del_res and not err_res" py:with="resid = isinstance(resid,(tuple,list)) and ','.join(resid) or resid">
+                    <h3 class="system-message-title">No match</h3>
+                    <div class="no_new_res">
+                          <p i18n:msg="resid,realm">
+                            The given pattern(s) <em>${resid}</em>
+                            did not matched any <span>${get_label(realm,0)}</span>.
+                          </p>
+                    </div>
+                    <p class="ackmsg">${ackmsg()}</p>
+                </div>
+
                 <div class="system-message" id="notice"
                   py:if="del_res" py:with="name=del_res[0]">
                     <h3 class="system-message-title">Removed from Watchlist</h3>
