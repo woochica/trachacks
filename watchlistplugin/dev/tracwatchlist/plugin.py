@@ -479,7 +479,7 @@ class WatchlistPlugin(Component):
                       about this resource.
                       """
                     )
-                req.redirect(req.href(realm,resids[0]))
+                req.redirect(req.href(realm,resid))
             if async:
                 req.send("",'text/plain', 200)
             else:
@@ -496,7 +496,7 @@ class WatchlistPlugin(Component):
                       change notifications about this resource.
                       """
                     )
-                req.redirect(req.href(realm,resids[0]))
+                req.redirect(req.href(realm,resid))
                 raise RequestDone
             if async:
                 req.send("",'text/plain', 200)
