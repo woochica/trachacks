@@ -63,11 +63,10 @@ class TracBrowserOps(Component):
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         if req.path_info.startswith('/browser') and req.method == 'POST':
-            self.log.debug('Intercepting browser POST req %s', 
-                           req.args.keys())
+            self.log.debug('Intercepting browser POST')
             
-            path = req.args['path']
-            
+            # Dispatch to private handlers based on which form submitted
+            # The handlers perform a redirect, so don't return the handler
             if 'bsop_upload_file' in req.args:
                 self._upload_request(req, handler)
             
