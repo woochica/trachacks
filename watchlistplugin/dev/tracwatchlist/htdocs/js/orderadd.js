@@ -44,7 +44,7 @@ $(document).ready(function(){
     wlprefsubmit();
     return true;
   });
-  $("#preferences form :reset").click(function(){
+  $("#preferences form input[type=reset]").click(function(){
     $(".orderadd select").each(function(){
         $(this).empty();
         $(this).append( $(this).data('original options') );
