@@ -89,6 +89,7 @@ class WatchlistDataBaseUpgrader(Component):
         self.create_watchlist_table(db)
         self.create_settings_table(db)
         self.set_version(self.latest_version, db)
+        self.upgrade_manual()
         return
 
 
@@ -372,5 +373,14 @@ class WatchlistDataBaseUpgrader(Component):
 
         self.log.info("Upgraded 'watchlist_settings' table to version 4")
         return
+
+
+    def upgrade_manual(self):
+        import pkg_resources
+        from trac.wiki.admin import WikiAdmin
+        self.env[WikiAdmin].load_pages(
+            pkg_resources.resource_filename('tracwatchlist', 'manual'),
+            ignore=[], create_only=[])
+
 
 # EOF
