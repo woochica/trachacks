@@ -18,8 +18,6 @@ class SubversionWriter(object):
         
         log=self.log
         
-        # TODO Permissions
-
         svn_repos = self._get_libsvn_handle()
                 
         fs_path_utf8 = repos_path.encode('utf-8')

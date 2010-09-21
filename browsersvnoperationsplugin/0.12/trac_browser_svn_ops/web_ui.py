@@ -1,5 +1,6 @@
 from pkg_resources import resource_filename
 from trac.core import *
+from trac.perm import IPermissionRequestor
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.web.chrome import ITemplateProvider, \
                             add_meta, add_script, add_stylesheet, add_ctxtnav, \
@@ -13,7 +14,8 @@ from contextmenu.contextmenu import ISourceBrowserContextMenuProvider
 from trac_browser_svn_ops.svn_fs import SubversionWriter
 
 class TracBrowserOps(Component):
-    implements(ITemplateProvider, ITemplateStreamFilter, IRequestFilter)
+    implements(ITemplateProvider, ITemplateStreamFilter, IRequestFilter,
+               IPermissionRequestor)
     
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
@@ -26,9 +28,14 @@ class TracBrowserOps(Component):
         '''
         return [resource_filename(__name__, 'templates')]
     
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['BROWSEROPS_ADMIN']
+        
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == 'browser.html':
+        if filename == 'browser.html' \
+                and req.perm.has_permission('BROWSEROPS_ADMIN'):
             self.log.debug('Extending TracBrowser')
             
             add_stylesheet(req, 
@@ -63,6 +70,8 @@ class TracBrowserOps(Component):
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         if req.path_info.startswith('/browser') and req.method == 'POST':
+            req.perm.require('BROWSEROPS_ADMIN')
+            
             self.log.debug('Intercepting browser POST')
             
             # Dispatch to private handlers based on which form submitted
