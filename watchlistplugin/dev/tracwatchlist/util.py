@@ -39,6 +39,29 @@ except ImportError:
         return trac_format_datetime(t, format, tzinfo)
 
 try:
+    from  babel.dates        import  get_datetime_format, get_date_format, get_time_format, DateTimePattern
+    def datetime_format(format='medium', locale=LC_TIME):
+        time_format = unicode(get_time_format(format, locale))\
+                .replace('HH','%H')\
+                .replace('h','%l')\
+                .replace('a','%p')\
+                .replace('mm','%i')\
+                .replace('ss','%S')
+        date_format = unicode(get_date_format(format, locale))\
+                .replace('yyyy','%Y')\
+                .replace('MMM','%b')\
+                .replace('MM','%m')\
+                .replace('dd','%X')\
+                .replace('d','%e')\
+                .replace('%X','%d')
+        return get_datetime_format(format, locale)\
+                .replace('{0}', time_format)\
+                .replace('{1}', date_format)
+except ImportError:
+    def datetime_format(format='medium', locale=LC_TIME):
+        return u"%Y-%m-%d %H:%i:%s"
+
+try:
     from  trac.util.datefmt  import  to_utimestamp
     def current_timestamp():
         return to_utimestamp( datetime.now(utc) )

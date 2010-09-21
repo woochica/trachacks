@@ -298,6 +298,8 @@ jQuery(document).ready(function() {
   });
   $(resetfilters).remove();
 
+  var format = $('#datetime_format').val();
+  console.log(format);
 
   /* Per-column filters */
   $("table.watchlist").each( function () {
@@ -342,9 +344,9 @@ jQuery(document).ready(function() {
             oTable.fnDraw();
         });
         $(this).find("input[type=text]").each( function () {
-            $(this).AnyTime_picker({ format: "%Y-%m-%d %H:%i:%s" });
+            $(this).AnyTime_picker({ format: format });
             $(this).change(function(){
-                var c = new AnyTime.Converter({ format: "%Y-%m-%d %H:%i:%s" });
+                var c = new AnyTime.Converter({ format: format });
                 $(this).next("input[type=hidden]").val( c.parse( $(this).val() ).getTime() / 1000 );
                 oTable.fnDraw();
             });

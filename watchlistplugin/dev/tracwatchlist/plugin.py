@@ -49,7 +49,8 @@ from  trac.mimeview.api      import  Context
 
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
-from  tracwatchlist.util     import  ensure_string, ensure_iter,\
+from  tracwatchlist.util     import  ensure_string, ensure_iter, LC_TIME,\
+                                     datetime_format,\
                                      format_datetime, current_timestamp
 
 class UserOption(object):
@@ -590,6 +591,8 @@ class WatchlistPlugin(Component):
         wldict['listoptions'] = settings['listoptions']
         wldict['listoptions_doc'] = settings['listoptions_doc']
         wldict['wlgettext'] = gettext
+        locale = getattr( req, 'locale', LC_TIME)
+        wldict['datetime_format'] = datetime_format(locale=locale)
         wldict['_'] = _
         wldict['t_'] = t_
         def get_label(realm, n_plural=1):

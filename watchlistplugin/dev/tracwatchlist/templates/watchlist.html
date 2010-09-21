@@ -76,6 +76,7 @@
   <body>
     <div id="content" class="watchlist">
         <input style="display:none;" type="button" id="resetfilters" name="resetfilters" value="${_('Reset all filters')}"/>
+        <input type="hidden" id="datetime_format" name="datetime_format" value="${datetime_format}"/>
         <py:def function="datetimefilter(colname,id=None)">
           <span id="$id" class="datetimefilter">
             <input py:if="colname == 'changetime'" type="checkbox" name="sincelastvisit" value=""
