@@ -196,7 +196,7 @@ def group_posts_by_month(posts):
     grouped_list = []
     count = len(posts)
     if not count:
-        return [()]
+        return []
     # Get starting period from first post
     current_period = datetime.datetime(
                 posts[0][2].year, posts[0][2].month, 1)
@@ -373,7 +373,8 @@ class BlogPost(object):
         
     def save(self, version_author, version_comment=u'', verify_only=False):
         """ Saves the post as a new version in the database.
-        Returns True if saved, False if aborted for some reason.
+        Returns [] if saved without warnings, or a list of warnings
+        if any errors occured.
         As this does not check for changes, the common usage is:
             if the_post.update_fields(fields_dict):
                 the_post.save('the_user', 'My view on things.')

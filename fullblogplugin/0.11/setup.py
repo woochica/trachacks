@@ -35,4 +35,7 @@ setup(name='TracFullBlogPlugin',
                                       'htdocs/js/*.js',
                                       'templates/*.html',
                                       'templates/*.rss', ]},
+      exclude_package_data={'': ['tests/*']},
+      test_suite = 'tracfullblog.tests.test_suite',
+      tests_require = [],
       install_requires = [])

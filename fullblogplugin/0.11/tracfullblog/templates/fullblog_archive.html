@@ -25,12 +25,10 @@
 
       <div id="blog-main">
         <h1>Blog Archive</h1>
-        <p py:if="not blog_archive[0]">No blog posts.</p>
-        <py:if test="blog_archive[0]">
-          <div py:for="period, posts in blog_archive" py:strip="True">
-            ${render_monthlist(to_unicode("%s %d" % (blog_month_names[period.month-1], period.year)), posts)}
-          </div>
-        </py:if>
+        <p py:if="not blog_archive">No blog posts.</p>
+        <div py:for="period, posts in blog_archive" py:strip="True">
+          ${render_monthlist(to_unicode("%s %d" % (blog_month_names[period.month-1], period.year)), posts)}
+        </div>
       </div>
 
     </div>

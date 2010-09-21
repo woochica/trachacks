@@ -46,8 +46,7 @@ schema = [
 def to_sql(env, table):
     """ Convenience function to get the to_sql for the active connector."""
     from trac.db.api import DatabaseManager
-    dm = env.components[DatabaseManager]
-    dc = dm._get_connector()[0]
+    dc = DatabaseManager(env)._get_connector()[0]
     return dc.to_sql(table)
 
 def create_tables(env, db):
