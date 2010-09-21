@@ -8,7 +8,7 @@
       py:strip="">
       <fieldset>
       <legend>${t_("General")}</legend>
-      <py:for each="k in booloptions.keys()">
+      <py:for each="k in booloptions_order">
           <input type="checkbox" name="booloptions" id="${k}" value="${k}"
                  checked="${booloptions[k] and 'checked' or None}" />
           <label for="${k}">${booloptions_doc[k]}</label>
@@ -17,7 +17,7 @@
       </fieldset>
       <fieldset>
       <legend>Watchlist sections</legend>
-      <py:for each="k in listoptions.keys()">
+      <py:for each="k in listoptions_order">
           <input type="text" name="${k}" id="${k}"
                  value="${','.join(listoptions[k])}" />
           <label for="${k}">${listoptions_doc[k]}</label>

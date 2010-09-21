@@ -81,6 +81,7 @@ class WatchlistPlugin(Component):
     implements( IRequestHandler, IRequestFilter, ITemplateProvider )
 
     bool_options = [
+        BoolOption('watchlist', 'attachment_changes'                   , True , doc=N_("Take attachment changes into account")),
         BoolOption('watchlist', 'notifications'                        , False, doc=N_("Notifications")),
         BoolOption('watchlist', 'display_notify_navitems'              , False, doc=N_("Display notification navigation items")),
         BoolOption('watchlist', 'display_notify_column'                , True , doc=N_("Display notification column in watchlist tables")),
@@ -94,7 +95,6 @@ class WatchlistPlugin(Component):
         BoolOption('watchlist', 'dynamic_tables'                       , True , doc=N_("Dynamic watchlist tables")),
         BoolOption('watchlist', 'datetime_picker'                      , True , doc=N_("Provide date/time picker application")),
         BoolOption('watchlist', 'individual_column_filtering'          , True , doc=N_("Individual column filtering")),
-        BoolOption('watchlist', 'attachment_changes'                   , True , doc=N_("Take attachment changes into account")),
     ]
 
     list_options = [
@@ -144,12 +144,13 @@ class WatchlistPlugin(Component):
             ( option.name, self.config.getbool('watchlist',option.name,option.default) )
                 for option in self.bool_options ])
         settings['booloptions_doc'] = dict([ (option.name,gettext(option.__doc__)) for option in self.bool_options ])
+        settings['booloptions_order'] = [ option.name for option in self.bool_options ]
         settings['listoptions'] = dict([
             ( option.name, self.config.getlist('watchlist',option.name,option.default) )
                 for option in self.list_options ])
         settings['listoptions_doc'] = dict([ (option.name,gettext(option.__doc__)) for option in self.list_options ])
+        settings['listoptions_order'] = [ option.name for option in self.list_options ]
         usersettings = self._get_user_settings(user)
-        self.log.debug("WL usersettings = " + unicode(usersettings))
         if 'booloptions' in usersettings:
             settings['booloptions'].update( usersettings['booloptions'] )
             del usersettings['booloptions']
@@ -158,7 +159,6 @@ class WatchlistPlugin(Component):
                 settings['listoptions'][l] = usersettings[l]
                 del usersettings[l]
         settings.update( usersettings )
-        self.log.debug("WL settings = " + unicode(settings))
         return settings
 
 
@@ -589,8 +589,10 @@ class WatchlistPlugin(Component):
         wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
         wldict['booloptions'] = options
         wldict['booloptions_doc'] = settings['booloptions_doc']
+        wldict['booloptions_order'] = settings['booloptions_order']
         wldict['listoptions'] = settings['listoptions']
         wldict['listoptions_doc'] = settings['listoptions_doc']
+        wldict['listoptions_order'] = settings['listoptions_order']
         wldict['wlgettext'] = gettext
         locale = getattr( req, 'locale', LC_TIME)
         wldict['datetime_format'] = datetime_format(locale=locale)
