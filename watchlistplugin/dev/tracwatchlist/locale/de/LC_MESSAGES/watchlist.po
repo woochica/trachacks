@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-08-31 21:31+0200\n"
-"PO-Revision-Date: 2010-09-21 13:36+0100\n"
+"PO-Revision-Date: 2010-09-21 13:39+0100\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -93,11 +93,11 @@ msgstr "Anwendung für Auswahl von Datum und Uhrzeit zur Verfügung stellen"
 
 #: tracwatchlist/plugin.py:97
 msgid "Individual column filtering"
-msgstr "Spaltenweise filtern"
+msgstr "Filter für einzelne Tabellenspalten bereitstellen"
 
 #: tracwatchlist/plugin.py:101
 msgid "Display only the given watchlist sections in the given order"
-msgstr "Nur die folgenden Listenabschnitte in der gegebenen Reihenfolge anzeigen"
+msgstr "Nur diese Listenabschnitte in der gegebenen Reihenfolge anzeigen"
 
 #. TRANSLATOR: Link part of
 #. "Please %(log_in)s to view or change your watchlist"
