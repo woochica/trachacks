@@ -207,6 +207,12 @@ $.fn.dataTableExt.afnFiltering.push(
 jQuery(document).ready(function() {
   // Copy reset filter button (hidden in HTML code to avoid JS localisation)
   var resetfilters = $('#resetfilters').removeAttr('Id').removeAttr('style').detach();
+  // Enable 'Delete Cookies' button
+  $("#preferences form #deletecookies").click(function(){
+      wldeletecookies();
+      wldisablecookies();
+      window.location.reload();
+  });
   // Dynamic Table
   $("table.watchlist").each(function(){
     var table = this;
