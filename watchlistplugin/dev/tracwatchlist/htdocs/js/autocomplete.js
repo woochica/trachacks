@@ -56,15 +56,18 @@ jQuery(document).ready(function() {
     $("#tickets .remfromwatch input[name=resid]")
         .autocomplete("./watchlist?action=search&realm=ticket&group=watched", options);
     ///
-    //// For table filters:
+    //// For table filters: KeyUp event is triggered when user selects an entry
+    //// with the mouse to update the filter
     options.multiple = false;
     // Autocomplete Wiki Names
     $("#wikis tfoot th.name input")
-        .autocomplete("./watchlist?action=search&realm=wiki&group=watched", options);
+        .autocomplete("./watchlist?action=search&realm=wiki&group=watched", options)
+        .result(function(){ $(this).keyup(); });
     ///
     // Autocomplete Ticket Ids
     $("#tickets tfoot th.id input")
-        .autocomplete("./watchlist?action=search&realm=ticket&group=watched", options);
+        .autocomplete("./watchlist?action=search&realm=ticket&group=watched", options)
+        .result(function(){ $(this).keyup(); });
     ///
 });
 
