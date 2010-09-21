@@ -103,7 +103,7 @@ function wldeleterow(tr, table) {
 }
 
 // Taken from http://datatables.net/forums/comments.php?DiscussionID=997
-// Changes: TODO: also reset global filter
+// Changes: also reset global filter
 function fnResetAllFilters(oTable) {
     var oSettings = oTable.fnSettings();
     if (oSettings) {
@@ -116,40 +116,24 @@ function fnResetAllFilters(oTable) {
 }
 ///
 
-// Cookie Code taken from http://www.quirksmode.org/js/cookies.html
-// 15th Sep 2010
-// Changes: added path argument
-function createCookie(name,value,days,path) {
-    if (days) {
-        var date = new Date();
-        date.setTime(date.getTime()+(days*24*60*60*1000));
-        var expires = "; expires="+date.toGMTString();
+// Initialise main cookie.
+// If stored cookie is from an old version delete it.
+var TRACWATCHLIST_COOKIE_VERSION = 1;
+var maincookie = "TracWatchlistPlugin";
+$.Jookie.Initialise(maincookie, 90*24*60);
+if (!($.Jookie.Get(maincookie, "version") == TRACWATCHLIST_COOKIE_VERSION)) {
+    var cookies = $.Jookie.Get(maincookie, "cookies");
+    if (typeof(cookies) == 'Object') {
+        for (cookie in cookies) {
+            $.Jookie.Delete(cookie);
+        }
     }
-    else var expires = "";
-    if ( !path ) {
-        path = "";
-    }
-    document.cookie = name+"="+value+expires+"; path=" + path + '/';
+    $.Jookie.Delete(maincookie);
+    $.Jookie.Initialise(maincookie, 90*24*60);
+    $.Jookie.Set(maincookie, "version", TRACWATCHLIST_COOKIE_VERSION);
+    $.Jookie.Set(maincookie, "cookies", new Object());
 }
-
-function readCookie(name) {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for(var i=0;i < ca.length;i++) {
-        var c = ca[i];
-        while (c.charAt(0)==' ')
-            c = c.substring(1,c.length);
-        if (c.indexOf(nameEQ) == 0)
-            return c.substring(nameEQ.length,c.length);
-    }
-    return null;
-}
-
-function eraseCookie(name,path) {
-    createCookie(name,"",-1,path);
-}
-/// End of Cookie Code
-
+///
 
 jQuery.fn.dataTableExt.oSort['html-numeric-asc']  = function(x,y) {
     var a = parseFloat( x.replace(/<[^>]+>/g,'').replace(/^\s*#/,'') );
@@ -213,12 +197,28 @@ jQuery(document).ready(function() {
       wldisablecookies();
       window.location.reload();
   });
+
+  var cookies = $.Jookie.Get(maincookie, "cookies");
+  if (typeof(cookies) != 'Object') {
+    cookies = new Object();
+  }
+
   // Dynamic Table
   $("table.watchlist").each(function(){
     var table = this;
+    var tid = $(table).attr('id');
+
+    // Init cookie for this table.
+    // Update list of table cookies in main cookie.
+    var cookie = "TracWatchlistPlugin-table#" + tid;
+    $.Jookie.Initialise(cookie, 90*24*60);
+    cookies[cookie] = 1;
+
     // Disabled sorting of marked columns (unwatch, notify, etc.)
+    var asColumnNames = [];
     var aoColumns = [];
     $(this).find('thead th').each( function (i) {
+      asColumnNames.push( String($(this).text()).replace(/^\s+|\s+$/g, '') );
       var hash = new Object();
       if ( $(this).hasClass( 'hidden' ) ) {
         hash["bVisible"] = false;
@@ -238,6 +238,15 @@ jQuery(document).ready(function() {
       }
       aoColumns.push( hash );
     });
+    // Check if columns (i.e. their order) changed:
+    if (JSON.stringify(asColumnNames) != JSON.stringify($.Jookie.Get(cookie, "asColumnNames", asColumnNames))) {
+        // If so delete cookie (and recreate it) to wipe the outdated settings:
+        wldeletecookies("table#" + tid);
+        $.Jookie.Initialise(cookie, 90*24*60);
+    }
+    // Store column names in cookie to check at next reload
+    $.Jookie.Set(cookie, "asColumnNames", asColumnNames);
+
     /* // Fixed width for name column (nonfunctional)
     if (aoColumns[0] == null) {
       aoColumns[0] = {};
@@ -302,6 +311,7 @@ jQuery(document).ready(function() {
     });
     $(table).parent().find("div.resetfilters").append( rfb );
   });
+  $.Jookie.Set(maincookie, "cookies", cookies);
   $(resetfilters).remove();
 
   var use_datetime_picker = false;
@@ -328,6 +338,7 @@ jQuery(document).ready(function() {
     var table  = this;
     var oTable = $(this).dataTable();
     var tid = $(table).attr('id');
+    var cookie = "TracWatchlistPlugin-table#" + tid;
 
     /* Per-column filter input fields in footer */
     $(this).find("tfoot input.filter").keyup( function () {
@@ -349,7 +360,7 @@ jQuery(document).ready(function() {
     /* Restore special numeric filters */
     $(table).find("tfoot input.numericfilter").each(function () {
         var name = tid + '/' + $(this).attr('name');
-        var value = readCookie(name);
+        var value = $.Jookie.Get(cookie, name);
         if (value) {
             $(this).val(value);
             $(this).data('filterfunction', wlgetfilterfunctions( value ));
@@ -389,7 +400,7 @@ jQuery(document).ready(function() {
         dtid = $(this).attr('id');
         $(this).find("input").each(function(){
             var name = dtid + '/' + $(this).attr('name');
-            var value = readCookie(name);
+            var value = $.Jookie.Get(cookie, name);
             if (value) {
               if ($(this).is("input[type=checkbox]")) {
                 $(this).attr('checked', value =='checked' );
@@ -438,10 +449,12 @@ function wlstorespecialfilters(tables) {
     $(tables).each( function () {
         table = this;
         var tid = $(table).attr('id');
+        var cookie = "TracWatchlistPlugin-table#" + tid
+
         $(table).find("tfoot input.numericfilter").each(function () {
             var value = $(this).val();
             var name = tid + '/' + $(this).attr('name');
-            createCookie(name,value,90,window.location.pathname);
+            $.Jookie.Set(cookie, name, value);
         });
         $(table).find(".datetimefilter").each(function(){
             var dtid = $(this).attr('id');
@@ -451,7 +464,7 @@ function wlstorespecialfilters(tables) {
                 if ($(this).is("input[type=checkbox]")) {
                     value = $(this).is(":checked") ? 'checked' : '';
                 }
-                createCookie(name,value,90,window.location.pathname);
+                $.Jookie.Set(cookie, name, value);
             });
         });
     });
@@ -460,27 +473,16 @@ function wlstorespecialfilters(tables) {
 function wldeletecookies(tables) {
     if (!tables) { tables = "table.watchlist"; }
     $(tables).each( function () {
-        // Delete all datetime filter cookies
-        $(this).find(".datetimefilter").each(function(){
-            dtid = $(this).attr('id');
-            $(this).find("input").each(function(){
-                var name = dtid + '/' + $(this).attr('name');
-                eraseCookie(name,window.location.pathname);
-            });
-        });
-        // Delete all numeric filter cookies
         var tid = $(this).attr('id');
-        $(this).find("tfoot input.numericfilter").each(function () {
-            var name = tid + '/' + $(this).attr('name');
-            eraseCookie(name,window.location.pathname);
-        });
+        var cookie = "TracWatchlistPlugin-table#" + tid;
+        $.Jookie.Delete(cookie);
         // Delete all dataTable cookies
         // This might break if dataTables changes the internal names
         // of the cookie (last part of path is attached at the moment).
         // Some code copied from dataTables.js.
         var aParts = window.location.pathname.split('/');
         var name = 'tracwatchlist_' + tid + '_' + aParts.pop().replace(/[\/:]/g,"").toLowerCase();
-        eraseCookie(name,aParts.join('/'));
+        document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=' + aParts.join('/')+"/";
     });
 };
 
