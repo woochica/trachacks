@@ -606,6 +606,7 @@ class WatchlistPlugin(Component):
                 cols = wldict['default_fields'].get(r,[])
             wldict['active_fields'][r] = cols
 
+        add_ctxtnav(req, t_("Help"), href=req.href.wiki('WatchlistManual', req.session.get('language', None)))
         for xrealm in wldict['realms']:
             xhandler = self.realm_handler[xrealm]
             if xhandler.has_perm(xrealm, req.perm):
