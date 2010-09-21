@@ -77,6 +77,16 @@
     <div id="content" class="watchlist">
         <input style="display:none;" type="button" id="resetfilters" name="resetfilters" value="${_('Reset all filters')}"/>
         <input type="hidden" id="datetime_format" name="datetime_format" value="${datetime_format}"/>
+        <input type="hidden" id="labelHour" name="labelHour" value="${_('Hour')}"/>
+        <input type="hidden" id="labelMinute" name="labelMinute" value="${_('Minute')}"/>
+        <input type="hidden" id="labelSecond" name="labelSecond" value="${_('Second')}"/>
+        <input type="hidden" id="labelYear" name="labelYear" value="${_('Year')}"/>
+        <input type="hidden" id="labelMonth" name="labelMonth" value="${_('Month')}"/>
+        <input type="hidden" id="labelDayOfMonth" name="labelDayOfMonth" value="${_('Day of Month')}"/>
+        <input type="hidden" id="labelTimeZone" name="labelTimeZone" value="${_('Time Zone')}"/>
+        <input type="hidden" id="labelTitle" name="labelTitle" value="${_('Select a Date and Time')}"/>
+        <input type="hidden" id="monthAbbreviations" name="monthAbbreviations" value="${_('Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec')}" />
+        <input type="hidden" id="dayAbbreviations" name="dayAbbreviations" value="${_('Sun,Mon,Tue,Wed,Thu,Fri,Sat')}" />
         <py:def function="datetimefilter(colname,id=None)">
           <span id="$id" class="datetimefilter">
             <input py:if="colname == 'changetime'" type="checkbox" name="sincelastvisit" value=""

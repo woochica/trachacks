@@ -298,8 +298,21 @@ jQuery(document).ready(function() {
   });
   $(resetfilters).remove();
 
-  var format = $('#datetime_format').val();
-  console.log(format);
+  var datetime_format = $('#datetime_format').val();
+  var datetime_picker_options = {
+      'format' : datetime_format,
+      'labelHour' : $('#labelHour').val(),
+      'labelMinute' : $('#labelMinute').val(),
+      'labelSecond' : $('#labelSecond').val(),
+      'labelYear' : $('#labelYear').val(),
+      'labelMonth' : $('#labelMonth').val(),
+      'labelDayOfMonth' : $('#labelDayOfMonth').val(),
+      'labelTimeZone' : $('#labelTimeZone').val(),
+      'labelTitle' : $('#labelTitle').val(),
+      'monthAbbreviations' : $('#monthAbbreviations').val().split(','),
+      'dayAbbreviations' : $('#dayAbbreviations').val().split(','),
+  };
+  console.log(datetime_picker_options);
 
   /* Per-column filters */
   $("table.watchlist").each( function () {
@@ -344,9 +357,9 @@ jQuery(document).ready(function() {
             oTable.fnDraw();
         });
         $(this).find("input[type=text]").each( function () {
-            $(this).AnyTime_picker({ format: format });
+            $(this).AnyTime_picker(datetime_picker_options);
             $(this).change(function(){
-                var c = new AnyTime.Converter({ format: format });
+                var c = new AnyTime.Converter({ format: datetime_format });
                 $(this).next("input[type=hidden]").val( c.parse( $(this).val() ).getTime() / 1000 );
                 oTable.fnDraw();
             });
