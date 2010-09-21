@@ -48,6 +48,7 @@ setup(
             'htdocs/css/*.css',
             'htdocs/js/*.js',
             'locale/*/LC_MESSAGES/*.mo',
+            'manual/*',
         ],
     },
     zip_safe     = False,
