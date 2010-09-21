@@ -22,7 +22,7 @@
       rel="stylesheet" />
     <meta py:if="version" name="ROBOTS" content="NOINDEX, NOFOLLOW" />
     <script src="${href.chrome('watchlist','js','orderadd.js')}" type="text/javascript"></script>
-    <script type="text/javascript" 
+    <script type="text/javascript" py:if="booloptions['dynamic_tables']"
       src="${href.chrome('watchlist','js','jquery.dataTables.min.js')}">
     </script>
     <script type="text/javascript" 
@@ -38,7 +38,7 @@
       src="${href.chrome('watchlist','js','dynamictables.js')}"></script>
     <script type="text/javascript" 
       src="${href.chrome('common','js','folding.js')}"></script>
-    <script type="text/javascript" 
+    <script type="text/javascript" py:if="booloptions['autocomplete_inputs']"
       src="${href.chrome('watchlist','js','jquery.autocomplete.js')}"></script>
     <py:def function="link(realm, resid, text='')">
         <a href="${href(realm,resid)}">${text or ":".join([realm,resid])}</a>

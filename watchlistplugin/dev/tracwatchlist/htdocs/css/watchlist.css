@@ -180,3 +180,7 @@ input#resettodefault {
   margin-left: 5em;
 }
 
+.hidden {
+    display: none;
+}
+
