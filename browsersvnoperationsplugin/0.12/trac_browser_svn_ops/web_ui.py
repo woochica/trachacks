@@ -183,7 +183,7 @@ class TracBrowserOps(Component):
         reponame, repos, path = self._get_repository(req)
         try:
             create_path = repos.normalize_path('/'.join([path, create_name]))
-            svn_writer = SubversionWriter(repos, self.authname)
+            svn_writer = SubversionWriter(repos, req.authname)
 
             self.log.info('Creating folder %s in repository %s',
                           create_path, reponame)
