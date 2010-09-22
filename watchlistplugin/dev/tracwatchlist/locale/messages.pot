@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.6\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-22 00:54+0100\n"
+"POT-Creation-Date: 2010-09-22 01:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -301,6 +301,14 @@ msgstr ""
 
 #: tracwatchlist/templates/watchlist.html:96
 msgid "Only show resources which changed since they got last visited"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:98
+msgid "from date/time"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist.html:100
+msgid "to date/time"
 msgstr ""
 
 #: tracwatchlist/templates/watchlist.html:138

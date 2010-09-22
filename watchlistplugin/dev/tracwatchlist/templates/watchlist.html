@@ -95,9 +95,9 @@
           <span id="$id" class="datetimefilter">
             <input py:if="colname == 'changetime'" type="checkbox" name="sincelastvisit" value=""
                 title="${_('Only show resources which changed since they got last visited')}"
-            /><input id="${id}_from" name="from-datetime" type="text" size="4" value="from"
+            /><input id="${id}_from" name="from-datetime" type="text" size="4" value="${_('from date/time')}"
             /><input name="from-datetime-ts" type="hidden" 
-            />-<input id="${id}_to" name="to-datetime" type="text" size="4" value="to"
+            />-<input id="${id}_to" name="to-datetime" type="text" size="4" value="${_('to date/time')}"
             /><input name="to-datetime-ts" type="hidden" />
           </span>
         </py:def>

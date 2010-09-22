@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: TracWatchlistPlugin 0.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
 "POT-Creation-Date: 2010-08-31 21:31+0200\n"
-"PO-Revision-Date: 2010-09-22 00:54+0100\n"
+"PO-Revision-Date: 2010-09-22 01:22+0100\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -320,6 +320,14 @@ msgid "Only show resources which changed since they got last visited"
 msgstr ""
 "Nur Dokumente anzeigen die sich geändert haben seit sie zuletzt besucht "
 "wurden"
+
+#: tracwatchlist/templates/watchlist.html:98
+msgid "from date/time"
+msgstr "von Datum/Uhrzeit"
+
+#: tracwatchlist/templates/watchlist.html:100
+msgid "to date/time"
+msgstr "bis Datum/Uhrzeit"
 
 #: tracwatchlist/templates/watchlist.html:138
 msgid "Not found"
