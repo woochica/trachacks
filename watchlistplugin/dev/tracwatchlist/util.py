@@ -90,55 +90,82 @@ def ldml_patterns( ldml_pattern ):
     return patterns
 
 _PATTERN_TRANSLATION = {
-    'HH'   : '%H',
-    'h'    : '%l',
-    'a'    : '%p',
-    'mm'   : '%i',
-    'ss'   : '%S',
-    'yyyy' : '%Y',
-    'MMM'  : '%b',
-    'MM'   : '%m',
-    'dd'   : '%d',
-    'd'    : '%e',
+    'h'     : '%l',
+    'hh'    : '%h',
+    'H'     : '%k',
+    'HH'    : '%H',
+    'K'     : '%l', # fuzzy
+    'KK'    : '%h', # fuzzy
+    'k'     : '%k', # fuzzy
+    'kk'    : '%H', # fuzzy
+    'j'     : '?',
+    'jj'    : '?',
+    'a'     : '%p',
+    'm'     : '%i', # fuzzy
+    'mm'    : '%i',
+    's'     : '%S',
+    'ss'    : '%S',
+    'S'     : '?',
+    'A'     : '?',
+    'z'     : '%@',
+    'zz'    : '%@',
+    'zzz'   : '%@',
+    'zzzz'  : '%@', # fuzzy
+    'Z'     : '%+',
+    'ZZ'    : '%+',
+    'ZZZ'   : '%+',
+    'ZZZZ'  : 'GMT%+',
+    'v'     : '%@', # fuzzy
+    'vvvv'  : '%@', # fuzzy
+    'V'     : '%@', # fuzzy
+    'VVVV'  : '%@', # fuzzy
+    'Q'     : '?', # quarter
+    'q'     : '?', # quarter
+    'yyyy'  : '%Y',
+    'yy'    : '%y',
+    'M'     : '%c',
+    'MM'    : '%m',
+    'MMM'   : '%b',
+    'MMMM'  : '%M',
+    'MMMMM' : '?',
+    'L'     : '%c',
+    'LL'    : '%m',
+    'LLL'   : '%b',
+    'LLLL'  : '%M',
+    'LLLLL' : '?',
+    'l'     : '*',
+    'w'     : '?', # week of the year
+    'ww'    : '??',
+    'W'     : '?', # week of the month
+    'd'     : '%e',
+    'dd'    : '%d',
+    'D'     : '?',
+    'DD'    : '??',
+    'DDD'   : '???',
+    'F'     : '%w',
+    'g'     : '?',
+    'E'     : '%a',
+    'EE'    : '%a',
+    'EEE'   : '%a',
+    'EEEE'  : '%W',
+    'EEEEE' : '?',
+    'e'     : '%w',
+    'ee'    : '%w',
+    'eee'   : '%a',
+    'eeee'  : '%W',
+    'eeeee' : '?',
+    'c'     : '%w',
+    'cc'    : '%w',
+    'ccc'   : '%a',
+    'cccc'  : '%W',
+    'ccccc' : '?',
+    'G'     : '%E', # Era abbreviation*
+    'GG'    : '%E', # Era abbreviation*
+    'GGG'   : '%E', # Era abbreviation*
+    'GGGG'  : '%E', # Era abbreviation*
+    'GGGGG' : '%E', # Era abbreviation*
 }
 
-"""
-    '' : '%a', # Abbreviated weekday name (Sun...Sat)
-    '' : '%B', # Abbreviation for Before Common Era (if year<1)*
-    '' : '%b', # Abbreviated month name (Jan...Dec)
-    '' : '%C', # Abbreviation for Common Era (if year>=1)*
-    '' : '%c', # Month, numeric (1..12)
-    '' : '%D', # Day of the month with English suffix (1st, 2nd, ...)
-    '' : '%d', # Day of the month, numeric (00...31)
-    '' : '%E', # Era abbreviation*
-    '' : '%e', # Day of the month, numeric (0...31)
-    '' : '%H', # Hour (00...23)
-    '' : '%h', # Hour (01...12)
-    '' : '%I', # Hour (01...12)
-    '' : '%i', # Minutes, numeric (00...59)
-    '' : '%k', # Hour (0...23)
-    '' : '%l', # Hour (1...12)
-    '' : '%M', # Month name (January...December)
-    '' : '%m', # Month, numeric (01...12)
-    '' : '%p', # AM or PM
-    '' : '%r', # Time, 12-hour (hh:mm:ss followed by AM or PM)
-    '' : '%S', # Seconds (00...59)
-    '' : '%s', # Seconds (00...59)
-    '' : '%T', # Time, 24-hour (hh:mm:ss)
-    '' : '%W', # Weekday name (Sunday...Saturday)
-    '' : '%w', # Day of the week (0=Sunday...6=Saturday)
-    '' : '%Y', # Year, numeric, four digits (possibly signed)
-    '' : '%y', # Year, numeric, two digits (possibly signed)
-    '' : '%Z', # Year, numeric, four digits (no sign)*
-    '' : '%z', # Year, numeric, variable length (no sign)*
-    '' : '%#', # Signed UTC offset in minutes*
-    '' : '%+', # Signed UTC offset in %h%i format*
-    '' : '%-', # Signed UTC offset in %l%i format*
-    '' : '%:', # Signed UTC offset in %h:%i format*
-    '' : '%;', # Signed UTC offset in %l:%i format*
-    '' : '%@', # UTC offset time zone label*
-    '' : '%%', # A literal % character
-"""
 
 
 def convert_LDML_to_MySQL( ldml_pattern ):
