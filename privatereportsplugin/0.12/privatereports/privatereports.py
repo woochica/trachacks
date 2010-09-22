@@ -140,6 +140,7 @@ class PrivateReports(Component):
 			cursor.close ()
 			return False
 		except:
+			cursor.connection.rollback()
 			cursor.close ()
 			return True
 
@@ -150,6 +151,7 @@ class PrivateReports(Component):
 			cursor.close ()
 			db.commit()
 		except:
+			cursor.connection.rollback()
 			cursor.close ()
 
 	# ITemplateStreamFilter
