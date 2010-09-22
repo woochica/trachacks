@@ -57,12 +57,12 @@ class SubversionWriter(object):
         
         return new_rev
 
-    def delete(self, repos_path, commit_msg):
+    def delete(self, repos_paths, commit_msg):
         from svn import core, fs, repos
         
         log = self.log
         svn_repos = self._get_libsvn_handle()
-        repos_path_utf8 = repos_path.encode('utf-8')
+        repos_paths_utf8 = [rp.encode('utf-8') for rp in repos_paths]
         commit_msg_utf8 = commit_msg.encode('utf-8')
         username_utf8 = self.username.encode('utf-8')
         rev = self.repos.get_youngest_rev()
@@ -76,11 +76,13 @@ class SubversionWriter(object):
         fs_root = fs.txn_root(fs_txn, pool)
             
         log.debug('cp')
-        kind = fs.check_path(fs_root, repos_path_utf8, pool)
+        for repos_path_utf8 in repos_paths_utf8:
+            kind = fs.check_path(fs_root, repos_path_utf8, pool)
         
-        if kind == core.svn_node_none:
-            raise TracError('Delete', repos_path)
-        else:
+            if kind == core.svn_node_none:
+                raise TracError('Delete', repos_path)
+        
+        for repos_path_utf8 in repos_paths_utf8:
             fs.delete(fs_root, repos_path_utf8)
          
         log.debug('ct')                                     
@@ -115,24 +117,22 @@ class SubversionWriter(object):
         log.debug('ct')                                     
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
         
-    def move(self, src_path, dst_path, commit_msg):
+    def move(self, src_paths, dst_path, commit_msg):
         from svn import core, client, repos, fs
         
         def _log_message(item, pool):
             return commit_msg_utf8
                 
-        src_url = self._path_to_url(src_path)
+        src_urls = [self._path_to_url(src_path) for src_path in src_paths]
         dst_url = self._path_to_url(dst_path)
-        self.log.debug('Source url: %s', src_url)
-        self.log.debug('Destination url: %s', dst_url)
         
-        src_url_utf8 = src_url.encode('utf-8')
+        src_urls_utf8 = [src_url.encode('utf-8') for src_url in src_urls]
         dst_url_utf8 = dst_url.encode('utf-8')
         dst_path_utf8 = dst_path.encode('utf-8')
         commit_msg_utf8 = commit_msg.encode('utf-8')
         username_utf8 = self.username.encode('utf-8')
         
-        # Open a transaction and check whether fst_path exists and if it's a
+        # Open a transaction and check whether dst_path exists and if it's a
         # directory. Abort the transaction since no changes are made.
         svn_repos = self._get_libsvn_handle()
         rev = self.repos.get_youngest_rev()
@@ -166,12 +166,18 @@ class SubversionWriter(object):
         core.svn_auth_set_parameter(client_ctx.auth_baton,
                 core.SVN_AUTH_PARAM_DEFAULT_USERNAME, username_utf8)
         
-        # Move file or dir from from src to dst. 
-        # Don't force, do place src in dst if dst exists, don't create parents of dst.
+        # Move files and dirs from from src to dst. 
+        # Don't force
+        # Place src files/dirs in in dst if dst exists, 
+        # Don't create parents of dst.
         # Don't set additional revision properties
-        commit_info = client.svn_client_move5((src_url_utf8,), dst_url_utf8,
-                                              False, True, False,
-                                              None, client_ctx)
+        commit_info = client.svn_client_move5(tuple(src_urls_utf8),
+                                              dst_url_utf8,
+                                              False, 
+                                              True, 
+                                              False,
+                                              None, 
+                                              client_ctx)
         return commit_info.revision
     
     def _get_repos_direct_object(self):

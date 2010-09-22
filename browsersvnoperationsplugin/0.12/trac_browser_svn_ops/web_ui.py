@@ -182,12 +182,12 @@ class TracBrowserOps(Component):
             if operation == 'delete':
                 self.log.info('Deleting %s in repository %s',
                               src_path, reponame)
-                svn_writer.delete(src_path, commit_msg)
+                svn_writer.delete([src_path], commit_msg)
             
             elif operation == 'move':
                 self.log.info('Moving %s to %s in repository %s',
                               src_path, dst_path, reponame)
-                svn_writer.move(src_path, dst_path, commit_msg)
+                svn_writer.move([src_path], dst_path, commit_msg)
                 
         finally:
             repos.sync()
