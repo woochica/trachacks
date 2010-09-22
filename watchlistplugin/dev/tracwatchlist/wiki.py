@@ -189,12 +189,12 @@ class WikiWatchlist(BasicWatchlist):
             if 'version' in fields:
                 wikidict['version'] = unicode(wikipage.version)
             if 'changetime' in fields:
-                wikidict['changetime'] = format_datetime( changetime, locale=locale )
+                wikidict['changetime'] = format_datetime( changetime, locale=locale, tzinfo=req.tz )
                 wikidict['ichangetime'] = to_timestamp( changetime )
                 wikidict['changedsincelastvisit'] = last_visit < wikidict['ichangetime'] and 1 or 0
                 wikidict['timedelta'] = pretty_timedelta( changetime )
                 wikidict['timeline_link'] = req.href.timeline(precision='seconds',
-                    from_=trac_format_datetime ( changetime, 'iso8601'))
+                    from_=trac_format_datetime ( changetime, 'iso8601', tzinfo=req.tz))
                 if changetime > max_changetime:
                     max_changetime = changetime
                 if changetime < min_changetime:
@@ -218,8 +218,8 @@ class WikiWatchlist(BasicWatchlist):
             wikilist.append(wikidict)
 
         if 'changetime' in fields:
-            extradict['max_changetime'] = format_datetime( max_changetime, locale=locale )
-            extradict['min_changetime'] = format_datetime( min_changetime, locale=locale )
+            extradict['max_changetime'] = format_datetime( max_changetime, locale=locale, tzinfo=req.tz )
+            extradict['min_changetime'] = format_datetime( min_changetime, locale=locale, tzinfo=req.tz )
 
         return wikilist, extradict
 

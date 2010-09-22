@@ -244,12 +244,12 @@ class TicketWatchlist(BasicWatchlist):
             if 'changetime' in fields:
                 ichangetime = to_timestamp( changetime )
                 ticketdict.update(
-                    changetime       = format_datetime( changetime, locale=locale ),
+                    changetime       = format_datetime( changetime, locale=locale, tzinfo=req.tz ),
                     ichangetime      = ichangetime,
                     changedsincelastvisit = (last_visit < ichangetime and 1 or 0),
                     changetime_delta = pretty_timedelta( changetime ),
                     changetime_link  = req.href.timeline(precision='seconds',
-                                       from_=trac_format_datetime ( changetime, 'iso8601')))
+                                       from_=trac_format_datetime ( changetime, 'iso8601', tzinfo=req.tz)))
                 if changetime > max_changetime:
                     max_changetime = changetime
                 if changetime < min_changetime:
@@ -257,11 +257,11 @@ class TicketWatchlist(BasicWatchlist):
             if 'time' in fields:
                 time = ticket.time_created
                 ticketdict.update(
-                    time             = format_datetime( time, locale=locale ),
+                    time             = format_datetime( time, locale=locale, tzinfo=req.tz ),
                     itime            = to_timestamp( time ),
                     time_delta       = pretty_timedelta( time ),
                     time_link        = req.href.timeline(precision='seconds',
-                                       from_=trac_format_datetime ( time, 'iso8601')))
+                                       from_=trac_format_datetime ( time, 'iso8601', tzinfo=req.tz )))
                 if time > max_time:
                     max_time = time
                 if time < min_time:
@@ -287,11 +287,11 @@ class TicketWatchlist(BasicWatchlist):
             ticketlist.append(ticketdict)
 
         if 'changetime' in fields:
-            extradict['max_changetime'] = format_datetime( max_changetime, locale=locale )
-            extradict['min_changetime'] = format_datetime( min_changetime, locale=locale )
+            extradict['max_changetime'] = format_datetime( max_changetime, locale=locale, tzinfo=req.tz )
+            extradict['min_changetime'] = format_datetime( min_changetime, locale=locale, tzinfo=req.tz )
         if 'time' in fields:
-            extradict['max_time'] = format_datetime( max_time, locale=locale )
-            extradict['min_time'] = format_datetime( min_time, locale=locale )
+            extradict['max_time'] = format_datetime( max_time, locale=locale, tzinfo=req.tz )
+            extradict['min_time'] = format_datetime( min_time, locale=locale, tzinfo=req.tz )
 
         return ticketlist, extradict
 

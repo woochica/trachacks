@@ -50,8 +50,7 @@ from  trac.mimeview.api      import  Context
 from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
 from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
 from  tracwatchlist.util     import  ensure_string, ensure_iter, LC_TIME,\
-                                     datetime_format,\
-                                     format_datetime, current_timestamp
+                                     datetime_format, current_timestamp
 
 class UserOption(object):
     """User changeable option."""
