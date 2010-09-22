@@ -38,25 +38,132 @@ except ImportError:
     def format_datetime(t=None, format='%x %X', tzinfo=None, locale=None):
         return trac_format_datetime(t, format, tzinfo)
 
+
+def ldml_patterns( ldml_pattern ):
+    """Takes a LDML date/time format pattern and breaks it down into its
+       elements"""
+    last = None
+    num = 1
+    patterns = []
+    verbatim = False
+    verbtext = ''
+    for s in ldml_pattern:
+        if verbatim:
+            if last == "'":
+                if s == "'":
+                    # Inside quote (quote character already added)
+                    last = None
+                    continue
+                else:
+                    # Last character ended verbatim
+                    if verbtext != "'":
+                        verbtext = verbtext[:-1]
+                    patterns.append( [verbtext] )
+                    last = None
+                    verbatim = False
+            else:
+                verbtext += s
+                last = s
+                continue
+        if s == "'":
+            verbatim = True
+            verbtext = ''
+            if not last is None:
+                patterns.append( last * num )
+            num = 1
+            last = None
+        elif s == last:
+            num+=1
+        else:
+            if not last is None:
+                patterns.append( last * num )
+            num = 1
+            last = s
+    # Flush buffers
+    if verbatim:
+        if last == "'" and verbtext:
+            verbtext = verbtext[:-1]
+        patterns.append( [verbtext ] )
+    else:
+        if not last is None:
+            patterns.append( last * num )
+    return patterns
+
+_PATTERN_TRANSLATION = {
+    'HH'   : '%H',
+    'h'    : '%l',
+    'a'    : '%p',
+    'mm'   : '%i',
+    'ss'   : '%S',
+    'yyyy' : '%Y',
+    'MMM'  : '%b',
+    'MM'   : '%m',
+    'dd'   : '%d',
+    'd'    : '%e',
+}
+
+"""
+    '' : '%a', # Abbreviated weekday name (Sun...Sat)
+    '' : '%B', # Abbreviation for Before Common Era (if year<1)*
+    '' : '%b', # Abbreviated month name (Jan...Dec)
+    '' : '%C', # Abbreviation for Common Era (if year>=1)*
+    '' : '%c', # Month, numeric (1..12)
+    '' : '%D', # Day of the month with English suffix (1st, 2nd, ...)
+    '' : '%d', # Day of the month, numeric (00...31)
+    '' : '%E', # Era abbreviation*
+    '' : '%e', # Day of the month, numeric (0...31)
+    '' : '%H', # Hour (00...23)
+    '' : '%h', # Hour (01...12)
+    '' : '%I', # Hour (01...12)
+    '' : '%i', # Minutes, numeric (00...59)
+    '' : '%k', # Hour (0...23)
+    '' : '%l', # Hour (1...12)
+    '' : '%M', # Month name (January...December)
+    '' : '%m', # Month, numeric (01...12)
+    '' : '%p', # AM or PM
+    '' : '%r', # Time, 12-hour (hh:mm:ss followed by AM or PM)
+    '' : '%S', # Seconds (00...59)
+    '' : '%s', # Seconds (00...59)
+    '' : '%T', # Time, 24-hour (hh:mm:ss)
+    '' : '%W', # Weekday name (Sunday...Saturday)
+    '' : '%w', # Day of the week (0=Sunday...6=Saturday)
+    '' : '%Y', # Year, numeric, four digits (possibly signed)
+    '' : '%y', # Year, numeric, two digits (possibly signed)
+    '' : '%Z', # Year, numeric, four digits (no sign)*
+    '' : '%z', # Year, numeric, variable length (no sign)*
+    '' : '%#', # Signed UTC offset in minutes*
+    '' : '%+', # Signed UTC offset in %h%i format*
+    '' : '%-', # Signed UTC offset in %l%i format*
+    '' : '%:', # Signed UTC offset in %h:%i format*
+    '' : '%;', # Signed UTC offset in %l:%i format*
+    '' : '%@', # UTC offset time zone label*
+    '' : '%%', # A literal % character
+"""
+
+
+def convert_LDML_to_MySQL( ldml_pattern ):
+    """Converts from LDML date/time format patterns to the one used by MySQL.
+       That is the same format used by the Any+Time datepicker currently used.
+       See http://www.ama3.com/anytime/#AnyTime.Converter.format
+       and http://unicode.org/reports/tr35/#Date_Format_Patterns .
+       """
+    result = ''
+    for pattern in ldml_patterns(ldml_pattern):
+        if isinstance(pattern,list):
+            result += ''.join(pattern).replace('%','%%')
+        else:
+            result += _PATTERN_TRANSLATION.get(pattern,pattern)
+    return result
+
+
 try:
-    from  babel.dates        import  get_datetime_format, get_date_format, get_time_format, DateTimePattern
+    from  babel.dates        import  get_datetime_format, get_date_format, get_time_format
     def datetime_format(format='medium', locale=LC_TIME):
-        time_format = unicode(get_time_format(format, locale))\
-                .replace('HH','%H')\
-                .replace('h','%l')\
-                .replace('a','%p')\
-                .replace('mm','%i')\
-                .replace('ss','%S')
-        date_format = unicode(get_date_format(format, locale))\
-                .replace('yyyy','%Y')\
-                .replace('MMM','%b')\
-                .replace('MM','%m')\
-                .replace('dd','%X')\
-                .replace('d','%e')\
-                .replace('%X','%d')
-        return get_datetime_format(format, locale)\
+        time_format = unicode(get_time_format(format, locale))
+        date_format = unicode(get_date_format(format, locale))
+        return convert_LDML_to_MySQL( get_datetime_format(format, locale)\
                 .replace('{0}', time_format)\
-                .replace('{1}', date_format)
+                .replace('{1}', date_format) )
 except ImportError:
     def datetime_format(format='medium', locale=LC_TIME):
         return u"%Y-%m-%d %H:%i:%s"
