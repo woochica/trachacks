@@ -174,12 +174,17 @@ def convert_LDML_to_MySQL( ldml_pattern ):
        See http://www.ama3.com/anytime/#AnyTime.Converter.format
        and http://unicode.org/reports/tr35/#Date_Format_Patterns .
        """
+    import re
     result = ''
     for pattern in ldml_patterns(ldml_pattern):
         if isinstance(pattern,list):
+            # Verbatim
             result += ''.join(pattern).replace('%','%%')
         else:
-            result += _PATTERN_TRANSLATION.get(pattern,pattern)
+            tp = _PATTERN_TRANSLATION.get(pattern,None)
+            if tp is None: # Replace unknown letters with '?'
+                tp = re.sub(r'[A-Za-z]','?', pattern)
+            result += tp
     return result
 
 
