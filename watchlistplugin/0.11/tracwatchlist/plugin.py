@@ -601,8 +601,8 @@ class WatchlistPlugin(Component):
                 self.env.log.info("Watchlist settings table not found")
                 return True
             cursor.execute("SELECT value FROM system WHERE name='watchlist_version'")
-            (version,) = cursor.fetchone()
-            if not version or int(version) < __DB_VERSION__:
+            version = cursor.fetchone()
+            if not version or int(version[0]) < __DB_VERSION__:
                 self.env.log.info("Watchlist table version to old")
                 return True
         except Exception, e:
