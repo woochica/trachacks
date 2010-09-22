@@ -137,10 +137,10 @@
                 <div class="system-message" id="error" py:if="not_found_res">
                     <h3 class="system-message-title">Not found</h3>
                     <div class="not_found_res" py:with="name = not_found_res[0]">
-                      <i18n:choose numeral="len(not_found_res)" params="name,realm">
+                      <i18n:choose numeral="len(not_found_res)" params="realm,name">
                           <p i18n:singular="">
-                            The pattern "<em>$name</em>"
-                            did not matched any <span>${get_label(realm,1)}</span>.
+                            No <span>${get_label(realm,1)}</span> was found
+                            matching pattern "<em>${name}</em>".
                           </p>
                           <p i18n:plural="">
                             The following patterns
