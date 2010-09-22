@@ -135,10 +135,13 @@ $(function() {
       $('#dialog-bsop_create_folder').dialog('open');
     });
     
-  $('.bsop_move, .bsop_delete').click(function() {
+  $('.bsop_move, .bsop_delete').live('click', function() {
       var mvdel_op = '';
-      var mvdel_src_name = $(this).closest('td.name') 
-                                    .find('a.dir, a.file').text();
+      
+      // Ascend the tree to the context-menu, then descend to find the hidden
+      // node name provided by ContextMenuPlugin
+      var mvdel_src_name = $(this).closest('div.context-menu') 
+                                  .find('span.filenameholder').text();
         
         // Is this a move or a delete? Show the destination field
         if ($(this).hasClass('bsop_move')) {
