@@ -195,7 +195,7 @@ jQuery(document).ready(function() {
   $("#preferences form #deletecookies").click(function(){
       wldeletecookies();
       wldisablecookies();
-      window.location.reload();
+      window.location.href =  window.location.protocol + '//' + window.location.host + window.location.pathname;
   });
 
   var cookies = $.Jookie.Get(maincookie, "cookies");
