@@ -152,13 +152,21 @@ def convert_to_sql_wildcards( pattern ):
     r"""Converts wildcards '*' and '?' to SQL versions '%' and '_'.
        A state machine is used to allow for using the backslash to
        escape this characters:
-           test -> test
-           test* -> test%
-           test\* -> test*
-           test\\* -> test\%
-           test\\\* -> test\*
-           test\\\\* -> test\\%
-           test\\\\\* -> test\\*
+            test -> test
+            test* -> test%
+            test\* -> test*
+            test\\* -> test\%
+            test\\\* -> test\*
+            test\\\\* -> test\\%
+            test\\\\\* -> test\\*
+            % -> \%
+            _ -> \_
+            test_test% -> test\_test\%
+            test__test% -> test\_\_test\%
+            test\_test\% -> test\\_test\\%
+            test\\_test\\% -> test\\_test\\%
+            test\\\_test\\\% -> test\\\_test\\\%
+            test\\\\_test\\\% -> test\\\_test\\\%
     """
     pat = ''
     esc = False
@@ -167,6 +175,9 @@ def convert_to_sql_wildcards( pattern ):
             if esc:
                 pat += '\\'
                 esc = False
+            if p in '%_':
+                # Escaped for SQL
+                pat += '\\'
             pat += p
         else:
             if esc:
