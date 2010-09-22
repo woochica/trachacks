@@ -116,7 +116,7 @@ class SubversionWriter(object):
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
         
     def move(self, src_path, dst_path, commit_msg):
-        from svn import core, client
+        from svn import core, client, repos, fs
         
         def _log_message(item, pool):
             return commit_msg_utf8
@@ -128,27 +128,49 @@ class SubversionWriter(object):
         
         src_url_utf8 = src_url.encode('utf-8')
         dst_url_utf8 = dst_url.encode('utf-8')
+        dst_path_utf8 = dst_path.encode('utf-8')
         commit_msg_utf8 = commit_msg.encode('utf-8')
+        username_utf8 = self.username.encode('utf-8')
         
+        # Open a transaction and check whether fst_path exists and if it's a
+        # directory. Abort the transaction since no changes are made.
+        svn_repos = self._get_libsvn_handle()
+        rev = self.repos.get_youngest_rev()
+        fs_ptr = repos.fs(svn_repos)
+        fs_txn = fs.begin_txn(fs_ptr, rev)
+        txn_root = fs.txn_root(fs_txn)
+        kind = fs.check_path(txn_root, dst_path_utf8)
+        fs.abort_txn(fs_txn)
+        
+        # Abort if destination is unsuitable
+        if kind not in (core.svn_node_none, core.svn_node_dir):
+            raise TracError('Cannot move "%s" to "%s", destination exists '
+                            'and is not a directory.' % (src_path, dst_path))
+        
+        # Prepare a subversion context to supply the commit message
         client_ctx = client.create_context()
         client_ctx.log_msg_func3 = client.svn_swig_py_get_commit_log_func
         client_ctx.log_msg_baton3 = _log_message
         
+        # Add subversion authentication baton to the client context
+        # Since we're dealing with file:// urls authentication is not used
+        # but subversion will not function without it
         auth_providers = [
                 client.svn_client_get_simple_provider(),
                 client.svn_client_get_username_provider(),
                 ]
         client_ctx.auth_baton = core.svn_auth_open(auth_providers)
         
+        # Set the username supplied, otherwise owner of subversion proces would
+        # be logged
         core.svn_auth_set_parameter(client_ctx.auth_baton,
-                core.SVN_AUTH_PARAM_DEFAULT_USERNAME, 
-                self.username.encode('utf-8'))
+                core.SVN_AUTH_PARAM_DEFAULT_USERNAME, username_utf8)
         
         # Move file or dir from from src to dst. 
-        # Don't force  place src in dst if dst exists, or create parent of dst.
+        # Don't force, do place src in dst if dst exists, don't create parents of dst.
         # Don't set additional revision properties
         commit_info = client.svn_client_move5((src_url_utf8,), dst_url_utf8,
-                                              False, False, False,
+                                              False, True, False,
                                               None, client_ctx)
         return commit_info.revision
     
