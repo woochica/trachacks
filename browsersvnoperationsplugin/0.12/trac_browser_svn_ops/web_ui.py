@@ -45,12 +45,14 @@ class TracBrowserOps(Component):
     
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        return ['BROWSEROPS_ADMIN']
+        return ['REPOSITORY_MODIFY', 
+                ('REPOSITORY_ADMIN', ['REPOSITORY_MODIFY']),
+                ]
         
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'browser.html' \
-                and req.perm.has_permission('BROWSEROPS_ADMIN'):
+                and req.perm.has_permission('REPOSITORY_MODIFY'):
             self.log.debug('Extending TracBrowser')
             
             if self.include_jqueryui:
@@ -85,7 +87,7 @@ class TracBrowserOps(Component):
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         if req.path_info.startswith('/browser') and req.method == 'POST':
-            req.perm.require('BROWSEROPS_ADMIN')
+            req.perm.require('REPOSITORY_MODIFY')
             
             self.log.debug('Intercepting browser POST')
             
@@ -236,8 +238,11 @@ class SvnDeleteMenu(Component):
         return True
     
     def get_content(self, req, entry, stream, data):
-        return tag.a('Delete %s' % (entry.name), href='#', 
-                     class_='bsop_delete')
+        if req.perm.has_permission('REPOSITORY_MODIFY'):
+            return tag.a('Delete %s' % (entry.name), href='#', 
+                         class_='bsop_delete')
+        else:
+            return None
 
 class SvnMoveMenu(Component):
     '''Generate context menu items for moving subversion items
@@ -252,5 +257,8 @@ class SvnMoveMenu(Component):
         return True
     
     def get_content(self, req, entry, stream, data):
-        return tag.a('Move %s' % (entry.name), href='#',
-                     class_='bsop_move')
+        if req.perm.has_permission('REPOSITORY_MODIFY'):
+            return tag.a('Move %s' % (entry.name), href='#',
+                         class_='bsop_move')
+        else:
+            return None
