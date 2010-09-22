@@ -1,6 +1,9 @@
+import os
+import unicodedata
+
 from pkg_resources import resource_filename
 from trac.core import *
-from trac.config import BoolOption
+from trac.config import BoolOption, IntOption
 from trac.perm import IPermissionRequestor
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.web.chrome import ITemplateProvider, \
@@ -24,6 +27,10 @@ class TracBrowserOps(Component):
         The plugin uses and includes jQuery UI, but this might already be 
         included by other means. Set False to have this plugin use a provided
         copy of jQuery UI and not it's own.''')
+    
+    max_upload_size = IntOption('browserops', 'max_upload_size', 262144,
+        '''Maximum allowed file size (in bytes) for file uploads. Set to 0 for
+        unlimited upload size.''')
     
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
@@ -112,12 +119,29 @@ class TracBrowserOps(Component):
     def _upload_request(self, req, handler):
         self.log.debug('Handling file upload for "%s"', req.authname)
         
-        # Retrieve uploaded fields
-        filename = req.args.get('bsop_upload_file').filename
-        file_data = req.args.get('bsop_upload_file').value # or .file for fo
-        commit_msg = req.args.get('bsop_upload_commit')
+        # Retrieve uploaded file
+        upload_file = req.args['bsop_upload_file']
+        
+        # Retrieve filename, normalize, use to check a file was uploaded
+        # Filename checks adapted from trac/attachment.py
+        filename = getattr(upload_file, 'filename', '')
+        filename = unicodedata.normalize('NFC', unicode(filename, 'utf-8'))
+        filename = filename.replace('\\', '/').replace(':', '/')
+        filename = os.path.basename(filename)
+        if not filename:
+            raise TracError('No file uploaded')
+        
+        # Check size of uploaded file, accepting 0 to max_upload_size bytes
+        file_data = upload_file.value # Alternatively .file for file object
+        file_size = len(file_data)
+        if self.max_upload_size > 0 and file_size > self.max_upload_size:
+            raise TracError('Uploaded file is too large, '
+                            'maximum upload size: %i' % self.max_upload_size)
+        
         self.log.debug('Received file %s with %i bytes', 
-                       filename, len(file_data))
+                       filename, file_size)
+        
+        commit_msg = req.args.get('bsop_upload_commit')
         
         self.log.debug('Opening repository for file upload')
         reponame, repos, path = self._get_repository(req)
