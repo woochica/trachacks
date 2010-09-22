@@ -156,6 +156,8 @@ def convert_to_sql_wildcards( pattern ):
         return pattern
     pattern = pattern.replace('%',r'\%').replace('_',r'\_')
     pattern = star.sub('%', ques.sub('_', pattern) )
+    # FIXME: Also needs regex:
+    pattern = pattern.replace('\*',r'*').replace('\?',r'?')
     return pattern
 
 # EOF
