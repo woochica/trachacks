@@ -3039,8 +3039,8 @@ AnyTime.picker = function( id, options )
 		      var left = off.left + .5 * this.inp.outerWidth(true) - .5 * pickerWidth;
 		      if ( left + pickerWidth > bodyWidth - 20 )
 		        left = bodyWidth - ( pickerWidth + 20 );
-              ptop = off.top + this.inp.outerHeight(true);
-		      this.div.css( { top: String(ptop)+'px', left: String(left<0?0:left)+'px' } );
+		      var top = off.top + this.inp.outerHeight(true);
+		      this.div.css( { top: String(top)+'px', left: String(left<0?0:left)+'px' } );
 		    }
 		
 		    var wOff = this.div.offset();
