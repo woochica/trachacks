@@ -148,16 +148,37 @@ def decode_range_sql( str ):
     return ' OR '.join(cmd)
 
 
-import re
-star = re.compile(r'(?<!\\)\*')
-ques = re.compile(r'(?<!\\)\?')
 def convert_to_sql_wildcards( pattern ):
-    if not pattern:
-        return pattern
-    pattern = pattern.replace('%',r'\%').replace('_',r'\_')
-    pattern = star.sub('%', ques.sub('_', pattern) )
-    # FIXME: Also needs regex:
-    pattern = pattern.replace('\*',r'*').replace('\?',r'?')
-    return pattern
+    r"""Converts wildcards '*' and '?' to SQL versions '%' and '_'.
+       A state machine is used to allow for using the backslash to
+       escape this characters:
+           test -> test
+           test* -> test%
+           test\* -> test*
+           test\\* -> test\%
+           test\\\* -> test\*
+           test\\\\* -> test\\%
+           test\\\\\* -> test\\*
+    """
+    pat = ''
+    esc = False
+    for p in pattern:
+        if not p in '*?\\':
+            if esc:
+                pat += '\\'
+                esc = False
+            pat += p
+        else:
+            if esc:
+                esc = False
+                pat += p
+            else:
+                if p == '\\':
+                    esc = True
+                elif p == '*':
+                    pat += '%'
+                elif p == '?':
+                    pat += '_'
+    return pat
 
 # EOF
