@@ -56,7 +56,7 @@ class IWatchlistProvider(Interface):
 
     def get_list(realm, wl, req, fields=None):
         """Returns list of watched elements as dictionaries plus an extra dictionary of extra
-           template data, which will be available in the template under the name "<realm>extra"
+           template data, which will be available in the template under the name "<realm>data"
            Example: 
                 data = [ {'name':'example', 'changetime': <DT Object> }, { ... } ]
                 extradict = { 'somethingspecial':42, ... }
