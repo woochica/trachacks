@@ -172,9 +172,7 @@ def convert_to_sql_wildcards( pattern ):
     esc = False
     for p in pattern:
         if not p in '*?\\':
-            if esc:
-                pat += '\\'
-                esc = False
+            esc = False
             if p in '%_':
                 # Escaped for SQL
                 pat += '\\'
