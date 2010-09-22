@@ -55,6 +55,13 @@ class IWatchlistProvider(Interface):
         pass
 
     def get_list(realm, wl, req, fields=None):
+        """Returns list of watched elements as dictionaries plus an extra dictionary of extra
+           template data, which will be available in the template under the name "<realm>extra"
+           Example: 
+                data = [ {'name':'example', 'changetime': <DT Object> }, { ... } ]
+                extradict = { 'somethingspecial':42, ... }
+                return data, extradict
+           """
         pass
 
     def get_href(realm, resid=None):
@@ -124,7 +131,7 @@ class BasicWatchlist(Component):
         return realm.upper() + '_VIEW' in perm
 
     def get_list(self, realm, wl, req, fields=None):
-        return []
+        return [], {}
 
     def get_href(self, realm, resid=None, **kwargs):
         if resid is None:

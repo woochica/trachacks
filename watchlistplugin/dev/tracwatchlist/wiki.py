@@ -120,10 +120,15 @@ class WikiWatchlist(BasicWatchlist):
         locale = getattr( req, 'locale', LC_TIME)
         context = Context.from_request(req)
         wikilist = []
+        extradict = {}
         if not fields:
             fields = set(self.default_fields['wiki'])
         else:
             fields = set(fields)
+
+        if 'changetime' in fields:
+            max_changetime = datetime(1970,1,1,tzinfo=utc)
+            min_changetime = datetime.now(utc)
 
         for name, last_visit in wl.get_watched_resources( 'wiki', req.authname ):
             wikipage = WikiPage(self.env, name, db=db)
@@ -190,6 +195,10 @@ class WikiWatchlist(BasicWatchlist):
                 wikidict['timedelta'] = pretty_timedelta( changetime )
                 wikidict['timeline_link'] = req.href.timeline(precision='seconds',
                     from_=trac_format_datetime ( changetime, 'iso8601'))
+                if changetime > max_changetime:
+                    max_changetime = changetime
+                if changetime < min_changetime:
+                    min_changetime = changetime
             if 'comment' in fields:
                 comment = moreless(comment or "", 200)
                 wikidict['comment'] = comment
@@ -207,6 +216,11 @@ class WikiWatchlist(BasicWatchlist):
             #if 'ipnr' in fields:
             #    wikidict['ipnr'] = wikipage.ipnr,  # Note: Not supported by Trac 0.12
             wikilist.append(wikidict)
-        return wikilist
+
+        if 'changetime' in fields:
+            extradict['max_changetime'] = format_datetime( max_changetime, locale=locale )
+            extradict['min_changetime'] = format_datetime( min_changetime, locale=locale )
+
+        return wikilist, extradict
 
 # EOF

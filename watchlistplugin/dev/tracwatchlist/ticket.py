@@ -122,10 +122,19 @@ class TicketWatchlist(BasicWatchlist):
         context = Context.from_request(req)
 
         ticketlist = []
+        extradict = {}
         if not fields:
             fields = set(self.default_fields['ticket'])
         else:
             fields = set(fields)
+
+        if 'changetime' in fields:
+            max_changetime = datetime(1970,1,1,tzinfo=utc)
+            min_changetime = datetime.now(utc)
+        if 'time' in fields:
+            max_time = datetime(1970,1,1,tzinfo=utc)
+            min_time = datetime.now(utc)
+
 
         for sid,last_visit in wl.get_watched_resources( 'ticket', req.authname ):
             ticketdict = {}
@@ -241,6 +250,10 @@ class TicketWatchlist(BasicWatchlist):
                     changetime_delta = pretty_timedelta( changetime ),
                     changetime_link  = req.href.timeline(precision='seconds',
                                        from_=trac_format_datetime ( changetime, 'iso8601')))
+                if changetime > max_changetime:
+                    max_changetime = changetime
+                if changetime < min_changetime:
+                    min_changetime = changetime
             if 'time' in fields:
                 time = ticket.time_created
                 ticketdict.update(
@@ -249,6 +262,10 @@ class TicketWatchlist(BasicWatchlist):
                     time_delta       = pretty_timedelta( time ),
                     time_link        = req.href.timeline(precision='seconds',
                                        from_=trac_format_datetime ( time, 'iso8601')))
+                if time > max_time:
+                    max_time = time
+                if time < min_time:
+                    min_time = time
             if 'description' in fields:
                 description = ticket.values['description']
                 description = moreless(description, 200)
@@ -268,7 +285,15 @@ class TicketWatchlist(BasicWatchlist):
                 ticketdict['tags'] = moreless(tags, 10)
 
             ticketlist.append(ticketdict)
-        return ticketlist
+
+        if 'changetime' in fields:
+            extradict['max_changetime'] = format_datetime( max_changetime, locale=locale )
+            extradict['min_changetime'] = format_datetime( min_changetime, locale=locale )
+        if 'time' in fields:
+            extradict['max_time'] = format_datetime( max_time, locale=locale )
+            extradict['min_time'] = format_datetime( min_time, locale=locale )
+
+        return ticketlist, extradict
 
 _EXTRA_STRINGS = [ _("%(value)s added") ]
 
