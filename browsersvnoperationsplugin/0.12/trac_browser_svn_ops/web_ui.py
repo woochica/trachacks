@@ -1,5 +1,6 @@
 from pkg_resources import resource_filename
 from trac.core import *
+from trac.config import BoolOption
 from trac.perm import IPermissionRequestor
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.web.chrome import ITemplateProvider, \
@@ -16,6 +17,13 @@ from trac_browser_svn_ops.svn_fs import SubversionWriter
 class TracBrowserOps(Component):
     implements(ITemplateProvider, ITemplateStreamFilter, IRequestFilter,
                IPermissionRequestor)
+    
+    include_jqueryui = BoolOption('browserops', 'include_jqueryui', True,
+        '''Include a copy of jQuery UI when extending TracBrowser page.
+        
+        The plugin uses and includes jQuery UI, but this might already be 
+        included by other means. Set False to have this plugin use a provided
+        copy of jQuery UI and not it's own.''')
     
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
@@ -38,13 +46,13 @@ class TracBrowserOps(Component):
                 and req.perm.has_permission('BROWSEROPS_ADMIN'):
             self.log.debug('Extending TracBrowser')
             
-            add_stylesheet(req, 
-                           'trac_browser_svn_ops/css/smoothness/jquery-ui.css')
+            if self.include_jqueryui:
+                add_stylesheet(req, 
+                        'trac_browser_svn_ops/css/smoothness/jquery-ui.css')
+                add_script(req, 'trac_browser_svn_ops/js/jquery-ui.js') 
+            
             add_stylesheet(req, 
                            'trac_browser_svn_ops/css/trac_browser_ops.css')
-            
-            # TODO Add jquery-ui conditionally
-            add_script(req, 'trac_browser_svn_ops/js/jquery-ui.js') 
             add_script(req, 'trac_browser_svn_ops/js/trac_browser_ops.js')
             
             # Insert browser operations elements when directory/file shown
