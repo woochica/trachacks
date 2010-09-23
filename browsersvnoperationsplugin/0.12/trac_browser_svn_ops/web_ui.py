@@ -262,3 +262,58 @@ class SvnMoveMenu(Component):
                          class_='bsop_move')
         else:
             return None
+
+class SvnEditMenu(Component):
+    '''Generate context menu items for moving subversion items
+    '''
+    implements(ISourceBrowserContextMenuProvider)
+    
+    # IContextMenuProvider methods
+    def get_order(self, req):
+        return 7
+
+    def get_draw_separator(self, req):
+        return True
+    
+    def get_content(self, req, entry, stream, data):
+        if req.perm.has_permission('REPOSITORY_MODIFY') \
+                and entry.kind == 'file':
+            reponame = data['reponame'] or ''
+            filename = os.path.join(reponame, entry.path)
+            return tag.a('Edit %s' % (entry.name), 
+                         href=req.href.browser(filename, action='edit'),
+                         class_='bsop_edit')
+        else:
+            return None
+
+class TracBrowserEdit(Component):
+    implements(ITemplateProvider, ITemplateStreamFilter, IRequestFilter,
+               IPermissionRequestor)
+    
+    # ITemplateProvider methods
+    def get_htdocs_dirs(self):
+        '''Return directories from which to serve js, css and other static files
+        '''
+        return [('trac_browser_svn_ops', resource_filename(__name__, 'htdocs'))]
+    
+    def get_templates_dirs(self):
+        '''Return directories from which to fetch templates for rendering
+        '''
+        return [resource_filename(__name__, 'templates')]
+
+    # IPermissionRequestor methods
+    def get_permission_actions(self):
+        return ['REPOSITORY_MODIFY', 
+                ('REPOSITORY_ADMIN', ['REPOSITORY_MODIFY']),
+                ]
+        
+    # ITemplateStreamFilter methods
+    def filter_stream(self, req, method, filename, stream, data):
+        return stream
+    
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        return (template, data, content_type)
