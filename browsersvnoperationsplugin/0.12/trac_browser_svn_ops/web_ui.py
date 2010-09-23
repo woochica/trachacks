@@ -86,7 +86,11 @@ class TracBrowserOps(Component):
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        if req.path_info.startswith('/browser') and req.method == 'POST':
+        # TODO Ugly set of conditions, make the if beautiful
+        if req.path_info.startswith('/browser') and req.method == 'POST' \
+                and ('bsop_upload_file' in req.args
+                     or 'bsop_mvdel_op' in req.args
+                     or 'bsop_create_folder_name' in req.args):
             req.perm.require('REPOSITORY_MODIFY')
             
             self.log.debug('Intercepting browser POST')
@@ -309,11 +313,96 @@ class TracBrowserEdit(Component):
         
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
+        action = req.args.get('action', '')
+        if filename == 'browser.html' and action == 'edit' \
+                and req.perm.has_permission('REPOSITORY_MODIFY'):
+            # NB TracBrowserOps already inserts javascript and css we need
+            # So only add css/javascript needed solely by the editor
+            
+            if data['file'] and data['file']['preview']['rendered']:
+                # Discard rendered table, replace with textarea of file contents
+                # This means reading the file from the repository again
+                # N.B. If a file is rendered as something other than a table
+                # e.g. due to PreCodeBrowserPlugin this code won't trigger
+                
+                # Retrieve the same node that BrowserModule.process_request() 
+                # used to render the preview.
+                # At this point reponame has been removed from data['path']
+                # and repos has already been determined
+                repos = data['repos']
+                path = data['path']
+                rev = data['rev']
+                node = repos.get_node(path, rev)
+                
+                # Read the node and supply it's content to the template data
+                # TODO Honour some maximum length and don't read() all at once
+                data['file_content'] = node.get_content().read()
+                
+                # Replace the already rendered preview with a form and textarea
+                bsops_stream = Chrome(self.env).render_template(req,
+                        'file_edit.html', data, fragment=True)
+                transf = Transformer('//div[@id="preview"]'
+                                     '/table[@class="code"]')
+                stream |=  transf.replace(
+                        bsops_stream.select('//div[@id="bsop_edit"]'))
         return stream
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        return handler
+        if req.path_info.startswith('/browser') and req.method == 'POST' \
+                and "bsop_edit_commit" in req.args:
+            req.perm.require('REPOSITORY_MODIFY')
+            
+            self.log.debug('Intercepting browser POST for edit')
+            
+            # Dispatch to private edit handler method
+            # The private handler performs a redirect, so don't return
+            if 'bsop_edit_text' in req.args:
+                self._edit_request(req, handler)
+        else:
+            return handler
 
     def post_process_request(self, req, template, data, content_type):
         return (template, data, content_type)
+    
+    # Private methods
+    # TODO Fix DRY violation, this is a copy from TracBrowserOps
+    def _get_repository(self, req):
+        '''From req identify and return (reponame, repository, path), removing 
+        reponame from path in the process.
+        '''
+        path = req.args.get('path')
+        repo_mgr = RepositoryManager(self.env)
+        reponame, repos, path = repo_mgr.get_repository_by_path(path)
+        return reponame, repos, path
+    
+    def _edit_request(self, req, handler):
+        self.log.debug('Handling file edit for "%s"', req.authname)
+        
+        # Retrieve fields
+        # TODO Don't assume encoding of file, detect it beforehand
+        text = req.args['bsop_edit_text'].encode('utf-8')
+        commit_msg = req.args['bsop_edit_commit_msg']
+        
+        # TODO Check size of editted text
+        self.log.debug('Received %i bytes of editted text as %r',
+                       len(text), text)
+        self.log.debug('Opening repository for file edit')
+        reponame, repos, path = self._get_repository(req)
+        try:
+            repos_path = repos.normalize_path(path)
+            filename = os.path.basename(repos_path)
+            self.log.debug('Writing file %s to %s in %s', 
+                           filename, repos_path, reponame)
+            svn_writer = SubversionWriter(repos, req.authname)
+            
+            rev = svn_writer.put_content(repos_path, text, filename,
+                                         commit_msg)
+        finally:
+            repos.sync()
+            self.log.debug('Closing repository')
+            repos.close()
+        
+        # Perform http redirect back to this page in order to rerender
+        # template according to new repository state
+        req.redirect(req.href(req.path_info))      
