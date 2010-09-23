@@ -334,8 +334,8 @@ msgid_plural ""
 "The following patterns\n"
 "                            did not matched any [1:%(realm)s]:"
 msgstr[0] ""
-"Das Suchmuster \"[1:%(name)s]\" brachte keine Ergebnisse für "
-"[2:%(realm)s]."
+"Das Suchmuster \"[2:%(name)s]\" brachte keine Ergebnisse für "
+"[1:%(realm)s]."
 msgstr[1] "Die folgenden Suchmuster brachten keine Ergebnisse für [2:%(realm)s]."
 
 #: tracwatchlist/templates/watchlist.html:160
