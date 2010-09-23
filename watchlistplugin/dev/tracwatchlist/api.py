@@ -64,7 +64,7 @@ class IWatchlistProvider(Interface):
     def get_list(realm, wl, req, fields=None):
         """Returns list of watched elements as dictionaries plus an extra dictionary of extra
            template data, which will be available in the template under the name "<realm>data"
-           Example: 
+           Example:
                 data = [ {'name':'example', 'changetime': <DT Object> }, { ... } ]
                 extradict = { 'somethingspecial':42, ... }
                 return data, extradict
@@ -84,8 +84,8 @@ class IWatchlistProvider(Interface):
         pass
 
     def get_sort_key(realm):
-        """Returns a sort `key` function for the argument of the same name of 
-           `sorted` or `list.sort`. By default this can be `None` for normal 
+        """Returns a sort `key` function for the argument of the same name of
+           `sorted` or `list.sort`. By default this can be `None` for normal
            sorting.
            Providers with numeric resource ids should return `int` or a similar
            function to enable numeric sorting.
@@ -93,8 +93,8 @@ class IWatchlistProvider(Interface):
         pass
 
     def get_sort_cmp(realm):
-        """Returns a sort `cmp` function for the argument of the same name of 
-           `sorted` or `list.sort`. By default this can be `None` for normal 
+        """Returns a sort `cmp` function for the argument of the same name of
+           `sorted` or `list.sort`. By default this can be `None` for normal
            sorting. """
         pass
 
