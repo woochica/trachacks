@@ -388,9 +388,10 @@ jQuery(document).ready(function() {
         if (use_datetime_picker) {
             $(this).find("input[type=text]").each( function () {
                 $(this).AnyTime_picker(datetime_picker_options);
+                $(this).data('converter', new AnyTime.Converter(datetime_converter_options) );
                 $(this).change(function(){
-                    var c = new AnyTime.Converter(datetime_converter_options);
-                    $(this).next("input[type=hidden]").val( c.parse( $(this).val() ).getTime() / 1000 );
+                    var conv = $(this).data('converter');
+                    $(this).next("input[type=hidden]").val( conv.parse( $(this).val() ).getTime() / 1000 );
                     oTable.fnDraw();
                 });
             });
