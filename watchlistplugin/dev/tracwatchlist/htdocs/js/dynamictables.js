@@ -431,7 +431,12 @@ jQuery(document).ready(function() {
  * */
 function wldelfilters(table) {
     var oTable = $(table).dataTable();
-    $(table).find('tfoot input[type=text],tfoot input[type=hidden]').removeAttr('disabled').val('');
+    $(table).find('tfoot .datetimefilter input[type=text]').each(function() {
+        $(this).removeAttr('disabled');
+        $(this).val( $(this).prev().val() );
+        $(this).change();
+    });
+    $(table).find('tfoot input.filter,tfoot input.numericfilter').removeAttr('disabled').val('');
     $(table).find('tfoot input.numericfilter').data('filterfunction','');
     $(table).parent().find('.dataTables_filter input').val('');
     $(table).find('tfoot input[type=checkbox]').removeAttr('checked');
