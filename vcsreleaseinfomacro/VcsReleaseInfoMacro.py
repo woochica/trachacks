@@ -55,11 +55,12 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         path, limit, rev = args[:3]
         limit = kwargs.pop('limit', limit)
         rev = kwargs.pop('rev', rev)
+        reponame = None
 
         if 'CHANGESET_VIEW' not in req.perm:
             return Markup('<i>Releases not available</i>')
 
-        repo = self.env.get_repository()
+        repo = self.env.get_repository(reponame = reponame)
 
         if rev is None:
             rev = repo.get_youngest_rev()
