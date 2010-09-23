@@ -212,6 +212,7 @@ try:
     def current_timestamp():
         return to_utimestamp( datetime.now(utc) )
 except ImportError:
+    from  trac.util.datefmt  import  to_timestamp
     def current_timestamp():
         return to_timestamp( datetime.now(utc) )
 
