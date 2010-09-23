@@ -609,11 +609,15 @@ class WatchlistPlugin(Component):
                 cols = wldict['default_fields'].get(r,[])
             wldict['active_fields'][r] = cols
 
-        helpwiki = 'WatchlistManual/' + req.session.get('language', 'en-US')
-        if not WikiPage(self.env, helpwiki).exists:
-            helpwiki = 'WatchlistManual/en-US'
+        helplink = "http://trac-hacks.org/wiki/WatchlistPlugin"
+        for postfix in ('/'+req.session.get('language', 'en-US'), '/en-US', ''):
+            helpwiki = 'WatchlistManual'+postfix
+            if WikiPage( self.env, helpwiki ).exists:
+                helplink = req.href.wiki( helpwiki )
+                break
+
         # TRANSLATOR: Link to manual page of the plug-in
-        add_ctxtnav(req, _("Help"), href=req.href.wiki(helpwiki))
+        add_ctxtnav(req, _("Help"), href=helplink)
         for xrealm in wldict['realms']:
             xhandler = self.realm_handler[xrealm]
             if xhandler.has_perm(xrealm, req.perm):
