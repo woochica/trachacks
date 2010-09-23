@@ -166,9 +166,9 @@ $.fn.dataTableExt.afnFiltering.push(
                 var iMin = $(this).find('input[name=from-datetime-ts]').val() * 1;
                 var iMax = $(this).find('input[name=to-datetime-ts]').val() * 1;
                 if ( !iMin && !iMax ) { }
-                else if ( !iMin && timestamp < iMax ) { }
-                else if ( iMin < timestamp && !iMax ) { }
-                else if ( iMin < timestamp && timestamp < iMax ) { }
+                else if ( !iMin && timestamp <= iMax ) { }
+                else if ( iMin <= timestamp && !iMax ) { }
+                else if ( iMin <= timestamp && timestamp <= iMax ) { }
                 else { show = false; }
             }
         });
@@ -320,6 +320,7 @@ jQuery(document).ready(function() {
     var datetime_format = $('#datetime_format').val();
     var datetime_picker_options = {
         'format' : datetime_format,
+        'formatUtcOffset': "%: (%@)",
         'labelHour' : $('#labelHour').val(),
         'labelMinute' : $('#labelMinute').val(),
         'labelSecond' : $('#labelSecond').val(),
@@ -330,6 +331,12 @@ jQuery(document).ready(function() {
         'labelTitle' : $('#labelTitle').val(),
         'monthAbbreviations' : $('#monthAbbreviations').val().split(','),
         'dayAbbreviations' : $('#dayAbbreviations').val().split(','),
+    };
+    var tzoffset = $('#tzoffset').val() * 1;
+    var datetime_converter_options = {
+        'format' : datetime_format,
+        'utcFormatOffsetImposed' : tzoffset,
+        'utcParseOffsetAssumed'  : tzoffset,
     };
   }
 
@@ -382,7 +389,7 @@ jQuery(document).ready(function() {
             $(this).find("input[type=text]").each( function () {
                 $(this).AnyTime_picker(datetime_picker_options);
                 $(this).change(function(){
-                    var c = new AnyTime.Converter({ format: datetime_format });
+                    var c = new AnyTime.Converter(datetime_converter_options);
                     $(this).next("input[type=hidden]").val( c.parse( $(this).val() ).getTime() / 1000 );
                     oTable.fnDraw();
                 });

@@ -79,6 +79,7 @@
     <div id="content" class="watchlist">
         <input style="display:none;" type="button" id="resetfilters" name="resetfilters" value="${_('Reset all filters')}"/>
         <py:if test="booloptions['datetime_picker']">
+        <input type="hidden" id="tzoffset" name="tzoffset" value="$tzoffset"/>
         <input type="hidden" id="datetime_format" name="datetime_format" value="${datetime_format}"/>
         <input type="hidden" id="labelHour" name="labelHour" value="${_('Hour')}"/>
         <input type="hidden" id="labelMinute" name="labelMinute" value="${_('Minute')}"/>
