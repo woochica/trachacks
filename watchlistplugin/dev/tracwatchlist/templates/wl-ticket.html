@@ -11,8 +11,10 @@
       <div id="tickets">
         <py:choose test="">
           <div class="system-message" py:when="'TICKET_VIEW' not in perm">
-          <h2>${get_label(realm,1000,astitle=True)}</h2>
-            You lack permission to view tickets.
+            <h2>${get_label(realm,1000,astitle=True)}</h2>
+            <p i18n:msg="realm_plural">
+               You lack permission to view ${get_label(realm,1000)}.
+            </p>
           </div>
           <div class="ticketlist-main" id="ticketlist-main" py:otherwise="">
             <div>
@@ -102,8 +104,8 @@
               </tfoot>
             </table>
           </div>
-          <p class="noentrymessage" style="${ticketlist or 'display:block'}">
-            No tickets are currently watched.
+          <p class="noentrymessage" style="${ticketlist or 'display:block'}" i18n:msg="realm_plural">
+            No ${get_label(realm,1000)} are currently watched.
           </p>
           </div>
           ${modify_form('ticket')}

@@ -12,7 +12,9 @@
     <py:choose test="">
       <div class="system-message" py:when="'WIKI_VIEW' not in perm">
         <h2>${get_label(realm,1000,astitle=True)}</h2>
-        You lack permission to view wikis.
+        <p i18n:msg="realm_plural">
+            You lack permission to view ${get_label(realm,1000)}.
+        </p>
       </div>
       <div class="watchlist-main" id="wikilist-main" py:otherwise="">
           <div>
@@ -110,9 +112,9 @@
               </tfoot>
             </table>
           </div>
-          <p class="noentrymessage" style="${wikilist or 'display:block'}">
-            No wikis are currently watched.
-            </p>
+          <p class="noentrymessage" style="${ticketlist or 'display:block'}" i18n:msg="realm_plural">
+            No ${get_label(realm,1000)} are currently watched.
+          </p>
           </div>
           ${modify_form('wiki')}
       </div>
