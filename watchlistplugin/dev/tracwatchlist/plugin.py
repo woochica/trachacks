@@ -24,47 +24,21 @@ __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
 from  pkg_resources          import  resource_filename
-from  urllib                 import  quote_plus
 
-from  genshi.builder         import  tag, Markup
-from  trac.config            import  Option, BoolOption, ListOption
 from  trac.core              import  *
-from  trac.db                import  Table, Column, Index, DatabaseManager
-from  trac.ticket.model      import  Ticket
-#from  trac.ticket.web_ui     import  TicketModule
-from  trac.ticket.api        import  TicketSystem
-from  trac.util.datefmt      import  pretty_timedelta, to_datetime, \
-                                     datetime, utc, to_timestamp
+from  genshi.builder         import  tag
+from  trac.config            import  BoolOption, ListOption
 from  trac.util.text         import  to_unicode
 from  trac.web.api           import  IRequestFilter, IRequestHandler, \
                                      RequestDone, HTTPNotFound, HTTPBadRequest
 from  trac.web.chrome        import  ITemplateProvider, add_ctxtnav, \
-                                     add_link, add_script, add_notice, \
-                                     Chrome
-from  trac.util.text         import  obfuscate_email_address
-from  trac.web.href          import  Href
+                                     add_notice
 from  trac.wiki.model        import  WikiPage
-from  trac.wiki.formatter    import  format_to_oneliner
-from  trac.mimeview.api      import  Context
 
-from  tracwatchlist.api      import  BasicWatchlist, IWatchlistProvider
-from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
+from  tracwatchlist.api      import  IWatchlistProvider
+from  tracwatchlist.translation import  add_domain, _, N_, t_, tag_, gettext
 from  tracwatchlist.util     import  ensure_string, ensure_iter, LC_TIME,\
                                      datetime_format, current_timestamp
-
-class UserOption(object):
-    """User changeable option."""
-
-    def __init__(self, option, config, log=None):
-        self.name = option.name
-        self.__doc__ = option.__doc__
-        self.value = option.accessor(config[option.section],option.name,option.default)
-        self.log = log
-
-    def __get__(self, instance, owner):
-        self.log.debug('User Option INSTANCE = ' + unicode(instance))
-        self.log.debug('User Option OWNER    = ' + unicode(owner))
-        return self
 
 
 
@@ -699,7 +673,6 @@ class WatchlistPlugin(Component):
         except KeyError:
             pass
 
-        href = Href(req.base_path)
         if self.is_watching(realm, resid, user):
             add_ctxtnav(req, _("Unwatch"),
                 href=req.href('watchlist', action='unwatch',
