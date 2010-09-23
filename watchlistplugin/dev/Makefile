@@ -4,6 +4,7 @@ install:
 	sudo easy_install .
 
 setup:
+	python ./setup.py compile_catalog
 	sudo python setup.py develop --exclude-scripts; sudo chown ${USER} . -R
 
 messages:
