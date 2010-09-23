@@ -33,7 +33,7 @@ __date__     = ur"$Date$"[7:-2]
 from  genshi.builder        import  tag
 from  trac.core             import  *
 from  trac.web.chrome       import  INavigationContributor
-from  tracwatchlist.plugin  import  _
+from  tracwatchlist.translation   import  _
 
 
 class WatchlistNavigation(Component):

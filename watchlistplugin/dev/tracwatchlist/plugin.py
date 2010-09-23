@@ -356,7 +356,7 @@ class WatchlistPlugin(Component):
 
     ## Methods for IRequestHandler ##########################################
     def match_request(self, req):
-        return req.path_info.startswith("/watchlist")
+        return req.path_info == "/watchlist"
 
 
     def process_request(self, req):
@@ -617,15 +617,8 @@ class WatchlistPlugin(Component):
                 cols = wldict['default_fields'].get(r,[])
             wldict['active_fields'][r] = cols
 
-        helplink = "http://trac-hacks.org/wiki/WatchlistPlugin"
-        for postfix in ('/'+req.session.get('language', 'en-US'), '/en-US', ''):
-            helpwiki = 'WatchlistManual'+postfix
-            if WikiPage( self.env, helpwiki ).exists:
-                helplink = req.href.wiki( helpwiki )
-                break
-
-        # TRANSLATOR: Link to manual page of the plug-in
-        add_ctxtnav(req, _("Help"), href=helplink)
+        # TRANSLATOR: Link to help/manual page of the plug-in
+        add_ctxtnav(req, _("Help"), href=req.href.watchlist('manual'))
         for xrealm in wldict['realms']:
             xhandler = self.realm_handler[xrealm]
             if xhandler.has_perm(xrealm, req.perm):
