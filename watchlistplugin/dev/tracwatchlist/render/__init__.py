@@ -2,17 +2,26 @@
 """
  This file is part of the Watchlist Plugin for Trac.
  Copyright (c) 2008-2010  Martin Scharrer <martin@scharrer-online.de>
- This is Free Software under the BSD license.
 
+ NOTE:
  Code taken and minimal modified from trac.ticket.web_ui.TicketModule._render_property_diff
- which is licensed under the modified BSD license. 
+ (from both Trac 0.11.7 and 0.12) which is licensed under the modified BSD license:
      Copyright (C) 2003-2009 Edgewall Software
      Copyright (C) 2003-2005 Jonas Borgström <jonas@edgewall.com>
      Author: Jonas Borgström <jonas@edgewall.com>
      See http://trac.edgewall.org/wiki/TracLicense
 
+ Notable changes:
+    * Added special format for attachments
+
+ The contribution of Martin Scharrer is licenced under the modified BSD licence
+ and the the GPL (v3 or later) licence. Either licence can be used for
+ derivatives.
+
  i18n notice:
  This file uses the same domain as trac itself, not the one for the WatchlistPlugin.
+
+ $Id$
 """
 
 from  trac.core              import  *

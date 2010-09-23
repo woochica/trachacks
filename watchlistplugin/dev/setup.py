@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Setup file for the
+= Watchlist Plugin for Trac =
+Copyright (c) 2008-2010 by Martin Scharrer <martin@scharrer-online.de>
+All rights reserved.
+See the `LICENCE` file for details.
+
+$Id$
+"""
 
 from setuptools import setup
 

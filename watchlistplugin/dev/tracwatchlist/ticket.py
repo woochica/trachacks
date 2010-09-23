@@ -1,21 +1,28 @@
 # -*- coding: utf-8 -*-
 """
- Watchlist Plugin for Trac
- Copyright (c) 2008-2010  Martin Scharrer <martin@scharrer-online.de>
- This is Free Software under the BSD license.
+= Watchlist Plugin for Trac =
+Plugin Website:  http://trac-hacks.org/wiki/WatchlistPlugin
+Trac website:    http://trac.edgewall.org/
 
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
+Copyright (c) 2008-2010 by Martin Scharrer <martin@scharrer-online.de>
+All rights reserved.
 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
+The i18n support was added by Steffen Hoffmann <hoff.st@web.de>.
 
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+For a copy of the GNU General Public License see
+<http://www.gnu.org/licenses/>.
+
+$Id$
 """
 
 __url__      = ur"$URL$"[6:-2]
@@ -24,10 +31,10 @@ __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
 from  trac.core              import  *
-from  genshi.builder         import  tag, Markup
+from  genshi.builder         import  tag
 from  trac.ticket.model      import  Ticket
 from  trac.ticket.api        import  TicketSystem
-from  trac.util.datefmt      import  pretty_timedelta, to_datetime, \
+from  trac.util.datefmt      import  pretty_timedelta, \
                                      datetime, utc, to_timestamp
 from  trac.util.text         import  to_unicode, obfuscate_email_address
 from  trac.wiki.formatter    import  format_to_oneliner
@@ -39,7 +46,7 @@ from  trac.attachment        import  Attachment
 from  trac.util.datefmt      import  format_datetime as trac_format_datetime
 
 from  tracwatchlist.api      import  BasicWatchlist
-from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, gettext, ngettext
+from  tracwatchlist.translation import  add_domain, _, N_, T_, t_, tag_, ngettext
 from  tracwatchlist.render   import  render_property_diff
 from  tracwatchlist.util     import  moreless, format_datetime, LC_TIME,\
                                      decode_range_sql
