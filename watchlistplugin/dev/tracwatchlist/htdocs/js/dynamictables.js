@@ -405,18 +405,20 @@ jQuery(document).ready(function() {
         // Restore datetime filter inputs on load
         // Must be after 'datetimefilter' handler are in place
         dtid = $(this).attr('id');
-        $(this).find("input").each(function(){
+        $(this).find("input[type=text]").each(function(){
             var name = dtid + '/' + $(this).attr('name');
             var value = $.Jookie.Get(cookie, name);
             if (value) {
-              if ($(this).is("input[type=checkbox]")) {
+                $(this).val(value);
+                $(this).change();
+            }
+        });
+        $(this).find("input[type=checkbox]").each(function(){
+            var name = dtid + '/' + $(this).attr('name');
+            var value = $.Jookie.Get(cookie, name);
+            if (value) {
                 $(this).attr('checked', value =='checked' );
                 $(this).change();
-              }
-              else {
-                $(this).val(value);
-                $(this).keyup();
-              }
             }
         });
     });
@@ -475,12 +477,20 @@ function wlstorespecialfilters(tables) {
         });
         $(table).find(".datetimefilter").each(function(){
             var dtid = $(this).attr('id');
-            $(this).find("input").each(function(){
+            $(this).find("input[type=text]").each(function(){
                 var name = dtid + '/' + $(this).attr('name');
                 var value = $(this).val();
-                if ($(this).is("input[type=checkbox]")) {
-                    value = $(this).is(":checked") ? 'checked' : '';
+                var initval = $(this).prev().val();
+                if (value == initval) {
+                    $.Jookie.Unset(cookie, name);
                 }
+                else {
+                    $.Jookie.Set(cookie, name, value);
+                }
+            });
+            $(this).find("input[type=checkbox]").each(function(){
+                var name = dtid + '/' + $(this).attr('name');
+                var value = $(this).is(":checked") ? 'checked' : '';
                 $.Jookie.Set(cookie, name, value);
             });
         });
