@@ -35,11 +35,13 @@ try:
     from  trac.util.translation  import  domain_functions
     add_domain, _, N_, tag_, gettext, ngettext = \
         domain_functions('watchlist', ('add_domain', '_', 'N_', 'tag_', 'gettext', 'ngettext'))
+    i18n_enabled = True
 except ImportError:
     from  trac.util.translation  import  gettext, ngettext
     _, N_, tag_  = gettext, gettext, None
     def add_domain(a,b,c=None):
         pass
+    i18n_enabled = False
 
 # Import tracs `N_` as `T_` to mark strings already translated by trac.
 # Note: Later this might also be needed for `_`.

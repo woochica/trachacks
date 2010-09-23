@@ -44,7 +44,8 @@ from  trac.web.chrome        import  ITemplateProvider, add_ctxtnav, \
 from  trac.wiki.model        import  WikiPage
 
 from  tracwatchlist.api      import  IWatchlistProvider
-from  tracwatchlist.translation import  add_domain, _, N_, t_, tag_, gettext
+from  tracwatchlist.translation import  add_domain, _, N_, t_, tag_, gettext,\
+                                        i18n_enabled
 from  tracwatchlist.util     import  ensure_string, ensure_iter, LC_TIME,\
                                      datetime_format, current_timestamp
 
@@ -587,6 +588,7 @@ class WatchlistPlugin(Component):
         else:
             offset = offset.seconds / 60
         wldict['tzoffset'] = offset
+        wldict['i18n'] = i18n_enabled
         wldict['realms'] = [ r for r in settings['listoptions']['realm_order'] if r in self.realms ]
         wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
         wldict['booloptions'] = options

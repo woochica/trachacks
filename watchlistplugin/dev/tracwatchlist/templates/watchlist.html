@@ -141,11 +141,11 @@
                     <h3 class="system-message-title">Not found</h3>
                     <div class="not_found_res" py:with="name = not_found_res[0]">
                       <i18n:choose numeral="len(not_found_res)" params="realm,name">
-                          <p i18n:singular="">
+                          <p i18n:singular="" py:if="i18n or len(not_found_res) == 1">
                             No <span>${get_label(realm,1000)}</span> were found
                             matching pattern "<em>${name}</em>".
                           </p>
-                          <p i18n:plural="">
+                          <p i18n:plural="" py:if="i18n or len(not_found_res) > 1">
                             The following patterns
                             did not matched any <span>${get_label(realm,1000)}</span>:
                           </p>
@@ -159,11 +159,11 @@
                 <div class="system-message" id="warning" py:if="already_watched_res" py:with="name=already_watched_res[0]">
                     <h3 class="system-message-title">Already on watchlist</h3>
                     <i18n:choose numeral="len(already_watched_res)" params="realm,name">
-                    <p i18n:singular="">
+                    <p i18n:singular="" py:if="i18n or len(already_watched_res) == 1">
                       The selected <span>${get_label(realm,1)}</span> <a href="${href(realm,name)}">$name</a> is already watched.
                       (<a href="${href.watchlist(action='unwatch',realm=realm,resid=name)}">Unwatch it</a>)
                     </p>
-                    <p i18n:plural="">
+                    <p i18n:plural="" py:if="i18n or len(already_watched_res) > 1">
                       The following selected <span>${get_label(realm,len(already_watched_res))}</span> where already
                       on the watchlist:
                       (<a href="${href.watchlist(action='unwatch',realm=realm,resid=already_watched_res)}">Unwatch them</a>)
@@ -178,13 +178,13 @@
                 <div class="system-message" id="notice" py:if="new_res" py:with="name=new_res[0]">
                     <h3 class="system-message-title">Added to Watchlist</h3>
                     <i18n:choose numeral="len(new_res)" params="realm,name">
-                    <p i18n:singular="">
+                    <p i18n:singular="" py:if="i18n or len(new_res) == 1">
                       The selected <span>${get_label(realm,1)}</span> <a href="${href(realm,name)}">$name</a>
                       was added to the watched.
                       (<a href="${href.watchlist(action='unwatch',realm=realm,
                       resid=name)}">Remove again</a>)
                     </p>
-                    <p i18n:plural="">
+                    <p i18n:plural="" py:if="i18n or len(new_res) > 1">
                       The following selected <span>${get_label(realm,len(new_res))}</span> where added
                       to the watchlist:
                       (<a href="${href.watchlist(action='unwatch',realm=realm,
@@ -203,13 +203,13 @@
                   py:if="del_res" py:with="name=del_res[0]">
                     <h3 class="system-message-title">Removed from Watchlist</h3>
                     <i18n:choose numeral="len(del_res)" params="realm,name">
-                    <p i18n:singular="">
+                    <p i18n:singular="" py:if="i18n or len(del_res) == 1">
                       The selected <span>${get_label(realm,1)}</span> <a href="${href(realm,name)}">$name</a>
                       was removed from the watchlist.
                       (<a href="${href.watchlist(action='watch',realm=realm,
                       resid=name)}">Add again</a>)
                     </p>
-                    <p i18n:plural="">
+                    <p i18n:plural="" py:if="i18n or len(del_res) > 1">
                       The following selected <span>${get_label(realm,len(del_res))}</span> where removed
                       from the watchlist:
                       (<a href="${href.watchlist(action='watch',realm=realm,
@@ -226,11 +226,11 @@
                     <h3 class="system-message-title">Not on Watchlist</h3>
                     <div class="not_watched_res">
                     <i18n:choose numeral="len(not_watched_res)" params="realm,name">
-                      <p i18n:singular="">
+                      <p i18n:singular="" py:if="i18n or len(not_watched_res) == 1">
                         The selected <span>${get_label(realm,1)}</span> <a href="${href(realm,name)}">$name</a>
                         was not on the watchlist.
                       </p>
-                      <p i18n:plural="">
+                      <p i18n:plural="" py:if="i18n or len(not_watched_res) > 1">
                         The following to-be-deleted <span>${get_label(realm,len(not_watched_res))}</span>
                         where not on the watchlist:
                       </p>
