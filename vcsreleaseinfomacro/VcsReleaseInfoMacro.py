@@ -7,6 +7,7 @@ from trac.util import format_datetime
 from StringIO import StringIO
 from operator import itemgetter, attrgetter
 from trac.versioncontrol import Node
+from trac.versioncontrol.api import RepositoryManager
 
 class VcsReleaseInfoMacro(WikiMacroBase):
     """ Provides the macro VcsReleaseInfoMacro to display latest releases from VCS path.
@@ -51,16 +52,16 @@ class VcsReleaseInfoMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         req = formatter.req
         args, kwargs = parse_args(content)
-        args += [None, None]
+        args += [None, None, None]
         path, limit, rev = args[:3]
         limit = kwargs.pop('limit', limit)
         rev = kwargs.pop('rev', rev)
-        reponame = None
 
         if 'CHANGESET_VIEW' not in req.perm:
             return Markup('<i>Releases not available</i>')
 
-        repo = self.env.get_repository(reponame = reponame)
+        rm = RepositoryManager(self.env)
+        reponame, repo, path = rm.get_repository_by_path(path);
 
         if rev is None:
             rev = repo.get_youngest_rev()
@@ -77,6 +78,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         releases = releases[:1+limit]
         items = []
         releases = [None] + releases + [None]
+        path = reponame.rstrip('/') + path.lstrip('/')
         for i in xrange(len(releases) - 2):
             prev, cur, next = releases[i : i + 3]
 
