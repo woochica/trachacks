@@ -390,8 +390,7 @@ jQuery(document).ready(function() {
                 $(this).AnyTime_picker(datetime_picker_options);
                 $(this).data('converter', new AnyTime.Converter(datetime_converter_options) );
                 $(this).change(function(){
-                    var conv = $(this).data('converter');
-                    $(this).next("input[type=hidden]").val( conv.parse( $(this).val() ).getTime() / 1000 );
+                    wlupdatedatetime(this);
                     oTable.fnDraw();
                 });
             });
@@ -427,6 +426,11 @@ jQuery(document).ready(function() {
   });
 });
 
+function wlupdatedatetime(input) {
+    var conv = $(input).data('converter');
+    $(input).next("input[type=hidden]").val( conv.parse( $(input).val() ).getTime() / 1000 );
+}
+
 /* Remove column sorting input when preferences are updated.
  * This is because the column order could have changed.
  * */
@@ -435,7 +439,7 @@ function wldelfilters(table) {
     $(table).find('tfoot .datetimefilter input[type=text]').each(function() {
         $(this).removeAttr('disabled');
         $(this).val( $(this).prev().val() );
-        $(this).change();
+        wlupdatedatetime(this);
     });
     $(table).find('tfoot input.filter,tfoot input.numericfilter').removeAttr('disabled').val('');
     $(table).find('tfoot input.numericfilter').data('filterfunction','');
