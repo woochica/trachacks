@@ -236,10 +236,10 @@ def ensure_tuple( var ):
     return (var,)
 
 
-def ensure_string( var ):
+def ensure_string( var, sep=u',' ):
     """Ensures that variable is a string"""
     if getattr(var, '__iter__', False):
-        return unicode(u','.join(var))
+        return unicode(sep.join(var))
     else:
         return var
 
