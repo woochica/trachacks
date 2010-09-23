@@ -94,8 +94,13 @@ class TicketWatchlist(BasicWatchlist):
                 self.fields['ticket']['tags'] = _("Tags")
 
 
-    def get_realm_label(self, realm, n_plural=1):
-        return ngettext("Ticket", "Tickets", n_plural)
+    def get_realm_label(self, realm, n_plural=1, astitle=False):
+        if astitle:
+            # TRANSLATOR: 'ticket(s)' as title
+            return ngettext("Ticket", "Tickets", n_plural)
+        else:
+            # TRANSLATOR: 'ticket(s)' inside a sentence
+            return ngettext("ticket", "tickets", n_plural)
 
 
     def resources_exists(self, realm, resids, fuzzy=0):

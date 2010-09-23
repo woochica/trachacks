@@ -41,7 +41,7 @@ class IWatchlistProvider(Interface):
         """ Must return list or tuple of realms provided. """
         pass
 
-    def get_realm_label(realm, n_plural=1):
+    def get_realm_label(realm, n_plural=1, astitle=False):
         pass
 
     def resources_exists(realm, resids):
@@ -120,11 +120,15 @@ class BasicWatchlist(Component):
     def get_realms(self):
         return self.realms
 
-    def get_realm_label(self, realm, n_plural=1):
-        if n_plural == 1:
-            return realm.capitalize()
+    def get_realm_label(self, realm, n_plural=1, astitle=False):
+        if astitle:
+            r = realm.capitalize()
         else:
-            return realm.capitalize() + 's'
+            r = realm
+        if n_plural == 1:
+            return r
+        else:
+            return r + 's'
 
     def resources_exists(self, realm, resids):
         if isinstance(resids,basestring):

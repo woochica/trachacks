@@ -11,12 +11,12 @@
   <div id="wikis">
     <py:choose test="">
       <div class="system-message" py:when="'WIKI_VIEW' not in perm">
-        <h2>${get_label(realm,1000)}</h2>
+        <h2>${get_label(realm,1000,astitle=True)}</h2>
         You lack permission to view wikis.
       </div>
       <div class="watchlist-main" id="wikilist-main" py:otherwise="">
           <div>
-          <h2 class="${wikilist and 'foldable' or ''}">${get_label(realm,1000)}</h2>
+          <h2 class="${wikilist and 'foldable' or ''}">${get_label(realm,1000,astitle=True)}</h2>
           <div class="watchlist-parent" id="wikilist-parent" py:if="wikilist">
             <table class="watchlist" id="wikilist"
                    py:with="attr = {

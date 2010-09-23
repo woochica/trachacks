@@ -91,8 +91,13 @@ class WikiWatchlist(BasicWatchlist):
                 self.fields['wiki']['tags'] = _("Tags")
 
 
-    def get_realm_label(self, realm, n_plural=1):
-        return ngettext("Wiki Page", "Wiki Pages", n_plural)
+    def get_realm_label(self, realm, n_plural=1, astitle=False):
+        if astitle:
+            # TRANSLATOR: 'wiki page(s)' as title
+            return ngettext("Wiki Page", "Wiki Pages", n_plural)
+        else:
+            # TRANSLATOR: 'wiki page(s)' inside a sentence
+            return ngettext("wiki page", "wiki pages", n_plural)
 
 
     def resources_exists(self, realm, resids, fuzzy=0):

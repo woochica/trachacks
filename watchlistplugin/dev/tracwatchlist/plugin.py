@@ -602,8 +602,8 @@ class WatchlistPlugin(Component):
         wldict['datetime_format'] = datetime_format(locale=locale)
         wldict['_'] = _
         wldict['t_'] = t_
-        def get_label(realm, n_plural=1):
-            return self.realm_handler[realm].get_realm_label(realm, n_plural)
+        def get_label(realm, n_plural=1, astitle=False):
+            return self.realm_handler[realm].get_realm_label(realm, n_plural, astitle)
         wldict['get_label'] = get_label
 
         wldict['available_fields'] = {}
@@ -630,7 +630,7 @@ class WatchlistPlugin(Component):
             xhandler = self.realm_handler[xrealm]
             if xhandler.has_perm(xrealm, req.perm):
                 wldict[xrealm + 'list'], wldict[xrealm + 'data'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
-                name = xhandler.get_realm_label(xrealm, n_plural=1000)
+                name = xhandler.get_realm_label(xrealm, n_plural=1000, astitle=True)
                 # TRANSLATOR: Navigation link to point to watchlist section of this realm
                 # (e.g. 'Wikis', 'Tickets').
                 add_ctxtnav(req, _("Watched %(realm_plural)s", realm_plural=name),
