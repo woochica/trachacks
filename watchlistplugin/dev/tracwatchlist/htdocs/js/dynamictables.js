@@ -190,7 +190,12 @@ $.fn.dataTableExt.afnFiltering.push(
 
 jQuery(document).ready(function() {
   // Copy reset filter button (hidden in HTML code to avoid JS localisation)
-  var resetfilters = $('#resetfilters').removeAttr('Id').removeAttr('style').detach();
+  try {
+     var resetfilters = $('#resetfilters').detach().removeAttr('Id').removeAttr('style');
+  } catch (err) {
+     var resetfilters = $('#resetfilters').clone().removeAttr('Id').removeAttr('style');
+     $('#resetfilters').remove();
+  }
   // Enable 'Delete Cookies' button
   $("#preferences form #deletecookies").click(function(){
       wldeletecookies();

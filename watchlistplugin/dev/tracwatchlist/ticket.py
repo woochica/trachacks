@@ -80,7 +80,7 @@ class TicketWatchlist(BasicWatchlist):
     def __init__(self):
         try: # Only works for Trac 0.12, but is not needed for Trac 0.11 anyway
             self.fields['ticket'].update( self.env[TicketSystem].get_ticket_field_labels() )
-        except KeyError, AttributeError:
+        except (KeyError, AttributeError):
             pass
         self.fields['ticket']['id'] = self.get_realm_label('ticket')
 
@@ -127,6 +127,7 @@ class TicketWatchlist(BasicWatchlist):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         context = Context.from_request(req)
+        locale = getattr( req, 'locale', LC_TIME)
 
         ticketlist = []
         extradict = {}
@@ -239,7 +240,6 @@ class TicketWatchlist(BasicWatchlist):
                     changes = moreless(changes, 5)
                     ticketdict['changes'] = tag(changes)
 
-            locale = getattr( req, 'locale', LC_TIME)
             if 'id' in fields:
                 ticketdict['id'] = sid
                 ticketdict['ID'] = format_to_oneliner(self.env, context, '#' + sid, shorten=True)

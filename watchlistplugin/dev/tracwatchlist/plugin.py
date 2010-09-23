@@ -31,6 +31,7 @@ __revision__ = int("0" + ur"$Rev$"[6:-2].strip('M'))
 __date__     = ur"$Date$"[7:-2]
 
 from  pkg_resources          import  resource_filename
+from  datetime               import  datetime
 
 from  trac.core              import  *
 from  genshi.builder         import  tag
@@ -580,7 +581,12 @@ class WatchlistPlugin(Component):
             wldict['show_messages'] = options['show_messages_on_watchlist_page']
 
         wldict['perm']   = req.perm
-        wldict['tzoffset'] = req.tz.utcoffset(req.tz).seconds / 60
+        offset = req.tz.utcoffset(datetime.now(req.tz))
+        if offset is None:
+            offset = 0
+        else:
+            offset = offset.seconds / 60
+        wldict['tzoffset'] = offset
         wldict['realms'] = [ r for r in settings['listoptions']['realm_order'] if r in self.realms ]
         wldict['notifications'] = bool(self.wsub and options['notifications'] and options['display_notify_column'])
         wldict['booloptions'] = options
