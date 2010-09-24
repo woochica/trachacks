@@ -57,7 +57,8 @@ setup(
             'htdocs/css/*.css',
             'htdocs/js/*.js',
             'locale/*/LC_MESSAGES/*.mo',
-            'manual/*',
+            'manuals/*.txt',
+            'manuals/attachments/*/*',
         ],
     },
     zip_safe     = False,
@@ -72,6 +73,7 @@ setup(
         'tracwatchlist.nav = tracwatchlist.nav',
         'tracwatchlist.render = tracwatchlist.render',
         'tracwatchlist.translation = tracwatchlist.translation',
+        'tracwatchlist.manual = tracwatchlist.manual',
       ]},
     **extra
 )

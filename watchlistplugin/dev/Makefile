@@ -18,3 +18,6 @@ upload:
 minify:
 	yuicompressfile tracwatchlist/htdocs/js/*.js tracwatchlist/htdocs/css/*.css
 
+clean:
+	sudo rm -rf build dist temp TracWatchlistPlugin.egg*
+
