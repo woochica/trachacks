@@ -17,6 +17,16 @@ from contextmenu.contextmenu import ISourceBrowserContextMenuProvider
 
 from trac_browser_svn_ops.svn_fs import SubversionWriter
 
+def _get_repository(env, req):
+    '''From env and req identify and return (reponame, repository, path), 
+    removing reponame from path in the process.
+    '''
+    path = req.args.get('path')
+    repo_mgr = RepositoryManager(env)
+    reponame, repos, path = repo_mgr.get_repository_by_path(path)
+    return reponame, repos, path
+
+
 class TracBrowserOps(Component):
     implements(ITemplateProvider, ITemplateStreamFilter, IRequestFilter,
                IPermissionRequestor)
@@ -113,15 +123,6 @@ class TracBrowserOps(Component):
     
     # Private methods
     
-    def _get_repository(self, req):
-        '''From req identify and return (reponame, repository, path), removing 
-        reponame from path in the process.
-        '''
-        path = req.args.get('path')
-        repo_mgr = RepositoryManager(self.env)
-        reponame, repos, path = repo_mgr.get_repository_by_path(path)
-        return reponame, repos, path
-        
     def _upload_request(self, req, handler):
         self.log.debug('Handling file upload for "%s"', req.authname)
         
@@ -150,7 +151,7 @@ class TracBrowserOps(Component):
         commit_msg = req.args.get('bsop_upload_commit')
         
         self.log.debug('Opening repository for file upload')
-        reponame, repos, path = self._get_repository(req)
+        reponame, repos, path = _get_repository(self.env, req)
         try:
             repos_path = repos.normalize_path('/'.join([path, filename]))
             self.log.debug('Writing file %s to %s in %s', 
@@ -177,7 +178,7 @@ class TracBrowserOps(Component):
         commit_msg = req.args.get('bsop_mvdel_commit')
         
         self.log.debug('Opening repository for %s', operation)
-        reponame, repos, path = self._get_repository(req)
+        reponame, repos, path = _get_repository(self.env, req)
         try:
             src_path = repos.normalize_path('/'.join([path, src_name]))
             dst_path = repos.normalize_path('/'.join([path, dst_name]))
@@ -210,7 +211,7 @@ class TracBrowserOps(Component):
         commit_msg = req.args.get('bsop_create_commit')
         
         self.log.debug('Opening repository to create folder')
-        reponame, repos, path = self._get_repository(req)
+        reponame, repos, path = _get_repository(self.env, req)
         try:
             create_path = repos.normalize_path('/'.join([path, create_name]))
             svn_writer = SubversionWriter(repos, req.authname)
@@ -366,16 +367,6 @@ class TracBrowserEdit(Component):
         return (template, data, content_type)
     
     # Private methods
-    # TODO Fix DRY violation, this is a copy from TracBrowserOps
-    def _get_repository(self, req):
-        '''From req identify and return (reponame, repository, path), removing 
-        reponame from path in the process.
-        '''
-        path = req.args.get('path')
-        repo_mgr = RepositoryManager(self.env)
-        reponame, repos, path = repo_mgr.get_repository_by_path(path)
-        return reponame, repos, path
-    
     def _edit_request(self, req, handler):
         self.log.debug('Handling file edit for "%s"', req.authname)
         
@@ -388,7 +379,7 @@ class TracBrowserEdit(Component):
         self.log.debug('Received %i bytes of editted text as %r',
                        len(text), text)
         self.log.debug('Opening repository for file edit')
-        reponame, repos, path = self._get_repository(req)
+        reponame, repos, path = _get_repository(self.env, req)
         try:
             repos_path = repos.normalize_path(path)
             filename = os.path.basename(repos_path)
