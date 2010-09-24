@@ -21,3 +21,5 @@ minify:
 clean:
 	sudo rm -rf build dist temp TracWatchlistPlugin.egg*
 
+dep:
+	python setup.py --command-packages=stdeb.command bdist_deb
