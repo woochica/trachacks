@@ -1,0 +1,13 @@
+<span xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:xi="http://www.w3.org/2001/XInclude" 
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:i18n="http://genshi.edgewall.org/i18n"
+     i18n:domain="announcer">
+     Subscribe to build announcements.
+
+     <ul>
+         <li><input type="checkbox" name="bitten_started_subscription" checked="${started}" value="1" /> Subscribe me to build started announcements.</li>
+         <li><input type="checkbox" name="bitten_aborted_subscription" checked="${aborted}" value="1" /> Subscribe me to build aborted announcements.</li>
+         <li><input type="checkbox" name="bitten_completed_subscription" checked="${completed}" value="1" /> Subscribe me to build completed announcements.</li>
+     </ul>
+</span>

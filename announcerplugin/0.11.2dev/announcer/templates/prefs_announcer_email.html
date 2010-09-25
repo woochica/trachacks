@@ -1,0 +1,17 @@
+<span xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:xi="http://www.w3.org/2001/XInclude" 
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:i18n="http://genshi.edgewall.org/i18n"
+     i18n:domain="announcer">
+  By default, the Announcer will deliver all notices to you in a plaintext format. You
+  may override this for each realm that may generate announcements.
+  <ul py:for="realm in realms">
+    <li> ${realm.capitalize()} announcements: 
+      <select name="email_format_${realm}">
+        <option py:for="format in realms[realm]" value="${format}" 
+         selected="${(preferences[realm] == format) or None}">${format}</option>
+      </select>
+    </li>        
+  </ul>
+    
+</span>
