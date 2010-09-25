@@ -263,6 +263,8 @@ class WatchlistPlugin(Component):
         cursor = db.cursor()
         if getattr(resid, '__iter__', False):
             reses = list(resid)
+            if not reses:
+                return []
             cursor.execute("""
                 SELECT resid
                 FROM watchlist

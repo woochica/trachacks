@@ -107,7 +107,7 @@ class WikiWatchlist(BasicWatchlist):
             if fuzzy:
                 resids += '*'
             resids = convert_to_sql_wildcards(resids).replace(',',' ').split()
-            sql = ' OR '.join((' name LIKE %s ESCAPE \'\\\' ',) * len(resids))
+            sql = ' OR '.join((" name LIKE %s ESCAPE '|' ",) * len(resids))
         else:
             resids = list(resids)
             if (len(resids) == 1):

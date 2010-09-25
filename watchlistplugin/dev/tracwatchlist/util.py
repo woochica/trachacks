@@ -295,7 +295,7 @@ def decode_range_sql( str ):
     return ' OR '.join(cmd)
 
 
-def convert_to_sql_wildcards( pattern ):
+def convert_to_sql_wildcards( pattern, sql_escape = '|' ):
     r"""Converts wildcards '*' and '?' to SQL versions '%' and '_'.
        A state machine is used to allow for using the backslash to
        escape this characters:
@@ -323,7 +323,7 @@ def convert_to_sql_wildcards( pattern ):
             esc = False
             if p in '%_':
                 # Escaped for SQL
-                pat += '\\'
+                pat += sql_escape
             pat += p
         else:
             if esc:
