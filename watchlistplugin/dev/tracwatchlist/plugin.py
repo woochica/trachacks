@@ -48,7 +48,7 @@ from  tracwatchlist.translation import  add_domain, _, N_, t_, tag_, gettext,\
                                         i18n_enabled
 from  tracwatchlist.util     import  ensure_string, ensure_iter, LC_TIME,\
                                      datetime_format, current_timestamp
-
+from  tracwatchlist.manual   import  WatchlistManual
 
 
 class WatchlistPlugin(Component):
@@ -620,7 +620,9 @@ class WatchlistPlugin(Component):
             wldict['active_fields'][r] = cols
 
         # TRANSLATOR: Link to help/manual page of the plug-in
-        add_ctxtnav(req, _("Help"), href=req.href.watchlist('manual'))
+        add_ctxtnav(req, _("Help"), href=(
+            self.env[WatchlistManual] and req.href.watchlist('manual')
+            or 'http://www.trac-hacks.org/wiki/WatchlistPlugin'))
         for xrealm in wldict['realms']:
             xhandler = self.realm_handler[xrealm]
             if xhandler.has_perm(xrealm, req.perm):
