@@ -138,7 +138,6 @@ class LegacyTicketSubscriber(Component):
                 ))
                 for s in subs:
                     yield s
-
     def _always_notify_component_owner(self, ticket):
         try:
             component = model.Component(self.env, ticket['component'])

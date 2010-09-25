@@ -293,7 +293,9 @@ class EmailDistributor(Component):
         return msgid
 
     def _event_id(self, event):
-        "FIXME: badly needs improvement"
+        """FIXME: badly needs improvement
+        Hacked bullshit.
+        """
         if hasattr(event.target, 'id'):
             return "%08d"%event.target.id
         elif hasattr(event.target, 'name'):
