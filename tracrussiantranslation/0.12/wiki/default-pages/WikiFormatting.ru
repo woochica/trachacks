@@ -691,64 +691,63 @@ InterWiki), написав `[[TitleIndex]]` вы все-таки вызывае�
 
 == Устанока якорей ==#SettingAnchors
 
-
-An anchor, or more correctly speaking, an [http://www.w3.org/TR/REC-html40/struct/links.html#h-12.2.1 anchor name] can be added explicitly at any place in the Wiki page, in order to uniquely identify a position in the document:
+Якорь или имя для ссылки ([http://www.w3.org/TR/REC-html40/struct/links.html#h-12.2.1 anchor name]) можно добавить явно в любом месте страницы wiki, для однозначного определения позиции в документе:
 
 {{{
 [=#point1]
 }}}
 
-This syntax was chosen to match the format for explicitly naming the header id [#Headings documented above]. For example:
+Такой синтаксис выбран для сходства с явным именованием id заголовка [#Headings описанным выше]. Например:
 {{{
-== Long title == #title
+== Длинное название == #title
 }}}
 
-It's also very close to the syntax for the corresponding link to that anchor:
+Это также очень похоже на синтаксис соответствующей ссылки на якорь:
 {{{
 [#point1]
 }}}
 
-Optionally, a label can be given to the anchor:
+По желанию можно сделать подпись к якорю:
 {{{
-[[=#point1 '''Point 1''']]
+[[=#point1 '''Точка 1''']]
 }}}
 
 ||= Разметка =||= Результат =||
 |----------------------------------
 {{{#!td
   {{{
-  [#point2 jump to the second point]
+  [#point2 перейти во вторую точку]
 
   ...
 
-  Point2:  [=#point2] Jump here
+  Точка2:  [=#point2] Иди сюда
   }}}
 }}}
 {{{#!td
-  [#point2 jump to the second point]
+  [#point2 перейти во вторую точку]
 
   ...
 
-  Point2:  [=#point2] Jump here
+  Точка2:  [=#point2] Иди сюда
 }}}
 
-For more complex anchors (e.g. when a custom title is wanted), one can use the Span macro, e.g. `[[span(id=point2, class=wikianchor, title=Point 2, ^(2)^)]]`.
+Для более сложных якорей (напр. когда нужно специальное название) можно использовать макрос Span, напр. `[[span(id=point2, class=wikianchor, title=Точка 2, ^(2)^)]]`.
 
 
-== Escaping Links and WikiPageNames ==
+== Отмена разметки ==#EscapingLinksandWikiPageNames
 
-You may avoid making hyperlinks out of TracLinks by preceding an expression with a single "!" (exclamation mark).
+Вы можете избежать создания гиперссылок из TracLinks, предваряя выражение одним "!" (восклицательным знаком).
 
 ||= Разметка =||= Результат =||
 {{{#!td
   {{{
    !NoHyperLink
-   !#42 is not a link
+   !#42 не является ссылкой
   }}}
 }}}
 {{{#!td
  !NoHyperLink
- !#42 is not a link
+ !#42 не является ссылкой
 }}}
 
 
@@ -946,63 +945,63 @@ if __name__ == '__main__':
 
 == Комментарии ==#Comments
 
-Comments can be added to the plain text. These will not be rendered and will not display in any other format than plain text.
+Можно добавить комметарии в текст. Они не будут отображены ни в каком формате кроме простого текста.
 
 ||= Разметка =||= Результат =||
 {{{#!td
   {{{
-  Nothing to
+  Нечего
   {{{
   #!comment
-  Your comment for editors here
+  Здесь ваш коментарий для редакторов
   }}}
-  see ;-)
+  смотреть ;-)
   }}}
 }}}
 {{{#!td
-  Nothing to
+  Нечего
   {{{
   #!comment
-  Your comment for editors here
+  Здесь ваш коментарий для редакторов
   }}}
-  see ;-)
+  смотреть ;-)
 }}}
 
 
 == Разное ==#Miscellaneous
 
-An horizontal line can be used to separated different parts of your page:
+Для разделения разных частей страницы можно использовать горизонтальную линию:
 
 ||= Разметка =||= Результат =||
 {{{#!td
   {{{
-  Four or more dashes will be replaced 
-  by an horizontal line (<HR>)
+  Четыре минуса и более будут заменены
+  на горизонтальную линию (<HR>)
   ----
-  See?
+  Видите?
   }}}
 }}}
 {{{#!td
-Four or more dashes will be replaced
-by an horizontal line (<HR>)
+Четыре минуса и более будут заменены
+на горизонтальную линию (<HR>)
 ----
-See?
+Видите?
 }}}
 |----------------------------------
 {{{#!td
   {{{
-  "macro" style [[br]] line break
+  макрос для [[br]] разрыва строки
   }}}
 }}}
 {{{#!td
-"macro" style [[br]] line break
+макрос для [[br]] разрыва строки
 }}}
 |----------------------------------
 {{{#!td
   {{{
-  !WikiCreole style \\ line\\break
+  стиль !WikiCreole \\ разрыва\\строки
   }}}
 }}}
 {{{#!td
-!WikiCreole style \\ line\\break
+стиль !WikiCreole \\ разрыва\\строки
 }}}
