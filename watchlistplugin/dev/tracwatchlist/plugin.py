@@ -530,7 +530,8 @@ class WatchlistPlugin(Component):
             handler = self.realm_handler[realm]
             not_found_res = list()
             found_res = set()
-            for rid in resid.split(u','):
+            resids = resid.strip().split(u',')
+            for rid in resids:
                 rid = rid.strip()
                 if not rid:
                     continue
@@ -548,11 +549,13 @@ class WatchlistPlugin(Component):
             wldict['not_watched_res'] = sorted(not_watched_res, cmp=comp, key=key)
             wldict['not_found_res'] = not_found_res
 
+            self.log.debug("reses = " + unicode(reses))
             if del_res:
                 self.unwatch(realm, del_res, user, db=db)
-            if len(reses) == 0:
-                # If there where no maches try to delete the given resid
+            elif len(resids) == 1:
+                # If there where no maches and only own resid try to delete it
                 # anyway. Might be a delete wiki page.
+                self.log.debug("resid = " + unicode(resid))
                 self.unwatch(realm, [resid], user, db=db)
 
             # Unset notification
