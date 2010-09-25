@@ -8,13 +8,44 @@
       py:strip="">
       <fieldset>
       <legend>${t_("General")}</legend>
-      <py:for each="k in booloptions_order">
+      <py:for each="k in ('attachment_changes',)">
           <input type="checkbox" name="booloptions" id="${k}" value="${k}"
                  checked="${booloptions[k] and 'checked' or None}" />
           <label for="${k}">${booloptions_doc[k]}</label>
           <br />
       </py:for>
       </fieldset>
+      <div class="clear" />
+      <fieldset>
+      <legend>User Interface</legend>
+      <py:for each="k in ( 'autocomplete_inputs', 'dynamic_tables', 'individual_column_filtering', 'datetime_picker')">
+          <input type="checkbox" name="booloptions" id="${k}" value="${k}"
+                 checked="${booloptions[k] and 'checked' or None}" />
+          <label for="${k}">${booloptions_doc[k]}</label>
+          <br />
+      </py:for>
+      </fieldset>
+      <div class="clear" />
+      <fieldset>
+      <legend>Messages</legend>
+      <py:for each="k in ( 'stay_at_resource', 'show_messages_on_resource_page', 'show_messages_on_watchlist_page', 'show_messages_while_on_watchlist_page')">
+          <input type="checkbox" name="booloptions" id="${k}" value="${k}"
+                 checked="${booloptions[k] and 'checked' or None}" />
+          <label for="${k}">${booloptions_doc[k]}</label>
+          <br />
+      </py:for>
+      </fieldset>
+      <div class="clear" />
+      <fieldset>
+      <legend>Notifications</legend>
+      <py:for each="k in ( 'notifications', 'display_notify_navitems', 'display_notify_column', 'notify_by_default', 'stay_at_resource_notify' )">
+          <input type="checkbox" name="booloptions" id="${k}" value="${k}"
+                 checked="${booloptions[k] and 'checked' or None}" />
+          <label for="${k}">${booloptions_doc[k]}</label>
+          <br />
+      </py:for>
+      </fieldset>
+      <div class="clear" />
       <fieldset>
       <legend>Watchlist sections</legend>
       <py:for each="k in listoptions_order">
