@@ -54,6 +54,20 @@
         margin-right:1ex;
 }
 
+.pptickettable td {
+  vertical-align: middle;
+}
+
+.ppticket .ppusecolors .ticket {
+/*   border-width: 2px; */
+/*   border-style: dotted; */
+  padding:2px;
+}
+.ppticket .ppuseimages .ticket {
+  padding-left: 16px;
+  background-repeat: no-repeat;
+  background-position: left middle;
+}
 
 /*
 #ppconnect_from {
@@ -318,3 +332,70 @@ table.pplisting tbody td.ppimagecol {
 }
 
 
+
+/* ***************** date picker ***************** */
+
+#ppDatePicker table
+{
+	font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+	border-collapse: collapse;
+	border:1px solid #EEE;
+	color: #111;
+	border:collapse;
+	border-bottom: 1px solid #9baff1;
+}
+#ppDatePicker  th, #ppDatePicker tfoot td, #ppDatePicker tfoot tr
+{
+	color: #DDD;
+	text-align:center;
+	font-weight: normal;
+	padding: 0.75ex;
+	background: #b9c9fe;
+	border: 1px solid #000;
+	background-color: #333;
+	background-image:url('black_gradient2.png');
+	background-position:center center;
+}
+#ppDatePicker table td
+{
+	color: #111;
+	padding: 0.75ex;
+	text-align:center;
+	border: 1px solid #EEE;
+}
+
+
+ #ppDatePicker td, #ppDatePicker th  { 
+  padding:3px; 
+  border-right:1px solid #999; 
+  border-bottom:1px solid #999; 
+}
+
+#ppDatePicker .today {
+/*     background-image:url(hatch5x5yellow.gif) !important; */
+	background-color:#FF9;
+}
+#ppDatePicker .selecteddate {
+	background-color:#9F9;
+}
+
+#ppDatePicker tr.odd {
+  background-color: #F5F5F5;
+}
+
+#ppDatePicker tr.even {
+  background-color: #FCFCFC;
+}
+
+#ppDatePicker td.sunday {
+    background-image:url(hatch10x10light.gif);
+}
+
+#ppDatePicker td.saturday {
+    background-image:url(hatch10x10light.gif);
+}
+
+#ppDatePicker input {
+  margin-left:1.5ex;
+  margin-right:1.5ex;
+}

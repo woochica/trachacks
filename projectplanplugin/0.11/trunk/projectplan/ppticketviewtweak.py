@@ -72,6 +72,8 @@ class PPTicketViewTweak(Component):
       sep = ', '
     
     stream |= Transformer('body/div[@id="main"]/div[@id="content"]/div[@id="ticket"]/table/tr/td[@headers="h_%s"]/text()' % self.field).replace(depwithlinks)
+    # TODO: need to publish the current date format
+    #stream |= Transformer('body/div[@id="main"]').prepend(tag.div( req.environ.get( 'ticketclosedf' ), id='dateformat') )
     
     return stream
  
@@ -84,7 +86,7 @@ class PPTicketViewTweak(Component):
     '''
       add javascript and stylesheet to ticket view
     '''
-    if req.path_info.startswith('/ticket/'):
+    if req.path_info.startswith('/ticket/') or req.path_info.startswith('/newticket'):
       #tkt = data['ticket']
       addExternFiles(req)
     return template, data, content_type

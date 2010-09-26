@@ -921,7 +921,8 @@ class PPEnv():
   '''
   # TODO: move to constants
   connectimg = 'crystal_project/16x16/conf/configure.png'
-
+  PPConstant = PPConstant()
+  
   def __init__( self, env, req, content ):
     '''
       Initialize the Envoironment
@@ -930,7 +931,12 @@ class PPEnv():
     args, kw = parse_args( content )
     self.macroid = str( kw.get('macroid') ) or '1';
     self.macroargs = args
+    
+    # replace generic values    
+    for k in kw.keys():
+      kw[k] = kw[k].replace('$user', req.authname)
     self.macrokw = kw
+    
     # set constants
     self.const = PPConstant
     # set trac environment, request
@@ -989,6 +995,8 @@ class PPEnv():
         'N': False,
         'TRUE': True,
         'FALSE': False,
+        'T': True,
+        'F': False,
       }.get( self.macrokw.get(arg).strip().upper(), default) # fallback: default
     except:
       return default

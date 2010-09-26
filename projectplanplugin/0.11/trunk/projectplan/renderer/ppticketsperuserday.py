@@ -92,13 +92,14 @@ class TicketsPerUserDay(RenderImpl):
         orderedtickets[segment][o] = []
     
     # fill up matrix
+    self.macroenv.tracenv.log.debug('number of tickets: '+str(len(ticketset.getIDList())) )
     for tid in ticketset.getIDList():
       try:
         ticket = ticketset.getTicket(tid)
         #orderedtickets[ticket.getfield(field)][ticket.getfield(owner)].append(tag.a(href=self.env.href.wiki(str(tid)), str(tid)))
-        orderedtickets[ticket.getfield(field)][ticket.getfield(owner)].append(tid)
+        orderedtickets[ticket.getfield(field)][ticket.getfield(owner)].append(ticket)
       except Exception,e:
-        self.macroenv.tracenv.log.warning(repr(e))
+        self.macroenv.tracenv.log.debug('fill up matrix: #'+str(tid)+' '+repr(e))
         pass
     
     calendar = {}
@@ -123,10 +124,10 @@ class TicketsPerUserDay(RenderImpl):
         calendar[segment]['date'] = consideredDate
         subtitle = weekdays[calendar[segment]['isocalendar'][2]] + ', week '+str(calendar[segment]['isocalendar'][1])
         if consideredDate == currentDate:
-          self.macroenv.tracenv.log.error('th.today')
+          #self.macroenv.tracenv.log.debug('th.today')
           myclass = 'today'
-        else:
-          self.macroenv.tracenv.log.error('NO th.today')
+        #else:
+          #self.macroenv.tracenv.log.debug('NO th.today')
         #tr(tag.th(tag.h4(segment), tag.h5( subtitle))) # week day and number
       except Exception,e:
         self.macroenv.tracenv.log.error(str(e)+' '+segment)
@@ -139,6 +140,9 @@ class TicketsPerUserDay(RenderImpl):
       tr(tag.th(tag.h4(segment, class_ = myclass ), tag.h5( subtitle, style = mystyle, title = mytitle, class_ = myclass  ))) 
       counttickets[segment] = 0
     table(tag.thead(tr))
+    
+    self.macroenv.tracenv.log.debug('tickets in table: '+repr(orderedtickets))
+    
     
     # table body
     tbody = tag.tbody()
@@ -158,17 +162,13 @@ class TicketsPerUserDay(RenderImpl):
           class_ = 'today'
         elif calendar[segment]['isocalendar'][2] == 6: # Saturday
           class_ = 'saturday'
-        elif calendar[segment]['isocalendar'][2] == 7: # Saturday
+        elif calendar[segment]['isocalendar'][2] == 7: # Sunday
           class_ = 'sunday'
         td = tag.td(class_ = class_)
         
-        for tid in orderedtickets[segment][o]:
+        for ticket in orderedtickets[segment][o]:
           counttickets[segment] += 1
-          #td(tag.a(str(tid),href=self.macroenv.tracenv.href.ticket(tid) ), ' ' )
-          #td(tag.a(str(tid),href='http://www.google.de' ))
-          td(tag.span(tag.a('#'+str(tid), href=self.macroenv.tracenv.href.ticket(tid) ), class_ = 'ticket_inner') )
-          td(' ')
-        #td(title='tickets of '+o+' at '+segment)
+          td(tag.span(self.createTicketLink(ticket), class_ = 'ticket_inner'), ' ' )
         tr(td)
       tbody(tr)
     table(tbody)

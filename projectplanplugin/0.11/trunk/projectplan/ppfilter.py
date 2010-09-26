@@ -29,6 +29,11 @@ class BaseFilter():
         self.cols.remove( i )
     # transform ['col1','col2',...] list into "col=col1&col=col2&.." string
     self.colsstr = reduce( lambda x, y: x+'&'+y, map( lambda x: "col="+x, self.cols ) )
+    # max_ticket_number_at_filters can be attached to trac.ini
+    try:
+      self.max_ticket_number_at_filters = self.macroenv.conf.get('max_ticket_number_at_filters')
+    except:
+      self.max_ticket_number_at_filters = '1000' # fallback, Trac default was 100
 
   def get_tickets( self ):
     '''
@@ -73,12 +78,7 @@ class NullFilter( BaseFilter ):
       Return all Tickets using trac.ticket.query.Query
     '''
     
-    # max_ticket_number_at_filters can be attached to trac.ini
-    try:
-      max_ticket_number_at_filters = self.macroenv.conf.get('max_ticket_number_at_filters')
-    except:
-      max_ticket_number_at_filters = '1000' # fallback, Trac default was 100
-    return Query( self.macroenv.tracenv, order='id', cols=self.cols, max=max_ticket_number_at_filters ).execute( self.macroenv.tracreq )
+    return Query( self.macroenv.tracenv, order='id', cols=self.cols, max=self.max_ticket_number_at_filters ).execute( self.macroenv.tracreq )
 
 class QueryFilter( ParamFilter ):
   '''
@@ -91,6 +91,7 @@ class QueryFilter( ParamFilter ):
     '''
     ParamFilter.__init__( self, macroenv )
     self.filtercol = ""
+    self.operator = '=' # equal-filter
 
   def set_col( self, c ):
     '''
@@ -100,14 +101,17 @@ class QueryFilter( ParamFilter ):
     if self.filtercol in self.cols:
       self.cols.remove( self.filtercol )
     self.filtercol = c
+  
+  def set_queryoperator_not( self ):
+    self.operator = '!='
 
   def get_tickets( self ):
     '''
       Query the Database and return
     '''
     if self.filtercol:
-      self.macroenv.tracenv.log.debug('QueryFilter: %s=%s&%s' % ( self.filtercol, self.queryarg, self.colsstr ) )
-      q = Query.from_string(self.macroenv.tracenv, '%s=%s&%s' % ( self.filtercol, self.queryarg, self.colsstr ) , order='id' )
+      self.macroenv.tracenv.log.debug('QueryFilter: %s%s%s&%s' % ( self.filtercol, self.operator, self.queryarg, self.colsstr ) )
+      q = Query.from_string(self.macroenv.tracenv, '%s%s%s&%s' % ( self.filtercol, self.operator, self.queryarg, self.colsstr ), max=self.max_ticket_number_at_filters , order='id' )
       return q.execute( self.macroenv.tracreq )
     else:
       return NullFilter( self.macroenv ).get_tickets()
@@ -253,6 +257,22 @@ class ppFilter():
       'filter_resolution':'resolution',
       'filter_keywords':'keywords'
     }
+    
+    # every inverted filter
+    query_notfilters = {
+      'filternot_milestone': 'milestone',
+      'filternot_component': 'component',
+      'filternot_id':'id',
+      'filternot_type':'type',
+      'filternot_severity':'severity',
+      'filternot_priority':'priority',
+      'filternot_owner':'owner',
+      'filternot_reporter':'reporter',
+      'filternot_version':'version',
+      'filternot_status':'status',
+      'filternot_resolution':'resolution',
+      'filternot_keywords':'keywords'
+    }
 
     # entries: <kw key>: <ParamFilter cls>
     # - value is passed with cls.set_queryarg, afterwards cls.get_tickets() is called
@@ -300,33 +320,48 @@ class ppFilter():
     global_filtered = False # was there every a filter applied
     for ( k, v ) in self.macroenv.macrokw.items():
       filtered = False
+      #self.macroenv.tracenv.log.warning('filter: '+repr(k))
+      
       if k in query_filters:
         # get list of tickets
-        self.macroenv.tracenv.log.debug('query_filters:'+repr(k))
+        #self.macroenv.tracenv.log.debug('query_filters:'+repr(k)+' '+repr(query_filters[ k ])+' '+repr(v) )
         f = QueryFilter( self.macroenv )
         f.set_col( query_filters[ k ] )
         f.set_queryarg( v )
         filtered = True
         
+      elif k in query_notfilters:
+        # get list of tickets
+        #self.macroenv.tracenv.log.debug('query_notfilters:'+repr(k)+' '+repr(query_notfilters[ k ])+' '+repr(v) )
+        f = QueryFilter( self.macroenv )
+        f.set_col( query_notfilters[ k ] )
+        f.set_queryarg( v )
+        f.set_queryoperator_not( )
+        filtered = True
+        
       elif k in param_filters:
-        self.macroenv.tracenv.log.debug('param_filters:'+repr(k))
+        #self.macroenv.tracenv.log.debug('param_filters:'+repr(k))
         f = param_filters[ k ]( self.macroenv )
         f.set_queryarg( v )
         filtered = True
       
+      #self.macroenv.tracenv.log.warning('filter: 010 ('+str(len(ticketset.getIDList()))+'):'+repr(ticketset.getIDList()))
       if filtered:
         global_filtered = True
-        self.macroenv.tracenv.log.debug('currentTickets: '+repr(ticketset.getIDList()))
+        #self.macroenv.tracenv.log.warning('currentTickets: '+repr(ticketset.getIDList()))
         # adapt ticket set
         if operator == self.OPERATOR_AND:
-          self.macroenv.tracenv.log.debug('intersect allowedTickets: '+repr(f.get_tickets()))
+          #self.macroenv.tracenv.log.debug('intersect allowedTickets: '+repr(f.get_tickets()))
           for tid in ticketset.getIDList():
             if not tid in f.get_ticket_ids(): # allowedTicketIDs
               ticketset.deleteTicketId( tid )
               #self.macroenv.tracenv.log.debug('remove ticket: '+str(tid))
-        else: # OR
+        elif operator == self.OPERATOR_OR: # OR
+          #self.macroenv.tracenv.log.debug('union allowedTickets: '+repr(f.get_tickets()))
           for t in f.get_tickets():
             ticketset.addTicket( t )
+        else:
+          raise Exception('Unknown Filter Operator: '+repr(operator)+' ('+repr(self.macroenv.macrokw.get('combine_filters'))+')')
     
     # Fallback, so no filter means all tickets
     if global_filtered == False and operator == self.OPERATOR_OR:
@@ -334,7 +369,7 @@ class ppFilter():
       for t in ticketlist:
         ticketset.addTicket(t)
     
-    self.macroenv.tracenv.log.warning('filter: result ids: ticketset ('+str(len(ticketset.getIDList()))+'):'+repr(ticketset.getIDList()))
+    #self.macroenv.tracenv.log.debug('filter: result ids: ticketset ('+str(len(ticketset.getIDList()))+'):'+repr(ticketset.getIDList()))
     return ticketset
 
 

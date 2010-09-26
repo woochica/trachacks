@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from datetime import *
 import re
+import os
+from datetime import *
+from genshi.builder import tag
 
 
 class RenderImpl():
@@ -113,6 +115,34 @@ class RenderImpl():
     except Exception,e:
       self.macroenv.tracenv.log.warn('getDateOfSegment: '+str(e)+' '+dateformat+' '+timestr)
       return None
+  
+  def createTicketLink(self, ticket):
+    '''
+      create a link to a ticket
+    '''
+    tid = ticket.getfield('id')
+    status = ticket.getfield('status')
+    priority = ticket.getfield('priority')
+    white = '#FFFFFF' # fallback color
+    
+    cssclass = 'ticket ticket_inner'
+    if status == 'closed':
+      cssclass += ' closed'
+    elif status == 'in_QA': # enterprise workflow
+      cssclass += ' in_QA'
+    
+    cssclassouter = ''
+    style = ''
+    if self.macroenv.get_bool_arg('useimages', False ):
+      cssclassouter += 'ppuseimages '
+      img = os.path.join( self.macroenv.tracreq.href.chrome( 'projectplan', self.macroenv.PPConstant.RelDocPath ), self.macroenv.conf.get_map_defaults('ImageForStatus', status, white) )
+      style += 'background-image:url('+img+');'
+    if self.macroenv.get_bool_arg('usecolors', False ):
+      cssclassouter += 'ppusecolors '
+      style += 'background-color: '+self.macroenv.conf.get_map_defaults('ColorForPriority', priority, white)
+    return tag.span( tag.span( tag.a('#'+str(tid), href=self.macroenv.tracenv.href.ticket(tid), class_ = cssclass, style = style ), class_ = cssclassouter ), class_ = 'ppticket' )
+  
+  
 
   def render(self, ticketset):
     '''

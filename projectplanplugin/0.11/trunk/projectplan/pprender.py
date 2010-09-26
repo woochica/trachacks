@@ -131,8 +131,8 @@ class SortedReportRenderer(RenderImpl):
       and a Mapping for Field Headers.
     '''
     RenderImpl.__init__(self,macroenv)
-    self.sortkey = 'id'
     self.extensions = []
+    self.sortkey = self.setsortkey('id') # default: id
     self.imgpath = macroenv.tracreq.href.chrome( 'projectplan', PPConstant.RelDocPath );
     try:
       self.limitlines = int(self.macroenv.macrokw.get( 'limitlines', 0 ))
@@ -155,6 +155,7 @@ class SortedReportRenderer(RenderImpl):
     # should images be used in the cols
     self.useimages = self.macroenv.get_bool_arg('useimages', self.useimages )
     self.usecolors = self.macroenv.get_bool_arg('usecolors', self.usecolors )
+    self.setascending(True)
 
   def setsortkey( self, default ):
     '''
@@ -162,11 +163,16 @@ class SortedReportRenderer(RenderImpl):
       if it is not given or it does not exists within the fields/extensions then the default value is used
       always call this method after setting self.fields and self.extensions
     '''
+    self.sortkey = self.getsortkey(default)
+  
+  def getsortkey( self, default = 'id' ):
     sortkey = self.macroenv.macrokw.get( 'sortby', default )
+    #self.macroenv.tracenv.log.debug('sortkey='+sortkey)
     if (sortkey in self.fields) or (sortkey in self.extensions) :
-      self.sortkey = sortkey
+      pass
     else:
-      self.sortkey = default
+      sortkey = default
+    return sortkey
 
   def setascending( self, default ):
     '''
@@ -174,28 +180,33 @@ class SortedReportRenderer(RenderImpl):
       if it is not given or it does not exists within the fields/extensions then the default value is used
       always call this method after setting self.fields and self.extensions
     '''
-    self.ascending = self.macroenv.get_bool_arg('asc', self.ascending )
+    self.ascending = self.macroenv.get_bool_arg('asc', default )
 
+  def getascending( self ):
+    return(self.ascending)
+  
+  
   def keysortedids( self, ticketset ):
     '''
       Build an ID:Sortkey Mapping, Sort it, and Return the Sorted IDs in a List
     '''
     tdict = dict()
+    sortkey = self.getsortkey()
     for tid in ticketset.getIDList():
       t = ticketset.getTicket(tid)
-      if self.sortkey in self.fields:
+      if sortkey in self.fields:
         tdict[ tid ] = t.getfielddef( self.sortkey, '' )
-      elif self.sortkey in self.extensions:
-        if t.hasextension( self.sortkey ):
-          tdict[ tid ] = t.getextension( self.sortkey )
+      elif sortkey in self.extensions:
+        if t.hasextension( sortkey ):
+          tdict[ tid ] = t.getextension( sortkey )
         else:
           tdict[ tid ] = ''
       else:
-        raise Exception( 'sortkey unknown' )
+        raise Exception( 'sortkey "%s, %s" unknown' % (sortkey,self.getsortkey() ))
     # sort
     srtkeys = [kk for (kk,vv) in sorted( tdict.iteritems(), key=lambda (k,v): (v,k))]
     # if descending, reverse the list
-    if not self.ascending:
+    if not self.getascending():
       srtkeys.reverse()
     return srtkeys
 
@@ -204,11 +215,14 @@ class SortedReportRenderer(RenderImpl):
       get css class needed for tablesorter
     '''
     sorttype = self.sorttype.get( field, '')
+    sortkey = self.getsortkey()
+    self.macroenv.tracenv.log.debug('sort field:'+field+' sorttype='+str(sorttype)+' self.sortkey='+sortkey )
     
-    if field == self.sortkey and self.ascending == True:
-      return 'headerSortDown '+sorttype
-    elif field == self.sortkey and self.ascending == False:
-      return 'headerSortUp '+sorttype
+    if field == sortkey:
+      if self.getascending() == True:
+        return 'headerSortDown sortStart '+sorttype
+      else:
+        return 'headerSortUp sortStart '+sorttype
     else:
       return sorttype
 
@@ -219,6 +233,7 @@ class SortedReportRenderer(RenderImpl):
       returns tuple (class,style)
     '''
     if (not self.useimages) and (not self.usecolors): # no images by configuration
+      self.macroenv.tracenv.log.debug(field+'   no color')
       return ('', '')
     
     backgroundimage = ''
@@ -269,10 +284,12 @@ class SortedReportRenderer(RenderImpl):
     
     # generate HTML: Table head
     for f in self.fields:
+      cssheaderclass = self.getcssheaderclass(f)
+      self.macroenv.tracenv.log.debug('cssheaderclass of '+f+': '+cssheaderclass)
       if f in self.headermap:
-        inner( tag.th( self.headermap[ f ] , title=f, class_ = self.getcssheaderclass(f) ) )
+        inner( tag.th( self.headermap[ f ] , title=f, class_ = cssheaderclass ) )
       else:
-        inner( tag.th( f ), class_ = self.getcssheaderclass(f) )
+        inner( tag.th( f , class_ = cssheaderclass ) )
     for e in self.extensions:
       if e in self.headermap:
         inner( tag.th( self.headermap[ e ], title=e, class_ = self.getcssheaderclass(e) ) )

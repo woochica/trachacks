@@ -387,7 +387,8 @@ class ppTSDueTimes( ppTicketSetExtension ):
           year=int(AtheDate[year_key]);
           month=int(AtheDate[month_key]);
           day=int(AtheDate[day_key]);
-          return datetime.datetime(year,month,day)
+          #return datetime.datetime(year,month,day)
+          return datetime.date(year,month,day) # catch 64 bit problem
       except:
         # a problem appears, while parsing the date field
         # TODO: raise error message
@@ -413,7 +414,8 @@ class ppTSDueTimes( ppTicketSetExtension ):
     cdatefield = self.__tso.macroenv.conf.get( 'custom_due_close_field' )
     adateformat = self.__tso.macroenv.conf.get( 'ticketassignedf' )
     cdateformat = self.__tso.macroenv.conf.get( 'ticketclosedf' )
-    dateNow = datetime.datetime.today()
+    #dateNow = datetime.datetime.today()
+    dateNow = datetime.date.today() # catch 64 bit problems
 
     for k in self.__ts:
       v = self.__ts[ k ]

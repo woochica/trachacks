@@ -143,8 +143,7 @@
 				var list = [];
 				
 				if(table.config.debug) { var parsersDebug = ""; }
-				
-				if(table.tBodies[0].rows && table.tBodies[0].rows[0]) {
+				if( table.tBodies[0].childNodes.length > 0 ) {
 					var rows = table.tBodies[0].rows;
 					var cells = rows[0].cells, l = cells.length;
 					
@@ -1062,175 +1061,15 @@ function ppInitializeTablesorter() {
     }); 
     
     $.tablesorter.defaults.widgets = ['zebra']; 
-    $("table.pptickettable").tablesorter(); 
+    $("table.pptickettable").each( function(index){
+      try {
+	$(this).tablesorter(); 
+      } catch (e) {
+	// might happen if no rows are contained in the table
+	// pass
+      }
+    });
 }
-
-
-
-
-
-
-/**
- * datum darstellen
- */
-function showDatePicker(moreID , fieldid)
-{
-	var datePicker = 	document.createElement("div");
-		datePicker.id = "datePickerDiv"+moreID;
-		datePicker.setAttribute('style','border:1px solid #999; background-color:#FF9; position:absolute; display:none;');
-		datePicker.innerHTML = '';
-	document.body.appendChild(datePicker);
-	now = new Date();
-	var monat = now.getMonth();
-
-	initDatePicker(datePicker, monat, fieldid );
-	
-}
-
-function initDatePicker(datePickerDiv, monat, fieldid)
-{
-	if( document.getElementById(fieldid) )
-	{
-
-	}
-	else
-	{
-		return;
-	}
-	today = new Date();
-
-	now = new Date();
-	oneday = 24*60*60 * 1000; // sec
-	lastvalue = document.getElementById(fieldid).value;
-
-	now.setTime(now.getTime() - (7*oneday)); // eine Woche weniger
-	while( now.getDay() != 1 )
-	{
-		now.setTime(now.getTime() - oneday);
-	}	
-
-	css = '';
-	tmp = '<style> #datePicker th { font-weight:bold; } #datePicker td, #datePicker th  { padding:3px; border-right:1px solid #999; border-bottom:1px solid #999; }</style>';
-	tmp += '<table id="datePicker" border="0" cellpadding="0" cellspacing="0">';
-	tmp += '<tr>';
-	tmp += '<th '+css+'>Mo</th>';
-	tmp += '<th '+css+'>Di</th>';
-	tmp += '<th '+css+'>Mi</th>';
-	tmp += '<th '+css+'>Do</th>';
-	tmp += '<th '+css+'>Fr</th>';
-	tmp += '<th '+css+'>Sa</th>';
-	tmp += '<th '+css+'>So</th>';
-	tmp += '</tr>';
-
-	var i;
-	for( i=0; i<(35) ; i++ ) // 5 Wochen
-	{
-		newdate = new Date();
-		newdate.setTime((i*oneday)+now.getTime());
-
-		if( (i % 7)  == 0 )
-		{
-			tmp += '<tr>';
-		}
-
-		myday = newdate.getDate();
-		if( myday < 10 ) myday = '0'+myday;
-		mymonth = (newdate.getMonth()+1);
-		if( mymonth < 10 ) mymonth = '0'+mymonth;
-		mydate = myday+'/'+mymonth+'/'+newdate.getFullYear(); 
-
-		css = '';
-		if( newdate.getTime() == today.getTime() ) { // heute
-			css = ' style="background-color:#99F;" ';
-		}
-		if( lastvalue == mydate ) { //  auswahl
-// 			css = ' style="background-color:#F99;" ';
-			css = ' style="background-color:#9F9;" ';
-// 			alert('#'+lastvalue+'# == #'+mydate+'#'+css );
-		}
-
-		tmp += '<td '+css+' align="right" onclick="document.getElementById(\''+fieldid+'\').value = \''+mydate+'\';">'+newdate.getDate()+'.'+mymonth+'.</td>';
-
-		if( (i % 7) == 6)
-		{
-			tmp += '</tr>';
-		}
-
-	} // for
-	
-	closebutton = '<input type="button" onclick="document.getElementById(\''+datePickerDiv.id+'\').style.display = \'none\';" value="schlie&szlig;en">';
-	resetbutton = '<input type="button" onclick="document.getElementById(\''+fieldid+'\').value = \''+lastvalue+'\';" value="letzter Wert">';
-
-	tmp += '<tr><td colspan="7" align="center">'+closebutton+' &nbsp; '+resetbutton+'</td></tr>';
-
-	tmp  += '</table>';
-// 	alert(tmp);
-	datePickerDiv.innerHTML = tmp;
-}
-
-function saveDate( fieldid, date )
-{
-}
-
-function createDatePicker()
-{
-	if( document.getElementById('field-due_assign') && document.getElementById('field-due_close'))
-	{
-		showDatePicker('field-due_assign', 'field-due_assign');
-		showDatePicker('field-due_close', 'field-due_close');
-	}
-	else
-	{
-		return;
-	}
-
-	document.getElementById('field-due_assign').addEventListener("focus", function(){
-		document.getElementById('datePickerDivfield-due_assign').style.display = 'block';
-		positionDivByElement( document.getElementById('field-due_assign'), document.getElementById('datePickerDivfield-due_assign'), 1 );	
-		return true;
-	}, false );
-	document.getElementById('field-due_close').addEventListener("focus", function(){
-		document.getElementById('datePickerDivfield-due_close').style.display = 'block';
-		positionDivByElement( document.getElementById('field-due_close'), document.getElementById('datePickerDivfield-due_close'), 1 );	
-		return true;
-	}, false );
-// 	positionDivByElement( document.getElementById('field-due_assign'), document.getElementById('datePickerDiv') );
-}
-
-/********************************************************
-Position the dropdown div below the input text field., abgewandelt von http://gadgetopia.com/autosuggest/
-********************************************************/
-function positionDivByElement(/* base */ el , /* move this */ div, mode)
-{
-	if( mode == 1 ) // drunter
-	{
-		var x = 0;
-		var y = el.offsetHeight;
-	}
-	else // neben
-	{
-		var x = el.offsetWidth;
-		var y = 0;
-	}
-
-	//Walk up the DOM and add up all of the offset positions.
-	while (el.offsetParent && el.tagName.toUpperCase() != 'BODY')
-	{
-		x += el.offsetLeft;
-		y += el.offsetTop;
-		el = el.offsetParent;
-	}
-
-	x += el.offsetLeft;
-	y += el.offsetTop;
-
-	div.style.left = x + 'px';
-	div.style.top = y + 'px';
-};
-
-
-/*createDatePicker()*/;
-
 
 
 
@@ -1247,7 +1086,10 @@ $(document).ready(function () {
 //  	$(".project_image .ticket_inner a").each(function() { this.title = "";});
 	ppAddTooltip(".properties a.ticket_inner"); // ticket view
 	ppAddTooltip(".pptickettable a.ticket"); // ticket view in report table
-	ppInitializeTacreateDatePickerblesorter();
+	
+	ppInitializeTablesorter();
+	$('.pptickettable .headerSortUp').click();
+	$('.pptickettable .headerSortDown').click().click(); // Hack: to ensure correct sortation
 });
 
 
