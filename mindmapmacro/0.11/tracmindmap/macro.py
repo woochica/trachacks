@@ -161,11 +161,11 @@ Website: http://trac-hacks.org/wiki/MindMapMacro
         else: # Long macro
           largs, kwargs = parse_args( args )
           digest = md5()
-          digest.update(unicode(content))
+          digest.update(unicode(content).encode('utf-8'))
           hash = digest.hexdigest()
           if not self._check_cache(hash):
             mm = MindMap(content)
-            self._set_cache(hash, unicode(mm))
+            self._set_cache(hash, mm)
           url = formatter.context.href.mindmap(hash + '.mm')
         return self.produce_html(formatter.context, url, kwargs)
 
@@ -294,7 +294,7 @@ class MindMap:
     self.xml = tag.map( self.node(name,branch), version="0.8.0")
 
   def __repr__(self):
-    return self.xml.generate().render("xml")
+    return self.xml.generate().render("xml", encoding='utf-8')
 
 
   def node(self, name, content, args={}):
