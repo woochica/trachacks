@@ -6,7 +6,7 @@ from trac.core import *
 from trac.config import BoolOption, IntOption
 from trac.perm import IPermissionRequestor
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
-from trac.web.chrome import ITemplateProvider, \
+from trac.web.chrome import ITemplateProvider, add_warning, add_notice, \
                             add_meta, add_script, add_stylesheet, add_ctxtnav, \
                             Chrome, tag
 from trac.versioncontrol.api import RepositoryManager
@@ -15,7 +15,7 @@ from genshi.filters.transform import Transformer
 
 from contextmenu.contextmenu import ISourceBrowserContextMenuProvider
 
-from trac_browser_svn_ops.svn_fs import SubversionWriter
+from trac_browser_svn_ops.svn_fs import SubversionWriter, SubversionException
 
 def _get_repository(env, req):
     '''From env and req identify and return (reponame, repository, path), 
@@ -194,21 +194,34 @@ class TracBrowserOps(Component):
             dst_path = repos.normalize_path('/'.join([path, dst_name]))
             svn_writer = SubversionWriter(repos, req.authname)
             
-            if operation == 'delete':
-                self.log.info('Deleting %i items in repository %s',
-                              len(src_paths), reponame)
-                svn_writer.delete(src_paths, commit_msg)
-            
-            elif operation == 'move':
-                self.log.info('Moving %i to %s in repository %s',
-                              len(src_paths), dst_path, reponame)
-                svn_writer.move(src_paths, dst_path, commit_msg)
+            try:
+                if operation == 'delete':
+                    self.log.info('Deleting %i items in repository %s',
+                                  len(src_paths), reponame)
+                    svn_writer.delete(src_paths, commit_msg)
                 
+                elif operation == 'move':
+                    self.log.info('Moving %i items to %s in repository %s',
+                                  len(src_paths), repr(dst_path), reponame)
+                    svn_writer.move(src_paths, dst_path, commit_msg)
+                else:
+                    raise TracError("Unknown operation %s" % operation)
+                    
+            except SubversionException, e:
+                self.log.exception("Failed when attempting svn operation "
+                                   "%s: %s",
+                                   operation, e)
+                add_warning(req, "Failed to perform %s: %s" 
+                             % (operation, 
+                                "See the log file for more information"))
+            
+            add_notice(req, "Performed %s operation" % operation)    
+
         finally:
             repos.sync()
             self.log.debug('Closing repository')
             repos.close()
-        
+
         # Perform http redirect back to this page in order to rerender
         # template according to new repository state
         req.redirect(req.href(req.path_info))
@@ -226,10 +239,19 @@ class TracBrowserOps(Component):
             create_path = repos.normalize_path('/'.join([path, create_name]))
             svn_writer = SubversionWriter(repos, req.authname)
 
-            self.log.info('Creating folder %s in repository %s',
-                          create_path, reponame)
-            svn_writer.make_dir(create_path, commit_msg)
-        
+            try:
+                self.log.info('Creating folder %s in repository %s',
+                              create_path, reponame)
+                svn_writer.make_dir(create_path, commit_msg)
+            
+            except SubversionException, e:
+                self.log.exception("Failed to create directory: %s", e)
+            
+                add_warning(req, "Failed to create folder: %s" 
+                                 % ("See the log file for more information",))
+            
+            add_notice(req, "Folder created.")
+            
         finally:
             repos.sync()
             self.log.debug('Closing repository')
@@ -399,6 +421,8 @@ class TracBrowserEdit(Component):
             
             rev = svn_writer.put_content(repos_path, text, filename,
                                          commit_msg)
+            # TODO add add_notice for success and turning exceptions
+            # into add_warning.
         finally:
             repos.sync()
             self.log.debug('Closing repository')
