@@ -302,6 +302,8 @@ class WatchlistPlugin(Component):
     def unwatch(self, realm, resid, user, db=None):
         db = db or self.env.get_db_cnx()
         cursor = db.cursor()
+        cursor.log = self.log
+        self.log.debug("resid = " + unicode(resid))
         reses = list(ensure_iter(resid))
         cursor.execute("""
             DELETE
@@ -395,14 +397,10 @@ class WatchlistPlugin(Component):
             group = to_unicode( req.args.get('group', u'notwatched') )
             if not query:
                 req.send('', 'text/plain', 200 )
-            found = set(handler.resources_exists(realm, query, fuzzy=1))
-            if not found:
-                req.send('', 'text/plain', 200 )
-            watched = set([v[0] for v in self.get_watched_resources( realm, user )])
             if group == 'notwatched':
-                result = list(found.difference(watched))
+                result = list(handler.unwatched_resources(realm, query, user, self, fuzzy=1))
             else:
-                result = list(found.intersection(watched))
+                result = list(handler.watched_resources(realm, query, user, self, fuzzy=1))
             result.sort(cmp=handler.get_sort_cmp(realm),
                         key=handler.get_sort_key(realm))
             req.send( unicode(u'\n'.join(result) + u'\n').encode("utf-8"),
@@ -529,27 +527,28 @@ class WatchlistPlugin(Component):
         elif action == "unwatch":
             handler = self.realm_handler[realm]
             not_found_res = list()
-            found_res = set()
+            not_watched_res = list()
+            del_res = list()
             resids = resid.strip().split(u',')
             for rid in resids:
                 rid = rid.strip()
                 if not rid:
                     continue
-                reses = set(handler.resources_exists(realm, rid))
+                reses = list(handler.watched_resources(realm, rid, user, self))
                 if len(reses) == 0:
-                    not_found_res.append(rid)
+                    reses = list(handler.resources_exists(realm, rid))
+                    if len(reses) == 0:
+                        not_found_res.append(rid)
+                    else:
+                        not_watched_res.extend(reses)
                 else:
-                    found_res.update(reses)
-            alw_res = set(self.is_watching(realm, found_res, user))
-            del_res = alw_res.intersection(found_res)
-            not_watched_res = found_res.difference(alw_res)
+                    del_res.extend(reses)
             comp=handler.get_sort_cmp(realm)
             key=handler.get_sort_key(realm)
             wldict['del_res'] = sorted(del_res, cmp=comp, key=key)
             wldict['not_watched_res'] = sorted(not_watched_res, cmp=comp, key=key)
-            wldict['not_found_res'] = not_found_res
+            wldict['not_found_res'] = sorted(not_found_res, cmp=comp, key=key)
 
-            self.log.debug("reses = " + unicode(reses))
             if del_res:
                 self.unwatch(realm, del_res, user, db=db)
             elif len(resids) == 1:

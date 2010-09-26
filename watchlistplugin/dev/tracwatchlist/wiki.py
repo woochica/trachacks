@@ -100,29 +100,72 @@ class WikiWatchlist(BasicWatchlist):
             return ngettext("wiki page", "wiki pages", n_plural)
 
 
-    def resources_exists(self, realm, resids, fuzzy=0):
-        if not resids:
-            return []
+    def _get_sql(self, resids, fuzzy, var='name'):
         if isinstance(resids,basestring):
             if fuzzy:
                 resids += '*'
-            resids = convert_to_sql_wildcards(resids).replace(',',' ').split()
-            sql = ' OR '.join((" name LIKE %s ESCAPE '|' ",) * len(resids))
+            args = convert_to_sql_wildcards(resids).replace(',',' ').split()
+            sql = ' OR '.join((' ' + var + " LIKE %s ESCAPE '|' ",) * len(args))
         else:
-            resids = list(resids)
-            if (len(resids) == 1):
-                sql = ' name=%s '
+            args = list(resids)
+            if (len(args) == 1):
+                sql = ' ' + var + '=%s '
             else:
-                sql = ' name IN (' + ','.join(('%s',) * len(resids)) + ') '
+                sql = ' ' + var + ' IN (' + ','.join(('%s',) * len(args)) + ') '
+        return sql, args
+
+
+    def resources_exists(self, realm, resids, fuzzy=0):
+        if not resids:
+            return []
+        sql, args = self._get_sql(resids, fuzzy)
+        if not sql:
+            return []
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("""
             SELECT DISTINCT name
             FROM wiki
             WHERE
-        """ + sql, resids)
-        ret = [ unicode(v[0]) for v in cursor.fetchall() ]
-        return ret
+        """ + sql, args)
+        return [ unicode(v[0]) for v in cursor.fetchall() ]
+
+
+    def watched_resources(self, realm, resids, user, wl, fuzzy=0):
+        if not resids:
+            return []
+        sql, args = self._get_sql(resids, fuzzy, 'resid')
+        if not sql:
+            return []
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.log = self.log
+        cursor.execute("""
+            SELECT resid
+            FROM watchlist
+            WHERE wluser=%s AND realm='wiki' AND (
+        """ + sql + " )", [user] + args)
+        return [ unicode(v[0]) for v in cursor.fetchall() ]
+
+
+    def unwatched_resources(self, realm, resids, user, wl, fuzzy=0):
+        if not resids:
+            return []
+        sql, args = self._get_sql(resids, fuzzy)
+        if not sql:
+            return []
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT DISTINCT name
+            FROM wiki
+            WHERE name NOT in (
+                SELECT resid
+                FROM watchlist
+                WHERE wluser=%s AND realm='wiki'
+            ) AND (
+        """ + sql + " )", [user] + args)
+        return [ unicode(v[0]) for v in cursor.fetchall() ]
 
 
     def get_list(self, realm, wl, req, fields=None):

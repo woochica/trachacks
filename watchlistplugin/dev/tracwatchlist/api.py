@@ -52,6 +52,12 @@ class IWatchlistProvider(Interface):
             """
         pass
 
+    def watched_resources(self, realm, resids, user, wl, fuzzy=0):
+        pass
+
+    def unwatched_resources(self, realm, resids, user, wl, fuzzy=0):
+        pass
+
     #def res_list_exists(realm, reslist):
     #    pass
 
@@ -134,7 +140,13 @@ class BasicWatchlist(Component):
         if isinstance(resids,basestring):
             return False
         else:
-            return False
+            return []
+
+    def watched_resources(self, realm, resids, user, wl, fuzzy=0):
+        return []
+
+    def unwatched_resources(self, realm, resids, user, wl, fuzzy=0):
+        return []
 
     def has_perm(self, realm, perm):
         if realm not in self.realms:
