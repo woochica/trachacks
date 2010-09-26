@@ -173,26 +173,36 @@ class TracBrowserOps(Component):
         self.log.debug('Handling move/delete for %s',
                        req.authname)
         operation = req.args.get('bsop_mvdel_op') #Moving or deleting?
-        src_name = req.args.get('bsop_mvdel_src_name') # Item to move or delete
+        src_names = req.args.getlist('bsop_mvdel_src_name') # Items to move/del
         dst_name = req.args.get('bsop_mvdel_dst_name') # Destination if move
         commit_msg = req.args.get('bsop_mvdel_commit')
+        
+        # ContextMenuPlugin provides each src as [reponame/]page_path/node_path
+        # The Trac request path is of the form   /[reponame/]page_path
+        # Retrieve just the portion of the src items that is relative to this
+        # page by stripping the request path. Do this before the request path 
+        # is itself stripped of reponame when retrieving the repository
+        path = req.args.get('path')
+        path = path.lstrip('/')
+        src_names = [src_name.split(path, 1)[1] for src_name in src_names]
         
         self.log.debug('Opening repository for %s', operation)
         reponame, repos, path = _get_repository(self.env, req)
         try:
-            src_path = repos.normalize_path('/'.join([path, src_name]))
+            src_paths = [repos.normalize_path('/'.join([path, src_name]))
+                         for src_name in src_names]
             dst_path = repos.normalize_path('/'.join([path, dst_name]))
             svn_writer = SubversionWriter(repos, req.authname)
             
             if operation == 'delete':
-                self.log.info('Deleting %s in repository %s',
-                              src_path, reponame)
-                svn_writer.delete([src_path], commit_msg)
+                self.log.info('Deleting %i items in repository %s',
+                              len(src_paths), reponame)
+                svn_writer.delete(src_paths, commit_msg)
             
             elif operation == 'move':
-                self.log.info('Moving %s to %s in repository %s',
-                              src_path, dst_path, reponame)
-                svn_writer.move([src_path], dst_path, commit_msg)
+                self.log.info('Moving %i to %s in repository %s',
+                              len(src_paths), dst_path, reponame)
+                svn_writer.move(src_paths, dst_path, commit_msg)
                 
         finally:
             repos.sync()

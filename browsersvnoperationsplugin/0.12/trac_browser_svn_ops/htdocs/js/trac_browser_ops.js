@@ -153,7 +153,10 @@ $(function() {
         }
         
         $('#bsop_mvdel_op').val(mvdel_op);
-        $('#bsop_mvdel_src_name').val(mvdel_src_name);
+        $('#bsop_mvdel_src_name').empty();
+        $('#bsop_mvdel_src_name').append($('<option selected="selected"/>')
+                                            .val(mvdel_src_name)
+                                            .text(mvdel_src_name));
         
         $('#dialog-bsop_move_delete').dialog('open');
   });
