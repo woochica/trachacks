@@ -19,8 +19,8 @@ setup(
     
     install_requires = [
         'Trac>=0.12',
-        'ContextMenuPlugin',
-        ]
+        #'ContextMenuPlugin', ContextMenuPlugin not on PyPI
+        ],
     
     packages=['trac_browser_svn_ops'],
     package_data={
