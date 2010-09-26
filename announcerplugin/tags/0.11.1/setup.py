@@ -33,8 +33,8 @@
 from setuptools import find_packages, setup
 
 setup(
-    name = 'AnnouncerPlugin', 
-    version = '1.0-a1',
+    name = 'TracAnnouncer', 
+    version = '0.11.1',
     author = 'Robert Corsaro',
     author_email = 'doki_pen@doki-pen.org',
     description = 'Customizable notification system',
