@@ -1,6 +1,5 @@
-import urllib
-
 from trac.core import Component, implements, Interface, TracError
+from trac.util.text import unicode_quote
 from trac.versioncontrol import Changeset, Node, Repository, \
                                 IRepositoryConnector, \
                                 NoSuchChangeset, NoSuchNode
@@ -20,8 +19,8 @@ class SubversionWriter(object):
         
         svn_repos = self._get_libsvn_handle()
                 
-        fs_path_utf8 = repos_path.encode('utf-8')
-        filename_utf8 = filename.encode('utf-8')
+        fs_path_utf8 = core.svn_path_canonicalize(repos_path.encode('utf-8'))
+        filename_utf8 = core.svn_path_canonicalize(filename.encode('utf-8'))
         username_utf8 = self.username.encode('utf-8')
         commit_msg_utf8 = commit_msg.encode('utf-8')
         rev = self.repos.get_youngest_rev()
@@ -62,7 +61,8 @@ class SubversionWriter(object):
         
         log = self.log
         svn_repos = self._get_libsvn_handle()
-        repos_paths_utf8 = [rp.encode('utf-8') for rp in repos_paths]
+        repos_paths_utf8 = [core.svn_path_canonicalize(rp.encode('utf-8')) 
+                            for rp in repos_paths]
         commit_msg_utf8 = commit_msg.encode('utf-8')
         username_utf8 = self.username.encode('utf-8')
         rev = self.repos.get_youngest_rev()
@@ -93,7 +93,8 @@ class SubversionWriter(object):
         
         log = self.log
         svn_repos = self._get_libsvn_handle()
-        repos_path_utf8 = repos_path.encode('utf-8')
+        repos_path_utf8 = core.svn_path_canonicalize(
+                                    repos_path.encode('utf-8'))
         commit_msg_utf8 = commit_msg.encode('utf-8')
         username_utf8 = self.username.encode('utf-8')
         rev = self.repos.get_youngest_rev()
@@ -126,9 +127,10 @@ class SubversionWriter(object):
         src_urls = [self._path_to_url(src_path) for src_path in src_paths]
         dst_url = self._path_to_url(dst_path)
         
-        src_urls_utf8 = [src_url.encode('utf-8') for src_url in src_urls]
-        dst_url_utf8 = dst_url.encode('utf-8')
-        dst_path_utf8 = dst_path.encode('utf-8')
+        src_urls_utf8 = [core.svn_path_canonicalize(src_url.encode('utf-8'))
+                         for src_url in src_urls]
+        dst_url_utf8 = core.svn_path_canonicalize(dst_url.encode('utf-8'))
+        dst_path_utf8 = core.svn_path_canonicalize(dst_path.encode('utf-8'))
         commit_msg_utf8 = commit_msg.encode('utf-8')
         username_utf8 = self.username.encode('utf-8')
         
@@ -202,8 +204,8 @@ class SubversionWriter(object):
         '''
         repos = self._get_repos_direct_object()
         url_parts =  ['file:///', 
-                      urllib.quote(repos.path.lstrip('/')),
+                      unicode_quote(repos.path.lstrip('/')),
                       '/',
-                      urllib.quote(path.lstrip('/')),
+                      unicode_quote(path.lstrip('/')),
                       ]
         return ''.join(url_parts)
