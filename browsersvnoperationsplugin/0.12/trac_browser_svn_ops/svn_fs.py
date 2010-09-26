@@ -6,6 +6,15 @@ from trac.versioncontrol import Changeset, Node, Repository, \
 from trac.versioncontrol.svn_fs import SubversionRepository, SubversionNode      
 from trac.versioncontrol.cache import CachedRepository
 
+# we need to understand the import hoops that
+# trac.versioncontrol.svn_fs go through in case we shouldn't do this.
+from svn import core, client, repos, fs
+SubversionException = core.SubversionException # nicer name for our
+                                               # importers to use
+                                               # without them having
+                                               # to import from svn
+                                               # themselves
+        
 class SubversionWriter(object):
     def __init__(self, repos, username):
         self.repos = repos
@@ -13,8 +22,6 @@ class SubversionWriter(object):
         self.username = username
         
     def put_content(self, repos_path, content, filename, commit_msg):
-        from svn import core, fs, repos
-        
         log=self.log
         
         svn_repos = self._get_libsvn_handle()
@@ -57,8 +64,6 @@ class SubversionWriter(object):
         return new_rev
 
     def delete(self, repos_paths, commit_msg):
-        from svn import core, fs, repos
-        
         log = self.log
         svn_repos = self._get_libsvn_handle()
         repos_paths_utf8 = [core.svn_path_canonicalize(rp.encode('utf-8')) 
@@ -89,8 +94,6 @@ class SubversionWriter(object):
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
     
     def make_dir(self, repos_path, commit_msg):
-        from svn import core, fs, repos
-        
         log = self.log
         svn_repos = self._get_libsvn_handle()
         repos_path_utf8 = core.svn_path_canonicalize(
@@ -119,8 +122,6 @@ class SubversionWriter(object):
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
         
     def move(self, src_paths, dst_path, commit_msg):
-        from svn import core, client, repos, fs
-        
         def _log_message(item, pool):
             return commit_msg_utf8
                 
