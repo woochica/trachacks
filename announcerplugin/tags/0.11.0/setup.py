@@ -32,8 +32,8 @@
 from setuptools import find_packages, setup
 
 setup(
-    name = 'AnnouncerPlugin', 
-    version = '0.2',
+    name = 'TracAnnouncer', 
+    version = '0.11.0',
     author = 'Stephen Hansen',
     author_email = 'shansen@advpubtech.com',
     description = 'Customizable notification system',
