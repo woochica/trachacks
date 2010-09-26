@@ -36,8 +36,9 @@
   current directory.</p>
   <p class="validate_tips">All fields are required</p>
   <form id="bsop_upload_form" method="post" enctype="multipart/form-data"
-      class="bsop_form">
+      class="bsop_form" action="">
   <fieldset>
+    <legend>Upload File</legend>
     <label for="bsop_upload_file">File</label>
     <input type="file" name="bsop_upload_file" id="bsop_upload_file" 
         class="bsop_ctl" />
@@ -53,8 +54,9 @@
   <p>Please enter a name for the new folder, and a commit message.</p>
   <p class="validate_tips">All fields are required</p>
   <form id="bsop_create_form" method="post"
-      class="bsop_form">
+      class="bsop_form" action="">
   <fieldset>
+    <legend>Folder details</legend>
     <label for="bsop_create_folder_name">Folder name</label>
     <input type="text" name="bsop_create_folder_name"
         id="bsop_create_folder_name" class="bsop_ctl" />
@@ -69,23 +71,25 @@
     title="Move or delete a file in the repository">
   <p>Please provide a commit message, and if you are moving a file or folder enter a destination</p>
   <p class="validate_tips">All fields are required</p>
-  <form id="bsop_move_delete_form" method="post"
+  <form id="bsop_move_delete_form" method="post" action=""
       class="bsop_form">
   <fieldset>
-    <label for="bsop_mvdel_dst_name">Destination</label>
+    <legend>Commit message</legend>
+    <label for="bsop_mvdel_dst_name">Destination</label> 
+    <!-- TODO: Say 'delete' if deleting -->
     <input type="text" id="bsop_mvdel_dst_name" name="bsop_mvdel_dst_name"
         value=""  class="bsop_ctl"/>
     <label for="bsop_mvdel_commit">Commit message</label>
     <textarea name="bsop_mvdel_commit" id="bsop_mvdel_commit"
         cols="50" rows="2" class="bsop_ctl"></textarea>
   </fieldset>
-  <fieldset style="display: none;">
+  <div style="display: none;">
     <input type="hidden" id="bsop_mvdel_op" name="bsop_mvdel_op" 
         value="" />
     <select id="bsop_mvdel_src_name" name="bsop_mvdel_src_name" 
         multiple="multiple">
     </select>
-  </fieldset>
+  </div>
   </form>
 </div>
 
