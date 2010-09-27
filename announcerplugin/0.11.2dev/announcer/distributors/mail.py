@@ -658,12 +658,16 @@ class SendmailEmailSender(Component):
         cmdline.extend(recipients)
         realcmd = ' '.join(map(lambda x: "\"%s\""%x, cmdline))
         self.log.debug("Sendmail command line: %s"%realcmd)
-        child = Popen(cmdline, bufsize=-1, stdin=PIPE, stdout=PIPE,
-                      stderr=PIPE)
-        (out, err) = child.communicate(message)
-        if child.returncode or err:
-            raise Exception("Sendmail failed with (%s, %s), command: '%s'"
-                            % (child.returncode, err.strip(), cmdline))
+        try:
+            child = Popen(cmdline, bufsize=-1, stdin=PIPE, stdout=PIPE,
+                          stderr=PIPE)
+            (out, err) = child.communicate(message)
+            if child.returncode or err:
+                raise Exception("Sendmail failed with (%s, %s), command: '%s'"
+                                % (child.returncode, err.strip(), cmdline))
+        except OSError, e:
+            self.log.error("Failed to run sendmail[%s] with error %s"%\
+                    (self.sendmail_path, e))
 
 
 class DeliveryThread(threading.Thread):
