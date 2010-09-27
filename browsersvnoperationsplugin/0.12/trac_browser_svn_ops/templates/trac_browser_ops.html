@@ -75,10 +75,9 @@
       class="bsop_form">
   <fieldset>
     <legend>Commit message</legend>
-    <label for="bsop_mvdel_dst_name">Destination</label> 
-    <!-- TODO: Say 'delete' if deleting -->
+    <label for="bsop_mvdel_dst_name" class="bsop_ctl_move">Destination</label> 
     <input type="text" id="bsop_mvdel_dst_name" name="bsop_mvdel_dst_name"
-        value=""  class="bsop_ctl"/>
+        value=""  class="bsop_ctl bsop_ctl_move"/>
     <label for="bsop_mvdel_commit">Commit message</label>
     <textarea name="bsop_mvdel_commit" id="bsop_mvdel_commit"
         cols="50" rows="2" class="bsop_ctl"></textarea>
@@ -88,6 +87,7 @@
         value="" />
     <select id="bsop_mvdel_src_name" name="bsop_mvdel_src_name" 
         multiple="multiple">
+      <option>Place holder</option>
     </select>
   </div>
   </form>

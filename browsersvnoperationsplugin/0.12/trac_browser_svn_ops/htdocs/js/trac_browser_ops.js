@@ -6,7 +6,7 @@ $(function() {
         .addClass("ui-state-highlight");
     setTimeout(function() {
       tips.removeClass("ui-state-highlight");
-    }, 500);
+    }, 1500);
   }
   
   function check_not_empty(o, n) {
@@ -146,10 +146,10 @@ $(function() {
         // Is this a move or a delete? Show the destination field
         if ($(this).hasClass('bsop_move')) {
             mvdel_op = 'move';
-            $('#bsop_mvdel_dst_name').show();
+            $('.bsop_ctl_move').show();
         } else if ($(this).hasClass('bsop_delete')) {
             mvdel_op = 'delete';
-            $('#bsop_mvdel_dst_name').hide();
+            $('.bsop_ctl_move').hide();
         }
         
         $('#bsop_mvdel_op').val(mvdel_op);

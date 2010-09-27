@@ -4,6 +4,12 @@ td input.name {
     }
 
 /* Upload and move/delete file forms */
+
+.validate_tips {
+    border: 1px solid transparent; 
+    padding: 0.3em;
+    }
+
 .bsop_form .bsop_ctl {
     display: block;
     margin-bottom:12px;
@@ -16,6 +22,10 @@ td input.name {
     margin-top: 25px;
     }
 
+.bsop_form fieldset legend {
+    display: none;
+    }
+    
 #bsop_buttons {
     text-align: right;
     }
