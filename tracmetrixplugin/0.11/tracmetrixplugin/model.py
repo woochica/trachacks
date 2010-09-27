@@ -87,12 +87,13 @@ class ProgressTicketGroupStatsProvider(Component):
             cursor = self.env.get_db_cnx().cursor()  # get database connection    
             
             type_count = [] # list of dictionary with key name and count
-            
             for type in model.Resolution.select(self.env):
-            
+                
+                #Replace possible single-quotes in resolution strings with double single-quotes,
+                #as required for SQLite queries (see th:#3684, http://www.sqlite.org/faq.html#q14)
                 count = cursor.execute("SELECT count(1) FROM ticket "
                                         "WHERE status = 'closed' AND resolution = '%s' AND id IN "
-                                        "(%s)" % (type.name, ",".join(str_ids))) # execute query and get cursor obj.
+                                        "(%s)" % (type.name.replace("'","''"), ",".join(str_ids)))
                 count = 0
                 for cnt, in cursor:
                     count = cnt
