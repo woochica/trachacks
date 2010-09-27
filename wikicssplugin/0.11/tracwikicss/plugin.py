@@ -13,7 +13,7 @@ __date__     = ur"$Date$"[7:-2]
 
 from  trac.core        import  *
 from  trac.web.chrome  import  add_stylesheet
-from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone
+from  trac.web.api     import  IRequestFilter, IRequestHandler, RequestDone, HTTPNotFound
 from  trac.util.text   import  to_unicode
 from  trac.wiki.model  import  WikiPage
 from  trac.config      import  Option
@@ -47,9 +47,7 @@ class WikiCssPlugin (Component):
         except RequestDone:
             pass
         except Exception, e:
-            self.log.error(e)
-            req.send_response(404)
-            req.end_headers()
+            raise HTTPNotFound(e, path=req.path_info)
         raise RequestDone
 
 
