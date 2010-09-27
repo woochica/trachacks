@@ -5,7 +5,7 @@ td input.name {
 
 /* Upload and move/delete file forms */
 
-.validate_tips {
+.validate_tips, .bsop_tips {
     border: 1px solid transparent; 
     padding: 0.3em;
     }

@@ -135,30 +135,70 @@ $(function() {
       $('#dialog-bsop_create_folder').dialog('open');
     });
     
-  $('.bsop_move, .bsop_delete').live('click', function() {
-      var mvdel_op = '';
+  function show_move_delete_dialog(operation, src_items) {
+    //var fred = $('#bsop_mvdel_src_name option:selected').length
+    
+    // Is this a move or a delete? Show/hide the destination field
+    if (operation === 'move') {
+        $('.bsop_ctl_move').show();
+    } else if (operation === 'delete') {
+        $('.bsop_ctl_move').hide();
+    }
+    
+    // Populate the move/delete form controls
+    $('#bsop_mvdel_op').val(operation);
+    $('#bsop_mvdel_src_name').empty();
+    $.each(src_items, function(index, value) {
+      $('#bsop_mvdel_src_name').append($('<option selected="selected"/>')
+                                        .val(value)
+                                        .text(value));
+    });
+                                          
+    $('#dialog-bsop_move_delete').dialog('open');
+  }
       
-      // Ascend the tree to the context-menu, then descend to find the hidden
-      // node name provided by ContextMenuPlugin
-      var mvdel_src_name = $(this).closest('div.context-menu') 
-                                  .find('span.filenameholder').text();
-        
-        // Is this a move or a delete? Show the destination field
-        if ($(this).hasClass('bsop_move')) {
-            mvdel_op = 'move';
-            $('.bsop_ctl_move').show();
-        } else if ($(this).hasClass('bsop_delete')) {
-            mvdel_op = 'delete';
-            $('.bsop_ctl_move').hide();
-        }
-        
-        $('#bsop_mvdel_op').val(mvdel_op);
-        $('#bsop_mvdel_src_name').empty();
-        $('#bsop_mvdel_src_name').append($('<option selected="selected"/>')
-                                            .val(mvdel_src_name)
-                                            .text(mvdel_src_name));
-        
-        $('#dialog-bsop_move_delete').dialog('open');
+  $('.bsop_move, .bsop_delete').live('click', function() {
+    // A context menu item has been clicked
+    // Ascend the tree to the context-menu, then descend to find the hidden
+    // name provided by ContextMenuPlugin, ignore the checkboxes
+    var mvdel_src_name = $(this).closest('div.context-menu') 
+                                .find('span.filenameholder').text();
+      
+    if ($(this).hasClass('bsop_move')) {
+        show_move_delete_dialog('move', [mvdel_src_name]);
+    } else if ($(this).hasClass('bsop_delete')) {
+        show_move_delete_dialog('delete', [mvdel_src_name]);
+    }
+  });
+  
+  $('#bsop_move, #bsop_delete').bind('click', function() {
+    // The Move selected or Delete selected button has been clicked
+    // Retrieve which fileselect checkboxes have been checked
+    var selected_items = $('td .fileselect:checked');
+    var bsop_tips = $('.bsop_tips');
+    
+    if (selected_items.length === 0) {
+      bsop_tips.text('No files or folders selected')
+               .addClass("ui-state-highlight");
+      setTimeout(function() {
+      bsop_tips.removeClass("ui-state-highlight");
+      }, 1500);
+      return;
+    }
+    
+    // Retrieve the hidden contextmenu name element for each selected item
+    // build an array of selected names
+    var selected_names = $(selected_items).closest('tr')
+                                          .find('span.filenameholder')
+                                          .map(function() {
+                                               return $(this).text();})
+                                          .get();
+    
+    if ($(this).is('#bsop_move')) {
+        show_move_delete_dialog('move', selected_names);
+    } else if ($(this).is('#bsop_delete')) {
+        show_move_delete_dialog('delete', selected_names);
+    }
   });
 
 });
