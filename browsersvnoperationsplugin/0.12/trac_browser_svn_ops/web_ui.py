@@ -177,14 +177,14 @@ class TracBrowserOps(Component):
         dst_name = req.args.get('bsop_mvdel_dst_name') # Destination if move
         commit_msg = req.args.get('bsop_mvdel_commit')
         
-        # ContextMenuPlugin provides each src as [reponame/]page_path/node_path
-        # The Trac request path is of the form   /[reponame/]page_path
+        # ContextMenuPlugin provides each src as [reponame/][page_path/]node_path
+        # The Trac request path is of the form   /[reponame/][page_path]
         # Retrieve just the portion of the src items that is relative to this
         # page by stripping the request path. Do this before the request path 
         # is itself stripped of reponame when retrieving the repository
         path = req.args.get('path')
-        path = path.lstrip('/')
-        src_names = [src_name.split(path, 1)[1] for src_name in src_names]
+        src_names = [('/' + src_name).split(path, 1)[1] 
+                     for src_name in src_names]
         
         self.log.debug('Opening repository for %s', operation)
         reponame, repos, path = _get_repository(self.env, req)
