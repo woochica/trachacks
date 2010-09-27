@@ -656,7 +656,8 @@ class SendmailEmailSender(Component):
                       % (self.sendmail_path, recipients))
         cmdline = [self.sendmail_path, "-i", "-f", from_addr]
         cmdline.extend(recipients)
-        self.log.debug("Sendmail command line: %s" % ' '.join(cmdline))
+        realcmd = ' '.join(map(lambda x: "\"%s\""%x, cmdline))
+        self.log.debug("Sendmail command line: %s"%realcmd)
         child = Popen(cmdline, bufsize=-1, stdin=PIPE, stdout=PIPE,
                       stderr=PIPE)
         (out, err) = child.communicate(message)
