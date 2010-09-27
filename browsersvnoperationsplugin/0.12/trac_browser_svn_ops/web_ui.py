@@ -76,6 +76,8 @@ class TracBrowserOps(Component):
             
             # Insert browser operations elements when directory/file shown
             if data['dir']:
+                data['max_upload_size'] = self.max_upload_size
+                
                 # Insert upload dialog and move/delete dialog into div#main
                 bsops_stream = Chrome(self.env).render_template(req,
                         'trac_browser_ops.html', data, fragment=True)

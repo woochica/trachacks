@@ -39,7 +39,9 @@
       class="bsop_form" action="">
   <fieldset>
     <legend>Upload File</legend>
-    <label for="bsop_upload_file">File</label>
+    <label for="bsop_upload_file">
+        File (maximum size ${pretty_size(max_upload_size)})
+    </label>
     <input type="file" name="bsop_upload_file" id="bsop_upload_file" 
         class="bsop_ctl" />
     <label for="bsop_upload_commit">Commit message</label>
