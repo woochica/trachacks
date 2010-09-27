@@ -5,6 +5,7 @@ from pkg_resources import resource_filename
 from trac.core import *
 from trac.config import BoolOption, IntOption
 from trac.perm import IPermissionRequestor
+from trac.util import pretty_size
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_warning, add_notice, \
                             add_meta, add_script, add_stylesheet, add_ctxtnav, \
@@ -145,7 +146,8 @@ class TracBrowserOps(Component):
         file_size = len(file_data)
         if self.max_upload_size > 0 and file_size > self.max_upload_size:
             raise TracError('Uploaded file is too large, '
-                            'maximum upload size: %i' % self.max_upload_size)
+                            'maximum upload size: %s' 
+                            % pretty_size(self.max_upload_size))
         
         self.log.debug('Received file %s with %i bytes', 
                        filename, file_size)
