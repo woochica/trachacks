@@ -1020,7 +1020,7 @@ function ppInitializeTablesorter() {
             // regular trac workflow
             s = s.toLowerCase().replace(/new/,10).replace(/assigned/,20).replace(/reopened/,30).replace(/closed/,40); 
             // trac enterprise workflow
-            s = s.toLowerCase().replace(/infoneeded_new/,12).replace(/infoneeded/,23).replace(/in_work/,25).replace(/in_QA/,35); 
+            s = s.toLowerCase().replace(/infoneeded_new/,12).replace(/infoneeded/,23).replace(/in_work/,25).replace(/in_qa/,35); 
             return s;
         }, 
         // set type, either numeric or text 

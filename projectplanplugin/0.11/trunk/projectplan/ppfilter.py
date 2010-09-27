@@ -92,6 +92,7 @@ class QueryFilter( ParamFilter ):
     ParamFilter.__init__( self, macroenv )
     self.filtercol = ""
     self.operator = '=' # equal-filter
+    self.filterlist = {}
 
   def set_col( self, c ):
     '''
@@ -105,15 +106,32 @@ class QueryFilter( ParamFilter ):
   def set_queryoperator_not( self ):
     self.operator = '!='
 
+  def add_query_col_and_arg(self, col, operator, arg):
+    '''
+      easy access to create AND query with several arguments
+    '''
+    self.filterlist[col] = (operator, arg)
+    
+
   def get_tickets( self ):
     '''
       Query the Database and return
     '''
-    if self.filtercol:
-      self.macroenv.tracenv.log.debug('QueryFilter: %s%s%s&%s' % ( self.filtercol, self.operator, self.queryarg, self.colsstr ) )
+    if self.filterlist != {}: # several attributes are given
+      querystr = ''
+      for filtercol in self.filterlist.keys():
+        querystr = '%s%s%s&%s' % (filtercol, self.filterlist[filtercol][0], self.filterlist[filtercol][1], querystr )
+      querystr = '%s%s' % ( querystr, self.colsstr )
+      #self.macroenv.tracenv.log.warning('QueryFilterSum: '+querystr )
+      q = Query.from_string(self.macroenv.tracenv, querystr, max=self.max_ticket_number_at_filters , order='id' )
+      return q.execute( self.macroenv.tracreq )
+      
+    elif self.filtercol: # only one col is given as filter
+      #self.macroenv.tracenv.log.debug('QueryFilter: %s%s%s&%s' % ( self.filtercol, self.operator, self.queryarg, self.colsstr ) )
       q = Query.from_string(self.macroenv.tracenv, '%s%s%s&%s' % ( self.filtercol, self.operator, self.queryarg, self.colsstr ), max=self.max_ticket_number_at_filters , order='id' )
       return q.execute( self.macroenv.tracreq )
-    else:
+      
+    else: # nothing given select all tickets
       return NullFilter( self.macroenv ).get_tickets()
 
 class AuthedOwnerFilter( QueryFilter ):
@@ -304,11 +322,24 @@ class ppFilter():
     
     self.macroenv.tracenv.log.debug('combine_filters:'+str(operator))
     
-    # add all tickets, if operator is AND
+    # interset all tickets initially if operator is AND
     if operator == self.OPERATOR_AND:
-      ticketlist = NullFilter( self.macroenv ).get_tickets() #  AND, all tickets
-      for t in ticketlist:
-        ticketset.addTicket(t)
+      # not performant, because all tickets are fetched
+      #ticketlist = NullFilter( self.macroenv ).get_tickets() #  AND, all tickets
+      #for t in ticketlist:
+        #ticketset.addTicket(t)
+      
+      # combine all and filter in one query
+      f = QueryFilter( self.macroenv )
+      for ( k, v ) in self.macroenv.macrokw.items():
+        if k in query_filters:
+          f.add_query_col_and_arg( query_filters[k] , '=', v )
+        elif k in query_notfilters:
+          f.add_query_col_and_arg( query_notfilters[k] , '!=', v )
+      
+      # add tickets 
+      for t in f.get_tickets():
+        ticketset.addTicket( t )
     #else:
       #ticketlist = NullFilter( self.macroenv ).get_tickets() # OR
     #self.macroenv.tracenv.log.error('pre-ticketset:'+repr(dir(ticketlist)))
@@ -322,7 +353,8 @@ class ppFilter():
       filtered = False
       #self.macroenv.tracenv.log.warning('filter: '+repr(k))
       
-      if k in query_filters:
+      # do not perform each single query at AND, because it is not performant
+      if k in query_filters and operator != self.OPERATOR_AND:
         # get list of tickets
         #self.macroenv.tracenv.log.debug('query_filters:'+repr(k)+' '+repr(query_filters[ k ])+' '+repr(v) )
         f = QueryFilter( self.macroenv )
@@ -330,7 +362,8 @@ class ppFilter():
         f.set_queryarg( v )
         filtered = True
         
-      elif k in query_notfilters:
+      # do not perform each single query at AND, because it is not performant
+      elif k in query_notfilters and operator != self.OPERATOR_AND:
         # get list of tickets
         #self.macroenv.tracenv.log.debug('query_notfilters:'+repr(k)+' '+repr(query_notfilters[ k ])+' '+repr(v) )
         f = QueryFilter( self.macroenv )

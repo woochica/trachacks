@@ -135,7 +135,8 @@ class RenderImpl():
     style = ''
     if self.macroenv.get_bool_arg('useimages', False ):
       cssclassouter += 'ppuseimages '
-      img = os.path.join( self.macroenv.tracreq.href.chrome( 'projectplan', self.macroenv.PPConstant.RelDocPath ), self.macroenv.conf.get_map_defaults('ImageForStatus', status, white) )
+      img = os.path.join( self.macroenv.tracreq.href.chrome( 'projectplan', self.macroenv.PPConstant.RelDocPath ), self.macroenv.conf.get_map_val('ImageForStatus', status) )
+      #self.macroenv.tracenv.log.debug('ppuseimages: '+repr(img)+' '+repr(status) )
       style += 'background-image:url('+img+');'
     if self.macroenv.get_bool_arg('usecolors', False ):
       cssclassouter += 'ppusecolors '

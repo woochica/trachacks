@@ -140,7 +140,10 @@ class SortedReportRenderer(RenderImpl):
       self.limitlines = 0
     
     # rows configured by user
-    confrows = self.macroenv.macrokw.get( 'rows', '' ).strip()
+    confrows = self.macroenv.macrokw.get( 'rows', '' ).strip() # deprecated: stupid error
+    confcols = self.macroenv.macrokw.get( 'cols', '' ).strip()
+    if confcols != '':
+      confrows = confcols
     
     if confrows.upper() == 'ALL': # show all existing fields
       self.allfields = True

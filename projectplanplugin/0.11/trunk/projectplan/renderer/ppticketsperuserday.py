@@ -61,6 +61,7 @@ class TicketsPerUserDay(RenderImpl):
   def render(self, ticketset):
     '''
       Generate HTML List
+      TODO: improve computation of ticket set
     '''
     orderedtickets = {}
     field = 'due_close'
@@ -155,7 +156,7 @@ class TicketsPerUserDay(RenderImpl):
       counter += 1
       tr = tag.tr(class_ = class_)
       
-      tr( tag.td(tag.h4(o)))
+      tr( tag.td(tag.h5(tag.a( o, href=self.macroenv.tracenv.href()+('/query?owner=%s&order=status' % (o,)) )))) # query owner's tickets
       for segment in self.segments:
         class_ = ''
         if calendar[segment]['date'] == currentDate: # Today
