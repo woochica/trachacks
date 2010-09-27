@@ -129,6 +129,27 @@ class RpcTicketTestCase(TracRpcTestCase):
             self.admin.ticket.delete(tid1)
             self.admin.ticket.delete(tid2)
 
+    def test_query_special_character_escape(self):
+        # Note: This test only passes when using Trac 0.12+
+        # See http://trac-hacks.org/ticket/7737
+        if __import__('trac').__version__ < '0.12':
+            self.fail("Known issue: Trac 0.11 does not handle escaped input properly.")
+        summary = ["here&now", "maybe|later", "back\slash"]
+        search = ["here\&now", "maybe\|later", "back\\slash"]
+        tids = []
+        for s in summary:
+            tids.append(self.admin.ticket.create(s,
+                            "test_special_character_escape", {}))
+        try:
+            for i in range(0, 3):
+                self.assertEquals([tids[i]],
+                    self.admin.ticket.query("summary=%s" % search[i]))
+            self.assertEquals(tids.sort(),
+                    self.admin.ticket.query("summary=%s" % "|".join(search)).sort())
+        finally:
+            for tid in tids:
+                self.admin.ticket.delete(tid)
+
 class RpcTicketVersionTestCase(TracRpcTestCase):
     
     def setUp(self):
