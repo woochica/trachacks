@@ -25,6 +25,7 @@ from genshi.builder import tag
 from pylab import date2num, num2date, drange
 from trac import mimeview
 from trac.core import Component, implements, TracError
+from trac.config import BoolOption, ExtensionOption, IntOption, Option
 from trac.perm import IPermissionRequestor
 from trac.util.compat import sorted
 from trac.util.datefmt import utc, to_datetime, format_date
@@ -35,7 +36,6 @@ from trac.ticket.roadmap import ITicketGroupStatsProvider, \
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor, ITemplateProvider
 from trac.wiki.api import IWikiSyntaxProvider
-from trac.config import ExtensionOption, IntOption, BoolOption
 
 
 def get_every_tickets_in_milestone(db, milestone):
