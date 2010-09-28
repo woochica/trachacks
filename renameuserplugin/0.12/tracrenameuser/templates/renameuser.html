@@ -1,0 +1,33 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Rename user</title>
+  </head>
+
+  <body>
+    <h2>Rename User</h2>
+
+    <form method="post" action="">
+      <input type="text" name="oldname" id="oldname" value="" />
+      <label for="oldname">Old name</label>
+      <input type="text" name="newname" id="newname" value="" />
+      <label for="newname">New name</label>
+
+      <div class="buttons">
+        <input type="submit" value="${_('Apply changes')}" />
+      </div>
+    </form>
+    <div id="messages" py:if="messages">
+    <h3>Results:</h3>
+    <ul>
+        <li py:for="message in messages">$message</li>
+    </ul>
+    </div>
+  </body>
+
+</html>
