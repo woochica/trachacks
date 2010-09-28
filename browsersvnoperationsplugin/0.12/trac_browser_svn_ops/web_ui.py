@@ -317,8 +317,11 @@ class SvnEditMenu(Component):
         return True
     
     def get_content(self, req, entry, stream, data):
+        max_edit_size = self.config.getint('browserops', 'max_edit_size')
         if req.perm.has_permission('REPOSITORY_MODIFY') \
-                and entry.kind == 'file':
+                and entry.kind == 'file' \
+                and (max_edit_size <= 0 
+                     or entry.content_length <= max_edit_size):
             reponame = data['reponame'] or ''
             filename = os.path.join(reponame, entry.path)
             return tag.a('Edit %s' % (entry.name), 
@@ -331,6 +334,10 @@ class TracBrowserEdit(Component):
     implements(ITemplateProvider, ITemplateStreamFilter, IRequestFilter,
                IPermissionRequestor)
     
+    max_edit_size = IntOption('browserops', 'max_edit_size', 262144,
+        '''Maximum allowed file size (in bytes) for edited files. Set to 0 for
+        unlimited editting size.''')
+        
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
         '''Return directories from which to serve js, css and other static files
@@ -357,6 +364,9 @@ class TracBrowserEdit(Component):
             # So only add css/javascript needed solely by the editor
             
             if data['file'] and data['file']['preview']['rendered']:
+                max_edit_size = self.max_edit_size
+                data['max_edit_size'] = max_edit_size
+                
                 # Discard rendered table, replace with textarea of file contents
                 # This means reading the file from the repository again
                 # N.B. If a file is rendered as something other than a table
@@ -371,8 +381,11 @@ class TracBrowserEdit(Component):
                 rev = data['rev']
                 node = repos.get_node(path, rev)
                 
+                # If node is too large then don't allow editting
+                if max_edit_size > 0 and node.content_length > max_edit_size:
+                    return stream
+                    
                 # Read the node and supply it's content to the template data
-                # TODO Honour some maximum length and don't read() all at once
                 data['file_content'] = node.get_content().read()
                 
                 # Replace the already rendered preview with a form and textarea
@@ -410,10 +423,13 @@ class TracBrowserEdit(Component):
         # TODO Don't assume encoding of file, detect it beforehand
         text = req.args['bsop_edit_text'].encode('utf-8')
         commit_msg = req.args['bsop_edit_commit_msg']
+        max_edit_size = self.max_edit_size
         
-        # TODO Check size of editted text
-        self.log.debug('Received %i bytes of editted text as %r',
-                       len(text), text)
+        if max_edit_size > 0 and len(text) > max_edit_size:
+            raise TracError("The edited texti too long, "
+                            "the limit is %s (%i bytes)."
+                            % (pretty_size(max_edit_size), max_edit_size))
+                             
         self.log.debug('Opening repository for file edit')
         reponame, repos, path = _get_repository(self.env, req)
         try:
