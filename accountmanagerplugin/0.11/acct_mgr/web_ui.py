@@ -70,7 +70,7 @@ def _create_user(req, env, check_permissions=True):
     try:
         mgr.set_password(user, password)
     except TracError, e:
-        e.acctmge = acctmgr
+        e.acctmgr = acctmgr
         raise e
 
     db = env.get_db_cnx()
