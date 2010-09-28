@@ -1,8 +1,9 @@
-import os
+import posixpath # Use to manipulate repository paths, which explicitly use
+                 # posix path seperator rather than native OS path seperator
 import unicodedata
 
 from pkg_resources import resource_filename
-from trac.core import *
+from trac.core import Component, implements, Interface, TracError
 from trac.config import BoolOption, IntOption
 from trac.perm import IPermissionRequestor
 from trac.util import pretty_size
@@ -27,6 +28,14 @@ def _get_repository(env, req):
     reponame, repos, path = repo_mgr.get_repository_by_path(path)
     return reponame, repos, path
 
+def _describe_op(operation, rename_only, delete_verb, move_verb, rename_verb):
+    if operation == 'delete':
+        return delete_verb
+    elif operation == 'move' and rename_only:
+        return rename_verb
+    elif operation == 'move':
+        return move_verb
+
 
 class TracBrowserOps(Component):
     implements(ITemplateProvider, ITemplateStreamFilter, IRequestFilter,
@@ -42,6 +51,13 @@ class TracBrowserOps(Component):
     max_upload_size = IntOption('browserops', 'max_upload_size', 262144,
         '''Maximum allowed file size (in bytes) for file uploads. Set to 0 for
         unlimited upload size.''')
+    
+    rename_only = BoolOption('browserops', 'rename_only', True,
+        '''Do not allow fils to be moved, but rather only renamed.
+        
+        If True users will be prevented from moving files out of their current 
+        directory, only renaming a single file within the directory will be 
+        allowed. Deleting, uploading and creating folders is unaffected.''')
     
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
@@ -78,6 +94,7 @@ class TracBrowserOps(Component):
             # Insert browser operations elements when directory/file shown
             if data['dir']:
                 data['max_upload_size'] = self.max_upload_size
+                data['rename_only'] = self.rename_only
                 
                 # Insert upload dialog and move/delete dialog into div#main
                 bsops_stream = Chrome(self.env).render_template(req,
@@ -137,7 +154,7 @@ class TracBrowserOps(Component):
         filename = getattr(upload_file, 'filename', '')
         filename = unicodedata.normalize('NFC', unicode(filename, 'utf-8'))
         filename = filename.replace('\\', '/').replace(':', '/')
-        filename = os.path.basename(filename)
+        filename = posixpath.basename(filename)
         if not filename:
             raise TracError('No file uploaded')
         
@@ -187,8 +204,42 @@ class TracBrowserOps(Component):
         # page by stripping the request path. Do this before the request path 
         # is itself stripped of reponame when retrieving the repository
         path = req.args.get('path')
-        src_names = [('/' + src_name).split(path, 1)[1] 
-                     for src_name in src_names]
+        src_names = [posixpath.join('/', src_name) for src_name in src_names]
+        src_names = [src_name.split(path, 1)[1] for src_name in src_names]
+        self.log.debug('Received %i source items to "%s"',
+                       len(src_names), operation)
+         
+        # Enforce rename_only mode
+        if operation == 'move' and self.rename_only:
+            # Do not allow move operation to place src in dst, if dst exists
+            move_as_child = False
+            
+            # Check that move affects only one node
+            if len(src_names) > 1:
+                self.log.error('Attempted to rename %i nodes, only 1 node can'
+                               'be renamed at a time', len(src_names))
+                raise TracError('Cannot rename multiple files or folders.')
+            
+            # Check that destination is just filename
+            # i.e. it doesn't contain any path components
+            elif '/' in dst_name:
+                self.log.error('Rename encountered path seperator "/" in' 
+                               'destination ("%s", "%s")',
+                               src_names[0], dst_name)
+                raise TracError('This trac is configured to only allow '
+                                'renaming. "/" is not allowed in the new '
+                                'name.')
+            
+            # Check whether the source is in a sub-folder - probably because
+            # the user chose a node delivered by XMLHTTPRequest
+            # Ensure destination directory is the same directory as the source
+            elif '/' in src_names[0]:
+                src_dir, src_base = posixpath.split(src_names[0])
+                dst_name = posixpath.join(src_dir, dst_name)
+        else:
+            # Rename only mode is not in effect, allow src to be moved inside
+            # dst if dst exists or there is more than one src item
+            move_as_child = True
         
         self.log.debug('Opening repository for %s', operation)
         reponame, repos, path = _get_repository(self.env, req)
@@ -207,19 +258,26 @@ class TracBrowserOps(Component):
                 elif operation == 'move':
                     self.log.info('Moving %i items to %s in repository %s',
                                   len(src_paths), repr(dst_path), reponame)
-                    svn_writer.move(src_paths, dst_path, commit_msg)
+                    svn_writer.move(src_paths, dst_path, move_as_child, 
+                                    commit_msg) 
                 else:
                     raise TracError("Unknown operation %s" % operation)
+                
+                verb = _describe_op(operation, self.rename_only, 
+                                    'Deleted', 'Moved', 'Renamed')
+                add_notice(req, "%s %i item(s) successfully" 
+                                % (verb, len(src_paths)))    
                     
             except SubversionException, e:
                 self.log.exception("Failed when attempting svn operation "
-                                   "%s: %s",
-                                   operation, e)
-                add_warning(req, "Failed to perform %s: %s" 
-                             % (operation, 
-                                "See the log file for more information"))
+                                   "%s with rename_only=%s: %s",
+                                   operation, self.rename_only, e)
+                verb = _describe_op(operation, self.rename_only, 
+                                    'Delete', 'Move', 'Rename')
+                add_warning(req, "%s failed: %s" 
+                                 % (verb, 
+                                    "See the log file for more information"))
             
-            add_notice(req, "Performed %s operation" % operation)    
 
         finally:
             repos.sync()
@@ -298,8 +356,10 @@ class SvnMoveMenu(Component):
         return True
     
     def get_content(self, req, entry, stream, data):
+        rename_only = self.config.getbool('browserops', 'rename_only')
+        verb = ['Move', 'Rename'][rename_only]
         if req.perm.has_permission('REPOSITORY_MODIFY'):
-            return tag.a('Move %s' % (entry.name), href='#',
+            return tag.a('%s %s' % (verb, entry.name), href='#',
                          class_='bsop_move')
         else:
             return None
@@ -323,7 +383,7 @@ class SvnEditMenu(Component):
                 and (max_edit_size <= 0 
                      or entry.content_length <= max_edit_size):
             reponame = data['reponame'] or ''
-            filename = os.path.join(reponame, entry.path)
+            filename = posixpath.join(reponame, entry.path)
             return tag.a('Edit %s' % (entry.name), 
                          href=req.href.browser(filename, action='edit'),
                          class_='bsop_edit')
@@ -434,7 +494,7 @@ class TracBrowserEdit(Component):
         reponame, repos, path = _get_repository(self.env, req)
         try:
             repos_path = repos.normalize_path(path)
-            filename = os.path.basename(repos_path)
+            filename = posixpath.basename(repos_path)
             self.log.debug('Writing file %s to %s in %s', 
                            filename, repos_path, reponame)
             svn_writer = SubversionWriter(repos, req.authname)

@@ -85,7 +85,7 @@ class SubversionWriter(object):
             kind = fs.check_path(fs_root, repos_path_utf8, pool)
         
             if kind == core.svn_node_none:
-                raise TracError('Delete', repos_path)
+                raise TracError('Delete', repos_path_utf8)
         
         for repos_path_utf8 in repos_paths_utf8:
             fs.delete(fs_root, repos_path_utf8)
@@ -121,7 +121,7 @@ class SubversionWriter(object):
         log.debug('ct')                                     
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
         
-    def move(self, src_paths, dst_path, commit_msg):
+    def move(self, src_paths, dst_path, move_as_child, commit_msg):
         def _log_message(item, pool):
             return commit_msg_utf8
                 
@@ -132,6 +132,7 @@ class SubversionWriter(object):
                          for src_url in src_urls]
         dst_url_utf8 = core.svn_path_canonicalize(dst_url.encode('utf-8'))
         dst_path_utf8 = core.svn_path_canonicalize(dst_path.encode('utf-8'))
+        move_as_child = bool(move_as_child)
         commit_msg_utf8 = commit_msg.encode('utf-8')
         username_utf8 = self.username.encode('utf-8')
         
@@ -171,13 +172,13 @@ class SubversionWriter(object):
         
         # Move files and dirs from from src to dst. 
         # Don't force
-        # Place src files/dirs in in dst if dst exists, 
+        # If move_as_child: place src nodes inside dst if dst exists, 
         # Don't create parents of dst.
         # Don't set additional revision properties
         commit_info = client.svn_client_move5(tuple(src_urls_utf8),
                                               dst_url_utf8,
                                               False, 
-                                              True, 
+                                              move_as_child, 
                                               False,
                                               None, 
                                               client_ctx)
