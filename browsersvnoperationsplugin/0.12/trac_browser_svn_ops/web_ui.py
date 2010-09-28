@@ -439,10 +439,16 @@ class TracBrowserEdit(Component):
                            filename, repos_path, reponame)
             svn_writer = SubversionWriter(repos, req.authname)
             
-            rev = svn_writer.put_content(repos_path, text, filename,
+            try:
+                rev = svn_writer.put_content(repos_path, text, filename,
                                          commit_msg)
-            # TODO add add_notice for success and turning exceptions
-            # into add_warning.
+                add_notice(req, 'Committed changes to "%s"' % filename)
+                
+            except SubversionException, e:
+                self.log.exception('Failed when attempting svn write: %s',
+                                   e)
+                add_warning(req, 'Failed to write edited file',
+                                 'See the Trac log file for more information')
         finally:
             repos.sync()
             self.log.debug('Closing repository')
