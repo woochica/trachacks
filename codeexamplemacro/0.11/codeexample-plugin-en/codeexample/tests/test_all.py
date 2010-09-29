@@ -243,6 +243,7 @@ class CodeExampleTestCase(unittest.TestCase):
             self.is_incorrect = is_incorrect
 
         def get_repository(self, param):
+            repo = param
 
             class Repo:
 
@@ -260,6 +261,8 @@ class CodeExampleTestCase(unittest.TestCase):
                             class Stream:
 
                                 def read(self):
+                                    if repo:
+                                        return 'repo:' + repo
                                     return 'test'
                             return Stream()
                     if self.is_incorrect:
@@ -279,6 +282,16 @@ class CodeExampleTestCase(unittest.TestCase):
         processor._args = src
         processor.extract_path()
         expected = 'test'
+        self.assertEqual(expected, processor.get_sources(src))
+
+    def test_get_repo(self):
+        """ Testing getting sources. """
+        processor = CodeExample(self.env)
+        processor.get_repos_manager = lambda: self.RepositoryManager()
+        src = '##repo=1\n##path=1'
+        processor._args = src
+        processor.extract_options()
+        expected = 'repo:1'
         self.assertEqual(expected, processor.get_sources(src))
 
     def test_broken_repos(self):

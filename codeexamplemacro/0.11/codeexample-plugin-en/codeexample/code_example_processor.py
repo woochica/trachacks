@@ -20,6 +20,7 @@
 
 import re
 import inspect
+import copy
 import os.path
 from trac.wiki.macros import IWikiMacroProvider
 from trac.core import implements, Component, TracError
@@ -115,6 +116,7 @@ class CodeExample(Component):
         * '''title''' - (optional) the title of the example
         * '''path''' - (optional) a file in the repository (using TracLinks
         format for source code)
+        * '''repo''' - (optional) repository to use (Trac 0.12 and upper only)
         * '''regex''' - (optional) a regular expression indicates
         where to start an example
         * '''lines''' - (optional) number of lines to show
@@ -143,6 +145,7 @@ class CodeExample(Component):
         self._regex_match = None
         self._lines_match = None
         self._title = None
+        self._repo = None
 
     def get_macros(self):
         """Yield the name of the macro based on the class name."""
@@ -244,7 +247,7 @@ class CodeExample(Component):
         """ Try to get sources from the required path. """
         try:
             repo_mgr = self.get_repos_manager()
-            repos = repo_mgr.get_repository(None)
+            repos = repo_mgr.get_repository(self._repo)
         except TracError, exception:
             self._render_exceptions.append(exception)
             return src
@@ -324,10 +327,18 @@ class CodeExample(Component):
         if match:
             self._title = match.group(1)
 
+    def extract_repo(self):
+        """ Extract macro type. """
+        self._repo = None
+        match = self.extract_match('^\s*##\s*repo\s*=\s*(.+)\s*$')
+        if match:
+            self._repo = match.group(1)
+
     def extract_options(self):
         """ Extract options from the macro arguments. """
         self.extract_type()
         self.extract_path()
+        self.extract_repo()
         self._regex_match = self.extract_match(
             '^\s*##\s*regex\s*=\s*"?(.+?)"?\s*$')
         self._lines_match = self.extract_match(
@@ -345,7 +356,7 @@ class CodeExample(Component):
                                                  self.default_style))
         add_script(formatter.req, 'ce/js/select_code.js')
         add_stylesheet(formatter.req, 'ce/css/codeexample.css')
-        data = self.styles[self._type]
+        data = copy.copy(self.styles[self._type])
         args = to_unicode(self.pygmentize_args(self._args, HAVE_PYGMENTS))
         data.update({'args': Markup(args)})
         data.update({'exceptions': self._render_exceptions})
