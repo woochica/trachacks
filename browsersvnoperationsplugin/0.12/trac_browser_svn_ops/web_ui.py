@@ -5,6 +5,7 @@ import unicodedata
 from pkg_resources import resource_filename
 from trac.core import Component, implements, Interface, TracError
 from trac.config import BoolOption, IntOption
+from trac.mimeview import Mimeview
 from trac.perm import IPermissionRequestor
 from trac.util import pretty_size
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
@@ -35,6 +36,15 @@ def _describe_op(operation, rename_only, delete_verb, move_verb, rename_verb):
         return rename_verb
     elif operation == 'move':
         return move_verb
+
+def _encoding_from_mime_type(mimetype):
+    '''Return the text encoding (charset) from a mimetype, or return None
+    '''
+    if mimetype:
+        parts = mimetype.split('charset=', 1)
+        if len(parts) == 2:
+            return parts[1].strip()
+    return None
 
 
 class TracBrowserOps(Component):
@@ -364,6 +374,7 @@ class SvnMoveMenu(Component):
         else:
             return None
 
+
 class SvnEditMenu(Component):
     '''Generate context menu items for moving subversion items
     '''
@@ -390,13 +401,14 @@ class SvnEditMenu(Component):
         else:
             return None
 
+
 class TracBrowserEdit(Component):
     implements(ITemplateProvider, ITemplateStreamFilter, IRequestFilter,
                IPermissionRequestor)
     
     max_edit_size = IntOption('browserops', 'max_edit_size', 262144,
         '''Maximum allowed file size (in bytes) for edited files. Set to 0 for
-        unlimited editting size.''')
+        unlimited editing size.''')
         
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
@@ -418,8 +430,9 @@ class TracBrowserEdit(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         action = req.args.get('action', '')
-        if filename == 'browser.html' and action == 'edit' \
-                and req.perm.has_permission('REPOSITORY_MODIFY'):
+        
+        if filename == 'browser.html' and action == 'edit':
+            req.perm.require('REPOSITORY_MODIFY')
             # NB TracBrowserOps already inserts javascript and css we need
             # So only add css/javascript needed solely by the editor
             
@@ -441,12 +454,29 @@ class TracBrowserEdit(Component):
                 rev = data['rev']
                 node = repos.get_node(path, rev)
                 
-                # If node is too large then don't allow editting
+                # If node is too large then don't allow editing, abort
                 if max_edit_size > 0 and node.content_length > max_edit_size:
                     return stream
-                    
-                # Read the node and supply it's content to the template data
-                data['file_content'] = node.get_content().read()
+                
+                # Open the node and read it
+                node_file = node.get_content() 
+                node_data = node_file.read()
+
+                # Discover the mime type and character encoding of the node
+                # Try in order
+                #  - svn:mime-type property
+                #  - detect from file name and content (BOM)
+                #  - use configured default for Trac
+                mime_view = Mimeview(self.env)
+                mime_type = node.content_type \
+                            or mime_view.get_mimetype(node.name, node_data) \
+                            or 'text/plain'
+                encoding = mime_view.get_charset(node_data, mime_type)
+                
+                # Populate template data
+                content = mime_view.to_unicode(node_data, mime_type, encoding)
+                data['file_content'] = content               
+                data['file_encoding'] = encoding
                 
                 # Replace the already rendered preview with a form and textarea
                 bsops_stream = Chrome(self.env).render_template(req,
@@ -480,29 +510,62 @@ class TracBrowserEdit(Component):
         self.log.debug('Handling file edit for "%s"', req.authname)
         
         # Retrieve fields
-        # TODO Don't assume encoding of file, detect it beforehand
-        text = req.args['bsop_edit_text'].encode('utf-8')
+        # Form data arrives in req.args as unicode strings so the edited text
+        # must be encoded before writing to disk, just as paths and commit
+        # messages are. The difference is that subversion always takes paths
+        # in utf-8 encoding. File encoding is not prescribed, to subversion
+        # it's all just bytes. 
+        edit_text = req.args['bsop_edit_text']
         commit_msg = req.args['bsop_edit_commit_msg']
         max_edit_size = self.max_edit_size
+        self.log.debug('Received %i characters of edited text', 
+                       len(edit_text))
         
-        if max_edit_size > 0 and len(text) > max_edit_size:
-            raise TracError("The edited texti too long, "
+        if max_edit_size > 0 and len(edit_text) > max_edit_size:
+            raise TracError("The edited text is too long, "
                             "the limit is %s (%i bytes)."
                             % (pretty_size(max_edit_size), max_edit_size))
                              
         self.log.debug('Opening repository for file edit')
         reponame, repos, path = _get_repository(self.env, req)
         try:
+            # Determine encoding to use
+            # Try in order
+            #  - extract charset= from svn:mimetype property
+            #  - Encoding determined earlier and sent to client
+            #  - Default encoding (in case returned by client is invalid)
+            
+            node = repos.get_node(path)
+            encoding = _encoding_from_mime_type(node.content_type) \
+                       or req.args.get('bsop_edit_encoding', '')
+            try:
+                text_encoded = edit_text.encode(encoding)
+            except (LookupError, UnicodeEncodeError), e:
+                self.log.info('Failed to encode edited text with encoding '
+                              '"%s" retrying with default. Error was: %s', 
+                              encoding, e)
+            
+            encoding = self.config.get('trac', 'default_charset')    
+            try:
+                text_encoded = edit_text.encode(encoding)
+            except (LookupError, UnicodeEncodeError), e:
+                self.log.error('Could not encode edited text with default '
+                               'encoding "%s": %s', 
+                               encoding, e)
+                raise TracError('Could not commit your text because it '
+                                'could not be encoded.')
+                
             repos_path = repos.normalize_path(path)
             filename = posixpath.basename(repos_path)
-            self.log.debug('Writing file %s to %s in %s', 
-                           filename, repos_path, reponame)
+            self.log.debug('Writing file "%s" encoded as "%s" to "%s" in "%s"', 
+                           filename, encoding, repos_path, reponame)
             svn_writer = SubversionWriter(repos, req.authname)
             
             try:
-                rev = svn_writer.put_content(repos_path, text, filename,
-                                         commit_msg)
-                add_notice(req, 'Committed changes to "%s"' % filename)
+                rev = svn_writer.put_content(repos_path, text_encoded, 
+                                             filename, commit_msg)
+                add_notice(req, 'Committed changes to rev %i in "%s"' 
+                                % (rev, filename))
                 
             except SubversionException, e:
                 self.log.exception('Failed when attempting svn write: %s',
@@ -516,4 +579,5 @@ class TracBrowserEdit(Component):
         
         # Perform http redirect back to this page in order to rerender
         # template according to new repository state
-        req.redirect(req.href(req.path_info))      
+        req.redirect(req.href(req.path_info))
+

@@ -25,13 +25,16 @@
 <body>
 
 <div id="bsop_edit" style="display: table; width: 100%;">
-  <form id="bsop_edit_form" method="post" action="" class="bsop_form">
+  <form id="bsop_edit_form" method="post" action="" 
+      enctype="multipart/form-data" class="bsop_form">
   <fieldset>
     <legend>Edit</legend>
     <input type="hidden" name="bsop_edit_action" value="edit" />
     <textarea id="bsop_edit_text" name="bsop_edit_text" 
         rows="20" cols="80" 
         style="resize: vertical; width: 100%">${file_content}</textarea>
+    <input type="hidden" id="bsop_edit_encoding" 
+        name="bsop_edit_encoding" value="${file_encoding}" />
     <label for="bsop_edit_commit">Commit message</label>
     <input type="text" id="bsop_edit_commit_msg" name="bsop_edit_commit_msg" 
         size="80"/>
