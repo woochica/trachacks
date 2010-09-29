@@ -112,6 +112,7 @@ class CodeExample(Component):
     Parameters:
         * '''type''' - (optional) a type of the example: simple (default),
         good, bad
+        * '''title''' - (optional) the title of the example
         * '''path''' - (optional) a file in the repository (using TracLinks
         format for source code)
         * '''regex''' - (optional) a regular expression indicates
@@ -141,6 +142,7 @@ class CodeExample(Component):
         self._path = None, None, None, None
         self._regex_match = None
         self._lines_match = None
+        self._title = None
 
     def get_macros(self):
         """Yield the name of the macro based on the class name."""
@@ -317,6 +319,10 @@ class CodeExample(Component):
                 self._type = 'BadCodeExample'
             if 'good' in macro_type:
                 self._type = 'GoodCodeExample'
+        self._title = self.styles[self._type]['title']
+        match = self.extract_match('^\s*##\s*title\s*=\s*(.+)\s*$')
+        if match:
+            self._title = match.group(1)
 
     def extract_options(self):
         """ Extract options from the macro arguments. """
@@ -345,6 +351,7 @@ class CodeExample(Component):
         data.update({'exceptions': self._render_exceptions})
         data.update({'index': self._index})
         data.update({'link': self._link})
+        data.update({'title': self._title})
         req = formatter.req
         return Chrome(self.env).render_template(req, 'codeexample.html', data,
             None, fragment=True).render(strip_whitespace=False)

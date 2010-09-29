@@ -57,6 +57,22 @@ class CodeExampleTestCase(unittest.TestCase):
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
 
+    def test_title(self):
+        """ Testing the expand_macro method. """
+        processor = CodeExample(self.env)
+        args = '##title=TITLE\ntest'
+        formatter = Formatter(self.env, self.context)
+
+        name = 'CodeExample'
+        expected = '<div ' \
+        'class="example">\n  <div class="title">\n\t' \
+        '<span class="select_code" id="link1">' \
+        'SELECT ALL</span>\n\t\n\t<span>TITLE:</span>\n</div>\n    \n    ' \
+        '<div class="code">' \
+        '\n        <pre id="codelink1">test\n</pre>\n    </div>\n</div>'
+        self.assertEqual(expected,
+                        processor.expand_macro(formatter, name, args))
+
     def test_expand_macro(self):
         """ Testing the expand_macro method. """
         processor = CodeExample(self.env)
