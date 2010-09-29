@@ -20,18 +20,16 @@ class CodeExampleTestCase(unittest.TestCase):
     def setUp(self):
         """ Set up the testing environment. """
         self.env = EnvironmentStub(enable=[CodeExample])
-        self.req = Mock(base_path = '', chrome = {}, args = {},
-                        abs_href = Href('/'), href = Href('/'),
-                        session = {}, perm = [], authname = None,
-                        tz = None, locale = 'utf-8')
+        self.req = Mock(base_path='', chrome={}, args={},
+                        abs_href=Href('/'), href=Href('/'),
+                        session={}, perm=[], authname=None,
+                        tz=None, locale='utf-8')
         self.context = Context.from_request(self.req)
 
     def test_get_macros(self):
         """ Testing the get_macros method. """
         processor = CodeExample(self.env)
-        expected_result = ['BadCodeExample', 'BadCodeExamplePath',
-                           'CodeExample', 'CodeExamplePath',
-                           'GoodCodeExample', 'GoodCodeExamplePath']
+        expected_result = ['CodeExample']
         index = 0
         for macros in processor.get_macros():
             self.assertEqual(macros, expected_result[index])
@@ -41,8 +39,7 @@ class CodeExampleTestCase(unittest.TestCase):
         """ Testing the get_macro_description method. """
         processor = CodeExample(self.env)
         description = processor.get_macro_description('CodeExample')
-        self.assertEqual(description,
-                         'Render the code block as a plain example.')
+        self.assertTrue(len(description) > 0)
 
     def test_expand_macro_with_unicode(self):
         """ Testing the expand_macro method with unicode symbols. """
@@ -56,7 +53,7 @@ class CodeExampleTestCase(unittest.TestCase):
         '<span class="select_code" id="link1">' \
         'SELECT ALL</span>\n\t\n\t<span>EXAMPLE:</span>\n</div>\n    \n    ' \
         '<div class="code">' \
-        '\n        <pre id="codelink1">ТЕСТ</pre>\n    </div>\n</div>'
+        '\n        <pre id="codelink1">ТЕСТ\n</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
 
@@ -72,27 +69,27 @@ class CodeExampleTestCase(unittest.TestCase):
         '<span class="select_code" id="link1">' \
         'SELECT ALL</span>\n\t\n\t<span>EXAMPLE:</span>\n</div>\n    \n    ' \
         '<div class="code">' \
-        '\n        <pre id="codelink1">test</pre>\n    </div>\n</div>'
+        '\n        <pre id="codelink1">test\n</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
 
-        name = 'BadCodeExample'
+        args = '##type=bad\ntest'
         expected = '<div ' \
         'class="bad_example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link2">' \
         'SELECT ALL</span>\n\t\n\t<span>INCORRECT EXAMPLE:</span>\n' \
         '</div>\n    \n    <div class="code">' \
-        '\n        <pre id="codelink2">test</pre>\n    </div>\n</div>'
+        '\n        <pre id="codelink2">test\n</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
 
-        name = 'GoodCodeExample'
+        args = '##type=good\ntest'
         expected = '<div ' \
         'class="good_example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link3">' \
         'SELECT ALL</span>\n\t\n\t<span>CORRECT EXAMPLE:</span>\n</div>' \
         '\n    \n    <div class="code">' \
-        '\n        <pre id="codelink3">test</pre>\n    </div>\n</div>'
+        '\n        <pre id="codelink3">test\n</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
 
@@ -113,7 +110,7 @@ class CodeExampleTestCase(unittest.TestCase):
         '<ul>\n        <li>no lexer for alias \'python1\' found</li>' \
         '\n    </ul>\n    </div>\n    \n    ' \
         '<div class="code">' \
-        '\n        <pre id="codelink1">test</pre>\n    </div>\n</div>'
+        '\n        <pre id="codelink1">test\n</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
 
@@ -121,26 +118,23 @@ class CodeExampleTestCase(unittest.TestCase):
         """ Testing the pygmentize_args method. """
         processor = CodeExample(self.env)
         args = 'test1'
-        pygmentized = 'test1'
-        self.assertEqual(pygmentized,
-                         processor.pygmentize_args(args, True, False))
-        self.assertEqual(args, processor.pygmentize_args(args, False, False))
+        pygmentized = 'test1\n'
+        self.assertEqual(pygmentized, processor.pygmentize_args(args, True))
+        self.assertEqual(args, processor.pygmentize_args(args, False))
 
     def test_pygmentize_with_python(self):
         """ Testing the pygmentize_args method with Python code. """
         processor = CodeExample(self.env)
         args = '#!python\ntest1'
         pygmentized = 'test1\n'
-        self.assertEqual(pygmentized,
-                         processor.pygmentize_args(args, True, False))
+        self.assertEqual(pygmentized, processor.pygmentize_args(args, True))
 
     def test_invalid_lang(self):
         """ Testing the pygmentize_args method with invalid language. """
         processor = CodeExample(self.env)
         args = '#!python1\ntest1\n'
-        pygmentized = 'test1\n'
-        self.assertEqual(pygmentized,
-                         processor.pygmentize_args(args, True, False))
+        pygmentized = 'test1\n\n'
+        self.assertEqual(pygmentized, processor.pygmentize_args(args, True))
 
     def test_pygmentize_multiline(self):
         """ Testing the pygmentize_args method with multiline code. """
@@ -148,9 +142,8 @@ class CodeExampleTestCase(unittest.TestCase):
         args = '#!python\ndef Class:\n    pass\n'
         pygmentized = '<span class="k">def</span> ' \
         '<span class="nf">Class</span><span class="p">:</span>\n' \
-        '    <span class="k">pass</span>\n'
-        self.assertEqual(pygmentized,
-                         processor.pygmentize_args(args, True, False))
+        '    <span class="k">pass</span>\n\n'
+        self.assertEqual(pygmentized, processor.pygmentize_args(args, True))
 
     def test_pygmentize_with_windows_new_lines(self):
         """ Testing the pygmentize_args method with Windows new lines. """
@@ -158,9 +151,8 @@ class CodeExampleTestCase(unittest.TestCase):
         args = '#!python\r\ndef Class:\n    pass\n'
         pygmentized = '<span class="k">def</span> ' \
         '<span class="nf">Class</span><span class="p">:</span>\n' \
-        '    <span class="k">pass</span>\n'
-        self.assertEqual(pygmentized,
-                         processor.pygmentize_args(args, True, False))
+        '    <span class="k">pass</span>\n\n'
+        self.assertEqual(pygmentized, processor.pygmentize_args(args, True))
 
     def test_render_as_lang(self):
         """ Testing the render_as_lang method. """
@@ -178,9 +170,8 @@ class CodeExampleTestCase(unittest.TestCase):
         content = '#!c#\ndouble test() {}'
         pygmentized = '<span class="kt">double</span> ' \
             '<span class="nf">test</span><span class="p">()</span> ' \
-            '<span class="k">{}</span>\n'
-        self.assertEqual(pygmentized, processor.pygmentize_args(content,
-                                                                True, False))
+            '<span class="p">{}</span>\n'
+        self.assertEqual(pygmentized, processor.pygmentize_args(content, True))
 
     def test_get_htdocs_dirs(self):
         """ Testing get_htdocs_dirs method. """
@@ -192,10 +183,10 @@ class CodeExampleTestCase(unittest.TestCase):
     def test_path_recognition(self):
         """ Testing correct path requirements. """
         processor = CodeExample(self.env)
-        args = 'ТЕСТ'
+        args = '##path=test\nТЕСТ'
         formatter = Formatter(self.env, self.context)
 
-        name = 'CodeExamplePath'
+        name = 'CodeExample'
         expected = '<div ' \
         'class="example">\n  <div class="title">\n\t' \
         '<span class="select_code" id="link1">' \
@@ -203,11 +194,10 @@ class CodeExampleTestCase(unittest.TestCase):
         '<div class="system-message">\n    <strong>' \
         'During the example analyzing the following problems' \
         ' appear:</strong>\n    <ul>\n        ' \
-        '<li>Unsupported version control system "svn": Can\'t find an' \
-        ' appropriate component, maybe the corresponding plugin was not' \
-        ' enabled? </li>\n    </ul>\n    </div>' \
+        '<li>Path element is not found.</li>\n    '\
+        '</ul>\n    </div>' \
         '\n    \n    <div class="code">' \
-        '\n        <pre id="codelink1">ТЕСТ</pre>\n    </div>\n</div>'
+        '\n        <pre id="codelink1">ТЕСТ\n</pre>\n    </div>\n</div>'
         self.assertEqual(expected,
                         processor.expand_macro(formatter, name, args))
 
@@ -215,7 +205,9 @@ class CodeExampleTestCase(unittest.TestCase):
         """ Testing getting quote from the text. """
         processor = CodeExample(self.env)
         text = 'one\ntwo\nthree'
-        args = 'regex=two\nlines=1'
+        args = '##regex=two\n##lines=1'
+        processor._args = args
+        processor.extract_options()
         expected = 'two'
         self.assertEqual(expected, processor.get_quote(text, args))
 
@@ -223,20 +215,22 @@ class CodeExampleTestCase(unittest.TestCase):
         """ Testing getting quote from the text without regex match. """
         processor = CodeExample(self.env)
         text = 'one\ntwo\nthree'
-        args = 'regex=four'
+        args = '##regex=four'
+        processor._args = args
+        processor.extract_options()
         expected = 'two'
         self.assertEqual(text, processor.get_quote(text, args))
 
     class RepositoryManager:
 
-        def __init__(self, is_incorrect = False):
+        def __init__(self, is_incorrect=False):
             self.is_incorrect = is_incorrect
 
         def get_repository(self, param):
 
             class Repo:
 
-                def __init__(self, is_incorrect = False):
+                def __init__(self, is_incorrect=False):
                     self.is_incorrect = is_incorrect
 
                 def get_node(self, path, rev=None):
@@ -265,7 +259,9 @@ class CodeExampleTestCase(unittest.TestCase):
         """ Testing getting sources. """
         processor = CodeExample(self.env)
         processor.get_repos_manager = lambda: self.RepositoryManager()
-        src = 'path=1'
+        src = '##path=1'
+        processor._args = src
+        processor.extract_path()
         expected = 'test'
         self.assertEqual(expected, processor.get_sources(src))
 
@@ -292,27 +288,40 @@ class CodeExampleTestCase(unittest.TestCase):
         """ Testing getting sources with incorrect path. """
         processor = CodeExample(self.env)
         processor.get_repos_manager = lambda: self.RepositoryManager(True)
-        src = 'path=1'
+        src = '##path=1'
+        processor._args = src
+        processor.extract_path()
         self.assertEqual(src, processor.get_sources(src))
 
     def test_link_updating_with_index(self):
         """ Testing adding anchor to the source link. """
         processor = CodeExample(self.env)
         processor._link = 'path'
-        processor.get_quote("test1\ndef\ntest2", "regex=def")
+        processor._args = "##regex=def"
+        processor.extract_options()
+        processor.get_quote("test1\ndef\ntest2", "")
         expected = 'path#L2'
         self.assertEqual(expected, processor._link)
 
     def test_parse_path(self):
         """ Testing correctness of parsing path. """
         processor = CodeExample(self.env)
-        get_lines = lambda path: processor.parse_path(path)[2]
-        self.assertEqual('100', get_lines('path=path@rev:100'))
-        self.assertEqual('26-30', get_lines('path=path@rev:26-30'))
+
+        def get_lines(path):
+            processor._args = path
+            processor.extract_path()
+            return processor._path[2]
+
+        def get_focus_line(path):
+            processor._args = path
+            processor.extract_path()
+            return processor._path[3]
+
+        self.assertEqual('100', get_lines('##path=path@rev:100'))
+        self.assertEqual('26-30', get_lines('##path=path@rev:26-30'))
         self.assertEqual('26-30,32-34,40',
-                         get_lines('path=path@rev:26-30,32-34,40'))
-        get_focus_line = lambda path: processor.parse_path(path)[3]
-        self.assertEqual(100, get_focus_line('path=path@rev:100#L100'))
+            get_lines('##path=path@rev:26-30,32-34,40'))
+        self.assertEqual(100, get_focus_line('##path=path@rev:100#L100'))
 
     def test_get_range(self):
         """ Testing getting required range from parsed lines. """

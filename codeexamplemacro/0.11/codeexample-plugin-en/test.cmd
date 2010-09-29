@@ -1,1 +1,0 @@
-python -c "from codeexample.tests import test_all;import unittest;unittest.main(test_all)"

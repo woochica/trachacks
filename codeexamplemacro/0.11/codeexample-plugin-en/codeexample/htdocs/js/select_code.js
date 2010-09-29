@@ -1,7 +1,7 @@
 $(document).ready(function(){
     $('.select_code').click(
-        function () {
-            a = $('#code' + $(this).attr('id')).get(0)
+        function (e) {
+            var a = $('#code' + $(this).attr('id')).get(0);
 			// Not IE
 			if (window.getSelection) {
 				var s = window.getSelection();
@@ -25,6 +25,18 @@ $(document).ready(function(){
 				r.moveToElementText(a);
 				r.select();
 			}
+			e.stopImmediatePropagation();
+        }
+    );
+    $('a').click(
+        function(e) {
+            e.stopImmediatePropagation();
+        }
+    );
+    $('.title').not($('.title').children()).click(
+        function () {
+            $(this).next('.code').slideToggle();
+            $(this).toggleClass('collapsed');
         }
     );
 });

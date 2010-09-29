@@ -19,6 +19,7 @@
 """ Code example processor module. """
 
 import re
+import inspect
 import os.path
 from trac.wiki.macros import IWikiMacroProvider
 from trac.core import implements, Component, TracError
@@ -43,54 +44,120 @@ __all__ = ['CodeExample']
 
 
 class CodeExample(Component):
-    """ Code example macro class. """
+    """Render a code example box that supports syntax highlighting.
+    It support three types of examples: simple, correct, and incorrect.
+    The '''SELECT ALL''' link highlights all of the code in the box
+    to simplify the copy and paste action.
+
+    The simple example:
+    {{{
+    {{{
+    #!CodeExample
+    #!python
+    @staticmethod
+    def get_templates_dirs():
+        \"\"\" Notify Trac about templates dir. \"\"\"
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+    }}}
+    }}}
+
+    will be rendered as:
+
+    [[Image(//chrome/ce/img/example1.png)]]
+
+    The incorrect example:
+    {{{
+    {{{
+    #!CodeExample
+    ## type = bad
+    #!haskell
+    fibs = 0 : 1 : [ a + b | a <- fibs | b <- tail fibs ]
+    }}}
+    }}}
+
+    will be rendered as:
+
+    [[Image(//chrome/ce/img/example2.png)]]
+
+    The correct example:
+    {{{
+    {{{
+    #!CodeExample
+    ## type = good
+    #!haskell
+    fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
+    }}}
+    }}}
+
+    will be rendered as:
+
+    [[Image(//chrome/ce/img/example3.png)]]
+
+    There is also support for getting sources from the repository:
+    {{{
+    {{{
+    #!CodeExample
+    ## path=GPGMail/Source/GPGMailPreferences.m
+    ## regex=".*updater\s*{"
+    ## lines=3
+    #!objective-c
+    }}}
+    }}}
+
+    will be rendered as:
+
+    [[Image(//chrome/ce/img/example4.png)]]
+
+    Parameters:
+        * '''type''' - (optional) a type of the example: simple (default),
+        good, bad
+        * '''path''' - (optional) a file in the repository (using TracLinks
+        format for source code)
+        * '''regex''' - (optional) a regular expression indicates
+        where to start an example
+        * '''lines''' - (optional) number of lines to show
+    """
 
     implements(ITemplateProvider, IWikiMacroProvider)
 
     styles = {
-        'CodeExample': {'title': u'EXAMPLE', 'css_class': 'example',
-                'description': 'Render the code block as a plain example.'},
+        'CodeExample': {'title': u'EXAMPLE', 'css_class': 'example'},
         'BadCodeExample': {'title': u'INCORRECT EXAMPLE',
-                           'css_class': 'bad_example',
-                'description': 'Render the code block as a bad example.'},
+                           'css_class': 'bad_example'},
         'GoodCodeExample': {'title': u'CORRECT EXAMPLE',
-                            'css_class': 'good_example',
-                'description': 'Render the code block as a good example.'},
-        'CodeExamplePath': {'title': u'EXAMPLE', 'css_class': 'example',
-        'description': 'Render the code from the path as a plain example.'},
-        'BadCodeExamplePath': {'title': u'INCORRECT EXAMPLE',
-                           'css_class': 'bad_example',
-        'description': 'Render the code from the path as a bad example.'},
-        'GoodCodeExamplePath': {'title': u'CORRECT EXAMPLE',
-                            'css_class': 'good_example',
-        'description': 'Render the code from the path as a good example.'},
-}
+                            'css_class': 'good_example'}}
 
     default_style = Option('mimeviewer', 'pygments_default_style', 'trac',
         """The default style to use for Pygments syntax highlighting.""")
 
     def __init__(self):
-        super(CodeExample, self).__init__()
+        Component.__init__(self)
         self._render_exceptions = []
         self._index = 0
         self._link = None
+        self._args = None
+        self._type = 'CodeExample'
+        self._path = None, None, None, None
+        self._regex_match = None
+        self._lines_match = None
 
     def get_macros(self):
         """Yield the name of the macro based on the class name."""
-        for key in sorted(self.styles.keys()):
-            yield key
+        yield self.__class__.__name__
 
     def get_macro_description(self, name):
         """Returns the required macro description."""
-        return self.styles[name]['description']
+        doc = inspect.getdoc(self.__class__)
+        return doc and to_unicode(doc) or ''
 
     def render_as_lang(self, lang, content):
         """ Try to render 'content' as 'lang' code. """
         try:
-            lexer = get_lexer_by_name(lang, stripnl = False)
+            lexer = get_lexer_by_name(lang, stripnl=False)
             tokens = lexer.get_tokens(content)
             stream = GenshiHtmlFormatter().generate(tokens)
-            return stream.render(strip_whitespace = False)
+            return stream.render(strip_whitespace=False)
         except ClassNotFound, exception:
             self._render_exceptions.append(exception)
         return content
@@ -100,21 +167,17 @@ class CodeExample(Component):
         lines = list(enumerate(text.split('\n')))
         if required_lines:
             lines_range = self.get_range(required_lines)
-            lines = filter(lambda i: i[0] + 1 in lines_range, lines)
+            lines = [i for i in lines if i[0] + 1 in lines_range]
         return lines
 
     def get_quote(self, text, args, required_lines=None, focus_line=None):
         """ Try to get the required quote from the text. """
-        regex_match = re.search('^\s*regex\s*=\s*"?(.+?)"?\s*$',
-                                   args, re.MULTILINE)
-        lines_match = re.search('^\s*lines\s*=\s*(\d+)\s*$',
-                                   args, re.MULTILINE)
         begin_idx = 0
         content = self.get_analyzed_content(text, required_lines)
-        if regex_match:
-            regex = regex_match.group(1)
-            for begin_idx, s in list(enumerate(content)):
-                if re.search(regex, s[1]):
+        if self._regex_match:
+            regex = self._regex_match.group(1)
+            for begin_idx, lines in list(enumerate(content)):
+                if re.search(regex, lines[1]):
                     break
             else:
                 err = 'Nothing is match to regex: ' + regex
@@ -125,8 +188,8 @@ class CodeExample(Component):
         if self._link and focus_line:
             self._link += "#L%d" % focus_line
         simple_content = [i[1] for i in content]
-        if lines_match:
-            lines = int(lines_match.group(1))
+        if self._lines_match:
+            lines = int(self._lines_match.group(1))
             return '\n'.join(simple_content[begin_idx:lines + begin_idx])
         else:
             return '\n'.join(simple_content[begin_idx:])
@@ -135,12 +198,19 @@ class CodeExample(Component):
         """ Get repository manager. """
         return RepositoryManager(self.env)
 
-    def parse_path(self, path):
+    def extract_match(self, expr):
+        """ Search for regexp and remove from arguments if found. """
+        match = re.search(expr, self._args, re.MULTILINE)
+        if match:
+            self._args = self._args.replace(match.group(0), '').strip()
+        return match
+
+    def extract_path(self):
         """ Parse source path. """
-        path_match = re.search(
-            '^\s*path\s*=\s*(?P<path>.+?)(?P<rev>@\w+)?' \
-            '(?P<lines>:\d+(-\d+)?(,\d+(-\d+)?)*)?(?P<focus>#L\d+)?\s*$',
-            path, re.MULTILINE)
+        self._path = None, None, None, None
+        path_match = self.extract_match(
+            '^\s*##\s*path\s*=\s*(?P<path>.+?)(?P<rev>@\w+)?' \
+            '(?P<lines>:\d+(-\d+)?(,\d+(-\d+)?)*)?(?P<focus>#L\d+)?\s*$')
         if path_match:
             path = path_match.group('path')
             rev = path_match.group('rev')
@@ -152,8 +222,7 @@ class CodeExample(Component):
             focus_line = path_match.group('focus')
             if focus_line:
                 focus_line = int(focus_line[2:])
-            return path, rev, lines, focus_line
-        return None, None, None, None
+            self._path = path, rev, lines, focus_line
 
     @staticmethod
     def get_range(lines):
@@ -178,8 +247,8 @@ class CodeExample(Component):
             self._render_exceptions.append(exception)
             return src
         try:
-            path, rev, lines, focus_line = self.parse_path(src)
-            if path:
+            path, rev, lines, focus_line = self._path
+            if repos and path:
                 try:
                     node = repos.get_node(path, rev)
                     self._link = self.env.href.browser(node.path)
@@ -197,16 +266,19 @@ class CodeExample(Component):
     def actualize(self, src, is_path):
         """ Detect and load required sources. """
         if is_path:
-            return self.get_sources(src)
+            src = self.get_sources(src)
         return src
 
-    def pygmentize_args(self, args, have_pygments, is_path):
+    def pygmentize_args(self, args, have_pygments):
         """ Process args via Pygments. """
+        is_path = self._path[0] != None
         if have_pygments:
+            args += '\n'  # fix pigmentation issues
             match = re.match('^#!(.+?)\s+((.*\s*)*)$', args, re.MULTILINE)
             if match:
-                return self.render_as_lang(match.group(1),
-                                       self.actualize(match.group(2), is_path))
+                lang = match.group(1)
+                src = self.actualize(match.group(2), is_path)
+                return self.render_as_lang(lang, src)
         return self.actualize(args, is_path)
 
     @staticmethod
@@ -232,25 +304,47 @@ class CodeExample(Component):
 
     @staticmethod
     def is_have_pygments():
+        """ Helper for checking is Pygments installed. """
         return HAVE_PYGMENTS
+
+    def extract_type(self):
+        """ Extract macro type. """
+        self._type = 'CodeExample'
+        match = self.extract_match('^\s*##\s*type\s*=\s*(.+)\s*$')
+        if match:
+            macro_type = match.group(1)
+            if 'bad' in macro_type:
+                self._type = 'BadCodeExample'
+            if 'good' in macro_type:
+                self._type = 'GoodCodeExample'
+
+    def extract_options(self):
+        """ Extract options from the macro arguments. """
+        self.extract_type()
+        self.extract_path()
+        self._regex_match = self.extract_match(
+            '^\s*##\s*regex\s*=\s*"?(.+?)"?\s*$')
+        self._lines_match = self.extract_match(
+            '^\s*##\s*lines\s*=\s*(\d+)\s*$')
 
     def expand_macro(self, formatter, name, args):
         """ Expand macro parameters and return required html. """
         self._render_exceptions = []
         self._link = None
         self._index += 1
+        self._args = args
+        self.extract_options()
         add_stylesheet(formatter.req, '/pygments/%s.css' %
                        formatter.req.session.get('pygments_style',
                                                  self.default_style))
         add_script(formatter.req, 'ce/js/select_code.js')
         add_stylesheet(formatter.req, 'ce/css/codeexample.css')
-        is_path = name[-4:] == 'Path'
-        args = to_unicode(self.pygmentize_args(args, HAVE_PYGMENTS, is_path))
-        data = self.styles[name]
+        data = self.styles[self._type]
+        args = to_unicode(self.pygmentize_args(self._args, HAVE_PYGMENTS))
         data.update({'args': Markup(args)})
         data.update({'exceptions': self._render_exceptions})
         data.update({'index': self._index})
         data.update({'link': self._link})
         req = formatter.req
         return Chrome(self.env).render_template(req, 'codeexample.html', data,
-            None, fragment=True).render(strip_whitespace = False)
+            None, fragment=True).render(strip_whitespace=False)
