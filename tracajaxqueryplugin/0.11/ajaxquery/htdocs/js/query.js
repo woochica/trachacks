@@ -1,11 +1,16 @@
-$(document).ready(function() {
+$(function() {
+    function getURLParameter(name) {
+        return unescape(
+            (RegExp(name + '=' + '(.+?)(&|$)').exec(location.search)||[,null])[1]
+        );
+    }
+
     function update_filter(){      
         $('#content > h1 > span').html('<img src="/trac/chrome/aq/image/ajax-loader-small.gif" />');
-        //$('#example-placeholder').html('<p><img src="/images/ajax-loader.gif" width="220" height="19" /></p>');
         
         var dataString = $('#query').serialize();
-        
-        $.ajax({
+       
+       $.ajax({
             type: "POST",
             url: "/trac/query",
             data: dataString,
@@ -13,34 +18,28 @@ $(document).ready(function() {
                 //alert(
                 $('.listing').parent().html($("#content > div[id='']:first", data));
                 $('#content > h1 > span').html($("#content > h1 > span", data).contents());
-                //$('.listing').html($(data).filter('table.listing'));
-                // $('#message').html("<h2>Contact Form Submitted!</h2>")
-                    // .append("<p>We will be in touch soon.</p>")
-                    // .hide()
-                    // .fadeIn(1500, function() {
-                        // $('#message').append("<img id='checkmark' src='images/check.png' />");
-                    // });
             }
         });
-        
-        //$('.listing').parent().load('/trac/query?'+dataString+' .listing');
     }
     
-    //hide update button
-    $(":input[name='update']").hide();
     
-    //load updated data after input change
-    $(":input:not(select)").click(function() {
+    $(":input[name='update']").bind('click', function() {
         update_filter();
+        return false;
     });
 
-    $("input:text").change(function() {
+    $(":button").bind("click", function(){
+        update_filter();
+    });
+    $("#query").delegate(":input[type!='text'][type!='select-one']", "click", function(){
         update_filter();
     });
     
-    $("select").change(function() {
-        //filter initial change event triggered by populating the the select elements
-        if($(this).val() != "")
-            update_filter();
+    $("#query").delegate("input:text",'change', function() {
+        update_filter();
+    });
+    
+    $("select").live('focusout', function() {
+        update_filter();
     });
 });
