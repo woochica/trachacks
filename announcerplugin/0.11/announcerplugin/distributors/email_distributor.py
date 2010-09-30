@@ -20,7 +20,7 @@ try:
     from email.header import Header
 except:
     from email.Header import Header
-import time, Queue, threading, smtplib
+import time, Queue, threading, smtplib, random
 
 class DeliveryThread(threading.Thread):
     def __init__(self, queue, sender):
@@ -114,6 +114,11 @@ class EmailDistributor(Component):
         
     use_tls = BoolOption('announcer', 'use_tls', 'false',
         """Use SSL/TLS to send notifications (''since 0.10'').""")
+
+    set_message_id = BoolOption('announcer', 'set_message_id', 'true',
+        """Disable if you would prefer to let the email server handle
+        message-id generation.
+        """)
     
     smtp_subject_prefix = Option('announcer', 'smtp_subject_prefix',
                                  '__default__', 
@@ -282,11 +287,13 @@ class EmailDistributor(Component):
         else:
             raise TracError(_('Invalid email encoding setting: %s'%pref))
 
-    def _message_id(self, realm, id, modtime=None):
+    def _message_id(self, realm):
         """Generate a predictable, but sufficiently unique message ID."""
-        s = '%s.%s.%d.%s' % (self.env.project_url, 
-                               id, to_timestamp(modtime),
-                               realm.encode('ascii', 'ignore'))
+        modtime = time.time()
+        rand = random.randint(0,32000)
+        s = '%s.%d.%d.%s' % (self.env.project_url,
+                          modtime, rand,
+                          realm.encode('ascii', 'ignore'))
         dig = md5(s).hexdigest()
         host = self.smtp_from[self.smtp_from.find('@') + 1:]
         msgid = '<%03d.%s@%s>' % (len(s), dig, host)
@@ -327,8 +334,9 @@ class EmailDistributor(Component):
         rootMessage['X-Trac-Project'] = proj_name
         rootMessage['X-Trac-Announcement-Realm'] = event.realm
         rootMessage['X-Trac-Announcement-ID'] = self._event_id(event)
-        msgid = self._message_id(event.realm, self._event_id(event))
-        rootMessage['Message-ID'] = msgid
+        if self.set_message_id:
+            msgid = self._message_id(event.realm)
+            rootMessage['Message-ID'] = msgid
         if event.category is not 'created':
             rootMessage['In-Reply-To'] = msgid
             rootMessage['References'] = msgid
