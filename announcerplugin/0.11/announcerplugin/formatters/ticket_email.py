@@ -172,24 +172,27 @@ class TicketEmailFormatter(Component):
             else:
                 short_changes[field.capitalize()] = (old_value, new_value)
 
-        try:
-            req = Mock(
-                href=Href(self.env.abs_href()),
-                abs_href=self.env.abs_href(),
-                authname=event.author, 
-                perm=MockPerm(),
-                chrome=dict(
-                    warnings=[],
-                    notices=[]
-                ),
-                args={}
-            )
-            context = Context.from_request(req, event.realm, event.target.id)
-            formatter = HtmlFormatter(self.env, context, event.comment)
-            temp = formatter.generate(True)
-        except Exception, e:
-            self.log.error(exception_to_unicode(e, traceback=True))
-            temp = 'Comment in plain text: %s'%event.comment
+        if event.comment:
+            try:
+                req = Mock(
+                    href=Href(self.env.abs_href()),
+                    abs_href=self.env.abs_href(),
+                    authname=event.author, 
+                    perm=MockPerm(),
+                    chrome=dict(
+                        warnings=[],
+                        notices=[]
+                    ),
+                    args={}
+                )
+                context = Context.from_request(req, event.realm, event.target.id)
+                formatter = HtmlFormatter(self.env, context, event.comment)
+                temp = formatter.generate(True)
+            except Exception, e:
+                self.log.error(exception_to_unicode(e, traceback=True))
+                temp = 'Comment in plain text: %s'%event.comment
+        else:
+            temp = ''
         data = dict(
             ticket = ticket,
             author = event.author,
