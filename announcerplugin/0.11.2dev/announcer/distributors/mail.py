@@ -467,7 +467,8 @@ class EmailDistributor(Component):
         rootMessage = MIMEMultipart("related")
 
         headers = dict()
-        headers['Message-ID'] = self._message_id(event.realm)
+        if self.set_message_id:
+            headers['Message-ID'] = self._message_id(event.realm)
         headers['Date'] = formatdate()
         from_header = formataddr((
             self.from_name or self.env.project_name,
@@ -590,6 +591,11 @@ class SmtpEmailSender(Component):
 
     use_tls = BoolOption('smtp', 'use_tls', 'false',
         """Use SSL/TLS to send notifications over SMTP.""")
+
+    set_message_id = BoolOption('announcer', 'set_message_id', 'true',
+        """Disable if you would prefer to let the email server handle
+        message-id generation.
+        """)
 
     use_ssl = BoolOption('smtp', 'use_ssl', 'false',
         """Use ssl for smtp connection.""")
