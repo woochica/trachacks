@@ -106,6 +106,9 @@ class QueryFilter( ParamFilter ):
   def set_queryoperator_not( self ):
     self.operator = '!='
 
+  def set_queryoperator_like( self ):
+    self.operator = '=~'
+
   def add_query_col_and_arg(self, col, operator, arg):
     '''
       easy access to create AND query with several arguments
@@ -270,6 +273,7 @@ class ppFilter():
       'filter_priority':'priority',
       'filter_owner':'owner',
       'filter_reporter':'reporter',
+      'filter_cc':'cc',
       'filter_version':'version',
       'filter_status':'status',
       'filter_resolution':'resolution',
@@ -286,10 +290,28 @@ class ppFilter():
       'filternot_priority':'priority',
       'filternot_owner':'owner',
       'filternot_reporter':'reporter',
+      'filternot_cc':'cc',
       'filternot_version':'version',
       'filternot_status':'status',
       'filternot_resolution':'resolution',
       'filternot_keywords':'keywords'
+    }
+    
+    # every inverted filter
+    query_likefilters = {
+      'filterlike_milestone': 'milestone',
+      'filterlike_component': 'component',
+      'filterlike_id':'id',
+      'filterlike_type':'type',
+      'filterlike_severity':'severity',
+      'filterlike_priority':'priority',
+      'filterlike_owner':'owner',
+      'filterlike_reporter':'reporter',
+      'filterlike_cc':'cc',
+      'filterlike_version':'version',
+      'filterlike_status':'status',
+      'filterlike_resolution':'resolution',
+      'filterlike_keywords':'keywords'
     }
 
     # entries: <kw key>: <ParamFilter cls>
@@ -336,6 +358,8 @@ class ppFilter():
           f.add_query_col_and_arg( query_filters[k] , '=', v )
         elif k in query_notfilters:
           f.add_query_col_and_arg( query_notfilters[k] , '!=', v )
+        elif k in query_likefilters:
+          f.add_query_col_and_arg( query_likefilters[k] , '=~', v )
       
       # add tickets 
       for t in f.get_tickets():
@@ -348,6 +372,7 @@ class ppFilter():
     
     #ticketset = ppTicketSet() # OR
     # get tickets for "Parameter based Filters" using macrokw
+    # TODO: need to refactor, duplicate code
     global_filtered = False # was there every a filter applied
     for ( k, v ) in self.macroenv.macrokw.items():
       filtered = False
@@ -370,6 +395,16 @@ class ppFilter():
         f.set_col( query_notfilters[ k ] )
         f.set_queryarg( v )
         f.set_queryoperator_not( )
+        filtered = True
+        
+      # do not perform each single query at AND, because it is not performant
+      elif k in query_likefilters and operator != self.OPERATOR_AND:
+        # get list of tickets
+        #self.macroenv.tracenv.log.debug('query_notfilters:'+repr(k)+' '+repr(query_notfilters[ k ])+' '+repr(v) )
+        f = QueryFilter( self.macroenv )
+        f.set_col( query_likefilters[ k ] )
+        f.set_queryarg( v )
+        f.set_queryoperator_like( )
         filtered = True
         
       elif k in param_filters:
