@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Trac 0.12\n"
 "Report-Msgid-Bugs-To: trac-dev@googlegroups.com\n"
 "POT-Creation-Date: 2007-07-15 21:01+0200\n"
-"PO-Revision-Date: 2010-09-06 18:54+0300\n"
+"PO-Revision-Date: 2010-10-03 16:24+0300\n"
 "Last-Translator: Dmitri Bogomolov <4glitch@gmail.com>\n"
 "Language-Team: ru_RU <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
@@ -1143,7 +1143,7 @@ msgstr "Действие:"
 msgid ""
 "Grant permission for an action to a subject, which can be either a user\n"
 "          or a group."
-msgstr "Дать право на заданное действе субъекту: пользователю или группе."
+msgstr "Дать право на заданное действие субъекту: пользователю или группе."
 
 #: trac/admin/templates/admin_perms.html:46
 msgid "Add Subject to Group:"
@@ -1473,7 +1473,7 @@ msgid ""
 "In your time zone %(tz)s, this would be displayed as\n"
 "            [1:%(formatted)s]."
 msgstr ""
-"В вашей временной зоне %(tz)s, это будет выглядеть как\n"
+"В вашем часовом поясе %(tz)s, это будет выглядеть как\n"
 "        [1:%(formatted)s]."
 
 #: trac/prefs/templates/prefs_datetime.html:40
@@ -1482,7 +1482,7 @@ msgid ""
 "In the default time zone, this would be displayed as\n"
 "            [1:%(formatted)s]."
 msgstr ""
-"В временной зоне по умолчанию это будет выглядеть как\n"
+"В часовом поясе по умолчанию это будет выглядеть как\n"
 "            [1:%(formatted)s]."
 
 #: trac/prefs/templates/prefs_datetime.html:47
@@ -1557,7 +1557,7 @@ msgid ""
 "      server."
 msgstr ""
 "Выбор языка приведет к отображению всего текста,\n"
-"      представленного на этом сайте на этом языке, а не на языке\n"
+"      представленного на этом сайте, на этом языке, а не на языке\n"
 "      сервера."
 
 #: trac/prefs/templates/prefs_language.html:25
@@ -1650,7 +1650,7 @@ msgid ""
 "        systems, and a number of convenient ways to stay on top of events"
 "\n"
 "        and changes within a project."
-msgstr "Trac это web-приложение для управления проектами и отслеживания ошибок (прецедентов), направленная на простоту использования и легкость работы. Система предоставляет встроенную Вики, интерфейс к хранилищу системы контроля версий и множество удобных методов контролировать события и изменения в проекте."
+msgstr "Trac это web-приложение для управления проектами и отслеживания ошибок (прецедентов), направленная на простоту использования и легкость работы. Система предоставляет встроенную wiki, интерфейс к хранилищу системы контроля версий и множество удобных методов контролировать события и изменения в проекте."
 
 #: trac/templates/about.html:36
 msgid ""
@@ -1827,7 +1827,7 @@ msgstr ""
 "[1:[2:]\n"
 "                Показать]\n"
 "        [3:[4:]\n"
-"                строчки вокруг каждого изменения]"
+"                строк вокруг каждого изменения]"
 
 #: trac/templates/diff_options.html:28
 msgid "Show the changes in full context"
@@ -1948,7 +1948,7 @@ msgstr "Удалено"
 #: trac/versioncontrol/templates/changeset.html:204
 #: trac/versioncontrol/templates/revisionlog.html:79 trac/wiki/admin.py:200
 msgid "Modified"
-msgstr "Изменено"
+msgstr "Изменен"
 
 #: trac/templates/error.html:10 trac/templates/index.html:18
 #: trac/web/main.py:526
@@ -3296,7 +3296,7 @@ msgstr "Дата не установлена"
 #: trac/ticket/templates/milestone_view.html:51
 #, python-format
 msgid "%(stat_title)s by"
-msgstr "%(stat_title)s от"
+msgstr "%(stat_title)s по"
 
 #: trac/ticket/templates/milestone_view.html:65
 msgid "(none)"
@@ -3557,7 +3557,7 @@ msgstr "Смотреть %(realm)s"
 
 #: trac/ticket/templates/roadmap.html:21
 msgid "Show completed milestones"
-msgstr "Показать выполненные этапы"
+msgstr "Показать завершенные этапы"
 
 #: trac/ticket/templates/roadmap.html:26
 msgid "Hide milestones with no due date"
@@ -4544,7 +4544,7 @@ msgid ""
 "              [2:\\[%(old_rev)s:%(new_rev)s\\]] in %(reponame)s"
 msgstr ""
 "Изменения в [1:%(new_path)s]\n"
-"          [2:\\[%(old_rev)s:%(new_rev)s\\]] в %(reponame)s"
+"          [2:\\[%(old_rev)s:%(new_rev)s\\]] из %(reponame)s"
 
 #: trac/versioncontrol/templates/changeset.html:43
 #, python-format
@@ -4764,7 +4764,7 @@ msgstr "Выберите базу и цель для вычисления раз
 
 #: trac/versioncontrol/templates/diff_form.html:30
 msgid "From:"
-msgstr "От:"
+msgstr "Между"
 
 #: trac/versioncontrol/templates/diff_form.html:34
 #: trac/versioncontrol/templates/diff_form.html:44
@@ -4773,7 +4773,7 @@ msgstr "в правке:"
 
 #: trac/versioncontrol/templates/diff_form.html:40
 msgid "To:"
-msgstr "До:"
+msgstr "и"
 
 #: trac/versioncontrol/templates/diff_form.html:50
 msgid ""
@@ -4785,7 +4785,7 @@ msgid ""
 msgstr ""
 "Для каждого пути вы можете набрать его первые символы\n"
 "              и выбрать из открывшегося списка\n"
-"              существующих файлов и каталогов при помощи мышки\n"
+"              существующих файлов и каталогов при помощи мыши\n"
 "              или стрелок и клавиши Tab."
 
 #: trac/versioncontrol/templates/diff_form.html:62
@@ -4909,7 +4909,7 @@ msgstr "Показывать комментарии целиком"
 
 #: trac/versioncontrol/templates/revisionlog.html:80
 msgid "Copied or renamed"
-msgstr "Копировано или переименовано"
+msgstr "Cкопировано или переименовано"
 
 #: trac/versioncontrol/templates/revisionlog.html:88
 #: trac/versioncontrol/templates/revisionlog.html:182
@@ -4941,7 +4941,7 @@ msgstr "Правки не найдены"
 #: trac/versioncontrol/templates/revisionlog.html:120
 #, python-format
 msgid "copied from [1:%(path)s]:"
-msgstr "скопировано из [1:%(path)s]:"
+msgstr "скопирован из [1:%(path)s]:"
 
 #: trac/versioncontrol/templates/revisionlog.html:126
 #, python-format
@@ -4965,7 +4965,7 @@ msgstr "Переместиться к правке %(rev)s"
 #: trac/versioncontrol/templates/revisionlog.html:146
 #, python-format
 msgid "View removal changeset [%(rev)s]"
-msgstr "Смотреть очищающий набо изменений [%(rev)s]"
+msgstr "Смотреть очищающий набор изменений [%(rev)s]"
 
 #: trac/versioncontrol/templates/revisionlog.html:148
 #, python-format
@@ -5043,7 +5043,7 @@ msgstr ""
 
 #: trac/versioncontrol/web_ui/browser.py:469
 msgid "Revision Log"
-msgstr "Журнал изменений"
+msgstr "Журнал правок"
 
 #: trac/versioncontrol/web_ui/browser.py:475
 msgid "Repository URL"
@@ -5528,12 +5528,12 @@ msgstr ""
 #: trac/wiki/web_ui.py:200
 #, python-format
 msgid "The Wiki page field '%(field)s' is invalid: %(message)s"
-msgstr "Недопустимое поле '%(field)s' Вики-страницы: %(message)s"
+msgstr "Недопустимое поле '%(field)s' страницы wiki: %(message)s"
 
 #: trac/wiki/web_ui.py:204
 #, python-format
 msgid "Invalid Wiki page: %(message)s"
-msgstr "Ошибка на Вики-странице: %(message)s"
+msgstr "Ошибка на странице wiki: %(message)s"
 
 #. TRANSLATOR: wiki page
 #: trac/wiki/web_ui.py:231
@@ -5639,7 +5639,7 @@ msgstr "История изменений"
 
 #: trac/wiki/web_ui.py:683
 msgid "Wiki changes"
-msgstr "Изменения в Вики"
+msgstr "Изменения в wiki"
 
 #: trac/wiki/web_ui.py:712
 #, python-format
