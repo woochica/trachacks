@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Trac 0.12\n"
 "Report-Msgid-Bugs-To: trac-dev@googlegroups.com\n"
 "POT-Creation-Date: 2007-07-15 21:01+0200\n"
-"PO-Revision-Date: 2010-10-03 16:24+0300\n"
+"PO-Revision-Date: 2010-10-04 00:07+0300\n"
 "Last-Translator: Dmitri Bogomolov <4glitch@gmail.com>\n"
 "Language-Team: ru_RU <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
@@ -5486,7 +5486,7 @@ msgstr "Псевдонимы:"
 
 #: trac/wiki/macros.py:583
 msgid "Sorry, no documentation found"
-msgstr "Извените, документация не найдена"
+msgstr "Извините, документация не найдена"
 
 #: trac/wiki/macros.py:648
 msgid "MIME Types"
