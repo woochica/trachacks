@@ -122,11 +122,13 @@ a, :link, :visited {
 	-moz-border-radius: 0 0 10px 10px;		/* Gecko based */
 	-webkit-border-radius: 0 0 10px 10px;		/* Webkit based */
 		
-	background: #FF7E00;
 	text-align: center;
 	color: white;
 	padding: 5px;
-	background: black url(bg_footer.png) repeat-x scroll left bottom;
+	background-color: #FF7E00;
+	background-image: url(bg_footer.png);
+	background-position: left bottom;
+	background-repeat: repeat-x;
 }
 
 .custom-nav {
