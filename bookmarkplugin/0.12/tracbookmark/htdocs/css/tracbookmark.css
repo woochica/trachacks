@@ -1,0 +1,38 @@
+#bookmark_menu {
+    position: absolute;
+    width: 10em;
+    left: 0;
+    top: -1em;
+    border-width: 0 !important;
+    z-index: 100;
+}
+#bookmark_menu li {
+    display: none;
+    text-align: left;
+    width: 100%;
+}
+
+#bookmark_menu li:first-child {
+    display: inline-block;
+    border-width: 0;
+}
+
+#bookmark_menu li a {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 0 .2em !important;
+}
+
+#bookmark_placeholder {
+    display: inline-block;
+    width: 10em;
+    position: relative;
+}
+
+#bookmark_this {
+    border-width: 0;
+}
+#bookmark_this img {
+    vertical-align: middle;
+}

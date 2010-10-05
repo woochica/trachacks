@@ -1,0 +1,20 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="layout.html"/>
+  <head>
+    <title>Bookmarks</title>
+  </head>
+  <body>
+    <h1>Your bookmarks</h1>
+    <div style="margin-bottom: 3em;">
+    <ul>
+      <py:for each="bookmark in bookmarks">
+        <li>
+            <a href="${bookmark}">${bookmark}</a>
+            (<a href="/bookmark/delete_in_page${bookmark}">delete</a>)
+        </li>
+      </py:for>
+    </ul>
+    </div>
+  </body>
+</html>
