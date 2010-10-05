@@ -170,6 +170,11 @@ class EmailDistributor(Component):
         preferences panel.
         """)
 
+    set_message_id = BoolOption('announcer', 'set_message_id', 'true',
+        """Disable if you would prefer to let the email server handle
+        message-id generation.
+        """)
+
     rcpt_allow_regexp = Option('announcer', 'rcpt_allow_regexp', '',
         """A whitelist pattern to match any address to before adding to
         recipients list.
@@ -591,11 +596,6 @@ class SmtpEmailSender(Component):
 
     use_tls = BoolOption('smtp', 'use_tls', 'false',
         """Use SSL/TLS to send notifications over SMTP.""")
-
-    set_message_id = BoolOption('announcer', 'set_message_id', 'true',
-        """Disable if you would prefer to let the email server handle
-        message-id generation.
-        """)
 
     use_ssl = BoolOption('smtp', 'use_ssl', 'false',
         """Use ssl for smtp connection.""")
