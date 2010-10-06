@@ -28,7 +28,7 @@ class ReposReadMePlugin(Component):
         if not (template == 'browser.html' and data.get('dir')):
             # Only interested if browsing directories
             return stream
-        repos = self.env.get_repository()
+        repos = data.get('repos') or self.env.get_repository()
         rev = req.args.get('rev', None)
         initial_space = False
         for entry in data['dir']['entries']:
