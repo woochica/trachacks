@@ -10,8 +10,7 @@
     <ul>
       <py:for each="bookmark in bookmarks">
         <li>
-            <a href="${bookmark}">${bookmark}</a>
-            (<a href="/bookmark/delete_in_page${bookmark}">delete</a>)
+            <a href="${bookmark[1]}">${bookmark[0]}</a> (<a href="${bookmark[2]}">delete</a>)
         </li>
       </py:for>
     </ul>

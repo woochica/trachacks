@@ -119,7 +119,7 @@ class BookmarkSystem(Component):
 
                 if action == 'delete_in_page':
                     add_notice(req, 'Bookmark is deleted.')
-                    req.redirect('/bookmark')
+                    req.redirect(req.href.bookmark())
 
                 if self._is_ajax(req):
                     content = "&".join((req.href.chrome('bookmark/' + self.image_map['off']),
@@ -132,16 +132,18 @@ class BookmarkSystem(Component):
 
                 req.redirect(resource)
 
+        base_path = req.base_path
+
         # listing bookmarks
         if self._is_ajax(req):
             menu = tag.ul('', id='bookmark_menu', title='')
 
-            anc = tag.a("Bookmarks", href="/bookmark")
+            anc = tag.a("Bookmarks", href=req.href.bookmark())
             menu.append(tag.li(anc))
 
             for bookmark in self.get_bookmarks(req):
                 resource = bookmark[0]
-                anc = tag.a(resource, href=resource)
+                anc = tag.a(resource, href=base_path + resource)
                 menu.append(tag.li(anc))
 
             content = "%s" % menu
@@ -152,7 +154,9 @@ class BookmarkSystem(Component):
 
         bookmarks = []
         for bookmark in self.get_bookmarks(req):
-            bookmarks.append(bookmark[0])
+            bookmarks.append([bookmark[0],
+                    base_path + bookmark[0],
+                    req.href.bookmark('delete_in_page', bookmark[0])])
 
         return 'list.html', { 'bookmarks': bookmarks }, None
 
@@ -215,13 +219,14 @@ class BookmarkSystem(Component):
 
         menu = tag.ul('', id='bookmark_menu', title='')
 
-        anc = tag.a("Bookmarks", href="/bookmark")
+        anc = tag.a("Bookmarks", href=req.href.bookmark())
         menu.append(tag.li(anc))
 
 
         for bookmark in self.get_bookmarks(req):
             resource = bookmark[0]
-            anc = tag.a(resource, href=resource)
+            base_path = req.base_path
+            anc = tag.a(resource, href=base_path + resource)
             menu.append(tag.li(anc))
 
         placeholder = tag.span(menu, id='bookmark_placeholder')
