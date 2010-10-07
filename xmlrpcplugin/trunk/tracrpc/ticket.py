@@ -58,7 +58,13 @@ class TicketRPC(Component):
 
     # Exported methods
     def query(self, req, qstr='status!=closed'):
-        """ Perform a ticket query, returning a list of ticket ID's. """
+        """
+        Perform a ticket query, returning a list of ticket ID's.
+        All queries will use stored settings for maximum number of results per
+        page and paging options. Use `max=n` to define number of results to
+        receive, and use `page=n` to page through larger result sets. Using
+        `max=0` will turn off paging and return all results.
+        """
         q = query.Query.from_string(self.env, qstr)
         ticket_realm = Resource('ticket')
         out = []
