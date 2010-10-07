@@ -100,6 +100,14 @@ class RpcXmlTestCase(TracRpcTestCase):
         self.assertEquals(e.faultString,
                 'Wiki page "Test" does not exist at version 10')
 
+    def test_xml_encoding_special_characters(self):
+        tid1 = self.admin.ticket.create(
+                                'One & Two < Four', 'Desc & ription', {})
+        ticket = self.admin.ticket.get(tid1)
+        self.assertEquals('One & Two < Four', ticket[3]['summary'])
+        self.assertEquals('Desc & ription', ticket[3]['description'])
+        self.admin.ticket.delete(tid1)
+
 def test_suite():
     return unittest.makeSuite(RpcXmlTestCase)
 
