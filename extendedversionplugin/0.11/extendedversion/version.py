@@ -93,7 +93,7 @@ class VisibleVersion(Component):
         if not decision:
             self.env.log.debug('ExtendedVersionTracPlugin denied %s '
                                'access to %s. User needs %s' %
-                              (username, resource, legacy_action))
+                              (username, resource, action))
         return decision
 
     # INavigationContributor methods
