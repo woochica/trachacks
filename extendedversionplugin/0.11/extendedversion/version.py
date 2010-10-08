@@ -48,6 +48,17 @@ def milestone_stats_data(env, req, stat, name, grouped_by='component',
                                for interval in stat.intervals]}
 
 
+def version_interval_hrefs(env, req, stat, milestones):
+    has_query = env[QueryModule] is not None
+    def query_href(extra_args):
+        if not has_query:
+            return None
+        args = {'milestone': milestones, 'group': 'milestone'}
+        args.update(extra_args)
+        return req.href.query(args)
+    return [query_href(interval['qry_args']) for interval in stat.intervals]
+
+
 class VisibleVersion(Component):
     implements(ILegacyAttachmentPolicyDelegate, INavigationContributor, IPermissionRequestor,
             IRequestHandler, IWikiSyntaxProvider)
@@ -302,6 +313,8 @@ class VisibleVersion(Component):
             milestone_stats.append(milestone_stats_data(self.env, req, stat, milestone.name))
 
         stats = get_ticket_stats(self.version_stats_provider, tickets)
+	interval_hrefs = version_interval_hrefs(self.env, req, stats,
+		[ milestone.name for milestone in milestones ])
 
         resource = Resource('version', version.name)
         context = Context.from_request(req, resource)
@@ -313,6 +326,7 @@ class VisibleVersion(Component):
             'version': version,
             'is_released': version.time and version.time.date() < date.today(),
             'stats': stats,
+	    'interval_hrefs': interval_hrefs,
             'attachments': AttachmentModule(self.env).attachment_data(context),
             'milestones': milestones,
             'milestone_stats': milestone_stats,
