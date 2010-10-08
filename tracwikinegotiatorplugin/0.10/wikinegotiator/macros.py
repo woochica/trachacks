@@ -3,7 +3,7 @@ import os, re
 from trac import __version__ as version
 from trac.core import *
 from trac.config import Option, ListOption
-from trac.wiki import WikiSystem, html
+from trac.wiki import WikiSystem
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
 
