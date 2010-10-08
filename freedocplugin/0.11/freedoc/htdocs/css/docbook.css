@@ -180,10 +180,9 @@ BLOCKQUOTE.NOTE {
 }
 
 BLOCKQUOTE.TIP {
-	color: #004F00;
 	background: #d8ecd6;
 	border: 1px solid green;
-	padding: 0.2em 2em;
+	padding: 0.4em 0.4em;
 	width: 85%;
 }
 
