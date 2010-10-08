@@ -125,11 +125,11 @@ class DownloadsApi(Component):
 
         # Replace field IDs with apropriate objects.
         for download in downloads:
-            download['architecture'] = self.get_architecture(context.cursor,
+            download['architecture'] = self.get_architecture(context,
               download['architecture'])
-            download['platform'] = self.get_platform(context.cursor,
+            download['platform'] = self.get_platform(context,
               download['platform'])
-            download['type'] = self.get_type(context.cursor, download['type'])
+            download['type'] = self.get_type(context, download['type'])
         return downloads
 
     def get_new_downloads(self, context, start, stop, order_by = 'time',
@@ -345,7 +345,7 @@ class DownloadsApi(Component):
         # Perform mode actions
         self._do_actions(context, modes)
 
-        # Fill up HDF structure and return template
+        # Fill up the template data.
         self.data['authname'] = context.req.authname
         self.data['time'] = format_datetime(datetime.now(utc))
         self.data['realm'] = context.resource.realm
@@ -507,6 +507,7 @@ class DownloadsApi(Component):
                 self.data['description'] = self.get_description(context)
                 self.data['downloads'] = self.get_downloads(context, order,
                   desc)
+                self.log.debug(self.data['downloads'])
                 self.data['visible_fields'] = [visible_field for visible_field
                   in self.visible_fields]
 

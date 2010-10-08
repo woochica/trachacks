@@ -99,11 +99,11 @@ class DownloadsApi(Component):
 
           # Replace field IDs with apropriate objects.
         for download in downloads:
-            download['architecture'] = self.get_architecture(context.cursor,
+            download['architecture'] = self.get_architecture(context,
               download['architecture'])
-            download['platform'] = self.get_platform(context.cursor,
+            download['platform'] = self.get_platform(context,
               download['platform'])
-            download['type'] = self.get_type(context.cursor, download['type'])
+            download['type'] = self.get_type(context, download['type'])
         return downloads
 
     def get_new_downloads(self, context, start, stop, order_by = 'time',

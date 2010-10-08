@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import sets
+# Deprecated as for Python 2.6.
+try:
+    import sets
+except:
+    pass
 
 from tracdownloads.api import *
 from trac.core import *
