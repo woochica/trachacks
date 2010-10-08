@@ -45,7 +45,8 @@
       <div py:if="milestones">
         <h2>Milestones</h2>
         <table class="milestones" style="width: 100%">
-          <tr py:for="idx, milestone in enumerate(milestones)" class="milestone">
+        <py:for each="idx, milestone in enumerate(milestones)">
+          <tr class="milestone">
             <td class="info">
               <h2><a href="${href.milestone(milestone.name)}">
                 <em>${milestone.name}</em>
@@ -71,7 +72,13 @@
             <td py:with="mstats = milestone_stats[idx]" class="info">
               <py:if test="mstats.stats.count">${progress_bar(mstats.stats, mstats.interval_hrefs, stats_href=mstats.stats_href)}</py:if>
             </td>
+          </tr> 
+          <tr py:if="show_milestone_description"> 
+            <td class="description" colspan="2" xml:space="preserve"> 
+              ${wiki_to_html(context(milestone.resource), milestone.description)} 
+            </td> 
           </tr>
+        </py:for>
         </table>
       </div>
       ${list_of_attachments(attachments, compact=True)}

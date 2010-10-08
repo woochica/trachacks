@@ -11,7 +11,7 @@ from datetime import date
 from genshi.builder import tag
 
 from trac.attachment import AttachmentModule
-from trac.config import ExtensionOption, Option
+from trac.config import BoolOption, ExtensionOption, Option
 from trac.core import *
 from trac.mimeview.api import Context
 from trac.resource import Resource, ResourceNotFound
@@ -63,7 +63,10 @@ class VisibleVersion(Component):
     implements(ILegacyAttachmentPolicyDelegate, INavigationContributor, IPermissionRequestor,
             IRequestHandler, IWikiSyntaxProvider)
 
-    navigation_item = Option('extended_version', 'navigation_item', 'roadmap')
+    navigation_item = Option('extended_version', 'navigation_item', 'roadmap',
+        """The main navigation item to highlight when displaying versions.""")
+    show_milestone_description = BoolOption('extended_version', 'show_milestone_description', False,
+        """whether to display milestone descriptions on version page.""")
     version_stats_provider = ExtensionOption('extended_version', 'version_stats_provider',
                                      ITicketGroupStatsProvider,
                                      'DefaultTicketGroupStatsProvider',
@@ -313,7 +316,7 @@ class VisibleVersion(Component):
             milestone_stats.append(milestone_stats_data(self.env, req, stat, milestone.name))
 
         stats = get_ticket_stats(self.version_stats_provider, tickets)
-	interval_hrefs = version_interval_hrefs(self.env, req, stats,
+        interval_hrefs = version_interval_hrefs(self.env, req, stats,
 		[ milestone.name for milestone in milestones ])
 
         resource = Resource('version', version.name)
@@ -326,10 +329,11 @@ class VisibleVersion(Component):
             'version': version,
             'is_released': version.time and version.time.date() < date.today(),
             'stats': stats,
-	    'interval_hrefs': interval_hrefs,
+            'interval_hrefs': interval_hrefs,
             'attachments': AttachmentModule(self.env).attachment_data(context),
             'milestones': milestones,
             'milestone_stats': milestone_stats,
+            'show_milestone_description': self.show_milestone_description,
             }
 
         return 'version_view.html', data, None
