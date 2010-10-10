@@ -8,7 +8,7 @@ License: BSD
 """
 
 from genshi.filters import Transformer
-from genshi.builder import tag
+from genshi.builder import tag, Markup
 
 from trac.core import *
 from trac.mimeview.api import Mimeview
@@ -42,10 +42,22 @@ class ReposReadMePlugin(Component):
                         insert_where = Transformer(
                                     "//div[@id='content']/div[@id='help']")
                         insert_what = tag.div(
+                                    tag.h1(entry.name,
+                                        tag.a(Markup(' &para;'),
+                                              class_="anchor",
+                                              href='#'+entry.name,
+                                              title='Link to file'),
+                                        id_=entry.name
+                                    ),
+                                    tag.div(
                                         not initial_space and tag.br() or None,
                                         output['rendered'],
-                                        id="readme", class_="searchable",
-                                        title=entry.name)
+                                        class_="searchable",
+                                        style="background:#FBFBFB;border:2px solid #EEE;padding:0 1em;",
+                                        title=entry.name),
+                                    class_="readme",
+                                    style="padding-top:1em;"
+                                    )
                         stream = stream | insert_where.before(insert_what)
                         initial_space = True
             except Exception, e:
