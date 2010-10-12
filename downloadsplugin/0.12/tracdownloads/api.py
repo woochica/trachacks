@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
+# Standard imports.
 import os, shutil, re, mimetypes, unicodedata
 from datetime import *
 
+# Trac imports
 from trac.core import *
 from trac.config import Option, IntOption, BoolOption, ListOption, PathOption
 from trac.resource import Resource
@@ -36,7 +38,7 @@ class DownloadsApi(Component):
     # Download change listeners.
     change_listeners = ExtensionPoint(IDownloadChangeListener)
 
-    # Configuration options.
+    # Configuration options.
     title = Option('downloads', 'title', 'Downloads',
       doc = 'Main navigation bar button title.')
     path = PathOption('downloads', 'path', '../downloads',
@@ -93,11 +95,11 @@ class DownloadsApi(Component):
         return items
 
     def get_versions(self, context, order_by = 'name', desc = False):
-        # Get versions from table.
+        # Get versions from table.
         versions = self._get_items(context, 'version', ('name', 'description'),
           order_by = order_by, desc = desc)
 
-        # Add IDs to versions according to selected sorting.
+        # Add IDs to versions according to selected sorting.
         id = 0
         for version in versions:
             id = id + 1
@@ -105,7 +107,7 @@ class DownloadsApi(Component):
         return versions
 
     def get_components(self, context, order_by = '', desc = False):
-        # Get components from table.
+        # Get components from table.
         components = self._get_items(context, 'component', ('name', 
           'description'), order_by = order_by, desc = desc)
 
@@ -367,7 +369,7 @@ class DownloadsApi(Component):
     # Internal functions.
 
     def _get_modes(self, context):
-        # Get request arguments.
+        # Get request arguments.
         page = context.req.args.get('page')
         action = context.req.args.get('action')
         self.log.debug('context: %s page: %s action: %s' % (context, page,
@@ -492,6 +494,8 @@ class DownloadsApi(Component):
             elif action == 'downloads-list':
                 context.req.perm.require('DOWNLOADS_VIEW')
 
+                self.log.debug('visible_fields: %s' % (self.visible_fields,))
+
                 # Get form values.
                 order = context.req.args.get('order') or self.download_sort
                 if context.req.args.has_key('desc'):
@@ -503,11 +507,11 @@ class DownloadsApi(Component):
                 self.data['desc'] = desc
                 self.data['has_tags'] = self.env.is_component_enabled(
                   'tractags.api.TagEngine')
+                self.data['visible_fields'] = self.visible_fields
                 self.data['title'] = self.title
                 self.data['description'] = self.get_description(context)
                 self.data['downloads'] = self.get_downloads(context, order,
                   desc)
-                self.log.debug(self.data['downloads'])
                 self.data['visible_fields'] = [visible_field for visible_field
                   in self.visible_fields]
 

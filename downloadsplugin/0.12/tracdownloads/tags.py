@@ -6,12 +6,17 @@ try:
 except:
     pass
 
-from tracdownloads.api import *
+# Trac imports.
 from trac.core import *
 from trac.resource import Resource
 from trac.mimeview import Context
 
+# TagsPlugin imports.
 from tractags.api import DefaultTagProvider, TagSystem
+
+# Local imports.
+from tracdownloads.api import *
+from tracdownloads.core import _
 
 class DownloadsTagProvider(DefaultTagProvider):
     """
@@ -23,7 +28,7 @@ class DownloadsTagProvider(DefaultTagProvider):
 
     def check_permission(self, perm, operation):
         # Permission table for download tags.
-        permissions = {'view' : 'DOWNLOADS_VIEW', 'modify' : 'DOWNLOADS_ADMIN'}
+        permissions = {'view' : 'DOWNLOADS_VIEW', 'modify' : 'DOWNLOADS_ADD'}
 
         # First check permissions in default provider then for downloads.
         return super(DownloadsTagProvider, self).check_permission(perm,
@@ -37,6 +42,13 @@ class DownloadsTags(Component):
     implements(IDownloadChangeListener)
 
     realm = 'downloads'
+
+    # Configuration options.
+
+    additional_tags = ListOption('downloads', 'additional_tags',
+      'author,component,version,architecture,platform,type', doc = _(
+      "Additional tags that will be created for submitted downloads. Possible "
+      "values are: author, component, version, architecture, platform, type."))
 
     # IDownloadChangeListener methods.
 
@@ -106,16 +118,19 @@ class DownloadsTags(Component):
         self._resolve_ids(download)
 
         # Prepare tag names.
-        tags = [download['author']]
-        if download['component']:
+        self.log.debug("additional_tags: %s" % (self.additional_tags,))
+        tags = []
+        if 'author' in self.additional_tags and download['author']:
+            tags += [download['author']]
+        if 'component' in self.additional_tags and download['component']:
             tags += [download['component']]
-        if download['version']:
+        if 'version' in self.additional_tags and download['version']:
             tags += [download['version']]
-        if download['architecture']:
+        if 'architecture' in self.additional_tags and download['architecture']:
             tags += [download['architecture']]
-        if download['platform']:
+        if 'platform' in self.additional_tags and download['platform']:
             tags += [download['platform']]
-        if download['type']:
+        if 'type' in self.additional_tags and download['type']:
             tags += [download['type']]
         if download['tags']:
             tags += download['tags'].split()

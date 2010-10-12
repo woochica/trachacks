@@ -1,19 +1,28 @@
 # -*- coding: utf-8 -*-
 
+# Standard imports.
 import re
 
+# Trac imports
 from trac.core import *
-from trac.mimeview import Context
-from trac.resource import IResourceManager
 from trac.config import Option
+from trac.mimeview import Context
 from trac.util.html import html
 from trac.util.text import pretty_size
+from trac.util.translation import domain_functions
 
-from trac.web.chrome import INavigationContributor, ITemplateProvider
+# Trac interfaces.
 from trac.web.main import IRequestHandler
+from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.resource import IResourceManager
 from trac.perm import IPermissionRequestor
 
+# Local imports.
 from tracdownloads.api import *
+
+# Bring in dedicated Trac plugin i18n helper.
+add_domain, _, tag_ = domain_functions('tracdownloads', ('add_domain', '_',
+  'tag_'))
 
 class DownloadsCore(Component):
     """

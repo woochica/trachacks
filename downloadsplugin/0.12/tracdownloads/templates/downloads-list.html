@@ -54,17 +54,17 @@
             <input type="file" id="file" name="file" /><br/>
           </div>
 
-          <div class="field">
+          <div py:if="'description' in downloads.visible_fields" class="field">
             <label for="description">Description:</label><br/>
             <input type="text" id="description" name="description" value=""/><br/>
           </div>
 
-          <div py:if="downloads.has_tags" class="field">
+          <div py:if="('tags' in downloads.visible_fields) and downloads.has_tags" class="field">
             <label for="tags">Additional Tags:</label><br/>
             <input type="text" id="tags" name="tags" value=""/><br/>
           </div>
 
-          <div class="component">
+          <div py:if="'component' in downloads.visible_fields" class="component">
             <label for="component">Component:</label><br/>
             <select id="component" name="component">
               <py:for each="component in downloads.components">
@@ -73,7 +73,7 @@
             </select><br/>
           </div>
 
-          <div class="version">
+          <div py:if="'version' in downloads.visible_fields" class="version">
             <label for="version">Version:</label><br/>
             <select id="version" name="version">
               <py:for each="version in downloads.versions">
@@ -82,7 +82,7 @@
             </select><br/>
           </div>
 
-          <div class="architecture">
+          <div py:if="'architecture' in downloads.visible_fields" class="architecture">
             <label for="architecture">Architecture:</label><br/>
             <select id="architecture" name="architecture">
               <py:for each="architecture in downloads.architectures">
@@ -91,7 +91,7 @@
             </select><br/>
           </div>
 
-          <div class="platform">
+          <div py:if="'platform' in downloads.visible_fields" class="platform">
             <label for="platform">Platform:</label><br/>
             <select id="platform" name="platform">
               <py:for each="platform in downloads.platforms">
@@ -100,7 +100,7 @@
             </select><br/>
           </div>
 
-          <div class="type">
+          <div py:if="'type' in downloads.visible_fields" class="type">
             <label for="type">Type:</label><br/>
             <select id="type" name="type">
               <py:for each="type in downloads.types">
