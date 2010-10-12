@@ -9,7 +9,7 @@ function initTags() {
     var el = document.getElementById('keywords');
     var currentTags = el.value.split(/\s+/);
     for(i in currentTags) {
-        link = document.getElementById('add_' + currentTags[i]);
+        var link = document.getElementById('add_' + currentTags[i]);
         if(link)
             link.className = "sel";
     }
