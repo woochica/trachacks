@@ -40,11 +40,11 @@ class TracKeywordsComponent(core.Component):
 
     To use it, enable the component in trac's configuration, then
     add the line:
-        <xi:include "keywords.html" />
+        <?cs include "keywords.cs" ?>
     which will insert a field set.
 
     The recommended place to put this is right after
-    the "properties" field set.
+    the "Change Properties" field set.
 
     The list of keywords can be configured in a [keywords] section in the
     trac configuration file.  Syntax is:
@@ -73,23 +73,17 @@ class TracKeywordsComponent(core.Component):
 
         return res
 
-    ### web.api.IRequestFilter methods
+    ### IRequestFilter methods
     def pre_process_request(self, req, handler):
         # don't do anything
         return handler
 
-    # changed to Genshi signature
-    def post_process_request(self, req, template, data, content_type):
-        data['keywords'] = self._get_keywords()
-        return (template, data, content_type)
+    def post_process_request(self, req, template, content_type):
+        req.hdf['keywords'] = self._get_keywords()
+        return (template, content_type)
 
     ### ITemplateProvider methods
     def get_htdocs_dirs(self):
-        # since we have nothing in htdocs, setuptools can't package the
-        # directory
-        return []
-
-        # if we ever do have htdocs, return this instead
         from pkg_resources import resource_filename
         return [('trackeywords', resource_filename(__name__, 'htdocs'))]
             
