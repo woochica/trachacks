@@ -1,5 +1,10 @@
 jQuery(document).ready(function($) {
     var methodsHTML5 = {
+        setup: function() {
+            new FileReader();
+            var xhr = new XMLHttpRequest();
+            return xhr.upload && xhr.sendAsBinary ? true : false;
+        },
         createXMLHttpRequest: function(options) {
             var uploadProgress = options.uploadProgress || emptyFunction;
             var success = options.success || emptyFunction;
@@ -33,6 +38,15 @@ jQuery(document).ready(function($) {
         }
     };
     var methodsGears = {
+        setup: function() {
+            var xhr = google.gears.factory.create('beta.httprequest');
+            if (!xhr.upload) {
+                return false;
+            }
+            this.gearsDesktop = google.gears.factory.create('beta.desktop');
+            return true;
+        },
+        gearsDesktop: null,
         createXMLHttpRequest: function(options) {
             var uploadProgress = options.uploadProgress || emptyFunction;
             var success = options.success || emptyFunction;
@@ -62,12 +76,11 @@ jQuery(document).ready(function($) {
             return xhr;
         },
         getDataTransfer: function(event) {
-            return gearsDesktop.getDragData(event.originalEvent, 'application/x-gears-files');
+            return this.gearsDesktop.getDragData(event.originalEvent, 'application/x-gears-files');
         }
     };
 
     var urls = null;
-    var gearsDesktop = null;
     var methods = null;
     if (!initialize()) {
         return;
@@ -139,10 +152,10 @@ jQuery(document).ready(function($) {
             queueFiles.push(files[i]);
         }
         countFiles += length;
-        event.stopPropagation();
         if (notice === null) {
             startUpload();
         }
+        return false;
     }
     function startUpload() {
         var reader = null;
@@ -343,37 +356,20 @@ jQuery(document).ready(function($) {
     }
     function initialize() {
         urls = getUrls();
-        if (!urls) {
-            return false;
-        }
-
-
-        // HTML5
-        try {
-            new FileReader();
-            var xhr = new XMLHttpRequest();
-            if (!xhr.upload || !xhr.sendAsBinary) {
-                return false;
+        if (urls) {
+            var list = [ methodsHTML5, methodsGears ];
+            var length = list.length;
+            for (var i = 0; i < length; i++) {
+                try {
+                    var m = list[i];
+                    if (m.setup.call(m)) {
+                        methods = m;
+                        return true;
+                    }
+                }
+                catch (e) { }
             }
-            methods = methodsHTML5;
-            return true;
         }
-        catch (e) {
-        }
-
-        // Google Gears
-        try {
-            var xhr = google.gears.factory.create('beta.httprequest');
-            if (!xhr.upload) {
-                return false;
-            }
-            gearsDesktop = google.gears.factory.create('beta.desktop');
-            methods = methodsGears;
-            return true;
-        }
-        catch (e) {
-        }
-
         return false;   // not available
     }
     function emptyFunction() { }
