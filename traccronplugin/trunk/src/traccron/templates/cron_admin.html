@@ -20,7 +20,38 @@
 
 <form id="traccron_admin" action="" method="post">
 
-    TODO
+    <fieldset>
+    	<legend>ticker_enabled</legend>
+    	<input type="text" name="ticker_enabled" value="$ticker_enabled"/>    	
+    </fieldset>
+     <fieldset>
+    	<legend>ticker_interval</legend>
+    	<input type="text" name="ticker_interval" value="$ticker_interval"/>    	
+    </fieldset>
+    <fieldset>
+    	<legend>Task list</legend>
+    	<table width="100%"  border="1">
+    		<th>id</th>
+    	 	<th>description</th>
+    	 	<th>schedule</th>
+    	 	<tr py:for="task in task_list">
+    	   		<td>${task['id']}</td>
+    	   		<td>${task['description']}</td>
+    	   		<td>
+    	   			<table>
+    	   				<th>type</th>
+    	   				<th>value</th>
+    	   				<tr py:for="type in task['schedule_list'].keys()">
+    	   					<td align="right">$type</td>
+    	   					<td align="left">
+	    	   					<input type="text" id="${task['id']}.${type}" name="${task['id']}.${type}" value="${task['schedule_list'][type]}"/>
+    	   					</td>
+    	   				</tr>
+    	   			</table>
+    	   		</td>
+    	 	</tr>
+    	</table>
+    </fieldset>
     <input type="submit" name="save" value="save" accesskey="s" />
 
 </form>
