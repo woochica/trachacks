@@ -182,7 +182,16 @@ class CronConfig():
         self.env.config.set(self.TRACCRON_SECTION, self.TICKER_INTERVAL_KEY, value)
     
     def get_schedule_value(self, task, schedule_type):
+        """
+        Return the raw value of the schedule
+        """
         return  self.env.config.get(self.TRACCRON_SECTION,task.getId() + "." + schedule_type.getId(), None)
+
+    def get_schedule_value_list(self, task, schedule_type):
+        """
+        Return the list of value for the schedule type and task
+        """
+        return  self.env.config.getlist(self.TRACCRON_SECTION,task.getId() + "." + schedule_type.getId())
 
     def set_schedule_value(self, task, schedule_type, value):
         self.env.config.set(self.TRACCRON_SECTION, task.getId() + "." + schedule_type.getId(), value)
@@ -319,12 +328,11 @@ class SchedulerType():
         Test is accordingly to this scheduler and given currentTime, is time to fire the task
         """
         # read the configuration value for the task
-        schedule_value = self._get_task_schedule_value(task)
-        if  schedule_value :
+        for schedule_value in self._get_task_schedule_value_list(task):
             self.env.log.debug("schedule value for task [" + task.getId() + "] and schedule type [" + self.getId() + "] = " + schedule_value)
-        else:
-            self.env.log.debug("no scheduling schedule value for task [" + task.getId() + "] and schedule type [" + self.getId() + "]")
-        return self.compareTime(currentTime, schedule_value)
+            if self.compareTime(currentTime, schedule_value):
+                return True
+        return False
     
     def compareTime(self, currentTime, schedule_value):
          """
@@ -335,8 +343,8 @@ class SchedulerType():
          """
          raise NotImplementedError
     
-    def _get_task_schedule_value(self, task):
-        return self.cronconf.get_schedule_value(task, self)
+    def _get_task_schedule_value_list(self, task):
+        return self.cronconf.get_schedule_value_list(task, self)
     
 
 
