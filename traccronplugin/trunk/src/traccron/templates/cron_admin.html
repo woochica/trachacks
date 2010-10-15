@@ -21,10 +21,16 @@
     <fieldset>
     	<legend>ticker_enabled</legend>
     	<input type="text" name="ticker_enabled" value="$ticker_enabled"/>    	
+    	<p class="hint">
+              Possible value are True, False, On, Off,1 or 0 
+        </p>    	
     </fieldset>
      <fieldset>
     	<legend>ticker_interval</legend>
-    	<input type="text" name="ticker_interval" value="$ticker_interval"/>    	
+    	<input type="text" name="ticker_interval" value="$ticker_interval"/>
+    	<p class="hint">
+              minute(s) between each ticker wake up 
+        </p>    	
     </fieldset>
     <fieldset>
     	<legend>Task list</legend>
@@ -42,20 +48,18 @@
     	   			<td>${task['description']}</td>
     	   			<td>
 	    	   			<table class="listing" width="100%">
-	    	   				<thead>
-	    	   					<tr>
-    	   							<th width="50%">type</th>
-    	   							<th width="50%">value</th>
-    	   						</tr>
-    	   					</thead>
-    	   					<tbody>
+	    	   				
+    	   					
     	   						<tr py:for="type in task['schedule_list'].keys()">
 		    	   					<td align="right">$type</td>
     	   							<td align="left">
-			    	   					<input type="text" id="${task['id']}.${type}" name="${task['id']}.${type}" value="${task['schedule_list'][type]}"/>
+			    	   					<input type="text" id="${task['id']}.${type}" name="${task['id']}.${type}" value="${task['schedule_list'][type]['value']}"/>
+			    	   					<p class="hint">
+             								 ${task['schedule_list'][type]['hint']} 
+        								</p> 
     	   							</td>
     	   						</tr>
-    	   					</tbody>
+    	   					
     	   				</table>
     	   			</td>
     	 		</tr>

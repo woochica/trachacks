@@ -265,9 +265,9 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
                 for schedule in self.all_schedule_type:
                     value = self.cronconf.get_schedule_value(task, schedule)
                     if value :
-                        all_schedule_value[schedule.getId()] = value
+                        all_schedule_value[schedule.getId()] = {"value":value, "hint":schedule.getHint()}
                     else:
-                        all_schedule_value[schedule.getId()] = ""
+                        all_schedule_value[schedule.getId()] = {"value":"", "hint":schedule.getHint()}
                 task_data['schedule_list'] = all_schedule_value                        
                                         
                 task_list.append(task_data)
@@ -323,6 +323,11 @@ class SchedulerType():
         """
         raise NotImplementedError
     
+    def getHint(self):
+        """
+        Return a description of what it is and the format used to defined the schedule
+        """
+    
     def isTriggerTime(self, task, currentTime):
         """
         Test is accordingly to this scheduler and given currentTime, is time to fire the task
@@ -362,6 +367,10 @@ class DailyScheduler(SchedulerType):
     def getId(self):
         return "daily"
     
+    def getHint(self):
+        return "ex: 8h30 fire every day at 8h30" 
+               
+    
     def compareTime(self, currentTime, schedule_value):        
         # compare value with current
         if schedule_value:
@@ -383,6 +392,9 @@ class HourlyScheduler(SchedulerType):
     
     def getId(self):
         return "hourly"
+    
+    def getHint(self):
+        return "ex: 45 fire every hour at 0h45 then 1h45 and so on" 
     
     def compareTime(self, currentTime, schedule_value):        
         # compare value with current
@@ -406,6 +418,10 @@ class WeeklyScheduler(SchedulerType):
     def getId(self):
         return "weekly"
     
+    def getHint(self):
+        return "ex: 0@12h00 fire every monday at 12h00" 
+
+    
     def compareTime(self, currentTime, schedule_value):        
         # compare value with current
         if schedule_value:
@@ -427,6 +443,10 @@ class MonthlyScheduler(SchedulerType):
     
     def getId(self):
         return "monthly"
+    
+    def getHint(self):
+        return "ex: 15@12h00 fire every month on the 15th day of month at 12h00" 
+
     
     def compareTime(self, currentTime, schedule_value):        
         # compare value with current
