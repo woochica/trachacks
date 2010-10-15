@@ -28,26 +28,38 @@
     </fieldset>
     <fieldset>
     	<legend>Task list</legend>
-    	<table width="100%"  border="1">
-    		<th>id</th>
-    	 	<th>description</th>
-    	 	<th>schedule</th>
-    	 	<tr py:for="task in task_list">
-    	   		<td>${task['id']}</td>
-    	   		<td>${task['description']}</td>
-    	   		<td>
-    	   			<table width="100%">
-    	   				<th width="50%">type</th>
-    	   				<th width="50%">value</th>
-    	   				<tr py:for="type in task['schedule_list'].keys()">
-    	   					<td align="right">$type</td>
-    	   					<td align="left">
-	    	   					<input type="text" id="${task['id']}.${type}" name="${task['id']}.${type}" value="${task['schedule_list'][type]}"/>
-    	   					</td>
-    	   				</tr>
-    	   			</table>
-    	   		</td>
-    	 	</tr>
+    	<table class="listing" width="100%"  border="1">
+    		<thead>
+    			<tr>
+    				<th>id</th>
+    	 			<th>description</th>
+    	 			<th>schedule</th>
+    	 		</tr>
+    	 	</thead>
+    	 	<tbody>
+    	 		<tr py:for="task in task_list">
+	    	   		<td>${task['id']}</td>
+    	   			<td>${task['description']}</td>
+    	   			<td>
+	    	   			<table class="listing" width="100%">
+	    	   				<thead>
+	    	   					<tr>
+    	   							<th width="50%">type</th>
+    	   							<th width="50%">value</th>
+    	   						</tr>
+    	   					</thead>
+    	   					<tbody>
+    	   						<tr py:for="type in task['schedule_list'].keys()">
+		    	   					<td align="right">$type</td>
+    	   							<td align="left">
+			    	   					<input type="text" id="${task['id']}.${type}" name="${task['id']}.${type}" value="${task['schedule_list'][type]}"/>
+    	   							</td>
+    	   						</tr>
+    	   					</tbody>
+    	   				</table>
+    	   			</td>
+    	 		</tr>
+    	 	</tbody>
     	</table>
     </fieldset>
     <input type="submit" name="save" value="save" accesskey="s" />
