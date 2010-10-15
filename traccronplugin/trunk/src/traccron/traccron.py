@@ -328,10 +328,12 @@ class SchedulerType():
         Test is accordingly to this scheduler and given currentTime, is time to fire the task
         """
         # read the configuration value for the task
+        self.env.log.debug("looking for schedule of type " + self.getId())
         for schedule_value in self._get_task_schedule_value_list(task):
-            self.env.log.debug("schedule value for task [" + task.getId() + "] and schedule type [" + self.getId() + "] = " + schedule_value)
+            self.env.log.debug("task [" + task.getId() + "] is scheduled for " + schedule_value)
             if self.compareTime(currentTime, schedule_value):
                 return True
+        self.env.log.debug("no matching schedule found")
         return False
     
     def compareTime(self, currentTime, schedule_value):
