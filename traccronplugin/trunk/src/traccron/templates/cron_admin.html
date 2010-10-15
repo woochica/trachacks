@@ -15,8 +15,6 @@
 
 <body>
 
-<h2>Coucou</h2>
-
 
 <form id="traccron_admin" action="" method="post">
 
@@ -38,9 +36,9 @@
     	   		<td>${task['id']}</td>
     	   		<td>${task['description']}</td>
     	   		<td>
-    	   			<table>
-    	   				<th>type</th>
-    	   				<th>value</th>
+    	   			<table width="100%">
+    	   				<th width="50%">type</th>
+    	   				<th width="50%">value</th>
     	   				<tr py:for="type in task['schedule_list'].keys()">
     	   					<td align="right">$type</td>
     	   					<td align="left">

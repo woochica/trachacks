@@ -8,6 +8,9 @@ Created on 12 oct. 2010
 from trac.core import *
 from trac.admin import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider
+from trac.web.chrome import add_notice, add_warning
+from trac.util.translation import _
+from trac.util.text import exception_to_unicode
 from threading import Timer
 from time import  time, localtime
 
@@ -47,16 +50,21 @@ class Core(Component):
     
     cron_tack_list = ExtensionPoint(ICronTask)
     
-    
+
+    current_ticker = None
     
     def __init__(self,*args,**kwargs):
         """
 	    Intercept the instanciation to start the ticker
         """        
         Component.__init__(self, *args, **kwargs)
-        self.ticker = None
         self.cronconf = CronConfig(self.env)
-        self.supported_schedule_type = [DailyScheduler(self.getCronConf())]
+        self.supported_schedule_type = [
+            DailyScheduler(self.env, self.getCronConf()),
+            HourlyScheduler(self.env, self.getCronConf()),
+            WeeklyScheduler(self.env, self.getCronConf()),
+            MonthlyScheduler(self.env, self.getCronConf())
+            ]
         self.webUi = WebUi(self)        
         self.apply_config()        
 
@@ -66,12 +74,19 @@ class Core(Component):
         Read configuration and apply it
         """
         # stop existing ticker if any
-        if self.ticker is not None:
-            self.ticker.cancel(wait=wait)
+        self.env.log.debug("applying config")
+        if Core.current_ticker is not None:
+            self.env.log.debug("stop existing ticker")
+            Core.current_ticker.cancel(wait=wait)
 
-        if self.getCronConf().get_ticker_enabled():            
-        	self.ticker = Ticker(self.env,self.getCronConf().get_ticker_interval(), self.check_task)
-
+        if self.getCronConf().get_ticker_enabled():
+                self.env.log.debug("ticker is enabled")
+                # try to execute task a first time
+                # because we don't want to wait for interval to elapse
+                self.check_task()
+        	Core.current_ticker = Ticker(self.env,self.getCronConf().get_ticker_interval(), self.check_task)
+        else:
+            self.env.log.debug("ticker is disabled")
             
 
     def getCronConf(self):
@@ -97,13 +112,24 @@ class Core(Component):
         Check if any task need to be executed. This method is called by the Ticker.
         """
         # store current time
-        currentTime = localtime(time())        
+        currentTime = localtime(time())
+        self.env.log.debug("check existing task");
         for task in self.cron_tack_list:
-            # test current time with task planing            
+            # test current time with task planing
+            self.env.log.debug("check task " + task.getId())
             for schedule in self.supported_schedule_type:
                 # run task if needed
                 if schedule.isTriggerTime(task, currentTime):
-                    task.wape_up()                       
+                    self.env.log.info("executing task " + task.getId());
+                    try:
+                        task.wake_up()
+                    except Exception, e:
+                        self.env.log.error('task execution result : FAILURE %s', exception_to_unicode(e))        
+                    else:
+                        self.env.log.info("task execution result : SUCCESS")
+                    self.env.log.info("task " + task.getId() + " finished");
+                else:
+                    self.env.log.debug("nothing to do for " + task.getId());
 
         
     # IAdminPanel interface
@@ -156,7 +182,7 @@ class CronConfig():
         self.env.config.set(self.TRACCRON_SECTION, self.TICKER_INTERVAL_KEY, value)
     
     def get_schedule_value(self, task, schedule_type):
-        self.env.config.get(self.TRACCRON_SECTION, task.getId() + "." + schedule_type.getId(), None)
+        return  self.env.config.get(self.TRACCRON_SECTION,task.getId() + "." + schedule_type.getId(), None)
 
     def set_schedule_value(self, task, schedule_type, value):
         self.env.config.set(self.TRACCRON_SECTION, task.getId() + "." + schedule_type.getId(), value)
@@ -208,7 +234,7 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
                     else:
                         self.cronconf.set_value(arg_name, arg_value)                  
                 
-                self.cronconf.save()
+                self._save_config(req)
                 self.core.apply_config(wait=True)
                 req.redirect(req.abs_href.admin(category, page))
         else:            
@@ -251,6 +277,25 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
 
 
     # internal method
+
+    def _save_config(self, req, notices=None):
+        """Try to save the config, and display either a success notice or a
+        failure warning.
+        """
+        try:            
+
+            self.cronconf.save()
+
+            if notices is None:
+                notices = [_('Your changes have been saved.')]
+            for notice in notices:
+                add_notice(req, notice)
+        except Exception, e:
+            self.env.log.error('Error writing to trac.ini: %s', exception_to_unicode(e))
+            add_warning(req, _('Error writing to trac.ini, make sure it is '
+                               'writable by the web server. Your changes have '
+                               'not been saved.'))
+
     
 
 class SchedulerType():
@@ -258,8 +303,10 @@ class SchedulerType():
     Define a sort of scheduling. Base class for any scheduler type implementation
     """   
     
-    def __init__(self, cronconf):
+    def __init__(self, env, cronconf):
+        self.env = env
         self.cronconf = cronconf
+
         
     def getId(self):
         """
@@ -273,6 +320,10 @@ class SchedulerType():
         """
         # read the configuration value for the task
         schedule_value = self._get_task_schedule_value(task)
+        if  schedule_value :
+            self.env.log.debug("schedule value for task [" + task.getId() + "] and schedule type [" + self.getId() + "] = " + schedule_value)
+        else:
+            self.env.log.debug("no scheduling schedule value for task [" + task.getId() + "] and schedule type [" + self.getId() + "]")
         return self.compareTime(currentTime, schedule_value)
     
     def compareTime(self, currentTime, schedule_value):
@@ -292,11 +343,11 @@ class SchedulerType():
 
 class DailyScheduler(SchedulerType):
     """
-    Scheduler that trigger a task one a day based uppon a defined time
+    Scheduler that trigger a task once a day based uppon a defined time
     """
     
-    def __init__(self, cronconf):
-        SchedulerType.__init__(self, cronconf)
+    def __init__(self, env, cronconf):
+        SchedulerType.__init__(self, env, cronconf)
     
     def getId(self):
         return "daily"
@@ -304,10 +355,80 @@ class DailyScheduler(SchedulerType):
     def compareTime(self, currentTime, schedule_value):        
         # compare value with current
         if schedule_value:
-            return schedule_value == str(currentTime.tm_hour) + str(currentTime.tm_min)
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with schedule_value " + schedule_value)
+        else:
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with NO schedule_value ")
+        if schedule_value:
+            return schedule_value == str(currentTime.tm_hour) + "h" + str(currentTime.tm_min)
         else:
             return False
          
+
+class HourlyScheduler(SchedulerType):
+    """
+    Scheduler that trigger a task once an hour at a defined time
+    """
+    def __init__(self, env, cronconf):
+        SchedulerType.__init__(self, env, cronconf)
+    
+    def getId(self):
+        return "hourly"
+    
+    def compareTime(self, currentTime, schedule_value):        
+        # compare value with current
+        if schedule_value:
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with schedule_value " + schedule_value)
+        else:
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with NO schedule_value ")
+        if schedule_value:
+            return schedule_value == str(currentTime.tm_min)
+        else:
+            return False    
+
+
+class WeeklyScheduler(SchedulerType):
+    """
+    Scheduler that trigger a task once a week at a defined day and time
+    """
+    def __init__(self, env, cronconf):
+        SchedulerType.__init__(self, env, cronconf)
+    
+    def getId(self):
+        return "weekly"
+    
+    def compareTime(self, currentTime, schedule_value):        
+        # compare value with current
+        if schedule_value:
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with schedule_value " + schedule_value)
+        else:
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with NO schedule_value ")
+        if schedule_value:
+            return schedule_value == str(currentTime.tm_wday) + "@" + str(currentTime.tm_hour) + "h" + str(currentTime.tm_min)
+        else:
+            return False    
+
+
+class MonthlyScheduler(SchedulerType):
+    """
+    Scheduler that trigger a task once a week at a defined day and time
+    """
+    def __init__(self, env, cronconf):
+        SchedulerType.__init__(self, env, cronconf)
+    
+    def getId(self):
+        return "monthly"
+    
+    def compareTime(self, currentTime, schedule_value):        
+        # compare value with current
+        if schedule_value:
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with schedule_value " + schedule_value)
+        else:
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with NO schedule_value ")
+        if schedule_value:
+            return schedule_value == str(currentTime.tm_mday) + "@" + str(currentTime.tm_hour) + "h" + str(currentTime.tm_min)
+        else:
+            return False   
+
 
 class Ticker():
     """
@@ -333,6 +454,7 @@ class Ticker():
         Create a new timer before killing existing one if required.
         wait : if True the current thread wait until running task finished. Default is False
         """
+        self.env.log.debug("create new ticker")
         if (self.timer != None):
             self.timer.cancel()
             if ( wait ):
@@ -340,8 +462,10 @@ class Ticker():
         
         self.timer = Timer(self.interval * 60 , self.wake_up)
         self.timer.start()
+        self.env.log.debug("new ticker started")
 
     def wake_up(self):
+        self.env.log.debug("ticker wake up")
         self.callback()
         self.create_new_timer()
         
@@ -361,7 +485,7 @@ class HeartBeatTask(Component,ICronTask):
     implements(ICronTask)
     
     def wake_up(self):
-        self.env.log.debug("Heart beat: boom boom")
+        self.env.log.debug("Heart beat: boom boom !!!")
     
     def getId(self):
         return "heart_beat"
