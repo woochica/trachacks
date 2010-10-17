@@ -10,8 +10,9 @@ from genshi.builder import tag as builder
 
 from trac.core import Component, implements
 from trac.resource import Resource, get_resource_url, render_resource_link
-from trac.util.compat import sorted, set
 from trac.util import embedded_numbers
+from trac.util.compat import sorted, set
+from trac.util.text import to_unicode
 from trac.web.chrome import add_stylesheet
 from trac.wiki import IWikiMacroProvider
 
@@ -119,7 +120,8 @@ class TagWikiMacros(Component):
 
             ul = builder.ul(class_='taglist')
             for resource, tags in sorted(query_result, key=lambda r: \
-                                         embedded_numbers(unicode(r[0].id))):
+                                         embedded_numbers(
+                                         to_unicode(r[0].id))):
                 tags = sorted(tags)
 
                 desc = tag_system.describe_tagged_resource(req, resource)
