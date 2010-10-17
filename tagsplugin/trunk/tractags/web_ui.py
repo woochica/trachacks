@@ -95,18 +95,18 @@ class TagRequestHandler(Component):
             data['tag_title'] = 'Showing objects matching "%s"' % query
         data['tag_query'] = query
 
-        from tractags.macros import TagCloudMacro, ListTaggedMacro
+        from tractags.macros import TagWikiMacros
+        macros = TagWikiMacros(self.env)
         if not query:
-            macro = TagCloudMacro(self.env)
+            macro = 'TagCloud'
         else:
-            macro = ListTaggedMacro(self.env)
+            macro = 'ListTagged'
         query = '(%s) (%s)' % (' or '.join(['realm:' + r for r in realms
                                             if r in checked_realms]), query)
         self.env.log.debug('Tag query: %s', query)
         try:
-            data['tag_body'] =  macro.expand_macro(formatter, None, query)
+            data['tag_body'] = macros.expand_macro(formatter, macro, query)
         except InvalidQuery, e:
             data['tag_query_error'] = to_unicode(e)
-            data['tag_body'] = TagCloudMacro(self.env) \
-                .expand_macro(formatter, None, '')
+            data['tag_body'] = macros.expand_macro(formatter, 'TagCloud', '')
         return 'tag_view.html', data, None

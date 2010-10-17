@@ -6,13 +6,16 @@
 # you should have received as part of this distribution.
 #
 
+from genshi.builder import tag as builder
+
+from trac.core import Component, implements
 from trac.resource import Resource, get_resource_url, render_resource_link
-from trac.wiki.macros import WikiMacroBase
-from trac.web.chrome import add_stylesheet
 from trac.util.compat import sorted, set
 from trac.util import embedded_numbers
+from trac.web.chrome import add_stylesheet
+from trac.wiki import IWikiMacroProvider
+
 from tractags.api import TagSystem
-from genshi.builder import tag as builder
 
 
 def render_cloud(env, req, cloud, renderer=None):
@@ -54,8 +57,14 @@ def render_cloud(env, req, cloud, renderer=None):
     return ul
 
 
-class TagCloudMacro(WikiMacroBase):
-    """Display a tag cloud.
+class TagWikiMacros(Component):
+    """Provides macros, that utilize the tagging system in wiki."""
+
+    implements(IWikiMacroProvider)
+
+    def __init__(self):
+        self.doc_cloud = """
+    Display a tag cloud.
 
     Show a tag cloud for all tags on resources matching query.
 
@@ -67,17 +76,8 @@ class TagCloudMacro(WikiMacroBase):
 
     See tags documentation for the query syntax.
     """
-    def expand_macro(self, formatter, name, content):
-        if not content:
-            content = ''
-        req = formatter.req
-        all_tags = TagSystem(self.env).get_all_tags(req, content)
-        return render_cloud(self.env, req, all_tags)
-
-
-
-class ListTaggedMacro(WikiMacroBase):
-    """List tagged resources.
+        self.doc_listtagged = """
+    List tagged resources.
 
     Usage:
 
@@ -87,32 +87,53 @@ class ListTaggedMacro(WikiMacroBase):
 
     See tags documentation for the query syntax.
     """
+
+    # IWikiMacroProvider
+
+    def get_macros(self):
+        yield 'ListTagged'
+        yield 'TagCloud'
+
+    def get_macro_description(self, name):
+        if name == 'ListTagged':
+            return self.doc_listtagged
+        elif name == 'TagCloud':
+            return self.doc_cloud
+
     def expand_macro(self, formatter, name, content):
-        req = formatter.req
-        tag_system = TagSystem(self.env)
-        query_result = tag_system.query(req, content)
-        add_stylesheet(req, 'tags/css/tractags.css')
+        if name == 'TagCloud':
+            if not content:
+                content = ''
+            req = formatter.req
+            all_tags = TagSystem(self.env).get_all_tags(req, content)
+            return render_cloud(self.env, req, all_tags)
 
-        def link(resource):
-            return render_resource_link(self.env, formatter.context,
-                                        resource, 'compact')
+        elif name == 'ListTagged':
+            req = formatter.req
+            tag_system = TagSystem(self.env)
+            query_result = tag_system.query(req, content)
+            add_stylesheet(req, 'tags/css/tractags.css')
 
-        ul = builder.ul(class_='taglist')
-        for resource, tags in sorted(query_result,
-                                     key=lambda r: embedded_numbers(unicode(r[0].id))):
-            tags = sorted(tags)
+            def _link(resource):
+                return render_resource_link(self.env, formatter.context,
+                                            resource, 'compact')
 
-            desc = tag_system.describe_tagged_resource(req, resource)
+            ul = builder.ul(class_='taglist')
+            for resource, tags in sorted(query_result, key=lambda r: \
+                                         embedded_numbers(unicode(r[0].id))):
+                tags = sorted(tags)
 
-            if tags:
-                rendered_tags = [
-                    link(resource('tag', tag))
-                    for tag in tags
-                    ]
-                li = builder.li(link(resource), ' ', desc, ' (', rendered_tags[0],
-                                [(' ', tag) for tag in rendered_tags[1:]],
-                                ')')
-            else:
-                li = builder.li(link(resource), ' ', desc)
-            ul(li, '\n')
-        return ul
+                desc = tag_system.describe_tagged_resource(req, resource)
+
+                if tags:
+                    rendered_tags = [
+                        _link(resource('tag', tag))
+                        for tag in tags
+                        ]
+                    li = builder.li(_link(resource), ' ', desc, ' (',
+                                    rendered_tags[0], [(' ', tag) for \
+                                        tag in rendered_tags[1:]], ')')
+                else:
+                    li = builder.li(_link(resource), ' ', desc)
+                ul(li, '\n')
+            return ul
