@@ -8,7 +8,7 @@
 
 import re
 from trac.core import *
-from tractags.api import DefaultTagProvider, TagSystem
+from tractags.api import DefaultTagProvider, TagSystem, _, tag_
 from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.api import IWikiSyntaxProvider
 from trac.resource import Resource, render_resource_link, get_resource_url
@@ -118,7 +118,8 @@ class WikiTagInterface(Component):
             anchor = anchor(rel='tag')
             li.append(tag.li(anchor, ' '))
 
-        insert = tag.ul(class_='tags')(tag.li('Tags', class_='header'), li)
+        # TRANSLATOR: Header label text for tag list at wiki page bottom.
+        insert = tag.ul(class_='tags')(tag.li(_("Tags"), class_='header'), li)
         return stream | Transformer('//div[contains(@class,"wikipage")]').after(insert)
 
     def _update_tags(self, req, page):
@@ -133,9 +134,11 @@ class WikiTagInterface(Component):
 
     def _wiki_edit(self, req, stream):
 
+        # TRANSLATOR: Label text for link to '/tags'.
+        tags_link = tag.a(_("view all tags"), href=req.href.tags())
         insert = tag.div(class_='field')(
             tag.label(
-                'Tag under: (', tag.a('view all tags', href=req.href.tags()), ')',
+                tag_("Tag under: (%(tags_link)s)", tags_link=tags_link),
                 tag.br(),
                 tag.input(id='tags', type='text', name='tags', size='50',
                           value=req.args.get('tags', ' '.join(self._page_tags(req)))),

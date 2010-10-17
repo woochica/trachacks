@@ -3,9 +3,14 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:py="http://genshi.edgewall.org/"
-      xmlns:xi="http://www.w3.org/2001/XInclude">
+      xmlns:xi="http://www.w3.org/2001/XInclude"      
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="tractags">
   <xi:include href="layout.html" />
   <xi:include href="macros.html" />
+  <?python
+    from tractags.api import _
+  ?>
 
   <head>
     <title py:if="title">$title</title>
@@ -17,7 +22,7 @@
         <div>
           <input type="text" id="tag-query" name="q" size="40" accesskey="t"
             value="${tag_query}"/>
-          <input type="submit" value="Filter Tags"/>
+          <input type="submit" value="${_('Filter Tags')}"/>
         </div>
         <div>
           <py:for each="realm in tag_realms">
@@ -31,7 +36,7 @@
         </div>
         <div>
           <p><strong>Query syntax:</strong></p>
-          <ul>
+          <ul i18n:msg="">
             <li>Use <strong>tag1 tag2</strong> to match <em>all</em> tags.</li>
             <li><strong>tag1 or tag2</strong> will match <em>any</em> tag.</li>
             <li>Negate a tag with <strong>-tag1</strong>.</li>
@@ -47,10 +52,15 @@
           ${tag_title}
           <py:if test="tag_page and 'WIKI_VIEW' in perm">
             <py:choose test="tag_page.exists">
-              <py:when test="True">(go to <a href="${href.wiki(tag_page.name)}">Wiki page</a>)</py:when>
+              <py:when test="True"><span i18n:msg="name>">(go to <a
+                href="${href.wiki(tag_page.name)}">Wiki page</a>)</span>
+              </py:when>
               <py:when test="False">
-                <py:if test="'WIKI_CREATE' in perm">
-                  (<a href="${href.wiki(tag_page.name, action='edit', text='= %s =\n\n[[ListTagged(%s)]]' % (tag_page.name, tag_page.name))}">Create Wiki page</a> for this tag)
+                <py:if test="'WIKI_CREATE' in perm"><span i18n:msg="name">
+                  (<a href="${href.wiki(tag_page.name, action='edit',
+                    text='= %s =\n\n[[ListTagged(%s)]]' % (tag_page.name,
+                    tag_page.name))}">Create Wiki page</a> for this tag)
+                  </span>
                 </py:if>
               </py:when>
             </py:choose>

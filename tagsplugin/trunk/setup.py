@@ -1,10 +1,30 @@
 from setuptools import setup
 
+extra = {}
+
+try:
+    from trac.util.dist  import  get_l10n_cmdclass
+    cmdclass = get_l10n_cmdclass()
+    if cmdclass:
+        extra['cmdclass'] = cmdclass
+        extractors = [
+            ('**.py',                'python', None),
+            ('**/templates/**.html', 'genshi', None),
+        ]
+        extra['message_extractors'] = {
+            'tractags': extractors,
+        }
+# i18n is implemented to be optional here
+except ImportError:
+    pass
+
+
 setup(
     name='TracTags',
-    version='0.6',
+    version='0.7',
     packages=['tractags'],
-    package_data={'tractags' : ['templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css']},
+    package_data={'tractags' : ['templates/*.html', 'htdocs/js/*.js',
+        'htdocs/css/*.css','locale/*/LC_MESSAGES/*.mo']},
     # With acknowledgement to Muness Albrae for the original idea :)
     author='Alec Thomas',
     license='BSD',
@@ -12,5 +32,7 @@ setup(
     description='Tags plugin for Trac',
     entry_points = {'trac.plugins': ['tractags = tractags']},
     dependency_links=['http://svn.edgewall.org/repos/genshi/trunk#egg=Genshi-dev'],
-    install_requires=['Genshi >= 0.5'],
+    install_requires=['Genshi >= 0.5', 'Trac >= 0.11'],
+    extras_require={'Babel': 'Babel>= 0.9.5', 'Trac': 'Trac >= 0.12'},
+    **extra
     )

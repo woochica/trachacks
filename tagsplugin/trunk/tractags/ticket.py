@@ -8,7 +8,7 @@
 
 import re
 from trac.core import *
-from tractags.api import TagSystem, ITagProvider
+from tractags.api import TagSystem, ITagProvider, _
 from trac.ticket.model import Ticket
 from trac.util.text import to_unicode
 from trac.util.compat import set, sorted
@@ -24,13 +24,13 @@ class TicketTagProvider(Component):
     implements(ITagProvider)
 
     fields = ListOption('tags', 'ticket_fields', 'keywords',
-        doc='List of ticket fields to expose as tags.')
+        doc=_("List of ticket fields to expose as tags."))
 
     ignore_closed_tickets = BoolOption('tags', 'ignore_closed_tickets', True,
-        'Do not collect tags from closed tickets.')
+        _("Do not collect tags from closed tickets."))
 
 #    custom_fields = ListOption('tags', 'custom_ticket_fields',
-#        doc='List of custom ticket fields to expose as tags.')
+#        doc=_("List of custom ticket fields to expose as tags."))
 
     # ITagProvider methods
     def get_taggable_realm(self):

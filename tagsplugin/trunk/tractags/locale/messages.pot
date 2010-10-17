@@ -1,0 +1,142 @@
+# Translations template for TracTags.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the TracTags
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TracTags 0.7\n"
+"Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
+"POT-Creation-Date: 2010-10-17 13:53+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#: tractags/api.py:336
+#, python-format
+msgid "Tags are not supported on the '%s' realm"
+msgstr ""
+
+#. TRANSLATOR: Keep macro doc style formatting here, please.
+#: tractags/macros.py:67
+msgid ""
+"Display a tag cloud.\n"
+"\n"
+"    Show a tag cloud for all tags on resources matching query.\n"
+"\n"
+"    Usage:\n"
+"\n"
+"    {{{\n"
+"    [[TagCloud(query)]]\n"
+"    }}}\n"
+"\n"
+"    See tags documentation for the query syntax.\n"
+"    "
+msgstr ""
+
+#: tractags/macros.py:79
+msgid ""
+"List tagged resources.\n"
+"\n"
+"    Usage:\n"
+"\n"
+"    {{{\n"
+"    [[ListTagged(query)]]\n"
+"    }}}\n"
+"\n"
+"    See tags documentation for the query syntax.\n"
+"    "
+msgstr ""
+
+#: tractags/query.py:191
+msgid "Attribute must be a word"
+msgstr ""
+
+#: tractags/query.py:216
+msgid "Expected ) at end of sub-expression"
+msgstr ""
+
+#: tractags/query.py:233
+msgid "Unexpected end of string"
+msgstr ""
+
+#: tractags/query.py:237
+#, python-format
+msgid "Expected terminal, got '%s'"
+msgstr ""
+
+#: tractags/query.py:394
+#, python-format
+msgid "Invalid attribute '%s'"
+msgstr ""
+
+#: tractags/ticket.py:27
+msgid "List of ticket fields to expose as tags."
+msgstr ""
+
+#: tractags/ticket.py:30
+msgid "Do not collect tags from closed tickets."
+msgstr ""
+
+#. TRANSLATOR: Header label text for tag list at wiki page bottom.
+#: tractags/web_ui.py:63 tractags/web_ui.py:80 tractags/wiki.py:122
+msgid "Tags"
+msgstr ""
+
+#. TRANSLATOR: The meta-nav link label.
+#: tractags/web_ui.py:74
+msgid "Cloud"
+msgstr ""
+
+#: tractags/web_ui.py:97
+#, python-format
+msgid "Showing objects matching '%s'"
+msgstr ""
+
+#. TRANSLATOR: Label text for link to '/tags'.
+#: tractags/wiki.py:138
+msgid "view all tags"
+msgstr ""
+
+#: tractags/wiki.py:141
+#, python-format
+msgid "Tag under: (%(tags_link)s)"
+msgstr ""
+
+#: tractags/templates/tag_view.html:25
+msgid "Filter Tags"
+msgstr ""
+
+#: tractags/templates/tag_view.html:35
+msgid "Error:"
+msgstr ""
+
+#: tractags/templates/tag_view.html:38
+msgid "Query syntax:"
+msgstr ""
+
+#: tractags/templates/tag_view.html:39
+msgid ""
+"[1:Use [2:tag1 tag2] to match [3:all] tags.]\n"
+"            [4:[5:tag1 or tag2] will match [6:any] tag.]\n"
+"            [7:Negate a tag with [8:-tag1].]\n"
+"            [9:Group sub-queries with [10:(tag1 or tag2)].]\n"
+"            [11:Quote strings to include special characters.]\n"
+"            [12:Restrict search to a specific realm with "
+"[13:realm:wiki].]"
+msgstr ""
+
+#: tractags/templates/tag_view.html:55
+msgid "(go to [1:Wiki page])"
+msgstr ""
+
+#: tractags/templates/tag_view.html:59
+msgid "([1:Create Wiki page] for this tag)"
+msgstr ""
+

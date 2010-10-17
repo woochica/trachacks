@@ -12,7 +12,7 @@ A generalised query parser and matcher.
 
 import re
 from trac.core import TracError
-
+from tractags.api import _
 
 __all__ = ['Query', 'InvalidQuery']
 
@@ -188,7 +188,7 @@ class Query(QueryNode):
             elif tokens[0][0] == QueryNode.ATTR:
                 tokens.pop(0)
                 if left.type is not QueryNode.TERM:
-                    raise InvalidQuery('Attribute must be a word')
+                    raise InvalidQuery(_("Attribute must be a word"))
                 left = QueryNode(QueryNode.ATTR, left=left,
                                  right=self.parse_unary(tokens))
             else:
@@ -213,7 +213,7 @@ class Query(QueryNode):
                 return None
             node = self.parse(tokens)
             if not tokens or tokens[0][0] != QueryNode.ENDSUB:
-                raise InvalidQuery('Expected ) at end of sub-expression')
+                raise InvalidQuery(_("Expected ) at end of sub-expression"))
             tokens.pop(0)
             return node
         if tokens[0][0] == QueryNode.NOT:
@@ -230,11 +230,11 @@ class Query(QueryNode):
         """
 
         if not tokens:
-            raise InvalidQuery('Unexpected end of string')
+            raise InvalidQuery(_("Unexpected end of string"))
         if tokens[0][0] in (QueryNode.TERM, QueryNode.OR):
             token = tokens.pop(0)
             return QueryNode(QueryNode.TERM, value=token[1])
-        raise InvalidQuery('Expected terminal, got "%s"' % tokens[0][1])
+        raise InvalidQuery(_("Expected terminal, got '%s'") % tokens[0][1])
 
     def terms(self, exclude_not=True):
         """A generator returning the terms contained in the Query.
@@ -391,7 +391,7 @@ class Query(QueryNode):
         return tokens
 
     def _invalid_handler(self, name, node, context):
-        raise InvalidQuery('Invalid attribute "%s"' % name)
+        raise InvalidQuery(_("Invalid attribute '%s'") % name)
 
 if __name__ == '__main__':
     import doctest

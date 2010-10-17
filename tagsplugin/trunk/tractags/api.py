@@ -7,9 +7,10 @@
 #
 
 import re
+from pkg_resources import resource_filename
+
 from trac.core import *
 from trac.resource import Resource
-from tractags.query import *
 from trac.perm import IPermissionRequestor, PermissionError
 from trac.web.chrome import add_warning
 from trac.wiki.model import WikiPage
@@ -19,6 +20,21 @@ from trac.resource import IResourceManager, get_resource_url, \
     get_resource_description
 from genshi import Markup
 from genshi.builder import tag as tag_
+
+# Import translation functions.
+# Fallbacks make Babel still optional and provide for Trac 0.11.
+try:
+    from  trac.util.translation  import  domain_functions
+    add_domain, _, tag_ = \
+        domain_functions('tractags', ('add_domain', '_', 'tag_'))
+except ImportError:
+    from  trac.util.translation  import  gettext
+    _, tag_  = gettext, tag
+    def add_domain(a,b,c=None):
+        pass
+
+# now call module importing i18n methods from here
+from tractags.query import *
 
 
 class InvalidTagRealm(TracError):
@@ -172,6 +188,12 @@ class TagSystem(Component):
     _tag_split = re.compile('[,\s]+')
     _realm_provider_map = None
 
+    def __init__(self):
+    # bind the 'tractags' catalog to the specified locale directory
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
+
+
     # Public methods
     def query(self, req, query='', attribute_handlers=None):
         """Return a sequence of (resource, tags) tuples matching a query.
@@ -311,4 +333,4 @@ class TagSystem(Component):
         try:
             return self._realm_provider_map[realm]
         except KeyError:
-            raise InvalidTagRealm('Tags are not supported on the "%s" realm' % realm)
+            raise InvalidTagRealm(_("Tags are not supported on the '%s' realm") % realm)

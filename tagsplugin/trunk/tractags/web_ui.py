@@ -16,7 +16,7 @@ from genshi.builder import tag as builder
 from trac.util import to_unicode
 from trac.util.text import CRLF
 from trac.util.compat import sorted, set, any
-from tractags.api import TagSystem, ITagProvider
+from tractags.api import TagSystem, ITagProvider, _, tag_
 from tractags.query import InvalidQuery
 from trac.resource import Resource
 from trac.mimeview import Context
@@ -60,8 +60,9 @@ class TagRequestHandler(Component):
 
     def get_navigation_items(self, req):
         if 'TAGS_VIEW' in req.perm:
+            label = tag_("Tags")
             yield ('mainnav', 'tags',
-                   builder.a('Tags', href=req.href.tags(), accesskey='T'))
+                   builder.a(label, href=req.href.tags(), accesskey='T'))
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -69,13 +70,14 @@ class TagRequestHandler(Component):
 
     def process_request(self, req):
         req.perm.require('TAGS_VIEW')
-        add_ctxtnav(req, 'Cloud', req.href.tags())
+        # TRANSLATOR: The meta-nav link label.
+        add_ctxtnav(req, _("Cloud"), req.href.tags())
         match = re.match(r'/tags/?(.*)', req.path_info)
         if match.group(1):
             req.redirect(req.href('tags', q=match.group(1)))
         add_stylesheet(req, 'tags/css/tractags.css')
         query = req.args.get('q', '')
-        data = {'title': 'Tags'}
+        data = {'title': _("Tags")}
         formatter = Formatter(
             self.env, Context.from_request(req, Resource('tag'))
             )
@@ -92,7 +94,7 @@ class TagRequestHandler(Component):
             data['tag_page'] = page
 
         if query:
-            data['tag_title'] = 'Showing objects matching "%s"' % query
+            data['tag_title'] = _("Showing objects matching '%s'") % query
         data['tag_query'] = query
 
         from tractags.macros import TagWikiMacros

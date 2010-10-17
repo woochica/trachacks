@@ -15,7 +15,7 @@ from trac.util import embedded_numbers
 from trac.web.chrome import add_stylesheet
 from trac.wiki import IWikiMacroProvider
 
-from tractags.api import TagSystem
+from tractags.api import TagSystem, _
 
 
 def render_cloud(env, req, cloud, renderer=None):
@@ -63,8 +63,8 @@ class TagWikiMacros(Component):
     implements(IWikiMacroProvider)
 
     def __init__(self):
-        self.doc_cloud = """
-    Display a tag cloud.
+        # TRANSLATOR: Keep macro doc style formatting here, please.
+        self.doc_cloud = _("""Display a tag cloud.
 
     Show a tag cloud for all tags on resources matching query.
 
@@ -75,9 +75,8 @@ class TagWikiMacros(Component):
     }}}
 
     See tags documentation for the query syntax.
-    """
-        self.doc_listtagged = """
-    List tagged resources.
+    """)
+        self.doc_listtagged = _("""List tagged resources.
 
     Usage:
 
@@ -86,7 +85,7 @@ class TagWikiMacros(Component):
     }}}
 
     See tags documentation for the query syntax.
-    """
+    """)
 
     # IWikiMacroProvider
 
