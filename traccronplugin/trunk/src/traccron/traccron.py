@@ -115,21 +115,27 @@ class Core(Component):
         currentTime = localtime(time())
         self.env.log.debug("check existing task");
         for task in self.cron_tack_list:
-            # test current time with task planing
-            self.env.log.debug("check task " + task.getId())
-            for schedule in self.supported_schedule_type:
-                # run task if needed
-                if schedule.isTriggerTime(task, currentTime):
-                    self.env.log.info("executing task " + task.getId());
-                    try:
-                        task.wake_up()
-                    except Exception, e:
-                        self.env.log.error('task execution result : FAILURE %s', exception_to_unicode(e))        
+            if self.cronconf.is_task_enabled(task):                
+                # test current time with task planing
+                self.env.log.debug("check task " + task.getId())
+                for schedule in self.supported_schedule_type:
+                    if self.cronconf.is_schedule_enabled(task, schedule):
+                        # run task if needed
+                        if schedule.isTriggerTime(task, currentTime):
+                            self.env.log.info("executing task " + task.getId());
+                            try:
+                                task.wake_up()
+                            except Exception, e:
+                                self.env.log.error('task execution result : FAILURE %s', exception_to_unicode(e))        
+                            else:
+                                self.env.log.info("task execution result : SUCCESS")
+                                self.env.log.info("task " + task.getId() + " finished");
+                        else:
+                            self.env.log.debug("nothing to do for " + task.getId());
                     else:
-                        self.env.log.info("task execution result : SUCCESS")
-                    self.env.log.info("task " + task.getId() + " finished");
-                else:
-                    self.env.log.debug("nothing to do for " + task.getId());
+                        self.env.log.debug("schedule " + schedule.getId() + " is disabled")
+            else:
+                self.env.log.debug("task " + task.getId() + " is disabled")
 
         
     # IAdminPanel interface
@@ -165,6 +171,12 @@ class CronConfig():
     TICKER_INTERVAL_KEY = "ticker_interval"
     TICKER_INTERVAL_DEFAULT = 1 #minutes
     
+    TASK_ENABLED_KEY = "enabled"
+    TASK_ENABLED_DEFAULT = "True"
+    
+    SCHEDULE_ENABLED_KEY = "enabled"
+    SCHEDULE_ENABLED_DEFAULT = "True"
+    
 
     def __init__(self, env):
         self.env = env
@@ -195,6 +207,25 @@ class CronConfig():
 
     def set_schedule_value(self, task, schedule_type, value):
         self.env.config.set(self.TRACCRON_SECTION, task.getId() + "." + schedule_type.getId(), value)
+    
+    def is_task_enabled(self, task):
+        """
+        Return the value that indicate if the task is enabled
+        """
+        return self.env.config.getbool(self.TRACCRON_SECTION, task.getId() + "." + self.TASK_ENABLED_KEY, self.TASK_ENABLED_DEFAULT)
+
+    def set_task_enabled(self, task, value):
+        self.env.config.set(self.TRACCRON_SECTION, task.getId() + "." + self.TASK_ENABLED_KEY, value)
+    
+    def is_schedule_enabled(self, task, schedule):
+        """
+        Return the value that indicate if the schedule for a given task is enabled
+        """
+        return self.env.config.getbool(self.TRACCRON_SECTION, task.getId() + "." + schedule.getId() + "." +  self.SCHEDULE_ENABLED_KEY, self.SCHEDULE_ENABLED_DEFAULT)
+
+    def set_schedule_enabled(self, task, schedule, value):
+        self.env.config.set(self.TRACCRON_SECTION, task.getId() + "." + schedule.getId() + "." + self.SCHEDULE_ENABLED_KEY, value)
+    
     
     def set_value(self, key, value):
         self.env.config.set(self.TRACCRON_SECTION, key, value)
@@ -230,16 +261,24 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
             if 'save' in req.args:          
                 
                 arg_name_list = [self.cronconf.TICKER_ENABLED_KEY,self.cronconf.TICKER_INTERVAL_KEY]
-                for task in self.cron_task_list:                            
-                    task_id = task.getId()                                            
+                for task in self.cron_task_list:                        
+                    task_id = task.getId()                                       
+                    arg_name_list.append(task_id + "." + self.cronconf.TASK_ENABLED_KEY)     
                     for schedule in self.all_schedule_type:
-                        arg_name_list.append(task_id + "." + schedule.getId())        
+                        schedule_id = schedule.getId()
+                        arg_name_list.append(task_id + "." + schedule_id)   
+                        arg_name_list.append(task_id + "." + schedule_id + "." + self.cronconf.SCHEDULE_ENABLED_KEY)     
                 
-                for arg_name in arg_name_list:
+                for arg_name in arg_name_list:                   
                     arg_value = req.args.get(arg_name,"").strip()
                     self.env.log.debug("receive req arg "+ arg_name + "=[" + arg_value + "]")
                     if (arg_value == ""):
-                        self.cronconf.remove_value(arg_name)                        
+                        # dont't remove the key because of default value may be True
+                        if ( arg_name.endswith(("." + self.cronconf.TASK_ENABLED_KEY, "." + self.cronconf.SCHEDULE_ENABLED_KEY))):
+                            self.cronconf.set_value(arg_name, "False")
+                        # otherwise we can remove the key 
+                        else:                                                  
+                            self.cronconf.remove_value(arg_name)                        
                     else:
                         self.cronconf.set_value(arg_name, arg_value)                  
                 
@@ -258,16 +297,27 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
             for task in self.cron_task_list:
                 task_data = {}
                 
+                task_data['enabled'] = self.cronconf.is_task_enabled(task)
                 task_data['id'] = task.getId()
                 task_data['description'] = task.getDescription()
                 
                 all_schedule_value = {}
                 for schedule in self.all_schedule_type:
                     value = self.cronconf.get_schedule_value(task, schedule)
+                    task_enabled = self.cronconf.is_schedule_enabled(task, schedule)
+                    
                     if value :
-                        all_schedule_value[schedule.getId()] = {"value":value, "hint":schedule.getHint()}
+                        all_schedule_value[schedule.getId()] = {
+                                                                "value":value,
+                                                                "hint":schedule.getHint(),
+                                                                "enabled": task_enabled
+                                                                }
                     else:
-                        all_schedule_value[schedule.getId()] = {"value":"", "hint":schedule.getHint()}
+                        all_schedule_value[schedule.getId()] = {
+                                                                "value":"",
+                                                                "hint":schedule.getHint(),
+                                                                "enabled":task_enabled
+                                                                }
                 task_data['schedule_list'] = all_schedule_value                        
                                         
                 task_list.append(task_data)
@@ -285,7 +335,8 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
         return [resource_filename(__name__, 'templates')]
 
 
-    # internal method
+    # internal method    
+
 
     def _save_config(self, req, notices=None):
         """Try to save the config, and display either a success notice or a

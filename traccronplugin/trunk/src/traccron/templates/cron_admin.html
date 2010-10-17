@@ -36,9 +36,10 @@
     	<legend>Task list</legend>
     	<table class="listing" width="100%"  border="1">
     		<thead>
-    			<tr>
+    			<tr>    			
     				<th>id</th>
     	 			<th>description</th>
+    	 			<th class="sel">active</th>
     	 			<th>schedule</th>
     	 		</tr>
     	 	</thead>
@@ -47,10 +48,26 @@
 	    	   		<td>${task['id']}</td>
     	   			<td>${task['description']}</td>
     	   			<td>
+    	   				 <py:choose test="task['enabled']">    	   				 	
+		                 	<input py:when="True" type="checkbox" name="${task['id']}.enabled" value="True" checked=""/>
+		                 	<py:otherwise>
+		                 		<input type="checkbox" name="${task['id']}.enabled" value="True"/>
+		                 	</py:otherwise>
+		                 </py:choose>
+                	</td>
+    	   			<td>
 	    	   			<table class="listing" width="100%">
 	    	   				
     	   					
     	   						<tr py:for="type in task['schedule_list'].keys()">
+    	   						    <td>
+    	   						     	<py:choose test="task['schedule_list'][type]['enabled']">    	   						     		    	 
+		                 					<input py:when="True" type="checkbox" name="${task['id']}.${type}.enabled" value="True" checked=""/>
+		                 					<py:otherwise>
+		                 						<input type="checkbox" name="${task['id']}.${type}.enabled" value="True"/>
+		                 					</py:otherwise>
+		                 				</py:choose>
+                					</td>
 		    	   					<td align="right">$type</td>
     	   							<td align="left">
 			    	   					<input type="text" id="${task['id']}.${type}" name="${task['id']}.${type}" value="${task['schedule_list'][type]['value']}"/>
