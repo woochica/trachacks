@@ -8,7 +8,8 @@ License: BSD
 """
 
 from genshi.filters import Transformer
-from genshi.builder import tag, Markup
+from genshi.builder import tag
+from genshi.core import Markup, Stream
 
 from trac.core import *
 from trac.mimeview.api import Mimeview
@@ -30,7 +31,6 @@ class ReposReadMePlugin(Component):
             return stream
         repos = data.get('repos') or self.env.get_repository()
         rev = req.args.get('rev', None)
-        initial_space = False
         for entry in data['dir']['entries']:
             try:
                 if not entry.isdir and entry.name.lower().startswith('readme'):
@@ -39,6 +39,11 @@ class ReposReadMePlugin(Component):
                     output = self._render_file(req, data['context'], repos,
                                                 node, rev=rev)
                     if output:
+                        if isinstance(output['rendered'], Stream):
+                            # strips the <div class="code" /> surrounding tag
+                            content = output['rendered'].select('*')
+                        else:
+                            content = output['rendered']
                         insert_where = Transformer(
                                     "//div[@id='content']/div[@id='help']")
                         insert_what = tag.div(
@@ -50,8 +55,7 @@ class ReposReadMePlugin(Component):
                                         id_=entry.name
                                     ),
                                     tag.div(
-                                        not initial_space and tag.br() or None,
-                                        output['rendered'],
+                                        content,
                                         class_="searchable",
                                         style="background:#FBFBFB;border:2px solid #EEE;padding:0 1em;",
                                         title=entry.name),
@@ -59,7 +63,6 @@ class ReposReadMePlugin(Component):
                                     style="padding-top:1em;"
                                     )
                         stream = stream | insert_where.before(insert_what)
-                        initial_space = True
             except Exception, e:
                 # Just log and ignore any kind of error (permissions and more)
                 self.log.debug(to_unicode(e))
