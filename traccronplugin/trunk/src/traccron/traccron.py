@@ -38,6 +38,33 @@ class ICronTask(Interface):
         Return the description of this task to be used in the admin panel.
         """
         raise NotImplementedError
+    
+
+class ISchedulerType(Interface):
+    """
+    Interface for scheduler type. A Scheduler type is a sort of scheduler that
+    can trigger a task based on a specific scheduling.
+    """        
+
+        
+    def getId(self):
+        """
+        Return the id to use in trac.ini for this schedule type
+        """
+        raise NotImplementedError
+    
+    def getHint(self):
+        """
+        Return a description of what it is and the format used to defined the schedule
+        """
+        raise NotImplementedError
+    
+    def isTriggerTime(self, task, currentTime):
+        """
+        Test is accordingly to this scheduler and given currentTime, is time to fire the task
+        """
+        raise NotImplementedError
+    
 
 
 class Core(Component):    
@@ -50,6 +77,8 @@ class Core(Component):
     
     cron_tack_list = ExtensionPoint(ICronTask)
     
+    supported_schedule_type = ExtensionPoint(ISchedulerType)
+    
 
     current_ticker = None
     
@@ -58,13 +87,7 @@ class Core(Component):
 	    Intercept the instanciation to start the ticker
         """        
         Component.__init__(self, *args, **kwargs)
-        self.cronconf = CronConfig(self.env)
-        self.supported_schedule_type = [
-            DailyScheduler(self.env, self.getCronConf()),
-            HourlyScheduler(self.env, self.getCronConf()),
-            WeeklyScheduler(self.env, self.getCronConf()),
-            MonthlyScheduler(self.env, self.getCronConf())
-            ]
+        self.cronconf = CronConfig(self.env)        
         self.webUi = WebUi(self)        
         self.apply_config()        
 
@@ -376,14 +399,16 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
 
     
 
-class SchedulerType():
+class SchedulerType(ISchedulerType):
     """
     Define a sort of scheduling. Base class for any scheduler type implementation
-    """   
+    """
     
-    def __init__(self, env, cronconf):
-        self.env = env
-        self.cronconf = cronconf
+    implements(ISchedulerType)   
+    
+    def __init__(self):    
+        self.cronconf = CronConfig(self.env)
+                
 
         
     def getId(self):
@@ -396,6 +421,7 @@ class SchedulerType():
         """
         Return a description of what it is and the format used to defined the schedule
         """
+        return ""
     
     def isTriggerTime(self, task, currentTime):
         """
@@ -425,14 +451,14 @@ class SchedulerType():
 
 
 
-class DailyScheduler(SchedulerType):
+class DailyScheduler(Component, SchedulerType):
     """
     Scheduler that trigger a task once a day based uppon a defined time
     """
     
-    def __init__(self, env, cronconf):
-        SchedulerType.__init__(self, env, cronconf)
-    
+    def __init__(self):
+        SchedulerType.__init__(self)
+        
     def getId(self):
         return "daily"
     
@@ -452,12 +478,14 @@ class DailyScheduler(SchedulerType):
             return False
          
 
-class HourlyScheduler(SchedulerType):
+class HourlyScheduler(Component,SchedulerType):
     """
     Scheduler that trigger a task once an hour at a defined time
     """
-    def __init__(self, env, cronconf):
-        SchedulerType.__init__(self, env, cronconf)
+
+    def __init__(self):
+        SchedulerType.__init__(self)
+
     
     def getId(self):
         return "hourly"
@@ -477,12 +505,14 @@ class HourlyScheduler(SchedulerType):
             return False    
 
 
-class WeeklyScheduler(SchedulerType):
+class WeeklyScheduler(Component,SchedulerType):
     """
     Scheduler that trigger a task once a week at a defined day and time
     """
-    def __init__(self, env, cronconf):
-        SchedulerType.__init__(self, env, cronconf)
+
+    def __init__(self):
+        SchedulerType.__init__(self)
+
     
     def getId(self):
         return "weekly"
@@ -503,12 +533,14 @@ class WeeklyScheduler(SchedulerType):
             return False    
 
 
-class MonthlyScheduler(SchedulerType):
+class MonthlyScheduler(Component, SchedulerType):
     """
     Scheduler that trigger a task once a week at a defined day and time
     """
-    def __init__(self, env, cronconf):
-        SchedulerType.__init__(self, env, cronconf)
+
+    def __init__(self):
+        SchedulerType.__init__(self)
+
     
     def getId(self):
         return "monthly"
