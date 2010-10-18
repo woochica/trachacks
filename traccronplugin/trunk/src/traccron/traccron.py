@@ -21,7 +21,7 @@ class ICronTask(Interface):
     Interface for component task
     """
     
-    def wake_up(self):
+    def wake_up(self, *args):
         """
         Call by the scheduler when the task need to be executed
         """
@@ -124,7 +124,8 @@ class Core(Component):
                         if schedule.isTriggerTime(task, currentTime):
                             self.env.log.info("executing task " + task.getId());
                             try:
-                                task.wake_up()
+                                args = self.cronconf.get_schedule_arg_list(task, schedule)
+                                task.wake_up(*args)
                             except Exception, e:
                                 self.env.log.error('task execution result : FAILURE %s', exception_to_unicode(e))        
                             else:
@@ -176,7 +177,9 @@ class CronConfig():
     
     SCHEDULE_ENABLED_KEY = "enabled"
     SCHEDULE_ENABLED_DEFAULT = "True"
-    
+
+    SCHEDULE_ARGUMENT_KEY ="arg"
+    SCHEDULE_ARGUMENT_DEFAULT = ""
 
     def __init__(self, env):
         self.env = env
@@ -226,6 +229,21 @@ class CronConfig():
     def set_schedule_enabled(self, task, schedule, value):
         self.env.config.set(self.TRACCRON_SECTION, task.getId() + "." + schedule.getId() + "." + self.SCHEDULE_ENABLED_KEY, value)
     
+    def get_schedule_arg(self, task, schedule):
+        """
+        Return the raw value of argument for a given schedule of a task
+        """
+        return self.env.config.get(self.TRACCRON_SECTION, task.getId() + "." + schedule.getId() + "." + self.SCHEDULE_ARGUMENT_KEY, None)
+ 
+
+    def get_schedule_arg_list(self, task, schedule):
+        """
+        Return the list of argument for a given schedule of a task
+        """
+        return self.env.config.getlist(self.TRACCRON_SECTION, task.getId() + "." + schedule.getId() + "." + self.SCHEDULE_ARGUMENT_KEY)
+    
+    def set_schedule_arg(self, task, schedule, value):
+        self.env.config.set(self.TRACCRON_SECTION, task.getId() + "." + schedule.getId() + "." + self.SCHEDULE_ARGUMENT_KEY, value)
     
     def set_value(self, key, value):
         self.env.config.set(self.TRACCRON_SECTION, key, value)
@@ -268,6 +286,7 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
                         schedule_id = schedule.getId()
                         arg_name_list.append(task_id + "." + schedule_id)   
                         arg_name_list.append(task_id + "." + schedule_id + "." + self.cronconf.SCHEDULE_ENABLED_KEY)     
+                        arg_name_list.append(task_id + "." + schedule_id + "." + self.cronconf.SCHEDULE_ARGUMENT_KEY)
                 
                 for arg_name in arg_name_list:                   
                     arg_value = req.args.get(arg_name,"").strip()
@@ -304,20 +323,19 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
                 all_schedule_value = {}
                 for schedule in self.all_schedule_type:
                     value = self.cronconf.get_schedule_value(task, schedule)
+                    if value is None:
+                        value = ""
                     task_enabled = self.cronconf.is_schedule_enabled(task, schedule)
-                    
-                    if value :
-                        all_schedule_value[schedule.getId()] = {
+                    task_arg = self.cronconf.get_schedule_arg(task, schedule)
+                    if task_arg is None:
+                        task_arg = ""
+                                        
+                    all_schedule_value[schedule.getId()] = {
                                                                 "value":value,
                                                                 "hint":schedule.getHint(),
-                                                                "enabled": task_enabled
-                                                                }
-                    else:
-                        all_schedule_value[schedule.getId()] = {
-                                                                "value":"",
-                                                                "hint":schedule.getHint(),
-                                                                "enabled":task_enabled
-                                                                }
+                                                                "enabled": task_enabled,
+                                                                "arg" : task_arg
+                                                            }
                 task_data['schedule_list'] = all_schedule_value                        
                                         
                 task_list.append(task_data)
@@ -565,8 +583,12 @@ class HeartBeatTask(Component,ICronTask):
     
     implements(ICronTask)
     
-    def wake_up(self):
-        self.env.log.debug("Heart beat: boom boom !!!")
+    def wake_up(self, *args):
+        if len(args) > 0:
+            for arg in args:
+                self.env.log.debug("Heart beat: " + arg)
+        else:
+            self.env.log.debug("Heart beat: boom boom !!!")
     
     def getId(self):
         return "heart_beat"

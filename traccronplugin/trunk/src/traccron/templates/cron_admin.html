@@ -57,8 +57,15 @@
                 	</td>
     	   			<td>
 	    	   			<table class="listing" width="100%">
-	    	   				
-    	   					
+	    	   				<thead>
+  		  						<tr>    			
+    								<th class="sel">Used</th>
+    								<th>type</th>
+    	 							<th>value</th>    	 							
+    	 							<th>arguments</th>
+    	 						</tr>
+    	 					</thead>
+    	   					<tbody>
     	   						<tr py:for="type in task['schedule_list'].keys()">
     	   						    <td>
     	   						     	<py:choose test="task['schedule_list'][type]['enabled']">    	   						     		    	 
@@ -75,8 +82,12 @@
              								 ${task['schedule_list'][type]['hint']} 
         								</p> 
     	   							</td>
+    	   							<td>
+    	   								<input type="text" id="${task['id']}.${type}.arg" name="${task['id']}.${type}.arg" value="${task['schedule_list'][type]['arg']}"/>
+    	   							</td>
+    	   							
     	   						</tr>
-    	   					
+    	   					</tbody>
     	   				</table>
     	   			</td>
     	 		</tr>
