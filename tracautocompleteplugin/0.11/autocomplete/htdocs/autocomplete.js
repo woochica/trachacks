@@ -64,12 +64,12 @@ $(document).ready(function() {
     
     var dialog_html = 
 '<div class="ui-dialog-content ui-widget-content" id="edit_cc_dialog">' +
-'    <div style="width: 260px; height: 40px; font-size: 12px;"></div>' +
-'    <div style="width: 260px; height: 40px;">' +
-'       <table style="width: 90%;">' +
+'    <div style="width: 380px; height: 40px; font-size: 12px;"></div>' +
+'    <div style="width: 380px; height: 40px;">' +
+'       <table style="width: 100%;">' +
 '        <tr>' +
 '            <td>' +
-'            <input type="text" id="input_new_cc"/>' +
+'            <input type="text" id="input_new_cc" style="width: 260px;"/>' +
 '            </td>' +
 '            <td style="width: 80px;">' +
 '            <input type="button" id="add_new_cc" value="Add" />' +
@@ -77,8 +77,8 @@ $(document).ready(function() {
 '        </tr>' +
 '    </table>' +
 '    </div>' +
-'    <div style="width: 260px; height: 300px; overflow:auto;">' +
-'       <table id="edit_cc_content" style="width: 90%;">' +
+'    <div style="width: 380px; height: 300px; overflow:auto;">' +
+'       <table id="edit_cc_content" style="width: 100%;">' +
 '       </table>' +
 '    </div>' +
 '</div>';
@@ -106,7 +106,7 @@ $(document).ready(function() {
             }
         }
         
-        var cc_tr = $('<tr><td><input type="text" name="list_cc" value="'+cc+'"/></td><td style="width: 80px;"><input type="button" value="Del" class="delete_cc"></td></tr>');
+        var cc_tr = $('<tr><td><input type="text" name="list_cc" style="width: 260px;" value="'+cc+'"/></td><td style="width: 80px;"><input type="button" value="Del" class="delete_cc"></td></tr>');
         $("input.delete_cc", cc_tr).click(function(){
             $(this).parent().parent().remove();
         });
@@ -143,6 +143,7 @@ $(document).ready(function() {
             buttons: { "Close": function() { $(this).dialog("close"); } },
             stackfix: true,
             height: 540,
+            width: 400,
             modal: true,
             resizable: false,
             draggable: false,
