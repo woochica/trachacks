@@ -25,7 +25,7 @@ setup(  name=PACKAGE, version=VERSION,
         entry_points = {
             'trac.plugins': [
                 'adauth = tracext.adauth',
-                'adauth.permissionstore = tracext.adauth.api.UserExtensiblePermissionStore',
+                'adauth.permissionstore = tracext.adauth.api:UserExtensiblePermissionStore',
             ],
         },
         namespace_packages=['tracext'],
