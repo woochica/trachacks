@@ -23,8 +23,9 @@ setup(
     name='TracTags',
     version='0.7',
     packages=['tractags'],
-    package_data={'tractags' : ['templates/*.html', 'htdocs/js/*.js',
-        'htdocs/css/*.css','locale/*/LC_MESSAGES/*.mo']},
+    package_data={'tractags' : [
+        'templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css',
+        'locale/*/LC_MESSAGES/*.mo', 'locale/.placeholder']},
     # With acknowledgement to Muness Albrae for the original idea :)
     author='Alec Thomas',
     license='BSD',
