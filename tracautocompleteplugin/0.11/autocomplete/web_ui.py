@@ -157,7 +157,7 @@ class AutoComplete(Component):
             return None
             
         return_list = []
-        f = open("conf/username_list.txt", "r")
+        f = open(os.path.join(self.env.path, 'conf/username_list.txt'), "r")
         for line in f.readlines():
             m = re.match("(.*)\[(.*)\]", line.decode("utf-8"))
             if m:
