@@ -19,7 +19,6 @@ from trac.util.compat import set, groupby
 from trac.resource import IResourceManager, get_resource_url, \
     get_resource_description
 from genshi import Markup
-from genshi.builder import tag as tag_
 
 # Import translation functions.
 # Fallbacks make Babel still optional and provide for Trac 0.11.
@@ -28,8 +27,9 @@ try:
     add_domain, _, tag_ = \
         domain_functions('tractags', ('add_domain', '_', 'tag_'))
 except ImportError:
+    from  genshi.builder         import  tag as tag_
     from  trac.util.translation  import  gettext
-    _, tag_  = gettext, tag
+    _ = gettext
     def add_domain(a,b,c=None):
         pass
 
