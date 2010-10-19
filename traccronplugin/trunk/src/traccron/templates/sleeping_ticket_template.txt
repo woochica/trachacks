@@ -1,0 +1,10 @@
+Hello,
+
+You have $ticket_count sleeping tickets.
+
+This mean that those ticket are assigned to you but either you did not
+have accepted them yet either you don't have put any comment on them since more than $delay day(s)
+
+Please consider working on those tickets or reassign them.
+
+Best regard.

@@ -6,6 +6,7 @@ Created on 12 oct. 2010
 @author: thierry
 '''
 from trac.core import *
+from trac.notification import NotifyEmail, Notify
 from trac.admin import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider
 from trac.web.chrome import add_notice, add_warning
@@ -14,7 +15,11 @@ from trac.util.text import exception_to_unicode
 from threading import Timer
 from time import  time, localtime
 
-
+###############################################################################
+##
+##                     I N T E R F A C E    A P I
+##
+###############################################################################
 
 class ICronTask(Interface):
     """
@@ -66,6 +71,11 @@ class ISchedulerType(Interface):
         raise NotImplementedError
     
 
+###############################################################################
+##
+##        C O R E    C L A S S E  S     O F     T H E    P L U G I N 
+##
+###############################################################################
 
 class Core(Component):    
     """
@@ -103,11 +113,11 @@ class Core(Component):
             Core.current_ticker.cancel(wait=wait)
 
         if self.getCronConf().get_ticker_enabled():
-                self.env.log.debug("ticker is enabled")
-                # try to execute task a first time
-                # because we don't want to wait for interval to elapse
-                self.check_task()
-        	Core.current_ticker = Ticker(self.env,self.getCronConf().get_ticker_interval(), self.check_task)
+            self.env.log.debug("ticker is enabled")
+            # try to execute task a first time
+            # because we don't want to wait for interval to elapse
+            self.check_task()
+            Core.current_ticker = Ticker(self.env,self.getCronConf().get_ticker_interval(), self.check_task)
         else:
             self.env.log.debug("ticker is disabled")
             
@@ -165,7 +175,7 @@ class Core(Component):
     # IAdminPanel interface
     
     def get_admin_panels(self, req):
-       return self.webUi.get_admin_panels(req)
+        return self.webUi.get_admin_panels(req)
 
 
     def render_admin_panel(self, req, category, page, path_info):
@@ -177,9 +187,55 @@ class Core(Component):
 
 
     def get_templates_dirs(self):
-       return self.webUi.get_templates_dirs()
+        return self.webUi.get_templates_dirs()
     
         
+
+class Ticker():
+    """
+    A Ticker is simply a simply timer that will repeatly wake up.
+    """
+    
+    
+    def __init__(self, env, interval, callback):
+        """
+        Create a new Ticker.
+        env : the trac environnement
+        interval: interval in minute
+        callback: the function callback to call o every wake-up
+        """
+        self.env = env
+        self.interval = interval
+        self.callback = callback
+        self.timer = None
+        self.create_new_timer()
+        
+    def create_new_timer(self, wait=False):
+        """
+        Create a new timer before killing existing one if required.
+        wait : if True the current thread wait until running task finished. Default is False
+        """
+        self.env.log.debug("create new ticker")
+        if (self.timer != None):
+            self.timer.cancel()
+            if ( wait ):
+                self.timer.join()            
+        
+        self.timer = Timer(self.interval * 60 , self.wake_up)
+        self.timer.start()
+        self.env.log.debug("new ticker started")
+
+    def wake_up(self):
+        self.env.log.debug("ticker wake up")
+        self.callback()
+        self.create_new_timer()
+        
+    
+    def cancel(self, wait=False):
+        self.timer.cancel()
+        if (wait):
+            self.timer.join()
+
         
  
 class CronConfig():
@@ -397,6 +453,13 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
                                'writable by the web server. Your changes have '
                                'not been saved.'))
 
+
+
+###############################################################################
+##
+##          O U T    O F    T H E    B O X    S C H E D U L E R
+##
+###############################################################################
     
 
 class SchedulerType(ISchedulerType):
@@ -437,13 +500,13 @@ class SchedulerType(ISchedulerType):
         return False
     
     def compareTime(self, currentTime, schedule_value):
-         """
-         Test is accordingly to this scheduler, given currentTime and schedule value,
-         is time to fire the task.
-         currentTime is a structure computed by time.localtime(time())
-         scheduled_value is the value of the configuration in trac.ini      
-         """
-         raise NotImplementedError
+        """
+        Test is accordingly to this scheduler, given currentTime and schedule value,
+        is time to fire the task.
+        currentTime is a structure computed by time.localtime(time())
+        scheduled_value is the value of the configuration in trac.ini      
+        """
+        raise NotImplementedError
     
     def _get_task_schedule_value_list(self, task):
         return self.cronconf.get_schedule_value_list(task, self)
@@ -561,50 +624,13 @@ class MonthlyScheduler(Component, SchedulerType):
             return False   
 
 
-class Ticker():
-    """
-    A Ticker is simply a simply timer that will repeatly wake up.
-    """
-    
-    
-    def __init__(self, env, interval, callback):
-        """
-        Create a new Ticker.
-        env : the trac environnement
-        interval: interval in minute
-        callback: the function callback to call o every wake-up
-        """
-        self.env = env
-        self.interval = interval
-        self.callback = callback
-        self.timer = None
-        self.create_new_timer()
-        
-    def create_new_timer(self, wait=False):
-        """
-        Create a new timer before killing existing one if required.
-        wait : if True the current thread wait until running task finished. Default is False
-        """
-        self.env.log.debug("create new ticker")
-        if (self.timer != None):
-            self.timer.cancel()
-            if ( wait ):
-                self.timer.join()            
-        
-        self.timer = Timer(self.interval * 60 , self.wake_up)
-        self.timer.start()
-        self.env.log.debug("new ticker started")
 
-    def wake_up(self):
-        self.env.log.debug("ticker wake up")
-        self.callback()
-        self.create_new_timer()
-        
-    
-    def cancel(self, wait=False):
-        self.timer.cancel()
-        if (wait):
-            self.timer.join()
+
+###############################################################################
+##
+##             O U T    O F    T H E    B O X    T A S K
+##
+###############################################################################
 
 
 class HeartBeatTask(Component,ICronTask):
@@ -628,5 +654,124 @@ class HeartBeatTask(Component,ICronTask):
     def getDescription(self):
         return self.__doc__
         
+
+class SleepingTicketReminderTask(Component, ICronTask, ITemplateProvider):
+    """
+    Remind user about sleeping ticket they are assigned to.
+    """
+       
+    implements(ICronTask, ITemplateProvider)
     
+    def get_htdocs_dirs(self):
+        return []
+
+
+    def get_templates_dirs(self):
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+
+    
+    def wake_up(self, *args):
+        delay = 3        
+        if len(args) > 0:
+            delay = int(args[0])
+        
+        
+        class SleepingTicketNotification(NotifyEmail):
+            
+            template_name  = "sleeping_ticket_template.txt"
+            
+            def __init__(self, env):
+                NotifyEmail.__init__(self, env)
+
+            def get_recipients(self, owner):
+                return ([owner],[])
+
+                
+            
+            def remind(self, tiketsByOwner):
+                """
+                Send a digest mail to ticket owner to remind him of those
+                sleeping tickets
+                """
+                for owner in tiketsByOwner.keys():  
+                    # prepare the data for the email content generation                      
+                    self.data.update({
+                                      "ticket_count": len(tiketsByOwner[owner]),
+                                      "delay": delay
+                                      })                                          
+                    NotifyEmail.notify(self, owner, "Sleeping ticket notification")
+
+            def send(self, torcpts, ccrcpts):
+                return NotifyEmail.send(self, torcpts, ccrcpts)
+
+            
+        class OrphanedTicketNotification(NotifyEmail):
+            
+            template_name  = "orphaned_ticket_template.txt"
+            
+            def __init__(self, env):
+                NotifyEmail.__init__(self, env)
+                
+            def get_recipients(self, reporter):
+                 return ([reporter],[])
+            
+            def remind(self, tiketsByReporter):
+                """
+                Send a digest mail to the reporter to remind them
+                of those orphaned tickets
+                """
+                for reporter in tiketsByReporter.keys():  
+                    # prepare the data for the email content generation                      
+                    self.data.update({
+                                      "ticket_count": len(tiketsByReporter[owner]),
+                                      "delay": delay
+                                      })                                          
+                    NotifyEmail.notify(self, reporter, "orphaned ticket notification")
+
+
+            def send(self, torcpts, ccrcpts):
+                return NotifyEmail.send(self, torcpts, ccrcpts)            
+            
+                                
+        # look for ticket assigned but not touched since more that the delay       
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        # assigned ticket
+        cursor.execute("""
+                SELECT t.id , t.owner  FROM ticket t, ticket_change tc                        
+                WHERE  t.id = tc.ticket  
+                AND    t.status in ('new','assigned','accepted')
+                AND    (SELECT MAX(tc2.time) FROM ticket_change tc2 WHERE tc2.ticket=tc.ticket)  < %s GROUP BY t.id
+            """, (time() - delay * 24 * 60 * 60,) )
+        dico = {}
+        for ticket, owner in cursor:
+            self.env.log.info("warning ticket %d assigned to %s but is inactive since more than %d day" % (ticket, owner, delay))
+            if dico.has_key(owner):
+                dico[owner].append(ticket)
+            else:
+                dico[owner] = [ticket]
+        SleepingTicketNotification(self.env).remind(dico)
+        # orphaned ticket
+        cursor.execute("""
+               SELECT t.id, t.reporter  FROM  ticket t
+               WHERE  t.id not in (select tc.ticket FROM ticket_change tc WHERE tc.ticket=t.id)
+               AND t.time < %s AND t.status = 'new'
+            """, (time() - delay * 24 * 60 * 60,) )
+        dico = {}
+        for ticket, reporter in cursor:
+            self.env.log.info("warning ticket %d is new but orphaned" % (ticket,))
+            if dico.has_key(reporter):
+                dico[reporter].append(ticket)
+            else:
+                dico[reporter] = [ticket]
+        OrphanedTicketNotification(self.env).remind(dico)
+    
+    def getId(self):
+        return "sleeping_ticket"
+    
+    def getDescription(self):
+        return self.__doc__
+    
+
     
