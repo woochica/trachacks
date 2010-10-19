@@ -176,7 +176,7 @@ class ADAuthStore(Component):
         # email address session attribute.  If it fails, don't worry, it's
         # already there.
         cnx = self.env.get_db_cnx()
-        lastvisit = int(time.time())
+        lastvisit = 0
         for uname, displayname, email in userinfo:
             try:
                 cur = cnx.cursor()
