@@ -70,6 +70,26 @@ class ISchedulerType(Interface):
         """
         raise NotImplementedError
     
+    
+
+class ITaskEventListener(Interface):
+    """
+    Interface that listen to event occuring on task
+    """    
+    
+    def onStartTask(self, task):
+        """
+        called by the core system when the task is triggered,
+        just before the waek_up method is called
+        """
+        raise NotImplementedError
+
+    def onEndTask(self, task, success):
+        """
+        called by the core system when the tsak execution is finished,
+        just after the task wake_up method exit
+        """
+        raise NotImplementedError
 
 ###############################################################################
 ##
@@ -88,6 +108,8 @@ class Core(Component):
     cron_tack_list = ExtensionPoint(ICronTask)
     
     supported_schedule_type = ExtensionPoint(ISchedulerType)
+    
+    task_event_list = ExtensionPoint(ITaskEventListener)
     
 
     current_ticker = None
@@ -158,11 +180,16 @@ class Core(Component):
                             self.env.log.info("executing task " + task.getId());
                             try:
                                 args = self.cronconf.get_schedule_arg_list(task, schedule)
+                                
+                                # notify listener
+                                self._notify_start_task(task)
                                 task.wake_up(*args)
                             except Exception, e:
-                                self.env.log.error('task execution result : FAILURE %s', exception_to_unicode(e))        
+                                self.env.log.error('task execution result : FAILURE %s', exception_to_unicode(e))
+                                self._notify_end_task(task, success=False)        
                             else:
                                 self.env.log.info("task execution result : SUCCESS")
+                                self._notify_end_task(task)
                                 self.env.log.info("task " + task.getId() + " finished");
                         else:
                             self.env.log.debug("nothing to do for " + task.getId());
@@ -189,7 +216,25 @@ class Core(Component):
     def get_templates_dirs(self):
         return self.webUi.get_templates_dirs()
     
-        
+    # internal method
+  
+    def _notify_start_task(self, task):
+        for listener in self.task_event_list:
+            try:
+                listener.onStartTask(task)
+            except Exception, e:
+                self.env.log.warn("listener %s failed  onStartTask event : %s" % (str(listener),exception_to_unicode(e)))
+
+
+    def _notify_end_task(self, task, success=True):
+        for listener in self.task_event_list:
+            try:
+                listener.onEndTask(task, success)
+            except Exception, e:
+                self.env.log.warn("listener %s failed  onEndTask event : %s" % (str(listener),exception_to_unicode(e)))
+
+
+
 
 class Ticker():
     """
@@ -259,6 +304,13 @@ class CronConfig():
 
     SCHEDULE_ARGUMENT_KEY ="arg"
     SCHEDULE_ARGUMENT_DEFAULT = ""
+    
+    TASK_LISTENER_LIMIT_KEY = "task_listener.limit"
+    TASK_LISTENER_LIMIT_DEFAULT = 1
+    
+    TASK_LISTENER_RECIPIENT_KEY = "task_listener.recipient"
+    TASK_LISTENER_RECIPIENT_DEFAULT = ""
+    
 
     def __init__(self, env):
         self.env = env
@@ -323,6 +375,26 @@ class CronConfig():
     
     def set_schedule_arg(self, task, schedule, value):
         self.env.config.set(self.TRACCRON_SECTION, task.getId() + "." + schedule.getId() + "." + self.SCHEDULE_ARGUMENT_KEY, value)
+    
+  
+    def get_task_listener_limit(self):
+        """
+        Return the number of task event to notify.
+        """
+        return self.env.config.getint(self.TRACCRON_SECTION, self.TASK_LISTENER_LIMIT_KEY, self.TASK_LISTENER_LIMIT_DEFAULT)
+    
+    def get_task_listener_recipient(self):
+        """
+        Return the recipients for task listener as raw value
+        """
+        return self.env.config.get(self.TRACCRON_SECTION, self.TASK_LISTENER_RECIPIENT_KEY, self.TASK_LISTENER_RECIPIENT_DEFAULT)
+    
+    def get_task_listener_recipient_list(self):
+        """
+        Return the recipients for task listener
+        """
+        return self.env.config.getlist(self.TRACCRON_SECTION, self.TASK_LISTENER_RECIPIENT_KEY)
+
     
     def set_value(self, key, value):
         self.env.config.set(self.TRACCRON_SECTION, key, value)
@@ -773,5 +845,126 @@ class SleepingTicketReminderTask(Component, ICronTask, ITemplateProvider):
     def getDescription(self):
         return self.__doc__
     
+###############################################################################
+##
+##        O U T    O F    T H E    B O X    T A S K    L I S T E N E R
+##
+###############################################################################
+
+
+class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvider):
+    """
+    This task listener send notification mail abot task event.
+    """
+    implements(ITaskEventListener)
+    
+    
+    class NotifyEmailTaskEvent(NotifyEmail):
+            
+            template_name  = "notify_task_event_template.txt"
+            
+            def __init__(self, env):
+                NotifyEmail.__init__(self, env)
+                self.cronconf = CronConfig(self.env)
+
+            def get_recipients(self, resid):
+                """
+                Return the recipients as defined in trac.ini.                
+                """
+                reclist = self.cronconf.get_task_listener_recipient_list()                
+                return (reclist, [])
+                
+            
+            def notifyTaskEvent(self, task_event_list):
+                """
+                Send task event by mail if recipients is defined in trac.ini
+                """
+                self.env.log.debug("notifying task event...")             
+                if (self.cronconf.get_task_listener_recipient() ):                                    
+                    # prepare the data for the email content generation
+                    mess = ""      
+                    start = True
+                    for event in task_event_list:
+                        if start:                        
+                            mess = mess + "task[%s]" % (event.task.getId(),)                       
+                            mess = mess + "\nstarted at %d h %d" % (event.time.tm_hour, event.time.tm_min)
+                            mess = mess + "\n"
+                        else:
+                            mess = mess + "ended at %d h %d" % (event.time.tm_hour, event.time.tm_min)
+                            if (event.success):
+                                mess = mess + "\nsuccess"
+                            else:
+                                mess = mess + "\nFAILURE"
+                            mess = mess + "\n\n"
+                        start = not start                            
+
+                    self.data.update({
+                                     "notify_body": mess,                                        
+                                      })                                          
+                    NotifyEmail.notify(self, None, "task event notification")
+                else:
+                    self.env.log.debug("no recipient for task event, aborting")
+
+            def send(self, torcpts, ccrcpts):
+                return NotifyEmail.send(self, torcpts, ccrcpts)
 
     
+    
+    def __init__(self):        
+        self.cronconf = CronConfig(self.env)
+        self.task_event_buffer = []
+        self.task_count = 0
+        self.notifier = NotificationEmailTaskEvent.NotifyEmailTaskEvent(self.env)
+    
+    
+    class StartTaskEvent():
+        """
+        Store the event of a task start
+        """
+        def __init__(self, task):
+            self.task = task
+            self.time = localtime(time())
+    
+    
+    class EndTaskEvent():
+        """
+        Store the event of a task end
+        """
+        def __init__(self, task, success):
+            self.task = task
+            self.time = localtime(time())
+            self.success = success
+            
+            
+            
+    def get_htdocs_dirs(self):
+        return []
+
+
+    def get_templates_dirs(self):
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+    
+    
+    def onStartTask(self, task):
+        """
+        called by the core system when the task is triggered,
+        just before the waek_up method is called
+        """
+        self.task_event_buffer.append(NotificationEmailTaskEvent.StartTaskEvent(task)) 
+        self.task_count = self.task_count + 1
+
+    def onEndTask(self, task, success):
+        """
+        called by the core system when the tsak execution is finished,
+        just after the task wake_up method exit
+        """
+        self.task_event_buffer.append(NotificationEmailTaskEvent.EndTaskEvent(task, success))
+        # if the buffer reach the count then we notify
+        if ( self.task_count >= self.cronconf.get_task_listener_limit()):
+            # send the mail
+            self.notifier.notifyTaskEvent(self.task_event_buffer)
+            
+            # reset task event buffer
+            self.task_event_buffer[:] = []
+            self.task_count= 0

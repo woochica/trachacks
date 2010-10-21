@@ -1,0 +1,3 @@
+The above task has been run by Trac Cron Plugin
+
+$notify_body
