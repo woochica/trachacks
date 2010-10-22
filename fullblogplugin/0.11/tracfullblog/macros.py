@@ -34,6 +34,7 @@ class BlogListMacro(WikiMacroBase):
      * `heading=` - a heading for the list
      * `format=` - type of display (see below for details)
      * `max_size=` - max. number of characters to render for each post
+     * `meta=` - use `=off` to hide date, author and categories (default 'on')
 
     Example showing some available named arguments:
     {{{
@@ -71,6 +72,7 @@ class BlogListMacro(WikiMacroBase):
         format = args_dict.get('format', 'inline').lower()
         heading = args_dict.get('heading', '')
         max_size = int(args_dict.get('max_size', 0))
+        show_meta = args_dict.get('meta', '') != 'off' and True or False
 
         # Get blog posts
         all_posts = get_blog_posts(self.env, author=author, category=category,
@@ -98,31 +100,33 @@ class BlogListMacro(WikiMacroBase):
         if format == 'inline':
             data = {'heading': heading,
                     'posts': post_list,
+                    'show_meta': show_meta,
                     'execute_blog_macro': True}
             return Chrome(self.env).render_template(formatter.req,
                     'fullblog_macro_monthlist.html', data=data, fragment=True)
 
         elif format == 'full':
             return self._render_full_format(formatter, post_list,
-                                            post_instances, heading, max_size)
+                                post_instances, heading, max_size, show_meta)
 
         elif format == 'float':
             # Essentially a 'full' list - just wrapped inside a new div
             return tag.div(self._render_full_format(formatter, post_list,
-                                    post_instances, heading, max_size),
+                                post_instances, heading, max_size, show_meta),
                             class_="blogflash")
 
         else:
             raise TracError("Invalid 'format' argument used for macro %s." % name)
 
     def _render_full_format(self, formatter, post_list, post_instances, heading,
-                                    max_size):
+                                    max_size, metadata):
         """ Renters full blog posts. """
         out = tag.div(class_="blog")
         out.append(tag.div(heading, class_="blog-list-title"))
         for post in post_instances:
             data = {'post': post,
                     'list_mode': True,
+                    'show_meta': show_meta,
                     'execute_blog_macro': True}
             if max_size:
                 data['blog_max_size'] = max_size

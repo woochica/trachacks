@@ -11,7 +11,7 @@
           or post.body)}
         <p py:if="do_shorten"><a href="${href.blog(post.name)}">(Read more)</a></p>
     </div>
-    <ul class="metainfo">
+    <ul class="metainfo" py:if="not defined('show_meta') and True or show_meta">
       <li class="metadates">Posted: ${format_datetime(post.publish_time, '%Y-%m-%d %H:%M')}
         <span class="metaupdated" py:if="len(post.versions) > 1">
           (Updated: ${format_datetime(post.version_time, '%Y-%m-%d %H:%M')})
