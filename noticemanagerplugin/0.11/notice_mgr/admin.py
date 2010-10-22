@@ -63,7 +63,7 @@ class NoticeManagerAdminPage(Component):
 	if ldap_import == 1:	
 	    for name,value in self.config.options('ldap'):
 	        if name in LDAP_DIRECTORY_PARAMS:
-		    self._ldapcfg[name] = value
+		    self._ldapcfg[str(name)] = value
 
     # IAdminPageProvider
     def get_admin_panels(self, req):
