@@ -1,0 +1,10 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<relationalModel class="oracle.dbtools.crest.model.design.relational.RelationalDesign" name="Relational Model" id="7D647A59-3AFB-3FF1-3CBB-1AA6340C14E2" mainViewID="CD7F1848-EFE7-AA40-9F7E-7B712E98165E">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 13:26:28 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 13:44:13 UTC</changedTime>
+   <ownerDesignName>TracReleasePlugin</ownerDesignName>
+   <shouldBeOpen>true</shouldBeOpen>
+   <selectedRDBMSSite>D9582E4E-79E2-319F-387A-2ED963CB9D32</selectedRDBMSSite>
+</relationalModel>

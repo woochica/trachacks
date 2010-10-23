@@ -1,0 +1,154 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" id="735A7493-40AF-938B-AB50-6E2018E45931" directorySegmentName="seg_0" name="Release">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 16:29:03 UTC</changedTime>
+   <generatorID>712BA111-2033-F409-7C99-BCD693A6B4FD</generatorID>
+   <ownerDesignName>DataModel</ownerDesignName>
+   <pkName>Release_PK</pkName>
+   <abbreviation>Release</abbreviation>
+   <fonts>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Title</foType>
+         <fontStyle>1</fontStyle>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Column</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Datatype</foType>
+         <colorRGB>-16744448</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>PK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>FK Element</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>UK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Not Null</foType>
+         <colorRGB>-65536</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Key</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+   </fonts>
+   <columns>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="ReleaseID" id="DA642A56-A418-40DE-FDEE-CB6923AA4C04">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Release unique identifier.</comment>
+         <generatorID>293C4F6D-E3AC-59EC-EE89-939E5AC64D3F</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>1E14A461-4F62-478C-2C00-BDEF47315746</domain>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="ReleaseName" id="D6B608AE-9C89-F381-DF2A-57E5E2C3545F">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Release name.</comment>
+         <generatorID>0D81E468-434B-F139-6BEF-99D321F4EE4B</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+         <domain>8F7D0246-E7A9-02C8-A6E4-7398123E27F8</domain>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="ReleaseVersion" id="ED7663D3-2292-8E0B-E5E4-934E02750677">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Release version.</comment>
+         <generatorID>D6F11286-E61D-751E-5215-3FF597CD8FC2</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+         <domain>3F620842-A77E-B834-F6AC-68D9A9124E64</domain>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="CreationDate" id="E572648F-213F-19F3-F239-A54B2922E930">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:29:03 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:29:03 UTC</changedTime>
+         <generatorID>FE0CB7D5-ACFD-BB40-4A42-1A13DE4040D6</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>1</use>
+         <logicalDatatype>LOGDT008</logicalDatatype>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="ReleaseStatus" id="86F89B64-96BF-BAE3-20E2-FF29D15D7225">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:29:03 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:29:03 UTC</changedTime>
+         <comment>Release Status</comment>
+         <generatorID>B5338DA9-585B-2D34-B55A-6AB3C1A41109</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>52F935B5-09CB-55F7-423F-3152F54C978A</domain>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="AppID" id="76D8535E-8FF5-CB1C-BAB4-9101C678807A">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Application unique identifier.</comment>
+         <generatorID>6A7B12CA-76C6-A6B9-18AE-95FBBEB1D364</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>F2CD5BD8-EEFA-78A4-F08E-10505CD855C1</domain>
+         <delegate>08EA1C20-8E3F-2A89-3AD9-ABE56F528A33</delegate>
+         <previousColumn>false</previousColumn>
+         <associations>
+            <colAssociation fkAssociation="E24CACEF-3CB7-E76E-B15C-B51F9EDB8F93" referredColumn="08EA1C20-8E3F-2A89-3AD9-ABE56F528A33"/>
+         </associations>
+      </Column>
+   </columns>
+   <indexes>
+      <ind_PK_UK class="oracle.dbtools.crest.model.design.relational.Index" id="448BA2A6-63D0-BC69-077C-0AD321F944F3" name="Release_PK">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <generatorID>A070E0E5-A609-758C-D951-3C22CAA60D8E</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <pk>true</pk>
+         <indexState>Primary Constraint</indexState>
+         <indexColumnUsage>
+            <colUsage columnID="DA642A56-A418-40DE-FDEE-CB6923AA4C04"/>
+         </indexColumnUsage>
+      </ind_PK_UK>
+      <ind_PK_UK class="oracle.dbtools.crest.model.design.relational.Index" id="455F3C45-F308-3AA7-9654-BCA53A249C90" name="FK_Release_Application">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <generatorID>A6C2CD24-96D7-959A-70C5-C56D4E7355EE</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <indexColumnUsage>
+            <colUsage columnID="76D8535E-8FF5-CB1C-BAB4-9101C678807A"/>
+         </indexColumnUsage>
+      </ind_PK_UK>
+   </indexes>
+</Table>

@@ -1,0 +1,9 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<LogicalDesign class="oracle.dbtools.crest.model.design.logical.LogicalDesign" name="Logical" id="5FB9FD1B-6AB9-22B2-A400-5D9BE1DC7B7E" mainViewID="5D0B140C-0555-7E2F-9807-3C3BF54D051A">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 13:26:28 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 13:44:49 UTC</changedTime>
+   <ownerDesignName>TracReleasePlugin</ownerDesignName>
+   <shouldBeOpen>false</shouldBeOpen>
+</LogicalDesign>

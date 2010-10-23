@@ -1,0 +1,12 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<BIResponsibleParty class="oracle.dbtools.crest.model.businessinfo.BIResponsibleParty" name="jtoledo" id="31878A6C-D7FE-1CA9-50EB-340ED4091AEB" directorySegmentName="seg_0">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 13:34:15 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 13:35:47 UTC</changedTime>
+   <ownerDesignName>TracReleasePlugin</ownerDesignName>
+   <responsibility>owner</responsibility>
+   <contacts>
+      <contact>E4804D87-14BD-4739-D55E-F1C04EE0F216</contact>
+   </contacts>
+</BIResponsibleParty>

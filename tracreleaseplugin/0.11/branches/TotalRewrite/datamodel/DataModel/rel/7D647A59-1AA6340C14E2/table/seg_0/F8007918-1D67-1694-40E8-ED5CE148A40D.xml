@@ -1,0 +1,143 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" id="F8007918-1D67-1694-40E8-ED5CE148A40D" directorySegmentName="seg_0" name="Artifact">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+   <generatorID>EBC0D976-83CA-C065-89CB-E4372B42AB65</generatorID>
+   <ownerDesignName>DataModel</ownerDesignName>
+   <pkName>Artifact_PK</pkName>
+   <fonts>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Title</foType>
+         <fontStyle>1</fontStyle>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Column</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Datatype</foType>
+         <colorRGB>-16744448</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>PK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>FK Element</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>UK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Not Null</foType>
+         <colorRGB>-65536</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Key</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+   </fonts>
+   <columns>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="ArtifactID" id="9493DF43-208D-7941-02BC-0F90AE00078F">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Artifact unique identifier.</comment>
+         <generatorID>899CFD76-E914-4771-7CD1-3C18B8B379F5</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>95E085B8-6FCC-57FC-D04B-926B5287F0A4</domain>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="ArtifactName" id="BAE43F69-3EDB-AE4B-44BA-3164647D58B9">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Artifact name.</comment>
+         <generatorID>CF4FF940-DEDA-A3B6-D806-013C676CFDF1</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+         <domain>8F7D0246-E7A9-02C8-A6E4-7398123E27F8</domain>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="ArtifactLocation" id="E0D7897D-A97D-464D-3C5B-D731A42BA888">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Where the artifact should be deployed.</comment>
+         <generatorID>042974F8-DEE9-B100-6D4C-D0D32CBA1E22</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <nullsAllowed>true</nullsAllowed>
+         <use>1</use>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+         <dataTypeSize>500</dataTypeSize>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="ArtifactType" id="84D0E6D0-A193-F371-CC2C-42AA5FAD9A98">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Artifact type.</comment>
+         <generatorID>F74FB015-8557-54BD-44D9-4F2226E6375C</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>3856E0C0-35FC-2591-F360-6EE1C794211F</domain>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="AppID" id="C012E47E-D4C2-1FEC-6FB7-24750314DD0F">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Application unique identifier.</comment>
+         <generatorID>94F78752-D5AE-9BA3-4795-1E81568204CB</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>F2CD5BD8-EEFA-78A4-F08E-10505CD855C1</domain>
+         <delegate>08EA1C20-8E3F-2A89-3AD9-ABE56F528A33</delegate>
+         <previousColumn>false</previousColumn>
+         <associations>
+            <colAssociation fkAssociation="BF570B15-ACD6-70FE-DD72-9E4C96AA5B54" referredColumn="08EA1C20-8E3F-2A89-3AD9-ABE56F528A33"/>
+         </associations>
+      </Column>
+   </columns>
+   <indexes>
+      <ind_PK_UK class="oracle.dbtools.crest.model.design.relational.Index" id="8F809C6E-89FF-8672-D033-DCDE1E9FB3EC" name="Artifact_PK">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <generatorID>B058D7F3-F782-DC51-25D9-1FBA25D62DE0</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <pk>true</pk>
+         <indexState>Primary Constraint</indexState>
+         <indexColumnUsage>
+            <colUsage columnID="9493DF43-208D-7941-02BC-0F90AE00078F"/>
+         </indexColumnUsage>
+      </ind_PK_UK>
+      <ind_PK_UK class="oracle.dbtools.crest.model.design.relational.Index" id="DB323194-E9A7-372E-C3EC-41A5278C9AE3" name="FK_Artifact_Application">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <generatorID>62CC6B52-A49E-30BD-A48B-EBAC913D6FAB</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <indexColumnUsage>
+            <colUsage columnID="C012E47E-D4C2-1FEC-6FB7-24750314DD0F"/>
+         </indexColumnUsage>
+      </ind_PK_UK>
+   </indexes>
+</Table>

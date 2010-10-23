@@ -1,0 +1,134 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" id="712BA111-2033-F409-7C99-BCD693A6B4FD" directorySegmentName="seg_0" name="Release">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 14:38:44 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 16:27:29 UTC</changedTime>
+   <ownerDesignName>DataModel</ownerDesignName>
+   <pkName>Release_PK</pkName>
+   <adequatelyNormalized>NO</adequatelyNormalized>
+   <expectedVolumes>0</expectedVolumes>
+   <fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+   <growthPercent>0</growthPercent>
+   <growthType>Year</growthType>
+   <maxVolumes>9999999</maxVolumes>
+   <minVolumes>0</minVolumes>
+   <normalForm>Third</normalForm>
+   <shortName>Release</shortName>
+   <fonts>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Title</foType>
+         <fontStyle>1</fontStyle>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Attribute</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Datatype</foType>
+         <colorRGB>-16744448</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>PK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>FK Element</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>UK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Not Null</foType>
+         <colorRGB>-65536</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Key</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+   </fonts>
+   <attributes>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ReleaseID" id="293C4F6D-E3AC-59EC-EE89-939E5AC64D3F">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 14:39:00 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 14:39:21 UTC</changedTime>
+         <comment>Release unique identifier.</comment>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>1E14A461-4F62-478C-2C00-BDEF47315746</domain>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ReleaseName" id="0D81E468-434B-F139-6BEF-99D321F4EE4B">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 14:39:21 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 14:39:36 UTC</changedTime>
+         <comment>Release name.</comment>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+         <domain>8F7D0246-E7A9-02C8-A6E4-7398123E27F8</domain>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ReleaseVersion" id="D6F11286-E61D-751E-5215-3FF597CD8FC2">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 14:39:41 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 14:39:57 UTC</changedTime>
+         <comment>Release version.</comment>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+         <domain>3F620842-A77E-B834-F6AC-68D9A9124E64</domain>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="CreationDate" id="FE0CB7D5-ACFD-BB40-4A42-1A13DE4040D6">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:21:16 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:21:54 UTC</changedTime>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>1</use>
+         <logicalDatatype>LOGDT008</logicalDatatype>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ReleaseStatus" id="B5338DA9-585B-2D34-B55A-6AB3C1A41109">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:26:55 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:27:10 UTC</changedTime>
+         <comment>Release Status</comment>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>52F935B5-09CB-55F7-423F-3152F54C978A</domain>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="AppID" id="6A7B12CA-76C6-A6B9-18AE-95FBBEB1D364">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 15:27:41 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 15:27:41 UTC</changedTime>
+         <comment>Application unique identifier.</comment>
+         <generatorID>A6C2CD24-96D7-959A-70C5-C56D4E7355EE</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <referedAttribute>554FECB8-38EF-127C-F080-328271015E4A</referedAttribute>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>F2CD5BD8-EEFA-78A4-F08E-10505CD855C1</domain>
+      </Attribute>
+   </attributes>
+   <identifiers>
+      <identifier class="oracle.dbtools.crest.model.design.logical.CandidateKey" id="A070E0E5-A609-758C-D951-3C22CAA60D8E" name="Release_PK">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 14:39:11 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:16:50 UTC</changedTime>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <pk>true</pk>
+         <usedAttributes>
+            <attributeRef>293C4F6D-E3AC-59EC-EE89-939E5AC64D3F</attributeRef>
+         </usedAttributes>
+      </identifier>
+   </identifiers>
+</Entity>

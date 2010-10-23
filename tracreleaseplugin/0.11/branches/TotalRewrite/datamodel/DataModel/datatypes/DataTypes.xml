@@ -1,0 +1,9 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<DataTypesDesign class="oracle.dbtools.crest.model.design.datatypes.DataTypesDesign" name="DataTypes" id="7BCBC373-0718-17E3-E9E4-57E2C30A4A29" mainViewID="3B1FBC61-C5D9-2A13-2F24-E6E696118DED">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 13:26:28 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 13:26:28 UTC</changedTime>
+   <ownerDesignName>TracReleasePlugin</ownerDesignName>
+   <shouldBeOpen>false</shouldBeOpen>
+</DataTypesDesign>

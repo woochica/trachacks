@@ -1,0 +1,16 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Relation class="oracle.dbtools.crest.model.design.logical.Relation" name="FK_Release_Application" id="A6C2CD24-96D7-959A-70C5-C56D4E7355EE" directorySegmentName="seg_0">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 15:27:41 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 16:16:50 UTC</changedTime>
+   <ownerDesignName>DataModel</ownerDesignName>
+   <identifying>false</identifying>
+   <optionalSource>false</optionalSource>
+   <optionalTarget>false</optionalTarget>
+   <sourceCardinality>1</sourceCardinality>
+   <sourceEntity>EC568D64-FB81-A4A1-B01E-AF8EBCA862D7</sourceEntity>
+   <targetCardinalityString>*</targetCardinalityString>
+   <targetEntity>712BA111-2033-F409-7C99-BCD693A6B4FD</targetEntity>
+   <transferable>true</transferable>
+</Relation>

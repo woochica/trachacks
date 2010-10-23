@@ -1,0 +1,126 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<DomainFile class="oracle.dbtools.crest.model.design.DomainFileWrapper" fileName="defaultdomains">
+   <domains>
+      <Domain class="oracle.dbtools.crest.model.design.Domain" name="ReleaseID" id="1E14A461-4F62-478C-2C00-BDEF47315746">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 14:00:40 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 14:01:31 UTC</changedTime>
+         <comment>Release unique ID</comment>
+         <ownerDesignName>System</ownerDesignName>
+         <avTSortOrder>0</avTSortOrder>
+         <dataTypePrecision>10</dataTypePrecision>
+         <dataTypeScale>0</dataTypeScale>
+         <dataTypeSize>10</dataTypeSize>
+         <fileName>defaultdomains</fileName>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+      </Domain>
+      <Domain class="oracle.dbtools.crest.model.design.Domain" name="ArtifactType" id="3856E0C0-35FC-2591-F360-6EE1C794211F">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 11:42:59 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 11:46:06 UTC</changedTime>
+         <ownerDesignName>System</ownerDesignName>
+         <avTSortOrder>0</avTSortOrder>
+         <dataTypePrecision>0</dataTypePrecision>
+         <dataTypeScale>0</dataTypeScale>
+         <dataTypeSize>2</dataTypeSize>
+         <fileName>defaultdomains</fileName>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <listOfValues>
+            <valueDef value="1" description="Versioned JAR file"/>
+            <valueDef value="2" description="EAR file"/>
+            <valueDef value="3" description="XML Service Definition file"/>
+            <valueDef value="4" description="XML Message Queue Definition file"/>
+            <valueDef value="5" description="XML Login Configuration file"/>
+            <valueDef value="6" description="Unversioned JAR file"/>
+         </listOfValues>
+      </Domain>
+      <Domain class="oracle.dbtools.crest.model.design.Domain" name="VersionID" id="3F620842-A77E-B834-F6AC-68D9A9124E64">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 14:03:54 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 14:04:10 UTC</changedTime>
+         <ownerDesignName>System</ownerDesignName>
+         <avTSortOrder>0</avTSortOrder>
+         <dataTypePrecision>100</dataTypePrecision>
+         <dataTypeSize>100</dataTypeSize>
+         <fileName>defaultdomains</fileName>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+      </Domain>
+      <Domain class="oracle.dbtools.crest.model.design.Domain" name="ReleaseStatus" id="52F935B5-09CB-55F7-423F-3152F54C978A">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:22:20 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:26:34 UTC</changedTime>
+         <ownerDesignName>System</ownerDesignName>
+         <avTSortOrder>0</avTSortOrder>
+         <dataTypePrecision>2</dataTypePrecision>
+         <dataTypeScale>0</dataTypeScale>
+         <dataTypeSize>2</dataTypeSize>
+         <fileName>defaultdomains</fileName>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <listOfValues>
+            <valueDef value="1" description="Preparation"/>
+            <valueDef value="10" description="Cancelled"/>
+            <valueDef value="2" description="UAT - Waiting for Approuval"/>
+            <valueDef value="3" description="UAT - Partially Installed"/>
+            <valueDef value="4" description="UAT - Totally Installed"/>
+            <valueDef value="5" description="UAT - Waiting Dependencies"/>
+            <valueDef value="6" description="UAT - Ready for Production"/>
+            <valueDef value="7" description="Production - Partially Installed"/>
+            <valueDef value="8" description="Production - Totally Installed"/>
+            <valueDef value="9" description="Finalized"/>
+         </listOfValues>
+      </Domain>
+      <Domain class="oracle.dbtools.crest.model.design.Domain" name="Name" id="8F7D0246-E7A9-02C8-A6E4-7398123E27F8">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 13:30:27 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 13:59:19 UTC</changedTime>
+         <ownerDesignName>System</ownerDesignName>
+         <avTSortOrder>0</avTSortOrder>
+         <dataTypeSize>100</dataTypeSize>
+         <fileName>defaultdomains</fileName>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+      </Domain>
+      <Domain class="oracle.dbtools.crest.model.design.Domain" name="ArtifactID" id="95E085B8-6FCC-57FC-D04B-926B5287F0A4">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 11:39:40 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 13:49:17 UTC</changedTime>
+         <comment>Unique Artifact ID</comment>
+         <ownerDesignName>System</ownerDesignName>
+         <avTSortOrder>0</avTSortOrder>
+         <dataTypePrecision>10</dataTypePrecision>
+         <dataTypeScale>0</dataTypeScale>
+         <dataTypeSize>10</dataTypeSize>
+         <fileName>defaultdomains</fileName>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+      </Domain>
+      <Domain class="oracle.dbtools.crest.model.design.Domain" name="Unknown" id="DOM3000004">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 11:31:53 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 11:31:53 UTC</changedTime>
+         <ownerDesignName>System</ownerDesignName>
+         <avTSortOrder>0</avTSortOrder>
+         <fileName>defaultdomains</fileName>
+         <logicalDatatype>LOGDT017</logicalDatatype>
+      </Domain>
+      <Domain class="oracle.dbtools.crest.model.design.Domain" name="ApplicationID" id="F2CD5BD8-EEFA-78A4-F08E-10505CD855C1">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 11:35:15 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 13:49:09 UTC</changedTime>
+         <comment>Application ID</comment>
+         <ownerDesignName>System</ownerDesignName>
+         <avTSortOrder>0</avTSortOrder>
+         <dataTypePrecision>8</dataTypePrecision>
+         <dataTypeScale>0</dataTypeScale>
+         <dataTypeSize>8</dataTypeSize>
+         <fileName>defaultdomains</fileName>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+      </Domain>
+   </domains>
+</DomainFile>

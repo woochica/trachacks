@@ -1,0 +1,11 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<BIContact class="oracle.dbtools.crest.model.businessinfo.BIContact" name="João A. Toledo" id="E4804D87-14BD-4739-D55E-F1C04EE0F216" directorySegmentName="seg_0">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 13:34:41 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 13:35:38 UTC</changedTime>
+   <ownerDesignName>TracReleasePlugin</ownerDesignName>
+   <emails>
+      <email>6836C984-231B-D610-543F-12A3283130AB</email>
+   </emails>
+</BIContact>

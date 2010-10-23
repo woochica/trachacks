@@ -1,0 +1,89 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Table class="oracle.dbtools.crest.model.design.relational.Table" id="269141CD-E6AD-55B2-3673-F903C275BF3A" directorySegmentName="seg_0" name="Application">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 16:12:57 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 16:17:17 UTC</changedTime>
+   <generatorID>EC568D64-FB81-A4A1-B01E-AF8EBCA862D7</generatorID>
+   <ownerDesignName>DataModel</ownerDesignName>
+   <pkName>Application_PK</pkName>
+   <abbreviation>App</abbreviation>
+   <fonts>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Title</foType>
+         <fontStyle>1</fontStyle>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Column</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Datatype</foType>
+         <colorRGB>-16744448</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>PK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>FK Element</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>UK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Not Null</foType>
+         <colorRGB>-65536</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Key</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+   </fonts>
+   <columns>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="AppID" id="08EA1C20-8E3F-2A89-3AD9-ABE56F528A33">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <comment>Application unique identifier.</comment>
+         <generatorID>554FECB8-38EF-127C-F080-328271015E4A</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>F2CD5BD8-EEFA-78A4-F08E-10505CD855C1</domain>
+         <previousColumn>false</previousColumn>
+      </Column>
+      <Column class="oracle.dbtools.crest.model.design.relational.Column" name="AppName" id="09D5EE86-88C3-BFA1-40D5-795C015F0287">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:17:17 UTC</changedTime>
+         <comment>Application common name.</comment>
+         <generatorID>CC0B1398-48EB-9D88-C486-B117E12D7DE3</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+         <domain>8F7D0246-E7A9-02C8-A6E4-7398123E27F8</domain>
+         <previousColumn>false</previousColumn>
+      </Column>
+   </columns>
+   <indexes>
+      <ind_PK_UK class="oracle.dbtools.crest.model.design.relational.Index" id="4E3D9DC2-4297-60E3-B092-F09009C12AA6" name="Application_PK">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:12:58 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:12:58 UTC</changedTime>
+         <generatorID>6789FC3E-F2BD-DC44-DEB4-0DD1D694DB11</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <pk>true</pk>
+         <indexState>Primary Constraint</indexState>
+         <indexColumnUsage>
+            <colUsage columnID="08EA1C20-8E3F-2A89-3AD9-ABE56F528A33"/>
+         </indexColumnUsage>
+      </ind_PK_UK>
+   </indexes>
+</Table>

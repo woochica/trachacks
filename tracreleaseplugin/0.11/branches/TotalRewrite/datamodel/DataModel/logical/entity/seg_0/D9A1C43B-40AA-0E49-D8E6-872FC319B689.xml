@@ -1,0 +1,104 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" id="D9A1C43B-40AA-0E49-D8E6-872FC319B689" directorySegmentName="seg_0" name="ReleaseArtifact">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 15:28:33 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 16:16:40 UTC</changedTime>
+   <ownerDesignName>DataModel</ownerDesignName>
+   <pkName>ReleaseArtifact_PK</pkName>
+   <adequatelyNormalized>NO</adequatelyNormalized>
+   <expectedVolumes>0</expectedVolumes>
+   <fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+   <growthPercent>0</growthPercent>
+   <growthType>Year</growthType>
+   <maxVolumes>9999999</maxVolumes>
+   <minVolumes>0</minVolumes>
+   <normalForm>Third</normalForm>
+   <fonts>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Title</foType>
+         <fontStyle>1</fontStyle>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Attribute</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Datatype</foType>
+         <colorRGB>-16744448</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>PK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>FK Element</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>UK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Not Null</foType>
+         <colorRGB>-65536</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Key</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+   </fonts>
+   <attributes>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ReleaseArtifactID" id="2FBF9F55-9490-C945-1164-98BAD748AFAF">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 15:28:55 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 15:29:27 UTC</changedTime>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>1</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <dataTypePrecision>10</dataTypePrecision>
+         <dataTypeScale>0</dataTypeScale>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ReleaseID" id="B20A4BD4-ED7E-0386-3FEA-ECDE563FD60C">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:08:28 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:08:28 UTC</changedTime>
+         <comment>Release unique identifier.</comment>
+         <generatorID>0BFF7595-F4C9-3DDE-085A-1B726BFB0B06</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <referedAttribute>293C4F6D-E3AC-59EC-EE89-939E5AC64D3F</referedAttribute>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>1E14A461-4F62-478C-2C00-BDEF47315746</domain>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ArtifactID" id="7A854F2A-3AB5-43DE-3671-5D53570E63AD">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 16:14:31 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:14:31 UTC</changedTime>
+         <comment>Artifact unique identifier.</comment>
+         <generatorID>C6461DCC-112B-5106-B41D-97841DFABA15</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <referedAttribute>899CFD76-E914-4771-7CD1-3C18B8B379F5</referedAttribute>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>95E085B8-6FCC-57FC-D04B-926B5287F0A4</domain>
+      </Attribute>
+   </attributes>
+   <identifiers>
+      <identifier class="oracle.dbtools.crest.model.design.logical.CandidateKey" id="E45DC8EB-AF39-4984-1503-1EEA500DC767" name="ReleaseArtifact_PK">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 15:29:11 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:16:40 UTC</changedTime>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <pk>true</pk>
+         <usedAttributes>
+            <attributeRef>2FBF9F55-9490-C945-1164-98BAD748AFAF</attributeRef>
+         </usedAttributes>
+      </identifier>
+   </identifiers>
+</Entity>

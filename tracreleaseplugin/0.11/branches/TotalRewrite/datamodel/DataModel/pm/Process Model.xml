@@ -1,0 +1,9 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<ProcessModel class="oracle.dbtools.crest.model.design.process.ProcessModel" name="Process Model" id="8CFB300F-EE23-9536-CA20-D4A2EBBCAC2E">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 13:26:28 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 13:26:28 UTC</changedTime>
+   <ownerDesignName>TracReleasePlugin</ownerDesignName>
+   <shouldBeOpen>false</shouldBeOpen>
+</ProcessModel>

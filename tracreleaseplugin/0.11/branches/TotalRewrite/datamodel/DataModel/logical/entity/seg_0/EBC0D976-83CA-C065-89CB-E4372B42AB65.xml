@@ -1,0 +1,125 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Entity class="oracle.dbtools.crest.model.design.logical.Entity" id="EBC0D976-83CA-C065-89CB-E4372B42AB65" directorySegmentName="seg_0" name="Artifact">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 13:30:59 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 16:14:31 UTC</changedTime>
+   <ownerDesignName>DataModel</ownerDesignName>
+   <pkName>Artifact_PK</pkName>
+   <adequatelyNormalized>NO</adequatelyNormalized>
+   <expectedVolumes>0</expectedVolumes>
+   <fwdEngineeringStrategyName>Single Table</fwdEngineeringStrategyName>
+   <growthPercent>0</growthPercent>
+   <growthType>Year</growthType>
+   <maxVolumes>9999999</maxVolumes>
+   <minVolumes>0</minVolumes>
+   <normalForm>Third</normalForm>
+   <fonts>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Title</foType>
+         <fontStyle>1</fontStyle>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Attribute</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Datatype</foType>
+         <colorRGB>-16744448</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>PK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>FK Element</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>UK Element</foType>
+         <colorRGB>-16776961</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Not Null</foType>
+         <colorRGB>-65536</colorRGB>
+      </FontObject>
+      <FontObject class="oracle.dbtools.crest.model.design.FontObjectWr">
+         <foType>Key</foType>
+         <colorRGB>-16777216</colorRGB>
+      </FontObject>
+   </fonts>
+   <attributes>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ArtifactID" id="899CFD76-E914-4771-7CD1-3C18B8B379F5">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 13:31:35 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 13:31:54 UTC</changedTime>
+         <comment>Artifact unique identifier.</comment>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>95E085B8-6FCC-57FC-D04B-926B5287F0A4</domain>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ArtifactName" id="CF4FF940-DEDA-A3B6-D806-013C676CFDF1">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 13:31:59 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 13:32:11 UTC</changedTime>
+         <comment>Artifact name.</comment>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+         <domain>8F7D0246-E7A9-02C8-A6E4-7398123E27F8</domain>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ArtifactLocation" id="042974F8-DEE9-B100-6D4C-D0D32CBA1E22">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 13:32:27 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 13:33:02 UTC</changedTime>
+         <comment>Where the artifact should be deployed.</comment>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <nullsAllowed>true</nullsAllowed>
+         <use>1</use>
+         <logicalDatatype>LOGDT024</logicalDatatype>
+         <dataTypeSize>500</dataTypeSize>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="ArtifactType" id="F74FB015-8557-54BD-44D9-4F2226E6375C">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 13:33:04 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 13:33:19 UTC</changedTime>
+         <comment>Artifact type.</comment>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>3856E0C0-35FC-2591-F360-6EE1C794211F</domain>
+      </Attribute>
+      <Attribute class="oracle.dbtools.crest.model.design.logical.Attribute" name="AppID" id="94F78752-D5AE-9BA3-4795-1E81568204CB">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 13:54:40 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 13:54:40 UTC</changedTime>
+         <comment>Application unique identifier.</comment>
+         <generatorID>62CC6B52-A49E-30BD-A48B-EBAC913D6FAB</generatorID>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <referedAttribute>554FECB8-38EF-127C-F080-328271015E4A</referedAttribute>
+         <use>0</use>
+         <logicalDatatype>LOGDT019</logicalDatatype>
+         <domain>F2CD5BD8-EEFA-78A4-F08E-10505CD855C1</domain>
+      </Attribute>
+   </attributes>
+   <identifiers>
+      <identifier class="oracle.dbtools.crest.model.design.logical.CandidateKey" id="B058D7F3-F782-DC51-25D9-1FBA25D62DE0" name="Artifact_PK">
+         <createdBy>jtoledo</createdBy>
+         <createdTime>2010-10-23 13:31:44 UTC</createdTime>
+         <changedBy>jtoledo</changedBy>
+         <changedTime>2010-10-23 16:14:19 UTC</changedTime>
+         <ownerDesignName>DataModel</ownerDesignName>
+         <pk>true</pk>
+         <usedAttributes>
+            <attributeRef>899CFD76-E914-4771-7CD1-3C18B8B379F5</attributeRef>
+         </usedAttributes>
+      </identifier>
+   </identifiers>
+</Entity>

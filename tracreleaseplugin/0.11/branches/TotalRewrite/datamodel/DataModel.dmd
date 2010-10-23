@@ -1,0 +1,10 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<OSDM_Design class="oracle.dbtools.crest.model.design.Design" name="DataModel" id="BAD63DA3-5E2D-538D-2629-29956F2CBAB9" version="3.4">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 13:26:28 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 16:30:42 UTC</changedTime>
+   <ownerDesignName>TracReleasePlugin</ownerDesignName>
+   <capitalNames>false</capitalNames>
+   <designId>BAD63DA3-5E2D-538D-2629-29956F2CBAB9</designId>
+</OSDM_Design>

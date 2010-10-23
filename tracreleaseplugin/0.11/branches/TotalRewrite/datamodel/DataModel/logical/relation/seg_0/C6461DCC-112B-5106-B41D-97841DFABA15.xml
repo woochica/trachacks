@@ -1,0 +1,16 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<Relation class="oracle.dbtools.crest.model.design.logical.Relation" name="FK_ReleaseArtifact_Artifact" id="C6461DCC-112B-5106-B41D-97841DFABA15" directorySegmentName="seg_0">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 16:13:53 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 16:15:49 UTC</changedTime>
+   <ownerDesignName>DataModel</ownerDesignName>
+   <identifying>false</identifying>
+   <optionalSource>false</optionalSource>
+   <optionalTarget>false</optionalTarget>
+   <sourceCardinality>1</sourceCardinality>
+   <sourceEntity>EBC0D976-83CA-C065-89CB-E4372B42AB65</sourceEntity>
+   <targetCardinalityString>*</targetCardinalityString>
+   <targetEntity>D9A1C43B-40AA-0E49-D8E6-872FC319B689</targetEntity>
+   <transferable>true</transferable>
+</Relation>

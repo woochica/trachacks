@@ -1,0 +1,9 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<BIEmail class="oracle.dbtools.crest.model.businessinfo.BIEmail" name="jtoledo" id="6836C984-231B-D610-543F-12A3283130AB" directorySegmentName="seg_0">
+   <createdBy>jtoledo</createdBy>
+   <createdTime>2010-10-23 13:34:56 UTC</createdTime>
+   <changedBy>jtoledo</changedBy>
+   <changedTime>2010-10-23 13:35:26 UTC</changedTime>
+   <ownerDesignName>TracReleasePlugin</ownerDesignName>
+   <emailAddress>chrprojs@toledosp.com.br</emailAddress>
+</BIEmail>
