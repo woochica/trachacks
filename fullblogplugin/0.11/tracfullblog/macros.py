@@ -119,7 +119,7 @@ class BlogListMacro(WikiMacroBase):
             raise TracError("Invalid 'format' argument used for macro %s." % name)
 
     def _render_full_format(self, formatter, post_list, post_instances, heading,
-                                    max_size, metadata):
+                                    max_size, show_meta):
         """ Renters full blog posts. """
         out = tag.div(class_="blog")
         out.append(tag.div(heading, class_="blog-list-title"))
