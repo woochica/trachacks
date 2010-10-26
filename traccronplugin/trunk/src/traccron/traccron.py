@@ -86,7 +86,7 @@ class ITaskEventListener(Interface):
 
     def onEndTask(self, task, success):
         """
-        called by the core system when the tsak execution is finished,
+        called by the core system when the task execution is finished,
         just after the task wake_up method exit
         """
         raise NotImplementedError
@@ -96,6 +96,33 @@ class ITaskEventListener(Interface):
         return the id of the listener. It is used in trac.ini
         """
         raise NotImplementedError
+    
+class IHistoryTaskExecutionStore(Interface):
+    """
+    Interface that store an history of task execution. 
+    """
+    
+    def addExecution(self, task, start, end, success):
+        """
+        Add a new execution of a task into this history.
+        Task is the task object.
+        start is the start time in second from EPOC
+        end is the end time in seconf from EPOC
+        """
+        raise NotImplementedError
+    
+    def getExecution(self, task=None, fromTime=None, toTime=None, sucess=None):
+        """
+        Return a iterator on all execution stored. Each element is a tuple
+        of (task, start time, end time, success status) where
+        task is the task object
+        start time and end time are second from EPOC
+        success status is a boolean value 
+        
+        Optional paramater can be used to filter the result.
+        """
+        raise NotImplementedError
+    
 
 ###############################################################################
 ##
@@ -115,8 +142,9 @@ class Core(Component):
     
     supported_schedule_type = ExtensionPoint(ISchedulerType)
     
-    task_event_list = ExtensionPoint(ITaskEventListener)
+    task_event_list = ExtensionPoint(ITaskEventListener)    
     
+    history_store_list = ExtensionPoint(IHistoryTaskExecutionStore)
 
     current_ticker = None
     
@@ -168,6 +196,14 @@ class Core(Component):
         """
         return self.supported_schedule_type
     
+    
+    def getHistoryList(self):
+        """
+        Return the list of history store
+        """
+        return self.history_store_list
+    
+    
     def check_task(self):
         """
         Check if any task need to be executed. This method is called by the Ticker.
@@ -184,11 +220,10 @@ class Core(Component):
                         # run task if needed
                         if schedule.isTriggerTime(task, currentTime):
                             self.env.log.info("executing task " + task.getId());
+                            # notify listener
+                            self._notify_start_task(task)
                             try:
-                                args = self.cronconf.get_schedule_arg_list(task, schedule)
-                                
-                                # notify listener
-                                self._notify_start_task(task)
+                                args = self.cronconf.get_schedule_arg_list(task, schedule)                                
                                 task.wake_up(*args)
                             except Exception, e:
                                 self.env.log.error('task execution result : FAILURE %s', exception_to_unicode(e))
@@ -435,6 +470,7 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
         self.env = core.env
         self.cron_task_list = core.getTaskList()
         self.cronconf = core.getCronConf()
+        self.history_store_list = core.getHistoryList()
         self.all_schedule_type = core.getSupportedScheduleType()
         self.core = core
     
@@ -475,7 +511,7 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
                         self.cronconf.set_value(arg_name, arg_value)                  
                 
                 self._save_config(req)
-                self.core.apply_config(wait=True)
+                self.core.apply_config(wait=True)            
                 req.redirect(req.abs_href.admin(category, page))
         else:            
             
@@ -514,6 +550,9 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
                 task_list.append(task_data)
             
             data['task_list'] = task_list
+            
+            # create history list
+            data['history_list'] = self._create_history_list()
             return 'cron_admin.html', data
                 
 
@@ -528,6 +567,27 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
 
     # internal method    
 
+    def _create_history_list(self):
+        """
+        Create list of task execution history
+        """
+        _history = []        
+        
+        for store in self.history_store_list:
+            for task, start, end, success in store.getExecution():
+                startTime  = localtime(start)
+                endTime  = localtime(end)                
+                _history.append({
+                                 "timestamp": start,
+                                 "date": "%d-%d-%d" % (startTime.tm_mon, startTime.tm_mday, startTime.tm_year),
+                                 "task":task.getId(),
+                                 "start": "%d h %d" % (startTime.tm_hour, startTime.tm_min),
+                                 "end": "%d h %d" % (endTime.tm_hour, endTime.tm_min),
+                                 "success": success
+                                 })
+        #apply sorting
+        _history.sort(None, lambda(x):x["timestamp"])
+        return _history
 
     def _save_config(self, req, notices=None):
         """Try to save the config, and display either a success notice or a
@@ -978,7 +1038,7 @@ class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvide
 
     def onEndTask(self, task, success):
         """
-        called by the core system when the tsak execution is finished,
+        called by the core system when the task execution is finished,
         just after the task wake_up method exit
         """
         self.task_event_buffer.append(NotificationEmailTaskEvent.EndTaskEvent(task, success))
@@ -993,3 +1053,72 @@ class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvide
 
     def getId(self):
         return self.cronconf.EMAIL_NOTIFIER_TASK_BASEKEY
+    
+class HistoryTaskEvent(Component,ITaskEventListener):
+    """
+    This task event listener catch task execution to fill all History store in its environment
+    """
+    
+    implements(ITaskEventListener)
+    
+    history_store_list = ExtensionPoint(IHistoryTaskExecutionStore)
+    
+    
+    def onStartTask(self, task):
+        """
+        called by the core system when the task is triggered,
+        just before the wake_up method is called
+        """
+        self.task = task
+        self.start = time()
+
+    def onEndTask(self, task, success):
+        """
+        called by the core system when the task execution is finished,
+        just after the task wake_up method exit
+        """ 
+        # currently Core assume that task are not threaded so any end event     
+        # match the previous start event
+        assert task.getId() == self.task.getId()
+        self.end = time()
+        self.success = success
+        
+        # notify all history store
+        self._notify_history()
+    
+    def getId(self):
+        """
+        return the id of the listener. It is used in trac.ini
+        """
+        return "history_task_event"
+    
+    def _notify_history(self):
+        for historyStore in self.history_store_list:
+            historyStore.addExecution(self.task, self.start, self.end, self.success)
+            
+###############################################################################
+##
+##        O U T    O F    T H E    B O X    H I S T O R Y    S T O R E
+##
+###############################################################################
+
+class MemoryHistoryStore(Component, IHistoryTaskExecutionStore):
+    
+    implements(IHistoryTaskExecutionStore)
+    
+    history = []
+    
+    def addExecution(self, task, start, end, success):
+        """
+        Add a new execution of a task into this history
+        """
+        self.history.append((task,start,end,success))
+    
+    def getExecution(self, task=None, fromTime=None, toTime=None, sucess=None):
+        """
+        Return a iterator on all execution stored. Each element is a tuple
+        of (task, start time, end time, success status)
+        """
+        for h in self.history:
+            yield h
+    
