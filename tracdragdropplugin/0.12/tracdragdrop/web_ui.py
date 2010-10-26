@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import cgi
+import os
 import re
 import shutil
 from pkg_resources import resource_filename
@@ -10,7 +11,6 @@ from trac.attachment import AttachmentModule
 from trac.core import Component, implements, TracError
 from trac.mimeview.api import Context
 from trac.perm import PermissionError
-from trac.resource import get_resource_url
 from trac.ticket.model import Ticket, Milestone
 from trac.web.api import IRequestHandler, IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script
@@ -24,13 +24,19 @@ __all__ = ['TracDragDropModule']
 _HEADER = 'X-TracDragDrop'
 
 
+def _list_message_files(dir):
+    return set(file[0:-3] for file in os.listdir(dir) if file.endswith('.js'))
+
+
 class TracDragDropModule(Component):
     implements(ITemplateProvider, IRequestFilter, IRequestHandler)
 
+    htdocs_dir = resource_filename(__name__, 'htdocs')
+    messages_files = _list_message_files(os.path.join(htdocs_dir, 'messages'))
+
     # ITemplateProvider#get_htdocs_dirs
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('tracdragdrop', resource_filename(__name__, 'htdocs'))]
+        return [('tracdragdrop', self.htdocs_dir)]
 
     # ITemplateProvider#get_templates_dirs
     def get_templates_dirs(self):
@@ -82,7 +88,7 @@ class TracDragDropModule(Component):
                     add_link(req, 'tracdragdrop.view', req.href.tracdragdrop('view', realm, name))
                     add_link(req, 'tracdragdrop.new', req.href.tracdragdrop('new', realm, name))
                     add_stylesheet(req, 'tracdragdrop/tracdragdrop.css')
-                    if req.locale is not None:
+                    if req.locale is not None and str(req.locale) in self.messages_files:
                         add_script(req, 'tracdragdrop/messages/%s.js' % req.locale)
                     add_script(req, 'tracdragdrop/tracdragdrop.js')
 
