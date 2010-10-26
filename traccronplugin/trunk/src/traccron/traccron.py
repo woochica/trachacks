@@ -90,6 +90,12 @@ class ITaskEventListener(Interface):
         just after the task wake_up method exit
         """
         raise NotImplementedError
+    
+    def getId(self):
+        """
+        return the id of the listener. It is used in trac.ini
+        """
+        raise NotImplementedError
 
 ###############################################################################
 ##
@@ -220,18 +226,21 @@ class Core(Component):
   
     def _notify_start_task(self, task):
         for listener in self.task_event_list:
-            try:
-                listener.onStartTask(task)
-            except Exception, e:
-                self.env.log.warn("listener %s failed  onStartTask event : %s" % (str(listener),exception_to_unicode(e)))
+            # notify only if listener is enabled
+            if self.cronconf.is_task_listener_enabled(listener):
+                try:    
+                    listener.onStartTask(task)
+                except Exception, e:
+                    self.env.log.warn("listener %s failed  onStartTask event : %s" % (str(listener),exception_to_unicode(e)))                                    
 
 
     def _notify_end_task(self, task, success=True):
         for listener in self.task_event_list:
-            try:
-                listener.onEndTask(task, success)
-            except Exception, e:
-                self.env.log.warn("listener %s failed  onEndTask event : %s" % (str(listener),exception_to_unicode(e)))
+            if self.cronconf.is_task_listener_enabled(listener):
+                try:
+                    listener.onEndTask(task, success)
+                except Exception, e:
+                    self.env.log.warn("listener %s failed  onEndTask event : %s" % (str(listener),exception_to_unicode(e)))
 
 
 
@@ -305,11 +314,16 @@ class CronConfig():
     SCHEDULE_ARGUMENT_KEY ="arg"
     SCHEDULE_ARGUMENT_DEFAULT = ""
     
-    TASK_LISTENER_LIMIT_KEY = "task_listener.limit"
-    TASK_LISTENER_LIMIT_DEFAULT = 1
+    TASK_LISTENER_ENABLED_KEY = "enabled"
+    TASK_LISTENER_ENABLED_DEFAULT = "True"    
     
-    TASK_LISTENER_RECIPIENT_KEY = "task_listener.recipient"
-    TASK_LISTENER_RECIPIENT_DEFAULT = ""
+    EMAIL_NOTIFIER_TASK_BASEKEY = "email_task_event"
+    
+    EMAIL_NOTIFIER_TASK_LIMIT_KEY = "limit"
+    EMAIL_NOTIFIER_TASK_LIMIT_DEFAULT = 1
+    
+    EMAIL_NOTIFIER_TASK_RECIPIENT_KEY = "recipient"
+    EMAIL_NOTIFIER_TASK_RECIPIENT_DEFAULT = ""
     
 
     def __init__(self, env):
@@ -377,24 +391,32 @@ class CronConfig():
         self.env.config.set(self.TRACCRON_SECTION, task.getId() + "." + schedule.getId() + "." + self.SCHEDULE_ARGUMENT_KEY, value)
     
   
-    def get_task_listener_limit(self):
+    def get_email_notifier_task_limit(self):
         """
         Return the number of task event to notify.
         """
-        return self.env.config.getint(self.TRACCRON_SECTION, self.TASK_LISTENER_LIMIT_KEY, self.TASK_LISTENER_LIMIT_DEFAULT)
+        return self.env.config.getint(self.TRACCRON_SECTION, 
+                                      self.EMAIL_NOTIFIER_TASK_BASEKEY + "." +  self.EMAIL_NOTIFIER_TASK_LIMIT_KEY, self.EMAIL_NOTIFIER_TASK_LIMIT_DEFAULT)
     
-    def get_task_listener_recipient(self):
+    def get_email_notifier_task_recipient(self):
         """
         Return the recipients for task listener as raw value
         """
-        return self.env.config.get(self.TRACCRON_SECTION, self.TASK_LISTENER_RECIPIENT_KEY, self.TASK_LISTENER_RECIPIENT_DEFAULT)
+        return self.env.config.get(self.TRACCRON_SECTION,
+                                   self.EMAIL_NOTIFIER_TASK_BASEKEY + "." +  self.EMAIL_NOTIFIER_TASK_RECIPIENT_KEY, self.EMAIL_NOTIFIER_TASK_RECIPIENT_DEFAULT)
     
-    def get_task_listener_recipient_list(self):
+    def get_email_notifier_task_recipient_list(self):
         """
         Return the recipients for task listener
         """
-        return self.env.config.getlist(self.TRACCRON_SECTION, self.TASK_LISTENER_RECIPIENT_KEY)
+        return self.env.config.getlist(self.TRACCRON_SECTION,
+                                       self.EMAIL_NOTIFIER_TASK_BASEKEY + "." +  self.EMAIL_NOTIFIER_TASK_RECIPIENT_KEY)
 
+    def is_task_listener_enabled(self, listener):
+        return self.env.config.getbool(self.TRACCRON_SECTION, listener.getId() + "." + self.TASK_LISTENER_ENABLED_KEY, self.TASK_LISTENER_ENABLED_DEFAULT)
+    
+    def set_task_listener_enabled(self, listener, value):
+        self.env.config.set(self.TRACCRON_SECTION, listener.getId() + "." + self.TASK_LISTENER_ENABLED_KEY, value) 
     
     def set_value(self, key, value):
         self.env.config.set(self.TRACCRON_SECTION, key, value)
@@ -854,7 +876,7 @@ class SleepingTicketReminderTask(Component, ICronTask, ITemplateProvider):
 
 class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvider):
     """
-    This task listener send notification mail abot task event.
+    This task listener send notification mail about task event.
     """
     implements(ITaskEventListener)
     
@@ -871,7 +893,7 @@ class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvide
                 """
                 Return the recipients as defined in trac.ini.                
                 """
-                reclist = self.cronconf.get_task_listener_recipient_list()                
+                reclist = self.cronconf.get_email_notifier_task_recipient_list()     
                 return (reclist, [])
                 
             
@@ -880,7 +902,7 @@ class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvide
                 Send task event by mail if recipients is defined in trac.ini
                 """
                 self.env.log.debug("notifying task event...")             
-                if (self.cronconf.get_task_listener_recipient() ):                                    
+                if self.cronconf.get_email_notifier_task_recipient() :                                    
                     # prepare the data for the email content generation
                     mess = ""      
                     start = True
@@ -961,10 +983,13 @@ class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvide
         """
         self.task_event_buffer.append(NotificationEmailTaskEvent.EndTaskEvent(task, success))
         # if the buffer reach the count then we notify
-        if ( self.task_count >= self.cronconf.get_task_listener_limit()):
+        if ( self.task_count >= self.cronconf.get_email_notifier_task_limit()):
             # send the mail
             self.notifier.notifyTaskEvent(self.task_event_buffer)
             
             # reset task event buffer
             self.task_event_buffer[:] = []
             self.task_count= 0
+
+    def getId(self):
+        return self.cronconf.EMAIL_NOTIFIER_TASK_BASEKEY
