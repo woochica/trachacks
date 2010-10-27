@@ -34,7 +34,7 @@ class ICronTask(Interface):
     
     def getId(self):
         """
-        Return the key to use in trac.ini to cinfigure this task
+        Return the key to use in trac.ini to configure this task
         """
         raise NotImplementedError
     
@@ -126,7 +126,7 @@ class IHistoryTaskExecutionStore(Interface):
 
 ###############################################################################
 ##
-##        C O R E    C L A S S E  S     O F     T H E    P L U G I N 
+##        C O R E    C L A S S E S     O F     T H E    P L U G I N 
 ##
 ###############################################################################
 
@@ -250,6 +250,7 @@ class Core(Component):
         return self.webUi.render_admin_panel(req, category, page, path_info)
 
     # ITemplateProvider interface
+    
     def get_htdocs_dirs(self):
         return self.webUi.get_htdocs_dirs()
 
@@ -257,6 +258,7 @@ class Core(Component):
     def get_templates_dirs(self):
         return self.webUi.get_templates_dirs()
     
+        
     # internal method
   
     def _notify_start_task(self, task):
@@ -466,6 +468,7 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
     """
     Class that deal with Web stuff. It is the both the controller and the page builder.
     """
+
     def __init__(self, core):        
         self.env = core.env
         self.cron_task_list = core.getTaskList()
@@ -473,10 +476,14 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
         self.history_store_list = core.getHistoryList()
         self.all_schedule_type = core.getSupportedScheduleType()
         self.core = core
+        
+    # IAdminPanelProvider
     
     def get_admin_panels(self, req):
         if ('TRAC_ADMIN' in req.perm) :
-            yield ('tracini', 'trac.ini', 'cron_admin', u'Trac Cron')
+            yield ('traccron', 'Trac Cron', 'cron_admin', u'Settings')
+            yield ('traccron', 'Trac Cron', 'cron_history', u'History')
+          
 
 
     def render_admin_panel(self, req, category, page, path_info):
@@ -485,76 +492,20 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
         data = {}
         
         if req.method == 'POST':
-            if 'save' in req.args:          
+            if 'save' in req.args:                          
+                self._saveSettings(req, category, page)
+        else:             
+            # which view to display ?
+            self.env.log.debug("category=%s" % str(category))           
+            self.env.log.debug("page=%s" % str(page))
+            self.env.log.debug("path_info=%s" % str(path_info))
+            if page == 'cron_admin':                
+                return self._displaySettingView()
+            elif page == 'cron_history':
+                return self._displayHistoryView()
                 
-                arg_name_list = [self.cronconf.TICKER_ENABLED_KEY,self.cronconf.TICKER_INTERVAL_KEY]
-                for task in self.cron_task_list:                        
-                    task_id = task.getId()                                       
-                    arg_name_list.append(task_id + "." + self.cronconf.TASK_ENABLED_KEY)     
-                    for schedule in self.all_schedule_type:
-                        schedule_id = schedule.getId()
-                        arg_name_list.append(task_id + "." + schedule_id)   
-                        arg_name_list.append(task_id + "." + schedule_id + "." + self.cronconf.SCHEDULE_ENABLED_KEY)     
-                        arg_name_list.append(task_id + "." + schedule_id + "." + self.cronconf.SCHEDULE_ARGUMENT_KEY)
-                
-                for arg_name in arg_name_list:                   
-                    arg_value = req.args.get(arg_name,"").strip()
-                    self.env.log.debug("receive req arg "+ arg_name + "=[" + arg_value + "]")
-                    if (arg_value == ""):
-                        # dont't remove the key because of default value may be True
-                        if ( arg_name.endswith(("." + self.cronconf.TASK_ENABLED_KEY, "." + self.cronconf.SCHEDULE_ENABLED_KEY))):
-                            self.cronconf.set_value(arg_name, "False")
-                        # otherwise we can remove the key 
-                        else:                                                  
-                            self.cronconf.remove_value(arg_name)                        
-                    else:
-                        self.cronconf.set_value(arg_name, arg_value)                  
-                
-                self._save_config(req)
-                self.core.apply_config(wait=True)            
-                req.redirect(req.abs_href.admin(category, page))
-        else:            
-            
-            data.update({
-                          self.cronconf.TICKER_ENABLED_KEY:self.cronconf.get_ticker_enabled(),
-                          self.cronconf.TICKER_INTERVAL_KEY: self.cronconf.get_ticker_interval()                         
-                          })
-            
-            task_list = []
-            
-            for task in self.cron_task_list:
-                task_data = {}
-                
-                task_data['enabled'] = self.cronconf.is_task_enabled(task)
-                task_data['id'] = task.getId()
-                task_data['description'] = task.getDescription()
-                
-                all_schedule_value = {}
-                for schedule in self.all_schedule_type:
-                    value = self.cronconf.get_schedule_value(task, schedule)
-                    if value is None:
-                        value = ""
-                    task_enabled = self.cronconf.is_schedule_enabled(task, schedule)
-                    task_arg = self.cronconf.get_schedule_arg(task, schedule)
-                    if task_arg is None:
-                        task_arg = ""
-                                        
-                    all_schedule_value[schedule.getId()] = {
-                                                                "value":value,
-                                                                "hint":schedule.getHint(),
-                                                                "enabled": task_enabled,
-                                                                "arg" : task_arg
-                                                            }
-                task_data['schedule_list'] = all_schedule_value                        
-                                        
-                task_list.append(task_data)
-            
-            data['task_list'] = task_list
-            
-            # create history list
-            data['history_list'] = self._create_history_list()
-            return 'cron_admin.html', data
-                
+
+    # ITemplateProvider
 
     def get_htdocs_dirs(self):
         return []
@@ -606,6 +557,70 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
             add_warning(req, _('Error writing to trac.ini, make sure it is '
                                'writable by the web server. Your changes have '
                                'not been saved.'))
+
+    def _displaySettingView(self, data= {}):
+        data.update({self.cronconf.TICKER_ENABLED_KEY:self.cronconf.get_ticker_enabled(), self.cronconf.TICKER_INTERVAL_KEY:self.cronconf.get_ticker_interval()})
+        task_list = []
+        for task in self.cron_task_list:
+            task_data = {}
+            task_data['enabled'] = self.cronconf.is_task_enabled(task)
+            task_data['id'] = task.getId()
+            task_data['description'] = task.getDescription()
+            all_schedule_value = {}
+            for schedule in self.all_schedule_type:
+                value = self.cronconf.get_schedule_value(task, schedule)
+                if value is None:
+                    value = ""
+                task_enabled = self.cronconf.is_schedule_enabled(task, schedule)
+                task_arg = self.cronconf.get_schedule_arg(task, schedule)
+                if task_arg is None:
+                    task_arg = ""
+                all_schedule_value[schedule.getId()] = {
+                    "value":value, 
+                    "hint":schedule.getHint(), 
+                    "enabled":task_enabled, 
+                    "arg":task_arg}
+            
+            task_data['schedule_list'] = all_schedule_value
+            task_list.append(task_data)
+        
+        data['task_list'] = task_list
+        return 'cron_admin.html', data
+    
+    def _displayHistoryView(self, data={}):
+             # create history list
+        data['history_list'] = self._create_history_list()
+        return 'cron_history.html', data
+
+    def _saveSettings(self, req, category, page):
+        arg_name_list = [self.cronconf.TICKER_ENABLED_KEY, self.cronconf.TICKER_INTERVAL_KEY]
+        for task in self.cron_task_list:
+            task_id = task.getId()
+            arg_name_list.append(task_id + "." + self.cronconf.TASK_ENABLED_KEY)
+            for schedule in self.all_schedule_type:
+                schedule_id = schedule.getId()
+                arg_name_list.append(task_id + "." + schedule_id)
+                arg_name_list.append(task_id + "." + schedule_id + "." + self.cronconf.SCHEDULE_ENABLED_KEY)
+                arg_name_list.append(task_id + "." + schedule_id + "." + self.cronconf.SCHEDULE_ARGUMENT_KEY)
+        
+        for arg_name in arg_name_list:
+            arg_value = req.args.get(arg_name, "").strip()
+            self.env.log.debug("receive req arg " + arg_name + "=[" + arg_value + "]")
+            if (arg_value == ""):
+                # dont't remove the key because of default value may be True
+                if (arg_name.endswith(("." + self.cronconf.TASK_ENABLED_KEY, "." + self.cronconf.SCHEDULE_ENABLED_KEY))):
+                    self.cronconf.set_value(arg_name, "False")
+                else:
+                    # otherwise we can remove the key
+                    self.cronconf.remove_value(arg_name)
+            else:
+                self.cronconf.set_value(arg_name, arg_value)
+        
+        self._save_config(req)
+        self.core.apply_config(wait=True)
+        req.redirect(req.abs_href.admin(category, page))
+
+
 
 
 

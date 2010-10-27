@@ -1,3 +1,3 @@
-The above task has been run by Trac Cron Plugin
+The following tasks have been run by Trac Cron Plugin
 
 $notify_body
