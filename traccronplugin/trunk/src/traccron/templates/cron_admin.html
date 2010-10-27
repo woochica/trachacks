@@ -45,7 +45,7 @@
     	 	</thead>
     	 	<tbody>
     	 		<tr py:for="task in task_list">
-	    	   		<td>${task['id']}</td>
+	    	   		<td>${task['id']}<a href="${href.traccron('runtask',[('task',task['id'])])}" title="Run now">&rarr;</a></td>
     	   			<td>${task['description']}</td>
     	   			<td>
     	   				 <py:choose test="task['enabled']">    	   				 	
@@ -84,8 +84,8 @@
     	   							</td>
     	   							<td>
     	   								<input type="text" id="${task['id']}.${type}.arg" name="${task['id']}.${type}.arg" value="${task['schedule_list'][type]['arg']}"/>
-    	   							</td>
-    	   							
+										<a href="${href.traccron('runtask',[('task',task['id']),('parameters',task['schedule_list'][type]['arg'])])}" title="Run now">&rarr;</a>    	   								    	   								    	   								
+    	   							</td>        	   								   						
     	   						</tr>
     	   					</tbody>
     	   				</table>

@@ -9,6 +9,7 @@ from trac.core import *
 from trac.notification import NotifyEmail, Notify
 from trac.admin import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider
+from trac.web.chrome import IRequestHandler
 from trac.web.chrome import add_notice, add_warning
 from trac.util.translation import _
 from trac.util.text import exception_to_unicode
@@ -136,7 +137,7 @@ class Core(Component):
     for Trac plugin architecture
     """    
     
-    implements(IAdminPanelProvider, ITemplateProvider)
+    implements(IAdminPanelProvider, ITemplateProvider, IRequestHandler)
     
     cron_tack_list = ExtensionPoint(ICronTask)
     
@@ -216,22 +217,10 @@ class Core(Component):
                 # test current time with task planing
                 self.env.log.debug("check task " + task.getId())
                 for schedule in self.supported_schedule_type:
-                    if self.cronconf.is_schedule_enabled(task, schedule):
+                    if self.cronconf.is_schedule_enabled(task, schedule=schedule):
                         # run task if needed
                         if schedule.isTriggerTime(task, currentTime):
-                            self.env.log.info("executing task " + task.getId());
-                            # notify listener
-                            self._notify_start_task(task)
-                            try:
-                                args = self.cronconf.get_schedule_arg_list(task, schedule)                                
-                                task.wake_up(*args)
-                            except Exception, e:
-                                self.env.log.error('task execution result : FAILURE %s', exception_to_unicode(e))
-                                self._notify_end_task(task, success=False)        
-                            else:
-                                self.env.log.info("task execution result : SUCCESS")
-                                self._notify_end_task(task)
-                                self.env.log.info("task " + task.getId() + " finished");
+                            self._runTask(task, schedule)
                         else:
                             self.env.log.debug("nothing to do for " + task.getId());
                     else:
@@ -239,6 +228,13 @@ class Core(Component):
             else:
                 self.env.log.debug("task " + task.getId() + " is disabled")
 
+
+    def runTask(self, task, parameters=None):
+        '''
+        run a given task with specified argument string
+        parameters maybe comma-separated values
+        '''
+        self._runTask(task, parameters=parameters)
         
     # IAdminPanel interface
     
@@ -258,7 +254,14 @@ class Core(Component):
     def get_templates_dirs(self):
         return self.webUi.get_templates_dirs()
     
-        
+    # IRequestHandler interface
+    
+    def match_request(self, req):
+        return self.webUi.match_request(req)
+
+    def process_request(self, req): 
+        return self.webUi.process_request(req)
+    
     # internal method
   
     def _notify_start_task(self, task):
@@ -278,6 +281,25 @@ class Core(Component):
                     listener.onEndTask(task, success)
                 except Exception, e:
                     self.env.log.warn("listener %s failed  onEndTask event : %s" % (str(listener),exception_to_unicode(e)))
+
+    def _runTask(self, task, schedule=None, parameters=None):
+        self.env.log.info("executing task " + task.getId()) # notify listener
+        self._notify_start_task(task)
+        try:
+            args = []
+            if schedule : 
+                args = self.cronconf.get_schedule_arg_list(task, schedule)
+            elif parameters:
+                args = parameters
+            task.wake_up(*args)
+        except Exception as e:
+            self.env.log.error('task execution result : FAILURE %s', exception_to_unicode(e))
+            self._notify_end_task(task, success=False)
+        else:
+            self.env.log.info("task execution result : SUCCESS")
+            self._notify_end_task(task)
+            self.env.log.info("task " + task.getId() + " finished")
+
 
 
 
@@ -464,7 +486,7 @@ class CronConfig():
     def save(self):
         self.env.config.save()
 
-class WebUi(IAdminPanelProvider, ITemplateProvider):
+class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
     """
     Class that deal with Web stuff. It is the both the controller and the page builder.
     """
@@ -496,9 +518,6 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
                 self._saveSettings(req, category, page)
         else:             
             # which view to display ?
-            self.env.log.debug("category=%s" % str(category))           
-            self.env.log.debug("page=%s" % str(page))
-            self.env.log.debug("path_info=%s" % str(path_info))
             if page == 'cron_admin':                
                 return self._displaySettingView()
             elif page == 'cron_history':
@@ -515,6 +534,19 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
+    # IRequestHandler interface
+    
+    def match_request(self, req):
+        return req.path_info.startswith('/traccron/')
+        
+    def process_request(self, req): 
+        if req.path_info == '/traccron/runtask':
+            self._runtask(req)
+        else:
+            self.env.log.warn("Trac Cron Plugin was unable to handle %s" % req.path_info)
+            add_warning(req, "The request was not handled by trac cron plugin")
+            req.redirect(req.href.admin('traccron','cron_admin'))
+            
 
     # internal method    
 
@@ -584,7 +616,7 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
             task_data['schedule_list'] = all_schedule_value
             task_list.append(task_data)
         
-        data['task_list'] = task_list
+        data['task_list'] = task_list      
         return 'cron_admin.html', data
     
     def _displayHistoryView(self, data={}):
@@ -621,8 +653,30 @@ class WebUi(IAdminPanelProvider, ITemplateProvider):
         req.redirect(req.abs_href.admin(category, page))
 
 
-
-
+    def _runtask(self, req):
+        taskId = req.args.get('task','')
+        
+        taskWithId = filter(lambda x: x.getId() == taskId, self.cron_task_list)
+        
+        if len(taskWithId) == 0:
+            self.env.log.error("The task with id %s was not found" % taskId)
+            add_warning(req, "The task with id %s was not found" % taskId)
+            req.redirect(req.href.admin('traccron','cron_admin'))
+        elif len(taskWithId) > 1:
+            self.env.log.error("Multiple task with id %s was not found" % taskId)
+            add_warning(req, "Multiple task with id %s was not found" % taskId) 
+            req.redirect(req.href.admin('traccron','cron_admin'))
+        else:
+            task = taskWithId[0]
+           
+            #create parameters list if needed
+            value = req.args.get('parameters', None)            
+            if value:               
+                parameters = [item.strip() for item in value.split(',')]
+                self.core.runTask(task, parameters=parameters)
+            else:           
+                self.core.runTask(task)
+            req.redirect(req.href.admin('traccron','cron_history'))
 
 ###############################################################################
 ##
