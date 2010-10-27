@@ -17,6 +17,7 @@ from trac.perm import PermissionError
 from trac.resource import ResourceNotFound
 from trac.util.datefmt import utc
 from trac.util.text import to_unicode
+from trac.web.api import RequestDone
 
 from tracrpc.api import XMLRPCSystem, IRPCProtocol, Binary, \
         RPCError, MethodNotFound, ProtocolException, ServiceException
@@ -146,6 +147,7 @@ class XmlRpcProtocol(Component):
         req.send_header('Content-Length', len(response))
         req.end_headers()
         req.write(response)
+        raise RequestDone
 
     def _normalize_xml_input(self, args):
         """ Normalizes arguments (at any level - traversing dicts and lists):
