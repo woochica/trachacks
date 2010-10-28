@@ -27,5 +27,11 @@ setup(
         'Framework :: Trac',
     ],
     install_requires = [],
-    entry_points = {'trac.plugins': ['traccron = traccron.traccron']},
+    entry_points = {'trac.plugins': [
+                                     'core = traccron.core',
+                                     'task = traccron.task',
+                                     'scheduler = traccron.scheduler',
+                                     'listener = traccron.listener',
+                                     'history = traccron.history'
+                                     ]},
 )
