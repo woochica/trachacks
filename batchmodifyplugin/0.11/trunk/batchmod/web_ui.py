@@ -8,12 +8,14 @@ from trac.config import Option, ListOption
 from trac.perm import IPermissionRequestor
 from trac.ticket import TicketSystem, Ticket
 from trac.ticket.query import QueryModule
+from trac.ticket.notification import TicketNotifyEmail
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, Chrome, \
                             add_script, add_stylesheet
 from trac.web.main import IRequestFilter
-from trac.util.datefmt import to_datetime, to_timestamp
+from trac.util.datefmt import to_datetime, to_timestamp, utc
 from genshi.filters.transform import Transformer
+from datetime import datetime
 import re
 
 __all__ = ['BatchModifyModule']
@@ -94,6 +96,8 @@ class BatchModifyModule(Component):
         batchFormData = dict(data)
         batchFormData['query_href']= req.session['query_href'] \
                                      or req.href.query()
+        batchFormData['notify_enabled'] = self.config.getbool('notification', 
+                                                        'smtp_enabled', False)
         
         ticketSystem = TicketSystem(self.env)
         fields = []
@@ -134,6 +138,9 @@ class BatchModifier:
         modify_changetime = bool(req.args.get(
                                               'batchmod_modify_changetime',
                                               False))
+        send_notifications = bool(req.args.get(
+                                              'batchmod_send_notifications',
+                                              False))
         
         values = self._get_new_ticket_values(req, env) 
         self._check_for_resolution(values)
@@ -147,7 +154,7 @@ class BatchModifier:
             raise TracError, 'No tickets selected'
         
         self._save_ticket_changes(req, env, log, selectedTickets, tickets, 
-                                  values, comment, modify_changetime)
+                                  values, comment, modify_changetime, send_notifications)
 
     def _get_new_ticket_values(self, req, env):
         """Pull all of the new values out of the post data."""
@@ -173,10 +180,11 @@ class BatchModifier:
             values['resolution'] = ''
 
     def _save_ticket_changes(self, req, env, log, selectedTickets, tickets,
-                             values, comment, modify_changetime):
+                             values, comment, modify_changetime, send_notifications):
         for id in selectedTickets:
             if id in tickets:
                 t = Ticket(env, int(id))
+                new_changetime = datetime.now(utc)
                 
                 log_msg = ""
                 if not modify_changetime:
@@ -190,7 +198,11 @@ class BatchModifier:
                                                           log)
                 
                 t.populate(_values)
-                t.save_changes(req.authname, comment)
+                t.save_changes(req.authname, comment, when=new_changetime)
+  
+                if send_notifications:
+                    tn = TicketNotifyEmail(env)
+                    tn.notify(t, newticket=0, modtime=new_changetime)
 
                 if not modify_changetime:
                     self._reset_changetime(env, original_changetime, t)
