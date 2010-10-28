@@ -22,6 +22,7 @@ setup(
     maintainer_email = "thierry@bressure.net",
     description = "Trac task scheduler  plugin for Trac.",
     license = "BSD",
+    url = "http://trac-hacks.org/wiki/TracCronPlugin",
     keywords = "trac cron schedeluer plugin",    
     classifiers = [
         'Framework :: Trac',
