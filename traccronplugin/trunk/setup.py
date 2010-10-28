@@ -12,7 +12,7 @@ from setuptools import find_packages, setup
 
 setup(
     name = 'TracCronPlugin',
-    version = '0.1',
+    version = '0.2',
     package_dir = {'': 'src'},
     packages= find_packages('src'),
     package_data = { 'traccron': [ 'templates/*.*'] },
