@@ -1,4 +1,4 @@
-# s5 plugin
+# slideshow plugin
 
 import re
 from trac.config import Option
@@ -11,7 +11,7 @@ from trac.wiki.formatter import wiki_to_html
 from trac.wiki.model import WikiPage
 from trac.util.html import escape, plaintext, Markup
 
-class S5Renderer(Component):
+class SlideShowRenderer(Component):
     implements(ITemplateProvider, IRequestHandler, IWikiMacroProvider,
                IContentConverter)
 
@@ -21,7 +21,7 @@ class S5Renderer(Component):
 
     # IRequestHandler methods
     def match_request(self, req):
-        match = re.match('^/s5/(.*)', req.path_info)
+        match = re.match('^/slideshow/(.*)', req.path_info)
         if match:
             if match.group(1):
                 req.args['page'] = match.group(1)
@@ -29,18 +29,18 @@ class S5Renderer(Component):
 
     def process_request(self, req):
 
-        default_theme = self.config['s5slideshow'].get('default_theme',
+        default_theme = self.config['slideshow'].get('default_theme',
                                                        'default')
         page = req.args.get('page', None)
         location = req.args.get('location', None)
         theme = req.args.get('theme', default_theme)
 
         if not page:
-            raise TracError('Invalid S5 template')
+            raise TracError('Invalid SlideShow template')
 
         page = WikiPage(self.env, name=page)
         if not page.exists:
-            raise TracError('Invalid S5 template "%s"' % page.name)
+            raise TracError('Invalid SlideShow template "%s"' % page.name)
 
         page_text = self.fixup_images_re.sub(r'[[Image(wiki:%s:\1)]]'
                                              % page.name, page.text)
@@ -91,7 +91,7 @@ class S5Renderer(Component):
         data['title_page'] = title_page
         data['slides'] = slides
 
-        return 's5.html', data, 'text/html'
+        return 'slideshow.html', data, 'text/html'
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -115,7 +115,7 @@ class S5Renderer(Component):
         resources on the local file system.
         """
         from pkg_resources import resource_filename
-        return [('s5', resource_filename(__name__, 'htdocs'))]
+        return [('slideshow', resource_filename(__name__, 'htdocs'))]
 
     # IWikiMacroProvider methods
     def get_macros(self):
@@ -132,15 +132,15 @@ class S5Renderer(Component):
                     <a href="%s%s">
                     <img style="float: right;" src="%s/icon.png" title="View as presentation"/>
                 </a>
-                """% (formatter.href('s5', match.group(1)), content and '?' + content or '',
-                      formatter.href('chrome', 's5')))
+                """% (formatter.href('slideshow', match.group(1)), content and '?' + content or '',
+                      formatter.href('chrome', 'slideshow')))
 
     # IContentConverter methods
     def get_supported_conversions(self):
-        opt = self.env.config.getbool('s5slideshow', 'show_content_conversion',                                       'true')
+        opt = self.env.config.getbool('slideshow', 'show_content_conversion',                                       'true')
         if opt:
-            yield ('s5', 'Slideshow', 's5', 'text/x-trac-wiki',
-                   'text/html;style=s5', 8)
+            yield ('slideshow', 'Slideshow', 'slideshow', 'text/x-trac-wiki',
+                   'text/html;style=slideshow', 8)
 
     def convert_content(self, req, mimetype, content, key):
         template, data, content_type = self.process_request(req)

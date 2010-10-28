@@ -15,12 +15,12 @@
 <meta name="defaultView" content="slideshow" />
 <meta name="controlVis" content="hidden" />
 <!-- style sheet links -->
-<link rel="stylesheet" href="<?cs var:chrome.href?>/s5/ui/<?cs var:theme ?>/slides.css" type="text/css" media="projection" id="slideProj" />
-<link rel="stylesheet" href="<?cs var:chrome.href?>/s5/ui/<?cs var:theme ?>/outline.css" type="text/css" media="screen" id="outlineStyle" />
-<link rel="stylesheet" href="<?cs var:chrome.href?>/s5/ui/<?cs var:theme ?>/print.css" type="text/css" media="print" id="slidePrint" />
-<link rel="stylesheet" href="<?cs var:chrome.href?>/s5/ui/<?cs var:theme ?>/opera.css" type="text/css" media="projection" id="operaFix" />
+<link rel="stylesheet" href="<?cs var:chrome.href?>/slideshow/ui/<?cs var:theme ?>/slides.css" type="text/css" media="projection" id="slideProj" />
+<link rel="stylesheet" href="<?cs var:chrome.href?>/slideshow/ui/<?cs var:theme ?>/outline.css" type="text/css" media="screen" id="outlineStyle" />
+<link rel="stylesheet" href="<?cs var:chrome.href?>/slideshow/ui/<?cs var:theme ?>/print.css" type="text/css" media="print" id="slidePrint" />
+<link rel="stylesheet" href="<?cs var:chrome.href?>/slideshow/ui/<?cs var:theme ?>/opera.css" type="text/css" media="projection" id="operaFix" />
 <!-- S5 JS -->
-<script src="<?cs var:chrome.href?>/s5/ui/<?cs var:theme ?>/slides.js" type="text/javascript"></script>
+<script src="<?cs var:chrome.href?>/slideshow/ui/<?cs var:theme ?>/slides.js" type="text/javascript"></script>
 </head>
 <body>
 
