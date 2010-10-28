@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:py="http://genshi.edgewall.org/"
+                   xmlns:dc="http://purl.org/dc/elements/1.1/"
+                   xmlns:xi="http://www.w3.org/2001/XInclude">
+  <channel>
+    <title>${project.name}  Cron Task</title>
+    <link>${abs_href.admin('traccron','cron_history')}</link>
+    <description>Trac Cron History</description>
+    <language>${req.locale and \
+                '%s-%s' % (req.locale.language, req.locale.territory) or \
+                'en-US'}</language>
+    <generator>Trac ${trac.version}</generator>
+    <image py:if="chrome.logo.src_abs">
+      <title>${project.name} Cron Task</title>
+      <url>${chrome.logo.src_abs}</url>
+      <link>${abs_href.admin('traccron','cron_history')}</link>
+    </image>
+
+    <item py:for="execution in history_list">           
+      <title py:if="execution['success']">${execution['task']} at ${execution['date']} ${execution['end']} succeed </title>                         
+      <title py:if="not execution['success']">${execution['task']} at ${execution['date']} ${execution['end']} FAILED </title>
+      <pubDate>${http_date(execution.datetime)}</pubDate>      
+      <link>${abs_href.admin('traccron','cron_history')}</link>
+      <guid isPermaLink="false">${abs_href.admin('traccron','cron_history')}/${execution.dateuid}</guid>
+ 	  <description>
+ 	  	${execution['task']} started at ${execution['start']} ended at ${execution['end']} with status
+			<py:if test="execution['success']">
+				success
+			</py:if>
+			<py:if test="not execution['success']">
+				FAILURE
+			</py:if>
+ 	  </description>      
+    </item>
+
+   </channel>
+</rss>

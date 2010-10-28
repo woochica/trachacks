@@ -11,13 +11,16 @@ Created on 28 oct. 2010
 ##
 ###############################################################################
 
+from datetime import datetime
+
 from trac.core import Component, ExtensionPoint, implements
 from trac.admin import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider
 from trac.web.chrome import IRequestHandler
-from trac.web.chrome import add_notice, add_warning
+from trac.web.chrome import add_notice, add_warning, add_link
 from trac.util.translation import _
 from trac.util.text import exception_to_unicode
+from trac.util.datefmt import utc, http_date
 from threading import Timer
 from time import  time, localtime
 
@@ -414,7 +417,7 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
             if page == 'cron_admin':                
                 return self._displaySettingView()
             elif page == 'cron_history':
-                return self._displayHistoryView()
+                return self._displayHistoryView(req)
                 
 
     # ITemplateProvider
@@ -435,6 +438,8 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
     def process_request(self, req): 
         if req.path_info == '/traccron/runtask':
             self._runtask(req)
+        elif  req.path_info == '/traccron/cron_history': 
+            return self._displayHistoryView(req)
         else:
             self.env.log.warn("Trac Cron Plugin was unable to handle %s" % req.path_info)
             add_warning(req, "The request was not handled by trac cron plugin")
@@ -452,18 +457,35 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
         for store in self.history_store_list:
             for task, start, end, success in store.getExecution():
                 startTime  = localtime(start)
-                endTime  = localtime(end)                
-                _history.append({
+                endTime  = localtime(end)         
+                date = datetime.fromtimestamp(start, utc)
+                execution = {
                                  "timestamp": start,
+                                 "datetime": date ,
+                                 "dateuid" : self._to_utimestamp(date),
                                  "date": "%d-%d-%d" % (startTime.tm_mon, startTime.tm_mday, startTime.tm_year),
                                  "task":task.getId(),
                                  "start": "%d h %d" % (startTime.tm_hour, startTime.tm_min),
                                  "end": "%d h %d" % (endTime.tm_hour, endTime.tm_min),
-                                 "success": success
-                                 })
+                                 "success": success                                 
+                                 }       
+                _history.append(execution)
+                for key in ["timestamp","datetime","dateuid"]:
+                    self.env.log.debug("%s=[%s]" % (key, execution[key]))
+
         #apply sorting
         _history.sort(None, lambda(x):x["timestamp"])
         return _history
+    
+    _epoc = datetime(1970, 1, 1, tzinfo=utc)
+    
+    def _to_utimestamp(self, dt):
+        """Return a microsecond POSIX timestamp for the given `datetime`."""
+        if not dt:
+            return 0
+        diff = dt - self._epoc
+        return (diff.days * 86400000000L + diff.seconds * 1000000
+                + diff.microseconds)
 
     def _save_config(self, req, notices=None):
         """Try to save the config, and display either a success notice or a
@@ -512,10 +534,19 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
         data['task_list'] = task_list      
         return 'cron_admin.html', data
     
-    def _displayHistoryView(self, data={}):
+    def _displayHistoryView(self, req, data={}):
          # create history list
         data['history_list'] = self._create_history_list()
-        return 'cron_history.html', data
+        
+        format = req.args.get('format')
+        if ( format == 'rss'):
+            return 'cron_history.rss', data,'application/rss+xml'
+        else:
+            rss_href = req.href.traccron('cron_history',             
+                                      format='rss')
+            add_link(req, 'alternate', rss_href, _('RSS Feed'),
+                     'application/rss+xml', 'rss')
+            return 'cron_history.html', data
 
     def _saveSettings(self, req, category, page):
         arg_name_list = [self.cronconf.TICKER_ENABLED_KEY, self.cronconf.TICKER_INTERVAL_KEY]

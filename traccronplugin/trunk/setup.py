@@ -29,10 +29,10 @@ setup(
     ],
     install_requires = [],
     entry_points = {'trac.plugins': [
-                                     'core = traccron.core',
-                                     'task = traccron.task',
-                                     'scheduler = traccron.scheduler',
-                                     'listener = traccron.listener',
-                                     'history = traccron.history'
+                                     'traccron.core = traccron.core',
+                                     'traccron.task = traccron.task',
+                                     'traccron.scheduler = traccron.scheduler',
+                                     'traccron.listener = traccron.listener',
+                                     'traccron.history = traccron.history'
                                      ]},
 )
