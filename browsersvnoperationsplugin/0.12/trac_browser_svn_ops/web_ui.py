@@ -18,7 +18,7 @@ from genshi.filters.transform import Transformer
 
 from contextmenu.contextmenu import ISourceBrowserContextMenuProvider
 
-from trac_browser_svn_ops.svn_fs import SubversionWriter, SubversionException
+from trac_browser_svn_ops.svn_fs import SubversionWriter
 
 def _get_repository(env, req):
     '''From env and req identify and return (reponame, repository, path), 
@@ -187,7 +187,7 @@ class TracBrowserOps(Component):
             repos_path = repos.normalize_path('/'.join([path, filename]))
             self.log.debug('Writing file %s to %s in %s', 
                            filename, repos_path, reponame)
-            svn_writer = SubversionWriter(repos, req.authname)
+            svn_writer = SubversionWriter(self.env, repos, req.authname)
             
             rev = svn_writer.put_content(repos_path, file_data, filename,
                                          commit_msg)
@@ -257,7 +257,7 @@ class TracBrowserOps(Component):
             src_paths = [repos.normalize_path('/'.join([path, src_name]))
                          for src_name in src_names]
             dst_path = repos.normalize_path('/'.join([path, dst_name]))
-            svn_writer = SubversionWriter(repos, req.authname)
+            svn_writer = SubversionWriter(self.env, repos, req.authname)
             
             try:
                 if operation == 'delete':
@@ -278,7 +278,7 @@ class TracBrowserOps(Component):
                 add_notice(req, "%s %i item(s) successfully" 
                                 % (verb, len(src_paths)))    
                     
-            except SubversionException, e:
+            except Exception, e:
                 self.log.exception("Failed when attempting svn operation "
                                    "%s with rename_only=%s: %s",
                                    operation, self.rename_only, e)
@@ -309,14 +309,14 @@ class TracBrowserOps(Component):
         reponame, repos, path = _get_repository(self.env, req)
         try:
             create_path = repos.normalize_path('/'.join([path, create_name]))
-            svn_writer = SubversionWriter(repos, req.authname)
+            svn_writer = SubversionWriter(self.env, repos, req.authname)
 
             try:
                 self.log.info('Creating folder %s in repository %s',
                               create_path, reponame)
                 svn_writer.make_dir(create_path, commit_msg)
             
-            except SubversionException, e:
+            except Exception, e:
                 self.log.exception("Failed to create directory: %s", e)
             
                 add_warning(req, "Failed to create folder: %s" 
@@ -559,7 +559,7 @@ class TracBrowserEdit(Component):
             filename = posixpath.basename(repos_path)
             self.log.debug('Writing file "%s" encoded as "%s" to "%s" in "%s"', 
                            filename, encoding, repos_path, reponame)
-            svn_writer = SubversionWriter(repos, req.authname)
+            svn_writer = SubversionWriter(self.env, repos, req.authname)
             
             try:
                 rev = svn_writer.put_content(repos_path, text_encoded, 
@@ -567,7 +567,7 @@ class TracBrowserEdit(Component):
                 add_notice(req, 'Committed changes to rev %i in "%s"' 
                                 % (rev, filename))
                 
-            except SubversionException, e:
+            except Exception, e:
                 self.log.exception('Failed when attempting svn write: %s',
                                    e)
                 add_warning(req, 'Failed to write edited file',

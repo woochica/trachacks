@@ -3,22 +3,20 @@ from trac.util.text import unicode_quote
 from trac.versioncontrol import Changeset, Node, Repository, \
                                 IRepositoryConnector, \
                                 NoSuchChangeset, NoSuchNode
-from trac.versioncontrol.svn_fs import SubversionRepository, SubversionNode      
+from trac.versioncontrol.svn_fs import SubversionRepository, SubversionNode, SubversionConnector
 from trac.versioncontrol.cache import CachedRepository
 
-# we need to understand the import hoops that
-# trac.versioncontrol.svn_fs go through in case we shouldn't do this.
-from svn import core, client, repos, fs
-SubversionException = core.SubversionException # nicer name for our
-                                               # importers to use
-                                               # without them having
-                                               # to import from svn
-                                               # themselves
-        
 class SubversionWriter(object):
-    def __init__(self, repos, username):
-        self.repos = repos
-        self.log = repos.log
+    def __init__(self, env, repository, username):
+        global fs, repos, core, delta, _kindmap, client
+
+        # have to avoid importing this from the svn bindings directly,
+        # see #define bug #420
+        SubversionConnector(env)
+        from trac.versioncontrol.svn_fs import core, fs, repos, client
+
+        self.repos = repository
+        self.log = repository.log
         self.username = username
         
     def put_content(self, repos_path, content, filename, commit_msg):
