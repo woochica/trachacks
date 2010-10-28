@@ -1,3 +1,21 @@
+********************************************************
+** BatchModifyPlugin 0.8.0 - r9368 (October 28, 2010) **
+********************************************************
+
+Added support for email notifications. If you have smtp enabled, notifications
+will be sent for each ticket as needed if you so choose. Thanks to gregmac for this patch.
+
+The other big change is that all ticket changes are now made in one transaction.
+
+Bug Fixes
+ #7654 - BatchMod under Trac 0.11.7 missing "quote" variable (http://trac-hacks.org/ticket/7654)
+ #7675 - Styling of "Change tickets" submit button (http://trac-hacks.org/ticket/7675)
+ #7553 - error with_transaction issue (http://trac-hacks.org/ticket/7553)
+ #7490 - [Patch] BatchModifyPlugin doesn't work with Trac 0.11.x (http://trac-hacks.org/ticket/7490)
+
+Enhancements
+ #3739 - Add option for mail notification (http://trac-hacks.org/ticket/3739)
+
 ****************************************************
 ** BatchModifyPlugin 0.7.1 - r8249 (July 9, 2010) **
 ****************************************************
