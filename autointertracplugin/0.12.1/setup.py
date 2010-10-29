@@ -3,7 +3,7 @@ from setuptools import setup
 PACKAGE = 'autointertracplugin'
 
 setup(name=PACKAGE,
-      version='0.0.2',
+      version='0.0.3',
       packages=[PACKAGE],
       url='http://www.trac-hacks.org/wiki/AutoInterTracPlugin',
       license='http://www.opensource.org/licenses/mit-license.php',

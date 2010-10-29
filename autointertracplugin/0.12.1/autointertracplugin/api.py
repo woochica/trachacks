@@ -23,9 +23,9 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
       original_save = trac.config.Configuration.save
       autointertrac = self
       self.ht = {}
-      def setup_config(self, load_defaults=False):
+      def setup_config(self):
         autointertrac.log.debug("AutoInterTrac: setup")
-        original_setup(self, load_defaults)
+        original_setup(self)
         c = self.config
         base_dir = c.get("intertrac", "base_dir")
         base_url = c.get("intertrac", "base_url")
