@@ -23,7 +23,7 @@ setup(
     description = "Trac task scheduler  plugin for Trac.",
     license = "BSD",
     url = "http://trac-hacks.org/wiki/TracCronPlugin",
-    keywords = "trac cron schedeluer plugin",    
+    keywords = "trac cron scheduler plugin",    
     classifiers = [
         'Framework :: Trac',
     ],

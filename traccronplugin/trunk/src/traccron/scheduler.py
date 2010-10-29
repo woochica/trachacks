@@ -175,3 +175,159 @@ class MonthlyScheduler(Component, SchedulerType):
         else:
             return False   
 
+class CronScheduler(Component, SchedulerType):
+    """
+    Scheduler that used a cron-like syntax to specified when task must be triggered
+    """
+    def __init__(self):
+        SchedulerType.__init__(self)
+
+        # Some utility classes / functions first
+    class AllMatch(set):
+        """
+        Universal set - match everything
+        Stand for * in cron expression
+        """
+        def __contains__(self, item): return True
+
+    class OmitMatch(AllMatch):
+        """
+        Stand for ? in cron expression
+        """
+        pass
+    
+    class CronExpressionError(Exception):
+        pass
+    
+    _allMatch = AllMatch()
+    _omitMatch = OmitMatch()
+    _event_parameter_for_cron_pos = {0:None, 1:"min",2:"hour",3:"day",4:"month",5:"dow",6:"year"}
+
+    # The actual Event class
+    class Event(object):
+        
+        
+        
+        def __init__(self,  min, hour, 
+                    day,  month, dow, year):
+            self.mins = self.conv_to_set(min)
+            self.hours= self.conv_to_set(hour)
+            self.days = self.conv_to_set(day)            
+            self.months = self.conv_to_set(month)
+            self.dow = self.conv_to_set(dow)
+            self.year = self.conv_to_set(year)
+
+        def conv_to_set(self, obj):  # Allow single integer to be provided
+            if isinstance(obj, (int,long)):
+                return set([obj])  # Single item
+            if not isinstance(obj, set):
+                obj = set(obj)
+                return obj
+            else:
+                return obj
+
+        def matchtime(self, t):
+            """Return True if this event should trigger at the specified localtime"""
+            return ((t.tm_min     in self.mins) and
+                    (t.tm_hour    in self.hours) and
+                    (t.tm_mday    in self.days) and
+                    (t.tm_mon   in self.months) and
+                    (t.tm_wday    in self.dow) and
+                    (t.tm_year    in self.year))
+
+
+
+    def getId(self):
+        return "cron"
+
+
+    def getHint(self):
+        return "use cron like expression"
+
+
+    def compareTime(self, currentTime, schedule_value):
+        
+        if schedule_value:
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with schedule_value " + schedule_value)
+        else:
+            self.env.log.debug(self.getId() + " compare currentTime=" + str(currentTime)  + " with NO schedule_value ")            
+        if schedule_value:           
+            try:
+                kwargs = self._parse_cron_expression(cron=schedule_value)
+            except CronScheduler.CronExpressionError:
+                self.env.log.debug("Failed to parse cron expression, can't compare current time")
+                return False
+            else:
+                return CronScheduler.Event(**kwargs).matchtime(t=currentTime)                
+        else:
+            return False   
+
+    def _parse_cron_expression(self, cron):
+        '''
+        Parse cron expression and return dictionary of argument key/value suitable
+        for Event object
+        '''
+        self.env.log.debug("parsing cron expression %s" % cron)
+        kwargs = {}
+        arglist = cron.split()
+        if len(arglist) < 6:
+            self.env.log.error("cron expression must have at least 6 items")
+            raise CronScheduler.CronExpressionError()
+        __event_parameter_for_cron_pos = CronScheduler._event_parameter_for_cron_pos
+        for pos in __event_parameter_for_cron_pos.keys():            
+            self.env.log.debug("item at pos %d" % pos)
+            event_param = __event_parameter_for_cron_pos.get(pos)
+            self.env.log.debug("event param %s" % event_param)            
+            if event_param and pos < len(arglist):                
+                value = arglist[pos]
+                self.env.log.debug("value in cron expression %s" % value)
+                if pos == 3:
+                    other_event_parm = __event_parameter_for_cron_pos.get(5)
+                    if value != '?':                       
+                        if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] != '?':
+                            self.env.log.error("invalid cron expression: ? %s already have a value" % __event_parameter_for_cron_pos[5])
+                            raise CronScheduler.CronExpressionError()
+                    if value == '?':
+                        if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] == '?':
+                            self.env.log.error("invalid cron expression: ? is already used for %s" % __event_parameter_for_cron_pos[5])
+                            raise CronScheduler.CronExpressionError()
+                        else:
+                            kwargs[event_param]=CronScheduler._omitMatch
+                    elif value == "*":
+                        kwargs[event_param] = CronScheduler._allMatch
+                    else:
+                        # Only int single value is supported
+                        kwargs[event_param]=int(value)
+                elif pos == 5:
+                    other_event_parm = __event_parameter_for_cron_pos.get(3)
+                    if value != '?':
+                        if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] != '?':
+                            self.env.log.error("invalid cron expression: ? %s already have a value" % __event_parameter_for_cron_pos[3])
+                            raise CronScheduler.CronExpressionError()
+                    if value == '?':
+                        if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] == '?':
+                            self.env.log.error("invalid cron expression: ? is already used for %s" % __event_parameter_for_cron_pos[3])
+                            raise CronScheduler.CronExpressionError()
+                        else:
+                            kwargs[event_param]=CronScheduler._omitMatch
+                    elif value == "*":
+                        kwargs[event_param] = CronScheduler._allMatch
+                    else:
+                        # Only int single value is supported
+                        # day of week starts at 1
+                        # since python localtime day of week start from 0
+                        kwargs[event_param]=int(value) - 1   
+                
+                elif value == "*":
+                    kwargs[event_param] = CronScheduler._allMatch                
+                else:
+                    # Only int single value is supported
+                    kwargs[event_param]=int(value) 
+                
+        # deal with optional item
+        year_parameter_name = __event_parameter_for_cron_pos.get(6)
+        if not kwargs.has_key(year_parameter_name):
+            kwargs[year_parameter_name] = CronScheduler._allMatch
+        
+        self.env.log.debug("result of parsing is %s" % str(kwargs))
+        return kwargs
