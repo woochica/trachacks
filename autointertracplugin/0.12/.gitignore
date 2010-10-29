@@ -1,0 +1,14 @@
+.svn
+build
+dist
+Thumbs.db
+thumbs.db
+*~
+*#
+*.fasl
+*.pyc
+etc/apache.conf
+/etc/init.d
+logs
+*.pyc
+*.egg-info
