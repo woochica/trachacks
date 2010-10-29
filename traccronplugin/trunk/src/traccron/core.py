@@ -11,7 +11,11 @@ Created on 28 oct. 2010
 ##
 ###############################################################################
 
-from datetime import datetime
+from datetime import datetime, timedelta
+from time import  time, localtime
+from threading import Timer
+
+
 
 from trac.core import Component, ExtensionPoint, implements
 from trac.admin import IAdminPanelProvider
@@ -21,8 +25,6 @@ from trac.web.chrome import add_notice, add_warning, add_link
 from trac.util.translation import _
 from trac.util.text import exception_to_unicode
 from trac.util.datefmt import utc, http_date
-from threading import Timer
-from time import  time, localtime
 
 from traccron.api import ICronTask, IHistoryTaskExecutionStore, ISchedulerType, ITaskEventListener
 
@@ -219,7 +221,7 @@ class Ticker():
         self.timer = None
         self.create_new_timer()
         
-    def create_new_timer(self, wait=False):
+    def create_new_timer(self, wait=False, delay=None):
         """
         Create a new timer before killing existing one if required.
         wait : if True the current thread wait until running task finished. Default is False
@@ -230,14 +232,40 @@ class Ticker():
             if ( wait ):
                 self.timer.join()            
         
-        self.timer = Timer(self.interval * 60 , self.wake_up)
+        if delay:
+            # use specified delay to wait
+            _delay = delay
+        else:
+            # use default delay
+            _delay = self.interval * 60 
+        self.timer = Timer( _delay, self.wake_up)
         self.timer.start()
         self.env.log.debug("new ticker started")
 
     def wake_up(self):
+        '''
+        Wake up this ticker. This ticker will call the callback function then
+        create a new timer to wake it up again
+        '''
         self.env.log.debug("ticker wake up")
-        self.callback()
-        self.create_new_timer()
+        in_hurry = True
+        while (in_hurry):
+            wake_up_time = datetime(*datetime.now().timetuple()[:5])
+        
+            self.callback()
+        
+            next_wake_up_time = wake_up_time + timedelta(minutes=self.interval)
+            now = datetime.now() 
+            if  now < next_wake_up_time:  
+                # calculate amount of second to wait in second
+                seconds_before_next_wake_up = (next_wake_up_time - now).seconds
+                self.create_new_timer(delay=seconds_before_next_wake_up)
+                in_hurry = False
+            else :
+                # the next wake up is over,
+                seconds_before_next_wake_up = (now - next_wake_up_time).seconds
+                self.env.log.warn("task processing duration overtake ticker interval\n"
+                                  "next wake up is over since %d seconds " % seconds_before_next_wake_up) 
         
     
     def cancel(self, wait=False):
@@ -470,8 +498,6 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
                                  "success": success                                 
                                  }       
                 _history.append(execution)
-                for key in ["timestamp","datetime","dateuid"]:
-                    self.env.log.debug("%s=[%s]" % (key, execution[key]))
 
         #apply sorting
         _history.sort(None, lambda(x):x["timestamp"])
