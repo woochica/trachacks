@@ -250,15 +250,20 @@ class Ticker():
         self.env.log.debug("ticker wake up")
         in_hurry = True
         while (in_hurry):
-            wake_up_time = datetime(*datetime.now().timetuple()[:5])
+            wake_up_time = datetime(*datetime.now().timetuple()[:6])
         
             self.callback()
         
             next_wake_up_time = wake_up_time + timedelta(minutes=self.interval)
             now = datetime.now() 
+            self.env.log.debug("last wake up time %s" % str(wake_up_time))
+            self.env.log.debug("next wake up time %s" % str(next_wake_up_time))
+            self.env.log.debug("current time %s" % str(now))
+
             if  now < next_wake_up_time:  
                 # calculate amount of second to wait in second
-                seconds_before_next_wake_up = (next_wake_up_time - now).seconds
+                seconds_before_next_wake_up = 1 + (next_wake_up_time - now).seconds # ensure always 1 second to avoid derivation 
+                self.env.log.debug("adjusted wait %s secondes" % seconds_before_next_wake_up)
                 self.create_new_timer(delay=seconds_before_next_wake_up)
                 in_hurry = False
             else :
