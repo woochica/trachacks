@@ -89,6 +89,12 @@ class ITaskEventListener(Interface):
         """
         raise NotImplementedError
     
+    def getDescription(self):
+        """
+        Return a description used in admin panel
+        """
+        raise NotImplementedError
+    
 class IHistoryTaskExecutionStore(Interface):
     """
     Interface that store an history of task execution. 

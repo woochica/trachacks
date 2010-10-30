@@ -80,7 +80,7 @@ class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvide
         self.cronconf = CronConfig(self.env)
         self.task_event_buffer = []
         self.task_count = 0
-        self.notifier = NotificationEmailTaskEvent.NotifyEmailTaskEvent(self.env)
+        self.notifier = None
     
     
     class StartTaskEvent():
@@ -129,6 +129,8 @@ class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvide
         # if the buffer reach the count then we notify
         if ( self.task_count >= self.cronconf.get_email_notifier_task_limit()):
             # send the mail
+            if not self.notifier:
+                self.notifier = NotificationEmailTaskEvent.NotifyEmailTaskEvent(self.env)
             self.notifier.notifyTaskEvent(self.task_event_buffer)
             
             # reset task event buffer
@@ -137,6 +139,9 @@ class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvide
 
     def getId(self):
         return self.cronconf.EMAIL_NOTIFIER_TASK_BASEKEY
+    
+    def getDescription(self):
+        return self.__doc__
     
 class HistoryTaskEvent(Component,ITaskEventListener):
     """
@@ -175,6 +180,9 @@ class HistoryTaskEvent(Component,ITaskEventListener):
         return the id of the listener. It is used in trac.ini
         """
         return "history_task_event"
+    
+    def getDescription(self):
+        return self.__doc__
     
     def _notify_history(self):
         for historyStore in self.history_store_list:

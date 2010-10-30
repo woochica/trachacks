@@ -102,6 +102,11 @@ class Core(Component):
         """
         return self.history_store_list
     
+    def getTaskListnerList(self):
+        """
+        Return the list of task event listener
+        """
+        return self.task_event_list
     
     def check_task(self):
         """
@@ -431,10 +436,11 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
 
     def __init__(self, core):        
         self.env = core.env
-        self.cron_task_list = core.getTaskList()
+        self.cron_task_list = core.getTaskList()        
         self.cronconf = core.getCronConf()
         self.history_store_list = core.getHistoryList()
         self.all_schedule_type = core.getSupportedScheduleType()
+        self.cron_listener_list = core.getTaskListnerList()        
         self.core = core
         
     # IAdminPanelProvider
@@ -443,23 +449,27 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
         if ('TRAC_ADMIN' in req.perm) :
             yield ('traccron', 'Trac Cron', 'cron_admin', u'Settings')
             yield ('traccron', 'Trac Cron', 'cron_history', u'History')
+            yield ('traccron', 'Trac Cron','cron_listener', u'Listener')
           
 
 
     def render_admin_panel(self, req, category, page, path_info):
-        req.perm.assert_permission('TRAC_ADMIN')
-        
-        data = {}
+        req.perm.assert_permission('TRAC_ADMIN')                
         
         if req.method == 'POST':
-            if 'save' in req.args:                          
-                self._saveSettings(req, category, page)
+            if 'save' in req.args:     
+                if page == 'cron_admin':                     
+                    self._saveSettings(req, category, page)
+                elif page == 'cron_listener':
+                    self._saveListenerSettings(req, category, page)                    
         else:             
             # which view to display ?
             if page == 'cron_admin':                
                 return self._displaySettingView()
             elif page == 'cron_history':
                 return self._displayHistoryView(req)
+            elif page == 'cron_listener':
+                return self._displayListenerView()
                 
 
     # ITemplateProvider
@@ -575,7 +585,7 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
         return 'cron_admin.html', data
     
     def _displayHistoryView(self, req, data={}):
-         # create history list
+        # create history list
         data['history_list'] = self._create_history_list()
         
         format = req.args.get('format')
@@ -587,7 +597,20 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
             add_link(req, 'alternate', rss_href, _('RSS Feed'),
                      'application/rss+xml', 'rss')
             return 'cron_history.html', data
-
+        
+    def _displayListenerView(self, data={}):
+        listener_list = []
+        for listener in self.cron_listener_list:
+            listener_data = {
+                             'id': listener.getId(),
+                             'enabled':self.cronconf.is_task_listener_enabled(listener) ,
+                             'description': listener.getDescription()
+                            }
+            listener_list.append(listener_data)
+        data["listener_list"] = listener_list
+        
+        return 'cron_listener.html', data
+    
     def _saveSettings(self, req, category, page):
         arg_name_list = [self.cronconf.TICKER_ENABLED_KEY, self.cronconf.TICKER_INTERVAL_KEY]
         for task in self.cron_task_list:
@@ -615,7 +638,30 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
         self._save_config(req)
         self.core.apply_config(wait=True)
         req.redirect(req.abs_href.admin(category, page))
+        
 
+    def _saveListenerSettings(self, req, category, page):
+        arg_name_list = []
+        for listener in self.cron_listener_list:
+            listener_id = listener.getId()
+            arg_name_list.append(listener_id + "." + self.cronconf.TASK_LISTENER_ENABLED_KEY)
+        
+        for arg_name in arg_name_list:
+            arg_value = req.args.get(arg_name, "").strip()
+            self.env.log.debug("receive req arg " + arg_name + "=[" + arg_value + "]")
+            if (arg_value == ""):
+                # dont't remove the key because of default value may be True
+                if (arg_name.endswith("." + self.cronconf.TASK_ENABLED_KEY)):
+                    self.cronconf.set_value(arg_name, "False")
+                else:
+                    # otherwise we can remove the key
+                    self.cronconf.remove_value(arg_name)
+            else:
+                self.cronconf.set_value(arg_name, arg_value)
+        
+        self._save_config(req)
+        self.core.apply_config(wait=True)
+        req.redirect(req.abs_href.admin(category, page))
 
     def _runtask(self, req):
         taskId = req.args.get('task','')
