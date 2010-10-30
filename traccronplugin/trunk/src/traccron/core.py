@@ -334,6 +334,10 @@ class CronConfig():
     EMAIL_NOTIFIER_TASK_RECIPIENT_KEY = "recipient"
     EMAIL_NOTIFIER_TASK_RECIPIENT_DEFAULT = ""
     
+    EMAIL_NOTIFIER_TASK_ONLY_ERROR_KEY = "only_error"
+    EMAIL_NOTIFIER_TASK_ONLY_ERROR_DEFAULT = "False"
+    
+    
 
     def __init__(self, env):
         self.env = env
@@ -421,6 +425,18 @@ class CronConfig():
         return self.env.config.getlist(self.TRACCRON_SECTION,
                                        self.EMAIL_NOTIFIER_TASK_BASEKEY + "." +  self.EMAIL_NOTIFIER_TASK_RECIPIENT_KEY)
 
+    def is_email_notifier_only_error(self):
+        """
+        Return the value that indicate of the notification must be sent only 
+        for task on error
+        """
+        return self.env.config.getbool(self.TRACCRON_SECTION,
+                                       self.EMAIL_NOTIFIER_TASK_BASEKEY + "."  + self.EMAIL_NOTIFIER_TASK_ONLY_ERROR_KEY,
+                                       self.EMAIL_NOTIFIER_TASK_ONLY_ERROR_DEFAULT)
+    
+    def set_email_notifier_only_error(self, value):
+        self.env.config.set(self.TRACCRON_SECTION, self.EMAIL_NOTIFIER_TASK_BASEKEY + "." + self.EMAIL_NOTIFIER_TASK_ONLY_ERROR_KEY, value)
+    
     def is_task_listener_enabled(self, listener):
         return self.env.config.getbool(self.TRACCRON_SECTION, listener.getId() + "." + self.TASK_LISTENER_ENABLED_KEY, self.TASK_LISTENER_ENABLED_DEFAULT)
     

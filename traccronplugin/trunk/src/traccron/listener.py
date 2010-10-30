@@ -125,6 +125,10 @@ class NotificationEmailTaskEvent(Component, ITaskEventListener, ITemplateProvide
         called by the core system when the task execution is finished,
         just after the task wake_up method exit
         """
+        if (self.cronconf.is_email_notifier_only_error() and success):
+            self.task_event_buffer.pop()
+            self.task_count -= 1
+            return
         self.task_event_buffer.append(NotificationEmailTaskEvent.EndTaskEvent(task, success))
         # if the buffer reach the count then we notify
         if ( self.task_count >= self.cronconf.get_email_notifier_task_limit()):

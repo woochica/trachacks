@@ -18,7 +18,7 @@ from traccron.api import ICronTask
 class HeartBeatTask(Component,ICronTask):
     """
     This is a simple task for testing purpose.
-    It only write a trace in log a debug level
+    It only write a trace in log at debug level
     """
     
     implements(ICronTask)
