@@ -194,14 +194,14 @@ class CronScheduler(Component, SchedulerType):
         """
         Stand for ? in cron expression
         """
-        pass
+        pass        
     
     class CronExpressionError(Exception):
         pass
     
     _allMatch = AllMatch()
     _omitMatch = OmitMatch()
-    _event_parameter_for_cron_pos = {0:None, 1:"min",2:"hour",3:"day",4:"month",5:"dow",6:"year"}
+    _event_parameter_for_cron_pos = {0:None, 1:"min",2:"hour",3:"day",4:"month",5:"dow",6:"year"}   
 
     # The actual Event class
     class Event(object):
@@ -231,7 +231,7 @@ class CronScheduler(Component, SchedulerType):
             return ((t.tm_min     in self.mins) and
                     (t.tm_hour    in self.hours) and
                     (t.tm_mday    in self.days) and
-                    (t.tm_mon   in self.months) and
+                    (t.tm_mon     in self.months) and
                     (t.tm_wday    in self.dow) and
                     (t.tm_year    in self.year))
 
@@ -262,6 +262,87 @@ class CronScheduler(Component, SchedulerType):
         else:
             return False   
 
+
+
+    def _parse_cron_default(self, kwargs, event_param, value, min_value, max_value, adjust=0):
+        """
+        utility method to parse value of a cron item.
+        Support of *, range expression (ex 1-10)
+        adjust is used to translate value (ex: first day of week is 0 in python and 1 in Cron)
+        """
+        if value == "*":
+            kwargs[event_param] = CronScheduler._allMatch
+        else:
+            begin, sep, end = value.partition("-")
+            if sep == '-':
+                # sanity check
+                _begin = int(begin)
+                _end = int(end)
+                if (_begin < min_value):
+                    self.env.log.error("invalid cron expression: start value of %s out of range [%d-%d] for %s" % (value,min_value,max_value, event_param))
+                    raise CronScheduler.CronExpressionError() 
+                if (_end > max_value):
+                    self.env.log.error("invalid cron expression: end value of %s out of range [%d-%d] for %s" % (value,min_value,max_value,event_param))
+                    raise CronScheduler.CronExpressionError()  
+                # cron range expression is inclusive
+                kwargs[event_param] = range(_begin + adjust, _end + 1 + adjust)
+            else:
+                begin, sep, step = value.partition("/")
+                if  sep =='/':
+                    # sanity check
+                    _begin = int(begin)                
+                    if ( ( _begin < min_value ) or ( _begin > max_value) ):
+                        self.env.log.error("invalid cron expression: start value of %s out of range [%d-%d] for %s" % (value,min_value,max_value,event_param))
+                        raise CronScheduler.CronExpressionError() 
+                    _step = int(step)
+                    # cron range expression is inclusive
+                    kwargs[event_param] = range(_begin + adjust, max_value + 1 + adjust, _step)                                            
+                else:
+                    # assuming  int single value
+                    _value = int(value)                
+                    if (( _value < min_value ) or ( _value > max_value) ):                        
+                        self.env.log.error("invalid cron expression: value of %s out of range [%d-%d] for %s" % (value, min_value, max_value, event_param))
+                        raise CronScheduler.CronExpressionError() 
+
+                    kwargs[event_param] = _value + adjust
+    
+        # range value
+
+    def _parse_cron_dmonth(self, kwargs, __event_parameter_for_cron_pos, event_param, value):
+        other_event_parm = __event_parameter_for_cron_pos.get(5)
+        if value != '?':
+            if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] != '?':
+                self.env.log.error("invalid cron expression: ? %s already have a value" % other_event_parm)
+                raise CronScheduler.CronExpressionError()
+        if value == '?':
+            if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] == '?':
+                self.env.log.error("invalid cron expression: ? is already used for %s" % other_event_parm)
+                raise CronScheduler.CronExpressionError()
+            else:
+                kwargs[event_param] = CronScheduler._omitMatch
+        else:
+            self._parse_cron_default(kwargs, event_param, value,1,31)       
+
+
+    def _parse_cron_dweek(self, kwargs, __event_parameter_for_cron_pos, event_param, value):
+        other_event_parm = __event_parameter_for_cron_pos.get(3)
+        if value != '?':
+            if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] != '?':
+                self.env.log.error("invalid cron expression: ? %s already have a value" % other_event_parm)
+                raise CronScheduler.CronExpressionError()
+        if value == '?':
+            if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] == '?':
+                self.env.log.error("invalid cron expression: ? is already used for %s" % other_event_parm)
+                raise CronScheduler.CronExpressionError()
+            else:
+                kwargs[event_param] = CronScheduler._omitMatch
+        else:        
+            # day of week starts at 1
+            # since python localtime day of week start from 0
+            self._parse_cron_default(kwargs, event_param, value, 1,7,adjust=-1)
+    
+               
+
     def _parse_cron_expression(self, cron):
         '''
         Parse cron expression and return dictionary of argument key/value suitable
@@ -274,55 +355,22 @@ class CronScheduler(Component, SchedulerType):
             self.env.log.error("cron expression must have at least 6 items")
             raise CronScheduler.CronExpressionError()
         __event_parameter_for_cron_pos = CronScheduler._event_parameter_for_cron_pos
-        for pos in __event_parameter_for_cron_pos.keys():            
-            self.env.log.debug("item at pos %d" % pos)
-            event_param = __event_parameter_for_cron_pos.get(pos)
-            self.env.log.debug("event param %s" % event_param)            
+        for pos in __event_parameter_for_cron_pos.keys():                        
+            event_param = __event_parameter_for_cron_pos.get(pos)                    
             if event_param and pos < len(arglist):                
-                value = arglist[pos]
-                self.env.log.debug("value in cron expression %s" % value)
-                if pos == 3:
-                    other_event_parm = __event_parameter_for_cron_pos.get(5)
-                    if value != '?':                       
-                        if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] != '?':
-                            self.env.log.error("invalid cron expression: ? %s already have a value" % __event_parameter_for_cron_pos[5])
-                            raise CronScheduler.CronExpressionError()
-                    if value == '?':
-                        if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] == '?':
-                            self.env.log.error("invalid cron expression: ? is already used for %s" % __event_parameter_for_cron_pos[5])
-                            raise CronScheduler.CronExpressionError()
-                        else:
-                            kwargs[event_param]=CronScheduler._omitMatch
-                    elif value == "*":
-                        kwargs[event_param] = CronScheduler._allMatch
-                    else:
-                        # Only int single value is supported
-                        kwargs[event_param]=int(value)
+                value = arglist[pos]                
+                if pos == 1:
+                    self._parse_cron_default(kwargs, event_param, value,0,59)
+                elif pos == 2:
+                    self._parse_cron_default(kwargs, event_param, value,0,23)
+                elif pos == 3:
+                    self._parse_cron_dmonth(kwargs, __event_parameter_for_cron_pos, event_param, value)
+                elif pos == 4:
+                    self._parse_cron_default(kwargs, event_param, value,1,12)
                 elif pos == 5:
-                    other_event_parm = __event_parameter_for_cron_pos.get(3)
-                    if value != '?':
-                        if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] != '?':
-                            self.env.log.error("invalid cron expression: ? %s already have a value" % __event_parameter_for_cron_pos[3])
-                            raise CronScheduler.CronExpressionError()
-                    if value == '?':
-                        if kwargs.has_key(other_event_parm) and kwargs[other_event_parm] == '?':
-                            self.env.log.error("invalid cron expression: ? is already used for %s" % __event_parameter_for_cron_pos[3])
-                            raise CronScheduler.CronExpressionError()
-                        else:
-                            kwargs[event_param]=CronScheduler._omitMatch
-                    elif value == "*":
-                        kwargs[event_param] = CronScheduler._allMatch
-                    else:
-                        # Only int single value is supported
-                        # day of week starts at 1
-                        # since python localtime day of week start from 0
-                        kwargs[event_param]=int(value) - 1   
-                
-                elif value == "*":
-                    kwargs[event_param] = CronScheduler._allMatch                
-                else:
-                    # Only int single value is supported
-                    kwargs[event_param]=int(value) 
+                    self._parse_cron_dweek(kwargs, __event_parameter_for_cron_pos, event_param, value)                   
+                elif pos == 6:
+                    self._parse_cron_default(kwargs, event_param, value,1970,2099)
                 
         # deal with optional item
         year_parameter_name = __event_parameter_for_cron_pos.get(6)
