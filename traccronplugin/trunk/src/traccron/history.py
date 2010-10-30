@@ -34,3 +34,6 @@ class MemoryHistoryStore(Component, IHistoryTaskExecutionStore):
         for h in self.history:
             yield h
     
+    def clear(self):
+        self.history[:] = []
+    

@@ -121,3 +121,10 @@ class IHistoryTaskExecutionStore(Interface):
         """
         raise NotImplementedError
     
+    def clear(self):
+        """
+        Clear all event in this history store
+        """
+        
+        raise NotImplementedError
+    

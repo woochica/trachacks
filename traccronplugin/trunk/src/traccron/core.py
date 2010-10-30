@@ -108,6 +108,13 @@ class Core(Component):
         """
         return self.task_event_list
     
+    def clearHistory(self):
+        """
+        Clear history store
+        """
+        for history in self.history_store_list:
+            history.clear()
+    
     def check_task(self):
         """
         Check if any task need to be executed. This method is called by the Ticker.
@@ -461,7 +468,10 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
                 if page == 'cron_admin':                     
                     self._saveSettings(req, category, page)
                 elif page == 'cron_listener':
-                    self._saveListenerSettings(req, category, page)                    
+                    self._saveListenerSettings(req, category, page)   
+            elif 'clear' in req.args:
+                if page == 'cron_history':
+                    self._clearHistory(req, category, page)                 
         else:             
             # which view to display ?
             if page == 'cron_admin':                
@@ -661,6 +671,10 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
         
         self._save_config(req)
         self.core.apply_config(wait=True)
+        req.redirect(req.abs_href.admin(category, page))
+        
+    def _clearHistory(self, req, category, page):
+        self.core.clearHistory()
         req.redirect(req.abs_href.admin(category, page))
 
     def _runtask(self, req):
