@@ -262,10 +262,16 @@ class Ticker():
 
             if  now < next_wake_up_time:  
                 # calculate amount of second to wait in second
-                seconds_before_next_wake_up = (next_wake_up_time - now).seconds 
-                if seconds_before_next_wake_up < 60:
-                    # ensure always 1 second to avoid sliding down 
+                seconds_before_next_wake_up = (next_wake_up_time - now).seconds
+                # need to adjust it to ensure to skip this last wake up  minute window                            
+                if next_wake_up_time.second == 0 :
+                    # slide up 1 second  
                     seconds_before_next_wake_up += 1
+                # need to adjust it to ensure to not skip next minute window
+                elif next_wake_up_time.second == 59:
+                    # slid down 1 second 
+                    seconds_before_next_wake_up -= 1
+                    
                 self.env.log.debug("adjusted wait %s secondes" % seconds_before_next_wake_up)
                 self.create_new_timer(delay=seconds_before_next_wake_up)
                 in_hurry = False
