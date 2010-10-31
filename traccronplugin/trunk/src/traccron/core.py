@@ -337,6 +337,9 @@ class CronConfig():
     EMAIL_NOTIFIER_TASK_ONLY_ERROR_KEY = "only_error"
     EMAIL_NOTIFIER_TASK_ONLY_ERROR_DEFAULT = "False"
     
+    UNREACHABLE_MILESTONE_TASK_BASEKEY="unreachable_milestone"
+    UNREACHABLE_MILESTONE_TASK_RECIPIENT_KEY = "recipient"
+    UNREACHABLE_MILESTONE_TASK_RECIPIENT_DEFAULT = ""
     
 
     def __init__(self, env):
@@ -442,6 +445,22 @@ class CronConfig():
     
     def set_task_listener_enabled(self, listener, value):
         self.env.config.set(self.TRACCRON_SECTION, listener.getId() + "." + self.TASK_LISTENER_ENABLED_KEY, value) 
+
+
+    def get_unreachable_milestone_task_recipient_list(self):
+        """
+        Return recipient list for unreachable milestone
+        """
+        return self.env.config.getlist(self.TRACCRON_SECTION,
+                                       self.UNREACHABLE_MILESTONE_TASK_BASEKEY + "." + self.UNREACHABLE_MILESTONE_TASK_RECIPIENT_KEY)
+
+    def get_unreachable_milestone_task_recipient(self):
+        """
+        Return raw value of unreachable milestone recipient
+        """    
+        return self.env.config.get(self.TRACCRON_SECTION,
+                                   self.UNREACHABLE_MILESTONE_TASK_BASEKEY + "." + self.UNREACHABLE_MILESTONE_TASK_RECIPIENT_KEY,
+                                   self.UNREACHABLE_MILESTONE_TASK_RECIPIENT_DEFAULT)
     
     def set_value(self, key, value):
         self.env.config.set(self.TRACCRON_SECTION, key, value)
