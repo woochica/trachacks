@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'TracWysiwyg',
-    version = '0.11.0.2',
+    version = '0.11.0.3',
     description = 'TracWiki WYSIWYG Editor',
     license = 'BSD',
     url = 'http://trac-hacks.org/wiki/TracWysiwygPlugin',
