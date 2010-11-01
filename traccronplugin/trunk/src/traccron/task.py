@@ -10,6 +10,7 @@ Created on 28 oct. 2010
 ##
 ###############################################################################
 from time import  time, localtime
+from trac.ticket.model import Ticket 
 from trac.core import Component, implements
 from trac.notification import NotifyEmail
 from trac.web.chrome import ITemplateProvider
@@ -97,7 +98,7 @@ class SleepingTicketReminderTask(Component, ICronTask, ITemplateProvider):
                 NotifyEmail.__init__(self, env)
                 
             def get_recipients(self, reporter):
-                 return ([reporter],[])
+                return ([reporter],[])
             
             def remind(self, tiketsByReporter):
                 """
@@ -351,4 +352,57 @@ class UnreachableMilestoneTask(Component, ICronTask, ITemplateProvider):
     
     def getDescription(self):
         return self.__doc__
+    
+
+class AutoPostponeTask(Component,ICronTask):
+    """
+    Scan closed milestone for still opened ticket then posptone those tickets
+    to the next milestone
+    """
+    
+    implements(ICronTask)
+    
+    
+
+    def wake_up(self, *args):
+        db = self.env.get_db_cnx()        
+        cursor = db.cursor()
+        # find still opened more recent milestone
+        # select ticket whom milestone are due in less than specified delay
+        cursor.execute("""
+                SELECT m.name  FROM milestone m                        
+                WHERE  m.completed is NULL or m.completed = 0
+                AND m.due not NULL and m.due > 0
+                ORDER BY m.due ASC LIMIT 1            
+            """ )
+        next_milestone = None
+        for name, in cursor:
+            next_milestone = name            
+                
+        # select ticket whom milestone are due in less than specified delay
+        cursor.execute("""
+                SELECT t.id , t.milestone  FROM ticket t, milestone m                        
+                WHERE t.status != 'closed'
+                AND    t.milestone = m.name  
+                AND    m.completed not NULL and m.completed > 0            
+            """ )        
+        if next_milestone:          
+            for id, milestone in cursor:
+                mess = "ticket %s is opened in closed milestone %s. Should postpone this ticket to %s" % (id, milestone, next_milestone)
+                self.env.log.debug(mess)
+                ticket = Ticket(self.env, id)
+                ticket.populate({'milestone':next_milestone})
+                ticket.save_changes(self.getId(),mess)
+        else:
+            self.env.log.debug("No opened milestone found. Cannot postpone tickets")
+            
+
+
+    def getId(self):
+        return "auto_postpone"
+
+
+    def getDescription(self):
+        return self.__doc__
+
     
