@@ -562,8 +562,8 @@ class WebUi(IAdminPanelProvider, ITemplateProvider, IRequestHandler):
                                  "dateuid" : self._to_utimestamp(date),
                                  "date": "%d-%d-%d" % (startTime.tm_mon, startTime.tm_mday, startTime.tm_year),
                                  "task":task.getId(),
-                                 "start": "%d h %d" % (startTime.tm_hour, startTime.tm_min),
-                                 "end": "%d h %d" % (endTime.tm_hour, endTime.tm_min),
+                                 "start": "%02d h %02d" % (startTime.tm_hour, startTime.tm_min),
+                                 "end": "%02d h %02d" % (endTime.tm_hour, endTime.tm_min),
                                  "success": success                                 
                                  }       
                 _history.append(execution)
