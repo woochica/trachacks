@@ -102,7 +102,7 @@ class TicketRPC(Component):
         t = model.Ticket(self.env, id)
         actions = []
         for action in ts.get_available_actions(req, t):
-            fragment = hints = genshi.builder.Fragment()
+            fragment = genshi.builder.Fragment()
             hints = []
             first_label = None
             for controller in ts.action_controllers:
