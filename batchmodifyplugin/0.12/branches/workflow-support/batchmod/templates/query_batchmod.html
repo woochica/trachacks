@@ -1,0 +1,13 @@
+<form xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:i18n="http://genshi.edgewall.org/i18n"
+     xmlns:xi="http://www.w3.org/2001/XInclude"
+         id="batchmod_form" method="get" action="${req.href + '/batchmodify'}">
+    
+    <div class="buttons">
+        <input type="hidden" name="selectedTickets" value=""/>
+        <input type="hidden" name="query_href" value="${query_href}"/>
+        <input type="submit" id="batchmod_submit" name="batchmod_submit" value="Modify Selected" />
+    </div>
+    
+</form>

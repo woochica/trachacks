@@ -89,9 +89,19 @@ class BatchModifyModule(Component):
         if filename == 'query.html' and self._has_permission(req):
             self.log.debug('BatchModifyPlugin: rendering template')
             return stream | Transformer('//div[@id="help"]'). \
-                                before(self._generate_form(req, formdata) )
+                                before(self._generate_query_form(req, formdata) )
         return stream
 
+    def _generate_query_form(self, req, data):
+        batchFormData = dict(data)
+        batchFormData['query_href']= req.session['query_href'] \
+                                     or req.href.query()
+        
+        add_script(req, 'batchmod/js/query_batchmod.js')
+        add_stylesheet(req, 'batchmod/css/batchmod.css')
+        stream = Chrome(self.env).render_template(req, 'query_batchmod.html',
+              batchFormData, fragment=True)
+        return stream.select('//form[@id="batchmod_form"]')
     
     def _generate_form(self, req, data):
         batchFormData = dict(data)
