@@ -1,1 +1,2 @@
-from batchmod.web_ui import *
+from batchmod.batchmod import *
+from batchmod.query_batchmod import *

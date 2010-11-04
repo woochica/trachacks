@@ -24,7 +24,8 @@ setup(
     },
     entry_points = {
         'trac.plugins': [
-            'batchmod.web_ui = batchmod.web_ui',
+            'batchmod.batchmod = batchmod.batchmod',
+            'batchmod.query_batchmod = batchmod.query_batchmod',
         ]
     }
 )

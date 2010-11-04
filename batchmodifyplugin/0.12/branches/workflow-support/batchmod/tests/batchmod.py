@@ -6,7 +6,7 @@ from trac.util.datefmt import utc
 import unittest
 import logging
 
-from batchmod.web_ui import BatchModifyModule, BatchModifier
+from batchmod.batchmod import BatchModifyModule, BatchModifier
 
 class BatchModifyTestCase(unittest.TestCase):
     

@@ -2,11 +2,11 @@ import doctest
 import unittest
 
 import batchmod
-from batchmod.tests import web_ui
+from batchmod.tests import batchmod
 
 def suite():
     suite = unittest.TestSuite()
-    suite.addTest(web_ui.suite())
+    suite.addTest(batchmod.suite())
     return suite
 
 if __name__ == '__main__':
