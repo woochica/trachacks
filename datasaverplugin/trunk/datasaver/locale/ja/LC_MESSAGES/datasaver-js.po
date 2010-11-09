@@ -1,0 +1,36 @@
+# Japanese (Japan) translations for DataSaverPlugin.
+# Copyright (C) 2010
+# This file is distributed under the same license as the DataSaverPlugin
+# project.
+# Jun Omae <jun66j5@gmail.com>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: DataSaverPlugin 2.0\n"
+"Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
+"POT-Creation-Date: 2010-08-16 00:46+0200\n"
+"PO-Revision-Date: 2010-11-09 20:47+0900\n"
+"Last-Translator: Jun Omae <jun66j5@gmail.com>\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#: datasaver/js/datasaver.js:46
+msgid ""
+"There is previous form data present for this page. Do you want to restore"
+" it?"
+msgstr "前回のフォームの内容が保存されています。この内容を復元しますか?"
+
+#: datasaver/js/datasaver.js:137
+msgid ""
+"Are you sure you want to restore? Anything unsaved on this page will be "
+"lost!"
+msgstr "フォームの内容を復元しますか? このページにある未保存の内容はすべて失われます!"
+
+#: datasaver/js/datasaver.js:160
+msgid "No form data is available for restoration."
+msgstr "復元できるデータがありません。"
+
