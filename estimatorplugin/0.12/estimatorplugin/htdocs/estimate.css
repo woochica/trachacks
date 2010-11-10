@@ -6,12 +6,9 @@
   margin:5px;
 }
 
-table.estimateBody tr td { border-top:1px solid #CCC; }
-
-table.estimateBody tr.lineItemFooter th { border-top:1px solid #CCC; }
-
-.numberCell, table.estimateBody tr td.numberCell { 
-  text-align:right; border:1px solid blue; width:80px; }
+.numberCell{ 
+   text-align:right;
+   border:1px solid blue !important; width:80px !important; }
 
 .fieldLabel{ font-weight:bold; text-align:right; }
 
@@ -40,7 +37,9 @@ input[type=submit].save:hover, button.save:hover
    padding-left:20px;  }
 
 td.textarea-holder{width:250px; white-space:pre-wrap;}
-td.buttons{width:150px;}
+td.buttons{width:150px; border:0 none transparent;}
 .line-item .number {text-align:right;}
-#estimateBody{width:800px;}
+.line-item td {border-top: 1px solid #CCF; border-bottom: 1px solid #CCF;}
+.estimateBody{width:98%;}
+.estimate-page{width:800px;}
 

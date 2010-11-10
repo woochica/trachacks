@@ -18,6 +18,7 @@
       </head>
 
       <body>
+	<div class="estimate-page">
 	<form method="post" action="${estimate.href}" >
 	  <input type="hidden" name="id" value="${estimate.id}"/>
 	  
@@ -65,14 +66,14 @@
 	</table>
 
 
-	<table border="0" cellpadding="3" cellspacing="1" id="estimateBody" >
+	<table border="0" cellpadding="3" cellspacing="1" id="estimateBody" class="estimateBody" >
 	  <thead>
 	    <tr id="lineItemheader" >
 	      <th>Description</th>
 	      <th>Low </th>
 	      <th>High </th>
 	      <th>Ave </th>
-	      <th></th>
+	      <td class="buttons"></td>
 	    </tr>
 	  </thead>
 	  <tbody></tbody>
@@ -82,21 +83,21 @@
 	      <td id="lowTotal" class="numberCell" ></td>
 	      <td id="highTotal" class="numberCell"></td>
 	      <td id="aveTotal" class="numberCell"></td>
-	      <td></td>
+	      <td class="buttons"></td>
 	    </tr>
 	    <tr>
 	      <th class="fieldLabel" >Adjusted Hours:</th>
 	      <td id="lowAdjusted" class="numberCell" ></td>
 	      <td id="highAdjusted" class="numberCell" ></td>
 	      <td id="aveAdjusted" class="numberCell" ></td>
-	      <td></td>
+	      <td class="buttons"></td>
 	    </tr>
 	    <tr>
 	      <th class="fieldLabel">          Cost:</th>
 	      <td id="lowCost" class="numberCell" ></td>
 	      <td id="highCost" class="numberCell" ></td>
 	      <td id="aveCost" class="numberCell" ></td>
-	      <td></td>
+	      <td class="buttons"></td>
 	    </tr>
 	  </tfoot>
 	</table>
@@ -131,6 +132,7 @@
       </div>
 
     </form>
+</div>
 </body>
 </html>
     
