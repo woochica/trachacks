@@ -1,0 +1,2 @@
+recursive-include tracremoteticket *
+recursive-exclude tracremoteticket *.pyc
