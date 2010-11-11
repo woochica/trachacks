@@ -18,7 +18,7 @@ if cmdclass:
     }
 
 PACKAGE = 'TracDynamicFields'
-VERSION = '2.0.0'
+VERSION = '2.1.0'
 
 setup(
     name=PACKAGE, version=VERSION,

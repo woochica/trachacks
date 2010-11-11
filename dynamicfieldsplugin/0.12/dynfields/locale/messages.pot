@@ -7,9 +7,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TracDynamicFields 2.0.0\n"
+"Project-Id-Version: TracDynamicFields 2.1.0\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-08 21:25+0200\n"
+"POT-Creation-Date: 2010-11-11 22:10+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,82 +29,72 @@ msgstr ""
 #. TRANSLATOR: checkbox label text for clear rules
 #: dynfields/rules.py:123
 #, python-format
-msgid "Clear %s when %s changes"
+msgid "Clear %(target)s when %(trigger)s changes"
 msgstr ""
 
-#: dynfields/rules.py:146
+#: dynfields/rules.py:147
 msgid "Copy Rules"
 msgstr ""
 
-#: dynfields/rules.py:151
+#: dynfields/rules.py:152
 msgid ""
 "Copies field content (when changed) to another field (if empty and "
 "visible)."
 msgstr ""
 
 #. TRANSLATOR: checkbox label text for copy rules
-#: dynfields/rules.py:166
+#: dynfields/rules.py:167
 #, python-format
-msgid "Copy %s to %s"
+msgid "Copy %(trigger)s to %(target)s"
 msgstr ""
 
-#: dynfields/rules.py:182
+#: dynfields/rules.py:184
 msgid "Default Value Rules"
 msgstr ""
 
-#: dynfields/rules.py:187
+#: dynfields/rules.py:189
 msgid "Defaults a field to a user-specified value."
 msgstr ""
 
 #. TRANSLATOR: checkbox label text for default value rules
-#: dynfields/rules.py:201
+#: dynfields/rules.py:203
 #, python-format
-msgid "Default %s to"
+msgid "Default %(target)s to"
 msgstr ""
 
-#: dynfields/rules.py:221
+#: dynfields/rules.py:223
 msgid "Hide Rules"
 msgstr ""
 
-#: dynfields/rules.py:226
+#: dynfields/rules.py:228
 msgid "Hides a field based on another field's value (or always)."
 msgstr ""
 
-#. TRANSLATOR: action name for conditional show/hide rules
-#: dynfields/rules.py:252
-msgid "Hide"
-msgstr ""
-
-#. TRANSLATOR: action name for conditional show/hide rules
-#: dynfields/rules.py:255
-msgid "Show"
-msgstr ""
-
 #. TRANSLATOR: char/word to replace '|' = logic OR in 'value|value'
-#: dynfields/rules.py:258
+#: dynfields/rules.py:253
 msgid " or "
 msgstr ""
 
-#. TRANSLATOR: checkbox label text for conditional show/hide rules
+#. TRANSLATOR: checkbox label text for conditional hide rules
+#: dynfields/rules.py:256
+#, python-format
+msgid "Hide %(target)s when %(trigger)s = %(trigval)s"
+msgstr ""
+
+#. TRANSLATOR: checkbox label text for conditional show rules
 #: dynfields/rules.py:260
 #, python-format
-msgid "%s %s when %s = %s"
+msgid "Show %(target)s when %(trigger)s = %(trigval)s"
 msgstr ""
 
-#. TRANSLATOR: action name for always-hide/show rules
-#: dynfields/rules.py:270
-msgid "show"
-msgstr ""
-
-#. TRANSLATOR: action name for always-hide/show rules
-#: dynfields/rules.py:273
-msgid "hide"
-msgstr ""
-
-#. TRANSLATOR: checkbox label text for always-hide/show rules
-#: dynfields/rules.py:275
+#: dynfields/rules.py:269
 #, python-format
-msgid "Always %s %s"
+msgid "Always show %(target)s"
+msgstr ""
+
+#: dynfields/rules.py:271
+#, python-format
+msgid "Always hide %(target)s"
 msgstr ""
 
 #. TRANSLATOR: the preferences tab label
@@ -112,7 +102,7 @@ msgstr ""
 msgid "Dynamic Fields"
 msgstr ""
 
-#. browser window title
+#. TRANSLATOR: browser window title
 #: dynfields/templates/prefs_panel.html:11
 msgid "Dynamic Fields Options"
 msgstr ""

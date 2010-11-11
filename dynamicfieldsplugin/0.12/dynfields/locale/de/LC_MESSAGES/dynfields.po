@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: TracDynamicFields 2.0.0\n"
+"Project-Id-Version: TracDynamicFields 2.1.0\n"
 "Report-Msgid-Bugs-To: hoff.st@web.de\n"
-"POT-Creation-Date: 2010-09-08 21:25+0200\n"
+"POT-Creation-Date: 2010-11-11 22:10+0100\n"
 "PO-Revision-Date: 2010-08-10 23:20+0200\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
@@ -29,14 +29,14 @@ msgstr "Löscht ein Feld, wenn sich ein anderes ändert."
 #. TRANSLATOR: checkbox label text for clear rules
 #: dynfields/rules.py:123
 #, python-format
-msgid "Clear %s when %s changes"
-msgstr "Lösche %s, wenn sich %s ändert"
+msgid "Clear %(target)s when %(trigger)s changes"
+msgstr "Lösche %(target)s, wenn sich %(trigger)s ändert"
 
-#: dynfields/rules.py:146
+#: dynfields/rules.py:147
 msgid "Copy Rules"
 msgstr "Kopiervorschrift"
 
-#: dynfields/rules.py:151
+#: dynfields/rules.py:152
 msgid ""
 "Copies field content (when changed) to another field (if empty and "
 "visible)."
@@ -45,76 +45,66 @@ msgstr ""
 "und sichtbar)."
 
 #. TRANSLATOR: checkbox label text for copy rules
-#: dynfields/rules.py:166
+#: dynfields/rules.py:167
 #, python-format
-msgid "Copy %s to %s"
-msgstr "Kopiere %s nach %s"
+msgid "Copy %(trigger)s to %(target)s"
+msgstr "Kopiere %(trigger)s nach %(target)s"
 
-#: dynfields/rules.py:182
+#: dynfields/rules.py:184
 msgid "Default Value Rules"
 msgstr "Standardwertregeln"
 
-#: dynfields/rules.py:187
+#: dynfields/rules.py:189
 msgid "Defaults a field to a user-specified value."
 msgstr "Setzt für ein Feld einen benutzerdefinierten Standardwert."
 
 #. TRANSLATOR: checkbox label text for default value rules
-#: dynfields/rules.py:201
+#: dynfields/rules.py:203
 #, python-format
-msgid "Default %s to"
-msgstr "Setze den Standardwert für %s auf"
+msgid "Default %(target)s to"
+msgstr "Setze den Standardwert für %(target)s auf"
 
-#: dynfields/rules.py:221
+#: dynfields/rules.py:223
 msgid "Hide Rules"
 msgstr "Ausblendregeln"
 
-#: dynfields/rules.py:226
+#: dynfields/rules.py:228
 msgid "Hides a field based on another field's value (or always)."
 msgstr "Verbirgt ein Feld abhängig vom Wert eines anderen Feldes (oder immer)."
 
-#. TRANSLATOR: action name for conditional show/hide rules
-#: dynfields/rules.py:252
-msgid "Hide"
-msgstr "Verberge"
-
-#. TRANSLATOR: action name for conditional show/hide rules
-#: dynfields/rules.py:255
-msgid "Show"
-msgstr "Zeige"
-
 #. TRANSLATOR: char/word to replace '|' = logic OR in 'value|value'
-#: dynfields/rules.py:258
+#: dynfields/rules.py:253
 msgid " or "
 msgstr " oder "
 
-#. TRANSLATOR: checkbox label text for conditional show/hide rules
+#. TRANSLATOR: checkbox label text for conditional hide rules
+#: dynfields/rules.py:256
+#, python-format
+msgid "Hide %(target)s when %(trigger)s = %(trigval)s"
+msgstr "Verberge %(target)s, wenn %(trigger)s = %(trigval)s"
+
+#. TRANSLATOR: checkbox label text for conditional show rules
 #: dynfields/rules.py:260
 #, python-format
-msgid "%s %s when %s = %s"
-msgstr "%s %s, wenn %s = %s"
+msgid "Show %(target)s when %(trigger)s = %(trigval)s"
+msgstr "Zeige %(target)s, wenn %(trigger)s = %(trigval)s"
 
-#. TRANSLATOR: action name for always-hide/show rules
-#: dynfields/rules.py:270
-msgid "show"
-msgstr "Zeige"
-
-#. TRANSLATOR: action name for always-hide/show rules
-#: dynfields/rules.py:273
-msgid "hide"
-msgstr "Verberge"
-
-#. TRANSLATOR: checkbox label text for always-hide/show rules
-#: dynfields/rules.py:275
+#: dynfields/rules.py:269
 #, python-format
-msgid "Always %s %s"
-msgstr "%s %s immer"
+msgid "Always show %(target)s"
+msgstr "Zeige %(target)s immer"
+
+#: dynfields/rules.py:271
+#, python-format
+msgid "Always hide %(target)s"
+msgstr "Verberge %(target)s immer"
 
 #. TRANSLATOR: the preferences tab label
 #: dynfields/web_ui.py:86
 msgid "Dynamic Fields"
 msgstr "Feldänderungen"
 
-#. browser window title
+#. TRANSLATOR: browser window title
 #: dynfields/templates/prefs_panel.html:11
 msgid "Dynamic Fields Options"
 msgstr "Feldveränderungsmöglichkeiten"
