@@ -12,8 +12,8 @@ class RemoteTicket(object):
         self.env = env
         self.remote_name = remote_name
         self.id = id
-        self.fields = [f for f TicketSystem(self.env).get_ticket_fields()
-                         if f['name'] in remote_fields]
+        self.fields = [f for f in TicketSystem(self.env).get_ticket_fields()
+                         if f['name'] in RemoteTicket.remote_fields]
         self.values = {}
     
     def __getitem__(self, name):
@@ -39,7 +39,7 @@ class RemoteTicket(object):
         @self.env.with_transaction(db)
         def do_insert(db):
             cursor = db.cursor()
-            cursor.execute('INSERT INTO remote_tickets (%s) VALUES (%s)',
+            cursor.execute('INSERT INTO remote_tickets (%s) VALUES (%s)'
                            % (','.join(std_fields),
                               ','.join('%s' for _ in std_fields)),
                            [values[name] for name in std_fields])
