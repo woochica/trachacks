@@ -1,10 +1,18 @@
 import re
 from trac.core import *
-from trac.util.translation import domain_functions
 
-
-add_domain, _, tag_ = \
-    domain_functions('dynfields', ('add_domain', '_', 'tag_'))
+# Import translation functions.
+# Fallbacks make Babel still optional and provide Trac 0.11 compatibility.
+try:
+    from  trac.util.translation  import  domain_functions
+    add_domain, _, tag_ = \
+        domain_functions('dynfields', ('add_domain', '_', 'tag_'))
+except ImportError:
+    from  genshi.builder         import  tag as tag_
+    from  trac.util.translation  import  gettext
+    _ = gettext
+    def add_domain(a,b,c=None):
+        pass
 
 
 class IRule(Interface):
