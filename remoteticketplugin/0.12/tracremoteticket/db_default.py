@@ -1,24 +1,29 @@
 from trac.db import Table, Column, Index
 
-__all__ = ['name', 'version', 'schema']
+__all__ = ['version', 'schema']
 
-name = 'remote_tickets'
-version = 1
+name = 'remote_ticket'
+version = 2
 
 schema  = [
-    Table(name, key=('source_name', 'source', 
-                     'destination_name', 'destination'))[
+    Table('remote_ticket_links', 
+          key=('source_name', 'source', 'type',
+               'destination_name', 'destination'))[
         Column('source_name'),
         Column('source', type='int'),
-        Column('destination_name', type='string'),
-        Column('destination'),
         Column('type'),
+        Column('destination_name'),
+        Column('destination', type='int'),
+        ],
+    Table('remote_tickets', key=('remote_name', 'id'))[
+        Column('remote_name'),
+        Column('id', type='int'),
         Column('cachetime', type='int64'),
-        Column('c_summary'),
-        Column('c_status'),
-        Column('c_type'),
-        Column('c_resolution'),
+        Column('summary'),
+        Column('status'),
+        Column('type'),
+        Column('resolution'),
         Index(['cachetime']),
-        Index(['c_status']),
+        Index(['status']),
         ],
     ]

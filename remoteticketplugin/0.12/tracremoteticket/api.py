@@ -2,6 +2,7 @@ from trac.core import Component, Interface, implements
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
 from trac.ticket.api import ITicketChangeListener, ITicketManipulator
+from trac.web.api import ITemplateStreamFilter, IRequestFilter
 
 from tracremoteticket import db_default
 
@@ -12,6 +13,8 @@ class RemoteTicketSystem(Component):
     implements(IEnvironmentSetupParticipant, 
                #ITicketChangeListener, 
                #ITicketManipulator,
+               IRequestFilter
+               ITemplateStreamFilter
                )
     
     # IEnvironmentSetupParticipant methods
@@ -44,4 +47,16 @@ class RemoteTicketSystem(Component):
                 for sql in db_manager.to_sql(table):
                     cursor.execute(sql)
     
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return (req, handler)
     
+    def post_process_request(self, req, template, data, content_type):
+        if 'linked_tickets' in data:
+            linked_tickets = data['linked_tickets']
+            cursor = self.env.get_read_db()
+            # TODO Actually fetch something
+        return (template, data, content_type)
+    
+    def _add_remote_tickets(self, req, template, data):
+        
