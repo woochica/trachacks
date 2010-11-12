@@ -1,14 +1,17 @@
 import re
 
-from genshi.builder import tag
+from genshi.builder import Markup, tag
 from genshi.filters.transform import Transformer
+
+from pkg_resources import resource_filename
 
 from trac.core import Component, Interface, implements
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
 from trac.ticket.api import ITicketChangeListener, ITicketManipulator
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
-
+from trac.web.chrome import ITemplateProvider, add_script
+from trac.web.href import Href
 from tracremoteticket import db_default
 from tracremoteticket.model import RemoteTicket
 
@@ -20,7 +23,8 @@ class RemoteTicketSystem(Component):
                #ITicketChangeListener, 
                #ITicketManipulator,
                IRequestFilter,
-               ITemplateStreamFilter
+               ITemplateProvider,
+               ITemplateStreamFilter,
                )
     
     # Regular expression to match remote links, a remote link is an
@@ -76,10 +80,19 @@ class RemoteTicketSystem(Component):
     
     def filter_stream(self, req, method, filename, stream, data):
         if 'ticket' in data and 'remote_sites' in data:
+            add_script(req, 'tracremoteticket/js/remoteticket.js')
+            
             transf = Transformer('//select[@id="linked-end"]')
-            options = [tag.option(rs['title'], value=rs['url'])
+            label = tag.label('in', for_='remote-site')
+            local = tag.option('this project', value=req.href.newticket(),
+                               selected='selected')
+            remotes = [tag.option(rs['title'], 
+                                  value=Href(rs['url']).newticket())
                        for rs in data['remote_sites']]
-            stream |= transf.after(tag.select(options, name='remote_site')).after('in')
+            select = tag.select([local] + remotes, id='remote-site')
+            content = label + select
+            stream |= transf.after(content)
+            
         return stream
     
     def _remote_tickets(self, ticket):
@@ -120,5 +133,10 @@ class RemoteTicketSystem(Component):
         
         return intertracs
                 
-        
+    # ITemplateProvider methods
+    def get_htdocs_dirs(self):
+        return [('tracremoteticket', resource_filename(__name__, 'htdocs'))]
+
+    def get_templates_dirs(self):
+        return []
     
