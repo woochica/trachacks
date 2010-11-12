@@ -111,8 +111,10 @@ class RemoteTicketSystem(Component):
         intertracs.sort()
         return intertracs
         
-    def _parse_links(self, s):
-        return self.REMOTES_RE.findall(s)
+    def _parse_links(self, value):
+        if not value:
+            return []
+        return [(name, int(id)) for name, id in self.REMOTES_RE.findall(value)]
         
     def _get_remotes_config(self):
         '''Return dict of intertracs and intertrac aliases.
