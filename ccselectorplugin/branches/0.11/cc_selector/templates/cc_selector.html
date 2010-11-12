@@ -1,0 +1,27 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:py="http://genshi.edgewall.org/">
+  <head>
+    <title>CC selector window</title>
+    <py:if test="chrome.links">
+      <py:for each="rel, links in chrome.links.items()">
+        <link rel="${rel}" py:for="link in links" py:attrs="link" />
+      </py:for>
+    </py:if>
+    <script py:for="script in chrome.scripts"
+            type="${script.type}" src="${script.href}"></script>
+  </head>
+  
+  <body>
+    <p>Select CC, then <a href="javascript:window.close();">close</a> this window.</p>
+
+    <div id="ccdiv">
+      <!-- checkboxes will be inserted here -->
+    </div>
+
+    <div id="cc_developers" >
+      <!-- developer names will be taken from here  -->
+      <var class="cc_dev" title="${d[0]}" name="${d[1]}" email="${d[2]}" py:for="d in cc_developers"></var>
+    </div>
+  </body>
+</html>
