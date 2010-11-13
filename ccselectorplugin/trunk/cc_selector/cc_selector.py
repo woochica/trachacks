@@ -3,7 +3,7 @@ import trac
 
 from pkg_resources   import resource_filename
 
-from trac.config     import BoolOption
+from trac.config     import BoolOption, Option
 from trac.core       import *
 from trac.perm       import PermissionSystem
 from trac.web.api    import IRequestFilter, IRequestHandler
@@ -15,6 +15,9 @@ class TicketWebUiAddon(Component):
     show_fullname = BoolOption(
         'cc_selector', 'show_fullname', False,
         doc="Display full names instead of usernames if available.")
+    username_blacklist = Option(
+        'cc_selector', 'username_blacklist', '',
+        doc="Usernames separated by comma, that should never get listed.")
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
@@ -48,12 +51,13 @@ class TicketWebUiAddon(Component):
     def process_request(self, req):
         add_script(req, 'cc_selector/cc_selector.js')
 
-        cc_developer_names = PermissionSystem(
+        blacklist = self.username_blacklist.split(', ')
+        privileged_users = PermissionSystem(
             self.env).get_users_with_permission('TICKET_VIEW')
-
         all_users = self.env.get_known_users()
-        cc_developers = filter(lambda u: u[0] in cc_developer_names,
-                                                          all_users)
+
+        developers = filter(lambda u: u[0] in privileged_users, all_users)
+        cc_developers = filter(lambda u: not u[0] in blacklist, developers)
         data = {
             'cc_developers': cc_developers,
             'show_fullname': self.show_fullname
