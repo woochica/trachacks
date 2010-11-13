@@ -1,14 +1,20 @@
 import re
 import trac
-from trac.core import *
-from trac.web.api import IRequestFilter, IRequestHandler
-from trac.web.chrome import add_script, \
-    ITemplateProvider
-from pkg_resources import resource_filename
-from trac.perm import PermissionSystem
+
+from pkg_resources   import resource_filename
+
+from trac.config     import BoolOption
+from trac.core       import *
+from trac.perm       import PermissionSystem
+from trac.web.api    import IRequestFilter, IRequestHandler
+from trac.web.chrome import add_script, ITemplateProvider
 
 class TicketWebUiAddon(Component):
     implements(IRequestFilter, ITemplateProvider, IRequestHandler)
+
+    show_fullname = BoolOption(
+        'cc_selector', 'show_fullname', False,
+        doc="Display full names instead of usernames if available.")
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
@@ -35,17 +41,21 @@ class TicketWebUiAddon(Component):
     # IRequestHandler
     def match_request(self, req):
         match = re.match(r'^/cc_selector', req.path_info)
-        if match:
+        if not match is None:
             return True
         return False
 
     def process_request(self, req):
         add_script(req, 'cc_selector/cc_selector.js')
 
-        cc_developer_names = PermissionSystem(self.env).get_users_with_permission('TICKET_VIEW')
+        cc_developer_names = PermissionSystem(
+            self.env).get_users_with_permission('TICKET_VIEW')
 
         all_users = self.env.get_known_users()
-        cc_developers = filter(lambda u: u[0] in cc_developer_names, all_users)
-
-        data = {'cc_developers': cc_developers}
+        cc_developers = filter(lambda u: u[0] in cc_developer_names,
+                                                          all_users)
+        data = {
+            'cc_developers': cc_developers,
+            'show_fullname': self.show_fullname
+            }
         return 'cc_selector.html', data, None

@@ -7,6 +7,7 @@
 JavaScript code in this page.
 
 Copyright (C) 2009 Vladislav Naumov
+Copyright (C) 2010 Steffen Hoffmann
 
 The JavaScript code in this page is free software: you can
 redistribute it and/or modify it under the terms of the GNU
@@ -32,7 +33,7 @@ function get_default_devs()
   var retval = new Array();
   var devs = new Array();
 
-  var devs_list=document.getElementById("cc_developers");
+  var devs_list=document.getElementById('cc_developers');
   for (var i=0; i<devs_list.childNodes.length; i++)
   {
     var d = devs_list.childNodes[i];
@@ -81,7 +82,8 @@ function show_selection(e)
 
   window.open(nurl,
     "cc_selector",
-    "width=300,height=400,scrollbars=1,resizable=1,left=" + e.screenX + ",top=" + e.screenY
+    "width=300,height=400,scrollbars=1,resizable=1,left="
+      + e.screenX + ",top=" + e.screenY
   );
   return;
 }
@@ -91,7 +93,8 @@ function guess_cc_field()
   var doc = document;
 
   // are we in the popup?
-  if (window.opener && ! window.opener.closed && document.getElementById('cc_developers'))
+  if (window.opener && ! window.opener.closed &&
+      document.getElementById('cc_developers'))
   {
     doc = window.opener.document;
   }
@@ -130,9 +133,13 @@ function split_field(fieldid)
   {
     if (arr.hasOwnProperty(w) && arr[w].length )
     {
-      retval[arr[w]] = new Object();
-      retval[arr[w]].selected = true;
-      retval[arr[w]].title = arr[w];
+      if (retval.hasOwnProperty(arr[w])) {
+        retval[arr[w]].selected = true;
+      } else {
+        retval[arr[w]] = new Object();
+        retval[arr[w]].selected = true;
+        retval[arr[w]].title = arr[w];
+      }
     }
   }
 
@@ -145,7 +152,8 @@ function cc_toggle(field, ckbox) {
   var checked = ckbox.checked;
   var devs = split_field(field);
 
-  // we now need to create object if it doesn't exist (was removed from line manually?)
+  // we now need to create object if it doesn't exist
+  // (was removed from line manually?)
   if (devs.hasOwnProperty(name))
   {
     devs[name].selected = checked;
@@ -221,12 +229,21 @@ function split_into_checkboxes(fromid, toid) {
       link = document.createElement('SPAN');
     }
     
+    var label_name = dev.title;
     if (dev.name)
     {
-      // if also have a name, show it on mouse-over
-      link.setAttribute("title", dev.name);
+      // if also have a full name, show it ...
+      // ... on mouse-over
+      var tip_name = dev.name;
+      if (document.getElementById('show_fullname'))
+      {
+        // ... as list element
+        label_name = dev.name;
+        tip_name = dev.title;
+      }
+      link.setAttribute("title", tip_name);
     }
-    link.appendChild(document.createTextNode(dev.title));
+    link.appendChild(document.createTextNode(label_name));
     
     lb.appendChild(link);
 
