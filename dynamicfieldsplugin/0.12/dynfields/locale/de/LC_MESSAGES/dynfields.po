@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracDynamicFields 2.1.0\n"
 "Report-Msgid-Bugs-To: hoff.st@web.de\n"
-"POT-Creation-Date: 2010-11-11 22:10+0100\n"
+"POT-Creation-Date: 2010-11-15 00:05+0100\n"
 "PO-Revision-Date: 2010-08-10 23:20+0200\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
@@ -18,25 +18,25 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.0dev-r482\n"
 
-#: dynfields/rules.py:103
+#: dynfields/rules.py:111
 msgid "Clear Rules"
 msgstr "Bereinigungsregeln"
 
-#: dynfields/rules.py:108
+#: dynfields/rules.py:116
 msgid "Clears one field when another changes."
 msgstr "Löscht ein Feld, wenn sich ein anderes ändert."
 
 #. TRANSLATOR: checkbox label text for clear rules
-#: dynfields/rules.py:123
+#: dynfields/rules.py:131
 #, python-format
 msgid "Clear %(target)s when %(trigger)s changes"
 msgstr "Lösche %(target)s, wenn sich %(trigger)s ändert"
 
-#: dynfields/rules.py:147
+#: dynfields/rules.py:155
 msgid "Copy Rules"
 msgstr "Kopiervorschrift"
 
-#: dynfields/rules.py:152
+#: dynfields/rules.py:160
 msgid ""
 "Copies field content (when changed) to another field (if empty and "
 "visible)."
@@ -45,56 +45,56 @@ msgstr ""
 "und sichtbar)."
 
 #. TRANSLATOR: checkbox label text for copy rules
-#: dynfields/rules.py:167
+#: dynfields/rules.py:175
 #, python-format
 msgid "Copy %(trigger)s to %(target)s"
 msgstr "Kopiere %(trigger)s nach %(target)s"
 
-#: dynfields/rules.py:184
+#: dynfields/rules.py:192
 msgid "Default Value Rules"
 msgstr "Standardwertregeln"
 
-#: dynfields/rules.py:189
+#: dynfields/rules.py:197
 msgid "Defaults a field to a user-specified value."
 msgstr "Setzt für ein Feld einen benutzerdefinierten Standardwert."
 
 #. TRANSLATOR: checkbox label text for default value rules
-#: dynfields/rules.py:203
+#: dynfields/rules.py:211
 #, python-format
 msgid "Default %(target)s to"
 msgstr "Setze den Standardwert für %(target)s auf"
 
-#: dynfields/rules.py:223
+#: dynfields/rules.py:231
 msgid "Hide Rules"
 msgstr "Ausblendregeln"
 
-#: dynfields/rules.py:228
+#: dynfields/rules.py:236
 msgid "Hides a field based on another field's value (or always)."
 msgstr "Verbirgt ein Feld abhängig vom Wert eines anderen Feldes (oder immer)."
 
 #. TRANSLATOR: char/word to replace '|' = logic OR in 'value|value'
-#: dynfields/rules.py:253
+#: dynfields/rules.py:261
 msgid " or "
 msgstr " oder "
 
 #. TRANSLATOR: checkbox label text for conditional hide rules
-#: dynfields/rules.py:256
+#: dynfields/rules.py:264
 #, python-format
 msgid "Hide %(target)s when %(trigger)s = %(trigval)s"
 msgstr "Verberge %(target)s, wenn %(trigger)s = %(trigval)s"
 
 #. TRANSLATOR: checkbox label text for conditional show rules
-#: dynfields/rules.py:260
+#: dynfields/rules.py:268
 #, python-format
 msgid "Show %(target)s when %(trigger)s = %(trigval)s"
 msgstr "Zeige %(target)s, wenn %(trigger)s = %(trigval)s"
 
-#: dynfields/rules.py:269
+#: dynfields/rules.py:277
 #, python-format
 msgid "Always show %(target)s"
 msgstr "Zeige %(target)s immer"
 
-#: dynfields/rules.py:271
+#: dynfields/rules.py:279
 #, python-format
 msgid "Always hide %(target)s"
 msgstr "Verberge %(target)s immer"
