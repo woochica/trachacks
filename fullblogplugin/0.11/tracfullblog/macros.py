@@ -101,6 +101,8 @@ class BlogListMacro(WikiMacroBase):
         if format == 'inline':
             data = {'heading': heading,
                     'posts': post_list,
+                    'blog_personal_blog': self.config.getbool(
+                                                'fullblog', 'personal_blog'),
                     'show_meta': show_meta,
                     'execute_blog_macro': True}
             return Chrome(self.env).render_template(formatter.req,
@@ -126,6 +128,8 @@ class BlogListMacro(WikiMacroBase):
         out.append(tag.div(heading, class_="blog-list-title"))
         for post in post_instances:
             data = {'post': post,
+                    'blog_personal_blog': self.config.getbool(
+                                                'fullblog', 'personal_blog'),
                     'list_mode': True,
                     'show_meta': show_meta,
                     'execute_blog_macro': True}
