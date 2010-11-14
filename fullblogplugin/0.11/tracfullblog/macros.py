@@ -96,6 +96,7 @@ class BlogListMacro(WikiMacroBase):
 
         # Rendering
         add_stylesheet(formatter.req, 'tracfullblog/css/fullblog.css')
+        add_stylesheet(formatter.req, 'common/css/code.css')
 
         if format == 'inline':
             data = {'heading': heading,

@@ -380,6 +380,7 @@ class FullBlogModule(Component):
             add_ctxtnav(req, 'New Post', href=req.href.blog('create'),
                     title="Create new Blog Post")
         add_stylesheet(req, 'tracfullblog/css/fullblog.css')
+        add_stylesheet(req, 'common/css/code.css')
         data['blog_personal_blog'] = self.env.config.getbool('fullblog',
                                                 'personal_blog')
         return (template, data, None)
