@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 
 from genshi.builder import tag
 
+#FIXME: use Trac's datetime utils and get rid of the pylab dependency.
 from pylab import date2num, num2date, drange
 from trac import mimeview
 from trac.core import Component, implements, TracError
