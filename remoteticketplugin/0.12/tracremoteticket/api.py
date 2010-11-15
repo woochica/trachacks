@@ -66,6 +66,20 @@ class RemoteTicketSystem(Component):
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
+        # Intercept linked_val argument, if it matches the URL of a known
+        # remote site then parse it and remove linked_val
+        if 'linked_val' in req.args:
+            linked_val = req.args['linked_val']
+            patt = re.compile(r'(.+)/ticket/(\d+)')
+            for name, site in self._intertracs.items():
+                m = patt.match(linked_val)
+                if m:
+                    remote_base, remote_tkt_id = m.groups()
+                    if remote_base == site['url'].rstrip('/'):
+                        req.args['linked_remote_val'] = '%s:%s' \
+                                                        % (name, remote_tkt_id)
+                        del req.args['linked_val']
+                        break
         return handler
     
     def post_process_request(self, req, template, data, content_type):
@@ -78,12 +92,13 @@ class RemoteTicketSystem(Component):
             
         return (template, data, content_type)
     
+    # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         if 'ticket' in data and 'remote_sites' in data:
             add_script(req, 'tracremoteticket/js/remoteticket.js')
             
             transf = Transformer('//select[@id="linked-end"]')
-            label = tag.label('in', for_='remote-site')
+            label = tag.label(' in ', for_='remote-site')
             local = tag.option('this project', value=req.href.newticket(),
                                selected='selected')
             remotes = [tag.option(rs['title'], 
@@ -105,6 +120,7 @@ class RemoteTicketSystem(Component):
                 for dest_name, dest in self._parse_links(ticket[field['name']])
                           ]
     
+    # Private methods
     def _remote_sites(self):
         intertracs = [v for k,v in self._intertracs.items() 
                         if isinstance(v, dict) and 'url' in v]
