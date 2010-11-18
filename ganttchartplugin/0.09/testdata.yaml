@@ -1,6 +1,0 @@
-'1': {dur: 1w, start: '2008-03-01', title: task1 3/1 + 1w}
-'2': {dur: 2w, start: '2008-03-01', title: task2 3/1 + 2w}
-'3': {dur: 3w, start: '2008-03-01', title: task3 3/1 +3w}
-'4': {start: '2008-03-01', end: '2008-05-15', title: task4 3/1-5/15}
-'5': {start: '2008-03-01', end: '2008-04-01', title: task5 3/1-4/1 }
-
