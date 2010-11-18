@@ -25,7 +25,7 @@ version: 0.1
 Update values in other tickets based on ticket changes.  For example,
 with Subtickets plugin and Timing and Estimation plugin in place, a
 parent ticket's estimate may be the sum of its children's estimates.
-This plugin can update the parent when the child changes.
+This plugin can update the parent when any children change.
 
 There are three types of relationships:
 
@@ -127,38 +127,63 @@ class ValuePropagationPlugin(Component):
         #   to - The field to update based on from
         #   oldOther - The old linked ticket
         #   newOther - The new linked ticket (maybe == oldOther)
+        #   options - The configuration options for the relationship
         #
         # The method must update one of the *Other tickets because
         # those are the ones saved by the calling function.
 
 
         # Other's value is the sum of my value.
-        def _method_sum(ticket, old_values, f, t, oldOther, newOther):
+        def _method_sum(ticket, old_values, f, t, oldOther, newOther, options):
             # When creating a ticket, there's no old value to subtract.
             if f in old_values and old_values[f]:
                 oldOther[t] = str(float(oldOther[t]) - float(old_values[f]))
             newOther[t] = str(float(newOther[t]) + float(ticket[f]))
 
         # Other's value is the min of my value and other's old value
-        def _method_min(ticket, old_values, f, t, oldOther, newOther):
+        def _method_min(ticket, old_values, f, t, oldOther, newOther, options):
             otherV = float(newOther[t])
             myV = float(ticket[f])
             if (myV < otherV):
                 newOther[t] = str(myV)
 
         # Other's value is the max of my value and other's old value
-        def _method_max(ticket, old_values, f, t, oldOther, newOther):
+        def _method_max(ticket, old_values, f, t, oldOther, newOther, options):
             otherV = float(newOther[t])
             myV = float(ticket[f])
             if (myV > otherV):
                 newOther[t] = str(myV)
 
+        # See if there's a default for missing values
+        def _get_default(ticket, options):
+            self.env.log.debug("Getting default for %s" % ticket.id)
+            dft = ''
+            for n, v in options:
+                self.env.log.debug("Processing (%s,%s)" % (n,v))
+                # Default option is "<relation>.default"
+                p=n.split('.')
+                if p[1]=='default':
+                    self.env.log.debug("Found default")
+                    p=v.split(':')
+                    link = p[0]
+                    field = p[1]
+                    self.env.log.debug("link:%s, field:%s" % (link,field))
+                    if link == 'id':
+                        other=Ticket(self.env, ticket.id)
+                    else:
+                        other=Ticket(self.env, ticket[link])
+                    self.env.log.debug("other is %s" % other.id)
+                    dft = other[field]
+                    self.env.log.debug("dft set to %s" % dft)
+            return dft
+                
         # When my value changes, replace my old value at the end of
         # other's value.
-        def _method_suffix(ticket, old_values, f, t, oldOther, newOther):
+        def _method_suffix(ticket, old_values, f, t, oldOther, newOther, options):
             v = oldOther[t]
             if v == None or v == '':
-                v=[]
+                v = _get_default(ticket, options)
+                v=v.split(',')
             else:
                 v=v.split(',')
                 v.pop()
@@ -168,7 +193,7 @@ class ValuePropagationPlugin(Component):
 
         # When my value changes, replace my old value at the beginning
         # of the other's value
-        def _method_prefix(ticket, old_values, f, t, oldOther, newOther):
+        def _method_prefix(ticket, old_values, f, t, oldOther, newOther, options):
             # First remove my old value from the beginning of the oldOther's
             # When creating a ticket, there's no old value to remove.
             if f in old_values and old_values[f]:
@@ -249,8 +274,8 @@ class ValuePropagationPlugin(Component):
             db = self.env.get_db_cnx()
             cursor = db.cursor()
             cursor.execute(q, (ticket.id,))
-            for x in [int(x[0]) for x in cursor]:
-                self._propagate(r, ticket, old_values, x, x)
+            for id in [int(row[0]) for row in cursor]:
+                self._propagate(r, ticket, old_values, id, id)
 
 
     # Propagate values from ticket to the ticket whose ID is
@@ -292,8 +317,10 @@ class ValuePropagationPlugin(Component):
                 method=self.config.get('value_propagation','%s.method.%s' % 
                                        (relation, f))
                 if method in self.methods:
+                    options = self.config.options('value_propagation')
+                    options = [(n,v) for n,v in options if n.startswith(relation+'.')]
                     self.methods[method](ticket, old_values, f, t,
-                                         oldOther, newOther)
+                                         oldOther, newOther, options)
                 else:
                     self.env.log.debug("No %s method found" % method)
 
@@ -303,17 +330,28 @@ class ValuePropagationPlugin(Component):
                         old_values[f] = None
 
         if changed:
+            def _update_ticket(ticket):
+                # Determine sequence number.
+                cnum = 0
+                tm = TicketModule(self.env)
+                db = self.env.get_db_cnx()
+                for change in tm.grouped_changelog_entries(ticket, db):
+                    # FIXME - should this say "and change['cnum'] > cnum?
+                    if change['permanent']:
+                        cnum = change['cnum']
+                # FIXME - Put something in the message?
+                # FIXME - the ticket_changed method gets an author, should
+                # this say "value propagation on behalf of <author>"?
+                ticket.save_changes('value propagation', '', when, db, cnum+1)
+
             # All the propagation is done, save the new values
             when = datetime.datetime.now()
             tzlocal = dateutil.tz.tzlocal()
             when = when.replace(tzinfo = tzlocal)
 
-            # FIXME - Put something in the message?
-            # FIXME - the ticket_changed method gets an author, should
-            # this say "value propagation on behalf of <author>"?
-            newOther.save_changes('value propagation', '', when)
+            _update_ticket(newOther)
             if newOther != oldOther:
-                oldOther.save_changes('value propagation', '', when)
+                _update_ticket(oldOther)
 
 
     # ITicketChangeListener methods
