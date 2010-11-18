@@ -26,7 +26,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.1.0'
+__version__   = '0.2'
 
 
 try:
@@ -96,10 +96,12 @@ class GanttMacro(Component):
             return None
 
 
-    def render_macro(self, req, name, content):
-        """Return the HTML output of the macro.
+    def expand_macro(self, formatter, name, content):
+        """Called by the formatter when rendering the parsed wiki text. (since 0.11)
 
-        req - ?
+	Should be used instead of render_macro to return the HTML output of the macro.
+
+        req - can be retrieved via formatter.context.req
         
         name - Wiki macro command that resulted in this method being
                called. In this case, it should be 'gantt', followed
@@ -201,13 +203,15 @@ class GanttMacro(Component):
             mstart,mend = self.process_dates(data)
             self.draw_chart(data,mstart,mend,img_path,80,20,False)
         except yaml.YAMLError,  detail :
-            msg = "Data Loading Error: " + detail.message
+            msg = "Data Loading Error: "
+            if hasattr(detail, 'message'):
+                msg = msg + detail.message	    
             if hasattr(detail, 'problem_mark'):
                 mark = detail.problem_mark
                 msg = msg + "<br />Error position: (%s:%s)" % (mark.line+1, mark.column+1)		
             return self.show_err(msg).getvalue()
             
-        buf.write('<img src="%s/gantt/%s"/>' % (req.base_url, img_name))
+        buf.write('<img src="%s/gantt/%s"/>' % (formatter.context.req.base_url, img_name))
         return buf.getvalue()
 
 
@@ -370,7 +374,6 @@ class GanttMacro(Component):
     # IHTMLPreviewRenderer methods
     
     def get_quality_ratio(self, mimetype):
-        self.log.error(mimetype)
         if mimetype in self.MIME_TYPES:
             return 2
         return 0
@@ -462,7 +465,10 @@ class GanttMacro(Component):
 
 
         ## column titles, centered horizontally and vertically:
-        font = ImageFont.truetype("arial.ttf", 12)
+        ## font could be "arial.ttf"
+	font_path = self.config.get('gantt', 'font_path')
+	font = ImageFont.truetype(font_path,12)
+	
         x = 0
         for i in range(cols):
             xpos = monthdays[i] * pixels_per_day
@@ -632,7 +638,9 @@ def main()  :
 	try :
 		data = yaml.load(infile)
 	except yaml.YAMLError,  detail :
-		msg = "Data Loading Error: " + detail.message
+		msg = "Data Loading Error: "
+                if hasattr(detail, 'message'):
+			msg = msg + detail.message
 		if hasattr(detail, 'problem_mark'):
 			mark = detail.problem_mark
 			msg = msg + "\nError position: (%s:%s)" % (mark.line+1, mark.column+1)		

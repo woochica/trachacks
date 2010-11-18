@@ -20,7 +20,7 @@ setup(name="gantt",
       description = "trac wiki plugin to render gantt charts",
       author = "Malcolm Smith",
       author_email = "malcolm@ripple6.com",
-      url = "http://ripple6.com/gantt",
+      url = "http://trac-hacks.org/wiki/GanttChartPlugin",
       license = "PSF License",
       long_description =
 """\
