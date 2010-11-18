@@ -1,12 +1,13 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from setuptools import setup
 
 PACKAGE = 'cc_selector'
+VERSION = '0.0.2'
 
 setup(
     name = PACKAGE,
-    version = '0.0.2',
+    version = VERSION,
     description = 'Visual Cc ticket field editor for Trac',
     keywords = 'trac cc ticket editor',
     url = 'http://trac-hacks.org/wiki/CcSelectorPlugin',

@@ -1,8 +1,10 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
-  xmlns:xi="http://www.w3.org/2001/XInclude"
-  xmlns:py="http://genshi.edgewall.org/">
+      xmlns:py="http://genshi.edgewall.org/">
   <head>
-    <title>CC selector window</title>
+    <title>Cc selector window</title>
     <py:if test="chrome.links">
       <py:for each="rel, links in chrome.links.items()">
         <link rel="${rel}" py:for="link in links" py:attrs="link" />
@@ -13,8 +15,8 @@
   </head>
   
   <body>
-    <p>Select CC, then <a href="javascript:window.close();">close</a>
-      this window.
+    <p>Select Cc, then
+      <a href="javascript:window.close();">close</a> this window.
     </p>
 
     <div id="ccdiv">
@@ -27,5 +29,11 @@
         py:for="d in cc_developers"></var>
       <var id="show_fullname" py:if="show_fullname"></var>
     </div>
+
+    <!-- additional close button, removed from short lists -->
+    <p py:if="len(cc_developers) > 9">
+      <input type="button" name="btt_close" value="Close"
+             title="Back to ticket editor" onclick="window.close()" />
+    </p>
   </body>
 </html>

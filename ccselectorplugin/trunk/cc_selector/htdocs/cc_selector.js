@@ -28,8 +28,7 @@ for the JavaScript code in this page.
 */
 
 // populate the list of default developers that should always be there
-function get_default_devs()
-{
+function get_default_devs() {
   var retval = new Array();
   var devs = new Array();
 
@@ -60,9 +59,9 @@ function get_default_devs()
   return retval;
 }
 
+
 // this function shows selection pop-up
-function show_selection(e)
-{
+function show_selection(event) {
   var thisurl = document.location.href;
 
   var nurl = thisurl.split('/');
@@ -74,22 +73,16 @@ function show_selection(e)
   nurl = nurl.join('/');
   nurl = nurl + "/cc_selector";
 
-  // MSIE crutch
-  if ( ! e )
-  {
-    e = event;
-  }
-
   window.open(nurl,
     "cc_selector",
-    "width=300,height=400,scrollbars=1,resizable=1,left="
-      + e.screenX + ",top=" + e.screenY
+    "width=300,height=400,location=no,scrollbars=yes,resizable=yes,left="
+      + event.screenX + ",top=" + event.screenY
   );
   return;
 }
 
-function guess_cc_field()
-{
+
+function guess_cc_field() {
   var doc = document;
 
   // are we in the popup?
@@ -112,9 +105,8 @@ function guess_cc_field()
   }
 }
 
-// split CC string into object
-function split_field(fieldid)
-{
+// split Cc string into object
+function split_field(fieldid) {
   var retval = get_default_devs();
 
   var f = document.getElementById(fieldid);
@@ -146,7 +138,8 @@ function split_field(fieldid)
   return retval;
 }
 
-// checkbox onclick reaction - set CC value
+
+// checkbox onclick reaction - set Cc value
 function cc_toggle(field, ckbox) {
   var name = ckbox.name;
   var checked = ckbox.checked;
@@ -183,7 +176,8 @@ function cc_toggle(field, ckbox) {
   target.value = newval;
 }
 
-// Fill given div with CC field contents
+
+// Fill given div with Cc field contents
 function split_into_checkboxes(fromid, toid) {
   var t = document.getElementById(toid);
 
@@ -195,7 +189,7 @@ function split_into_checkboxes(fromid, toid) {
     {
       continue;
     }
-    
+
     var dev = devs[w];
 
     var id_ck = "cc_" + w
@@ -212,10 +206,10 @@ function split_into_checkboxes(fromid, toid) {
     }
 
     lb.setAttribute("for", id_ck);
-    
+
     // make title / mailto: link / pop-up text
-    lb.appendChild(document.createTextNode(' cc to '));
-   
+    lb.appendChild(document.createTextNode(' Cc to '));
+
     var link;
     if (dev.email)
     {
@@ -228,7 +222,7 @@ function split_into_checkboxes(fromid, toid) {
       // otherwise, plain span
       link = document.createElement('SPAN');
     }
-    
+
     var label_name = dev.title;
     if (dev.name)
     {
@@ -244,7 +238,7 @@ function split_into_checkboxes(fromid, toid) {
       link.setAttribute("title", tip_name);
     }
     link.appendChild(document.createTextNode(label_name));
-    
+
     lb.appendChild(link);
 
     t.appendChild(document.createElement('br'));
@@ -253,10 +247,9 @@ function split_into_checkboxes(fromid, toid) {
   }
 }
 
-// onload function. Used in both ticket window and in pop-up.
-function afterLoad()
-{
 
+// onload function. Used in both ticket window and in pop-up.
+function afterLoad() {
   // guess fromid (possible values: cc, from-cc)
   var cc_field = guess_cc_field();
 
@@ -270,8 +263,15 @@ function afterLoad()
   else
   {
     // we're on ticket window
-    // create button
     var p = document.getElementById(cc_field);
+
+    if ( ! p )
+    {
+      // only act in editor mode, that is not always available,
+      // i.e. without proper permission/before authentication
+      return;
+    }
+
     if (p.type != "text")
     {
       // we only want to show button for text fields
@@ -281,33 +281,27 @@ function afterLoad()
 
     p = p.parentNode;
 
+    // create button
     var ccb = document.createElement('input');
+    var ccb_label = "Extended Cc selection";
     ccb.setAttribute("type", "button");
     ccb.setAttribute("id", "ccbutton");
     ccb.setAttribute("name", "ccbutton");
     ccb.setAttribute("value", ">");
-    ccb.setAttribute("alt", "Extended CC selection");
-    ccb.setAttribute("title", "Extended CC selection");
-    // ccb.setAttribute("onClick", "show_selection()");
-    ccb.onclick = show_selection;
+    ccb.setAttribute("alt", ccb_label);
+    ccb.setAttribute("title", ccb_label);
     p.appendChild(ccb);
   }
 }
 
-// utility function
-function teAddEventListener(elem, evt, func, capture)
-{
-   capture = capture || false;
-   if (elem.addEventListener)
-   {
-     elem.addEventListener(evt, func, capture);
-   }
-   else
-   {
-     elem.attachEvent('on'+evt, func);
-   }
-   return func;
-}
 
 // automatically add button on load:
-teAddEventListener(window, 'load', afterLoad);
+$(document).ready(function() {
+  // jQuery based onload trigger
+  afterLoad();
+
+  // custom 'click' event (for getting position to put pop-up there)
+  $('#ccbutton').click(function(event) {
+    show_selection(event);
+  });
+});
