@@ -1,19 +1,10 @@
 import re
 
-from genshi.builder import Markup, tag
-from genshi.filters.transform import Transformer
-
-from pkg_resources import resource_filename
-
 from trac.core import Component, Interface, implements
+from trac.config import IntOption
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
-from trac.ticket.api import ITicketChangeListener, ITicketManipulator
-from trac.web.api import ITemplateStreamFilter, IRequestFilter
-from trac.web.chrome import ITemplateProvider, add_script
-from trac.web.href import Href
 from tracremoteticket import db_default
-from tracremoteticket.model import RemoteTicket
 
 __all__ = ['RemoteTicketSystem']
 
@@ -22,10 +13,10 @@ class RemoteTicketSystem(Component):
     implements(IEnvironmentSetupParticipant, 
                #ITicketChangeListener, 
                #ITicketManipulator,
-               IRequestFilter,
-               ITemplateProvider,
-               ITemplateStreamFilter,
                )
+    
+    cache_ttl = IntOption('remoteticket', 'cache_ttl', 60000,
+        """Timeout in milliseconds for cached tickets.""")
     
     # Regular expression to match remote links, a remote link is an
     # InterTrac label, a colon, an optional hash/pound, then a number
@@ -64,69 +55,7 @@ class RemoteTicketSystem(Component):
             for sql in db_manager.to_sql(table):
                 cursor.execute(sql)
     
-    # IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        # Intercept linked_val argument, if it matches the URL of a known
-        # remote site then parse it and remove linked_val
-        if 'linked_val' in req.args:
-            linked_val = req.args['linked_val']
-            patt = re.compile(r'(.+)/ticket/(\d+)')
-            for name, site in self._intertracs.items():
-                m = patt.match(linked_val)
-                if m:
-                    remote_base, remote_tkt_id = m.groups()
-                    if remote_base == site['url'].rstrip('/'):
-                        req.args['linked_remote_val'] = '%s:%s' \
-                                                        % (name, remote_tkt_id)
-                        del req.args['linked_val']
-                        break
-        return handler
-    
-    def post_process_request(self, req, template, data, content_type):
-        if 'ticket' in data and 'linked_tickets' in data:
-            ticket = data['ticket']
-            data['linked_tickets'].extend(self._remote_tickets(ticket))
-            
-        if 'ticket' in data and 'newlinked_options' in data:
-            data['remote_sites'] = self._remote_sites()
-            
-        return (template, data, content_type)
-    
-    # ITemplateStreamFilter methods
-    def filter_stream(self, req, method, filename, stream, data):
-        if 'ticket' in data and 'remote_sites' in data:
-            add_script(req, 'tracremoteticket/js/remoteticket.js')
-            
-            transf = Transformer('//select[@id="linked-end"]')
-            label = tag.label(' in ', for_='remote-site')
-            local = tag.option('this project', value=req.href.newticket(),
-                               selected='selected')
-            remotes = [tag.option(rs['title'], 
-                                  value=Href(rs['url']).newticket())
-                       for rs in data['remote_sites']]
-            select = tag.select([local] + remotes, id='remote-site')
-            content = label + select
-            stream |= transf.after(content)
-            
-        return stream
-    
-    def _remote_tickets(self, ticket):
-        link_fields = [f for f in ticket.fields if f['type'] == 'link']
-        
-        return [(field['label'], 
-                 '%s:%s' % (dest_name, dest),
-                 RemoteTicket(self.env, dest_name, dest))
-                for field in link_fields
-                for dest_name, dest in self._parse_links(ticket[field['name']])
-                          ]
-    
-    # Private methods
-    def _remote_sites(self):
-        intertracs = [v for k,v in self._intertracs.items() 
-                        if isinstance(v, dict) and 'url' in v]
-        intertracs.sort()
-        return intertracs
-        
+    # Private methods        
     def _parse_links(self, value):
         if not value:
             return []
@@ -150,11 +79,3 @@ class RemoteTicketSystem(Component):
                 intertracs[key] = val
         
         return intertracs
-                
-    # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        return [('tracremoteticket', resource_filename(__name__, 'htdocs'))]
-
-    def get_templates_dirs(self):
-        return []
-    
