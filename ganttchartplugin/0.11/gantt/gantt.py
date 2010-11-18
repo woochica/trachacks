@@ -33,7 +33,7 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
-import sha
+import hashlib
 import os
 import sys
 import re
@@ -182,7 +182,7 @@ class GanttMacro(Component):
         else:
             sha_text = self.processor + content
 
-        sha_key  = sha.new(sha_text).hexdigest()
+        sha_key  = hashlib.sha1(sha_text).hexdigest()
         img_name = '%s.%s.%s' % (sha_key, self.processor, self.out_format) # cache: hash.<dot>.<png>
         img_path = os.path.join(self.cache_dir, img_name)
         map_name = '%s.%s.map' % (sha_key, self.processor)       # cache: hash.<dot>.map
