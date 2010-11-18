@@ -11,6 +11,19 @@ from trac.perm       import PermissionSystem
 from trac.web.api    import IRequestFilter, IRequestHandler
 from trac.web.chrome import add_script, ITemplateProvider
 
+# Import i18n methods.  Fallback modules maintain compatibility to Trac 0.11
+# by keeping Babel optional here.
+try:
+    from trac.util.translation  import domain_functions
+    add_domain, _ = \
+        domain_functions('cc_selector', ('add_domain', '_'))
+except ImportError:
+    from trac.util.translation  import gettext
+    _ = gettext
+    def add_domain(a,b,c=None):
+        pass
+
+
 class TicketWebUiAddon(Component):
     implements(IRequestFilter, ITemplateProvider, IRequestHandler)
 
@@ -21,6 +34,11 @@ class TicketWebUiAddon(Component):
         'cc_selector', 'username_blacklist', '',
         doc="Usernames separated by comma, that should never get listed.")
 
+    def __init__(self):
+        # bind the 'cc_selector' catalog to the specified locale directory
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
+
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
@@ -28,6 +46,8 @@ class TicketWebUiAddon(Component):
     def post_process_request(self, req, template, data, content_type):
         if re.search('ticket', req.path_info):
             add_script(req, 'cc_selector/cc_selector.js')
+            if req.locale is not None:
+                add_script(req, 'cc_selector/lang_js/%s.js' % req.locale)
         return(template, data, content_type)
 
     # ITemplateProvider
@@ -60,8 +80,12 @@ class TicketWebUiAddon(Component):
 
         developers = filter(lambda u: u[0] in privileged_users, all_users)
         cc_developers = filter(lambda u: not u[0] in blacklist, developers)
+        # TRANSLATOR: text added per list item in popup window like
+        #   [_] CC to username
+        cc_to =  _("Cc to")
         data = {
             'cc_developers': cc_developers,
+            'cc_to': cc_to,
             'show_fullname': self.show_fullname
             }
         return 'cc_selector.html', data, None

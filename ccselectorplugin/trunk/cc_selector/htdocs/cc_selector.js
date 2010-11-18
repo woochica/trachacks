@@ -183,6 +183,9 @@ function split_into_checkboxes(fromid, toid) {
 
   var devs = split_field(fromid);
 
+  // per list item text prepended once per list
+  var cc_to = document.getElementById('cc_to').getAttribute('title');
+
   for (var w in devs)
   {
     if (! devs.hasOwnProperty(w))
@@ -208,7 +211,7 @@ function split_into_checkboxes(fromid, toid) {
     lb.setAttribute("for", id_ck);
 
     // make title / mailto: link / pop-up text
-    lb.appendChild(document.createTextNode(' Cc to '));
+    lb.appendChild(document.createTextNode(' ' + cc_to + ' '));
 
     var link;
     if (dev.email)
@@ -283,7 +286,7 @@ function afterLoad() {
 
     // create button
     var ccb = document.createElement('input');
-    var ccb_label = "Extended Cc selection";
+    var ccb_label = _("Extended Cc selection");
     ccb.setAttribute("type", "button");
     ccb.setAttribute("id", "ccbutton");
     ccb.setAttribute("name", "ccbutton");

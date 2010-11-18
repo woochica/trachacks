@@ -1,0 +1,44 @@
+# German (Germany) translations for cc_selector.
+# Copyright (C) 2010
+# This file is distributed under the same license as the cc_selector
+# project.
+# Steffen Hoffmann <hoff.st@web.de>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: cc_selector 0.0.3\n"
+"Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
+"POT-Creation-Date: 2010-11-18 13:20+0100\n"
+"PO-Revision-Date: 2010-11-17 23:06+0100\n"
+"Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
+"Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#. TRANSLATOR: text added per list item in popup window like
+#. [_] CC to username
+#: cc_selector/cc_selector.py:85
+msgid "Cc to"
+msgstr "Kopie an"
+
+#: cc_selector/templates/cc_selector.html:9
+msgid "Cc selector window"
+msgstr "Kopie-Auswahl-Dialog"
+
+#: cc_selector/templates/cc_selector.html:20
+msgid ""
+"Select Cc, then\n"
+"      [1:close] this window."
+msgstr "Wählen Sie Kopien, [1:schliessen] Sie danach den Dialog wieder."
+
+#: cc_selector/templates/cc_selector.html:39
+msgid "Close"
+msgstr "Schliessen"
+
+#: cc_selector/templates/cc_selector.html:39
+msgid "Back to ticket editor"
+msgstr "Zurück zum Ticket-Editor"
+

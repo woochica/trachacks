@@ -2,7 +2,9 @@
     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:py="http://genshi.edgewall.org/">
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="cc_selector">
   <head>
     <title>Cc selector window</title>
     <py:if test="chrome.links">
@@ -15,7 +17,7 @@
   </head>
   
   <body>
-    <p>Select Cc, then
+    <p i18n:msg="">Select Cc, then
       <a href="javascript:window.close();">close</a> this window.
     </p>
 
@@ -27,12 +29,18 @@
       <!-- developer names will be taken from here  -->
       <var class="cc_dev" title="${d[0]}" name="${d[1]}" email="${d[2]}"
         py:for="d in cc_developers"></var>
+    </div>
+
+    <div id="cc_popup_hints">
+      <!-- variables for popup generator code stored here  -->
+      <var id="cc_to" title="${cc_to}"></var>
       <var id="show_fullname" py:if="show_fullname"></var>
     </div>
 
     <!-- additional close button, removed from short lists -->
     <p py:if="len(cc_developers) > 9">
-      <input type="button" name="btt_close" value="Close"
+      <input type="button" name="btt_close"
+             value="${dgettext('cc_selector', 'Close')}"
              title="Back to ticket editor" onclick="window.close()" />
     </p>
   </body>
