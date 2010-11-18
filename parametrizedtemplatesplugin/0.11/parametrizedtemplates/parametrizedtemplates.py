@@ -121,10 +121,13 @@ class ParametrizedTemplates(Component):
     def _find_fields(self, text):
         fields = []
         existing_fields = []
-        for match in re.finditer(r'{{\s*(.*?)\s*,\s*(.*?)\s*(?:,\s*(.*?)\s*)?}}', text):
+        for match in re.finditer(r'{{\s*(?P<name>.*?)\s*,\s*(?P<title>.*?)\s*(?:,\s*(?P<type>.*?)\s*(?:,\s*(?P<default>.*?)\s*)?)?}}', text):
             if match.group(1) not in existing_fields:
                 existing_fields.append(match.group(1))
-                fields.append((match.group(1), match.group(2), match.group(3)))
+                fields.append((match.group('name'), 
+                    match.group('title'), 
+                    match.group('type') or 'text', 
+                    match.group('default')))
         
         return fields
         

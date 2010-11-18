@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name = 'ParametrizedTemplates',
-    version = '0.2',
+    version = '0.3',
     packages = ['parametrizedtemplates'],
     package_data={
         'parametrizedtemplates': [

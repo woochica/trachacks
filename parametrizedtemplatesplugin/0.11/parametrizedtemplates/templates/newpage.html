@@ -50,8 +50,8 @@ form .field textarea:focus {
         <div class="field">
             <label for="field_${field[0]}">${field[1]}:</label><br/>
             <py:choose test="">
-                <textarea py:when="field[2] == 'textarea'" name="field_${field[0]}" id="field_${field[0]}" class="template_textarea" value=""/>
-                <input py:otherwise="" type="text" name="field_${field[0]}" id="field_${field[0]}" class="template_text" value=""/>
+                <textarea py:when="field[2] == 'textarea'" name="field_${field[0]}" id="field_${field[0]}" class="template_textarea" value="${field[3]}"/>
+                <input py:otherwise="" type="text" name="field_${field[0]}" id="field_${field[0]}" class="template_text" value="${field[3]}"/>
             </py:choose>
             <em>${field[0]}</em>
         </div>
