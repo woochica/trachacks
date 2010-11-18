@@ -299,8 +299,8 @@ function afterLoad() {
 
 
 // automatically add button on load:
-$(document).ready(function() {
-  // jQuery based onload trigger
+jQuery(document).ready(function($) {
+  // multiple browser compliant 'onload' trigger
   afterLoad();
 
   // custom 'click' event (for getting position to put pop-up there)
