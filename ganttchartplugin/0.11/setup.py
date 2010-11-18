@@ -30,5 +30,7 @@ The ganttplugin module renders gantt charts in trac wiki
       package_data={"": ["*.tar.bz2"]},
       include_package_data=True,
       entry_points={'trac.plugins': ['gantt=gantt']},
-      
+      install_requires = ['PyYAML', 
+                          'python-dateutil',
+                          'PIL']
       )
