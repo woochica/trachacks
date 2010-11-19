@@ -1712,17 +1712,16 @@ class DiscussionApi(Component):
     # Add items functions.
 
     def _add_item(self, context, table, item):
-        fields = item.keys()
-        values = item.values()
+        fields = tuple(item.keys())
+        values = tuple(item.values())
         sql_values = {'table' : table,
          'fields' : ', '.join(fields),
-         'values' : ', '.join(["\"%s\"" % to_unicode(value) for value in
-           values])}
+         'values' : ', '.join(["%s" for I in range(len(values))])}
         sql = ("INSERT INTO %(table)s "
                "(%(fields)s) "
                "VALUES (%(values)s)" % (sql_values))
-        self.log.debug(sql)
-        context.cursor.execute(sql)
+        self.log.debug(sql % values)
+        context.cursor.execute(sql, values)
 
     def add_group(self, context, group):
         self._add_item(context, 'forum_group', group)
@@ -1819,17 +1818,16 @@ class DiscussionApi(Component):
     # Edit functions.
 
     def _edit_item(self, context, table, id, item):
-        fields = item.keys()
-        values = item.values()
+        fields = tuple(item.keys())
+        values = tuple(item.values())
         sql_values = {'table' : table,
-         'fields' : ", ".join([("%s = \"%s\"" % (fields[I], to_unicode(
-           values[I]))) for I in range(len(fields))]),
+         'fields' : ", ".join([("%s = %%s" % (field)) for field in fields]),
          'id' : id}
         sql = ("UPDATE %(table)s "
                "SET %(fields)s "
                "WHERE id = %(id)s" % (sql_values))
-        self.log.debug(sql)
-        context.cursor.execute(sql)
+        self.log.debug(sql % values)
+        context.cursor.execute(sql, values)
 
     def edit_group(self, context, id, group):
         # Edit froum group.
