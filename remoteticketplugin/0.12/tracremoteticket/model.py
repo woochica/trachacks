@@ -31,11 +31,11 @@ class RemoteTicket(object):
         try:
             tkt_vals = server.ticket.get(tkt_id)
         except xmlrpclib.Error, e:
-            self.env.log.warn('Could not access remote trac %s %s', 
-                              e.args, e.message)
             return
         
         self.values.update(tkt_vals[3])
+        self._cachetime = datetime.now()
+        self.save()
     
     def __getitem__(self, name):
         return self.values.get(name)
@@ -48,24 +48,36 @@ class RemoteTicket(object):
                                  if f['name'] in values]
         for name in field_names:
             self[name] = values.get(name, '')
-        
-    def insert(self, when=None, db=None):
+    
+    def save(self, when=None):
         if when is None:
-            when = datetime.now(utc)
+            when = self._cachetime
+        # Build the update/insert sequences
+        # NB The ordering means the same sequences may be reused in both cases
+        field_names = self.remote_fields + ['cachetime', 'remote_name', 'id']
+        values_dict = dict(self.values)
+        values_dict.update({'cachetime': when, 'remote_name': self.remote_name, 
+                            'id': self.id})
+        values = [values_dict[name] for name in field_names]
         
-        values = dict(self.values)
-        std_fields = [f['name'] for f in self.fields 
-                                if f['name'] in self.values]
-        
-        @self.env.with_transaction(db)
-        def do_insert(db):
+        @self.env.with_transaction()
+        def do_save(db):
             cursor = db.cursor()
-            cursor.execute('INSERT INTO remote_tickets (%s) VALUES (%s)'
-                           % (','.join(std_fields),
-                              ','.join('%s' for _ in std_fields)),
-                           [values[name] for name in std_fields])
-        
-        return self.id
+            # Update the existing entry (if any)
+            sql = ('''UPDATE remote_tickets SET %s
+                   WHERE remote_name=%%s and id=%%s''' %
+                   ','.join('%s=%%s' % name for name in field_names[:-2]))
+            cursor.execute(sql, values)
+            
+            # If a row was updated then our work is done
+            if cursor.rowcount > 0:
+                return
+            
+            # If no rows were updated then this remote ticket is new to us
+            sql = ('''INSERT INTO remote_tickets (%s) VALUES (%s)''' %
+                   (','.join(field_names),  
+                    ','.join(['%s'] * len(field_names))))
+            cursor.execute(sql, values)
     
     def delete(self, db=None):
         @self.env.with_transaction(db)

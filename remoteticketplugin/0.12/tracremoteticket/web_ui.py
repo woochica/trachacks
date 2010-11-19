@@ -46,30 +46,46 @@ class RemoteTicketModule(Component):
         return handler
     
     def post_process_request(self, req, template, data, content_type):
-        if data and 'ticket' in data and 'linked_tickets' in data:
+        if req.path_info.startswith('/ticket') and data:
+            return self._do_ticket(req, template, data, content_type)
+        elif req.path_info.startswith('/newticket') and data:
+            return self._do_newticket(req, template, data, content_type)
+        else:
+            return (template, data, content_type)
+        
+    def _do_ticket(self, req, template, data, content_type):
+        # Append remote linked tickets, to list of linked tickets
+        if 'ticket' in data and 'linked_tickets' in data:
             ticket = data['ticket']
             data['linked_tickets'].extend(self._remote_tickets(ticket))
-            
-        if data and 'ticket' in data and 'newlinked_options' in data:
+        
+        # Provide list of remote sites if newlinked form options are present
+        if 'newlinked_options' in data:
             data['remote_sites'] = self._remote_sites()
         
-        if data and 'ticket' in data and 'linked_end' in req.args \
-                                     and 'linked_remote_val' in req.args:
+        return (template, data, content_type)
+        
+    def _do_newticket(self, req, template, data, content_type):
+        link_remote_val = req.args.get('linked_remote_val', '')
+        pattern = RemoteTicketSystem(self.env).REMOTES_RE
+        lrv_match = pattern.match(link_remote_val)
+        link_end = req.args.get('linked_end', '')
+        ends_map = TicketSystem(self.env).link_ends_map
+        
+        if ('ticket' in data and lrv_match and link_end in ends_map):
             ticket = data['ticket']
-            link_end = req.args['linked_end']
-            lrv_patt = RemoteTicketSystem(self.env).REMOTES_RE
-            lrv_match = lrv_patt.match(req.args['linked_remote_val'])
+            remote_name = lrv_match.group(1)
+            remote_id = lrv_match.group(2)
+            remote_ticket = RemoteTicket(self.env, remote_name, remote_id)
+            link_fields = [f for f in ticket.fields if f['name'] == link_end]
+            copy_field_names = link_fields[0]['copy_fields']
             
-            if lrv_match and link_end in TicketSystem(self.env).link_ends_map:
-                remote_name, remote_id = lrv_match.groups()
-                remote_ticket = RemoteTicket(self.env, remote_name, remote_id)
-                link_field = [f for f in ticket.fields 
-                                if f['name'] == link_end][0]
-                copy_field_names = link_field['copy_fields']
-                for fname in copy_field_names:                
-                    ticket[fname] = remote_ticket[fname]
-                data['remote_ticket'] = remote_ticket
-                
+            ticket[link_end] = link_remote_val
+            for fname in copy_field_names:
+                ticket[fname] = remote_ticket[fname]
+            
+            data['remote_ticket'] = remote_ticket
+            
         return (template, data, content_type)
     
     # ITemplateStreamFilter methods
