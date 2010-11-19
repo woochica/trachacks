@@ -1795,11 +1795,11 @@ class DiscussionApi(Component):
     def _set_item(self, context, table, column, value, where = '', values = ()):
         sql_values = {'table' : table,
           'column' : column,
-          'value' : to_unicode(value),
           'where' : 'WHERE ' + where if where else ''}
         sql = ("UPDATE %(table)s "
-               "SET %(column)s = \"%(value)s\" "
+               "SET %(column)s = %%s "
                "%(where)s" % (sql_values))
+        values = (value,) + values
         self.log.debug(sql % values)
         context.cursor.execute(sql, values)
 
