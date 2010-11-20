@@ -66,6 +66,8 @@ class HudsonTracPlugin(Component):
                           'Whether to display the build descriptions for '
                           'each build instead of the canned "Build finished '
                           'successfully" etc messages.')
+    disp_building = BoolOption('hudson', 'display_building', False,
+                               'Also show in-progress builds')
 
     def __init__(self):
         # get base api url
@@ -214,27 +216,36 @@ class HudsonTracPlugin(Component):
 
         # extract all build entries
         for entry in __get_builds(info):
-            # ignore builds that are still running
-            if entry['building'] == 'true':
-                continue
+            # get result, optionally ignoring builds that are still running
+            if entry['building']:
+                if self.disp_building:
+                    result = 'IN-PROGRESS'
+                else:
+                    continue
+            else:
+                result = entry['result']
 
             # get start/stop times
-            started   = entry['timestamp']
-            completed = started + entry['duration']
-            started   /= 1000
-            completed /= 1000
-
+            started = entry['timestamp'] / 1000
             if started < start or started > stop:
                 continue
 
+            if result == 'IN-PROGRESS':
+                # we hope the clocks are close...
+                completed = time.time()
+            else:
+                completed = (entry['timestamp'] + entry['duration']) / 1000
+
             # get message
-            result = entry['result']
             message, kind = {
                 'SUCCESS': ('Build finished successfully',
                             ('build-successful',
                              'build-successful-alt')[self.alt_succ]),
                 'UNSTABLE': ('Build unstable', 'build-unstable'),
                 'ABORTED': ('Build aborted', 'build-aborted'),
+                'IN-PROGRESS': ('Build in progress',
+                                ('build-inprogress',
+                                 'build-inprogress-alt')[self.alt_succ]),
                 }.get(result, ('Build failed', 'build-failed'))
 
             if self.use_desc:
@@ -242,9 +253,14 @@ class HudsonTracPlugin(Component):
                             unicode(entry['description'], cset) or message
 
             # format response
-            comment = "%s at %s, duration %s" % (
-                          message, format_datetime(completed),
-                          pretty_timedelta(started, completed))
+            if result == 'IN-PROGRESS':
+                comment = "%s since %s, duration %s" % (
+                              message, format_datetime(started),
+                              pretty_timedelta(started, completed))
+            else:
+                comment = "%s at %s, duration %s" % (
+                              message, format_datetime(completed),
+                              pretty_timedelta(started, completed))
 
             href  = entry['url']
             title = 'Build "%s" (%s)' % \
