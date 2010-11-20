@@ -228,9 +228,9 @@ class PDashboard(Component):
         closed_stat = self.stats_provider.get_ticket_resolution_group_stats(project_tickets)
 
         data['proj_closed_stat'] = {'stats': closed_stat,
-                                      'stats_href': req.href.query(closed_stat.qry_args),
-                                      'interval_hrefs': [req.href.query(interval['qry_args'])
-                                                         for interval in closed_stat.intervals]}
+                                    'stats_href': req.href.query(closed_stat.qry_args),
+                                    'interval_hrefs': [req.href.query(interval['qry_args'])
+                                                       for interval in closed_stat.intervals]}
 
         tkt_frequency_stats = {}
         tkt_duration_stats = {}

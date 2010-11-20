@@ -40,7 +40,8 @@ class ProgressTicketGroupStatsProvider(Component):
         # ticket_ids is a list of ticket id as number.
         total_cnt = len(ticket_ids)
         if total_cnt:
-            cursor = self.env.get_db_cnx().cursor() # get database connection
+            db = self.env.get_db_cnx()
+            cursor = db.cursor() # get database connection
             str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
             
             
@@ -78,46 +79,34 @@ class ProgressTicketGroupStatsProvider(Component):
         stat.refresh_calcs()
         return stat
 
-    def get_ticket_resolution_group_stats(self, ticket_ids):
-        
-        # ticket_ids is a list of ticket id as number.
-        total_cnt = len(ticket_ids)
-        if total_cnt:
-            str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
-            cursor = self.env.get_db_cnx().cursor()  # get database connection    
-            
-            type_count = [] # list of dictionary with key name and count
-            for type in model.Resolution.select(self.env):
-                
-                #Replace possible single-quotes in resolution strings with double single-quotes,
-                #as required for SQLite queries (see th:#3684, http://www.sqlite.org/faq.html#q14)
-                count = cursor.execute("SELECT count(1) FROM ticket "
-                                        "WHERE status = 'closed' AND resolution = '%s' AND id IN "
-                                        "(%s)" % (type.name.replace("'","''"), ",".join(str_ids)))
-                count = 0
-                for cnt, in cursor:
-                    count = cnt
-
-                if count > 0:
-                    type_count.append({'name':type.name,'count':count})
-
-        else:
-            type_count = []
+    def get_ticket_resolution_group_stats(self, ticket_ids):        
+        # ticket_ids is a list of ticket ids with type int
         
         stat = TicketGroupStats('ticket resolution', 'ticket')
-        
-        
-        for type in type_count:
                 
-            if type['name'] in ('fixed', 'completed'): # default ticket type 'defect'
+        if len(ticket_ids):
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+                        
+            str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
+            count_by_resolution = [] # list of dictionaries with keys name and count
+            for resolution in model.Resolution.select(self.env, db=db):                
+                cursor.execute("SELECT COUNT(*) FROM ticket "
+                               "WHERE status = 'closed' AND resolution=%%s AND id IN (%s)"
+                               % (",".join(str_ids)), (resolution.name,) )
+
+                count = cursor.fetchone()[0]
+                if count > 0:
+                    count_by_resolution.append({'name': resolution.name, 'count': count})            
         
-                stat.add_interval(type['name'], type['count'],
-                                  {'resolution': type['name']}, 'value', True)
+            for t in count_by_resolution:                
+                if t['name'] in ('fixed', 'completed'): # default ticket type 'defect'        
+                    stat.add_interval(t['name'], t['count'],
+                                      {'resolution': t['name']}, 'value', True)            
+                else:
+                    stat.add_interval(t['name'], t['count'],
+                                      {'resolution': t['name']}, 'waste', False)
             
-            else:
-                stat.add_interval(type['name'], type['count'],
-                                  {'resolution': type['name']}, 'waste', False)
-                          
         stat.refresh_calcs()
         return stat
 
