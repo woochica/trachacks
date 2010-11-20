@@ -38,9 +38,7 @@ class HudsonTracPlugin(Component):
                ITemplateProvider, IPermissionRequestor)
 
     disp_mod = BoolOption('hudson', 'display_modules', 'false',
-                          'Display status of modules in the timeline too. '
-                          'Note: enabling this may slow down the timeline '
-                          'retrieval significantly')
+                          'Display status of modules in the timeline too. ')
     job_url  = Option('hudson', 'job_url', 'http://localhost/hudson/',
                       'The url of the top-level hudson page if you want to '
                       'display all jobs, or a job or module url (such as '
@@ -66,11 +64,13 @@ class HudsonTracPlugin(Component):
                           'successfully" etc messages.')
 
     def __init__(self):
+        # get base api url
         api_url = unicode_quote(self.job_url, '/%:@')
         if api_url and api_url[-1] != '/':
             api_url += '/'
         api_url += 'api/xml'
 
+        # set up http authentication
         pwd_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
         pwd_mgr.add_password(None, api_url, self.username, self.password)
 
@@ -83,25 +83,18 @@ class HudsonTracPlugin(Component):
         self.env.log.debug("registered auth-handler for '%s', username='%s'",
                            api_url, self.username)
 
-        if '/job/' in api_url:
-            path = '/*/build[timestamp>=%(start)s][timestamp<=%(stop)s]'
-            depth = 1
-            if self.disp_mod:
-                path  += ('|/*/module/build'
-                          '[timestamp>=%(start)s][timestamp<=%(stop)s]')
-                depth += 1
-        else:
-            path = '/*/job/build[timestamp>=%(start)s][timestamp<=%(stop)s]'
-            depth = 2
-            if self.disp_mod:
-                path  += ('|/*/job/module/build'
-                          '[timestamp>=%(start)s][timestamp<=%(stop)s]')
-                depth += 1
+        # construct tree=... parameter to query for the desired items
+        tree = '%(b)s'
+        if self.disp_mod:
+            tree += ',modules[%(b)s]'
+        if '/job/' not in api_url:
+            tree = 'jobs[' + tree + ']'
 
-        self.info_url = ('%s?xpath=%s&depth=%s&'
-                         'exclude=//action|//artifact|//changeSet|//culprit&'
-                         'wrapper=builds' %
-                         (api_url.replace('%', '%%'), path, depth))
+        tree = tree % {'b':
+            'builds[building,timestamp,duration,result,description,url,fullDisplayName]'}
+
+        # assemble final url
+        self.info_url = '%s?tree=%s' % (api_url, tree)
 
         self.env.log.debug("Build-info url: '%s'", self.info_url)
 
@@ -163,28 +156,21 @@ class HudsonTracPlugin(Component):
         add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
 
         # get and parse the build-info
-        url = self.info_url % {'start': int(start*1000), 'stop': int(stop*1000)}
         try:
             try:
-                info = minidom.parse(self.url_opener.open(url))
+                info = minidom.parse(self.url_opener.open(self.info_url))
             except Exception:
                 import sys
                 self.env.log.exception("Error getting build info from '%s'",
-                                       url)
+                                       self.info_url)
                 raise IOError(
                     "Error getting build info from '%s': %s: %s. This most "
                     "likely means you configured a wrong job_url, username, "
                     "or password." %
-                    (url, sys.exc_info()[0].__name__, str(sys.exc_info()[1])))
+                    (self.info_url, sys.exc_info()[0].__name__,
+                     str(sys.exc_info()[1])))
         finally:
             self.url_opener.close()
-
-        if info.documentElement.nodeName != 'builds':
-            raise IOError(
-                "Error getting build info from '%s': returned document has "
-                "unexpected node '%s'. This most likely means you configured "
-                "a wrong job_url." %
-                (self.info_url, info.documentElement.nodeName))
 
         # extract all build entries
         for entry in info.documentElement.getElementsByTagName("build"):
@@ -197,6 +183,9 @@ class HudsonTracPlugin(Component):
             completed = started + _get_number(entry, 'duration')
             started   /= 1000
             completed /= 1000
+
+            if started < start or started > stop:
+                continue
 
             result = _get_string(entry, 'result')
             message, kind = {
