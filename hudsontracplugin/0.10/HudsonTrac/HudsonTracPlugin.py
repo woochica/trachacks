@@ -143,6 +143,81 @@ class HudsonTracPlugin(Component):
 
         self.env.log.debug("Build-info url: '%s'", self.info_url)
 
+    def __get_info(self):
+        """Retrieve build information from Hudson"""
+        try:
+            local_exc = False
+            try:
+                resp = self.url_opener.open(self.info_url)
+                cset = resp.info().getparam('charset') or 'ISO-8859-1'
+
+                ct   = resp.info().gettype()
+                if ct != 'text/x-python':
+                    local_exc = True
+                    raise IOError(
+                        "Error getting build info from '%s': returned document "
+                        "has unexpected type '%s' (expected 'text/x-python'). "
+                        "The returned text is:\n%s" %
+                        (self.info_url, ct, unicode(resp.read(), cset)))
+
+                info = literal_eval(resp.read())
+
+                return info, cset
+            except Exception:
+                if local_exc:
+                    raise
+
+                import sys
+                self.env.log.exception("Error getting build info from '%s'",
+                                       self.info_url)
+                raise IOError(
+                    "Error getting build info from '%s': %s: %s. This most "
+                    "likely means you configured a wrong job_url, username, "
+                    "or password." %
+                    (self.info_url, sys.exc_info()[0].__name__,
+                     str(sys.exc_info()[1])))
+        finally:
+            self.url_opener.close()
+
+    def __find_all(self, d, paths):
+        """Find and return a list of all items with the given paths."""
+        if not isinstance(paths, basestring):
+            for path in paths:
+                for item in self.__find_all(d, path):
+                    yield item
+            return
+
+        parts = paths.split('.', 1)
+        key = parts[0]
+        if key in d:
+            if len(parts) > 1:
+                for item in self.__find_all(d[key], parts[1]):
+                    yield item
+            else:
+                yield d[key]
+        elif not isinstance(d, dict) and not isinstance(d, basestring):
+            for elem in d:
+                for item in self.__find_all(elem, paths):
+                    yield item
+
+    def __find_first(self, d, paths):
+        """Similar to __find_all, but return only the first item or None"""
+        l = list(self.__find_all(d, paths))
+        return len(l) > 0 and l[0] or None
+
+    def __extract_builds(self, info):
+        """Extract individual builds from the info returned by Hudson.
+        What we may get from Hudson is zero or more of the following:
+          {'jobs': [{'modules': [{'builds': [{'building': False, ...
+          {'jobs': [{'builds': [{'building': False, ...
+          {'modules': [{'builds': [{'building': False, ...
+          {'builds': [{'building': False, ...
+        """
+        p = ['builds', 'modules.builds', 'jobs.builds', 'jobs.modules.builds']
+        for arr in self.__find_all(info, p):
+            for item in arr:
+                yield item
+
     # IPermissionRequestor methods  
 
     def get_permission_actions(self):
@@ -186,42 +261,6 @@ class HudsonTracPlugin(Component):
         if 'build' not in filters or not req.perm.has_permission('BUILD_VIEW'):
             return
 
-        # helper to extract all values in a nested structure of lists and dicts
-        def __find_all(d, paths):
-            if not isinstance(paths, basestring):
-                for path in paths:
-                    for item in __find_all(d, path):
-                        yield item
-                return
-
-            parts = paths.split('.', 1)
-            key = parts[0]
-            if key in d:
-                if len(parts) > 1:
-                    for item in __find_all(d[key], parts[1]):
-                        yield item
-                else:
-                    yield d[key]
-            elif not isinstance(d, dict) and not isinstance(d, basestring):
-                for elem in d:
-                    for item in __find_all(elem, paths):
-                        yield item
-
-        def __find_first(d, paths):
-            l = list(__find_all(d, paths))
-            return len(l) > 0 and l[0] or None
-
-        # extract individual builds; what we may get from hudson is:
-        # {'jobs': [{'modules': [{'builds': [{'building': False, ...
-        # {'jobs': [{'builds': [{'building': False, ...
-        # {'modules': [{'builds': [{'building': False, ...
-        # {'builds': [{'building': False, ...
-        def __get_builds(info):
-            for arr in __find_all(info, ['builds', 'modules.builds',
-                                         'jobs.builds','jobs.modules.builds']):
-                for item in arr:
-                    yield item
-
         # Support both Trac 0.10 and 0.11
         if isinstance(start, datetime): # Trac>=0.11
             from trac.util.datefmt import to_timestamp
@@ -231,40 +270,10 @@ class HudsonTracPlugin(Component):
         add_stylesheet(req, 'HudsonTrac/hudsontrac.css')
 
         # get and parse the build-info
-        try:
-            local_exc = False
-            try:
-                resp = self.url_opener.open(self.info_url)
-                cset = resp.info().getparam('charset') or 'ISO-8859-1'
-
-                ct   = resp.info().gettype()
-                if ct != 'text/x-python':
-                    local_exc = True
-                    raise IOError(
-                        "Error getting build info from '%s': returned document "
-                        "has unexpected type '%s' (expected 'text/x-python'). "
-                        "The returned text is:\n%s" %
-                        (self.info_url, ct, unicode(resp.read(), cset)))
-
-                info = literal_eval(resp.read())
-            except Exception:
-                if local_exc:
-                    raise
-
-                import sys
-                self.env.log.exception("Error getting build info from '%s'",
-                                       self.info_url)
-                raise IOError(
-                    "Error getting build info from '%s': %s: %s. This most "
-                    "likely means you configured a wrong job_url, username, "
-                    "or password." %
-                    (self.info_url, sys.exc_info()[0].__name__,
-                     str(sys.exc_info()[1])))
-        finally:
-            self.url_opener.close()
+        info, cset = self.__get_info()
 
         # extract all build entries
-        for entry in __get_builds(info):
+        for entry in self.__extract_builds(info):
             # get result, optionally ignoring builds that are still running
             if entry['building']:
                 if self.disp_building:
@@ -305,7 +314,8 @@ class HudsonTracPlugin(Component):
             changesets = ''
             if self.list_changesets:
                 paths = ['changeSet.items.revision', 'changeSet.items.id']
-                revs = [unicode(str(r), cset) for r in __find_all(entry, paths)]
+                revs  = [unicode(str(r), cset) for r in \
+                                                self.__find_all(entry, paths)]
                 if revs:
                     revs = [self.__fmt_changeset(r, req) for r in revs]
                     changesets = '<br/>Changesets: ' + ', '.join(revs)
@@ -314,13 +324,18 @@ class HudsonTracPlugin(Component):
             author = None
             for c in self.disp_culprit:
                 author = {
-                    'starter':  __find_first(entry, 'actions.causes.userName'),
-                    'author':   __find_first(entry, ['changeSet.items.user',
+                    'starter':
+                        self.__find_first(entry, 'actions.causes.userName'),
+                    'author':
+                        self.__find_first(entry, ['changeSet.items.user',
                                            'changeSet.items.author.fullName']),
-                    'authors':  __find_all(entry, ['changeSet.items.user',
+                    'authors':
+                        self.__find_all(entry, ['changeSet.items.user',
                                            'changeSet.items.author.fullName']),
-                    'culprit':  __find_first(entry, 'culprits.fullName'),
-                    'culprits': __find_all(entry, 'culprits.fullName'),
+                    'culprit':
+                        self.__find_first(entry, 'culprits.fullName'),
+                    'culprits':
+                        self.__find_all(entry, 'culprits.fullName'),
                 }.get(c)
 
                 if author and not isinstance(author, basestring):
