@@ -14,7 +14,6 @@ See also:
 import time
 import urllib2
 import base64
-from xml.dom import minidom
 from datetime import datetime
 from trac.core import *
 from trac.config import Option, BoolOption
@@ -27,6 +26,11 @@ try:
     from trac.timeline.api import ITimelineEventProvider
 except ImportError:
     from trac.Timeline import ITimelineEventProvider
+try:
+    from ast import literal_eval
+except ImportError:
+    def literal_eval(str):
+        return eval(str, {"__builtins__":None}, {"True":True, "False":False})
 
 class HudsonTracPlugin(Component):
     """
@@ -68,7 +72,7 @@ class HudsonTracPlugin(Component):
         api_url = unicode_quote(self.job_url, '/%:@')
         if api_url and api_url[-1] != '/':
             api_url += '/'
-        api_url += 'api/xml'
+        api_url += 'api/python'
 
         # set up http authentication
         pwd_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -131,21 +135,41 @@ class HudsonTracPlugin(Component):
         if 'build' not in filters or not req.perm.has_permission('BUILD_VIEW'):
             return
 
-        # xml parsing helpers
-        def _get_text(node):
-            rc = ""
-            for node in node.childNodes:
-                if node.nodeType == node.TEXT_NODE:
-                    rc += node.data
-            return rc
+        # helper to extract all values in a nested structure of lists and dicts
+        def __find_all(d, paths):
+            if not isinstance(paths, basestring):
+                for path in paths:
+                    for item in __find_all(d, path):
+                        yield item
+                return
 
-        def _get_string(parent, child):
-            nodes = parent.getElementsByTagName(child)
-            return nodes and _get_text(nodes[0]).strip() or ''
+            parts = paths.split('.', 1)
+            key = parts[0]
+            if key in d:
+                if len(parts) > 1:
+                    for item in __find_all(d[key], parts[1]):
+                        yield item
+                else:
+                    yield d[key]
+            elif not isinstance(d, dict) and not isinstance(d, basestring):
+                for elem in d:
+                    for item in __find_all(elem, paths):
+                        yield item
 
-        def _get_number(parent, child):
-            num = _get_string(parent, child)
-            return num and int(num) or 0
+        def __find_first(d, paths):
+            l = list(__find_all(d, paths))
+            return len(l) > 0 and l[0] or None
+
+        # extract individual builds; what we may get from hudson is:
+        # {'jobs': [{'modules': [{'builds': [{'building': False, ...
+        # {'jobs': [{'builds': [{'building': False, ...
+        # {'modules': [{'builds': [{'building': False, ...
+        # {'builds': [{'building': False, ...
+        def __get_builds(info):
+            for arr in __find_all(info, ['builds', 'modules.builds',
+                                         'jobs.builds','jobs.modules.builds']):
+                for item in arr:
+                    yield item
 
         # Support both Trac 0.10 and 0.11
         if isinstance(start, datetime): # Trac>=0.11
@@ -157,9 +181,25 @@ class HudsonTracPlugin(Component):
 
         # get and parse the build-info
         try:
+            local_exc = False
             try:
-                info = minidom.parse(self.url_opener.open(self.info_url))
+                resp = self.url_opener.open(self.info_url)
+                cset = resp.info().getparam('charset') or 'ISO-8859-1'
+
+                ct   = resp.info().gettype()
+                if ct != 'text/x-python':
+                    local_exc = True
+                    raise IOError(
+                        "Error getting build info from '%s': returned document "
+                        "has unexpected type '%s' (expected 'text/x-python'). "
+                        "The returned text is:\n%s" %
+                        (self.info_url, ct, unicode(resp.read(), cset)))
+
+                info = literal_eval(resp.read())
             except Exception:
+                if local_exc:
+                    raise
+
                 import sys
                 self.env.log.exception("Error getting build info from '%s'",
                                        self.info_url)
@@ -173,21 +213,22 @@ class HudsonTracPlugin(Component):
             self.url_opener.close()
 
         # extract all build entries
-        for entry in info.documentElement.getElementsByTagName("build"):
+        for entry in __get_builds(info):
             # ignore builds that are still running
-            if _get_string(entry, 'building') == 'true':
+            if entry['building'] == 'true':
                 continue
 
-            # create timeline entry
-            started   = _get_number(entry, 'timestamp')
-            completed = started + _get_number(entry, 'duration')
+            # get start/stop times
+            started   = entry['timestamp']
+            completed = started + entry['duration']
             started   /= 1000
             completed /= 1000
 
             if started < start or started > stop:
                 continue
 
-            result = _get_string(entry, 'result')
+            # get message
+            result = entry['result']
             message, kind = {
                 'SUCCESS': ('Build finished successfully',
                             ('build-successful',
@@ -197,15 +238,17 @@ class HudsonTracPlugin(Component):
                 }.get(result, ('Build failed', 'build-failed'))
 
             if self.use_desc:
-                message = _get_string(entry, 'description') or message
+                message = entry['description'] and \
+                            unicode(entry['description'], cset) or message
 
+            # format response
             comment = "%s at %s, duration %s" % (
                           message, format_datetime(completed),
                           pretty_timedelta(started, completed))
 
-            href  = _get_string(entry, 'url')
+            href  = entry['url']
             title = 'Build "%s" (%s)' % \
-                        (_get_string(entry, 'fullDisplayName'), result.lower())
+                    (unicode(entry['fullDisplayName'], cset), result.lower())
 
             yield kind, href, title, completed, None, comment
 
