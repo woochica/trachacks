@@ -87,13 +87,12 @@ class ProgressTicketGroupStatsProvider(Component):
         if len(ticket_ids):
             db = self.env.get_db_cnx()
             cursor = db.cursor()
-                        
-            str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
+            
             count_by_resolution = [] # list of dictionaries with keys name and count
             for resolution in model.Resolution.select(self.env, db=db):                
                 cursor.execute("SELECT COUNT(*) FROM ticket "
                                "WHERE status = 'closed' AND resolution=%%s AND id IN (%s)"
-                               % (",".join(str_ids)), (resolution.name,) )
+                               % (",".join(['%s']*len(ticket_ids))), (resolution.name,) + tuple(ticket_ids))
 
                 count = cursor.fetchone()[0]
                 if count > 0:
