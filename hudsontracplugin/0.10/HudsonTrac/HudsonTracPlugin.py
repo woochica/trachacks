@@ -16,7 +16,7 @@ import urllib2
 import base64
 from datetime import datetime
 from trac.core import *
-from trac.config import Option, BoolOption
+from trac.config import Option, BoolOption, ListOption
 from trac.perm import IPermissionRequestor
 from trac.util import Markup, format_datetime, pretty_timedelta
 from trac.util.text import unicode_quote
@@ -71,6 +71,23 @@ class HudsonTracPlugin(Component):
                                'Also show in-progress builds')
     list_changesets = BoolOption('hudson', 'list_changesets', False,
                                  'List the changesets for each build')
+    disp_culprit = ListOption('hudson', 'display_culprit', [], doc =
+                              'Display the culprit(s) for each build. This is '
+                              'a comma-separated list of zero or more of the '
+                              'following tokens: `starter`, `author`, '
+                              '`authors`, `culprit`, `culprits`. `starter` is '
+                              'the user that started the build, if any; '
+                              '`author` is the author of the first commit, if '
+                              'any; `authors` is the list of authors of all '
+                              'commits; `culprit` is the first of what hudson '
+                              'thinks are the culprits that caused the build; '
+                              'and `culprits` is the list of all culprits. If '
+                              'given a list, the first non-empty value is used.'
+                              ' Example: `starter,authors` (this would show '
+                              'who started the build if it was started '
+                              'manually, else list the authors of the commits '
+                              'that triggered the build if any, else show no '
+                              'author for the build).')
 
     def __init__(self):
         # get base api url
@@ -101,8 +118,23 @@ class HudsonTracPlugin(Component):
 
         items = 'builds[building,timestamp,duration,result,description,url,' \
                 'fullDisplayName'
+
+        elems = []
         if self.list_changesets:
-            items += ',changeSet[items[revision,id]]'
+            elems.append('revision')
+            elems.append('id')
+        if 'author' in self.disp_culprit or 'authors' in self.disp_culprit:
+            elems.append('user')
+            elems.append('author[fullName]')
+        if elems:
+            items += ',changeSet[items[%s]]' % ','.join(elems)
+
+        if 'culprit' in self.disp_culprit or 'culprits' in self.disp_culprit:
+            items += ',culprits[fullName]'
+
+        if 'starter' in self.disp_culprit:
+            items += ',actions[causes[userName]]'
+
         items += ']'
 
         # assemble final url
@@ -278,6 +310,25 @@ class HudsonTracPlugin(Component):
                     revs = [self.__fmt_changeset(r, req) for r in revs]
                     changesets = '<br/>Changesets: ' + ', '.join(revs)
 
+            # get author(s)
+            author = None
+            for c in self.disp_culprit:
+                author = {
+                    'starter':  __find_first(entry, 'actions.causes.userName'),
+                    'author':   __find_first(entry, ['changeSet.items.user',
+                                           'changeSet.items.author.fullName']),
+                    'authors':  __find_all(entry, ['changeSet.items.user',
+                                           'changeSet.items.author.fullName']),
+                    'culprit':  __find_first(entry, 'culprits.fullName'),
+                    'culprits': __find_all(entry, 'culprits.fullName'),
+                }.get(c)
+
+                if author and not isinstance(author, basestring):
+                    author = ', '.join(set(author))
+                if author:
+                    author = unicode(author, cset)
+                    break
+
             # format response
             if result == 'IN-PROGRESS':
                 comment = Markup("%s since %s, duration %s%s" % (
@@ -294,7 +345,7 @@ class HudsonTracPlugin(Component):
             title = 'Build "%s" (%s)' % \
                     (unicode(entry['fullDisplayName'], cset), result.lower())
 
-            yield kind, href, title, completed, None, comment
+            yield kind, href, title, completed, author, comment
 
     class HudsonFormLoginHandler(urllib2.BaseHandler):
         def __init__(self, parent):
