@@ -7,6 +7,13 @@
   <xi:include href="admin.html" />
   <head>
     <title>[${iniadmin.section}]</title>
+    <script>
+     //<![CDATA[
+        jQuery(document).ready(function(){
+            $('form').attr('autocomplete','off');
+        });
+     //]]>
+    </script>
   </head>
   <body>
     <h2>[${iniadmin.section}]</h2>
