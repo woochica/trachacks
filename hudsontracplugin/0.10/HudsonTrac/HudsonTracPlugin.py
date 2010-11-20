@@ -22,6 +22,7 @@ from trac.util import Markup, format_datetime, pretty_timedelta
 from trac.util.text import unicode_quote
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.web.chrome import add_stylesheet
+from trac.wiki.formatter import wiki_to_oneliner
 try:
     from trac.timeline.api import ITimelineEventProvider
 except ImportError:
@@ -68,6 +69,8 @@ class HudsonTracPlugin(Component):
                           'successfully" etc messages.')
     disp_building = BoolOption('hudson', 'display_building', False,
                                'Also show in-progress builds')
+    list_changesets = BoolOption('hudson', 'list_changesets', False,
+                                 'List the changesets for each build')
 
     def __init__(self):
         # get base api url
@@ -96,10 +99,14 @@ class HudsonTracPlugin(Component):
         if '/job/' not in api_url:
             tree = 'jobs[' + tree + ']'
 
-        tree = tree % {'b':
-            'builds[building,timestamp,duration,result,description,url,fullDisplayName]'}
+        items = 'builds[building,timestamp,duration,result,description,url,' \
+                'fullDisplayName'
+        if self.list_changesets:
+            items += ',changeSet[items[revision,id]]'
+        items += ']'
 
         # assemble final url
+        tree = tree % {'b': items}
         self.info_url = '%s?tree=%s' % (api_url, tree)
 
         self.env.log.debug("Build-info url: '%s'", self.info_url)
@@ -132,6 +139,16 @@ class HudsonTracPlugin(Component):
     def get_timeline_filters(self, req):
         if req.perm.has_permission('BUILD_VIEW'):
             yield ('build', 'Hudson Builds')
+
+    def __fmt_changeset(self, rev, req):
+        # use format_to_oneliner and drop num_args hack when we drop Trac 0.10
+        # support
+        import inspect
+        num_args = len(inspect.getargspec(wiki_to_oneliner)[0])
+        if num_args > 5:
+            return wiki_to_oneliner('[%s]' % rev, self.env, req=req)
+        else:
+            return wiki_to_oneliner('[%s]' % rev, self.env)
 
     def get_timeline_events(self, req, start, stop, filters):
         if 'build' not in filters or not req.perm.has_permission('BUILD_VIEW'):
@@ -252,15 +269,26 @@ class HudsonTracPlugin(Component):
                 message = entry['description'] and \
                             unicode(entry['description'], cset) or message
 
+            # get changesets
+            changesets = ''
+            if self.list_changesets:
+                paths = ['changeSet.items.revision', 'changeSet.items.id']
+                revs = [unicode(str(r), cset) for r in __find_all(entry, paths)]
+                if revs:
+                    revs = [self.__fmt_changeset(r, req) for r in revs]
+                    changesets = '<br/>Changesets: ' + ', '.join(revs)
+
             # format response
             if result == 'IN-PROGRESS':
-                comment = "%s since %s, duration %s" % (
-                              message, format_datetime(started),
-                              pretty_timedelta(started, completed))
+                comment = Markup("%s since %s, duration %s%s" % (
+                                 message, format_datetime(started),
+                                 pretty_timedelta(started, completed),
+                                 changesets))
             else:
-                comment = "%s at %s, duration %s" % (
-                              message, format_datetime(completed),
-                              pretty_timedelta(started, completed))
+                comment = Markup("%s at %s, duration %s%s" % (
+                                 message, format_datetime(completed),
+                                 pretty_timedelta(started, completed),
+                                 changesets))
 
             href  = entry['url']
             title = 'Build "%s" (%s)' % \
