@@ -42,10 +42,12 @@ class TracBacksPlugin(Component):
     
     TICKET_REGEX = r"""
         (?=                    # Don't return '#' character:
-           (?<=^\#)            # Look for a TracLink Ticket at the beginning of the string
+          (?!\{\{\{.*)	       # Exclude comment blocks 
+	  (?<=^\#)            # Look for a TracLink Ticket at the beginning of the string
           |(?<=[\s,.;:!]\#)    # or on a whitespace boundary or some punctuation
           |(?<=ticket:)        # or the "ticket:NNN" format
         )
+        (?!.*\}\}\})
         (\d+)                  # Any length ticket number (return the digits)
         (?=
            (?=\b)              # Don't return word boundary at the end
@@ -64,7 +66,7 @@ class TracBacksPlugin(Component):
                             ticket.values.get('reporter'), None)
     def ticket_changed(self, ticket, comment, author, old_values):
         
-        pattern = re.compile(self.TICKET_REGEX, re.VERBOSE)
+        pattern = re.compile(self.TICKET_REGEX, re.DOTALL|re.VERBOSE)
 
         if not isinstance(comment, basestring):
             return
