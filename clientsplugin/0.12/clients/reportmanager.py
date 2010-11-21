@@ -11,20 +11,21 @@ class CustomReportManager:
   def __init__(self, env, log):
     self.env = env
     self.log = log
-    @self.env.with_transaction()
-    def do_init(db):
-        self.upgrade(db)
+    self.upgrade()
   
-  def upgrade(self, db):  
+  def upgrade(self):  
     # Check to see what version we have
+    db = self.env.get_read_db()
     cursor = db.cursor()
     cursor.execute("SELECT value FROM system WHERE name=%s", (self.name,))
     try:
       version = int(cursor.fetchone()[0])
     except:
-      version = 0
-      cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)",
-                     (self.name, version))
+      @self.env.with_transaction()
+      def do_init(db):
+        version = 0
+        cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)",
+                       (self.name, version))
         
     if version > self.version:
       raise TracError("Fatal Error: You appear to be running two plugins with conflicting versions "
@@ -33,44 +34,49 @@ class CustomReportManager:
                       % (__name__, str(version), str(self.version)))
     
     # Do the staged updates
-    try:
-      if version < 1:
-        cursor.execute("CREATE TABLE custom_report ("
-                       "id         INTEGER,"
-                       "uuid       VARCHAR(64),"
-                       "maingroup  VARCHAR(255),"
-                       "subgroup   VARCHAR(255),"
-                       "version    INTEGER,"
-                       "ordering   INTEGER)")
-      
-      #if version < 2:
-      #  cursor.execute("...")
-    
-      # Updates complete, set the version
-      cursor.execute("UPDATE system SET value=%s WHERE name=%s", 
-                     (self.version, self.name))
-      db.commit()
-      db.close()
-    
-    except Exception, e:
-      self.log.error("CustomReportManager Exception: %s" % (e,));
-      db.rollback()
+    if version < self.version:
+      @self.env.with_transaction()
+      def do_updates(db):
+        cursor = db.cursor()
+        try:
+          if version < 1:
+            cursor.execute("CREATE TABLE custom_report ("
+                           "id         INTEGER,"
+                           "uuid       VARCHAR(64),"
+                           "maingroup  VARCHAR(255),"
+                           "subgroup   VARCHAR(255),"
+                           "version    INTEGER,"
+                           "ordering   INTEGER)")
+          
+          #if version < 2:
+          #  cursor.execute("...")
+        
+          # Updates complete, set the version
+          cursor.execute("UPDATE system SET value=%s WHERE name=%s", 
+                         (self.version, self.name))
+        
+        except Exception, e:
+          self.log.error("CustomReportManager Exception: %s" % (e,));
+          db.rollback()
   
   def add_report(self, title, author, description, query, uuid, version, maingroup, subgroup=""):
     # First check to see if we can load an existing version of this report
     rv = False
 
-    @self.env_with_transaction()
-    def do_add_report(db):
+    db = self.env.get_read_db()
+    cursor = db.cursor()
+    try:
+      cursor.execute("SELECT id, version FROM custom_report "
+                     "WHERE uuid=%s", (uuid,))
+      (id, currentversion) = cursor.fetchone()          
+    except:
+      id = None
+      currentversion = 0
+    
+    if (not id) or (currentversion < version):
+      @self.env_with_transaction()
+      def do_add_report(db):
         cursor = db.cursor()
-        try:
-          cursor.execute("SELECT id, version FROM custom_report "
-                        "WHERE uuid=%s", (uuid,))
-          (id, currentversion) = cursor.fetchone()          
-        except:
-          id = None
-          currentversion = 0
-        
         try:
           if not id:
             cursor.execute("SELECT MAX(id) FROM report")
@@ -92,7 +98,7 @@ class CustomReportManager:
                            "VALUES (%s, %s, %s, %s, %s, %s)",
                            (next_id, uuid, maingroup, subgroup, version, ordering))
             rv = True
-          if currentversion < version:
+          else:
             self.log.debug("Updating report with uuid '%s' to version %s" % (uuid,version));
             cursor.execute("UPDATE report SET title=%s, author=%s, description=%s, query=%s "
                            "WHERE id=%s", (title, author, description, query, id))
