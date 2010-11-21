@@ -24,7 +24,7 @@ class ClientMonthlyHoursSummary(Component):
   implements(IClientSummaryProvider)
 
   client = None
-  debug = True
+  debug = False
 
   def get_name(self):
     return "Monthly Hours Summary"
