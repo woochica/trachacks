@@ -98,7 +98,7 @@ class ClientTicketChanges(Component):
       ORDER BY t.time
       """)
     cur2 = db.cursor()
-    cur2.execute(sql, (client, fromdate, todate))
+    cur2.execute(sql, (client, fromdate*1000000, todate*1000000))
     changes = etree.SubElement(xml, 'changes')
     lasttid = 0
     for tid, summary, description, status, resolution, milestone, due, cgfield, oldvalue, newvalue in cur2:

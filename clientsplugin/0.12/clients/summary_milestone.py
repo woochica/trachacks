@@ -102,7 +102,8 @@ class ClientMilestoneSummary(Component):
       ORDER BY m.due ASC
       """)
     cur2 = db.cursor()
-    cur2.execute(sql, (client, int(time.time()), (int(time.time()) - (24*60*60*7))))
+    now = int(time.time()*1000000)
+    cur2.execute(sql, (client, now, (now - (7*24*60*60*1000000))))
     xsummary = etree.SubElement(xml, 'summary')
     for tid, summary, description, status, milestone, due, completed, mdescription, estimatedhours, totalhours in cur2:
       have_data = True
