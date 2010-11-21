@@ -120,8 +120,22 @@ class ClientsSetupParticipant(Component):
             
             if self.db_installed_version < 6:
                 print 'Updating clients table (v6)'
-                cursor.execute('ALTER TABLE client '
-                               'CHANGE COLUMN default_rate default_rate DECIMAL(10,2)')
+                cursor.execute('CREATE TEMPORARY TABLE client_tmp ('
+                               'name               TEXT,'
+                               'description        TEXT,'
+                               'default_rate       DECIMAL(10,2),'
+                               'currency           TEXT'
+                               ')')
+                cursor.execute('INSERT INTO client_tmp SELECT name, description, default_rate, currency FROM client')
+                cursor.execute('DROP TABLE client')
+                cursor.execute('CREATE TABLE client ('
+                               'name               TEXT,'
+                               'description        TEXT,'
+                               'default_rate       DECIMAL(10,2),'
+                               'currency           TEXT'
+                               ')')
+                cursor.execute('INSERT INTO client SELECT name, description, default_rate, currency FROM client_tmp')
+                cursor.execute('DROP TABLE client_tmp')
             
             #if self.db_installed_version < 7:
             #    print 'Updating clients table (v7)'
@@ -133,7 +147,7 @@ class ClientsSetupParticipant(Component):
             db.commit()
             db.close()
         except Exception, e:
-            self.log.error("WorklogPlugin Exception: %s" % (e,));
+            print ("WorklogPlugin Exception: %s" % (e,));
             db.rollback()
 
     def do_reports_upgrade(self):
