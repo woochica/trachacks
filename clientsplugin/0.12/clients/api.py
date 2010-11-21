@@ -28,7 +28,7 @@ class ClientsSetupParticipant(Component):
                 cursor = db.cursor()
                 self.db_installed_version = 0
                 cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)",
-                              (self.db_version_key, self.db_installed_version))
+                               (self.db_version_key, self.db_installed_version))
 
     def system_needs_upgrade(self):
         return self.db_installed_version < self.db_version
