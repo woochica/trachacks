@@ -207,7 +207,7 @@ class ClientsSetupParticipant(Component):
         print 'ClientsPlugin needs an upgrade'
         print ' * Upgrading db'
         @self.env.with_transaction(db)
-        def reall_do_db_upgrade(db):
+        def real_do_db_upgrade(db):
             self.do_db_upgrade(db)
         print ' * Upgrading reports'
         self.do_reports_upgrade()
