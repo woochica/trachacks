@@ -82,14 +82,14 @@ class ClientMonthlyHoursSummary(Component):
     # Load in a summary of the client's tickets
     sql = ("""\
       SELECT t.id, t.summary, t.description, t.status,
-        SUM(tchng.newvalue) AS totalhours, CONCAT(MONTHNAME(FROM_UNIXTIME(tchng.time)), " ", YEAR(FROM_UNIXTIME(tchng.time))) AS month
+        SUM(tchng.newvalue) AS totalhours, CONCAT(MONTHNAME(FROM_UNIXTIME(tchng.time/1000000)), " ", YEAR(FROM_UNIXTIME(tchng.time/1000000))) AS month
       FROM ticket_custom AS tcust
       INNER JOIN ticket AS t ON tcust.ticket=t.id
       INNER JOIN ticket_change AS tchng ON t.id=tchng.ticket AND tchng.field='hours' AND tchng.oldvalue=0
       WHERE tcust.name = 'client'
         AND tcust.value = %s
-        AND tchng.time >= UNIX_TIMESTAMP(PERIOD_ADD(EXTRACT(YEAR_MONTH FROM NOW()), -3)*100+1)
-      GROUP BY t.id, MONTH(FROM_UNIXTIME(tchng.time))
+        AND tchng.time >= (UNIX_TIMESTAMP(PERIOD_ADD(EXTRACT(YEAR_MONTH FROM NOW()), -3)*100+1)*1000000)
+      GROUP BY t.id, MONTH(FROM_UNIXTIME(tchng.time/1000000))
       ORDER BY tchng.time desc;
       """)
     cur2 = db.cursor()
