@@ -19,17 +19,17 @@ class RemoteTicket(object):
         self.fields = [f for f in TicketSystem(self.env).get_ticket_fields()
                          if f['name'] in RemoteTicket.remote_fields]
         self.values = {}
-        self._fetch_ticket(self.remote_name, self.id)
+        self._fetch_ticket()
         
-    def _fetch_ticket(self, remote_name, tkt_id):
+    def _fetch_ticket(self):
         # TODO Define and use method
         rts = RemoteTicketSystem(self.env)
-        remote_trac = rts._intertracs[remote_name]['url']
+        remote_trac = rts.get_remote_trac(self.remote_name)['url']
         server = xmlrpclib.ServerProxy(Href(remote_trac).rpc())
         multicall = xmlrpclib.MultiCall(server)
         
         try:
-            tkt_vals = server.ticket.get(tkt_id)
+            tkt_vals = server.ticket.get(self.tkt_id)
         except xmlrpclib.Error, e:
             return
         

@@ -6,6 +6,7 @@ from genshi.filters.transform import Transformer
 from pkg_resources import resource_filename
 
 from trac.core import Component, implements
+from trac.resource import ResourceNotFound
 from trac.ticket import TicketSystem
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script
@@ -110,12 +111,18 @@ class RemoteTicketModule(Component):
         link_fields = [f for f in ticket.fields if f['type'] == 'link']
         rts = RemoteTicketSystem(self.env)
         
-        return [(field['label'], 
-                 '%s:%s' % (dest_name, dest),
-                 RemoteTicket(self.env, dest_name, dest))
-                for field in link_fields
-                for dest_name, dest in rts._parse_links(ticket[field['name']])
-                          ]
+        linked_tickets = []
+        linked_rejects = []
+        for field in link_fields:
+            for link_name, link in rts._parse_links(ticket[field['name']]):
+                try:
+                    tkt = RemoteTicket(self.env, link_name, link)
+                    linked_tickets.append(tkt)
+                except ResourceNotFound:
+                    linked_rejects.append((link_name, link))
+                    
+        return [(field['label'], '%s:%s' % (tkt.remote_name, tkt.id), tkt)
+                for tkt in linked_tickets]
     
     def _remote_sites(self):
         rts = RemoteTicketSystem(self.env)
