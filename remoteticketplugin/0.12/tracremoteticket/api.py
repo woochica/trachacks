@@ -4,6 +4,7 @@ from trac.core import Component, Interface, implements
 from trac.config import IntOption
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
+from trac.resource import ResourceNotFound
 from tracremoteticket import db_default
 
 __all__ = ['RemoteTicketSystem']
@@ -54,6 +55,16 @@ class RemoteTicketSystem(Component):
         for table in db_default.schema:
             for sql in db_manager.to_sql(table):
                 cursor.execute(sql)
+    
+    # Public methods
+    def get_remote_trac(self, remote_name):
+        try:
+            intertrac = self._intertracs[remote_name]
+        except KeyError:
+            raise ResourceNotFound("Remote Trac '%s' is unknown." 
+                                   % remote_name,
+                                   "Invalid InterTrac alias")
+        return intertrac
     
     # Private methods        
     def _parse_links(self, value):
