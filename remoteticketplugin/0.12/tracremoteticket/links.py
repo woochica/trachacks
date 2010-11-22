@@ -3,7 +3,7 @@ from copy import copy
 from trac.core import Component, implements
 from trac.ticket.api import (ITicketChangeListener, ITicketManipulator, 
                              TicketSystem)
-from trac.ticket.link import LinksProvider
+from trac.ticket.link import LinksProvider, uniq
 
 class RemoteLinksProvider(Component):
     
