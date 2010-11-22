@@ -32,7 +32,8 @@ class BaseFilter():
     # max_ticket_number_at_filters can be attached to trac.ini
     try:
       self.max_ticket_number_at_filters = self.macroenv.conf.get('max_ticket_number_at_filters')
-    except:
+    except Exception,e:
+      self.macroenv.tracenv.log.warning('init Basefilter: '+repr(e))
       self.max_ticket_number_at_filters = '1000' # fallback, Trac default was 100
 
   def get_tickets( self ):

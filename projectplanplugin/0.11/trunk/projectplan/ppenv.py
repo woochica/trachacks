@@ -767,6 +767,14 @@ class PPConfiguration():
       DateTime Format which will be used for Calculating the Closing Date
       """ )
 
+
+    self.flatconf[ 'max_ticket_number_at_filters' ] = PPIntegerOption(
+      self.env, 'max_ticket_number_at_filters', u'1000', catid='General', groupid='Query', doc="""
+      How many tickets should be get at maximum during one query?\n
+      If not all tickets appear within your ticket representations, then increase this number.\n
+      The default of Trac is 100, while the default of ProjectPlanPlugin is 1000.
+      """ )
+
     # TODO: Add Configuration
     # Ticket Visualizations Options
     #self.flatconf[ 'custom_show_tickettype' ] = PPActivateColumnOption(
