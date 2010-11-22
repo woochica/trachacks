@@ -7,18 +7,7 @@ from trac.ticket.link import LinksProvider
 
 class RemoteLinksProvider(Component):
     
-    implements(ITicketChangeListener,
-               ITicketManipulator)
-
-    # ITicketChangeListener methods
-    def ticket_created(self, ticket): 
-        pass
-        
-    def ticket_changed(self, ticket):
-        pass
-        
-    def ticket_deleted(self, ticket): 
-        pass
+    implements(ITicketManipulator)
     
     # ITicketManipulator methods
     def prepare_ticket(self, req, ticket, fields, actions): 
