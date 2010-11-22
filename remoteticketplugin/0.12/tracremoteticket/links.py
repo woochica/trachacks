@@ -44,6 +44,15 @@ class RemoteLinksProvider(Component):
             if check:
                 yield None, check
             
+            if action == 'resolve':
+                blockers = self.find_blockers(ticket, end, [])
+                if blockers:
+                    blockers_str = ', '.join('#%s' % x for x in uniq(blockers))
+                    msg = ("Cannot resolve this ticket because it is "
+                           "blocked by '%s' tickets [%s]" 
+                           % (end,  blockers_str))
+                        yield None, msg
+                        
     def validate_no_cycle(self, ticket, end):
         cycle = self.find_cycle(ticket, end, [])
         if cycle != None
