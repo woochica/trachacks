@@ -1,0 +1,36 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+<head>
+<title>Builds</title>
+</head>
+<body>
+<h1>TeamCity Builds:</h1>
+<div id="info_ajax_error" class="system-message" style="display: none"></div>
+<div class="build-list">
+	<div py:for="project_id,details in projects.items()" class="project-wrapper">
+		<div class="project-header">${details['name']}</div>
+		<div py:for="b in details['btypes']" class="build-type" id="div-${b['btype_id']}">
+			<div class="build-name">
+				<input type="checkbox" name="run_build" value="${b['btype_id']}" id="box-${b['btype_id']}"/>
+				${b['btype_name']}
+			</div>
+			<div class="inner-build ${b['build']['status']}" id="header-${b['btype_id']}">
+				<a href="builds/download/${b['build']['id']}">Last build #${b['build']['number']}: ${b['build']['end_date']} (duration: ${b['build']['end_date']-b['build']['start_date']})</a>
+			</div>
+			<div class="build-info">
+				<span id="progress-text-${b['btype_id']}">&nbsp;</span>
+				<div class="progress" id="progress-${b['btype_id']}"></div>
+			</div>
+			<a class="stop-build" href="#cancel" id="cancel-${b['btype_id']}">Cancel build</a>
+		</div>
+	</div>
+	<button id="build-button">Build selected</button>
+</div>
+</body>
+</html>
