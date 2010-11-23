@@ -10,7 +10,8 @@ setup(
 		[trac.plugins]
 		ticketstats = ticketstats
 	""",
-	package_data={'ticketstats': ['templates/*.html']},
+        install_requires = ['Trac >= 0.12'],
+	package_data = {'ticketstats': ['templates/*.html']},
 )
 
 
