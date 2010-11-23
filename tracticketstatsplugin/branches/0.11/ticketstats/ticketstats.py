@@ -132,6 +132,7 @@ class TicketStatsPlugin(Component):
       return re.match(r'/ticketstats(?:_trac)?(?:/.*)?$', req.path_info)
 
    def process_request(self, req):
+      req.perm.require('TSTATS_VIEW')
       req_content = req.args.get('content')
       milestone = None
       
