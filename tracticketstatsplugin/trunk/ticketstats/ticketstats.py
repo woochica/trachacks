@@ -132,10 +132,11 @@ class TicketStatsPlugin(Component):
       return re.match(r'/ticketstats(?:_trac)?(?:/.*)?$', req.path_info)
 
    def process_request(self, req):
-      req_content = req.args.get('content')
-      milestone = None
+       req.perm.require('TSTATS_VIEW')
+       req_content = req.args.get('content')
+       milestone = None
       
-      if not None in [req.args.get('end_date'), req.args.get('start_date'), req.args.get('resolution')]:
+       if not None in [req.args.get('end_date'), req.args.get('start_date'), req.args.get('resolution')]:
          # form submit
          grab_at_date = req.args.get('end_date')
          grab_from_date = req.args.get('start_date')
@@ -171,7 +172,7 @@ class TicketStatsPlugin(Component):
 
          graph_res = int(grab_resolution)
 
-      else:
+       else:
          # default data
          todays_date = date.today()
          at_date = datetime.combine(todays_date,time(11,59,59,0,utc))
@@ -189,59 +190,59 @@ class TicketStatsPlugin(Component):
          from_date = datetime(*strptime(from_date_str, "%m/%d/%Y")[0:6])
          from_date = datetime.combine(from_date, time(0,0,0,0,utc)) # Add tzinfo
          
-      count = []
+       count = []
 
-      # Calculate 0th point 
-      last_date = from_date - timedelta(graph_res)
-      last_num_open = self._get_num_open_tix(last_date, milestone, req)
+       # Calculate 0th point 
+       last_date = from_date - timedelta(graph_res)
+       last_num_open = self._get_num_open_tix(last_date, milestone, req)
 
-      # Calculate remaining points
-      for cur_date in daterange(from_date, at_date, graph_res):
-         num_open = self._get_num_open_tix(cur_date, milestone, req)
-         num_closed = self._get_num_closed_tix(last_date, cur_date, milestone, req)
-         datestr = cur_date.strftime("%m/%d/%Y") 
-         if graph_res != 1:
+       # Calculate remaining points
+       for cur_date in daterange(from_date, at_date, graph_res):
+          num_open = self._get_num_open_tix(cur_date, milestone, req)
+          num_closed = self._get_num_closed_tix(last_date, cur_date, milestone, req)
+          datestr = cur_date.strftime("%m/%d/%Y") 
+          if graph_res != 1:
             datestr = "%s thru %s" % (last_date.strftime("%m/%d/%Y"), datestr) 
-         count.append( {'date'  : datestr,
+          count.append( {'date'  : datestr,
                    'new'   : num_open - last_num_open + num_closed,
                    'closed': num_closed,
                    'open'  : num_open })
-         last_num_open = num_open
-         last_date = cur_date
+          last_num_open = num_open
+          last_date = cur_date
 
-      # if chartdata is requested, raw text is returned rather than data object
-      # for templating
-      if (not req_content == None) and (req_content == "chartdata"):
-         jsdstr = '{"chartdata": [\n'
-         for x in count:
-            jsdstr += '{"date": "%s",' % x['date']
-            jsdstr += ' "new_tickets": %s,' % x['new']
-            jsdstr += ' "closed": %s,' % x['closed']
-            jsdstr += ' "open": %s},\n' % x['open']
-         jsdstr = jsdstr[:-2] +'\n]}'
-         req.send(jsdstr.encode('utf-8'))
-         return 
-      else:
-         db = self.env.get_db_cnx()
-         showall = req.args.get('show') == 'all'
-         milestone_list = [ m.name for m in Milestone.select(self.env, showall, db) ]
-         if milestone == None:
-            milestone_num = 0 
-         elif milestone in milestone_list:
-            milestone_num = milestone_list.find(milestone)
-         else:
-            milestone_num = 0
+       # if chartdata is requested, raw text is returned rather than data object
+       # for templating
+       if (not req_content == None) and (req_content == "chartdata"):
+          jsdstr = '{"chartdata": [\n'
+          for x in count:
+             jsdstr += '{"date": "%s",' % x['date']
+             jsdstr += ' "new_tickets": %s,' % x['new']
+             jsdstr += ' "closed": %s,' % x['closed']
+             jsdstr += ' "open": %s},\n' % x['open']
+          jsdstr = jsdstr[:-2] +'\n]}'
+          req.send(jsdstr.encode('utf-8'))
+          return 
+       else:
+          db = self.env.get_db_cnx()
+          showall = req.args.get('show') == 'all'
+          milestone_list = [ m.name for m in Milestone.select(self.env, showall, db) ]
+          if milestone == None:
+             milestone_num = 0 
+          elif milestone in milestone_list:
+             milestone_num = milestone_list.find(milestone)
+          else:
+             milestone_num = 0
 
-         data = {}
-         data['ticket_data'] = count
-         data['start_date'] = from_date.strftime("%m/%d/%Y")
-         data['end_date'] = at_date.strftime("%m/%d/%Y")
-         data['resolution'] = str(graph_res)
-         data['baseurl'] = req.base_url
-         data['milestones'] = milestone_list
-         data['cmilestone'] = milestone_num
-         data['yui_base_url'] = self.yui_base_url
-         return 'greensauce.html', data, None
+          data = {}
+          data['ticket_data'] = count
+          data['start_date'] = from_date.strftime("%m/%d/%Y")
+          data['end_date'] = at_date.strftime("%m/%d/%Y")
+          data['resolution'] = str(graph_res)
+          data['baseurl'] = req.base_url
+          data['milestones'] = milestone_list
+          data['cmilestone'] = milestone_num
+          data['yui_base_url'] = self.yui_base_url
+          return 'greensauce.html', data, None
  
    def get_htdocs_dirs(self):
       return []
