@@ -37,7 +37,7 @@
 		    				<th style="width: 300px;"><div style="width: 280px; height: 1.2em; overflow: hidden;">summary</div></th>
 		    				<th style="width: 120px;">owner</th>
 		    				<th style="width: 90px;">type</th>		    				
-		    				<th style="width: 60px;">milestone</th>
+		    				<th style="width: 60px;">impact</th>
 		    				<th style="width: 60px;">status</th>
 		    				<th style="width: 60px;">time open</th>
 		    				<th style="width: 80px;">deadline</th>
@@ -55,7 +55,7 @@
 		    				<td style="width: 300px"> <div style="width: 280px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.summary}">${ticket.summary}</a></div></td>	
 		    				<td style="width: 120px;">${ticket.owner}</td>
 		    				<td style="width: 90px;">${ticket.type}</td>					    				    	
-		    				<td style="width: 60px;">${ticket.milestone}</td>			
+		    				<td style="width: 60px;">${ticket.impact}</td>			
 		    				<td style="width: 60px;">${ticket.status}</td>	
 		    				<td style="width: 60px;">${str(datetime.now() - datetime.fromtimestamp(ticket.time)).split(',')[0].split('.')[0]}</td>
 		    				
@@ -93,7 +93,7 @@
 			    				<th style="width: 300px;"><div style="width: 280px; height: 1.2em; overflow: hidden;">summary</div></th>
 			    				<th style="width: 120px;">owner</th>
 			    				<th style="width: 80px;">type</th>		    				
-			    				<th style="width: 60px;">milestone</th>
+			    				<th style="width: 60px;">impact</th>
 			    				<th style="width: 60px;">status</th>
 			    				<th style="width: 60px;">time open</th>
 			    				<th style="width: 80px;">deadline</th>
@@ -111,7 +111,7 @@
 			    				<td style="width: 300px"><div style="width: 280px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.summary}">${ticket.summary}</a></div></td>	
 			    				<td style="width: 120px;">${ticket.owner}</td>
 			    				<td style="width: 80px;">${ticket.type}</td>					    				    	
-			    				<td style="width: 60px;">${ticket.milestone}</td>			
+			    				<td style="width: 60px;">${ticket.impact}</td>			
 			    				<td style="width: 60px;">${ticket.status}</td>	
 			    				<td style="width: 60px;">${str(datetime.now() - datetime.fromtimestamp(ticket.time)).split(',')[0].split('.')[0]}</td>
 			    				

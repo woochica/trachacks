@@ -5,6 +5,7 @@ Created on Aug 17, 2009
 '''
 
 HARD_DEADLINE_FIELD = 'hard_deadline1'
+IMPACT_FIELD = 'impact'
 NO_BACKLOG = 'no backlog'
 
 class BacklogException(Exception): pass
@@ -125,17 +126,20 @@ class Backlog(object):
         try:
             cursor = self.db.cursor()
             #get name
-            columns = ['id', 'summary', 'component', 'description', 'version', 'type', 'milestone', 'owner', 'status', 'time', 'tkt_order', 'keywords' ]
-            sql = """SELECT %s,tc.value as hard_deadline
+            columns = ['id', 'summary', 'component', 'description', 'version', 'type', 'milestone', 'owner', 'status', 'time', 'tkt_order', 'keywords']
+            sql = """SELECT %s,tc.value as hard_deadline, tc2.value as impact
                      FROM  backlog_ticket b, ticket t  
                      LEFT OUTER JOIN ticket_custom tc 
                      ON t.id = tc.ticket
                      AND tc.name = '%s'
+                     LEFT OUTER JOIN ticket_custom tc2 
+                     ON t.id = tc2.ticket
+                     AND tc2.name = '%s'
                      WHERE t.id = b.tkt_id 
                      AND b.bklg_id = %%s 
                      AND (b.tkt_order IS NULL OR b.tkt_order > -1)
-                     ORDER BY b.tkt_order, t.time DESC"""%(','.join(columns), HARD_DEADLINE_FIELD)
-            columns.append('hard_deadline')    
+                     ORDER BY b.tkt_order, t.time DESC"""%(','.join(columns), HARD_DEADLINE_FIELD, IMPACT_FIELD)
+            columns.extend(('hard_deadline','impact'))
             self.env.log.info('GET_TICKETS sql = """%s"""'%sql)      
             cursor.execute(sql, (self.id,))            
             all_tickets = [dict(zip(columns, ticket)) for ticket in cursor]  #creating list of column:value dictionaries
