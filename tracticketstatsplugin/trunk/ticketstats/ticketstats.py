@@ -21,8 +21,7 @@ from trac.perm import IPermissionRequestor
 from trac.ticket import Milestone
 
 from datetime import date, datetime, time, timedelta
-from time import strptime
-from trac.util.datefmt import to_utimestamp, utc
+from trac.util.datefmt import format_date, parse_date, to_utimestamp, utc
 
 # ************************
 DEFAULT_DAYS_BACK = 30*6 
@@ -160,14 +159,10 @@ class TicketStatsPlugin(Component):
          if not grab_resolution.isdigit():
             raise TracError('The graph interval field must be an integer, days.')
 
-         # TODO: I'm letting the exception raised by 
-         #  strptime() appear as the Trac error.
-         #  Maybe a wrapper should be written.
-
-         at_date = datetime(*strptime(grab_at_date, "%m/%d/%Y")[0:6])
+         at_date = parse_date(grab_at_date)
          at_date = datetime.combine(at_date, time(11,59,59,0,utc)) # Add tzinfo
 
-         from_date = datetime(*strptime(grab_from_date, "%m/%d/%Y")[0:6])
+         from_date = parse_date(grab_from_date)
          from_date = datetime.combine(from_date, time(0,0,0,0,utc)) # Add tzinfo
 
          graph_res = int(grab_resolution)
@@ -179,20 +174,12 @@ class TicketStatsPlugin(Component):
          from_date = at_date - timedelta(self.default_days_back)
          graph_res = self.default_interval
    
-         at_date_str = at_date.strftime("%m/%d/%Y")
-         from_date_str=  from_date.strftime("%m/%d/%Y")
-
-         # 2.5 only: at_date = datetime.strptime(at_date_str, "%m/%d/%Y")
-         at_date = datetime(*strptime(at_date_str, "%m/%d/%Y")[0:6])
-         at_date = datetime.combine(at_date, time(11,59,59,0,utc)) # Add tzinfo
-         
-         # 2.5 only: from_date = datetime.strptime(from_date_str, "%m/%d/%Y")
-         from_date = datetime(*strptime(from_date_str, "%m/%d/%Y")[0:6])
-         from_date = datetime.combine(from_date, time(0,0,0,0,utc)) # Add tzinfo
+         at_date_str = format_date(at_date)
+         from_date_str=  format_date(from_date)
          
        count = []
 
-       # Calculate 0th point 
+       # Calculate 0th point
        last_date = from_date - timedelta(graph_res)
        last_num_open = self._get_num_open_tix(last_date, milestone, req)
 
@@ -200,9 +187,9 @@ class TicketStatsPlugin(Component):
        for cur_date in daterange(from_date, at_date, graph_res):
           num_open = self._get_num_open_tix(cur_date, milestone, req)
           num_closed = self._get_num_closed_tix(last_date, cur_date, milestone, req)
-          datestr = cur_date.strftime("%m/%d/%Y") 
+          datestr = format_date(cur_date) 
           if graph_res != 1:
-            datestr = "%s thru %s" % (last_date.strftime("%m/%d/%Y"), datestr) 
+            datestr = "%s thru %s" % (format_date(last_date), datestr) 
           count.append( {'date'  : datestr,
                    'new'   : num_open - last_num_open + num_closed,
                    'closed': num_closed,
@@ -235,8 +222,8 @@ class TicketStatsPlugin(Component):
 
           data = {}
           data['ticket_data'] = count
-          data['start_date'] = from_date.strftime("%m/%d/%Y")
-          data['end_date'] = at_date.strftime("%m/%d/%Y")
+          data['start_date'] = format_date(from_date)
+          data['end_date'] = format_date(at_date)
           data['resolution'] = str(graph_res)
           data['baseurl'] = req.base_url
           data['milestones'] = milestone_list
@@ -283,6 +270,4 @@ def daterange(begin, end, delta = timedelta(1)):
         yield begin
         begin += delta
 
-
-
-
+#[EOF]
