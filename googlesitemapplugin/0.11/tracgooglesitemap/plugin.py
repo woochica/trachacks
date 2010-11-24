@@ -71,8 +71,11 @@ class GoogleSitemapPlugin(Component):
         return req.path_info == path or (self.compress_sitemap and req.path_info == path + '.gz')
 
     def _fixtime(self, timestring):
+        """Ensure that the timestring has a colon between hours and minute"""
         if not timestring.endswith('Z') and timestring[-3] != ':':
             return timestring[:-2] + ':' + timestring[-2:]
+        else:
+            return timestring
 
     def process_request(self, req):
         try:
