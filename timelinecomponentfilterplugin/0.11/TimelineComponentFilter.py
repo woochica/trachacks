@@ -1,6 +1,5 @@
 from trac.core import *
-from trac.web.api import IRequestFilter
-from trac.web.api import ITemplateStreamFilter
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.ticket.model import Ticket
 
 from genshi.builder import tag
@@ -21,16 +20,17 @@ class TimelineComponentFilterPlugin(Component):
 
     def post_process_request(self, req, template, data, content_type):
         if template == 'timeline.html':
-            components = req.args.get('filter-components', '')
+            components = req.args.get('filter-components')
+            components = type(components) is unicode and (components,) or components
             if components:
-                tickettypes = ["newticket", "editedticket", "closedticket", "attachment", "reopenedticket"]
+                tickettypes = ("newticket", "editedticket", "closedticket", "attachment", "reopenedticket")
                 filtered_events = []
                 for event in data['events']:
                     if event['kind'] in tickettypes:
                         resource = event['kind'] == "attachment" and event['data'][0].parent or event['data'][0]
                         if resource.realm == "ticket":
-                            ticket = Ticket( self.env, resource.id )
-                            if ticket.values['component'] in components:
+                            ticket = Ticket( self.env, resource.id )               
+                            if components and ticket.values['component'] in components:
                                 filtered_events.append(event)
                     else:
                         filtered_events.append(event)
@@ -51,10 +51,10 @@ class TimelineComponentFilterPlugin(Component):
         cursor = db.cursor()
         cursor.execute("SELECT name FROM component ORDER BY name")
         select = tag.select(name="filter-components", id="filter-components", multiple="multiple", size="10")
-        selectedcomps = []
-        selectedcomps = req.args.get('filter-components', '')
+        selectedcomps = req.args.get('filter-components')
+        selectedcomps = type(selectedcomps) is unicode and (selectedcomps,) or selectedcomps
         for component in cursor:
-            if component[0] in selectedcomps:
+            if selectedcomps and component[0] in selectedcomps:
                 select.append(tag.option(component[0], value=component[0], selected="selected"))
             else:
                 select.append(tag.option(component[0], value=component[0]))
