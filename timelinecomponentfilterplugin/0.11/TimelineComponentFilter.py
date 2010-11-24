@@ -47,7 +47,8 @@ class TimelineComponentFilterPlugin(Component):
         return stream
 
     def _components_field_input(self, req):
-        cursor = self.env.get_db_cnx().cursor()
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
         cursor.execute("SELECT name FROM component ORDER BY name")
         select = tag.select(name="filter-components", id="filter-components", multiple="multiple", size="10")
         selectedcomps = []
