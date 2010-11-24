@@ -37,6 +37,7 @@ class MyPagePlugin(Component):
 		return False
 
 	def process_request(self, req):
+		req.perm.require('MYPAGE_VIEW')
 		url = self.mypage_url(req)
 		self.log.debug('process_request: %s' % url)
 		if req.path_info == '/me' or req.path_info == '/':
