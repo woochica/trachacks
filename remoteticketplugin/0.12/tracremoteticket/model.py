@@ -1,19 +1,10 @@
-from datetime import datetime
-import re
 import xmlrpclib
 
 from trac.ticket.api import TicketSystem
-from trac.util.datefmt import utc
+from trac.util.datefmt import datetime, parse_date, utc
 from trac.web.href import Href
 
 from tracremoteticket.api import RemoteTicketSystem
-
-def _datetime(s):
-    m = re.match(r'(\d{4})(\d{2})(\d{2})T(\d{2}):(\d{2}):(\d{2})', s)
-    if m:
-        return datetime(*(int(x) for x in m.groups()))
-    else:
-        raise ValueError
         
 class RemoteTicket(object):
     '''Local proxy for a ticket in a remote Trac system.
@@ -41,9 +32,12 @@ class RemoteTicket(object):
         except xmlrpclib.Error, e:
             return
         
-        tkt_vals[3]['time'] = _datetime(tkt_vals[3]['time'].value)
+        # Convert from DateTime used by xmlrpclib to datetime used by trac
+        for k in ['time', 'changetime']:
+            tkt_vals[3][k] = parse_date(tkt_vals[3][k].value, utc)
+
         self.values.update(tkt_vals[3])
-        self._cachetime = datetime.now()
+        self._cachetime = datetime.now(utc)
         self.save()
     
     def __getitem__(self, name):
