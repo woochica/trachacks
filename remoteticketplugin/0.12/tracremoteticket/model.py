@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 import xmlrpclib
 
 from trac.ticket.api import TicketSystem
@@ -7,6 +8,13 @@ from trac.web.href import Href
 
 from tracremoteticket.api import RemoteTicketSystem
 
+def _datetime(s):
+    m = re.match(r'(\d{4})(\d{2})(\d{2})T(\d{2}):(\d{2}):(\d{2})', s)
+    if m:
+        return datetime(*(int(x) for x in m.groups()))
+    else:
+        raise ValueError
+        
 class RemoteTicket(object):
     '''Local proxy for a ticket in a remote Trac system.
     '''
@@ -29,10 +37,11 @@ class RemoteTicket(object):
         multicall = xmlrpclib.MultiCall(server)
         
         try:
-            tkt_vals = server.ticket.get(self.tkt_id)
+            tkt_vals = server.ticket.get(self.id)
         except xmlrpclib.Error, e:
             return
         
+        tkt_vals[3]['time'] = _datetime(tkt_vals[3]['time'].value)
         self.values.update(tkt_vals[3])
         self._cachetime = datetime.now()
         self.save()
