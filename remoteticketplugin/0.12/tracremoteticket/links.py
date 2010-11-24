@@ -113,7 +113,7 @@ class RemoteLinksProvider(Component):
         
     def validate_links_exist(self, ticket, end):
         remote_tktsys = RemoteTicketSystem(self.env)
-        links = remote_tktsys._parse_links(ticket[end])
+        links = remote_tktsys.parse_links(ticket[end])
         bad_links = []
         for remote_name, link in links:
             try:
@@ -136,7 +136,7 @@ class RemoteLinksProvider(Component):
         if cycle_validation: 
             return cycle_validation
         
-        links = RemoteTicketSystem(self.env)._parse_links(ticket[end])
+        links = RemoteTicketSystem(self.env).parse_links(ticket[end])
         if len(links) > 1 and end == LinksProvider.PARENT_END:
             parents_str = ', '.join('%s:#%s' % (remote_name, tkt_id) 
                                     for (remote_name, tkt_id) in links)
@@ -150,7 +150,7 @@ class RemoteLinksProvider(Component):
     def find_blockers(self, ticket, field, blockers):
         tkt_ref = '%s:#%s' % (getattr(ticket, 'remote_name', ''), ticket.id)
         remote_tktsys = RemoteTicketSystem(self.env)
-        links = remote_tktsys._parse_links(ticket[field])
+        links = remote_tktsys.parse_links(ticket[field])
         for remote_name, link in links:
             linked_ticket = RemoteTicket(self.env, remote_name, link)
             if linked_ticket['status'] != 'closed':
@@ -168,7 +168,7 @@ class RemoteLinksProvider(Component):
         path.append(tkt_ref)
         
         remote_tktsys = RemoteTicketSystem(self.env)
-        links = remote_tktsys._parse_links(ticket[field])
+        links = remote_tktsys.parse_links(ticket[field])
         for remote_name, link in links:
             linked_ticket = RemoteTicket(self.env, remote_name, link)
             cycle = self.find_cycle(linked_ticket, field, copy(path))

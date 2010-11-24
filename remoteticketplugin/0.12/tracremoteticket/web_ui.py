@@ -117,7 +117,7 @@ class RemoteTicketModule(Component):
         linked_tickets = []
         linked_rejects = []
         for field in link_fields:
-            for link_name, link in rts._parse_links(ticket[field['name']]):
+            for link_name, link in rts.parse_links(ticket[field['name']]):
                 try:
                     tkt = RemoteTicket(self.env, link_name, link)
                     linked_tickets.append(tkt)

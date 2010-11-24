@@ -11,9 +11,7 @@ __all__ = ['RemoteTicketSystem']
 
 class RemoteTicketSystem(Component):
     
-    implements(IEnvironmentSetupParticipant, 
-               #ITicketChangeListener, 
-               #ITicketManipulator,
+    implements(IEnvironmentSetupParticipant,
                )
     
     cache_ttl = IntOption('remoteticket', 'cache_ttl', 60000,
@@ -72,12 +70,12 @@ class RemoteTicketSystem(Component):
                                    "Invalid InterTrac alias")
         return intertrac
     
-    # Private methods        
-    def _parse_links(self, value):
+    def parse_links(self, value):
         if not value:
             return []
         return [(name, int(id)) for name, id in self.REMOTES_RE.findall(value)]
         
+    # Private methods        
     def _get_remotes_config(self):
         '''Return dict of intertracs and intertrac aliases.
         
