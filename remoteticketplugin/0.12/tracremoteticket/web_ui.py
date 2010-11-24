@@ -62,7 +62,8 @@ class RemoteTicketModule(Component):
         
         # Provide list of remote sites if newlinked form options are present
         if 'newlinked_options' in data:
-            data['remote_sites'] = self._remote_sites()
+            remote_sites = RemoteTicketSystem(self.env).get_remote_tracs()
+            data['remote_sites'] = remote_sites
         
         return (template, data, content_type)
         
@@ -123,11 +124,4 @@ class RemoteTicketModule(Component):
                     
         return [(field['label'], '%s:%s' % (tkt.remote_name, tkt.id), tkt)
                 for tkt in linked_tickets]
-    
-    def _remote_sites(self):
-        rts = RemoteTicketSystem(self.env)
-        intertracs = [v for k,v in rts._intertracs.items() 
-                        if isinstance(v, dict) and 'url' in v]
-        intertracs.sort()
-        return intertracs
 

@@ -57,6 +57,12 @@ class RemoteTicketSystem(Component):
                 cursor.execute(sql)
     
     # Public methods
+    def get_remote_tracs(self):
+        intertracs = [v for k,v in self._intertracs.items() 
+                      if isinstance(v, dict) and 'url' in v]
+        intertracs.sort()
+        return intertracs
+        
     def get_remote_trac(self, remote_name):
         try:
             intertrac = self._intertracs[remote_name]
