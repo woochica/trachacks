@@ -29,6 +29,9 @@ class MyPagePlugin(Component):
 		url = self.mypage_url(req)
 		self.log.debug('match_request: url = %s' % url)
 		self.log.debug('match_request: req = %s' % req.path_info)
+		redirect = self.config.getbool('mypage', 'homepage_redirect')
+		if redirect and req.path_info == '/' and req.authname != 'anonymous':
+		        return True
 		if req.path_info == '/me':
 			return True
 		return False
@@ -36,7 +39,7 @@ class MyPagePlugin(Component):
 	def process_request(self, req):
 		url = self.mypage_url(req)
 		self.log.debug('process_request: %s' % url)
-		if req.path_info == '/me':
+		if req.path_info == '/me' or req.path_info == '/':
 			req.send_response(307)
 			req.send_header('Location', url)
 			req.end_headers()
@@ -46,6 +49,8 @@ class MyPagePlugin(Component):
 	# public methods
 	def mypage_url(self, req):
 		url = self.config.get('mypage', 'url')
+		self.log.debug('auth: %s' % req.authname)
 		if '%' in url:
 			url = url % req.authname
+		self.log.debug('url: %s' % url)
 		return url
