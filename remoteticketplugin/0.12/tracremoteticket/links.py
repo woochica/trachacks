@@ -9,6 +9,8 @@ from trac.ticket.links import LinksProvider, uniq
 from tracremoteticket.api import RemoteTicketSystem
 from tracremoteticket.model import RemoteTicket
 
+__all__ = ['RemoteLinksProvider']
+
 class RemoteLinksProvider(Component):
     
     implements(ITicketChangeListener,

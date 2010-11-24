@@ -5,7 +5,9 @@ from trac.util.datefmt import datetime, parse_date, utc
 from trac.web.href import Href
 
 from tracremoteticket.api import RemoteTicketSystem
-        
+
+__all__ = ['RemoteTicket']
+
 class RemoteTicket(object):
     '''Local proxy for a ticket in a remote Trac system.
     '''

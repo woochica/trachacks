@@ -15,6 +15,8 @@ from trac.web.href import Href
 from tracremoteticket.api import RemoteTicketSystem
 from tracremoteticket.model import RemoteTicket
 
+__all__ = ['RemoteTicketModule']
+
 class RemoteTicketModule(Component):
     implements(ITemplateProvider,
                IRequestFilter,
