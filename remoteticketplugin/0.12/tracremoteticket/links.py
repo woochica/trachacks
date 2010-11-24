@@ -1,6 +1,7 @@
 from copy import copy
 
 from trac.core import Component, implements
+from trac.resource import ResourceNotFound
 from trac.ticket.api import (ITicketChangeListener, ITicketManipulator, 
                              TicketSystem)
 from trac.ticket.links import LinksProvider, uniq
@@ -108,7 +109,7 @@ class RemoteLinksProvider(Component):
                            % (end,  blockers_str))
                     yield None, msg
         
-    def validate_links_exist(ticket, end):
+    def validate_links_exist(self, ticket, end):
         remote_tktsys = RemoteTicketSystem(self.env)
         links = remote_tktsys._parse_links(ticket[end])
         bad_links = []
@@ -116,7 +117,7 @@ class RemoteLinksProvider(Component):
             try:
                 tkt = RemoteTicket(self.env, remote_name, link)
             except ResourceNotFound:
-                badlinks.append((remote_name, link))
+                bad_links.append((remote_name, link))
         if bad_links:
             return ("Remote tickets linked in '%s' could not be found: [%s]"
                     % (end, ', '.join('%s:#%s' % t for t in bad_links)))
