@@ -68,6 +68,12 @@ class RemoteTicketSystem(Component):
             raise ResourceNotFound("Remote Trac '%s' is unknown." 
                                    % remote_name,
                                    "Invalid InterTrac alias")
+        try:
+            intertrac['url']
+        except KeyError:
+            raise ResourceNotFound("Remote Trac '%s' has no address configured."
+                                   % remote_name, 
+                                   "Invalid InterTrac alias")
         return intertrac
     
     def parse_links(self, value):
