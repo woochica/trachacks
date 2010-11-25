@@ -6,6 +6,7 @@ from genshi.filters.transform import Transformer
 from pkg_resources import resource_filename
 
 from trac.core import Component, implements
+from trac.mimeview.api import Context
 from trac.resource import ResourceNotFound
 from trac.ticket import TicketSystem
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
@@ -15,6 +16,7 @@ from trac.web.href import Href
 from tracremoteticket.api import RemoteTicketSystem
 from tracremoteticket.links import RemoteLinksProvider
 from tracremoteticket.model import RemoteTicket
+from trac.wiki.formatter import format_to_oneliner
 
 __all__ = ['RemoteTicketModule']
 
@@ -58,11 +60,22 @@ class RemoteTicketModule(Component):
             return (template, data, content_type)
         
     def _do_ticket(self, req, template, data, content_type):
-        # Append remote linked tickets, to list of linked tickets
         if 'ticket' in data and 'linked_tickets' in data:
             ticket = data['ticket']
+            context = Context.from_request(req, ticket.resource)
+            
+            # Add name:#n links to link fields of Ticket instance
             RemoteLinksProvider(self.env).augment_ticket(ticket)
-            data['linked_tickets'].extend(self._remote_tickets(ticket))
+            
+            # Rerender link fields
+            for field in data['fields']:
+                if field['type'] == 'link':
+                    name = field['name']
+                    field['rendered'] = format_to_oneliner(self.env, context,
+                                                           ticket[name])
+            
+            #Add RemoteTicket objects for linked issues table
+            data['linked_tickets'].extend(self._remote_tickets(ticket, context))
         
         # Provide list of remote sites if newlinked form options are present
         if 'newlinked_options' in data:
@@ -112,7 +125,7 @@ class RemoteTicketModule(Component):
             
         return stream
     
-    def _remote_tickets(self, ticket):
+    def _remote_tickets(self, ticket, context):
         link_fields = [f for f in ticket.fields if f['type'] == 'link']
         rts = RemoteTicketSystem(self.env)
         
@@ -122,9 +135,10 @@ class RemoteTicketModule(Component):
             for link_name, link in rts.parse_links(ticket[field['name']]):
                 try:
                     tkt = RemoteTicket(self.env, link_name, link)
-                    linked_tickets.append((field['label'],
-                                           '%s:#%s' % (tkt.remote_name, tkt.id),
-                                           tkt))
+                    tkt_fmt = format_to_oneliner(self.env, context,
+                                                 '%s:#%s' % (tkt.remote_name,
+                                                             tkt.id))
+                    linked_tickets.append((field['label'], tkt_fmt, tkt))
                 except ResourceNotFound:
                     linked_rejects.append((link_name, link))
                     
