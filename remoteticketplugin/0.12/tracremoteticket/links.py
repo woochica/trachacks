@@ -76,11 +76,10 @@ class RemoteLinksProvider(Component):
             cursor = db.cursor()
             cursor.execute('''
                 DELETE FROM remote_ticket_links
-                WHERE type=%s
-                AND ((source_name='' AND source = %s)
-                     OR (destination_name='' AND destination = %s)''',
-                (end, ticket.id, ticket.id))
-                           
+                WHERE  (source_name='' AND source = %s)
+                OR (destination_name='' AND destination = %s)''',
+                (ticket.id, ticket.id))
+                
     # ITicketManipulator methods
     def prepare_ticket(self, req, ticket, fields, actions): 
         pass
