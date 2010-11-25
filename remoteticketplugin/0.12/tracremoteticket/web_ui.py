@@ -122,10 +122,11 @@ class RemoteTicketModule(Component):
             for link_name, link in rts.parse_links(ticket[field['name']]):
                 try:
                     tkt = RemoteTicket(self.env, link_name, link)
-                    linked_tickets.append(tkt)
+                    linked_tickets.append((field['label'],
+                                           '%s:#%s' % (tkt.remote_name, tkt.id),
+                                           tkt))
                 except ResourceNotFound:
                     linked_rejects.append((link_name, link))
                     
-        return [(field['label'], '%s:%s' % (tkt.remote_name, tkt.id), tkt)
-                for tkt in linked_tickets]
+        return linked_tickets
 
