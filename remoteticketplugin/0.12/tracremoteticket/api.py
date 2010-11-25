@@ -27,9 +27,16 @@ class RemoteTicketSystem(Component):
     
     # IEnvironmentSetupParticipant methods
     def environment_created(self):
-        self.found_db_version = 0
-        self.upgrade_environment(self.env.get_db_cnx())
-    
+        @self.env.with_transaction()
+        def do_db_create(db):
+            db_manager, _ = DatabaseManager(self.env)._get_connector()
+            cursor = db.cursor()
+            for table in db_default.schema:
+                for sql in db_manager.to_sql(table):
+                    cursor.execute(sql)       
+            cursor.execute('INSERT INTO system (name, value) VALUES (%s, %s)',
+                           (db_default.name, db_default.version))
+        
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
         cursor.execute('SELECT value FROM system WHERE name=%s',
@@ -37,22 +44,36 @@ class RemoteTicketSystem(Component):
         value = cursor.fetchone()
         if not value:
             self.found_db_version = 0
-            return True
         else:
             self.found_db_version = int(value[0])
-            if self.found_db_version < db_default.version:
-                return True
         
-        return False
+        if self.found_db_version < db_default.version:
+            return True
+        elif self.found_db_version > db_default.version:
+            raise TracError('Database newer than %s version', db_default.name)
+        else:
+            return False
         
     def upgrade_environment(self, db):
-        db_manager, _ = DatabaseManager(self.env)._get_connector()
+        if self.found_db_version == 0:
+            self.environment_created()
+            return
+        
         cursor = db.cursor()
-        cursor.execute('INSERT INTO system (name, value) VALUES (%s, %s)',
-                       (db_default.name, db_default.version))
-        for table in db_default.schema:
-            for sql in db_manager.to_sql(table):
-                cursor.execute(sql)
+        for i in range(self.found_db_version+1, db_default.version+1):
+            name = 'db%i' % i
+            try:
+                upgrades = __import__('upgrades', globals(), locals(), [name])
+                script = getattr(upgrades, name)
+            except AttributeError:
+                raise TracError('No upgrade module for %s version %i',
+                                db_default.name, i)
+            script.do_upgrade(self.env, i, cursor)
+            cursor.execute('UPDATE system SET value=%s WHERE name=%s',
+                           (db_default.version, db_default.name))
+            db.commit()
+            self.log.info('Upgraded %s database version from %d to %d', 
+                          db_default.name, i-1, i)
     
     # Public methods
     def get_remote_tracs(self):

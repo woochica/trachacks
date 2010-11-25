@@ -12,7 +12,11 @@ __all__ = ['RemoteTicket']
 class RemoteTicket(object):
     '''Local proxy for a ticket in a remote Trac system.
     '''
-    remote_fields = ['summary', 'status', 'type', 'resolution']
+    remote_fields = ['time', 'changetime', 'component', #'severity', 
+                     'priority', 'owner', 'reporter', 'cc',
+                     'version', 'milestone', 'status', 'resolution',
+                     'summary', 'description', 'keywords',
+                     ]
     
     def __init__(self, env, remote_name, tkt_id):
         self.env = env
