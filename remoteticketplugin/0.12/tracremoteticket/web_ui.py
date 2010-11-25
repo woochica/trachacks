@@ -13,6 +13,7 @@ from trac.web.chrome import ITemplateProvider, add_script
 from trac.web.href import Href
 
 from tracremoteticket.api import RemoteTicketSystem
+from tracremoteticket.links import RemoteLinksProvider
 from tracremoteticket.model import RemoteTicket
 
 __all__ = ['RemoteTicketModule']
@@ -60,6 +61,7 @@ class RemoteTicketModule(Component):
         # Append remote linked tickets, to list of linked tickets
         if 'ticket' in data and 'linked_tickets' in data:
             ticket = data['ticket']
+            RemoteLinksProvider(self.env).augment_ticket(ticket)
             data['linked_tickets'].extend(self._remote_tickets(ticket))
         
         # Provide list of remote sites if newlinked form options are present

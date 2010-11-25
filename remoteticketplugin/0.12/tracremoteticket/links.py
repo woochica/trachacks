@@ -5,6 +5,7 @@ from trac.resource import ResourceNotFound
 from trac.ticket.api import (ITicketChangeListener, ITicketManipulator, 
                              TicketSystem)
 from trac.ticket.links import LinksProvider, uniq
+from trac.ticket.model import Ticket
 
 from tracremoteticket.api import RemoteTicketSystem
 from tracremoteticket.model import RemoteTicket
@@ -26,6 +27,10 @@ class RemoteLinksProvider(Component):
         links_provider = LinksProvider(self.env)
         remote_tktsys = RemoteTicketSystem(self.env)
         
+        if not old_values:
+            old_values = Ticket(self.env, ticket.id)
+            self.augment_ticket(old_values)
+            
         @self.env.with_transaction()
         def do_changed(db):
             cursor = db.cursor()
@@ -37,41 +42,44 @@ class RemoteLinksProvider(Component):
                 for remote_name, remote_id in new_rtkts - old_rtkts:
                     cursor.execute('''
                         INSERT INTO remote_ticket_links
-                        (source_name, source, destination_name, destination)
-                        VALUES (%s, %s, %s, %s)''',
-                        (None, ticket.id, remote_name, remote_id))
+                        (source_name, source, type, 
+                            destination_name, destination)
+                        VALUES (%s, %s, %s, %s, %s)''',
+                        ('', ticket.id, end, remote_name, remote_id))
                     other_end = ticket_system.link_ends_map[end]
                     if other_end:
                         cursor.execute('''
                             INSERT INTO remote_ticket_links
-                            (source_name, source, destination_name, destination)
-                            VALUES (%s, %s, %s, %s)''',
-                            (remote_name, remote_id, None, ticket.id))
+                            (source_name, source, type, 
+                                destination_name, destination)
+                            VALUES (%s, %s, %s, %s, %s)''',
+                            (remote_name, remote_id, other_end, '', ticket.id))
                 
                 # Old links removed
                 for remote_name, remote_id in old_rtkts - new_rtkts:
                     cursor.execute('''
-                        DELETE FROM remote_ticket_links WHERE
-                        source_name IS NULL AND source=%s AND 
-                        destination_name=%s AND destination=%s''',
-                        (ticket.id, remote_name, remote_id))
+                        DELETE FROM remote_ticket_links 
+                        WHERE source_name='' AND source=%s AND type=%s
+                        AND destination_name=%s AND destination=%s''',
+                        (ticket.id, end, remote_name, remote_id))
                     other_end = ticket_system.link_ends_map[end]
                     if other_end:
                         cursor.execute('''
-                            DELETE FROM remote_ticket_links WHERE 
-                            source_name=%s AND source=%s AND
-                            destination_name IS NULL AND destination=%s''',
-                            (remote_name, remote_id, ticket.id))
+                            DELETE FROM remote_ticket_links 
+                            WHERE source_name=%s AND source=%s AND type=%s
+                            AND destination_name='' AND destination=%s''',
+                            (remote_name, remote_id, other_end, ticket.id))
                 
     def ticket_deleted(self, ticket):
         @self.env.with_transaction()
         def do_delete(db):
             cursor = db.cursor()
-            cursor.execute('''DELETE FROM remote_ticket_links
-                           WHERE (source_name IS NULL AND source = %s)
-                           OR (destination_name IS NULL AND destination = %s)
-                           ''',
-                           (ticket.id, ticket.id))
+            cursor.execute('''
+                DELETE FROM remote_ticket_links
+                WHERE type=%s
+                AND ((source_name='' AND source = %s)
+                     OR (destination_name='' AND destination = %s)''',
+                (end, ticket.id, ticket.id))
                            
     # ITicketManipulator methods
     def prepare_ticket(self, req, ticket, fields, actions): 
@@ -175,4 +183,19 @@ class RemoteLinksProvider(Component):
             if cycle != None:
                 return cycle
         return None
-
+    
+    def augment_ticket(self, ticket):
+        link_fields = [f['name'] for f in ticket.fields if f.get('link')]
+        db = self.env.get_read_db()
+        cursor = db.cursor()
+        for end in link_fields:
+            cursor.execute('''SELECT destination_name, destination
+                           FROM remote_ticket_links
+                           WHERE type=%s AND source_name='' and source=%s
+                           ORDER BY destination_name, destination''',
+                           (end, ticket.id))
+            remote_links = ', '.join('%s:#%s' % rec for rec in cursor)
+            if ticket[end] and remote_links:
+                ticket[end] = ticket[end] + ', ' + remote_links 
+            elif remote_links:
+                ticket[end] = remote_links
