@@ -1,5 +1,6 @@
 import xmlrpclib
 
+from trac.resource import ResourceNotFound
 from trac.ticket.api import TicketSystem
 from trac.util.datefmt import datetime, parse_date, utc
 from trac.web.href import Href
@@ -26,13 +27,23 @@ class RemoteTicket(object):
         # TODO Define and use method
         rts = RemoteTicketSystem(self.env)
         remote_trac = rts.get_remote_trac(self.remote_name)['url']
-        server = xmlrpclib.ServerProxy(Href(remote_trac).rpc())
-        multicall = xmlrpclib.MultiCall(server)
+        xmlrpc_addr = Href(remote_trac).rpc()
+        server = xmlrpclib.ServerProxy(xmlrpc_addr)
         
         try:
             tkt_vals = server.ticket.get(self.id)
-        except xmlrpclib.Error, e:
-            return
+        except xmlrpclib.ProtocolError, e:
+            raise ResourceNotFound("Could not contact remote Trac '%s' at %s."
+                                   "Received error %s, %s"
+                                   % (self.remote_name, xmlrpc_addr, 
+                                      e.errcode, e.errmsg),
+                                   "Uncontactable server")
+        except xmlrpclib.Fault, e:
+            raise ResourceNotFound("Could not retrieve remote ticket %s:#%s."
+                                   "Received fault %s, %s"
+                                   % (self.remote_name, self.id,
+                                      e.faultCode, e.faultString),
+                                   "Remote ticket unavailable")
         
         # Convert from DateTime used by xmlrpclib to datetime used by trac
         for k in ['time', 'changetime']:
