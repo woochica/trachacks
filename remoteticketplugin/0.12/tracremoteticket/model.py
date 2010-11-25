@@ -2,7 +2,7 @@ import xmlrpclib
 
 from trac.resource import ResourceNotFound
 from trac.ticket.api import TicketSystem
-from trac.util.datefmt import datetime, parse_date, utc
+from trac.util.datefmt import datetime, parse_date, to_utimestamp, utc
 from trac.web.href import Href
 
 from tracremoteticket.api import RemoteTicketSystem
@@ -68,11 +68,14 @@ class RemoteTicket(object):
     def save(self, when=None):
         if when is None:
             when = self._cachetime
+        when_ts = to_utimestamp(when)
+        
         # Build the update/insert sequences
         # NB The ordering means the same sequences may be reused in both cases
         field_names = self.remote_fields + ['cachetime', 'remote_name', 'id']
         values_dict = dict(self.values)
-        values_dict.update({'cachetime': when, 'remote_name': self.remote_name, 
+        values_dict.update({'cachetime': when_ts, 
+                            'remote_name': self.remote_name, 
                             'id': self.id})
         values = [values_dict[name] for name in field_names]
         
