@@ -1,15 +1,23 @@
 import re
 
-from trac.core import Component, Interface, implements
+from trac.core import Component, Interface, implements, TracError
 from trac.config import IntOption
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
 from trac.resource import ResourceNotFound
+from trac.ticket.api import TicketSystem
 from trac.util import unique
 
 from tracremoteticket import db_default
 
 __all__ = ['RemoteTicketSystem']
+
+PARSE_LINKS_ERR_STRING = """Trac is parsing ticket links of the form name:#N.
+Use the remote-ticket branch of Trac, or replace
+  NUMBERS_RE = re.compile(r'\d+', re.U)
+with
+  NUMBERS_RE = re.compile(r'(?:^|[\s,])#?(\d+)', re.U)
+in 'trac/ticket/api.py'."""
 
 class RemoteTicketSystem(Component):
     
@@ -25,8 +33,14 @@ class RemoteTicketSystem(Component):
     REMOTES_RE = re.compile(r'(\w+):#?(\d+)', re.U)
     
     def __init__(self):
+        # Check that Trac will not try to save/process the remote tickets that
+        # this plugin injects
+        canary = TicketSystem(self.env).parse_links('#1, remote:#2')
+        if len(canary) != 1:
+            raise TracError(PARSE_LINKS_ERR_STRING)
+                
         self._intertracs = self._get_remotes_config()
-    
+        
     # IEnvironmentSetupParticipant methods
     def environment_created(self):
         @self.env.with_transaction()
