@@ -95,7 +95,8 @@ class RemoteTicketModule(Component):
             ticket = data['ticket']
             remote_name = lrv_match.group(1)
             remote_id = lrv_match.group(2)
-            remote_ticket = RemoteTicket(self.env, remote_name, remote_id)
+            remote_ticket = RemoteTicket(self.env, remote_name, remote_id,
+                                         refresh=True)
             link_fields = [f for f in ticket.fields if f['name'] == link_end]
             copy_field_names = link_fields[0]['copy_fields']
             
