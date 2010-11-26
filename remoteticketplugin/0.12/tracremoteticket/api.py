@@ -5,6 +5,8 @@ from trac.config import IntOption
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
 from trac.resource import ResourceNotFound
+from trac.util import unique
+
 from tracremoteticket import db_default
 
 __all__ = ['RemoteTicketSystem']
@@ -100,7 +102,8 @@ class RemoteTicketSystem(Component):
     def parse_links(self, value):
         if not value:
             return []
-        return [(name, int(id)) for name, id in self.REMOTES_RE.findall(value)]
+        return list(unique((name, int(id)) 
+                           for name, id in self.REMOTES_RE.findall(value)))
         
     # Private methods        
     def _get_remotes_config(self):

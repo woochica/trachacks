@@ -4,8 +4,9 @@ from trac.core import Component, implements
 from trac.resource import ResourceNotFound
 from trac.ticket.api import (ITicketChangeListener, ITicketManipulator, 
                              TicketSystem)
-from trac.ticket.links import LinksProvider, uniq
+from trac.ticket.links import LinksProvider
 from trac.ticket.model import Ticket
+from trac.util import unique
 
 from tracremoteticket.api import RemoteTicketSystem
 from tracremoteticket.model import RemoteTicket
@@ -112,7 +113,8 @@ class RemoteLinksProvider(Component):
             if action == 'resolve':
                 blockers = self.find_blockers(ticket, end, [])
                 if blockers:
-                    blockers_str = ', '.join('%s' % x for x in uniq(blockers))
+                    blockers_str = ', '.join('%s' % x 
+                                             for x in unique(blockers))
                     msg = ("Cannot resolve this ticket because it is "
                            "blocked by '%s' tickets [%s]" 
                            % (end,  blockers_str))
