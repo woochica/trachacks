@@ -72,6 +72,7 @@ class WorkLogSetupParticipant(Component):
         # End Legacy support hack
 
         # Do the staged updates
+        cursor = db.cursor()
         try:
             # This var is to deal with a problem case with pgsql and the "user"
             # keyword. We need to skip over new installations but not upgrades
