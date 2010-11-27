@@ -1,4 +1,7 @@
 import re
+from StringIO import StringIO
+import codecs
+import csv
 from util import *
 from time import time
 from datetime import tzinfo, timedelta, datetime
@@ -53,19 +56,20 @@ class WorkLogPage(Component):
                 'summary',
                 'comment']
       sep=','
-      req.write(sep.join(fields) + CRLF)
+
+      content = StringIO()
+      writer = csv.writer(content, delimiter=sep, quoting=csv.QUOTE_MINIMAL)
+      writer.writerow([unicode(c).encode('utf-8') for c in fields])
 
       # Rows
       for row in log:
-        first = True
+        values=[]
         for field in fields:
-          if not first:
-            req.write(sep)
-          first = False
-          req.write(str(row[field])
-                    .replace(sep, '_').replace('\\', '\\\\')
-                    .replace('\n', '\\n').replace('\r', '\\r'))
-        req.write(CRLF)
+          values.append(unicode(row[field]).encode('utf-8'))
+        writer.writerow(values)
+
+      req.send_header('Content-Length', content.len)
+      req.write(content.getvalue())
     
     # IRequestHandler methods
     def match_request(self, req):
