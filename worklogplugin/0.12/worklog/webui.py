@@ -78,6 +78,8 @@ class WorkLogPage(Component):
         return None
 
     def process_request(self, req):
+        req.perm.require('WORK_VIEW')
+        
         messages = []
 
         def addMessage(s):
