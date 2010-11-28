@@ -715,6 +715,9 @@ class PPConfiguration():
     # Ticket-Custom Field Mappings (no catid/grpid -> not for panel)
     self.flatconf[ 'custom_dependency_field' ] = PPSingleValOption(
       self.env, 'custom_dependency_field', u'dependencies' )
+    
+    self.flatconf[ 'custom_reverse_dependency_field' ] = PPSingleValOption(
+      self.env, 'custom_reverse_dependency_field', u'dependenciesreverse' )
 
     self.flatconf[ 'custom_due_assign_field' ] = PPSingleValOption(
       self.env, 'custom_due_assign_field', u'due_assign' )

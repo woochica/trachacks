@@ -1071,7 +1071,25 @@ function ppInitializeTablesorter() {
     });
 }
 
-
+/**
+ * normalize the ticket list fields
+ */
+function ppAddTicketListChecks(field_id){
+  myfield = $('#'+$(field_id).html());
+  if ( myfield.val() != null ){
+      myfield.blur( function() {
+	  tickets = this.value.split(/[,; ]/);
+	  tickets_normalized = new Array();
+	  for( i=0; i<tickets.length; i++){
+	    tickets[i] = tickets[i].replace(/#+/,'');
+	    if( $.trim(tickets[i]) != '' ) {
+	      tickets_normalized.push( $.trim(tickets[i]) );
+	    }
+	  }
+	  this.value = tickets_normalized.join(', ');
+    });
+  }
+}
 
 
 
@@ -1086,6 +1104,10 @@ $(document).ready(function () {
 //  	$(".project_image .ticket_inner a").each(function() { this.title = "";});
 	ppAddTooltip(".properties a.ticket_inner"); // ticket view
 	ppAddTooltip(".pptickettable a.ticket"); // ticket view in report table
+	
+	// normalize the ticket fields; ids are published by the ppticketviewtweak component
+	ppAddTicketListChecks("#ppDependenciesField");
+	ppAddTicketListChecks("#ppDependenciesReverseField");
 	
 	ppInitializeTablesorter();
 	$('.pptickettable .headerSortUp').click();

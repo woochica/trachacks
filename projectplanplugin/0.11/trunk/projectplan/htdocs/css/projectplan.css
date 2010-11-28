@@ -399,3 +399,7 @@ table.pplisting tbody td.ppimagecol {
   margin-left:1.5ex;
   margin-right:1.5ex;
 }
+
+#ppShowDatePicker, #ppTicketViewTweakConf {
+  display:none;
+}
