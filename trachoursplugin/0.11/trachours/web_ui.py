@@ -84,16 +84,13 @@ class TracHoursRoadmapFilter(Component):
                         estimatedhours = 0.
                     hours[milestone.name]['estimatedhours'] += estimatedhours
 
-                    # total hours for the ticket
-                    totalhours = trachours.get_total_hours(ticket.id)
+                    # total hours for the ticket (seconds -> hours)
+                    totalhours = trachours.get_total_hours(ticket.id) / 3600.0
                     hours[milestone.name]['totalhours'] += totalhours
                 
                     # update date for oldest ticket
                     if ticket.time_created < hours[milestone.name]['date']:
                         hours[milestone.name]['date'] = ticket.time_created
-                    # seconds -> hours
-                    hours[milestone.name]['totalhours'] /= 3600.
-
 
             b = StreamBuffer()
             stream |= Transformer(find_xpath).copy(b).end().select(xpath).append(self.MilestoneMarkup(b, hours, req.href, this_milestone))
