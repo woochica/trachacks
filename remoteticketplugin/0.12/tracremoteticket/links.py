@@ -1,4 +1,6 @@
 from copy import copy
+from itertools import groupby
+from operator import itemgetter
 
 from trac.core import Component, implements
 from trac.resource import ResourceNotFound
@@ -29,8 +31,7 @@ class RemoteLinksProvider(Component):
         remote_tktsys = RemoteTicketSystem(self.env)
         
         if not old_values:
-            old_values = Ticket(self.env, ticket.id)
-            self.augment_ticket(old_values)
+            old_values = self._fetch_remote_links(ticket.id)
             
         @self.env.with_transaction()
         def do_changed(db):
@@ -186,17 +187,26 @@ class RemoteLinksProvider(Component):
         return None
     
     def augment_ticket(self, ticket):
-        link_fields = [f['name'] for f in ticket.fields if f.get('link')]
-        db = self.env.get_read_db()
-        cursor = db.cursor()
-        for end in link_fields:
-            cursor.execute('''SELECT destination_name, destination
-                           FROM remote_ticket_links
-                           WHERE type=%s AND source_name='' and source=%s
-                           ORDER BY destination_name, destination''',
-                           (end, ticket.id))
-            remote_links = ', '.join('%s:#%s' % rec for rec in cursor)
+        remote_link_vals = self._fetch_remote_links(ticket.id)
+        for end, remote_links in remote_link_vals.items():
             if ticket[end] and remote_links:
-                ticket[end] = ticket[end] + ', ' + remote_links 
+                ticket[end] = '%s, %s' % (ticket[end], remote_links)
             elif remote_links:
                 ticket[end] = remote_links
+        
+    def _fetch_remote_links(self, tkt_id):
+        link_ends_map =  TicketSystem(self.env).link_ends_map
+        db = self.env.get_read_db()
+        cursor = db.cursor()
+        cursor.execute('''SELECT type, destination_name, destination
+                       FROM remote_ticket_links
+                       WHERE type IN (%s) AND source_name='' and source=%%s
+                       ORDER BY type, destination_name, destination
+                       ''' % (','.join(['%s'] * len(link_ends_map))),
+                       list(link_ends_map) + [tkt_id])
+        remote_link_vals = {}
+        for end, recs in groupby(cursor, key=itemgetter(0)):
+            remote_link_vals[end] = ', '.join('%s:#%s' % r[1:3] for r in recs)
+            
+        return remote_link_vals
+
