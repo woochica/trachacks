@@ -13,7 +13,6 @@
   <body>
     <form method="post" action="${worklog_href}">
       <div id="content" class="worklog">
-        <a id="worklogmanual" href="${usermanual_href}" >${usermanual_title}</a>
         <h2>Work Log for ${worklog[0].dispname}</h2>
         <div id="messages" >
           <div py:for="item in messages" class="message" >${item}</div>
@@ -33,6 +32,11 @@
         </table>
       </div>
     </form>
+
+    <div id="help"><strong>Note:</strong> See
+      <a href="${usermanual_href}">${usermanual_title}</a> for help on using
+      the worklog.
+    </div>
     
     <div id="altlinks">  <h3>Download in other formats:</h3><ul><li class="first last"><a href="?format=csv" class="csv">CSV</a></li></ul></div>
   </body>
