@@ -349,3 +349,20 @@ h2.report-result {
 .down span {
 	display: none;
 }
+
+#system {
+	background: #CCC;
+	border-left: 2px solid #CCC;
+	border-right: 2px solid #CCC;
+	clear: both;
+	padding: 1px 10px;
+}
+
+#warning.system-message {
+	background: #FFFFBB;
+	border: 1px outset #999966;
+	color: #000;
+}
+#notice.system-message {
+	border: 1px outset #999966;
+}

@@ -56,6 +56,22 @@
       </div>
     </div>
 
+    <div id="system">
+      <div id="warning" py:if="chrome.warnings" class="system-message">
+        <py:choose test="len(chrome.warnings)">
+          <strong>Advertencia:</strong>
+          <py:when test="1">${chrome.warnings[0]}</py:when>
+          <py:otherwise><ul><li py:for="warning in chrome.warnings">$warning</li></ul></py:otherwise>
+        </py:choose>
+      </div>
+      <div id="notice" py:if="chrome.notices" class="system-message">
+        <py:choose test="len(chrome.notices)">
+          <py:when test="1">${chrome.notices[0]}</py:when>
+          <py:otherwise><ul><li py:for="notice in chrome.notices">$notice</li></ul></py:otherwise>
+        </py:choose>
+      </div>
+    </div>
+
 	<py:if test="len(chrome.ctxtnav) > 0">
       <div id="SubMenuBar" class="noprint">
         <ul>
