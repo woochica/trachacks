@@ -25,6 +25,8 @@ _HEADER = 'X-TracDragDrop'
 
 
 def _list_message_files(dir):
+    if not os.path.isdir(dir):
+        return set()
     return set(file[0:-3] for file in os.listdir(dir) if file.endswith('.js'))
 
 
