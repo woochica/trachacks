@@ -19,8 +19,8 @@ import os
 from datetime import timedelta, datetime
 from trac.core import *
 from trac.ticket import Ticket, model
-from trac.util.datefmt import utc, to_timestamp, to_datetime, format_date
 from trac.ticket.roadmap import ITicketGroupStatsProvider, TicketGroupStats
+from trac.util.datefmt import utc, to_timestamp, to_datetime, format_date
 
 # set HOME environment variable to a directory the httpd server can write to
 # (matplotlib needs this)
@@ -40,24 +40,19 @@ class ProgressTicketGroupStatsProvider(Component):
         # ticket_ids is a list of ticket id as number.
         total_cnt = len(ticket_ids)
         if total_cnt:
+            
             db = self.env.get_db_cnx()
-            cursor = db.cursor() # get database connection
-            str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
+            cursor = db.cursor()            
             
-            
-            closed_cnt = cursor.execute("SELECT count(1) FROM ticket "
-                                        "WHERE status = 'closed' AND id IN "
-                                        "(%s)" % ",".join(str_ids)) # execute query and get cursor obj.
-            closed_cnt = 0
-            for cnt, in cursor:
-                closed_cnt = cnt
+            closed_cnt = cursor.execute("SELECT COUNT(*) FROM ticket "
+                                        "WHERE status = 'closed' AND id IN (%s)"
+                                        %  (",".join(['%s']*len(ticket_ids))), tuple(ticket_ids))
+            closed_cnt = cursor.fetchone()[0]
                 
-            active_cnt = cursor.execute("SELECT count(1) FROM ticket "
-                                        "WHERE status IN ('new', 'reopened') "
-                                        "AND id IN (%s)" % ",".join(str_ids)) # execute query and get cursor obj.
-            active_cnt = 0
-            for cnt, in cursor:
-                active_cnt = cnt
+            active_cnt = cursor.execute("SELECT COUNT(*) FROM ticket "
+                                        "WHERE status IN ('new', 'reopened') AND id IN (%s)"
+                                        %  (",".join(['%s']*len(ticket_ids))), tuple(ticket_ids))
+            active_cnt = cursor.fetchone()[0]
                 
         else:
             closed_cnt = 0
@@ -114,22 +109,20 @@ class ProgressTicketGroupStatsProvider(Component):
         # ticket_ids is a list of ticket id as number.
         total_cnt = len(ticket_ids)
         if total_cnt:
-            str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
-            cursor = self.env.get_db_cnx().cursor()  # get database connection    
+            
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()    
             
             type_count = [] # list of dictionary with key name and count
             
             for type in model.Type.select(self.env):
             
-                count = cursor.execute("SELECT count(1) FROM ticket "
-                                        "WHERE type = '%s' AND id IN "
-                                        "(%s)" % (type.name, ",".join(str_ids))) # execute query and get cursor obj.
-                count = 0
-                for cnt, in cursor:
-                    count = cnt
-
+                count = cursor.execute("SELECT COUNT(*) FROM ticket "
+                                        "WHERE type = %%s AND id IN (%s)"
+                                        %  (",".join(['%s']*len(ticket_ids))), (type.name, ) + tuple(ticket_ids))
+                count = cursor.fetchone()[0]
                 if count > 0:
-                    type_count.append({'name':type.name,'count':count})
+                    type_count.append({'name':type.name, 'count':count})
 
         else:
             type_count = []
@@ -159,22 +152,20 @@ class TicketTypeGroupStatsProvider(Component):
         # ticket_ids is a list of ticket id as number.
         total_cnt = len(ticket_ids)
         if total_cnt:
-            str_ids = [str(x) for x in sorted(ticket_ids)] # create list of ticket id as string
-            cursor = self.env.get_db_cnx().cursor()  # get database connection    
+            
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()    
             
             type_count = [] # list of dictionary with key name and count
             
             for type in model.Type.select(self.env):
             
-                count = cursor.execute("SELECT count(1) FROM ticket "
-                                        "WHERE type = '%s' AND id IN "
-                                        "(%s)" % (type.name, ",".join(str_ids))) # execute query and get cursor obj.
-                count = 0
-                for cnt, in cursor:
-                    count = cnt
-
+                cursor.execute("SELECT COUNT(*) FROM ticket "
+                               "WHERE type = %%s AND id IN (%s)"
+                               %  (",".join(['%s']*len(ticket_ids))), (type.name, ) + tuple(ticket_ids))
+                count = cursor.fetchone()[0]
                 if count > 0:
-                    type_count.append({'name':type.name,'count':count})
+                    type_count.append({'name':type.name, 'count':count})
 
         else:
             type_count = []
@@ -599,7 +590,9 @@ class ChangesetsStats:
     
     def set_date_range(self, start_date, stop_date): 
 
-        cursor = self.env.get_db_cnx().cursor()
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        
         cursor.execute("SELECT rev, time, author FROM revision "
                        "WHERE time >= %s AND time < %s ORDER BY time",
                        (to_timestamp(start_date), to_timestamp(stop_date)))

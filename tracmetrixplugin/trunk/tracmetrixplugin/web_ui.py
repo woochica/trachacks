@@ -44,7 +44,8 @@ def get_project_tickets(env):
         
     """
     
-    cursor = env.get_db_cnx().cursor()
+    db = env.get_db_cnx()
+    cursor = db.cursor()
     
     cursor.execute("SELECT id FROM ticket ORDER BY id")
 

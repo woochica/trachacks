@@ -53,11 +53,11 @@ def get_every_tickets_in_milestone(db, milestone):
 #                        "ticket_change.oldvalue=%s))", (milestone,))
     
     cursor.execute("SELECT id FROM ticket WHERE id IN "
-                       "(SELECT DISTINCT ticket FROM ticket_change "
-                       "WHERE (ticket_change.field='milestone' AND "
-                       "ticket_change.oldvalue=%s)) "
-                       "UNION SELECT id FROM ticket WHERE milestone=%s", 
-                       (milestone, milestone))  
+                   "(SELECT DISTINCT ticket FROM ticket_change "
+                   "WHERE (ticket_change.field='milestone' AND "
+                   "ticket_change.oldvalue=%s)) "
+                   "UNION SELECT id FROM ticket WHERE milestone=%s", 
+                   (milestone, milestone))  
     tickets = []
     for tkt_id, in cursor:
         tickets.append(tkt_id)  #tkt_id is a tuple of lengh 1
@@ -84,26 +84,26 @@ def collect_tickets_status_history(env, db, ticket_ids, milestone):
     history = {}
 
     cursor = db.cursor()
-    str_ids = [str(x) for x in sorted(ticket_ids)]
-    ticket_list = ",".join(str_ids)
     
     sqlquery = "SELECT ticket.id AS tid, ticket.type, ticket.time, ticket.status, " \
-                       "ticket_change.time, ticket.milestone, ticket_change.field, " \
-                       "ticket_change.oldvalue, ticket_change.newvalue " \
-                       "FROM ticket LEFT JOIN ticket_change ON ticket.id = ticket_change.ticket " \
-                       "WHERE (ticket_change.field='status' " \
-                       "OR ticket_change.field='milestone') AND ticket.id IN (%s) " \
-                       "UNION SELECT ticket.id AS tid, ticket.type, ticket.time, ticket.status, " \
-                       "ticket.time, ticket.milestone, null, null, null FROM ticket " \
-                       "WHERE ticket.time = ticket.changetime " \
-                       "AND ticket.id IN (%s) ORDER BY tid" % (ticket_list, ticket_list)
+               "ticket_change.time, ticket.milestone, ticket_change.field, " \
+               "ticket_change.oldvalue, ticket_change.newvalue " \
+               "FROM ticket LEFT JOIN ticket_change ON ticket.id = ticket_change.ticket " \
+               "WHERE (ticket_change.field='status' " \
+               "OR ticket_change.field='milestone') AND ticket.id IN (%s) " \
+               "UNION SELECT ticket.id AS tid, ticket.type, ticket.time, ticket.status, " \
+               "ticket.time, ticket.milestone, null, null, null FROM ticket " \
+               "WHERE ticket.time = ticket.changetime " \
+               "AND ticket.id IN (%s) ORDER BY tid" \
+               % ((",".join(['%s']*len(ticket_ids))), (",".join(['%s']*len(ticket_ids))))
+    print sqlquery
         
 #    sqlquery = "SELECT ticket.id, ticket.type, ticket.time, ticket.status, " \
 #                   "ticket.time as changetime, null, null, null FROM ticket " \
 #                   "WHERE ticket.time = ticket.changetime " \
 #                   "AND ticket.id IN (%s) ORDER BY changetime" % (ticket_list,)
 #    
-    cursor.execute(sqlquery)
+    cursor.execute(sqlquery, tuple(ticket_ids) + tuple(ticket_ids))
     
     #env.log.info(sqlquery)
     event_history = cursor.fetchall()
@@ -129,7 +129,7 @@ def collect_tickets_status_history(env, db, ticket_ids, milestone):
         
         # Assume that ticket is created with out milestone.
         # The event will be store in the list until we find out what milestone do the
-        # event belog to.
+        # event belong to.
         current_milestone = None
         current_status = 'Active'
         for tkt_id, tkt_type, tkt_createdtime, tkt_status, tkt_changedtime, \
