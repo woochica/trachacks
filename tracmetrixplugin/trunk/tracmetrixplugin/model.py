@@ -17,6 +17,9 @@ import sys
 import os
 
 from datetime import timedelta
+from bisect import bisect
+from pylab import date2num, drange, num2date
+
 from trac.core import *
 from trac.ticket import Ticket, model
 from trac.ticket.roadmap import ITicketGroupStatsProvider, TicketGroupStats
@@ -25,12 +28,6 @@ from trac.util.datefmt import utc, to_timestamp, to_datetime, format_date
 # set HOME environment variable to a directory the httpd server can write to
 # (matplotlib needs this)
 os.environ[ 'HOME' ] = '/tmp/'
-
-from bisect import bisect
-import matplotlib
-from pylab import *
-from matplotlib.dates import DayLocator, HourLocator, DateFormatter, drange
-
 
 class ProgressTicketGroupStatsProvider(Component):
     implements(ITicketGroupStatsProvider)

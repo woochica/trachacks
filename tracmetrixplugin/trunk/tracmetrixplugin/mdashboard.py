@@ -17,23 +17,19 @@ import re
 import os
 
 from bisect import bisect
+from datetime import timedelta
 from itertools import groupby
-from datetime import datetime, timedelta
+from pylab import date2num, drange, num2date #FIXME: use Trac's date utils and get rid of the pylab dependency.
 
 from genshi.builder import tag
-
-#FIXME: use Trac's datetime utils and get rid of the pylab dependency.
-from pylab import date2num, num2date, drange
 from trac import mimeview
-from trac.core import Component, implements, TracError
 from trac.config import BoolOption, ExtensionOption, IntOption, Option
+from trac.core import Component, implements, TracError
 from trac.perm import IPermissionRequestor
+from trac.ticket import Milestone, TicketSystem
+from trac.ticket.roadmap import ITicketGroupStatsProvider, get_ticket_stats, get_tickets_for_milestone, milestone_stats_data
 from trac.util.compat import sorted
-from trac.util.datefmt import utc, to_datetime, format_date
-from trac.ticket import Milestone, TicketSystem #These are object    
-from trac.ticket.roadmap import ITicketGroupStatsProvider, \
-                                get_ticket_stats, get_tickets_for_milestone, \
-                                milestone_stats_data
+from trac.util.datefmt import to_datetime, format_date, utc    
 from trac.web import IRequestHandler
 from trac.web.chrome import add_link, add_stylesheet, INavigationContributor, ITemplateProvider
 from trac.wiki.api import IWikiSyntaxProvider
@@ -64,9 +60,7 @@ def get_every_tickets_in_milestone(db, milestone):
                 
     return tickets       
 
-def add_milestone_event(env, history, time, event, ticket_id):
-    
-    #env.log.info("Date: %s Ticket %s event %s" % (datetime.fromtimestamp(time, utc).date(), ticket_id, event))
+def add_milestone_event(env, history, time, event, ticket_id):    
                     
     if history.has_key(time):
 
@@ -235,7 +229,7 @@ def make_ticket_history_table(env, dates, sorted_events):
     for event in sorted_events:
         
         #Time in epoch time
-        date = datetime.fromtimestamp(event[0], utc).date()
+        date = to_datetime(event[0])
         
         #env.log.info("Event Date:%s:%s" % (date,event[1]))
         
@@ -445,20 +439,12 @@ class MDashboard(Component):
               
                 # Get first date that ticket enter the milestone
                 min_time = min(sorted_events)[0] #in Epoch Seconds
-                begin_date = datetime.fromtimestamp(min_time, utc).date() 
+                begin_date = to_datetime(min_time) 
                 
-                if milestone.completed != None:
+                if milestone.completed is not None:
                     end_date = milestone.completed        
                 else:
-                    end_date = datetime.now(utc).date()
-                
-                #self.env.log.info("begindate: Timezone %s:%s, UTC:%s)" % \
-                #                  (req.tz,datetime.fromtimestamp(min_time, req.tz).date(), \
-                #                   datetime.fromtimestamp(min_time, utc).date())) 
-        
-                #self.env.log.info("enddate: UTC:%s" % (end_date,))
-    
-                
+                    end_date = to_datetime(None).date()
             
                 # this is array of date in numpy
                 numdates = drange(begin_date, end_date + timedelta(days=1), timedelta(days=1))

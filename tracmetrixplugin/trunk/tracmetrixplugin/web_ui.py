@@ -14,9 +14,9 @@
 # Author: Bhuricha Sethanandha <khundeen@gmail.com>
 
 from datetime import timedelta, datetime
+
 from genshi.builder import tag
 from genshi.filters.transform import StreamBuffer, Transformer
-
 from trac import mimeview
 from trac.config import ExtensionOption, Option
 from trac.mimeview import Context
@@ -24,12 +24,11 @@ from trac.core import Component, implements
 from trac.perm import IPermissionRequestor
 from trac.ticket import Milestone
 from trac.ticket.query import Query
-from trac.ticket.roadmap import ITicketGroupStatsProvider, \
-                                get_ticket_stats, get_tickets_for_milestone, \
-                                milestone_stats_data
+from trac.ticket.roadmap import ITicketGroupStatsProvider, get_ticket_stats, get_tickets_for_milestone, milestone_stats_data
 from trac.util.datefmt import to_datetime, utc
-from trac.web import IRequestHandler, IRequestFilter, ITemplateStreamFilter
+from trac.web import IRequestFilter, IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import add_stylesheet, INavigationContributor, ITemplateProvider
+
 from tracmetrixplugin.model import ChangesetsStats, TicketGroupMetrics
 
 # Constants
