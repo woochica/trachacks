@@ -27,7 +27,7 @@ from trac.ticket.query import Query
 from trac.ticket.roadmap import ITicketGroupStatsProvider, \
                                 get_ticket_stats, get_tickets_for_milestone, \
                                 milestone_stats_data
-from trac.util.datefmt import utc
+from trac.util.datefmt import to_datetime, utc
 from trac.web import IRequestHandler, IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import add_stylesheet, INavigationContributor, ITemplateProvider
 from tracmetrixplugin.model import ChangesetsStats, TicketGroupMetrics
@@ -237,7 +237,7 @@ class PDashboard(Component):
         tkt_duration_stats = {}
         bmi_stats = []
         daily_backlog_chart = {}
-        today = datetime.now()
+        today = to_datetime(None)
             
         if showmetrics:                                                     
             self.env.log.info("getting ticket metrics")

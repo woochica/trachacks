@@ -96,7 +96,6 @@ def collect_tickets_status_history(env, db, ticket_ids, milestone):
                "WHERE ticket.time = ticket.changetime " \
                "AND ticket.id IN (%s) ORDER BY tid" \
                % ((",".join(['%s']*len(ticket_ids))), (",".join(['%s']*len(ticket_ids))))
-    print sqlquery
         
 #    sqlquery = "SELECT ticket.id, ticket.type, ticket.time, ticket.status, " \
 #                   "ticket.time as changetime, null, null, null FROM ticket " \
@@ -391,7 +390,7 @@ class MDashboard(Component):
                 
         # Parse the from date and adjust the timestamp to the last second of
         # the day
-        today = datetime.now(req.tz)
+        today = to_datetime(None, req.tz)
 
         # Get milestone start date from session or use default day back.
         # TODO: add logic to remember the start date either in db or session.

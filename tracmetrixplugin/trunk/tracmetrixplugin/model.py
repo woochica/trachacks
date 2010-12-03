@@ -16,7 +16,7 @@
 import sys
 import os
 
-from datetime import timedelta, datetime
+from datetime import timedelta
 from trac.core import *
 from trac.ticket import Ticket, model
 from trac.ticket.roadmap import ITicketGroupStatsProvider, TicketGroupStats
@@ -510,12 +510,12 @@ class TicketMetrics(object):
                 if newvalue != '':
                     self.num_comment += 1
     
-        # Claculate the ticket time up to current.
+        # Calculate the ticket time up to current.
         if previous_status == 'closed':
-            self.closed_time = self.closed_time + self.__inseconds(datetime.now(utc)- previous_status_change)
+            self.closed_time = self.closed_time + self.__inseconds(to_datetime(None, utc)- previous_status_change)
 
         else:
-            self.lead_time = self.lead_time + self.__inseconds(datetime.now(utc)- previous_status_change)
+            self.lead_time = self.lead_time + self.__inseconds(to_datetime(None, utc) - previous_status_change)
 
     def get_all_metrics(self):
         return {'lead_time':self.lead_time, 
