@@ -55,7 +55,7 @@
 		    				<td style="width: 300px"> <div style="width: 280px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.summary}">${ticket.summary}</a></div></td>	
 		    				<td style="width: 120px;">${ticket.owner}</td>
 		    				<td style="width: 90px;">${ticket.type}</td>					    				    	
-		    				<td style="width: 60px;">${ticket.impact}</td>			
+		    				<td style="width: 60px;"> <div style="width: 58px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.impact}">${ticket.impact}</a></div></td>			
 		    				<td style="width: 60px;">${ticket.status}</td>	
 		    				<td style="width: 60px;">${str(datetime.now() - datetime.fromtimestamp(ticket.time)).split(',')[0].split('.')[0]}</td>
 		    				
@@ -111,7 +111,7 @@
 			    				<td style="width: 300px"><div style="width: 280px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.summary}">${ticket.summary}</a></div></td>	
 			    				<td style="width: 120px;">${ticket.owner}</td>
 			    				<td style="width: 80px;">${ticket.type}</td>					    				    	
-			    				<td style="width: 60px;">${ticket.impact}</td>			
+			    				<td style="width: 60px;"> <div style="width: 58px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.impact}">${ticket.impact}</a></div></td>			
 			    				<td style="width: 60px;">${ticket.status}</td>	
 			    				<td style="width: 60px;">${str(datetime.now() - datetime.fromtimestamp(ticket.time)).split(',')[0].split('.')[0]}</td>
 			    				
