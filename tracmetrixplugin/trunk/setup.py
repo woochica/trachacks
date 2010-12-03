@@ -32,5 +32,6 @@ setup(
                                        'htdocs/images/*']},
     install_requires = ['Python >= 2.4', 
                         'Trac >= 0.11.6',
+                        'MatPlotLib >= 0.87.7',
                         'NumPy >= 1.0.1'],
 )
