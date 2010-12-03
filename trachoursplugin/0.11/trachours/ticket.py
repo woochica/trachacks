@@ -40,10 +40,7 @@ class TracHoursByComment(Component):
     def validate_ticket(self, req, ticket):
         """add hours through comments"""
 
-        # only allow allowed users to add hours via comments
-        user = req.authname 
-        can_add_hours = PermissionSystem(self.env).check_permission('TICKET_ADD_HOURS', user)
-        if not can_add_hours:
+        if not req.perm.has_permission('TICKET_ADD_HOURS'):
             return []
 
         # markup the comment and add hours
