@@ -119,6 +119,7 @@ class ppTicketSet():
     '''
       add a new ticket with ticket data <ticket>
     '''
+    #self.macroenv.tracenv.log.debug('addTicket: '+repr(ticket) )
     self.__tickets[ ticket['id'] ] = ppTicket(ticket,self)
 
   def deleteTicket(self,ticket):

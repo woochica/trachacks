@@ -620,6 +620,13 @@ class PPConfiguration():
         return val
     else:
       raise Exception( "Option %s not found" % n )
+  
+  def get_ticket_custom( self, option_name ):
+    '''
+      read directly from the trac.ini file
+    '''
+    return self.env.config.get( 'ticket-custom', option_name, None )
+
 
   def set( self, n, v ):
     '''

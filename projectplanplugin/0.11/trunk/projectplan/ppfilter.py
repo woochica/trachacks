@@ -33,7 +33,7 @@ class BaseFilter():
     try:
       self.max_ticket_number_at_filters = self.macroenv.conf.get('max_ticket_number_at_filters')
     except Exception,e:
-      self.macroenv.tracenv.log.warning('init Basefilter: '+repr(e))
+      self.macroenv.tracenv.log.warning('init max_ticket_number_at_filters (fallback): '+repr(e))
       self.max_ticket_number_at_filters = '1000' # fallback, Trac default was 100
 
   def get_tickets( self ):
@@ -94,6 +94,7 @@ class QueryFilter( ParamFilter ):
     self.filtercol = ""
     self.operator = '=' # equal-filter
     self.filterlist = {}
+    self.filterlistcustom = {}
 
   def set_col( self, c ):
     '''
@@ -115,7 +116,54 @@ class QueryFilter( ParamFilter ):
       easy access to create AND query with several arguments
     '''
     self.filterlist[col] = (operator, arg)
+
+  def add_query_customcol_and_arg(self, col, operator, arg):
+    '''
+      easy access to create AND query with several arguments of a custom ticket value
+    '''
+    self.filterlistcustom[col] = (operator, arg)
+
+  def get_tickets_custom( self ):
+    '''
+      Query the Database including ticket_custom and return result set
+    '''
     
+    def translate2sqlcommands( filtertupel ):
+      if filtertupel[0] == '=~':
+        sep = '%'
+        return ' LIKE "%s%s%s"' % (sep, filtertupel[1], sep)
+      else:
+        return ' '+filtertupel[0]+' "'+filtertupel[1]+'" '
+    
+    
+    wherefilter = []
+    for filtercol in self.filterlist.keys():
+      wherefilter.append( ' %s%s ' % (filtercol, translate2sqlcommands(self.filterlist[filtercol]) ) )
+    
+    self.macroenv.tracenv.log.debug('self.filterlistcustom: '+repr(self.filterlistcustom) )
+    for filtercustomcol in self.filterlistcustom.keys():
+      wherefilter.append( ' id IN ( SELECT ticket FROM ticket_custom WHERE name="%s" AND value %s ) ' % (filtercustomcol, translate2sqlcommands(self.filterlistcustom[filtercustomcol]) ) )
+    
+    wherefilter = '  AND '.join(wherefilter)
+    wherefilter = ' SELECT id FROM ticket WHERE '+wherefilter
+    self.macroenv.tracenv.log.debug("translate2sqlcommands sql: "+wherefilter);
+    
+    db = self.macroenv.tracenv.get_db_cnx() 
+    cursor = db.cursor()
+    cursor.execute(wherefilter)
+    ticket_ids = cursor.fetchall()
+    
+    # query for all these tickets
+    querystr = '0'
+    for ticket_id in ticket_ids:
+      querystr = '%s|%s' % (ticket_id[0], querystr )
+    querystr = 'id=%s' % (querystr)
+    querystr = '%s&%s' % ( querystr, self.colsstr ) # choose columns 
+    
+    
+    #self.macroenv.tracenv.log.debug('get_tickets_list: '+querystr )
+    q = Query.from_string(self.macroenv.tracenv, querystr, max=self.max_ticket_number_at_filters , order='id' )
+    return q.execute( self.macroenv.tracreq )
 
   def get_tickets( self ):
     '''
@@ -126,7 +174,7 @@ class QueryFilter( ParamFilter ):
       for filtercol in self.filterlist.keys():
         querystr = '%s%s%s&%s' % (filtercol, self.filterlist[filtercol][0], self.filterlist[filtercol][1], querystr )
       querystr = '%s%s' % ( querystr, self.colsstr )
-      #self.macroenv.tracenv.log.warning('QueryFilterSum: '+querystr )
+      self.macroenv.tracenv.log.warning('QueryFilterSum: '+querystr )
       q = Query.from_string(self.macroenv.tracenv, querystr, max=self.max_ticket_number_at_filters , order='id' )
       return q.execute( self.macroenv.tracreq )
       
@@ -345,12 +393,21 @@ class ppFilter():
     
     self.macroenv.tracenv.log.debug('combine_filters:'+str(operator))
     
-    # interset all tickets initially if operator is AND
+    # intersect all tickets initially if operator is AND
     if operator == self.OPERATOR_AND:
-      # not performant, because all tickets are fetched
-      #ticketlist = NullFilter( self.macroenv ).get_tickets() #  AND, all tickets
-      #for t in ticketlist:
-        #ticketset.addTicket(t)
+      
+      def check_filter_on_ticket_custom_field( k, v, filtertype, filteroperator ):
+        '''
+          register user filter for a field out of ticket-custom
+          precondition: the field actally exists within the ticket-custom section in trac.ini
+        '''
+        self.macroenv.tracenv.log.debug(filtertype+' found: '+k+'='+v)
+        ticket_custom_field = k[len(filtertype):]
+        if self.macroenv.conf.get_ticket_custom(ticket_custom_field) :
+          f.add_query_customcol_and_arg( ticket_custom_field , filteroperator, v )
+        else:
+          # this might happen for example while using "filter_ticketdeps"
+          self.macroenv.tracenv.log.warning(filtertype+' NOT found in conf: '+k+'='+v+'  --> '+repr(self.macroenv.conf.get_ticket_custom(ticket_custom_field)))
       
       # combine all and filter in one query
       f = QueryFilter( self.macroenv )
@@ -361,9 +418,18 @@ class ppFilter():
           f.add_query_col_and_arg( query_notfilters[k] , '!=', v )
         elif k in query_likefilters:
           f.add_query_col_and_arg( query_likefilters[k] , '=~', v )
+        elif k.startswith('filter_'):  # custom field filter
+          check_filter_on_ticket_custom_field( k, v, 'filter_', '=' )
+        elif k.startswith('filternot_'): # custom field filter
+          check_filter_on_ticket_custom_field( k, v, 'filternot_', '!=' )
+        elif k.startswith('filterlike_'): # custom field filter
+          check_filter_on_ticket_custom_field( k, v, 'filterlike_', '=~' )
+        else: 
+          self.macroenv.tracenv.log.debug(k+' is not a filter: '+k+'='+v)
       
       # add tickets 
-      for t in f.get_tickets():
+      for t in f.get_tickets_custom():
+        #self.macroenv.tracenv.log.error('ticket:'+repr((t)))
         ticketset.addTicket( t )
     #else:
       #ticketlist = NullFilter( self.macroenv ).get_tickets() # OR
@@ -373,7 +439,7 @@ class ppFilter():
     
     #ticketset = ppTicketSet() # OR
     # get tickets for "Parameter based Filters" using macrokw
-    # TODO: need to refactor, duplicate code
+    # TODO: need to refactor, duplicate code; need to speed up OR-filter-operator
     global_filtered = False # was there every a filter applied
     for ( k, v ) in self.macroenv.macrokw.items():
       filtered = False
