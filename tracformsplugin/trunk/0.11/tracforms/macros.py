@@ -3,6 +3,7 @@ from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
 import sys, StringIO, re, traceback, cgi, time, fnmatch
 from iface import TracFormDBUser, TracPasswordStoreUser
+from environment import TracFormEnvironment
 from errors import TracFormError, \
     TracFormTooManyValuesError, \
     TracFormNoOperationError, \
