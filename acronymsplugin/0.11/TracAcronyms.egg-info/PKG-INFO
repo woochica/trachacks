@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: TracAcronyms
+Version: 0.1
+Summary: Auto-generated acronyms from a table in a Wiki page.
+Home-page: http://trac-hacks.org/wiki/AcronymsPlugin
+Author: Alec Thomas
+Author-email: UNKNOWN
+License: BSD
+Description: UNKNOWN
+Platform: UNKNOWN
