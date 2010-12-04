@@ -106,6 +106,15 @@ class TracHoursPlugin(Component):
 
         results = get_all_dict(self.env, "select sum(seconds_worked) as t, ticket from ticket_time where ticket in (%s) group by ticket" % ",".join(map(str,ids)))
 
+        #If no work has been logged for a ticket id, nothing will be returned for that id, but we want it to return 0
+        for id in ids:
+            id_ismember = False
+            for result in results:
+                if id == result['ticket']:
+                    id_ismember = True
+            if not id_ismember:
+                results.append({'ticket':id, 't':0})
+
         update = "update ticket_custom set value=%s where name='totalhours' and ticket=%s"
         for result in results:
             formatted = "%8.2f" % (float(result['t']) / 3600.0)
