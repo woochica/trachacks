@@ -72,8 +72,8 @@
   <div>
     <form py:if="can_add_hours and users" method="POST">
     <fieldset>
-    <b>Add:</b> <input type="text" name="hours" /> hours and
-      <input type="text" name="minutes" /> minutes
+    <b>Add:</b> <input type="text" name="hours" size="3" style="align-text:right"/> hours and
+      <input type="text" name="minutes" size="2" style="align-text:right"/> minutes
       by 
       <span py:if="can_add_others_hours">
 	<select name="worker">
