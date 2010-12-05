@@ -3,6 +3,7 @@ from trac.core import *
 from trac.util import escape, Markup, reversed, sorted
 from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider
 from trac.wiki.model import WikiPage
+from urlparse import urlparse
 
 class Acronyms(Component):
     """ Automatically generates HTML acronyms from definitions in tables in a
@@ -34,7 +35,7 @@ class Acronyms(Component):
                     self.env.log.warning("Invalid acronym line: %s (%s)", line, e)
         keys = reversed(sorted(self.acronyms.keys(), key=lambda a: len(a)))
         self.compiled_acronyms = \
-            r'''\b(?P<acronym>%s)(?P<acronymselector>\w*)\b''' % '|'.join(keys)          
+            r'''\b(?P<acronym>%s)(?P<acronymselector>\w*)\b''' % '|'.join(keys) 
 
         # XXX Very ugly, but only "reliable" way?
         from trac.wiki.parser import WikiParser
@@ -55,6 +56,11 @@ class Acronyms(Component):
                 acronym += ' ' + selector
             else:
                 suffix = selector
+        
+        # if parsing the href string doesn't return a protocol string,
+        # assume the href string is a reference to a wiki page        
+        if not urlparse(href).scheme:
+            href = self.env.href.wiki(href)            
                 
         if href:
             return Markup('<a class="acronym" href="%s"><acronym title="%s">%s</acronym></a>%s'
