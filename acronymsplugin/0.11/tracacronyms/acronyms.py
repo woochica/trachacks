@@ -1,8 +1,8 @@
 import re
 from trac.core import *
-from trac.wiki.api import IWikiSyntaxProvider, IWikiChangeListener
+from trac.util import escape, Markup, reversed, sorted
+from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider
 from trac.wiki.model import WikiPage
-from trac.util import Markup, escape, sorted, reversed
 
 class Acronyms(Component):
     """ Automatically generates HTML acronyms from definitions in tables in a
@@ -12,9 +12,9 @@ class Acronyms(Component):
 
     acronyms = {}
     compiled_acronyms = None
-    valid_acronym = re.compile('^\w+$')
+    valid_acronym = re.compile('^\w+$', re.UNICODE)
     acronym_page = property(lambda self: self.env.config.get('acronym', 'page',
-                                                          'AcronymDefinitions'))
+                                                             'AcronymDefinitions'))
     def __init__(self):
         self._update_acronyms()
 
@@ -34,7 +34,7 @@ class Acronyms(Component):
                     self.env.log.warning("Invalid acronym line: %s (%s)", line, e)
         keys = reversed(sorted(self.acronyms.keys(), key=lambda a: len(a)))
         self.compiled_acronyms = \
-            r'''\b(?P<acronym>%s)(?P<acronymselector>\w*)\b''' % '|'.join(keys)
+            r'''\b(?P<acronym>%s)(?P<acronymselector>\w*)\b''' % '|'.join(keys)          
 
         # XXX Very ugly, but only "reliable" way?
         from trac.wiki.parser import WikiParser
@@ -46,17 +46,16 @@ class Acronyms(Component):
         if acronym not in self.acronyms:
             return match.group(0)
         title, href, shref = self.acronyms[acronym]
-        # Perform basic variable subsitution
+        # Perform basic variable substitution
         title = title.replace('$1', selector).strip()
         suffix = ''
         if selector:
             if shref:
                 href = shref.replace('$1', selector)
-                acronym += ' ' + match.group('acronymselector')
+                acronym += ' ' + selector
             else:
-                suffix = match.group('acronymselector')
+                suffix = selector
                 
-
         if href:
             return Markup('<a class="acronym" href="%s"><acronym title="%s">%s</acronym></a>%s'
                           % (href, title, acronym, suffix))
