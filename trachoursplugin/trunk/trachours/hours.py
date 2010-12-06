@@ -469,13 +469,16 @@ class TracHoursPlugin(Component):
             if user: 
                 qstring = qstring.replace('$USER', user) 
             self.log.debug('QueryModule: Using default query: %s', str(qstring)) 
+
             constraints = Query.from_string(self.env, qstring).constraints 
             # Ensure no field constraints that depend on $USER are used 
-            # if we have no username. 
-            for field, vals in constraints.items(): 
-                for val in vals: 
-                    if val.endswith('$USER'): 
-                        del constraints[field] 
+            # if we have no username.
+
+            for constraint_set in constraints:
+                for field, vals in constraint_set.items(): 
+                    for val in vals: 
+                        if val.endswith('$USER'): 
+                            del constraint_set[field] 
 
         cols = req.args.get('col')
         if isinstance(cols, basestring):
@@ -614,7 +617,7 @@ class TracHoursPlugin(Component):
 
         # For clients without JavaScript, we add a new constraint here if
         # requested
-        constraints = ticket_data['constraints']
+        constraints = ticket_data['clauses']
         if 'add' in req.args:
             field = req.args.get('add_filter')
             if field:
@@ -713,10 +716,10 @@ class TracHoursPlugin(Component):
         data['row'] = ticket_data['row'] 
         if 'comments' in req.args.get('row', []):
             data['row'].append('comments')
-        data['constraints'] = ticket_data['constraints']
+        data['constraints'] = ticket_data['clauses']
 
         our_labels = dict([(f['name'], f['label']) for f in self.fields])
-        labels = ticket_data['labels']
+        labels = TicketSystem(self.env).get_ticket_field_labels()
         labels.update(our_labels)
         data['labels'] = labels
 
@@ -822,7 +825,7 @@ class TracHoursPlugin(Component):
             
 
         data['query'].num_items = num_items
-        data['labels'] = ticket_data['labels']
+        data['labels'] = TicketSystem(self.env).get_ticket_field_labels()
         data['labels'].update(labels)
         data['can_add_hours'] = req.perm.has_permission('TICKET_ADD_HOURS')
 
