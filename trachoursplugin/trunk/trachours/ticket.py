@@ -3,7 +3,7 @@ import re
 from componentdependencies.interface import IRequireComponents
 from hours import TracHoursPlugin
 from trac.core import * 
-from trac.perm import PermissionSystem
+from trac.perm import PermissionCache
 from trac.ticket.api import ITicketManipulator
 from trac.ticket.api import ITicketChangeListener
 
@@ -40,10 +40,7 @@ class TracHoursByComment(Component):
     def validate_ticket(self, req, ticket):
         """add hours through comments"""
 
-        # only allow allowed users to add hours via comments
-        user = req.authname 
-        can_add_hours = PermissionSystem(self.env).check_permission('TICKET_ADD_HOURS', user)
-        if not can_add_hours:
+        if not req.perm.has_permission('TICKET_ADD_HOURS'):
             return []
 
         # markup the comment and add hours
@@ -71,8 +68,8 @@ class TracHoursByComment(Component):
         reporter = emailaddr2user(self.env, message['from'])
         reply_to_ticket = ReplyToTicket(self.env)
         
-        can_add_hours = PermissionSystem(self.env).check_permission('TICKET_ADD_HOURS', reporter)
-        if not can_add_hours:
+        perm = PermissionCache(self.env, reporter)        
+        if not perm.has_permission('TICKET_ADD_HOURS'):
             return False
         return bool(reply_to_ticket.ticket(message))
 
@@ -100,9 +97,8 @@ class TracHoursByComment(Component):
         `old_values` is a dictionary containing the previous values of the
         fields that have changed.
         """
-        can_add_hours = PermissionSystem(self.env).check_permission('TICKET_ADD_HOURS', author)
-
-        if can_add_hours:
+        perm = PermissionCache(self.env, author)
+        if perm.has_permission('TICKET_ADD_HOURS'):
             self.add_hours_by_comment(comment, ticket.id, author)
 
     def ticket_created(self, ticket):
