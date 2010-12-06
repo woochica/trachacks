@@ -604,8 +604,7 @@ class TracHoursPlugin(Component):
             tickets = query.execute(req, db)
             # New or outdated query, (re-)initialize session vars
             req.session['query_constraints'] = query_constraints
-            req.session['query_tickets'] = ' '.join([str(t['id'])
-                                                     for t in tickets])
+            req.session['query_tickets'] = ' '.join([str(t['id']) for t in tickets])
         else:
             orig_list = [int(id) for id
                          in req.session.get('query_tickets', '').split()]
@@ -617,7 +616,7 @@ class TracHoursPlugin(Component):
 
         # For clients without JavaScript, we add a new constraint here if
         # requested
-        constraints = ticket_data['clauses']
+        constraints = ticket_data['clauses'][0]
         if 'add' in req.args:
             field = req.args.get('add_filter')
             if field:
@@ -992,10 +991,11 @@ class TracHoursPlugin(Component):
             title = 'Hours'
         writer.writerow([title, req.abs_href()])
 
-        for constraint in sorted(data['constraints'].keys()):
-            if constraint == 'status' and data['constraints'][constraint]['values'] == ['bogus']:
+        constraint = data['constraints'][0]
+        for key in constraint:
+            if key == 'status' and constraint[key]['values'] == ['bogus']:
                 continue  # XXX I actually have no idea why this is here
-            writer.writerow([constraint] + data['constraints'][constraint]['values'])
+            writer.writerow([key] + constraint[key]['values'])
         writer.writerow([])
 
         format = '%B %d, %Y'
