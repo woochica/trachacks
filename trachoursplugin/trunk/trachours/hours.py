@@ -589,8 +589,6 @@ class TracHoursPlugin(Component):
         orig_time = datetime.datetime.now(utc)
         query_time = int(req.session.get('query_time', 0))
         query_time = datetime.datetime.fromtimestamp(query_time, utc)
-        print 'QUERY.CONSTRAINTS'
-        print query.constraints
         query_constraints = unicode(query.constraints)
         if query_constraints != req.session.get('query_constraints') \
                 or query_time < orig_time - datetime.timedelta(hours=1):
