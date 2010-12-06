@@ -46,7 +46,7 @@ var vBenchTime = new Date().getTime();
 * @param pName {String} Task Name
 * @param pStart {Date} Task start date/time (not required for pGroup=1 )
 * @param pEnd {Date} Task end date/time, you can set the end time to 12:00 to indicate half-day (not required for pGroup=1 )
-* @param pColor {String} Task bar RGB value
+* @param pDisplay {String} How to display the task.  "class=classname" or "style=style string" or a color ("#rgb" or a color name)
 * @param pLink {String} Task URL, clicking on the task will redirect to this url. Leave empty if you do not with the Task also serve as a link
 * @param pMile {Boolean} Determines whether task is a milestone (1=Yes,0=No)
 * @param pRes {String} Resource to perform the task
@@ -59,7 +59,7 @@ var vBenchTime = new Date().getTime();
 * note : you should use setCaption("Caption") in order to display the caption
 * @return void
 */
-JSGantt.TaskItem = function(pID, pName, pStart, pEnd, pColor, pLink, pMile, pRes, pComp, pGroup, pParent, pOpen, pDepend, pCaption)
+JSGantt.TaskItem = function(pID, pName, pStart, pEnd, pDisplay, pLink, pMile, pRes, pComp, pGroup, pParent, pOpen, pDepend, pCaption)
 {
 
 /**
@@ -101,14 +101,36 @@ var vEnd   = new Date();
 * @default pColor
 * @private
 */    
-var vColor = pColor;
+var vColor;
+var vClass;
+var vStyle;
+/* Parse display value */
+if (pDisplay.indexOf('=') == -1) {
+    vColor = pDisplay;
+    vClass = '';
+    vStyle = '';
+} else {
+    vColor = '';
+
+    pDisplay = pDisplay.split('=')
+    switch (pDisplay[0]) {
+    case 'class':
+        vStyle = '';
+        vClass = 'gtask '+pDisplay[1];
+        break;
+    case 'style':
+        vStyle = pDisplay[1];
+        vClass = 'gtask';
+        break;
+    }
+}
 
 /**
 * @property vLink 
 * @type String 
 * @default pLink
 * @private
-*/    
+*/
 var vLink  = pLink;
 
 /**
@@ -243,6 +265,18 @@ var vVisible  = 1;
 * @method getColor
 * @return {String}
 */    this.getColor    = function(){ return vColor};
+
+/**
+* Returns task bar style
+* @method getStyle
+* @return {String}
+*/    this.getStyle    = function(){ return vStyle};
+
+/**
+* Returns task bar class
+* @method getClass
+* @return {String}
+*/    this.getClass    = function(){ return vClass};
 
 /**
 * Returns task URL (i.e. http://www.jsgantt.com)
@@ -1440,7 +1474,7 @@ Complete-Displays task percent complete</p>
                      '<TR id=childrow_' + vID + ' class=yesdisplay style="HEIGHT: 20px" bgColor=#f3f3f3 onMouseover=g.mouseOver(this,' + vID + ',"right","group") onMouseout=g.mouseOut(this,' + vID + ',"right","group")>' + vItemRowStr + '</TR></TABLE></DIV>';
                   vRightTable +=
                      '<div id=bardiv_' + vID + ' style="position:absolute; top:5px; left:' + Math.ceil(vTaskLeft * (vDayWidth) + 1) + 'px; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px">' +
-                       '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class=gtask style="background-color:#000000; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) -1) + 'px;  cursor: pointer;opacity:0.9;">' +
+		      '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="'+vTaskList[i].getClass()+'" style="background-color:#000000; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) -1) + 'px;  cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'">' +
                          '<div style="Z-INDEX: -4; float:left; background-color:#666666; height:3px; overflow: hidden; margin-top:1px; ' +
                                'margin-left:1px; margin-right:1px; filter: alpha(opacity=80); opacity:0.8; width:' + vTaskList[i].getCompStr() + '; ' + 
                                'cursor: pointer;" onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '",300,200);>' +
@@ -1478,7 +1512,7 @@ Complete-Displays task percent complete</p>
                   // Draw Task Bar  which has outer DIV with enclosed colored bar div, and opaque completion div
 	            vRightTable +=
                      '<div id=bardiv_' + vID + ' style="position:absolute; top:4px; left:' + Math.ceil(vTaskLeft * (vDayWidth) + 1) + 'px; height:18px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px">' +
-                        '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class=gtask style="background-color:' + vTaskList[i].getColor() +'; height: 13px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px; cursor: pointer;opacity:0.9;" ' +
+                        '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="'+vTaskList[i].getClass()+'" style="background-color:' + vTaskList[i].getColor() +'; height: 13px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px; cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'" ' +
                            'onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '",300,200); >' +
                            '<div class=gcomplete style="Z-INDEX: -4; float:left; background-color:black; height:5px; overflow: auto; margin-top:4px; filter: alpha(opacity=40); opacity:0.4; width:' + vTaskList[i].getCompStr() + '; overflow:hidden">' +
                            '</div>' +
