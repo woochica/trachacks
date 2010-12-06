@@ -22,7 +22,7 @@ setup(name='TracHoursPlugin',
       dependency_links=[
               "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
               "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
-              "http://trac-hacks.org/svn/tracsqlhelperscript/0.12#egg=TracSQLHelper",
+              "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
               ],
       extras_require=dict(lxml=['lxml']),
       entry_points = """
