@@ -51,13 +51,11 @@ VERSION = "1.2.4"
 setup(
     name = PACKAGE,
     version = VERSION,
-    keywords = "trac macro calendar milestone ticket",
     author = "Matthew Good",
     author_email = "trac@matt-good.net",
     maintainer = "Steffen Hoffmann",
     maintainer_email = "hoff.st@web.de",
     url = "http://trac-hacks.org/wiki/WikiTicketCalendarMacro",
-    classifiers = ['Framework :: Trac'],
     description = "Full page Milestone and Ticket calendar for Trac wiki.",
     long_description = """
 Display Milestones and Tickets in a calendar view, the days link to:
@@ -66,22 +64,20 @@ Display Milestones and Tickets in a calendar view, the days link to:
  - create that wiki page, if it does not exist and
 use page template (if exist) for that new page
 """,
+    keywords = "trac macro calendar milestone ticket",
+    classifiers = ['Framework :: Trac'],
     license = """
         Copyright (c), 2010.
         Released under the 3-clause BSD license after initially being under
         THE BEER-WARE LICENSE, Copyright (c) Matthew Good.
         See changelog in source for contributors.
         """,
-    install_requires = [
-        'Babel>= 0.9.5',
-        'Trac >= 0.12dev',
-        ],
-
+    install_requires = ['Genshi >= 0.5', 'Trac >= 0.11'],
+    extras_require = {'Babel': 'Babel>= 0.9.5', 'Trac': 'Trac >= 0.12'},
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
         'wikiticketcalendar': [
-            'htdocs/css/*.css',
-            'locale/*/LC_MESSAGES/*.mo',
+            'htdocs/css/*.css', 'locale/*/LC_MESSAGES/*.mo',
         ],
     },
     zip_safe = True,

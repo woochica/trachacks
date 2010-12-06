@@ -31,7 +31,7 @@ from genshi.core            import escape, Markup
 from genshi.filters.html    import HTMLSanitizer
 from genshi.input           import HTMLParser, ParseError
 
-from trac.config            import Configuration
+from trac.config            import Configuration, Option
 from trac.core              import implements
 from trac.ticket.query      import Query
 from trac.util.datefmt      import format_date, to_utimestamp
@@ -63,6 +63,16 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     implements(IWikiMacroProvider, ITemplateProvider)
 
+    #  [wikiticketcalendar] section
+    due_field_name = Option('wikiticketcalendar', 'ticket.due_field.name',
+                            'due_close', doc = """Custom due date field name
+                            to evaluate for displaying tickets by date.""")
+    due_field_fmt = Option('wikiticketcalendar', 'ticket.due_field.format',
+                           '%y-%m-%d', doc = """Custom due date value format,
+                           that is any expression supported by strftime or
+                           'ts' identifier for POSIX microsecond time stamps
+                           as supported in later Trac versions.""")
+
     def __init__(self):
         # bind the 'foo' catalog to the specified locale directory
         locale_dir = resource_filename(__name__, 'locale')
@@ -73,12 +83,6 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         self.sanitize = True
         if self.config.getbool('wiki', 'render_unsafe_content') is True:
             self.sanitize = False
-
-        #  [wikiticketcalendar] section
-        self.due_field_name = self.config.get('wikiticketcalendar',
-                                  'ticket.due_field.name') or 'due_close'
-        self.due_field_fmt = self.config.get('wikiticketcalendar',
-                                  'ticket.due_field.format') or '%y-%m-%d'
 
     # ITemplateProvider methods
     # Returns additional path where stylesheets are placed.
