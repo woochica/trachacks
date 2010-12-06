@@ -33,17 +33,21 @@ from setuptools     import find_packages, setup
 
 extra = {}
 
-# run a 'compile_catalog' before 'bdist_egg' (copied from Trac)
-from distutils.command.build            import build
-build.sub_commands.insert(0, ('compile_catalog', lambda x: True))
+try:
+    from trac.util.dist  import  get_l10n_cmdclass
+    cmdclass = get_l10n_cmdclass()
+    if cmdclass:
+        extra['cmdclass'] = cmdclass
+        extractors = [
+            ('**.py',                'python', None),
+        ]
+        extra['message_extractors'] = {
+            'wikiticketcalendar': extractors,
+        }
+# i18n is implemented to be optional here
+except ImportError:
+    pass
 
-# 'bdist_egg' isn't that nice, all it does is an 'install_lib'
-from setuptools.command.install_lib     import install_lib as _install_lib
-class install_lib(_install_lib): # playing setuptools' own tricks ;-)
-    def run(self):
-        self.run_command('compile_catalog')
-        _install_lib.run(self)
-extra['cmdclass'] = {'install_lib': install_lib}
 
 PACKAGE = "WikiTicketCalendarMacro"
 VERSION = "1.2.4"

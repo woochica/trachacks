@@ -44,8 +44,18 @@ from trac.wiki.api          import parse_args, IWikiMacroProvider, \
 from trac.wiki.formatter    import format_to_html
 from trac.wiki.macros       import WikiMacroBase
 
-_, tag_, N_, add_domain = \
-    domain_functions('wikiticketcalendar', '_', 'tag_', 'N_', 'add_domain')
+# Import i18n methods.  Fallback modules maintain compatibility to Trac 0.11
+# by keeping Babel optional here.
+try:
+    from  trac.util.translation  import  domain_functions
+    add_domain, _, tag_ = \
+        domain_functions('wikiticketcalendar', ('add_domain', '_', 'tag_'))
+except ImportError:
+    from  genshi.builder         import  tag as tag_
+    from  trac.util.translation  import  gettext
+    _ = gettext
+    def add_domain(a,b,c=None):
+        pass
 
 
 __all__ = ['WikiTicketCalendarMacro', ]
