@@ -1,0 +1,14 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      py:strip="True">
+  <form method="post" action="${action}">
+    <center>
+      <b>Add hours to ticket:</b>
+      <p>
+        <input type="text" name="hours"/>:<input type="text" name="minutes"/>
+      </p>
+    </center>
+    <input type="hidden" name="worker" value="${worker}"/>
+    <input type="submit" name="addhours" value="Add Hours"/>
+  </form>
+</html>
