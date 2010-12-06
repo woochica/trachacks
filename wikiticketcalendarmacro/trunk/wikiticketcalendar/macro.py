@@ -404,11 +404,11 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         heading(align='center')
 
         for day in calendar.weekheader(2).split()[:-2]:
-            col = tag.th(day)
+            col = tag.th(to_unicode(day))
             col(class_='workday', scope='col')
             heading(col)
         for day in calendar.weekheader(2).split()[-2:]:
-            col = tag.th(day)
+            col = tag.th(to_unicode(day))
             col(class_='weekend', scope='col')
             heading(col)
 
@@ -496,8 +496,9 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                                     due_ts > day_ts_eod:
                                     continue
                             else:
+                                # Beware: Format might even be unicode string.
                                 duedate = format_date(day_dt,
-                                                      self.due_field_fmt)
+                                                      str(self.due_field_fmt))
                                 if not due == duedate:
                                     continue
 
