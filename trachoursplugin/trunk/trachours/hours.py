@@ -33,17 +33,8 @@ from trac.ticket.api import ITicketManipulator
 from trac.ticket.query import Query
 from trac.util.datefmt import to_timestamp, utc
 from trac.util.translation import _
-from trac.web.api import IRequestHandler
-from trac.web.api import ITemplateStreamFilter
-from trac.web.chrome import INavigationContributor
-from trac.web.chrome import ITemplateProvider
-from trac.web.chrome import add_ctxtnav
-from trac.web.chrome import add_link 
-from trac.web.chrome import add_script
-from trac.web.chrome import add_stylesheet
-from trac.web.chrome import add_warning
-from trac.web.chrome import Chrome
-from trac.web.chrome import INavigationContributor
+from trac.web.api import IRequestHandler, ITemplateStreamFilter
+from trac.web.chrome import add_ctxtnav, add_link, add_script, add_stylesheet, add_warning, Chrome, INavigationContributor, ITemplateProvider
 
 from StringIO import StringIO
 
@@ -902,7 +893,8 @@ class TracHoursPlugin(Component):
         # add rss link
         rss_href = req.href(req.path_info, format='rss')
         add_link(req, 'alternate', rss_href, _('RSS Feed'),
-                 'application/rss+xml', 'rss')
+                 'application/rss+xml', 'rss')        
+        add_ctxtnav(req, 'Back to Ticket #%s' %ticket_id, req.href.ticket(ticket_id))        
 
         return ('hours_ticket.html', data, 'text/html')
 

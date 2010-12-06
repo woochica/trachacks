@@ -18,12 +18,8 @@ from ticketsidebarprovider.ticketsidebar import TicketSidebarProvider
 from trac.core import *
 from trac.ticket import Ticket
 from trac.ticket.model import Milestone
-from trac.web.api import IRequestHandler
-from trac.web.api import ITemplateStreamFilter
-from trac.web.chrome import add_link
-from trac.web.chrome import add_stylesheet
-from trac.web.chrome import Chrome
-from trac.web.chrome import ITemplateProvider
+from trac.web.api import IRequestHandler, ITemplateStreamFilter
+from trac.web.chrome import add_link, add_stylesheet, Chrome, ITemplateProvider
 from tracsqlhelper import get_all_dict, get_column
 from utils import get_date
 
