@@ -34,7 +34,7 @@
         <py:choose test="bool(query_title)">
           <py:when test="True">${query_title}</py:when>
           <py:otherwise>
-            <a href="${req.href('hours')}">hours</a>
+            <a href="${req.href('hours')}">Hours</a>
           </py:otherwise>
         </py:choose>
         <span class="numrows">(${ngettext('%(num)s match', '%(num)s matches', query.num_items)})</span>
