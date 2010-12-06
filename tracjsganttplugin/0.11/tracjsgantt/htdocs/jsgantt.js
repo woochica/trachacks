@@ -2045,7 +2045,7 @@ JSGantt.parseDateStr = function(pDateStr,pFormatStr) {
          break;
 	  case 'yyyy-mm-dd':
 	     var vDateParts = pDateStr.split('-');
-         vDate.setFullYear(parseInt(vDateParts[0], 10), parseInt(vDateParts[1], 10) - 1, parseInt(vDateParts[1], 10));
+         vDate.setFullYear(parseInt(vDateParts[0], 10), parseInt(vDateParts[1], 10) - 1, parseInt(vDateParts[2], 10));
          break;
     }
 
