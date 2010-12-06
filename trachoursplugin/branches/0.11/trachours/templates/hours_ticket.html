@@ -35,12 +35,12 @@
       a report/query -->
 	</td>
 	<py:choose test="can_add_others_hours or can_add_hours and req.authname == record['worker']">
-	  <td py:when="True">
-	  <input type="text" name="hours_${record['id']}"
+	  <td py:when="True"><nobr>
+	  <input type="text" name="hours_${record['id']}" size="3" style="text-align:right" 
 	  value="${record['hours_worked']}"/>:
-	  <input type="text" name="minutes_${record['id']}"
+	  <input type="text" name="minutes_${record['id']}" size="2" style="text-align:right"
 	  value="${'%02d' % record['minutes_worked']}"/>
-	  </td>
+	  </nobr></td>
 	  <td py:when="False">
 	  ${record['hours_worked']}:${'%02d' % record['minutes_worked']}
 	  </td>
@@ -72,8 +72,8 @@
   <div>
     <form py:if="can_add_hours and users" method="POST">
     <fieldset>
-    <b>Add:</b> <input type="text" name="hours" /> hours and
-      <input type="text" name="minutes" /> minutes
+    <b>Add:</b> <input type="text" name="hours" size="3" style="align-text:right"/> hours and
+      <input type="text" name="minutes" size="2" style="align-text:right"/> minutes
       by 
       <span py:if="can_add_others_hours">
 	<select name="worker">
