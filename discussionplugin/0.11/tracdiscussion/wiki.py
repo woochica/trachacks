@@ -4,6 +4,7 @@
 import time, re
 
 # Trac imports.
+
 from trac.core import *
 from trac.wiki.web_ui import WikiModule
 from trac.wiki.formatter import format_to_html, format_to_oneliner
@@ -126,7 +127,10 @@ class DiscussionWiki(Component):
     # Internal methods.
 
     def _discussion_link(self, formatter, namespace, params, label):
-        id = params
+        try:
+           id = int(params)
+        except:
+           id = -1
 
         # Get database access.
         db = self.env.get_db_cnx()

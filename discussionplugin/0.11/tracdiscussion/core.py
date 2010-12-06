@@ -29,6 +29,7 @@ class DiscussionCore(Component):
       IRequestHandler)
 
     # Configuration options.
+
     title = Option('discussion', 'title', _('Discussion'),
       _('Main navigation bar button title.'))
 

@@ -5,12 +5,14 @@ from datetime import datetime
 
 # Trac imports.
 from trac.core import *
+from trac.config import ListOption
 from trac.resource import Resource
 from trac.web.chrome import Chrome
 from trac.notification import NotifyEmail
 from trac.util import md5, format_datetime
 from trac.util.datefmt import to_timestamp
 from trac.util.text import to_unicode
+from trac.util.translation import _
 
 # Trac interfaces.
 from trac.web.chrome import ITemplateProvider
@@ -63,7 +65,8 @@ class DiscussionNotifyEmail(NotifyEmail):
             self.template_name = 'topic-notify-body.txt'
 
         # Send e-mail to all subscribers.
-        self.cc_recipients = forum['subscribers'] + topic['subscribers']
+        self.cc_recipients = forum['subscribers'] + topic['subscribers'] + \
+          self.config.getlist('discussion', 'smtp_always_cc')
 
         # Render subject template and send notification.
         subject = (to_unicode(Chrome(self.env).render_template(context.req,
@@ -96,7 +99,8 @@ class DiscussionNotifyEmail(NotifyEmail):
             self.template_name = 'forum-invite-body.txt'
 
         # Send e-mail to all subscribers.
-        self.cc_recipients = recipients
+        self.cc_recipients = recipients + self.config.get('discussion',
+          'smtp_always_cc')
 
         # Render subject template and send notification.
         subject = (to_unicode(Chrome(self.env).render_template(context.req,
@@ -177,6 +181,11 @@ class DiscussionEmailNotification(Component):
     """
     implements(IForumChangeListener, ITopicChangeListener,
       IMessageChangeListener)
+
+    # Configuration options.
+
+    smtp_always_cc = ListOption('discussion', 'smtp_always_cc', [],
+      _('Always send discussion notification to listed e-mail addresses.'))
 
     # IForumChangeListener methods.
 
