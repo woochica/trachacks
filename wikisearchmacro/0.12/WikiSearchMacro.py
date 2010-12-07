@@ -58,10 +58,8 @@ class WikiSearchMacro(WikiMacroBase):
         if limit:
             sql += ' LIMIT %s'
             args.append(limit)
-        sql += ') AS rows WHERE text LIKE %s'
+        sql += ') AS temptable WHERE text LIKE %s'
         args.append('%' + search + '%')
-	print sql
-	print args
         cursor.execute(sql, args)
 
         wiki = WikiSystem(self.env)
@@ -69,4 +67,3 @@ class WikiSearchMacro(WikiMacroBase):
             html.UL([html.LI(
                 html.A(wiki.format_page_name(name), href=req.href.wiki(name)))
                       for name, version in cursor]))
-
