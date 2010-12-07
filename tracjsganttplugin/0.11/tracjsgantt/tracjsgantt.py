@@ -276,7 +276,7 @@ class TracJSGanttChart(WikiMacroBase):
                     t[self.fields[field]] = d.strftime(self.pyDateFormat)
             
 
-            t['link'] = '/trac/ticket/%d' % t['id']
+            t['link'] = self.req.href.ticket(t['id'])
 
             # FIXME - translate owner to full name
 
@@ -353,7 +353,7 @@ class TracJSGanttChart(WikiMacroBase):
                 if self.fields['parent']:
                     ticket[self.fields['parent']] = 0
                 # Link to the milestone page
-                ticket['link'] = '/trac/milestone/%s' % row[0]
+                ticket['link'] = self.req.href.milestone(row[0])
                 # A milestone has no priority
                 ticket['priority'] = 'n/a'
 
