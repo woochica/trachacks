@@ -391,8 +391,13 @@ class TracJSGanttChart(WikiMacroBase):
     #   summary - ticket summary
     #   type - string displayed in tool tip FIXME - not displayed yet
     def _format_ticket(self, t, options):
-        def _safeDesc(d):
-            return d.replace('\r\n','\\n')
+        def _safeStr(s):
+            # No new lines
+            s = s.replace('\r\n','\\n')
+            # Quoted quotes
+            s = s.replace("'","\\'")
+            s = s.replace('"','\\"')
+            return s
 
         task = ''
 
@@ -401,7 +406,7 @@ class TracJSGanttChart(WikiMacroBase):
             name = t['summary']
         else:
             name = "#%d:%s" % (t['id'], t['summary'])
-        task += 't = new JSGantt.TaskItem(%d,"%s",' % (t['id'], name)
+        task += 't = new JSGantt.TaskItem(%d,"%s",' % (t['id'], _safeStr(name))
 
         # pStart, pEnd
         if self.fields['finish']:
@@ -459,7 +464,7 @@ class TracJSGanttChart(WikiMacroBase):
         # caption 
         # FIXME - this only shows up if caption is set to caption.
         # we're using caption=Resource.  Where can we show (status, type)?
-        task += '"%s (%s %s)"' % (_safeDesc(t['description']), t['status'], t['type'])
+        task += '"%s (%s %s)"' % (_safeStr(t['description']), t['status'], t['type'])
 
         task += ');\n'
         task += 'g.AddTaskItem(t);\n'
