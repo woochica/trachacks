@@ -19,14 +19,15 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
     trac.core.implements(trac.env.IEnvironmentSetupParticipant)
     # add auto config vars when we read in the config
     def run_setup (self):
+      self.log.debug("AutoInterTrac: overwritting setup_config")
       original_setup = trac.env.Environment.setup_config
       original_save = trac.config.Configuration.save
       autointertrac = self
       self.ht = {}
-      def setup_config(self):
-        autointertrac.log.debug("AutoInterTrac: setup")
-        original_setup(self)
-        c = self.config
+
+      def do_intertrac_config():
+        autointertrac.log.debug("AutoInterTrac: Adding Ephemeral Intertracs")
+        c = autointertrac.env.config
         base_dir = c.get("intertrac", "base_dir")
         base_url = c.get("intertrac", "base_url")
         if not base_dir or not base_url:
@@ -44,6 +45,14 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
             c.set("intertrac", "%s.title"%kd, kd )
             c.set("intertrac", "%s.url"%kd, urlparse.urljoin(base_url,kd))
             c.set("intertrac", "%s.compat"%kd, "false")
+
+
+      def setup_config(self):
+        autointertrac.log.debug("AutoInterTrac: setup")
+        original_setup(self)
+        autointertrac.log.debug("AutoInterTrac: after original_setup")
+        c = self.config
+        do_intertrac_config()
       setup_config.__doc__ = original_setup.__doc__ + "\n Being extended by AutoInterTracPlugin "
 
       #remove auto added config vars
@@ -56,10 +65,11 @@ class AutoInterTracPluginSetupParticipant(trac.core.Component):
           c.remove("intertrac", "%s.url"%key)
           c.remove("intertrac", "%s.compat"%key)
         original_save(self)
+        do_intertrac_config() # put intertrac back after saving
       save.__doc__ = original_save.__doc__ + "\n Being extended by AutoInterTracPlugin "
       trac.env.Environment.setup_config = setup_config
       trac.config.Configuration.save = save
-      self.env.setup_config()
+      do_intertrac_config() # put intertrac into place
       
     def __init__(self):
       #only if we should be enabled do we monkey patch
