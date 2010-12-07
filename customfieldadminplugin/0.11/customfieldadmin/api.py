@@ -57,7 +57,7 @@ class CustomFields(Component):
         # Use lowercase custom fieldnames only
         customfield['name'] = customfield['name'].lower()
         # Only alphanumeric characters (and [-_]) allowed for custom fieldname
-        if re.search('^[a-z0-9-_]+$', customfield['name']) == None:
+        if re.search('^[a-z][a-z0-9_]+$', customfield['name']) == None:
            raise TracError("Only alphanumeric characters allowed for custom field name (a-z or 0-9 or -_).")
         # Name must begin with a character - anything else not supported by Trac
         if not customfield['name'][0].isalpha():
