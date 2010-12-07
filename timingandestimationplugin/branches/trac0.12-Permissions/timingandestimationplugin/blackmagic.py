@@ -48,12 +48,16 @@ def remove_header(stream, field):
         Transformer('//td[@headers="h_%s"]' % field).replace(tag.th(id="h_%s" % field))
     return stream
 
-def remove_changelog(stream, field):
+def remove_changelog(self, stream, field):
     """ Removes entries from the visible changelog"""
+    #self.log.debug('Begin ChangeLog Filter')
+    check = self.env.config.get('ticket-custom',field+'.label', field).lower().strip()
     def helper(field_stream):
         s =  Stream(field_stream)
-        f = s.select('//strong/text()').render()
-        if field != f: #if we are the field just skip it
+        f = s.select('//strong/text()').render().lower().strip()
+        #self.log.debug('ChangeLog Filter: field:%s, label:%s, we are looking at:%s, skip?%s',
+        #               field, check, f, check == f)
+        if check != f: #if we are the field just skip it
             #identity stream filter
             for kind, data, pos in s:
                 yield kind, data, pos
@@ -61,7 +65,7 @@ def remove_changelog(stream, field):
     return stream
     
 
-def hide_field(stream , field):
+def hide_field(self, stream , field):
     """ Replaces a field from the form area with an input type=hidden"""
     def helper (field_stream):
         type = Stream(field_stream).select('@type').render()
@@ -92,13 +96,13 @@ def hide_field(stream , field):
     stream = stream | Transformer('//input[@id="field-%s"]' % field).filter(helper)
     stream = stream | Transformer('//select[@id="field-%s"]' % field).filter(select_helper)
 
-    return remove_changelog(remove_header(stream , field), field)
+    return remove_changelog(self, remove_header(stream , field), field)
 
-def remove_field(stream , field):
+def remove_field(self, stream , field):
     """ Removes a field from the form area"""
     stream = stream | Transformer('//label[@for="field-%s"]' % field).replace(" ")
     stream = stream | Transformer('//*[@id="field-%s"]' % field).replace(" ")
-    return remove_changelog(remove_header(stream , field), field)
+    return remove_changelog(self,remove_header(stream , field), field)
 
 def istrue(v, otherwise=None):
     if isinstance(v, bool):
@@ -182,11 +186,11 @@ class TicketTweaks(Component):
                     
                 if remove or istrue(self.config.get(csection, '%s.remove' % field, None)):
                     self.log.debug('removing: %s' % field)
-                    stream = remove_field(stream, field)
+                    stream = remove_field(self, stream, field)
 
                 if hidden or istrue(self.config.get(csection, '%s.hide' % field, None)):
                     self.log.debug('hiding: %s' % field)
-                    stream = hide_field(stream, field)
+                    stream = hide_field(self, stream, field)
                     
         return stream
 
