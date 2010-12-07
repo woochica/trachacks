@@ -22,7 +22,6 @@ import datetime
 import re
 import sys
 
-from inspect                import getdoc
 from pkg_resources          import resource_filename
 from StringIO               import StringIO
 
@@ -32,43 +31,24 @@ from genshi.filters.html    import HTMLSanitizer
 from genshi.input           import HTMLParser, ParseError
 
 from trac.config            import Configuration, Option
-from trac.core              import implements
-from trac.ticket.query      import Query
+from trac.core              import Component, implements
 from trac.util.datefmt      import format_date, to_utimestamp
 from trac.util.text         import to_unicode
-from trac.util.translation  import domain_functions
 from trac.web.href          import Href
 from trac.web.chrome        import add_stylesheet, ITemplateProvider
 from trac.wiki.api          import parse_args, IWikiMacroProvider, \
                                    WikiSystem
 from trac.wiki.formatter    import format_to_html
-from trac.wiki.macros       import WikiMacroBase
 
-# Import i18n methods.  Fallback modules maintain compatibility to Trac 0.11
-# by keeping Babel optional here.
-try:
-    from  trac.util.translation  import  domain_functions
-    add_domain, _, tag_ = \
-        domain_functions('wikiticketcalendar', ('add_domain', '_', 'tag_'))
-except ImportError:
-    from  genshi.builder         import  tag as tag_
-    from  trac.util.translation  import  gettext
-    _ = gettext
-    def add_domain(a,b,c=None):
-        pass
+from api                    import add_domain, _, tag_
+from ticket                 import WikiCalendarTicketProvider
 
 
-__all__ = ['WikiTicketCalendarMacro', ]
+__all__ = ['WikiCalendarMacros']
 
 
-class WikiTicketCalendarMacro(WikiMacroBase):
-    """Display Milestones and Tickets in a calendar view.
-
-    displays a calendar, the days link to:
-     - milestones (day in bold) if there is one on that day
-     - a wiki page that has wiki_page_format (if exist)
-     - create that wiki page if it does not exist
-     - use page template (if exist) for new wiki page
+class WikiCalendarMacros(Component):
+    """Provides macros to display wiki page navigation in a calendar view.
     """
 
     implements(IWikiMacroProvider, ITemplateProvider)
@@ -84,7 +64,7 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                            as supported in later Trac versions.""")
 
     def __init__(self):
-        # bind the 'foo' catalog to the specified locale directory
+        # bind 'wikiticketcalendar' catalog to the specified locale directory
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
@@ -93,6 +73,17 @@ class WikiTicketCalendarMacro(WikiMacroBase):
         self.sanitize = True
         if self.config.getbool('wiki', 'render_unsafe_content') is True:
             self.sanitize = False
+
+        # TRANSLATOR: Keep macro doc style formatting here, please.
+        self.doc_ticketcalendar = _(
+    """Display Milestones and Tickets in a calendar view.
+
+    displays a calendar, the days link to:
+     - milestones (day in bold) if there is one on that day
+     - a wiki page that has wiki_page_format (if exist)
+     - create that wiki page if it does not exist
+     - use page template (if exist) for new wiki page
+    """)
 
     # ITemplateProvider methods
     # Returns additional path where stylesheets are placed.
@@ -110,55 +101,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
 
     # Returns documentation for provided macros.
     def get_macro_description(self, name):
-        return getdoc(self.__class__)
-
-    # Ticket Query provider
-    def _ticket_query(self, formatter, content):
-        """
-        A custom TicketQuery macro implementation.
-
-        Most lines were taken directly from that code.
-        *** Original Comments as follows (shortend)***
-        Macro that lists tickets that match certain criteria.
-
-        This macro accepts a comma-separated list of keyed parameters,
-        in the form "key=value".
-
-        If the key is the name of a field, the value must use the syntax
-        of a filter specifier as defined in TracQuery#QueryLanguage.
-        Note that this is ''not'' the same as the simplified URL syntax
-        used for `query:` links starting with a `?` character.
-
-        In addition to filters, several other named parameters can be used
-        to control how the results are presented. All of them are optional.
-
-        Also, using "&" as a field separator still works but is deprecated.
-        """
-        # Parse args and kwargs.
-        argv, kwargs = parse_args(content, strict=False)
-
-        # Define minimal set of values.
-        std_fields = ['description', 'owner', 'status', 'summary']
-        kwargs['col'] = "|".join(std_fields + [self.due_field_name])
-
-        # Construct the querystring.
-        query_string = '&'.join(['%s=%s' %
-            item for item in kwargs.iteritems()])
-
-        # Get the Query Object.
-        query = Query.from_string(self.env, query_string)
-
-        # Get the tickets.
-        tickets = self._get_tickets(query, formatter.req)
-        return tickets
-
-    def _get_tickets(self, query, req):
-        '''Returns a list of ticket objects.'''
-        rawtickets = query.execute(req) # Get all tickets
-        # Do permissions check on tickets
-        tickets = [t for t in rawtickets
-                   if 'TICKET_VIEW' in req.perm('ticket', t['id'])]
-        return tickets
+        if name == 'WikiTicketCalendar':
+            return self.doc_ticketcalendar
 
     def _mkdatetime(self, year, month, day=1):
         """A custom 'datetime' object builder.
@@ -316,7 +260,8 @@ class WikiTicketCalendarMacro(WikiMacroBase):
                 query_args = kwargs['query']
             except KeyError:
                 query_args = args[6]
-        self.tickets = self._ticket_query(formatter, query_args)
+        tickets = WikiCalendarTicketProvider(self.env)
+        self.tickets = tickets.harvest(formatter.req, query_args)
 
         # compress long ticket lists
         list_condense = 0
