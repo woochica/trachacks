@@ -247,7 +247,7 @@ var vVisible  = 1;
 * @method getName
 * @return {String}
 */
-      this.getName     = function(){ return vName };
+      this.getName     = function(){ return vName.replace(/\"/g,'&quot;') };
 /**
 * Returns task start date
 * @method getStart
