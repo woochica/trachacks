@@ -138,6 +138,23 @@ from trac.util.text import to_unicode
 from trac.util.datefmt import utc
 from trac.versioncontrol.api import NoSuchChangeset
 
+from trac.ticket.default_workflow import ConfigurableTicketWorkflow
+from trac.ticket import TicketSystem
+
+def get_available_actions(env, action='resolve'):
+    # The list should not have duplicates.
+    ts = TicketSystem(env)
+    for controller in ts.action_controllers:
+        if isinstance(controller, ConfigurableTicketWorkflow):
+            return controller.actions.get(action)
+    return None
+
+def get_next_status(env,action='resolve'):
+    action = get_available_actions(env,action)
+    return action['newstate']
+
+
+
 # Change logfile to point to someplace this script can write.
 logfile = "/var/trac/commithook.log"
 LOG = False
@@ -259,7 +276,8 @@ class CommitHook:
             
 
     def _cmdClose(self, ticket):
-        ticket['status'] = 'closed'
+        status = get_next_status(ticket.env, 'resolve') or 'closed'
+        ticket['status'] = status
         ticket['resolution'] = 'fixed'
 
     def _cmdRefs(self, ticket):
