@@ -141,7 +141,7 @@ class TracJSGanttChart(WikiMacroBase):
         opt += 'g.setShowStartDate(%s);\n' % g('startDate')
         opt += 'g.setShowEndDate(%s);\n' % g('endDate')
 
-        opt += 'g.setDateInputFormat("%s");\n' % self.pyDateFormat
+        opt += 'g.setDateInputFormat("%s");\n' % self.jsDateFormat
 
         opt += 'g.setDateDisplayFormat("%s");\n' % g('dateDisplay')
 
