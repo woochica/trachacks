@@ -206,6 +206,14 @@ class TracJSGanttChart(WikiMacroBase):
 
     # Process the tickets to make displaying easy.
     def _process_tickets(self):
+        # ChildTicketsPlugin puts '#' at the start of the parent
+        # field.  Strip it for simplicity.
+        for t in self.tickets:
+            if self.fields['parent']:
+                p = t[self.fields['parent']]
+                if len(p) > 0 and p[0] == '#':
+                    t[self.fields['parent']] = p[1:]
+
         for t in self.tickets:
             # Clean up custom fields which might be null ('--') vs. blank ('')
             nullable = [ 'pred', 'succ', 
