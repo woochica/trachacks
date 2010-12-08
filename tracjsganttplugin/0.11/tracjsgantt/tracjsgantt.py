@@ -208,7 +208,10 @@ class TracJSGanttChart(WikiMacroBase):
     def _process_tickets(self):
         for t in self.tickets:
             # Clean up custom fields which might be null ('--') vs. blank ('')
-            nullable = [ 'pred', 'succ', 'start', 'finish', 'parent', ]
+            nullable = [ 'pred', 'succ', 
+                         'start', 'finish', 
+                         'parent', 
+                         'worked', 'estimate', 'percent' ]
             for field in nullable:
                 if self.fields.get(field) and t[self.fields[field]] == '--':
                     t[self.fields[field]] = ''
@@ -240,7 +243,7 @@ class TracJSGanttChart(WikiMacroBase):
                 
 
             # Make sure there's a percent complete value
-            if self.fields['percent'] and not t.get('percent'):
+            if self.fields['percent'] and not t.get(self.fields['percent']):
                 t[self.fields['percent']] = 0
 
             # If there's no finish, set it to today (in db format,
@@ -340,7 +343,7 @@ class TracJSGanttChart(WikiMacroBase):
                 # Start is ignored for a milestone.
                 msTicket[self.fields['start']] = msTicket[self.fields['finish']]
                 # There is no percent complete for a milestone
-                msTicket['percent'] = 0
+                msTicket[self.fields['percent']] = 0
                 # A milestone has no children or parent
                 msTicket['children'] = None
                 if self.fields['parent']:
