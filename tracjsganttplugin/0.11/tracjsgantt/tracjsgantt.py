@@ -321,18 +321,18 @@ class TracJSGanttChart(WikiMacroBase):
             cursor.execute("SELECT name, due FROM milestone "
                            "WHERE name in ('" + "','".join(milestones) + "')")
             for row in cursor:
-                ticket = {}
+                msTicket = {}
                 id = id+1
-                ticket['id'] = id
-                ticket['summary'] = row[0]
-                ticket['description'] = 'Milestone %s' % row[0]
-                ticket['milestone'] = row[0]
+                msTicket['id'] = id
+                msTicket['summary'] = row[0]
+                msTicket['description'] = 'Milestone %s' % row[0]
+                msTicket['milestone'] = row[0]
                 # A milestone has no owner
-                ticket['owner'] = ''
-                ticket['type'] = self.milestoneType
-                ticket['status'] = ''
+                msTicket['owner'] = ''
+                msTicket['type'] = self.milestoneType
+                msTicket['status'] = ''
                 # Milestones are always shown
-                ticket['level'] = 0
+                msTicket['level'] = 0
 
                 us = row[1]
                 # If there's no due date, default to today
@@ -341,21 +341,21 @@ class TracJSGanttChart(WikiMacroBase):
                 else:
                     s = us / 1000000
                     finish = date.fromtimestamp(s)
-                ticket[self.fields['finish']] = \
+                msTicket[self.fields['finish']] = \
                     finish.strftime(self.pyDateFormat)
 
                 # Start is ignored for a milestone.
-                ticket[self.fields['start']] = ticket[self.fields['finish']]
+                msTicket[self.fields['start']] = msTicket[self.fields['finish']]
                 # There is no percent complete for a milestone
-                ticket['percent'] = 0
+                msTicket['percent'] = 0
                 # A milestone has no children or parent
-                ticket['children'] = None
+                msTicket['children'] = None
                 if self.fields['parent']:
-                    ticket[self.fields['parent']] = 0
+                    msTicket[self.fields['parent']] = 0
                 # Link to the milestone page
-                ticket['link'] = self.req.href.milestone(row[0])
+                msTicket['link'] = self.req.href.milestone(row[0])
                 # A milestone has no priority
-                ticket['priority'] = 'n/a'
+                msTicket['priority'] = 'n/a'
 
                 # Any ticket with this as a milestone and no
                 # successors has the milestone as a successor
@@ -367,9 +367,9 @@ class TracJSGanttChart(WikiMacroBase):
                                 t[self.fields['succ']] == '':
                             t[self.fields['succ']] = str(id)
                             pred.append(str(t['id']))
-                    ticket[self.fields['pred']] = ','.join(pred)
+                    msTicket[self.fields['pred']] = ','.join(pred)
 
-                self.tickets.append(ticket)
+                self.tickets.append(msTicket)
 
         
 
