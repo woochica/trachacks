@@ -87,7 +87,7 @@ class UserbaseModule(Component):
             popFiles = []
             # Set up the file information
             for struct in files:
-                returnFiles+= "%s,%s,%s, %s#" % (struct.Path, struct.Version, struct.LineStart, struct.LineEnd ) 
+                returnFiles+= "%s,%s,%s, %s#" % (struct.Path, struct.Version, struct.LineStart, struct.LineEnd) 
                 tempFiles = []
                 tempFiles.append(struct.Path)
                 tempFiles.append(struct.Version)
@@ -168,13 +168,15 @@ class UserbaseModule(Component):
     # and populates it with the information.  Also creates
     # new reviewer structs and file structs for the review.
     def createCodeReview(self, req):
+        db = self.env.get_db_cnx()
+        
         struct = CodeReviewStruct(None)
         struct.Author = util.get_reporter_id(req)
         struct.Status = 'Open for review'
         struct.DateCreate = int(time.time())
         struct.Name = req.args.get('Name')
         struct.Notes = req.args.get('Notes')
-        id = struct.save(self.env.get_db_cnx())
+        id = struct.save(db)
         
         # loop here through all the reviewers
         # and create new reviewer structs based on them
@@ -187,7 +189,7 @@ class UserbaseModule(Component):
                 struct.Reviewer = token
                 struct.Status = 'Not Reviewed'
                 struct.Vote = "-1"
-                struct.save(self.env.get_db_cnx())
+                struct.save(db)
 
         # loop here through all included files
         # and create new file structs based on them
@@ -202,6 +204,6 @@ class UserbaseModule(Component):
                 struct.Version = segment[1]
                 struct.LineStart = segment[2]
                 struct.LineEnd = segment[3]
-                struct.save(self.env.get_db_cnx())
+                struct.save(db)
 
         return id    

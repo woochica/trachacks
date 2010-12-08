@@ -34,10 +34,10 @@ class ReviewerStruct(object):
             self.Vote = row[3]
 
     def save(self, db):
-        #Add information to a new database entry
-        query = "INSERT INTO Reviewers VALUES('" + dbEscape(self.IDReview) + "', '" + dbEscape(self.Reviewer) + "','" + dbEscape(self.Status) + "','" + dbEscape(self.Vote) + "')"
-        cursor = db.cursor();
         try:
+            #Add information to a new database entry            
+            cursor = db.cursor()
+            query = "INSERT INTO Reviewers VALUES('" + dbEscape(self.IDReview) + "', '" + dbEscape(self.Reviewer) + "','" + dbEscape(self.Status) + "','" + dbEscape(self.Vote) + "')"            
             cursor.execute(query)
             db.commit()
         except:
