@@ -234,26 +234,6 @@ class TracJSGanttChart(WikiMacroBase):
             else:
                 t['children'] = None
 
-            # Compute percent complete if given estimate and worked
-            if self.fields['estimate'] and self.fields['worked']:
-                self.fields['percent'] = 'percent'
-                # Try to compute the percent complete, default to 0
-                try:
-                    w = float(t[self.fields['worked']])
-                    e = float(t[self.fields['estimate']])
-                    t[self.fields['percent']] = int(100 * w / e)
-                except:
-                    # Don't bother logging because 0 for an estimate is common.
-                    t[self.fields['percent']] = 0
-            # If no estimate and worked (above) and no percent, create a field
-            elif not self.fields.get('percent'):
-                self.fields['percent'] = 'percent'
-                
-
-            # Make sure there's a percent complete value
-            if self.fields['percent'] and not t.get(self.fields['percent']):
-                t[self.fields['percent']] = 0
-
             # If there's no finish, set it to today (in db format,
             # convert below)
             if self.fields['finish']:
@@ -482,7 +462,26 @@ class TracJSGanttChart(WikiMacroBase):
         task += '"%s",' % t['owner']
 
         # pComp (percent complete); integer 0..100
-        task += '%d,' % int(t[self.fields['percent']])
+        # Compute percent complete if given estimate and worked
+        if self.fields['estimate'] and self.fields['worked']:
+            # Try to compute the percent complete, default to 0
+            try:
+                w = float(t[self.fields['worked']])
+                e = float(t[self.fields['estimate']])
+                p = int(100 * w / e)
+            except:
+                # Don't bother logging because 0 for an estimate is common.
+                p = 0
+        # Use percent if provided
+        elif self.fields.get('percent'):
+            try:
+                p = int(t[self.fields['percent']])
+            except:
+                p = 0
+        # If no estimate and worked (above) and no percent, it's 0
+        else:
+            p = 0
+        task += '%d,' % p
 
         # pGroup (has children)
         task += '%s,' % (1 if t['children'] else 0)
