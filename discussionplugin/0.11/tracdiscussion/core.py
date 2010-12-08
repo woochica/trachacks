@@ -6,11 +6,11 @@ from pkg_resources import resource_filename
 
 # Trac imports.
 from trac.core import *
-from trac.mimeview.api import Mimeview, Context
 from trac.config import Option
+from trac.resource import Resource
+from trac.mimeview.api import Mimeview, Context
 from trac.util.html import html
 from trac.util.translation import _
-from trac.resource import Resource
 
 # Trac interfaces.
 from trac.web.chrome import INavigationContributor, ITemplateProvider
