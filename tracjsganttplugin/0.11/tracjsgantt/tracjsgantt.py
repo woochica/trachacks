@@ -212,8 +212,8 @@ class TracJSGanttChart(WikiMacroBase):
         return tickets
 
     # Process the tickets to make displaying easy.
-    def _process_tickets(self, tickets):
-        for t in tickets:
+    def _process_tickets(self):
+        for t in self.tickets:
             # Clean up custom fields which might be null ('--') vs. blank ('')
             nullable = [ 'pred', 'succ', 'start', 'finish', 'parent', ]
             for field in nullable:
@@ -225,7 +225,7 @@ class TracJSGanttChart(WikiMacroBase):
                 if t[self.fields['parent']] == '':
                     t[self.fields['parent']] = 0
                 
-                t['children'] = [c['id'] for c in tickets \
+                t['children'] = [c['id'] for c in self.tickets \
                                      if c[self.fields['parent']] == str(t['id'])]
             else:
                 t['children'] = None
@@ -282,7 +282,7 @@ class TracJSGanttChart(WikiMacroBase):
 
         # Figure out the tickets' levels for controlling how many levels are open
         tarr = {}
-        for t in tickets:
+        for t in self.tickets:
             tarr[t['id']] = t
 
         # Set the ticket's level then recurse to children.
@@ -293,25 +293,25 @@ class TracJSGanttChart(WikiMacroBase):
                     _setLevel(c, level+1)
 
         # Set level on all top level tickets (and recurse)
-        for t in tickets:
+        for t in self.tickets:
             if not self.fields['parent'] or t[self.fields['parent']] == 0:
                 _setLevel(t['id'], 1)
 
     # Add tasks for milestones related to the tickets
-    def _add_milestones(self, tickets, options):
+    def _add_milestones(self, options):
         if options.get('milestone'):
             milestones = options['milestone'].split('|')
         else:
             milestones = []
 
-        for t in tickets:
+        for t in self.tickets:
             if t['milestone'] != '' and t['milestone'] not in milestones:
                 milestones.append(t['milestone'])
 
         if len(milestones) > 0:
             # Need a unique ID for each task.
             id = 9999
-            for t in tickets:
+            for t in self.tickets:
                 if t['id'] > id:
                     id = t['id']
 
@@ -361,7 +361,7 @@ class TracJSGanttChart(WikiMacroBase):
                 # successors has the milestone as a successor
                 if self.fields['pred'] and self.fields['succ']:
                     pred = []
-                    for t in tickets:
+                    for t in self.tickets:
                         if not t['children'] and \
                                 t['milestone'] == row[0] and \
                                 t[self.fields['succ']] == '':
@@ -369,7 +369,7 @@ class TracJSGanttChart(WikiMacroBase):
                             pred.append(str(t['id']))
                     ticket[self.fields['pred']] = ','.join(pred)
 
-                tickets.append(ticket)
+                self.tickets.append(ticket)
 
         
 
@@ -475,16 +475,16 @@ class TracJSGanttChart(WikiMacroBase):
             tasks = self._add_sample_tasks()
         else:
             tasks = ''
-            tickets = self._query_tickets(options)
+            self.tickets = self._query_tickets(options)
 
             # Post process the query to add and compute fields so
             # displaying the tickets is easy
-            self._process_tickets(tickets)
+            self._process_tickets()
 
             # Add the milestone(s) with all their tickets depending on them.
-            self._add_milestones(tickets, options)
+            self._add_milestones(options)
 
-            for ticket in tickets:
+            for ticket in self.tickets:
                 tasks += self._format_ticket(ticket, options)
 
         return tasks
