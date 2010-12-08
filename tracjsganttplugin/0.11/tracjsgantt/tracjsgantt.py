@@ -52,6 +52,7 @@ class TracJSGanttChart(WikiMacroBase):
             'endDate': '1',
             'dateDisplay': 'mm/dd/yyyy',
             'openLevel': 999,
+            'colorBy' : 'priority',
             }
 
         # Configuration fields
@@ -92,20 +93,7 @@ class TracJSGanttChart(WikiMacroBase):
                                              'milestone_type', 
                                              default='milestone')
 
-        # Cache enum lookups (just priority for now)
-        # TODO - get all enums, at least severity
-        self.p_values = {}
-        self.enums = {}
-        self.enums['priority_value'] = 'priority'
 
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("SELECT name," + 
-                       db.cast('value', 'int') + 
-                       " FROM enum WHERE type=%s", ('priority',))
-        for name, value in cursor:
-            self.p_values[name] = value
-    
     def _begin_gantt(self, options):
         if options.get('format'):
             format = options['format']
@@ -148,6 +136,7 @@ class TracJSGanttChart(WikiMacroBase):
         opt += 'g.setFormatArr("day","week","month","quarter");\n'
         return opt
 
+    # TODO - use ticket-classN styles instead of colors?
     def _add_sample_tasks(self):
         tasks = ''
         tasks += 'g.AddTaskItem(new JSGantt.TaskItem(1,   "Define Chart API",     "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1));\n'
@@ -192,6 +181,10 @@ class TracJSGanttChart(WikiMacroBase):
         for field in self.fields:
             if self.fields[field]:
                 fields.append(self.fields[field])
+
+        # Make sure the coloring field is included
+        if 'colorBy' in options and options['colorBy'] not in fields:
+            fields.append(options['colorBy'])
 
         # Make the query argument
         query_args['col'] = "|".join(fields)  
@@ -371,6 +364,48 @@ class TracJSGanttChart(WikiMacroBase):
 
                 self.tickets.append(msTicket)
 
+    def _task_display(self, t, options):
+        def _buildMap(field):
+            self.classMap = {}
+            i = 0
+            for t in self.tickets:
+                if t[field] not in self.classMap:
+                    i = i + 1
+                    self.classMap[t[field]] = i
+
+        def _buildEnumMap(field):
+            self.classMap = {}
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("SELECT name," + 
+                           db.cast('value', 'int') + 
+                           " FROM enum WHERE type=%s", (field,))
+            for name, value in cursor:
+                self.classMap[name] = value
+
+        display = None
+
+        # Use the default if no user specification
+        if not options.get('colorBy'):
+            options['colorBy'] = self.options['colorBy']
+
+        colorBy = options['colorBy']
+
+        # Build the map the first time we need it
+        if self.classMap == None:
+            # Enums (TODO: what others should I list?)
+            if options['colorBy'] in ['priority', 'severity']:
+                _buildEnumMap(colorBy)
+            else:
+                _buildMap(colorBy)
+
+        # Set display based on class map
+        if t[colorBy] in self.classMap:
+            display = 'class=ticket-class%d' % self.classMap[t[colorBy]]
+        
+        if display == None:
+            display = '#ff7f3f'
+        return display
         
 
     # Format a ticket into JavaScript source to display the task. t is
@@ -421,13 +456,7 @@ class TracJSGanttChart(WikiMacroBase):
         task += '"%s",' % (t[self.fields['finish']] if self.fields['finish'] else f)
 
         # pDisplay
-        # TODO - it'd be nice to color by owner or milestone or severity
-        if t['priority'] in self.p_values:
-            display = 'class=ticket-class%d' % self.p_values[t['priority']]
-        else:
-            display = '#ff7f3f'
-
-        task += '"%s",' % display
+        task += '"%s",' % self._task_display(t, options)
 
         # pLink
         task += '"%s",' % t['link']
@@ -499,9 +528,11 @@ class TracJSGanttChart(WikiMacroBase):
         
         return options
         
-    # 
     def expand_macro(self, formatter, name, content):
         self.req = formatter.req
+
+        # Each invocation needs to build its own map.
+        self.classMap = None
 
         options = self._parse_options(content)
         chart = ''
