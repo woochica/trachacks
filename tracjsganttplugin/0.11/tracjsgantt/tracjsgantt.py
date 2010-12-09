@@ -93,6 +93,18 @@ class TracJSGanttChart(WikiMacroBase):
                                              'milestone_type', 
                                              default='milestone')
 
+        # Days per estimate unit.  
+        #
+        # If estimate is in hours, and a day is 8 hours, this would be
+        # 1/8 or 0.125.  If you assume only 6 productive hours per day
+        # this is 1/6 or 0.1666.
+        # 
+        # float('1/6') is an error so the value must be a number, not
+        # an equation.
+        self.dpe = float(self.config.get('trac-jsgantt',
+                                         'days_per_estimate', 
+                                         default='0.125'))
+
 
     def _begin_gantt(self, options):
         if options.get('format'):
@@ -414,9 +426,30 @@ class TracJSGanttChart(WikiMacroBase):
 
             return p
 
-        # TODO if I have estimate and start or end, I can determine
-        # the other (start or end) if I divide estimate by
-        # hours-per-day (some configurable value).
+        def _workDays(t):
+            if self.fields['estimate'] and t[self.fields['estimate']] != '':
+                hours = float(t[self.fields['estimate']])
+                days = int(hours * self.dpe)
+            else:
+                # FIXME = make this default duration configurable?
+                days = 1
+
+            return days
+
+        def _calendarOffset(days, fromDate):
+            # Figure out weeks from days
+            weeks = int(days / 7.0)
+            # For each week, adjust days for weekends
+            days += weeks * 2
+
+            # Get day of week from fromDate; 0 = Monday .. 6 = Sunday
+            dow = fromDate.weekday()
+            # If new dow ends up in a weekend, adjust by weekend length
+            if ((dow + days) % 7) > 4:
+                days += 2 * (1 if days > 0 else -1)
+
+            return timedelta(days=days)            
+
 
         # Return task start as a date string in the format jsGantt.js
         # expects it.
@@ -428,11 +461,15 @@ class TracJSGanttChart(WikiMacroBase):
             # Otherwise, make it from finish
             else:
                 f = datetime.strptime(_finish(t), self.pyDateFormat)
-                delta = timedelta(days=-1)
-                s = f + delta
+                days = _workDays(t)
+                s = f + _calendarOffset(-1*days, f)
 
             return s.strftime(self.pyDateFormat)
             
+
+        # TODO: If we have start and estimate, we can figure out
+        # finish (opposite case of figuring out start from finish and
+        # estimate as we do now).  
 
         # Return task finish as a date string in the format jsGantt.js
         # expects it.
