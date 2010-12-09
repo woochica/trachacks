@@ -1465,6 +1465,7 @@ Complete-Displays task percent complete</p>
                         tTime.setTime(Date.parse(vTaskList[i].getStart()));
                         if (tTime.getMinutes() > 29)
                             vTaskLeft+=.5;
+			vTaskRight -= 1/vColUnit;
                     }
                 }
 
