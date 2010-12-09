@@ -27,7 +27,7 @@ class MilestoneQueryMacro(WikiMacroBase):
         cursor.execute(
             "SELECT name FROM milestone WHERE name like '%s' %s %s;" % (
                 pattern,
-                "AND completed > 0" if completed else "",
+                "AND completed > 0" if completed else "AND completed = 0",
                 "ORDER BY name ASC" \
                     if (order.upper() == "ASC" or order == "") \
                     else "ORDER BY name DESC"
@@ -37,7 +37,7 @@ class MilestoneQueryMacro(WikiMacroBase):
 
         out = StringIO()
         for m in milestone_names:
-            wikitext = """== %(milestonename)s ==\n[[TicketQuery(milestone=%(milestonename)s,order=id,desc=0,format=table,col=summary|owner|ticket_status|type|status)]]""" % {
+            wikitext = """== [milestone:%(milestonename)s %(milestonename)s] ==\n[[TicketQuery(milestone=%(milestonename)s,order=id,desc=0,format=table,col=summary|owner|ticket_status|type|status)]]""" % {
                 "milestonename": m
                 }
             Formatter(self.env, formatter.context).format(wikitext, out)
