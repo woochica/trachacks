@@ -3380,10 +3380,8 @@ else if (document.selection) {
         return row.insertCell(index);
     };
     TracWysiwyg.prototype.getFocusNode = function() {
+        this.contentWindow.focus();
         var d = this.contentDocument;
-        if (!d.activeElement) {
-            this.contentWindow.focus();
-        }
         var range = d.selection.createRange();
         var node = range.item ? range.item(0) : range.parentElement();
         return node.ownerDocument == d ? node : null;
@@ -3573,6 +3571,7 @@ else if (document.selection) {
         return pseudo;
     };
     TracWysiwyg.prototype.getNativeSelectionRange = function() {
+        this.contentWindow.focus();
         return this.contentDocument.selection.createRange();
     };
     TracWysiwyg.prototype.getSelectionText = function() {
@@ -3598,10 +3597,8 @@ else if (document.selection) {
         return fragment;
     };
     TracWysiwyg.prototype.getSelectionPosition = function() {
+        this.contentWindow.focus();
         var d = this.contentDocument;
-        if (!d.activeElement) {
-            this.contentWindow.focus();
-        }
         var range = d.selection.createRange();
         var startNode = null;
         var endNode = null;
@@ -3624,6 +3621,7 @@ else if (document.selection) {
         return { start: startNode, end: endNode };
     };
     TracWysiwyg.prototype.expandSelectionToElement = function(arg) {
+        this.contentWindow.focus();
         var d = this.contentDocument;
         var body = d.body;
         var range = d.selection.createRange();
@@ -3643,10 +3641,8 @@ else if (document.selection) {
         }
     };
     TracWysiwyg.prototype.selectionContainsTagName = function(name) {
+        this.contentWindow.focus();
         var d = this.contentDocument;
-        if (!d.activeElement) {
-            this.contentWindow.focus();
-        }
         var selection = d.selection;
         var range = selection.createRange();
         var parent = range.item ? range.item(0) : range.parentElement();
@@ -3670,13 +3666,13 @@ else if (document.selection) {
         return false;
     };
     TracWysiwyg.prototype.insertHTML = function(html) {
-        var range = this.contentDocument.selection.createRange();
-        if (/^\s+$/.exec(html)) {
-            range.text = html;
-        }
-        else {
-            range.pasteHTML(html.replace(/\t/g, "&#9;"));
-        }
+        this.contentWindow.focus();
+        var selection = this.contentDocument.selection;
+        var range = selection.createRange();
+        range.pasteHTML(html.replace(/\t/g, "&#9;"));
+        range.collapse(false);
+        range.select();
+        range = this.contentDocument.selection.createRange();
     };
 }
 else {
