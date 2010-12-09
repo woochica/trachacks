@@ -234,32 +234,6 @@ class TracJSGanttChart(WikiMacroBase):
             else:
                 t['children'] = None
 
-            # If there's no finish, set it to today (in db format,
-            # convert below)
-            if self.fields['finish']:
-                if t[self.fields['finish']] == '':
-                    t[self.fields['finish']] = \
-                        date.today().strftime(self.dbDateFormat)
-
-            # If there's no start, set it to finish - 1 day.
-            if self.fields['start']:
-                if t[self.fields['start']] == '':
-                    finish = datetime.strptime(t[self.fields['finish']],
-                                               self.dbDateFormat)
-                    # FIXME - make the default length configurable
-                    delta = timedelta(days=-1)
-                    start = finish + delta
-                    t[self.fields['start']] = start.strftime(self.dbDateFormat)
-                
-            # Convert start and finish times from Trac db format to
-            # jsGantt format
-            for field in ['start', 'finish']:
-                if self.fields[field]:
-                    d = datetime.strptime(t[self.fields[field]],
-                                          self.dbDateFormat)
-                    t[self.fields[field]] = d.strftime(self.pyDateFormat)
-            
-
             t['link'] = self.req.href.ticket(t['id'])
 
             # FIXME - translate owner to full name
@@ -417,6 +391,62 @@ class TracJSGanttChart(WikiMacroBase):
     #   summary - ticket summary
     #   type - string displayed in tool tip FIXME - not displayed yet
     def _format_ticket(self, t, options):
+        def _percent(t):
+            # Compute percent complete if given estimate and worked
+            if self.fields['estimate'] and self.fields['worked']:
+                # Try to compute the percent complete, default to 0
+                try:
+                    w = float(t[self.fields['worked']])
+                    e = float(t[self.fields['estimate']])
+                    p = int(100 * w / e)
+                except:
+                    # Don't bother logging because 0 for an estimate is common.
+                    p = 0
+            # Use percent if provided
+            elif self.fields.get('percent'):
+                try:
+                    p = int(t[self.fields['percent']])
+                except:
+                    p = 0
+                # If no estimate and worked (above) and no percent, it's 0
+                else:
+                    p = 0
+
+            return p
+
+        # TODO if I have estimate and start or end, I can determine
+        # the other (start or end) if I divide estimate by
+        # hours-per-day (some configurable value).
+
+        # Return task start as a date string in the format jsGantt.js
+        # expects it.
+        def _start(t):
+            # If we have a start, parse it
+            if self.fields['start'] and t[self.fields['start']] != '':
+                s = datetime.strptime(t[self.fields['start']],
+                                      self.dbDateFormat)
+            # Otherwise, make it from finish
+            else:
+                f = datetime.strptime(_finish(t), self.pyDateFormat)
+                delta = timedelta(days=-1)
+                s = f + delta
+
+            return s.strftime(self.pyDateFormat)
+            
+
+        # Return task finish as a date string in the format jsGantt.js
+        # expects it.
+        def _finish(t):
+            # If we have a finish, parse it
+            if self.fields['finish'] and t[self.fields['finish']] != '':
+                f = datetime.strptime(t[self.fields['finish']],
+                                      self.dbDateFormat)
+            # Otherwise, default to today.
+            else:
+                f = date.today()
+
+            return f.strftime(self.pyDateFormat)
+
         def _safeStr(s):
             # No new lines
             s = s.replace('\r\n','\\n')
@@ -435,16 +465,8 @@ class TracJSGanttChart(WikiMacroBase):
         task += 't = new JSGantt.TaskItem(%d,"%s",' % (t['id'], _safeStr(name))
 
         # pStart, pEnd
-        if self.fields['finish']:
-            f = datetime.strptime(t[self.fields['finish']],self.dbDateFormat)
-        else:
-            f = date.today()
-        delta = timedelta(days=-1)
-        s = f + delta
-        s = s.strftime(self.pyDateFormat)
-        f = f.strftime(self.pyDateFormat)
-        task += '"%s",' % (t[self.fields['start']] if self.fields['start'] else s)
-        task += '"%s",' % (t[self.fields['finish']] if self.fields['finish'] else f)
+        task += '"%s",' % _start(t)
+        task += '"%s",' % _finish(t)
 
         # pDisplay
         task += '"%s",' % self._task_display(t, options)
@@ -462,26 +484,7 @@ class TracJSGanttChart(WikiMacroBase):
         task += '"%s",' % t['owner']
 
         # pComp (percent complete); integer 0..100
-        # Compute percent complete if given estimate and worked
-        if self.fields['estimate'] and self.fields['worked']:
-            # Try to compute the percent complete, default to 0
-            try:
-                w = float(t[self.fields['worked']])
-                e = float(t[self.fields['estimate']])
-                p = int(100 * w / e)
-            except:
-                # Don't bother logging because 0 for an estimate is common.
-                p = 0
-        # Use percent if provided
-        elif self.fields.get('percent'):
-            try:
-                p = int(t[self.fields['percent']])
-            except:
-                p = 0
-        # If no estimate and worked (above) and no percent, it's 0
-        else:
-            p = 0
-        task += '%d,' % p
+        task += '%d,' % _percent(t)
 
         # pGroup (has children)
         task += '%s,' % (1 if t['children'] else 0)
