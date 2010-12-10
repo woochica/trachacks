@@ -64,6 +64,7 @@ class TracBacksPlugin(Component):
         # Check for tracbacks on ticket creation.
         self.ticket_changed(ticket, ticket.values.get('description'),
                             ticket.values.get('reporter'), None)
+        
     def ticket_changed(self, ticket, comment, author, old_values):
         
         pattern = re.compile(self.TICKET_REGEX, re.DOTALL|re.VERBOSE)
@@ -86,7 +87,20 @@ class TracBacksPlugin(Component):
                     continue
                     
                 tracback = self.create_tracbacks(ticket, t, comment)
-                t.save_changes(author, tracback)
+                
+                # cnum is stored in the ticket_change table as an string
+                # identifying the comment number, and if applicable,
+                # the replyto comment number. If comment 8 is a reply to
+                # comment 4, the string will be '4.8'. The index is used
+                # by the TicketChangePlugin to identify the comment being
+                # edited, so we make sure to add it here.
+                change_log = t.get_changelog()
+                lastchange = change_log[-1]
+                cnum_lastchange = lastchange[3].rsplit('.', 1)
+                cnum_lastcomment = int(cnum_lastchange[-1])
+                cnum_thischange = str(cnum_lastcomment + 1)
+                                
+                t.save_changes(author, tracback, cnum=cnum_thischange)
 
     def ticket_deleted(self, ticket):
         pass
