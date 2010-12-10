@@ -63,7 +63,7 @@ class TicketChangePlugin(Component):
                         # Wiki format a preview of comment
                         db = self.env.get_db_cnx()
                         req.hdf['ticketchange.comment_preview'] = wiki_to_html(
-                            comment, self.env, req, db)
+                            comment, self.env, req, db, escape_newlines=True)
                         req.hdf['ticketchange.change.time'] = req.args.get('time')
                         req.hdf['ticketchange.change.prettytime'] = req.args.get('prettytime')
                         req.hdf['ticketchange.change.author'] = req.args.get('author')

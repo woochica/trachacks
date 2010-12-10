@@ -72,15 +72,15 @@ class TicketChangePlugin(Component):
                 if req.args.has_key('preview'):
                     if comment:
                         ticketchange['change'] = {}
+                        ticketchange['change']['time'] = int(req.args.get('time'))
+                        ticketchange['change']['author'] = req.args.get('author')                        
                         ticketchange['change']['fields'] = {}
                         ticketchange['change']['fields']['comment'] = {}
                         ticketchange['change']['fields']['comment']['new'] = comment
                         # Wiki format a preview of comment
                         db = self.env.get_db_cnx()
-                        ticketchange['comment_preview'] = wiki_to_html(
-                            comment, self.env, req, db)
-                        ticketchange['change']['time'] = int(req.args.get('time'))
-                        ticketchange['change']['author'] = req.args.get('author')
+                        ticketchange['comment_preview'] = wiki_to_html(comment, self.env, 
+                                                                       req, db, escape_newlines=True)
                         ticketchange['href'] = req.args.get('href')
                         ticketchange['href2'] = req.args.get('href2')
                 else:
