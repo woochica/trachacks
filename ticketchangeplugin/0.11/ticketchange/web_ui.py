@@ -9,14 +9,11 @@ from trac.ticket.model import Ticket
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.web import IRequestHandler
-from trac.util.datefmt import to_timestamp
+from trac.util.datefmt import to_timestamp, format_datetime
 from trac.wiki import wiki_to_html
 from trac.resource import ResourceNotFound
 
 import re
-import traceback
-import pprint
-from time import strftime, localtime
 
 __all__ = ['TicketChangePlugin']
 
@@ -168,11 +165,12 @@ class TicketChangePlugin(Component):
         row = cursor.fetchone()
         if not row:
             raise ResourceNotFound("Unable to update comment on Ticket #%d at time '%s' ('%s') - existing change not found.\n" \
-                                   % (id, time, strftime('%A, %d %b %Y %H:%M:%S', localtime(time))))
+                                   % (id, time, format_datetime(time)))
         old_author, old_comment = (row[0], row[1])
         cursor.execute("UPDATE ticket_change SET newvalue=%s WHERE ticket = %s AND time = %s AND field = 'comment'", (comment, id, time))
         db.commit()
+        
         self.env.log.info("Ticket #%d comment of '%s' by '%s' has been updated by '%s':\nold value: '%s'\n\nnew value: '%s'\n" \
-                        % (id, strftime('%A, %d %b %Y %H:%M:%S', localtime(time)), old_author, author, old_comment.replace('\r', ''), comment.replace('\r','')))
+                        % (id, format_datetime(time), old_author, author, old_comment.replace('\r', ''), comment.replace('\r','')))
                                                                                                                 
 
