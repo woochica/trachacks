@@ -130,7 +130,7 @@ class TracBacksPlugin(Component):
                 
                 # There's probably a better way to say this in python, but Tim doesn't know
                 # how to do it. (He's tried """ but something's foobar'ed.)
-                excerpts.append("\n> ''%s%s%s''\n" % (left_ellipsis, excerpt, right_ellipsis))
+                excerpts.append("\n> %s%s%s\n" % (left_ellipsis, excerpt, right_ellipsis))
             
         tracback += ''.join(excerpts)
         return tracback
