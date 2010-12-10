@@ -29,7 +29,7 @@ class TicketChangePlugin(Component):
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'ticket.html' and req.authname != 'anonymous':
             ticket = data.get('ticket')
-            if 'TICKET_ADMIN' in req.perm(ticket.resource):
+            if req.perm.has_permission('TICKET_ADMIN'):
     	        self.log.debug("TicketChangePlugin adding 'Change' links for ticket %s" % ticket.id)
                 buffer = StreamBuffer()
                 
@@ -52,7 +52,7 @@ class TicketChangePlugin(Component):
             return True
 
     def process_request(self, req):
-        assert req.perm.has_permission('TICKET_ADMIN')
+        req.perm.require('TICKET_ADMIN')
 
         ticketchange = {}
         ticketchange['href'] = self.env.href('report')

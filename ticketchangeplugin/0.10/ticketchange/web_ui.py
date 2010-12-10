@@ -42,7 +42,7 @@ class TicketChangePlugin(Component):
             return True
 
     def process_request(self, req):
-        assert req.perm.has_permission('TICKET_ADMIN')
+        req.perm.assert_permission('TICKET_ADMIN')
         
         req.hdf['ticketchange.href'] = self.env.href('report')
         req.hdf['ticketchange.redir'] = 1
