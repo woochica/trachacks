@@ -1,19 +1,19 @@
 # Ticket changing plugins
 
+import re
+
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
 
 from trac.core import *
-from trac.ticket.model import Ticket
-from trac.web.api import ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
-from trac.web import IRequestHandler
-from trac.util.datefmt import to_timestamp, format_datetime
-from trac.wiki import wiki_to_html
 from trac.resource import ResourceNotFound
-
-import re
+from trac.ticket.model import Ticket
+from trac.util.datefmt import format_datetime, to_timestamp
+from trac.web import IRequestHandler
+from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import add_script, add_stylesheet, ITemplateProvider
+from trac.wiki import wiki_to_html
 
 __all__ = ['TicketChangePlugin']
 
@@ -164,13 +164,15 @@ class TicketChangePlugin(Component):
         cursor.execute("SELECT author, newvalue FROM ticket_change WHERE ticket = %s AND time = %s AND field = 'comment'", (id, time))
         row = cursor.fetchone()
         if not row:
-            raise ResourceNotFound("Unable to update comment on Ticket #%d at time '%s' ('%s') - existing change not found.\n" \
-                                   % (id, time, format_datetime(time)))
+            raise ResourceNotFound("Unable to update comment %d (%s) on Ticket #%d - comment not found.\n" \
+                                   % (time, format_datetime(time), id))
         old_author, old_comment = (row[0], row[1])
         cursor.execute("UPDATE ticket_change SET newvalue=%s WHERE ticket = %s AND time = %s AND field = 'comment'", (comment, id, time))
         db.commit()
         
-        self.env.log.info("Ticket #%d comment of '%s' by '%s' has been updated by '%s':\nold value: '%s'\n\nnew value: '%s'\n" \
-                        % (id, format_datetime(time), old_author, author, old_comment.replace('\r', ''), comment.replace('\r','')))
+        self.env.log.info("Ticket #%d comment %d (%s) by %s has been updated by %s.\n"
+                          "old value:\n%s\n\nnew value:\n%s\n" \
+                        % (id, time, format_datetime(time), old_author, author, 
+                           old_comment.replace('\r', ''), comment.replace('\r','')))
                                                                                                                 
 
