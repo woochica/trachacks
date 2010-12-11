@@ -148,7 +148,10 @@ class ppTicketSet():
     '''
       return the ppTicket object for a ticket with id <id>
     '''
-    return self.__tickets[ id ]
+    try:
+      return self.__tickets[ id ]
+    except KeyError:
+      raise Exception('ticket not available: #%s (maybe increase the value of max_ticket_number_at_filters)' % (id,))
 
   def hasExtension(self,name):
     '''
