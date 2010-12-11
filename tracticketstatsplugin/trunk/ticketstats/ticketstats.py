@@ -79,7 +79,8 @@ class TicketStatsPlugin(Component):
       cursor = db.cursor()
    
       # TODO clean up this query
-      cursor.execute("SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority FROM ticket_change tc, enum p INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > %s AND tc.time <= %s WHERE p.name = t.priority AND p.type = 'priority' %s ORDER BY tc.time" % (to_utimestamp(from_date), to_utimestamp(at_date), ma_milestone_str))
+      cursor.execute("SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority FROM enum p, ticket_change tc INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > %s AND tc.time <= %s WHERE p.name = t.priority AND p.type = 'priority' %s ORDER BY tc.time"
+                     % (to_utimestamp(from_date), to_utimestamp(at_date), ma_milestone_str))
 
       for id, field, time, old, status, priority in cursor:
          if field == 'status':
@@ -110,13 +111,15 @@ class TicketStatsPlugin(Component):
       cursor = db.cursor()
    
       # TODO clean up this query
-      cursor.execute("SELECT t.type AS type, owner, status, time AS created FROM ticket t, enum p WHERE p.name = t.priority AND p.type = 'priority' AND created <= %s %s" % (to_utimestamp(at_date), ma_milestone_str))
+      cursor.execute("SELECT t.type AS type, owner, status, time FROM ticket t, enum p WHERE p.name = t.priority AND p.type = 'priority' AND t.time <= %s %s"
+                     % (to_utimestamp(at_date), ma_milestone_str))
 
       for rows in cursor:
          count += 1
 
       # TODO clean up this query
-      cursor.execute("SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority FROM ticket_change tc, enum p INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > 0 AND tc.time <= %s WHERE p.name = t.priority AND p.type = 'priority' %s ORDER BY tc.time" % (to_utimestamp(at_date), ma_milestone_str))
+      cursor.execute("SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority FROM enum p, ticket_change tc INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > 0 AND tc.time <= %s WHERE p.name = t.priority AND p.type = 'priority' %s ORDER BY tc.time"
+                     % (to_utimestamp(at_date), ma_milestone_str))
 
       for id, field, time, old, status, priority in cursor:
          if field == 'status':
