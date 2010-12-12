@@ -100,7 +100,7 @@ def synchronized(f):
     return wrap
 
 class Indexer:
-    _strip = re.compile(r'\w+',re.U)
+    _strip = re.compile(r'\S+',re.U)
 
     def __init__(self, env):
         self.env = env
