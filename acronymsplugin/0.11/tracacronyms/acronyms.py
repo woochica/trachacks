@@ -13,7 +13,7 @@ class Acronyms(Component):
 
     acronyms = {}
     compiled_acronyms = None
-    valid_acronym = re.compile('^\w+$', re.UNICODE)
+    valid_acronym = re.compile('^\S+$', re.UNICODE)
     acronym_page = property(lambda self: self.env.config.get('acronym', 'page',
                                                              'AcronymDefinitions'))
     def __init__(self):
