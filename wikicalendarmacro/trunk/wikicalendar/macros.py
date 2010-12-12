@@ -64,7 +64,7 @@ class WikiCalendarMacros(Component):
                            as supported in later Trac versions.""")
 
     def __init__(self):
-        # bind 'wikiticketcalendar' catalog to the specified locale directory
+        # bind 'wikicalendar' catalog to the specified locale directory
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
@@ -88,7 +88,7 @@ class WikiCalendarMacros(Component):
     # ITemplateProvider methods
     # Returns additional path where stylesheets are placed.
     def get_htdocs_dirs(self):
-        return [('wikiticketcalendar', resource_filename(__name__, 'htdocs'))]
+        return [('wikicalendar', resource_filename(__name__, 'htdocs'))]
 
     # Returns additional path where templates are placed.
     def get_templates_dirs(self):
@@ -187,7 +187,7 @@ class WikiCalendarMacros(Component):
 
         # Add CSS stylesheet
         add_stylesheet(self.ref.req,
-            'wikiticketcalendar/css/wikiticketcalendar.css')
+            'wikicalendar/css/wikiticketcalendar.css')
 
 
         # Parse arguments from macro invocation

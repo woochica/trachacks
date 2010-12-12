@@ -10,7 +10,7 @@ from trac.util.translation  import domain_functions
 try:
     from  trac.util.translation  import  domain_functions
     add_domain, _, tag_ = \
-        domain_functions('wikiticketcalendar', ('add_domain', '_', 'tag_'))
+        domain_functions('wikicalendar', ('add_domain', '_', 'tag_'))
 except ImportError:
     from  genshi.builder         import  tag as tag_
     from  trac.util.translation  import  gettext

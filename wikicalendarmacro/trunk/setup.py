@@ -42,15 +42,15 @@ try:
             ('**.py',                'python', None),
         ]
         extra['message_extractors'] = {
-            'wikiticketcalendar': extractors,
+            'wikicalendar': extractors,
         }
 # i18n is implemented to be optional here
 except ImportError:
     pass
 
 
-PACKAGE = "WikiTicketCalendarMacro"
-VERSION = "1.2.4"
+PACKAGE = "WikiCalendarMacro"
+VERSION = "2.0.0"
 
 setup(
     name = PACKAGE,
@@ -59,14 +59,16 @@ setup(
     author_email = "trac@matt-good.net",
     maintainer = "Steffen Hoffmann",
     maintainer_email = "hoff.st@web.de",
-    url = "http://trac-hacks.org/wiki/WikiTicketCalendarMacro",
-    description = "Full page Milestone and Ticket calendar for Trac wiki.",
+    url = "http://trac-hacks.org/wiki/WikiCalendarMacro",
+    description = "Configurable calendars for Trac wiki.",
     long_description = """
 Display Milestones and Tickets in a calendar view, the days link to:
  - milestones (day in bold) if there is one on that day
  - a wiki page that has wiki_page_format (if exist)
  - create that wiki page, if it does not exist and
-use page template (if exist) for that new page
+use page template (if exist) for that new page.
+Many different presentations are possible by using a certain macro
+with one or more of it's corresponding attributes.
 """,
     keywords = "trac macro calendar milestone ticket",
     classifiers = ['Framework :: Trac'],
@@ -80,14 +82,14 @@ use page template (if exist) for that new page
     extras_require = {'Babel': 'Babel>= 0.9.5', 'Trac': 'Trac >= 0.12'},
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
-        'wikiticketcalendar': [
+        'wikicalendar': [
             'htdocs/css/*.css', 'locale/*/LC_MESSAGES/*.mo',
         ],
     },
     zip_safe = True,
     entry_points = {
         'trac.plugins': [
-            'wikiticketcalendar = wikiticketcalendar.macro',
+            'wikicalendar = wikicalendar.macros',
         ],
     },
     **extra
