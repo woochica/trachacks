@@ -1,0 +1,268 @@
+Index: trac/ticket/api.py
+===================================================================
+--- trac/ticket/api.py	(revision 10370)
++++ trac/ticket/api.py	(working copy)
+@@ -363,7 +363,7 @@
+                 'label': config.get(name + '.label') or name.capitalize(),
+                 'value': config.get(name + '.value', '')
+             }
+-            if field['type'] == 'select' or field['type'] == 'radio':
++            if field['type'] in ('select', 'radio', 'multi'):
+                 field['options'] = config.getlist(name + '.options', sep='|')
+                 if '' in field['options']:
+                     field['optional'] = True
+Index: trac/ticket/web_ui.py
+===================================================================
+--- trac/ticket/web_ui.py	(revision 10370)
++++ trac/ticket/web_ui.py	(working copy)
+@@ -1142,10 +1142,17 @@
+             if name in ticket.values and name in ticket._old:
+                 value = ticket[name]
+                 if value:
+-                    if value not in field['options']:
+-                        add_warning(req, '"%s" is not a valid value for '
+-                                    'the %s field.' % (value, name))
+-                        valid = False
++                    if field['type'] == 'multi':
++                        values = value.split('|')
++                        if len(values) > 1:
++                            values.remove('')   #   get rid of trailing ''
++                    else:
++                        values = (value,)
++                    for val in values:
++                        if val not in field['options']:
++                            add_warning(req, '"%s" is not a valid value for '
++                                        'the %s field.' % (value, name))
++                            valid = False
+                 elif not field.get('optional', False):
+                     add_warning(req, _("field %(name)s must be set",
+                                        name=name))
+@@ -1396,19 +1403,32 @@
+                     field['cc_update'] = 'cc_update' in req.args or None
+ 
+             # per type settings
+-            if type_ in ('radio', 'select'):
++            if type_ in ('radio', 'select', 'multi'):
+                 if ticket.exists:
+                     value = ticket.values.get(name)
+                     options = field['options']
+                     optgroups = []
+                     for x in field.get('optgroups', []):
+                         optgroups.extend(x['options'])
+-                    if value and \
+-                        (not value in options and \
+-                         not value in optgroups):
+-                        # Current ticket value must be visible,
+-                        # even if it's not among the possible values
+-                        options.append(value)
++                    if value:
++                        if type_ == 'multi':
++                            values = value.split('|')
++                            if len(values) > 1:
++                                values.remove('')
++                        else:
++                            values = (value,)
++                        for val in values:
++                          if not val in options and not val in optgroups:
++                                # Current ticket value must be visible,
++                                # even if it's not among the possible values
++                                options.append(value)
++                        #   Rendered output should be pretty for multi-values
++                        if len(values) > 1:
++                            from genshi.builder import Element
++                            choices = Element('ul', class_='multi-value')
++                            for val in values:
++                                choices.append(Element('li')(val))
++                            field['rendered'] = choices
+             elif type_ == 'checkbox':
+                 value = ticket.values.get(name)
+                 if value in ('1', '0'):
+@@ -1623,6 +1643,13 @@
+         elif field == 'keywords':
+             old_list, new_list = old.split(), new.split()
+             sep = ' '
++        elif type_ == 'multi':
++            old_list = (old or '').split('|')
++            if old_list.count(''):
++                old_list.remove('')
++            new_list = new.split('|')
++            if new_list.count(''):
++                new_list.remove('')
+         if (old_list, new_list) != (None, None):
+             added = [tag.em(render_elt(x)) for x in new_list 
+                      if x not in old_list]
+Index: trac/ticket/model.py
+===================================================================
+--- trac/ticket/model.py	(revision 10370)
++++ trac/ticket/model.py	(working copy)
+@@ -141,6 +141,8 @@
+     def __setitem__(self, name, value):
+         """Log ticket modifications so the table ticket_change can be updated
+         """
++        if isinstance(value, list): #   account for multi-selects
++            value = '|'.join(value) + '|'
+         if name in self.values and self.values[name] == value:
+             return
+         if name not in self._old: # Changed field
+@@ -149,7 +151,7 @@
+             del self._old[name]
+         if value:
+             if isinstance(value, list):
+-                raise TracError(_("Multi-values fields not supported yet"))
++                value = '|'.join(value) + '|'
+             field = [field for field in self.fields if field['name'] == name]
+             if field and field[0].get('type') != 'textarea':
+                 value = value.strip()
+@@ -179,6 +181,10 @@
+                      and name.startswith('checkbox_')]:
+             if name[9:] not in values:
+                 self[name[9:]] = '0'
++        #   We do something similar for empty multi-selects
++        for f in self.fields:
++            if f['type'] == 'multi' and not f['name'] in values:
++                self[f['name']] = ''
+ 
+     def insert(self, when=None, db=None):
+         """Add ticket to database.
+Index: trac/ticket/query.py
+===================================================================
+--- trac/ticket/query.py	(revision 10370)
++++ trac/ticket/query.py	(working copy)
+@@ -162,7 +162,7 @@
+             field, values = filter_
+             # from last chars of `field`, get the mode of comparison
+             mode = ''
+-            if field and field[-1] in ('~', '^', '$') \
++            if field and field[-1] in ('~', '^', '$', '|') \
+                                 and not field in cls.substitutions:
+                 mode = field[-1]
+                 field = field[:-1]
+@@ -335,6 +335,14 @@
+                         val = bool(int(val))
+                     except (TypeError, ValueError):
+                         val = False
++                elif field and field['type'] == 'multi':
++                    val = (val or '').split('|')
++                    if val.count(''):
++                        val.remove('')
++                    if len(val):
++                        val = ', '.join(val)
++                    else:
++                        val = 'None'
+                 elif val is None:
+                     val = ''
+                 result[name] = val
+@@ -533,6 +541,8 @@
+                 value = value + '%'
+             elif mode == '$':
+                 value = '%' + value
++            elif mode == '|':
++                value = '%' + value + '|%'
+             return ("COALESCE(%s,'') %s%s" % (col, neg and 'NOT ' or '',
+                                               db.like()),
+                     (value, ))
+@@ -547,7 +557,7 @@
+                 # starts-with, negation, etc.)
+                 neg = v[0].startswith('!')
+                 mode = ''
+-                if len(v[0]) > neg and v[0][neg] in ('~', '^', '$'):
++                if len(v[0]) > neg and v[0][neg] in ('~', '^', '$', '|'):
+                     mode = v[0][neg]
+ 
+                 # Special case id ranges
+@@ -673,6 +683,10 @@
+             {'name': _("is"), 'value': ""},
+             {'name': _("is not"), 'value': "!"},
+         ]
++        modes['multi'] = [
++            {'name': _("contains"), 'value': "|"},
++            {'name': _("does not contain"), 'value': "!"}
++        ]
+         modes['id'] = [
+             {'name': _("is"), 'value': ""},
+             {'name': _("is not"), 'value': "!"},
+@@ -691,7 +705,7 @@
+                     if neg:
+                         val = val[1:]
+                     mode = ''
+-                    if val[:1] in ('~', '^', '$') \
++                    if val[:1] in ('~', '^', '$', '|') \
+                                         and not val in self.substitutions:
+                         mode, val = val[:1], val[1:]
+                     constraint['mode'] = (neg and '!' or '') + mode
+Index: trac/ticket/templates/ticket.html
+===================================================================
+--- trac/ticket/templates/ticket.html	(revision 10370)
++++ trac/ticket/templates/ticket.html	(working copy)
+@@ -291,6 +291,19 @@
+                                     value="$option" py:content="option"></option>
+                           </optgroup>
+                         </select>
++                        <select py:when="'multi'" id="field-${field.name}" name="field_${field.name}" size="5" 
++                          multiple="multiple">
++                          <option py:for="option in field.options"
++                                  selected="${option in value.split('|') or None}"
++                                  py:content="option"></option>
++                          <optgroup py:for="optgroup in field.optgroups"
++                                    py:if="optgroup.options"
++                                    label="${optgroup.label}">
++                            <option py:for="option in optgroup.options"
++                                    selected="${option in value.split('|') or None}"
++                                    py:content="option"></option>
++                          </optgroup>
++                        </select>
+                         <textarea py:when="'textarea'" id="field-${field.name}" name="field_${field.name}"
+                                   cols="${field.width}" rows="${field.height}"
+                                   class="${field.format == 'wiki' and 'wikitext ' or None}trac-resizable">
+Index: trac/ticket/templates/query.html
+===================================================================
+--- trac/ticket/templates/query.html	(revision 10370)
++++ trac/ticket/templates/query.html	(working copy)
+@@ -52,7 +52,7 @@
+                   <tbody py:for="field_name in field_names" py:if="field_name in constraints"
+                          py:with="field = fields[field_name]; n_field_name = clause_pre + field_name;
+                                   constraint = constraints[field_name];
+-                                  multiline = field.type in ('select', 'text', 'textarea', 'time')">
++                                  multiline = field.type in ('select', 'multi', 'text', 'textarea', 'time')">
+                     <tr py:for="constraint_idx, constraint_value in enumerate(constraint['values'])"
+                         class="${field_name}" py:if="multiline or constraint_idx == 0">
+                       <td>
+@@ -78,7 +78,7 @@
+                       <td class="filter" colspan="${field.type in ('radio', 'checkbox', 'time') and 2 or None}"
+                           py:choose="">
+ 
+-                        <py:when test="field.type == 'select'">
++                        <py:when test="field.type in ('select', 'multi')">
+                           <select name="${n_field_name}">
+                             <option></option>
+                             <option py:for="option in field.options"
+Index: trac/htdocs/js/query.js
+===================================================================
+--- trac/htdocs/js/query.js	(revision 10370)
++++ trac/htdocs/js/query.js	(working copy)
+@@ -183,7 +183,7 @@
+         
+         // Add the selector or text input for the actual filter value
+         td = $("<td>").addClass("filter");
+-        if (property.type == "select") {
++        if (property.type == "select" || property.type == "multi") {
+           focusElement = createSelect(propertyName, property.options, true);
+         } else if ((property.type == "text") || (property.type == "id")
+                    || (property.type == "textarea")) {
+Index: trac/htdocs/css/ticket.css
+===================================================================
+--- trac/htdocs/css/ticket.css	(revision 10370)
++++ trac/htdocs/css/ticket.css	(working copy)
+@@ -65,6 +65,12 @@
+ #ticket table.properties td p:last-child { margin-bottom: 0 }
+ #ticket table.properties .description { border-top: 1px solid #dd9 }
+ 
++#ticket table.properties ul.multi-value {
++ padding: 0; 
++ margin-top: 0;
++ margin-bottom: 0;
++}
++
+ #ticket .description h3 {
+  border-bottom: 1px solid #dd9;
+  color: #663;

@@ -1,0 +1,73 @@
+Index: trac/ticket/tests/api.py
+===================================================================
+--- trac/ticket/tests/api.py	(revision 10370)
++++ trac/ticket/tests/api.py	(working copy)
+@@ -56,6 +56,28 @@
+                           'order': 0, 'optional': True},
+                          fields[0])
+ 
++    def test_custom_field_multi(self):
++        self.env.config.set('ticket-custom', 'test', 'multi')
++        self.env.config.set('ticket-custom', 'test.label', 'Test')
++        self.env.config.set('ticket-custom', 'test.value', '1')
++        self.env.config.set('ticket-custom', 'test.options', 'option1|option2')
++        fields = TicketSystem(self.env).get_custom_fields()
++        self.assertEqual({'name': 'test', 'type': 'multi', 'label': 'Test',
++                          'value': '1', 'options': ['option1', 'option2'],
++                          'order': 0},
++                         fields[0])
++
++    def test_custom_field_optional_multi(self):
++        self.env.config.set('ticket-custom', 'test', 'multi')
++        self.env.config.set('ticket-custom', 'test.label', 'Test')
++        self.env.config.set('ticket-custom', 'test.value', '1')
++        self.env.config.set('ticket-custom', 'test.options', '|option1|option2')
++        fields = TicketSystem(self.env).get_custom_fields()
++        self.assertEqual({'name': 'test', 'type': 'multi', 'label': 'Test',
++                          'value': '1', 'options': ['option1', 'option2'],
++                          'order': 0, 'optional': True},
++                         fields[0])
++
+     def test_custom_field_textarea(self):
+         self.env.config.set('ticket-custom', 'test', 'textarea')
+         self.env.config.set('ticket-custom', 'test.label', 'Test')
+Index: trac/ticket/tests/model.py
+===================================================================
+--- trac/ticket/tests/model.py	(revision 10370)
++++ trac/ticket/tests/model.py	(working copy)
+@@ -177,12 +177,19 @@
+         self.env.config.set('ticket-custom', 'baz.options', 'one|two|three')
+         self.env.config.set('ticket-custom', 'baz.value', '2')
+ 
++        # Add a custom field of type 'multi' with a default value specified as
++        # the values themselves
++        self.env.config.set('ticket-custom', 'qux', 'multi')
++        self.env.config.set('ticket-custom', 'qux.options', 'one|two|three')
++        self.env.config.set('ticket-custom', 'qux.value', 'one|three')
++
+         ticket = Ticket(self.env)
+         self.assertEqual('defect', ticket['type'])
+         self.assertEqual('component1', ticket['component'])
+         self.assertEqual('Something', ticket['foo'])
+         self.assertEqual('two', ticket['bar'])
+         self.assertEqual('three', ticket['baz'])
++        self.assertEqual('one|three', ticket['qux'])
+ 
+     def test_set_field_stripped(self):
+         """
+@@ -195,15 +202,6 @@
+         self.assertEqual('foo', ticket['component'])
+         self.assertEqual('  bar  ', ticket['description'])
+ 
+-    def test_set_field_multi(self):
+-        """
+-        Ticket fields can't yet be multi-valued
+-        """
+-        ticket = Ticket(self.env)
+-        def set_multi_valued():
+-            ticket['component'] = ['  foo  ',  '  bar  ']
+-        self.assertRaises(TracError, set_multi_valued)
+-
+     def test_owner_from_component(self):
+         """
+         Verify that the owner of a new ticket is set to the owner of the
