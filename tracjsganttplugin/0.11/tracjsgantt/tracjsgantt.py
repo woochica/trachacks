@@ -420,9 +420,9 @@ class TracJSGanttChart(WikiMacroBase):
                     p = int(t[self.fields['percent']])
                 except:
                     p = 0
-                # If no estimate and worked (above) and no percent, it's 0
-                else:
-                    p = 0
+            # If no estimate and worked (above) and no percent, it's 0
+            else:
+                p = 0
 
             return p
 
