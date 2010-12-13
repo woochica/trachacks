@@ -1,4 +1,5 @@
 from datetime import timedelta, date, datetime
+from operator import itemgetter, attrgetter
 
 
 from trac.util.html import Markup
@@ -250,22 +251,43 @@ class TracJSGanttChart(WikiMacroBase):
 
             # FIXME - translate owner to full name
 
-        # Figure out the tickets' levels for controlling how many levels are open
+    # Compute WBS for sorting and figure out the tickets' levels for
+    # controlling how many levels are open.  
+    #
+    # WBS is a list like [ 2, 4, 1] (the first child of the fourth
+    # child of the second top-level element).
+    def _compute_wbs(self):
         tarr = {}
         for t in self.tickets:
             tarr[t['id']] = t
 
-        # Set the ticket's level then recurse to children.
-        def _setLevel(id, level):
+        # Set the ticket's level and wbs then recurse to children.
+        def _setLevel(id, wbs, level):
+            # Update this node
             tarr[id]['level'] = level
-            if tarr[id]['children']:
-                for c in tarr[id]['children']:
-                    _setLevel(c, level+1)
+            tarr[id]['wbs'] = copy.copy(wbs)
 
-        # Set level on all top level tickets (and recurse)
+            # Recurse to children
+            if tarr[id]['children']:
+                # Add another level
+                wbs.append(1)
+                for c in tarr[id]['children']:
+                    wbs = _setLevel(c, wbs, level+1)
+                # Remove the level we added
+                wbs.pop()
+            
+
+            # Increment last element of wbs
+            wbs[len(wbs)-1] += 1
+
+            return wbs
+
+        # Set WBS and level on all top level tickets (and recurse)
+        wbs = [ 1 ]
         for t in self.tickets:
             if not self.fields['parent'] or t[self.fields['parent']] == 0:
-                _setLevel(t['id'], 1)
+                wbs = _setLevel(t['id'], wbs, 1)
+
 
     # Add tasks for milestones related to the tickets
     def _add_milestones(self, options):
@@ -562,6 +584,10 @@ class TracJSGanttChart(WikiMacroBase):
 
             # Add the milestone(s) with all their tickets depending on them.
             self._add_milestones(options)
+
+            self._compute_wbs()
+
+            self.tickets.sort(key=itemgetter('wbs'))
 
             for ticket in self.tickets:
                 tasks += self._format_ticket(ticket, options)
