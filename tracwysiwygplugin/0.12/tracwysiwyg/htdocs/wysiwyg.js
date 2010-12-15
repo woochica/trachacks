@@ -237,21 +237,20 @@ TracWysiwyg.prototype.setupFormEvent = function() {
 TracWysiwyg.prototype.createEditable = function(d, textarea, textareaResizable) {
     var self = this;
     var getStyle = TracWysiwyg.getStyle;
-    var width = TracWysiwyg.getSelfOrAncestor(textarea, "table") ? textarea.offsetWidth : "100%";
-    var height = textarea.offsetHeight;
-    if (!width || !height) {
+    var dimension = getDimension(textarea);
+    if (!dimension.width || !dimension.height) {
         setTimeout(lazy, 100);
     }
-    if (!width) {
-        width = parseInt(getStyle(textarea, "fontSize"), 10) * (textarea.cols || 10) * 0.5;
+    if (!dimension.width) {
+        dimension.width = parseInt(getStyle(textarea, "fontSize"), 10) * (textarea.cols || 10) * 0.5;
     }
-    if (!height) {
-        height = parseInt(getStyle(textarea, "lineHeight"), 10) * (textarea.rows || 3);
+    if (!dimension.height) {
+        dimension.height = parseInt(getStyle(textarea, "lineHeight"), 10) * (textarea.rows || 3);
     }
     var wrapper = d.createElement("div");
     wrapper.innerHTML = '<iframe class="wysiwyg" '
         + 'src="javascript:\'\'" '
-        + 'width="' + width + '" height="' + height + '" '
+        + 'width="' + dimension.width + '" height="' + dimension.height + '" '
         + 'frameborder="0" marginwidth="0" marginheight="0">'
         + '</iframe>';
     var frame = this.frame = wrapper.firstChild;
@@ -262,8 +261,8 @@ TracWysiwyg.prototype.createEditable = function(d, textarea, textareaResizable) 
         var contentDocument = null;
         var grip = d.createElement("div");
         grip.className = "trac-grip";
-        if (width != "100%" && !textarea.addEventListener) {
-            grip.style.width = width + "px";
+        if (/^[0-9]+$/.exec(dimension.width)) {
+            grip.style.width = dimension.width + "px";
         }
         addEvent(grip, "mousedown", beginDrag);
         wrapper.appendChild(grip);
@@ -310,14 +309,26 @@ TracWysiwyg.prototype.createEditable = function(d, textarea, textareaResizable) 
         TracWysiwyg.removeEvent(contentDocument, "mouseup", endDrag);
     }
 
-    function lazy() {
+    function getDimension(textarea) {
         var width = textarea.offsetWidth;
-        var height = textarea.offsetHeight;
-        if (width && height) {
-            self.frame.width = width;
-            self.frame.height = height;
-            if (!textarea.addEventListener && textareaResizable) {
-                grip.style.width = width + "px";
+        if (width) {
+            var parentWidth = textarea.parentNode.offsetWidth
+                            + parseInt(getStyle(textarea, 'borderLeftWidth'), 10)
+                            + parseInt(getStyle(textarea, 'borderRightWidth'), 10);
+            if (width == parentWidth) {
+                width = "100%";
+            }
+        }
+        return { width: width, height: textarea.offsetHeight };
+    }
+
+    function lazy() {
+        var dimension = getDimension(textarea);
+        if (dimension.width && dimension.height) {
+            self.frame.width = dimension.width;
+            self.frame.height = dimension.height;
+            if (textareaResizable) {
+                grip.style.width = /^[0-9]+$/.exec(dimension.width) ? dimension.width + "px" : dimension.width;
             }
             return;
         }
