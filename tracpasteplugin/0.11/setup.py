@@ -27,5 +27,6 @@ setup(
         'tracpaste.db = tracpaste.db',
         'tracpaste.model = tracpaste.model',
         'tracpaste.web_ui = tracpaste.web_ui'],
-    }
+    },
+    install_requires = ['Pygments']
 )
