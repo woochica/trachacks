@@ -1,0 +1,73 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      py:strip="">
+  <ul py:match="//div[@id='ctxtnav']/ul"></ul>
+  <form py:match="//form[@id='query']" id="query" method="post" action="${href.tasklist()}">
+    ${select('*|text()')}
+  </form>
+  <py:match path="//form[@id='create']/table[@class='listing tickets']/thead/tr" once="true">
+    <tr>
+      <th><input size="1" type="submit" name="add" value="+"/></th>
+      <th py:for="field in ticket_fields"> 
+        <py:choose test="field.type" py:if="field">
+          <select py:when="'select'" id="field-${field.name}" name="field_${field.name}">
+            <option py:if="field.optional"></option>
+            <option py:for="option in field.options"
+                    selected="${field.value == option or None}"
+                    py:content="option"></option>
+            <optgroup py:for="optgroup in field.optgroups"
+                      label="${optgroup.label}">
+              <option py:for="option in optgroup.options"
+                      selected="${field.value == option or None}"
+                      py:content="option"></option>
+            </optgroup>
+          </select>
+          <textarea py:when="'textarea'" id="field-${field.name}" name="field_${field.name}"
+                    cols="${field.width}" rows="${field.height}"
+                    py:content="field.value"></textarea>
+          <span py:when="'checkbox'">
+            <input type="checkbox" id="field-${field.name}" name="field_${field.name}"
+                   checked="${field.value == '1' and 'checked' or None}" value="1" />
+            <input type="hidden" name="field_checkbox_${field.name}" value="1" />
+          </span>
+          <label py:when="'radio'"
+                 py:for="idx, option in enumerate(field.options)">
+            <input type="radio" name="field_${field.name}" value="${option}"
+                   checked="${field.value == option or None}" />
+            ${option}
+          </label>
+          <py:otherwise><!--! Text input fields -->
+            <py:choose>
+              <span py:when="field.cc_entry"><!--! Special case for Cc: field -->
+                <em>${field.cc_entry}</em>
+                <input type="checkbox" id="field-cc" name="cc_update" 
+                       checked="${field.cc_update}" class="taskinput" />
+              </span>
+              <!--! All the other text input fields -->
+              <input py:otherwise="" type="text" id="field-${field.name}"
+                name="field_${field.name}" value="" class="taskinput" />
+            </py:choose>
+          </py:otherwise>
+        </py:choose>
+      </th>
+    </tr>
+    <tr>
+      ${select('*|text()')}
+    </tr>
+  </py:match>
+  <py:match path="//div/table[@class='listing tickets']" once="true">
+    <form id="create" method="post" action="${href.tasklist()}">
+      <table class="listing tickets">
+        ${select('*|text()')}
+      </table>
+    </form>
+   </py:match>
+   <tr py:match="//tr[@id='add']" once="true">
+  </tr>
+  <xi:include href="query.html" />
+</html>
+
