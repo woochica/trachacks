@@ -99,12 +99,16 @@ class TasklistPlugin(QueryModule):
                 qstring = qstring.replace('$USER', user)
             self.log.debug('TasklistPlugin: Using default query: %s', qstring)
             constraints = Query.from_string(self.env, qstring).constraints
+
             # Ensure no field constraints that depend on $USER are used
-            # if we have no username.
-            for field, vals in constraints.items():
-                for val in vals:
-                    if val.endswith('$USER'):
-                        del constraints[field]
+            # if we have no username.            
+            # It may be possible to just use constraints[0] here, rather than
+            # iterating over constraints. See th#6336.
+            for constraint in constraints:
+                for field, vals in constraint.items():
+                    for val in vals:
+                        if val.endswith('$USER'):
+                            del constraint[field]
 
         cols = req.args.get('col')
         if not cols:

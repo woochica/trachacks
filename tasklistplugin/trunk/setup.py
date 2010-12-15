@@ -14,10 +14,10 @@ from setuptools import setup
 
 setup(
     name='TaskList',
-    version='0.1.2',
+    version='0.2.2',
     packages=['tasklist'],
     author='John Hampton',
-    description='Provides a task list based on tickets.  Allows for very simple ticket creation',
+    description='Provides a task list based on tickets.  Allows for very simple ticket creation.',
     url='http://trac-hacks.org/wiki/TaskListPLugin',
     license='BSD',
     entry_points = {
@@ -31,5 +31,6 @@ setup(
             'htdocs/js/*.js',
             'templates/*.html',
         ]
-    }
+    },
+    install_requires = ['Trac >= 0.12']    
 )
