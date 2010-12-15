@@ -27,16 +27,16 @@ from trac.ticket.notification import TicketNotifyEmail
 from trac.mimeview.api import Context
 from trac.web.chrome import add_ctxtnav, add_link, add_script, add_stylesheet, \
                             add_warning, INavigationContributor, Chrome
-from trac.config import Option, ListOption
+from trac.config import ListOption, Option
 from trac.util import get_reporter_id
 
+from pprint import PrettyPrinter
 from pkg_resources import resource_filename
 
-__all__ = ['TasklistPlugin', 'pprint']
+__all__ = ['TasklistPlugin']
 
-def pprint(object, prefix=""):
-    """ Pretty Print the given object with an optionl prefix.  Used for debugging"""
-    from pprint import PrettyPrinter
+def _pprint(object, prefix=""):
+    """ Pretty Print the given object with an optional prefix.  Used for debugging"""
     if prefix:
         print prefix
     PrettyPrinter().pprint(object)
@@ -62,7 +62,7 @@ class TasklistPlugin(QueryModule):
                               default=['id', 'summary', 'priority'],
                               doc='The default list of columns to show in the tasklist.')
 
-    # INavigationContributor methods
+    # INavigationContributor methods    
     def get_active_navigation_item(self, req):
         return 'tasklist'
 
@@ -77,7 +77,12 @@ class TasklistPlugin(QueryModule):
 
     def process_request(self, req):
         req.perm.assert_permission('TICKET_VIEW')
-
+        
+        if not self.env.config.has_option('ticket-custom', self.field_name):
+            raise TracError('Configuration error: the custom ticket field "%s" has not been defined '
+                            'in the [ticket-custom] section of trac.ini. See the documentation ' 
+                            'for more info on configuring the TaskListPlugin.'  % self.field_name)
+        
         constraints = self._get_constraints(req)
         if not constraints and not 'order' in req.args:
             # If no constraints are given in the URL, use the default ones.
@@ -169,7 +174,7 @@ class TasklistPlugin(QueryModule):
 
         data['title'] = 'Task List'
         data['all_columns'].remove(self.field_name)
-        pprint(data['tickets'])
+        #_pprint(data['tickets'])
         for ticket in data['tickets']:
             summary = ticket['summary']
             action = ticket[self.field_name]
@@ -195,6 +200,7 @@ class TasklistPlugin(QueryModule):
                 title = ticket['title']
                 stream |= Transformer('//td[@class="summary"]/a[@href="%s"]' % ticket['href']
                                      ).attr('title', title)
+                                         
         return stream
 
     # ITemplateProvider methods

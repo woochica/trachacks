@@ -14,7 +14,7 @@ from setuptools import setup
 
 setup(
     name='TaskList',
-    version='0.1.1',
+    version='0.1.2',
     packages=['tasklist'],
     author='John Hampton',
     description='Provides a task list based on tickets.  Allows for very simple ticket creation',
