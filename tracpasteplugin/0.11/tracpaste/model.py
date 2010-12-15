@@ -28,7 +28,8 @@ def get_pastes(env, number=None, offset=None, from_dt=None, to_dt=None, db=None)
 
     To get the paste data, use id to instantiate a Paste object."""
 
-    cursor = (db or env.get_db_cnx()).cursor()
+    db = db or env.get_db_cnx()
+    cursor = db.cursor()
 
     sql = "SELECT id, title, author, time FROM pastes"
     order_clause = " ORDER BY id DESC"
