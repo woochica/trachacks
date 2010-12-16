@@ -6,7 +6,7 @@ from trac.admin.api import IAdminPanelProvider
 from trac.core import *
 from trac.ticket.model import Ticket
 from trac.web.api import IRequestFilter
-from trac.web.chrome import add_notice
+from trac.web.chrome import add_ctxtnav, add_notice
 from trac.web.chrome import add_script
 from trac.web.chrome import add_stylesheet
 from trac.web.chrome import add_warning
@@ -44,14 +44,13 @@ class TicketDeletePlugin(Component):
 
     def get_admin_panels(self, req):
         if 'TICKET_ADMIN' in req.perm:
-            yield ('ticket', 'Ticket System', 'delete', 'Delete')
+            yield ('ticket', 'Ticket System', 'delete', 'Delete Tickets')
             yield ('ticket', 'Ticket System', 'comments', 'Delete Changes')
             
     def render_admin_panel(self, req, cat, page, path_info):
         req.perm.require('TICKET_ADMIN')
         
         data = {}
-
         data['href'] = req.href('admin', cat, page)
         data['page'] = page
         data['redir'] = 1
@@ -66,9 +65,10 @@ class TicketDeletePlugin(Component):
                         self._delete_ticket(t.id)
                         add_notice(req, "Ticket #%s has been deleted." % t.id)
                         req.redirect(req.href('admin', cat, 'delete'))
-            elif page == 'comments':
+            elif page == 'comments':                
                 if 'ticketid' in req.args:
-                    req.redirect(req.href.admin(cat, page, req.args.get('ticketid')))
+                    ticket_id = req.args.get('ticketid')
+                    req.redirect(req.href.admin(cat, page, ticket_id))
                 else:
                     t = self._validate(req, path_info)
                     if t:
@@ -115,6 +115,10 @@ class TicketDeletePlugin(Component):
                         ticket_data[time_list[selected]]['checked'] = True
                     data['changes'] = ticket_data
                     data['id'] = t.id
+                    
+                    # cnum is only in the args dictionary if we navigated from the ticket page
+                    if 'cnum' in req.args:
+                        add_ctxtnav(req, "Back to Ticket #%s" % t.id, req.href.ticket(t.id))                    
                 elif page == 'delete':
                     data['id'] = t.id
  

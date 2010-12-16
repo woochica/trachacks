@@ -14,10 +14,11 @@
   <body>
 
     <h2>
-      Delete Ticket${ticketdelete.page=='comments' and ' Changes' or None}
+      Delete Ticket
       <a py:if="ticketdelete.id" href="${req.href('ticket', ticketdelete.id)}">
         #${ticketdelete.id}
       </a>
+      ${ticketdelete.page=='comments' and ' Changes' or None}
     </h2>
 
   <py:choose>
@@ -95,10 +96,6 @@
 
         //-->
         </script>
-
-
-        <br />
-        <a href="${ticketdelete.href}">Back</a>
       </py:when>
       <py:otherwise>
         <form method="post">
