@@ -1,6 +1,13 @@
 from trac.ticket import TicketSystem
 
 PREFIX = 'dynfields.'
+PREF_DEFAULTS = {
+    '(pref)': '1',
+    '(pref:enable)': '1',
+    '(pref:enabled)': '1',
+    '(pref:disable)': '0',
+    '(pref:disabled)': '0',
+}
 
 class Options(dict):
     """A thin dict wrapper of ticket-custom options to handle specifying,
@@ -16,25 +23,27 @@ class Options(dict):
         from values.  Maintains which options/rules have been configured
         for user preference."""
         self.env = env
-        self._prefkeys = []
+        self._pref_defaults = {}
         for key,val in self.env.config.options('ticket-custom'):
-            if val.endswith('(pref)'):
-                val = val.replace('(pref)','').rstrip()
-                self._prefkeys.append(key)
+            for pref,default in PREF_DEFAULTS.items():
+                if val.endswith(pref):
+                    val = val.replace(pref,'').rstrip()
+                    self._pref_defaults[key] = default
+                    break
             self[key] = val
     
     def has_pref(self, key):
         """Returns True if the given key is configured for user preference."""
-        return key in self._prefkeys
+        return key in self._pref_defaults
     
     def is_enabled(self, req, key):
-        """Returns True if there's no user preference configured for this
-        key or if there is and the user enabled the rule spec (the default)."""
-        if key not in self._prefkeys:
+        """Returns True, if there's no user preference configured for this
+        key or if it is and the user enabled the rule spec (the default)."""
+        if key not in self._pref_defaults:
             return True
         
-        # default pref to enabled if not set
-        return req.session.get(PREFIX+key, '1') == '1'
+        # return the default pref value if not set
+        return req.session.get(PREFIX+key, self._pref_defaults[key]) == '1'
     
     def get_value_and_options(self, req, target, key):
         """Returns the preference value for the given key if configured
@@ -47,7 +56,7 @@ class Options(dict):
                 value = field.get('value', value)
                 options = field.get('options', options)
                 break
-        if key in self._prefkeys:
+        if key in self._pref_defaults:
             value = req.session.get(PREFIX+key+'.value', value)
         return value,options
     
@@ -63,19 +72,20 @@ class Options(dict):
           value (saved preference or default value)
         """
         value,options = self.get_value_and_options(req, target, key)
-        return {'id': PREFIX+key,
-                'label': '%s = %s' % (key,self[key]),
-                'enabled': req.session.get(PREFIX+key, '1'),
-                'type': 'none',
-                'options': options,
-                'value': value,
-                }
+        return {
+            'id': PREFIX+key,
+            'label': '%s = %s' % (key, self[key]),
+            'enabled': req.session.get(PREFIX+key, self._pref_defaults[key]),
+            'type': 'none',
+            'options': options,
+            'value': value,
+        }
     
     def set_prefs(self, req):
         """Saves the user's preferences."""
         # save checkbox settings
-        for key in self._prefkeys:
-            req.session[PREFIX+key] = req.args.get(PREFIX+key,'0')
+        for key in self._pref_defaults:
+            req.session[PREFIX+key] = req.args.get(PREFIX+key, '0')
         
         # now save values
         for arg,value in req.args.items():
