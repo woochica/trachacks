@@ -6,6 +6,7 @@ var Rule = function(name){
     this.setup    = noop;
     this.apply    = noop;
     this.complete = noop;
+    this.query    = function(spec){}; // for query page
     
     // register this rule by adding to global variable
     if (window.dynfields_rules == undefined)
@@ -88,6 +89,7 @@ defaultrule.apply = function(input, spec){
     
     var fld = jQuery('#field-'+spec.target);
     if (!fld.hasClass('defaulted')){
+        fld.addClass('defaulted');
         var doit = true;
         if (fld.get(0).tagName.toLowerCase() == 'select'){
             var opts = new Array();
@@ -101,8 +103,6 @@ defaultrule.apply = function(input, spec){
         if (doit){
             fld.val(spec.value).change(); // cascade rules
         }
-        
-        fld.addClass('defaulted');
     }
 };
 
@@ -155,6 +155,19 @@ hiderule.apply = function(input, spec){
     }        
 };
 
+// query
+hiderule.query = function(spec){
+    // hide hide_always fields on /query page
+    if (spec.hide_always.toLowerCase() == 'true'){
+        // hide from columns section
+        jQuery('input[value="'+spec.target+'"]')
+              .attr('checked',false)
+              .parent().hide();
+        // hide from column filter/dropdown
+        jQuery('#add_filter option[value="'+spec.target+'"]')
+              .hide();
+    }
+};
 // complete
 hiderule.complete = function(input, spec){
     jQuery('.dynfields-hide').hide();

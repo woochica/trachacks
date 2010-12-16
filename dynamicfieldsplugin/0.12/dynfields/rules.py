@@ -220,7 +220,7 @@ class HideRule(Component, Rule):
       [ticket-custom]
       version.show_when_type = enhancement
       milestone.hide_when_type = defect
-      alwayshide.show_when_type = invalid_value
+      alwayshide.hide_always = True
       alwayshide.clear_on_hide = False
     """
     
@@ -240,18 +240,30 @@ class HideRule(Component, Rule):
         rule_re = re.compile(r"%s.(?P<op>(show|hide))_when_(?P<trigger>.*)" \
                              % target)
         match = rule_re.match(key)
-        if not match:
-            return None
-        return match.groupdict()['trigger']
-       
+        if match:
+            return match.groupdict()['trigger']
+            
+        # try finding hide_always rule
+        if key == "%s.hide_always" % target:
+            return 'type' # requires that 'type' field is enabled
+        return None
+  
     def update_spec(self, req, key, opts, spec):
         target = spec['target']
         trigger = spec['trigger']
         
         spec_re = re.compile(r"%s.(?P<op>(show|hide))_when_%s" \
                              % (target,trigger))
-        spec['op'] = spec_re.match(key).groupdict()['op']
-        spec['trigger_value'] = opts[key]
+        match = spec_re.match(key)
+        if match:
+            spec['op'] = match.groupdict()['op']
+            spec['trigger_value'] = opts[key]
+            spec['hide_always'] = \
+                str(self._is_always_hidden(req, key, opts, spec)).lower()
+        else: # assume 'hide_always' rule
+            spec['op'] = 'show'
+            spec['trigger_value'] = 'invalid_value'
+            spec['hide_always'] = 'true'
         spec['clear_on_hide'] = opts.get(target+'.clear_on_hide','true')
 
     def update_pref(self, req, trigger, target, key, opts, pref):
@@ -269,7 +281,7 @@ class HideRule(Component, Rule):
                               target=target, trigger=trigger, trigval=trigval)
         
         # special case when trigger value is not a select option
-        v,options = opts.get_value_and_options(req, trigger, key)
+        v, options = opts.get_value_and_options(req, trigger, key)
         value = spec['trigger_value']
         if options and value and value not in options and '|' not in value:
             # "Always hide/show target"
@@ -277,3 +289,11 @@ class HideRule(Component, Rule):
                 pref['label'] = _("Always show %(target)s", target=target)
             else:
                 pref['label'] = _("Always hide %(target)s", target=target)
+
+    def _is_always_hidden(self, req, key, opts, spec):
+        trigger = spec['trigger']
+        v, options = opts.get_value_and_options(req, trigger, key)
+        value = spec['trigger_value']
+        if options and value and value not in options and '|' not in value:
+           return spec['op'] == 'show'
+        return False
