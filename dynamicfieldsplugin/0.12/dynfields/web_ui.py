@@ -42,6 +42,7 @@ class DynamicFieldsModule(Component):
             req.path_info.startswith('/newticket')) \
           and req.perm.has_permission('TICKET_MODIFY'):
             add_script(req, '/dynfields/dynfields.js')
+            add_script(req, 'dynfields/layout.js')
             add_script(req, 'dynfields/rules.js')
         return template, data, content_type
     
