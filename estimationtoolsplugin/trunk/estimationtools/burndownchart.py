@@ -50,9 +50,10 @@ class BurndownChart(EstimationToolsBase, WikiMacroBase):
     closed_states = get_closed_states()
     serverside_charts = get_serverside_charts()
 
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
 
         # prepare options
+        req = formatter.req
         options, query_args = parse_options(self.env.get_db_cnx(), content, copy.copy(DEFAULT_OPTIONS))
 
         if not options['startdate']:

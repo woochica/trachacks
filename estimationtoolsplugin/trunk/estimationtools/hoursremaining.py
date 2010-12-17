@@ -16,7 +16,8 @@ class HoursRemaining(EstimationToolsBase, WikiMacroBase):
         
     closed_states = get_closed_states()
     
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
+        req = formatter.req
         _ignore, options = parse_args(content, strict=False)
 
         # we have to add custom estimation field to query so that field is added to

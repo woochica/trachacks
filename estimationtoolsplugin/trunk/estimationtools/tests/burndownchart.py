@@ -20,6 +20,7 @@ class BurndownChartTestCase(unittest.TestCase):
                         abs_href = Href('http://www.example.com/'),
                         perm = MockPerm(),
                         authname='anonymous')
+        self.formatter = Mock(req=self.req)
         
     def _insert_ticket(self, estimation):
         ticket = Ticket(self.env)
@@ -72,7 +73,7 @@ class BurndownChartTestCase(unittest.TestCase):
     def test_build_zero_day_chart(self):
         chart = BurndownChart(self.env)
         # shouldn't throw
-        chart.render_macro(self.req, "", "startdate=2008-01-01, enddate=2008-01-01")
+        chart.expand_macro(self.formatter, "", "startdate=2008-01-01, enddate=2008-01-01")
         
     def test_calculate_timetable_simple(self):
         chart = BurndownChart(self.env)
@@ -190,23 +191,29 @@ class BurndownChartTestCase(unittest.TestCase):
         self.assertEqual(timetable, {day1: Decimal(10), day2: Decimal(10), day3: Decimal(5)})
 
     def test_url_encode(self):
+        start = datetime.now(utc).date()
+        end = (start + timedelta(days=5)).strftime('%Y-%m-%d')
+        start = start.strftime('%Y-%m-%d')
         chart = BurndownChart(self.env)
         t = Ticket(self.env, self._insert_ticket('12'))
-        result = chart.render_macro(self.req, 'BurndownChart',
-                        "milestone=milestone1, startdate=2010-09-15, enddate=2010-09-20")
+        result = chart.expand_macro(self.formatter, 'BurndownChart',
+                        "milestone=milestone1, startdate=%s, enddate=%s" % (start, end))
         self.failUnless("&amp;chtt=milestone1&amp;" in str(result))
-        result = chart.render_macro(self.req, 'BurndownChart',
-                        "milestone=One & Two, startdate=2010-09-15, enddate=2010-09-20")
+        result = chart.expand_macro(self.formatter, 'BurndownChart',
+                        "milestone=One & Two, startdate=%s, enddate=%s" % (start, end))
         self.failUnless("&amp;chtt=One+%26+Two&amp;" in str(result))
 
     def test_expected_y_axis(self):
+        start = datetime.now(utc).date()
+        end = (start + timedelta(days=5)).strftime('%Y-%m-%d')
+        start = start.strftime('%Y-%m-%d')
         chart = BurndownChart(self.env)
         t = Ticket(self.env, self._insert_ticket('12'))
         # Test without expected
-        result = chart.render_macro(self.req, 'BurndownChart',
-                        "startdate=2010-09-15, enddate=2010-09-20")
+        result = chart.expand_macro(self.formatter, 'BurndownChart',
+                        "startdate=%s, enddate=%s" % (start, end))
         self.assertEquals(self._extract_query(result)['chxr'], [u'2,0,12'])
         # Confirm Y axis changes with new higher expected
-        result = chart.render_macro(self.req, 'BurndownChart',
-                        "startdate=2010-09-15, enddate=2010-09-20, expected=200")
+        result = chart.expand_macro(self.formatter, 'BurndownChart',
+                        "startdate=%s, enddate=%s, expected=200" % (start, end))
         self.assertEquals(self._extract_query(result)['chxr'], [u'2,0,200'])

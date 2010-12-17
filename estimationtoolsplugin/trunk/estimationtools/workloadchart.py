@@ -31,7 +31,8 @@ class WorkloadChart(EstimationToolsBase, WikiMacroBase):
     closed_states = get_closed_states()
     serverside_charts = get_serverside_charts()
 
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
+        req = formatter.req
         db = self.env.get_db_cnx()
         # prepare options
         options, query_args = parse_options(db, content, copy.copy(DEFAULT_OPTIONS))
