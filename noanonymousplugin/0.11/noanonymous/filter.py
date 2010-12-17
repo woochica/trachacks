@@ -7,7 +7,7 @@ Enable it in trac.ini ::
 By default static resources from plugins are allowed, i.e URLs
 `/chrome/something` are not blocked. If you want to block everything except
 `/chrome/common` (standard Trac styles) and `/chrome/site` (environment
-customizations)
+customizations), add the following block to `trac.ini` ::
 
   [noanonymous]
   paranoid = true
