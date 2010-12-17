@@ -1,3 +1,19 @@
+"""
+Enable it in trac.ini ::
+
+  [components]
+  noanonymous.* = enabled
+
+By default static resources from plugins are allowed, i.e URLs
+`/chrome/something` are not blocked. If you want to block everything except
+`/chrome/common` (standard Trac styles) and `/chrome/site` (environment
+customizations)
+
+  [noanonymous]
+  paranoid = true
+
+"""
+
 from trac.core import *
 from trac.web.api import IRequestFilter
 
@@ -8,7 +24,13 @@ class NoAnonymousModule(Component):
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        paths = ['/login', '/reset_password', '/chrome/site', '/chrome/common']
+        paths = ['/login', '/reset_password']
+        # #6412 - paranoid mode allows only standard trac static resources
+        #         otherwise plugin resources are allowed too (default)
+        if self.config.get('noanonymous', 'paranoid', False):
+            paths += ['/chrome/site', '/chrome/common']
+        else:
+            paths += ['/chrome']
 
         if req.authname == 'anonymous':
             for p in paths:

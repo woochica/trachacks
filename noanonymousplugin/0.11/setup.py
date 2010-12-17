@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracNoAnonymous',
-    version = '2.2',
+    version = '2.3',
     packages = ['noanonymous'],
 
     author = 'Pedro Paixao',
