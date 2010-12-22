@@ -44,7 +44,10 @@ class SecureTicketsPolicy(Component):
             cursor = db.cursor()
             cursor.execute("SELECT component FROM ticket WHERE id=%s",
                            (resource.id,))
-            for (component,) in cursor: pass
+            for (component,) in cursor:
+                break
+            else:
+                component = ''
             
             # any public component makes the ticket public
             for pc in self.public_components:

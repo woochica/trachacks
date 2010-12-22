@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracSecureTickets',
-    version = '0.1.2',
+    version = '0.1.4',
     packages = ['securetickets'],
     author = 'Rob Guttman',
     author_email = 'guttman@alum.mit.edu',
