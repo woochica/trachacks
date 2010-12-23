@@ -99,7 +99,7 @@ class DiscussionNotifyEmail(NotifyEmail):
             self.template_name = 'forum-invite-body.txt'
 
         # Send e-mail to all subscribers.
-        self.cc_recipients = recipients + self.config.get('discussion',
+        self.cc_recipients = recipients + self.config.getlist('discussion',
           'smtp_always_cc')
 
         # Render subject template and send notification.
