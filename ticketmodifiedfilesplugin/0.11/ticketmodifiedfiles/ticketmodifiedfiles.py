@@ -8,7 +8,7 @@ from trac.core import *
 from trac.ticket.model import Ticket
 from trac.web import IRequestHandler
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
+from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, add_ctxtnav
 from trac.util.datefmt import format_time
 
 #WARNING: genshi.filters.Transformer requires Genshi 0.5+
@@ -30,6 +30,9 @@ class TicketModifiedFilesPlugin(Component):
         (id, files, deletedfiles, ticketsperfile, filestatus, conflictingtickets, ticketisclosed, revisions, ticketsdescription) = self.__process_ticket_request(req)
         #Pack the information to send to the html file
         data = {'ticketid':id, 'files':files, 'deletedfiles':deletedfiles, 'ticketsperfile':ticketsperfile, 'filestatus':filestatus, 'conflictingtickets':conflictingtickets, 'ticketisclosed':ticketisclosed, 'revisions':revisions, 'ticketsdescription':ticketsdescription}
+
+        add_ctxtnav(req, 'Back to Ticket #%s' % id, req.href.ticket(id))
+
         #Add the custom stylesheet
         add_stylesheet(req, 'common/css/timeline.css')
         add_stylesheet(req, 'tmf/css/ticketmodifiedfiles.css')
