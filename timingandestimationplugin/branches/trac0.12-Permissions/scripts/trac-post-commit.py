@@ -300,4 +300,8 @@ if __name__ == "__main__":
         print
         print "Note that the deprecated options will be removed in Trac 0.12."
     else:
-        CommitHook()
+        try:
+            CommitHook()
+        except Exception, e:
+            log('ERROR while processing: %s' % str(e) )
+            sys.exit(1)

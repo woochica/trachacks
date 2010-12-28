@@ -13,7 +13,7 @@ setup(name=PACKAGE,
       author='Russ Tyndall at Acceleration.net',
       author_email='russ@acceleration.net',
       long_description="""
-      This Trac 0.11 plugin provides support for Time estimation and tracking.
+      This Trac 0.12 plugin provides support for Time estimation and tracking.
 
       See http://trac-hacks.org/wiki/TimingAndEstimationPlugin for details.
       """,
