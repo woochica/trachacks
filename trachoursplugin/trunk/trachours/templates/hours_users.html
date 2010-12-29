@@ -76,10 +76,6 @@
 	  </option>
 	</select>
 
-	<a href="${prev_url}">Week of ${to_unicode(prev_week.strftime('%B %d, %Y'))}
-	  - ${to_unicode(from_date.strftime('%B %d, %Y'))}</a>
-
-
         <!-- milestone -->
         <div py:if="milestones" 
              py:with="selected_milestone=req.args.get('milestone')">
@@ -116,8 +112,6 @@
         </tr>
       </table>
     </div>
-
-    <a href="${req.href('/hours', from_day=from_date.day, from_month=from_date.month, from_year=from_date.year, to_day=to_date.year, to_month=to_date.month, to_year=to_date.year)}">Query Hours</a>
   </body>
 </html>
 

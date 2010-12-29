@@ -13,6 +13,7 @@ from genshi.builder import tag
 from trac.core import *
 from trac.env import open_environment
 from trac.web.api import IRequestHandler
+from trac.web.chrome import add_ctxtnav
 from trac.web.href import Href
 from trachours.api import hours_format
 from trachours.feed import total_hours

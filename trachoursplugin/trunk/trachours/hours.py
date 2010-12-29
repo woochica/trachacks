@@ -7,7 +7,7 @@ See: http://trac-hacks.org/wiki/TracHoursPlugin
 
 import calendar
 import csv
-import datetime
+from datetime import datetime, timedelta
 import dateutil.parser
 import re
 import time
@@ -34,7 +34,8 @@ from trac.ticket.query import Query
 from trac.util.datefmt import to_timestamp, utc
 from trac.util.translation import _
 from trac.web.api import IRequestHandler, ITemplateStreamFilter
-from trac.web.chrome import add_ctxtnav, add_link, add_script, add_stylesheet, add_warning, Chrome, INavigationContributor, ITemplateProvider
+from trac.web.chrome import add_ctxtnav, add_link, add_script, add_stylesheet, add_warning, \
+                            Chrome, INavigationContributor, ITemplateProvider, prevnext_nav
 
 from StringIO import StringIO
 
@@ -156,7 +157,7 @@ class TracHoursPlugin(Component):
         if submitter is None:
             submitter = worker
         if time_started is None:
-            time_started = datetime.datetime.now()
+            time_started = datetime.now()
         time_started = int(time.mktime(time_started.timetuple()))
         comments = comments.strip()
 
@@ -192,11 +193,9 @@ class TracHoursPlugin(Component):
         permissions" that group several simple actions under one name for
         convenience.
         """
-        return [ 'TICKET_ADD_HOURS' ]
+        return ['TICKET_ADD_HOURS']
 
-    ### methods for IRequestHandler
-
-    """Extension point interface for request handlers."""
+    # IRequestHandler methods
 
     def match_request(self, req):
         """Return whether the handler wants to process the given request."""
@@ -239,11 +238,7 @@ class TracHoursPlugin(Component):
         ### assume a ticket if the other handlers don't work
         return self.process_ticket(req)
 
-    ### methods for INavigationContributor
-
-    """Extension point interface for components that contribute items to the
-    navigation.
-    """
+    # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
         """This method is only called for the `IRequestHandler` processing the
@@ -259,7 +254,7 @@ class TracHoursPlugin(Component):
         add, each being a tuple in the form (category, name, text).
         """
         yield ('mainnav', 'hours',
-               tag.a('Hours', href=req.href.hours(), accesskey='H'))
+               tag.a(_("Hours"), href=req.href.hours(), accesskey='H'))
 
 
     ### methods for ITemplateProvider
@@ -347,7 +342,7 @@ class TracHoursPlugin(Component):
 
 
     def format_date(self, date):
-        return datetime.datetime.fromtimestamp(date).strftime(self.date_format)
+        return datetime.fromtimestamp(date).strftime(self.date_format)
 
     ### methods for the query interface
 
@@ -504,7 +499,7 @@ class TracHoursPlugin(Component):
                       req.args.get('page'), 
                       max)
         if rm_est_hours: # if not in the columns, remove estimatedhours
-            cols.pop()
+            cols.pop()                 
 
         return self.display_html(req, query)
 
@@ -560,7 +555,7 @@ class TracHoursPlugin(Component):
                 cols = [cols]
             base += '&' + "&".join("col=%s" % col for col in cols if not col in query.cols)
 
-        now = datetime.datetime.now()
+        now = datetime.now()
         if 'from_day' in args:
             base += '&from_year=%s&from_month=%s&from_day=%s&to_year=%s&to_month=%s&to_day=%s' % (
                 args.get('from_year', now.year),
@@ -575,23 +570,16 @@ class TracHoursPlugin(Component):
 
     def display_html(self, req, query):
         """returns the HTML according to a query for /hours view"""
-
-        # variables
-        now = datetime.datetime.now()
         db = self.env.get_db_cnx()
-
-        # add head matter to the display
-        add_stylesheet(req, 'common/css/report.css')
-        add_script(req, 'common/js/query.js')
 
         # The most recent query is stored in the user session;
         orig_list = None
-        orig_time = datetime.datetime.now(utc)
+        orig_time = datetime.now(utc)
         query_time = int(req.session.get('query_time', 0))
-        query_time = datetime.datetime.fromtimestamp(query_time, utc)
+        query_time = datetime.fromtimestamp(query_time, utc)
         query_constraints = unicode(query.constraints)
         if query_constraints != req.session.get('query_constraints') \
-                or query_time < orig_time - datetime.timedelta(hours=1):
+                or query_time < orig_time - timedelta(hours=1):
             tickets = query.execute(req, db)
             # New or outdated query, (re-)initialize session vars
             req.session['query_constraints'] = query_constraints
@@ -619,7 +607,6 @@ class TracHoursPlugin(Component):
         req.session['query_time'] = to_timestamp(orig_time)
         req.session['query_tickets'] = ' '.join([str(t['id'])
                                                  for t in tickets])
-
 
         # data dictionary for genshi
         data = {}
@@ -655,7 +642,7 @@ class TracHoursPlugin(Component):
             cols = query.get_columns() + self.get_default_columns()
         data['col'] = cols
 
-
+        now = datetime.now()
         # get the date range for the query
         if 'from_year' in req.args:
             from_date = get_date(req.args['from_year'], 
@@ -663,30 +650,18 @@ class TracHoursPlugin(Component):
                                  req.args.get('from_day'))
 
         else:
-            from_date = datetime.datetime(now.year, now.month, now.day)
-            from_date = from_date - datetime.timedelta(days=7) # 1 week ago, by default
+            from_date = datetime(now.year, now.month, now.day)
+            from_date = from_date - timedelta(days=7) # 1 week ago, by default
 
         if 'to_year' in req.args:
             to_date = get_date(req.args['to_year'], 
-                                 req.args.get('to_month'),
-                                 req.args.get('to_day'),
-                                 end_of_day=True)
+                               req.args.get('to_month'),
+                               req.args.get('to_day'),
+                               end_of_day=True)
         else:
             to_date = now
         
-        data['prev_week'] = from_date - datetime.timedelta(days=7)
-        args = dict(req.args)
-        args['from_year'] = data['prev_week'].year
-        args['from_month'] = data['prev_week'].month
-        args['from_day'] = data['prev_week'].day
-        args['to_year'] = from_date.year
-        args['to_month'] = from_date.month
-        args['to_day'] = from_date.day
-
-        data['prev_url'] = self.get_href(query, args,
-                                        context.href, 
-                                        )
-
+        data['prev_week'] = from_date - timedelta(days=7)
         data['months'] = [ (i, calendar.month_name[i]) for i in range(1,13) ]        
         data['years'] = range(now.year, now.year - 10, -1)
         data['days'] = range(1, 32)
@@ -835,14 +810,46 @@ class TracHoursPlugin(Component):
         # add rss link
         rss_href = req.href(req.path_info, format='rss')
         add_link(req, 'alternate', rss_href, _('RSS Feed'),
-                 'application/rss+xml', 'rss')        
+                 'application/rss+xml', 'rss')
 
         # add csv link
         add_link(req, 'alternate', req.href(req.path_info, format='csv', **req.args), 'CSV', 'text/csv', 'csv')
+                
+        # add navigation of weeks
+        prev_args = dict(req.args)        
+        next_args = dict(req.args)
+                
+        prev_args['from_year'] = (from_date - timedelta(days=7)).year
+        prev_args['from_month'] = (from_date - timedelta(days=7)).month
+        prev_args['from_day'] = (from_date - timedelta(days=7)).day
+        prev_args['to_year'] = from_date.year
+        prev_args['to_month'] = from_date.month
+        prev_args['to_day'] = from_date.day        
+        
+        next_args['from_year'] = to_date.year
+        next_args['from_month'] = to_date.month
+        next_args['from_day'] = to_date.day
+        next_args['to_year'] = (to_date + timedelta(days=7)).year
+        next_args['to_month'] = (to_date + timedelta(days=7)).month
+        next_args['to_day'] = (to_date + timedelta(days=7)).day
+        
+        add_link(req, 'prev', self.get_href(query, prev_args, context.href), _('Prev Week'))
+        add_link(req, 'next', self.get_href(query, next_args, context.href), _('Next Week'))                                            
+        prevnext_nav(req, _('Prev Week'), _('Next Week'))
+        
+        add_ctxtnav(req, 'Cross-Project Hours', req.href.hours('multiproject'))
+        add_ctxtnav(req, 'Hours by User', req.href.hours('user', from_day=from_date.day, 
+                                                                 from_month=from_date.month, 
+                                                                 from_year=from_date.year, 
+                                                                 to_day=to_date.year, 
+                                                                 to_month=to_date.month, 
+                                                                 to_year=to_date.year))
+        add_ctxtnav(req, 'Saved Queries', req.href.hours('query/list'))
+        
+        add_stylesheet(req, 'common/css/report.css')
+        add_script(req, 'common/js/query.js')
         
         return ('hours_timeline.html', data, 'text/html')
-
-    ###
                           
     def process_ticket(self, req):
         """process a request to /hours/<ticket number>"""
@@ -859,7 +866,7 @@ class TracHoursPlugin(Component):
                 return self.edit_ticket_hours(req, ticket)            
 
         # XXX abstract date stuff as this is used multiple places
-        now = datetime.datetime.now()
+        now = datetime.now()
         months = [ (i, calendar.month_name[i], i == now.month) for i in range(1,13) ]
         years = range(now.year, now.year - 10, -1)
         days= [ (i, i == now.day) for i in range(1, 32) ]
@@ -960,7 +967,7 @@ class TracHoursPlugin(Component):
 
             # the 'GMT' business is wrong
             # maybe use py2rssgen a la bitsyblog?
-            item['date'] = datetime.datetime.fromtimestamp(float('%s' % record['time_started'])).strftime('%a, %d %b %Y %T GMT')
+            item['date'] = datetime.fromtimestamp(float('%s' % record['time_started'])).strftime('%a, %d %b %Y %T GMT')
 
             # could add these links to the template
             item['guid'] = '%s#%s' % (link, record['id'])
@@ -1017,7 +1024,7 @@ class TracHoursPlugin(Component):
         req.perm.require('TICKET_ADD_HOURS')
 
         # 
-        now = datetime.datetime.now()
+        now = datetime.now()
         logged_in_user = req.authname
         worker = req.args.get('worker', logged_in_user)
         if not worker == logged_in_user:
@@ -1026,8 +1033,8 @@ class TracHoursPlugin(Component):
         # when the work was done
         if 'year' in req.args: # assume month and day are provided
 
-            started = datetime.datetime(*map(int, [req.args[i] for i in 'year', 'month', 'day']))
-            if started == datetime.datetime(now.year, now.month, now.day):
+            started = datetime(*map(int, [req.args[i] for i in 'year', 'month', 'day']))
+            if started == datetime(now.year, now.month, now.day):
                 # assumes entries made for today should be ordered
                 # as they are entered
                 started = now
