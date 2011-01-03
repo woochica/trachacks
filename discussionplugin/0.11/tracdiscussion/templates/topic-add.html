@@ -78,8 +78,19 @@
             </div>
 
             <div py:if="discussion.authemail" class="subscribe">
-              <input py:if="req.args.subscribe" type="checkbox" id="subscribe" name="subscribe" checked="yes" value="1">Subscribe to topic.</input>
-              <input py:if="not req.args.subscribe" type="checkbox" id="subscribe" name="subscribe" value="0">Subscribe to topic.</input><br/>
+              <label for="subscribe">
+                <input py:if="req.args.subscribe" type="checkbox" id="subscribe" name="subscribe" checked="yes" value="1"/>
+                <input py:if="not req.args.subscribe" type="checkbox" id="subscribe" name="subscribe" value="0"/>
+                Subscribe to topic.
+              </label><br/>
+            </div>
+
+            <div py:if="'DISCUSSION_MODERATE' in perm and discussion.moderator" class="discussion_important">
+              <label for="important">
+                <input py:if="req.args.important" type="checkbox" id="important" name="important" checked="yes" value="1"/>
+                <input py:if="not req.args.important" type="checkbox" id="important" name="important" value="0"/>
+                Make topic important (listed at the top).
+              </label><br/>
             </div>
 
             <div class="buttons">

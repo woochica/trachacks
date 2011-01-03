@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
   name = 'TracDiscussion',
-  version = '0.7',
+  version = '0.8',
   packages = ['tracdiscussion', 'tracdiscussion.db'],
   package_data = {'tracdiscussion' : ['templates/*.html', 'templates/*.txt',
     'templates/*.rss', 'htdocs/css/*.css', 'htdocs/*.png']},
@@ -21,7 +21,7 @@ setup(
   install_requires = ['Trac'],
   extras_require = {'SpamFilter' : ['TracSpamFilter']},
   keywords = 'trac discussion e-mail',
-  author = 'Radek Bartoň, Alec Thomas',
+  author = 'Radek Bartoň',
   author_email = 'blackhex@post.cz',
   url = 'http://trac-hacks.org/wiki/DiscussionPlugin',
   description = 'Discussion forum plugin for Trac',

@@ -148,7 +148,10 @@ class DiscussionApi(Component):
     # ILegacyAttachmentPolicyDelegate methods.
 
     def check_attachment_permission(self, action, username, resource, perm):
-        return perm.has_permission('DISCUSSION_ATTACH')
+        if resource.parent.realm == 'discussion':
+            if action in ['ATTACHMENT_VIEW', 'ATTACHMENT_CREATE',
+              'ATTACHMENT_DELETE']:
+                return 'DISCUSSION_ATTACH' in perm(resource.parent)
 
     # IResourceManager methods.
 
@@ -208,9 +211,9 @@ class DiscussionApi(Component):
         # Get database access.
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()
-            
+
         type, id = resource.id.split('/')
-       
+
         # Check if forum exists.
         if type == 'forum':
             return self.get_forum(context, id) != None
@@ -287,9 +290,10 @@ class DiscussionApi(Component):
         add_script(context.req, 'common/js/trac.js')
         add_script(context.req, 'common/js/search.js')
         add_script(context.req, 'common/js/wikitoolbar.js')
+        add_script(context.req, 'discussion/js/discussion.js')
 
         # Determine template name.
-        self._get_template(context, actions)
+        context.template = self._get_template(context, actions)
 
         # Return request template and data.
         self.log.debug('template: %s data: %s' % (context.template,
@@ -397,6 +401,8 @@ class DiscussionApi(Component):
                         return ['wiki-message-list']
                     else:
                         return ['message-post-edit']
+                elif action == 'edit-attribute':
+                    return ['message-edit-attribute']
                 elif action == 'delete':
                     return ['message-delete']
                 elif action == 'set-display':
@@ -422,6 +428,8 @@ class DiscussionApi(Component):
                         return ['message-list']
                     else:
                         return ['message-post-edit']
+                elif action == 'edit-attribute':
+                    return ['message-edit-attribute']
                 elif action == 'delete':
                     return ['message-delete']
                 elif action == 'set-display':
@@ -448,6 +456,8 @@ class DiscussionApi(Component):
                         return ['wiki-message-list']
                     else:
                         return ['topic-post-edit']
+                elif action == 'edit-attribute':
+                    return ['topic-edit-attribute']
                 elif action == 'set-display':
                     return ['topic-set-display', 'wiki-message-list']
                 elif action == 'subscriptions-post-add':
@@ -479,6 +489,8 @@ class DiscussionApi(Component):
                         return ['message-list']
                     else:
                         return ['topic-post-edit']
+                elif action == 'edit-attribute':
+                    return ['topic-edit-attribute']
                 elif action == 'delete':
                     return ['topic-delete']
                 elif action == 'move':
@@ -501,6 +513,8 @@ class DiscussionApi(Component):
             if context.realm == 'discussion-admin':
                 if action == 'post-edit':
                     return ['forum-post-edit']
+                elif action == 'edit-attribute':
+                    return ['forum-edit-attribute']
                 else:
                     return ['admin-forum-list']
             elif context.realm == 'discussion-wiki':
@@ -533,6 +547,8 @@ class DiscussionApi(Component):
                     return ['forum-post-add']
                 elif action == 'post-edit':
                     return ['group-post-edit']
+                elif action == 'edit-attribute':
+                    return ['group-edit-attribute']
                 elif action == 'delete':
                     return ['forums-delete']
                 else:
@@ -567,9 +583,9 @@ class DiscussionApi(Component):
 
     def _get_template(self, context, actions):
         if context.format == 'rss':
-            context.template = actions[-1].replace('-rss', '') + '.rss'
+            return actions[-1].replace('-rss', '') + '.rss'
         else:
-            context.template = actions[-1] + '.html'
+            return actions[-1] + '.html'
 
     def _do_actions(self, context, actions):
         for action in actions:
@@ -880,7 +896,7 @@ class DiscussionApi(Component):
                 context.visited_forums[context.forum['id']] = to_timestamp(
                   datetime.now(utc))
 
-                # Get form values
+                # Get form values.
                 order = context.req.args.get('order') or self.topic_sort
                 if context.req.args.has_key('desc'):
                     desc = context.req.args.get('desc') == '1'
@@ -892,7 +908,7 @@ class DiscussionApi(Component):
                 display = context.req.session.get('topic-list-display') or \
                   self.default_topic_display
 
-                # Get topics of current page.
+                # Get topics of the current page.
                 topics_count = self.get_topics_count(context,
                   context.forum['id'])
                 topics = self.get_topics(context, context.forum['id'], order,
@@ -901,7 +917,7 @@ class DiscussionApi(Component):
                 paginator = self._get_paginator(context, page,
                   self.topics_per_page, topics_count)
 
-                # Display topics.
+                # Display the topics.
                 context.data['order'] = order
                 context.data['desc'] = desc
                 context.data['display'] = display
@@ -1005,6 +1021,48 @@ class DiscussionApi(Component):
 
                 # Redirect request to prevent re-submit.
                 context.redirect_url = (context.req.path_info, '#topic')
+
+            elif action == 'topic-edit-attribute':
+                # Check general topic editing permission.
+                context.req.perm.assert_permission('DISCUSSION_APPEND')
+                if not context.moderator and (context.topic['author'] !=
+                  context.req.authname):
+                    raise PermissionError("Topic edit")
+
+                # Get form values.
+                if not context.req.args.has_key('name') and \
+                  context.req.args.has_key('value'):
+                    raise TracError("Missing request arguments.")
+                name = context.req.args.get('name')
+                value = context.req.args.get('value')
+                topic = {}
+                if name == 'important':
+                    # Important flag is implemented as integer priority.
+                    context.req.perm.assert_permission('DISCUSSION_MODERATE')
+                    self.log.debug(value)
+                    topic['priority'] = 1 if value in ('true', 'yes', True) \
+                      else 0;
+                elif name in ('id', 'time'):
+                    # Attributes that can change only administrator.
+                    context.req.perm.assert_permission('DISCUSSION_ADMIN')
+                    topic[name] = value;
+                elif name in ('forum', 'author', 'subscribers', 'status',
+                  'priority'):
+                    # Attributes that can change modearator.
+                    context.req.perm.assert_permission('DISCUSSION_MODERATE')
+                    if not context.moderator:
+                        raise PermissionError("Topic editing")
+                    topic[name] = value;
+                else:
+                    # Attributes that can change owner of the topic or moderator.
+                    context.req.perm.assert_permission('DISCUSSION_APPEND')
+                    if not context.moderator or (context.topic['author'] !=
+                      context.req.authname):
+                        raise PermissionError("Topic editing")
+                    topic[name] = value;
+
+                # Update the attribute value.
+                self.edit_topic(context, context.topic['id'], topic)
 
             elif action == 'topic-move':
                 context.req.perm.assert_permission('DISCUSSION_MODERATE')
@@ -1354,8 +1412,9 @@ class DiscussionApi(Component):
 
     def get_topic(self, context, id):
         # Get topic by ID.
-        topic = self._get_item(context, 'topic', ('id', 'forum', 'subject',
-          'time', 'author', 'subscribers', 'body'), 'id = %s', (id,))
+        topic = self._get_item(context, 'topic', ('id', 'forum', 'time',
+          'author', 'subscribers', 'subject', 'body', 'status', 'priority'),
+          'id = %s', (id,))
 
         # Unpack list of subscribers.
         if topic:
@@ -1365,8 +1424,9 @@ class DiscussionApi(Component):
 
     def get_topic_by_time(self, context, time):
         # Get topic by time of creation.
-        topic = self._get_item(context, 'topic', ('id', 'forum', 'subject',
-          'time', 'author', 'subscribers', 'body'), 'time = %s', (time,))
+        topic = self._get_item(context, 'topic', ('id', 'forum', 'time',
+          'author', 'subscribers', 'subject', 'body', 'status', 'priority'),
+          'time = %s', (time,))
 
         # Unpack list of subscribers.
         if topic:
@@ -1376,8 +1436,9 @@ class DiscussionApi(Component):
 
     def get_topic_by_subject(self, context, subject):
         # Get topic by subject.
-        topic = self._get_item(context, 'topic', ('id', 'forum', 'subject',
-          'time', 'author', 'subscribers', 'body'), 'subject = %s', (subject,))
+        topic = self._get_item(context, 'topic', ('id', 'forum', 'time',
+          'author', 'subscribers', 'subject', 'body', 'status', 'priority'),
+          'subject = %s', (subject,))
 
         # Unpack list of subscribers.
         if topic:
@@ -1611,38 +1672,49 @@ class DiscussionApi(Component):
                return int(row[0])
             return 0
 
-        if not order_by in ('replies', 'lastreply',):
+        # Prepere SQL query.
+        if not order_by in ('replies', 'lastreply'):
             order_by = 't.' + order_by
         if with_body:
-            columns = ('id', 'forum', 'time', 'subject', 'body', 'author',
-              'replies', 'lastreply')
+            columns = ('id', 'forum', 'time', 'author', 'subscribers',
+              'subject', 'body', 'status', 'priority', 'replies', 'lastreply')
         else:
-            columns = ('id', 'forum', 'time', 'subject', 'author', 'replies',
-              'lastreply')
+            columns = ('id', 'forum', 'time', 'author', 'subscribers',
+              'subject', 'status', 'priority', 'replies', 'lastreply')
         sql_values = {'with_body' : 't.body, ' if with_body else '',
-          'forum_id' : to_unicode(forum_id),
-          'order_by' : 'ORDER BY ' + order_by + (' ASC', ' DESC')[bool(desc)]
-            if order_by else '',
-          'limit' : 'LIMIT ' + to_unicode(limit) if limit else '',
-          'offset' : 'OFFSET ' + to_unicode(offset) if offset else ''}
-        sql = ("SELECT t.id, t.forum, t.time, t.subject, %(with_body)s"
-                 "t.author, m.replies, m.lastreply "
+          'order_by' : 'ORDER BY priority DESC' + (", " + order_by + (' ASC',
+          ' DESC')[bool(desc)] if order_by else ''),
+          'limit' : 'LIMIT %s' if limit else '',
+          'offset' : 'OFFSET %s' if offset else ''}
+        sql = ("SELECT t.id, t.forum, t.time, t.author, t.subscribers, "
+                 "t.subject %(with_body)s, t.status, t.priority, m.replies, "
+                 "m.lastreply "
                "FROM topic t "
                "LEFT JOIN "
                  "(SELECT COUNT(id) AS replies, MAX(time) AS lastreply, topic "
                  "FROM message "
                  "GROUP BY topic) m "
                "ON t.id = m.topic "
-               "WHERE t.forum = %(forum_id)s "
+               "WHERE t.forum = %%s "
                "%(order_by)s "
                "%(limit)s "
                "%(offset)s" % (sql_values))
-        self.env.log.debug(sql)
-        context.cursor.execute(sql)
+        values = [forum_id]
+        if limit:
+            values.append(limit)
+        if offset:
+            values.append(offset)
+        values = tuple(values)
 
-        # Convert certain topic attributes.
+        # Execute the query.
+        self.env.log.debug(sql % values)
+        context.cursor.execute(sql, values)
+
+        # Convert result to dictionaries.
+        self.log.debug(columns)
         topics = []
         for row in context.cursor:
+            self.log.debug(row)
             row = dict(zip(columns, row))
             topics.append(row)
 
@@ -1650,6 +1722,7 @@ class DiscussionApi(Component):
         for topic in topics:
             topic['new_replies'] = _get_new_replies_count(context, topic['id'])
 
+        self.log.debug(topics)
         return topics
 
     def get_messages(self, context, topic_id, order_by = 'time', desc = False):
@@ -1861,5 +1934,5 @@ class DiscussionApi(Component):
 
 # Formats wiki text to signle line HTML but removes all links.
 def format_to_oneliner_no_links(env, context, content):
-    stream = HTML(format_to_oneliner(env, context, content))
+    stream = HTML(format_to_oneliner(env, context, to_unicode(content)))
     return Markup(stream | Transformer('//a').unwrap())

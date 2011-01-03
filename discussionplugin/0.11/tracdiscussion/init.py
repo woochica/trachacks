@@ -8,7 +8,7 @@ from trac.db import *
 from trac.env import IEnvironmentSetupParticipant
 
 # Last discussion database shcema version.
-last_db_version = 4
+last_db_version = 5
 
 class DiscussionInit(Component):
     """

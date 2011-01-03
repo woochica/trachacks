@@ -1,4 +1,25 @@
-/* General styles. */
+/* Overriding and extending Trac styles. */
+table.listing tbody tr.important.even
+{
+  background: #fcb;
+}
+
+table.listing tbody tr.important.odd
+{
+  background: #fba;
+}
+
+table.listing tbody tr.important:hover
+{
+  background: #fa9 !important;
+}
+
+/* General plugin styles. */
+div.discussion#content
+{
+  margin: 15px 15px 0;
+}
+
 .discussion table
 {
   text-align: left;
@@ -77,9 +98,14 @@
 /* Message list. */
 .message-list div.topic
 {
-  margin: 2em;
+  margin: 2em 0em;
   margin-bottom: 0em;
   border: 1px solid #d7d7d7;
+}
+
+.message-list input
+{
+  vertical-align: bottom;
 }
 
 .message-list div.topic.new
@@ -110,8 +136,7 @@
 .message-list div.replies
 {
   display: block;
-  margin: 2em;
-  margin-top: 0em;
+  margin: 0em;
   padding: 0.25em;
   border-right: 1px solid #d7d7d7;
   border-left: 1px solid #d7d7d7;
@@ -217,19 +242,9 @@
   margin-left: 0em;
 }
 
-.message-list div.subscriptions
-{
-  padding-left: 1em;
-}
-
-.message-list div.subscriptions form
+.message-list div.subscriptions form, .message-list div.moderation form
 {
   display: inline-block;
-}
-
-.message-list div.attachments
-{
-  padding-left: 1em;
 }
 
 /* Timeline. */

@@ -13,7 +13,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr py:for="line, topic in enumerate(discussion.topics)" class="${line % 2 and 'even' or 'odd'}">
+        <tr py:for="line, topic in enumerate(discussion.topics)" class="${'even' if line % 2 else 'odd'} ${'important' if topic.priority > 0 else ''}">
           <td class="id">
             <div class="id">
               <a href="${href.discussion('topic', topic.id)}">
@@ -39,8 +39,8 @@
             <div class="lastreply">
               <a href="${href.discussion('topic', topic.id)}">
                 <span>
-                ${topic.lastreply and format_datetime(topic.lastreply) or 'no replies'}<br/>
-                ${topic.lastreply and pretty_timedelta(topic.lastreply) + ' ago' or ''}
+                ${format_datetime(topic.lastreply) if topic.lastreply else 'no replies'}<br/>
+                ${pretty_timedelta(topic.lastreply) + ' ago' if topic.lastreply else ''}
                 </span>
               </a>
             </div>
