@@ -138,9 +138,12 @@ hiderule.apply = function(input, spec){
         var th = td.siblings('th')
                    .find('label[for=field-'+target+']')
                    .parents('th:first');
-        td.addClass('dynfields-hide dynfields-'+trigger);
-        th.addClass('dynfields-hide dynfields-'+trigger);
-            
+        var cls = 'dynfields-hide dynfields-'+trigger;
+        if (spec.link_to_show.toLowerCase() == 'true')
+            cls += ' dynfields-link';
+        td.addClass(cls);
+        th.addClass(cls);
+        
         // let's also clear out the field's value to avoid confusion
         if (spec.clear_on_hide.toLowerCase() == 'true'){
             if (field.val().length)
@@ -162,6 +165,18 @@ hiderule.complete = function(input, spec){
     // update layout (see layout.js)
     inputs_layout.update(spec);
     header_layout.update(spec);
+    
+    // add link to show hidden fields (that are enabled to be shown)
+    if (spec.link_to_show.toLowerCase() == 'true'){
+        if (jQuery('#dynfields-show-link').length == 0){
+            var html = '<tr id="dynfields-show-link">' +
+            '  <th></th><td></td><th></th><td>' +
+            '    <a href="#no3" onClick="jQuery(\'.dynfields-link\').show(); jQuery(\'#dynfields-show-link\').remove();">Show hidden fields</a>' +
+            '  </td>' +
+            '</tr>';
+            jQuery('.dynfields-link:last').parents('tbody:first').append(html);
+        }
+    }
 };
 
 // query

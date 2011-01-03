@@ -4,7 +4,7 @@
 from setuptools import setup
 
 PACKAGE = 'TracDynamicFields'
-VERSION = '1.2.0'
+VERSION = '1.2.1'
 
 setup(
     name=PACKAGE, version=VERSION,
@@ -12,7 +12,8 @@ setup(
     author="Rob Guttman", author_email="guttman@alum.mit.edu",
     license='GPL', url='http://trac-hacks.org/wiki/DynamicFieldsPlugin',
     packages = ['dynfields'],
-    package_data = {'dynfields':['templates/*.html','htdocs/*.js']},
+    package_data = {'dynfields':['templates/*.html',
+                                 'htdocs/*.js','htdocs/*.css']},
     entry_points = {'trac.plugins':['dynfields.web_ui = dynfields.web_ui',
                                     'dynfields.rules = dynfields.rules']}
 )

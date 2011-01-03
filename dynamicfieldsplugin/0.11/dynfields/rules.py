@@ -205,6 +205,7 @@ class HideRule(Component, Rule):
             spec['trigger_value'] = 'invalid_value'
             spec['hide_always'] = 'true'
         spec['clear_on_hide'] = opts.get(target+'.clear_on_hide','true')
+        spec['link_to_show'] = opts.get(target+'.link_to_show','false')
     
     def update_pref(self, req, trigger, target, key, opts, pref):
         spec = {'trigger':trigger,'target':target}

@@ -36,8 +36,9 @@ class DynamicFieldsModule(Component):
           or (req.path_info.startswith('/query') \
            and req.perm.has_permission('REPORT_VIEW')):
             add_script(req, '/dynfields/dynfields.js')
-            add_script(req, 'dynfields/layout.js')
             add_script(req, 'dynfields/rules.js')
+            add_script(req, 'dynfields/layout.js')
+            add_stylesheet(req, 'dynfields/layout.css')
         return template, data, content_type
     
     # IRequestHandler methods
