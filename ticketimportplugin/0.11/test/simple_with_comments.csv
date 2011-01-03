@@ -1,0 +1,4 @@
+summary,owner,anyotherfield,priority,component,mycustomfield,comment
+sum1,me again modified,anything,mypriority,again again mycomp again,mycustomfield1 modified,comment with some modified fields
+sum2,you,somethingelse,yourpriority,yourcomp,customfield2,comment with no field modified
+newticket,you,,yourpriority,yourcomp,customfield2, comment for a new ticket

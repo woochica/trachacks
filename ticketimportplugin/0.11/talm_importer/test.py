@@ -286,10 +286,18 @@ class ImporterTestCase(unittest.TestCase):
         env = self._setup()
         self._do_test_diffs(env, 'non_ascii_ticket_4458.csv', self._test_preview)
 
+    def test_ticket_6220(self):
+        env = self._setup()
+        db = env.get_db_cnx()
+        cursor = db.cursor()
+        _exec(cursor, "insert into session values (%s,1,1174683538)", ["newuser2"])
+        db.commit()
+        self._do_test_diffs(env, 'multiple_new_users_ticket_6220.csv', self._test_preview)
+
 
 def suite():
-    return unittest.makeSuite(ImporterTestCase, 'test')
-    #return unittest.TestSuite( [ ImporterTestCase('test_import_7') ])
+    #return unittest.makeSuite(ImporterTestCase, 'test')
+    return unittest.TestSuite( [ ImporterTestCase('test_ticket_6220') ])
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')

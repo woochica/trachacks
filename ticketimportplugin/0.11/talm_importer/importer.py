@@ -287,7 +287,7 @@ class ImportModule(Component):
             cursor = db.cursor()
             cursor.execute(sql)
             for result in cursor:
-                list += [ result ]
+                list += result
 
             
         existingusers = []
@@ -295,7 +295,7 @@ class ImportModule(Component):
         add_sql_result(db, "SELECT DISTINCT reporter FROM ticket", existingusers)
         add_sql_result(db, "SELECT DISTINCT owner FROM ticket", existingusers)
         add_sql_result(db, "SELECT DISTINCT owner FROM component", existingusers)
-
+        add_sql_result(db, "SELECT DISTINCT sid FROM session", existingusers)
         newusers = []
 
         duplicate_summaries = []
