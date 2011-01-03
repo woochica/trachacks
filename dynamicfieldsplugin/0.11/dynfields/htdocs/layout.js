@@ -116,7 +116,7 @@ inputs_layout.move_field = function(field, i){
                 old_th.before(td);
             }
         } else {
-            var old_td = tr.find('td:last');
+            var old_td = tr.find('td:has(:input):last');
             if (old_td.get(0) != td.get(0)){ // don't move self to self
                 old_td.after(td);
                 old_td.after(th);
