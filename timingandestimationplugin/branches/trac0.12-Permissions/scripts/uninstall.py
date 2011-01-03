@@ -38,6 +38,7 @@ class Script ( object ):
         self.find_and_remove_ticket_change()
         self.find_and_remove_reports()
         self.remove_configuration()
+        self.remove_system_keys()
         print "Done uninstalling"
         
 
@@ -132,13 +133,27 @@ class Script ( object ):
     def remove_configuration(self):
         if not p_bool('Remove T&E configuration (y/n)'): return
         for k,v in self.env.config.options('ticket-custom'):
-            if any(re.search('(?i)'+k,f) for f in field_list):
+            if any(re.search('(?i)'+f,k) for f in field_list):
                 self.env.config.remove('ticket-custom',k)
         for k,v in self.env.config.options('field settings'):
             self.env.config.remove('field settings',k)
+
+        for k,v in self.env.config.options('components'):
+            if re.search('timingandestimationplugin',k):
+                self.env.config.remove('components', k);
+
+        for k,v in self.env.config.options('field settings'):
+            self.env.config.remove('field settings',k)
+
         if re.search('InternalTicketsPolicy', 
                       self.env.config.get('trac','permission_policies','')):
             print "Please remove InternalTicketsPolicy from your trac.ini [trac] permission_policies"
+        self.env.config.save()
+
+    def remove_system_keys(self):
+        if not p_bool('Remove T&E system keys'): return 
+        self.execute("DELETE FROM system WHERE name in "
+                     "('TimingAndEstimationPlugin_Db_Version','T&E-statuses');")
 
 
 
