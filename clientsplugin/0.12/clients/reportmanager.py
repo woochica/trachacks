@@ -74,7 +74,7 @@ class CustomReportManager:
       currentversion = 0
     
     if (not id) or (currentversion < version):
-      @self.env_with_transaction()
+      @self.env.with_transaction()
       def do_add_report(db):
         cursor = db.cursor()
         try:
