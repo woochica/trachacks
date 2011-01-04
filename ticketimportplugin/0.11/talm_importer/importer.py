@@ -101,15 +101,18 @@ class ImportModule(Component):
 
     # Internal methods
 
+    def _datetime_format(self):
+        return str(self.config.get('importer', 'datetime_format', '%x')) # default is Locale's appropriate date representation
+
     def _do_preview(self, uploadedfile, sheet, req):
-        filereader = get_reader(uploadedfile, sheet)
+        filereader = get_reader(uploadedfile, sheet, self._datetime_format())
         try:
             return self._process(filereader, get_reporter_id(req), PreviewProcessor(self.env, req))
         finally:
             filereader.close()
 
     def _do_import(self, uploadedfile, sheet, req, uploadedfilename, tickettime):
-        filereader = get_reader(uploadedfile, sheet)
+        filereader = get_reader(uploadedfile, sheet, self._datetime_format())
         try:
             try:
                 return self._process(filereader, get_reporter_id(req), ImportProcessor(self.env, req, uploadedfilename, tickettime))

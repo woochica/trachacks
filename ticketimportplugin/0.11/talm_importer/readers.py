@@ -5,15 +5,16 @@
 #
 
 import csv
+import datetime
 
 from trac.core import TracError
 
 
-def get_reader(filename, sheet_index = 1):
+def get_reader(filename, sheet_index, datetime_format):
     # NOTE THAT the sheet index is 1-based !
     # KISS - keep it simple: if it can be opened as XLS, do, otherwise try as CSV.
     try:
-        return XLSReader(filename, sheet_index)
+        return XLSReader(filename, sheet_index, datetime_format)
     except ImportError:
         try:
             return CSVReader(filename)
@@ -21,7 +22,7 @@ def get_reader(filename, sheet_index = 1):
             raise TracError('XLS reading is not configured, and this file is not a valid CSV file: unable to read file.')
     except IndexError:
             raise TracError('The sheet index (' + str(sheet_index) + ') does not seem to correspond to an existing sheet in the spreadsheet')
-    except:
+    except Exception, e:
         try:
             return CSVReader(filename)
         except:
@@ -49,16 +50,18 @@ class CSVReader(object):
         self.file.close()
 
 class XLSReader(object):
-    def __init__(self, filename, sheet_index = 1):
+    def __init__(self, filename, sheet_index, datetime_format):
         import xlrd
-        book = xlrd.open_workbook(filename)
-        self.sheetcount = book.nsheets
-        self.sh = book.sheet_by_index(sheet_index - 1)
+        self.book = xlrd.open_workbook(filename)
+        self.sheetcount = self.book.nsheets
+        self.sh = self.book.sheet_by_index(sheet_index - 1)
+        self._datetime_format = datetime_format
 
     def get_sheet_count():
         return self.sheetcount
         
     def readers(self):
+        import xlrd
         # TODO: do something with sh.name. Probably add it as a column. 
         # TODO: read the other sheets. What if they don't have the same columns ?
         header = []
@@ -72,7 +75,10 @@ class XLSReader(object):
             row = {}
             i = 0
             for cx in range(self.sh.ncols):
-                row[header[i]] = self.sh.cell_value(rowx=rx, colx=cx)
+                row[header[i]] = self.sh.cell_value(rx, cx)
+                if self.sh.cell_type(rx, cx) == xlrd.XL_CELL_DATE:
+                    row[header[i]] = datetime.datetime(*xlrd.xldate_as_tuple(row[header[i]], self.book.datemode)).strftime(self._datetime_format)
+
                 i += 1
             data.append(row)
 

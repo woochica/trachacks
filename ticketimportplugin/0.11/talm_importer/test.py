@@ -313,10 +313,20 @@ class ImporterTestCase(unittest.TestCase):
         # preview after import... should now show any "modified-"
         self._do_test_diffs(env, 'simple_for_7205.csv', self._test_preview) 
 
+    def test_dates_ticket_8357(self):
+        env = self._setup('\n[ticket-custom]\nmydate = text\nproject.label = My Date\nmydatetime = text\nproject.label = My DateTime\n\n')
+        self._do_test_diffs(env, 'datetimes.xls', self._test_preview) 
+        self._do_test_diffs(env, 'datetimes.xls', self._test_import)
+
+    def test_dates_formatted_ticket_8357(self):
+        env = self._setup('\n[ticket-custom]\nmydate = text\nproject.label = My Date\nmydatetime = text\nproject.label = My DateTime\n[importer]\ndatetime_format=%x %X\n')
+        self._do_test_diffs(env, 'datetimes_formatted.xls', self._test_preview) 
+        self._do_test_diffs(env, 'datetimes_formatted.xls', self._test_import)
+
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
-    #return unittest.TestSuite( [ ImporterTestCase('test_import_1') ])
+    #return unittest.TestSuite( [ ImporterTestCase('test_dates_formatted_ticket_8357') ])
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')
