@@ -294,9 +294,13 @@ class ImporterTestCase(unittest.TestCase):
         db.commit()
         self._do_test_diffs(env, 'multiple_new_users_ticket_6220.csv', self._test_preview)
 
-    def test_ticket_7679(self):
+    def test_status_ticket_7679(self):
         env = self._setup()
         self._do_test_diffs(env, 'importing_status_ticket_7679.csv', self._test_import)
+
+    def test_project_ticket_7679(self):
+        env = self._setup('\n[ticket-custom]\nproject = text\nproject.label = My Project\n\n')
+        self._do_test_diffs(env, 'importing_project_ticket_7679.csv', self._test_import)
 
 
 def suite():
