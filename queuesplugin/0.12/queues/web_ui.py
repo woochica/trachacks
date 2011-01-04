@@ -165,20 +165,23 @@ class QueuesAjaxModule(Component):
             db = self.env.get_db_cnx()
             cursor = db.cursor()
             for id,(field,new_pos) in changes.items():
-                if self.audit == 'log':
-                    cursor.execute("""
-                        SELECT value from ticket_custom
-                         WHERE name=%s AND ticket=%s
-                        """, (field,id))
-                    result = cursor.fetchone()
-                    if result:
-                        old_pos = result[0]
-                    else:
-                        old_pos = '(none)'
                 cursor.execute("""
-                    UPDATE ticket_custom SET value=%s
+                    SELECT value from ticket_custom
                      WHERE name=%s AND ticket=%s
-                    """, (new_pos,field,id))
+                    """, (field,id))
+                result = cursor.fetchone()
+                if result:
+                    old_pos = result[0]
+                    cursor.execute("""
+                        UPDATE ticket_custom SET value=%s
+                         WHERE name=%s AND ticket=%s
+                        """, (new_pos,field,id))
+                else:
+                    old_pos = '(none)'
+                    cursor.execute("""
+                        INSERT INTO ticket_custom (ticket,name,value)
+                         VALUES (%s,%s,%s)
+                        """, (id,field,new_pos))
                 if self.audit == 'log':
                     self.log.info("%s reordered ticket #%s's %s from %s to %s" \
                         % (author,id,field,old_pos,new_pos))
