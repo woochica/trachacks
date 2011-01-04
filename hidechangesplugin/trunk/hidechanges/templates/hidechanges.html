@@ -1,0 +1,42 @@
+<script type="text/javascript" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+
+var toggle = function(){
+    var button = jQuery('#hidechangesbutton');
+    if (button.attr('op') == 'show'){
+        jQuery('.hidechange').show();
+        button.attr('op', 'hide');
+        button.attr('value', '${data.hide_button_name}');
+    } else {
+        jQuery('.hidechange').hide();
+        button.attr('op', 'show');
+        button.attr('value', '${data.show_button_name}');
+    }
+    
+    // scroll to #comment:n anchor if visible
+    if (location.hash){
+        var anchor = jQuery(location.hash.replace(':','\\:'));
+        var form = anchor.parent().parent();
+        if (form.is(':visible')){
+            jQuery(document).scrollTop(anchor.offset().top);
+        }
+    }
+}
+
+jQuery(document).ready(function($){
+    // add class to all changes to hide
+    jQuery('div.change').each(function(){
+        <py:for each="rule in data.rules">
+		var changediv = jQuery(this);
+        if (${rule}){
+            changediv.addClass('hidechange');
+        }
+        </py:for>
+    });
+    
+    // add button to toggle hiding commentless changes
+    jQuery('#changelog').append('<input type="button" id="hidechangesbutton" onClick="toggle();"/>');
+    toggle();
+});
+</script>
