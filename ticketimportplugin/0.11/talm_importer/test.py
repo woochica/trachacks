@@ -302,6 +302,11 @@ class ImporterTestCase(unittest.TestCase):
         env = self._setup('\n[ticket-custom]\nproject = text\nproject.label = My Project\n\n')
         self._do_test_diffs(env, 'importing_project_ticket_7679.csv', self._test_import)
 
+    def test_status_ticket_7658(self):
+        env = self._setup()
+        self._do_test_diffs(env, 'importing_status_ticket_7658.csv', self._test_preview) 
+        self._do_test_diffs(env, 'importing_status_ticket_7658.csv', self._test_import)
+
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')

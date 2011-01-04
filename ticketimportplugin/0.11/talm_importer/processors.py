@@ -122,8 +122,9 @@ class ImportProcessor(object):
 
     def process_new_lookups(self, newvalues):
         for field, names in newvalues.iteritems():
-            if names == []:
+            if field == 'status':
                 continue
+            
             if field == 'component':
                 class CurrentLookupEnum(model.Component):
                     pass
@@ -262,12 +263,20 @@ class PreviewProcessor(object):
 
             
     def process_new_lookups(self, newvalues):
-        self.message += ' * Some lookup values are not found and will be added to the possible list of values:\n\n'
-        self.message += "   ||'''field'''||'''New values'''||\n"
-        for field, values in newvalues.iteritems():
-            if values == []:
-                continue
-            self.message += "   ||" + field.capitalize() + "||" + ', '.join(values) + "||\n"
+        if 'status' in newvalues:
+            if len(newvalues['status']) > 1:
+                msg = ' * Some values for the "Status" field do not exist: %s. They will be imported, but will result in invalid status.\n\n'
+            else:
+                msg = ' * A value for the "Status" field does not exist: %s. It will be imported, but will result in an invalid status.\n\n'
+                
+            self.message += (msg % ','.join(newvalues['status']))
+            del newvalues['status']
+            
+        if newvalues:
+            self.message += ' * Some lookup values are not found and will be added to the possible list of values:\n\n'
+            self.message += "   ||'''field'''||'''New values'''||\n"
+            for field, values in newvalues.iteritems():                
+                self.message += "   ||" + field.capitalize() + "||" + ', '.join(values) + "||\n"
             
 
     def process_new_users(self, newusers):

@@ -354,10 +354,14 @@ class ImportModule(Component):
             row_idx += 1
 
 
-        if newvalues != {} and reduce(lambda x, y: x == [] and y or x, newvalues.values()) != []:
+        for name in list(newvalues):
+            if not newvalues[name]:
+                del newvalues[name]
+
+        if newvalues:
             processor.process_new_lookups(newvalues)
             
-        if newusers != []:
+        if newusers:
             processor.process_new_users(newusers)
 
         return processor.end_process(row_idx)
