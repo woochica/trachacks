@@ -295,7 +295,7 @@ class ImportModule(Component):
         add_sql_result(db, "SELECT DISTINCT reporter FROM ticket", existingusers)
         add_sql_result(db, "SELECT DISTINCT owner FROM ticket", existingusers)
         add_sql_result(db, "SELECT DISTINCT owner FROM component", existingusers)
-        add_sql_result(db, "SELECT DISTINCT sid FROM session", existingusers)
+        add_sql_result(db, "SELECT DISTINCT sid FROM session WHERE authenticated > 0", existingusers)
         newusers = []
 
         duplicate_summaries = []
@@ -304,7 +304,7 @@ class ImportModule(Component):
 
         for row in rows:
             if idcolumn:
-                ticket_id = row[idcolumn]
+                ticket_id = int(row[idcolumn]) if row[idcolumn] else 0
                 if ticket_id:
                     self._check_ticket(db, ticket_id)
                 else:
