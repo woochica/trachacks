@@ -1,0 +1,166 @@
+<script type="text/javascript" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+
+var setup = function(paging){
+    // add op classes to each group of tickets
+	jQuery('.listing.tickets').attr('op', 'reorder');
+    jQuery('#content').children('h2').each(function(i){
+		grouped = true;
+        var h2 = jQuery(this);
+        var name = jQuery.trim(h2.text().split('\n')[1]).toLowerCase();
+        var op = 'reorder';
+      <py:for each="group,op in data.groups.items()">
+        if (name == '${group}'){
+            op = '${op}';
+        }
+      </py:for>
+        var tbl = h2.next().attr('op', op);
+      
+        // add simple collapsibility
+        if (op != 'reorder'){
+            jQuery(this).click(function(){
+                tbl.toggle("blind");
+            });
+        }
+    });
+    
+    // make the table rows sortable (but only if on first page)
+    if (jQuery('div.paging').length == 0){
+        var fixHelper = function(e, ui){
+            ui.children().each(function(){
+                $(this).width($(this).width());
+            });
+            return ui;
+        };
+        jQuery("table.listing.tickets[@op!=ignore] tbody").sortable({
+            connectWith: jQuery("table.listing.tickets[@op!=ignore] tbody"),
+            helper: fixHelper,
+            update: update,
+            cancel: 'select,option,input' // needed for GridModify in chrome/safari
+        }).disableSelection();
+    }
+    
+    // disable column sorting (screws up queue ordering)
+    jQuery("table.listing.tickets thead tr th a").each(function(i,a){
+        var href = jQuery(a)
+        href.parent().text(href.text());
+        href.remove();
+    })
+    
+    // add a "warning" to the page
+    var html = '<div class="system-message" id="warning">'
+              +'  This is a special <strong>queue</strong> report.'
+              +'  Drag and drop tickets to their desired position.'
+              +'  Select report arguments to the right.'
+              +'</div>';
+    jQuery('#ctxtnav').after(html);
+    
+    // move report arguments (prefs) up to the notice
+    jQuery('#warning').append(jQuery('#prefs').parent());
+    
+    //move description to after h1 title
+    jQuery('#content h1:first').after(jQuery('#description'));
+    
+    // remove top pagination (if present)
+    jQuery('h2.report-result').each(function(){
+        var txt = jQuery.trim(jQuery(this).text()).substr(0,9);
+        if (txt == 'Results ('){
+            jQuery(this).remove();
+        }
+    });
+    jQuery('div.paging:first').remove();
+    
+    // do an update
+    update();
+}
+
+var update = function(){
+    // change positions and submit to backend
+    var changes = {};
+    var cells = [];
+    if (change(changes, cells) != 0) {
+        submit(changes, cells);
+    }
+}
+
+var change = function(changes, cells){
+    var len = 0;
+    jQuery('.listing.tickets').each(function(){
+        var op = jQuery(this).attr('op');
+        jQuery('tbody tr', this).each(function(i){
+            // check for re-ordered items
+            if (op == 'reorder'){
+                var cell = jQuery(this).find('td:first'); // use 1st cell of row
+                var num = i+1;
+                if (${data.max_position} != 0){
+                    num = Math.min(num,${data.max_position});
+                }
+                var new_pos = pad(num, ${data.pad_length});
+                if (jQuery.trim(cell.text()) != new_pos){
+                    // returned args look like: id5=position1 amp id23=position2
+                    var id = cell.siblings('.ticket').text().replace(/[^\d]/g,'');
+                    var field = cell.attr('class').replace(/ /g,'').toLowerCase();
+                    changes['id'+id] = field+new_pos;
+                    len += 1;
+                    
+                    // update cell to new position
+                    cells.push(cell.text(new_pos));
+                };
+            }
+            
+            // check for items that were cleared
+            if (op == 'clear'){
+                var cell = jQuery(this).find('td:first'); // use 1st cell of row
+                if (cell.text().replace(/[^\d]/g,'') != ''){
+                    var id = cell.siblings('.ticket').text().replace(/[^\d]/g,'');
+                    changes['id'+id] = cell.attr('class'); // empty position
+                    len += 1;
+                    
+                    // clear the cell's position
+                    cells.push(cell.text(''));
+                }
+            }
+        });
+    });
+    return len;
+}
+
+var pad = function(num, len, char){
+    // convert a num to a string and pad/prefix with char up to len
+    var s = num + "";
+    char = (char) ? char : "0";
+    var lt = unescape("%3C"); // hack around genshi finickiness
+    while (eval("s.length "+lt+" len")){
+        s = char + s;
+    }
+    return s;
+}
+
+var submit = function(changes,cells){
+    var url = jQuery('link[rel="search"]').attr('href').replace(/\/search/, '');
+    url += '/queuesajax/update';
+    jQuery.ajax({
+        // Although semantically this should be POST, Trac makes that tricky
+        'type': "GET",
+        'url': url,
+        'data': changes,
+        'success': function(){
+            jQuery(cells).each(function(i,cell){
+                cell.show("highlight",{color:'green'},1000);
+            });
+        },
+        'error': function(r,status){
+            jQuery(cells).each(function(i,cell){
+                cell.css('backgroundColor','red');
+            });
+            alert("Error detected on db save:\n\n"+r.responseText);
+            window.location.reload();
+        }
+    });
+}
+
+jQuery(document).ready(function(){
+    setup();
+});
+</script>
