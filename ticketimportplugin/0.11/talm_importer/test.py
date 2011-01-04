@@ -294,10 +294,14 @@ class ImporterTestCase(unittest.TestCase):
         db.commit()
         self._do_test_diffs(env, 'multiple_new_users_ticket_6220.csv', self._test_preview)
 
+    def test_ticket_7679(self):
+        env = self._setup()
+        self._do_test_diffs(env, 'importing_status_ticket_7679.csv', self._test_import)
+
 
 def suite():
-    #return unittest.makeSuite(ImporterTestCase, 'test')
-    return unittest.TestSuite( [ ImporterTestCase('test_ticket_6220') ])
+    return unittest.makeSuite(ImporterTestCase, 'test')
+    #return unittest.TestSuite( [ ImporterTestCase('test_ticket_7679') ])
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')

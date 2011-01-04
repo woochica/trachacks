@@ -30,9 +30,10 @@ class ImportProcessor(object):
         self.missingemptyfields = None
         self.missingdefaultedfields = None
         self.computedfields = None
+        self.importedfields = None
 
     def start(self, importedfields, reconciliate_by_owner_also, has_comments):
-        pass
+        self.lowercaseimportedfields = [f.lower() for f in importedfields]
 
     def process_missing_fields(self, missingfields, missingemptyfields, missingdefaultedfields, computedfields):
         self.missingemptyfields = missingemptyfields
@@ -100,8 +101,8 @@ class ImportProcessor(object):
                 self.ticket['description'] = self.ticket['description'] + "\n[[BR]][[BR]]\n''Batch insert from file " + self.filename + ":''\n" + self.comment
 
             for f in self.computedfields:
-                 if self.computedfields[f] != None and self.computedfields[f]['set']:
-                     self.ticket[f] = self.computedfields[f]['value']
+                if f not in self.lowercaseimportedfields and self.computedfields[f] != None and self.computedfields[f]['set']:
+                    self.ticket[f] = self.computedfields[f]['value']
 
             
             self.added += 1
