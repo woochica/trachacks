@@ -233,7 +233,7 @@ class PreviewProcessor(object):
             
 
     def process_cell(self, column, cell):
-        if self.ticket and not (self.ticket.values.has_key(column) and self.ticket[column] == cell):
+        if self.ticket and not (self.ticket.values.has_key(column.lower()) and self.ticket[column.lower()] == cell):
             self.cells.append( { 'col': column, 'value': cell, 'style': 'modified-' + column })
             self.modified = True
         else:

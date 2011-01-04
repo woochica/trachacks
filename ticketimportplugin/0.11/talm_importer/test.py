@@ -307,10 +307,16 @@ class ImporterTestCase(unittest.TestCase):
         self._do_test_diffs(env, 'importing_status_ticket_7658.csv', self._test_preview) 
         self._do_test_diffs(env, 'importing_status_ticket_7658.csv', self._test_import)
 
+    def test_preview_ticket_7205(self):
+        env = self._setup()
+        self._do_test_diffs(env, 'simple_for_7205.csv', self._test_import)
+        # preview after import... should now show any "modified-"
+        self._do_test_diffs(env, 'simple_for_7205.csv', self._test_preview) 
+
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
-    #return unittest.TestSuite( [ ImporterTestCase('test_ticket_7679') ])
+    #return unittest.TestSuite( [ ImporterTestCase('test_import_1') ])
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')
