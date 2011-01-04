@@ -8,7 +8,7 @@ VERSION = '0.1.0'
 
 setup(
     name=PACKAGE, version=VERSION,
-    description='Manages named queues via drag-and-drop',
+    description='Manages ticket queues via drag-and-drop',
     author="Rob Guttman", author_email="guttman@alum.mit.edu",
     license='GPL', url='http://trac-hacks.org/wiki/TracQueuesPlugin',
     packages = ['queues'],
