@@ -235,11 +235,15 @@ class TracUserHours(Component):
         Note that if template processing should not occur, this method can
         simply send the response itself and not return anything.
         """
-        add_stylesheet(req, 'common/css/report.css')
-        add_link(req, 'alternate', req.href(req.path_info, format='csv'), 'CSV', 'text/csv', 'csv')
         if req.path_info.rstrip('/') == '/hours/user':
             return self.users(req)
         user = req.path_info.split('/hours/user/', 1)[-1]
+        
+        id = req.args.get('id')
+                
+        add_stylesheet(req, 'common/css/report.css')
+        add_link(req, 'alternate', req.href(req.path_info, format='csv'), 'CSV', 'text/csv', 'csv')
+        
         return self.user(req, user)
 
     ### internal methods
@@ -334,6 +338,10 @@ class TracUserHours(Component):
                 writer.writerow([worker, hours])
             
             req.send(buffer.getvalue(), "text/csv")
+            
+        #add_link(req, 'prev', self.get_href(query, args, context.href), _('Prev Week'))
+        #add_link(req, 'next', self.get_href(query, args, context.href), _('Next Week'))                                            
+        #prevnext_nav(req, _('Prev Week'), _('Next Week'))            
 
         return 'hours_users.html', data, "text/html"
 
@@ -382,6 +390,5 @@ class TracUserHours(Component):
                 writer.writerow([ticket, hours])
             
             req.send(buffer.getvalue(), "text/csv")
-
 
         return 'hours_user.html', data, "text/html"
