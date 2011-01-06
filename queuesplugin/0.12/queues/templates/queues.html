@@ -34,8 +34,8 @@ var setup = function(paging){
             });
             return ui;
         };
-        jQuery("table.listing.tickets[@op!=ignore] tbody").sortable({
-            connectWith: jQuery("table.listing.tickets[@op!=ignore] tbody"),
+        jQuery("table.listing.tickets[op!=ignore] tbody").sortable({
+            connectWith: jQuery("table.listing.tickets[op!=ignore] tbody"),
             helper: fixHelper,
             update: update,
             cancel: 'select,option,input' // needed for GridModify in chrome/safari
