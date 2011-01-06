@@ -41,14 +41,6 @@
       </h1>
 
       <!-- links to other display formats -->
-      <a py:if="multiproject" href="hours/multiproject">
-	Cross-project hours
-      </a>
-
-      <a py:if="user_hours" href="${req.href('/hours/user', from_day=from_date.day, from_month=from_date.month, from_year=from_date.year, to_day=to_date.year, to_month=to_date.month, to_year=to_date.year)}">
-        User hours
-      </a>
-
 
       <div id="description">
         <p>${query_description}</p>
@@ -105,9 +97,6 @@
 	    ${user}
 	  </option>
 	</select>
-
-	<a href="${prev_url}">Week of ${to_unicode(prev_week.strftime('%B %d, %Y'))}
-	  - ${to_unicode(from_date.strftime('%B %d, %Y'))}</a>
 
         <!-- filters -->
         <fieldset id="filters">
@@ -251,7 +240,7 @@
           </py:for>
           <label><input type="checkbox" name="row" value="comments"
                         checked="${any([(value == 'comments') for value in row]) and 'checked' or None}" />
-            work comments</label>
+            Work Comments</label>
           
         </p><!-- Show under each result -->
 
@@ -265,18 +254,6 @@
         </div><!-- update -->
 
         <hr/>
-
-        <!-- query storage -->
-        <a href="${req.href('hours/query/list')}">List saved queries</a>
-        <py:if test="can_add_hours">
-          <input type="submit" name="save_query" value="${_('Save query')}"
-                 title="${edit and _('Save updated query in report {%(id)s}',
-                        id=report_resource.id) or
-                        _('Create new report from current query')}" />
-
-          <input py:if="query_id" type="submit" name="edit_query" value="${_('Edit query')}" />
-          <input py:if="query_id" type="submit" name="delete_query" value="${_('Delete query')}" />
-        </py:if><!-- query storage -->
 
       </form>
 
@@ -303,6 +280,17 @@
       </script>
 
       <xi:include href="hours_query_results.html" />
+      
+      <!-- query storage -->
+      <py:if test="can_add_hours">
+        <input type="submit" name="save_query" value="${_('Save query')}"
+               title="${edit and _('Save updated query in report {%(id)s}',
+                        id=report_resource.id) or
+                        _('Create new report from current query')}" />
+        <input py:if="query_id" type="submit" name="edit_query" value="${_('Edit query')}" />
+        <input py:if="query_id" type="submit" name="delete_query" value="${_('Delete query')}" />
+      </py:if>
+      <!-- query storage -->      
 
       <div class="buttons" py:with="edit = report_resource and 'REPORT_MODIFY' in perm(report_resource);
                                     new = 'REPORT_CREATE' in perm;
@@ -321,7 +309,7 @@
                    value="${_('Delete query')}" />
           </div>
         </form>
-      </div>
+      </div>           
 
       <div id="help">
         <strong>Note:</strong> See <a href="${href.wiki('TracQuery')}">TracQuery</a>
