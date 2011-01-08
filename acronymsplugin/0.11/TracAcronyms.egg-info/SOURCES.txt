@@ -1,8 +1,0 @@
-setup.py
-TracAcronyms.egg-info/PKG-INFO
-TracAcronyms.egg-info/SOURCES.txt
-TracAcronyms.egg-info/dependency_links.txt
-TracAcronyms.egg-info/entry_points.txt
-TracAcronyms.egg-info/top_level.txt
-tracacronyms/__init__.py
-tracacronyms/acronyms.py
