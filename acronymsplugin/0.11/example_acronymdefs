@@ -1,0 +1,6 @@
+||'''Acronym'''||'''Description'''            ||'''URL'''                    ||'''ID URL'''                      ||
+||RFC          ||Request For Comment $1       ||http://www.ietf.org/rfc.html ||http://www.ietf.org/rfc/rfc$1.txt ||
+||RFC2316      ||Request For Comment 2316     ||Rfc2316                      ||                                  ||
+||URL          ||Universal Resource Locater   ||http://www.w3.org/Addressing ||   || 
+||SCSI         ||Small Computer Interface Bus ||                             ||   ||
+||ROM          ||Read-Only Memory             ||                             ||   ||

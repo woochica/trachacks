@@ -37,12 +37,13 @@ class Acronyms(Component):
         keys = reversed(sorted(self.acronyms.keys(), key=lambda a: len(a)))
         self.compiled_acronyms = \
             r'''\b(?P<acronym>%s)(?P<acronymselector>\w*)\b''' % '|'.join(keys) 
+        print self.compiled_acronyms
 
         # XXX Very ugly, but only "reliable" way?
         from trac.wiki.parser import WikiParser
         WikiParser(self.env)._compiled_rules = None
 
-    def _acronym_formatter(self, f, n, match):
+    def _acronym_formatter(self, formatter, ns, match):
         acronym = match.group('acronym')
         selector = match.group('acronymselector')
         if acronym not in self.acronyms:
