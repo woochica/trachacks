@@ -13,20 +13,21 @@ class Acronyms(Component):
 
     acronyms = {}
     compiled_acronyms = None
-    valid_acronym = re.compile('^\S+$', re.UNICODE)
+    valid_acronym = re.compile(r'^\S+$', re.UNICODE)
     acronym_page = property(lambda self: self.env.config.get('acronym', 'page',
                                                              'AcronymDefinitions'))
     def __init__(self):
         self._update_acronyms()
 
     def _update_acronyms(self):
-        page = WikiPage(self.env, self.acronym_page)
         self.env.log.debug('Updating acronym database')
+        page = WikiPage(self.env, self.acronym_page)
         self.acronyms = {}
         if not page.exists:
             return
         for line in page.text.splitlines():
-            if line.startswith('||') and line.endswith('||') and line[3] != "'":
+            line = line.rstrip()
+            if line.startswith('||') and line.endswith('||') and line[3] != "'":               
                 try:
                     a, d, u, s = ([i.strip() for i in line.strip('||').split('||')] + ['', ''])[0:4]
                     assert self.valid_acronym.match(a), "Invalid acronym %s" % a
