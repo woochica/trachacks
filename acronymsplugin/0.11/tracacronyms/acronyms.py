@@ -36,8 +36,7 @@ class Acronyms(Component):
                     self.env.log.warning("Invalid acronym line: %s (%s)", line, e)
         keys = reversed(sorted(self.acronyms.keys(), key=lambda a: len(a)))
         self.compiled_acronyms = \
-            r'''\b(?P<acronym>%s)(?P<acronymselector>\w*)\b''' % '|'.join(keys) 
-        print self.compiled_acronyms
+            r'''\b(?P<acronym>%s)(?P<acronymselector>\w*)\b''' % '|'.join(keys)
 
         # XXX Very ugly, but only "reliable" way?
         from trac.wiki.parser import WikiParser
