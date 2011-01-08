@@ -60,7 +60,7 @@ class Acronyms(Component):
         
         # if parsing the href string doesn't return a protocol string,
         # assume the href string is a reference to a wiki page        
-        if not urlparse(href).scheme:
+        if href and not urlparse(href).scheme:
             href = self.env.href.wiki(href)            
                 
         if href:
