@@ -70,7 +70,7 @@ class AbstractPasswordFileStore(Component):
             for line in fd:
                 if line.startswith(prefix):
                     return self._check_userline(user, password,
-                                                line[len(prefix):].rstrip('\n'))
+                        line[len(prefix):].rstrip('\n\r'))
         finally:
             fd.close()
         return False
