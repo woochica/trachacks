@@ -56,7 +56,7 @@ class TracMetrixSetupParticipant(Component):
             path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin')
             try:
                 os.makedirs(path)
-            except OSError as e:
+            except OSError, e:
                 print "Upgrade failed: Could not create path %s" % path
                 print e
         
