@@ -18,7 +18,6 @@ from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
 
 
-
 class TracMetrixSetupParticipant(Component):
     """
         This class make sure that the enviroment has what TracMetrix Needs.
@@ -53,17 +52,13 @@ class TracMetrixSetupParticipant(Component):
         performed the upgrades they need without an error being raised.
         """
         
-        def p(s):
-            print s
-            return True
-        print "TracMetrix Plugin needs an upgrade"
-        
         if self._cachefolder_needs_upgrade():
-            p("creating cache folder")
             path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin')
-            os.makedirs(path) 
-        print "Done Upgrading"
-        
+            try:
+                os.makedirs(path)
+            except OSError as e:
+                print "Upgrade failed: Could not create path %s" % path
+                print e
         
     def _cachefolder_needs_upgrade(self):
         # Check if the cache exist
