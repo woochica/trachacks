@@ -19,10 +19,16 @@ class ScrippetMacro(WikiMacroBase):
     """
     implements(IWikiMacroProvider, ITemplateProvider)
 
-    def expand_macro(self, formatter, name, content):
+    def expand_macro(self, formatter, name, content, args):
+#        self.log.debug("ARGUMENTS: %s " % args)
+#        self.log.debug("INITIAL CONTENT: %s" % content)
         req = formatter.req
-        
-        add_stylesheet(req, 'scrippets/css/scrippets.css')
+        if args != {} and args != None and args['mode'] == "full":
+            add_stylesheet(req, 'scrippets/css/scrippets-full.css')
+            mode = "-full"
+        else:
+            add_stylesheet(req, 'scrippets/css/scrippets.css')
+            mode = ""
         #Sceneheaders must start with INT, EXT, or EST
         sceneheader_re = re.compile('\n(INT|EXT|[^a-zA-Z0-9]EST)([\.\-\s]+?)(.+?)([A-Za-z0-9\)\s\.])\n')
         #Transitions
@@ -44,11 +50,15 @@ class ScrippetMacro(WikiMacroBase):
         italic_re = re.compile('(\*{1}|\[i\])(.*?)(\*{1}|\[\/i\])')
         underline_re = re.compile('(_|\[u\])(.*?)(_|\[\/u\])')
         
-        theoutput = tag.div(class_="scrippet")
+        theoutput = tag.div(class_="scrippet"+mode)
         _content = content
+#        self.log.debug("BEFORE SCENE: %s" % _content)
         _content = sceneheader_re.sub(r'<p class="sceneheader">\1\2\3\4</p>' + "\n",_content)
+#        self.log.debug("BEFORE TRANSITIONS: %s" % _content)
         _content = transitions_re.sub(r'<p class="transition">\1</p>' + "\n",_content)
+#        self.log.debug("BEFORE ACTIONS: %s" % _content)
         _content = actions_re.sub("\n" + r'<p class="action">\2</p>' + "\n",_content)
+#        self.log.debug("BEFORE CHARACTERS: %s" % _content)
         _content = characters_re.sub(r'<p class="character">\1</p>',_content)
         _content = parentheticals_re.sub(r'<p class="parenthetical">\1</p>',_content)
         _content = dialog_re.sub(r'\1' + "\n" + r'<p class="dialogue">\2</p>' + "\n",_content)
@@ -59,9 +69,12 @@ class ScrippetMacro(WikiMacroBase):
         _content = underline_re.sub(r'<u>\2</u>',_content)
         para_re = re.compile(r'<p class="(?P<_class>.*?)">(?P<_body>.*?)</p>')
         for line in _content.splitlines():
+#            self.log.debug("LINE: %s" % line)
             m = para_re.search(line)
             if m != None:
-                theoutput += tag.p(m.group('_body'),class_=m.group('_class'))
+#                self.log.debug("BODY: %s" % m.group('_body'))
+#                self.log.debug("CLASS: %s" % m.group('_class'))
+                theoutput += tag.p(m.group('_body'),class_=m.group('_class')+mode)
         return theoutput
     
     ## ITemplateProvider
