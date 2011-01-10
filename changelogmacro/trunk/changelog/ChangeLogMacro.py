@@ -2,11 +2,11 @@ import re
 
 from trac.core import *
 from trac.mimeview import *
-from trac.util import escape, Markup
+from trac.util import escape, format_datetime, Markup
+from trac.web.chrome import web_context
 from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import format_to_html, wiki_to_oneliner
-from trac.util import format_datetime
 from StringIO import StringIO
 
 class ChangeLogMacro(WikiMacroBase):
@@ -71,7 +71,9 @@ class ChangeLogMacro(WikiMacroBase):
         if 'CHANGESET_VIEW' not in req.perm:
             return Markup('<i>Changelog not available</i>')
 
-        context = Context.from_request(req)
+        context = web_context(req)
+        context.href is req.href
+        context.href is req.href
         args, kwargs = parse_args(content)
         args += [None, None]
         path, limit, rev = args[:3]
