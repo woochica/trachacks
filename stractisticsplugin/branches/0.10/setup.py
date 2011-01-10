@@ -41,5 +41,6 @@ setup(name=PACKAGE,
                                      'htdocs/javascript/*.js',
                                      'htdocs/swf/*.swf',
                                      'htdocs/javascript/js-ofc-library/*.js',
-                                     'htdocs/javascript/js-ofc-library/charts/*.js']} 
+                                     'htdocs/javascript/js-ofc-library/charts/*.js']},
+      install_requires=['ClearSilver>=0.10.2']
 )
