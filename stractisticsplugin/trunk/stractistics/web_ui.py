@@ -21,14 +21,13 @@
 #
 
 from trac.core import *
-from trac.web.chrome import INavigationContributor, ITemplateProvider, \
-        add_stylesheet, add_script, add_ctxtnav
 from trac.config import Option
-from trac.web.api import IRequestHandler
-from trac.web.chrome import Chrome
+from trac.perm import IPermissionRequestor
 from trac.util import escape
 from trac.util.html import html, Markup
-from trac.perm import IPermissionRequestor
+from trac.web.api import IRequestHandler
+from trac.web.chrome import add_ctxtnav, add_script, add_stylesheet, \
+                            INavigationContributor, ITemplateProvider        
 import trac
 
 import simplejson

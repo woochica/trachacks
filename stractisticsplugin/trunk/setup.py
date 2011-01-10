@@ -22,24 +22,26 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'STractistics'
-VERSION = '0.4.2'
+VERSION = '0.5.0b'
 
 setup(name=PACKAGE, 
       version=VERSION, 
       author='Daniel Gómez Brito, Manuel Jesús Recena Soto',
       author_email='dagomez@gmv.com, mjrecena@gmv.com',
+      maintainer='Ryan J Ollos',
+      maintainer_email='ryano@physiosonics.com',
       license='GNU GPL v2',
       description='Allows to gauge project activity at a glance. Developed by GMV Soluciones Globales Internet',
-      url='http://www.gmv.com',
+      url='http://trac-hacks.org/wiki/StractisticsPlugin',
       packages = ['stractistics'], 
       entry_points={'trac.plugins': [\
                     '%s = stractistics' % PACKAGE,  
                                      ]}, 
-      package_data={'stractistics': ['templates/*.cs',
+      package_data={'stractistics': ['templates/*.html',
                                      'htdocs/css/*.css',
                                      'htdocs/images/*.jpg',
-                                     'htdocs/javascript/*.js',
                                      'htdocs/swf/*.swf',
+                                     'htdocs/javascript/*.js',                                     
                                      'htdocs/javascript/js-ofc-library/*.js',
                                      'htdocs/javascript/js-ofc-library/charts/*.js']} 
 )
