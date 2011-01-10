@@ -74,7 +74,10 @@ class ScrippetMacro(WikiMacroBase):
             if m != None:
 #                self.log.debug("BODY: %s" % m.group('_body'))
 #                self.log.debug("CLASS: %s" % m.group('_class'))
-                theoutput += tag.p(m.group('_body'),class_=m.group('_class')+mode)
+                if "FADE IN" in m.group('_body') and m.group('_class') == "transition":
+                    theoutput += tag.p(m.group('_body'),class_="action"+mode)
+                else:
+                    theoutput += tag.p(m.group('_body'),class_=m.group('_class')+mode)
         return theoutput
     
     ## ITemplateProvider
