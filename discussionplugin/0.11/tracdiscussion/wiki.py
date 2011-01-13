@@ -118,7 +118,7 @@ class DiscussionWiki(Component):
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()
 
-        # Get API object.
+        # Get API component.
         api = self.env[DiscussionApi]
 
         # Get topic by subject

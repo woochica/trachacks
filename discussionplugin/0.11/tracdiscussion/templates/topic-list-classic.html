@@ -3,6 +3,7 @@
     <table py:when="len(discussion.topics)" class="listing">
       <thead>
         <tr>
+          <th class="status">Status</th>
           ${sortable_th(discussion.order, discussion.desc, 'id', 'ID', href.discussion('forum', discussion.forum.id))}
           ${sortable_th(discussion.order, discussion.desc, 'subject', 'Subject', href.discussion('forum', discussion.forum.id))}
           ${sortable_th(discussion.order, discussion.desc, 'author', 'Author', href.discussion('forum', discussion.forum.id))}
@@ -14,6 +15,11 @@
       </thead>
       <tbody>
         <tr py:for="line, topic in enumerate(discussion.topics)" class="${'even' if line % 2 else 'odd'} ${'important' if topic.priority > 0 else ''}">
+          <td class="status">
+            <div class="status">
+              ${display_topic_status(topic.status)}
+            </div>
+          </td>
           <td class="id">
             <div class="id">
               <a href="${href.discussion('topic', topic.id)}">

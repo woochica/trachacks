@@ -44,6 +44,32 @@
                       'topic', discussion.topic.id)}', 'important',
                       this.checked);"/>
                   Make topic important (listed at the top).
+                </label><br/>
+                <label for="solved">
+                  <input py:if="discussion.topic.status.solved" type="checkbox"
+                    name="solved" id="solved" checked="yes" value="1"
+                    onchange="change_attribute('${href.discussion('ajax',
+                      'topic', discussion.topic.id)}', 'status.solved',
+                      this.checked);"/>
+                  <input py:if="not discussion.topic.status.solved" type="checkbox"
+                    name="solved" id="solved" value="0"
+                    onchange="change_attribute('${href.discussion('ajax',
+                      'topic', discussion.topic.id)}', 'status.solved',
+                      this.checked);"/>
+                  Solve topic.
+                </label><br/>
+                <label for="locked">
+                  <input py:if="discussion.topic.status.locked" type="checkbox"
+                    name="locked" id="locked" checked="yes" value="1"
+                    onchange="change_attribute('${href.discussion('ajax',
+                      'topic', discussion.topic.id)}', 'status.locked',
+                      this.checked);"/>
+                  <input py:if="not discussion.topic.status.locked" type="checkbox"
+                    name="locked" id="locked" value="0"
+                    onchange="change_attribute('${href.discussion('ajax',
+                      'topic', discussion.topic.id)}', 'status.locked',
+                      this.checked);"/>
+                  Lock topic.
                 </label>
                 <input type="hidden" name="discussion_action" value="edit-attribute"/>
               </div>

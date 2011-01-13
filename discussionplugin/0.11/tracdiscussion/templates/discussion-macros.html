@@ -252,4 +252,10 @@
     </li>
   </py:def>
 
+ <py:def function="display_topic_status(status)">
+   <div py:for="state in status" class="icon ${state}">
+     &nbsp;<span class="icon-text ${state}">${state}</span>
+   </div>
+ </py:def>
+
 </html>

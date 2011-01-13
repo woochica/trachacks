@@ -14,6 +14,9 @@ from trac.timeline import ITimelineEventProvider
 # Genshi imports.
 from genshi.builder import tag
 
+# Local imports.
+from tracdiscussion.api import *
+
 class DiscussionTimeline(Component):
     """
         The timeline module implements raising timeline events when
@@ -22,6 +25,7 @@ class DiscussionTimeline(Component):
     implements(ITimelineEventProvider)
 
     # ITimelineEventProvider
+
     def get_timeline_filters(self, req):
         if 'DISCUSSION_VIEW' in req.perm:
             yield ('discussion', self.config.get('discussion', 'title') +
@@ -32,7 +36,7 @@ class DiscussionTimeline(Component):
           filters))
 
         if ('discussion' in filters) and 'DISCUSSION_VIEW' in req.perm:
-            # Create context.
+            # Create request context.
             context = Context.from_request(req)
             context.realm = 'discussion-core'
 
@@ -40,33 +44,41 @@ class DiscussionTimeline(Component):
             db = self.env.get_db_cnx()
             context.cursor = db.cursor()
 
+            # Get API component.
+            api = self.env[DiscussionApi]
+
             # Add CSS styles and scripts.
             add_stylesheet(context.req, 'discussion/css/discussion.css')
 
-            # Get forum events
-            for forum in self._get_changed_forums(context, start, stop):
+            # Get forum events.
+            for forum in api.get_changed_forums(context, start, stop):
                 # Return event.
                 title = 'New forum %s created' % (forum['name'],)
-                description = tag(forum['subject'], ' - ', forum['description'])
+                description = tag(format_to_oneliner(self.env, context,
+                  forum['subject']), ' - ', format_to_oneliner(self.env,
+                  context, forum['description']))
                 ids = ('forum', forum['id'])
-                yield ('discussion', forum['time'], forum['author'], (title,
-                  description, ids))
+                yield ('discussion unsolved', to_datetime(forum['time'], utc),
+                  forum['author'], (title, description, ids))
 
-            # Get topic events
-            for topic in self._get_changed_topics(context, start, stop):
-                title = 'New topic on %s created' % (topic['forum_name'])
-                description = topic['subject']
+            # Get topic events.
+            for topic in api.get_changed_topics(context, start, stop):
+                title = 'New topic on %s created' % (topic['forum_name'],)
+                description = format_to_oneliner(self.env, context,
+                  topic['subject'])
                 ids = ('topic', topic['id'])
-                yield ('discussion', topic['time'], topic['author'], (title,
-                  description, ids))
+                yield ('discussion solved' if 'solved' in topic['status']
+                  else 'discussion unsolved', to_datetime(topic['time'], utc),
+                  topic['author'], (title, description, ids))
 
-            # Get message events
-            for message in self._get_changed_messages(context, start, stop):
-                title = 'New reply on %s created' % (message['forum_name'])
-                description = message['topic_subject']
+            # Get message events.
+            for message in api.get_changed_messages(context, start, stop):
+                title = 'New reply on %s created' % (message['forum_name'],)
+                description = format_to_oneliner(self.env, context,
+                  message['topic_subject'])
                 ids = ('message', message['id'])
-                yield ('discussion', message['time'], message['author'], (title,
-                  description, ids))
+                yield ('discussion unsolved', to_datetime(message['time'], utc),
+                  message['author'], (title, description, ids))
 
     def render_timeline_event(self, context, field, event):
         # Decompose event data.
@@ -82,68 +94,3 @@ class DiscussionTimeline(Component):
            return tag(title)
         elif field == 'description':
            return tag(description)
-
-    # Internal methods.
-
-    def _get_changed_forums(self, context, start, stop):
-        columns = ('id', 'name', 'author', 'subject', 'description', 'time')
-        sql_values = {'start' : to_timestamp(start),
-          'stop' : to_timestamp(stop)}
-        sql = ("SELECT f.id, f.name, f.author, f.subject, f.description, f.time "
-               "FROM forum f "
-               "WHERE f.time BETWEEN %(start)s AND %(stop)s" % (sql_values))
-        self.log.debug(sql)
-        context.cursor.execute(sql)
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['time'] = to_datetime(row['time'], utc)
-            row['subject'] = format_to_oneliner(self.env, context,
-              row['subject'])
-            row['description'] = format_to_oneliner(self.env, context,
-              row['description'])
-            yield row
-
-    def _get_changed_topics(self, context, start, stop):
-        columns = ('id', 'subject', 'body', 'author', 'time', 'forum',
-          'forum_name')
-        sql_values = {'start' : to_timestamp(start),
-          'stop' : to_timestamp(stop)}
-        sql = ("SELECT t.id, t.subject, t.body, t.author, t.time, t.forum, "
-                 "f.name "
-               "FROM topic t "
-               "LEFT JOIN "
-                 "(SELECT id, name "
-                 "FROM forum) f "
-               "ON t.forum = f.id "
-               "WHERE t.time BETWEEN %(start)s AND %(stop)s" % (sql_values))
-        self.log.debug(sql)
-        context.cursor.execute(sql)
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['time'] = to_datetime(row['time'], utc)
-            row['subject'] = format_to_oneliner(self.env, context,
-              row['subject'])
-            yield row
-
-    def _get_changed_messages(self, context, start, stop):
-        columns = ('id', 'author', 'time', 'forum', 'topic', 'body', 'forum_name',
-          'topic_subject')
-        sql_values = {'start' : to_timestamp(start),
-          'stop' : to_timestamp(stop)}
-        sql = ("SELECT m.id, m.author, m.time, m.forum, m.topic, m.body, "
-                 "f.name, t.subject "
-               "FROM message m, "
-                 "(SELECT id, name "
-                 "FROM forum) f, "
-                 "(SELECT id, subject "
-                 "FROM topic) t "
-               "WHERE t.id = m.topic AND f.id = m.forum AND time BETWEEN "
-               "%(start)s AND %(stop)s" % (sql_values))
-        self.log.debug(sql)
-        context.cursor.execute(sql)
-        for row in context.cursor:
-            row = dict(zip(columns, row))
-            row['time'] = to_datetime(row['time'], utc)
-            row['topic_subject'] = format_to_oneliner(self.env, context,
-              row['topic_subject'])
-            yield row

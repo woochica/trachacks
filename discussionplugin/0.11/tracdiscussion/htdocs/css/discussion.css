@@ -25,6 +25,35 @@ div.discussion#content
   text-align: left;
 }
 
+.discussion div.icon
+{
+  position:relative;
+  display: inline-block;
+  margin: 0.1em;
+  width: 12px;
+  height: 12px;
+  background-repeat: no-repeat;
+}
+
+.discussion div.icon span.icon-text
+{
+  display: none;
+}
+
+.discussion div.icon:hover span.icon-text
+{
+  display: block;
+  position: absolute;
+  padding: 0.2em 0.5em;
+  top: 1.2em;
+  left: -0.5em;
+  border: 1px solid #000;
+  color: #000;
+  background-color: #ffd;
+  text-align: center;
+  vertical-align: middle;
+}
+
 /* Forum list. */
 .forum-list tr >td
 {
@@ -80,9 +109,34 @@ div.discussion#content
   text-align: center;
 }
 
-.topic-list td.id
+.topic-list td.status, .topic-list td.id
 {
   width: 1%;
+}
+
+.topic-list td.status
+{
+  vertical-align: middle;
+}
+
+.topic-list td.status div.status
+{
+  text-align: center;
+}
+
+.topic-list td.status div.icon.unsolved
+{
+  background-image: url("../unsolved.png") !important;
+}
+
+.topic-list td.status div.icon.solved
+{
+  background-image: url("../solved.png") !important;
+}
+
+.topic-list td.status div.icon.locked
+{
+  background-image: url("../../common/lock-locked.png") !important;
 }
 
 .topic-add form.add_form
@@ -248,7 +302,12 @@ div.discussion#content
 }
 
 /* Timeline. */
-dt.discussion, dt.discussion a
+dt.discussion.solved, dt.discussion.solved a
 {
-  background-image: url(../discussion.png) !important
+  background-image: url("../solved.png") !important
+}
+
+dt.discussion.unsolved, dt.discussion.unsolved a
+{
+  background-image: url("../unsolved.png") !important
 }

@@ -748,7 +748,7 @@ class DiscussionApi(Component):
                 context.forum = self.get_forum_by_time(context, forum['time'])
 
                 # Notify change listeners.
-                self.log.debug("forum_change_listeners: %s" % (
+                self.log.debug('forum_change_listeners: %s' % (
                   self.forum_change_listeners))
                 for listener in self.forum_change_listeners:
                     listener.forum_created(context, context.forum)
@@ -977,9 +977,10 @@ class DiscussionApi(Component):
 
                 # Get inserted topic with new ID.
                 context.topic = self.get_topic_by_time(context, topic['time'])
+                self.log.debug(context.topic)
 
                 # Notify change listeners.
-                self.log.debug("topic_change_listeners: %s" % (
+                self.log.debug('topic_change_listeners: %s' % (
                   self.topic_change_listeners))
                 for listener in self.topic_change_listeners:
                     listener.topic_created(context, context.topic)
@@ -1035,33 +1036,63 @@ class DiscussionApi(Component):
                     raise TracError("Missing request arguments.")
                 name = context.req.args.get('name')
                 value = context.req.args.get('value')
-                topic = {}
+
+                # Important flag is implemented as integer priority.
                 if name == 'important':
-                    # Important flag is implemented as integer priority.
-                    context.req.perm.assert_permission('DISCUSSION_MODERATE')
-                    self.log.debug(value)
-                    topic['priority'] = 1 if value in ('true', 'yes', True) \
-                      else 0;
-                elif name in ('id', 'time'):
-                    # Attributes that can change only administrator.
+                    name = 'priority'
+                    value = 1 if value in ('true', 'yes', True) else 0;
+                self.log.debug((name, value))
+
+                # Attributes that can be changed only by administrator.
+                topic = {}
+                if name in ('id', 'time'):
                     context.req.perm.assert_permission('DISCUSSION_ADMIN')
                     topic[name] = value;
-                elif name in ('forum', 'author', 'subscribers', 'status',
-                  'priority'):
-                    # Attributes that can change modearator.
+                # Attributes that can be changed by moderator.
+                elif name in ('forum', 'author', 'subscribers', 'priority',
+                  'status.locked', 'status'):
                     context.req.perm.assert_permission('DISCUSSION_MODERATE')
                     if not context.moderator:
                         raise PermissionError("Topic editing")
-                    topic[name] = value;
-                else:
-                    # Attributes that can change owner of the topic or moderator.
+
+                    # Decode status flag to status list.
+                    if name in ('status.locked'):
+                        topic['status'] = context.topic['status'].copy()
+                        self.log.debug(topic)
+                        if value in ('true', 'yes', True):
+                           topic['status'] |= set(['locked'])
+                        else:
+                           topic['status'] -= set(['locked'])
+                    else:
+                        topic[name] = value;
+                    self.log.debug(topic)
+                # Attributes that can be changed by owner of the topic or the
+                # moderator.
+                elif name in ('subject', 'body', 'status.solved'):
                     context.req.perm.assert_permission('DISCUSSION_APPEND')
-                    if not context.moderator or (context.topic['author'] !=
+                    if not ('DISCUSSION_MODERATE' in context.req.perm and
+                      context.moderator) or (context.topic['author'] !=
                       context.req.authname):
                         raise PermissionError("Topic editing")
-                    topic[name] = value;
+
+                    # Decode status flag to status list.
+                    if name in ('status.solved'):
+                        topic['status'] = context.topic['status'].copy()
+                        self.log.debug(topic)
+                        if value in ('true', 'yes', True):
+                           topic['status'] |= set(['solved'])
+                           topic['status'] -= set(['unsolved'])
+                        else:
+                           topic['status'] |= set(['unsolved'])
+                           topic['status'] -= set(['solved'])
+                    else:
+                        topic[name] = value;
+                    self.log.debug(topic)
+                else:
+                    raise PermissionError("Topic editing")
 
                 # Update the attribute value.
+                self.log.debug(topic)
                 self.edit_topic(context, context.topic['id'], topic)
 
             elif action == 'topic-move':
@@ -1247,7 +1278,7 @@ class DiscussionApi(Component):
                   message['time'])
 
                 # Notify change listeners.
-                self.log.debug("message_change_listeners: %s" % (
+                self.log.debug('message_change_listeners: %s' % (
                   self.message_change_listeners))
                 for listener in self.message_change_listeners:
                     listener.message_created(context, context.message)
@@ -1418,7 +1449,9 @@ class DiscussionApi(Component):
 
         # Unpack list of subscribers.
         if topic:
+            self.log.debug(topic);
             topic['subscribers'] = topic['subscribers'].split()
+            topic['status'] = self._topic_status_to_list(topic['status'])
 
         return topic
 
@@ -1431,6 +1464,7 @@ class DiscussionApi(Component):
         # Unpack list of subscribers.
         if topic:
            topic['subscribers'] = topic['subscribers'].split()
+           topic['status'] = self._topic_status_to_list(topic['status'])
 
         return topic
 
@@ -1443,8 +1477,29 @@ class DiscussionApi(Component):
         # Unpack list of subscribers.
         if topic:
            topic['subscribers'] = topic['subscribers'].split()
+           topic['status'] = self._topic_status_to_list(topic['status'])
 
         return topic
+
+    def _topic_status_to_list(self, status):
+        if status == 0:
+           return set(['unsolved'])
+        status_list = set([])
+        if status & 0x01:
+           status_list.add('solved')
+        else:
+           status_list.add('unsolved')
+        if status & 0x02:
+           status_list.add('locked')
+        return status_list
+
+    def _topic_status_from_list(self, status_list):
+       status = 0
+       if 'solved' in status_list:
+           status = status | 0x01
+       if 'locked' in status_list:
+           status = status | 0x02
+       return status
 
     def get_forum(self, context, id):
         # Get forum by ID.
@@ -1619,8 +1674,8 @@ class DiscussionApi(Component):
         columns = ('id', 'name', 'author', 'time', 'moderators', 'subscribers',
           'forum_group', 'subject', 'description', 'topics', 'replies',
           'lasttopic', 'lastreply')
-        sql_values = {'order_by' : 'ORDER BY ' + order_by + (' ASC',
-          ' DESC')[bool(desc)] if order_by else ''}
+        sql_values = {'order_by' : ('ORDER BY ' + order_by + (' ASC',
+          ' DESC')[bool(desc)]) if order_by else ''}
         sql = ("SELECT f.id, f.name, f.author, f.time, f.moderators, "
                  "f.subscribers, f.forum_group, f.subject, f.description, "
                  "ta.topics, ta.replies, ta.lasttopic, ta.lastreply "
@@ -1655,6 +1710,24 @@ class DiscussionApi(Component):
 
         return forums
 
+    def get_changed_forums(self, context, start, stop, order_by = 'time', desc
+      = False):
+        columns = ('id', 'name', 'author', 'time', 'subject', 'description')
+        sql_values = {'order_by' : ('ORDER BY ' + order_by + (' ASC', ' DESC')
+          [bool(desc)]) if order_by else ''}
+        sql = ("SELECT f.id, f.name, f.author, f.time, f.subject, f.description "
+               "FROM forum f "
+               "WHERE f.time BETWEEN %%s AND %%s "
+               "%(order_by)s "% (sql_values))
+        values = (to_timestamp(start), to_timestamp(stop))
+        self.log.debug(sql % values)
+        context.cursor.execute(sql, values)
+
+        # Convert row to dictionaries.
+        for row in context.cursor:
+            row = dict(zip(columns, row))
+            yield row
+
     def get_topics(self, context, forum_id, order_by = 'time', desc = False,
       limit = 0, offset = 0, with_body = True):
 
@@ -1683,7 +1756,7 @@ class DiscussionApi(Component):
               'subject', 'status', 'priority', 'replies', 'lastreply')
         sql_values = {'with_body' : 't.body, ' if with_body else '',
           'order_by' : 'ORDER BY priority DESC' + (", " + order_by + (' ASC',
-          ' DESC')[bool(desc)] if order_by else ''),
+          ' DESC')[bool(desc)]) if order_by else '',
           'limit' : 'LIMIT %s' if limit else '',
           'offset' : 'OFFSET %s' if offset else ''}
         sql = ("SELECT t.id, t.forum, t.time, t.author, t.subscribers, "
@@ -1711,19 +1784,39 @@ class DiscussionApi(Component):
         context.cursor.execute(sql, values)
 
         # Convert result to dictionaries.
-        self.log.debug(columns)
         topics = []
         for row in context.cursor:
-            self.log.debug(row)
             row = dict(zip(columns, row))
+            row['status'] = self._topic_status_to_list(row['status'])
             topics.append(row)
 
         # Compute count of new replies.
         for topic in topics:
             topic['new_replies'] = _get_new_replies_count(context, topic['id'])
-
-        self.log.debug(topics)
         return topics
+
+    def get_changed_topics(self, context, start, stop, order_by = 'time',
+      desc = False):
+        columns = ('id', 'forum', 'forum_name', 'time', 'author', 'subject',
+          'status')
+        sql_values = {'order_by' : ('ORDER BY ' + order_by + (' ASC', ' DESC')
+          [bool(desc)]) if order_by else ''}
+        sql = ("SELECT t.id, t.forum, f.name, t.time, t.author, t.subject, "
+                 "t.status "
+               "FROM topic t "
+               "LEFT JOIN "
+                 "(SELECT id, name "
+                 "FROM forum) f "
+               "ON t.forum = f.id "
+               "WHERE t.time BETWEEN %%s AND %%s "
+               "%(order_by)s" % (sql_values))
+        values = (to_timestamp(start), to_timestamp(stop))
+        self.log.debug(sql % values)
+        context.cursor.execute(sql, values)
+        for row in context.cursor:
+            row = dict(zip(columns, row))
+            row['status'] = self._topic_status_to_list(row['status'])
+            yield row
 
     def get_messages(self, context, topic_id, order_by = 'time', desc = False):
         order_by = 'm.' + order_by
@@ -1770,6 +1863,32 @@ class DiscussionApi(Component):
           'time', 'author', 'body'), 'forum = %s', (id,), order_by, desc, limit,
           offset)
 
+    def get_changed_messages(self, context, start, stop, order_by = 'time',
+      desc = False):
+        columns = ('id', 'forum', 'forum_name', 'topic', 'topic_subject', 'time',
+          'author')
+        sql_values = {'order_by' : ('ORDER BY ' + order_by + (' ASC', ' DESC')
+          [bool(desc)]) if order_by else ''}
+        sql = ("SELECT m.id, m.forum, f.name, m.topic, t.subject, m.time, "
+                 "m.author "
+               "FROM message m "
+               "LEFT JOIN "
+                 "(SELECT id, name "
+                 "FROM forum) f "
+               "ON m.forum = f.id "
+               "LEFT JOIN "
+                 "(SELECT id, subject "
+                 "FROM topic) t "
+               "ON m.topic = t.id "
+               "WHERE time BETWEEN %%s AND %%s "
+               "%(order_by)s"% (sql_values))
+        values = (to_timestamp(start), to_timestamp(stop))
+        self.log.debug(sql % values)
+        context.cursor.execute(sql, values)
+        for row in context.cursor:
+            row = dict(zip(columns, row))
+            yield row
+
     def get_replies(self, context, id, order_by = 'time', desc = False):
         # Return replies of specified message.
         return self._get_items(context, 'message', ('id', 'replyto', 'time',
@@ -1814,6 +1933,8 @@ class DiscussionApi(Component):
 
         # Pack subscribers field.
         tmp_topic['subscribers'] = ' '.join(tmp_topic['subscribers'])
+        tmp_topic['status'] = self._topic_status_from_list(tmp_topic['status']
+          if tmp_topic.has_key('status') else [])
 
         self._add_item(context, 'topic', tmp_topic)
 
@@ -1924,6 +2045,10 @@ class DiscussionApi(Component):
         # Pack subscribers field.
         if tmp_topic.has_key('subscribers'):
             tmp_topic['subscribers'] = ' '.join(tmp_topic['subscribers'])
+
+        # Encode status field.
+        tmp_topic['status'] = self._topic_status_from_list(tmp_topic[
+          'status'])
 
         # Edit topic.
         self._edit_item(context, 'topic', id, tmp_topic)

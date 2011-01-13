@@ -11,8 +11,6 @@ tables = [
     Column('subscribers'),
     Column('subject'),
     Column('body'),
-    Column('status', type = 'integer'),
-    Column('priority', type = 'integer')
   ]
 ]
 
@@ -29,6 +27,11 @@ def do_upgrade(env, cursor):
     for table in tables:
         for statement in db_connector.to_sql(table):
             cursor.execute(statement)
+
+    # Add two columns that uses constraints.
+    # TODO: No other way how to do it.
+    cursor.execute("ALTER TABLE topic ADD COLUMN status INT DEFAULT 0 NOT NULL")
+    cursor.execute("ALTER TABLE topic ADD COLUMN priority INT DEFAULT 0 NOT NULL")
 
     # Copy old topics.
     cursor.execute("INSERT INTO topic "

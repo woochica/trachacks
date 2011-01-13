@@ -216,7 +216,7 @@ class DiscussionEmailNotification(Component):
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()
 
-        # Get forum of the topic.
+        # Get forum of the topic.
         api = self.env[DiscussionApi]
         forum = api.get_forum(context, topic['forum'])
 
