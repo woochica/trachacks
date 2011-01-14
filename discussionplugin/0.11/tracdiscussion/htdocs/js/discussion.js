@@ -14,3 +14,10 @@ function change_attribute(url, name, value)
 
   $.post(url, arguments, callback)
 }
+
+/* Hides/reveals all "Reply" and "Quote" links on page when topic is
+locked/unlcoked */
+function lock_topic(value)
+{
+  $("a.reply, a.quote").css("display", value ? "none" : "");
+}

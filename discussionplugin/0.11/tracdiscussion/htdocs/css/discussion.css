@@ -54,6 +54,21 @@ div.discussion#content
   vertical-align: middle;
 }
 
+.discussion div.icon.unsolved
+{
+  background-image: url("../unsolved.png") !important;
+}
+
+.discussion div.icon.solved
+{
+  background-image: url("../solved.png") !important;
+}
+
+.discussion div.icon.locked
+{
+  background-image: url("../../common/lock-locked.png") !important;
+}
+
 /* Forum list. */
 .forum-list tr >td
 {
@@ -124,21 +139,6 @@ div.discussion#content
   text-align: center;
 }
 
-.topic-list td.status div.icon.unsolved
-{
-  background-image: url("../unsolved.png") !important;
-}
-
-.topic-list td.status div.icon.solved
-{
-  background-image: url("../solved.png") !important;
-}
-
-.topic-list td.status div.icon.locked
-{
-  background-image: url("../../common/lock-locked.png") !important;
-}
-
 .topic-add form.add_form
 {
   margin: 1em;
@@ -171,9 +171,14 @@ div.discussion#content
 {
   font-weight: bold;
   margin: 0em;
-  padding: 0.25em 1em 0.25em 1em;
+  padding: 0.25em 0.5em 0.25em 1em;
   background-color: #f7f7f7;
   border-bottom: 1px solid #d7d7d7;
+}
+
+.message-list div.topic div.subject div.icon
+{
+  float: right;
 }
 
 .message-list div.topic > fieldset

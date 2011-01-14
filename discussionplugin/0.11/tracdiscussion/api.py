@@ -977,7 +977,6 @@ class DiscussionApi(Component):
 
                 # Get inserted topic with new ID.
                 context.topic = self.get_topic_by_time(context, topic['time'])
-                self.log.debug(context.topic)
 
                 # Notify change listeners.
                 self.log.debug('topic_change_listeners: %s' % (
@@ -1005,9 +1004,16 @@ class DiscussionApi(Component):
 
             elif action == 'topic-post-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
+
+                # Check if user can edit topic.
                 if not context.moderator and (context.topic['author'] !=
                   context.req.authname):
-                    raise PermissionError('Topic edit')
+                    raise PermissionError('Topic editing')
+
+                # Check if user can edit locked topic.
+                if not context.moderator and ('locked' in
+                  context.topic['status']):
+                    raise PermissionError("Locked topic editing")
 
                 # Get form values.
                 topic = {'subject' : context.req.args.get('subject'),
@@ -1028,7 +1034,7 @@ class DiscussionApi(Component):
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
                 if not context.moderator and (context.topic['author'] !=
                   context.req.authname):
-                    raise PermissionError("Topic edit")
+                    raise PermissionError("Topic editing")
 
                 # Get form values.
                 if not context.req.args.has_key('name') and \
@@ -1041,7 +1047,6 @@ class DiscussionApi(Component):
                 if name == 'important':
                     name = 'priority'
                     value = 1 if value in ('true', 'yes', True) else 0;
-                self.log.debug((name, value))
 
                 # Attributes that can be changed only by administrator.
                 topic = {}
@@ -1058,27 +1063,28 @@ class DiscussionApi(Component):
                     # Decode status flag to status list.
                     if name in ('status.locked'):
                         topic['status'] = context.topic['status'].copy()
-                        self.log.debug(topic)
                         if value in ('true', 'yes', True):
                            topic['status'] |= set(['locked'])
                         else:
                            topic['status'] -= set(['locked'])
                     else:
                         topic[name] = value;
-                    self.log.debug(topic)
+
                 # Attributes that can be changed by owner of the topic or the
                 # moderator.
                 elif name in ('subject', 'body', 'status.solved'):
+
+                    self.log.debug((context.topic['author'], context.req.authname))
                     context.req.perm.assert_permission('DISCUSSION_APPEND')
-                    if not ('DISCUSSION_MODERATE' in context.req.perm and
-                      context.moderator) or (context.topic['author'] !=
+
+                    # Check if user can edit topic.
+                    if not context.moderator and (context.topic['author'] !=
                       context.req.authname):
                         raise PermissionError("Topic editing")
 
                     # Decode status flag to status list.
                     if name in ('status.solved'):
                         topic['status'] = context.topic['status'].copy()
-                        self.log.debug(topic)
                         if value in ('true', 'yes', True):
                            topic['status'] |= set(['solved'])
                            topic['status'] -= set(['unsolved'])
@@ -1087,12 +1093,10 @@ class DiscussionApi(Component):
                            topic['status'] -= set(['solved'])
                     else:
                         topic[name] = value;
-                    self.log.debug(topic)
                 else:
                     raise PermissionError("Topic editing")
 
                 # Update the attribute value.
-                self.log.debug(topic)
                 self.edit_topic(context, context.topic['id'], topic)
 
             elif action == 'topic-move':
@@ -1251,6 +1255,11 @@ class DiscussionApi(Component):
             elif action == 'message-post-add':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
 
+                # Check if user can post to locked topic.
+                if not context.moderator and ('locked' in
+                  context.topic['status']):
+                    raise PermissionError("Locked topic posting")
+
                 # Get form values.
                 message = {'forum' : context.forum['id'],
                            'topic' : context.topic['id'],
@@ -1298,9 +1307,16 @@ class DiscussionApi(Component):
 
             elif action == 'message-post-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
+
+                # check if user can edit message.
                 if not context.moderator and (context.message['author'] !=
                   context.req.authname):
                     raise PermissionError('Message edit')
+
+                # Check if user can edit locked topic.
+                if not context.moderator and ('locked' in
+                  context.topic['status']):
+                    raise PermissionError("Locked topic editing")
 
                 # Get form values.
                 message = {'body' : context.req.args.get('body')}
@@ -1449,7 +1465,6 @@ class DiscussionApi(Component):
 
         # Unpack list of subscribers.
         if topic:
-            self.log.debug(topic);
             topic['subscribers'] = topic['subscribers'].split()
             topic['status'] = self._topic_status_to_list(topic['status'])
 
@@ -2047,8 +2062,8 @@ class DiscussionApi(Component):
             tmp_topic['subscribers'] = ' '.join(tmp_topic['subscribers'])
 
         # Encode status field.
-        tmp_topic['status'] = self._topic_status_from_list(tmp_topic[
-          'status'])
+        if tmp_topic.has_key('status'):
+            tmp_topic['status'] = self._topic_status_from_list(tmp_topic['status'])
 
         # Edit topic.
         self._edit_item(context, 'topic', id, tmp_topic)
