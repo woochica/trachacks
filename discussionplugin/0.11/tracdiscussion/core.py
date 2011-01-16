@@ -67,26 +67,21 @@ class DiscussionCore(Component):
 
     def match_request(self, req):
         if req.path_info == '/discussion/redirect':
-            # Proces redirection request.
+            # Proces redirection request.
             req.redirect(req.args.get('redirect_url'))
         else:
-            # Possible request format patterns.
-            patterns = [r'''/discussion(?:/?$|/(forum|topic|message)/(\d+)(?:/?$))''',
-              r'''/discussion/ajax(?:/(forum|topic|message)/(\d+)(?:/?$))''']
-
             # Try to match request pattern to request URL.
-            for pattern in patterns:
-                match = re.match(pattern, req.path_info)
-                if match:
-                    resource_type = match.group(1)
-                    resource_id = match.group(2)
-                    if resource_type == 'forum':
-                        req.args['forum'] = resource_id
-                    if resource_type == 'topic':
-                        req.args['topic'] = resource_id
-                    if resource_type== 'message':
-                        req.args['message'] = resource_id
-                    break;
+            match = re.match(r'''/discussion(?:/?$|/(forum|topic|message)/(\d+)(?:/?$))''',
+              req.path_info)
+            if match:
+                resource_type = match.group(1)
+                resource_id = match.group(2)
+                if resource_type == 'forum':
+                    req.args['forum'] = resource_id
+                if resource_type == 'topic':
+                    req.args['topic'] = resource_id
+                if resource_type== 'message':
+                    req.args['message'] = resource_id
             return match
 
     def process_request(self, req):

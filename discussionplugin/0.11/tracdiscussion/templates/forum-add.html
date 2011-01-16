@@ -1,5 +1,8 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="discussion-macros.html"/>
   <xi:include href="layout.html"/>
   <head>
@@ -32,16 +35,26 @@
 
             <div class="field">
               <label for="description">Description:</label><br/>
-              <input type="text" id="description" name="description" value=""/><br/>
+              <input type="text" id="description" name="description"
+                value=""/><br/>
             </div>
 
             <div class="field">
               <label for="moderators">Moderators:</label><br/>
               <py:choose>
-                <select py:when="len(discussion.users)" id="moderators" name="moderators" multiple="on">
-                  <option py:for="user in discussion.users" value="${user}">${user}</option>
+                <select py:when="len(discussion.users) > 0 and 7 >
+                  len(discussion.users)" id="moderators" name="moderators"
+                  multiple="on">
+                  <option py:for="user in discussion.users" value="${user}">
+                    ${user}</option>
                 </select>
-                <input py:otherwise="" type="text" id="moderators" name="moderators" value=""/>
+                <select py:when="len(discussion.users) > 6" id="moderators"
+                  name="moderators" size="6" multiple="on">
+                  <option py:for="user in discussion.users" value="${user}">
+                    ${user}</option>
+                </select>
+                <input py:otherwise="" type="text" id="moderators"
+                  name="moderators" value=""/>
               </py:choose><br/>
             </div>
 
@@ -49,20 +62,37 @@
               <div py:when="len(discussion.groups) > 1" class="group">
                 <label for="group">Forum Group:</label><br/>
                 <select id="group" name="group">
-                  <option py:for="group in discussion.groups" value="${group.id}">${group.name}</option>
+                  <option py:for="group in discussion.groups"
+                    value="${group.id}">${group.name}</option>
                 </select><br/>
               </div>
-              <input py:otherwise="" type="hidden" id="group" name="group" value="0"/>
+              <input py:otherwise="" type="hidden" id="group" name="group"
+                value="0"/>
             </py:choose>
 
             <div class="field">
               <label for="subscribers">Subscribers:</label><br/>
-              <input type="text" id="subscribers" name="subscribers" value=""/><br/>
+              <py:choose>
+                <select py:when="len(discussion.users) > 0 and 7 >
+                  len(discussion.users)" id="subscribers" name="subscribers"
+                  multiple="on">
+                  <option py:for="user in discussion.users" value="${user}">
+                    ${user}</option>
+                </select>
+                <select py:when="len(discussion.users) > 6" id="subscribers"
+                  name="subscribers" size="6" multiple="on">
+                  <option py:for="user in discussion.users" value="${user}">
+                    ${user}</option>
+                </select>
+              </py:choose><br/>
+              <input type="text" id="unregistered_subscribers"
+                name="unregistered_subscribers" value=""/><br/>
             </div>
 
             <div class="buttons">
               <input type="submit" name="submit" value="Submit"/>
-              <input type="button" name="cancel" value="Cancel" onclick="location.href = '${href.discussion()}'"/>
+              <input type="button" name="cancel" value="Cancel"
+                onclick="location.href = '${href.discussion()}'"/>
               <input type="hidden" name="discussion_action" value="post-add"/>
             </div>
           </fieldset>

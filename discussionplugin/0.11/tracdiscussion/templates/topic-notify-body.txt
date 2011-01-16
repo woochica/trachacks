@@ -2,7 +2,7 @@ Topic #${discussion.topic.id} - ${discussion.topic.subject}
 ----------------------------------------------------------------------------
 Author:     ${format_author(discussion.topic.author)}
 Created:    ${format_datetime(discussion.topic.time)}
-Moderators: ${discussion.forum.moderators}
+Moderators: ${', '.join(discussion.forum.moderators)}
 ----------------------------------------------------------------------------
 
 ${discussion.topic.body}

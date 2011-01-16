@@ -1,7 +1,7 @@
 <div xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/" class="discussion" py:strip="">
   <xi:include href="macros.html"/>
   <xi:include href="discussion-macros.html"/>
-  <div id="${discussion.mode}" class="${discussion.mode}">
+  <div id="${discussion.mode}" class="discussion ${discussion.mode}">
     <py:choose>
       <py:when test="'DISCUSSION_VIEW' in perm and discussion.topic">
         <xi:include href="wiki-discussion-header.html"/>

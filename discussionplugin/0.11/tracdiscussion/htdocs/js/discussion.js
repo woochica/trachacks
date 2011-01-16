@@ -12,7 +12,21 @@ function change_attribute(url, name, value)
     'value' : value,
     '__FORM_TOKEN': $('input[name="__FORM_TOKEN"]')[0].value};
 
-  $.post(url, arguments, callback)
+  $.post(url, arguments, callback);
+}
+
+function forum_subscribe(url, authname, subscribe)
+{
+  function callback(data, text_status)
+  {
+    // Nothing.
+  }
+  
+  arguments = {'discussion_action' : subscribe ? 'subscribe' : 'unsubscribe',
+    '__FORM_TOKEN': $('input[name="__FORM_TOKEN"]')[0].value};
+  $.post(url, arguments, callback);
+  $("select#subscribers option[value='" + authname + "']").attr("selected",
+    subscribe ? "selected" : "");
 }
 
 /* Hides/reveals all "Reply" and "Quote" links on page when topic is

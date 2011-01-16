@@ -2,7 +2,7 @@ Message #${discussion.message.id} - ${discussion.topic.subject}
 ----------------------------------------------------------------------------
 Author:     ${format_author(discussion.message.author)}
 Created:    ${format_datetime(discussion.message.time)}
-Moderators: ${discussion.forum.moderators}
+Moderators: ${', '.join(discussion.forum.moderators)}
 ----------------------------------------------------------------------------
 
 ${discussion.message.body}

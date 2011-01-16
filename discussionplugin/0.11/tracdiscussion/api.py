@@ -171,6 +171,7 @@ class DiscussionApi(Component):
         # Get database access.
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()
+        context.users = self.get_users(context)
 
         type, id = resource.id.split('/')
 
@@ -211,6 +212,7 @@ class DiscussionApi(Component):
         # Get database access.
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()
+        context.users = self.get_users(context)
 
         type, id = resource.id.split('/')
 
@@ -252,12 +254,10 @@ class DiscussionApi(Component):
         context.req.session['visited-forums'] = to_unicode(context.visited_forums)
 
         # Fill up template data structure.
+        context.data['users'] = context.users
         context.data['authname'] = context.req.authname
         context.data['authemail'] = context.authemail
         context.data['moderator'] = context.moderator
-        context.data['forum_subscriber'] = context.forum_subscriber
-        context.data['topic_subscriber'] = context.topic_subscriber
-        context.data['subscriber'] = context.subscriber
         context.data['group'] = context.group
         context.data['forum'] = context.forum
         context.data['topic'] = context.topic
@@ -313,6 +313,9 @@ class DiscussionApi(Component):
         context.redirect_url = None
         context.format = context.req.args.get('format')
 
+        # Get list of Trac users.
+        context.users = self.get_users(context)
+
         # Populate active message.
         if context.req.args.has_key('message'):
             message_id = int(context.req.args.get('message') or 0)
@@ -365,12 +368,6 @@ class DiscussionApi(Component):
 
         # Determine if user is subscriber to topic.
         context.authemail = context.req.session.get('email')
-        context.forum_subscriber = context.forum and (context.authemail in
-          context.forum['subscribers'])
-        context.topic_subscriber = context.topic and (context.authemail in
-          context.topic['subscribers'])
-        context.subscriber = context.forum_subscriber or \
-          context.topic_subscriber
 
     def _get_actions(self, context):
         # Get action.
@@ -384,6 +381,13 @@ class DiscussionApi(Component):
         if context.message:
             if context.realm == 'discussion-admin':
                 pass
+            elif context.realm == 'discussion-ajax':
+               if action == 'edit-attribute':
+                    return ['message-edit-attribute']
+               elif action == 'subscribe':
+                    return ['topic-subscribe']
+               elif action == 'unsubscribe':
+                    return ['topic-unsubscribe']
             elif context.realm == 'discussion-wiki':
                 if action == 'add':
                     return ['message-add', 'wiki-message-list']
@@ -401,8 +405,6 @@ class DiscussionApi(Component):
                         return ['wiki-message-list']
                     else:
                         return ['message-post-edit']
-                elif action == 'edit-attribute':
-                    return ['message-edit-attribute']
                 elif action == 'delete':
                     return ['message-delete']
                 elif action == 'set-display':
@@ -428,8 +430,6 @@ class DiscussionApi(Component):
                         return ['message-list']
                     else:
                         return ['message-post-edit']
-                elif action == 'edit-attribute':
-                    return ['message-edit-attribute']
                 elif action == 'delete':
                     return ['message-delete']
                 elif action == 'set-display':
@@ -439,6 +439,13 @@ class DiscussionApi(Component):
         if context.topic:
             if context.realm == 'discussion-admin':
                 pass
+            elif context.realm == 'discussion-ajax':
+               if action == 'edit-attribute':
+                    return ['topic-edit-attribute']
+               elif action == 'subscribe':
+                    return ['topic-subscribe']
+               elif action == 'unsubscribe':
+                    return ['topic-unsubscribe']
             elif context.realm == 'discussion-wiki':
                 if action == 'add':
                     return ['message-add', 'wiki-message-list']
@@ -456,18 +463,12 @@ class DiscussionApi(Component):
                         return ['wiki-message-list']
                     else:
                         return ['topic-post-edit']
-                elif action == 'edit-attribute':
-                    return ['topic-edit-attribute']
                 elif action == 'set-display':
                     return ['topic-set-display', 'wiki-message-list']
                 elif action == 'subscriptions-post-add':
                     return ['topic-subscriptions-post-add']
                 elif action == 'subscriptions-post-edit':
                     return ['topic-subscriptions-post-edit']
-                elif action == 'subscribe':
-                    return ['topic-subscribe']
-                elif action == 'unsubscribe':
-                    return ['topic-unsubscribe']
                 else:
                     return ['wiki-message-list']
             else:
@@ -489,8 +490,6 @@ class DiscussionApi(Component):
                         return ['message-list']
                     else:
                         return ['topic-post-edit']
-                elif action == 'edit-attribute':
-                    return ['topic-edit-attribute']
                 elif action == 'delete':
                     return ['topic-delete']
                 elif action == 'move':
@@ -503,20 +502,21 @@ class DiscussionApi(Component):
                     return ['topic-subscriptions-post-add']
                 elif action == 'subscriptions-post-edit':
                     return ['topic-subscriptions-post-edit']
-                elif action == 'subscribe':
-                    return ['topic-subscribe']
-                elif action == 'unsubscribe':
-                    return ['topic-unsubscribe']
                 else:
                     return ['message-list']
         elif context.forum:
             if context.realm == 'discussion-admin':
                 if action == 'post-edit':
                     return ['forum-post-edit']
-                elif action == 'edit-attribute':
-                    return ['forum-edit-attribute']
                 else:
                     return ['admin-forum-list']
+            elif context.realm == 'discussion-ajax':
+               if action == 'edit-attribute':
+                    return ['forum-edit-attribute']
+               elif action == 'subscribe':
+                    return ['forum-subscribe']
+               elif action == 'unsubscribe':
+                    return ['forum-unsubscribe']
             elif context.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
@@ -535,10 +535,6 @@ class DiscussionApi(Component):
                     return ['forum-set-display', 'topic-list']
                 elif action == 'subscriptions-post-edit':
                     return ['forum-subscriptions-post-edit']
-                elif action == 'subscribe':
-                    return ['forum-subscribe']
-                elif action == 'unsubscribe':
-                    return ['forum-unsubscribe']
                 else:
                     return ['topic-list']
         elif context.group:
@@ -547,8 +543,6 @@ class DiscussionApi(Component):
                     return ['forum-post-add']
                 elif action == 'post-edit':
                     return ['group-post-edit']
-                elif action == 'edit-attribute':
-                    return ['group-edit-attribute']
                 elif action == 'delete':
                     return ['forums-delete']
                 else:
@@ -556,6 +550,9 @@ class DiscussionApi(Component):
                         return ['admin-group-list']
                     else:
                         return ['admin-forum-list']
+            elif context.realm == 'discussion-ajax':
+               if action == 'edit-attribute':
+                    return ['group-edit-attribute']
             elif context.realm == 'discussion-wiki':
                 return ['wiki-message-list']
             else:
@@ -687,7 +684,6 @@ class DiscussionApi(Component):
                 # Display forums.
                 context.data['order'] = order
                 context.data['desc'] = desc
-                context.data['users'] = self.get_users(context)
                 context.data['groups'] = self.get_groups(context)
                 context.data['forums'] = self.get_forums(context, order, desc)
 
@@ -717,7 +713,6 @@ class DiscussionApi(Component):
                 context.req.perm.assert_permission('DISCUSSION_ADMIN')
 
                 # Display Add Forum form.
-                context.data['users'] = self.get_users(context)
                 context.data['groups'] = self.get_groups(context)
 
             elif action == 'forum-post-add':
@@ -729,9 +724,7 @@ class DiscussionApi(Component):
                          'subject' : context.req.args.get('subject'),
                          'description' : context.req.args.get('description'),
                          'moderators' : context.req.args.get('moderators'),
-                         'subscribers' : [subscriber.strip() for subscriber in
-                           context.req.args.get('subscribers').replace(':',
-                           ' ').split()],
+                         'subscribers' : context.req.args.get('subscribers'),
                          'forum_group' : int(context.req.args.get('group') or 0),
                          'time': to_timestamp(datetime.now(utc))}
 
@@ -739,7 +732,18 @@ class DiscussionApi(Component):
                 if not forum['moderators']:
                     forum['moderators'] = []
                 if not isinstance(forum['moderators'], list):
-                     forum['moderators'] = [forum['moderators']]
+                     forum['moderators'] = [moderator.strip() for moderator in
+                       forum['moderators'].replace(',', ' ').split()]
+
+                # Fix subscribers attribute to be a list.
+                if not forum['subscribers']:
+                    forum['subscribers'] = []
+                if not isinstance(forum['subscribers'], list):
+                    forum['subscribers'] = [subscribers.strip() for subscribers
+                      in forum['subscribers'].replace(',', ' ').split()]
+                forum['subscribers'] += [subscriber.strip() for subscriber in
+                  context.req.args.get('unregistered_subscribers').replace(',',
+                  ' ').split()]
 
                 # Perform new forum add.
                 self.add_forum(context, forum)
@@ -764,16 +768,25 @@ class DiscussionApi(Component):
                          'subject' : context.req.args.get('subject'),
                          'description' : context.req.args.get('description'),
                          'moderators' : context.req.args.get('moderators'),
-                         'subscribers' : [subscriber.strip() for subscriber in
-                           context.req.args.get('subscribers').replace(':',
-                           ' ').split()],
+                         'subscribers' : context.req.args.get('subscribers'),
                          'forum_group' : int(context.req.args.get('group') or 0)}
 
                 # Fix moderators attribute to be a list.
                 if not forum['moderators']:
-                    forum['moderators'] = []
+                   forum['moderators'] = []
                 if not isinstance(forum['moderators'], list):
-                     forum['moderators'] = [forum['moderators']]
+                    forum['moderators'] = [moderator.strip() for moderator in
+                      forum['moderators'].replace(',', ' ').split()]
+                            
+                # Fix subscribers attribute to be a list.
+                if not forum['subscribers']:
+                    forum['subscribers'] = []
+                if not isinstance(forum['subscribers'], list):
+                    forum['subscribers'] = [subscribers.strip() for subscribers
+                      in forum['subscribers'].replace(',', ' ').split()]
+                forum['subscribers'] += [subscriber.strip() for subscriber in
+                  context.req.args.get('unregistered_subscribers').replace(',',
+                  ' ').split()]
 
                 # Perform forum edit.
                 self.edit_forum(context, context.forum['id'], forum)
@@ -834,8 +847,15 @@ class DiscussionApi(Component):
                     raise PermissionError('Forum moderate')
 
                 # Prepare edited attributes of the forum.
-                forum = {'subscribers' : [subscriber.strip() for subscriber in
-                  context.req.args.get('subscribers').replace(',', ' ').split()]}
+                forum = {'subscribers' : context.req.args.get('subscribers')}
+                if not forum['subscribers']:
+                    forum['subscribers'] = []
+                if not isinstance(forum['subscribers'], list):
+                    forum['subscribers'] = [subscribers.strip() for subscribers
+                      in forum['subscribers'].replace(',', ' ').split()]
+                forum['subscribers'] += [subscriber.strip() for subscriber in
+                  context.req.args.get('unregistered_subscribers').replace(',',
+                    ' ').split()]
 
                 # Edit topic.
                 self.edit_forum(context, context.forum['id'], forum)
@@ -850,13 +870,13 @@ class DiscussionApi(Component):
             elif action == 'forum-subscribe':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
 
-                if context.authemail and not (context.authemail in
+                if context.authemail and not (context.req.authname in
                   context.forum['subscribers']):
 
                     # Prepare edited attributes of the forum.
                     forum = {'subscribers' : deepcopy(context.forum[
                       'subscribers'])}
-                    forum['subscribers'].append(context.authemail)
+                    forum['subscribers'].append(context.req.authname)
 
                     # Edit topic.
                     self.edit_forum(context, context.forum['id'], forum)
@@ -871,13 +891,13 @@ class DiscussionApi(Component):
             elif action == 'forum-unsubscribe':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
 
-                if context.authemail and (context.authemail in
+                if context.authemail and (context.req.authname in
                   context.forum['subscribers']):
 
                     # Prepare edited attributes of the topic.
                     forum = {'subscribers' : deepcopy(context.forum[
                       'subscribers'])}
-                    forum['subscribers'].remove(context.authemail)
+                    forum['subscribers'].remove(context.req.authname)
 
                     # Edit topic.
                     self.edit_forum(context, context.forum['id'], forum)
@@ -952,15 +972,23 @@ class DiscussionApi(Component):
                          'subject' : context.req.args.get('subject'),
                          'time': to_timestamp(datetime.now(utc)),
                          'author' : context.req.args.get('author'),
-                         'subscribers' : [subscriber.strip() for subscriber in
-                           context.req.args.get('subscribers').replace(':',
-                           ' ').split()],
+                         'subscribers' : context.req.args.get('subscribers'),
                          'body' : context.req.args.get('body')}
+
+                # Fix subscribers attribute to be a list.
+                if not topic['subscribers']:
+                    topic['subscribers'] = []
+                if not isinstance(topic['subscribers'], list):
+                    topic['subscribers'] = [subscribers.strip() for subscribers
+                      in topic['subscribers'].replace(',', ' ').split()]
+                topic['subscribers'] += [subscriber.strip() for subscriber in
+                  context.req.args.get('unregistered_subscribers').replace(',',
+                        ' ').split()]
 
                 # Add user e-mail if subscription checked.
                 if context.req.args.get('subscribe') and context.authemail and \
-                  not (context.authemail in topic['subscribers']):
-                    topic['subscribers'].append(context.authemail)
+                  not (context.req.authname in topic['subscribers']):
+                    topic['subscribers'].append(context.req.authname)
 
                 # Filter topic.
                 for discussion_filter in self.discussion_filters:
@@ -1155,9 +1183,16 @@ class DiscussionApi(Component):
                 if not context.moderator:
                     raise PermissionError('Forum moderate')
 
-                # Prepare edited attributes of the forum.
-                topic = {'subscribers' : [subscriber.strip() for subscriber in
-                  context.req.args.get('subscribers').replace(',', ' ').split()]}
+                # Prepare edited attributes of the topic.
+                topic = {'subscribers' : context.req.args.get('subscribers')}
+                if not topic['subscribers']:
+                    topic['subscribers'] = []
+                if not isinstance(topic['subscribers'], list):
+                    topic['subscribers'] = [subscribers.strip() for subscribers
+                      in topic['subscribers'].replace(',', ' ').split()]
+                topic['subscribers'] += [subscriber.strip() for subscriber in
+                  context.req.args.get('unregistered_subscribers').replace(',',
+                  ' ').split()]
 
                 # Edit topic.
                 self.edit_topic(context, context.topic['id'], topic)
@@ -1193,13 +1228,13 @@ class DiscussionApi(Component):
             elif action == 'topic-subscribe':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
 
-                if context.authemail and not (context.authemail in
+                if context.authemail and not (context.name in
                   context.topic['subscribers']):
 
                     # Prepare edited attributes of the topic.
                     topic = {'subscribers' : deepcopy(context.topic[
                       'subscribers'])}
-                    topic['subscribers'].append(context.authemail)
+                    topic['subscribers'].append(context.req.authname)
 
                     # Edit topic.
                     self.edit_topic(context, context.topic['id'], topic)
@@ -1214,13 +1249,13 @@ class DiscussionApi(Component):
             elif action == 'topic-unsubscribe':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
 
-                if context.authemail and (context.authemail in
+                if context.authemail and (context.req.authname in
                   context.topic['subscribers']):
 
                     # Prepare edited attributes of the topic.
                     topic = {'subscribers' : deepcopy(context.topic[
                       'subscribers'])}
-                    topic['subscribers'].remove(context.authemail)
+                    topic['subscribers'].remove(context.req.authname)
 
                     # Edit topic.
                     self.edit_topic(context, context.topic['id'], topic)
@@ -1308,7 +1343,7 @@ class DiscussionApi(Component):
             elif action == 'message-post-edit':
                 context.req.perm.assert_permission('DISCUSSION_APPEND')
 
-                # check if user can edit message.
+                # Check if user can edit message.
                 if not context.moderator and (context.message['author'] !=
                   context.req.authname):
                     raise PermissionError('Message edit')
@@ -1465,7 +1500,12 @@ class DiscussionApi(Component):
 
         # Unpack list of subscribers.
         if topic:
-            topic['subscribers'] = topic['subscribers'].split()
+            topic['subscribers'] = [subscribers.strip() for subscribers in
+              topic['subscribers'].split()]
+            topic['unregistered_subscribers'] = []
+            for subscriber in topic['subscribers']:
+                if subscriber not in context.users:
+                     topic['unregistered_subscribers'].append(subscriber)
             topic['status'] = self._topic_status_to_list(topic['status'])
 
         return topic
@@ -1478,8 +1518,13 @@ class DiscussionApi(Component):
 
         # Unpack list of subscribers.
         if topic:
-           topic['subscribers'] = topic['subscribers'].split()
-           topic['status'] = self._topic_status_to_list(topic['status'])
+            topic['subscribers'] = [subscribers.strip() for subscribers in
+              topic['subscribers'].split()]
+            topic['unregistered_subscribers'] = []
+            for subscriber in topic['subscribers']:
+                if subscriber not in context.users:
+                     topic['unregistered_subscribers'].append(subscriber)
+            topic['status'] = self._topic_status_to_list(topic['status'])
 
         return topic
 
@@ -1491,8 +1536,13 @@ class DiscussionApi(Component):
 
         # Unpack list of subscribers.
         if topic:
-           topic['subscribers'] = topic['subscribers'].split()
-           topic['status'] = self._topic_status_to_list(topic['status'])
+            topic['subscribers'] = [subscribers.strip() for subscribers in
+              topic['subscribers'].split()]
+            topic['unregistered_subscribers'] = []
+            for subscriber in topic['subscribers']:
+                if subscriber not in context.users:
+                     topic['unregistered_subscribers'].append(subscriber)
+            topic['status'] = self._topic_status_to_list(topic['status'])
 
         return topic
 
@@ -1526,7 +1576,12 @@ class DiscussionApi(Component):
         if forum:
            forum['moderators'] = [moderator.strip() for moderator in
              forum['moderators'].split()]
-           forum['subscribers'] = forum['subscribers'].split()
+           forum['subscribers'] = [subscribers.strip() for subscribers in
+             forum['subscribers'].split()]
+           forum['unregistered_subscribers'] = []
+           for subscriber in forum['subscribers']:
+               if subscriber not in context.users:
+                   forum['unregistered_subscribers'].append(subscriber)
 
         return forum
 
@@ -1718,10 +1773,25 @@ class DiscussionApi(Component):
             row = dict(zip(columns, row))
             forums.append(row)
 
-        # Compute count of new replies and topics.
         for forum in forums:
+            # Compute count of new replies and topics.
             forum['new_topics'] = _get_new_topic_count(context, forum['id'])
             forum['new_replies'] = _get_new_replies_count(context, forum['id'])
+            
+            # Convert FP result of SUM() above into integer.
+            forum['replies'] = int(forum['replies'] or 0)
+
+            # Split moderators list.
+            forum['moderators'] = [subscribers.strip() for subscribers in
+              forum['moderators'].split()]
+
+            # Split subscriber list to uregistered and unregistered subscribers.
+            forum['subscribers'] = [subscribers.strip() for subscribers in
+              forum['subscribers'].split()]
+            forum['unregistered_subscribers'] = []
+            for subscriber in forum['subscribers']:
+                if subscriber not in context.users:
+                     forum['unregistered_subscribers'].append(subscriber)
 
         return forums
 
@@ -1802,12 +1872,18 @@ class DiscussionApi(Component):
         topics = []
         for row in context.cursor:
             row = dict(zip(columns, row))
-            row['status'] = self._topic_status_to_list(row['status'])
             topics.append(row)
 
-        # Compute count of new replies.
         for topic in topics:
+            # Compute count of new replies.
             topic['new_replies'] = _get_new_replies_count(context, topic['id'])
+            topic['subscribers'] = [subscribers.strip() for subscribers in
+              topic['subscribers'].split()]
+            topic['unregistered_subscribers'] = []
+            for subscriber in topic['subscribers']:
+                if subscriber not in context.users:
+                     topic['unregistered_subscribers'].append(subscriber)
+            topic['status'] = self._topic_status_to_list(topic['status'])
         return topics
 
     def get_changed_topics(self, context, start, stop, order_by = 'time',
@@ -1923,7 +1999,7 @@ class DiscussionApi(Component):
         values = tuple(item.values())
         sql_values = {'table' : table,
          'fields' : ', '.join(fields),
-         'values' : ', '.join(["%s" for I in range(len(values))])}
+         'values' : ','.join(["%s" for I in range(len(values))])}
         sql = ("INSERT INTO %(table)s "
                "(%(fields)s) "
                "VALUES (%(values)s)" % (sql_values))

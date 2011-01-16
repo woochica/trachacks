@@ -74,7 +74,15 @@
 
             <div class="subscribers">
               <label for="subscribers">Subscribers:</label><br/>
-              <input type="text" id="subscribers" name="subscribers">${req.args.subscribers}</input><br/>
+              <py:choose>
+                <select py:when="len(discussion.users) > 0 and 7 > len(discussion.users)" id="subscribers" name="subscribers" multiple="on">
+                  <option py:for="user in discussion.users" value="${user}">${user}</option>
+                </select>
+                <select py:when="len(discussion.users) > 6" id="subscribers" name="subscribers" size="6" multiple="on">
+                  <option py:for="user in discussion.users" value="${user}">${user}</option>
+                </select>
+              </py:choose><br/>
+              <input type="text" id="unregistered_subscribers" name="unregistered_subscribers">${req.args.unregistered_subscribers}</input><br/>
             </div>
 
             <div py:if="discussion.authemail" class="subscribe">

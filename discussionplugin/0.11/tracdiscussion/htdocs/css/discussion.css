@@ -25,7 +25,7 @@ div.discussion#content
   text-align: left;
 }
 
-.discussion div.icon
+.discussion div.icon, .wiki div.icon
 {
   position:relative;
   display: inline-block;
@@ -67,6 +67,17 @@ div.discussion#content
 .discussion div.icon.locked
 {
   background-image: url("../../common/lock-locked.png") !important;
+}
+
+.discussion form input[type=text], .discussion form.edit_form
+  input[type=text]
+{
+  width: 20em;
+}
+
+.discussion form select, .discussion form.edit_form select
+{
+  width: 21em;
 }
 
 /* Forum list. */
