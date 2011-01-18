@@ -125,16 +125,14 @@ class ImportProcessor(object):
             if field == 'status':
                 continue
             
-            if field == 'component':
-                class CurrentLookupEnum(model.Component):
-                    pass
-            elif field == 'milestone':
-                class CurrentLookupEnum(model.Milestone):
-                    pass
-            elif field == 'version':
-                class CurrentLookupEnum(model.Version):
-                    pass
-            else:
+            LOOKUPS = {  'component': model.Component,
+                         'milestone': model.Milestone,
+                         'version':  model.Version,
+                         'type': model.Type,
+                         }
+            try:
+                CurrentLookupEnum = LOOKUPS[field]
+            except KeyError:
                 class CurrentLookupEnum(model.AbstractEnum):
                     # here, you shouldn't put 'self.' before the class field.
                     type = field

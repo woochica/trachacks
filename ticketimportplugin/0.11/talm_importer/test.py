@@ -105,7 +105,8 @@ class ImporterTestCase(unittest.TestCase):
         result = d.compare(readall('.' + testfun.__name__ + CTL_EXT), 
                            readall('.' + testfun.__name__ + '.out'))
         lines = [ line for line in result if line[0] != ' ']
-        #sys.stdout.writelines(lines)
+        # Uncomment this line to see the difference between expected (.ctl) output files and actual test output files (.out)
+        sys.stdout.writelines(lines)
         self.assertEquals(0, len(lines)) 
 
     def _do_test_with_exception(self, env, filename, testfun):
@@ -236,7 +237,7 @@ class ImporterTestCase(unittest.TestCase):
     def test_import_with_ticket_types(self):
         env = self._setup()
         self._do_test_diffs(env, 'simple-with-type.csv', self._test_preview)
-        self.assert_(self._do_test(env, 'simple-with-type.csv', self._test_import))
+        self._do_test_diffs(env, 'simple-with-type.csv', self._test_import)
 
     def test_import_with_reconciliation_by_owner(self):
         '''
@@ -326,7 +327,7 @@ class ImporterTestCase(unittest.TestCase):
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
-    #return unittest.TestSuite( [ ImporterTestCase('test_dates_formatted_ticket_8357') ])
+    #return unittest.TestSuite( [ ImporterTestCase('test_import_with_ticket_types') ])
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')
