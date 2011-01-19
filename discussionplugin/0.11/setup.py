@@ -8,7 +8,7 @@ setup(
   version = '0.8',
   packages = ['tracdiscussion', 'tracdiscussion.db'],
   package_data = {'tracdiscussion' : ['templates/*.html', 'templates/*.txt',
-    'templates/*.rss', 'htdocs/css/*.css', 'htdocs/*.png']},
+    'templates/*.rss', 'htdocs/css/*.css', 'htdocs/js/*.js', 'htdocs/*.png']},
   entry_points = {'trac.plugins': ['TracDiscussion.ajax = tracdiscussion.ajax',
     'TracDiscussion.api = tracdiscussion.api',
     'TracDiscussion.core = tracdiscussion.core',
