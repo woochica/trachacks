@@ -26,6 +26,5 @@ setup(
         ],
     },
  	
-    install_requires = [ 'Trac' ],
-    
+    install_requires = [ 'Trac >= 0.11' ]
 )
