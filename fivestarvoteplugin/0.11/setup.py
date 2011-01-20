@@ -3,9 +3,9 @@ from setuptools import setup
 
 setup(
     	name='FiveStarVote',
-    	version='0.1',
+    	version='0.1.1',
     	packages=['fivestarvote'],
-	package_data={'fivestarvote' : ['htdocs/js/*.js', 'htdocs/css/*.css', 'htdocs/css/*.png']},
+        package_data={'fivestarvote' : ['htdocs/js/*.js', 'htdocs/css/*.css', 'htdocs/css/*.png']},
     	author='Dav Glass',
       	author_email='dav.glass@yahoo.com',
         maintainer = 'Ryan J Ollos',

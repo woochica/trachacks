@@ -23,7 +23,7 @@ class FiveStarVoteSystem(Component):
     implements(ITemplateProvider, IRequestFilter, IRequestHandler,
                IEnvironmentSetupParticipant, IPermissionRequestor)
 
-    voteable_paths = ListOption('fivestarvote', 'paths', '/wiki*,/ticket*',
+    voteable_paths = ListOption('fivestarvote', 'paths', '^/$,^/wiki*,^/ticket*',
         doc='List of URL paths to allow voting on. Globs are supported.')
 
     schema = [
@@ -187,7 +187,7 @@ class FiveStarVoteSystem(Component):
         if isinstance(resource, basestring):
             resource = resource.strip('/')
             # Special-case start page
-            if resource == 'wiki':
+            if not resource or resource == 'wiki':
                 resource += '/WikiStart'
             return resource
         return get_resource_url(self.env, resource, Href('')).strip('/')
