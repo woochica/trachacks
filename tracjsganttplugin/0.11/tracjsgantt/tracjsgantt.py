@@ -285,9 +285,12 @@ class TracJSGanttChart(WikiMacroBase):
             return wbs
 
         # Set WBS and level on all top level tickets (and recurse)
+        # If a ticket's parent is in the viewed tickets, consider it top-level
         wbs = [ 1 ]
         for t in self.tickets:
-            if not self.fields['parent'] or t[self.fields['parent']] == 0:
+            if not self.fields['parent'] \
+                    or t[self.fields['parent']] == 0 \
+                    or int(t[self.fields['parent']]) not in ticketsByID.keys():
                 wbs = _setLevel(t['id'], wbs, 1)
 
 

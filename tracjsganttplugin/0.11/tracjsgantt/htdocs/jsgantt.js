@@ -906,7 +906,7 @@ Complete-Displays task percent complete</p>
                for(var k=0;k<n;k++) {
                   var vTask = this.getArrayLocationByID(vDepList[k]);
 
-                  if(vList[vTask].getVisible()==1)
+                  if(vTask != undefined && vList[vTask].getVisible()==1)
                      this.drawDependency(vList[vTask].getEndX(),vList[vTask].getEndY(),vList[i].getStartX()-1,vList[i].getStartY())
                }
   	    }
