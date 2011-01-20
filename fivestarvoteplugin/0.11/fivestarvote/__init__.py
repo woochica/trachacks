@@ -188,7 +188,7 @@ class FiveStarVoteSystem(Component):
             resource = resource.strip('/')
             # Special-case start page
             if not resource or resource == 'wiki':
-                resource += '/WikiStart'
+                resource = 'wiki/WikiStart'
             return resource
         return get_resource_url(self.env, resource, Href('')).strip('/')
 

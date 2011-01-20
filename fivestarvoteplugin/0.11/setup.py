@@ -12,6 +12,6 @@ setup(
         maintainer_email = 'ryano@physiosonics.com',
     	license='BSD',
     	url='http://trac-hacks.org/wiki/FiveStarVotePlugin',
-    	description='A 5 star plugin for voting on Trac resources.',
+    	description='A plugin for 5-star voting on Trac resources.',
     	entry_points = {'trac.plugins': ['fivestarvote = fivestarvote']},
     )
