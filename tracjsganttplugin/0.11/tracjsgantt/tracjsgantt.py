@@ -152,6 +152,8 @@ class TracJSGanttChart(WikiMacroBase):
     # TODO - use ticket-classN styles instead of colors?
     def _add_sample_tasks(self):
         tasks = ''
+        tasks = 'g.setDateInputFormat("mm/dd/yyyy");'
+
         tasks += 'g.AddTaskItem(new JSGantt.TaskItem(1,   "Define Chart API",     "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1));\n'
         tasks += 'g.AddTaskItem(new JSGantt.TaskItem(11,  "Chart Object",         "2/20/2011", "2/20/2011", "#ff00ff", "http://www.yahoo.com", 1, "Shlomy",  100, 0, 1, 1));\n'
         tasks += 'g.AddTaskItem(new JSGantt.TaskItem(12,  "Task Objects",         "",          "",          "#00ff00", "", 0, "Shlomy",   40, 1, 1, 1));\n'
