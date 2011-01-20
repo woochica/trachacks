@@ -214,7 +214,7 @@ class WikiToPdfPage(Component):
         
     # IContentConverter methods
     def get_supported_conversions(self):
-        yield ('pdf', 'WikiToPdf', 'pdf', 'text/x-trac-wiki', 'application/pdf', 7)
+        yield ('pdf', 'PDF', 'pdf', 'text/x-trac-wiki', 'application/pdf', 7)
 
     def convert_content(self, req, input_type, text, output_type):
 
