@@ -95,7 +95,7 @@ $(document).ready(function() {
 		var returnData = new Array();
 		var returnIdx = 0;
 		
-		var summaryRegex = /#(\d+)<\/span>:\s*([a-z0-9\-\_\ ]+):\s*(.*)\s*\(([a-z0-9\-\_\ ]+)(?:\: ([a-z0-9\-\_\ ]+))?\)$/i;
+		var summaryRegex = /#(\d+)<\/span>:\s*(.*):\s*(.*)\s*\((.*)(?:\: (.*))?\)$/i;
 		
 		//console.log('.each ', $('params > param > value > array > data > value', xmlData));
 		var dataValues = $('params > param > value > array > data', xmlData);
