@@ -258,12 +258,12 @@ class DiscussionWiki(Component):
 
         if namespace == 'forum':
             columns = ('subject',)
-            sql_values = {'id' : id}
             sql = ("SELECT f.subject "
                    "FROM forum f "
-                   "WHERE f.id = %(id)s" % (sql_values))
-            self.log.debug(sql)
-            context.cursor.execute(sql)
+                   "WHERE f.id = %s")
+            values = (id,)
+            self.log.debug(sql % values)
+            context.cursor.execute(sql, values)
             for row in context.cursor:
                 row = dict(zip(columns, row))
                 return tag.a(label, href = formatter.href.discussion('forum',
@@ -272,15 +272,15 @@ class DiscussionWiki(Component):
               title = label, class_ = 'missing')
         elif namespace == 'last-forum':
             columns = ('id', 'subject')
-            sql_values = {'id' : id}
             sql = ("SELECT f.id, f.subject "
                    "FROM forum f "
                    "WHERE f.time = "
                    "  (SELECT MAX(time) "
                    "  FROM forum "
-                   "  WHERE forum_group = %(id)s)" % (sql_values))
-            self.log.debug(sql)
-            context.cursor.execute(sql)
+                   "  WHERE forum_group = %s)")
+            values = (id,)
+            self.log.debug(sql % values)
+            context.cursor.execute(sql, values)
             for row in context.cursor:
                 row = dict(zip(columns, row))
                 return tag.a(label, href = formatter.href.discussion('forum',
@@ -289,14 +289,14 @@ class DiscussionWiki(Component):
               '-1'), title = label, class_ = 'missing')
         elif namespace == 'topic':
             columns = ('forum', 'forum_subject', 'subject')
-            sql_values = {'id' : id}
             sql = ("SELECT t.forum, f.subject, t.subject "
                    "FROM topic t "
                    "LEFT JOIN forum f "
                    "ON t.forum = f.id "
-                   "WHERE t.id = %(id)s" % (sql_values))
-            self.log.debug(sql)
-            context.cursor.execute(sql)
+                   "WHERE t.id = %s")
+            values = (id,)
+            self.log.debug(sql % values)
+            context.cursor.execute(sql, values)
             for row in context.cursor:
                 row = dict(zip(columns, row))
                 return tag.a(label, href = '%s#-1' % \
@@ -307,16 +307,16 @@ class DiscussionWiki(Component):
               title = label.replace('"', ''), class_ = 'missing')
         elif namespace == 'last-topic':
             columns = ('id', 'forum_subject', 'subject')
-            sql_values = {'id' : id}
             sql = ("SELECT t.id, f.subject, t.subject "
                    "FROM topic t "
                    "LEFT JOIN forum f "
                    "ON t.forum = f.id WHERE t.time = "
                    "  (SELECT MAX(time) "
                    "  FROM topic "
-                   "  WHERE forum = %(id)s)" % (sql_values))
-            self.log.debug(sql)
-            context.cursor.execute(sql)
+                   "  WHERE forum = %s)")
+            values = (id,)
+            self.log.debug(sql % values)
+            context.cursor.execute(sql, values)
             for row in context.cursor:
                 row = dict(zip(columns, row))
                 return tag.a(label, href = '%s#-1' % \
@@ -327,17 +327,16 @@ class DiscussionWiki(Component):
               '-1'), title = label.replace('"', ''), class_ = 'missing')
         elif namespace == 'message':
             columns = ('forum', 'topic', 'forum_subject', 'subject')
-            sql_values = {'id' : id}
             sql = ("SELECT m.forum, m.topic, f.subject, t.subject "
               "FROM message m, "
                 "(SELECT subject, id "
                 "FROM forum) f, "
                 "(SELECT subject, id "
                 "FROM topic) t "
-              "WHERE m.forum = f.id AND m.topic = t.id AND m.id = %(id)s" %
-                (sql_values))
-            self.log.debug(sql)
-            context.cursor.execute(sql)
+              "WHERE m.forum = f.id AND m.topic = t.id AND m.id = %s")
+            values = (id,)
+            self.log.debug(sql % values)
+            context.cursor.execute(sql, values)
             for row in context.cursor:
                 row = dict(zip(columns, row))
                 return tag.a(label, href = '%s#%s' % \
