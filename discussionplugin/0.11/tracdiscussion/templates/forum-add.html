@@ -60,7 +60,7 @@
 
             <py:choose>
               <div py:when="len(discussion.groups) > 1" class="group">
-                <label for="group">Forum Group:</label><br/>
+                <label for="group">Forum group:</label><br/>
                 <select id="group" name="group">
                   <option py:for="group in discussion.groups"
                     value="${group.id}">${group.name}</option>
@@ -71,7 +71,8 @@
             </py:choose>
 
             <div class="field">
-              <label for="subscribers">Subscribers:</label><br/>
+              <label for="subscribers">Registered subscribers:</label>
+              <br/>
               <py:choose>
                 <select py:when="len(discussion.users) > 0 and 7 >
                   len(discussion.users)" id="subscribers" name="subscribers"
@@ -84,9 +85,33 @@
                   <option py:for="user in discussion.users" value="${user}">
                     ${user}</option>
                 </select>
-              </py:choose><br/>
+              </py:choose>
+              <br/>
+            </div>
+
+            <div class="field">
+              <label for="unregistered_subscribers">Unregistered subscribers
+                (e-mails):</label>
+              <br/>
               <input type="text" id="unregistered_subscribers"
-                name="unregistered_subscribers" value=""/><br/>
+                name="unregistered_subscribers" value=""/>
+              <br/>
+            </div>
+
+            <div py:if="discussion.authemail" class="field">
+              <label for="subscribe">
+                <input py:if="discussion.authname in
+                  discussion.forum.subscribers" type="checkbox" name="subscribe"
+                  id="subscribe"  checked="yes" value="1"
+                  onchange="subscription_select('${discussion.authname}',
+                    this.checked)"/>
+                <input py:if="not (discussion.authname in
+                  discussion.forum.subscribers)" type="checkbox"
+                  name="subscribe" id="subscribe" value="0"
+                  onchange="subscription_select('${discussion.authname}',
+                    this.checked)"/>
+                Subscribe to forum.
+              </label><br/>
             </div>
 
             <div class="buttons">

@@ -6,8 +6,8 @@
   <xi:include href="discussion-macros.html"/>
   <xi:include href="layout.html"/>
   <head>
-    <title>Discussion &ndash; Forum: ${discussion.forum.subject} &ndash;
-      ${discussion.forum.description}</title>
+    <title>${discussion.forum.subject} &ndash; ${discussion.forum.description}
+      &ndash; Topic List &ndash; Discussion</title>
   </head>
 
   <?python
@@ -48,60 +48,78 @@
         <xi:include py:with="paginator = discussion.paginator"
           href="page_index.html"/>
 
-        <div py:if="discussion.moderator" class="subscriptions">
-          <a name="subscriptions"></a>
-          <h3>Subscriptions</h3>
+        <div py:if="discussion.moderator or discussion.authemail"
+          class="subscription">
+          <a name="subscription"></a>
           <form method="post" action="${href.discussion('forum',
             discussion.forum.id)}">
-            <py:choose>
-              <select py:when="len(discussion.users) > 0 and 7 >
-                len(discussion.users)" id="subscribers" name="subscribers"
-                multiple="on">
-                <py:for each="user in discussion.users">
-                  <py:choose>
-                    <option py:when="user in discussion.forum.subscribers"
-                      value="${user}" selected="selected">${user}</option>
-                    <option py:otherwise="" value="${user}">${user}</option>
-                  </py:choose>
-                </py:for>
-              </select>
-              <select py:when="len(discussion.users) > 6" id="subscribers"
-                name="subscribers" size="6" multiple="on">
-                <py:for each="user in discussion.users">
-                  <py:choose>
-                    <option py:when="user in discussion.forum.subscribers"
-                      value="${user}" selected="selected">${user}</option>
-                    <option py:otherwise="" value="${user}">${user}</option>
-                  </py:choose>
-                </py:for>
-             </select>
-            </py:choose><br/>
-            <input type="text" id="unregistered_subscribers"
-              name="unregistered_subscribers"
-              value="${' '.join(discussion.forum.unregistered_subscribers)}"/><br/>
-            <input type="hidden" name="discussion_action"
-              value="subscriptions-post-edit"/>
-            <div class="buttons">
-              <input type="submit" name="editsubscribers"
-                value="Edit subscribers"/>
-            </div>
-            <div py:if="discussion.authemail">
-              <label for="subscribe">
-                <input py:if="discussion.authname in
-                  discussion.forum.subscribers" type="checkbox" name="subscribe"
-                  id="subscribe"  checked="yes" value="1"
-                  onchange="forum_subscribe('${href.discussion('ajax', 'forum',
-                  discussion.forum.id)}', '${discussion.authname}',
-                  this.checked)"/>
-                <input py:if="not (discussion.authname in
-                  discussion.forum.subscribers)" type="checkbox"
-                  name="subscribe" id="subscribe" value="0"
-                  onchange="forum_subscribe('${href.discussion('ajax', 'forum',
-                  discussion.forum.id)}', '${discussion.authname}',
-                  this.checked)"/>
-                Subscribe to forum.
-              </label><br/>
-            </div>
+            <fieldset id="subscription">
+              <legend>Subscription</legend>
+
+              <div py:if="discussion.moderator">
+                <label for="subscribers">Registered users:</label>
+                <br/>
+                <py:choose>
+                  <select py:when="len(discussion.users) > 0 and 7 >
+                    len(discussion.users)" id="subscribers" name="subscribers"
+                    multiple="on">
+                    <py:for each="user in discussion.users">
+                      <py:choose>
+                        <option py:when="user in discussion.forum.subscribers"
+                          value="${user}" selected="selected">${user}</option>
+                        <option py:otherwise="" value="${user}">${user}</option>
+                      </py:choose>
+                    </py:for>
+                  </select>
+                  <select py:when="len(discussion.users) > 6" id="subscribers"
+                    name="subscribers" size="6" multiple="on">
+                    <py:for each="user in discussion.users">
+                      <py:choose>
+                        <option py:when="user in discussion.forum.subscribers"
+                          value="${user}" selected="selected">${user}</option>
+                        <option py:otherwise="" value="${user}">${user}</option>
+                      </py:choose>
+                    </py:for>
+                  </select>
+                </py:choose>
+                <br/>
+              </div>
+
+              <div py:if="discussion.moderator">
+                <label for="unregistered_subscribers">Unregistered users
+                  (e-mails):</label>
+                <br/>
+                <input type="text" id="unregistered_subscribers"
+                  name="unregistered_subscribers"
+                  value="${' '.join(discussion.forum.unregistered_subscribers)}"/>
+                <br/>
+              </div>
+
+              <div py:if="discussion.authemail">
+                <label for="subscribe">
+                  <input py:if="discussion.authname in
+                    discussion.forum.subscribers" type="checkbox"
+                    name="subscribe"  id="subscribe"  checked="yes" value="1"
+                    onchange="subscribe_user('${href.discussion('ajax', 'forum',
+                    discussion.forum.id)}', '${discussion.authname}',
+                    this.checked)"/>
+                  <input py:if="not (discussion.authname in
+                    discussion.forum.subscribers)" type="checkbox"
+                    name="subscribe" id="subscribe" value="0"
+                    onchange="subscribe_user('${href.discussion('ajax', 'forum',
+                    discussion.forum.id)}', '${discussion.authname}',
+                    this.checked)"/>
+                  Subscribe to forum.
+                </label><br/>
+              </div>
+
+              <div py:if="discussion.moderator" class="buttons">
+                <input type="hidden" name="discussion_action"
+                  value="subscriptions-post-edit"/>
+                <input type="submit" name="editsubscribers"
+                  value="Edit subscribers"/>
+              </div>
+            </fieldset>
           </form>
         </div>
 

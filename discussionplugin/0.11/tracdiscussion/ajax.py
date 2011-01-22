@@ -17,7 +17,7 @@ class DiscussionAjax(Component):
         The AJAX module implements AJAX requests handler.
     """
     implements(IRequestHandler)
-    
+
     # IRequestHandler methods.
 
     def match_request(self, req):

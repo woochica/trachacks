@@ -777,7 +777,7 @@ class DiscussionApi(Component):
                 if not isinstance(forum['moderators'], list):
                     forum['moderators'] = [moderator.strip() for moderator in
                       forum['moderators'].replace(',', ' ').split()]
-                            
+
                 # Fix subscribers attribute to be a list.
                 if not forum['subscribers']:
                     forum['subscribers'] = []
@@ -1228,7 +1228,7 @@ class DiscussionApi(Component):
             elif action == 'topic-subscribe':
                 context.req.perm.assert_permission('DISCUSSION_VIEW')
 
-                if context.authemail and not (context.name in
+                if context.authemail and not (context.req.authname in
                   context.topic['subscribers']):
 
                     # Prepare edited attributes of the topic.
@@ -1845,7 +1845,7 @@ class DiscussionApi(Component):
           'limit' : 'LIMIT %s' if limit else '',
           'offset' : 'OFFSET %s' if offset else ''}
         sql = ("SELECT t.id, t.forum, t.time, t.author, t.subscribers, "
-                 "t.subject %(with_body)s, t.status, t.priority, m.replies, "
+                 "t.subject, %(with_body)s t.status, t.priority, m.replies, "
                  "m.lastreply "
                "FROM topic t "
                "LEFT JOIN "

@@ -58,10 +58,9 @@
             <a style="${'display: none;' if 'locked' in discussion.topic.status
               else ''}" class="quote"
               href="${href}?discussion_action=quote;#topic">Quote</a>
-            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.moderator)
-              or ((discussion.authname == discussion.topic.author) and (not
-              'locked' in discussion.topic.status) and (discussion.authname !=
-              'anonymous'))"
+            <a py:if="discussion.moderator or ((discussion.authname ==
+              discussion.topic.author) and (not 'locked' in
+              discussion.topic.status) and (discussion.authname != 'anonymous'))"
               href="${href}?discussion_action=edit;#topic">Edit</a>
           </py:if>
         </div>
@@ -109,15 +108,16 @@
         ${display_set_display(href)}
       </py:if>
 
-      <a name="subscriptions"></a>
-      <div class="subscriptions">
-        <h3>Subscriptions</h3>
+      <div py:if="discussion.moderator or discussion.authemail"
+        class="subscription">
+        <a name="subscription"></a>
         <form method="post" action="${href}">
-          <py:choose>
-            <py:when test="('DISCUSSION_MODERATE' in perm and
-                discussion.moderator)">
-              <!-- <input type="text" name="subscribers" value="${' '.join(
-                discussion.topic.subscribers)}"/>-->
+          <fieldset id="subscription">
+            <legend>Subscription</legend>
+
+            <div py:if="discussion.moderator">
+              <label for="subscribers">Registered users:</label>
+              <br/>
               <py:choose>
                 <select py:when="(len(discussion.users) > 0) and (7 >
                   len(discussion.users))" id="subscribers"
@@ -140,43 +140,111 @@
                     </py:choose>
                   </py:for>
                 </select>
-                </py:choose><br/>
-                <input type="text" id="subscribers" name="unregistered_subscribers"
-                  value="${discussion.topic.unregistered_subscribers}"/><br/>
-              <input type="submit" name="editsubscribers"
-                value="Edit subscribers"/>
+              </py:choose>
+              <br/>
+            </div>
+
+            <div py:if="discussion.moderator">
+              <label for="unregistered_subscribers">Unregistered users
+                (e-mails):</label>
+              <br/>
+              <input type="text" id="unregistered_subscribers"
+                name="unregistered_subscribers"
+                value="${' '.join(discussion.topic.unregistered_subscribers)}"/>
+              <br/>
+            </div>
+
+            <div py:if="discussion.authemail">
+              <label for="subscribe">
+                <input py:if="discussion.authname in
+                  discussion.topic.subscribers" type="checkbox"
+                  name="subscribe" id="subscribe"  checked="yes" value="1"
+                  onchange="subscribe_user('${req.href.discussion('ajax', 'topic',
+                  discussion.topic.id)}', '${discussion.authname}', this.checked)"/>
+                <input py:if="not (discussion.authname in
+                  discussion.topic.subscribers)" type="checkbox"
+                  name="subscribe" id="subscribe" value="0"
+                  onchange="subscribe_user('${req.href.discussion('ajax', 'topic',
+                  discussion.topic.id)}', '${discussion.authname}', this.checked)"/>
+                Subscribe to topic.
+              </label><br/>
+            </div>
+
+            <div py:if="discussion.moderator" class="buttons">
               <input type="hidden" name="discussion_action"
                 value="subscriptions-post-edit"/>
-            </py:when>
-            <py:otherwise>
-              <input type="text" name="subscribers" value=""/>
-              <input type="submit" name="addsubscribers"
-                value="Add subscribers"/>
-              <input type="hidden" name="discussion_action"
-                value="subscriptions-post-add"/>
-            </py:otherwise>
-          </py:choose>
+              <input type="submit" name="editsubscribers"
+                value="Edit subscribers"/>
+            </div>
+          </fieldset>
         </form>
-        <form py:if="discussion.authemail" method="post" action="${href}">
-          <py:choose>
-            <py:when test="discussion.topic_subscriber">
-              <input type="submit" value="Unsubscribe"/>
-              <input type="hidden" name="discussion_action"
-                value="unsubscribe"/>
-            </py:when>
-            <py:otherwise>
-              <input type="submit" value="Subscribe"/>
-              <input type="hidden" name="discussion_action" value="subscribe"/>
-            </py:otherwise>
-          </py:choose>
+      </div>
+
+      <div py:if="discussion.moderator or ((discussion.authname ==
+        discussion.topic.author) and (not 'locked' in discussion.topic.status)
+        and (discussion.authname != 'anonymous'))" class="moderation">
+        <a name="moderation"></a>
+        <form method="post" action="${req.href.discussion('topic',
+          discussion.topic.id)}">
+          <fieldset id="moderation">
+            <legend>Moderation</legend>
+            <div py:if="discussion.moderator">
+              <label for="important">
+                <input py:if="discussion.topic.priority > 0" type="checkbox"
+                  name="important" id="important" checked="yes" value="1"
+                  onchange="change_attribute('${req.href.discussion('ajax',
+                    'topic', discussion.topic.id)}', 'important',
+                    this.checked);"/>
+                <input py:if="not (discussion.topic.priority > 0)" type="checkbox"
+                  name="important" id="important" value="0"
+                  onchange="change_attribute('${req.href.discussion('ajax',
+                    'topic', discussion.topic.id)}', 'important',
+                    this.checked);"/>
+                Make topic important (listed at the top).
+              </label><br/>
+            </div>
+            <div>
+              <label for="solved">
+                <input py:if="'solved' in discussion.topic.status" type="checkbox"
+                  name="solved" id="solved" checked="yes" value="1"
+                  onchange="change_attribute('${req.href.discussion('ajax',
+                    'topic', discussion.topic.id)}', 'status.solved',
+                    this.checked);"/>
+                <input py:if="not 'solved' in discussion.topic.status" type="checkbox"
+                  name="solved" id="solved" value="0"
+                  onchange="change_attribute('${req.href.discussion('ajax',
+                    'topic', discussion.topic.id)}', 'status.solved',
+                    this.checked);"/>
+                Solve topic.
+              </label><br/>
+            </div>
+            <div py:if="discussion.moderator">
+              <label for="locked">
+                <input py:if="'locked' in discussion.topic.status" type="checkbox"
+                  name="locked" id="locked" checked="yes" value="1"
+                  onchange="change_attribute('${req.href.discussion('ajax',
+                    'topic', discussion.topic.id)}', 'status.locked',
+                    this.checked); lock_topic(this.checked);"/>
+                <input py:if="not 'locked' in discussion.topic.status"
+                  type="checkbox" name="locked" id="locked" value="0"
+                  onchange="change_attribute('${req.href.discussion('ajax',
+                    'topic', discussion.topic.id)}', 'status.locked',
+                    this.checked); lock_topic(this.checked);"/>
+                Lock topic.
+              </label>
+            </div>
+            <input type="hidden" name="discussion_action" value="edit-attribute"/>
+          </fieldset>
         </form>
       </div>
 
       <div class="attachments">
+        <a name="attachments"></a>
         <py:choose>
           <py:when test="not len(discussion.attachments.attachments)">
             <h3>Attachments</h3>
             <p>No attachments created.</p>
+            ${attach_file_form(discussion.attachments)}
           </py:when>
           <py:otherwise>
             ${list_of_attachments(discussion.attachments, compact = True)}
@@ -301,14 +369,13 @@
               else ''}" class="quote"
               href="${href}?discussion_action=quote;message=${message.id}#message${message.id}">
               Quote</a>
-            <a py:if="('DISCUSSION_MODERATE' in perm and discussion.moderator)
-              or ((discussion.authname == message.author) and (not
-              'locked' in discussion.topic.status) and (discussion.authname !=
-              'anonymous'))"
+            <a py:if="discussion.moderator or ((discussion.authname ==
+              message.author) and (not 'locked' in discussion.topic.status) and
+              (discussion.authname != 'anonymous'))"
               href="${href}?discussion_action=edit;message=${message.id}#message${message.id}">
               Edit</a>
           </py:if>
-          <a py:if="'DISCUSSION_MODERATE' in perm and discussion.moderator"
+          <a py:if="discussion.moderator"
             href="${href}?discussion_action=delete;message=${message.id}#${message.replyto
               == -1 and 'topic' or ('message' + unicode(message.replyto))}"
             onclick="return confirm('Do you realy want to delete this reply and all its descendants?')">

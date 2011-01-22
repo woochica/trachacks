@@ -175,6 +175,9 @@ class DiscussionWiki(Component):
         # Get API object.
         api = self.env[DiscussionApi]
 
+        # Get list of Trac users.
+        context.users = api.get_users(context)
+
         # Parse macro arguments.
         arguments = []
         forum_id = None

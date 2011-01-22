@@ -155,22 +155,12 @@ div.discussion#content
   margin: 1em;
 }
 
-.topic-list div.subscriptions form
-{
-  display: inline-block;
-}
-
 /* Message list. */
 .message-list div.topic
 {
   margin: 2em 0em;
   margin-bottom: 0em;
   border: 1px solid #d7d7d7;
-}
-
-.message-list input
-{
-  vertical-align: bottom;
 }
 
 .message-list div.topic.new
@@ -310,11 +300,6 @@ div.discussion#content
 .message-list h5, .message-list h6
 {
   margin-left: 0em;
-}
-
-.message-list div.subscriptions form, .message-list div.moderation form
-{
-  display: inline-block;
 }
 
 /* Timeline. */

@@ -15,13 +15,19 @@ function change_attribute(url, name, value)
   $.post(url, arguments, callback);
 }
 
-function forum_subscribe(url, authname, subscribe)
+function subscription_select(authname, subscribe)
+{
+  $("select#subscribers option[value='" + authname + "']").attr("selected",
+    subscribe ? "selected" : "");
+}
+
+function subscribe_user(url, authname, subscribe)
 {
   function callback(data, text_status)
   {
     // Nothing.
   }
-  
+
   arguments = {'discussion_action' : subscribe ? 'subscribe' : 'unsubscribe',
     '__FORM_TOKEN': $('input[name="__FORM_TOKEN"]')[0].value};
   $.post(url, arguments, callback);

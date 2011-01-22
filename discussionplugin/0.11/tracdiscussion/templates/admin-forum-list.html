@@ -74,7 +74,7 @@
           </div>
 
           <div class="field">
-            <label for="subscribers">Subscribers:</label><br/>
+            <label for="subscribers">Registered subscribers:</label><br/>
             <py:choose>
               <select py:when="len(discussion.users) > 0 and 7 >
                 len(discussion.users)" id="subscribers" name="subscribers"
@@ -100,6 +100,11 @@
                 </py:for>
               </select>
             </py:choose><br/>
+          </div>
+
+          <div class="field">
+            <label for="unregistered_subscribers">Unregistered
+              subscribers:</label><br/>
             <input type="text" id="unregistered_subscribers"
               name="unregistered_subscribers" value="${is_edit and
               ' '.join(discussion.forum.unregistered_subscribers)}"/><br/>
@@ -202,14 +207,14 @@
                   <td class="moderators">
                     <div class="moderators">
                       <a href="${panel_href(forum.id)}">
-                        <span>${forum.moderators or '&nbsp;'}</span>
+                        <span>${' '.join(forum.moderators) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>
                   <td class="subscribers">
                     <div class="subscribers">
                       <a href="${panel_href(forum.id)}">
-                        <span>${forum.subscribers or '&nbsp;'}</span>
+                        <span>${' '.join(forum.subscribers) or '&nbsp;'}</span>
                       </a>
                     </div>
                   </td>

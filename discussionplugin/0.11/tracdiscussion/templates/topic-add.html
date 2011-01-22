@@ -1,5 +1,8 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:py="http://genshi.edgewall.org/">
   <xi:include href="discussion-macros.html"/>
   <xi:include href="layout.html"/>
   <head>
@@ -23,17 +26,21 @@
           <div class="topic">
             <div class="header">
               <div class="subject">
-                ${req.args.subject and format_to_oneliner(discussion.env, context, req.args.subject) or '&nbsp;'}
+                ${req.args.subject and format_to_oneliner(discussion.env,
+                  context, req.args.subject) or '&nbsp;'}
               </div>
               <div class="body">
-                ${req.args.body and format_to_html(discussion.env, context, req.args.body) or '&nbsp;'}
+                ${req.args.body and format_to_html(discussion.env, context,
+                  req.args.body) or '&nbsp;'}
               </div>
               <div class="footer">
                 <div class="author">
-                  ${format_to_oneliner(discussion.env, context, format_author(req.args.author))}
+                  ${format_to_oneliner(discussion.env, context, format_author(
+                    req.args.author))}
                 </div>
                 <div class="time">
-                  ${format_datetime(discussion.time)} (${pretty_timedelta(discussion.time)} ago)
+                  ${format_datetime(discussion.time)} (${pretty_timedelta(
+                    discussion.time)} ago)
                 </div>
               </div>
             </div>
@@ -72,7 +79,7 @@
               </py:choose>
             </div>
 
-            <div class="subscribers">
+            <div class="field">
               <label for="subscribers">Subscribers:</label><br/>
               <py:choose>
                 <select py:when="len(discussion.users) > 0 and 7 > len(discussion.users)" id="subscribers" name="subscribers" multiple="on">
@@ -82,18 +89,33 @@
                   <option py:for="user in discussion.users" value="${user}">${user}</option>
                 </select>
               </py:choose><br/>
-              <input type="text" id="unregistered_subscribers" name="unregistered_subscribers">${req.args.unregistered_subscribers}</input><br/>
             </div>
 
-            <div py:if="discussion.authemail" class="subscribe">
+            <div class="field">
+              <label for="unregistered_subscribers">Unregistered subscribers
+                (e-mails):</label>
+              <br/>
+              <input type="text" id="unregistered_subscribers"
+                name="unregistered_subscribers">
+                ${req.args.unregistered_subscribers}</input>
+              <br/>
+            </div>
+
+            <div py:if="discussion.authemail" class="field">
               <label for="subscribe">
-                <input py:if="req.args.subscribe" type="checkbox" id="subscribe" name="subscribe" checked="yes" value="1"/>
-                <input py:if="not req.args.subscribe" type="checkbox" id="subscribe" name="subscribe" value="0"/>
+                <input py:if="req.args.subscribe" type="checkbox" id="subscribe"
+                  name="subscribe" checked="yes" value="1"
+                  onchange="subscription_select('${req.authname}',
+                  this.checked);"/>
+                <input py:if="not req.args.subscribe" type="checkbox"
+                  id="subscribe" name="subscribe" value="0"
+                  onchange="subscription_select('${req.authname}',
+                  this.checked);"/>
                 Subscribe to topic.
               </label><br/>
             </div>
 
-            <div py:if="'DISCUSSION_MODERATE' in perm and discussion.moderator" class="discussion_important">
+            <div py:if="discussion.moderator" class="field">
               <label for="important">
                 <input py:if="req.args.important" type="checkbox" id="important" name="important" checked="yes" value="1"/>
                 <input py:if="not req.args.important" type="checkbox" id="important" name="important" value="0"/>
