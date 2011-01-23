@@ -4,6 +4,11 @@
 from datetime import *
 from copy import deepcopy
 
+# Genshi imports.
+from genshi.input import HTML
+from genshi.core import Markup
+from genshi.filters import Transformer
+
 # Trac imports.
 from trac.core import *
 from trac.config import Option, IntOption
@@ -27,10 +32,11 @@ from trac.resource import IResourceManager
 from trac.perm import IPermissionRequestor
 from trac.attachment import ILegacyAttachmentPolicyDelegate
 
-# Genshi imports.
-from genshi.input import HTML
-from genshi.core import Markup
-from genshi.filters import Transformer
+# TracTags imports.
+try:
+    from tractags.api import TagSystem
+except:
+    pass
 
 class IDiscussionFilter(Interface):
     """Extension point interface for components that want to filter discussion
@@ -171,13 +177,13 @@ class DiscussionApi(Component):
         # Get database access.
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()
-        context.users = self.get_users(context)
 
         type, id = resource.id.split('/')
 
         # Generate description for forums.
         if type == 'forum':
-            forum = self.get_forum(context, id)
+            forum = self._get_item(context, 'forum', ('id', 'name', 'subject'),
+              where = 'id = %s', values = (id,))
             if format == 'compact':
                 return '#%s' % (forum['id'],)
             elif format == 'summary':
@@ -187,7 +193,8 @@ class DiscussionApi(Component):
 
         # Generate description for topics.
         elif type == 'topic':
-            topic = self.get_topic(context, id)
+            topic = self._get_item(context, 'topic', ('id', 'subject'), where =
+              'id = %s', values = (id,))
             if format == 'compact':
                 return '#%s' % (topic['id'],)
             elif format == 'summary':
@@ -197,13 +204,12 @@ class DiscussionApi(Component):
 
         # Generate description for messages.
         elif type == 'message':
-            message = self.get_message(context, id)
             if format == 'compact':
-                return '#%s' % (message['id'],)
+                return '#%s' % (id,)
             elif format == 'summary':
-                return 'Message #%s' % (message['id'],)
+                return 'Message #%s' % (id,)
             else:
-                return 'Message #%s' % (message['id'],)
+                return 'Message #%s' % (id,)
 
     def resource_exists(self, resource):
         # Create context.
@@ -212,21 +218,23 @@ class DiscussionApi(Component):
         # Get database access.
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()
-        context.users = self.get_users(context)
 
         type, id = resource.id.split('/')
 
         # Check if forum exists.
         if type == 'forum':
-            return self.get_forum(context, id) != None
+            return self._get_item(context, 'forum', ('id'), where = 'id = %s',
+              values = (id,)) != None
 
         # Check if topic exits.
         elif type == 'topic':
-            return self.get_topic(context, id) != None
+            return self._get_item(context, 'topic', ('id'), where = 'id = %s',
+              values = (id,)) != None
 
         # Check if message exists.
         elif type == 'message':
-            return self.get_message(context, id) != None
+            return self._get_item(context, 'message', ('id'), where = 'id = %s',
+              values = (id,)) != None
 
     # Main request processing function.
 
@@ -255,16 +263,17 @@ class DiscussionApi(Component):
 
         # Fill up template data structure.
         context.data['users'] = context.users
-        context.data['authname'] = context.req.authname
-        context.data['authemail'] = context.authemail
-        context.data['moderator'] = context.moderator
+        context.data['has_tags'] = context.has_tags
         context.data['group'] = context.group
         context.data['forum'] = context.forum
         context.data['topic'] = context.topic
         context.data['message'] = context.message
+        context.data['moderator'] = context.moderator
+        context.data['authname'] = context.req.authname
+        context.data['authemail'] = context.authemail
+        context.data['realm'] = context.realm
         context.data['mode'] = actions[-1]
         context.data['time'] = datetime.now(utc)
-        context.data['realm'] = context.realm
         context.data['env'] = self.env
 
         # Commit database changes.
@@ -306,17 +315,18 @@ class DiscussionApi(Component):
         # Prepare template data.
         context.data = {}
 
+        # Get list of Trac users.
+        context.users = self.get_users(context)
+
+        # Check if TracTags plugin is enabled.
+        context.has_tags = self.env.is_component_enabled(
+          'tracdiscussion.tags.DiscussionTags')
+
+        # Populate active message.
         context.group = None
         context.forum = None
         context.topic = None
         context.message = None
-        context.redirect_url = None
-        context.format = context.req.args.get('format')
-
-        # Get list of Trac users.
-        context.users = self.get_users(context)
-
-        # Populate active message.
         if context.req.args.has_key('message'):
             message_id = int(context.req.args.get('message') or 0)
             context.message = self.get_message(context, message_id)
@@ -325,6 +335,10 @@ class DiscussionApi(Component):
                 context.forum = self.get_forum(context, context.topic['forum'])
                 context.group = self.get_group(context, context.forum[
                   'forum_group'])
+
+                # Create request resource.
+                context.resource = Resource('discussion', 'message/%s' % (
+                  context.message['id'],))
             else:
                 raise TracError('Message with ID %s does not exist.' % (
                   message_id,))
@@ -337,6 +351,10 @@ class DiscussionApi(Component):
                 context.forum = self.get_forum(context, context.topic['forum'])
                 context.group = self.get_group(context, context.forum[
                   'forum_group'])
+
+                # Create request resource.
+                context.resource = Resource('discussion', 'topic/%s' % (
+                  context.topic['id'],))
             else:
                 raise TracError('Topic with ID %s does not exist.' % (
                   topic_id,))
@@ -348,6 +366,10 @@ class DiscussionApi(Component):
             if context.forum:
                 context.group = self.get_group(context, context.forum[
                   'forum_group'])
+
+                # Create request resource.
+                context.resource = Resource('discussion', 'forum/%s' % (
+                  context.forum['id'],))
             else:
                 raise TracError('Forum with ID %s does not exist.' % (
                   forum_id,))
@@ -356,6 +378,11 @@ class DiscussionApi(Component):
         elif context.req.args.has_key('group'):
             group_id = int(context.req.args.get('group') or 0)
             context.group = self.get_group(context, group_id)
+
+            # Create request resource.
+            context.resource = Resource('discussion', 'group/%s' % (
+              context.group['id'],))
+
             if not context.group:
                 raise TracError('Group with ID %s does not exist.' % (
                   group_id,))
@@ -366,8 +393,12 @@ class DiscussionApi(Component):
           'DISCUSSION_MODERATE') or context.req.perm.has_permission(
           'DISCUSSION_ADMIN')
 
-        # Determine if user is subscriber to topic.
+        # Determine if user has e-mail set.
         context.authemail = context.req.session.get('email')
+
+        # Prepare other general context attributes.
+        context.redirect_url = None
+        context.format = context.req.args.get('format')
 
     def _get_actions(self, context):
         # Get action.
@@ -726,7 +757,8 @@ class DiscussionApi(Component):
                          'moderators' : context.req.args.get('moderators'),
                          'subscribers' : context.req.args.get('subscribers'),
                          'forum_group' : int(context.req.args.get('group') or 0),
-                         'time': to_timestamp(datetime.now(utc))}
+                         'time': to_timestamp(datetime.now(utc)),
+                         'tags': context.req.args.get('tags')}
 
                 # Fix moderators attribute to be a list.
                 if not forum['moderators']:
@@ -745,11 +777,21 @@ class DiscussionApi(Component):
                   context.req.args.get('unregistered_subscribers').replace(',',
                   ' ').split()]
 
+                # Fix tags attribute to be a list
+                if not forum['tags']:
+                    forum['tags'] = []
+                if not isinstance(forum['tags'], list):
+                    forum['tags'] = [tag.strip() for tag in forum['tags']
+                      .replace(',', ' ').split()]
+
                 # Perform new forum add.
                 self.add_forum(context, forum)
 
                 # Get inserted forum with new ID.
                 context.forum = self.get_forum_by_time(context, forum['time'])
+
+                # Copy tags field which is not stored in the database table.
+                context.forum['tags'] = forum['tags']
 
                 # Notify change listeners.
                 self.log.debug('forum_change_listeners: %s' % (
@@ -1426,15 +1468,9 @@ class DiscussionApi(Component):
         context.data['messages'] = messages
         context.data['paginator'] = paginator
 
-        # Create context with topic resource for attachments.
-        topic_context = Context.from_request(context.req)
-        topic_context.realm = context.realm
-        topic_context.resource = Resource('discussion', 'topic/%s' % (
-          context.topic['id'],))
-
         # Display list of attachments.
         context.data['attachments'] = AttachmentModule(self.env) \
-          .attachment_data(topic_context)
+          .attachment_data(context)
 
     def _get_paginator(self, context, page, items_limit, items_count,
       anchor = ''):
@@ -1572,16 +1608,20 @@ class DiscussionApi(Component):
           'subject', 'time', 'author', 'moderators', 'subscribers',
           'description'), 'id = %s', (id,))
 
-        # Unpack list of moderators and subscribers.
+        # Unpack list of moderators and subscribers and get forum tags.
         if forum:
-           forum['moderators'] = [moderator.strip() for moderator in
-             forum['moderators'].split()]
-           forum['subscribers'] = [subscribers.strip() for subscribers in
-             forum['subscribers'].split()]
-           forum['unregistered_subscribers'] = []
-           for subscriber in forum['subscribers']:
-               if subscriber not in context.users:
-                   forum['unregistered_subscribers'].append(subscriber)
+            forum['moderators'] = [moderator.strip() for moderator in
+              forum['moderators'].split()]
+            forum['subscribers'] = [subscribers.strip() for subscribers in
+              forum['subscribers'].split()]
+            forum['unregistered_subscribers'] = []
+            for subscriber in forum['subscribers']:
+                if subscriber not in context.users:
+                    forum['unregistered_subscribers'].append(subscriber)
+            if context.has_tags:
+                tag_system = TagSystem(self.env)
+                forum['tags'] = tag_system.get_tags(context.req,
+                  context.resource)
 
         return forum
 
@@ -1591,11 +1631,15 @@ class DiscussionApi(Component):
           'subject', 'time', 'author', 'moderators', 'subscribers',
           'description'), 'time = %s', (time,))
 
-        # Unpack list of moderators and subscribers.
+        # Unpack list of moderators and subscribers and get forum tags.
         if forum:
-           forum['moderators'] = [moderator.strip() for moderator in
-             forum['moderators'].split()]
-           forum['subscribers'] = forum['subscribers'].split()
+            forum['moderators'] = [moderator.strip() for moderator in
+              forum['moderators'].split()]
+            forum['subscribers'] = forum['subscribers'].split()
+            if context.has_tags:
+                tag_system = TagSystem(self.env)
+                forum['tags'] = tag_system.get_tags(context.req,
+                  context.resource)
 
         return forum
 
@@ -1777,7 +1821,7 @@ class DiscussionApi(Component):
             # Compute count of new replies and topics.
             forum['new_topics'] = _get_new_topic_count(context, forum['id'])
             forum['new_replies'] = _get_new_replies_count(context, forum['id'])
-            
+
             # Convert FP result of SUM() above into integer.
             forum['replies'] = int(forum['replies'] or 0)
 
@@ -1792,6 +1836,13 @@ class DiscussionApi(Component):
             for subscriber in forum['subscribers']:
                 if subscriber not in context.users:
                      forum['unregistered_subscribers'].append(subscriber)
+
+            # Get forum tags.
+            self.log.debug(context.resource)
+            if context.has_tags:
+                tag_system = TagSystem(self.env)
+                forum['tags'] = tag_system.get_tags(context.req, Resource(
+                  'discussion', 'forum/%s' % (forum['id'])))
 
         return forums
 
@@ -1884,6 +1935,10 @@ class DiscussionApi(Component):
                 if subscriber not in context.users:
                      topic['unregistered_subscribers'].append(subscriber)
             topic['status'] = self._topic_status_to_list(topic['status'])
+            if context.has_tags:
+                tag_system = TagSystem(self.env)
+                topic['tags'] = tag_system.get_tags(context.req, Resource(
+                  'discussion', 'topic/%s' % (topic['id'])))
         return topics
 
     def get_changed_topics(self, context, start, stop, order_by = 'time',
@@ -2015,6 +2070,10 @@ class DiscussionApi(Component):
         # Pack moderators and subscribers fields.
         tmp_forum['moderators'] = ' '.join(tmp_forum['moderators'])
         tmp_forum['subscribers'] = ' '.join(tmp_forum['subscribers'])
+
+        # Remove tags field.
+        if tmp_forum.has_key('tags'):
+            del tmp_forum['tags']
 
         # Add forum.
         self._add_item(context, 'forum', tmp_forum)

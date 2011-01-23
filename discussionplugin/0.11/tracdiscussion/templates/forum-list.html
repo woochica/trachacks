@@ -16,7 +16,7 @@
     <table class="listing">
       <thead>
         <tr py:if="group and group.id != 0">
-          <th class="group" colspan="10">
+          <th class="group" colspan="11">
             <div class="name">${format_to_oneliner(discussion.env, context, group.name)}</div>
             <div class="description">${format_to_oneliner(discussion.env, context, group.description)}</div>
           </th>
@@ -28,10 +28,11 @@
           ${sortable_th(discussion.order, discussion.desc, 'lasttopic', 'Last Topic', href.discussion())}
           ${sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', href.discussion())}
           ${sortable_th(discussion.order, discussion.desc, 'time', 'Founded', href.discussion())}
+          <th class="tags">Tags</th>
           ${sortable_th(discussion.order, discussion.desc, 'topics', 'Topics', href.discussion())}
-          <th>New Topics</th>
+          <th class="new_topics">New Topics</th>
           ${sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', href.discussion())}
-          <th>New Replies</th>
+          <th class="new_replies">New Replies</th>
         </tr>
       </thead>
       <tbody>
@@ -90,6 +91,13 @@
                     ${format_datetime(forum.time)}<br/>
                     ${pretty_timedelta(forum.time) + ' ago'}
                   </span>
+                </a>
+              </div>
+            </td>
+            <td class="tags">
+              <div class="tags">
+                <a href="${href.discussion('forum', forum.id)}">
+                  <span>${' '.join(forum.tags) or '&nbsp;'}</span>
                 </a>
               </div>
             </td>

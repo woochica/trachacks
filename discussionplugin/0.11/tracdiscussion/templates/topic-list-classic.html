@@ -9,6 +9,7 @@
           ${sortable_th(discussion.order, discussion.desc, 'author', 'Author', href.discussion('forum', discussion.forum.id))}
           ${sortable_th(discussion.order, discussion.desc, 'lastreply', 'Last Reply', href.discussion('forum', discussion.forum.id))}
           ${sortable_th(discussion.order, discussion.desc, 'time', 'Founded', href.discussion('forum', discussion.forum.id))}
+          <th class="tags">Tags</th>
           ${sortable_th(discussion.order, discussion.desc, 'replies', 'Replies', href.discussion('forum', discussion.forum.id))}
           <th class="new_replies">New Replies</th>
         </tr>
@@ -58,6 +59,13 @@
                 ${format_datetime(topic.time)}<br/>
                 ${pretty_timedelta(topic.time) + ' ago'}
                 </span>
+              </a>
+            </div>
+          </td>
+          <td class="tags">
+            <div class="tags">
+              <a href="${href.discussion('topic', topic.id)}">
+                <span>${' '.join(topic.tags) or '&nbsp;'}</span>
               </a>
             </div>
           </td>

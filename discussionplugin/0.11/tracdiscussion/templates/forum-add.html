@@ -114,6 +114,13 @@
               </label><br/>
             </div>
 
+            <div py:if="discussion.has_tags" class="field">
+              <label for="tags">Tags:</label>
+              <br/>
+              <input type="text" id="tags" name="tags" value=""/>
+              <br/>
+            </div>
+
             <div class="buttons">
               <input type="submit" name="submit" value="Submit"/>
               <input type="button" name="cancel" value="Cancel"
