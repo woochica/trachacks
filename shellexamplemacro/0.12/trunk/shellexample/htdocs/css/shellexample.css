@@ -1,32 +1,40 @@
-span.code-note {
+span.se-note {
 	color: #800;
 }
 
-span.code-snipped {
+span.se-output-snipped {
 	font-style: italic;
 	color: #999;
 }
 
-span.code-output {
+span.se-output {
 	color: #669;
 }
 
-span.code-input {
+span.se-prompt {
+	color: #006;
+}
+
+span.se-root {
+	color: red;
+}
+
+span.se-input {
 	font-weight: bold;
 }
 
-span.code-input-continuation {
+span.se-input-continuation {
 	color: #090;
 }
 
-span.code-input-option {
+span.se-input-option {
 	color: #00b;
 }
 
-span.code-input-string {
+span.se-input-string {
 	color: #606;
 }
 
-span.code-input-userreplacement {
+span.se-input-userreplacement {
 	color: orange;
 }

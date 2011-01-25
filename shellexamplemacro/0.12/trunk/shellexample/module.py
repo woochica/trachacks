@@ -9,34 +9,48 @@ import re
 
 __all__ = ['ShellExample']
 
+#######   Patterns   #######
+PATT_PRINTABLE =       '[*-_./!@~a-zA-Z0-9]'
+PATT_USERREPLACEMENT = '\{%s+\}' % (PATT_PRINTABLE)
+PATT_SINGLEQUOTE =     "'.*?(?<!\\\\)'"
+PATT_DOUBLEQUOTE =     '".*?(?<!\\\\)"'
+PATT_CMDOPTION =       '(?<=\s)-{1,2}%s+=?' % (PATT_PRINTABLE)
+PATT_CONTINUATION =    '\\\\\\n'
+PATT_WRD =             '.*?'
+PATT_PTH =             '(?P<path>[-~_ /a-zA-Z0-9]+)'
+PATT_USERHOST =        '((?P<user>[-._a-zA-Z0-9]+)?(?P<userhostsep>@)?(?P<host>[-._a-zA-Z0-9]+)?)'
+PATT_PS1START =        '(?P<ps1start>[\[({])'
+PATT_PS1END =          '(?P<ps1end>[\])}:])'
+PATT_CLI =             '(?P<cli>[#$](?![$])\s*)'
+PATT_NOTE =            '^(?P<note>\(.*?\))$'
+PATT_SNIPPEDOUTPUT =   '^(?P<snippedoutput>[$]{2}-{3}(?: .+?)?)$'
+PATT_OUTPUT =          '^(?P<output>.*?)$'
+PATT_INPUT =           '\s*%s|\s*%s|\s*%s|\s*%s|%s' % (PATT_USERREPLACEMENT, 
+		                      PATT_SINGLEQUOTE, PATT_DOUBLEQUOTE, PATT_CONTINUATION, PATT_WRD)
+PATT_DELAYEDINPUT =    '^(?P<delayedinput>[$]{2} (%s)+)$' % (PATT_INPUT)
+PATT_PS1 =            ('(?P<preinput>(?P<ps1>%(ps1start)s?(%(userhost)s?(?P<userpathspace>\s*)%(path)s?)' +
+		                 '%(ps1end)s?(?P<ps1endclispace>\s*))?%(cli)s)') % {
+		                     'ps1start': PATT_PS1START, 'userhost': PATT_USERHOST, 'path': PATT_PTH, 
+		                     'ps1end': PATT_PS1END, 'cli': PATT_CLI}
+PATT_PRIMARYINPUT =   ('^(?P<primaryinput>%(ps1)s(?P<input>(%(input)s)+))$' % 
+		                     {'ps1': PATT_PS1, 'input': PATT_INPUT})
+PATT_INPUT_TAGS =     ('(?P<ur>%s)|(?P<sq>%s)|(?P<dq>%s)|(?P<op>%s)|(?P<ct>%s)|(?P<wrd>%s)' % 
+		                     (PATT_USERREPLACEMENT, PATT_SINGLEQUOTE, PATT_DOUBLEQUOTE, 
+									 PATT_CMDOPTION, PATT_CONTINUATION, PATT_WRD))
+
+#######   Regular Expressions   #######
+REGEX_CRLF = re.compile('''(\r\n|\r|\n)''')
+REGEXP_LINE_MATCHER = re.compile(
+		PATT_PRIMARYINPUT + '|' + PATT_DELAYEDINPUT + '|' + PATT_NOTE + '|' + 
+		PATT_SNIPPEDOUTPUT + '|' + PATT_OUTPUT, re.M | re.S)
+REGEXP_TAGS = re.compile(PATT_INPUT_TAGS, re.S)
+REGEXP_UR = re.compile("(%s)" % (PATT_USERREPLACEMENT))
+
 class ShellExample(WikiMacroBase):
 	implements(IRequestHandler, ITemplateProvider)
 	revision = "$Rev$"
 	url = "$URL$"
 
-	regex_crlf = re.compile('''(\r\n|\r|\n)''')
-	patt_printable =  '[*-_./!@~a-zA-Z0-9]'
-	patt_userreplacement =  '\{%s+\}' % (patt_printable)
-	patt_singlequote =  "'.*?(?<!\\\\)'"
-	patt_doublequote =  '".*?(?<!\\\\)"'
-	patt_cmdoption =  '(?<=\s)-{1,2}%s+=?' % (patt_printable)
-	patt_continuation =  '\\\\\\n'
-	patt_wrd = '.*?'
-	patt_pth = '[-~_ /a-zA-Z0-9]+'
-	patt_userhost =  '([-._a-zA-Z0-9]+)?@?([-._a-zA-Z0-9]+)?'
-	patt_input = '\s*%s|\s*%s|\s*%s|\s*%s|%s' % (patt_userreplacement, 
-			patt_singlequote, patt_doublequote, patt_continuation, patt_wrd)
-	regexp = re.compile(
-			('^(?P<path>[\[({]?(%s( %s)?)[\])}:]?)?(?P<cli>[#$] )(?P<input>(%s)+)$' % 
-				(patt_userhost, patt_pth, patt_input)) + 
-			('|^(?P<delayedinput>[$]{2} (%s)+)$' % (patt_input)) +
-			'|^(?P<note>\(.*?\))$'
-			'|^(?P<snippedoutput>[$]{2}-{3}(?: .+?)?)$'
-			'|^(?P<output>.*?)$'
-			, re.M | re.S)
-	patt_input_tags = '(?P<ur>%s)|(?P<sq>%s)|(?P<dq>%s)|(?P<op>%s)|(?P<ct>%s)|(?P<wrd>%s)' % (patt_userreplacement, patt_singlequote, patt_doublequote, patt_cmdoption, patt_continuation, patt_wrd)
-	regexp_tags = re.compile(patt_input_tags, re.S)
-	regexp_ur = re.compile("(%s)" % (patt_userreplacement))
 
 	def expand_macro(self, req, name, text, args):
 		# args will be null if the macro is called without parenthesis.
@@ -44,57 +58,64 @@ class ShellExample(WikiMacroBase):
 		
 
 	def render_macro(self, req, name, content):
-		#if req.hdf:
-		#	if not req.hdf.has_key("macro.ShellExample.outputcss"):
-		#		req.hdf["macro.ShellExample.outputcss"] = True
-		content = content and self.regex_crlf.sub("\n", escape(content).replace('&#34;', '"')) or ''
-		def stringcallback(match):
+		content = content and REGEX_CRLF.sub("\n", escape(content).replace('&#34;', '"')) or ''
+
+		def inputstringcallback(match):
 			if match.group('ur'):
-				return '<span class="code-input-userreplacement">' + match.group('ur') + '</span>'
+				return '<span class="se-input-userreplacement">' + match.group('ur') + '</span>'
 			if match.group('sq'):
-				m = self.regexp_ur.sub(r'<span class="code-input-userreplacement">\1</span>', match.group('sq'))
-				return '<span class="code-input-string">' + m + '</span>'
+				m = REGEXP_UR.sub(r'<span class="se-input-userreplacement">\1</span>', match.group('sq'))
+				return '<span class="se-input-string">' + m + '</span>'
 			if match.group('dq'):
-				m = self.regexp_ur.sub(r'<span class="code-input-userreplacement">\1</span>', match.group('dq'))
-				return '<span class="code-input-string">' + m + '</span>'
+				m = REGEXP_UR.sub(r'<span class="se-input-userreplacement">\1</span>', match.group('dq'))
+				return '<span class="se-input-string">' + m + '</span>'
 			if match.group('ct'):
-				return '<span class="code-input-continuation">' + match.group('ct') + '</span>'
+				return '<span class="se-input-continuation">' + match.group('ct') + '</span>'
 			if match.group('op'):
-				return '<span class="code-input-option">' + match.group('op') + '</span>'
+				return '<span class="se-input-option">' + match.group('op') + '</span>'
 			return match.group(0)
 
-		def callback(match):
-			m = match.group('cli')
-			if m:
-				path = match.group('path')
-				if path:
-					line = '<span class="code-path">' + path + '</span>'
-				else:
-					line = ''
-
-				input = self.regexp_tags.sub(stringcallback, match.group('input'))
-				input = '<span class="code-input">' + input + '</span>'
-				if m == '# ':
-					line = line + '<span class="code-root">' + m + input + '</span>'
-				else:
-					line = line + '<span class="code-user">' + m + input + '</span>'
-				return line
-			m = match.group('note')
-			if m:
-				return '<span class="code-note">' + m + '</span>'
-			m = match.group('delayedinput')
-			if m:
-				inputdelayed = self.regexp_tags.sub(stringcallback, m[3:])
-				return '<span class="code-input"><span class="code-delayed">' + inputdelayed + '</span></span>'
-			m = match.group('snippedoutput')
-			if m:
+		def linematcher_callback(match):
+			if match.group('preinput'):
+				s = ''
+				if match.group('ps1'):
+					if match.group('ps1start'):
+						s += '<span class="se-prompt-start">' + match.group('ps1start') + '</span>'
+					if match.group('user'):
+						s += '<span class="se-prompt-user">' + match.group('user') + '</span>'
+					if match.group('userhostsep'):
+						s += '<span class="se-prompt-userhostseparator">' + match.group('userhostsep') + '</span>'
+					if match.group('host'):
+						s += '<span class="se-prompt-host">' + match.group('host') + '</span>'
+					if match.group('userpathspace'):
+						s += match.group('userpathspace')
+					if match.group('path'):
+						s += '<span class="se-prompt-path">' + match.group('path') + '</span>'
+					if match.group('ps1end'):
+						s += '<span class="se-prompt-end">' + match.group('ps1end') + '</span>'
+					s = '<span class="se-prompt">' + s + '</span>';
+				if match.group('cli'):
+					if match.group('cli') == '# ':
+						s += '<span class="se-root">' + match.group('cli') + '</span>'
+					else:
+						s += '<span class="se-unprivileged">' + match.group('cli') + '</span>'
+					input = REGEXP_TAGS.sub(inputstringcallback, match.group('input'))
+					s += '<span class="se-input">' + input + '</span>'
+				return s;
+			if match.group('note'):
+				return '<span class="se-note">' + match.group('note') + '</span>'
+			if match.group('delayedinput'):
+				inputdelayed = REGEXP_TAGS.sub(inputstringcallback, match.group('delayedinput')[3:])
+				return '<span class="se-input"><span class="se-input-delayed">' + inputdelayed + '</span></span>'
+			if match.group('snippedoutput'):
+				m = match.group('snippedoutput')
 				sniptext = "&lt;Output Snipped&gt;" if len(m) == 5 else m[6:]
-				return '<span class="code-output"><span class="code-snipped">' + sniptext + '</span></span>'
-			m = match.group('output')
-			if m:
-				return '<span class="code-output">' + m + '</span>'
+				return '<span class="se-output"><span class="se-output-snipped">' + sniptext + '</span></span>'
+			if match.group('output'):
+				return '<span class="se-output">' + match.group('output') + '</span>'
 			return match.group(0)
-		return Markup('<div class="code"><pre>' + self.regexp.sub(callback, content) + '</pre></div>');
+
+		return Markup('<div class="code"><pre>' + REGEXP_LINE_MATCHER.sub(linematcher_callback, content) + '</pre></div>');
 
 	def get_templates_dirs(self):
 		"""Return a list of directories containing the provided ClearSilver
