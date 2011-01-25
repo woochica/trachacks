@@ -5,7 +5,7 @@
 # but has been signifigantly updated
 
 
-VERSION = '0.12.0'
+VERSION = '0.12.1'
 PACKAGE = 'ShellExampleProcessor'
 import os
 from setuptools import find_packages, setup
