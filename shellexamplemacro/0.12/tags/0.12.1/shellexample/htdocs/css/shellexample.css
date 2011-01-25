@@ -1,0 +1,40 @@
+span.se-note {
+	color: #800;
+}
+
+span.se-output-snipped {
+	font-style: italic;
+	color: #999;
+}
+
+span.se-output {
+	color: #669;
+}
+
+span.se-prompt {
+	color: #006;
+}
+
+span.se-root {
+	color: red;
+}
+
+span.se-input {
+	font-weight: bold;
+}
+
+span.se-input-continuation {
+	color: #090;
+}
+
+span.se-input-option {
+	color: #00b;
+}
+
+span.se-input-string {
+	color: #606;
+}
+
+span.se-input-userreplacement {
+	color: orange;
+}
