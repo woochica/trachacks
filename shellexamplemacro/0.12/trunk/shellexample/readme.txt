@@ -1,7 +1,7 @@
 == Shell Example ==
-This plugin was originally developed by mOo <moolighttpd@gmail.com>
-located <http://xcache.lighttpd.net/wiki/ShellExample>
-but has been signifigantly updated to colorize code and recognize more options
+This plugin was originally developed by mOo moolighttpd@gmail.com
+located at http://xcache.lighttpd.net/wiki/ShellExample. This plugin is now
+maintained by Nathaniel Madura nmadura@umich.edu
 
 This plugin has only been tested on Trac 0.12, but may work with earlier versions.
 
@@ -30,20 +30,27 @@ shellexample.* = enabled
 
 === Details ===
 This is a [wiki:WikiProcessors WikiProcessor] so it is used with the standard #! notation. This processor injects css code into Trac, so you should get formatted output by default. Any tagged code is inside a span element, and the following classes are used:
- * code-input
- * code-input-userreplacement
- * code-input-string
- * code-input-continuation
- * code-input-option
- * code-path
- * code-root
- * code-user
- * code-note
- * code-delayed
- * code-output
- * code-snipped
+ * se-input
+ * se-input-userreplacement
+ * se-input-string
+ * se-input-continuation
+ * se-input-option
+ * se-input-delayed
+ * se-prompt
+ * se-prompt-start
+ * se-prompt-user
+ * se-prompt-userhostseparator
+ * se-prompt-host
+ * se-prompt-path
+ * se-prompt-end
+ * se-root
+ * se-unprivileged
+ * se-note
+ * se-output
+ * se-output-snipped
 
 === Usage ===
+
  1. Standard shebang (#!) notation is used
  {{{
 
@@ -77,21 +84,25 @@ baruser$ foo
 }}}
  1. Parenthesis are used to indicate a note
  {{{
-
+{{{
 #!ShellExample
-(do this with caution you are a root user)
-root# foo
+(become root and install)
+~ $ su
+~ # make install
+}}}
 }}}
  {{{
 #!ShellExample
-(do this with caution you are a root user)
-root# foo
+(become root and install)
+~ $ su
+~ # make install
 }}}
  1. Command line switches/options are also recognized and highlighted differently, as are strings that are in the input
  {{{
-
+{{{
 #!ShellExample
 {user@foo ~/path/to}$ foo -v --hello --hello="something"
+}}}
 }}}
  {{{
 #!ShellExample
@@ -99,12 +110,13 @@ root# foo
 }}}
  1. Shell continuation is also recognized, just make sure there is no white space after the backslash
  {{{
-
+{{{
 #!ShellExample
 {user@foo ~/path/to}$ foo \
 --some \
 --multiline \ 
 --input='something'
+}}}
 }}}
  {{{
 #!ShellExample
@@ -125,7 +137,7 @@ root# foo
 }}}
  1. Example output can be included, and will be highlighted differently
  {{{
-
+{{{
 #!ShellExample
 {user@foo ~/path/to}$ cat lorem.txt
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod 
@@ -135,6 +147,7 @@ commodo consequat. Duis aute irure dolor in reprehenderit in voluptate
 velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat 
 cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id 
 est laborum.
+}}}
 }}}
  {{{
 #!ShellExample
@@ -149,7 +162,7 @@ est laborum.
 }}}
  1. Long sample output can be trimmed and annotated with $$---, if a string is included after the tag, that string is used otherwise <Output Snipped> will appear
  {{{
-
+{{{
 #!ShellExample
 {user@foo ~/path/to}$ cat lorem.txt
 Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod 
@@ -157,6 +170,7 @@ tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
 $$--- Unnecessary text deleted
 cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id 
 est laborum.
+}}}
 }}}
  {{{
 #!ShellExample
@@ -169,10 +183,10 @@ est laborum.
 }}}
  1. Input can appear in the output by using $$ at the start of the line.
  {{{
-
+{{{
 #!ShellExample
 (full example showing how to use openssl to connect to a pops mail server)
-$ openssl s_client -connect mail.foo.com:995
+[foo@bar ~]$ openssl s_client -connect mail.foo.com:995
 CONNECTED(00000003)
 depth=0 /C=US/ST=Nowhere/O=Foo/OU=bar/CN=mail.foo.com
 $$---
@@ -188,10 +202,11 @@ $$ quit
 +OK Logging out.
 closed
 }}}
+}}}
  {{{
 #!ShellExample
 (full example showing how to use openssl to connect to a pops mail server)
-$ openssl s_client -connect mail.foo.com:995
+[foo@bar ~]$ openssl s_client -connect mail.foo.com:995
 CONNECTED(00000003)
 depth=0 /C=US/ST=Nowhere/O=Foo/OU=bar/CN=mail.foo.com
 $$---
