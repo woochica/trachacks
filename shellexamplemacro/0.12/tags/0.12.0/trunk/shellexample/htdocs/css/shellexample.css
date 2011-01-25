@@ -1,0 +1,32 @@
+span.code-note {
+	color: #800;
+}
+
+span.code-snipped {
+	font-style: italic;
+	color: #999;
+}
+
+span.code-output {
+	color: #669;
+}
+
+span.code-input {
+	font-weight: bold;
+}
+
+span.code-input-continuation {
+	color: #090;
+}
+
+span.code-input-option {
+	color: #00b;
+}
+
+span.code-input-string {
+	color: #606;
+}
+
+span.code-input-userreplacement {
+	color: orange;
+}
