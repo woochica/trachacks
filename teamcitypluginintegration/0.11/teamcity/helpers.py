@@ -62,7 +62,7 @@ class TeamCityQuery(object):
 			opener = urllib2.build_opener(authhandler)
 			urllib2.install_opener(opener)
 		timeout = socket.getdefaulttimeout()
-		socket.setdefaulttimeout(1)
+		socket.setdefaulttimeout(3)
 		if data:
 			data = urllib.urlencode(data)
 		try:

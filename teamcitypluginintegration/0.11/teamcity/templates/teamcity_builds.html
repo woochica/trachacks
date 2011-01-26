@@ -21,7 +21,14 @@
 				${b['btype_name']}
 			</div>
 			<div class="inner-build ${b['build']['status']}" id="header-${b['btype_id']}">
-				<a href="builds/download/${b['build']['id']}">Last build #${b['build']['number']}: ${b['build']['end_date']} (duration: ${b['build']['end_date']-b['build']['start_date']})</a>
+				<py:choose>
+					<py:when test="b['build']['id']">
+						<a href="builds/download/${b['build']['id']}">Last build #${b['build']['number']}: ${b['build']['end_date']} (duration: ${b['build']['duration']})</a>
+					</py:when>
+					<py:otherwise>
+						<span>Build history is empty</span>
+					</py:otherwise>
+				</py:choose>
 			</div>
 			<div class="build-info">
 				<span id="progress-text-${b['btype_id']}">&nbsp;</span>

@@ -150,7 +150,7 @@ class TeamCityBuildPage(Component):
 	def process_request(self,req):
 		if not req.perm.has_permission('TEAMCITY_BUILD'):
 			raise HTTPForbidden('You are not allowed to view/run TC builds')
-		options = get_options(self.config) # FIXME!
+		options = get_options(self.config)
 		tc = TeamCityQuery(options)
 		# projects variable will collect builds result in following format:
 		# {'projectId': { 
@@ -175,6 +175,33 @@ class TeamCityBuildPage(Component):
 			if btype_xml is None:
 				self.log.error("Can't load builds xml at %s" % url)
 				continue
+			if len(btype_xml) < 1: # there is not any builds yet
+				url = '%s/httpAuth/app/rest/buildTypes/id:%s' % (options['base_url'], build_type)
+				build_xml = tc.xml_query(url)
+				if build_xml is None:
+					continue
+				# here build as man info as possible and continue
+				build_info = {
+					'btype_id': build_type,
+					'btype_name': build_xml.attrib['name'],
+					'build': {
+						'id': None,
+						'number': None,
+						'status': 'unknown',
+						'end_date': 'Never',
+						'duration': 'Unknown'
+					}
+				}
+				if proj_id in projects:
+					projects[proj_id]['btypes'].append(build_info)
+				else: # or create new item in projects
+					projects[proj_id] = {
+						'name': proj_name,
+						'btypes': [build_info,]
+					}
+				continue
+
+			# There is at least one finished build
 			last_build = btype_xml[0].attrib
 			# load this build xml
 			url = "%s%s" % (options['base_url'],last_build['href'])
@@ -184,19 +211,33 @@ class TeamCityBuildPage(Component):
 			proj_id = build_xml.xpath('/build/buildType/@projectId')[0]
 			proj_name =  build_xml.xpath('/build/buildType/@projectName')[0]
 			# Fuck! python2.5 has not support for timezones in datetime.strptime
-			start_date =  build_xml.xpath('/build/startDate/text()')[0].split('+')[0] # datetime lacks timezone info
-			start_date = datetime.strptime(start_date, '%Y%m%dT%H%M%S')
-			end_date = build_xml.xpath('/build/finishDate/text()')[0].split('+')[0] # datetime lacks timezone info
-			end_date = datetime.strptime(end_date, '%Y%m%dT%H%M%S')
+			try:
+				# datetime lacks timezone info
+				start_date =  build_xml.xpath('/build/startDate/text()')[0].split('+')[0] 
+				start_date = datetime.strptime(start_date, '%Y%m%dT%H%M%S')
+				# datetime lacks timezone info
+				end_date = build_xml.xpath('/build/finishDate/text()')[0].split('+')[0] 
+				end_date = datetime.strptime(end_date, '%Y%m%dT%H%M%S')
+			except IndexError: # no start_date or end_date, duration is unknown
+				end_date = 'Never'
+				duration = 'Unknown'
+			else:
+				duration = end_date - start_date
+			# parse build status
+			try:
+				status = build_xml.xpath('/build/statusText/text()')[0].lower()
+			except IndexError: # no last status yet
+				status = 'unknown'
+			# result build dictionary
 			build_info = {
 				'btype_id': build_type,
 				'btype_name': build_xml.xpath('/build/buildType/@name')[0],
 				'build': {
 					'id': build_xml.attrib['id'],
 					'number': build_xml.attrib['number'],
-					'status': build_xml.xpath('/build/statusText/text()')[0].lower(),
-					'start_date': start_date,
+					'status': status,
 					'end_date': end_date,
+					'duration': duration
 				}
 			}
 			# add new build to project
@@ -273,7 +314,6 @@ class TeamCityHistory(Component):
 			date = entry.find('{http://www.w3.org/2005/Atom}published').text
 			date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%SZ')
 			summary = entry.find('{http://www.w3.org/2005/Atom}summary').text
-#			assert False, summary
 			summary =  summary.split('<a href')[0]
 			build_id_match = re.search('buildId=(\d+)', link)
 			if build_id_match:

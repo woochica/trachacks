@@ -49,6 +49,9 @@ div.failure {
 div.running {
 	background: url(../img/build_r.gif) no-repeat scroll 0 50%;
 }
+div.unknown {
+	background: url(../img/cancelled.gif) no-repeat scroll 0 50%;
+}
 div.build-info {
 	height: 15px; 
 	border:1px solid #ACACAE; 

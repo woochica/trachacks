@@ -18,7 +18,6 @@ class TeamCityAdmin(Component):
 			options,errors = self._save_options(req.args)
 		else:
 			options,errors = get_options(self.config),[]
-		#assert False, options
 		tc = TeamCityQuery(options)
 		url = "%s/httpAuth/app/rest/buildTypes" % options['base_url']
 		# load builds from TC using REST API
