@@ -88,13 +88,14 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     " * "
                     " [/log/%(path)s/trunk trunk]"
                     " ("
-                    "[/log/%(path)s/trunk?stop_rev=%(stop_rev)s changes]"
+                    "[/log/%(path)s/trunk?revs=%(stop_rev)s-%(start_rev)s changes]"
                     " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/trunk diffs]"
                     ")"
                 % {
                     'path': path,
                     'old_tag' : next['version'],
                     'stop_rev' : next['rev'],
+                    'start_rev' : cur['rev'],
                 })
             elif next != None:
                 # regular releases
