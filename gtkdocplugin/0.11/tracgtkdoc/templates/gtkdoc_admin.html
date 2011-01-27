@@ -1,0 +1,86 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+    This file is part of TracGtkDoc.
+    Copyright (C) 2011 Luis Saavedra <luis94855510@gmail.com>
+
+    TracGtkDoc is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    TracGtkDoc is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with TracGtkDoc.  If not, see <http://www.gnu.org/licenses/>.
+
+    $Author$
+    $Date$
+    $Revision$
+  -->
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+    <xi:include href="admin.html" />
+
+    <head>
+        <title>GtkDoc</title>
+    </head>
+    <body>
+        <h2>GtkDoc Books</h2>
+
+        <form id="addbook" class="addnew" method="post">
+            <fieldset>
+                <legend>Add Book</legend>
+
+                <div class="field">
+                    <label>Name: <br/>
+                    <input type="text" name="name" class="textwidget" value="${ name }"/></label>
+                </div>
+
+                <div class="field">
+                    <label>Path: <br/>
+                    <input type="text" name="path" class="textwidget" value="${ path }"/></label>
+                </div>
+
+                <div class="buttons">
+                    <input type="submit" name="add" value=" Add "/>
+                </div>
+            </fieldset>
+        </form>
+
+        <py:choose>
+            <div py:when="not books">
+                <p class="help">No books have been added yet.</p>
+            </div>
+            <form method="post" py:otherwise="">
+                <table class="listing" id="booklist">
+                    <thead>
+                        <tr>
+                            <th class="sel">&nbsp;</th>
+                            <th>Name</th>
+                            <th>Path</th>
+                            <th>Default</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr py:for="book in books">
+                            <td><input type="checkbox" name="sel" value="${ book.name }"/></td>
+                            <td>${ book.name }</td>
+                            <td>${ book.path }</td>
+                            <td><input type="radio" name="default" value="${ book.name }" checked="${ book.name==default or None}"/></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="buttons">
+                    <input type="submit" name="remove" value="Remove selected books"/>
+                    <input type="submit" name="apply" value="Apply changes"/>
+                </div>
+            </form>
+        </py:choose>
+    </body>
+</html>
