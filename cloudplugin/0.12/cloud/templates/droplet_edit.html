@@ -1,0 +1,60 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>$title</title>
+  </head>
+
+  <body>
+    <div id="content" class="cloud">
+      <h1>$title</h1>
+      <form action="" method="post">
+        <div>
+          <input type="hidden" name="action" value="$action" />
+          
+          <div class="field" py:for="field in fields">
+            <label for="$field">${labels[field]}:</label><br />
+            <div py:choose="opttype.get(field)">
+              <select py:when="'multiselect'" id="$field" name="$field" size="10"
+                      py:attrs="{'class':'multiselect','multiple':'multiple',
+                                 'disabled':field in readonly and 'disabled' or None}">
+                <option py:for="name,value in options[field]"
+                        selected="${value in item.get(field,[]) or None}"
+                        value="$value">$name</option>
+              </select>
+              <select py:when="'select'" id="$field" name="$field"
+                      py:attrs="{'disabled':field in readonly and 'disabled' or None}">
+                <option py:for="name,value in options[field]"
+                        selected="${value == item.get(field) or None}"
+                        value="$value">$name</option>
+              </select>
+              <input py:otherwise="" id="$field" name="$field" value="${item.get(field,'')}"
+                     py:attrs="{'disabled':field in readonly and 'disabled' or None}"
+                     type="text" size="50"/>
+              <br />
+              <br />
+            </div>
+          </div>
+		  
+          <div class="field">
+            <div class="system-message" py:if="error">
+              <strong>Error:</strong> $error
+            </div>
+          </div>
+          
+          <div class="buttons">
+            <input type="submit" value="$button"/>
+            <input type="submit" name="cancel" value="${_('Cancel')}"/>
+          </div>
+          
+        </div>
+      </form>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>$title</title>
+  </head>
+
+  <body>
+    <div id="content" class="droplet">
+      <h1>$title</h1>
+	  
+      <table>
+        <tr py:for="field in fields">
+          <td>${labels.get(field,field)}</td>
+          <td py:choose="type(item.get(field))">
+          	<a py:when="tuple" href="${item.get(field)[0]}">${item.get(field)[1]}</a>
+          	<div py:otherwise="">${item.get(field,'')}</div>
+		  </td>
+        </tr>
+      </table>
+	  
+      <div class="field">
+        <div class="system-message" py:if="error">
+          <strong>Error:</strong> $error
+        </div>
+      </div>
+      
+      <div class="buttons">
+        <form py:if="'CLOUD_MODIFY' in perm(resource)" action="" method="get">
+          <input type="hidden" name="action" value="edit" />
+          <input type="submit" value="${_('Edit %(label)s', label=label)}"/>
+        </form>
+        
+        <form py:if="'CLOUD_MODIFY' in perm(resource)" action="" method="get">
+          <input type="hidden" name="action" value="delete" />
+          <input type="submit" value="${_('Delete %(label)s', label=label)}"/>
+        </form>
+        
+	  </div>
+    </div>
+  </body>
+</html>
