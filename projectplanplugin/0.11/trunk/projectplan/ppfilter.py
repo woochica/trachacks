@@ -128,21 +128,31 @@ class QueryFilter( ParamFilter ):
       Query the Database including ticket_custom and return result set
     '''
     
-    def translate2sqlcommands( filtertupel ):
-      if filtertupel[0] == '=~':
-        sep = '%'
-        return ' LIKE "%s%s%s"' % (sep, filtertupel[1], sep)
+    def translate2sqlcommands( colname, filtertupel ):
+      values = filtertupel[1].split('|') # splits the list of values like TracQuery
+      sqlmore = [] # list of sql where clauses
+      
+      if filtertupel[0] == '!=':
+        glue = ' AND '
       else:
-        return ' '+filtertupel[0]+' "'+filtertupel[1]+'" '
+        glue = ' OR '
+      
+      for value in values:
+        if filtertupel[0] == '=~':
+          sep = '%'
+          sqlmore.append('%s LIKE "%s%s%s"' % (colname, sep, value, sep))
+        else:
+          sqlmore.append(colname+' '+filtertupel[0]+' "'+value+'" ')
+      return '(%s)' % ( glue.join(sqlmore)  ) # create a summarized SQL where clause
     
     
     wherefilter = []
     for filtercol in self.filterlist.keys():
-      wherefilter.append( ' %s%s ' % (filtercol, translate2sqlcommands(self.filterlist[filtercol]) ) )
+      wherefilter.append( ' %s ' % (translate2sqlcommands(filtercol, self.filterlist[filtercol]) ) )
     
     self.macroenv.tracenv.log.debug('self.filterlistcustom: '+repr(self.filterlistcustom) )
     for filtercustomcol in self.filterlistcustom.keys():
-      wherefilter.append( ' id IN ( SELECT ticket FROM ticket_custom WHERE name="%s" AND value %s ) ' % (filtercustomcol, translate2sqlcommands(self.filterlistcustom[filtercustomcol]) ) )
+      wherefilter.append( ' id IN ( SELECT ticket FROM ticket_custom WHERE name="%s" AND %s ) ' % (filtercustomcol, translate2sqlcommands('value', self.filterlistcustom[filtercustomcol]) ) )
     
     wherefilter = '  AND '.join(wherefilter)
     wherefilter = ' SELECT id FROM ticket WHERE '+wherefilter
