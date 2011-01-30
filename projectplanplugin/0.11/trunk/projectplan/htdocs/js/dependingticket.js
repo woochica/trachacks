@@ -12,6 +12,7 @@ function ppCreateNewDependingTicket()
 {
   if( /\/ticket\//.test(window.location.href) ) {
     $('.buttons').append('<input type="button" name="ppCreateNewDependingTicket" value="Create new depending ticket" onclick="ppCreateNewDependingTicketAction()">');
+    $('.buttons').append('<input type="button" name="ppCreateNewBlockedTicket" value="Create new blocked ticket" onclick="ppCreateNewBlockedTicketAction()">');
   }
 }
 
@@ -25,6 +26,10 @@ function ppAddDependenciesToNewDependingTicket()
     if( pos > -1 ) {
       $('#field-dependencies').val(window.location.search.substr(pos+('?dep='.length)));
     }
+  pos = window.location.search.search(/\?blocking=/);
+    if( pos > -1 ) {
+      $('#field-dependenciesreverse').val(window.location.search.substr(pos+('?blocking='.length)));
+    }
   }
 }
 
@@ -33,6 +38,9 @@ function ppAddDependenciesToNewDependingTicket()
  */
 function ppCreateNewDependingTicketAction() {
   window.location.href = window.location.href.replace(/\/ticket\//, '/newticket?dep=' );
+}
+function ppCreateNewBlockedTicketAction() {
+  window.location.href = window.location.href.replace(/\/ticket\//, '/newticket?blocking=' );
 }
  
 
