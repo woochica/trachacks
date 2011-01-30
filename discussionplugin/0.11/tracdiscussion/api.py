@@ -247,6 +247,7 @@ class DiscussionApi(Component):
         self._prepare_context(context)
         actions = self._get_actions(context)
         self.log.debug('actions: %s' % (actions,))
+        self.log.debug('req.args: %s' % (str(context.req.args)))
 
         # Get session data.
         context.visited_forums = eval(context.req.session.get('visited-forums')

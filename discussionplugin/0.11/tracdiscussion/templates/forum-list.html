@@ -60,7 +60,7 @@
             <td class="moderators">
               <div class="moderators">
                 <a href="${href.discussion('forum', forum.id)}">
-                  <span>${forum.moderators or '&nbsp;'}</span>
+                  <span>${' '.join(forum.moderators) or '&nbsp;'}</span>
                 </a>
               </div>
             </td>
