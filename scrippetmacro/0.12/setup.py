@@ -5,13 +5,13 @@ from setuptools import setup
 
 setup(
     name = 'TracScrippetsMacro',
-    version = '0.1',
+    version = '0.2',
     packages = ['scrippets'],
     package_data={ 'scrippets' : [ 'htdocs/css/*.css' ] },
     author = "Benjamin Lau",
-    description = "Macro to add scrippets to a wiki page.",
+    description = "Macro to add scrippets to a wiki page and a IHTMLPreviewRenderer for Final Draft Pro v8 XML.",
     license = "BSD",
-    keywords = "trac plugin macro comments",
+    keywords = "trac plugin macro comments renderer",
     url = "http://trac-hacks.org/wiki/ScrippetsMacro",
     classifiers = [
         'Framework :: Trac',
@@ -20,6 +20,7 @@ setup(
     entry_points = {
         'trac.plugins': [
             'scrippets.macro = scrippets.macro',
+            'scrippets.render = scrippets.render',
         ],
     },
 )
