@@ -7,7 +7,7 @@
 from setuptools import setup
 
 setup(name="TracSectionEditPlugin",
-      version="0.1",
+      version="0.1.1",
       packages=['tracsectionedit'],
       author="Catalin Balan", 
       author_email="cbalan@optaros.com", 
