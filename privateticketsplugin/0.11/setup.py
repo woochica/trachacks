@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name = 'TracPrivateTickets',
-    version = '2.0.2',
+    version = '2.0.3',
     packages = ['privatetickets'],
 
     author = 'Noah Kantrowitz',

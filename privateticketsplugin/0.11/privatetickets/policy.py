@@ -122,7 +122,7 @@ class PrivateTicketsPolicy(Component):
         while repeat:
             repeat = False
             for subject, action in perms:
-                if subject in groups and action.islower() and action not in groups:
+                if subject in groups and not action.isupper() and action not in groups:
                     groups.add(action)
                     repeat = True 
         
