@@ -38,17 +38,17 @@ class TracHoursByComment(Component):
         compatibility."""
 
     def validate_ticket(self, req, ticket):
-        """add hours through comments"""
-
-        if not req.perm.has_permission('TICKET_ADD_HOURS'):
-            return []
+        """Parse comments to add hours using '%f hours' syntax. """
 
         # markup the comment and add hours
-        comment = req.args.get('comment')
-        if comment is None:
-            return []
-
-        req.args['comment'] = self.munge_comment(comment, ticket)
+        # For example, the comment "Worked 2 hours." on ticket 
+        # 18 is transformed to "Worked [/hours/18 2 hours]." and
+        # a entry is made in the total hours for ticket 18.        
+        if 'TICKET_ADD_HOURS' in req.perm('ticket', ticket.id):
+            comment = req.args.get('comment')
+            if comment:
+                req.args['comment'] = self.munge_comment(comment, ticket)
+                    
         return []
 
     def munge_comment(self, comment, ticket):
@@ -67,11 +67,11 @@ class TracHoursByComment(Component):
     def match(self, message):
         reporter = emailaddr2user(self.env, message['from'])
         reply_to_ticket = ReplyToTicket(self.env)
-        
-        perm = PermissionCache(self.env, reporter)        
-        if not perm.has_permission('TICKET_ADD_HOURS'):
+        perm = PermissionCache(self.env, reporter)
+        if 'TICKET_ADD_HOURS' in perm('ticket', reply_to_ticket.ticket(message).id):
+            return bool(reply_to_ticket.ticket(message))
+        else:
             return False
-        return bool(reply_to_ticket.ticket(message))
 
     def invoke(self, message, warnings):
         reply_to_ticket = ReplyToTicket(self.env)

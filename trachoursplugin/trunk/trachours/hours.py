@@ -320,7 +320,8 @@ class TracHoursPlugin(Component):
                 field = '0'
             else:
                 hours = '%.1f' % (self.get_total_hours(ticket_id) / 3600.0)
-                field = tag.a(hours, href=req.href('hours', data['ticket'].id), title="hours for ticket %s" % data['ticket'].id)
+                field = tag.a(hours, href=req.href('hours', data['ticket'].id), 
+                              title="hours for ticket %s" % data['ticket'].id)
             totalhours['rendered'] = field
             stream |= Transformer("//input[@id='field-totalhours']").replace(field)
 
