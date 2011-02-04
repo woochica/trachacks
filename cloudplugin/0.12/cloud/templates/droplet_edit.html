@@ -16,31 +16,39 @@
       <form action="" method="post">
         <div>
           <input type="hidden" name="action" value="$action" />
-          
           <div class="field" py:for="field in fields">
-            <label for="$field">${labels[field]}:</label><br />
-            <div py:choose="opttype.get(field)">
-              <select py:when="'multiselect'" id="$field" name="$field" size="10"
-                      py:attrs="{'class':'multiselect','multiple':'multiple',
-                                 'disabled':field in readonly and 'disabled' or None}">
-                <option py:for="name,value in options[field]"
-                        selected="${value in item.get(field,[]) or None}"
-                        value="$value">$name</option>
-              </select>
-              <select py:when="'select'" id="$field" name="$field"
-                      py:attrs="{'disabled':field in readonly and 'disabled' or None}">
-                <option py:for="name,value in options[field]"
-                        selected="${value == item.get(field) or None}"
-                        value="$value">$name</option>
-              </select>
-              <input py:otherwise="" id="$field" name="$field" value="${item.get(field,'')}"
-                     py:attrs="{'disabled':field in readonly and 'disabled' or None}"
-                     type="text" size="50"/>
-              <br />
-              <br />
-            </div>
+            <py:choose test="field.readonly">
+              
+              <py:when test="False">
+                <label for="$field.name">$field.label:</label><br />
+                <div py:choose="field.kind">
+                  <select py:when="'multiselect'" id="$field.name" name="$field.name" size="10"
+                          py:attrs="{'class':'multiselect','multiple':'multiple'}">
+                    <option py:for="name,value in field.options"
+                            selected="${value in field.get(item,req) or None}"
+                            value="$value">$name</option>
+                  </select>
+                  <select py:when="'select'" id="$field.name" name="$field.name">
+                    <option py:for="name,value in field.options"
+                            selected="${value == field.get(item,req) or None}"
+                            value="$value">$name</option>
+                  </select>
+                  <input py:otherwise="" id="$field.name" name="$field.name" value="${field.get(item,req)}"
+                         type="text" size="50"/>
+                </div>
+              </py:when>
+                
+              <py:otherwise>
+                <label for="${field.name+'-disabled'}">${field.label}:</label><br />
+                <input id="${field.name+'-disabled'}" name="${field.name+'-disabled'}" value="${field.get(item,req)}"
+                       py:attrs="{'disabled':'disabled'}" type="text" size="50"/>
+                <input type="hidden" id="$field.name" name="$field.name" value="${field.get(item,req)}" />
+              </py:otherwise>
+          
+            </py:choose>
+            <br />
           </div>
-		  
+          
           <div class="field">
             <div class="system-message" py:if="error">
               <strong>Error:</strong> $error

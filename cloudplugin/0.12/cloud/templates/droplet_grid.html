@@ -101,10 +101,10 @@
 
                 <py:for each="cell in cell_group">
                   <py:if test="not cell.header.hidden">
-                    <py:with vars="col = cell.header.col.strip('_')">
+                    <py:with vars="col = cell.header.col">
                       <py:choose>
 
-                        <py:when test="col == columns[0]">
+                        <py:when test="col == columns[0].name">
                           <td class="resource" py:attrs="td_attrs">
                             <a title="${_('View %(realm)s', realm=row.resource.realm)}"
                                href="${url_of(row.resource)}">$cell.value</a>

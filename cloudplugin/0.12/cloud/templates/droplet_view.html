@@ -16,10 +16,10 @@
 	  
       <table>
         <tr py:for="field in fields">
-          <td>${labels.get(field,field)}</td>
-          <td py:choose="type(item.get(field))">
-          	<a py:when="tuple" href="${item.get(field)[0]}">${item.get(field)[1]}</a>
-          	<div py:otherwise="">${item.get(field,'')}</div>
+          <td>$field.label</td>
+          <td py:choose="type(field.get(item,req))">
+          	<a py:when="tuple" href="${field.get(item,req)[0]}">${field.get(item,req)[1]}</a>
+          	<div py:otherwise="">${field.get(item,req)}</div>
 		  </td>
         </tr>
       </table>

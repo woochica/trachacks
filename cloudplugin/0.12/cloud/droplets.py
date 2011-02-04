@@ -1,14 +1,14 @@
-from trac.resource import Resource, ResourceNotFound
+import copy
+import time
+from trac.resource import Resource
 from trac.util import as_int
 from trac.util.presentation import Paginator
 from trac.util.text import to_unicode
 from trac.web.chrome import Chrome, add_link, add_notice, add_warning
 from trac.mimeview import Context
 from trac.util.translation import _
-import re
-import copy
-import time
-from timer import Timer
+from fields import Fields
+from defaults import droplet_defaults
 
 class Droplet(object):
     """Generic class for a cloud resource that I'm calling a 'droplet'
@@ -16,39 +16,32 @@ class Droplet(object):
     that coordinate trac, chef, and cloud behaviors."""
     
     @classmethod
-    def new(cls, env, name, chefapi, cloudapi, field_handlers, boto_field_node_name, log):
+    def new(cls, env, name, chefapi, cloudapi, field_handlers, log):
         """Return a new droplet instance based on the class name defined
         in the droplet's trac.ini config section - e.g.,
         
           [cloud.instance]
           class = Ec2Instance
         
-        where the name param = 'instance'.
+        where the name param = 'instance'.  Default options for the
+        droplet are overridden by those in the trac.ini file.
         """
         section = 'cloud.%s' % name
-        options = dict(env.config.options('cloud'))
-        options.update(env.config.options(section))
+        options = copy.copy(droplet_defaults.get(name,{})) # defaults
+        options.update(dict(env.config.options('cloud')))  # overrides
+        options.update(env.config.options(section))        # overrides
         cls = globals()[options['class']]
-        return cls(name, chefapi, cloudapi, field_handlers, boto_field_node_name, log, options)
+        return cls(name, chefapi, cloudapi, field_handlers, log, options)
     
-    def __init__(self, name, chefapi, cloudapi, field_handlers, boto_field_node_name, log, options):
-        """Convenience routines for parsing each droplet's config file section
-        in trac.ini.  The format of each droplet section is as follows:
+    def __init__(self, name, chefapi, cloudapi, field_handlers, log, options):
+        """Parses the droplet's config file section in trac.ini.  Here's
+        an example trac.ini droplet section:
         
           [cloud.instance]
           class = Ec2Instance
           title = EC2 Instances
           order = 1
           label = Instance
-          fields = name, ec2.instance_type as Instance Type, ohai_time, ..
-          crud_resource = nodes
-          crud_view = name, ec2.instance_type, ohai_time, ..
-          crud_edit = roles
-          grid_index = node
-          grid_columns = name, ec2.instance_type, ohai_time, ..
-          grid_sort = ohai_time
-          grid_asc = 0
-          grid_group = environment
         
         The 'instance' in '[cloud.instance]' is the droplet name which is
         used to uniquely identify the class of cloud resources including in
@@ -62,147 +55,32 @@ class Droplet(object):
         droplet will not be returned as a contextual navigation element
         (but would still be accessible by its url). The 'label' value is
         displayed in various buttons and forms for the name of a single
-        droplet item.  The remaining fields are for querying chef.
+        droplet item.
         
-        The 'crud' option is the url prefix for creating, updating, and
-        deleting individual chef resources.  The 'fields' options is used
-        to specify display names and/or field handlers.  A dot notation
-        can be used to specify nested attributes.  The 'as' notation
-        permits defining a field's display name which are extracted into
-        a new 'labels' option (a dict).  Field handlers can be used to
-        format or convert a field.  For example:
-        
-          [cloud.instance]
-          fields = .., ohai_time_ as Checkin < AgoEpochHandler, ..
-          crud_view = .., ohai_time_, ..
-        
-        This will format the ohai_time attribute (an epoch value) into
-        a string like this: "0:01:10 ago".  See handlers.py for all
-        available handlers.  Most handlers require that the field name
-        *not* be the exact name of an actual node attribute but instead
-        be the same name but *suffixed* with one or more underscores
-        such as 'ohai_time_' above.  These dynamic field names are the
-        ones that should be used in the 'crud_view', 'grid_columns',
-        and 'grid_sort' options - the first two being ordered lists of
-        fields to display.
-        
-        The 'grid_index' option is used to search chef for a list of
-        resources.  The 'grid_columns' option should list the fields to
-        display in order and match those in the 'fields' option to use
-        its labels and handlers.  The first column listed in 'columns'
-        *must* be the resource's unique primary key.  The 'grid_sort',
-        'grid_asc', and 'grid_group' options work as would be expected.
-        
-        All of the above options are added as attributes to the droplet
-        object.
+        The remaining fields (not shown above) are for querying chef and
+        are parsed by the Fields class.
         """
         self.name = name
         self.chefapi = chefapi
         self.cloudapi = cloudapi
-        self.boto_field_node_name = boto_field_node_name
         self.log = log
         
+        prefix = 'field.'
+        self.fields = Fields(options, field_handlers, chefapi, log, prefix)
+        
         for k,v in options.items():
-            if k == 'fields':
-                v,labels,handlers = self._extract_fields(v, field_handlers)
-                setattr(self, 'labels', labels)
-                setattr(self, 'handlers', handlers)
-            elif k in ('crud_new','crud_edit'):
-                v,readonly,opttype,options = self._extract_crud_config(v)
-                setattr(self, k+'_readonly', readonly)
-                setattr(self, k+'_opttype', opttype)
-                setattr(self, k+'_options', options)
-            elif k in ('crud_view','grid_columns'):
-                v = [s.strip() for s in v.split(',')]
+            if k.startswith(prefix):
+                continue # handled by Fields class above
+            if k in ('crud_view','crud_new','crud_edit','grid_columns'):
+                self.fields.set_list(k,v)
+                continue
             setattr(self, k, v)
-    
-    def _extract_fields(self, s, field_handlers):
-        """Convert a string into a three-tuple:
-        
-         1. a list of fields in defined order
-         2. a dict of fields each mapped to its display name
-         3. a dict of fields each mapped to its handler
-        
-        The format of the given string must look like this:
-        
-          name, created_by as Created By, checkin < OhaiTimeHandler
-        
-        The above string would return the following three-tuple:
-        
-         (['name',created_by'],
-          {'name':'name','created_by':'Created By'},
-          {'checkin':<instance of OhaiTimeHandler>})
-        
-        In general, the field names for handlers should not exist in
-        the row in advance - i.e., create them as needed.
-        """
-        field_re = re.compile(r"([\w.\-]+)( as ([^,<]+))?( ?< ([^,]+))?")
-        fields = []
-        display_names = {}
-        handlers = {}
-        for field,as_,display_name,fh_,handler in field_re.findall(s):
-            fields.append(field)
-            display_names[field] = display_name.strip() or field
-            if handler:
-                for fh in field_handlers:
-                    if fh.__class__.__name__ == handler:
-                         handlers[field] = fh
-                         break
-        return fields,display_names,handlers
-    
-    def _extract_crud_config(self, s):
-        """Convert a string into a two-tuple:
-        
-         1. a list of fields in defined order
-         2. a list of fields that are marked read-only
-        
-        The format of the given string must look like this:
-        
-          name, created_by, created_at*
-        
-        The above string would return the following three-tuple:
-        
-         (['name',created_by','created_at'], ['created_at'])
-        """
-        crud_re = re.compile(r"([\w.\-]+)(\*)?(\|(\|)?([^,]*))?")
-        fields = []
-        readonly = []
-        opttype = {}
-        options = {}
-        for field,ro,opt,multi,opts in crud_re.findall(s):
-            if ro:
-                readonly.append(field)
-            if opt:
-                opttype[field] = multi and 'multiselect' or 'select'
-                options[field] = opts and [o.strip() for o in opts.split('|')] \
-                                       or []
-            fields.append(field)
-        return fields,readonly,opttype,options
-    
-    def handle(self, req, item, fields):
-        """Apply handlers to those field's values who have them."""
-        for field in fields:
-            if field in self.handlers:
-                handler = self.handlers[field]
-                item.set_dotted(field, handler.convert(req, field, item))
-    
-    def crud_item(self, req, fields, id=None):
-        """Return a node overlaying any request params on top
-        of any chef attributes for the given set of fields."""
-        item = self.chefapi.create(self.crud_resource)
-        if id:
-            item = self.chefapi.resource(self.crud_resource, id)
-        self.handle(req, item, fields)
-        for field in fields:
-            value = req.args.get(field,item.get(field,''))
-            item.set_dotted(field, value)
-        return item
     
     def render_grid(self, req):
         """Retrieve the droplets and pre-process them for rendering."""
         index = self.grid_index
-        columns = self.grid_columns
-        id_col = columns[0]
+        columns = self.fields.get_list('grid_columns')
+        id_col = columns[0].name
         
         format = req.args.get('format')
         resource = Resource('cloud', self.name)
@@ -241,7 +119,7 @@ class Droplet(object):
                 'title': self.title,
                 'description': self.description,
                 'label': self.label,
-                'columns': self.grid_columns,
+                'columns': columns,
                 'max': limit,
                 'message': None,
                 'paginator': None,
@@ -286,15 +164,15 @@ class Droplet(object):
         #  * col_ means finish the current group and start a new one
         
         header_groups = [[]]
-        for idx, col in enumerate(self.grid_columns):
+        for idx, field in enumerate(columns):
             header = {
-                'col': col,
-                'title': self.labels.get(col,col),
+                'col': field.name,
+                'title': field.label,
                 'hidden': False,
                 'asc': None,
             }
 
-            if col == sort:
+            if field.name == sort:
                 header['asc'] = asc
 
             header_group = header_groups[-1]
@@ -306,7 +184,7 @@ class Droplet(object):
         row_groups = []
         authorized_results = [] 
         prev_group_value = None
-        for row_idx, result in enumerate(rows):
+        for row_idx, item in enumerate(rows):
             col_idx = 0
             cell_groups = []
             row = {'cell_groups': cell_groups}
@@ -314,11 +192,8 @@ class Droplet(object):
                 cell_group = []
                 for header in header_group:
                     col = header['col']
-                    if col in self.handlers:
-                        handler = self.handlers[col]
-                        value = handler.convert(req, col, result)
-                    else:
-                        value = self._cell_value(result.get(col))
+                    field = self.fields[col]
+                    value = field.get(item, req)
                     cell = {'value': value, 'header': header, 'index': col_idx}
                     col_idx += 1
                     # Detect and create new group
@@ -334,7 +209,7 @@ class Droplet(object):
             # FIXME: for now, we still need to hardcode the realm in the action
             if 'CLOUD_VIEW' not in req.perm(resource):
                 continue
-            authorized_results.append(result)
+            authorized_results.append(item)
             row['resource'] = resource
             if row_groups:
                 row_group = row_groups[-1][1]
@@ -373,13 +248,9 @@ class Droplet(object):
 
             return 'droplet_grid.html', data, None
     
-    def render_create(self, req):
-        pass
-    
     def render_view(self, req, id):
         req.perm.require('CLOUD_VIEW')
         item = self.chefapi.resource(self.crud_resource, id)
-        self.handle(req, item, self.crud_view)
         
         data = {
             'title': _('%(label)s %(id)s', label=self.label, id=id),
@@ -387,20 +258,25 @@ class Droplet(object):
             'droplet_name': self.name,
             'id': id,
             'label': self.label,
-            'fields': self.crud_view,
-            'labels': self.labels,
+            'fields': self.fields.get_list('crud_view'),
             'item': item,
+            'req': req,
             'error': req.args.get('error')}
         
         return 'droplet_view.html', data, None
     
     def render_edit(self, req, id):
+        if id:
+            item = self.chefapi.resource(self.crud_resource, id)
+        else:
+            item = None
+
         data = {
             'droplet_name': self.name,
             'id': id,
             'label': self.label,
-            'labels': self.labels,
-            'item': self.crud_item(req, self.crud_new, id),
+            'item': item,
+            'req': req,
             'error': req.args.get('error')}
         
         # check if creating or editing
@@ -410,38 +286,16 @@ class Droplet(object):
                 'title': _('Edit  %(label)s %(id)s', label=self.label, id=id),
                 'button': _('Save %(label)s', label=self.label),
                 'action': 'edit',
-                'fields': self.crud_edit,
-                'readonly': self.crud_edit_readonly,
-                'opttype': self.crud_edit_opttype,
-                'options': self._get_options(self.crud_edit_options)})
+                'fields': self.fields.get_list('crud_edit')})
         else:
             req.perm.require('CLOUD_CREATE')
             data.update({
                 'title': _('Create New %(label)s', label=self.label),
                 'button': _('Create %(label)s', label=self.label),
                 'action': 'new',
-                'fields': self.crud_new,
-                'readonly': self.crud_new_readonly,
-                'opttype': self.crud_new_opttype,
-                'options': self._get_options(self.crud_new_options)})
+                'fields': self.fields.get_list('crud_new')})
         
         return 'droplet_edit.html', data, None
-    
-    def _get_options(self, crud_options):
-        """.. data bag .."""
-        options = {}
-        for field,opts in crud_options.items():
-            if not opts:
-                try:
-                    name = field.replace('.','_')
-                    bag = self.chefapi.databag(name)
-                    opts = [(rec['name'],rec['value']) for rec in bag]
-                except:
-                    self.log.debug("Could not access databag %s" % name)
-            else:
-                opts = [(v,v) for v in opts]
-            options[field] = opts
-        return options
     
     def render_delete(self, req, id):
         req.perm.require('CLOUD_DELETE')
@@ -462,117 +316,44 @@ class Droplet(object):
     def delete(self, req, id):
         pass
     
-    def _cell_value(self, v):
-        """Normalize a cell value for display.
-        >>> (cell_value(None), cell_value(0), cell_value(1), cell_value('v'))
-        ('', '0', u'1', u'v')
-        """
-        return v is 0 and '0' or v and unicode(v) or ''
-    
 
 class Ec2Instance(Droplet):
     """An EC2 instance cloud droplet."""
     
-    def render_edit(self, req, id):
-        template, data, content_type = Droplet.render_edit(self, req, id)
-        
-        # handle run_lists as special case (they're not normal item attributes)
-        if id:
-            item = self.chefapi.resource(self.crud_resource, id)
-            self.handle(req, item, self.crud_edit_options)
-            item_roles = [r.strip() for r in item['run_list_'].split(',')]
-            data['item']['run_list_'] = item_roles
-        roles = self.chefapi.resource('roles')
-        data['options']['run_list_'] = sorted([(r,r) for r in roles])
-        return template, data, content_type
-    
     def create(self, req):
         req.perm.require('CLOUD_CREATE')
-        instance_data = self.chefapi.get_instance_data()
         
         # launch instance (and wait until running)
         now = time.time()
+        placement = req.args.get('ec2.placement_availability_zone','')
+        if placement in ('No preference',''):
+            placement = None
         instance = self.cloudapi.launch_instance(
             image_id = req.args.get('ec2.ami_id'),
             instance_type = req.args.get('ec2.instance_type'),
-            placement = req.args.get('ec2.placement_availability_zone'),
-            user_data = instance_data,
-            timeout=300)
-        if instance.state == 'pending':
+            placement = placement, timeout = 300)
+        if instance.state != 'running':
             add_warning(req,
-                _("%(label)s %(id)s was created but isn't (yet) running. " + \
+                _("%(label)s %(id)s was created but isn't running (yet). " + \
                   "Please check in the AWS Management Console directly.",
                   label=self.label, id=instance.id))
             req.redirect(req.href.cloud(self.name))
         
-        # The pre-installed chef-client config uses the instance id as the
-        # node name - which is what we're assuming is being used here.
-        # However, some chef setups allow for changing the node name post-
-        # launch.  The boto_field_node_name option should be set to the
-        # *final* expected chef node name.  If it's not set to the instance
-        # id (the expected initial node name), then we'll do a little dance
-        # to create the new node with the newly expected node name and
-        # delete the old (instance id) node name from chef.
-        if not self.boto_field_node_name or self.boto_field_node_name == 'id':
-            add_notice(req, _('%(label)s %(id)s has been created.',
-                          label=self.label, id=instance.id))
-            req.redirect(req.href.cloud(self.name, instance.id))
+        # bootstrap the new instance
+        id = instance.private_dns_name
+        public_hostname = instance.public_dns_name
+        node = self.chefapi.bootstrap(id, public_hostname, timeout=300)
+        if node is None:
+            add_warning(req,
+                _("%(label)s %(id)s is running but not bootstrapped (yet). " + \
+                  "Please login to %(hostname)s to investigate.",
+                  label=self.label, id=instance.id,
+                  hostname=instance.public_dns_name))
+            req.redirect(req.href.cloud(self.name))
         
-        # start the dance of creating new node and deleting old one
-        id = getattr(instance, self.boto_field_node_name)
-        
-        try:
-            # create a new chef node
-            node = self.chefapi.create(self.crud_resource, id)
-            self.log.info("Added new chef node %s (id=%s)" % (id,instance.id))
-        except chef.exceptions.ChefServerError, e:
-            if e.code != 409:
-                raise
-            # node already exists so get it in finally block
-        finally:
-            timer = Timer(15) # 15 seconds
-            while timer.running:
-                try:
-                    node = self.chefapi.resource(self.crud_resource, id)
-                    break
-                except chef.exceptions.ChefServerError, e:
-                    if e.code != 404: # can take time for solr to be updated
-                        raise
-                finally:
-                    time.sleep(1.0)
-            else:
-                add_warning(req,
-                    _("Unable to save %(label)s %(id)s. " + \
-                      "Please check in the AWS Management Console directly.",
-                      label=self.label, id=id))
-                req.redirect(req.href.cloud(self.name))
-        
-        # save the run_list and fields
-        fields = set(self.crud_new + ['created_at','created_by'])
-        req.args['created_at'] = now
-        req.args['created_by'] = req.args.get('created_by',req.authname)
-        self.save(req, id, list(fields), redirect=False)
-        
-        # now wait until the new node has checked in to chefserver
-        timer = Timer(12 * 60) # 12 minutes
-        while timer.running:
-            try:
-                node = self.chefapi.resource(self.crud_resource, id)
-                if node.get('ec2.public_hostname'):
-                    break # cool, this means that the node has checked in
-            except chef.exceptions.ChefServerError, e:
-                if e.code != 404: # can take time for solr to be updated
-                    raise
-            finally:
-                time.sleep(2.0)
-        
-        # can now delete the old node (if it exists)
-        try:
-            node = self.chefapi.resource(self.crud_resource, instance.id)
-            node.delete()
-            self.log.info("Deleted old node %s" % instance.id)
-        except:
-            pass
+        # save the new fields (filter out run_list and automatic)
+        fields = self.fields.get_list('crud_new', filter=r"ec2\..*")
+        self.save(req, id, fields, redirect=False)
         
         # show the view
         add_notice(req, _('%(label)s %(id)s has been created.',
@@ -583,18 +364,11 @@ class Ec2Instance(Droplet):
         req.perm.require('CLOUD_MODIFY')
         node = self.chefapi.resource(self.crud_resource, id)
         
-        # prepare fields; remove automatic and dynamic fields
+        # prepare fields; remove automatic (ec2) fields
         if fields is None:
-            fields = self.crud_edit
-        fields = [f for f in fields
-                  if not f.startswith('ec2.') or f.endswith('_')]
+            fields = self.fields.get_list('crud_edit', filter=r"ec2\..*")
         for field in fields:
-            node.set_dotted(field, req.args.get(field,''))
-        
-        # special handle run_list_
-        roles = req.args.get('run_list_','')
-        run_list = ["role[%s]" % r.strip() for r in roles.split(',')]
-        node.run_list = run_list
+            field.set(node, req)
         node.save()
         
         if redirect:
@@ -606,10 +380,11 @@ class Ec2Instance(Droplet):
     def delete(self, req, id):
         req.perm.require('CLOUD_DELETE')
         node = self.chefapi.resource(self.crud_resource, id)
-        instance_id = node.get('ec2.instance_id')
         
-        # delete ec2 instance
+        # delete the ec2 instance
+        instance_id = 'undefined'
         try:
+            instance_id = node.attributes.get_dotted('ec2.instance_id')
             terminated = self.cloudapi.terminate_instance(instance_id)
         except:
             terminated = False

@@ -8,67 +8,71 @@ from trac.core import Component, Interface, implements
 class IFieldHandler(Interface):
     """An extension point interface for adding field handlers. """
     
-    def convert(self, req, field, record):
-        """Converts the value and/or other attributes in the record."""
+    def convert_item(self, field, item, req):
+        """Converts a PyChef item's attribute value for viewing."""
+    
+    def convert_req(self, field, req):
+        """Converts a web request to a PyChef attribute value for saving."""
 
 
 # Handlers
 
-class NameHandler(Component):
-    """'name' is not a normal attribute and so needs to be handled special."""
+class DefaultHandler(Component):
+    """Default field handler."""
     implements(IFieldHandler)
     
-    def convert(self, req, field, record):
-        return record.name
+    def convert_item(self, field, item, req):
+        return item.attributes.get_dotted(field)
+    
+    def convert_req(self, field, req):
+        return req.args.get(field)
 
-class EpochHandler(Component):
-    """Converts an epoch into a human-readable format.  Uses current
-    time if empty."""
+class NameHandler(DefaultHandler):
+    """'name' is not a normal attribute and so needs special handling."""
     implements(IFieldHandler)
     
-    def convert(self, req, field, record):
-        field = field.strip('_')
-        epoch = float(record.get(field) or time.time())
-        return time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(epoch))
+    def convert_item(self, field, item, req):
+        return item.name
 
-class AgoEpochHandler(Component):
-    """Converts an epoch into an 'n minutes ago..' type of message.
-    Uses current time if empty."""
+class EpochHandler(DefaultHandler):
+    """Converts an epoch into a human-readable format and vice-versa.
+    Uses current time if no item is provided."""
     implements(IFieldHandler)
     
-    def convert(self, req, field, record):
-        field = field.strip('_')
-        epoch = int(record.get(field) or time.time())
+    def convert_item(self, field, item, req):
+        epoch = item and float(item.attributes.get_dotted(field)) or time.time()
+        return time.strftime("%Y-%m-%d %H:%M:%S UTC", time.localtime(epoch))
+    
+    def convert_req(self, field, req):
+        value = req.args[field]
+        t = time.strptime(value, "%Y-%m-%d %H:%M:%S UTC")
+        return time.mktime(t)
+
+class AgoEpochHandler(DefaultHandler):
+    """Converts an epoch into an 'n minutes ago..' type of message."""
+    implements(IFieldHandler)
+    
+    def convert_item(self, field, item, req):
+        epoch = int(item.attributes.get_dotted(field))
         ago = "%s ago" % timedelta(seconds=int(time.time()) - epoch)
         return ago
 
-class NowHandler(Component):
-    """Returns current time as an epoch if currently empty."""
+class AuthorHandler(DefaultHandler):
+    """Returns the current author if no item is provided."""
     implements(IFieldHandler)
     
-    def convert(self, req, field, record):
-        field = field.strip('_')
-        epoch = float(record.get(field) or time.time())
-        return epoch
-
-class AuthorHandler(Component):
-    """Returns the current author, if empty."""
-    implements(IFieldHandler)
-    
-    def convert(self, req, field, record):
-        field = field.strip('_')
-        author = record.get(field) or req.authname
+    def convert_item(self, field, item, req):
+        author = item and item.attributes.get_dotted(field) or req.authname
         return author
 
-class RunListHandler(Component):
+class RunListHandler(DefaultHandler):
     """Extract the role(s) from a run_list, which is the most accurate
     way to to determine a node's roles."""
     implements(IFieldHandler)
     
-    def convert(self, req, field, record):
-        field = field.strip('_')
+    def convert_item(self, field, item, req):
         role_re = re.compile(r"role\[([^\]]+)]")
-        run_list = getattr(record, field, []) or record.get(field,[])
+        run_list = getattr(item, field, []) or item.attributes.get_dotted(field)
         roles = []
         for role in run_list:
             match = role_re.match(role)
@@ -76,36 +80,63 @@ class RunListHandler(Component):
                 roles.append(match.group(1))
         return ', '.join(roles)
     
-class HttpHandler(Component):
-    """Assemble an http link from the given port and the public_hostname
-    fields."""
+    def convert_req(self, field, req):
+        roles = req.args.get('run_list')
+        if not roles:
+            return []
+        if isinstance(roles,str) or isinstance(roles,unicode):
+            roles = [roles]
+        return ["role[%s]" % r for r in roles]
+    
+class HttpHandler(DefaultHandler):
+    """Assemble an http link from the given hostname field."""
     implements(IFieldHandler)
     
-    def convert(self, req, field, record):
-        field = field.strip('_')
-        port = record.get(field,80)
-        hostname = record.get('public_hostname','public_hostname-not-set-yet')
+    def convert_item(self, field, item, req):
+        hostname = item.attributes.get_dotted(field)
+        url = 'http://' + hostname
+        return (url,url)
+    
+class HttpsHandler(DefaultHandler):
+    """Assemble an https link from the given hostname field."""
+    implements(IFieldHandler)
+    
+    def convert_item(self, field, item, req):
+        hostname = item.attributes.get_dotted(field)
+        url = 'https://' + hostname
+        return (url,url)
+    
+class HttpPortHandler(DefaultHandler):
+    """Assemble an http link from the given port and ec2.public_hostname."""
+    implements(IFieldHandler)
+    
+    def convert_item(self, field, item, req):
+        port = item.attributes.get_dotted(field)
+        try:
+            hostname = item.attributes.get_dotted('ec2.public_hostname')
+        except KeyError:
+            hostname = item.attributes.get_dotted('public_hostname')
         url = 'http://%s:%s' % (hostname,port)
         return (url,url)
     
-class HttpsHandler(Component):
-    """Assemble an https link from the given port and the public_hostname
-    fields."""
+class HttpsPortHandler(DefaultHandler):
+    """Assemble an https link from the given port and ec2.public_hostname."""
     implements(IFieldHandler)
     
-    def convert(self, req, field, record):
-        field = field.strip('_')
-        port = record.get(field,443)
-        hostname = record.get('public_hostname','public_hostname-not-set')
+    def convert_item(self, field, item, req):
+        port = item.attributes.get_dotted(field)
+        try:
+            hostname = item.attributes.get_dotted('ec2.public_hostname')
+        except KeyError:
+            hostname = item.attributes.get_dotted('public_hostname')
         url = 'https://%s:%s' % (hostname,port)
         return (url,url)
     
-class SshHandler(Component):
+class SshHandler(DefaultHandler):
     """Assemble an ssh link from the the given host field."""
     implements(IFieldHandler)
     
-    def convert(self, req, field, record):
-        field = field.strip('_')
-        hostname = record.get(field,'not-set-yet')
+    def convert_item(self, field, item, req):
+        hostname = item.attributes.get_dotted(field)
         url = 'ssh://' + hostname
         return (url,hostname)

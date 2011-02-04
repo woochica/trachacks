@@ -1,8 +1,6 @@
-import chef
-import json
+from subprocess import Popen, STDOUT, PIPE
 import os
-import time
-from timer import Timer
+import chef
 
 class ChefApi(object):
     """Wraps pychef with several conveniences including:
@@ -14,11 +12,13 @@ class ChefApi(object):
       * instance data support
     """
     
-    def __init__(self, instancedata_file, base_path, log):
-        self.instancedata_file = instancedata_file
-        self.base_path = base_path or None
-        self.chef = chef.autoconfigure(self.base_path)
+    def __init__(self, base_path, keypair_pem, username, sudo, log):
+        self.base_path = os.path.abspath(base_path)
+        self.keypair_pem = keypair_pem
+        self.username = username
+        self.sudo = sudo
         self.log = log
+        self.chef = chef.autoconfigure(self.base_path)
         
     def search(self, index, sort=None, asc=1, limit=0, offset=0, q='*:*'):
         """Search the chefserver and return a list of dict items."""
@@ -57,18 +57,8 @@ class ChefApi(object):
 #            return chef.data_bag.DataBag.list(self.chef)
         raise Exception("Unknown resource '%s'" % resource)
     
-    def create(self, resource, id=None):
-        """Creates the given chef resource.  If dummy is True, then returns
-        a dict with extra 'set_dotted' methods to make compatible with pychef
-        classes."""
-        class Resource(dict):
-            def __init__(self, name):
-                self.name = name
-            def set_dotted(self, key, value):
-                self[key] = value
-        if not id:
-            return Resource(resource)
-        
+    def create(self, resource, id):
+        """Creates the given chef resource."""
         if resource == 'nodes':
             return chef.node.Node.create(id, self.chef)
         if resource == 'roles':
@@ -87,28 +77,30 @@ class ChefApi(object):
         
         items = []
         for id in ids:
-            # XXX: add a bag.py class to pychef
-            item = chef.data_bag.DataBagItem(id, self.chef, parent=databag)
+            item = chef.data_bag.DataBagItem(bag, id, self.chef)
             items.append( (item.get('order',99),item) )
         return [item for (order,item) in sorted(items)]
     
-    def get_instance_data(self):
-        """Return the instance data for chef-managed instances."""
-        f = open(self.instancedata_file,'r')
-        data = json.loads(f.read())
-        f.close()
+    def bootstrap(self, id, hostname, roles=None, timeout=300):
+        """Bootstraps an ec2 instance by calling out to "knife bootstrap".
+        The result should be that the ec2 instance connects with the
+        chefserver.  Any run_list provided will get run upon the initial
+        bootstrap."""
+        cmd = 'knife bootstrap %s' % hostname
+        cmd += ' -c %s' % os.path.join(self.base_path,'.chef','knife.rb')
+        cmd += ' -x %s' % self.username
+        if self.keypair_pem:
+            cmd += ' -i %s' % self.keypair_pem
+        if roles:
+            cmd += ' -r %s' % ','.join('role[%s]' % r for r in roles)
+        if self.sudo:
+            cmd += ' --sudo'
+        p = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE)
+        # TODO: handle timeout
+        out = p.communicate()[0]
         
-        # override with ones from chefapi's base path (e.g., for dev)
-        if self.base_path:
-            # override chef server url
-            data['chef_server'] = self.chef.url
-
-            # override validation key
-            path = os.path.join(self.base_path,'.chef','validation.pem')
-            if os.path.exists(path):
-                f = open(path,'r')
-                pem = f.read()
-                f.close()
-                data['validation_key'] = pem
+        if p.returncode != 0:
+            self.log.info('Error bootstrapping ec2 instance %s:\n%s' % (id,out))
+            return None
         
-        return json.dumps(data)
+        return chef.node.Node(id, self.chef)

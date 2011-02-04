@@ -15,8 +15,8 @@ class AwsApi(object):
         self.keypair = keypair
         self.log = log
         
-    def launch_instance(self, image_id, instance_type, placement, user_data,
-                        timeout=0):
+    def launch_instance(self, image_id, instance_type, placement,
+                        user_data=None, timeout=0):
         """Launch an ec2 instance.  If timeout is > 0, then this method
         won't return until the instance is fully running or the timeout
         duration expires."""

@@ -1,18 +1,12 @@
-import csv
 import re
-from StringIO import StringIO
-
 from genshi.builder import tag
-
-from trac.config import Option, IntOption, ChoiceOption, ListOption
+from trac.config import Option, BoolOption, IntOption
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.resource import Resource, ResourceNotFound
-from trac.util.datefmt import format_datetime, format_time, from_utimestamp
 from trac.util.translation import _
-from trac.web.api import IRequestHandler, RequestDone
-from trac.web.chrome import Chrome, add_ctxtnav, add_link, add_notice, \
-                            add_script, add_stylesheet, add_warning, \
+from trac.web.api import IRequestHandler
+from trac.web.chrome import Chrome, add_ctxtnav, add_stylesheet, \
                             INavigationContributor, ITemplateProvider
 from handlers import IFieldHandler
 from droplets import Droplet
@@ -28,25 +22,28 @@ class CloudModule(Component):
                IRequestHandler)
     
     # trac.ini options
-    label = Option('cloud', 'label', _('Cloud'), _("Top nav label."))
+    nav_label = Option('cloud', 'nav_label', _('Cloud'), _("Top nav label."))
     
     aws_key = Option('cloud', 'aws_key', '', _("AWS/S3 access key."))
     
     aws_secret = Option('cloud', 'aws_secret', '', _("AWS/S3 secret."))
     
-    aws_keypair = Option('cloud', 'aws_keypair', '', _("AWS/EC2 keypair name."))
+    aws_keypair = Option('cloud', 'aws_keypair', '', _("AWS/S3 keypair name."))
     
-    chef_instancedata_file = Option('cloud', 'chef_instancedata_file', '',
-        _("File containing instance data for new ec2 instances."))
+    aws_keypair_pem = Option('cloud', 'aws_keypair_pem', '',
+        _("AWS/EC2 keypair file path."))
+    
+    aws_username = Option('cloud', 'aws_username', 'ubuntu',
+        _("AWS/EC2 ssh username."))
     
     chef_base_path = Option('cloud', 'chef_base_path', '',
-        _("Directory where .chef configs can be found (mostly used for dev)."))
+        _("Directory where .chef configs can be found."))
     
-    boto_field_node_name = Option('cloud', 'boto_field_node_name', '',
-        _("The boto field whose value is expected as the chef node name."))
+    chef_bootstrap_sudo = BoolOption('cloud', 'chef_bootstrap_sudo', True,
+        _("Whether the chef knife bootstrap should be run as sudo."))
     
-    default_droplet = Option('cloud', 'default_droplet', '',
-        _("Name of droplet to show if not provided in url."))
+    default_resource = Option('cloud', 'default_resource', '',
+        _("Name of the AWS resource to show if not provided in url."))
     
     items_per_page = IntOption('cloud', 'items_per_page', 100,
         _("Number of items displayed per page in cloud reports by default"))
@@ -78,7 +75,8 @@ class CloudModule(Component):
 
     def get_navigation_items(self, req):
         if 'CLOUD_VIEW' in req.perm:
-            yield ('mainnav', 'cloud', tag.a(self.label, href=req.href.cloud()))
+            yield ('mainnav', 'cloud',
+                   tag.a(self.nav_label, href=req.href.cloud()))
     
     
     # IPermissionRequestor methods  
@@ -105,8 +103,10 @@ class CloudModule(Component):
         # setup cloud droplets
         if not hasattr(self, 'droplets'):
             # setup chefapi and cloudapi
-            chefapi = ChefApi(self.chef_instancedata_file,
-                              self.chef_base_path,
+            chefapi = ChefApi(self.chef_base_path,
+                              self.aws_keypair_pem,
+                              self.aws_username,
+                              self.chef_bootstrap_sudo,
                               self.log)
             
             cloudapi = AwsApi(self.aws_key,
@@ -120,15 +120,23 @@ class CloudModule(Component):
             for order,droplet_name,title in self.titles:
                 self.droplets[droplet_name] = Droplet.new(self.env,
                     droplet_name, chefapi, cloudapi,
-                    self.field_handlers,
-                    self.boto_field_node_name, self.log)
+                    self.field_handlers, self.log)
+        
+        # ensure at least one droplet exists
+        if not self.droplets:
+            raise ResourceNotFound(
+                _("No cloud resources found in trac.ini."),
+                _('Missing Cloud Resource'))
         
         droplet_name = req.args.get('droplet_name', '')
         id = req.args.get('id', '')
         action = req.args.get('action', 'view')
         
-        if droplet_name == '':
-            req.redirect(req.href.cloud(self.default_droplet))
+        if not droplet_name:
+            droplet_name = self.default_resource
+            if not droplet_name:
+                o_,droplet_name,t_ = self.titles[0]
+            req.redirect(req.href.cloud(droplet_name))
         
         # check for valid kind
         if droplet_name not in self.droplets:
