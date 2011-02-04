@@ -11,10 +11,11 @@ from datetime import datetime
 
 from trac.attachment import Attachment
 from trac.core import *
+from trac.mimeview import Context
 from trac.resource import Resource, ResourceNotFound
 from trac.wiki.api import WikiSystem
 from trac.wiki.model import WikiPage
-from trac.wiki.formatter import wiki_to_html
+from trac.wiki.formatter import wiki_to_html, format_to_html
 
 from tracrpc.api import IXMLRPCHandler, expose_rpc, Binary
 from tracrpc.util import StringIO, to_utimestamp, from_utimestamp
@@ -94,7 +95,9 @@ class WikiRPC(Component):
     def getPageHTML(self, req, pagename, version=None):
         """ Return page in rendered HTML, latest version. """
         text = self.getPage(req, pagename, version)
-        html = wiki_to_html(text, self.env, req, absurls=1)
+        resource = Resource('wiki', pagename, version)
+        context = Context.from_request(req, resource, absurls=True)
+        html = format_to_html(self.env, context, text)
         return '<html><body>%s</body></html>' % html
 
     def getAllPages(self, req):

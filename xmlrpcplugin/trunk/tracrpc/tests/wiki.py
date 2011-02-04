@@ -64,6 +64,27 @@ class RpcWikiTestCase(TracRpcTestCase):
         self.admin.wiki.deletePage('WikiOne')
         self.admin.wiki.deletePage('WikiTwo')
 
+    def test_getPageHTMLWithImage(self):
+        # Create the wiki page (absolute image reference)
+        self.admin.wiki.putPage('ImageTest',
+                        '[[Image(wiki:ImageTest:feed.png, nolink)]]\n', {})
+        # Create attachment
+        image_url = os.path.join(rpc_testenv.trac_src, 'trac',
+                             'htdocs', 'feed.png')
+        self.admin.wiki.putAttachmentEx('ImageTest', 'feed.png', 'test image',
+            xmlrpclib.Binary(open(image_url, 'r').read()))
+        # Check rendering absolute
+        markup_1 = self.admin.wiki.getPageHTML('ImageTest')
+        self.assertEquals('<html><body><p>\n<img src="http://127.0.0.1:8765'
+                '/raw-attachment/wiki/ImageTest/feed.png" alt="test image" '
+                'title="test image" />\n</p>\n</body></html>', markup_1)
+        # Change to relative image reference and check again
+        self.admin.wiki.putPage('ImageTest',
+                        '[[Image(feed.png, nolink)]]\n', {})
+        markup_2 = self.admin.wiki.getPageHTML('ImageTest')
+        self.assertEquals(markup_2, markup_1)
+
+
 def test_suite():
     return unittest.makeSuite(RpcWikiTestCase)
 
