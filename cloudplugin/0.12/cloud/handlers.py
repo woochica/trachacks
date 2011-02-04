@@ -36,7 +36,7 @@ class NameHandler(DefaultHandler):
 
 class EpochHandler(DefaultHandler):
     """Converts an epoch into a human-readable format and vice-versa.
-    Uses current time if no item is provided."""
+    Uses current time if no item is provided or the req's value is empty."""
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
@@ -44,9 +44,13 @@ class EpochHandler(DefaultHandler):
         return time.strftime("%Y-%m-%d %H:%M:%S UTC", time.localtime(epoch))
     
     def convert_req(self, field, req):
-        value = req.args[field]
-        t = time.strptime(value, "%Y-%m-%d %H:%M:%S UTC")
-        return time.mktime(t)
+        try:
+            value = req.args.get(field)
+            t = time.strptime(value, "%Y-%m-%d %H:%M:%S UTC")
+            epoch = time.mktime(t)
+        except:
+            epoch = time.time()
+        return epoch
 
 class AgoEpochHandler(DefaultHandler):
     """Converts an epoch into an 'n minutes ago..' type of message."""

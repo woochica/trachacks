@@ -12,10 +12,11 @@ class ChefApi(object):
       * instance data support
     """
     
-    def __init__(self, base_path, keypair_pem, username, sudo, log):
+    def __init__(self, base_path, keypair_pem, user, boot_run_list, sudo, log):
         self.base_path = os.path.abspath(base_path)
         self.keypair_pem = keypair_pem
-        self.username = username
+        self.user = user
+        self.boot_run_list = boot_run_list
         self.sudo = sudo
         self.log = log
         self.chef = chef.autoconfigure(self.base_path)
@@ -82,18 +83,18 @@ class ChefApi(object):
             items.append( (item.get('order',99),item) )
         return [item for (order,item) in sorted(items)]
     
-    def bootstrap(self, id, hostname, roles=None, timeout=300):
+    def bootstrap(self, id, hostname, timeout=300):
         """Bootstraps an ec2 instance by calling out to "knife bootstrap".
         The result should be that the ec2 instance connects with the
         chefserver.  Any run_list provided will get run upon the initial
         bootstrap."""
         cmd = '/usr/bin/knife bootstrap %s' % hostname
         cmd += ' -c %s' % os.path.join(self.base_path,'knife.rb')
-        cmd += ' -x %s' % self.username
+        cmd += ' -x %s' % self.user
         if self.keypair_pem:
             cmd += ' -i %s' % self.keypair_pem
-        if roles:
-            cmd += ' -r %s' % ','.join('role[%s]' % r for r in roles)
+        if self.boot_run_list:
+            cmd += ' -r %s' % ','.join(r for r in self.boot_run_list)
         if self.sudo:
             cmd += ' --sudo'
         self.log.debug('bootstrapping %s with command: %s' % (id,cmd))

@@ -1,6 +1,6 @@
 import re
 from genshi.builder import tag
-from trac.config import Option, BoolOption, IntOption
+from trac.config import Option, BoolOption, IntOption, ListOption
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.resource import Resource, ResourceNotFound
@@ -39,7 +39,10 @@ class CloudModule(Component):
     chef_base_path = Option('cloud', 'chef_base_path', '',
         _("Directory where .chef configs can be found."))
     
-    chef_bootstrap_sudo = BoolOption('cloud', 'chef_bootstrap_sudo', True,
+    chef_boot_run_list = ListOption('cloud', 'chef_boot_run_list', [],
+        _("If set, used instead of the role(s) to bootstrap instances."))
+    
+    chef_boot_sudo = BoolOption('cloud', 'chef_boot_sudo', True,
         _("Whether the chef knife bootstrap should be run as sudo."))
     
     default_resource = Option('cloud', 'default_resource', '',
@@ -106,7 +109,8 @@ class CloudModule(Component):
             chefapi = ChefApi(self.chef_base_path,
                               self.aws_keypair_pem,
                               self.aws_username,
-                              self.chef_bootstrap_sudo,
+                              self.chef_boot_run_list,
+                              self.chef_boot_sudo,
                               self.log)
             
             cloudapi = AwsApi(self.aws_key,

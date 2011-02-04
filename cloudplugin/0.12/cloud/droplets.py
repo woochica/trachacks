@@ -354,6 +354,7 @@ class Ec2Instance(Droplet):
                   "Please check in the AWS Management Console directly.",
                   label=self.label, id=instance.id))
             req.redirect(req.href.cloud(self.name))
+        time.sleep(5.0) # give a little time to be ready for bootstrapping
         
         # bootstrap the new instance
         id = instance.private_dns_name
