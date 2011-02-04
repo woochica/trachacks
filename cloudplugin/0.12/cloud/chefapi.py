@@ -27,6 +27,7 @@ class ChefApi(object):
             sort = 'X_CHEF_id_CHEF_X'
         sort += asc and ' asc' or ' desc'
         search = chef.search.Search(index, q, sort, limit, offset, self.chef)
+        self.log.debug("About to query chef at %s" % search.url)
         
         # convert rows to resource objects (e.g., nodes)
         rows = []
@@ -86,8 +87,8 @@ class ChefApi(object):
         The result should be that the ec2 instance connects with the
         chefserver.  Any run_list provided will get run upon the initial
         bootstrap."""
-        cmd = 'knife bootstrap %s' % hostname
-        cmd += ' -c %s' % os.path.join(self.base_path,'.chef','knife.rb')
+        cmd = '/usr/bin/knife bootstrap %s' % hostname
+        cmd += ' -c %s' % os.path.join(self.base_path,'knife.rb')
         cmd += ' -x %s' % self.username
         if self.keypair_pem:
             cmd += ' -i %s' % self.keypair_pem
@@ -95,6 +96,7 @@ class ChefApi(object):
             cmd += ' -r %s' % ','.join('role[%s]' % r for r in roles)
         if self.sudo:
             cmd += ' --sudo'
+        self.log.debug('bootstrapping %s with command: %s' % (id,cmd))
         p = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE)
         # TODO: handle timeout
         out = p.communicate()[0]
@@ -103,4 +105,5 @@ class ChefApi(object):
             self.log.info('Error bootstrapping ec2 instance %s:\n%s' % (id,out))
             return None
         
+        self.log.info('Bootstrapped %s (id=%s)' % (hostname,id))
         return chef.node.Node(id, self.chef)

@@ -227,7 +227,8 @@ class Field(object):
                 bag = self._chefapi.databag(self._databag)
                 opts = [(rec['name'],rec['value']) for rec in bag]
         except Exception, e:
-            self._log.debug("Could not access databag '%s'" % self._databag)
+            self._log.debug("Could not access databag '%s'\n%s" % \
+                            (self._databag),str(e))
         return opts
     
     def get(self, item=None, req=None, default='', raw=False):

@@ -42,6 +42,7 @@ class Droplet(object):
           title = EC2 Instances
           order = 1
           label = Instance
+          description = AWS EC2 instances.
         
         The 'instance' in '[cloud.instance]' is the droplet name which is
         used to uniquely identify the class of cloud resources including in
@@ -55,7 +56,8 @@ class Droplet(object):
         droplet will not be returned as a contextual navigation element
         (but would still be accessible by its url). The 'label' value is
         displayed in various buttons and forms for the name of a single
-        droplet item.
+        droplet item.  The 'description' option is displayed in the grid
+        view (much like a report description).
         
         The remaining fields (not shown above) are for querying chef and
         are parsed by the Fields class.
@@ -64,6 +66,7 @@ class Droplet(object):
         self.chefapi = chefapi
         self.cloudapi = cloudapi
         self.log = log
+        self.log.debug('Instantiating droplet %s' % name)
         
         prefix = 'field.'
         self.fields = Fields(options, field_handlers, chefapi, log, prefix)
@@ -75,9 +78,11 @@ class Droplet(object):
                 self.fields.set_list(k,v)
                 continue
             setattr(self, k, v)
+        self.log.info('Instantiated droplet %s' % name)
     
     def render_grid(self, req):
         """Retrieve the droplets and pre-process them for rendering."""
+        self.log.debug('Rendering grid..')
         index = self.grid_index
         columns = self.fields.get_list('grid_columns')
         id_col = columns[0].name
@@ -127,13 +132,16 @@ class Droplet(object):
                 }
         
         try:
+            self.log.debug('About to search chef..')
             sort_ = sort.strip('_') # handle dynamic attributes
             rows,total = self.chefapi.search(index, sort_, asc, limit, offset)
             numrows = len(rows)
+            self.log.debug('Chef search returned %s rows' % numrows)
         except Exception:
             import traceback;
             msg = "Oops...\n" + traceback.format_exc()+"\n"
             data['message'] = _(to_unicode(msg))
+            self.log.debug(data['message'])
             return 'droplet_grid.html', data, None
         
         paginator = None
@@ -246,9 +254,11 @@ class Droplet(object):
             add_link(req, 'alternate', droplet_href(format='tab', page=p),
                      _('Tab-delimited Text'), 'text/plain')
 
+            self.log.debug('Rendered grid')
             return 'droplet_grid.html', data, None
     
     def render_view(self, req, id):
+        self.log.debug('Rendering view..')
         req.perm.require('CLOUD_VIEW')
         item = self.chefapi.resource(self.crud_resource, id)
         
@@ -263,9 +273,11 @@ class Droplet(object):
             'req': req,
             'error': req.args.get('error')}
         
+        self.log.debug('Rendered view')
         return 'droplet_view.html', data, None
     
     def render_edit(self, req, id):
+        self.log.debug('Rendering edit/new..')
         if id:
             item = self.chefapi.resource(self.crud_resource, id)
         else:
@@ -295,9 +307,11 @@ class Droplet(object):
                 'action': 'new',
                 'fields': self.fields.get_list('crud_new')})
         
+        self.log.debug('Rendered edit/new')
         return 'droplet_edit.html', data, None
     
     def render_delete(self, req, id):
+        self.log.debug('Rendering delete..')
         req.perm.require('CLOUD_DELETE')
         data = {
             'title': _('Delete  %(label)s %(id)s', label=self.label, id=id),
@@ -305,6 +319,7 @@ class Droplet(object):
             'droplet_name': self.name,
             'id': id,
             'label': self.label}
+        self.log.debug('Rendered delete')
         return 'droplet_delete.html', data, None
     
     def create(self, req):
@@ -322,6 +337,7 @@ class Ec2Instance(Droplet):
     
     def create(self, req):
         req.perm.require('CLOUD_CREATE')
+        self.log.debug('Creating instance..')
         
         # launch instance (and wait until running)
         now = time.time()
@@ -362,6 +378,7 @@ class Ec2Instance(Droplet):
     
     def save(self, req, id, fields=None, redirect=True):
         req.perm.require('CLOUD_MODIFY')
+        self.log.debug('Saving node..')
         node = self.chefapi.resource(self.crud_resource, id)
         
         # prepare fields; remove automatic (ec2) fields
@@ -370,6 +387,7 @@ class Ec2Instance(Droplet):
         for field in fields:
             field.set(node, req)
         node.save()
+        self.log.debug('Saved node')
         
         if redirect:
             # show the view
@@ -379,6 +397,7 @@ class Ec2Instance(Droplet):
         
     def delete(self, req, id):
         req.perm.require('CLOUD_DELETE')
+        self.log.debug('Deleting instance and node..')
         node = self.chefapi.resource(self.crud_resource, id)
         
         # delete the ec2 instance
@@ -386,11 +405,14 @@ class Ec2Instance(Droplet):
         try:
             instance_id = node.attributes.get_dotted('ec2.instance_id')
             terminated = self.cloudapi.terminate_instance(instance_id)
-        except:
+            self.log.debug('Deleted instance = %s' % terminated)
+        except Exception, e:
+            self.log.debug('Error terminating instance..\n&s' % str(e))
             terminated = False
         
         # delete node from chef
         node.delete()
+        self.log.debug('Deleted node..')
         
         # wait for chef solr to catch-up to avoid a search failure
         time.sleep(15.0)
