@@ -407,7 +407,7 @@ class Ec2Instance(Droplet):
             terminated = self.cloudapi.terminate_instance(instance_id)
             self.log.debug('Deleted instance = %s' % terminated)
         except Exception, e:
-            self.log.debug('Error terminating instance..\n&s' % str(e))
+            self.log.debug('Error terminating instance..\n%s' % str(e))
             terminated = False
         
         # delete node from chef
