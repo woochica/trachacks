@@ -240,7 +240,7 @@ class PPTicketViewTweak(Component):
         self.env.log.debug('add: save to '+blocked_ticket_id+': '+repr(blocked_ticket_depends_on_tickets)+' --> '+repr(newvalue))
         
         self.saveDependenciesToDatabase( blocked_ticket_id, newvalue )
-        Ticket(self.env, blocked_ticket_id).save_changes(self.authname, 'note: change '+repr(blocked_ticket_depends_on_tickets)+' to '+newvalue) # add comment to ticket
+        Ticket(self.env, blocked_ticket_id).save_changes(self.authname, 'note: change "'+blocked_ticket_depends_on_tickets+'" to "'+newvalue+'" (add '+ticket_id+') initiated by #'+str(ticket_id)) # add comment to ticket
        
       else:
         self.env.log.error('not added: '+blocked_ticket_id+': '+repr(blocked_ticket_depends_on_tickets) )
@@ -249,14 +249,21 @@ class PPTicketViewTweak(Component):
     
 
   def removeBlockedTicket( self, ticket_id, old_blockedtid):
+    '''
+      remove ticket_id from the dependencies of old_blockedtid
+    '''
     dependencies = self.getDependsOn(old_blockedtid)
     dependencies_list = self.splitStringToTicketList(dependencies)
     new_dependencies_list = [ t.strip() for t in dependencies_list if str(t).strip() != ticket_id ]
     new_dependencies = self.createNormalizedTicketString(new_dependencies_list)
     
     self.saveDependenciesToDatabase( old_blockedtid, new_dependencies )
-    # Ticket(self.env, ticket_id).save_changes(self.authname, 'note: change '+dependencies+' to '+new_dependencies) # add comment
-    self.env.log.debug('consider #%s: change dependencies of #%s: %s --> %s' % (ticket_id, old_blockedtid, dependencies, new_dependencies))
+    comment = 'note: change "'+dependencies+'" to "'+new_dependencies+'" (remove '+str(ticket_id)+') initiated by #'+str(ticket_id) 
+    try:
+      Ticket(self.env, old_blockedtid).save_changes(self.authname, comment ) # add comment to ticket
+      self.env.log.debug('consider #%s: change dependencies of #%s: %s --> %s' % (ticket_id, old_blockedtid, dependencies, new_dependencies) )
+    except Exception,e:
+      self.env.log.error('error while adding the comment "%s" to #%s: %s' % (comment,ticket_id,repr(e)) )
 
   def saveDependenciesToDatabase( self, ticket_id, newvalue):
     '''
