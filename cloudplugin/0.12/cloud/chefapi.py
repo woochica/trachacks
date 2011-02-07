@@ -9,7 +9,7 @@ class ChefApi(object):
       * data bag item ordering
       * generalized resource querying
       * generalized resource creation
-      * instance data support
+      * ec2 instance bootstrapping
     """
     
     def __init__(self, base_path, keypair_pem, user, boot_run_list, sudo, log):
@@ -53,10 +53,10 @@ class ChefApi(object):
             if id:
                 return chef.data_bag.DataBag(id, self.chef)
             return chef.data_bag.DataBag.list(self.chef)
-#        if resource == 'client':
-#            if id:
-#                return chef.api_request('GET', '/client/%s' % id)
-#            return chef.data_bag.DataBag.list(self.chef)
+        if resource == 'clients':
+            if id:
+                return chef.client.Client(id, self.chef)
+            return chef.client.Client.list(self.chef)
         raise Exception("Unknown resource '%s'" % resource)
     
     def create(self, resource, id):
@@ -67,6 +67,8 @@ class ChefApi(object):
             return chef.role.Role.create(id, self.chef)
         if resource == 'data':
             return chef.data_bag.DataBag.create(id, self.chef)
+        if resource == 'clients':
+            return chef.client.Client.create(id, self.chef)
         raise Exception("Unknown resource '%s'" % resource)
     
     def databag(self, bag, id=None):
@@ -97,9 +99,9 @@ class ChefApi(object):
             cmd += ' -r %s' % ','.join(r for r in self.boot_run_list)
         if self.sudo:
             cmd += ' --sudo'
-        self.log.debug('bootstrapping %s with command: %s' % (id,cmd))
+        self.log.debug('Bootstrapping %s with command: %s' % (id,cmd))
         p = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE)
-        # TODO: handle timeout
+        # TODO: handle/add timeout
         out = p.communicate()[0]
         
         if p.returncode != 0:

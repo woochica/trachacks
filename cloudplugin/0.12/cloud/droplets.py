@@ -362,7 +362,7 @@ class Ec2Instance(Droplet):
         node = self.chefapi.bootstrap(id, public_hostname, timeout=300)
         if node is None:
             add_warning(req,
-                _("%(label)s %(id)s is running but not bootstrapped (yet). " + \
+                _("%(label)s %(id)s is running but not bootstrapped. " + \
                   "Please login to %(hostname)s to investigate.",
                   label=self.label, id=instance.id,
                   hostname=instance.public_dns_name))
@@ -388,7 +388,7 @@ class Ec2Instance(Droplet):
         for field in fields:
             field.set(node, req)
         node.save()
-        self.log.debug('Saved node')
+        self.log.info('Saved node %s' % id)
         
         if redirect:
             # show the view
@@ -398,7 +398,7 @@ class Ec2Instance(Droplet):
         
     def delete(self, req, id):
         req.perm.require('CLOUD_DELETE')
-        self.log.debug('Deleting instance and node..')
+        self.log.debug('Deleting instance, node, and client..')
         node = self.chefapi.resource(self.crud_resource, id)
         
         # delete the ec2 instance
@@ -406,14 +406,19 @@ class Ec2Instance(Droplet):
         try:
             instance_id = node.attributes.get_dotted('ec2.instance_id')
             terminated = self.cloudapi.terminate_instance(instance_id)
-            self.log.debug('Deleted instance = %s' % terminated)
+            self.log.info('Terminated instance %s (%s)' % (instance_id,terminated))
         except Exception, e:
-            self.log.debug('Error terminating instance..\n%s' % str(e))
+            self.log.warn('Error terminating instance %s:\n%s' % (instance_id,str(e)))
             terminated = False
         
         # delete node from chef
         node.delete()
-        self.log.debug('Deleted node')
+        self.log.info('Deleted node %s' % id)
+        
+        # delete the client from chef (so we can reuse the key)
+        client = self.chefapi.resource('clients', id)
+        client.delete()
+        self.log.info('Deleted client %s' % id)
         
         # wait for chef solr to catch-up to avoid a search failure
         time.sleep(15.0)
