@@ -35,7 +35,7 @@ class DynamicFieldsModule(Component):
            and req.perm.has_permission('TICKET_MODIFY')) \
           or (req.path_info.startswith('/query') \
            and req.perm.has_permission('REPORT_VIEW')):
-            add_script(req, '/dynfields/dynfields.js')
+            add_script(req, '/dynfields/dynfields.html')
             add_script(req, 'dynfields/rules.js')
             add_script(req, 'dynfields/layout.js')
             add_stylesheet(req, 'dynfields/layout.css')
@@ -47,7 +47,7 @@ class DynamicFieldsModule(Component):
     
     def process_request(self, req):
         data = {'triggers':self._get_triggers(req)}
-        return 'dynfields.html', {'data': data},'text/javascript' 
+        return 'dynfields.html', {'data': data}, 'text/javascript'
     
     def _get_triggers(self, req):
         """Converts trac.ini config to dict of triggers with rule specs."""
