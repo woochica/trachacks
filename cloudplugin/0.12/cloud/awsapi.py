@@ -32,6 +32,7 @@ class AwsApi(object):
         self.log.info('Launched ec2 instance %s' % instance.id)
         
         if timeout:
+            time.sleep(5.0) # avoids intermittent error
             self.wait_until_running(instance,timeout)
         
         return instance

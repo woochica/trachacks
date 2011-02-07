@@ -354,7 +354,7 @@ class Ec2Instance(Droplet):
                   "Please check in the AWS Management Console directly.",
                   label=self.label, id=instance.id))
             req.redirect(req.href.cloud(self.name))
-        time.sleep(5.0) # give a little time to be ready for bootstrapping
+        time.sleep(15.0) # give a little time to be ready for bootstrapping
         
         # bootstrap the new instance
         id = instance.private_dns_name
@@ -413,7 +413,7 @@ class Ec2Instance(Droplet):
         
         # delete node from chef
         node.delete()
-        self.log.debug('Deleted node..')
+        self.log.debug('Deleted node')
         
         # wait for chef solr to catch-up to avoid a search failure
         time.sleep(15.0)

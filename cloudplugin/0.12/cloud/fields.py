@@ -147,6 +147,8 @@ class Fields(object):
                 if h.__class__.__name__ == handler_name:
                     handler = h
                     break
+            else:
+                raise Exception("Field handler '%s' not found" % handler_name)
             field = Field(name,kind,label,opts,databag,handler,chefapi,log)
             self._fields[name] = field
     

@@ -106,5 +106,5 @@ class ChefApi(object):
             self.log.info('Error bootstrapping ec2 instance %s:\n%s' % (id,out))
             return None
         
-        self.log.info('Bootstrapped %s (id=%s)' % (hostname,id))
+        self.log.info('Bootstrapped %s (id=%s):\n%s' % (hostname,id,out))
         return chef.node.Node(id, self.chef)
