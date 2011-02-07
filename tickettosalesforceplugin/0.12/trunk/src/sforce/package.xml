@@ -1,18 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trac Tickets</fullName>
+    <description>Synchronize Trac tickets into Salesforce via Ticket__c and Comment__c custom objects and custom related lists layouts.</description>
     <types>
-        <members>Ticket__c</members>
+        <members>CaseTicketLink__c.Case__c</members>
+        <members>CaseTicketLink__c.Ticket__c</members>
+        <members>Comment__c.Author__c</members>
+        <members>Comment__c.Comment__c</members>
+        <members>TicketCommentLink__c.Comment__c</members>
+        <members>TicketCommentLink__c.Ticket__c</members>
+        <members>Ticket__c.Cc__c</members>
+        <members>Ticket__c.Component__c</members>
+        <members>Ticket__c.Description__c</members>
+        <members>Ticket__c.Keywords__c</members>
+        <members>Ticket__c.Last_Update_Time__c</members>
+        <members>Ticket__c.Milestone__c</members>
+        <members>Ticket__c.Owner__c</members>
+        <members>Ticket__c.Priority__c</members>
+        <members>Ticket__c.Reporter__c</members>
+        <members>Ticket__c.Status__c</members>
+        <members>Ticket__c.Summary__c</members>
+        <members>Ticket__c.Time__c</members>
+        <members>Ticket__c.Trac_Ticket_Id__c</members>
+        <members>Ticket__c.Type__c</members>
+        <members>Ticket__c.Version__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
         <members>CaseTicketLink__c</members>
-        <members>TicketCommentLink__c</members>
         <members>Comment__c</members>
+        <members>TicketCommentLink__c</members>
+        <members>Ticket__c</members>
         <name>CustomObject</name>
     </types>
     <types>
         <members>Case-Case Layout</members>
+        <members>CaseTicketLink__c-CaseTicketLink Layout</members>
         <members>Comment__c-Comment Layout</members>
         <members>TicketCommentLink__c-TicketCommentLink Layout</members>
         <members>Ticket__c-Ticket Layout</members>
         <name>Layout</name>
+    </types>
+    <types>
+        <members>Ticket__c.All</members>
+        <name>ListView</name>
     </types>
     <version>20.0</version>
 </Package>
