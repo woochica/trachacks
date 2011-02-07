@@ -347,7 +347,7 @@ class Ec2Instance(Droplet):
         instance = self.cloudapi.launch_instance(
             image_id = req.args.get('ec2.ami_id'),
             instance_type = req.args.get('ec2.instance_type'),
-            placement = placement, timeout = 300)
+            placement = placement, timeout = 600)
         if instance.state != 'running':
             add_warning(req,
                 _("%(label)s %(id)s was created but isn't running (yet). " + \
