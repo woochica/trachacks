@@ -94,7 +94,7 @@ class DynamicFieldsModule(Component):
           id (based on unique key)
           label (of checkbox)
           enabled ('1' or '0')
-          type ('none' or 'select'; TODO: 'text') 
+          type ('none', 'select', or 'text') 
           options (list of options if type is 'select')
           value (saved preference or default value)
         """

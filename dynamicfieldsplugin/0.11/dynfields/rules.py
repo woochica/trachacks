@@ -138,7 +138,7 @@ class CopyRule(Component, Rule):
 
 
 class DefaultValueRule(Component, Rule):
-    """Defaults a field to a user-specified value.
+    """Defaults a field to a user-specified value if empty.
     
     Example trac.ini specs:
     
@@ -159,7 +159,10 @@ class DefaultValueRule(Component, Rule):
     def update_pref(self, req, trigger, target, key, opts, pref):
         # "Default trigger to <select options>"
         pref['label'] = "Default %s to" % target
-        pref['type'] = 'select'
+        if opts.get(target) == 'select':
+            pref['type'] = 'select'
+        else:
+            pref['type'] = 'text'
 
 
 class HideRule(Component, Rule):

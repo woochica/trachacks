@@ -84,25 +84,28 @@ var defaultrule = new Rule('DefaultValueRule'); // must match python class name 
 
 // apply
 defaultrule.apply = function(input, spec){
-    if (window.location.pathname.indexOf('/newticket') == -1)
-        return;
-    
     var fld = jQuery('#field-'+spec.target);
     if (!fld.hasClass('defaulted')){
         fld.addClass('defaulted');
         var doit = true;
+        
+        // ensure default value is in list of select options
         if (fld.get(0).tagName.toLowerCase() == 'select'){
             var opts = new Array();
             fld.find('option').each(function(i,e){
                 opts.push($(e).text());
             });
-            if (jQuery.inArray(spec.value, opts) == -1){
+            if (jQuery.inArray(spec.value, opts) == -1)
                 doit = false;
-            }
-        } 
-        if (doit){
-            fld.val(spec.value).change(); // cascade rules
         }
+            
+        // ensure an 'empty' option value for existing tickets
+        if (fld.val().length > 1 &&
+           window.location.pathname.indexOf('/ticket') > -1)
+            doit = false;
+        
+        if (doit)
+            fld.val(spec.value).change(); // cascade rules
     }
 };
 

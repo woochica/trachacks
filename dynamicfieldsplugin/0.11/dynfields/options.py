@@ -30,6 +30,10 @@ class Options(dict):
                     self._pref_defaults[key] = default
                     break
             self[key] = val
+            
+        # add built-in field types
+        for field in TicketSystem(self.env).get_ticket_fields():
+            self[field['name']] = field['type']
     
     def has_pref(self, key):
         """Returns True if the given key is configured for user preference."""
