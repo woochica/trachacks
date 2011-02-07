@@ -50,6 +50,7 @@ src/objects/Comment__c.object
 src/objects/CaseTicketLink__c.object
 src/objects/TicketCommentLink__c.object
 
+Author: Chris Wolf   cw10025 AT gmail
 """
 import re
 import sys, datetime
