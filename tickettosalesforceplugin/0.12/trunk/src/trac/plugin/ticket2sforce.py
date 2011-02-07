@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Maintain synchronization if Trac tickets in Salesforce.  Trac tickets are
+Maintain synchronization of Trac tickets in Salesforce.  Trac tickets are
 reflected by the Salesforce custom object, Ticket__c and Comment__c.  
 Ticket__c objects are linked to Cases via M2M relationship provided by
 the CaseTicketLink__c custom object.  Even though this is a M2M relation,
