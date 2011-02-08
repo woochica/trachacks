@@ -77,7 +77,7 @@ class AddHeadersPlugin(Component):
 
         for meta in self.metas:
             http_equiv = get(self.section, meta      + '.http_equiv', None )
-            name       = get(self.section, meta      + '.name', None )
+            name       = get(self.section, meta      + '.name', meta )
             scheme     = get(self.section, meta      + '.scheme', None )
             lang       = get(self.section, meta      + '.lang', self.default_meta_lang )
             content    = get(self.section, meta      + '.content', u'' )
