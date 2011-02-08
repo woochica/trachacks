@@ -61,43 +61,10 @@ from trac.ticket.api import ITicketChangeListener
 from trac.ticket.api import ITicketManipulator
 from sforce.partner import SforcePartnerClient
 
-# there's probably a better way for the two classes to pass a value
-caseId = None
-
-class CaseNumberTicketValidator(Component):
-  implements(ITicketManipulator)
-
-  sf = None
-
-  def prepare_ticket(self, req, ticket, fields, actions):
-    """Not currently called, but should be provided for future
-    compatibility.
-    """
-
-  def validate_ticket(self, req, ticket):
-    """Validate a ticket after it's been populated from user input.
-    Must return a list of `(field, message)` tuples, one for each problem
-    """
-    self.env.log.debug("******** Called CaseNumberTicketValidator validate_ticket ***")
-    caseNumber = ticket['case_number']
-    if caseNumber == None or len(caseNumber) < 1:
-      return [('case_number', 'case_number is required')]
-    if CaseNumberTicketValidator.sf == None:
-      CaseNumberTicketValidator.sf \
-        = Ticket2Case.getSForceConnection(self.compmgr)
-    qstr = u"select Id, CaseNumber from Case where CaseNumber = '%s'" \
-      % (caseNumber)
-    result = CaseNumberTicketValidator.sf.query(qstr)
-    if result.size < 1:
-      return [('case_number', 'case_number is not in the configured Org')]
-    global caseId
-    caseId = result.records[0].Id
-    return []
-
-class Ticket2Case(Component):
-  implements(ITicketChangeListener)
+class Ticket2SForce(Component):
+  implements(ITicketManipulator, ITicketChangeListener)
   
-  # map Trac ticket field names to Salesforce custom object Ticket__cc field names 
+  # map Trac ticket field names to Salesforce custom object Ticket__c field names 
   fieldMap = \
     {'id': 'Trac_Ticket_Id__c',
      'status': 'Status__c',
@@ -114,33 +81,54 @@ class Ticket2Case(Component):
      'milestone': 'Milestone__c',
      'keywords': 'Keywords__c',
      'type': 'Type__c'}
-    
-  # class variable for Salesforce web serivce connection
-  sf = None
-
+      
   def connect2SForce(self):
     self.env.log.debug('--- Called connect2SForce: %s, %s, %s, %s' % \
       (self.username, self.password, self.sectoken, self.wsdlPath))
-    Ticket2Case.sf = SforcePartnerClient(self.wsdlPath)
-    Ticket2Case.sf.login(self.username, self.password, self.sectoken)
-    #self.env.log.debug('**** SessionId: ' + Ticket2Case.sf._sessionHeader.sessionId)
+    self.sf = SforcePartnerClient(self.wsdlPath)
+    self.sf.login(self.username, self.password, self.sectoken)
+    #self.env.log.debug('**** SessionId: ' + self.sf._sessionHeader.sessionId)
     
-  # implemented as static so ticketvalidator class get access it
-  @staticmethod
-  def getSForceConnection(compmgr):
-    if Ticket2Case.sf == None:
-      temp = Ticket2Case(compmgr)
-      #print "*** getSForceConnection: %s" % str(temp)
-    return Ticket2Case.sf
+  def __init__(self):
+    self.env.log.debug('--------------- Ticket2SForce init')
+    self.wsdlPath = 'file://' + self.env.config.getpath('ticket2sforce', 'wsdl')
+    self.username = self.config.get('ticket2sforce', 'username', '')
+    self.password = self.config.get('ticket2sforce', 'password', '')
+    self.sectoken = self.config.get('ticket2sforce', 'sectoken', '')
+    self.delete_closed_ticket = self.config.get('ticket2sforce', 'delete_closed_ticket', 'false')
+    self.connect2SForce()
+
+  def prepare_ticket(self, req, ticket, fields, actions):
+    """Not currently called, but should be provided for future
+    compatibility.
+    """
+
+  def validate_ticket(self, req, ticket):
+    """Validate a ticket after it's been populated from user input.
+    Must return a list of `(field, message)` tuples, one for each problem
+    """
+    self.env.log.debug("******** Called validate_ticket ***")
+    caseNumber = ticket['case_number']
+    if caseNumber == None or len(caseNumber) < 1:
+      return [('case_number', 'case_number is required')]
+    
+    qstr = u"select Id, CaseNumber from Case where CaseNumber = '%s'" \
+      % (caseNumber)
+    result = self.sf.query(qstr)
+    if result.size < 1:
+      return [('case_number', 'case_number is not in the configured Org')]
+
+    self.caseId = result.records[0].Id
+    return []
   
   def createCaseTicketLink(self, caseId, ticketId):
     """
       Create M2M link Case <==> Ticket
     """
-    link           = Ticket2Case.sf.generateObject('CaseTicketLink__c') 
+    link           = self.sf.generateObject('CaseTicketLink__c') 
     link.Case__c   = caseId
     link.Ticket__c = ticketId
-    result         = Ticket2Case.sf.create(link)
+    result         = self.sf.create(link)
     
     if result.success != True:
       msg = "Error: Can't create CaseTicketLink record for %s, result was %s" \
@@ -152,10 +140,10 @@ class Ticket2Case(Component):
     """
     Create Comment_cc and link object, to be linked to Ticket__cc
     """
-    comment             = Ticket2Case.sf.generateObject('Comment__c')
+    comment             = self.sf.generateObject('Comment__c')
     comment.Author__c   = author
     comment.Comment__c  = comment_text
-    result              = Ticket2Case.sf.create(comment)
+    result              = self.sf.create(comment)
     
     if result.success != True:
       msg = "Error: Can't create Comment record for %s, result was %s" \
@@ -167,10 +155,10 @@ class Ticket2Case(Component):
     """
       Create M2M link Ticket <==> Comment
     """
-    link            = Ticket2Case.sf.generateObject('TicketCommentLink__c') 
+    link            = self.sf.generateObject('TicketCommentLink__c') 
     link.Ticket__c  = ticketId
     link.Comment__c = commentId
-    result          = Ticket2Case.sf.create(link)
+    result          = self.sf.create(link)
     
     if result.success != True:
       msg = "Error: Can't create TicketCommentLink record for %s, result was %s" \
@@ -182,7 +170,7 @@ class Ticket2Case(Component):
     """
       Create a Ticket__c record, associated with the ticket in Trac
     """
-    ticket                      = Ticket2Case.sf.generateObject('Ticket__c')
+    ticket                      = self.sf.generateObject('Ticket__c')
     ticket.Trac_Ticket_Id__c    = record.id
     ticket.Name                 = record.id
     ticket.Status__c            = record['status']
@@ -199,7 +187,7 @@ class Ticket2Case(Component):
     ticket.Milestone__c         = record['milestone']
     ticket.Keywords__c          = record['keywords']
     ticket.Type__c              = record['type']
-    result                      = Ticket2Case.sf.create(ticket)
+    result                      = self.sf.create(ticket)
 
     if result.success != True:
       msg = "Error: Can't create Ticket record for %s, result was %s" \
@@ -213,12 +201,12 @@ class Ticket2Case(Component):
       Update existing Ticket - only fields that changed
     """
     
-    fieldList = ','.join([Ticket2Case.fieldMap[fld] for fld in old_values.iterkeys()]) 
-    sfTicket = Ticket2Case.sf.retrieve(fieldList, 'Ticket__c', ticketId)
+    fieldList = ','.join([Ticket2SForce.fieldMap[fld] for fld in old_values.iterkeys()]) 
+    sfTicket = self.sf.retrieve(fieldList, 'Ticket__c', ticketId)
     for fld in old_values.iterkeys():
-      sfTicket[Ticket2Case.fieldMap[fld]] = ticket.values[fld]
+      sfTicket[Ticket2SForce.fieldMap[fld]] = ticket.values[fld]
     
-    result = Ticket2Case.sf.update(sfTicket)
+    result = self.sf.update(sfTicket)
 
     if result.success != True:
       msg = "Error: Can't update Ticket record for %s, result was %s" \
@@ -227,29 +215,18 @@ class Ticket2Case(Component):
 
     return result  
 
-  def __init__(self):
-    self.env.log.debug('--------------- Ticket2Case init')
-    self.wsdlPath = 'file://' + self.env.config.getpath('ticket2sforce', 'wsdl')
-    self.username = self.config.get('ticket2sforce', 'username', '')
-    self.password = self.config.get('ticket2sforce', 'password', '')
-    self.sectoken = self.config.get('ticket2sforce', 'sectoken', '')
-    self.delete_closed_ticket = self.config.get('ticket2sforce', 'delete_closed_ticket', 'false')
-    self.connect2SForce()
-
-
   def create_sfticket(self, ticket):
     self.env.log.debug('--------------- create_sfticket')
     self.env.log.debug(ticket['priority'])
     result = self.createTicket(ticket)
     ticketId = result.id
-    global caseId
-    result = self.createCaseTicketLink(caseId, ticketId)
+    result = self.createCaseTicketLink(self.caseId, ticketId)
     
   def change_sfticket(self, ticket, comment, author, old_values):
     self.env.log.debug('--------------- change_sfticket')
     qstr = u"select Id, Trac_Ticket_Id__c from Ticket__c where Trac_Ticket_Id__c = '%s'" \
       % (ticket.id)
-    result = Ticket2Case.sf.query(qstr)
+    result = self.sf.query(qstr)
     if result.size < 1:    
       msg = "Error: Can't locate Ticket record for %s, result was %s" \
         % (str(ticket), result)      
