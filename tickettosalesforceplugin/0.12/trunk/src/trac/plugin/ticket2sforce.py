@@ -123,6 +123,7 @@ class Ticket2Case(Component):
       (self.username, self.password, self.sectoken, self.wsdlPath))
     Ticket2Case.sf = SforcePartnerClient(self.wsdlPath)
     Ticket2Case.sf.login(self.username, self.password, self.sectoken)
+    #self.env.log.debug('**** SessionId: ' + Ticket2Case.sf._sessionHeader.sessionId)
     
   # implemented as static so ticketvalidator class get access it
   @staticmethod
