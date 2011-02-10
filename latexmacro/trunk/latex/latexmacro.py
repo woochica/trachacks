@@ -48,7 +48,7 @@ class LatexMacro(WikiMacroBase):
     {{{
        {{{
        #!Latex
-       $\frac{\alpha^{\beta^2}}{\delta + \alpha}$
+       \frac{\alpha^{\beta^2}}{\delta + \alpha}
        }}}
     }}}
     This code will produce a PNG file, inserted directly in the body of the Wiki page.
