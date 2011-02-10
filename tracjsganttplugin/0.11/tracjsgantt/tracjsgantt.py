@@ -290,7 +290,7 @@ class TracJSGanttChart(WikiMacroBase):
         for t in self.tickets:
             if not self.fields['parent'] \
                     or t[self.fields['parent']] == 0 \
-                    or int(t[self.fields['parent']]) not in ticketsByID.keys():
+                    or int(t[self.fields['parent']]) not in tarr.keys():
                 wbs = _setLevel(t['id'], wbs, 1)
 
 
