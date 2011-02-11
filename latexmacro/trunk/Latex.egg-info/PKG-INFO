@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: Latex
+Version: 0.1-r9847
+Summary: Latex support in wiki pages
+Home-page: http://trac-hacks.org/wiki/LatexMacro
+Author: Jean-Guilhem Rouel
+Author-email: jean-guilhem.rouel@ercim.org
+License: GPLv2
+Description: This macro renders Latex code in wiki pages as PNG images.
+Keywords: trac 0.11 latex macro
+Platform: UNKNOWN

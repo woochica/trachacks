@@ -1,0 +1,11 @@
+setup.cfg
+setup.py
+Latex.egg-info/PKG-INFO
+Latex.egg-info/SOURCES.txt
+Latex.egg-info/dependency_links.txt
+Latex.egg-info/entry_points.txt
+Latex.egg-info/requires.txt
+Latex.egg-info/top_level.txt
+Latex.egg-info/zip-safe
+latex/__init__.py
+latex/latexmacro.py
