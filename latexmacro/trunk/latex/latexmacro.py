@@ -79,11 +79,13 @@ class LatexMacro(WikiMacroBase):
            cmd = "dvipng -T tight -x 1200 -z 6 -bg Transparent " \
                  + "-o %s/%s.png %s 2>/dev/null 1>/dev/null" \
                  % (images_folder, filename, fn)
-           ret = os.system(cmd)   
+           ret = os.system(cmd)
        
            self.clean_tmp_dir(tmpdir)
-
-       return '<img src="%s/%s.png"/></a>' % (images_url, filename)
+           
+       filepath = "%s/%s.png" % (images_url, filename)
+           
+       return '<a href="%s"><img src="%s"/></a>' % (filepath, filepath)
 
     def clean_tmp_dir(self, tmpdir):
         for f in glob.glob(os.path.join(tmpdir ,"*")):
