@@ -9,12 +9,14 @@
 from trac.wiki.macros import WikiMacroBase, parse_args
 from genshi.builder import tag
 from trac.util.text import pretty_size
+from trac.resource import ResourceNotFound
+from trac.attachment import Attachment
 
-revison = "$Rev$"
-url = "$URL$"
+revison = "8461"
+url = "http://trac-hacks.org/wiki/AllAttachmentsMacro"
 
 class AllAttachmentsMacro(WikiMacroBase):
-    """Shows all attachments on the Trac site
+    """Shows all attachments on the Trac site.
 
        The first argument is the filter for which attachments to show.
        The filter can have the value 'ticket' or 'wiki'. Omitting the filter argument
@@ -63,7 +65,13 @@ class AllAttachmentsMacro(WikiMacroBase):
                           " (", tag.span(pretty_size(size), title=size), ") - added by ",
                           tag.em(author), " to ",
                           tag.a(types[type] + " " + id, href=formatters[type](id)), " ")
-                    for type,id,filename,size,time,description,author,ipnr in cursor])
+                    for type,id,filename,size,time,description,author,ipnr in cursor if self._has_perm(type, id, filename, formatter.context)])
 
         return attachmentFormattedList
-    
+
+    def _has_perm(self, parent_realm, parent_id, filename, context):
+        try:
+            attachment = Attachment(self.env, parent_realm, parent_id, filename)
+        except ResourceNotFound:
+            return False
+        return 'ATTACHMENT_VIEW' in context.req.perm(attachment.resource)
