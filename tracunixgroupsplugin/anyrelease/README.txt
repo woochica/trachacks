@@ -1,4 +1,4 @@
-= TracHtgroups =
+= TracUnixgroups =
 
 A permission group provider for Trac. It is using Unix group 
 membership 
