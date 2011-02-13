@@ -74,6 +74,10 @@ class PPTicketViewTweak(Component):
     # change fields
     stream |= Transformer('//*[@id="field-%s"]' % (self.field)).attr('value', dependencies)
     stream |= Transformer('//*[@id="field-%s"]' % (self.fieldrev)).attr('value', blocked_tickets_string)  
+    # create a backup field containing the earlier value
+    stream |= Transformer('//*[@id="propertyform"]').prepend( tag.input(name='field_%s_backup' % (self.fieldrev), value=blocked_tickets_string, style='display:none') )
+    
+    
     
     # publish data that should be used by javascript
     stream |= Transformer('body/div[@id="main"]').prepend(
@@ -89,20 +93,51 @@ class PPTicketViewTweak(Component):
  
   # IRequestFilter methods
   def pre_process_request(self, req, handler):
+    
+    def createDiff( ticket_id ):
+      '''
+        HACK: need an indicator when the ticket was created lately
+      '''
+      diff = -1
+      if ticket_id != None:
+        created = Ticket(self.env, int(ticket_id)).time_created
+        now = datetime.now(created.tzinfo) # needs tzinfo!
+        created = datetime.combine( created.date(), created.time() )
+        now = datetime.combine( now.date(), now.time() )
+        diff = now - created
+        diff = diff.seconds + diff.days * 24 * 3600 # calculated here, to be compatible to python <2.7
+      return diff
+    
+    
     if req.path_info.startswith('/ticket/') or req.path_info.startswith('/newticket'):
       self.lazy_init()
       
       # get blocked tickets and save the dependencies
       blocked_tickets = req.args.get('field_'+self.fieldrev)
+      blocked_tickets_backup = req.args.get('field_%s_backup' % (self.fieldrev) )
       ticket_id = req.args.get('id')
       
       # if the ticket was created lately, the blocking-dependencies are only available within ticket attribute; they are now added to the blocked tickets
-      if blocked_tickets == None and req.path_info.startswith('/ticket'):
-        blocked_tickets = Ticket(self.env, int(ticket_id)).get_value_or_default(self.fieldrev)
+      #self.env.log.error("\n\n")
+      #self.env.log.error('pre_process_request: #%s  %s  %s' % (ticket_id,req.path_info, repr(req.args)))
+      #self.env.log.error('pre_process_request: #%s  %s  %s' % (ticket_id,req.path_info, req.args.get('submit') ))
+      #self.env.log.error('pre_process_request: #%s  %s  %s' % (ticket_id,'blocked_field', blocked_tickets ))
+      
+      newTicketFlag = False
+      if (0 <= createDiff( ticket_id ) <= 1) and req.path_info.startswith('/ticket') :
+        blocked_tickets = Ticket(self.env, int(ticket_id)).get_value_or_default(self.fieldrev) # read from the DB
+        self.env.log.warning('pre_process_request: new ticket #%s created: %s --> save blocked tickets' % (ticket_id, blocked_tickets)) # hack
+        newTicketFlag = True
+      
+      # save "blocks tickets": save if the field was provided and changed, moreover, the submit button was hit 
+      if (blocked_tickets != None and (blocked_tickets != blocked_tickets_backup) and req.path_info.startswith('/ticket') and req.args.get('submit') != "" and req.args.get('submit') != None) or newTicketFlag:
+        self.authname = req.authname
+        #blocked_tickets = Ticket(self.env, int(ticket_id)).get_value_or_default(self.fieldrev)
         self.change_blocked_tickets( ticket_id , blocked_tickets )
       
-      if blocked_tickets != None :
-        self.authname = req.authname
+      
+      #if blocked_tickets != None :
+      self.authname = req.authname
       
     return handler
 
@@ -203,6 +238,8 @@ class PPTicketViewTweak(Component):
     if ticket_id == None:
       return
     
+    self.env.log.warning('change_blocked_tickets: #%s saved_blocking_tickets: %s' % (ticket_id, saved_blocked_tickets) )
+    
     # tickets saved in the form
     saved_blocked_tickets = self.splitStringToTicketList( saved_blocked_tickets )
     # tickets currently saved in the database
@@ -210,21 +247,23 @@ class PPTicketViewTweak(Component):
     
     saved_blocked_tickets.sort()
     stored_blocked_tickets.sort()
-    self.env.log.debug('saved_blocking_tickets: '+repr(saved_blocked_tickets ) )
-    self.env.log.debug('stored_blocking_tickets: '+repr(stored_blocked_tickets) )
+    #self.env.log.debug('change_blocked_tickets: #'+ticket_id+' saved_blocking_tickets: '+repr(saved_blocked_tickets ) )
+    #self.env.log.debug('change_blocked_tickets: #'+ticket_id+' stored_blocking_tickets: '+repr(stored_blocked_tickets) )
     
     for blocked_ticket_id in saved_blocked_tickets :
       if blocked_ticket_id in stored_blocked_tickets: # change nothing 
+        self.env.log.debug('NO new blocked ticket: #'+ticket_id+': %s was in %s' % (blocked_ticket_id,stored_blocked_tickets))
         pass
       elif not blocked_ticket_id in stored_blocked_tickets: # new blocking ticket id
-        self.env.log.debug('new blocked ticket id '+blocked_ticket_id+' at #'+str(ticket_id))
+        self.env.log.debug('ADD: new blocked ticket id '+blocked_ticket_id+' at #'+str(ticket_id))
         self.addBlockedTicket(ticket_id, blocked_ticket_id)
     
     for tid in stored_blocked_tickets:
       if tid in saved_blocked_tickets : # change nothing 
+        self.env.log.debug('NO new blocked ticket: #%s already in %s' % (tid,saved_blocked_tickets) )
         pass
       else: 
-        self.env.log.debug('remove '+str(ticket_id)+' from former blocked ticket id '+str(tid) )
+        self.env.log.debug('REMOVE '+str(ticket_id)+' from former blocked ticket id '+str(tid) )
         self.removeBlockedTicket(ticket_id, tid)
 
   def addBlockedTicket( self, ticket_id, blocked_ticket_id ):
@@ -243,9 +282,9 @@ class PPTicketViewTweak(Component):
         Ticket(self.env, blocked_ticket_id).save_changes(self.authname, 'note: change "'+blocked_ticket_depends_on_tickets+'" to "'+newvalue+'" (add '+ticket_id+') initiated by #'+str(ticket_id)) # add comment to ticket
        
       else:
-        self.env.log.error('not added: '+blocked_ticket_id+': '+repr(blocked_ticket_depends_on_tickets) )
+        self.env.log.debug('not added: '+blocked_ticket_id+': '+repr(blocked_ticket_depends_on_tickets) )
     except Exception,e:
-      self.env.log.error('ticket error while adding a blocked ticket: '+repr(e) )
+      self.env.log.error('ticket #%s error while adding a blocked ticket: %s' % ( ticket_id, repr(e) ) )
     
 
   def removeBlockedTicket( self, ticket_id, old_blockedtid):
@@ -261,7 +300,7 @@ class PPTicketViewTweak(Component):
     comment = 'note: change "'+dependencies+'" to "'+new_dependencies+'" (remove '+str(ticket_id)+') initiated by #'+str(ticket_id) 
     try:
       Ticket(self.env, old_blockedtid).save_changes(self.authname, comment ) # add comment to ticket
-      self.env.log.debug('consider #%s: change dependencies of #%s: %s --> %s' % (ticket_id, old_blockedtid, dependencies, new_dependencies) )
+      self.env.log.error('consider #%s: change dependencies of #%s: %s --> %s' % (ticket_id, old_blockedtid, dependencies, new_dependencies) )
     except Exception,e:
       self.env.log.error('error while adding the comment "%s" to #%s: %s' % (comment,ticket_id,repr(e)) )
 
