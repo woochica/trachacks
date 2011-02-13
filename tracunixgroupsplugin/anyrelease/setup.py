@@ -20,7 +20,7 @@ setup(
         " OS group membership for permissions assignment.",
     license = "BSD",
     keywords = "trac group permission plugin",
-    url = "https://trac-hacks.org/wiki/TracUnixGroupsPlugin",
+    url = "http://trac-hacks.org/wiki/TracUnixGroupsPlugin",
 
     entry_points = {
         'trac.plugins': [
