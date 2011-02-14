@@ -1,7 +1,7 @@
 # Default droplet config options that can be overridden in the trac.ini file.
 
 droplet_defaults = {
-  'instance': {
+  'cloud.instance': {
     'class': 'Ec2Instance', # must exactly match corresponding Python class name
     'description': 'AWS EC2 instances.',
     'title': 'Instances',

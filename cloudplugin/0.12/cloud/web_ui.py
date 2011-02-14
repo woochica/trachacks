@@ -120,8 +120,8 @@ class CloudModule(Component):
             
             # instantiate each droplet (singletons)
             self.droplets = {}
-            self.titles = self._get_droplet_titles()
-            for order,droplet_name,title in self.titles:
+            self.titles = Droplet.titles(self.env)
+            for order_,droplet_name,title_ in self.titles:
                 self.droplets[droplet_name] = Droplet.new(self.env,
                     droplet_name, chefapi, cloudapi,
                     self.field_handlers, self.log)
@@ -178,24 +178,8 @@ class CloudModule(Component):
                     return template, data, content_type
         
         # add contextual nav
-        for order,droplet_name,title in self.titles:
+        for order_,droplet_name,title in self.titles:
             add_ctxtnav(req, title, href=req.href.cloud(droplet_name))
         
         add_stylesheet(req, 'common/css/report.css') # reuse css
         return template, data, None
-    
-    
-    # Internal methods
-    
-    def _get_droplet_titles(self):
-        """Return an ordered list of tuples of the droplet's name and title.
-        The order is based on an 'order' config option (if provided)."""
-        titles = []
-        for section in self.env.config.sections():
-            if not section.startswith('cloud.'):
-                continue
-            droplet_name = section.replace('cloud.','',1)
-            order = int(self.env.config.get(section,'order',99))
-            title = self.env.config.get(section,'title',droplet_name)
-            titles.append( (order,droplet_name,title) )
-        return sorted(titles)

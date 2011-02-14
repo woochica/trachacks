@@ -26,12 +26,35 @@ class Droplet(object):
         where the name param = 'instance'.  Default options for the
         droplet are overridden by those in the trac.ini file.
         """
-        section = 'cloud.%s' % name
-        options = copy.copy(droplet_defaults.get(name,{})) # defaults
-        options.update(dict(env.config.options('cloud')))  # overrides
-        options.update(env.config.options(section))        # overrides
+        options = cls.options(env).get(name)
         cls = globals()[options['class']]
         return cls(name, chefapi, cloudapi, field_handlers, log, options)
+    
+    @classmethod
+    def titles(cls, env):
+        """Return a list of tuples of order, droplet name, and its title."""
+        titles = []
+        for droplet_name,opts in cls.options(env).items():
+            order = int(opts.get('order',99))
+            title = opts.get('title',droplet_name)
+            titles.append( (order,droplet_name,title) )
+        return sorted(titles)
+    
+    @classmethod
+    def options(cls, env):
+        """Return a dict of all droplet options - keys are droplet names
+        and values are its config options created by merging the main
+        [cloud] section with the defaults overridden by its respective
+        trac.ini section."""
+        options = {}
+        for section in set(droplet_defaults.keys() + env.config.sections()):
+            if not section.startswith('cloud.'):
+                continue
+            opts = copy.copy(dict(env.config.options('cloud'))) # main section
+            opts.update(droplet_defaults.get(section,{}))       # defaults
+            opts.update(env.config.options(section))            # overrides
+            options[section.replace('cloud.','',1)] = opts
+        return options
     
     def __init__(self, name, chefapi, cloudapi, field_handlers, log, options):
         """Parses the droplet's config file section in trac.ini.  Here's
