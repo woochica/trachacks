@@ -102,7 +102,7 @@ class ChefApi(object):
         self.log.debug('Bootstrapping %s with command: %s' % (id,cmd))
         p = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE)
         # TODO: handle/add timeout
-        out = p.communicate()[0]
+        out = unicode(p.communicate()[0], 'utf-8', 'ignore')
         
         if p.returncode != 0:
             self.log.info('Error bootstrapping ec2 instance %s:\n%s' % (id,out))
