@@ -263,10 +263,12 @@ class Field(object):
             # special handle run_list
             if self.name == 'run_list':
                 item.run_list = v
+                self._log.debug("Item %s field run_list set to %s" % (item,v))
                 return
         else:
             v = req.args.get(self.name,default)
         item.attributes.set_dotted(self.name, v)
+        self._log.debug("Item %s field %s set to %s" % (item,self.name,v))
     
     def __str__(self):
         return self.name
