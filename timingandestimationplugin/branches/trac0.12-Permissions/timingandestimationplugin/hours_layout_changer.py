@@ -13,7 +13,7 @@ class HoursLayoutChanger(Component):
 
     def post_process_request(self, req, template, data, content_type):
         if template == 'ticket.html':
-            add_script(req, "Billing/change_layout.js")
+            add_script(req, "billing/change_layout.js")
         return (template, data, content_type)
  
 class TicketPropsLayoutChanger(Component):
@@ -25,5 +25,5 @@ class TicketPropsLayoutChanger(Component):
 
     def post_process_request(self, req, template, data, content_type):
         if template == 'ticket.html':
-            add_script(req, "Billing/whitespace_remover.js")
+            add_script(req, "billing/whitespace_remover.js")
         return (template, data, content_type)

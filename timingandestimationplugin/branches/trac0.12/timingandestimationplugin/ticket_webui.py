@@ -24,6 +24,6 @@ class TicketWebUiAddon(Component):
             return stream
         stream = stream | Transformer('//div[@id="banner"]').before(
             tag.script(type="text/javascript", 
-                       src=req.href.chrome("Billing", "ticket.js"))()
+                       src=req.href.chrome("billing", "ticket.js"))()
             )
         return stream

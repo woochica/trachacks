@@ -41,16 +41,16 @@ class TimingEstimationAndBillingPage(Component):
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
-        val = re.search('/Billing$', req.path_info)
+        val = re.search('/billing$', req.path_info)
         if val and val.start() == 0:
-            return "Billing"
+            return "billing"
         else:
             return ""
 
     def get_navigation_items(self, req):
-        url = req.href.Billing()
+        url = req.href.billing()
         if req.perm.has_permission("REPORT_VIEW"):
-            yield 'mainnav', "Billing", \
+            yield 'mainnav', "billing", \
                   Markup('<a href="%s">%s</a>' % \
                          (url , "Management"))
 
@@ -71,7 +71,7 @@ class TimingEstimationAndBillingPage(Component):
         data['billing_info']["billdates"] = billing_dates
 
     def match_request(self, req):
-        val = re.search('/Billing$', req.path_info)
+        val = re.search('/billing$', req.path_info)
         return val and val.start() == 0
 
     def process_request(self, req):
@@ -100,16 +100,16 @@ class TimingEstimationAndBillingPage(Component):
                 data["reports"][key]["description"] = report_descriptions[key]
         #self.log.debug("DEBUG got %s, %s" % (data["reports"], type(data["reports"])));
         data["billing_info"] = {"messages":         messages,
-                                "href":             req.href.Billing(),
+                                "href":             req.href.billing(),
                                 "report_base_href": req.href.report(),
                                 "usermanual_href":  req.href.wiki(user_manual_wiki_title),
                                 "usermanual_title": user_manual_title }
 
         self.set_request_billing_dates(data)
 
-        add_stylesheet(req, "Billing/billingplugin.css")
-        add_script(req, "Billing/date.js")
-        add_script(req, "Billing/linkifyer.js")
+        add_stylesheet(req, "billing/billingplugin.css")
+        add_script(req, "billing/date.js")
+        add_script(req, "billing/linkifyer.js")
         return 'billing.html', data, None
 
 
@@ -118,7 +118,7 @@ class TimingEstimationAndBillingPage(Component):
         """Return the absolute path of a directory containing additional
         static resources (such as images, style sheets, etc).
         """
-        return [('Billing', resource_filename(__name__, 'htdocs'))]
+        return [('billing', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
         """Return the absolute path of the directory containing the provided
