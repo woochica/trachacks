@@ -39,8 +39,8 @@ class AnchorMacro(WikiMacroBase):
                 args = tuple(args.split(","))
                 print args
 
-                if len(args) == 2 :
-                        return '<a class="mytabel" id="%s" href="#%s">%s</a>' % (args[0],args[1],args[1])
+                if len(args) == 2:
+                        return '<a class="mytabel" id="%s" href="#%s">%s</a>' % (args[0],args[0],args[1])
                 else:
                         return '<a class="mytabel" id="%s"></a>' % args
 

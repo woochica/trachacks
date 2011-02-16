@@ -28,7 +28,7 @@ Example:
 def execute(hdf, args, env):
     args = tuple(args.split(","))
     print args
-    if len(args) == 2 :
-      return '<a name="%s" href="#%s">%s</a>' % (args[0],args[1],args[1])
+    if len(args) == 2:
+      return '<a name="%s" href="#%s">%s</a>' % (args[0],args[0],args[1])
     else:
       return '<a name="%s"></a>' % args
