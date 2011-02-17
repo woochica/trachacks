@@ -5,7 +5,7 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.web.api import IRequestFilter, IRequestHandler, Href
 from trac.web.chrome import ITemplateProvider, add_stylesheet, \
                             add_script, add_notice
-from trac.resource import get_resource_url
+from trac.resource import Resource, get_resource_description
 from trac.db import DatabaseManager, Table, Column
 from trac.perm import IPermissionRequestor
 from trac.util import get_reporter_id
@@ -38,7 +38,7 @@ class BookmarkSystem(Component):
         """Return the current users bookmarks."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT resource FROM bookmarks WHERE username=%s ',
+        cursor.execute('SELECT resource, name, username FROM bookmarks WHERE username=%s ',
                          (get_reporter_id(req), ))
         return cursor.fetchall()
 
@@ -141,8 +141,8 @@ class BookmarkSystem(Component):
             anc = tag.a("Bookmarks", href=req.href.bookmark())
             menu.append(tag.li(anc))
 
-            for bookmark in self.get_bookmarks(req):
-                resource = bookmark[0]
+            for url, name, username in self.get_bookmarks(req):
+                resource = url
                 anc = tag.a(resource, href=base_path + resource)
                 menu.append(tag.li(anc))
 
@@ -153,10 +153,8 @@ class BookmarkSystem(Component):
             req.send(content)
 
         bookmarks = []
-        for bookmark in self.get_bookmarks(req):
-            bookmarks.append([bookmark[0],
-                    base_path + bookmark[0],
-                    req.href.bookmark('delete_in_page', bookmark[0])])
+        for url, name, username in self.get_bookmarks(req):
+            bookmarks.append(self.__format_name(req, url))
 
         return 'list.html', { 'bookmarks': bookmarks }, None
 
@@ -199,6 +197,68 @@ class BookmarkSystem(Component):
 
     ### internal methods
 
+    def __format_name(self, req, url):
+        linkname = url
+        name = ""
+
+        path = url.split('/')
+        realm = path[1]
+        if len(path) >= 3:
+            resource = Resource(realm, path[2])
+            if resource:
+                if realm == 'ticket':
+                    linkname = get_resource_description(self.env, resource, 'compact')
+                    name = get_resource_description(self.env, resource, 'summary')
+                elif realm == 'milestone':
+                    linkname = get_resource_description(self.env, resource, 'compact')
+                elif realm == 'wiki':
+                    resource = Resource(realm, '/'.join(path[2:]))
+                    linkname = get_resource_description(self.env, resource, 'compact')
+                elif realm == 'report':
+                    linkname = "{%s}" % path[2]
+                    name = self.__format_report_name(path[2])
+                elif realm == 'changeset':
+                    parent = Resource('source', path[3])
+                    resource = Resource(realm, path[2], False, parent)
+                    linkname = "[%s]" % path[2]
+                    name = get_resource_description(self.env, resource)
+                elif realm == 'browser':
+                    parent = Resource('source', path[2])
+                    self.env.log.debug("==============================> %s" % "/".join(path[3:]))
+                    resource = Resource('source', '/'.join(path[3:]), False, parent)
+                    linkname = get_resource_description(self.env, resource)
+                    name = get_resource_description(self.env, resource, 'summary')
+                elif realm == 'attachment':
+                    parent = Resource(path[2], '/'.join(path[3:-1]))
+                    resource = Resource(realm, path[-1], False, parent)
+                    linkname = get_resource_description(self.env, resource, 'compact')
+                    name = get_resource_description(self.env, resource, 'summary')
+                else:
+                    linkname = get_resource_description(self.env, resource, 'compact')
+                    name = get_resource_description(self.env, resource, 'summary')
+        elif len(path) == 2 and path[1]:
+            linkname = path[1].capitalize()
+        else:
+            realm = 'wiki'
+            linkname = 'WikiStart'
+
+        return {
+                'realm': realm,
+                'url': url,
+                'linkname': linkname,
+                'name': name,
+                'delete': req.href.bookmark('delete_in_page', url)}
+
+    def __format_report_name(self, id):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('SELECT id, title from report WHERE id=%s', (id,))
+        row = cursor.fetchone()
+        if row:
+            return row[1]
+        else:
+            return ''
+
     def render_bookmarker(self, req):
         resource = self._get_resource_uri(req)
         bookmark = self.get_bookmark(req, resource)
@@ -223,10 +283,14 @@ class BookmarkSystem(Component):
         menu.append(tag.li(anc))
 
 
-        for bookmark in self.get_bookmarks(req):
-            resource = bookmark[0]
+        for url, name, username in self.get_bookmarks(req):
             base_path = req.base_path
-            anc = tag.a(resource, href=base_path + resource)
+            params = self.__format_name(req, url)
+            if params['name']:
+                name = ' '.join([params['linkname'], params['name']])
+            else:
+                name = params['linkname']
+            anc = tag.a(name, href=base_path + url)
             menu.append(tag.li(anc))
 
         placeholder = tag.span(menu, id='bookmark_placeholder')

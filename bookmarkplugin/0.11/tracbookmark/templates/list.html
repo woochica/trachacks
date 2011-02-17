@@ -7,10 +7,11 @@
   <body>
     <h1>Your bookmarks</h1>
     <div style="margin-bottom: 3em;">
-    <ul>
+    <ul class="bookmarks">
       <py:for each="bookmark in bookmarks">
-        <li>
-            <a href="${bookmark[1]}">${bookmark[0]}</a> (<a href="${bookmark[2]}">delete</a>)
+        <li class="${bookmark.realm}">
+            <a href="${bookmark.url}">${bookmark.linkname}</a>
+                ${bookmark.name} (<a href="${bookmark.delete}">delete</a>)
         </li>
       </py:for>
     </ul>

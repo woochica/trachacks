@@ -36,3 +36,28 @@
 #bookmark_this img {
     vertical-align: middle;
 }
+
+ul.bookmarks li {
+    padding-left: 1.5em;
+    background-repeat: no-repeat;
+    background-position: left center;
+    line-height: 160%;
+}
+ul.bookmarks li.wiki {
+    background-image: url(../../common/wiki.png);
+}
+ul.bookmarks li.report,
+ul.bookmarks li.ticket {
+    background-image: url(../../common/newticket.png);
+}
+ul.bookmarks li.browser,
+ul.bookmarks li.changeset {
+    background-image: url(../../common/changeset.png);
+}
+ul.bookmarks li.attachment {
+    background-image: url(../../common/attachment.png);
+}
+ul.bookmarks li.roadmap,
+ul.bookmarks li.milestone {
+    background-image: url(../../common/milestone.png);
+}
