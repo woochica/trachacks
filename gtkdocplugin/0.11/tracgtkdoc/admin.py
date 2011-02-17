@@ -83,7 +83,7 @@ class GtkDocAdmin(Component):
             books_names = (books_names and re.split("[ ]*,[ ]*", books_names.strip())) or []
             for book in books_names:
               path = self.config.get('gtkdoc', book)
-              books.append({ 'name': name, 'path': path })
+              books.append({ 'name': book, 'path': path })
 
         data = {
             'books': books,
