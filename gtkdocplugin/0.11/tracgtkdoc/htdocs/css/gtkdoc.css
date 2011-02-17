@@ -20,6 +20,8 @@
  *  $Revision$
  */
 iframe.book {
-	border: None;
-	width: 100%;
+  padding: 0em 0em 0em 0em;
+  margin: 1em 0em 0em 0em;
+  border: None;
+  width: 100%;
 }
