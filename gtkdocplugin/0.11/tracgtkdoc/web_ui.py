@@ -125,7 +125,6 @@ class GtkDocWebUI(Component):
         }
 
         add_stylesheet(req, 'tracgtkdoc/css/gtkdoc.css')
-        add_script(req, 'tracgtkdoc/js/jquery-1.4.3.min.js')
         add_script(req, 'tracgtkdoc/js/jquery.iframe-auto-height.plugin.js')
 
         books = self.config.get('gtkdoc', 'books')
