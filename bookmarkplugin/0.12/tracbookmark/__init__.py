@@ -55,6 +55,9 @@ class BookmarkSystem(Component):
     def set_bookmark(self, req, resource):
         """Bookmark a resource."""
 #        resource = self.normalise_resource(resource)
+        if self.get_bookmark(req, resource):
+            return
+
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('INSERT INTO bookmarks (resource, username) '
