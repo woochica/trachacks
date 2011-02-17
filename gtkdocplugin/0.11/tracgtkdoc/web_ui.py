@@ -129,9 +129,10 @@ class GtkDocWebUI(Component):
 
         books = self.config.get('gtkdoc', 'books')
         books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
-        for book in books:
-          url = '%s/%s' % (req.href.gtkdoc(), book)
-          add_ctxtnav(req, book, urllib.quote(url))
+        if len(books) > 1:
+          for book in books:
+            url = '%s/%s' % (req.href.gtkdoc(), book)
+            add_ctxtnav(req, book, urllib.quote(url))
 
         return 'gtkdoc_wrapper.html', data, None
 
