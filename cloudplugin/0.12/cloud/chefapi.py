@@ -1,6 +1,7 @@
 from subprocess import Popen, STDOUT, PIPE
 import os
 import chef
+from timer import Timer
 
 class ChefApi(object):
     """Wraps pychef with several conveniences including:
@@ -88,8 +89,15 @@ class ChefApi(object):
     def bootstrap(self, id, hostname, timeout=300):
         """Bootstraps an ec2 instance by calling out to "knife bootstrap".
         The result should be that the ec2 instance connects with the
-        chefserver.  Any run_list provided will get run upon the initial
-        bootstrap."""
+        chefserver.
+        
+        This routine handles the race condition when the bootstrap tries
+        to connect to the chefserver after the instance's chef-client
+        starts but before it creates the client.pem file causing the
+        bootstrap to fail with a 409 permission error.  In this case, the
+        routine will simply attempt to bootstrap again until it succeeds
+        or until the given timeout period expires.
+        """
         cmd = '/usr/bin/knife bootstrap %s' % hostname
         cmd += ' -c %s' % os.path.join(self.base_path,'knife.rb')
         cmd += ' -x %s' % self.user
@@ -99,13 +107,22 @@ class ChefApi(object):
             cmd += ' -r %s' % ','.join(r for r in self.boot_run_list)
         if self.sudo:
             cmd += ' --sudo'
-        self.log.debug('Bootstrapping %s with command: %s' % (id,cmd))
-        p = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE)
-        # TODO: handle/add timeout
-        out = unicode(p.communicate()[0], 'utf-8', 'ignore')
         
-        if p.returncode != 0:
-            self.log.info('Error bootstrapping ec2 instance %s:\n%s' % (id,out))
+        timer = Timer(timeout)
+        while timer.running:
+            self.log.debug('Bootstrapping %s with command: %s' % (id,cmd))
+            p = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE)
+            # TODO: add timeout
+            out = unicode(p.communicate()[0], 'utf-8', 'ignore')
+            
+            if p.returncode != 0:
+                self.log.info('Error bootstrapping %s:\n%s' % (id,out))
+                return None
+            
+            if "409 Conflict: Client already exists" not in out:
+                break
+        else: # timer ran out after the last (possibly only) bootstrap attempt
+            self.log.info('Error bootstrapping %s:\n%s' % (id,out))
             return None
         
         self.log.info('Bootstrapped %s (id=%s):\n%s' % (hostname,id,out))

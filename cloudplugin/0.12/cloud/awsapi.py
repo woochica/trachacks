@@ -42,7 +42,7 @@ class AwsApi(object):
         instance is running before the 'timeout' duration (seconds)."""
         timer = Timer(timeout)
         while instance.state == 'pending' and timer.running:
-            time.sleep(1.0)
+            time.sleep(0.1)
             instance.update()
         return timer.running
     
