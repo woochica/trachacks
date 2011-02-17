@@ -18,12 +18,10 @@
 # $Date$
 # $Revision$
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.search import ISearchSource
 from trac.perm import IPermissionRequestor
 from trac.util import datefmt
-
-from tracgtkdoc.api import get_books
 
 import os
 import re
@@ -62,20 +60,23 @@ class GtkDocSearch(Component):
 
     # ISearchSource
     def get_search_filters(self, req):
-        if req.perm.has_permission('GTKDOC_SEARCH') and len(get_books(self.config)) > 0:
-            yield ('api', 'API Reference', True)
+        if req.perm.has_permission('GTKDOC_SEARCH'):
+            books = self.config.get('gtkdoc', 'books')
+            if books:
+                yield ('api', 'API Reference', True)
 
     def get_search_results(self, req, terms, filters):
         if not 'api' in filters:
             return
 
-        books = get_books(self.config)
+        books = self.config.get('gtkdoc', 'books')
+        books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
         if not books:
             return
 
         base_url = req.href.gtkdoc()
 
-        for book in books.keys():
+        for book in books:
             ids = self._load_index(book)
 
             for id in ids.keys():

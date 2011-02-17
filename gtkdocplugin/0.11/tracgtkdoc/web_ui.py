@@ -21,6 +21,7 @@
 from genshi.builder import tag
 
 from trac.core import Component, implements
+from trac.config import Option
 from trac.web.api import IRequestHandler
 from trac.web.chrome import INavigationContributor, \
                             ITemplateProvider, \
@@ -28,8 +29,6 @@ from trac.web.chrome import INavigationContributor, \
                             add_script, \
                             add_ctxtnav
 from trac.perm import IPermissionRequestor
-
-from tracgtkdoc.api import get_books
 
 import os
 import re
@@ -41,6 +40,10 @@ class GtkDocWebUI(Component):
                ITemplateProvider, \
                IPermissionRequestor)
 
+    index = Option('gtkdoc', 'index', 'index.html',
+      """Default index page to pick in the generated documentation."""
+    )
+
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
         if req.perm.has_permission('GTKDOC_VIEW'):
@@ -48,23 +51,25 @@ class GtkDocWebUI(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('GTKDOC_VIEW'):
-            if len(get_books(self.config)) > 0:
+            books = self.config.get('gtkdoc', 'books')
+            books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
+            if books:
                 book = self.config.get('gtkdoc', 'default')
                 path = req.href.gtkdoc()
-                href_real = book and os.path.join(path, book) or path
+                href_real = (book and os.path.join(path, book)) or path
                 yield('mainnav', 'gtkdoc',
                       tag.a('API Reference', href=href_real, accesskey='r'))
 
     # IRequestHandler
     def match_request(self, req):
         if req.perm.has_permission('GTKDOC_VIEW'):
-            return re.match(r'/gtkdoc(-raw)?(?:/|$)([^/]+)?(?:/|$)(.+)?$', req.path_info)
+            return re.match(r'^/gtkdoc(-raw)?(?:/|$)([^/]+)?(?:/|$)(.+)?$', req.path_info)
 
     def _process_url(self, req):
-        match = re.match(r'/gtkdoc(-raw)?(?:/|$)([^/]+)?(?:/|$)(.+)?$', req.path_info)
+        match = re.match(r'^/gtkdoc(-raw)?(?:/|$)([^/]+)?(?:/|$)(.+)?$', req.path_info)
         if match:
             book = match.group(2)
-            page = match.group(3) or 'index.html'
+            page = match.group(3) or self.index
             
             if not book and self.config.get('gtkdoc', 'default'):
                 book = self.config.get('gtkdoc', 'default')
@@ -72,7 +77,7 @@ class GtkDocWebUI(Component):
             return book, page
 
         book = None
-        page = "index.html"
+        page = self.index
         if self.config.get('gtkdoc', 'default'):
             book = self.config.get('gtkdoc', 'default')
             
@@ -123,11 +128,11 @@ class GtkDocWebUI(Component):
         add_script(req, 'tracgtkdoc/js/jquery-1.4.3.min.js')
         add_script(req, 'tracgtkdoc/js/jquery.iframe-auto-height.plugin.js')
 
-        books = get_books(self.config)
-        if len(books) > 1:
-            for book in books.keys():
-                url = '%s/%s' % (req.href.gtkdoc(), book)
-                add_ctxtnav(req, book, urllib.quote(url))
+        books = self.config.get('gtkdoc', 'books')
+        books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
+        for book in books:
+          url = '%s/%s' % (req.href.gtkdoc(), book)
+          add_ctxtnav(req, book, urllib.quote(url))
 
         return 'gtkdoc_wrapper.html', data, None
 

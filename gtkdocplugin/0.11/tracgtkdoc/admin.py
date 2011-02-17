@@ -18,13 +18,18 @@
 # $Date$
 # $Revision$
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.admin import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider
 from trac.perm import IPermissionRequestor
+from trac.web.chrome import add_stylesheet
+
+import re
 
 class GtkDocAdmin(Component):
-    implements(IAdminPanelProvider, ITemplateProvider, IPermissionRequestor)
+    implements(IAdminPanelProvider, \
+               ITemplateProvider, \
+               IPermissionRequestor)
 
     # IAdminPanelProvider
     def get_admin_panels(self, req):
@@ -34,18 +39,36 @@ class GtkDocAdmin(Component):
     def render_admin_panel(self, req, category, page, path_info):
         if req.method == 'POST':
             if req.args.get('add'):
-                self.log.debug("default is %r", self.config.get('gtkdoc', 'default'))
-                if not self.config.get('gtkdoc', 'default'):
-                    self.config.set('gtkdoc', 'default', req.args.get('name'))
-                self.log.debug("default is %r", self.config.get('gtkdoc', 'default'))
+                default = self.config.get('gtkdoc', 'default')
+                books = self.config.get('gtkdoc', 'books')
+                books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
+                if not req.args.get('name') in books:
+                  books.append(req.args.get('name'))
+
+                if books and not default:
+                  default = books[0]
+                self.config.set('gtkdoc', 'default', default)
+                self.config.set('gtkdoc', 'books', ", ".join(books))
                 self.config.set('gtkdoc', req.args.get('name'), req.args.get('path'))
                 self.config.save()
 
             if req.args.get('remove'):
+                default = self.config.get('gtkdoc', 'default')
+                books = self.config.get('gtkdoc', 'books')
+                books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
+
                 sel = req.args.get('sel')
-                sel = isinstance(sel, list) and sel or [sel]
+                sel = (isinstance(sel, list) and sel) or [sel]
                 for book in sel:
+                    if book == default:
+                      default = None
                     self.config.remove('gtkdoc', book)
+                    books.remove(book)
+
+                if books and not default:
+                  default = books[0]
+                self.config.set('gtkdoc', 'default', default)
+                self.config.set('gtkdoc', 'books', ", ".join(books))
                 self.config.save()
 
             if req.args.get('apply'):
@@ -56,23 +79,25 @@ class GtkDocAdmin(Component):
         books = []
         if 'gtkdoc' in self.config:
             default = self.config.get('gtkdoc', 'default')
-
-            for name, path in self.config['gtkdoc'].options():
-                if 'default' in name:
-                    continue
-
-                books.append({ 'name': name, 'path': path })
+            books_names = self.config.get('gtkdoc', 'books')
+            books_names = (books_names and re.split("[ ]*,[ ]*", books_names.strip())) or []
+            for book in books_names:
+              path = self.config.get('gtkdoc', book)
+              books.append({ 'name': name, 'path': path })
 
         data = {
             'books': books,
             'default': default
         }
 
+        add_stylesheet(req, 'tracgtkdoc/css/gtkdoc.css')
+
         return 'gtkdoc_admin.html', data
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
-        return []
+        from pkg_resources import resource_filename
+        return [('tracgtkdoc', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
