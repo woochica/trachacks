@@ -223,17 +223,17 @@ class DiscussionApi(Component):
 
         # Check if forum exists.
         if type == 'forum':
-            return self._get_item(context, 'forum', ('id'), where = 'id = %s',
+            return self._get_item(context, 'forum', ('id',), where = 'id = %s',
               values = (id,)) != None
 
         # Check if topic exits.
         elif type == 'topic':
-            return self._get_item(context, 'topic', ('id'), where = 'id = %s',
+            return self._get_item(context, 'topic', ('id',), where = 'id = %s',
               values = (id,)) != None
 
         # Check if message exists.
         elif type == 'message':
-            return self._get_item(context, 'message', ('id'), where = 'id = %s',
+            return self._get_item(context, 'message', ('id',), where = 'id = %s',
               values = (id,)) != None
 
     # Main request processing function.
