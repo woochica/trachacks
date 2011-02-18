@@ -119,8 +119,19 @@ class ChefApi(object):
                 self.log.info('Error bootstrapping %s:\n%s' % (id,out))
                 return None
             
-            if "409 Conflict: Client already exists" not in out:
-                break
+            if "409 Conflict: Client already exists" in out:
+                self.log.info('Retrying bootstrap due to:\n%s' % out)
+                continue
+            
+            if "Connection refused - connect(2) (Errno::ECONNREFUSED)" in out:
+                self.log.info('Retrying bootstrap due to:\n%s' % out)
+                continue
+            
+            if "Errno::ETIMEDOUT: Connection timed out - connect(2)" in out:
+                self.log.info('Retrying bootstrap due to:\n%s' % out)
+                continue
+            
+            break
         else: # timer ran out after the last (possibly only) bootstrap attempt
             self.log.info('Error bootstrapping %s:\n%s' % (id,out))
             return None
