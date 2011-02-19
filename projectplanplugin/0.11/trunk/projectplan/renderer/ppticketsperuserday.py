@@ -64,9 +64,16 @@ class TicketsPerUserDay(RenderImpl):
         self.showsummarypiechart = True
       else:
         pass
+    
+    
+    self.isShowAggregatedTicketState = self.macroenv.get_bool_arg('showaggregatedstate', False)
+    
 
   def isSummary( self ):
     return self.showsummarypiechart or False # add other values
+  
+  def showAggregatedTicketState( self ):
+    return self.isShowAggregatedTicketState or False
 
   def getHeadline( self ):
     title = self.getTitle()
@@ -191,17 +198,49 @@ class TicketsPerUserDay(RenderImpl):
           class_ = 'saturday'
         elif calendar[segment]['isocalendar'][2] == 7: # Sunday
           class_ = 'sunday'
-        td = tag.td(class_ = class_)
+        td_div = tag.div()
+        
+        
+        # only show the highlight, if the date is in the past
+        color_class = ''
+        if  self.showAggregatedTicketState()  and  calendar[segment]['date'] < currentDate:
+          # determine color 
+          state_new = 1
+          state_work = 2
+          state_done = 3
+          state_none = 4
+          
+          state_progess = state_none
+          
+          for ticket in orderedtickets[segment][o]:
+            status = ticket.getfield('status')
+            if status in ['in_QA','closed'] and state_progess >= state_done:
+              state_progess = state_done
+            elif status in ['in_work','assigned','infoneeded'] and state_progess >= state_work:
+              state_progess = state_work
+            elif status in ['new','infoneeded_new'] and state_progess >= state_new:
+              state_progess = state_new
+          
+          color_class =  { # switch/case in Python style
+            state_none: '',
+            state_new: 'bar bar_red',
+            state_work: 'bar bar_blue',
+            state_done: 'bar bar_green'
+          }.get(state_progess, '')
+        
+        
         
         for ticket in orderedtickets[segment][o]:
           counttickets[segment] += 1
-          td(tag.span(self.createTicketLink(ticket), class_ = 'ticket_inner'), ' ' )
+          td_div(tag.div( tag.span(self.createTicketLink(ticket), class_ = 'ticket_inner') ) )
           
           if ticket.getfield('status') in countStatus.keys(): # count values
             countStatus[ticket.getfield('status')] += 1
           else:
             countStatus[ticket.getfield('status')] = 1
-        tr(td)
+        
+        #tr(tag.td( tag.div( td_div, style = 'border-left:3px solid %s;' % (color) ) ) )
+        tr(tag.td( tag.div( td_div ), class_ = '%s %s' % (color_class, class_)  ) )
       if self.showsummarypiechart:
         tr(tag.td(tag.img(src=self.createGoogleChartFromDict('ColorForStatus', countStatus)))) # Summary
       tbody(tr)

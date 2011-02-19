@@ -279,10 +279,12 @@ table.pplisting tbody td.ppimagecol {
 .blacktable table td.sunday
 {
     background-image:url(hatch10x10light.gif);
+    background-repeat: repeat;
 }
 .blacktable table td.saturday
 {
     background-image:url(hatch10x10light.gif);
+    background-repeat: repeat;
 }
 
 
@@ -297,6 +299,7 @@ table.pplisting tbody td.ppimagecol {
 {
 /*     background-image:url(hatch5x5yellow.gif); */
     background-image:url(hatch10x10yellow.gif);
+    background-repeat: repeat;
 }
 
 .blacktable table tbody tr:hover
@@ -403,3 +406,23 @@ table.pplisting tbody td.ppimagecol {
 #ppShowDatePicker, #ppTicketViewTweakConf {
   display:none;
 }
+
+
+/* ***************** bar at the left ***************** */
+.bar {
+  background-repeat: repeat-y;
+  background-position: 3px 0px;
+}
+
+.bar_red {
+  background-image:url(red3x3.png);
+}
+
+.bar_blue {
+  background-image:url(blue3x3.png);
+}
+
+.bar_green {
+  background-image:url(green3x3.png);
+}
+
