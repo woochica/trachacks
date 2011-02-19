@@ -4,6 +4,7 @@ import re
 import os
 from datetime import *
 from genshi.builder import tag
+import random
 
 
 class RenderImpl():
@@ -143,7 +144,27 @@ class RenderImpl():
       style += 'background-color: '+self.macroenv.conf.get_map_defaults('ColorForPriority', priority, white)
     return tag.span( tag.span( tag.a('#'+str(tid), href=self.macroenv.tracenv.href.ticket(tid), class_ = cssclass, style = style ), class_ = cssclassouter ), class_ = 'ppticket' )
   
-  
+  def createGoogleChartFromDict( self, colorschema, mydict ):
+    
+    #Example: http://chart.googleapis.com/chart?chf=bg,s,FFFFFF00&cht=p&chd=t:1,4,1,1&chs=200x100&chdl=January|February|March|April
+    googlecharturl = 'chart.googleapis.com/chart'
+    
+    keys = []
+    values = []
+    colors = []
+    
+    for key in mydict :
+      keys.append(key)
+      values.append(str(mydict[key]))
+      colors.append(self.macroenv.conf.get_map_val(colorschema, key)[1:] ) # remove #
+    
+    # convient issue: remove color if no chart element is contained 
+    if len(colors) == 0:
+      colors.append('FFFFFF00') # transparent
+    
+    # nr = random.randrange(0, 9) # randomize server
+    
+    return('https://%s?chf=bg,s,FFFFFF00&cht=p3&chd=t:%s&chs=170x50&chdl=%s&chco=%s' % (googlecharturl, ','.join(values), '|'.join(keys), ','.join(colors)) )
 
   def render(self, ticketset):
     '''

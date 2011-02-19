@@ -50,6 +50,23 @@ class TicketsPerUserDay(RenderImpl):
     else:
       self.cssclass = cssclass.strip()
     
+    
+    showsummary = self.macroenv.macrokw.get('summary')
+    self.showsummarypiechart = False
+    
+    if showsummary == None:
+      pass # fallback
+    else:
+      showsummary = showsummary.lower()
+      if showsummary == 'chart' : 
+        self.showsummarypiechart = True # default
+      elif showsummary == 'chart:pie':
+        self.showsummarypiechart = True
+      else:
+        pass
+
+  def isSummary( self ):
+    return self.showsummarypiechart or False # add other values
 
   def getHeadline( self ):
     title = self.getTitle()
@@ -110,14 +127,19 @@ class TicketsPerUserDay(RenderImpl):
     self.macroenv.tracenv.log.debug(repr(orderedtickets))
     table = tag.table( class_="data" , border = "1", style = 'width:auto;')
     
+    # standard values
+    mystyle_org = ''
+    mytitle_org = ''
+    myclass_org = '' 
+    
     # table header
     tr = tag.tr()
     tr(tag.th('Ticket Owner'))
     # TODO: add today css class
     for segment in self.segments:
-      mystyle = ''
-      mytitle = ''
-      myclass = ''
+      mystyle = mystyle_org
+      mytitle = mytitle_org
+      myclass = myclass_org
       try:
         consideredDate = self.getDateOfSegment(segment)
         calendar[segment] = {}
@@ -126,7 +148,7 @@ class TicketsPerUserDay(RenderImpl):
         subtitle = weekdays[calendar[segment]['isocalendar'][2]] + ', week '+str(calendar[segment]['isocalendar'][1])
         if consideredDate == currentDate:
           #self.macroenv.tracenv.log.debug('th.today')
-          myclass = 'today'
+          myclass = 'today' # overwrite
         #else:
           #self.macroenv.tracenv.log.debug('NO th.today')
         #tr(tag.th(tag.h4(segment), tag.h5( subtitle))) # week day and number
@@ -140,7 +162,9 @@ class TicketsPerUserDay(RenderImpl):
         #tr(tag.th(tag.h4(segment), tag.h5( subtitle, style = 'color:#000;', title = 'date could not be resolved' ))) # HACK
       tr(tag.th(tag.h4(segment, class_ = myclass ), tag.h5( subtitle, style = mystyle, title = mytitle, class_ = myclass  ))) 
       counttickets[segment] = 0
-    table(tag.thead(tr))
+    if self.showsummarypiechart:
+      tr(tag.th(tag.h4('Summary', class_ = myclass_org ), tag.h5( 'of all tickets', style = mystyle_org, title = mytitle_org, class_ = myclass_org ))) 
+    table(tag.thead(tr)) # Summary
     
     self.macroenv.tracenv.log.debug('tickets in table: '+repr(orderedtickets))
     
@@ -148,6 +172,7 @@ class TicketsPerUserDay(RenderImpl):
     # table body
     tbody = tag.tbody()
     counter=0
+    
     for o in self.owners:
       if counter % 2 == 1:
         class_ = 'odd'
@@ -157,6 +182,7 @@ class TicketsPerUserDay(RenderImpl):
       tr = tag.tr(class_ = class_)
       
       tr( tag.td(tag.h5(tag.a( o, href=self.macroenv.tracenv.href()+('/query?owner=%s&order=status' % (o,)) )))) # query owner's tickets
+      countStatus = {} # summarize the status of a ticket 
       for segment in self.segments:
         class_ = ''
         if calendar[segment]['date'] == currentDate: # Today
@@ -170,17 +196,27 @@ class TicketsPerUserDay(RenderImpl):
         for ticket in orderedtickets[segment][o]:
           counttickets[segment] += 1
           td(tag.span(self.createTicketLink(ticket), class_ = 'ticket_inner'), ' ' )
+          
+          if ticket.getfield('status') in countStatus.keys(): # count values
+            countStatus[ticket.getfield('status')] += 1
+          else:
+            countStatus[ticket.getfield('status')] = 1
         tr(td)
+      if self.showsummarypiechart:
+        tr(tag.td(tag.img(src=self.createGoogleChartFromDict('ColorForStatus', countStatus)))) # Summary
       tbody(tr)
     table(tbody)
     
+    countTickets = 0
     tfoot = tag.tfoot()
     tr = tag.tr()
     tr(tag.td(tag.h5(str(len(self.owners))+' owners')))
     for segment in self.segments:
       tr(tag.td(tag.h5(str(counttickets[segment])+' tickets')))
+      countTickets += counttickets[segment]
+    if self.showsummarypiechart:
+      tr(tag.td(tag.h5(str(str(countTickets))+' tickets'))) # Summary
     tfoot(tr)
-    
     table(tfoot)
     
     div(table)
