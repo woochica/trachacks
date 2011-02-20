@@ -19,6 +19,7 @@
 # $Revision$
 
 from trac.core import Component, implements
+from trac.config import Option
 from trac.search import ISearchSource
 from trac.perm import IPermissionRequestor
 from trac.util import datefmt
@@ -28,7 +29,12 @@ import re
 import pwd
 
 class GtkDocSearch(Component):
-    implements(ISearchSource, IPermissionRequestor)
+    implements(ISearchSource, \
+               IPermissionRequestor)
+
+    title = Option('gtkdoc', 'title', 'API Reference',
+      """Title to use for the main navigation tab."""
+    )
 
     def __init__(self):
         self._regex = re.compile(r'<ANCHOR id="(.+)" href="(?:[^/]+)/(.+)">')
@@ -49,7 +55,7 @@ class GtkDocSearch(Component):
             match = self._regex.match(line)
             if match:
                 ids[match.group(1).replace('-','_')] = (
-                    os.path.join(book, match.group(2).replace('#', '?')),
+                    os.path.join(book, match.group(2)),
                     date,
                     user
                 )
@@ -63,10 +69,10 @@ class GtkDocSearch(Component):
         if req.perm.has_permission('GTKDOC_SEARCH'):
             books = self.config.get('gtkdoc', 'books')
             if books:
-                yield ('api', 'API Reference', True)
+                yield ('gtkdoc', self.title, True)
 
     def get_search_results(self, req, terms, filters):
-        if not 'api' in filters:
+        if not 'gtkdoc' in filters:
             return
 
         books = self.config.get('gtkdoc', 'books')

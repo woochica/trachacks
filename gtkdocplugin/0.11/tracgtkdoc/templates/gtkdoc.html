@@ -27,15 +27,26 @@
       xmlns:xi="http://www.w3.org/2001/XInclude">
     <xi:include href="layout.html" />
     <head>
-        <title>${ book }</title>
+        <title>${ title }</title>
     </head>
     <body>
-        <iframe class="book" src="${ raw_url }#${ query }">
-            <p>
-               Your browser does not support frames or is
-               currently configured not to display frames.
-               However, you may visit <a href="${ raw_url }#${ query }">the related document</a>.
-            </p>
-        </iframe>
+        <div py:if="wiki_content" id="content" class="wiki">
+            <div class="wikipage">
+                <div id="searchable" py:content="wiki_content" />
+            </div>
+        </div>
+        <div py:if="content">
+            <!--!
+             !    Ideally it would be nice to be able to use Genshi xi:include
+             !    but there's currently no way to specify /no/ parsing on the
+             !    included file, as in:
+             !
+             !      <xi:include href="$path" parse="" />
+             !
+             !    (using parse="text" won't work either, as the output will be
+             !     HTML escaped)
+             !-->
+            ${ content }
+        </div>
     </body>
 </html>

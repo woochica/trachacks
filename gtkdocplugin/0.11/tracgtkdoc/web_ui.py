@@ -19,30 +19,54 @@
 # $Revision$
 
 from genshi.builder import tag
+from genshi.core import Markup
 
-from trac.core import Component, implements
+from trac.core import Component, implements, TracError
 from trac.config import Option
 from trac.web.api import IRequestHandler
 from trac.web.chrome import INavigationContributor, \
                             ITemplateProvider, \
-                            add_stylesheet, \
-                            add_script, \
                             add_ctxtnav
+from trac.util.text import to_unicode
 from trac.perm import IPermissionRequestor
+from trac.wiki.api import IWikiSyntaxProvider, WikiSystem
+from trac.wiki.model import WikiPage
+from trac.wiki.formatter import wiki_to_html
 
 import os
 import re
 import urllib
+import mimetypes
 
 class GtkDocWebUI(Component):
     implements(INavigationContributor, \
                IRequestHandler, \
                ITemplateProvider, \
-               IPermissionRequestor)
+               IPermissionRequestor, \
+               IWikiSyntaxProvider)
 
     index = Option('gtkdoc', 'index', 'index.html',
       """Default index page to pick in the generated documentation."""
     )
+
+    wiki_index = Option('gtkdoc', 'wiki_index', None,
+      """Wiki page to use as the default page for the GtkDoc main page.
+      If set, supersedes the `[gtkdoc] index` option."""
+    )
+
+    title = Option('gtkdoc', 'title', 'API Reference',
+      """Title to use for the main navigation tab."""
+    )
+
+    encoding = Option('gtkdoc', 'encoding', 'utf-8',
+      """Default encoding used by the generated documentation files."""
+    )    
+
+    # intern-all
+    def _get_books(self):
+        books = self.config.get('gtkdoc', 'books')
+        books = (books and re.split("[ ]*,[ ]*", books.strip())) or []            
+        return books
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -51,102 +75,109 @@ class GtkDocWebUI(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('GTKDOC_VIEW'):
-            books = self.config.get('gtkdoc', 'books')
-            books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
+            books = self._get_books()
             if books:
-                book = self.config.get('gtkdoc', 'default')
-                path = req.href.gtkdoc()
-                href_real = (book and os.path.join(path, book)) or path
                 yield('mainnav', 'gtkdoc',
-                      tag.a('API Reference', href=href_real, accesskey='r'))
+                      tag.a(self.title, href=req.href.gtkdoc(), accesskey='r'))
 
     # IRequestHandler
     def match_request(self, req):
         if req.perm.has_permission('GTKDOC_VIEW'):
-            return re.match(r'^/gtkdoc(-raw)?(?:/|$)([^/]+)?(?:/|$)(.+)?$', req.path_info)
+            return re.match(r'^/gtkdoc(?:/|$)([^/]+)?(?:/|$)(.+)?$', req.path_info)
 
     def _process_url(self, req):
-        match = re.match(r'^/gtkdoc(-raw)?(?:/|$)([^/]+)?(?:/|$)(.+)?$', req.path_info)
+        match = re.match(r'^/gtkdoc(?:/|$)([^/]+)?(?:/|$)(.+)?$', req.path_info)
         if match:
-            book = match.group(2)
-            page = match.group(3) or self.index
-            
-            if not book and self.config.get('gtkdoc', 'default'):
+            if not(match.group(1) or match.group(2)):
+                book = 'wiki_index'
+                page = self.wiki_index
+                path = None
+
+                if page:
+                    return book, page, path
+
                 book = self.config.get('gtkdoc', 'default')
+                if book:
+                    redirect_href = os.path.join(req.href.gtkdoc(), book)
+                    req.redirect(redirect_href)
+                else:
+                    raise TracError("Can't read gtkdoc content: %s" % req.path_info)
 
-            return book, page
+            books = self._get_books()
 
-        book = None
-        page = self.index
-        if self.config.get('gtkdoc', 'default'):
-            book = self.config.get('gtkdoc', 'default')
-            
-        return book, page
+            book = match.group(1)
+            page = match.group(2) or self.index
+            if not book:
+                book = self.config.get('gtkdoc', 'default')
+                page = self.index
+            if book not in books:
+                book = self.config.get('gtkdoc', 'default')
+                page = match.group(1) or self.index
 
-    def _process_raw(self, req):
-        book, page = self._process_url(req)
-        self.log.debug("book is %r", book)
-        self.log.debug("page is %r", page)
-        self.log.debug("path_info is %r", req.path_info)
-        self.log.debug("query_string is %r", req.query_string)
+            if not book or book not in books:
+                raise TracError("Can't read gtkdoc content: %s" % req.path_info)
 
-        path = self.config.get('gtkdoc', book)
-        real_path = page and os.path.join(path, page) or path
+            path = os.path.join(self.config.get('gtkdoc', book), page)
+            return book, page, path
 
-        self.log.debug("real_path is %r", real_path)
-        req.send_file(real_path)
+        raise TracError("Can't read gtkdoc content: %s" % req.path_info)
 
-    def _process_wrapper(self, req):
-        book, page = self._process_url(req)
-        self.log.debug("book is %r", book)
-        self.log.debug("page is %r", page)
-        self.log.debug("path_info is %r", req.path_info)
-        self.log.debug("query_string is %r", req.query_string)
-
-        # build the url and raw url
-        url = req.href.gtkdoc()
-        raw_url = '%s-raw' % url
-        if book:
-            url += '/%s' % book
-            raw_url += '/%s' % book
-            if page:
-                url += '/%s' % page
-                raw_url += '/%s' % page
-
-        self.log.debug("url is %r", url)
-        self.log.debug("raw_url is %r", raw_url)
+    def _process_request(self, req):
+        book, page, path = self._process_url(req)
 
         data = {
-            'book': book,
-            'page': page,
-            'url' :  url,
-            'raw_url': raw_url,
-            'query': req.query_string
+            'title': self.title,
         }
 
-        add_stylesheet(req, 'tracgtkdoc/css/gtkdoc.css')
-        add_script(req, 'tracgtkdoc/js/jquery.iframe-auto-height.plugin.js')
+        # build wiki_index
+        if book == 'wiki_index':
+            if page:
+                text = ''
+                if WikiSystem(self.env).has_page(page):
+                    text = WikiPage(self.env, page).text
+                else:
+                    text = '!GtkDoc index page [wiki:"%s"] does not exist.' % page
+                data['wiki_content'] = wiki_to_html(text, self.env, req)
+                add_ctxtnav(req, "View %s page" % page, req.href.wiki(page))
+                return 'gtkdoc.html', data, 'text/html'
 
-        books = self.config.get('gtkdoc', 'books')
-        books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
+        # build content
+        mimetype, encoding = mimetypes.guess_type(path)
+        encoding = encoding or \
+                   self.encoding or \
+                   self.env.config['trac'].get('default_charset')
+        content = ''
+        # Genshi can't include an unparsed file
+        # data = {'content': path}
+        if (mimetype == 'text/html'):
+            try:
+                content = Markup(to_unicode(file(path).read(), encoding))
+            except (IOError, OSError), e:
+                self.log.debug("Can't read gtkdoc content: %s" % e)
+                raise TracError("Can't read gtkdoc content: %s" % req.path_info)
+            data['content'] = content
+        else:
+            if mimetype:
+                req.send_file(path, mimetype)
+            else:
+                raise TracError("Can't read gtkdoc content mimetype: %s" % req.path_info)
+
+        books = self._get_books()
         if len(books) > 1:
-          for book in books:
-            url = '%s/%s' % (req.href.gtkdoc(), book)
-            add_ctxtnav(req, book, urllib.quote(url))
+            for book in books:
+                url = '%s/%s' % (req.href.gtkdoc(), book)
+                add_ctxtnav(req, book, urllib.quote(url))
 
-        return 'gtkdoc_wrapper.html', data, None
+        return 'gtkdoc.html', data, 'text/html'
 
     def process_request(self, req):
         if req.perm.has_permission('GTKDOC_VIEW'):
-            if re.match(r'/gtkdoc-raw.*', req.path_info):
-                return self._process_raw(req)
-            else:
-                return self._process_wrapper(req)
+            return self._process_request(req)
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-        return [('tracgtkdoc', resource_filename(__name__, 'htdocs'))]
+        return []
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
@@ -155,3 +186,27 @@ class GtkDocWebUI(Component):
     # IPermissionRequestor
     def get_permission_actions(self):
         return [('GTKDOC_VIEW', ['GTKDOC_SEARCH'])]
+
+    # IWikiSyntaxProvider
+    def get_wiki_syntax(self):
+        return []
+
+    def get_link_resolvers(self):
+        def gtkdoc_link(formatter, ns, params, label):
+            match = re.match(r'^(?:/|$)?([^/]+)?(?:/|$)(.+)?$', params)
+            books = self._get_books()
+
+            href_fragment = formatter.href.gtkdoc()
+            if match:
+                if match.group(1) not in books:
+                    book = self.config.get('gtkdoc', 'default')
+                    if book:
+                        href_fragment = os.path.join(href_fragment, book)
+                if match.group(1):
+                    href_fragment = os.path.join(href_fragment, match.group(1))
+                if match.group(2):
+                    href_fragment = os.path.join(href_fragment, match.group(2))
+	
+            return tag.a(label, title=self.title, href=href_fragment)
+
+        yield ('gtkdoc', gtkdoc_link)

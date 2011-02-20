@@ -22,7 +22,6 @@ from trac.core import Component, implements
 from trac.admin import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider
 from trac.perm import IPermissionRequestor
-from trac.web.chrome import add_stylesheet
 
 import re
 
@@ -90,14 +89,12 @@ class GtkDocAdmin(Component):
             'default': default
         }
 
-        add_stylesheet(req, 'tracgtkdoc/css/gtkdoc.css')
-
         return 'gtkdoc_admin.html', data
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-        return [('tracgtkdoc', resource_filename(__name__, 'htdocs'))]
+        return []
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
