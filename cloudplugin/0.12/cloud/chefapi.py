@@ -127,6 +127,10 @@ class ChefApi(object):
                 self.log.info('Retrying bootstrap due to:\n%s' % out)
                 continue
             
+            if "No route to host - connect(2) (Errno::EHOSTUNREACH)" in out:
+                self.log.info('Retrying bootstrap due to:\n%s' % out)
+                continue
+            
             if "Errno::ETIMEDOUT: Connection timed out - connect(2)" in out:
                 self.log.info('Retrying bootstrap due to:\n%s' % out)
                 continue
