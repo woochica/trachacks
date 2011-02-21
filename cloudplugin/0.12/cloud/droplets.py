@@ -377,6 +377,7 @@ class Ec2Instance(Droplet):
                   "Please check in the AWS Management Console directly.",
                   label=self.label, id=instance.id))
             req.redirect(req.href.cloud(self.name))
+        time.sleep(10.0) # instance is cranky when it wakes up
         
         # bootstrap the new instance
         id = instance.private_dns_name

@@ -107,6 +107,13 @@ class ChefApi(object):
             cmd += ' -r %s' % ','.join(r for r in self.boot_run_list)
         if self.sudo:
             cmd += ' --sudo'
+            
+        expected_transient_errors = [
+            "409 Conflict: Client already exists",
+            "Connection refused - connect(2) (Errno::ECONNREFUSED)",
+            "No route to host - connect(2) (Errno::EHOSTUNREACH)",
+            "Errno::ETIMEDOUT: Connection timed out - connect(2)",
+        ]
         
         timer = Timer(timeout)
         while timer.running:
@@ -115,24 +122,14 @@ class ChefApi(object):
             # TODO: add timeout
             out = unicode(p.communicate()[0], 'utf-8', 'ignore')
             
-            if "409 Conflict: Client already exists" in out:
-                self.log.info('Retrying bootstrap due to:\n%s' % out)
-                continue
-            
-            if "Connection refused - connect(2) (Errno::ECONNREFUSED)" in out:
-                self.log.info('Retrying bootstrap due to:\n%s' % out)
-                continue
-            
-            if "No route to host - connect(2) (Errno::EHOSTUNREACH)" in out:
-                self.log.info('Retrying bootstrap due to:\n%s' % out)
-                continue
-            
-            if "Errno::ETIMEDOUT: Connection timed out - connect(2)" in out:
-                self.log.info('Retrying bootstrap due to:\n%s' % out)
-                continue
-            
-            break
-        else: # timer ran out after the last (possibly only) bootstrap attempt
+            for error in expected_transient_errors:
+                if error in out:
+                    self.log.info('Retrying due to transient error %s' % error)
+                    break
+            else: # no error found ..
+                break # .. so break out of while loop
+        else:
+            # timer ran out after the last (possibly only) bootstrap attempt
             self.log.info('Timed out bootstrapping %s with:\n%s' % (id,out))
             return None
         
