@@ -115,10 +115,6 @@ class ChefApi(object):
             # TODO: add timeout
             out = unicode(p.communicate()[0], 'utf-8', 'ignore')
             
-            if p.returncode != 0:
-                self.log.info('Error bootstrapping %s:\n%s' % (id,out))
-                return None
-            
             if "409 Conflict: Client already exists" in out:
                 self.log.info('Retrying bootstrap due to:\n%s' % out)
                 continue
@@ -137,6 +133,10 @@ class ChefApi(object):
             
             break
         else: # timer ran out after the last (possibly only) bootstrap attempt
+            self.log.info('Timed out bootstrapping %s with:\n%s' % (id,out))
+            return None
+        
+        if p.returncode != 0:
             self.log.info('Error bootstrapping %s:\n%s' % (id,out))
             return None
         
