@@ -35,8 +35,6 @@ setup(
     zip_safe=True,
     packages=['tracgtkdoc'],
     package_data={'tracgtkdoc': [
-        'htdocs/css/*.css',
-        'htdocs/js/*.js',
         'templates/*.html',
     ]},
 
