@@ -66,8 +66,10 @@ class RemoteTicketModule(Component):
             ticket = data['ticket']
             context = Context.from_request(req, ticket.resource)
             
-            # Add name:#n links to link fields of Ticket instance
-            RemoteLinksProvider(self.env).augment_ticket(ticket)
+            # Add name:#n links to link fields of Ticket instance when
+            # flowing from storage to browser
+            if req.method == 'GET':
+                RemoteLinksProvider(self.env).augment_ticket(ticket)
             
             # Rerender link fields
             for field in data['fields']:

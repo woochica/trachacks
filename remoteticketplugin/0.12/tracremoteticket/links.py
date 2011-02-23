@@ -30,29 +30,26 @@ class RemoteLinksProvider(Component):
         links_provider = LinksProvider(self.env)
         remote_tktsys = RemoteTicketSystem(self.env)
         
-        # TODO Is this necessary? Think I added it to handle case of new ticket
-        # where old_values is None, but in that case there wouldn't be any 
-        # values in the database either.
-        if not old_values:
-            old_values = self._fetch_remote_links(ticket.id)
-            
+        # We go behind trac's back to augment the ticket with remote links
+        # As a result trac doesn't provide a correct old_values so fetch
+        # our own
+        old_values = self._fetch_remote_links(ticket.id)
+        
         @self.env.with_transaction()
         def do_changed(db):
             cursor = db.cursor()
             for end in link_fields:
-                # Determine link fields containing changes by taking the set 
-                # difference of new and old.
-                new_rtkts  = set(remote_tktsys.parse_links(ticket[end]))
-       
-                if ticket.values['status'] == 'new':
-                    old_rtkts = set()
-                elif end in old_values:
-                    old_rtkts = set(remote_tktsys.parse_links(old_values[end]))
-                else:
-                    continue
+                # Determine links added or removed in this change by taking the
+                # set difference of new and old values
+                new_rtkts = set(remote_tktsys.parse_links(ticket[end]))
+                old_rtkts = set(remote_tktsys.parse_links(old_values.get(end)))
                 
-                # New links added
-                for remote_name, remote_id in new_rtkts - old_rtkts:
+                links_added = new_rtkts - old_rtkts
+                links_removed = old_rtkts - new_rtkts
+                
+                # TODO Use executemany() rather than loop
+                # Add link records for remote links created in this change
+                for remote_name, remote_id in links_added:
                     cursor.execute('''
                         INSERT INTO remote_ticket_links
                         (source_name, source, type, 
@@ -68,8 +65,9 @@ class RemoteLinksProvider(Component):
                             VALUES (%s, %s, %s, %s, %s)''',
                             (remote_name, remote_id, other_end, '', ticket.id))
                 
-                # Old links removed
-                for remote_name, remote_id in old_rtkts - new_rtkts:
+                # TODO Use executemany() rather than loop
+                # Remove link records for remote links removed in this change
+                for remote_name, remote_id in links_removed:
                     cursor.execute('''
                         DELETE FROM remote_ticket_links 
                         WHERE source_name='' AND source=%s AND type=%s
