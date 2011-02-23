@@ -22,13 +22,13 @@ from setuptools import setup
 
 setup(
     name='TracGtkDoc',
-    version='0.2.0',
+    version='0.2.1',
 
     author='Luis Saavedra',
     author_email='luis94855510@gmail.com',
 
     url='http://trac-hacks.org/wiki/GtkDocPlugin',
-    description='GtkDoc plugin for Trac',
+    description='GTK-Doc Plugin for Trac',
 
     license = "GPLv3",
 
@@ -39,7 +39,7 @@ setup(
     ]},
 
     install_requires = [
-        #'trac>=0.11',
+        'trac>=0.11',
     ],
 
     entry_points={'trac.plugins': [

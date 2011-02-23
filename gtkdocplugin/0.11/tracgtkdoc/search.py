@@ -33,16 +33,24 @@ class GtkDocSearch(Component):
                IPermissionRequestor)
 
     title = Option('gtkdoc', 'title', 'API Reference',
-      """Title to use for the main navigation tab."""
+      """Title to use for the search filter."""
     )
 
     def __init__(self):
         self._regex = re.compile(r'<ANCHOR id="(.+)" href="(?:[^/]+)/(.+)">')
 
-    # loads an index.sgml from a gtkdoc book into a hash table of id:href
+    # intern-all
+    def _get_values(self, book):
+        values = self.config.get('gtkdoc', book)
+        values = (values and re.split("[ ]*,[ ]*", values.strip())) or []
+        return values
+
+    # loads an sgml from a gtkdoc book into a hash table of id:href
     def _load_index(self, book):
-        path = self.config.get('gtkdoc', book)
-        full_path = os.path.join(path, 'index.sgml')
+        values = self._get_values(book)
+        book_path = values[0]
+        book_sgml = values[3]
+        full_path = os.path.join(book_path, book_sgml)
 
         fp = open(full_path)
         stats = os.stat(full_path)
@@ -67,7 +75,7 @@ class GtkDocSearch(Component):
     # ISearchSource
     def get_search_filters(self, req):
         if req.perm.has_permission('GTKDOC_SEARCH'):
-            books = self.config.get('gtkdoc', 'books')
+            books = self._get_values('books')
             if books:
                 yield ('gtkdoc', self.title, True)
 
@@ -75,8 +83,7 @@ class GtkDocSearch(Component):
         if not 'gtkdoc' in filters:
             return
 
-        books = self.config.get('gtkdoc', 'books')
-        books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
+        books = self._get_values('books')
         if not books:
             return
 
@@ -90,10 +97,6 @@ class GtkDocSearch(Component):
                     if term in id:
                         url = '%s/%s' % (base_url, ids[id][0])
                         yield(url, id, ids[id][1], ids[id][2], None)
-
-        # dirty hack to stop exceptions for the time being
-        if False:
-            yield None
 
     # IPermissionRequestor
     def get_permission_actions(self):

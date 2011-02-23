@@ -35,7 +35,7 @@ from trac.wiki.formatter import wiki_to_html
 
 import os
 import re
-import urllib
+import urllib2
 import mimetypes
 
 class GtkDocWebUI(Component):
@@ -45,12 +45,8 @@ class GtkDocWebUI(Component):
                IPermissionRequestor, \
                IWikiSyntaxProvider)
 
-    index = Option('gtkdoc', 'index', 'index.html',
-      """Default index page to pick in the generated documentation."""
-    )
-
     wiki_index = Option('gtkdoc', 'wiki_index', None,
-      """Wiki page to use as the default page for the GtkDoc main page.
+      """Wiki page to use as the default page for the GTK-Doc main page.
       If set, supersedes the `[gtkdoc] index` option."""
     )
 
@@ -58,15 +54,11 @@ class GtkDocWebUI(Component):
       """Title to use for the main navigation tab."""
     )
 
-    encoding = Option('gtkdoc', 'encoding', 'utf-8',
-      """Default encoding used by the generated documentation files."""
-    )    
-
     # intern-all
-    def _get_books(self):
-        books = self.config.get('gtkdoc', 'books')
-        books = (books and re.split("[ ]*,[ ]*", books.strip())) or []            
-        return books
+    def _get_values(self, book):
+        values = self.config.get('gtkdoc', book)
+        values = (values and re.split("[ ]*,[ ]*", values.strip())) or []
+        return values
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -75,7 +67,7 @@ class GtkDocWebUI(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('GTKDOC_VIEW'):
-            books = self._get_books()
+            books = self._get_values('books')
             if books:
                 yield('mainnav', 'gtkdoc',
                       tag.a(self.title, href=req.href.gtkdoc(), accesskey='r'))
@@ -91,10 +83,9 @@ class GtkDocWebUI(Component):
             if not(match.group(1) or match.group(2)):
                 book = 'wiki_index'
                 page = self.wiki_index
-                path = None
 
                 if page:
-                    return book, page, path
+                    return book, page
 
                 book = self.config.get('gtkdoc', 'default')
                 if book:
@@ -103,27 +94,31 @@ class GtkDocWebUI(Component):
                 else:
                     raise TracError("Can't read gtkdoc content: %s" % req.path_info)
 
-            books = self._get_books()
+            books = self._get_values('books')
 
-            book = match.group(1)
-            page = match.group(2) or self.index
+            book = None
+            page = None
+            if match.group(1) not in books:
+                book = self.config.get('gtkdoc', 'default')
+                page = match.group(1)
+                if match.group(2):
+                    if page:
+                        page = os.path.join(page, match.group(2))
+                    else:
+                        page = match.group(2)
+            else:
+                book = match.group(1)
+                page = match.group(2)
+
             if not book:
-                book = self.config.get('gtkdoc', 'default')
-                page = self.index
-            if book not in books:
-                book = self.config.get('gtkdoc', 'default')
-                page = match.group(1) or self.index
-
-            if not book or book not in books:
                 raise TracError("Can't read gtkdoc content: %s" % req.path_info)
 
-            path = os.path.join(self.config.get('gtkdoc', book), page)
-            return book, page, path
+            return book, page
 
         raise TracError("Can't read gtkdoc content: %s" % req.path_info)
 
     def _process_request(self, req):
-        book, page, path = self._process_url(req)
+        book, page = self._process_url(req)
 
         data = {
             'title': self.title,
@@ -136,17 +131,27 @@ class GtkDocWebUI(Component):
                 if WikiSystem(self.env).has_page(page):
                     text = WikiPage(self.env, page).text
                 else:
-                    text = '!GtkDoc index page [wiki:"%s"] does not exist.' % page
+                    text = 'GTK-Doc index page [wiki:"%s"] does not exist.' % page
                 data['wiki_content'] = wiki_to_html(text, self.env, req)
                 add_ctxtnav(req, "View %s page" % page, req.href.wiki(page))
                 return 'gtkdoc.html', data, 'text/html'
+            else:
+                raise TracError("Can't read gtkdoc content: %s" % req.path_info)
 
         # build content
+        values = self._get_values(book)
+        book_path = values[0]
+        book_index = values[1]
+        book_encoding = values[2]
+
+        page = page or book_index
+        path = os.path.join(book_path, page)
+
         mimetype, encoding = mimetypes.guess_type(path)
         encoding = encoding or \
-                   self.encoding or \
+                   book_encoding or \
                    self.env.config['trac'].get('default_charset')
-        content = ''
+
         # Genshi can't include an unparsed file
         # data = {'content': path}
         if (mimetype == 'text/html'):
@@ -162,11 +167,11 @@ class GtkDocWebUI(Component):
             else:
                 raise TracError("Can't read gtkdoc content mimetype: %s" % req.path_info)
 
-        books = self._get_books()
+        books = self._get_values('books')
         if len(books) > 1:
             for book in books:
                 url = '%s/%s' % (req.href.gtkdoc(), book)
-                add_ctxtnav(req, book, urllib.quote(url))
+                add_ctxtnav(req, book, urllib2.quote(url))
 
         return 'gtkdoc.html', data, 'text/html'
 
@@ -194,7 +199,7 @@ class GtkDocWebUI(Component):
     def get_link_resolvers(self):
         def gtkdoc_link(formatter, ns, params, label):
             match = re.match(r'^(?:/|$)?([^/]+)?(?:/|$)(.+)?$', params)
-            books = self._get_books()
+            books = self._get_values('books')
 
             href_fragment = formatter.href.gtkdoc()
             if match:

@@ -30,34 +30,48 @@ class GtkDocAdmin(Component):
                ITemplateProvider, \
                IPermissionRequestor)
 
+    # intern-all
+    def _get_values(self, book):
+        values = self.config.get('gtkdoc', book)
+        values = (values and re.split("[ ]*,[ ]*", values.strip())) or []
+        return values
+
     # IAdminPanelProvider
     def get_admin_panels(self, req):
-        if req.perm.has_permission('GTKDOC_ADMIN') or req.perm.has_permission('TRAC_ADMIN'):
-            yield('general', 'General', 'gtkdoc', 'GtkDoc')
+        if req.perm.has_permission('GTKDOC_ADMIN') or \
+           req.perm.has_permission('TRAC_ADMIN'):
+            yield('general', 'General', 'gtkdoc', 'GTK-Doc')
 
     def render_admin_panel(self, req, category, page, path_info):
         if req.method == 'POST':
             if req.args.get('add'):
-                default = self.config.get('gtkdoc', 'default')
-                books = self.config.get('gtkdoc', 'books')
-                books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
-                if not req.args.get('name') in books:
+                books = self._get_values('books')
+                if req.args.get('name') not in books:
                   books.append(req.args.get('name'))
 
+                default = self.config.get('gtkdoc', 'default')
                 if books and not default:
                   default = books[0]
+
+                values = [
+                    req.args.get('path'),
+                    req.args.get('index'),
+                    req.args.get('encoding'),
+                    req.args.get('sgml'),
+                ]
+                values_str = u', '.join(values)
+
                 self.config.set('gtkdoc', 'default', default)
                 self.config.set('gtkdoc', 'books', ", ".join(books))
-                self.config.set('gtkdoc', req.args.get('name'), req.args.get('path'))
+                self.config.set('gtkdoc', req.args.get('name'), values_str)
                 self.config.save()
 
             if req.args.get('remove'):
+                books = self._get_values('books')
                 default = self.config.get('gtkdoc', 'default')
-                books = self.config.get('gtkdoc', 'books')
-                books = (books and re.split("[ ]*,[ ]*", books.strip())) or []
 
                 sel = req.args.get('sel')
-                sel = (isinstance(sel, list) and sel) or [sel]
+                sel = (isinstance(sel, list) and sel) or (sel and [sel]) or []
                 for book in sel:
                     if book == default:
                       default = None
@@ -66,6 +80,7 @@ class GtkDocAdmin(Component):
 
                 if books and not default:
                   default = books[0]
+
                 self.config.set('gtkdoc', 'default', default)
                 self.config.set('gtkdoc', 'books', ", ".join(books))
                 self.config.save()
@@ -78,11 +93,20 @@ class GtkDocAdmin(Component):
         books = []
         if 'gtkdoc' in self.config:
             default = self.config.get('gtkdoc', 'default')
-            books_names = self.config.get('gtkdoc', 'books')
-            books_names = (books_names and re.split("[ ]*,[ ]*", books_names.strip())) or []
+            books_names = self._get_values('books')
             for book in books_names:
-              path = self.config.get('gtkdoc', book)
-              books.append({ 'name': book, 'path': path })
+              values = self._get_values(book)
+              book_path = values[0]
+              book_index = values[1]
+              book_encoding = values[2]
+              book_sgml = values[3]
+              books.append({
+                  'name': book,
+                  'path': book_path,
+                  'index': book_index,
+                  'encoding': book_encoding,
+                  'sgml': book_sgml,
+              })
 
         data = {
             'books': books,
@@ -93,10 +117,16 @@ class GtkDocAdmin(Component):
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
+        """Return the absolute path of a directory containing additional
+        static resources (such as images, style sheets, etc).
+        """
         from pkg_resources import resource_filename
         return []
 
     def get_templates_dirs(self):
+        """Return the absolute path of the directory containing the provided
+        ClearSilver templates.
+        """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 

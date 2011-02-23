@@ -28,10 +28,10 @@
     <xi:include href="admin.html" />
 
     <head>
-        <title>GtkDoc</title>
+        <title>GTK-Doc</title>
     </head>
     <body>
-        <h2>GtkDoc Books</h2>
+        <h2>GTK-Doc Books</h2>
 
         <form id="addbook" class="addnew" method="post">
             <fieldset>
@@ -46,6 +46,24 @@
                     <label>Path: <br/>
                     <input type="text" name="path" class="textwidget" value="${ path }"/></label>
                 </div>
+
+                <fieldset>
+                    <legend>hidden values</legend>
+                    <div class="field">
+                        <label>index: <br/>
+                        <input type="text" name="index" class="textwidget" value="index.html"/></label>
+                    </div>
+
+                    <div class="field">
+                        <label>encoding: <br/>
+                        <input type="text" name="encoding" class="textwidget" value="utf-8"/></label>
+                    </div>
+
+                    <div class="field">
+                        <label>sgml: <br/>
+                        <input type="text" name="sgml" class="textwidget" value="index.sgml"/></label>
+                    </div>
+                </fieldset>
 
                 <div class="buttons">
                     <input type="submit" name="add" value=" Add "/>
