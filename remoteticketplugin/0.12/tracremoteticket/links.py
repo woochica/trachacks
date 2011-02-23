@@ -47,39 +47,31 @@ class RemoteLinksProvider(Component):
                 links_added = new_rtkts - old_rtkts
                 links_removed = old_rtkts - new_rtkts
                 
-                # TODO Use executemany() rather than loop
-                # Add link records for remote links created in this change
-                for remote_name, remote_id in links_added:
-                    cursor.execute('''
-                        INSERT INTO remote_ticket_links
-                        (source_name, source, type, 
-                            destination_name, destination)
-                        VALUES (%s, %s, %s, %s, %s)''',
-                        ('', ticket.id, end, remote_name, remote_id))
-                    other_end = ticket_system.link_ends_map[end]
-                    if other_end:
-                        cursor.execute('''
-                            INSERT INTO remote_ticket_links
-                            (source_name, source, type, 
-                                destination_name, destination)
-                            VALUES (%s, %s, %s, %s, %s)''',
-                            (remote_name, remote_id, other_end, '', ticket.id))
+                other_end = ticket_system.link_ends_map[end]
                 
-                # TODO Use executemany() rather than loop
+                # Add link records for remote links created in this change
+                records = [('', ticket.id, end, rname, rid)
+                           for rname, rid in links_added]
+                if other_end:
+                    records += [(rname, rid, other_end, '', ticket.id)
+                                for rname, rid in links_added]
+                cursor.executemany('''
+                    INSERT INTO remote_ticket_links
+                    (source_name, source, type, destination_name, destination)
+                    VALUES (%s, %s, %s, %s, %s)''', 
+                    records)
+                
                 # Remove link records for remote links removed in this change
-                for remote_name, remote_id in links_removed:
-                    cursor.execute('''
-                        DELETE FROM remote_ticket_links 
-                        WHERE source_name='' AND source=%s AND type=%s
-                        AND destination_name=%s AND destination=%s''',
-                        (ticket.id, end, remote_name, remote_id))
-                    other_end = ticket_system.link_ends_map[end]
-                    if other_end:
-                        cursor.execute('''
-                            DELETE FROM remote_ticket_links 
-                            WHERE source_name=%s AND source=%s AND type=%s
-                            AND destination_name='' AND destination=%s''',
-                            (remote_name, remote_id, other_end, ticket.id))
+                records = [('', ticket.id, end, rname, rid)
+                           for rname, rid in links_removed]
+                if other_end:
+                    records += [(rname, rid, other_end, '', ticket.id)
+                                for rname, rid in links_added]
+                cursor.executemany('''
+                    DELETE FROM remote_ticket_links 
+                    WHERE source_name=%s AND source=%s AND type=%s
+                    AND destination_name=%s AND destination=%s''', 
+                    records)
                 
     def ticket_deleted(self, ticket):
         @self.env.with_transaction()
