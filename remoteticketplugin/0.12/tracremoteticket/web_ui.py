@@ -35,8 +35,10 @@ class RemoteTicketModule(Component):
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        # Intercept linked_val argument, if it matches the URL of a known
-        # remote site then parse it and remove linked_val
+        # If linked_val request argument matches the URL of a known
+        # remote site then:
+        #  - Parse it, storing the result in linked_remote_val
+        #  - Remove the linked_val argument, so trac doesn't also process it
         if 'linked_val' in req.args:
             linked_val = req.args['linked_val']
             patt = re.compile(r'(.+)/ticket/(\d+)')
