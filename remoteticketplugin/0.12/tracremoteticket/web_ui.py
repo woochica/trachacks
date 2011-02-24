@@ -78,8 +78,12 @@ class RemoteTicketModule(Component):
                     field['rendered'] = format_to_oneliner(self.env, context,
                                                            ticket[name])
             
-            #Add RemoteTicket objects for linked issues table
-            data['linked_tickets'].extend(self._remote_tickets(ticket, context))
+            # Add RemoteTicket objects for linked issues table, and pass list
+            # of rejects that could not be retrieved
+            linked_tickets, linked_rejects = self._remote_tickets(ticket,
+                                                                  context)
+            data['linked_tickets'].extend(linked_tickets)
+            data['linked_rejects'].extend(linked_rejects)
         
         # Provide list of remote sites if newlinked form options are present
         if 'newlinked_options' in data:
@@ -138,14 +142,13 @@ class RemoteTicketModule(Component):
         linked_rejects = []
         for field in link_fields:
             for link_name, link in rts.parse_links(ticket[field['name']]):
+                tkt_fmt = format_to_oneliner(self.env, context,
+                                             '%s:#%s' % (link_name, link))
                 try:
                     tkt = RemoteTicket(self.env, link_name, link)
-                    tkt_fmt = format_to_oneliner(self.env, context,
-                                                 '%s:#%s' % (tkt.remote_name,
-                                                             tkt.id))
                     linked_tickets.append((field['label'], tkt_fmt, tkt))
                 except ResourceNotFound:
-                    linked_rejects.append((link_name, link))
-                    
-        return linked_tickets
+                    linked_rejects.append((field['label'], tkt_fmt))
+        
+        return linked_tickets, linked_rejects
 

@@ -1,3 +1,4 @@
+import socket
 import xmlrpclib
 
 from trac.resource import ResourceNotFound
@@ -82,17 +83,35 @@ class RemoteTicket(object):
         try:
             tkt_vals = server.ticket.get(self.id)
         except xmlrpclib.ProtocolError, e:
-            raise ResourceNotFound("Could not contact remote Trac '%s' at %s."
-                                   "Received error %s, %s"
-                                   % (self.remote_name, xmlrpc_addr, 
-                                      e.errcode, e.errmsg),
-                                   "Uncontactable server")
+            msg = ("Could not contact remote Trac '%s' at %s. "
+                   "Received error %s, %s")
+            log = ("XML-RPC ProtocolError contacting Trac %s at %s, "
+                   "errcode=%s, errmsg='%s'")
+            args = (self.remote_name, xmlrpc_addr, e.errcode, e.errmsg)
+            self.env.log.warn(log, *args)
+            raise ResourceNotFound(msg % args, "Uncontactable server")
         except xmlrpclib.Fault, e:
-            raise ResourceNotFound("Could not retrieve remote ticket %s:#%s."
-                                   "Received fault %s, %s"
-                                   % (self.remote_name, self.id,
-                                      e.faultCode, e.faultString),
-                                   "Remote ticket unavailable")
+            msg = ("Could not retrieve remote ticket %s:#%s."
+                   "Received fault %s, %s")
+            log = ("XML-RPC Fault contacting Trac %s at %s, "
+                   "faultCode=%s, faultString='%s'")
+            args = (self.remote_name, self.id, e.faultCode, e.faultString)
+            self.env.log.warn(log, *args)
+            raise ResourceNotFound(msg % args, "Remote ticket unavailable")
+        except socket.error, e:
+            msg = ("Could not connect to remote Trac '%s' at %s. "
+                   "Reason: %s")
+            log = ("Network error connecting to remote Trac '%s' at '%s'. "
+                   "Error: %s")
+            args = (self.remote_name, xmlrpc_addr, e.args)
+            self.env.log.warn(log, *args)
+            raise ResourceNotFound(msg % args, "Network error")
+        except Exception,e:
+            msg = ("Unknown exception contacting remote Trac '%s' at %s. "
+                   "Exception args: %s %s %s")
+            args = (self.remote_name, xmlrpc_addr, e, type(e), e.args)
+            self.env.log.error(msg, *args)
+            raise
         
         # Convert from DateTime used by xmlrpclib to datetime used by trac
         for k in self.time_fields:
