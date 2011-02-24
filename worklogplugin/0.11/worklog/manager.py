@@ -120,7 +120,7 @@ class WorkLogManager:
         if self.authname != tckt['owner']:
             tckt['owner'] = self.authname
             if 'new' == tckt['status']:
-                tckt['status'] = 'assigned'
+                tckt['status'] = 'accepted'
             else:
                 tckt['status'] = 'new'
             self.save_ticket(tckt, db, 'Automatically reassigning in order to start work.')
@@ -130,8 +130,8 @@ class WorkLogManager:
             tckt = Ticket(self.env, ticket, db)
 
 
-        if 'assigned' != tckt['status']:
-            tckt['status'] = 'assigned'
+        if 'accepted' != tckt['status']:
+            tckt['status'] = 'accepted'
             self.save_ticket(tckt, db, 'Automatically accepting in order to start work.')
 
         # There is a chance the user may be working on another ticket at the moment
