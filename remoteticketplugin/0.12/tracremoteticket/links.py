@@ -98,7 +98,7 @@ class RemoteLinksProvider(Component):
                          ticket.id, when_ts, author, end))
                     
                     # Check that a row was updated, if so
-                    if cursor.rowcount > 1:
+                    if cursor.rowcount >= 1:
                         continue
                     
                     cursor.execute('''
