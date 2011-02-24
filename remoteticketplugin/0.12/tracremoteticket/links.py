@@ -151,8 +151,8 @@ class RemoteLinksProvider(Component):
             if action == 'resolve':
                 blockers = self.find_blockers(ticket, end, [])
                 if blockers:
-                    blockers_str = ', '.join('%s' % x 
-                                             for x in unique(blockers))
+                    blockers_str = ', '.join('%s:#%s' % rlink
+                                             for rlink in unique(blockers))
                     msg = ("Cannot resolve this ticket because it is "
                            "blocked by '%s' tickets [%s]" 
                            % (end,  blockers_str))
@@ -195,13 +195,12 @@ class RemoteLinksProvider(Component):
         return None
     
     def find_blockers(self, ticket, field, blockers):
-        tkt_ref = '%s:#%s' % (getattr(ticket, 'remote_name', ''), ticket.id)
         remote_tktsys = RemoteTicketSystem(self.env)
         links = remote_tktsys.parse_links(ticket[field])
         for remote_name, link in links:
             linked_ticket = RemoteTicket(self.env, remote_name, link)
             if linked_ticket['status'] != 'closed':
-                blockers.append(tkt_ref)
+                blockers.append((remote_name, link))
             else:
                 self.find_blockers(linked_ticket, field, blockers)
         return blockers
