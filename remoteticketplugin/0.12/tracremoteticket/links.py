@@ -9,6 +9,7 @@ from trac.ticket.api import (ITicketChangeListener, ITicketManipulator,
 from trac.ticket.links import LinksProvider
 from trac.ticket.model import Ticket
 from trac.util import unique
+from trac.util.datefmt import from_utimestamp, to_utimestamp
 
 from tracremoteticket.api import RemoteTicketSystem
 from tracremoteticket.model import RemoteTicket
@@ -33,7 +34,11 @@ class RemoteLinksProvider(Component):
         # We go behind trac's back to augment the ticket with remote links
         # As a result trac doesn't provide a correct old_values so fetch
         # our own
-        old_values = self._fetch_remote_links(ticket.id)
+        orig_old_vals = old_values
+        if old_values is None:
+            old_values = {}
+        else:
+            self._augment_values(ticket.id, old_values)
         
         @self.env.with_transaction()
         def do_changed(db):
@@ -46,6 +51,7 @@ class RemoteLinksProvider(Component):
                 
                 links_added = new_rtkts - old_rtkts
                 links_removed = old_rtkts - new_rtkts
+                links_changed = old_rtkts ^ new_rtkts # Additons and removals
                 
                 other_end = ticket_system.link_ends_map[end]
                 
@@ -73,6 +79,36 @@ class RemoteLinksProvider(Component):
                     AND destination_name=%s AND destination=%s''', 
                     records)
                 
+                # Record change history in ticket_change
+                # Again we're going behind trac's back, so take care not to
+                # obliterate existing records:
+                #  - If the field (end) has changed local links, as well as
+                #    changed remote links then update the record
+                #  - If the only change was to remote links then there is no
+                #    ticket_change record to update, so insert one
+                if links_changed and orig_old_vals is not None:
+                    when_ts = to_utimestamp(ticket['changetime'])
+                    
+                    cursor.execute('''
+                        UPDATE ticket_change
+                        SET oldvalue=%s, newvalue=%s
+                        WHERE ticket=%s AND time=%s AND author=%s AND field=%s
+                        ''',
+                        (old_values[end], ticket[end], 
+                         ticket.id, when_ts, author, end))
+                    
+                    # Check that a row was updated, if so
+                    if cursor.rowcount > 1:
+                        continue
+                    
+                    cursor.execute('''
+                        INSERT INTO ticket_change
+                        (ticket, time, author, field, oldvalue, newvalue)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        ''',
+                        (ticket.id, when_ts, author, end,
+                         old_values[end], ticket[end]))
+
     def ticket_deleted(self, ticket):
         @self.env.with_transaction()
         def do_delete(db):
@@ -188,13 +224,25 @@ class RemoteLinksProvider(Component):
         return None
     
     def augment_ticket(self, ticket):
-        remote_link_vals = self._fetch_remote_links(ticket.id)
+        '''Fetch remote links from the database, append them to the link fields.
+        ''' 
+        self._augment_values(ticket.id, ticket)
+    
+    def _augment_values(self, tkt_id, values):
+        remote_link_vals = self._fetch_remote_links(tkt_id)
         for end, remote_links in remote_link_vals.items():
-            if ticket[end] and remote_links:
-                ticket[end] = '%s, %s' % (ticket[end], remote_links)
+            # values is either a ticket object, or the old_values dictionary
+            # Can't use .get() or 'end in  values' on ticket and old_values
+            # won't contain all ends, so use try except instead
+            try:
+                val = values[end]
+            except KeyError:
+                val = ''
+            if val and remote_links:
+                values[end] = '%s, %s' % (val, remote_links)
             elif remote_links:
-                ticket[end] = remote_links
-        
+                values[end] = remote_links
+    
     def _fetch_remote_links(self, tkt_id):
         link_ends_map =  TicketSystem(self.env).link_ends_map
         db = self.env.get_read_db()
