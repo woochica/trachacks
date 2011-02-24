@@ -22,7 +22,6 @@ from genshi.builder import tag
 from genshi.core import Markup
 
 from trac.core import Component, implements, TracError
-from trac.config import Option
 from trac.web.api import IRequestHandler
 from trac.web.chrome import INavigationContributor, \
                             ITemplateProvider, \
@@ -45,20 +44,15 @@ class GtkDocWebUI(Component):
                IPermissionRequestor, \
                IWikiSyntaxProvider)
 
-    wiki_index = Option('gtkdoc', 'wiki_index', None,
-      """Wiki page to use as the default page for the GTK-Doc main page.
-      If set, supersedes the `[gtkdoc] index` option."""
-    )
-
-    title = Option('gtkdoc', 'title', 'API Reference',
-      """Title to use for the main navigation tab."""
-    )
-
     # intern-all
     def _get_values(self, book):
         values = self.config.get('gtkdoc', book)
         values = (values and re.split("[ ]*,[ ]*", values.strip())) or []
         return values
+
+    def _get_title(self):
+        title = self.config.get('gtkdoc', 'title') or 'API Reference'
+        return title
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -70,7 +64,7 @@ class GtkDocWebUI(Component):
             books = self._get_values('books')
             if books:
                 yield('mainnav', 'gtkdoc',
-                      tag.a(self.title, href=req.href.gtkdoc(), accesskey='r'))
+                      tag.a(self._get_title(), href=req.href.gtkdoc(), accesskey='r'))
 
     # IRequestHandler
     def match_request(self, req):
@@ -82,7 +76,7 @@ class GtkDocWebUI(Component):
         if match:
             if not(match.group(1) or match.group(2)):
                 book = 'wiki_index'
-                page = self.wiki_index
+                page = self.config.get('gtkdoc', book)
 
                 if page:
                     return book, page
@@ -121,7 +115,7 @@ class GtkDocWebUI(Component):
         book, page = self._process_url(req)
 
         data = {
-            'title': self.title,
+            'title': self._get_title(),
         }
 
         # build wiki_index
@@ -212,6 +206,6 @@ class GtkDocWebUI(Component):
                 if match.group(2):
                     href_fragment = os.path.join(href_fragment, match.group(2))
 	
-            return tag.a(label, title=self.title, href=href_fragment)
+            return tag.a(label, title=self._get_title(), href=href_fragment)
 
         yield ('gtkdoc', gtkdoc_link)

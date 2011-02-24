@@ -33,49 +33,22 @@
     <body>
         <h2>GTK-Doc Books</h2>
 
-        <form id="addbook" class="addnew" method="post">
-            <fieldset>
-                <legend>Add Book</legend>
-
-                <div class="field">
-                    <label>Name: <br/>
-                    <input type="text" name="name" class="textwidget" value="${ name }"/></label>
-                </div>
-
-                <div class="field">
-                    <label>Path: <br/>
-                    <input type="text" name="path" class="textwidget" value="${ path }"/></label>
-                </div>
-
-                <fieldset>
-                    <legend>hidden values</legend>
-                    <div class="field">
-                        <label>index: <br/>
-                        <input type="text" name="index" class="textwidget" value="index.html"/></label>
-                    </div>
-
-                    <div class="field">
-                        <label>encoding: <br/>
-                        <input type="text" name="encoding" class="textwidget" value="utf-8"/></label>
-                    </div>
-
-                    <div class="field">
-                        <label>sgml: <br/>
-                        <input type="text" name="sgml" class="textwidget" value="index.sgml"/></label>
-                    </div>
-                </fieldset>
-
-                <div class="buttons">
-                    <input type="submit" name="add" value=" Add "/>
-                </div>
-            </fieldset>
-        </form>
-
         <py:choose>
-            <div py:when="not books">
-                <p class="help">No books have been added yet.</p>
-            </div>
-            <form method="post" py:otherwise="">
+        <div py:when="not books">
+            <p class="help">No books have been added yet.</p>
+        </div>
+        <form method="post" py:otherwise="">
+            <fieldset>
+                <legend>Global Settings</legend>
+                <div class="field">
+                    <label title="Title to use for the main navigation tab.">title: <br/>
+                    <input type="text" name="title" class="textwidget" value="${ title }"/></label>
+                </div>
+                <div class="field">
+                    <label title="Wiki page to use as the default page for the GTK-Doc main page.
+If set, supersedes the hidden `[gtkdoc] default book index` option.">wiki_index:<br/>
+                    <input type="text" name="wiki_index" class="textwidget" value="${ wiki_index }"/></label>
+                </div>
                 <table class="listing" id="booklist">
                     <thead>
                         <tr>
@@ -98,7 +71,52 @@
                     <input type="submit" name="remove" value="Remove selected books"/>
                     <input type="submit" name="apply" value="Apply changes"/>
                 </div>
-            </form>
+            </fieldset>
+        </form>
         </py:choose>
+
+        <form id="addbook" method="post" class="listing">
+            <fieldset>
+                <legend>Add Book</legend>
+                <table class="listing">
+                    <thead>
+                        <th>visible settings</th>
+                        <th>hidden settings</th>
+                    </thead>
+                    <tbody>
+                        <th>
+                            <div class="field">
+                                <label>Name: <br/>
+                                <input type="text" name="name" class="textwidget" value="${ name }"/></label>
+                            </div>
+
+                            <div class="field">
+                                <label>Path: <br/>
+                                <input type="text" name="path" class="textwidget" value="${ path }"/></label>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="field">
+                                <label>index: <br/>
+                                <input type="text" name="index" class="textwidget" value="index.html"/></label>
+                            </div>
+
+                            <div class="field">
+                                <label>encoding: <br/>
+                                <input type="text" name="encoding" class="textwidget" value="utf-8"/></label>
+                            </div>
+
+                            <div class="field">
+                                <label>sgml: <br/>
+                                <input type="text" name="sgml" class="textwidget" value="index.sgml"/></label>
+                            </div>
+                        </th>
+                    </tbody>
+                </table>
+                <div class="buttons">
+                    <input type="submit" name="add" value=" Add "/>
+                </div>
+            </fieldset>
+        </form>
     </body>
 </html>

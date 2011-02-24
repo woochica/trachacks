@@ -86,31 +86,36 @@ class GtkDocAdmin(Component):
                 self.config.save()
 
             if req.args.get('apply'):
+                self.config.set('gtkdoc', 'title', req.args.get('title'))
+                self.config.set('gtkdoc', 'wiki_index', req.args.get('wiki_index'))
                 self.config.set('gtkdoc', 'default', req.args.get('default'))
                 self.config.save()
 
-        default = None
         books = []
-        if 'gtkdoc' in self.config:
-            default = self.config.get('gtkdoc', 'default')
-            books_names = self._get_values('books')
-            for book in books_names:
-              values = self._get_values(book)
-              book_path = values[0]
-              book_index = values[1]
-              book_encoding = values[2]
-              book_sgml = values[3]
-              books.append({
-                  'name': book,
-                  'path': book_path,
-                  'index': book_index,
-                  'encoding': book_encoding,
-                  'sgml': book_sgml,
-              })
+        books_names = self._get_values('books')
+        for book in books_names:
+            values = self._get_values(book)
+            book_path = values[0]
+            book_index = values[1]
+            book_encoding = values[2]
+            book_sgml = values[3]
+            books.append({
+                'name': book,
+                'path': book_path,
+                'index': book_index,
+                'encoding': book_encoding,
+                'sgml': book_sgml,
+            })
+
+        title = self.config.get('gtkdoc', 'title') or 'API Reference'
+        wiki_index = self.config.get('gtkdoc', 'wiki_index')
+        default = self.config.get('gtkdoc', 'default')
 
         data = {
+            'title': title,
+            'wiki_index': wiki_index,
+            'default': default,
             'books': books,
-            'default': default
         }
 
         return 'gtkdoc_admin.html', data
