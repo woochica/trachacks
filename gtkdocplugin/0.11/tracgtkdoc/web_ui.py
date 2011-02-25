@@ -138,6 +138,11 @@ class GtkDocWebUI(Component):
         book_index = values[1]
         book_encoding = values[2]
 
+        if not page:
+            redirect_href = os.path.join(req.href.gtkdoc(), book)
+            redirect_href = os.path.join(redirect_href, book_index)
+            req.redirect(redirect_href)
+
         page = page or book_index
         path = os.path.join(book_path, page)
 

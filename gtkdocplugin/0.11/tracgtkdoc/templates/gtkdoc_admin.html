@@ -31,7 +31,7 @@
         <title>GTK-Doc</title>
     </head>
     <body>
-        <h2>GTK-Doc Books</h2>
+        <h2>Manage GTK-Doc Books</h2>
 
         <py:choose>
         <div py:when="not books">
@@ -39,17 +39,18 @@
         </div>
         <form method="post" py:otherwise="">
             <fieldset>
-                <legend>Global Settings</legend>
+                <legend>Configuration</legend>
                 <div class="field">
-                    <label title="Title to use for the main navigation tab.">title: <br/>
+                    <label title="Title to use for the main navigation tab.">title: 
                     <input type="text" name="title" class="textwidget" value="${ title }"/></label>
                 </div>
                 <div class="field">
                     <label title="Wiki page to use as the default page for the GTK-Doc main page.
-If set, supersedes the hidden `[gtkdoc] default book index` option.">wiki_index:<br/>
+If set, supersedes the hidden `[gtkdoc] default book index` option.">wiki_index: 
                     <input type="text" name="wiki_index" class="textwidget" value="${ wiki_index }"/></label>
                 </div>
-                <table class="listing" id="booklist">
+                <br/>
+                <table class="listing" id="booklist" title="books list with their name and path">
                     <thead>
                         <tr>
                             <th class="sel">&nbsp;</th>
@@ -80,8 +81,8 @@ If set, supersedes the hidden `[gtkdoc] default book index` option.">wiki_index:
                 <legend>Add Book</legend>
                 <table class="listing">
                     <thead>
-                        <th>visible settings</th>
-                        <th>hidden settings</th>
+                        <th>visible</th>
+                        <th>hidden</th>
                     </thead>
                     <tbody>
                         <th>
