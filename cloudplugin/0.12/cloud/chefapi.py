@@ -110,9 +110,9 @@ class ChefApi(object):
             
         expected_transient_errors = [
             "409 Conflict: Client already exists",
-            "Connection refused - connect(2) (Errno::ECONNREFUSED)",
-            "No route to host - connect(2) (Errno::EHOSTUNREACH)",
-            "Errno::ETIMEDOUT: Connection timed out - connect(2)",
+            "Connection refused - connect(2)",
+            "No route to host - connect(2)",
+            "Connection timed out - connect(2)",
         ]
         
         timer = Timer(timeout)
