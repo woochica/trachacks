@@ -113,6 +113,7 @@ class ChefApi(object):
             "Connection refused - connect(2)",
             "No route to host - connect(2)",
             "Connection timed out - connect(2)",
+            "Failed to authenticate",
         ]
         
         timer = Timer(timeout)
