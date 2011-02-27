@@ -443,9 +443,6 @@ class Ec2Instance(Droplet):
         client.delete()
         self.log.info('Deleted client %s' % id)
         
-        # wait for chef solr to catch-up to avoid a search failure
-        time.sleep(15.0)
-        
         # show the grid
         if terminated:
             add_notice(req, _('%(label)s %(id)s has been deleted.',

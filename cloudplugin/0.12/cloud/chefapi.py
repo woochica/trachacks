@@ -1,5 +1,6 @@
 from subprocess import Popen, STDOUT, PIPE
 import os
+import time
 import chef
 from timer import Timer
 
@@ -28,14 +29,23 @@ class ChefApi(object):
         if not sort:
             sort = 'X_CHEF_id_CHEF_X'
         sort += asc and ' asc' or ' desc'
-        search = chef.search.Search(index, q, sort, limit, offset, self.chef)
-        self.log.debug("About to query chef at %s" % search.url)
         
         # convert rows to resource objects (e.g., nodes)
-        rows = []
-        for result in search:
-            rows.append(result.object)
-        return rows, search.total
+        timer = Timer(60.0)
+        while True:
+            try:
+                rows = []
+                search = chef.search.Search(index, q, sort, limit, offset, self.chef)
+                self.log.debug("About to query chef at %s" % search.url)
+                for result in search:
+                    rows.append(result.object)
+                return rows, search.total
+            except TypeError, e:
+                # workaround for race condition when row was just deleted
+                if not timer.running:
+                    raise
+                self.log.debug("Encountered error %s, retrying.." % str(e))
+                time.sleep(1.0)
     
     def resource(self, resource, id=None):
         """Query chef for a resource and return the result as a dict (or
