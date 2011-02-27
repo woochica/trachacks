@@ -305,7 +305,7 @@ class Droplet(object):
             item = self.chefapi.resource(self.crud_resource, id)
         else:
             item = None
-
+        
         data = {
             'droplet_name': self.name,
             'id': id,

@@ -26,6 +26,7 @@ class Fields(object):
           field.ec2.placement_availability_zone.label = Availability Zone
           field.ec2.placement_availability_zone.options = \
             No preference|us-east-1a|us-east-1b|us-east-1c|us-east-1d
+          field.ec2.placement_availability_zone.value = us-east-1c
           
           .. many more fields ..
         
@@ -142,6 +143,7 @@ class Fields(object):
             opts = options.get(key+'.options','')
             opts = opts and opts.split('|') or []
             databag = options.get(key+'.databag')
+            default = options.get(key+'.value','')
             handler_name = options.get(key+'.handler','DefaultHandler')
             for h in handlers:
                 if h.__class__.__name__ == handler_name:
@@ -149,8 +151,8 @@ class Fields(object):
                     break
             else:
                 raise Exception("Field handler '%s' not found" % handler_name)
-            field = Field(name,kind,label,opts,databag,handler,chefapi,log)
-            self._fields[name] = field
+            self._fields[name] = Field(
+                name,kind,label,opts,databag,default,handler,chefapi,log)
     
     def __getitem__(self, field_name):
         return self._fields[field_name]
@@ -180,12 +182,13 @@ class Fields(object):
 
 class Field(object):
     
-    def __init__(self, name, kind, label, opts, databag, handler, chefapi, log):
+    def __init__(self,name,kind,label,opts,databag,default,handler,chefapi,log):
         self.name = name
         self.kind = kind
         self.label = label
         self._opts = opts
         self._databag = databag
+        self._default = default
         self._handler = handler
         self._chefapi = chefapi
         self._log = log
@@ -233,13 +236,21 @@ class Field(object):
                             (self._databag),str(e))
         return opts
     
-    def get(self, item=None, req=None, default='', raw=False):
+    def get(self, item=None, req=None, default=None, raw=False):
         """Returns the given key's value from the given PyChef object
         using dotted notation.  If raw is False, then the defined field
         handler will be used to convert the raw value into a new format,
         else the raw value is returned.  If the key is not found in the
-        item, then the default value is returned.  If the item is None,
-        then data is extracted from only the request object."""
+        item, then a default value is returned; if default is None, then
+        the field's originally instantiated default value is used.  If
+        the item is None, then data is extracted from only the request
+        object."""
+        def get_default():
+            if default is None:
+                return self._default
+            else:
+                return default
+        
         try:
             if raw is False:
                 v = self._handler.convert_item(self.name, item, req)
@@ -247,9 +258,9 @@ class Field(object):
                 if item:
                     v = item.attributes.get_dotted(self.name)
                 else:
-                    v = req.args.get(self.name,default)
+                    v = req.args.get(self.name,get_default())
         except (KeyError, AttributeError):
-            v = default
+            v = get_default()
         return v is 0 and '0' or isinstance(v,str) and unicode(v) or v
     
     def set(self, item, req, default='', raw=False):
@@ -283,6 +294,7 @@ class FixedField(Field):
         self.label = field.label
         self._opts = field._opts
         self._databag = field._databag
+        self._default = field._default
         self._handler = field._handler
         self._chefapi = field._chefapi
         self._log = field._log
