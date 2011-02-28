@@ -1,0 +1,16 @@
+Notes
+=====
+Uses google translate to translate ticket description and ticket comments. Requires google API key.
+
+Configuration
+=============
+You must enable it in Trac's UI or by editing trac.ini
+
+[components]
+translate.* = enabled
+
+Also, you should get a google API key and add it to trac.ini
+
+[translate]
+google_api_key = <GOOGLE API KEY>
+

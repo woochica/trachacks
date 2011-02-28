@@ -1,0 +1,37 @@
+# Translations template for TracTranslate.
+# Copyright (C) 2011 ORGANIZATION
+# This file is distributed under the same license as the TracTranslate
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TracTranslate 0.01\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2011-02-24 20:14+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.5\n"
+
+#: translate/web_ui.py:34
+#, python-format
+msgid "Translate to %s"
+msgstr ""
+
+#: translate/web_ui.py:34
+msgid "Translate"
+msgstr ""
+
+#: translate/web_ui.py:34
+msgid "Untranslate"
+msgstr ""
+
+#: translate/web_ui.py:34
+msgid "Working"
+msgstr ""
+
