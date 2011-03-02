@@ -41,7 +41,7 @@ $(function() {
   
   $("#dialog-bsop_create_folder").dialog({
     autoOpen: false,
-    height: 350,
+    height: 370,
     width: 500,
     modal: true,
     buttons: {
@@ -70,7 +70,7 @@ $(function() {
 
   $("#dialog-bsop_upload").dialog({
     autoOpen: false,
-    height: 350,
+    height: 370,
     width: 500,
     modal: true,
     buttons: {
@@ -97,7 +97,7 @@ $(function() {
 
   $("#dialog-bsop_move_delete").dialog({
     autoOpen: false,
-    height: 350,
+    height: 370,
     width: 500,
     modal: true,
     buttons: {
@@ -127,13 +127,15 @@ $(function() {
   });
   
   // Show dialogs on click of corresponding button
-  $('#bsop_upload').click(function() {
+  $('.bsop_upload').click(function(e) {
+    e.preventDefault();
     $('#dialog-bsop_upload').dialog('open');
   });
       
-  $('#bsop_create_folder').click(function() {
-      $('#dialog-bsop_create_folder').dialog('open');
-    });
+  $('.bsop_create_folder').click(function(e) {
+    e.preventDefault();
+    $('#dialog-bsop_create_folder').dialog('open');
+  });
     
   function show_move_delete_dialog(operation, src_items) {
     //var fred = $('#bsop_mvdel_src_name option:selected').length

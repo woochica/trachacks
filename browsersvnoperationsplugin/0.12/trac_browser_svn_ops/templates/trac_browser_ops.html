@@ -32,7 +32,7 @@
 
 <div id="dialog-bsop_upload"  class="bsop_dialog"
     title="Upload a file to the repository">
-  <p>Choose a file to upload to the Trac repository. It will be placed in the 
+  <p>Choose a file to upload to the repository. It will be placed in the 
   current directory.</p>
   <p class="validate_tips">All fields are required</p>
   <form id="bsop_upload_form" method="post" enctype="multipart/form-data"
@@ -73,7 +73,7 @@
     title="${['Move', 'Rename'][rename_only]} or delete a file in the repository">
   <p>Please provide a commit message, and if you are 
   ${['moving', 'renaming'][rename_only]} a file or folder enter a
-  ${['destination', 'new name'][rename_only]}</p>
+  ${['destination', 'new name'][rename_only]}.</p>
   <p class="validate_tips">All fields are required</p>
   <form id="bsop_move_delete_form" method="post" action=""
       class="bsop_form">
@@ -102,14 +102,11 @@
 
 <div id="bsop_buttons">
   <span class="bsop_tips"></span>
-  <button id="bsop_delete">Delete selected...</button>
-  <button py:if="not rename_only" id="bsop_move">Move selected...</button>
-  <button id="bsop_create_folder">Create folder...</button>
-  <button id="bsop_upload">Upload file...</button>
+  <button id="bsop_delete" class="bsop_delete">Delete selected...</button>
+  <button py:if="not rename_only" id="bsop_move" class="bsop_move">Move selected...</button>
+  <button id="bsop_create_folder" class="bsop_create_folder">Create folder...</button>
+  <button id="bsop_upload" class="bsop_upload">Upload file...</button>
 </div>
-
-<button id="show_upload">Show upload</button>
-
 </body>
 </html>
     
