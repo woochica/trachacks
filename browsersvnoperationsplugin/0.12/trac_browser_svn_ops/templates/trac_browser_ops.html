@@ -71,9 +71,8 @@
 
 <div id="dialog-bsop_move_delete" class="bsop_dialog"
     title="${['Move', 'Rename'][rename_only]} or delete a file in the repository">
-  <p>Please provide a commit message, and if you are 
-  ${['moving', 'renaming'][rename_only]} a file or folder enter a
-  ${['destination', 'new name'][rename_only]}.</p>
+  <p>Please provide a commit message<span id="bsop_mvdel_supplemental"> and a 
+  ${['destination', 'new name'][rename_only]}</span>.</p>
   <p class="validate_tips">All fields are required</p>
   <form id="bsop_move_delete_form" method="post" action=""
       class="bsop_form">
@@ -90,6 +89,8 @@
   </fieldset>
   
   <div style="display: none;">
+    <span id="bsop_mvdel_move_title">${['Move', 'Rename'][rename_only]}</span>
+    <span id="bsop_mvdel_delete_title">Delete</span>    
     <input type="hidden" id="bsop_mvdel_op" name="bsop_mvdel_op" 
         value="" />
     <select id="bsop_mvdel_src_name" name="bsop_mvdel_src_name" 

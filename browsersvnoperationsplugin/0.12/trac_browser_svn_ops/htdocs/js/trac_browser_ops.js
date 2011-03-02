@@ -138,12 +138,16 @@ $(function() {
   });
     
   function show_move_delete_dialog(operation, src_items) {
-    //var fred = $('#bsop_mvdel_src_name option:selected').length
-    
     // Is this a move or a delete? Show/hide the destination field
     if (operation === 'move') {
+        $('#dialog-bsop_move_delete').dialog('option', 'title',
+                                             $('#bsop_mvdel_move_title').text());
+        $('#bsop_mvdel_supplemental').show();
         $('.bsop_ctl_move').show();
     } else if (operation === 'delete') {
+        $('#dialog-bsop_move_delete').dialog('option', 'title',
+                                             $('#bsop_mvdel_delete_title').text());
+        $('#bsop_mvdel_supplemental').hide();
         $('.bsop_ctl_move').hide();
     }
     
