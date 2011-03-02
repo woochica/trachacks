@@ -3,16 +3,16 @@ import posixpath # Use to manipulate repository paths, which explicitly use
 import unicodedata
 
 from pkg_resources import resource_filename
-from trac.core import Component, implements, Interface, TracError
+from trac.core import Component, implements, TracError
 from trac.config import BoolOption, IntOption
 from trac.mimeview import Mimeview
-from trac.perm import IPermissionRequestor
+from trac.perm import IPermissionRequestor, PermissionError
 from trac.util import pretty_size
-from trac.web.api import ITemplateStreamFilter, IRequestFilter
+from trac.web.api import ITemplateStreamFilter, IRequestFilter, HTTPBadRequest, RequestDone
 from trac.web.chrome import ITemplateProvider, add_warning, add_notice, \
-                            add_meta, add_script, add_stylesheet, add_ctxtnav, \
-                            Chrome, tag
+                            add_script, add_stylesheet, Chrome, tag
 from trac.versioncontrol.api import RepositoryManager
+from trac.util.translation import _
 
 from genshi.filters.transform import Transformer
 
@@ -63,7 +63,7 @@ class TracBrowserOps(Component):
         unlimited upload size.''')
     
     rename_only = BoolOption('browserops', 'rename_only', True,
-        '''Do not allow fils to be moved, but rather only renamed.
+        '''Do not allow files to be moved, but rather only renamed.
         
         If True users will be prevented from moving files out of their current 
         directory, only renaming a single file within the directory will be 
@@ -137,14 +137,25 @@ class TracBrowserOps(Component):
             
             # Dispatch to private handlers based on which form submitted
             # The handlers perform a redirect, so don't return the handler
-            if 'bsop_upload_file' in req.args:
-                self._upload_request(req, handler)
-            
-            elif 'bsop_mvdel_op' in req.args:
-                self._move_delete_request(req, handler)
-            
-            elif 'bsop_create_folder_name' in req.args:
-                self._create_path_request(req, handler)
+            try:
+                if 'bsop_upload_file' in req.args:
+                    self._upload_request(req, handler)
+                elif 'bsop_mvdel_op' in req.args:
+                    self._move_delete_request(req, handler)
+                elif 'bsop_create_folder_name' in req.args:
+                    self._create_path_request(req, handler)
+            except PermissionError, e:
+                add_warning(req, "Permission denied")
+                req.redirect(req.href(req.path_info))
+            except RequestDone:
+                # Raised from redirect in successful operations above, we don't want it caught
+                # by the below general except.
+                raise
+            except Exception, e:
+                self.log.exception("Failed when processing write request.")
+                add_warning(req, "Failed write operation: %s" % e)
+                req.redirect(req.href(req.path_info))
+
         else:
             return handler
 
@@ -189,12 +200,14 @@ class TracBrowserOps(Component):
                            filename, repos_path, reponame)
             svn_writer = SubversionWriter(self.env, repos, req.authname)
             
-            rev = svn_writer.put_content(repos_path, file_data, filename,
-                                         commit_msg)
-        finally:
-            repos.sync()
-            self.log.debug('Closing repository')
-            repos.close()
+            rev = svn_writer.put_content(repos_path, file_data, commit_msg)
+            add_notice(req, _("Uploaded %s, creating revision %s.") % (filename, rev))
+        except Exception, e:
+            self.log.exception("Failed when uploading file %s" % filename)
+            add_warning(req, _("Failed to upload file: %s") % e)
+        repos.sync()
+        self.log.debug('Closing repository')
+        repos.close()
         
         # Perform http redirect back to this page in order to rerender
         # template according to new repository state
@@ -236,9 +249,7 @@ class TracBrowserOps(Component):
                 self.log.error('Rename encountered path seperator "/" in' 
                                'destination ("%s", "%s")',
                                src_names[0], dst_name)
-                raise TracError('This trac is configured to only allow '
-                                'renaming. "/" is not allowed in the new '
-                                'name.')
+                raise TracError(_('A filename can not contain "/"'))
             
             # Check whether the source is in a sub-folder - probably because
             # the user chose a node delivered by XMLHTTPRequest
@@ -286,9 +297,7 @@ class TracBrowserOps(Component):
                                     'Delete', 'Move', 'Rename')
                 add_warning(req, "%s failed: %s" 
                                  % (verb, 
-                                    "See the log file for more information"))
-            
-
+                                    e))
         finally:
             repos.sync()
             self.log.debug('Closing repository')
@@ -319,12 +328,10 @@ class TracBrowserOps(Component):
             except Exception, e:
                 self.log.exception("Failed to create directory: %s", e)
             
-                add_warning(req, "Failed to create folder: %s" 
-                                 % ("See the log file for more information",))
+                add_warning(req, "Failed to create folder: %s" % e)
             
-            add_notice(req, "Folder created.")
-            
-        finally:
+            add_notice(req, _("Folder %s created.") % create_name)
+        finally:    
             repos.sync()
             self.log.debug('Closing repository')
             repos.close()
@@ -376,7 +383,7 @@ class SvnMoveMenu(Component):
 
 
 class SvnEditMenu(Component):
-    '''Generate context menu items for moving subversion items
+    '''Generate context menu items for editing subversion items
     '''
     implements(ISourceBrowserContextMenuProvider)
     
@@ -563,7 +570,7 @@ class TracBrowserEdit(Component):
             
             try:
                 rev = svn_writer.put_content(repos_path, text_encoded, 
-                                             filename, commit_msg)
+                                             commit_msg)
                 add_notice(req, 'Committed changes to rev %i in "%s"' 
                                 % (rev, filename))
                 

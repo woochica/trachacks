@@ -1,10 +1,7 @@
-from trac.core import Component, implements, Interface, TracError
+from trac.core import TracError
 from trac.util.text import unicode_quote
-from trac.versioncontrol import Changeset, Node, Repository, \
-                                IRepositoryConnector, \
-                                NoSuchChangeset, NoSuchNode
-from trac.versioncontrol.svn_fs import SubversionRepository, SubversionNode, SubversionConnector
 from trac.versioncontrol.cache import CachedRepository
+from trac.versioncontrol.svn_fs import SubversionRepository, SubversionConnector
 
 class SubversionWriter(object):
     def __init__(self, env, repository, username):
@@ -19,13 +16,12 @@ class SubversionWriter(object):
         self.log = repository.log
         self.username = username
         
-    def put_content(self, repos_path, content, filename, commit_msg):
+    def put_content(self, repos_path, content, commit_msg):
         log=self.log
         
         svn_repos = self._get_libsvn_handle()
                 
         fs_path_utf8 = core.svn_path_canonicalize(repos_path.encode('utf-8'))
-        filename_utf8 = core.svn_path_canonicalize(filename.encode('utf-8'))
         username_utf8 = self.username.encode('utf-8')
         commit_msg_utf8 = commit_msg.encode('utf-8')
         rev = self.repos.get_youngest_rev()
@@ -90,6 +86,8 @@ class SubversionWriter(object):
          
         log.debug('ct')                                     
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
+        
+        return new_rev
     
     def make_dir(self, repos_path, commit_msg):
         log = self.log
@@ -116,8 +114,11 @@ class SubversionWriter(object):
         else:
             fs.make_dir(fs_root, repos_path_utf8)
          
-        log.debug('ct')                                     
+        log.debug('ct')
         new_rev = repos.fs_commit_txn(svn_repos, fs_txn, pool)
+       
+        return new_rev
+        
         
     def move(self, src_paths, dst_path, move_as_child, commit_msg):
         def _log_message(item, pool):
