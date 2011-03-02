@@ -153,7 +153,9 @@ class RpcTicketTestCase(TracRpcTestCase):
     def test_update_author(self):
         tid = self.admin.ticket.create("ticket_update_author", "one", {})
         self.admin.ticket.update(tid, 'comment1', {})
+        time.sleep(1)
         self.admin.ticket.update(tid, 'comment2', {}, False, 'foo')
+        time.sleep(1)
         self.user.ticket.update(tid, 'comment3', {}, False, 'should_be_rejected')
         changes = self.admin.ticket.changeLog(tid)
         self.assertEquals(3, len(changes))
@@ -193,12 +195,13 @@ class RpcTicketTestCase(TracRpcTestCase):
         self.admin.ticket.update(tid, 'one', {}, False, '', xmlrpclib.DateTime(minus2))
         self.admin.ticket.update(tid, 'two', {}, False, '', xmlrpclib.DateTime(minus1))
         self.user.ticket.update(tid, 'three', {}, False, '', xmlrpclib.DateTime(minus1))
+        time.sleep(1)
         self.user.ticket.update(tid, 'four', {})
         changes = self.admin.ticket.changeLog(tid)
         self.assertEquals(4, len(changes))
         # quick test to make sure each is older than previous
         self.assertTrue(changes[0][0] < changes[1][0] < changes[2][0])
-        # margin of 1 second for tests (calls take time...)
+        # margin of 2 seconds for tests
         justnow = xmlrpclib.DateTime(now - datetime.timedelta(seconds=1))
         self.assertTrue(justnow <= changes[2][0])
         self.assertTrue(justnow <= changes[3][0])
