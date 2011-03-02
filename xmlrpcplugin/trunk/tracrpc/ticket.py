@@ -148,6 +148,7 @@ class TicketRPC(Component):
         """ Fetch a ticket. Returns [id, time_created, time_changed, attributes]. """
         t = model.Ticket(self.env, id)
         req.perm(t.resource).require('TICKET_VIEW')
+        t['_ts'] = str(t.time_changed)
         return (t.id, t.time_created, t.time_changed, t.values)
 
     def create(self, req, summary, description, attributes={}, notify=False, when=None):
@@ -182,8 +183,13 @@ class TicketRPC(Component):
 
     def update(self, req, id, comment, attributes={}, notify=False, author='', when=None):
         """ Update a ticket, returning the new ticket in the same form as
-        getTicket(). Requires a valid 'action' in attributes to support workflow.
-        Overriding 'author' and 'when' requires admin permission. """
+        get(). 'New-style' call requires two additional items in attributes:
+        (1) 'action' for workflow support (including any supporting fields
+        as retrieved by getActions()),
+        (2) '_ts' changetime token for detecting update collisions (as received
+        from get() or update() calls).
+        ''Calling update without 'action' and '_ts' changetime token is
+        deprecated, and will raise errors in a future version.'' """
         t = model.Ticket(self.env, id)
         # custom author?
         if author and not (req.authname == 'anonymous' \
@@ -205,12 +211,17 @@ class TicketRPC(Component):
             self.log.warning("Rpc ticket.update for ticket %d by user %s " \
                     "has no workflow 'action'." % (id, req.authname))
             req.perm(t.resource).require('TICKET_MODIFY')
+            time_changed = attributes.pop('_ts', None)
+            if time_changed and str(time_changed) != str(t.time_changed):
+                raise TracError("Ticket has been updated since last get().")
             for k, v in attributes.iteritems():
                 t[k] = v
             t.save_changes(author, comment, when=when)
         else:
             ts = TicketSystem(self.env)
             tm = TicketModule(self.env)
+            # TODO: Deprecate update without time_changed timestamp
+            time_changed = str(attributes.pop('_ts', t.time_changed))
             action = attributes.get('action')
             avail_actions = ts.get_available_actions(req, t)
             if not action in avail_actions:
@@ -224,7 +235,7 @@ class TicketRPC(Component):
             # TicketModule reads req.args - need to move things there...
             req.args.update(attributes)
             req.args['comment'] = comment
-            req.args['ts'] = str(t.time_changed) # collision hack...
+            req.args['ts'] = time_changed
             changes, problems = tm.get_ticket_changes(req, t, action)
             for warning in problems:
                 add_warning(req, "Rpc ticket.update: %s" % warning)

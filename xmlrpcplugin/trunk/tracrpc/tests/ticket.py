@@ -204,6 +204,103 @@ class RpcTicketTestCase(TracRpcTestCase):
         self.assertTrue(justnow <= changes[3][0])
         self.admin.ticket.delete(tid)
 
+    def test_update_non_existing(self):
+        try:
+            self.admin.ticket.update(3344, "a comment", {})
+            self.fail("Allowed to update non-existing ticket???")
+            self.admin.ticket.delete(3234)
+        except Exception, e:
+            self.assertTrue("Ticket 3344 does not exist." in str(e))
+
+    def test_update_basic(self):
+        import time
+        # Basic update check, no 'action' or 'time_changed'
+        tid = self.admin.ticket.create('test_update_basic1', 'ieidnsj', {
+                        'owner': 'osimons'})
+        # old-style (deprecated)
+        self.admin.ticket.update(tid, "comment1", {'component': 'component2'})
+        self.assertEquals(2, len(self.admin.ticket.changeLog(tid)))
+        # new-style with 'action'
+        time.sleep(1) # avoid "columns ticket, time, field are not unique"
+        self.admin.ticket.update(tid, "comment2", {'component': 'component1',
+                                                   'action': 'leave'})
+        self.assertEquals(4, len(self.admin.ticket.changeLog(tid)))
+        self.admin.ticket.delete(tid)
+
+    def test_update_time_changed(self):
+        # Update with collision check
+        import datetime
+        from tracrpc.xml_rpc import from_xmlrpc_datetime, to_xmlrpc_datetime
+        tid = self.admin.ticket.create('test_update_time_changed', '...', {})
+        tid, created, modified, attrs = self.admin.ticket.get(tid)
+        then = from_xmlrpc_datetime(modified) - datetime.timedelta(minutes=1)
+        # Unrestricted old-style update (to be removed soon)
+        try:
+            self.admin.ticket.update(tid, "comment1",
+                    {'_ts': to_xmlrpc_datetime(then)})
+        except Exception, e:
+            self.assertTrue("Ticket has been updated since last get" in str(e))
+        # Update with 'action' to test new-style update.
+        try:
+            self.admin.ticket.update(tid, "comment1",
+                    {'_ts': to_xmlrpc_datetime(then),
+                     'action': 'leave'})
+        except Exception, e:
+            self.assertTrue("modified by someone else" in str(e))
+        self.admin.ticket.delete(tid)
+
+    def test_update_time_same(self):
+        # Update with collision check
+        import datetime
+        from tracrpc.xml_rpc import from_xmlrpc_datetime, to_xmlrpc_datetime
+
+        # Unrestricted old-style update (to be removed soon)
+        tid = self.admin.ticket.create('test_update_time_same', '...', {})
+        tid, created, modified, attrs = self.admin.ticket.get(tid)
+        ts = attrs['_ts']
+        self.admin.ticket.update(tid, "comment1",
+                    {'_ts': ts})
+        self.admin.ticket.delete(tid)
+
+        # Update with 'action' to test new-style update.
+        tid = self.admin.ticket.create('test_update_time_same', '...', {})
+        tid, created, modified, attrs = self.admin.ticket.get(tid)
+        ts = attrs['_ts']
+        self.admin.ticket.update(tid, "comment1",
+                    {'_ts': ts, 'action': 'leave'})
+        self.admin.ticket.delete(tid)
+
+    def test_update_action(self):
+        # Updating with 'action' in attributes
+        tid = self.admin.ticket.create('test_update_action', 'ss')
+        current = self.admin.ticket.get(tid)
+        self.assertEqual('', current[3].get('owner', ''))
+        updated = self.admin.ticket.update(tid, "comment1",
+                {'action': 'reassign',
+                 'action_reassign_reassign_owner': 'user'})
+        self.assertEqual('user', updated[3].get('owner'))
+        self.admin.ticket.delete(tid)
+
+    def test_update_action_non_existing(self):
+        # Updating with non-existing 'action' in attributes
+        tid = self.admin.ticket.create('test_update_action_wrong', 'ss')
+        try:
+            self.admin.ticket.update(tid, "comment1",
+                {'action': 'reassign',
+                 'action_reassign_reassign_owner': 'user'})
+        except Exception, e:
+            self.assertTrue("invalid action" in str(e))
+        self.admin.ticket.delete(tid)
+
+    def test_update_field_non_existing(self):
+        tid = self.admin.ticket.create('test_update_field_non_existing', 'yw3')
+        try:
+            self.admin.ticket.update(tid, "comment1",
+                    {'does_not_exist': 'eiwrjoer'})
+        except Exception, e:
+            self.assertTrue("no such column" in str(e))
+        self.admin.ticket.delete(tid)
+
 
 class RpcTicketVersionTestCase(TracRpcTestCase):
     
