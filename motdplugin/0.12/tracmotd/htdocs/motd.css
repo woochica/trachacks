@@ -1,0 +1,54 @@
+
+/*
+ * styles for motd
+ */
+
+
+#motdframe {
+    position: absolute;
+    visibility: hidden;
+    overflow: hidden;
+    border: 2px solid #DB9B7F;
+    background-color: #F9D1BC;
+    height: 400px;
+    width: 500px;
+    /* padding: 5px; */
+}
+
+#motdheader {
+    background-color: #C08C79;
+    border: 2px solid #DB9B7F;
+    width: 100%;
+    text-align: center;
+}
+
+#motdheader td {
+    font-weight: bold;
+    padding: 0.3em;
+}
+
+#motdcontent {
+    border: 2px solid #DB9B7F;
+    /*height: 85%;*/
+    height: 338px;
+    overflow: auto;
+    position: static;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+#motdcontent h4 {
+    margin-top: 1em;
+    margin-bottom: -0.5em;
+}
+#motdcontent p {
+}
+
+#motdfooter {
+    border: 2px solid #DB9B7F;
+    bottom: 0;
+    padding: 0.2em;
+    position: absolute;
+    width: 98%;
+}
+
