@@ -43,8 +43,17 @@ class TicketRPC(Component):
         yield (None, ((list, int),), self.getAvailableActions)
         yield (None, ((list, int),), self.getActions)
         yield (None, ((list, int),), self.get)
-        yield ('TICKET_CREATE', ((int, str, str), (int, str, str, dict), (int, str, str, dict, bool)), self.create)
-        yield (None, ((list, int, str), (list, int, str, dict), (list, int, str, dict, bool)), self.update)
+        yield ('TICKET_CREATE', ((int, str, str),
+                                 (int, str, str, dict),
+                                 (int, str, str, dict, bool),
+                                 (int, str, str, dict, bool, datetime)),
+                      self.create)
+        yield (None, ((list, int, str),
+                      (list, int, str, dict),
+                      (list, int, str, dict, bool),
+                      (list, int, str, dict, bool, str),
+                      (list, int, str, dict, bool, str, datetime)),
+                      self.update)
         yield (None, ((None, int),), self.delete)
         yield (None, ((dict, int), (dict, int, int)), self.changeLog)
         yield (None, ((list, int),), self.listAttachments)
@@ -141,8 +150,9 @@ class TicketRPC(Component):
         req.perm(t.resource).require('TICKET_VIEW')
         return (t.id, t.time_created, t.time_changed, t.values)
 
-    def create(self, req, summary, description, attributes = {}, notify=False):
-        """ Create a new ticket, returning the ticket ID. """
+    def create(self, req, summary, description, attributes={}, notify=False, when=None):
+        """ Create a new ticket, returning the ticket ID.
+        Overriding 'when' requires admin permission. """
         t = model.Ticket(self.env)
         t['summary'] = summary
         t['description'] = description
@@ -151,7 +161,12 @@ class TicketRPC(Component):
             t[k] = v
         t['status'] = 'new'
         t['resolution'] = ''
-        t.insert()
+        # custom create timestamp?
+        if when and not 'TICKET_ADMIN' in req.perm:
+            self.log.warn("RPC ticket.create: %r not allowed to create with "
+                    "non-current timestamp (%r)", req.authname, when)
+            when = None
+        t.insert(when=when)
         # Call ticket change listeners
         ts = TicketSystem(self.env)
         for listener in ts.change_listeners:
@@ -165,11 +180,26 @@ class TicketRPC(Component):
                                    "of ticket #%s: %s" % (t.id, e))
         return t.id
 
-    def update(self, req, id, comment, attributes = {}, notify=False):
+    def update(self, req, id, comment, attributes={}, notify=False, author='', when=None):
         """ Update a ticket, returning the new ticket in the same form as
-        getTicket(). Requires a valid 'action' in attributes to support workflow. """
-        now = to_datetime(None, utc)
+        getTicket(). Requires a valid 'action' in attributes to support workflow.
+        Overriding 'author' and 'when' requires admin permission. """
         t = model.Ticket(self.env, id)
+        # custom author?
+        if author and not (req.authname == 'anonymous' \
+                            or 'TICKET_ADMIN' in req.perm(t.resource)):
+            # only allow custom author if anonymous is permitted or user is admin
+            self.log.warn("RPC ticket.update: %r not allowed to change author "
+                    "to %r for comment on #%d", req.authname, author, id)
+            author = ''
+        author = author or req.authname
+        # custom change timestamp?
+        if when and not 'TICKET_ADMIN' in req.perm(t.resource):
+            self.log.warn("RPC ticket.update: %r not allowed to update #%d with "
+                    "non-current timestamp (%r)", author, id, when)
+            when = None
+        when = when or to_datetime(None, utc)
+        # and action...
         if not 'action' in attributes:
             # FIXME: Old, non-restricted update - remove soon!
             self.log.warning("Rpc ticket.update for ticket %d by user %s " \
@@ -177,7 +207,7 @@ class TicketRPC(Component):
             req.perm(t.resource).require('TICKET_MODIFY')
             for k, v in attributes.iteritems():
                 t[k] = v
-            t.save_changes(req.authname, comment, when=now)
+            t.save_changes(author, comment, when=when)
         else:
             ts = TicketSystem(self.env)
             tm = TicketModule(self.env)
@@ -205,17 +235,17 @@ class TicketRPC(Component):
             else:
                 tm._apply_ticket_changes(t, changes)
                 self.log.debug("Rpc ticket.update save: %s" % repr(t.values))
-                t.save_changes(req.authname, comment, when=now)
+                t.save_changes(author, comment, when=when)
                 # Apply workflow side-effects
                 for controller in controllers:
                     controller.apply_action_side_effects(req, t, action)
                 # Call ticket change listeners
                 for listener in ts.change_listeners:
-                    listener.ticket_changed(t, comment, req.authname, t._old)
+                    listener.ticket_changed(t, comment, author, t._old)
         if notify:
             try:
                 tn = TicketNotifyEmail(self.env)
-                tn.notify(t, newticket=False, modtime=now)
+                tn.notify(t, newticket=False, modtime=when)
             except Exception, e:
                 self.log.exception("Failure sending notification on change of "
                                    "ticket #%s: %s" % (t.id, e))

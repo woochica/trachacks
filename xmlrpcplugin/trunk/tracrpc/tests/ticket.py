@@ -150,6 +150,61 @@ class RpcTicketTestCase(TracRpcTestCase):
             for tid in tids:
                 self.admin.ticket.delete(tid)
 
+    def test_update_author(self):
+        tid = self.admin.ticket.create("ticket_update_author", "one", {})
+        self.admin.ticket.update(tid, 'comment1', {})
+        self.admin.ticket.update(tid, 'comment2', {}, False, 'foo')
+        self.user.ticket.update(tid, 'comment3', {}, False, 'should_be_rejected')
+        changes = self.admin.ticket.changeLog(tid)
+        self.assertEquals(3, len(changes))
+        for when, who, what, cnum, comment, _tid in changes:
+            self.assertTrue(comment in ('comment1', 'comment2', 'comment3'))
+            if comment == 'comment1':
+                self.assertEquals('admin', who)
+            if comment == 'comment2':
+                self.assertEquals('foo', who)
+            if comment == 'comment3':
+                self.assertEquals('user', who)
+        self.admin.ticket.delete(tid)
+
+    def test_create_at_time(self):
+        from trac.util.datefmt import to_datetime, utc
+        now = to_datetime(None, utc)
+        minus1 = now - datetime.timedelta(days=1)
+        # create the tickets (user ticket will not be permitted to change time)
+        one = self.admin.ticket.create("create_at_time1", "ok", {}, False,
+                                        xmlrpclib.DateTime(minus1))
+        two = self.user.ticket.create("create_at_time3", "ok", {}, False,
+                                        xmlrpclib.DateTime(minus1))
+        # get the tickets
+        t1 = self.admin.ticket.get(one)
+        t2 = self.admin.ticket.get(two)
+        # check timestamps
+        self.assertTrue(t1[1] < t2[1])
+        self.admin.ticket.delete(one)
+        self.admin.ticket.delete(two)
+
+    def test_update_at_time(self):
+        from trac.util.datefmt import to_datetime, utc
+        now = to_datetime(None, utc)
+        minus1 = now - datetime.timedelta(hours=1)
+        minus2 = now - datetime.timedelta(hours=2)
+        tid = self.admin.ticket.create("ticket_update_at_time", "ok", {})
+        self.admin.ticket.update(tid, 'one', {}, False, '', xmlrpclib.DateTime(minus2))
+        self.admin.ticket.update(tid, 'two', {}, False, '', xmlrpclib.DateTime(minus1))
+        self.user.ticket.update(tid, 'three', {}, False, '', xmlrpclib.DateTime(minus1))
+        self.user.ticket.update(tid, 'four', {})
+        changes = self.admin.ticket.changeLog(tid)
+        self.assertEquals(4, len(changes))
+        # quick test to make sure each is older than previous
+        self.assertTrue(changes[0][0] < changes[1][0] < changes[2][0])
+        # margin of 1 second for tests (calls take time...)
+        justnow = xmlrpclib.DateTime(now - datetime.timedelta(seconds=1))
+        self.assertTrue(justnow <= changes[2][0])
+        self.assertTrue(justnow <= changes[3][0])
+        self.admin.ticket.delete(tid)
+
+
 class RpcTicketVersionTestCase(TracRpcTestCase):
     
     def setUp(self):

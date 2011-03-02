@@ -19,7 +19,7 @@ else :
 
 setup(
     name='TracXMLRPC',
-    version='1.1.0',
+    version='1.1.1',
     license='BSD',
     author='Alec Thomas',
     author_email='alec@swapoff.org',
