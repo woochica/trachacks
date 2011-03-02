@@ -17,6 +17,9 @@ class ClientAdminPanel(TicketAdminPanel):
     _label = ('Client', 'Clients')
 
     # TicketAdminPanel methods
+    def get_admin_commands(self):
+        return None
+
     def _render_admin_panel(self, req, cat, page, client):
         # Detail view?
         if client:

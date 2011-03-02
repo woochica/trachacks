@@ -18,6 +18,9 @@ class ClientEventsAdminPanel(TicketAdminPanel):
     _label = ('Client Events', 'Client Events')
 
     # TicketAdminPanel methods
+    def get_admin_commands(self):
+        return None
+
     def _render_admin_panel(self, req, cat, page, event):
         # Detail view?
         if event:
