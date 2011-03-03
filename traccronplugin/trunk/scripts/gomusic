@@ -1,8 +1,0 @@
-#!/usr/bin/python
-#THIS IS GOMUSIC LAUNCH SCRIPT
-
-from gomedia import music
-
-# run zourite
-music.run()
-

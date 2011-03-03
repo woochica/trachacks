@@ -1,7 +1,0 @@
-#!/usr/bin/python
-#THIS IS GIVIDEO LAUNCH SCRIPT
-
-from gomedia import video
-
-# run zourite
-video.run()
