@@ -89,6 +89,11 @@ class DBCursor(object):
     def last_id(self, cursor, table, column='id'):
         return self.db.get_last_id(self, table, column)
 
+    @property
+    def lastrowid(self):
+        return self.cursor.lastrowid
+
+ 
 class DBComponent(Component):
     implements(IEnvironmentSetupParticipant)
     applySchema = False
