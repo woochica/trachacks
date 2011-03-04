@@ -14,7 +14,8 @@ class HoursRemainingTestCase(unittest.TestCase):
         self.req = Mock(href = Href('/'),
                         abs_href = Href('http://www.example.com/'),
                         perm = MockPerm(),
-                        authname='anonymous')
+                        authname='anonymous',
+                        tz='')
         self.formatter = Mock(req=self.req)
        
     def _insert_ticket(self, estimation, status='open'):
