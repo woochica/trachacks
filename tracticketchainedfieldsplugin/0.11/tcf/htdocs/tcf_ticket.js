@@ -96,6 +96,8 @@ $(document).ready(function() {
         });
         
         for (var field in tcf_define) {
+            var orig_value = $("#field-"+field).val();
+
             $("#field-"+field).empty();
             
             var root_options = [];
@@ -122,6 +124,8 @@ $(document).ready(function() {
             
             if (location.pathname.match(/newticket/g)){
                 $("#field-"+field).change();
+            } else {
+                $("#field-"+field).val(orig_value);
             }
             break;
         }
