@@ -3,6 +3,7 @@ from trac.core import Component, implements
 from trac.web import IRequestHandler
 from trac.web.api import HTTPBadRequest, HTTPUnauthorized
 from iface import TracFormDBUser, TracPasswordStoreUser
+from macros import xml_encode
 import urllib
 
 class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
@@ -29,10 +30,10 @@ class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
                 name = urllib.quote(str(name))
                 if isinstance(value, (list, tuple)):
                     for item in value:
-                        item = str(item)
+                        item = xml_encode(item)
                         result.append('%s=%s' % (name, urllib.quote(item)))
                 else:
-                    value = str(value)
+                    value = xml_encode(value)
                     result.append('%s=%s' % (name, urllib.quote(value)))
             self.save_tracform(context, '&'.join(result), who, basever,
                                 keep_history=keep_history,

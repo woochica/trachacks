@@ -1,7 +1,9 @@
 
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
+from trac.util.text import to_unicode
 import sys, StringIO, re, traceback, cgi, time, fnmatch
+from codecs import getencoder
 from iface import TracFormDBUser, TracPasswordStoreUser
 from environment import TracFormEnvironment
 from errors import TracFormError, \
@@ -19,6 +21,11 @@ kwtrans = {
     'class'     : '_class',
     'id'        : '_id',
     }
+
+def xml_encode(text):
+    enc = getencoder('us-ascii')
+    return enc(to_unicode(text), 'xmlcharrefreplace')[0]
+
 
 class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
     """
@@ -103,9 +110,12 @@ class TracFormProcessor(object):
         if self.subcontext:
             self.context += ':' + self.subcontext
         state = self.macro.get_tracform_state(self.context)
+        self.formatter.env.log.debug('TracForms state = ' + str(state))
         #self.state = cgi.parse_qs(state or '')
         for name, value in cgi.parse_qs(state or '').iteritems():
             self.env[self.context + ':' + name] = value
+            self.formatter.env.log.debug(
+                self.context + ':' + str(name) + ' = ' + str(value))
             if self.subcontext is not None:
                 self.env[self.subcontext + ':' + name] = value
         self.sorted_env = None
@@ -128,6 +138,7 @@ class TracFormProcessor(object):
             text = tfRE.sub(self.process, text)
         setattr(formatter.req, type(self).__name__, None)
 
+        self.formatter.env.log.debug('TracForms parsing finished')
         return ''.join(self.build_form(text))
 
     def build_form(self, text):
@@ -153,7 +164,7 @@ class TracFormProcessor(object):
                 yield '<INPUT class="buttons" type="submit"'
                 if self.submit_name:
                     yield ' name=%r' % str(self.submit_name)
-                yield ' value=%r' % str(self.submit_label)
+                yield ' value=%r' % xml_encode(self.submit_label)
                 yield '>'
             if self.keep_history:
                 yield '<INPUT type="hidden"'
@@ -349,6 +360,7 @@ class TracFormProcessor(object):
         self.updated = True
         op, argstr = m.groups()
         op = op or self.default_op
+        self.formatter.env.log.debug('Converting TracForms op: ' + str(op))
         kw = {}
         args = tuple(self.getargs(argstr, kw))
         fn = self.env.get('op:' + op.lower())
@@ -359,9 +371,13 @@ class TracFormProcessor(object):
         else:
             try:
                 if op[:5] == 'wikiop_':
+                    self.formatter.env.log.debug(
+                        'TracForms wiki value: ' + self.wiki(str(fn(*args))))
                     return self.wiki(str(fn(*args)))
                 else:
-                    return str(fn(*args, **kw))
+                    self.formatter.env.log.debug(
+                        'TracForms value: ' + xml_encode(fn(*args, **kw)))
+                    return xml_encode(fn(*args, **kw))
             except TracFormError, e:
                 return '<PRE>' + str(e) + '</PRE>'
             except Exception, e:
