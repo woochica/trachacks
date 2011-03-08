@@ -61,15 +61,15 @@ var setup = function(paging){
     })
     
     // add a "warning" to the page
-    var html = '<div class="system-message" id="warning">'
+    var html = '<div class="system-message" id="message">'
               +'  This is a special <strong>queue</strong> report.'
               +'  Drag and drop tickets to their desired position.'
               +'  Select report arguments to the right.'
               +'</div>';
     jQuery('#ctxtnav').after(html);
     
-    // move report arguments (prefs) up to the notice
-    jQuery('#warning').append(jQuery('#prefs').parent());
+    // move report arguments (prefs) up to the message
+    jQuery('#message').append(jQuery('#prefs').parent());
     
     //move description to after h1 title
     jQuery('#content h1:first').after(jQuery('#description'));
