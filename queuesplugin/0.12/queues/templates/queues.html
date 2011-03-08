@@ -3,27 +3,34 @@
       xmlns:py="http://genshi.edgewall.org/" py:strip="">
 
 var setup = function(paging){
+    jQuery('table.listing.tickets tbody').attr('op', 'ignore');
+        
     // make the table rows sortable (but only if on first page)
     if (jQuery('div.paging').length == 0 || jQuery('div.paging:last span.current').text() == '1'){
         
         // add op classes to each group of tickets
-        jQuery('.listing.tickets').attr('op', 'reorder');
-        jQuery('#content').children('h2').each(function(i){
+        jQuery('#content').find('h2.report-result').each(function(i){
             grouped = true;
             var h2 = jQuery(this);
             var name = jQuery.trim(h2.text().split('\n')[1]).toLowerCase();
+            
+            // determine operation
             var op = 'reorder';
           <py:for each="group,op in data.groups.items()">
             if (name == '${group}'){
                 op = '${op}';
             }
           </py:for>
-            var tbl = h2.next().attr('op', op);
           
+            // find the rows
+            var rows = h2.parents('tbody').next().attr('op', op);
+            if (rows.length == 0)
+                rows = h2.next().children('tbody:first').attr('op', op);
+            
             // add simple collapsibility
             if (op != 'reorder'){
-                jQuery(this).click(function(){
-                    tbl.toggle("blind");
+                h2.click(function(){
+                    rows.toggle("blind");
                 });
             }
         });
@@ -34,18 +41,20 @@ var setup = function(paging){
             });
             return ui;
         };
-        jQuery("table.listing.tickets[op!=ignore] tbody").sortable({
-            connectWith: jQuery("table.listing.tickets[op!=ignore] tbody"),
+        jQuery("table.listing.tickets tbody[op!=ignore]").sortable({
+            connectWith: jQuery("table.listing.tickets tbody[op!=ignore]"),
             helper: fixHelper,
             update: update,
             cancel: 'select,option,input' // needed for GridModify in chrome/safari
         }).disableSelection();
-		
-    } else
-       jQuery('.listing.tickets').attr('op', 'ignore');
+    	
+    }
     
     // disable column sorting (screws up queue ordering)
-    jQuery("table.listing.tickets thead tr th a").each(function(i,a){
+    var cols = jQuery("table.listing.tickets tr.trac-columns th a");
+    if (cols.length == 0)
+        cols = jQuery("table.listing.tickets thead tr th a"); // Trac 0.12.1 support
+    cols.each(function(i,a){
         var href = jQuery(a)
         href.parent().text(href.text());
         href.remove();
@@ -89,9 +98,10 @@ var update = function(){
 
 var change = function(changes, cells){
     var len = 0;
-    jQuery('.listing.tickets').each(function(){
-        var op = jQuery(this).attr('op');
-        jQuery('tbody tr', this).each(function(i){
+    jQuery('table.listing.tickets tbody[op!=ignore]').each(function(){
+        var rows = jQuery(this);
+        var op = rows.attr('op');
+        jQuery('tr', this).each(function(i){
             // check for re-ordered items
             if (op == 'reorder'){
                 var cell = jQuery(this).find('td:first'); // use 1st cell of row
