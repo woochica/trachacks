@@ -70,7 +70,7 @@ var apply_rules = function(){
 jQuery(document).ready(function($){
     var triggers = get_triggers(); // trigger fields
     
-	if (window.location.pathname == '/query'){
+	if (window.location.pathname.match(/\/query$/)){
         // hide all "hide_always" fields
         jQuery.each(triggers, function(trigger,specs){
 			jQuery.each(specs, function(i,spec){

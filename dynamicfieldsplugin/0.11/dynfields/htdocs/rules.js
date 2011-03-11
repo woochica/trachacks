@@ -117,11 +117,14 @@ var hiderule = new Rule('HideRule'); // must match python class name exactly
 
 // setup
 hiderule.setup = function(input, spec){
-    // show and reset elements controlled by this input field
-    var trigger = input.attr('id').substring(6); // ids start with 'field-'
-    jQuery('.dynfields-'+trigger)
-        .removeClass('dynfields-hide dynfields-'+trigger)
-        .show();
+    var id = input.attr('id');
+    if (id){ // no input fields when on /query page
+        // show and reset elements controlled by this input field
+        var trigger = id.substring(6); // ids start with 'field-'
+        jQuery('.dynfields-'+trigger)
+            .removeClass('dynfields-hide dynfields-'+trigger)
+            .show();
+    }
 };
 
 // apply
