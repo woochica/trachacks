@@ -63,7 +63,7 @@ class DynamicVariablesModule(Component):
                 if options:
                     args.append('%s=%s' % (var,options[0]))
         if args:
-            url = req.path_info + '?' + req.query_string
+            url = req.base_path + req.path_info + '?' + req.query_string
             if req.query_string:
                 url += '&'
             url += '&'.join(args)
