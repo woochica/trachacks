@@ -147,13 +147,10 @@ class BibAddMacro(WikiMacroBase):
       file = whom[1]
 
       repos = self.env.get_repository()
-      try:
-        bib = repos.get_node(file, rev)
-        file = bib.get_content()
-        string = file.read()
-      finally:
-        repos.close()
-  
+      bib = repos.get_node(file, rev)
+      file = bib.get_content()
+      string = file.read()
+
     # load the file from the wiki attachments
     elif whom[0] == 'attachment':
       if (len(whom) != 2):
