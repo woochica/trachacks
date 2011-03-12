@@ -39,7 +39,10 @@ except ImportError: # for trac 0.10:
               if m:
                   kw = arg[:m.end()-1].strip()
                   if strict:
-                      kw = unicode(kw).encode('utf-8')
+                      try:
+                          kw = unicode(kw).encode('utf-8')
+                      except TypeError:
+                          pass
                   kwargs[kw] = arg[m.end():]
               else:
                   largs.append(arg)
@@ -190,7 +193,10 @@ class BibAddMacro(WikiMacroBase):
       raise TracError('Unknown location \''+ whom[0] +'\'')
     try:
         # handle all data as unicode objects
-        u = unicode(string,"utf-8")
+        try:
+            u = unicode(string,"utf-8")
+        except TypeError:
+            u = string
         entries = extract_entries(u)
     except UnicodeDecodeError:
         raise TracError("A UnicodeDecodeError occured while loading the data. Try to save the file in UTF-8 encoding.")
