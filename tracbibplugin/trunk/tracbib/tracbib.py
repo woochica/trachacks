@@ -39,7 +39,10 @@ except ImportError: # for trac 0.10:
               if m:
                   kw = arg[:m.end()-1].strip()
                   if strict:
-                      kw = unicode(kw).encode('utf-8')
+                      try:
+                          kw = unicode(kw).encode('utf-8')
+                      except TypeError:
+                          pass
                   kwargs[kw] = arg[m.end():]
               else:
                   largs.append(arg)
