@@ -218,3 +218,44 @@ class BurndownChartTestCase(unittest.TestCase):
         result = chart.expand_macro(self.formatter, 'BurndownChart',
                         "startdate=%s, enddate=%s, expected=200" % (start, end))
         self.assertEquals(self._extract_query(result)['chxr'], [u'2,0,200'])
+
+    def test_scale_weekends(self):
+        chart = BurndownChart(self.env)
+        # 7 days, monday -> sunday this week
+        now = datetime.now(utc).date()
+        day1 = now - timedelta(days=now.weekday())
+        day2 = day1 + timedelta(days=1)
+        day3 = day1 + timedelta(days=2)
+        day4 = day1 + timedelta(days=3)
+        day5 = day1 + timedelta(days=4)
+        day6 = day1 + timedelta(days=5)
+        day7 = day1 + timedelta(days=6)
+        options = {'startdate': day1, 'enddate': day7, 'today': day7}
+        timetable = {day1: Decimal(70), day2: Decimal(60), day3: Decimal(50),
+                day4: Decimal(40), day5: Decimal(30), day6: Decimal(20),
+                day7: Decimal(10)}
+        self.assertEquals(chart._scale_data(timetable, options),
+               (['0.00', '16.67', '33.33', '50.00', '66.67', '83.33', '100.00'],
+                ['100.00', '85.71', '71.43', '57.14', '42.86', '28.57', '14.29'],
+                Decimal('70')))
+
+    def test_scale_no_weekends(self):
+        chart = BurndownChart(self.env)
+        # 7 days, monday -> friday this week
+        now = datetime.now(utc).date()
+        day1 = now - timedelta(days=now.weekday())
+        day2 = day1 + timedelta(days=1)
+        day3 = day1 + timedelta(days=2)
+        day4 = day1 + timedelta(days=3)
+        day5 = day1 + timedelta(days=4)
+        day6 = day1 + timedelta(days=5)
+        day7 = day1 + timedelta(days=6)
+        options = {'startdate': day1, 'enddate': day7, 'today': day7}
+        # no weekends option, so day6 and day7 not included
+        timetable = {day1: Decimal(70), day2: Decimal(60), day3: Decimal(50),
+                day4: Decimal(40), day5: Decimal(30)}
+        self.assertEquals(chart._scale_data(timetable, options),
+               (['0.00', '25.00', '50.00', '75.00', '100.00'],
+                ['100.00', '85.71', '71.43', '57.14', '42.86'],
+                Decimal('70')))
+

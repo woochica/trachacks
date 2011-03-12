@@ -256,11 +256,11 @@ class BurndownChart(EstimationToolsBase, WikiMacroBase):
         ydata = [str(self._round(timetable[d] * Decimal(100) / maxhours))
                  for d in dates]
         xdata = [str(self._round(x * Decimal(100) / (len(dates) - 1)))
-                 for x in range((options['enddate'] - options['startdate']).days + 1)]
+                 for x in range(len(dates))]
 
         # mark ydata invalid that is after today
-        if options['enddate'] > options['today']:
-            remaining_days = (options['enddate'] - options['today']).days;
+        remaining_days = len([d for d in dates if d > options['today']])
+        if remaining_days:
             ydata = ydata[: - remaining_days] + ['-1' for x in xrange(0, remaining_days)]
 
         return xdata, ydata, maxhours
