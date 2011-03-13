@@ -1,9 +1,11 @@
 import re
+import time
+import json
 from genshi.builder import tag
 from trac.config import Option, BoolOption, IntOption, ListOption
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.resource import Resource, ResourceNotFound
+from trac.resource import ResourceNotFound
 from trac.util.translation import _
 from trac.web.api import IRequestHandler
 from trac.web.chrome import Chrome, add_ctxtnav, add_stylesheet, \
@@ -12,6 +14,7 @@ from handlers import IFieldHandler
 from droplets import Droplet
 from chefapi import ChefApi
 from awsapi import AwsApi
+from progress import Progress
 
 
 class CloudModule(Component):
@@ -135,6 +138,7 @@ class CloudModule(Component):
         droplet_name = req.args.get('droplet_name', '')
         id = req.args.get('id', '')
         action = req.args.get('action', 'view')
+        file = req.args.get('file', '')
         
         if not droplet_name:
             droplet_name = self.default_resource
@@ -168,6 +172,8 @@ class CloudModule(Component):
                 Chrome(self.env).add_wiki_toolbars(req)
             elif action == 'delete':
                 template, data, content_type = droplet.render_delete(req, id)
+            elif action == 'progress':
+                template, data, content_type = droplet.render_progress(req,file)
             elif id == '':
                 template, data, content_type = droplet.render_grid(req)
                 if content_type: # i.e. alternate format
@@ -183,3 +189,34 @@ class CloudModule(Component):
         
         add_stylesheet(req, 'common/css/report.css') # reuse css
         return template, data, None
+
+
+class CloudFileAjaxModule(Component):
+    implements(IRequestHandler)
+    
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info.startswith('/cloudajax/file')
+
+    def process_request(self, req):
+        """Process AJAX request.  Args are:
+        
+          path - contents should be returned as JSON
+          set_time - 0 (default) or 1 sets 'now' in contents to current epoch
+        """
+        try:
+            progress = Progress(req.args['path'])
+            data = progress.get()
+            if int(req.args.get('set_time',0)) == 1:
+                data['now'] = time.time()
+            msg = json.dumps(data)
+            req.send_response(200)
+            req.send_header('Content-Type', 'application/json')
+        except Exception, e:
+            import traceback;
+            msg = "Oops...\n" + traceback.format_exc()+"\n"
+            req.send_response(500)
+            req.send_header('Content-Type', 'text/plain')
+        req.send_header('Content-Length', len(msg))
+        req.end_headers()
+        req.write(msg);

@@ -42,7 +42,7 @@ droplet_defaults = {
     
     # create, read, update, delete views - chef resource name and fields
     'crud_resource': 'nodes',
-    'crud_view': 'name, ec2.instance_id, run_list, created_by, created_at, ohai_time, ec2.instance_type, ec2.hostname, ec2.public_hostname, ec2.placement_availability_zone, ec2.ami_id, supervisord.ssl_port',
+    'crud_view': 'name, ec2.instance_id, run_list, created_by, created_at, ohai_time, ec2.instance_type, ec2.hostname, ec2.public_hostname, ec2.placement_availability_zone, ec2.ami_id',
     'crud_new': 'run_list, created_by, created_at, ec2.instance_type, ec2.ami_id, ec2.placement_availability_zone',
     'crud_edit': 'run_list, created_by, created_at*, ec2.instance_type*, ec2.ami_id*, ec2.placement_availability_zone*',
     

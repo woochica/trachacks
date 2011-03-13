@@ -281,6 +281,16 @@ class Field(object):
         item.attributes.set_dotted(self.name, v)
         self._log.debug("Item %s field %s set to %s" % (item,self.name,v))
     
+    def set_dict(self, d, req, default='', raw=False):
+        """Sets the given key's value in the given dict object by
+        extracting the same field name from the req param. If the key
+        is not found in args, then the default value is used."""
+        if raw is False:
+            v = self._handler.convert_req(self.name, req)
+        else:
+            v = req.args.get(self.name,default)
+        d[self.name] = v
+    
     def __str__(self):
         return self.name
 

@@ -124,13 +124,14 @@ class ChefApi(object):
             "No route to host - connect(2)",
             "Connection timed out - connect(2)",
             "Failed to authenticate",
+            "Failed to connect",
         ]
         
         timer = Timer(timeout)
         while timer.running:
             self.log.debug('Bootstrapping %s with command: %s' % (id,cmd))
             p = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE)
-            # TODO: add timeout
+            # TODO: add timeout!
             out = unicode(p.communicate()[0], 'utf-8', 'ignore')
             
             for error in expected_transient_errors:

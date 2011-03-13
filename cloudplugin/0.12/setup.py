@@ -12,7 +12,11 @@ setup(
     author="Rob Guttman", author_email="guttman@alum.mit.edu",
     license='GPL', url='http://trac-hacks.org/wiki/CloudPlugin',
     packages = ['cloud'],
-    package_data = {'cloud':['templates/*.html','htdocs/*.js','htdocs/*.css']},
+    package_data = {'cloud':['templates/*.html',
+                             'htdocs/*.js',
+                             'htdocs/*.css',
+                             'htdocs/*.png',
+                             'htdocs/*.gif']},
     entry_points = {'trac.plugins':['cloud.web_ui = cloud.web_ui',
                                     'cloud.handlers = cloud.handlers']}
 )

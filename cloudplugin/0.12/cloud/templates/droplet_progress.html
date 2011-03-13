@@ -1,0 +1,113 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <title>$title</title>
+    <script type="text/javascript">
+      
+      var update_progress = function(){
+        var url = jQuery('link[rel="search"]').attr('href').replace(/\/search/, '');
+        url += '/cloudajax/file';
+        jQuery.ajax({
+          'type': "GET",
+          'url': url,
+          'data': {path:'${file}',set_time:1},
+          'success': function(data){
+            if (display(data))
+              setTimeout("update_progress()", 5000); // only on success
+          },
+          'error': function(r){
+            alert("Error fetching progress:\n\n"+r.responseText);
+          }
+        });
+      }
+
+      var display = function(progress){
+        var done = false;
+        var error = false;
+        var steps = jQuery('#steps').empty();
+        jQuery(progress['steps']).each(function(i,step){
+          // compute status
+          var duration = '';
+          var src = '';
+          var img = '';
+          var status = progress['status'][i.toString()];
+          if (status){
+            var started = status[0];
+            var completed = status[1];
+            if (completed){
+              duration = (completed - started).toFixed(1) + ' secs';
+              src = "${href.chrome('/cloud/ok.png')}";
+              
+              // check for done
+              if (i == progress['steps'].length-1)
+                done = true;
+              
+            } else {
+              if (progress['error']){
+                var div = '<div class="field">'
+                        + '  <div class="system-message">'
+                        + '    <strong>Error:</strong> ' + progress['error']
+                        + '  </div>'
+                        + '</div>';
+                jQuery('#progress').after(div);
+                error = true;
+                
+                src = "${href.chrome('/cloud/error.png')}";
+              } else {
+                var now = progress['now'];
+                duration = (now - started).toFixed(0) + '.. secs';
+                src = "${href.chrome('/cloud/loading.gif')}";
+              }
+            }
+            img = '<img src="'+src+'" />';
+          }
+          
+          // create row
+          var row = '<tr>'
+              + '  <td>'+img+'</td>'
+              + '  <td>'+(i+1).toString()+'.</td>'
+              + '  <td>'+step+'</td>'
+              + '  <td>'+duration+'</td>'
+              + '</tr>'
+          steps.append(row);
+        });
+        
+        if (done){
+          // see http://stackoverflow.com/questions/979024/changing-the-action-of-a-form-with-javascript-jquery/3863869#3863869
+          jQuery('#buttons-form').get(0).setAttribute('action','/cloud/${droplet_name}/'+progress['id']);
+          jQuery('#view').removeAttr('disabled');
+        }
+        
+        return !(done || error);
+      }
+      
+      jQuery(document).ready(function(){
+        update_progress();
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="content" class="droplet">
+      <h1>$title</h1>
+	  
+      <div id="progress">
+        <table id="steps"/>
+      </div>
+            
+      <div class="buttons">
+        <form id="buttons-form" action="" method="get">
+          <input type="hidden" name="action" value="view" />
+          <input type="submit" id="view" value="${_('View %(label)s', label=label)}" disabled="disabled" />
+        </form>
+      </div>
+      
+    </div>
+  </body>
+</html>

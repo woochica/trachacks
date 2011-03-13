@@ -1,5 +1,9 @@
 import copy
 import time
+import os
+import json
+import tempfile
+import subprocess
 from trac.resource import Resource
 from trac.util import as_int
 from trac.util.presentation import Paginator
@@ -7,6 +11,7 @@ from trac.util.text import to_unicode
 from trac.web.chrome import Chrome, add_link, add_notice, add_warning
 from trac.mimeview import Context
 from trac.util.translation import _
+
 from fields import Fields
 from defaults import droplet_defaults
 
@@ -345,6 +350,22 @@ class Droplet(object):
         self.log.debug('Rendered delete')
         return 'droplet_delete.html', data, None
     
+    def render_progress(self, req, file):
+        self.log.debug('Rendering progress..')
+        req.perm.require('CLOUD_MODIFY')
+        
+        data = {
+            'title': _('%(label)s Progress', label=self.label),
+            'action': 'progress',
+            'file': file,
+            'droplet_name': self.name,
+            'label': self.label,
+            'req': req,
+            'error': req.args.get('error')}
+        
+        self.log.debug('Rendered progress')
+        return 'droplet_progress.html', data, None
+    
     def create(self, req):
         pass
     
@@ -360,45 +381,59 @@ class Ec2Instance(Droplet):
     
     def create(self, req):
         req.perm.require('CLOUD_CREATE')
-        self.log.debug('Creating instance..')
+        dir = tempfile.gettempdir()
+        prefix = 'progress-'
         
-        # launch instance (and wait until running)
-        now = time.time()
+        # delete old progress files
+        for file in os.listdir(dir):
+            if file.startswith(prefix):
+                path = os.path.join(dir,file)
+                mtime = os.stat(path).st_mtime
+                if (time.time() - mtime) > 60 * 60 * 24: # 24+ hours old
+                    self.log.debug('Deleting old progress file %s' % path)
+                    os.remove(path)
+        
+        # prepare the command
+        exe = os.path.join(os.path.dirname(__file__),'launcher.py')
+        f = tempfile.NamedTemporaryFile(dir=dir, prefix=prefix, delete=False)
+        progress_file = f.name
         placement = req.args.get('ec2.placement_availability_zone','')
         if placement in ('No preference',''):
             placement = None
-        instance = self.cloudapi.launch_instance(
-            image_id = req.args.get('ec2.ami_id'),
-            instance_type = req.args.get('ec2.instance_type'),
-            placement = placement, timeout = 600)
-        if instance.state != 'running':
-            add_warning(req,
-                _("%(label)s %(id)s was created but isn't running (yet). " + \
-                  "Please check in the AWS Management Console directly.",
-                  label=self.label, id=instance.id))
-            req.redirect(req.href.cloud(self.name))
-        time.sleep(10.0) # instance is cranky when it wakes up
-        
-        # bootstrap the new instance
-        id = instance.private_dns_name
-        public_hostname = instance.public_dns_name
-        node = self.chefapi.bootstrap(id, public_hostname, timeout=300)
-        if node is None:
-            add_warning(req,
-                _("%(label)s %(id)s is running but not bootstrapped. " + \
-                  "Please login to %(hostname)s to investigate.",
-                  label=self.label, id=instance.id,
-                  hostname=instance.public_dns_name))
-            req.redirect(req.href.cloud(self.name))
-        
-        # save the new fields (filter out run_list and automatic)
+        attributes = {}
         fields = self.fields.get_list('crud_new', filter=r"ec2\..*")
-        self.save(req, id, fields, redirect=False)
+        for field in fields:
+            field.set_dict(attributes, req=req, default='')
         
-        # show the view
-        add_notice(req, _('%(label)s %(id)s has been created.',
-                          label=self.label, id=instance.id))
-        req.redirect(req.href.cloud(self.name, id))
+        # create the command
+        cmd = [
+           '/usr/bin/python', exe, '--daemonize',
+           '--progress-file="%s"' % progress_file,
+           '--log-file="%s"' %  self.log.handlers[0].stream.name, # TODO: more robust way to get this info?
+           '--chef-base-path="%s"' % self.chefapi.base_path,
+           '--aws-key="%s"' % self.cloudapi.key,
+           '--aws-secret="%s"' % self.cloudapi.secret,
+           '--aws-keypair="%s"' % self.cloudapi.keypair,
+           '--aws-keypair-pem="%s"' % self.chefapi.keypair_pem,
+           '--aws-username="%s"' % self.chefapi.user,
+           '--placement="%s"' % placement,
+           '--image-id="%s"' % req.args.get('ec2.ami_id'),
+           '--instance-type="%s"' % req.args.get('ec2.instance_type'),
+           "--attributes='%s'" % json.dumps(attributes),
+        ]
+        cmd += ['--chef-boot-run-list="%s"' % \
+            r for r in self.chefapi.boot_run_list]
+        if self.chefapi.sudo:
+            cmd += ['--chef-boot-sudo']
+        cmd = ' '.join(cmd)
+        
+        # Spawn command as daemon to launch and bootstrap instance in background
+        self.log.debug('Launching command: %s' % cmd)
+        if subprocess.call(cmd, shell=True):
+            add_warning(req, _("Error launching command: %(cmd)s", cmd=cmd))
+            req.redirect(req.href.cloud(self.name))
+        req.redirect(req.href.cloud(self.name, action='progress',
+                                               file=progress_file))
     
     def save(self, req, id, fields=None, redirect=True):
         req.perm.require('CLOUD_MODIFY')
