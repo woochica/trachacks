@@ -4,7 +4,7 @@
 from setuptools import setup
 
 PACKAGE = 'TracCloud'
-VERSION = '0.1.0'
+VERSION = '0.2.0'
 
 setup(
     name=PACKAGE, version=VERSION,
