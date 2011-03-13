@@ -70,6 +70,9 @@ class ScrippetRenderer(Component):
                             fd_text.text = fd_text.text.upper()
                         if ptype in ["character","transition","sceneheader","header"]:
                             fd_text.text = fd_text.text.upper()
+                        #clean smart quotes
+                        fd_text.text = fd_text.text.replace(u"\u201c", "\"").replace(u"\u201d", "\"") #strip double curly quotes
+                        fd_text.text  = fd_text.text.replace(u"\u2018", "'").replace(u"\u2019", "'").replace(u"\u02BC", "'") #strip single curly quotes
                         ptext.append({"style":text_style,"text":fd_text.text})
                 content = []
                 for block in ptext:
