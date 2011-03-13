@@ -30,7 +30,7 @@ class ScrippetRenderer(Component):
             return 9
         
     def render(self, context, mimetype, content, filename=None, url=None):
-        add_stylesheet(context.req, 'scrippets/css/scrippets-full.css')                    
+        add_stylesheet(context.req, 'scrippets/css/scrippets-full.css')
         if hasattr(content, 'read'):
             content = content.read()
         mode = "-full"
@@ -51,21 +51,40 @@ class ScrippetRenderer(Component):
                     ptype = "sceneheader"
                 elif ptype == "Transition":
                     ptype = "transition"
+                elif ptype == "Teaser/Act One":
+                    ptype = "header"
+                elif ptype == "New Act":
+                    ptype = "header"
+                elif ptype == "End Of Act":
+                    ptype = "header"
                 else:
                     ptype = "action"
                 #UNHANDLED FOR THE MOMENT
-                #End Of Act
-                #New Act
                 #Shot
                 #Show/Ep. Title
-                #Teaser/Act One
-                ptext = ""
+                ptext = []
                 for fd_text in fd_paragraph.findall("Text"):
+                    text_style = fd_text.get('Style')
                     if fd_text.text != None:
-                        ptext += fd_text.text
-                if ptype in ["character","transition","sceneheader"]:
-                    ptext = ptext.upper()
-                theoutput += tag.p(ptext,class_=ptype+mode)
+                        if "FADE IN:" in fd_text.text.upper():
+                            fd_text.text = fd_text.text.upper()
+                        if ptype in ["character","transition","sceneheader","header"]:
+                            fd_text.text = fd_text.text.upper()
+                        ptext.append({"style":text_style,"text":fd_text.text})
+                content = []
+                for block in ptext:
+                    if block["style"] == "Italic":
+                        
+                        content.append(tag.i(block["text"]))
+                    elif block["style"] == "Underline":
+                        content.append(tag.u(block["text"]))
+                    elif block["style"] == "Bold":
+                        content.append(tag.b(block["text"]))
+                    elif block["style"] == "Bold+Underline":
+                        content.append(tag.b(tag.u(block["text"])))
+                    else:
+                        content.append(block["text"])
+                theoutput += tag.p(content,class_=ptype+mode)
         return "%s" % theoutput
     
     ## ITemplateProvider
