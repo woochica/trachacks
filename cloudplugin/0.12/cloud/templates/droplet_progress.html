@@ -50,12 +50,10 @@
               
             } else {
               if (progress['error']){
-                var div = '<div class="field">'
-                        + '  <div class="system-message">'
-                        + '    <strong>Error:</strong> ' + progress['error']
-                        + '  </div>'
+                var div = '<div class="system-message">'
+                        + '  <strong>Error:</strong> ' + progress['error']
                         + '</div>';
-                jQuery('#progress').after(div);
+                jQuery('#error').append(div);
                 error = true;
                 
                 src = "${href.chrome('/cloud/error.png')}";
@@ -100,6 +98,8 @@
       <div id="progress">
         <table id="steps"/>
       </div>
+            
+      <div id="error" />
             
       <div class="buttons">
         <form id="buttons-form" action="" method="get">

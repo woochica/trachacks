@@ -124,7 +124,6 @@ class ChefApi(object):
             "No route to host - connect(2)",
             "Connection timed out - connect(2)",
             "Failed to authenticate",
-            "Failed to connect",
         ]
         
         timer = Timer(timeout)
@@ -145,7 +144,7 @@ class ChefApi(object):
             self.log.info('Timed out bootstrapping %s with:\n%s' % (id,out))
             return None
         
-        if p.returncode != 0:
+        if p.returncode != 0 or 'ERROR: Exception handlers complete' in out:
             self.log.info('Error bootstrapping %s:\n%s' % (id,out))
             return None
         

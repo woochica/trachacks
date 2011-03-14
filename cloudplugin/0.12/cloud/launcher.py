@@ -11,7 +11,6 @@ from daemon import Daemon
 from progress import Progress
 from chefapi import ChefApi
 from awsapi import AwsApi
-from timer import Timer
 
 class Launcher(Daemon):
     """Launches and bootstraps an ec2 instance in a separate process."""
@@ -21,7 +20,6 @@ class Launcher(Daemon):
         'Starting up the instance',
         'Bootstrapping the instance',
         'Applying the chef roles',
-        'Starting supervised chef-client',
     ]
     
     def __init__(self, progress_file, chefapi, cloudapi,
@@ -99,41 +97,6 @@ class Launcher(Daemon):
         node.save()
         self.log.info('Saved node %s' % id)
         self.progress.done(3)
-        
-        # Step 5. Starting supervised chef-client
-        self.log.debug('Running first chef-client..')
-        self.progress.start(4)
-        # get the first checkin time (from the bootstrap)
-        timer = Timer(30)
-        while timer.running:
-            try:
-                node = self.chefapi.resource('nodes', id)
-                start = node['ohai_time']
-                self.log.debug('Starting checkin time is %s' % start)
-                break
-            except KeyError:
-                time.sleep(1.0)
-        else:
-            msg = "Timed out waiting to get ohai_time. Check" + \
-                  " that the bootstrap succeeded properly."
-            self.log.error(msg)
-            self.progress.error(msg)
-            sys.exit(1)
-        # get the next checkin time (from the first supervised chef-client run)
-        timer = Timer(600)
-        while timer.running:
-            time.sleep(5.0)
-            node = self.chefapi.resource('nodes', id)
-            if node['ohai_time'] != start:
-                self.log.debug('End checkin time is %s' % node['ohai_time'])
-                break
-        else:
-            msg = "Timed out waiting for first chef-client run." + \
-                  " Check that the chef-client is properly supervised."
-            self.log.error(msg)
-            self.progress.error(msg)
-            sys.exit(1)
-        self.progress.done(4)
         
         if sysexit:
             sys.exit(0) # success
