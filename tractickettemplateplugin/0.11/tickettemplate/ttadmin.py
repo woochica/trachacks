@@ -70,7 +70,7 @@ class TicketTemplateModule(Component):
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
-        actions = ['TT_ADMIN']
+        actions = ['TT_USER', ('TT_ADMIN', ['TT_USER'])]
         return actions
 
     # IEnvironmentSetupParticipant methods
@@ -133,7 +133,7 @@ class TicketTemplateModule(Component):
 
     # IAdminPanelProvider methods
     def get_admin_panels(self, req):
-        if 'TRAC_ADMIN' in req.perm:
+        if 'TT_ADMIN' in req.perm:
             yield ('ticket', _('Ticket System'), 'tickettemplate', _('Ticket Template'))
 
     def render_admin_panel(self, req, cat, page, path_info):
@@ -249,7 +249,8 @@ class TicketTemplateModule(Component):
             result = TT_Template.fetchAll(self.env, data)
             result["status"] = "1"
             result["field_list"] = self._getFieldList()
-            if self.config.getbool("tickettemplate", "enable_custom", True):
+            if self.config.getbool("tickettemplate", "enable_custom", True) and \
+                'TT_USER' in req.perm:
                 result["enable_custom"] = True
             else:
                 result["enable_custom"] = False
