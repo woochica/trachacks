@@ -4,12 +4,12 @@ from setuptools import setup, find_packages
 
 setup(  
         name='AdvancedTicketWorkflowPlugin',
-        version='0.10',
+        version='0.11',
         author = 'Eli Carter',
         author_email = 'elicarter@retracile.net',
         license='BSD',
         description = 'Advanced workflow operations Trac plugin',
-        long_description = 'Provides more advanced workflow operations',
+        long_description = 'Provides more advanced workflow operations for Trac 0.12',
         url = 'http://trac-hacks.org/wiki/AdvancedTicketWorkflowPlugin',
 
         packages = find_packages(),
