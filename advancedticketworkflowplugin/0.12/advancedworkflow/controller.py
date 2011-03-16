@@ -208,7 +208,7 @@ class TicketWorkflowOpOwnerPrevious(TicketWorkflowOpBase):
         if row:
             owner = row[0]
         else: # The owner has never changed.
-            owner = ''
+            owner = ticket['owner']
         return owner
 
 
