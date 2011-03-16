@@ -409,6 +409,10 @@ class TicketWorkflowOpXRef(TicketWorkflowOpBase):
 
             try:
                 xticket = model.Ticket(self.env, ticketnum)
+            except ValueError:
+                req.args['preview'] = True
+                add_warning(req, 'The cross-referenced ticket number "%s" was not a number' % ticketnum)
+                return {}
             except ResourceNotFound, e:
                 #put in preview mode to prevent ticket being saved
                 req.args['preview'] = True
