@@ -1,5 +1,5 @@
 from trac.core import *
-import dbhelper
+import dbhelper, trac, trac.db
 
 def tryint(val, default=0):
   if not val: return default
@@ -80,8 +80,8 @@ class CustomReportManager:
       ("INSERT INTO custom_report (id, uuid, maingroup, subgroup, version, ordering) " \
          "VALUES (%s, %s, %s, %s, %s, %s)",
        (next_id, uuid, maingroup, subgroup, version, ordering)))
-    self.log.debug("Attempting to increment sequence (only works in postgres)")
-    if type(e.get_read_db().cnx) == trac.db.postgres_backend.PostgreSQLConnection:
+    if type(self.env.get_read_db().cnx) == trac.db.postgres_backend.PostgreSQLConnection:
+      self.log.debug("Attempting to increment sequence (only works in postgres)")
       try:
         dbhelper.execute_in_nested_trans(self.env, "update_seq", ("SELECT nextval('report_id_seq');",[]));
         self.log.debug("Sequence updated");
