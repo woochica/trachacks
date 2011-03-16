@@ -9,8 +9,8 @@ jQuery(document).ready(function(){
 	    var input = jQuery('#prefs input[name=${var}]');
 	    if (input.length != 0){
 	        var html = '<select id="${var}">'
-	                      <py:for each="option in options">
-	                  +'  <option value="${option}">${option}</option>'
+	                      <py:for each="option in options" py:with="opt = option.replace('\'','\\\'')">
+	                  +'  <option value="${opt}">${opt}</option>'
 	                      </py:for>
 	                  +'</select>';
 	        input.after(html).hide();
