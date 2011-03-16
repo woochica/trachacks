@@ -4,6 +4,7 @@ workflows.
 
 import os
 import time
+from datetime import datetime
 from subprocess import call
 from genshi.builder import tag
 
@@ -12,6 +13,10 @@ from trac.ticket import model
 from trac.ticket.api import ITicketActionController
 from trac.ticket.default_workflow import ConfigurableTicketWorkflow
 from trac.ticket.model import Milestone
+from trac.ticket.notification import TicketNotifyEmail
+from trac.resource import ResourceNotFound
+from trac.util.datefmt import utc
+from trac.web.chrome import add_warning
 
 
 class TicketWorkflowOpBase(Component):
@@ -396,6 +401,32 @@ class TicketWorkflowOpXRef(TicketWorkflowOpBase):
         return (label, control, hint)
 
     def get_ticket_changes(self, req, ticket, action):
+        # WARNING: Directly modifying the ticket in this method breaks the
+        # intent of this method.  But it does accomplish the desired goal.
+        if not 'preview' in req.args:
+            id = 'action_%s_xref' % action
+            ticketnum = req.args.get(id).strip('#')
+
+            try:
+                xticket = model.Ticket(self.env, ticketnum)
+            except ResourceNotFound, e:
+                #put in preview mode to prevent ticket being saved
+                req.args['preview'] = True
+                add_warning(req, "Unable to cross-reference Ticket #%s (%s)." % (ticketnum, e.message))
+                return {}
+
+            oldcomment = req.args.get('comment')
+            actions = ConfigurableTicketWorkflow(self.env).actions
+            format_string = actions[action].get('xref_local',
+                'Ticket %s was marked as related to this ticket')
+            # Add a comment to this ticket to indicate that the "remote" ticket is
+            # related to it.  (But only if <action>.xref_local was set in the
+            # config.)
+            if format_string:
+                comment = format_string % ('#%s' % ticketnum)
+                req.args['comment'] = "%s%s%s" % \
+                    (comment, oldcomment and "[[BR]]" or "", oldcomment or "")
+
         """Returns no changes."""
         return {}
 
@@ -412,24 +443,20 @@ class TicketWorkflowOpXRef(TicketWorkflowOpBase):
         format_string = actions[action].get('xref',
                                         'Ticket %s is related to this ticket')
         comment = format_string % ('#%s' % ticket.id)
-        # FIXME: This assumes the referenced ticket exists.
+        # FIXME: we need a cnum to avoid messing up 
         xticket = model.Ticket(self.env, ticketnum)
         # FIXME: We _assume_ we have sufficient permissions to comment on the
         # other ticket.
-        xticket.save_changes(author, comment)
+        now = datetime.now(utc)
+        xticket.save_changes(author, comment, now)
 
-        # Add a comment to this ticket to indicate that the "remote" ticket is
-        # related to it.  (But only if <action>.xref_local was set in the
-        # config.)
-        format_string = actions[action].get('xref_local',
-            'Ticket %s was marked as related to this ticket')
-        if format_string:
-            comment = format_string % ('#%s' % ticketnum)
-            time.sleep(1) # FIXME: Hack around IntegrityError
-            # HACK: Grab a new ticket object to avoid getting
-            # "OperationalError: no such column: new"
-            xticket = model.Ticket(self.env, ticket.id)
-            xticket.save_changes(author, comment)
+        #Send notification on the other ticket
+        try:
+            tn = TicketNotifyEmail(self.env)
+            tn.notify(xticket, newticket=False, modtime=now)
+        except Exception, e:
+            self.log.exception("Failure sending notification on change to "
+                               "ticket #%s: %s" % (ticketnum, e))
 
 
 class TicketWorkflowOpResetMilestone(TicketWorkflowOpBase):
