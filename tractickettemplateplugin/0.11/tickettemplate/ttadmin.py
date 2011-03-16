@@ -33,6 +33,7 @@ from genshi.filters.transform import Transformer
 
 from pkg_resources import resource_filename
 
+import sys
 import os
 import pickle
 import inspect
@@ -40,10 +41,10 @@ import time
 import textwrap
 import urllib
 
-try: 
-    import json as simplejson 
-except ImportError: 
-    import simplejson 
+if sys.version_info[0] == 2 and sys.version_info[1] > 5:
+    import json
+else:
+    import simplejson as json
 
 from tickettemplate.model import schema, schema_version, TT_Template
 
@@ -256,7 +257,7 @@ class TicketTemplateModule(Component):
                 result["enable_custom"] = False
             if req.args.has_key("warning"):
                 result["warning"] = "1"
-            jsonstr = simplejson.dumps(result)
+            jsonstr = json.dumps(result)
             self._sendResponse(req, jsonstr)
 
         # tt_custom save
@@ -266,7 +267,7 @@ class TicketTemplateModule(Component):
             result["status"] = "1"
             result["tt_name"] = tt_name
             result["new_template"] = custom_template
-            jsonstr = simplejson.dumps(result)
+            jsonstr = json.dumps(result)
             self._sendResponse(req, jsonstr)
 
         # tt_custom delete
@@ -275,7 +276,7 @@ class TicketTemplateModule(Component):
             result = {}
             result["status"] = "1"
             result["tt_name"] = tt_name
-            jsonstr = simplejson.dumps(result)
+            jsonstr = json.dumps(result)
             self._sendResponse(req, jsonstr)
 
         elif req.path_info.startswith('/tt/edit_buffer_save'):
@@ -284,7 +285,7 @@ class TicketTemplateModule(Component):
             result["status"] = "1"
             result["tt_name"] = tt_name
             result["new_template"] = custom_template
-            jsonstr = simplejson.dumps(result)
+            jsonstr = json.dumps(result)
             self._sendResponse(req, jsonstr)
         elif req.path_info.startswith('/tt/tt_newticket.js'):
             filename = resource_filename(__name__, 'templates/tt_newticket.js')
@@ -321,7 +322,7 @@ class TicketTemplateModule(Component):
         """ delete custom template
         """
         jsonstr = urllib.unquote(req.read())
-        custom_data = simplejson.loads(jsonstr)
+        custom_data = json.loads(jsonstr)
         tt_name = custom_data.get("tt_name")
         if not tt_name:
             return
@@ -340,7 +341,7 @@ class TicketTemplateModule(Component):
         """ save custom template
         """
         jsonstr = urllib.unquote(req.read())
-        custom_data = simplejson.loads(jsonstr)
+        custom_data = json.loads(jsonstr)
         tt_name = custom_data.get("tt_name")
         custom_template = custom_data.get("custom_template")
         if not tt_name or not custom_template:
