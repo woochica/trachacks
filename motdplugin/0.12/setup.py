@@ -8,7 +8,7 @@ setup(
     version = '0.1',
     packages = ['tracmotd'],
     package_data = {
-      'tracmotd': [ 'htdocs/*.css', 'htdocs/*.js' ]
+      'tracmotd': [ 'htdocs/css/*.css', 'htdocs/js/*.js', 'templates/*.html' ]
     },
     author = 'Christian Masopust',
     author_email = 'christian.masopust@chello.at',
@@ -18,6 +18,7 @@ setup(
     zip_safe = False,
     keywords = 'trac plugin motd',
     classifiers = ['Framework :: Trac'],
-    entry_points = {'trac.plugins': ['tracmotd.motd = tracmotd.motd']}
+    entry_points = {'trac.plugins': ['tracmotd.motd = tracmotd.motd',
+                                     'tracmotd.admin = tracmotd.admin']}
 )
 

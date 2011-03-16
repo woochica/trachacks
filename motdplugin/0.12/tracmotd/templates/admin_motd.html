@@ -1,0 +1,53 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	py:strip="">
+
+<xi:include href="admin.html" />
+
+<head>
+  <title>MessageOfTheDay Properties</title>
+</head>
+<body>
+  <h2>Properties for MOTD display</h2>
+  <form method="post">
+    <fieldset>
+      <legend>Global settings for MOTD</legend>
+      <table>
+        <tr>
+          <td>Message file:</td>
+          <td><input type="text" value="${message_file}" name="message_file" size="80"/></td>
+        </tr>
+        <tr>
+          <td>Message directory:</td>
+          <td><input type="text" value="${message_dir}" name="message_dir" size="80"/></td>
+        </tr>
+        <!-- tr>
+          <td>Date format:</td>
+          <td><input type="text" value="${date_format}" name="date_format" size="80"/></td>
+        </tri -->
+      </table>
+      <br/>
+      <input type="submit" name="save" value="Save configuration" />
+    </fieldset>
+    <fieldset>
+      <legend>Settings for MOTD frame</legend>
+      <table>
+        <tr>
+          <td>Frame width:</td>
+          <td><input type="text" value="${frame_width}" name="frame_width" size="20"/></td>
+          <td>(between 400 and 900 pixels)</td>
+        </tr>
+        <tr>
+          <td>Frame height:</td>
+          <td><input type="text" value="${frame_height}" name="frame_height" size="20"/></td>
+          <td>(between 300 and 800 pixels)</td>
+        </tr>
+      </table>
+      <br/>
+      <input type="submit" name="save" value="Save configuration" />
+    </fieldset>
+  </form>
+</body>
+
+</html>
