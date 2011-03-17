@@ -17,6 +17,7 @@ from trac.perm import IPermissionRequestor
 from trac.env import open_environment
 from trac.util import Markup
 from trac.util.datefmt import to_datetime
+from trac.util.text import to_unicode
 
 import re
 import posixpath
@@ -160,7 +161,7 @@ class SearchAllPlugin(Component):
                     except Exception, ex:
                         results += [(req.href('search', **req.args), 
                             "<strong>ERROR</strong> in search filter <em>%s</em>" % filter,
-                            to_datetime(None), "none", "Exception: %s" % str(ex)),]
+                            to_datetime(None), "none", "Exception: %s" % to_unicode(ex)),]
             
             req.href = orig_href
             
