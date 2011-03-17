@@ -3,13 +3,13 @@ from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
 from trac.util.text import to_unicode
 import sys, StringIO, re, traceback, cgi, time, fnmatch
-from codecs import getencoder
 from iface import TracFormDBUser, TracPasswordStoreUser
 from environment import TracFormEnvironment
 from errors import TracFormError, \
     TracFormTooManyValuesError, \
     TracFormNoOperationError, \
     TracFormNoCommandError
+from util import xml_escape
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
 argstrRE = re.compile('%(.*?)%')
@@ -21,11 +21,6 @@ kwtrans = {
     'class'     : '_class',
     'id'        : '_id',
     }
-
-def xml_encode(text):
-    enc = getencoder('us-ascii')
-    return enc(to_unicode(text), 'xmlcharrefreplace')[0]
-
 
 class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
     """
@@ -164,7 +159,7 @@ class TracFormProcessor(object):
                 yield '<INPUT class="buttons" type="submit"'
                 if self.submit_name:
                     yield ' name=%r' % str(self.submit_name)
-                yield ' value=%r' % xml_encode(self.submit_label)
+                yield ' value=%r' % xml_escape(self.submit_label)
                 yield '>'
             if self.keep_history:
                 yield '<INPUT type="hidden"'
@@ -376,8 +371,8 @@ class TracFormProcessor(object):
                     return self.wiki(str(fn(*args)))
                 else:
                     self.formatter.env.log.debug(
-                        'TracForms value: ' + xml_encode(fn(*args, **kw)))
-                    return xml_encode(fn(*args, **kw))
+                        'TracForms value: ' + xml_escape(fn(*args, **kw)))
+                    return xml_escape(fn(*args, **kw))
             except TracFormError, e:
                 return '<PRE>' + str(e) + '</PRE>'
             except Exception, e:
