@@ -51,6 +51,7 @@ class Launcher(Daemon):
         # Step 2. Starting up the instance
         self.log.debug('Starting up the instance..')
         self.progress.start(1)
+        time.sleep(2.0) # instance can be a tad cranky when it launches
         self.cloudapi.wait_until_running(instance,timeout=600)
         if instance.state != 'running':
             msg = "Instance %s was launched" % instance.id + \
@@ -74,7 +75,7 @@ class Launcher(Daemon):
         self.log.debug('Bootstrapping the instance..')
         self.progress.start(2)
         public_hostname = instance.public_dns_name
-        node = self.chefapi.bootstrap(id, public_hostname, timeout=600)
+        node = self.chefapi.bootstrap(id, public_hostname, timeout=480)
         if node is None:
             msg = "Instance %s is running" % instance.id + \
                   " but not bootstrapped. Login to" + \

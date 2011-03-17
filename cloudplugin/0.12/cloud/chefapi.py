@@ -126,6 +126,7 @@ class ChefApi(object):
             "Failed to authenticate",
         ]
         
+        attempt = 1
         timer = Timer(timeout)
         while timer.running:
             self.log.debug('Bootstrapping %s with command: %s' % (id,cmd))
@@ -137,7 +138,11 @@ class ChefApi(object):
                 if error in out:
                     self.log.info('Retrying due to transient error %s' % error)
                     break
-            else: # no error found ..
+            else: # no transient error found ..
+                # .. but check for chef error
+                if 'ERROR: Exception handlers complete' in out and attempt == 1:
+                    attempt += 1
+                    continue # try just one more time
                 break # .. so break out of while loop
         else:
             # timer ran out after the last (possibly only) bootstrap attempt
