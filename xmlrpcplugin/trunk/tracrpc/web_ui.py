@@ -204,4 +204,5 @@ class RPCWeb(Component):
     def get_navigation_items(self, req):
         if req.perm.has_permission('XML_RPC'):
             yield ('metanav', 'rpc',
-                   tag.a('RPC API', href=req.href.rpc(), accesskey=1))
+                   tag.a('API', href=req.href.rpc(), accesskey=1))
+
