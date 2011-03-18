@@ -9,8 +9,9 @@ class DynamicVariablesModule(Component):
     
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('dynvars', resource_filename(__name__, 'htdocs'))]
+#        from pkg_resources import resource_filename
+#        return [('dynvars', resource_filename(__name__, 'htdocs'))]
+        return []
     
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
