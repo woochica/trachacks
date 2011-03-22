@@ -6,7 +6,7 @@ $(document).ready(function(){
   if ($('#comment').length == 0) return;
   var tbl, hours, colClass, tr, replacement;
   tbl = $('<table style="border:1px solid #D7D7D7;" border="0" cellpadding="3" cellspacing="0"><tbody><tr></tr></tbody></table>');
-  $('#comment').parent().append(tbl);
+  $('#comment').parent().parent().after(tbl);
   hours = $('#field-hours');
   colClass = hours.parent().attr("class");
   tr = hours.parent().parent();
