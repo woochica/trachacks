@@ -127,7 +127,7 @@ var change = function(changes, cells){
                 var cell = jQuery(this).find('td:first'); // use 1st cell of row
                 if (cell.text().replace(/[^\d]/g,'') != ''){
                     var id = cell.siblings('.ticket').text().replace(/[^\d]/g,'');
-                    changes['id'+id] = cell.attr('class'); // empty position
+                    changes['id'+id] = cell.attr('class').replace(/ /g,'').toLowerCase(); // empty position
                     len += 1;
                     
                     // clear the cell's position

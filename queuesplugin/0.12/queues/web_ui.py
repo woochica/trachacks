@@ -149,7 +149,7 @@ class QueuesAjaxModule(Component):
             if not id:
                 continue
             
-            # get posiiton field name and value
+            # get position field name and value
             match = keyval_re.search(val)
             if not match:
                 continue
