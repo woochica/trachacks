@@ -63,7 +63,7 @@ jQuery(document).ready(function(){
     var currentTab = "gridTab";
     
     tabsElem.tabs("select", 0);
-    tabsElem.bind("tabsselect", function(event, ui) {
+    $("#workflowTabs").bind("tabsselect", function(event, ui) {
         currentTab = ui.panel.id;
         
         if (!ui.panel.id) {
@@ -85,8 +85,11 @@ jQuery(document).ready(function(){
         try
         {
             if (currentTab == "textTab") {
-                context.updateModelByText("#workflowText");
-                context.refreshGrid();            
+            	currentTab = tabsElem.tabs().data('selected.tabs')
+            	if (currentTab == "1") { 
+                	context.updateModelByText("#workflowText");
+                	context.refreshGrid();
+                }
             }
             
             context.updateModelByGrid("#workflowGrid");
