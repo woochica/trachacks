@@ -116,7 +116,7 @@ class WorkflowEditorAdmin(Component):
         # read defalut config
         template = Chrome(self.env).load_template(init_file, 'text')
         stream = template.generate()
-        default_config = stream.render('text')
+        default_config = stream.render('text', encoding=None)
         
         page_param['workflow_default_config'] = default_config
 
