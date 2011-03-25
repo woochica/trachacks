@@ -60,7 +60,7 @@ copyrule.apply = function(input, spec){
         if (fld.get(0).tagName.toLowerCase() == 'select'){
             var opts = new Array();
             fld.find('option').each(function(i,e){
-                opts.push($(e).text());
+                opts.push(jQuery(e).text());
             });
             if (jQuery.inArray(input.val(), opts) == -1){
                 doit = false;
@@ -88,24 +88,41 @@ defaultrule.apply = function(input, spec){
     if (!fld.hasClass('defaulted')){
         fld.addClass('defaulted');
         var doit = true;
+        var value = spec.value;
         
         // ensure default value is in list of select options
         if (fld.get(0).tagName.toLowerCase() == 'select'){
             var opts = new Array();
             fld.find('option').each(function(i,e){
-                opts.push($(e).text());
+                opts.push(jQuery(e).text());
             });
-            if (jQuery.inArray(spec.value, opts) == -1)
+            if (jQuery.inArray(value, opts) == -1)
                 doit = false;
         }
             
-        // ensure an 'empty' option value for existing tickets
+        // ensure an 'empty' option value for existing tickets (unless appending)
         if (fld.val().length > 1 &&
-           window.location.pathname.indexOf('/ticket') > -1)
-            doit = false;
+           window.location.pathname.indexOf('/ticket') > -1){
+            doit = spec.append.toLowerCase() == 'true';
+            if (doit){
+                // append preference to text field's value
+                var values = new Array();
+                jQuery(fld.val().split(',')).each(function(i,v){
+                    values.push(jQuery.trim(v));
+                });
+                // the preference value could be comma-delimited list itself
+                jQuery(value.split(',')).each(function(i,v){
+                    v = jQuery.trim(v);
+                    if (jQuery.inArray(v, values) == -1){
+                        values.push(v);
+                        value = values.join(', ');
+                    }
+                });
+            }
+        }
         
         if (doit)
-            fld.val(spec.value).change(); // cascade rules
+            fld.val(value).change(); // cascade rules
     }
 };
 

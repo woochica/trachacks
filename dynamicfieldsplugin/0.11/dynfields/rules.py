@@ -117,7 +117,7 @@ class CopyRule(Component, Rule):
       
     In this example, if the owner value changes, then the captain field's
     value gets set to that value if the captain field is empty and visible
-    (the default).  If overwrite is true, then the captain field's value
+    (the default).  If 'overwrite' is true, then the captain field's value
     will get over-written even if it already has a value (and even if it's
     hidden).
     """
@@ -143,7 +143,12 @@ class DefaultValueRule(Component, Rule):
     Example trac.ini specs:
     
       [ticket-custom]
-      type.default_value = (pref)
+      cc.default_value = (pref)
+      cc.append = true
+      
+    If the field is a non-empty text field and 'append' is true, then the
+    field is presumed to be a comma-delimited list and the preference value
+    is appended if not already present.
     """
     
     implements(IRule)
@@ -154,7 +159,9 @@ class DefaultValueRule(Component, Rule):
         return None
         
     def update_spec(self, req, key, opts, spec):
-        pass
+        spec['op'] = 'default'
+        spec['append'] = opts.get(spec['target']) == 'select' and 'false' or \
+                         opts.get(spec['target']+'.append','false')
     
     def update_pref(self, req, trigger, target, key, opts, pref):
         # "Default trigger to <select options>"
