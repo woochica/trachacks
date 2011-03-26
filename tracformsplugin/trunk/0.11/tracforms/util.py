@@ -28,7 +28,7 @@ def xml_unescape(text):
 def _unescape_charref(ref):
     name = ref[2:-1]
     base = 10
-    # DEVEL: gain 20 % performance by omitting hex references (not used here)
+    # DEVEL: gain 20 % performance by omitting hex references
     if name.startswith("x"):
         name = name[1:]
         base = 16
@@ -37,8 +37,7 @@ def _unescape_charref(ref):
 def _replace_entities(match):
     ent = match.group()
     if ent[1] == "#":
-        #return _unescape_charref(ent)
-        return unichr(int(ent[2:-1], 10))
+        return _unescape_charref(ent)
     repl = htmlentitydefs.name2codepoint.get(ent[1:-1])
     if repl is not None:
         repl = unichr(repl)
@@ -51,7 +50,7 @@ class UnescapeTests(unittest.TestCase):
 
     def test_unescape_charref(self):
         self.assertEqual(unescape_charref(u"&#38;"), u"&")
-#        self.assertEqual(unescape_charref(u"&#x2014;"), u"\N{EM DASH}")
+        self.assertEqual(unescape_charref(u"&#x2014;"), u"\N{EM DASH}")
         self.assertEqual(unescape_charref(u"—"), u"\N{EM DASH}")
 
     def test_unescape(self):

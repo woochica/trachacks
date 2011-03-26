@@ -31,7 +31,10 @@ and provides recursive context for pseudo-variables.
 '5\t7'
 """
 
-import fnmatch, sys, re, cgi
+import fnmatch, sys, re
+
+from compat import json
+
 
 class TracFormEnvironment(dict):
     def __init__(self, base=None, prefixes=()):
@@ -96,7 +99,7 @@ class TracFormEnvironment(dict):
         return self.get(search, singleton=False, all=all)
 
     def addform(self, data):
-        for name, value in cgi.parse_qs(state or '').iteritems():
+        for name, value in json.loads(state or '').iteritems():
             keys = [prefix + ':' + name for prefix in self.prefixes]
             for key in keys:
                 self[key] = tuple(value)

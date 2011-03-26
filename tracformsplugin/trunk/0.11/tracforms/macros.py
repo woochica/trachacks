@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 
+import StringIO, re, traceback, time, fnmatch
+
+from trac.util.datefmt import format_datetime
+from trac.util.text import to_unicode
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
-from trac.util.text import to_unicode
-import sys, StringIO, re, traceback, cgi, time, fnmatch
-from iface import TracFormDBUser, TracPasswordStoreUser
+
+from compat import json
 from environment import TracFormEnvironment
 from errors import TracFormError, \
     TracFormTooManyValuesError, \
     TracFormNoOperationError, \
     TracFormNoCommandError
+from iface import TracFormDBUser, TracPasswordStoreUser
 from util import xml_escape
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
@@ -23,6 +27,7 @@ kwtrans = {
     'id'        : '_id',
     }
 
+
 class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
     """
     Docs for TracForm macro...
@@ -31,6 +36,7 @@ class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
     def expand_macro(self, formatter, name, args):
         processor = TracFormProcessor(self, formatter, name, args)
         return processor.execute()
+
 
 class TracFormProcessor(object):
     # Default state (beyond what is set in expand_macro).
@@ -106,12 +112,11 @@ class TracFormProcessor(object):
         if self.subcontext:
             self.context += ':' + self.subcontext
         state = self.macro.get_tracform_state(self.context)
-        self.formatter.env.log.debug('TracForms state = ' + str(state))
-        #self.state = cgi.parse_qs(state or '')
-        for name, value in cgi.parse_qs(state or '').iteritems():
+        self.formatter.env.log.debug('TracForms state = ' + state)
+        for name, value in json.loads(state or '').iteritems():
             self.env[self.context + ':' + name] = value
             self.formatter.env.log.debug(
-                self.context + ':' + str(name) + ' = ' + str(value))
+                self.context + ':' + name + ' = ' + to_unicode(value))
             if self.subcontext is not None:
                 self.env[self.subcontext + ':' + name] = value
         self.sorted_env = None
@@ -295,7 +300,7 @@ class TracFormProcessor(object):
             page = self.page
         context = page + ':' + subcontext
         state = self.macro.get_tracform_state(context)
-        for name, value in cgi.parse_qs(state or '').iteritems():
+        for name, value in json.loads(state or '').iteritems():
             self.env[context + ':' + name] = value
             if self.subcontext is not None:
                 self.env[self.subcontext + ':' + name] = value
@@ -372,8 +377,8 @@ class TracFormProcessor(object):
                     return self.wiki(str(fn(*args)))
                 else:
                     self.formatter.env.log.debug(
-                        'TracForms value: ' + xml_escape(fn(*args, **kw)))
-                    return xml_escape(fn(*args, **kw))
+                        'TracForms value: ' + to_unicode(fn(*args, **kw)))
+                    return to_unicode(fn(*args, **kw))
             except TracFormError, e:
                 return '<PRE>' + str(e) + '</PRE>'
             except Exception, e:
@@ -401,7 +406,8 @@ class TracFormProcessor(object):
         return ("<INPUT name='%s'" % field +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
-                (current is not None and (" value=%r" % str(current)) or '') +
+                (current is not None and (" value=%r" % xml_escape(
+                                                     current)) or '') +
                 '>')
 
     def op_checkbox(self, field, value=None, _id=None, _class=None):
@@ -467,7 +473,7 @@ class TracFormProcessor(object):
     def op_when(self, field, format='%m/%d/%Y %H:%M:%S'):
         when = self.macro.get_tracform_fieldinfo(self.context, field)[1]
         if when is not None:
-            when = time.strftime(format, time.localtime(when))
+            when = format_datetime(when, format=format)
         return when
 
     def op_id(self):

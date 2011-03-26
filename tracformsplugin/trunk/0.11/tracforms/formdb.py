@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import unittest, time
+
 from trac.core import Component, implements
-from tracdb import DBComponent
+
+from compat import json, parse_qs
 from iface import TracFormDBObserver
-import unittest, time, cgi
+from tracdb import DBComponent
+
 
 class TracFormDBComponent(DBComponent):
     applySchema = True
@@ -16,18 +20,18 @@ class TracFormDBComponent(DBComponent):
     ###########################################################################
     def get_tracform_meta(self, src, cursor=None):
         """
-        Returns the meta information about a form based on a form_id (int or
+        Returns the meta information about a form based on a form id (int or
         long) or context (string or unicode).
         """
         cursor = self.get_cursor(cursor)
         sql = """
-            SELECT  tracform_id, 
-                    context, 
-                    updater, 
-                    updated_on,
+            SELECT  id,
+                    context,
+                    author,
+                    time,
                     keep_history,
                     track_fields
-            FROM    tracform_forms
+            FROM    forms
             """
         if isinstance(src, basestring):
             sql += """
@@ -35,7 +39,7 @@ class TracFormDBComponent(DBComponent):
                 """
         else:
             sql += """
-                WHERE   tracform_id = %s
+                WHERE   id = %s
                 """
         form_id = None
         context = None
@@ -43,14 +47,14 @@ class TracFormDBComponent(DBComponent):
             context = src
         else:
             form_id = src
-        return (cursor(sql, src).firstrow or 
+        return (cursor(sql, src).firstrow or
                 (form_id, context, None, None, None, None))
 
     def get_tracform_state(self, src, cursor=None):
         cursor = self.get_cursor(cursor)
         sql = """
             SELECT  state
-            FROM    tracform_forms
+            FROM    forms
             """
         if isinstance(src, basestring):
             sql += """
@@ -58,11 +62,11 @@ class TracFormDBComponent(DBComponent):
                 """
         else:
             sql += """
-                WHERE   tracform_id = %s
+                WHERE   id = %s
                 """
         return cursor(sql, src).value
 
-    def save_tracform(self, src, state, updater,
+    def save_tracform(self, src, state, author,
                         base_version=None, keep_history=False,
                         track_fields=False, cursor=None):
         cursor = self.get_cursor(cursor)
@@ -84,31 +88,30 @@ class TracFormDBComponent(DBComponent):
                 updated_on = int(time.time())
                 if form_id is None:
                     form_id = cursor("""
-                        INSERT INTO tracform_forms
-                            (context, state, updater, updated_on)
+                        INSERT INTO forms
+                            (context, state, author, time)
                             VALUES (%s, %s, %s, %s)
-                        """, context, state, updater, updated_on) \
-                        .last_id('tracform_forms', 'tracform_id')
+                        """, context, state, author, updated_on) \
+                        .last_id('forms', 'id')
                 else:
                     cursor("""
-                        UPDATE  tracform_forms
+                        UPDATE  forms
                         SET     state = %s,
-                                updater = %s,
-                                updated_on = %s
-                        WHERE   tracform_id = %s
-                        """, state, updater, updated_on, form_id)
+                                author = %s,
+                                time = %s
+                        WHERE   id = %s
+                        """, state, author, updated_on, form_id)
                     if keep_history:
                         cursor("""
-                            INSERT INTO tracform_history
-                                    (tracform_id, updated_on, 
-                                    updater, old_states)
+                            INSERT INTO forms_history
+                                    (id, time, author, old_state)
                                     VALUES (%s, %s, %s, %s)
                             """, form_id, last_updated_on,
                                 last_updater, old_state)
                 if track_fields:
                     # Break down old version and new version.
-                    old_fields = cgi.parse_qs(old_state or '')
-                    new_fields = cgi.parse_qs(state or '')
+                    old_fields = json.loads(old_state or '')
+                    new_fields = json.loads(state or '')
                     updated_fields = []
                     for field, old_value in old_fields.iteritems():
                         if new_fields.get(field) != old_value:
@@ -120,28 +123,27 @@ class TracFormDBComponent(DBComponent):
                     for field in updated_fields:
                         if cursor("""
                             SELECT  COUNT(*)
-                            FROM    tracform_fields
-                            WHERE   tracform_id = %s
+                            FROM    forms_fields
+                            WHERE   id = %s
                                 AND field = %s""", form_id, field).value:
 
                             cursor("""
-                                UPDATE  tracform_fields
-                                    SET updater = %s,
-                                        updated_on = %s
-                                WHERE   tracform_id = %s
+                                UPDATE  forms_fields
+                                    SET author = %s,
+                                        time = %s
+                                WHERE   id = %s
                                     AND field = %s
-                                """, updater, updated_on, form_id, field)
+                                """, author, updated_on, form_id, field)
                         else:
                             cursor("""
-                                INSERT INTO tracform_fields
-                                        (tracform_id, field, 
-                                        updater, updated_on)
+                                INSERT INTO forms_fields
+                                        (id, field, author, time)
                                 VALUES  (%s, %s, %s, %s)
-                                """, form_id, field, updater, updated_on)
+                                """, form_id, field, author, updated_on)
             else:
                 updated_on = last_updated_on
-                updater = last_updater
-            return ((form_id, context, state, updater, updated_on),
+                author = last_updater
+            return ((form_id, context, state, author, updated_on),
                     (form_id, context, old_state,
                     last_updater, last_updated_on))
         else:
@@ -151,28 +153,28 @@ class TracFormDBComponent(DBComponent):
         cursor = self.get_cursor(cursor)
         form_id = self.get_tracform_meta(src, cursor=cursor)[0]
         return cursor("""
-            SELECT  updater, updated_on, old_states
-            FROM    tracform_history
-            WHERE   tracform_id = %s
-            ORDER   BY updated_on DESC
+            SELECT  author, time, old_state
+            FROM    forms_history
+            WHERE   id = %s
+            ORDER   BY time DESC
             """, form_id)
 
     def get_tracform_fields(self, src, cursor=None):
         cursor = self.get_cursor(cursor)
         form_id = self.get_tracform_meta(src, cursor=cursor)[0]
         return cursor("""
-            SELECT  field, updater, updated_on
-            FROM    tracform_fields
-            WHERE   tracform_id = %s
+            SELECT  field, author, time
+            FROM    forms_fields
+            WHERE   id = %s
             """, form_id)
 
     def get_tracform_fieldinfo(self, src, field, cursor=None):
         cursor = self.get_cursor(cursor)
         form_id = self.get_tracform_meta(src, cursor=cursor)[0]
         return cursor("""
-            SELECT  updater, updated_on
-            FROM    tracform_fields
-            WHERE   tracform_id = %s
+            SELECT  author, time
+            FROM    forms_fields
+            WHERE   id = %s
                 AND field = %s
             """, form_id, field).firstrow or (None, None)
 
@@ -314,6 +316,193 @@ class TracFormDBComponent(DBComponent):
             CREATE UNIQUE INDEX tracform_fields_tracform_id_field
                 ON tracform_fields(tracform_id, field)
             """)
+
+    def db13(self, cursor):
+        """Convert state serialization type to be more readable and
+        migrate to slicker named major tables and associated indexes.
+        """ 
+        cursor("""
+            CREATE TABLE forms(
+                id              INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                context         TEXT NOT NULL,
+                state           TEXT NOT NULL,
+                author          TEXT NOT NULL,
+                time            INTEGER NOT NULL,
+                keep_history    INTEGER,
+                track_fields    INTEGER
+                )
+            """,
+            mysql = """
+            CREATE TABLE forms(
+                id              INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
+                context         VARCHAR(255) NOT NULL,
+                state           TEXT NOT NULL,
+                author          VARCHAR(127) NOT NULL,
+                time            INTEGER NOT NULL,
+                keep_history    INTEGER,
+                track_fields    INTEGER,
+                PRIMARY KEY     (id)
+                )
+            """)
+
+        forms_columns = ('tracform_id', 'context', 'state', 'updater',
+                         'updated_on', 'keep_history', 'track_fields')
+        forms_columns_new = ('id', 'context', 'state', 'author',
+                         'time', 'keep_history', 'track_fields')
+
+        sql = 'SELECT ' + ', '.join(forms_columns) + ' FROM tracform_forms'
+        cursor.execute(sql)
+        forms = []
+        for row in cursor:
+            row = dict(zip(forms_columns_new, row))
+            forms.append(row)
+
+        # convert current states serialization
+        for form in forms:
+            state_new = _url_to_json(form.get('state'))
+            if state_new == '{}':
+                form['state'] = form.get('state')
+            else:
+                form['state'] = state_new
+
+        for form in forms:
+            fields = form.keys()
+            values = form.values()
+            sql = "INSERT INTO forms (" + ", ".join(fields) + \
+              ") VALUES (" + ", ".join(["%s" for I in xrange(len(fields))]) \
+              + ")"
+            cursor.execute(sql, values[0], values[1], values[2],
+                           values[3], values[4], values[5], values[6])
+
+        cursor("""
+            DROP INDEX tracform_forms_context
+            """, mysql="""
+            ALTER TABLE tracform_forms DROP INDEX tracform_forms_context
+            """)
+        # append common suffix for Trac db indexes to new TracForm indexes
+        cursor("""
+            CREATE UNIQUE INDEX forms_context_idx
+                ON forms(context)
+            """)
+        cursor("""
+            DROP INDEX tracform_forms_updater
+            """, mysql="""
+            ALTER TABLE tracform_forms DROP INDEX tracform_forms_updater
+            """)
+        cursor("""
+            CREATE INDEX forms_author_idx
+                ON forms(author)
+            """)
+        # remove misspelled index name
+        cursor("""
+            DROP INDEX tracform_froms_updated_on
+            """, mysql="""
+            ALTER TABLE tracform_forms DROP INDEX tracform_froms_updated_on
+            """)
+        cursor("""
+            CREATE INDEX forms_time_idx
+                ON forms(time DESC)
+            """)
+        cursor("""
+            DROP TABLE tracform_forms
+            """)
+        # migrate history table
+        cursor("""
+            CREATE TABLE forms_history
+                AS SELECT
+                     tracform_id 'id', updated_on 'time',
+                     updater 'author', old_states 'old_state'
+                FROM tracform_history
+            """)
+
+        sql = 'SELECT id,time,old_state FROM forms_history'
+        cursor.execute(sql)
+        history = []
+        for row in cursor:
+            row = dict(zip(('id', 'time', 'old_state'), row))
+            history.append(row)
+
+        # convert historic states serialization
+        for row in history:
+            old_state_new = _url_to_json(row.get('old_state'))
+            if old_state_new == '{}':
+                row['old_state'] = row.get('old_state')
+            else:
+                row['old_state'] = old_state_new
+
+        for row in history:
+            sql = "UPDATE forms_history SET old_state=%s " + \
+              "WHERE id=%s AND time=%s"
+            cursor.execute(sql, row['old_state'], row['id'], row['time'])
+
+        cursor("""
+            DROP INDEX tracform_history_tracform_id
+            """, mysql="""
+            ALTER TABLE tracform_forms DROP INDEX tracform_history_tracform_id
+            """)
+        cursor("""
+            CREATE INDEX forms_history_id_idx
+                ON forms_history(id)
+            """)
+        cursor("""
+            DROP INDEX tracform_history_updated_on
+            """, mysql="""
+            ALTER TABLE tracform_forms DROP INDEX tracform_history_updated_on
+            """)
+        cursor("""
+            CREATE INDEX forms_history_time_idx
+                ON forms_history(time DESC)
+            """)
+        cursor("""
+            DROP INDEX tracform_history_updater
+            """, mysql="""
+            ALTER TABLE tracform_forms DROP INDEX tracform_history_updater
+            """)
+        cursor("""
+            CREATE INDEX forms_history_author_idx
+                ON forms_history(author)
+            """)
+        cursor("""
+            DROP TABLE tracform_history
+            """)
+        # migrate fields table
+        cursor("""
+            CREATE TABLE forms_fields
+                AS SELECT
+                     tracform_id 'id', field, 
+                     updater 'author', updated_on 'time'
+                FROM tracform_fields
+            """)
+        cursor("""
+            DROP INDEX tracform_fields_tracform_id_field
+            """, mysql="""
+            ALTER TABLE tracform_forms
+                DROP INDEX tracform_fields_tracform_id_field
+            """)
+        cursor("""
+            CREATE UNIQUE INDEX forms_fields_id_field_idx
+                ON forms_fields(id, field)
+            """)
+        cursor("""
+            DROP TABLE tracform_fields
+            """)
+        # remove old TracForm version entry
+        cursor("""
+            DELETE FROM system WHERE name='TracFormDBComponent:version';
+            """)
+
+
+def _url_to_json(state_url):
+    """Convert urlencoded state serial to JSON state serial."""
+    state = parse_qs(state_url)
+    for name, value in state.iteritems():
+        if isinstance(value, (list, tuple)):
+            for item in value:
+                state[name] = xml_unescape(item)
+        else:
+            state[name] = xml_unescape(value)
+    return json.dumps(state, separators=(',', ':'))
+
 
 if __name__ == '__main__':
     from trac.test import EnvironmentStub

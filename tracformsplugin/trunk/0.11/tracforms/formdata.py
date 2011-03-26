@@ -3,9 +3,10 @@
 from trac.core import Component, implements
 from trac.web import IRequestHandler
 from trac.web.api import HTTPBadRequest, HTTPUnauthorized
+
+from compat import json
 from iface import TracFormDBUser, TracPasswordStoreUser
-from macros import xml_escape
-import urllib
+
 
 class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
     implements(IRequestHandler)
@@ -26,17 +27,8 @@ class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
             if context is None:
                 raise HTTPBadRequest('__context__ is required')
             who = req.authname
-            result = []
-            for name, value in args.iteritems():
-                name = urllib.quote(str(name))
-                if isinstance(value, (list, tuple)):
-                    for item in value:
-                        item = xml_escape(item)
-                        result.append('%s=%s' % (name, urllib.quote(item)))
-                else:
-                    value = xml_escape(value)
-                    result.append('%s=%s' % (name, urllib.quote(value)))
-            self.save_tracform(context, '&'.join(result), who, basever,
+            result = json.dumps(args, separators=(',', ':'))
+            self.save_tracform(context, result, who, basever,
                                 keep_history=keep_history,
                                 track_fields=track_fields)
             if backpath is not None:
@@ -58,3 +50,4 @@ class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
             req.send_header('Content-Length', len(str(e)))
             req.end_headers()
             req.write(str(e))
+
