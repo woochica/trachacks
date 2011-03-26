@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 class TracFormError(Exception):
     def __str__(self):

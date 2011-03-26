@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Handles the environment used by TracForm macros.  This dictionary is stackable
 and provides recursive context for pseudo-variables.

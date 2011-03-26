@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter

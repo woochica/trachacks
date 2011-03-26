@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
