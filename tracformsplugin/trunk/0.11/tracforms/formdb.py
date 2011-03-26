@@ -180,12 +180,12 @@ class TracFormDBComponent(DBComponent):
     #   Schema components
     #
     ###########################################################################
-    def dbschema_2008_06_14_0000(self, cursor):
-        """
-        This was a simple test for the schema base class.
-        """
+    #def dbschema_2008_06_14_0000(self, cursor):
+    #    """
+    #    This was a simple test for the schema base class.
+    #    """
 
-    def dbschema_2008_06_15_0000(self, cursor):
+    def db00(self, cursor):
         "Create the major tables."
         cursor("""
             CREATE TABLE tracform_forms(
@@ -222,7 +222,7 @@ class TracFormDBComponent(DBComponent):
                 );
             """)
 
-    def dbschema_2008_06_15_0001(self, cursor):
+    def db01(self, cursor):
         "Create indices for tracform_forms table."
         cursor("""
             CREATE INDEX tracform_forms_context
@@ -237,12 +237,12 @@ class TracFormDBComponent(DBComponent):
                 ON tracform_forms(updated_on)
             """)
 
-    def dbschema_2008_06_14_0002(self, cursor):
+    def db02(self, cursor):
         """
         This was a modify table, but instead removed the data altogether.
         """
 
-    def dbschema_2008_06_15_0003(self, cursor):
+    def db03(self, cursor):
         "Create indices for tracform_history table."
         cursor("""
             CREATE INDEX tracform_history_tracform_id
@@ -257,7 +257,7 @@ class TracFormDBComponent(DBComponent):
                 ON tracform_history(updater)
             """)
 
-    def dbschema_2008_06_15_0004(self, cursor):
+    def db04(self, cursor):
         "Recreating updated_on index for tracform_forms to be descending."
         cursor("""
             DROP INDEX tracform_forms_updated_on
@@ -269,14 +269,14 @@ class TracFormDBComponent(DBComponent):
                 ON tracform_forms(updated_on DESC)
             """)
 
-    def dbschema_2008_06_15_0010(self, cursor):
+    def db10(self, cursor):
         "Also maintain whether history should me maintained for form."
         cursor("""
             ALTER TABLE tracform_forms
                 ADD keep_history INTEGER
             """)
 
-    def dbschema_2008_06_15_0011(self, cursor):
+    def db11(self, cursor):
         "Make the context a unique index."
         cursor("""
             DROP INDEX tracform_forms_context
@@ -288,7 +288,7 @@ class TracFormDBComponent(DBComponent):
                 ON tracform_forms(context)
             """)
 
-    def dbschema_2008_06_15_0012(self, cursor):
+    def db12(self, cursor):
         "Track who changes individual fields"
         cursor("""
             ALTER TABLE tracform_forms

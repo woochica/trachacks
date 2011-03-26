@@ -6,6 +6,10 @@ import os, sys
 
 DEBUG_SQL = os.environ.get('DEBUG_SQL', False)
 
+def _db_to_version(name):
+    return int(name.lstrip('db'))
+
+
 class DBCursor(object):
     cursor = None
 
@@ -93,10 +97,11 @@ class DBCursor(object):
     def lastrowid(self):
         return self.cursor.lastrowid
 
- 
+
 class DBComponent(Component):
     implements(IEnvironmentSetupParticipant)
     applySchema = False
+    plugin_name = 'forms'
 
     ###########################################################################
     #
@@ -109,7 +114,7 @@ class DBComponent(Component):
     def environment_needs_upgrade(self, db):
         if not type(self).__dict__.get('applySchema', False):
             self.log.debug(
-                'Not checking schema for "%s", since applyScheme is not '
+                'Not checking schema for "%s", since applySchema is not '
                 'defined or is False.' % type(self).__name__)
             return False
         cursor = self.get_cursor(db)
@@ -127,7 +132,7 @@ class DBComponent(Component):
     def upgrade_environment(self, db):
         if not type(self).__dict__.get('applySchema', False):
             self.log.debug(
-                'Not updating schema for "%s", since applyScheme is not '
+                'Not updating schema for "%s", since applySchema is not '
                 'defined or is False.' % type(self).__name__)
             return
         self.log.debug(
@@ -152,25 +157,32 @@ class DBComponent(Component):
     ###########################################################################
     def get_installed_version(self, cursor):
         cursor = self.get_cursor(cursor)
-        return self.get_system_value(
-            cursor, type(self).__name__ + ':version', -1)
+        version = self.get_system_value(
+            cursor, self.plugin_name + '_version', -1)
+        if version is None:
+            # check for old naming schema
+            oldversion = self.get_system_value(
+                cursor, 'TracFormDBComponent:version', -1)
+            version = _db_oldversion_dict.get(oldversion)
+        if version is None:
+            return version
+        return int(version)
 
-    def get_schema_functions(self, prefix='dbschema_'):
+    def get_schema_functions(self, prefix='db'):
         fns = []
         for name in self.__dict__:
             if name.startswith(prefix):
-                fns.append((name, getattr(self, name)))
+                fns.append((_db_to_version(name), getattr(self, name)))
         for cls in type(self).__mro__:
             for name in cls.__dict__:
                 if name.startswith(prefix):
-                    fns.append((name, getattr(self, name)))
+                    fns.append((_db_to_version(name), getattr(self, name)))
         fns.sort()
         return tuple(fns)
 
     def set_installed_version(self, cursor, version):
         cursor = self.get_cursor(cursor)
-        self.set_system_value(
-            cursor, type(self).__name__ + ':version', version)
+        self.set_system_value(cursor, self.plugin_name + '_version', version)
 
     ###########################################################################
     #
@@ -201,4 +213,12 @@ class DBComponent(Component):
         if not isinstance(db_or_cursor, DBCursor):
             db_or_cursor = DBCursor(db_or_cursor, self.log)
         return db_or_cursor
+
+
+_db_oldversion_dict = {
+    'dbschema_2008_06_15_0000': 0, 'dbschema_2008_06_15_0001': 1,
+    'dbschema_2008_06_14_0002': 2, 'dbschema_2008_06_15_0003': 3,
+    'dbschema_2008_06_15_0004': 4, 'dbschema_2008_06_15_0010': 10,
+    'dbschema_2008_06_15_0011': 11, 'dbschema_2008_06_15_0012': 12,
+    }
 
