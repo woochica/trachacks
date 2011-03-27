@@ -371,8 +371,7 @@ class TracFormDBComponent(DBComponent):
             sql = "INSERT INTO forms (" + ", ".join(fields) + \
               ") VALUES (" + ", ".join(["%s" for I in xrange(len(fields))]) \
               + ")"
-            cursor.execute(sql, values[0], values[1], values[2],
-                           values[3], values[4], values[5], values[6])
+            cursor.execute(sql, *values)
 
         cursor("""
             DROP INDEX tracform_forms_context
