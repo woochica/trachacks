@@ -99,7 +99,7 @@ class TracFormEnvironment(dict):
         return self.get(search, singleton=False, all=all)
 
     def addform(self, data):
-        for name, value in json.loads(state or '').iteritems():
+        for name, value in json.loads(state or '{}').iteritems():
             keys = [prefix + ':' + name for prefix in self.prefixes]
             for key in keys:
                 self[key] = tuple(value)

@@ -112,8 +112,9 @@ class TracFormProcessor(object):
         if self.subcontext:
             self.context += ':' + self.subcontext
         state = self.macro.get_tracform_state(self.context)
-        self.formatter.env.log.debug('TracForms state = ' + state)
-        for name, value in json.loads(state or '').iteritems():
+        self.formatter.env.log.debug(
+            'TracForms state = ' + (state is not None and state or ''))
+        for name, value in json.loads(state or '{}').iteritems():
             self.env[self.context + ':' + name] = value
             self.formatter.env.log.debug(
                 self.context + ':' + name + ' = ' + to_unicode(value))
@@ -300,7 +301,7 @@ class TracFormProcessor(object):
             page = self.page
         context = page + ':' + subcontext
         state = self.macro.get_tracform_state(context)
-        for name, value in json.loads(state or '').iteritems():
+        for name, value in json.loads(state or '{}').iteritems():
             self.env[context + ':' + name] = value
             if self.subcontext is not None:
                 self.env[self.subcontext + ':' + name] = value

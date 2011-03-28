@@ -110,8 +110,8 @@ class TracFormDBComponent(DBComponent):
                                 last_updater, old_state)
                 if track_fields:
                     # Break down old version and new version.
-                    old_fields = json.loads(old_state or '')
-                    new_fields = json.loads(state or '')
+                    old_fields = json.loads(old_state or '{}')
+                    new_fields = json.loads(state or '{}')
                     updated_fields = []
                     for field, old_value in old_fields.iteritems():
                         if new_fields.get(field) != old_value:
