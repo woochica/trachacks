@@ -115,9 +115,9 @@ defaultrule.apply = function(input, spec){
                     v = jQuery.trim(v);
                     if (jQuery.inArray(v, values) == -1){
                         values.push(v);
-                        value = values.join(', ');
                     }
                 });
+                value = values.join(', ');
             }
         }
         
