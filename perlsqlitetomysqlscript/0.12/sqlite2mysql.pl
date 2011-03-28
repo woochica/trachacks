@@ -88,7 +88,7 @@ while ( my $cmd = <IN> )  {
 		$cmd =~ s/((?:node_type|change+type)) text/$1 VARCHAR(1)/g;
 		$cmd =~ s/((?:sid|path|filename)) text/$1 VARCHAR(128)/g;
 		# $cmd =~ s/((?:s?id)) text/$1 VARCHAR(256)/g;
-		verbose STDERR "creating $table with " . join(',',map { $_->{'name'} } @{$tables->{$table}->{'columns'}}) . "\n";
+		verbose  "creating $table with " . join(',',map { $_->{'name'} } @{$tables->{$table}->{'columns'}}) . "\n";
 		$dbh->do("DROP TABLE IF EXISTS  $table;") or die "can't drop $table \nERROR: " . $dbh->errstr;
 		$dbh->do($cmd) or die "can't create table $table from\n----\n$cmd\n----\nERROR: " . $dbh->errstr;
 	} 
