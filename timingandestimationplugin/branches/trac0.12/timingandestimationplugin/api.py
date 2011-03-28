@@ -71,45 +71,28 @@ class TimeTrackingSetupParticipant(Component):
     def do_db_upgrade(self):
         self.log.debug( "T&E Beginning DB Upgrade");
         if self.db_installed_version < 1:
-            print "Creating bill_date table"
-            sql = """
-            CREATE TABLE bill_date (
-            time integer,
-            set_when integer,
-            str_value text
-            );
-            """
-            dbhelper.execute_non_query(self.env,  sql)
-
-
-            print "Creating report_version table"
-            sql = """
-            CREATE TABLE report_version (
-            report integer,
-            version integer,
-            UNIQUE (report, version)
-            );
-            """
-            dbhelper.execute_non_query(self.env, sql)
-
-        if self.db_installed_version < 4:
-            print "Upgrading report_version table to v4"
-            sql ="""
-            ALTER TABLE report_version ADD COLUMN tags varchar(1024) null;
-            """
-            dbhelper.execute_non_query(self.env, sql)
+            if not dbhelper.db_table_exists(self.env, 'bill_date'):
+                print "Creating bill_date table"
+                sql = """
+                CREATE TABLE bill_date (
+                time integer,
+                set_when integer,
+                str_value text
+                );"""
+                dbhelper.execute_non_query(self.env,  sql)
 
         if self.db_installed_version < 5:
             # In this version we convert to using reportmanager.py
             # The easiest migration path is to remove all the reports!!
             # They will be added back in later but all custom reports will be lost (deleted)
-            print "Dropping report_version table"
-            sql = "DELETE FROM report " \
-                  "WHERE author=%s AND id IN (SELECT report FROM report_version)"
-            dbhelper.execute_non_query(self.env, sql, 'Timing and Estimation Plugin')
+            if dbhelper.db_table_exists(self.env, 'report_version'):
+                print "Dropping report_version table"
+                sql = "DELETE FROM report " \
+                      "WHERE author=%s AND id IN (SELECT report FROM report_version)"
+                dbhelper.execute_non_query(self.env, sql, 'Timing and Estimation Plugin')
 
-            sql = "DROP TABLE report_version"
-            dbhelper.execute_non_query(self.env, sql)
+                sql = "DROP TABLE report_version"
+                dbhelper.execute_non_query(self.env, sql)
 
         #version 6 upgraded reports
 

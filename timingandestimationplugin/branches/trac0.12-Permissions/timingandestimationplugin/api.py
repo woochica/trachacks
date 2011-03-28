@@ -76,16 +76,17 @@ class TimeTrackingSetupParticipant(Component):
         return self.db_installed_version < self.db_version
 
     def do_db_upgrade(self):
+        self.log.debug( "T&E Beginning DB Upgrade");
         if self.db_installed_version < 1:
-            print "Creating bill_date table"
-            sql = """
-            CREATE TABLE bill_date (
-            time integer,
-            set_when integer,
-            str_value text
-            );
-            """
-            dbhelper.execute_non_query(self.env,  sql)
+            if not dbhelper.db_table_exists(self.env, 'bill_date'):
+                print "Creating bill_date table"
+                sql = """
+                CREATE TABLE bill_date (
+                time integer,
+                set_when integer,
+                str_value text
+                );"""
+                dbhelper.execute_non_query(self.env,  sql)
 
 
         if self.db_installed_version < 5:

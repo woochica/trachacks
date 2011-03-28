@@ -22,7 +22,7 @@ class CustomReportManager:
     self.upgrade()
 
   def upgrade(self):
-    self.env.log.debug("T&E Starting Report Schema Upgrade")
+    self.env.log.debug("T&E Checking for custom_report upgrade")
     # Check to see what version we have
     version = tryint(dbhelper.get_system_value(self.env, self.name))
     if version > self.version:
@@ -33,7 +33,7 @@ class CustomReportManager:
                       % (__name__, str(self.version), str(version)))
 
       # Do the staged updates
-    if version < 1:
+    if version < 1 and not dbhelper.db_table_exists(self.env, 'custom_report'):
       dbhelper.execute_non_query(
         self.env,
         "CREATE TABLE custom_report ("
@@ -48,7 +48,7 @@ class CustomReportManager:
 
     # Updates complete, set the version
     dbhelper.set_system_value(self.env, self.name, self.version)
-    self.env.log.debug("T&E Ending Report Schema Upgrade")
+    self.env.log.debug("T&E END Checking for custom_report upgrade")
 
   def get_report_id_and_version (self, uuid):
     sql = "SELECT custom_report.id, custom_report.version FROM custom_report "\
