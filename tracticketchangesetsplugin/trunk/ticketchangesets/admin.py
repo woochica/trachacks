@@ -192,10 +192,10 @@ class TicketChangesetsAdmin(Component):
         def do_update(db):
             cursor = db.cursor()
             # Iterate over all ticket comments
-            cursor.execute('SELECT rowid,ticket,oldvalue,newvalue '
+            cursor.execute('SELECT ticket,time,oldvalue,newvalue '
                            'FROM ticket_change WHERE field=%s', ['comment'])
             for row in cursor.fetchall():
-                rowid, ticket, oldvalue, oldmessage = row
+                ticket, time, oldvalue, oldmessage = row
                 if oldvalue.isnumeric(): # ticket comment number
                     matches = [(parts[0], extract) for parts, extract in 
                                [(pat.findall(oldmessage), extract) for
@@ -207,11 +207,12 @@ class TicketChangesetsAdmin(Component):
                         newmessage = make_ticket_comment(rev, message)
                         if reformat:
                             cursor.execute('UPDATE ticket_change '
-                                           'SET newvalue=%s WHERE rowid=%s',
-                                           [newmessage, rowid])
+                                           'SET newvalue=%s '
+                                           'WHERE ticket=%s and time=%s',
+                                           [newmessage, ticket, time])
                         else:
-                            printout('@@ comment:%s:ticket:%s (db rowid %s) @@'
-                                     % (oldvalue, ticket, rowid))
+                            printout('@@ comment:%s:ticket:%d (db time %d) @@'
+                                     % (oldvalue, ticket, time))
                             printout('-' + oldmessage.replace('\n', '\n-'))
                             printout('+' + newmessage.replace('\n', '\n+'))
         if reformat:
