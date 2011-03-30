@@ -104,7 +104,7 @@
                     <py:with vars="col = cell.header.col">
                       <py:choose>
 
-                        <py:when test="col == columns[0].name">
+                        <py:when test="col in (columns[0].name,id_field)">
                           <td class="resource" py:attrs="td_attrs">
                             <a title="${_('View %(realm)s', realm=row.resource.realm)}"
                                href="${url_of(row.resource)}">$cell.value</a>

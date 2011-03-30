@@ -113,7 +113,6 @@ class Droplet(object):
         self.log.debug('Rendering grid..')
         index = self.grid_index
         columns = self.fields.get_list('grid_columns')
-        id_col = columns[0].name
         
         format = req.args.get('format')
         resource = Resource('cloud', self.name)
@@ -153,6 +152,7 @@ class Droplet(object):
                 'description': self.description,
                 'label': self.label,
                 'columns': columns,
+                'id_field': self.id_field,
                 'max': limit,
                 'message': None,
                 'paginator': None,
@@ -237,11 +237,11 @@ class Droplet(object):
                         prev_group_value = value
                     # Other row properties
                     row['__idx__'] = row_idx
-                    if col == id_col:
+                    if col == self.id_field:
                         row['id'] = value
                     cell_group.append(cell)
                 cell_groups.append(cell_group)
-            resource = Resource('cloud', '%s/%s' %(self.name,row['id']))
+            resource = Resource('cloud', '%s/%s' % (self.name,row['id']))
             # FIXME: for now, we still need to hardcode the realm in the action
             if 'CLOUD_VIEW' not in req.perm(resource):
                 continue

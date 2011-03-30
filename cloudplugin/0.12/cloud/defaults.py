@@ -7,6 +7,7 @@ droplet_defaults = {
     'title': 'Instances',
     'label': 'Instance',
     'order': 1, # order in contextual nav from left to right
+    'id_field': 'name',
     
     # field definitions
     'field.name': 'text',
