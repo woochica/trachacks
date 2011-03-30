@@ -120,6 +120,7 @@ class ChefApi(object):
             
         expected_transient_errors = [
             "409 Conflict: Client already exists",
+            "409 Conflict: Node already exists",
             "Connection refused - connect(2)",
             "No route to host - connect(2)",
             "Connection timed out - connect(2)",
@@ -141,6 +142,7 @@ class ChefApi(object):
             else: # no transient error found ..
                 # .. but check for chef error
                 if 'ERROR: Exception handlers complete' in out and attempt == 1:
+                    self.log.info('Chef error - trying again..')
                     attempt += 1
                     continue # try just one more time
                 break # .. so break out of while loop
