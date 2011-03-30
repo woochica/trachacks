@@ -31,6 +31,46 @@ from trac.util.text import printout
 from ticketchangesets.api import *
 from ticketchangesets.commit_updater import *
 
+_oldmessage_pat = [
+    # List of tuples (patstr, extract-fn) where
+    # extract-fn in turn shall return a tuple (reponame, rev, message,
+    # startcomment, endcomment)
+    # matched with patstr
+
+    # Message created by Trac 0.12 (tracopt.ticket.commit_updater):
+    (r'^(?P<startcomment>.*?)\s*In \[.*?\]:\s+{{{\s*#!CommitTicketReference\s+'
+     r'repository="(?P<reponame>.*?)"\s+revision="(?P<rev>[0-9]+)"\s+'
+     r'(?P<message>.*?)\s+}}}\s*(?P<endcomment>.*?)$',
+     lambda extract: (extract[1], extract[2], extract[3], extract[0],
+                      extract[4])),
+
+    # Message created by old custom script by mrelbe for Trac 0.11.x:
+    (r'^{{{\s*#!div class="ticket-commit-message"\s+'
+     r'\[(?P<rev>[0-9]+)\]:\s+(?P<message>.*?)\s+}}}\s*(?P<comment>.*?)$',
+     lambda extract: ('', extract[0], extract[1], '', extract[2])),
+    ]
+
+_oldmessage_re = [(re.compile(pat, re.DOTALL), extract) for
+                 pat, extract in _oldmessage_pat]
+
+def _reformat_message(oldmessage):
+    """Reformat old formatted message to current format.
+
+    None is returned if no reformatting shall be done on provided message.
+    """
+    # Old message patterns and extract functions.
+    # Lambda function is applied when ticket message matches pattern,
+    # extracted tuple: (reponame, rev, message)
+    matches = [(parts[0], extract) for parts, extract in
+               [(pat.findall(oldmessage), extract) for
+                pat, extract in _oldmessage_re] if parts]
+    if matches:
+        parts, extract = matches[0]
+        reponame, rev, message, startcomment, endcomment = extract(parts)
+        return make_ticket_comment(rev, message, reponame, startcomment,
+                                   endcomment)
+
+    
 class TicketChangesetsAdmin(Component):
     """trac-admin command provider for ticketchangesets plugin."""
 
@@ -167,52 +207,50 @@ class TicketChangesetsAdmin(Component):
         else:
             printout('diff ticket commit messages to be reformatted')
         
-        # Old message patterns and extract functions.
-        # Lambda function is applied when ticket message matches pattern,
-        # extracted tuple: (reponame, rev, message)
-        oldmessage_pat = [
-            
-            # Message created by Trac 0.12 (tracopt.ticket.commit_updater):
-            (r'^In \[.*?\]:\s+{{{\s*#!CommitTicketReference\s+'
-             r'repository="(?P<reponame>.*?)"\s+revision="(?P<rev>[0-9]+)"\s+'
-             r'(?P<message>.*?)\s+}}}$',
-             lambda extract: (extract[0], extract[1], extract[2])),
-            
-            # Message created by old custom script by mrelbe for Trac 0.11.x:
-            (r'^{{{\s*#!div class="ticket-commit-message"\s+'
-             r'\[(?P<rev>[0-9]+)\]:\s+(?P<message>.*?)\s+}}}$',
-             lambda extract: ("", extract[0], extract[1])),
-        ]
-
-        oldmessage_re = [(re.compile(pat, re.DOTALL), extract) for 
-                         pat, extract in oldmessage_pat]
         n_matches = [0]
                          
         @self.env.with_transaction()
         def do_update(db):
             cursor = db.cursor()
-            # Iterate over all ticket comments
+            # Iterate over current ticket comments
             cursor.execute('SELECT ticket,time,oldvalue,newvalue '
                            'FROM ticket_change WHERE field=%s', ['comment'])
             for row in cursor.fetchall():
                 ticket, time, oldvalue, oldmessage = row
                 if oldvalue.isnumeric(): # ticket comment number
-                    matches = [(parts[0], extract) for parts, extract in 
-                               [(pat.findall(oldmessage), extract) for
-                                pat, extract in oldmessage_re] if parts]
-                    if matches:
+                    newmessage = _reformat_message(oldmessage)
+                    if newmessage:
                         n_matches[0] += 1
-                        parts, extract = matches[0]
-                        reponame, rev, message = extract(parts)
-                        newmessage = make_ticket_comment(rev, message)
                         if reformat:
-                            cursor.execute('UPDATE ticket_change '
-                                           'SET newvalue=%s '
-                                           'WHERE ticket=%s and time=%s',
-                                           [newmessage, ticket, time])
+                            cursor.execute(
+                                    'UPDATE ticket_change SET newvalue=%s '
+                                    'WHERE ticket=%s and time=%s and '
+                                    'oldvalue=%s',
+                                    [newmessage, ticket, time, oldvalue])
                         else:
                             printout('@@ comment:%s:ticket:%d (db time %d) @@'
                                      % (oldvalue, ticket, time))
+                            printout('-' + oldmessage.replace('\n', '\n-'))
+                            printout('+' + newmessage.replace('\n', '\n+'))
+            # Iterate over changed (edited) ticket comments
+            cursor.execute('SELECT ticket,time,oldvalue,newvalue '
+                           'FROM ticket_change WHERE field LIKE %s',
+                           ['_comment_%'])
+            for row in cursor.fetchall():
+                ticket, time, oldmessage, edit_time = row
+                if edit_time.isnumeric(): # ticket comment change time
+                    newmessage = _reformat_message(oldmessage)
+                    if newmessage:
+                        n_matches[0] += 1
+                        if reformat:
+                            cursor.execute(
+                                    'UPDATE ticket_change SET oldvalue=%s '
+                                    'WHERE ticket=%s and time=%s and '
+                                    'newvalue=%s',
+                                    [newmessage, ticket, time, edit_time])
+                        else:
+                            printout('@@ comment:(edit):ticket:%d (db time %d) @@'
+                                     % (ticket, edit_time))
                             printout('-' + oldmessage.replace('\n', '\n-'))
                             printout('+' + newmessage.replace('\n', '\n+'))
         if reformat:

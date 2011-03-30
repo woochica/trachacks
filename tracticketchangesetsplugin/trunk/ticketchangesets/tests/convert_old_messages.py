@@ -5,15 +5,11 @@
 
 # TODO: Create a real test environment.
 
-import re
-
-from trac.util.compat import any
-
-from ticketchangesets.commit_updater import make_ticket_comment
+from ticketchangesets.admin import _reformat_message
 
 # [("message", "converted message")]
 testmessages = [
-    #1
+    #1 -- Message created by old custom script by mrelbe for Trac 0.11.x:
     ("""\
 {{{
 #!div class="ticket-commit-message"
@@ -41,7 +37,7 @@ project-sites/scripts: Adjusted for new server (re #41)
 project-sites/scripts: Adjusted for new server (re #41)
 }}}"""),
 
-    #3
+    #3 -- Message created by Trac 0.12 (tracopt.ticket.commit_updater):
     ("""\
 In [234]:
 {{{
@@ -59,7 +55,7 @@ Committing to repo for testing ticket commit updater, see #61
 End...
 }}}"""),
 
-    #4
+    #4 -- Message created by Trac 0.12 (tracopt.ticket.commit_updater):
     ("""\
 In [234]:
 {{{
@@ -76,58 +72,193 @@ Committing to repo for testing ticket commit updater, see #61
 
 End...
 }}}"""),
+
+    #5 -- Message created by Trac 0.12 (tracopt.ticket.commit_updater)
+    #     with manually added comment at end
+    #  -- Old
+    ("""\
+In [234]:
+{{{
+#!CommitTicketReference repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}Manual edit line 1""",
+    #  -- New
+    """\
+[234/reponame]:
+{{{
+#!CommitMessage repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}
+
+Manual edit line 1"""),
+
+    #6 -- Message created by Trac 0.12 (tracopt.ticket.commit_updater)
+    #     with manually added comment at end
+    #  -- Old
+    ("""\
+In [234]:
+{{{
+#!CommitTicketReference repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}
+
+
+Manual edit line 1
+
+""",
+    #  -- New
+    """\
+[234/reponame]:
+{{{
+#!CommitMessage repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}
+
+Manual edit line 1"""),
+
+    #7 -- Message created by Trac 0.12 (tracopt.ticket.commit_updater)
+    #     with manually added comment at end
+    #  -- Old
+    ("""\
+In [234]:
+{{{
+#!CommitTicketReference repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}Manual edit line 1
+Manual edit line 2""",
+    #  -- New
+    """\
+[234/reponame]:
+{{{
+#!CommitMessage repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}
+
+Manual edit line 1
+Manual edit line 2"""),
+
+    #8 -- Message created by Trac 0.12 (tracopt.ticket.commit_updater)
+    #     with manually added comment at start
+    #  -- Old
+    ("""\
+Manual edit line 1 In [234]:
+{{{
+#!CommitTicketReference repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}""",
+    #  -- New
+    """\
+Manual edit line 1
+
+[234/reponame]:
+{{{
+#!CommitMessage repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}"""),
+
+    #9 -- Message created by Trac 0.12 (tracopt.ticket.commit_updater)
+    #     with manually added comment at start
+    #  -- Old
+    ("""\
+Manual edit line 1
+
+In [234]:
+{{{
+#!CommitTicketReference repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}""",
+    #  -- New
+    """\
+Manual edit line 1
+
+[234/reponame]:
+{{{
+#!CommitMessage repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}"""),
+
+    #10-- Message created by Trac 0.12 (tracopt.ticket.commit_updater)
+    #     with manually added comment at both start and end
+    #  -- Old
+    ("""\
+Manual edit line 1
+Manual edit line 2
+In [234]:
+{{{
+#!CommitTicketReference repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}
+Manual edit line 1
+Manual edit line 2""",
+    #  -- New
+    """\
+Manual edit line 1
+Manual edit line 2
+
+[234/reponame]:
+{{{
+#!CommitMessage repository="reponame" revision="234"
+Committing to repo for testing ticket commit updater, see #61
+
+End...
+}}}
+
+Manual edit line 1
+Manual edit line 2"""),
+
 ]
 
 
 def test():
     """Replace old commit messages with new."""
-
-    # Old message patterns and extract functions.
-    # Lambda function applied when ticket message matches pattern,
-    # extracted tuple: (reponame, rev, message)
-    oldmessage_pat = [
-        # Message created by Trac 0.12 (tracopt.ticket.commit_updater):
-        (r'^In \[.*?\]:\s+{{{\s*#!CommitTicketReference\s+'
-         r'repository="(?P<reponame>.*?)"\s+revision="(?P<rev>[0-9]+)"\s+'
-         r'(?P<message>.*?)\s+}}}$',
-         lambda extract: (extract[0], extract[1], extract[2])),
-        # Message created by old custom script by mrelbe for Trac 0.11.x:
-        (r'^{{{\s*#!div class="ticket-commit-message"\s+'
-         r'\[(?P<rev>[0-9]+)\]:\s+(?P<message>.*?)\s+}}}$',
-         lambda extract: ("", extract[0], extract[1])),
-    ]
-    oldmessage_re = [(re.compile(pat, re.DOTALL), extract) for pat, extract in
-                     oldmessage_pat]
-    
     n = 0
     for oldmessage, expectednewmessage in testmessages:
         n += 1
-        matches = [(parts[0], extract) for parts, extract in 
-                [(pat.findall(oldmessage), extract) for pat, extract in
-                 oldmessage_re] if parts]
-        if matches:
-            parts, extract = matches[0]
-            reponame, rev, message = extract(parts)
-
-            newmessage = make_ticket_comment(rev, message, reponame)
-
+        newmessage = _reformat_message(oldmessage)
+        if newmessage:
             if newmessage == expectednewmessage:
                 print('Test %d Ok' % n)
             else:
-                print('Test %d FAIL!' % n)
-                print
-                print('Old message:\n%s' % oldmessage)
-                print
-                print('New message:\n%s' % newmessage)
-                print
-                print('Expected message:\n%s' % expectednewmessage)
-                print
+                print("""
+Test %d FAILED!
+---- Old message ----
+%s
+---------------------
+---- New message ----
+%s
+--------------------------
+---- Expected message ----
+%s
+--------------------------
+""" % (n, oldmessage, newmessage, expectednewmessage))
                 raise ValueError
             continue
         if oldmessage == expectednewmessage:
-            print('Test %d Ok' % n)
+            print('Test %d OK' % n)
         else:
-            print('FAIL!')
+            print('Test %d FAIL' % n)
             print('Old message:\n%s' % oldmessage)
             print('New message:\n%s' % newmessage)
             raise ValueError

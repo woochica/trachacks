@@ -284,16 +284,41 @@ class CommitTicketUpdater(Component):
 
 # Utility functions
 
-def make_ticket_comment(rev, message, reponame=None):
-    """Create a ticket comment."""
+def make_ticket_comment(rev, message, reponame=None, startcomment='',
+                        endcomment=''):
+    """Create a ticket comment.
+
+    Syntax:
+        $startcomment
+
+        [$rev/$reponame]:
+        {{{
+        #!CommitMessage repository="$reponame" revision="$rev"
+        $message
+        }}}
+
+        $endcomment
+    """
+    def make_comment(text, start=False):
+        text = str(text)
+        if text:
+            text = '\n'.join(text.splitlines())
+            if start:
+                return text + '\n\n'
+            else:
+                return '\n\n' + text
+        return ''
+
     revstring = str(rev)
     repostring = ''
     if reponame:
         revstring += '/' + reponame
         repostring = 'repository="%s" ' % reponame
+    startcomment = make_comment(startcomment, True)
+    endcomment = make_comment(endcomment, False)
     return """\
-[%s]:
+%s[%s]:
 {{{
 #!CommitMessage %srevision="%s"
 %s
-}}}""" % (revstring, repostring, rev, message)
+}}}%s""" % (startcomment, revstring, repostring, rev, message, endcomment)
