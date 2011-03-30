@@ -24,6 +24,7 @@ setup(
     install_requires = ['Trac >= 0.11'],
     entry_points = {
         'trac.plugins': [
+            'tracforms.api = tracforms.api',
             'tracforms.errors = tracforms.errors',
             'tracforms.formdata = tracforms.formdata',
             'tracforms.formdb = tracforms.formdb',

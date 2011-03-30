@@ -7,13 +7,14 @@ from trac.util.text import to_unicode
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
 
+from api import TracFormDBUser
 from compat import json
 from environment import TracFormEnvironment
 from errors import TracFormError, \
     TracFormTooManyValuesError, \
     TracFormNoOperationError, \
     TracFormNoCommandError
-from iface import TracFormDBUser, TracPasswordStoreUser
+from iface import TracPasswordStoreUser
 from util import resource_from_page, xml_escape
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')

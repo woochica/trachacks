@@ -6,8 +6,9 @@ from trac.core import Component, implements
 from trac.web import IRequestHandler
 from trac.web.api import HTTPBadRequest, HTTPUnauthorized
 
+from api import TracFormDBUser
 from compat import json
-from iface import TracFormDBUser, TracPasswordStoreUser
+from iface import TracPasswordStoreUser
 
 
 class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):

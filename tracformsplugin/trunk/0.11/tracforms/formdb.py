@@ -5,8 +5,8 @@ import re, time, unittest
 from trac.core import Component, implements
 from trac.resource import Resource, resource_exists
 
+from api import TracFormDBObserver
 from compat import json, parse_qs
-from iface import TracFormDBObserver
 from tracdb import DBComponent
 from util import resource_from_page, xml_unescape
 
