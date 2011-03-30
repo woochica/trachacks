@@ -14,7 +14,7 @@ from errors import TracFormError, \
     TracFormNoOperationError, \
     TracFormNoCommandError
 from iface import TracFormDBUser, TracPasswordStoreUser
-from util import xml_escape
+from util import resource_from_page, xml_escape
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
 argstrRE = re.compile('%(.*?)%')
@@ -75,6 +75,7 @@ class TracFormProcessor(object):
         self.page = formatter.req.path_info
         if self.page == '/wiki' or self.page == '/wiki/':
             self.page = '/wiki/WikiStart'
+        realm, resource_id = resource_from_page(formatter.env, self.page)
 
         # Remove leading comments and process commands.
         textlines = []
@@ -108,21 +109,20 @@ class TracFormProcessor(object):
                 textlines.extend(srciter)
 
         # Determine our destination context and load the current state.
-        self.context = self.page
-        if self.subcontext:
-            self.context += ':' + self.subcontext
+        self.context = (realm, resource_id, self.subcontext is not None and \
+                                            self.subcontext or '')
         state = self.macro.get_tracform_state(self.context)
         self.formatter.env.log.debug(
             'TracForms state = ' + (state is not None and state or ''))
         for name, value in json.loads(state or '{}').iteritems():
-            self.env[self.context + ':' + name] = value
+            self.env[name] = value
             self.formatter.env.log.debug(
-                self.context + ':' + name + ' = ' + to_unicode(value))
+                name + ' = ' + to_unicode(value))
             if self.subcontext is not None:
                 self.env[self.subcontext + ':' + name] = value
         self.sorted_env = None
-        (self.form_id, self.form_context,
-            self.form_updater, self.form_updated_on,
+        (self.form_id, self.form_realm, self.form_resource_id,
+            self.form_subcontext, self.form_updater, self.form_updated_on,
             self.form_keep_history, self.form_track_fields) = \
             self.macro.get_tracform_meta(self.context)
 
@@ -177,8 +177,10 @@ class TracFormProcessor(object):
             if self.form_updated_on is not None:
                 yield '<INPUT type="hidden" name="__basever__"'
                 yield ' value="' + str(self.form_updated_on) + '">'
+            context = json.dumps(
+                self.context, separators=(',', ':'))
             yield '<INPUT type="hidden" ' + \
-                'name="__context__" value=%r>' % str(self.context)
+                'name="__context__" value=%r>' % context
             backpath = self.formatter.req.href(self.formatter.req.path_info)
             yield '<INPUT type="hidden" ' \
                     'name="__backpath__" value=%s>' % str(backpath)
@@ -214,7 +216,7 @@ class TracFormProcessor(object):
         if '*' in name or '?' in name or '[' in name:
             value = []
             keys = self.get_sorted_env()
-            for key in fnmatch.filter(keys, self.context + ':' + name):
+            for key in fnmatch.filter(keys, name):
                 obj = self.env[key]
                 if isinstance(obj, (tuple, list)):
                     value.extend(obj)
@@ -242,7 +244,7 @@ class TracFormProcessor(object):
                     else:
                         value.append(obj)
         else:
-            value = self.env.get(self.context + ':' + name, NOT_FOUND)
+            value = self.env.get(name, NOT_FOUND)
             if self.page is not None and value is NOT_FOUND:
                 value = self.env.get(self.page + ':' + name, NOT_FOUND)
             if self.subcontext is not None and value is NOT_FOUND:
@@ -392,7 +394,7 @@ class TracFormProcessor(object):
         return 'VALUE=' + field
 
     def get_field(self, name, default=None, make_single=True):
-        current = self.env.get(self.context + ':' + name, default)
+        current = self.env.get(name, default)
         if make_single and isinstance(current, (tuple, list)):
             if len(current) == 0:
                 current = default

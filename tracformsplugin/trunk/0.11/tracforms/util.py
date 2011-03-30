@@ -7,6 +7,8 @@ import re
 import unittest
 
 from codecs          import getencoder
+
+from trac.resource   import ResourceSystem
 from trac.util.text  import to_unicode
 
 
@@ -44,6 +46,18 @@ def _replace_entities(match):
     else:
         repl = ent
     return repl
+
+def resource_from_page(env, page):
+    resource_realm = None
+    resources = ResourceSystem(env)
+    for realm in resources.get_known_realms():
+        if page.startswith('/' + realm):
+            resource_realm = realm
+            break
+    if resource_realm is not None:
+        return resource_realm, re.sub('/' + resource_realm + '/', '', page)
+    else:
+        return page, None
 
 
 class UnescapeTests(unittest.TestCase):

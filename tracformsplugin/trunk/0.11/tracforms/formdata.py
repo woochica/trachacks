@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from urllib import unquote_plus
+
 from trac.core import Component, implements
 from trac.web import IRequestHandler
 from trac.web.api import HTTPBadRequest, HTTPUnauthorized
@@ -19,7 +21,9 @@ class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
             self.log.debug('UPDATE ARGS:' + str(req.args))
             args = dict(req.args)
             backpath = args.pop('__backpath__', None)
-            context = args.pop('__context__', None)
+            context = json.loads(
+                unquote_plus(args.pop('__context__', None)) or \
+                '(None, None, None)')
             basever = args.pop('__basever__', None)
             keep_history = args.pop('__keep_history__', None)
             track_fields = args.pop('__track_fields__', None)

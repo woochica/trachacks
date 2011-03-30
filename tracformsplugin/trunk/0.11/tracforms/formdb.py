@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import unittest, time
+import re, time, unittest
 
 from trac.core import Component, implements
+from trac.resource import Resource, resource_exists
 
 from compat import json, parse_qs
 from iface import TracFormDBObserver
 from tracdb import DBComponent
+from util import resource_from_page, xml_unescape
 
 
 class TracFormDBComponent(DBComponent):
@@ -26,29 +28,35 @@ class TracFormDBComponent(DBComponent):
         cursor = self.get_cursor(cursor)
         sql = """
             SELECT  id,
-                    context,
+                    realm,
+                    resource_id,
+                    subcontext,
                     author,
                     time,
                     keep_history,
                     track_fields
             FROM    forms
             """
-        if isinstance(src, basestring):
+        if not isinstance(src, int):
             sql += """
-                WHERE   context = %s
+                WHERE   realm = %s
+                    AND resource_id = %s
+                    AND subcontext = %s
                 """
         else:
             sql += """
                 WHERE   id = %s
                 """
         form_id = None
-        context = None
-        if isinstance(src, basestring):
-            context = src
+        realm = None
+        resource_id = None
+        subcontext = None
+        if not isinstance(src, int):
+            realm, resource_id, subcontext = src
         else:
             form_id = src
-        return (cursor(sql, src).firstrow or
-                (form_id, context, None, None, None, None))
+        return (cursor(sql, *src).firstrow or
+            (form_id, realm, resource_id, subcontext, None, None, None, None))
 
     def get_tracform_state(self, src, cursor=None):
         cursor = self.get_cursor(cursor)
@@ -56,22 +64,25 @@ class TracFormDBComponent(DBComponent):
             SELECT  state
             FROM    forms
             """
-        if isinstance(src, basestring):
+        if not isinstance(src, int):
             sql += """
-                WHERE   context = %s
+                WHERE   realm = %s
+                    AND resource_id = %s
+                    AND subcontext = %s
                 """
         else:
             sql += """
                 WHERE   id = %s
                 """
-        return cursor(sql, src).value
+        return cursor(sql, *src).value
 
     def save_tracform(self, src, state, author,
                         base_version=None, keep_history=False,
                         track_fields=False, cursor=None):
         cursor = self.get_cursor(cursor)
-        (form_id, context, last_updater, last_updated_on,
-            form_keep_history, form_track_fields) = self.get_tracform_meta(src)
+        (form_id, realm, resource_id, subcontext, last_updater,
+            last_updated_on, form_keep_history,
+            form_track_fields) = self.get_tracform_meta(src)
 
         if form_keep_history is not None:
             keep_history = form_keep_history
@@ -89,9 +100,11 @@ class TracFormDBComponent(DBComponent):
                 if form_id is None:
                     form_id = cursor("""
                         INSERT INTO forms
-                            (context, state, author, time)
-                            VALUES (%s, %s, %s, %s)
-                        """, context, state, author, updated_on) \
+                            (realm, resource_id, subcontext,
+                            state, author, time)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                        """, realm, resource_id, subcontext,
+                        state, author, updated_on) \
                         .last_id('forms', 'id')
                 else:
                     cursor("""
@@ -143,8 +156,9 @@ class TracFormDBComponent(DBComponent):
             else:
                 updated_on = last_updated_on
                 author = last_updater
-            return ((form_id, context, state, author, updated_on),
-                    (form_id, context, old_state,
+            return ((form_id, realm, resource_id, subcontext, state,
+                    author, updated_on),
+                    (form_id, realm, resource_id, subcontext, old_state,
                     last_updater, last_updated_on))
         else:
             raise ValueError("Conflict")
@@ -348,7 +362,7 @@ class TracFormDBComponent(DBComponent):
         forms_columns = ('tracform_id', 'context', 'state', 'updater',
                          'updated_on', 'keep_history', 'track_fields')
         forms_columns_new = ('id', 'context', 'state', 'author',
-                         'time', 'keep_history', 'track_fields')
+                             'time', 'keep_history', 'track_fields')
 
         sql = 'SELECT ' + ', '.join(forms_columns) + ' FROM tracform_forms'
         cursor.execute(sql)
@@ -490,6 +504,82 @@ class TracFormDBComponent(DBComponent):
             DELETE FROM system WHERE name='TracFormDBComponent:version';
             """)
 
+    def db14(self, cursor):
+        """Split context into proper Trac resource descriptors.
+        """ 
+        cursor("""
+            CREATE TABLE forms_old
+                AS SELECT *
+                FROM forms
+            """)
+        cursor("""
+            DROP TABLE forms
+            """)
+        cursor("""
+            CREATE TABLE forms(
+                id              INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                realm           TEXT NOT NULL,
+                resource_id     TEXT NOT NULL,
+                subcontext      TEXT,
+                state           TEXT NOT NULL,
+                author          TEXT NOT NULL,
+                time            INTEGER NOT NULL,
+                keep_history    INTEGER,
+                track_fields    INTEGER
+                )
+            """,
+            mysql = """
+            CREATE TABLE forms(
+                id              INT(10) UNSIGNED AUTO_INCREMENT NOT NULL,
+                realm           VARCHAR(127) NOT NULL,
+                resource_id     VARCHAR(255) NOT NULL,
+                subcontext      VARCHAR(127),
+                state           TEXT NOT NULL,
+                author          VARCHAR(127) NOT NULL,
+                time            INTEGER NOT NULL,
+                keep_history    INTEGER,
+                track_fields    INTEGER,
+                PRIMARY KEY     (id)
+                )
+            """)
+
+        forms_columns = ('id', 'context', 'state', 'author',
+                         'time', 'keep_history', 'track_fields')
+
+        sql = 'SELECT ' + ', '.join(forms_columns) + ' FROM forms_old'
+        cursor.execute(sql)
+        forms = []
+        for row in cursor:
+            row = dict(zip(forms_columns, row))
+            # extract realm, resource_id and subcontext from context
+            row['realm'], row['resource_id'], row['subcontext'] = \
+                _context_to_resource(self.env, row.pop('context'))
+            forms.append(row)
+
+        for form in forms:
+            fields = form.keys()
+            values = form.values()
+            sql = "INSERT INTO forms (" + ", ".join(fields) + \
+              ") VALUES (" + ", ".join(["%s" for I in xrange(len(fields))]) \
+              + ")"
+            cursor.execute(sql, *values)
+
+        cursor("""
+            CREATE UNIQUE INDEX forms_realm_resource_id_subcontext_idx
+                ON forms(realm, resource_id, subcontext)
+            """)
+        cursor("""
+            CREATE INDEX forms_author_idx
+                ON forms(author)
+            """)
+        cursor("""
+            CREATE INDEX forms_time_idx
+                ON forms(time DESC)
+            """)
+        cursor("""
+            DROP TABLE forms_old
+            """)
+
 
 def _url_to_json(state_url):
     """Convert urlencoded state serial to JSON state serial."""
@@ -501,6 +591,35 @@ def _url_to_json(state_url):
         else:
             state[name] = xml_unescape(value)
     return json.dumps(state, separators=(',', ':'))
+
+def _context_to_resource(env, context):
+    """Find parent realm, parent resource_id and optional TracForm subcontext.
+    """
+    realm, resource_path = resource_from_page(env, context)
+    if resource_path is not None:
+        # ambiguous: ':' could be part of resource_id or subcontext or
+        # the start of subcontext
+        segments = re.split(':', resource_path)
+        id = ''
+        resource_id = None
+        subcontext = None
+        while len(segments) > 0:
+            id += segments.pop(0)
+            # guess: shortest valid resource_id is parent,
+            # the rest is TracForm subcontext
+            if resource_exists(env, Resource(realm, id)):
+                resource_id = id
+                subcontext = ':'.join(segments)
+                break
+            id += ':'
+        # valid resource_id in context NOT FOUND
+        if resource_id is None:
+            resource_id = resource_path
+    else:
+        # realm in context NOT FOUND
+        resource_id = context
+        realm = ''
+    return realm, resource_id, subcontext
 
 
 if __name__ == '__main__':

@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
+import os, sys
+
+from datetime import datetime
+
 from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
-from datetime import datetime
-import os, sys
 
 DEBUG_SQL = os.environ.get('DEBUG_SQL', False)
 
