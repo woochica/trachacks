@@ -168,11 +168,12 @@ hiderule.apply = function(input, spec){
         th.addClass(cls);
         
         // let's also clear out the field's value to avoid confusion
-        if (spec.clear_on_hide.toLowerCase() == 'true'){
-            if (field.val().length)
-                field.val('').change(); // cascade rules
-                
-            // assume we now also want to hide field in the header
+        if (spec.clear_on_hide.toLowerCase() == 'true' && field.val().length)
+            field.val('').change(); // cascade rules
+            
+        // hide field in the header if cleared or always hidden
+        if (spec.clear_on_hide.toLowerCase() == 'true' ||
+            spec.hide_always.toLowerCase() == 'true'){
             th = jQuery('#h_'+target);
             td = th.siblings('td[headers=h_'+target+']');
             td.addClass('dynfields-hide dynfields-'+trigger);
