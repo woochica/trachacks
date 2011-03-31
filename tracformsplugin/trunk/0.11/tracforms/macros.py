@@ -477,7 +477,7 @@ class TracFormProcessor(object):
     def op_when(self, field, format='%m/%d/%Y %H:%M:%S'):
         when = self.macro.get_tracform_fieldinfo(self.context, field)[1]
         if when is not None:
-            when = format_datetime(when, format=format)
+            when = format_datetime(when, format=str(format))
         return when
 
     def op_id(self):

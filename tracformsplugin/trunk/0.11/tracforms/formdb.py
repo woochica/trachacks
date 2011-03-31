@@ -596,13 +596,13 @@ def _context_to_resource(env, context):
     """Find parent realm, parent resource_id and optional TracForm subcontext.
     """
     realm, resource_path = resource_from_page(env, context)
+    subcontext = None
     if resource_path is not None:
         # ambiguous: ':' could be part of resource_id or subcontext or
         # the start of subcontext
         segments = re.split(':', resource_path)
         id = ''
         resource_id = None
-        subcontext = None
         while len(segments) > 0:
             id += segments.pop(0)
             # guess: shortest valid resource_id is parent,
