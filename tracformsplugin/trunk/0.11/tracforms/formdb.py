@@ -451,7 +451,7 @@ class TracFormDBComponent(DBComponent):
         cursor("""
             DROP INDEX tracform_history_tracform_id
             """, mysql="""
-            ALTER TABLE tracform_forms DROP INDEX tracform_history_tracform_id
+            ALTER TABLE tracform_history DROP INDEX tracform_history_tracform_id
             """)
         cursor("""
             CREATE INDEX forms_history_id_idx
@@ -460,7 +460,7 @@ class TracFormDBComponent(DBComponent):
         cursor("""
             DROP INDEX tracform_history_updated_on
             """, mysql="""
-            ALTER TABLE tracform_forms DROP INDEX tracform_history_updated_on
+            ALTER TABLE tracform_history DROP INDEX tracform_history_updated_on
             """)
         cursor("""
             CREATE INDEX forms_history_time_idx
@@ -469,7 +469,7 @@ class TracFormDBComponent(DBComponent):
         cursor("""
             DROP INDEX tracform_history_updater
             """, mysql="""
-            ALTER TABLE tracform_forms DROP INDEX tracform_history_updater
+            ALTER TABLE tracform_history DROP INDEX tracform_history_updater
             """)
         cursor("""
             CREATE INDEX forms_history_author_idx
@@ -489,7 +489,7 @@ class TracFormDBComponent(DBComponent):
         cursor("""
             DROP INDEX tracform_fields_tracform_id_field
             """, mysql="""
-            ALTER TABLE tracform_forms
+            ALTER TABLE tracform_fields
                 DROP INDEX tracform_fields_tracform_id_field
             """)
         cursor("""
