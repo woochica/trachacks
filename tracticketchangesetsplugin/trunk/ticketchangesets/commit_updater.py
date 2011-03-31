@@ -136,8 +136,7 @@ class CommitTicketUpdater(Component):
         If set to the special value <ALL>, all tickets referenced by the
         message will get a reference to the changeset.""")
     
-    check_perms = BoolOption('ticket-changesets', 'check_perms',
-        'true',
+    check_perms = BoolOption('ticket-changesets', 'check_perms', 'true',
         """Check that the committer has permission to perform the requested
         operations on the referenced tickets.
         
@@ -147,9 +146,13 @@ class CommitTicketUpdater(Component):
     notify = BoolOption('ticket-changesets', 'notify', 'true',
         """Send ticket change notification when updating a ticket.""")
 
-    resolution = Option('ticket-changesets', 'resolution',
-        'fixed',
+    resolution = Option('ticket-changesets', 'resolution', 'fixed',
         """The resolution to set to a ticket closed by a commit message.""")
+
+    ticket_comments = BoolOption('ticket-changesets', 'ticket_comments',
+        'true',
+        """Add a ticket comment based on changeset info, for each referenced
+        ticket.""")
 
     ticket_prefix = '(?:#|(?:ticket|issue|bug)[: ]?)'
     ticket_reference = ticket_prefix + '[0-9]+'
@@ -173,9 +176,10 @@ class CommitTicketUpdater(Component):
         if self._is_duplicate(changeset):
             return
         tickets = self.parse_message(changeset.message)
-        comment = self.make_ticket_comment(repos, changeset)
-        self._update_tickets(tickets, changeset, comment,
-                             datetime.now(utc))
+        if self.ticket_comments:
+            comment = self.make_ticket_comment(repos, changeset)
+            self._update_tickets(tickets, changeset, comment,
+                                 datetime.now(utc))
         # Add rev to ticket changesets
         tkt_changesets = TicketChangesets(self.env)
         for tkt_id, cmds in tickets.iteritems():
@@ -190,9 +194,10 @@ class CommitTicketUpdater(Component):
             old_tickets = self.parse_message(old_changeset.message)
         tickets = dict(each for each in current_tickets.iteritems()
                        if each[0] not in old_tickets)
-        comment = self.make_ticket_comment(repos, changeset)
-        self._update_tickets(tickets, changeset, comment,
-                             datetime.now(utc))
+        if self.ticket_comments:
+            comment = self.make_ticket_comment(repos, changeset)
+            self._update_tickets(tickets, changeset, comment,
+                                 datetime.now(utc))
         # Add rev to ticket changesets
         tkt_changesets = TicketChangesets(self.env)
         for tkt_id, cmds in tickets.iteritems():
