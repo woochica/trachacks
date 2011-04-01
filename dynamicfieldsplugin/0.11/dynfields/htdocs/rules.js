@@ -168,7 +168,8 @@ hiderule.apply = function(input, spec){
         th.addClass(cls);
         
         // let's also clear out the field's value to avoid confusion
-        if (spec.clear_on_hide.toLowerCase() == 'true' && field.val().length)
+        if (spec.clear_on_hide.toLowerCase() == 'true' &&
+            field.val() && field.val().length) // Chrome fix - see #8654
             field.val('').change(); // cascade rules
             
         // hide field in the header if cleared or always hidden
