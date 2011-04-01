@@ -1,6 +1,8 @@
-from subprocess import Popen, STDOUT, PIPE
 import os
 import time
+import signal
+from subprocess import Popen, STDOUT, PIPE
+
 import chef
 from timer import Timer
 
@@ -108,6 +110,9 @@ class ChefApi(object):
         routine will simply attempt to bootstrap again until it succeeds
         or until the given timeout period expires.
         """
+        class Alarm(Exception): pass
+        def alarm_handler(signum, frame): raise Alarm
+        
         cmd = '/usr/bin/knife bootstrap %s' % hostname
         cmd += ' -c %s' % os.path.join(self.base_path,'knife.rb')
         cmd += ' -x %s' % self.user
@@ -128,21 +133,35 @@ class ChefApi(object):
         ]
         
         attempt = 1
+        signal.signal(signal.SIGALRM, alarm_handler)
+        signal.alarm(timeout)
         timer = Timer(timeout)
         while timer.running:
             self.log.debug('Bootstrapping %s with command: %s' % (id,cmd))
             p = Popen(cmd, shell=True, stderr=STDOUT, stdout=PIPE)
-            # TODO: add timeout!
-            out = unicode(p.communicate()[0], 'utf-8', 'ignore')
+            out = ''
+            
+            try:
+                out = unicode(p.communicate()[0], 'utf-8', 'ignore')
+                signal.alarm(0) # clear the alarm
+            except Alarm:
+                p.kill()
             
             for error in expected_transient_errors:
                 if error in out:
                     self.log.info('Retrying due to transient error %s' % error)
                     break
             else: # no transient error found ..
-                # .. but check for chef error
-                if 'ERROR: Exception handlers complete' in out and attempt == 1:
-                    self.log.info('Chef error - trying again..')
+                # .. but check for chef error or possible ssh error
+                if attempt == 1 and \
+                   (not out or 'ERROR: Exception handlers complete' in out):
+                    if not out:
+                        self.log.info('possible ssh problem - trying again..')
+                        signal.signal(signal.SIGALRM, alarm_handler)
+                        signal.alarm(timeout)
+                        timer = Timer(timeout)
+                    else:
+                        self.log.info('Chef error - trying again..')
                     attempt += 1
                     continue # try just one more time
                 break # .. so break out of while loop

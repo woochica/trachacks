@@ -75,7 +75,7 @@ class Launcher(Daemon):
         self.log.debug('Bootstrapping the instance..')
         self.progress.start(2)
         public_hostname = instance.public_dns_name
-        node = self.chefapi.bootstrap(id, public_hostname, timeout=480)
+        node = self.chefapi.bootstrap(id, public_hostname, timeout=360)
         if node is None:
             msg = "Instance %s is running" % instance.id + \
                   " but not bootstrapped. Login to" + \
