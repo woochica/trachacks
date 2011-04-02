@@ -3,6 +3,7 @@
 import sys
 
 from trac.core import Component, ExtensionPoint, Interface, implements
+from trac.perm import IPermissionRequestor
 from trac.resource import IResourceManager, Resource, ResourceNotFound, \
                           get_resource_name, get_resource_shortname
 
@@ -85,7 +86,13 @@ class FormSystem(Component):
     """Provides permissions and access to TracForms as resource 'form'.
     """
 
-    implements(IResourceManager)
+    implements(IPermissionRequestor, IResourceManager)
+
+    # IPermissionRequestor method
+
+    def get_permission_actions(self):
+        return ['FORM_VIEW', 'FORM_EDIT_VAL', 'FORM_RESET',
+                ('FORM_ADMIN', ['FORM_VIEW', 'FORM_EDIT_VAL', 'FORM_RESET'])]
 
     # IResourceManager methods
 

@@ -45,7 +45,7 @@ class TracFormProcessor(object):
     page = None
     subcontext = None
     default_op = 'checkbox'
-    needs_submit = True
+    allow_submit = False
     keep_history = False
     track_fields = True
     submit_label = 'Update Form'
@@ -142,6 +142,8 @@ class TracFormProcessor(object):
         setattr(formatter.req, type(self).__name__, None)
 
         self.formatter.env.log.debug('TracForms parsing finished')
+        if 'FORM_EDIT_VAL' in formatter.perm:
+            self.allow_submit = True
         return ''.join(self.build_form(text))
 
     def build_form(self, text):
@@ -163,7 +165,7 @@ class TracFormProcessor(object):
                         or '') +
                     '>')
             yield text
-            if self.needs_submit:
+            if self.allow_submit:
                 yield '<INPUT class="buttons" type="submit"'
                 if self.submit_name:
                     yield ' name=%r' % str(self.submit_name)

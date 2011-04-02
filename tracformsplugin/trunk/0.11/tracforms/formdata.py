@@ -18,6 +18,7 @@ class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
         return req.path_info.endswith('/formdata/update')
 
     def process_request(self, req):
+        req.perm.require('FORM_EDIT_VAL')
         try:
             self.log.debug('UPDATE ARGS:' + str(req.args))
             args = dict(req.args)
