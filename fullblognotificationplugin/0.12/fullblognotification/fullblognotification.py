@@ -33,6 +33,10 @@ class FullBlogNotificationPlugin(Component):
         'fullblog-notification', 'from_name', None,
         """Sender name to use in notification emails.
            Defaults to project name.""")
+    
+    reply_to_email = Option(
+        'fullblog-notification', 'reply_to_email', '', 
+        """Reply-to address to use in notification emails.""")
 
     notification_actions = ListOption(
         'fullblog-notification', 'notification_actions',
