@@ -25,6 +25,7 @@ class FullBlogNotificationEmail(NotifyEmail):
         NotifyEmail.__init__(self, env)
         self.from_name = self.config.get('fullblog-notification', 'from_name')
         self.from_email = self.config.get('fullblog-notification', 'from_email')
+        self.reply_to_email = self.config.get('fullblog-notification', 'reply_to_email') or self.from_email
         self.notification_actions = self.config.getlist('fullblog-notification', 
                                                         'notification_actions')  
         self.no_notification_categories = self.config.getlist('fullblog-notification',
@@ -100,7 +101,8 @@ class FullBlogNotificationEmail(NotifyEmail):
         headers['Auto-Submitted'] = 'auto-generated'
         headers['Subject'] = self.subject
         headers['From'] = (self.from_name or projname, self.from_email)
-        headers['Reply-To'] = self.replyto_email
+        headers['Reply-To'] = self.reply_to_email
+        
         # add Message-ID and In-Reply-To for threaded mail clients
         if self.action == 'post_created':
             headers['Message-ID'] = self.get_message_id(projname, self.blog.name)
