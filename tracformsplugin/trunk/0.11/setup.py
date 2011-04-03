@@ -29,6 +29,7 @@ setup(
             'tracforms.formdata = tracforms.formdata',
             'tracforms.formdb = tracforms.formdb',
             'tracforms.macros = tracforms.macros',
+            'tracforms.web_ui = tracforms.web_ui',
         ]
     }
 )
