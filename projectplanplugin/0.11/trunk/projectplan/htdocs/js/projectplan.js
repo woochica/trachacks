@@ -977,23 +977,34 @@ function hideIfShown(){
 // 	}
 // }
 
-
+/**
+ * add an AJAX tooltip to each ticket ref
+ */
 function ppAddTooltip( sel ){
 	$(sel).tooltip({
  		bodyHandler: function() { 
- 			$("#tooltip").load(this.href+" #ticket");
- 			this.title = ""
+			$("#tooltip div.ticketcache").each(function(i){ $(this).hide();} ); // hide all
+			myid = "ticket"+this.href.split("/").pop(); 
+			
+			if( $("#"+myid).size() != 0 ){
+			  $("#"+myid).fadeIn(); // to increase performance: if exists, only show the previous result
+			  $("#tooltip .url").hide();
+			} else {
+			  $("#tooltip .url").fadeIn();
+			  $("#tooltip").append("<div id='"+myid+"' class='ticketcache'><img src='"+this.href+"/../../chrome/projectplan/images/loading.gif'> "+this.href+"</div>");
+			  $("#"+myid).load(this.href+" #content > *:lt(3)"); // works on Trac 0.12
+			  $("#tooltip .url").fadeOut();
+			}
+			
  			return ""; 
  		}, 
 		track: false, 
-		delay: 0, 
-		showURL: true, 
+		delay: 250, 
+		showURL: false, 
 		opacity: 1, 
 		fixPNG: true, 
 		showBody: " - ", 
-// 		extraClass: "pretty fancy", 
- 		extraClass: "tooltip2", 
-		showURL: true
+ 		extraClass: "tooltip2"
 	});
 }
 

@@ -93,14 +93,24 @@
 	font-weight: bold;
 }
 
-
+#tooltip.tooltip2 div.url {
+  font-size:75%;
+}
 #tooltip.tooltip2 {
 	width:50em;
 	border: 1px solid #111;
-	background-color: #eee;
-	padding: 0px;
+	background-color: #FFD; /* Trac ticket background color */
+	padding: 3px;
 	opacity: 1;
+	font-size:90% !important;
+}
 
+#tooltip.tooltip2 h2.summary , #tooltip.tooltip2 h2 {
+	font-size:110% !important;
+}
+
+#tooltip.tooltip2 h1 {
+	font-size:120% !important;
 }
 
 
