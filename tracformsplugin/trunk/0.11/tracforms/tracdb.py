@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import os, sys
+import os
+import sys
 
 from datetime import datetime
 
@@ -116,9 +117,9 @@ class DBComponent(Component):
 
     def environment_needs_upgrade(self, db):
         if not type(self).__dict__.get('applySchema', False):
-            self.log.debug(
-                'Not checking schema for "%s", since applySchema is not '
-                'defined or is False.' % type(self).__name__)
+            self.log.debug("""Not checking schema for \"%s\",
+                           since applySchema is not defined or is False.
+                           """ % type(self).__name__)
             return False
         cursor = self.get_cursor(db)
         installed = self.get_installed_version(cursor)
@@ -134,9 +135,9 @@ class DBComponent(Component):
 
     def upgrade_environment(self, db):
         if not type(self).__dict__.get('applySchema', False):
-            self.log.debug(
-                'Not updating schema for "%s", since applySchema is not '
-                'defined or is False.' % type(self).__name__)
+            self.log.debug("""Not updating schema for \"%s\",
+                           since applySchema is not defined or is False.
+                           """ % type(self).__name__)
             return
         self.log.debug(
             'Upgrading schema for "%s".' % type(self).__name__)

@@ -10,6 +10,7 @@ from codecs          import getencoder
 
 from trac.resource   import ResourceSystem
 from trac.util.text  import to_unicode
+
 from compat          import json
 
 __all__ = ['format_values', 'resource_from_page', 'xml_escape',

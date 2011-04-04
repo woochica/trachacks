@@ -8,19 +8,20 @@ from trac.util.datefmt import to_datetime
 
 from model import Form
 from tracdb import DBCursor
+from tracforms import _
 from util import format_values
 
 
 class FormUI(Component):
-    """Provides TracSearch support for TracForms.
-    """
+    """Provides TracSearch support for TracForms."""
+
     implements(ISearchSource)
 
     # ISearchSource methods
 
     def get_search_filters(self, req):
         if 'FORM_VIEW' in req.perm:
-            yield ('form', 'Forms')
+            yield ('form', _("Forms"))
 
     def get_search_results(self, req, terms, filters):
         if not 'form' in filters:

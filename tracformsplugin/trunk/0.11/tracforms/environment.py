@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
 
-"""
-Handles the environment used by TracForm macros.  This dictionary is stackable
-and provides recursive context for pseudo-variables.
+import fnmatch
+import re
+
+from compat import json
+from tracforms import _
+
+
+class TracFormEnvironment(dict):
+    """Handles the environment used by TracForm macros.
+
+This dictionary is stackable and provides recursive context
+for pseudo-variables.
 
 >>> outer = TracFormEnvironment(None)
 >>> outer['hello'] = 'World'
@@ -29,14 +38,8 @@ and provides recursive context for pseudo-variables.
 >>> web.addform('a=5&a=7&b=hello', 'test')
 >>> web['a']
 '5\t7'
-"""
+    """
 
-import fnmatch, sys, re
-
-from compat import json
-
-
-class TracFormEnvironment(dict):
     def __init__(self, base=None, prefixes=()):
         if base is not None:
             self.update(base)
@@ -59,7 +62,8 @@ class TracFormEnvironment(dict):
             elif len(values) == 1:
                 return values[0]
             else:
-                raise ValueError('Too many results for singleton %r' % key)
+                raise ValueError(
+                    _("Too many results for singleton %r" % key))
         else:
             return values
 

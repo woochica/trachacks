@@ -7,14 +7,13 @@ from trac.util.text import to_unicode
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
 
+import errors # various TracForm exceptions
+
 from api import TracFormDBUser
 from compat import json
 from environment import TracFormEnvironment
-from errors import TracFormError, \
-    TracFormTooManyValuesError, \
-    TracFormNoOperationError, \
-    TracFormNoCommandError
 from iface import TracPasswordStoreUser
+from tracforms import _
 from util import resource_from_page, xml_escape
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
@@ -30,9 +29,7 @@ kwtrans = {
 
 
 class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
-    """
-    Docs for TracForm macro...
-    """
+    """Docs for TracForm macro..."""
 
     def expand_macro(self, formatter, name, args):
         processor = TracFormProcessor(self, formatter, name, args)
@@ -40,6 +37,8 @@ class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
 
 
 class TracFormProcessor(object):
+    """Core parser and processor logic for TracForm markup."""
+
     # Default state (beyond what is set in expand_macro).
     showErrors = True
     page = None
@@ -48,7 +47,6 @@ class TracFormProcessor(object):
     allow_submit = False
     keep_history = False
     track_fields = True
-    submit_label = 'Update Form'
     submit_name = None
     form_class = None
     form_cssid = None
@@ -95,7 +93,7 @@ class TracFormProcessor(object):
                         fn = getattr(self, 'cmd_' + cmd.lower(), None)
                         if fn is None:
                             errors.append(
-                                'ERROR: No TracForm command "%s"' % cmd)
+                                _("ERROR: No TracForm command '%s'" % cmd))
                         else:
                             try:
                                 fn(*args, **kw)
@@ -166,10 +164,12 @@ class TracFormProcessor(object):
                     '>')
             yield text
             if self.allow_submit:
+                # TRANSLATOR: Default submit button label
+                submit_label = _("Update Form")
                 yield '<INPUT class="buttons" type="submit"'
                 if self.submit_name:
                     yield ' name=%r' % str(self.submit_name)
-                yield ' value=%r' % xml_escape(self.submit_label)
+                yield ' value=%r' % xml_escape(submit_label)
                 yield '>'
             if self.keep_history:
                 yield '<INPUT type="hidden"'
@@ -290,7 +290,7 @@ class TracFormProcessor(object):
         self.showErrors = show.upper() in ('SHOW', 'YES')
 
     def cmd_page(self, page):
-        if page.upper() in ('NONE', 'DEFAULT', 'CURRENt'):
+        if page.upper() in ('NONE', 'DEFAULT', 'CURRENT'):
             self.page = None
         else:
             self.page = page
@@ -472,15 +472,15 @@ class TracFormProcessor(object):
         return str(self.context)
 
     def op_who(self, field):
+        # TRANSLATOR: Default updater name
         who = self.macro.get_tracform_fieldinfo(
-            self.context, field)[0] or 'unknown'
+                self.context, field)[0] or _("unknown")
         return who
         
     def op_when(self, field, format='%m/%d/%Y %H:%M:%S'):
         when = self.macro.get_tracform_fieldinfo(self.context, field)[1]
-        if when is not None:
-            when = format_datetime(when, format=str(format))
-        return when
+        return (when is not None and format_datetime(
+                when, format=str(format)) or _("unknown"))
 
     def op_id(self):
         return id(self)

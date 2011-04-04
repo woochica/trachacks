@@ -9,6 +9,7 @@ from trac.web.api import HTTPBadRequest, HTTPUnauthorized
 from api import TracFormDBUser
 from compat import json
 from iface import TracPasswordStoreUser
+from tracforms import _
 
 
 class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
@@ -31,7 +32,8 @@ class TracFormUpdater(TracFormDBUser, TracPasswordStoreUser):
             track_fields = args.pop('__track_fields__', None)
             args.pop('__FORM_TOKEN', None)  # Ignore.
             if context is None:
-                raise HTTPBadRequest('__context__ is required')
+                # TRANSLATOR: HTTP error message
+                raise HTTPBadRequest(_("__context__ is required"))
             who = req.authname
             result = json.dumps(args, separators=(',', ':'))
             self.save_tracform(context, result, who, basever,

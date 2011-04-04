@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import re, time, unittest
+import re
+import time
+import unittest
 
 from trac.core import Component, implements
 from trac.resource import Resource, resource_exists
@@ -8,10 +10,13 @@ from trac.resource import Resource, resource_exists
 from api import TracFormDBObserver
 from compat import json, parse_qs
 from tracdb import DBComponent
+from tracforms import _
 from util import resource_from_page, xml_unescape
 
 
 class TracFormDBComponent(DBComponent):
+    """Provides form update methods and schema components."""
+
     applySchema = True
     implements(TracFormDBObserver)
 
@@ -23,7 +28,7 @@ class TracFormDBComponent(DBComponent):
     def get_tracform_meta(self, src, cursor=None):
         """
         Returns the meta information about a form based on a form id (int or
-        long) or context (string or unicode).
+        long) or context (parent realm, parent id, TracForms subcontext).
         """
         cursor = self.get_cursor(cursor)
         sql = """
@@ -161,7 +166,7 @@ class TracFormDBComponent(DBComponent):
                     (form_id, realm, resource_id, subcontext, old_state,
                     last_updater, last_updated_on))
         else:
-            raise ValueError("Conflict")
+            raise ValueError(_("Conflict"))
 
     def get_tracform_history(self, src, cursor=None):
         cursor = self.get_cursor(cursor)
@@ -198,12 +203,10 @@ class TracFormDBComponent(DBComponent):
     #
     ###########################################################################
     #def dbschema_2008_06_14_0000(self, cursor):
-    #    """
-    #    This was a simple test for the schema base class.
-    #    """
+    #    """This was a simple test for the schema base class."""
 
     def db00(self, cursor):
-        "Create the major tables."
+        """Create the major tables."""
         cursor("""
             CREATE TABLE tracform_forms(
                 tracform_id     INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -240,7 +243,7 @@ class TracFormDBComponent(DBComponent):
             """)
 
     def db01(self, cursor):
-        "Create indices for tracform_forms table."
+        """Create indices for tracform_forms table."""
         cursor("""
             CREATE INDEX tracform_forms_context
                 ON tracform_forms(context)
@@ -255,12 +258,11 @@ class TracFormDBComponent(DBComponent):
             """)
 
     def db02(self, cursor):
-        """
-        This was a modify table, but instead removed the data altogether.
+        """This was a modify table, but instead removed the data altogether.
         """
 
     def db03(self, cursor):
-        "Create indices for tracform_history table."
+        """Create indices for tracform_history table."""
         cursor("""
             CREATE INDEX tracform_history_tracform_id
                 ON tracform_history(tracform_id)
@@ -275,7 +277,7 @@ class TracFormDBComponent(DBComponent):
             """)
 
     def db04(self, cursor):
-        "Recreating updated_on index for tracform_forms to be descending."
+        """Recreating updated_on index for tracform_forms to be descending."""
         cursor("""
             DROP INDEX tracform_forms_updated_on
             """, mysql="""
@@ -287,14 +289,14 @@ class TracFormDBComponent(DBComponent):
             """)
 
     def db10(self, cursor):
-        "Also maintain whether history should me maintained for form."
+        """Also maintain whether history should me maintained for form."""
         cursor("""
             ALTER TABLE tracform_forms
                 ADD keep_history INTEGER
             """)
 
     def db11(self, cursor):
-        "Make the context a unique index."
+        """Make the context a unique index."""
         cursor("""
             DROP INDEX tracform_forms_context
             """, mysql="""
@@ -306,7 +308,7 @@ class TracFormDBComponent(DBComponent):
             """)
 
     def db12(self, cursor):
-        "Track who changes individual fields"
+        """Track who changes individual fields."""
         cursor("""
             ALTER TABLE tracform_forms
                 ADD track_fields INTEGER
@@ -332,8 +334,9 @@ class TracFormDBComponent(DBComponent):
             """)
 
     def db13(self, cursor):
-        """Convert state serialization type to be more readable and
-        migrate to slicker named major tables and associated indexes.
+        """Convert state serialization type to be more readable.
+
+        Migrate to slicker named major tables and associated indexes too.
         """ 
         cursor("""
             CREATE TABLE forms(
@@ -505,8 +508,7 @@ class TracFormDBComponent(DBComponent):
             """)
 
     def db14(self, cursor):
-        """Split context into proper Trac resource descriptors.
-        """ 
+        """Split context into proper Trac resource descriptors.""" 
         cursor("""
             CREATE TABLE forms_old
                 AS SELECT *
@@ -594,6 +596,9 @@ def _url_to_json(state_url):
 
 def _context_to_resource(env, context):
     """Find parent realm, parent resource_id and optional TracForm subcontext.
+
+    Some guesswork is knowingly involved here to finally overcome previous
+    potentially ambiguous contexts by distinct resource parameters.
     """
     realm, resource_path = resource_from_page(env, context)
     subcontext = None

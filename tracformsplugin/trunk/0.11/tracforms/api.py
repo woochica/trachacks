@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import sys
-
 from trac.core import Component, ExtensionPoint, Interface, implements
 from trac.perm import IPermissionRequestor
 from trac.resource import IResourceManager, Resource, ResourceNotFound, \
@@ -80,11 +78,11 @@ class TracFormDBUser(Component):
 # deferred imports to avoid circular dependencies
 from formdb import TracFormDBComponent
 #from model import Form
+from tracforms import TracFormPlugin, _
 
 
-class FormSystem(Component):
-    """Provides permissions and access to TracForms as resource 'form'.
-    """
+class FormSystem(TracFormPlugin):
+    """Provides permissions and access to TracForms as resource 'form'."""
 
     implements(IPermissionRequestor, IResourceManager)
 
@@ -101,7 +99,7 @@ class FormSystem(Component):
 
     def get_resource_description(self, resource, format=None, **kwargs):
         if not resource.parent:
-            return 'Unparented form %s' % resource.id
+            return _("Unparented form %(id)s", id=resource.id)
         if format == 'compact':
             return '%s (%s)' % (resource.id,
                    get_resource_shortname(self.env, resource.parent))
@@ -109,9 +107,9 @@ class FormSystem(Component):
         #elif format == 'summary':
         #    return Form(self.env, resource).description
         if resource.id:
-            return "Form '%s' in %s" % (resource.id,
-                   get_resource_name(self.env, resource.parent))
+            return _("Form %(id)s in %(parent)s", id=resource.id,
+                     parent=get_resource_name(self.env, resource.parent))
         else:
-            return 'Forms of %s' % (
-                   get_resource_name(self.env, resource.parent))
+            return _("Forms of %(parent)s",
+                     parent=get_resource_name(self.env, resource.parent))
 

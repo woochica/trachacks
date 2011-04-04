@@ -21,6 +21,6 @@ if can_check_user:
 else:
     class TracPasswordStoreUser(Component):
         def has_user(self, *_args, **_kw):
-            "Stub if the user doesn't have acct_mgr installed"
+            """Stub, if AccountManagerPlugin isn't installed."""
             return False
 
