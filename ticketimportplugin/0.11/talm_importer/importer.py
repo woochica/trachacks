@@ -307,7 +307,7 @@ class ImportModule(Component):
 
         for row in rows:
             if idcolumn:
-                ticket_id = int(row[idcolumn]) if row[idcolumn] else 0
+                ticket_id = int(row[idcolumn] or 0)
                 if ticket_id:
                     self._check_ticket(db, ticket_id)
                 else:
