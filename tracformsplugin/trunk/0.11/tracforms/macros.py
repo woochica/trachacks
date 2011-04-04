@@ -47,6 +47,7 @@ class TracFormProcessor(object):
     allow_submit = False
     keep_history = False
     track_fields = True
+    submit_label = None
     submit_name = None
     form_class = None
     form_cssid = None
@@ -165,7 +166,7 @@ class TracFormProcessor(object):
             yield text
             if self.allow_submit:
                 # TRANSLATOR: Default submit button label
-                submit_label = _("Update Form")
+                submit_label = self.submit_label or  _("Update Form")
                 yield '<INPUT class="buttons" type="submit"'
                 if self.submit_name:
                     yield ' name=%r' % str(self.submit_name)
