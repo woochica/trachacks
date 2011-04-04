@@ -1,0 +1,84 @@
+# Translations template for TracForms.
+# Copyright (C) 2011 ORGANIZATION
+# This file is distributed under the same license as the TracForms
+# project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TracForms 0.3\n"
+"Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
+"POT-Creation-Date: 2011-04-05 00:27+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#: tracforms/api.py:102
+#, python-format
+msgid "Unparented form %(id)s"
+msgstr ""
+
+#: tracforms/api.py:111
+#, python-format
+msgid "Form %(id)s in %(parent)s"
+msgstr ""
+
+#: tracforms/api.py:114
+#, python-format
+msgid "Forms of %(parent)s"
+msgstr ""
+
+#: tracforms/environment.py:66
+#, python-format
+msgid "Too many results for singleton %r"
+msgstr ""
+
+#: tracforms/errors.py:18
+#, python-format
+msgid ""
+"ERROR: Too many values for TracForm variable %r\n"
+"        (maybe the same field is being used multiple times?)"
+msgstr ""
+
+#: tracforms/errors.py:27
+#, python-format
+msgid "ERROR: No TracForm operation '%r'"
+msgstr ""
+
+#: tracforms/errors.py:34
+#, python-format
+msgid "ERROR: No TracForm command '%r'"
+msgstr ""
+
+#. TRANSLATOR: HTTP error message
+#: tracforms/formdata.py:36
+msgid "__context__ is required"
+msgstr ""
+
+#: tracforms/formdb.py:169
+msgid "Conflict"
+msgstr ""
+
+#: tracforms/macros.py:96
+#, python-format
+msgid "ERROR: No TracForm command '%s'"
+msgstr ""
+
+#. TRANSLATOR: Default submit button label
+#: tracforms/macros.py:168
+msgid "Update Form"
+msgstr ""
+
+#: tracforms/macros.py:477 tracforms/macros.py:483
+msgid "unknown"
+msgstr ""
+
+#: tracforms/web_ui.py:24
+msgid "Forms"
+msgstr ""
+

@@ -24,12 +24,12 @@ class TracFormNoOperationError(TracFormError):
     def __init__(self, name):
         TracFormError.__init__(self, name)
 
-    message = _("ERROR: No TracForm operation named %r")
+    message = _("ERROR: No TracForm operation '%r'")
 
 
 class TracFormNoCommandError(TracFormError):
     def __init__(self, name):
         TracFormError.__init__(self, name)
 
-    message = _("ERROR: No TracForm command named %r")
+    message = _("ERROR: No TracForm command '%r'")
 
