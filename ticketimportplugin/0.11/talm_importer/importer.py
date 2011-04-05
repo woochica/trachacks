@@ -233,7 +233,7 @@ class ImportModule(Component):
         from ticket import PatchedTicket
         ticket = PatchedTicket(self.env)
         
-        for f in [ 'type', 'cc' , 'url', 'description', 'keywords', 'component' , 'severity' , 'priority' , 'version', 'milestone' ] + customfields:
+        for f in [ 'type', 'cc' , 'description', 'keywords', 'component' , 'severity' , 'priority' , 'version', 'milestone' ] + customfields:
             if f in ticket.values:
                 computedfields[f] = {}
                 computedfields[f]['value'] = ticket.values[f]
