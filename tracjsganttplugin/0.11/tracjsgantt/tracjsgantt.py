@@ -403,7 +403,7 @@ class TracJSGanttChart(WikiMacroBase):
             # Get the milestones and their due dates
             db = self.env.get_db_cnx()
             cursor = db.cursor()
-            cursor.execute("SELECT name, due FROM milestone "
+            cursor.execute("SELECT name, due FROM milestone " +
                            "WHERE name in ('" + "','".join(milestones) + "')")
             for row in cursor:
                 milestoneTicket = {}
