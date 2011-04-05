@@ -106,6 +106,10 @@ class TracJSGanttChart(WikiMacroBase):
                                          'days_per_estimate', 
                                          default='0.125'))
 
+        # User name map
+        self.user_map = {}
+        for username, name, email in self.env.get_known_users():
+            self.user_map[username] = name
 
     def _begin_gantt(self, options):
         if options.get('format'):
@@ -252,7 +256,6 @@ class TracJSGanttChart(WikiMacroBase):
 
             t['link'] = self.req.href.ticket(t['id'])
 
-            # FIXME - translate owner to full name
 
     # Compute WBS for sorting and figure out the tickets' levels for
     # controlling how many levels are open.  
@@ -431,6 +434,14 @@ class TracJSGanttChart(WikiMacroBase):
     #   summary - ticket summary
     #   type - string displayed in tool tip FIXME - not displayed yet
     def _format_ticket(self, t, options):
+        # Translate owner to full name
+        def _owner(t):
+            if t['owner'] in self.user_map:
+                owner_name = self.user_map[t['owner']]
+            else:
+                owner_name = t['owner']
+            return owner_name
+            
         def _percent(t):
             # Compute percent complete if given estimate and worked
             if self.fields['estimate'] and self.fields['worked']:
@@ -546,7 +557,7 @@ class TracJSGanttChart(WikiMacroBase):
             task += '0,'
 
         # pRes (owner)
-        task += '"%s",' % t['owner']
+        task += '"%s",' % _owner(t)
 
         # pComp (percent complete); integer 0..100
         task += '%d,' % _percent(t)
