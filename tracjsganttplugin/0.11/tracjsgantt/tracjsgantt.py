@@ -151,6 +151,7 @@ class TracJSGanttChart(WikiMacroBase):
         opt += 'g.setDateDisplayFormat("%s");\n' % g('dateDisplay')
 
         opt += 'g.setFormatArr("day","week","month","quarter");\n'
+        opt += 'g.setPopupFeatures("location=1,scrollbars=1");\n'
         return opt
 
     # TODO - use ticket-classN styles instead of colors?

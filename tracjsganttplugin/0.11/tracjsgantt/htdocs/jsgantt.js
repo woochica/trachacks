@@ -625,6 +625,14 @@ JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat)
 * @private
 */var vDateDisplayFormat = "mm/dd/yy";
 
+/**
+* Popup-window features (width, height, scroll bars, etc.)
+* @property vPopupFeatures
+* @type String 
+* @default "height=200,width=300"
+* @private
+*/var vPopupFeatures = "height=200,width=300";
+
 	  var vNumUnits  = 0;
       var vCaptionType;
       var vDepId = 1;
@@ -690,6 +698,14 @@ JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat)
 * @return {void}
 */      this.setDateDisplayFormat = function(pShow) { vDateDisplayFormat = pShow; };
 /**
+* Popup window features
+* @param pPopupFeatures {String} 
+* @method setPopupFeatures
+* @return {void}
+*/      this.setPopupFeatures = function(pPopupFeatures) { 
+	  vPopupFeatures = pPopupFeatures; 
+};
+/**
 * Set gantt caption
 * @param pType {String} 
 <p>Caption-Displays a custom caption set in TaskItem<br>
@@ -743,6 +759,11 @@ Complete-Displays task percent complete</p>
 * @method getDateDisplayFormat
 * @return {String}
 */  this.getDateDisplayFormat = function() { return vDateDisplayFormat };
+/**
+* Returns popup feature string
+* @method getPopupFeatures
+* @return {String}
+*/  this.getPopupFeatures = function() { return vPopupFeatures };
 /**
 * Returns current gantt caption type
 * @method getCaptionType
@@ -1439,7 +1460,7 @@ Complete-Displays task percent complete</p>
 
   	            vRightTable +=
                   '<div id=bardiv_' + vID + ' style="position:absolute; top:0px; left:' + Math.ceil((vTaskLeft * (vDayWidth) + 1)) + 'px; height: 18px; width:160px; overflow:hidden;">' +
-                  '  <div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" style="height: 16px; width:12px; overflow:hidden; cursor: pointer;" onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '",300,200);>';
+                  '  <div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" style="height: 16px; width:12px; overflow:hidden; cursor: pointer;" onclick=JSGantt.taskLink"' + vTaskList[i].getLink() + '","'+vPopupFeatures+'");>';
 
                if(vTaskList[i].getCompVal() < 100)
  		            {vRightTable += '&loz;</div>' ;}
@@ -1499,7 +1520,7 @@ Complete-Displays task percent complete</p>
 		      '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="'+vTaskList[i].getClass()+'" style="background-color:#000000; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) -1) + 'px;  cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'">' +
                          '<div style="Z-INDEX: -4; float:left; background-color:#666666; height:3px; overflow: hidden; margin-top:1px; ' +
                                'margin-left:1px; margin-right:1px; filter: alpha(opacity=80); opacity:0.8; width:' + vTaskList[i].getCompStr() + '; ' + 
-                               'cursor: pointer;" onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '",300,200);>' +
+                               'cursor: pointer;" onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '","'+vPopupFeatures+'");>' +
                            '</div>' +
                         '</div>' +
                         '<div style="Z-INDEX: -4; float:left; background-color:#000000; height:4px; overflow: hidden; width:1px;"></div>' +
@@ -1535,7 +1556,7 @@ Complete-Displays task percent complete</p>
 	            vRightTable +=
                      '<div id=bardiv_' + vID + ' style="position:absolute; top:4px; left:' + Math.ceil(vTaskLeft * (vDayWidth) + 1) + 'px; height:18px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px">' +
                         '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="'+vTaskList[i].getClass()+'" style="background-color:' + vTaskList[i].getColor() +'; height: 13px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px; cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'" ' +
-                           'onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '",300,200); >' +
+                           'onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '","'+vPopupFeatures+'"); >' +
                            '<div class=gcomplete style="Z-INDEX: -4; float:left; background-color:black; height:5px; overflow: auto; margin-top:4px; filter: alpha(opacity=40); opacity:0.4; width:' + vTaskList[i].getCompStr() + '; overflow:hidden">' +
                            '</div>' +
                         '</div>';
@@ -2066,18 +2087,21 @@ JSGantt.show =  function (pID, pTop, ganttObj) {
 *
 * @method taskLink
 * @param pRef {String} - URL for window
-* @param pWidth {Number} - Width of window
-* @param pHeight {Number} - Height of window
+* @param pFeatures (String) - Feature string (e.g., "status=1,toolbar=1")
 * @return {void}
 */
-JSGantt.taskLink = function(pRef,pWidth,pHeight) 
+JSGantt.taskLink = function(pRef,pFeatures) 
 
   {
+    if (pFeatures && pFeatures.length != 0) {
+	vFeatures = pFeatures
+    } else {
+	vFeatures = "height=200,width=300"
+    }
 
-    if(pWidth)  {vWidth =pWidth;}  else {vWidth =400;}
-    if(pHeight) {vHeight=pHeight;} else {vHeight=400;}
-
-    var OpenWindow=window.open(pRef, "newwin", "height="+vHeight+",width="+vWidth); 
+    var OpenWindow=window.open(pRef, 
+			       "newwin", 
+			       vFeatures);
 
   };
 
