@@ -54,6 +54,7 @@ class TracJSGanttChart(WikiMacroBase):
             'dateDisplay': 'mm/dd/yyyy',
             'openLevel': 999,
             'colorBy' : 'priority',
+            'lwidth' : None,
             }
 
         # Configuration fields
@@ -140,6 +141,10 @@ class TracJSGanttChart(WikiMacroBase):
         opt += 'g.setShowRes(%s);\n' % g('res')
         opt += 'g.setShowDur(%s);\n' % g('dur')
         opt += 'g.setShowComp(%s);\n' % g('comp')
+        w = g('lwidth')
+        if w:
+            opt += 'g.setLeftWidth(%s);\n' % w
+            
 
         opt += 'g.setCaptionType("%s");\n' % g('caption')
 

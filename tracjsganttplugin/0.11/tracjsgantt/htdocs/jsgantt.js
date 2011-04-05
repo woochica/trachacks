@@ -632,6 +632,13 @@ JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat)
 * @default "height=200,width=300"
 * @private
 */var vPopupFeatures = "height=200,width=300";
+/**
+* Width of the left table (task, duration, etc.)
+* @property vLeftWidth
+* @type integer 
+* @default Room for +/-, name, resource, duration, %, start, and end dates
+* @private
+*/var vLeftWidth = 15 + 220 + 70 + 70 + 70 + 70 + 70;
 
 	  var vNumUnits  = 0;
       var vCaptionType;
@@ -704,6 +711,14 @@ JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat)
 * @return {void}
 */      this.setPopupFeatures = function(pPopupFeatures) { 
 	  vPopupFeatures = pPopupFeatures; 
+};
+/**
+* Left table width
+* @param pLeftWidth {integer} 
+* @method setLeftWidth
+* @return {void}
+*/      this.setLeftWidth = function(pLeftWidth) { 
+	  vLeftWidth = pLeftWidth; 
 };
 /**
 * Set gantt caption
@@ -990,9 +1005,8 @@ Complete-Displays task percent complete</p>
       var vNumDays = 0;
       var vDayWidth = 0;
       var vStr = "";
-      var vNameWidth = 220;	
+      var vNameWidth = vLeftWidth;
       var vStatusWidth = 70;
-      var vLeftWidth = 15 + 220 + 70 + 70 + 70 + 70 + 70;
 
       if(vTaskList.length > 0)
       {
@@ -1042,15 +1056,13 @@ Complete-Displays task percent complete</p>
          vChartWidth = vNumUnits * vColWidth + 1;
          vDayWidth = (vColWidth / vColUnit) + (1/vColUnit);
 
-         vMainTable =
-            '<TABLE id=theTable cellSpacing=0 cellPadding=0 border=0><TBODY><TR>' +
-            '<TD vAlign=top bgColor=#ffffff>';
+         vMainTable = ''
 
-         if(vShowRes !=1) vNameWidth+=vStatusWidth;
-         if(vShowDur !=1) vNameWidth+=vStatusWidth;
-         if(vShowComp!=1) vNameWidth+=vStatusWidth;
-		   if(vShowStartDate!=1) vNameWidth+=vStatusWidth;
-		   if(vShowEndDate!=1) vNameWidth+=vStatusWidth;
+         if(vShowRes ==1) vNameWidth-=vStatusWidth;
+         if(vShowDur ==1) vNameWidth-=vStatusWidth;
+         if(vShowComp==1) vNameWidth-=vStatusWidth;
+	 if(vShowStartDate==1) vNameWidth-=vStatusWidth;
+	 if(vShowEndDate==1) vNameWidth-=vStatusWidth;
         
 		   // DRAW the Left-side of the chart (names, resources, comp%)
          vLeftTable =
@@ -1174,13 +1186,12 @@ Complete-Displays task percent complete</p>
               '<TR><TD border=1 colspan=5 align=left style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 11px; BORDER-LEFT: #efefef 1px solid; height:18px">&nbsp;&nbsp;Powered by <a href=http://www.jsgantt.com>jsGantt</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
 		
 
-            vLeftTable += '</TD></TR></TBODY></TABLE></TD>';
+            vLeftTable += '</TD></TR></TBODY></TABLE></div>';
 
             vMainTable += vLeftTable;
 
             // Draw the Chart Rows
             vRightTable = 
-            '<TD style="width: ' + vChartWidth + 'px;" vAlign=top bgColor=#ffffff>' +
             '<DIV class=scroll2 id=rightside>' +
             '<TABLE style="width: ' + vChartWidth + 'px;" cellSpacing=0 cellPadding=0 border=0>' +
             '<TBODY><TR style="HEIGHT: 18px">';
@@ -1583,7 +1594,7 @@ Complete-Displays task percent complete</p>
 
          }
 
-         vMainTable += vRightTable + '</DIV></TD></TR></TBODY></TABLE></BODY></HTML>';
+         vMainTable += vRightTable + '</DIV></body></HTML>';
 
 		   vDiv.innerHTML = vMainTable;
 
