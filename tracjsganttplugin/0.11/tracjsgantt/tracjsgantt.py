@@ -55,6 +55,7 @@ class TracJSGanttChart(WikiMacroBase):
             'openLevel': 999,
             'colorBy' : 'priority',
             'lwidth' : None,
+            'root' : None,
             }
 
         # Configuration fields
@@ -188,10 +189,32 @@ class TracJSGanttChart(WikiMacroBase):
     # Get the required columns for the tickets which match the
     # criteria in options.
     def _query_tickets(self, options):
+        # Parents is a list of strings
+        def _children(parents):
+            if len(parents) == 0:
+                return []
+
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("SELECT t.id "
+                           "FROM ticket AS t "
+                           "LEFT OUTER JOIN ticket_custom AS p ON "
+                           "    (t.id=p.ticket AND p.name='%s') "
+                           "WHERE p.value IN (%s)" % 
+                           (self.fields['parent'],
+                            "'" + "','".join(parents) + "'"))
+            children = ['%s'%row[0] for row in cursor] 
+
+            return parents + _children(children)
+
         query_args = {}
         for key in options.keys():
             if not key in self.options:
                 query_args[key] = options[key]
+
+        if 'root' in options:
+            parents = options['root'].split('|')
+            query_args['id'] = '|'.join(_children(parents))
 
         # Start with values that are always needed
         fields = [
@@ -374,12 +397,13 @@ class TracJSGanttChart(WikiMacroBase):
             elif ticket[self.fields['succ']] != []:
                 finish = None
                 for tid in ticket[self.fields['succ']]:
-                    succ = self.ticketsByID[int(tid)]
-                    if succ['type'] == self.milestoneType:
-                        f = datetime.strptime(succ[self.fields['finish']],
-                                              self.dbDateFormat)
-                        if finish == None or finish > f:
-                            finish = f
+                    if int(tid) in self.ticketsByID:
+                        succ = self.ticketsByID[int(tid)]
+                        if succ['type'] == self.milestoneType:
+                            f = datetime.strptime(succ[self.fields['finish']],
+                                                  self.dbDateFormat)
+                            if finish == None or finish > f:
+                                finish = f
                 if finish == None:
                     finish = date.today()
             # Otherwise, default to today.
