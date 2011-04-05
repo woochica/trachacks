@@ -445,8 +445,11 @@ class TracJSGanttChart(WikiMacroBase):
             
         # FIXME - perhaps a closed ticket should always be 100% done.
         def _percent(ticket):
+            # Closed tickets are 100% complete
+            if ticket['status'] == 'closed':
+                percent = 100
             # Compute percent complete if given estimate and worked
-            if self.fields['estimate'] and self.fields['worked']:
+            elif self.fields['estimate'] and self.fields['worked']:
                 # Try to compute the percent complete, default to 0
                 try:
                     worked = float(ticket[self.fields['worked']])
