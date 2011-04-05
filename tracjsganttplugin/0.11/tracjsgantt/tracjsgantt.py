@@ -257,6 +257,16 @@ class TracJSGanttChart(WikiMacroBase):
 
             t['link'] = self.req.href.ticket(t['id'])
 
+        for t in self.tickets:
+            lists = [ 'pred', 'succ' ]
+            for field in lists:
+                if self.fields.get(field):
+                    if t[self.fields[field]] == '':
+                        t[self.fields[field]] = []
+                    else:
+                        t[self.fields[field]] = t[self.fields[field]].split(',')
+
+
 
     # Compute WBS for sorting and figure out the tickets' levels for
     # controlling how many levels are open.  
@@ -451,11 +461,11 @@ class TracJSGanttChart(WikiMacroBase):
                     for t in self.tickets:
                         if not t['children'] and \
                                 t['milestone'] == row[0] and \
-                                t[self.fields['succ']] == '':
-                            t[self.fields['succ']] = str(id)
+                                t[self.fields['succ']] == []:
+                            t[self.fields['succ']] = [ str(id) ]
                             pred.append(str(t['id']))
-                    milestoneTicket[self.fields['pred']] = ','.join(pred)
-
+                    milestoneTicket[self.fields['pred']] = pred
+                
                 self.tickets.append(milestoneTicket)
 
     def _task_display(self, t, options):
@@ -611,7 +621,8 @@ class TracJSGanttChart(WikiMacroBase):
         task += '%d,' % open
 
         # predecessors
-        task += '"%s",' % ticket[self.fields['pred']] if self.fields['pred'] else ''
+        task += '"%s",' % ','.join(ticket[self.fields['pred']]) \
+            if self.fields['pred'] else ''
 
         # caption 
         # FIXME - this only shows up if caption is set to caption.
