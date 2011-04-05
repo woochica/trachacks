@@ -406,6 +406,7 @@ class TracJSGanttChart(WikiMacroBase):
             for t in self.tickets:
                 if t['id'] > id:
                     id = t['id']
+            self.firstMilestoneID = id+1
 
             # Get the milestones and their due dates
             db = self.env.get_db_cnx()
@@ -529,7 +530,9 @@ class TracJSGanttChart(WikiMacroBase):
     def _format_ticket(self, ticket, options):
         # Translate owner to full name
         def _owner(ticket):
-            if ticket['owner'] in self.user_map:
+            if ticket['type'] == self.milestoneType:
+                owner_name = ''
+            elif ticket['owner'] in self.user_map:
                 owner_name = self.user_map[ticket['owner']]
             else:
                 owner_name = ticket['owner']
@@ -576,9 +579,16 @@ class TracJSGanttChart(WikiMacroBase):
 
         # pID, pName
         if ticket['type'] == self.milestoneType:
-            name = ticket['summary']
+            if ticket['id'] < self.firstMilestoneID:
+                # Put ID number on inchpebbles
+                name = 'MS:%s (#%s)' % (ticket['summary'], ticket['id'])
+            else:
+                # Don't show bogus ID of milestone pseudo tickets.
+                name = 'MS:%s' % ticket['summary']
         else:
-            name = "#%d:%s" % (ticket['id'], ticket['summary'])
+            name = "#%d:%s (%s %s)" % \
+                (ticket['id'], ticket['summary'], 
+                 ticket['status'], ticket['type'])
         task += 't = new JSGantt.TaskItem(%d,"%s",' % (ticket['id'], _safeStr(name))
 
         # pStart, pEnd
