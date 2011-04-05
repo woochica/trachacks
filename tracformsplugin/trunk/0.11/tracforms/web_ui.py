@@ -6,9 +6,9 @@ from trac.resource import Resource, get_resource_description, \
 from trac.search.api import ISearchSource, search_to_sql, shorten_result
 from trac.util.datefmt import to_datetime
 
+from api import _
 from model import Form
 from tracdb import DBCursor
-from tracforms import _
 from util import format_values
 
 
@@ -21,6 +21,7 @@ class FormUI(Component):
 
     def get_search_filters(self, req):
         if 'FORM_VIEW' in req.perm:
+            # TRANSLATOR: The realm name used as TracSearch filter label
             yield ('form', _("Forms"))
 
     def get_search_results(self, req, terms, filters):

@@ -3,21 +3,21 @@
 import fnmatch
 import re
 
+from api import _
 from compat import json
-from tracforms import _
 
 
-class TracFormEnvironment(dict):
-    """Handles the environment used by TracForm macros.
+class FormEnvironment(dict):
+    """Handles the environment used by TracForms macros.
 
 This dictionary is stackable and provides recursive context
 for pseudo-variables.
 
->>> outer = TracFormEnvironment(None)
+>>> outer = FormEnvironment(None)
 >>> outer['hello'] = 'World'
 >>> outer['test:ACK'] = 'OOP'
 >>> outer['test:FOO'] = 'BAR'
->>> inner = TracFormEnvironment(outer, ('test:',))
+>>> inner = FormEnvironment(outer, ('test:',))
 >>> inner['hello']
 'World'
 >>> inner['ACK']
@@ -34,7 +34,7 @@ for pseudo-variables.
 ('hello', 'test:ACK', 'test:FOO')
 >>> inner.getmany('/.el/')
 ('World',)
->>> web = TracFormEnvironment(None, ('test',))
+>>> web = FormEnvironment(None, ('test',))
 >>> web.addform('a=5&a=7&b=hello', 'test')
 >>> web['a']
 '5\t7'

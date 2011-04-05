@@ -1,19 +1,21 @@
 # -*- coding: utf-8 -*-
 
-import StringIO, re, traceback, time, fnmatch
+import StringIO
+import fnmatch
+import re
+import time
+import traceback
 
 from trac.util.datefmt import format_datetime
 from trac.util.text import to_unicode
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
 
-import errors # various TracForm exceptions
+import errors # various TracForms exceptions
 
-from api import TracFormDBUser
+from api import FormDBUser, PasswordStoreUser, _
 from compat import json
-from environment import TracFormEnvironment
-from iface import TracPasswordStoreUser
-from tracforms import _
+from environment import FormEnvironment
 from util import resource_from_page, xml_escape
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
@@ -28,16 +30,16 @@ kwtrans = {
     }
 
 
-class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
-    """Docs for TracForm macro..."""
+class TracFormMacro(WikiMacroBase, FormDBUser, PasswordStoreUser):
+    """Docs for TracForms macro..."""
 
     def expand_macro(self, formatter, name, args):
-        processor = TracFormProcessor(self, formatter, name, args)
+        processor = FormProcessor(self, formatter, name, args)
         return processor.execute()
 
 
-class TracFormProcessor(object):
-    """Core parser and processor logic for TracForm markup."""
+class FormProcessor(object):
+    """Core parser and processor logic for TracForms markup."""
 
     # Default state (beyond what is set in expand_macro).
     showErrors = True
@@ -94,11 +96,11 @@ class TracFormProcessor(object):
                         fn = getattr(self, 'cmd_' + cmd.lower(), None)
                         if fn is None:
                             errors.append(
-                                _("ERROR: No TracForm command '%s'" % cmd))
+                                _("ERROR: No TracForms command '%s'" % cmd))
                         else:
                             try:
                                 fn(*args, **kw)
-                            except TracFormError, e:
+                            except FormError, e:
                                 errors.append(str(e))
                             except Exception, e:
                                 errors.append(traceback.format_exc())
@@ -166,7 +168,7 @@ class TracFormProcessor(object):
             yield text
             if self.allow_submit:
                 # TRANSLATOR: Default submit button label
-                submit_label = self.submit_label or  _("Update Form")
+                submit_label = self.submit_label or _("Update Form")
                 yield '<INPUT class="buttons" type="submit"'
                 if self.submit_name:
                     yield ' name=%r' % str(self.submit_name)
@@ -288,7 +290,7 @@ class TracFormProcessor(object):
         return time.strftime(time.localtime(time.time()))
 
     def cmd_errors(self, show):
-        self.showErrors = show.upper() in ('SHOW', 'YES')
+        self.showErrors = show.upper() in ('SHOW', 'TRUE', 'YES')
 
     def cmd_page(self, page):
         if page.upper() in ('NONE', 'DEFAULT', 'CURRENT'):
@@ -349,7 +351,7 @@ class TracFormProcessor(object):
             _op, _args = _args[0], _args[1:]
         op = getattr(_self, 'op_' + _op, None)
         if op is None:
-            raise TracFormTooManyValuesError(str(_name))
+            raise FormTooManyValuesError(str(_name))
         def partial(*_newargs, **_newkw):
             if _kw or _newkw:
                 kw = dict(_kw)
@@ -375,7 +377,7 @@ class TracFormProcessor(object):
         if fn is None:
             fn = getattr(self, 'op_' + op.lower(), None)
         if fn is None:
-            raise TracFormTooManyValuesError(str(op))
+            raise FormTooManyValuesError(str(op))
         else:
             try:
                 if op[:5] == 'wikiop_':
@@ -386,7 +388,7 @@ class TracFormProcessor(object):
                     self.formatter.env.log.debug(
                         'TracForms value: ' + to_unicode(fn(*args, **kw)))
                     return to_unicode(fn(*args, **kw))
-            except TracFormError, e:
+            except FormError, e:
                 return '<PRE>' + str(e) + '</PRE>'
             except Exception, e:
                 return '<PRE>' + traceback.format_exc() + '</PRE>'
@@ -405,7 +407,7 @@ class TracFormProcessor(object):
             elif len(current) == 1:
                 current = current[0]
             else:
-                raise TracFormTooManyValuesError(str(name))
+                raise FormTooManyValuesError(str(name))
         return current
 
     def op_input(self, field, _id=None, _class=None):

@@ -7,24 +7,21 @@ import unittest
 from trac.core import Component, implements
 from trac.resource import Resource, resource_exists
 
-from api import TracFormDBObserver
+from api import IFormDBObserver, _
 from compat import json, parse_qs
 from tracdb import DBComponent
-from tracforms import _
 from util import resource_from_page, xml_unescape
 
 
-class TracFormDBComponent(DBComponent):
+class FormDBComponent(DBComponent):
     """Provides form update methods and schema components."""
 
-    applySchema = True
-    implements(TracFormDBObserver)
+    implements(IFormDBObserver)
 
-    ###########################################################################
-    #
-    #   Form update methods.
-    #
-    ###########################################################################
+    applySchema = True
+
+    # abstract TracForms update methods
+
     def get_tracform_meta(self, src, cursor=None):
         """
         Returns the meta information about a form based on a form id (int or
@@ -197,11 +194,9 @@ class TracFormDBComponent(DBComponent):
                 AND field = %s
             """, form_id, field).firstrow or (None, None)
 
-    ###########################################################################
-    #
-    #   Schema components
-    #
-    ###########################################################################
+    ##########################################################################
+    # TracForms schemas
+
     #def dbschema_2008_06_14_0000(self, cursor):
     #    """This was a simple test for the schema base class."""
 
@@ -395,7 +390,7 @@ class TracFormDBComponent(DBComponent):
             """, mysql="""
             ALTER TABLE tracform_forms DROP INDEX tracform_forms_context
             """)
-        # append common suffix for Trac db indexes to new TracForm indexes
+        # append common suffix for Trac db indexes to new TracForms indexes
         cursor("""
             CREATE UNIQUE INDEX forms_context_idx
                 ON forms(context)
@@ -502,7 +497,7 @@ class TracFormDBComponent(DBComponent):
         cursor("""
             DROP TABLE tracform_fields
             """)
-        # remove old TracForm version entry
+        # remove old TracForms version entry
         cursor("""
             DELETE FROM system WHERE name='TracFormDBComponent:version';
             """)
@@ -595,7 +590,7 @@ def _url_to_json(state_url):
     return json.dumps(state, separators=(',', ':'))
 
 def _context_to_resource(env, context):
-    """Find parent realm, parent resource_id and optional TracForm subcontext.
+    """Find parent realm and resource_id and optional TracForms subcontext.
 
     Some guesswork is knowingly involved here to finally overcome previous
     potentially ambiguous contexts by distinct resource parameters.
@@ -611,7 +606,7 @@ def _context_to_resource(env, context):
         while len(segments) > 0:
             id += segments.pop(0)
             # guess: shortest valid resource_id is parent,
-            # the rest is TracForm subcontext
+            # the rest is a TracForms subcontext
             if resource_exists(env, Resource(realm, id)):
                 resource_id = id
                 subcontext = ':'.join(segments)
@@ -630,7 +625,7 @@ def _context_to_resource(env, context):
 if __name__ == '__main__':
     from trac.test import EnvironmentStub
     env = EnvironmentStub()
-    db = TracFormDBComponent(env)
+    db = FormDBComponent(env)
     db.upgrade_environment(None)
     updated_on_1 = db.save_tracform('/', 'hello world', 'me')[0][4]
     assert db.get_tracform_state('/') == 'hello world'

@@ -15,6 +15,11 @@ def _db_to_version(name):
 
 
 class DBCursor(object):
+    """Custom layer for TracForms on top of the Trac database.
+
+    Support for db-specific SQL syntax, SQL statement logging,
+    and special result access methods are provide by this class.
+    """
     cursor = None
 
     def __init__(self, db, log):
@@ -103,15 +108,15 @@ class DBCursor(object):
 
 
 class DBComponent(Component):
+    """Provides TracForms db schema management methods."""
+
     implements(IEnvironmentSetupParticipant)
+
     applySchema = False
     plugin_name = 'forms'
 
-    ###########################################################################
-    #
-    #   IEnvironmentSetupParticipant
-    #
-    ###########################################################################
+    # IEnvironmentSetupParticipant methods
+
     def environment_created(self):
         pass
 
@@ -146,7 +151,7 @@ class DBComponent(Component):
         for version, fn in self.get_schema_functions():
             if version > installed:
                 self.log.info(
-                    'Upgrading TracForm Plugin Schema to %s' % version)
+                    'Upgrading TracForm plugin schema to %s' % version)
                 self.log.info('- %s: %s' % (fn.__name__, fn.__doc__))
                 fn(cursor)
                 self.set_installed_version(cursor, version)
@@ -154,11 +159,8 @@ class DBComponent(Component):
                 installed = version
                 self.log.info('Upgrade to %s successful.' % version)
 
-    ###########################################################################
-    #
-    #   Schema Management
-    #
-    ###########################################################################
+    # TracForms db schema management methods
+
     def get_installed_version(self, cursor):
         cursor = self.get_cursor(cursor)
         version = self.get_system_value(
@@ -188,11 +190,8 @@ class DBComponent(Component):
         cursor = self.get_cursor(cursor)
         self.set_system_value(cursor, self.plugin_name + '_version', version)
 
-    ###########################################################################
-    #
-    #   System Value Management
-    #
-    ###########################################################################
+    # Trac db 'system' table management methods for TracForms entry
+
     def get_system_value(self, cursor, key, default=None):
         return self.get_cursor(cursor).execute(
             'SELECT value FROM system WHERE name=%s', key) \
@@ -206,11 +205,8 @@ class DBComponent(Component):
             return self.get_cursor(cursor).execute(
                 'INSERT INTO system(name, value) VALUES(%s, %s)', key, value)
 
-    ###########################################################################
-    #
-    #   Cursor/Low Level Database Management
-    #
-    ###########################################################################
+    # Cursor/low level database management
+
     def get_cursor(self, db_or_cursor=None):
         if db_or_cursor is None:
             db_or_cursor = self.env.get_db_cnx()

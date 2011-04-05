@@ -6,8 +6,7 @@ __all__ = ['Form']
 
 
 class Form(object):
-    """Trac resource representation of a TracForm.
-    """
+    """Trac resource representation of a TracForms form."""
 
     @staticmethod
     def id_is_valid(num):

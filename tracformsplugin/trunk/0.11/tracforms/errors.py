@@ -1,35 +1,35 @@
 # -*- coding: utf-8 -*-
 
-from tracforms import _
+from api import _
 
-__all__ = ['TracFormError', 'TracFormTooManyValuesError',
-           'TracFormNoOperationError', 'TracFormNoCommandError']
+__all__ = ['FormError', 'FormTooManyValuesError',
+           'FormNoOperationError', 'FormNoCommandError']
 
 
-class TracFormError(Exception):
+class FormError(Exception):
     def __str__(self):
         return self.message % self.args
 
 
-class TracFormTooManyValuesError(TracFormError):
+class FormTooManyValuesError(FormError):
     def __init__(self, name):
-        TracFormError.__init__(self, name)
+        FormError.__init__(self, name)
 
     message = _(
-        """ERROR: Too many values for TracForm variable %r
+        """ERROR: Too many values for TracForms variable %r
         (maybe the same field is being used multiple times?)""")
 
 
-class TracFormNoOperationError(TracFormError):
+class FormNoOperationError(FormError):
     def __init__(self, name):
-        TracFormError.__init__(self, name)
+        FormError.__init__(self, name)
 
-    message = _("ERROR: No TracForm operation '%r'")
+    message = _("ERROR: No TracForms operation '%r'")
 
 
-class TracFormNoCommandError(TracFormError):
+class FormNoCommandError(FormError):
     def __init__(self, name):
-        TracFormError.__init__(self, name)
+        FormError.__init__(self, name)
 
-    message = _("ERROR: No TracForm command '%r'")
+    message = _("ERROR: No TracForms command '%r'")
 

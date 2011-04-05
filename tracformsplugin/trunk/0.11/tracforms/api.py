@@ -1,12 +1,60 @@
 # -*- coding: utf-8 -*-
 
+from pkg_resources import resource_filename
+from urllib import unquote_plus
+
 from trac.core import Component, ExtensionPoint, Interface, implements
 from trac.perm import IPermissionRequestor
 from trac.resource import IResourceManager, Resource, ResourceNotFound, \
                           get_resource_name, get_resource_shortname
 
+# Import i18n methods.  Fallback modules maintain compatibility to Trac 0.11
+# by keeping Babel optional here.
+try:
+    from trac.util.translation import domain_functions
+    add_domain, _, ngettext = \
+        domain_functions('tracforms', ('add_domain', '_', 'ngettext'))
+except ImportError:
+    from trac.util.translation import gettext
+    _ = gettext
+    ngettext = _
+    def add_domain(a,b,c=None):
+        pass
 
-class TracFormDBObserver(Interface):
+from trac.web import IRequestHandler
+from trac.web.api import HTTPBadRequest, HTTPUnauthorized
+
+# Import AccountManagerPlugin methods, if plugin is installed.
+try:
+    from acct_mgr.api import IPasswordStore
+    can_check_user = True
+except ImportError:
+    can_check_user = False
+
+from compat import json
+
+
+class IFormChangeListener(Interface):
+    """Extension point interface for components that require notification
+    when TracForms forms are created, modified or deleted.
+    """
+
+    def form_created(form):
+        """Called when a form is created."""
+
+    def form_changed(form, author, old_state):
+        """Called when a form is modified.
+
+        `old_state` is a dictionary containing the previous values of the
+        fields that have changed.
+        """
+
+    def form_deleted(form):
+        """Called when a form is deleted."""
+    # DEVEL: not implemented yet
+
+
+class IFormDBObserver(Interface):
     def get_tracform_meta(self, src, cursor=None):
         pass
 
@@ -47,8 +95,8 @@ def tracob_first(fn=None, default=None):
         return wrapper
 
 
-class TracFormDBUser(Component):
-    tracformdb_observers = ExtensionPoint(TracFormDBObserver)
+class FormDBUser(Component):
+    tracformdb_observers = ExtensionPoint(IFormDBObserver)
 
     @tracob_first
     def save_tracform(self, *_args, **_kw):
@@ -75,13 +123,21 @@ class TracFormDBUser(Component):
         return self.tracformdb_observers
 
 
+class FormBase(Component):
+    """Provides i18n support for TracForms."""
+
+    def __init__(self):
+        # bind 'tracforms' catalog to specified locale directory
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
+
+
 # deferred imports to avoid circular dependencies
-from formdb import TracFormDBComponent
+from formdb import FormDBComponent
 #from model import Form
-from tracforms import TracFormPlugin, _
 
 
-class FormSystem(TracFormPlugin):
+class FormSystem(FormBase):
     """Provides permissions and access to TracForms as resource 'form'."""
 
     implements(IPermissionRequestor, IResourceManager)
@@ -112,4 +168,67 @@ class FormSystem(TracFormPlugin):
         else:
             return _("Forms of %(parent)s",
                      parent=get_resource_name(self.env, resource.parent))
+
+
+class PasswordStoreUser(Component):
+    if can_check_user:
+        passwordstore_observers = ExtensionPoint(IPasswordStore)
+
+        @tracob_first
+        def has_user(self, *_args, **_kw):
+            return self.passwordstore_observers
+    else:
+        def has_user(self, *_args, **_kw):
+            """Stub, if AccountManagerPlugin isn't installed."""
+            return False
+
+
+class FormUpdater(FormDBUser, PasswordStoreUser):
+    """Update request handler for TracForms form commits."""
+
+    implements(IRequestHandler)
+
+    def match_request(self, req):
+        return req.path_info.endswith('/formdata/update')
+
+    def process_request(self, req):
+        req.perm.require('FORM_EDIT_VAL')
+        try:
+            self.log.debug('UPDATE ARGS:' + str(req.args))
+            args = dict(req.args)
+            backpath = args.pop('__backpath__', None)
+            context = json.loads(
+                unquote_plus(args.pop('__context__', None)) or \
+                '(None, None, None)')
+            basever = args.pop('__basever__', None)
+            keep_history = args.pop('__keep_history__', None)
+            track_fields = args.pop('__track_fields__', None)
+            args.pop('__FORM_TOKEN', None)  # Ignore.
+            if context is None:
+                # TRANSLATOR: HTTP error message
+                raise HTTPBadRequest(_("__context__ is required"))
+            who = req.authname
+            result = json.dumps(args, separators=(',', ':'))
+            self.save_tracform(context, result, who, basever,
+                                keep_history=keep_history,
+                                track_fields=track_fields)
+            if backpath is not None:
+                req.send_response(302)
+                req.send_header('Content-Type', 'text/plain')
+                req.send_header('Location', backpath)
+                req.send_header('Content-Length', len('OK'))
+                req.end_headers()
+                req.write('OK')
+            else:
+                req.send_response(200)
+                req.send_header('Content-Type', 'text/plain')
+                req.send_header('Content-Length', len('OK'))
+                req.end_headers()
+                req.write('OK')
+        except Exception, e:
+            req.send_response(500)
+            req.send_header('Content-type', 'text/plain')
+            req.send_header('Content-Length', len(str(e)))
+            req.end_headers()
+            req.write(str(e))
 
