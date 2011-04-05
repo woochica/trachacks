@@ -298,6 +298,89 @@ class TracJSGanttChart(WikiMacroBase):
                     or int(t[self.fields['parent']]) not in tarr.keys():
                 wbs = _setLevel(t['id'], wbs, 1)
 
+    def _schedule_tasks(self):
+        def _workDays(ticket):
+            if self.fields['estimate'] \
+                    and ticket[self.fields['estimate']] != '':
+                hours = float(ticket[self.fields['estimate']])
+                days = int(hours * self.dpe)
+                # FIXME - if worked configured and available and
+                # greater than estimate, use it instead.
+            else:
+                # FIXME = make this default duration configurable?
+                days = 1
+
+            return days
+
+        def _calendarOffset(days, fromDate):
+            # Figure out weeks from days
+            weeks = int(days / 7.0)
+            # For each week, adjust days for weekends
+            days += weeks * 2
+
+            # Get day of week from fromDate; 0 = Monday .. 6 = Sunday
+            dow = fromDate.weekday()
+            # If new dow ends up in a weekend, adjust by weekend length
+            if ((dow + days) % 7) > 4:
+                days += 2 * (1 if days > 0 else -1)
+
+            return timedelta(days=days)            
+
+
+        # Return task start as a date string in the format jsGantt.js
+        # expects it.
+        def _start(ticket):
+            # Milestones have no duration, start on their finish date.
+            if ticket['type'] == self.milestoneType:
+                start = datetime.strptime(_finish(ticket), self.pyDateFormat)
+            # If we have a start, parse it
+            elif self.fields['start'] and ticket[self.fields['start']] != '':
+                start = datetime.strptime(ticket[self.fields['start']],
+                                      self.dbDateFormat)
+            # Otherwise, make it from finish
+            else:
+                finish = datetime.strptime(_finish(ticket), self.pyDateFormat)
+                days = _workDays(ticket)
+                start = finish + _calendarOffset(-1*days, finish)
+
+            return start.strftime(self.pyDateFormat)
+            
+
+        # TODO: If we have start and estimate, we can figure out
+        # finish (opposite case of figuring out start from finish and
+        # estimate as we do now).  
+
+        # Return task finish as a date string in the format jsGantt.js
+        # expects it.
+        def _finish(ticket):
+            # If we have a finish, parse it
+            if self.fields['finish'] and ticket[self.fields['finish']] != '':
+                finish = datetime.strptime(ticket[self.fields['finish']],
+                                           self.dbDateFormat)
+            # If there are successors, this ticket's finish is the earliest
+            # start of any successor
+            elif ticket[self.fields['succ']] != []:
+                finish = None
+                for tid in ticket[self.fields['succ']]:
+                    succ = self.ticketsByID[int(tid)]
+                    if succ['type'] == self.milestoneType:
+                        f = datetime.strptime(succ[self.fields['finish']],
+                                              self.dbDateFormat)
+                        if finish == None or finish > f:
+                            finish = f
+                if finish == None:
+                    finish = date.today()
+            # Otherwise, default to today.
+            else:
+                finish = date.today()
+
+            return finish.strftime(self.pyDateFormat)
+        
+        # FIXME - do this from milestones back to start
+        for t in self.tickets:
+            t['calc_start'] = _start(t)
+            t['calc_finish'] = _finish(t)
+
 
     # Add tasks for milestones related to the tickets
     def _add_milestones(self, options):
@@ -346,7 +429,8 @@ class TracJSGanttChart(WikiMacroBase):
                 milestoneTicket[self.fields['finish']] = \
                     finish.strftime(self.pyDateFormat)
 
-                # Start is ignored for a milestone.
+                # jsGantt ignores start for a milestone but we use it
+                # for scheduling.
                 milestoneTicket[self.fields['start']] = \
                     milestoneTicket[self.fields['finish']]
                 # There is no percent complete for a milestone
@@ -473,70 +557,6 @@ class TracJSGanttChart(WikiMacroBase):
 
             return percent
 
-        def _workDays(ticket):
-            if self.fields['estimate'] \
-                    and ticket[self.fields['estimate']] != '':
-                hours = float(ticket[self.fields['estimate']])
-                days = int(hours * self.dpe)
-                # FIXME - if worked configured and available and
-                # greater than estimate, use it instead.
-            else:
-                # FIXME = make this default duration configurable?
-                days = 1
-
-            return days
-
-        def _calendarOffset(days, fromDate):
-            # Figure out weeks from days
-            weeks = int(days / 7.0)
-            # For each week, adjust days for weekends
-            days += weeks * 2
-
-            # Get day of week from fromDate; 0 = Monday .. 6 = Sunday
-            dow = fromDate.weekday()
-            # If new dow ends up in a weekend, adjust by weekend length
-            if ((dow + days) % 7) > 4:
-                days += 2 * (1 if days > 0 else -1)
-
-            return timedelta(days=days)            
-
-
-        # Return task start as a date string in the format jsGantt.js
-        # expects it.
-        def _start(ticket):
-            # If we have a start, parse it
-            if self.fields['start'] and ticket[self.fields['start']] != '':
-                start = datetime.strptime(ticket[self.fields['start']],
-                                      self.dbDateFormat)
-            # Otherwise, make it from finish
-            else:
-                finish = datetime.strptime(_finish(ticket), self.pyDateFormat)
-                days = _workDays(ticket)
-                start = finish + _calendarOffset(-1*days, finish)
-
-            return start.strftime(self.pyDateFormat)
-            
-
-        # TODO: If we have start and estimate, we can figure out
-        # finish (opposite case of figuring out start from finish and
-        # estimate as we do now).  
-
-        # TODO: If we have no finish but we have a milestone, the
-        # implicit finish is the milestone's due date.
-
-        # Return task finish as a date string in the format jsGantt.js
-        # expects it.
-        def _finish(ticket):
-            # If we have a finish, parse it
-            if self.fields['finish'] and ticket[self.fields['finish']] != '':
-                finish = datetime.strptime(ticket[self.fields['finish']],
-                                           self.dbDateFormat)
-            # Otherwise, default to today.
-            else:
-                finish = date.today()
-
-            return finish.strftime(self.pyDateFormat)
-
         def _safeStr(str):
             # No new lines
             str = str.replace('\r\n','\\n')
@@ -555,8 +575,8 @@ class TracJSGanttChart(WikiMacroBase):
         task += 't = new JSGantt.TaskItem(%d,"%s",' % (ticket['id'], _safeStr(name))
 
         # pStart, pEnd
-        task += '"%s",' % _start(ticket)
-        task += '"%s",' % _finish(ticket)
+        task += '"%s",' % ticket['calc_start']
+        task += '"%s",' % ticket['calc_finish']
 
         # pDisplay
         task += '"%s",' % self._task_display(ticket, options)
@@ -617,6 +637,8 @@ class TracJSGanttChart(WikiMacroBase):
             self._add_milestones(options)
 
             self._compute_wbs()
+
+            self._schedule_tasks()
 
             self.tickets.sort(key=itemgetter('wbs'))
 
