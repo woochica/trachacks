@@ -19,10 +19,10 @@ function showMotd() {
 
     motd.innerHTML = h;
     motd.innerHTML += "<div id=\"motdcontent\">" + m +"</div>";
-    motd.innerHTML += "<table id=\"motdfooter\"><button onclick=\"hideMotd();\">Acknowledge Message(s)</button></table>";
+    motd.innerHTML += "<table id=\"motdfooter\"><tr><td><button onclick=\"hideMotd();\">Acknowledge Message(s)</button></td></tr></table>";
 
     var cont = document.getElementById("motdcontent");
-    cont.style.height = (TracMotdFrame['frame_height'] - 62) + "px";
+    cont.style.height = (TracMotdFrame['frame_height'] - 66) + "px";
 
     motd.style.visibility = "visible";
 }
@@ -96,7 +96,7 @@ function addMotdDiv() {
 
 function getHeader() {
     var header = "";
-    header += "<table id=\"motdheader\"><tr><td>Systemmessage available</td></tr></table>";
+    header += "<table id=\"motdheader\"><tr><td>Message from SysAdmin</td></tr></table>";
     return header;
 }
 

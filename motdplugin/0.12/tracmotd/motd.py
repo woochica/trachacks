@@ -138,8 +138,16 @@ class MessageOfTheDayPlugin(Component):
 	message_file = section + '.html'
 	message_file = os.path.join(self.message_dir, message_file)
 	if os.path.exists(message_file):
-	    with open(message_file, 'r') as mf:
-	        return mf.read()
+	    try:
+	        mf = open(message_file, 'r')
+	        mess = ''
+	        try:
+	            mess = mf.read()
+	        finally:
+	            mf.close()
+	        return mess
+	    except IOError:
+	        return ''
 	else:
 	    return ''
         
