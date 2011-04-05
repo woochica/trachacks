@@ -274,21 +274,17 @@ class TracJSGanttChart(WikiMacroBase):
     # WBS is a list like [ 2, 4, 1] (the first child of the fourth
     # child of the second top-level element).
     def _compute_wbs(self):
-        ticketsByID = {}
-        for t in self.tickets:
-            ticketsByID[t['id']] = t
-
         # Set the ticket's level and wbs then recurse to children.
         def _setLevel(id, wbs, level):
             # Update this node
-            ticketsByID[id]['level'] = level
-            ticketsByID[id]['wbs'] = copy.copy(wbs)
+            self.ticketsByID[id]['level'] = level
+            self.ticketsByID[id]['wbs'] = copy.copy(wbs)
 
             # Recurse to children
-            if ticketsByID[id]['children']:
+            if self.ticketsByID[id]['children']:
                 # Add another level
                 wbs.append(1)
-                for c in ticketsByID[id]['children']:
+                for c in self.ticketsByID[id]['children']:
                     wbs = _setLevel(c, wbs, level+1)
                 # Remove the level we added
                 wbs.pop()
@@ -305,7 +301,8 @@ class TracJSGanttChart(WikiMacroBase):
         for t in self.tickets:
             if not self.fields['parent'] \
                     or t[self.fields['parent']] == 0 \
-                    or int(t[self.fields['parent']]) not in tarr.keys():
+                    or int(t[self.fields['parent']]) \
+                    not in self.ticketsByID.keys():
                 wbs = _setLevel(t['id'], wbs, 1)
 
     def _schedule_tasks(self):
@@ -646,6 +643,11 @@ class TracJSGanttChart(WikiMacroBase):
 
             # Add the milestone(s) with all their tickets depending on them.
             self._add_milestones(options)
+
+            # Faster lookups for WBS and scheduling.
+            self.ticketsByID = {}
+            for t in self.tickets:
+                self.ticketsByID[t['id']] = t
 
             self._compute_wbs()
 
