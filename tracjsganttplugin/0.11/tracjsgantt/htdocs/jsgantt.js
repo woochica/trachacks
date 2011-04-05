@@ -519,7 +519,7 @@ var vVisible  = 1;
 	
 	
 /**
-* Creates the gant chart. for example:
+* Creates the Gantt chart. for example:
 
 <p>var g = new JSGantt.GanttChart('g',document.getElementById('GanttChartDIV'), 'day');</p>
  
@@ -535,6 +535,8 @@ document.getElementById('GanttChartDIV') - reference to the DIV that will hold t
 * @param pFormat {String} default format (minute,hour,day,week,month,quarter)
 * @return void
 */
+
+/* FIXME - should be able to set Today color (or in CSS?) */
 
 JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat)
 {
@@ -2079,19 +2081,25 @@ JSGantt.parseDateStr = function(pDateStr,pFormatStr) {
 
    switch(pFormatStr) 
    {
-	  case 'mm/dd/yyyy':
-	     var vDateParts = pDateStr.split('/');
-         vDate.setFullYear(parseInt(vDateParts[2], 10), parseInt(vDateParts[0], 10) - 1, parseInt(vDateParts[1], 10));
-         break;
-	  case 'dd/mm/yyyy':
-	     var vDateParts = pDateStr.split('/');
-         vDate.setFullYear(parseInt(vDateParts[2], 10), parseInt(vDateParts[1], 10) - 1, parseInt(vDateParts[0], 10));
-         break;
-	  case 'yyyy-mm-dd':
-	     var vDateParts = pDateStr.split('-');
-         vDate.setFullYear(parseInt(vDateParts[0], 10), parseInt(vDateParts[1], 10) - 1, parseInt(vDateParts[2], 10));
-         break;
-    }
+   case 'mm/dd/yyyy':
+       var vDateParts = pDateStr.split('/');
+       vDate.setFullYear(parseInt(vDateParts[2], 10), 
+			 parseInt(vDateParts[0], 10) - 1, 
+			 parseInt(vDateParts[1], 10));
+       break;
+   case 'dd/mm/yyyy':
+       var vDateParts = pDateStr.split('/');
+       vDate.setFullYear(parseInt(vDateParts[2], 10), 
+			 parseInt(vDateParts[1], 10) - 1, 
+			 parseInt(vDateParts[0], 10));
+       break;
+   case 'yyyy-mm-dd':
+       var vDateParts = pDateStr.split('-');
+       vDate.setFullYear(parseInt(vDateParts[0], 10), 
+			 parseInt(vDateParts[1], 10) - 1, 
+			 parseInt(vDateParts[2], 10));
+       break;
+   }
 
     return(vDate);
     

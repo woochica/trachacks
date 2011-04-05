@@ -5,7 +5,7 @@
 
 div.ticket-class1 { 
   background-color: #fdc; 
-  border:1px;
+  border: 1px;
   border-color: #949494;
   border-style: solid;
   color: #a22;
@@ -13,7 +13,7 @@ div.ticket-class1 {
 
 div.ticket-class2 { 
   background-color: #ffb; 
-  border:1px;
+  border: 1px;
   border-color: #949494;
   border-style: solid;
   color: #880;
@@ -21,7 +21,7 @@ div.ticket-class2 {
 
 div.ticket-class3 {
   background-color: #fbfbfb;
-  border:1px;
+  border: 1px;
   border-color: #949494;
   border-style: solid;
   color: #444;
@@ -29,7 +29,7 @@ div.ticket-class3 {
 
 div.ticket-class4 {
   background-color: #e7ffff;
-  border:1px;
+  border: 1px;
   border-color: #949494;
   border-style: solid;
   color: #099;
@@ -37,7 +37,7 @@ div.ticket-class4 {
 
 div.ticket-class5 {
   background-color: #e7eeff;
-  border:1px;
+  border: 1px;
   border-color: #949494;
   border-style: solid;
   color: #469;
@@ -45,7 +45,7 @@ div.ticket-class5 {
 
 div.ticket-class6 {
   background-color: #f0f0f0;
-  border:1px;
+  border: 1px;
   border-color: #949494;
   border-style: solid;
   color: #888;

@@ -16,7 +16,7 @@ from pkg_resources import resource_filename
 from trac.wiki.api import parse_args
 
 
-class TaacJSGanttSupport(Component):
+class TracJSGanttSupport(Component):
     implements(IRequestFilter, ITemplateProvider)
 
     # ITemplateProvider methods
@@ -175,7 +175,8 @@ class TracJSGanttChart(WikiMacroBase):
         tasks += 'g.AddTaskItem(new JSGantt.TaskItem(35,  "Make Updates",         "10/17/2011","12/04/2011","#f600f6", "http://help.com", 0, "Brian",    30, 0, 3,  1));\n'
         return tasks
 
-    # Get the required columns for the tickets which match the criteria in options.
+    # Get the required columns for the tickets which match the
+    # criteria in options.
     def _query_tickets(self, options):
         query_args = {}
         for key in options.keys():
