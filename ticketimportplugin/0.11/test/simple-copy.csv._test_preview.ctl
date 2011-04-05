@@ -51,7 +51,7 @@ Below you can see a preview of the tickets as they will be imported. If the data
 <blockquote>
 <table class="wiki">
 <tr><td><strong>field</strong></td><td><strong>Default value</strong>
-</td></tr><tr><td>Description, Cc, Milestone, Url, Version, Keywords, Severity</td><td><i>(Empty value)</i>
+</td></tr><tr><td>Description, Cc, Milestone, Version, Keywords, Severity</td><td><i>(Empty value)</i>
 </td></tr><tr><td>Status</td><td>new
 </td></tr><tr><td>Changetime</td><td><i>(now)</i>
 </td></tr><tr><td>Reporter</td><td>testuser
