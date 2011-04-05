@@ -35,6 +35,20 @@ var JSGantt; if (!JSGantt) JSGantt = {};
 var vTimeout = 0;
 var vBenchTime = new Date().getTime();
 
+/* Adapted from 
+ * http://www.toao.net/32-my-htmlspecialchars-function-for-javascript 
+ */
+function htmlspecialchars(str) {
+    if (typeof(str) == "string") {
+	str = str.replace(/&/g, "&amp;"); /* must do &amp; first */
+	str = str.replace(/"/g, "&quot;");
+	str = str.replace(/'/g, "&#039;");
+	str = str.replace(/</g, "&lt;");
+	str = str.replace(/>/g, "&gt;");
+    }
+    return str;
+}
+
 /**
 * Creates a task (one row) in gantt object
 * @class TaskItem 
@@ -247,7 +261,7 @@ var vVisible  = 1;
 * @method getName
 * @return {String}
 */
-      this.getName     = function(){ return vName.replace(/\"/g,'&quot;') };
+this.getName     = function(){ return htmlspecialchars(vName) };
 /**
 * Returns task start date
 * @method getStart
