@@ -230,9 +230,9 @@ class TracJSGanttChart(WikiMacroBase):
         # field.  Strip it for simplicity.
         for t in self.tickets:
             if self.fields['parent']:
-                p = t[self.fields['parent']]
-                if len(p) > 0 and p[0] == '#':
-                    t[self.fields['parent']] = p[1:]
+                parent = t[self.fields['parent']]
+                if len(parent) > 0 and parent[0] == '#':
+                    t[self.fields['parent']] = parent[1:]
 
         for t in self.tickets:
             # Clean up custom fields which might be null ('--') vs. blank ('')
@@ -263,21 +263,21 @@ class TracJSGanttChart(WikiMacroBase):
     # WBS is a list like [ 2, 4, 1] (the first child of the fourth
     # child of the second top-level element).
     def _compute_wbs(self):
-        tarr = {}
+        ticketsByID = {}
         for t in self.tickets:
-            tarr[t['id']] = t
+            ticketsByID[t['id']] = t
 
         # Set the ticket's level and wbs then recurse to children.
         def _setLevel(id, wbs, level):
             # Update this node
-            tarr[id]['level'] = level
-            tarr[id]['wbs'] = copy.copy(wbs)
+            ticketsByID[id]['level'] = level
+            ticketsByID[id]['wbs'] = copy.copy(wbs)
 
             # Recurse to children
-            if tarr[id]['children']:
+            if ticketsByID[id]['children']:
                 # Add another level
                 wbs.append(1)
-                for c in tarr[id]['children']:
+                for c in ticketsByID[id]['children']:
                     wbs = _setLevel(c, wbs, level+1)
                 # Remove the level we added
                 wbs.pop()
@@ -322,41 +322,42 @@ class TracJSGanttChart(WikiMacroBase):
             cursor.execute("SELECT name, due FROM milestone "
                            "WHERE name in ('" + "','".join(milestones) + "')")
             for row in cursor:
-                msTicket = {}
+                milestoneTicket = {}
                 id = id+1
-                msTicket['id'] = id
-                msTicket['summary'] = row[0]
-                msTicket['description'] = 'Milestone %s' % row[0]
-                msTicket['milestone'] = row[0]
+                milestoneTicket['id'] = id
+                milestoneTicket['summary'] = row[0]
+                milestoneTicket['description'] = 'Milestone %s' % row[0]
+                milestoneTicket['milestone'] = row[0]
                 # A milestone has no owner
-                msTicket['owner'] = ''
-                msTicket['type'] = self.milestoneType
-                msTicket['status'] = ''
+                milestoneTicket['owner'] = ''
+                milestoneTicket['type'] = self.milestoneType
+                milestoneTicket['status'] = ''
                 # Milestones are always shown
-                msTicket['level'] = 0
+                milestoneTicket['level'] = 0
 
                 us = row[1]
                 # If there's no due date, default to today
                 if us == 0:
                     finish = date.today()
                 else:
-                    s = us / 1000000
-                    finish = date.fromtimestamp(s)
-                msTicket[self.fields['finish']] = \
+                    seconds = us / 1000000
+                    finish = date.fromtimestamp(seconds)
+                milestoneTicket[self.fields['finish']] = \
                     finish.strftime(self.pyDateFormat)
 
                 # Start is ignored for a milestone.
-                msTicket[self.fields['start']] = msTicket[self.fields['finish']]
+                milestoneTicket[self.fields['start']] = \
+                    milestoneTicket[self.fields['finish']]
                 # There is no percent complete for a milestone
-                msTicket[self.fields['percent']] = 0
+                milestoneTicket[self.fields['percent']] = 0
                 # A milestone has no children or parent
-                msTicket['children'] = None
+                milestoneTicket['children'] = None
                 if self.fields['parent']:
-                    msTicket[self.fields['parent']] = 0
+                    milestoneTicket[self.fields['parent']] = 0
                 # Link to the milestone page
-                msTicket['link'] = self.req.href.milestone(row[0])
+                milestoneTicket['link'] = self.req.href.milestone(row[0])
                 # A milestone has no priority
-                msTicket['priority'] = 'n/a'
+                milestoneTicket['priority'] = 'n/a'
 
                 # Any ticket with this as a milestone and no
                 # successors has the milestone as a successor
@@ -368,9 +369,9 @@ class TracJSGanttChart(WikiMacroBase):
                                 t[self.fields['succ']] == '':
                             t[self.fields['succ']] = str(id)
                             pred.append(str(t['id']))
-                    msTicket[self.fields['pred']] = ','.join(pred)
+                    milestoneTicket[self.fields['pred']] = ','.join(pred)
 
-                self.tickets.append(msTicket)
+                self.tickets.append(milestoneTicket)
 
     def _task_display(self, t, options):
         def _buildMap(field):
@@ -433,42 +434,48 @@ class TracJSGanttChart(WikiMacroBase):
     #   status - string displayed in tool tip ; FIXME - not displayed yet
     #   summary - ticket summary
     #   type - string displayed in tool tip FIXME - not displayed yet
-    def _format_ticket(self, t, options):
+    def _format_ticket(self, ticket, options):
         # Translate owner to full name
-        def _owner(t):
-            if t['owner'] in self.user_map:
-                owner_name = self.user_map[t['owner']]
+        def _owner(ticket):
+            if ticket['owner'] in self.user_map:
+                owner_name = self.user_map[ticket['owner']]
             else:
-                owner_name = t['owner']
+                owner_name = ticket['owner']
             return owner_name
             
-        def _percent(t):
+        # FIXME - perhaps a closed ticket should always be 100% done.
+        def _percent(ticket):
             # Compute percent complete if given estimate and worked
             if self.fields['estimate'] and self.fields['worked']:
                 # Try to compute the percent complete, default to 0
                 try:
-                    w = float(t[self.fields['worked']])
-                    e = float(t[self.fields['estimate']])
-                    p = int(100 * w / e)
+                    worked = float(ticket[self.fields['worked']])
+                    estimate = float(ticket[self.fields['estimate']])
+                    percent = int(100 * worked / estimate)
                 except:
                     # Don't bother logging because 0 for an estimate is common.
-                    p = 0
+                    percent = 0
             # Use percent if provided
             elif self.fields.get('percent'):
+                self.env.log.debug('Parsing percent complete from %s' %
+                                   self.fields['percent'])
                 try:
-                    p = int(t[self.fields['percent']])
+                    percent = int(ticket[self.fields['percent']])
                 except:
-                    p = 0
+                    percent = 0
             # If no estimate and worked (above) and no percent, it's 0
             else:
-                p = 0
+                percent = 0
 
-            return p
+            return percent
 
-        def _workDays(t):
-            if self.fields['estimate'] and t[self.fields['estimate']] != '':
-                hours = float(t[self.fields['estimate']])
+        def _workDays(ticket):
+            if self.fields['estimate'] \
+                    and ticket[self.fields['estimate']] != '':
+                hours = float(ticket[self.fields['estimate']])
                 days = int(hours * self.dpe)
+                # FIXME - if worked configured and available and
+                # greater than estimate, use it instead.
             else:
                 # FIXME = make this default duration configurable?
                 days = 1
@@ -492,97 +499,100 @@ class TracJSGanttChart(WikiMacroBase):
 
         # Return task start as a date string in the format jsGantt.js
         # expects it.
-        def _start(t):
+        def _start(ticket):
             # If we have a start, parse it
-            if self.fields['start'] and t[self.fields['start']] != '':
-                s = datetime.strptime(t[self.fields['start']],
+            if self.fields['start'] and ticket[self.fields['start']] != '':
+                start = datetime.strptime(ticket[self.fields['start']],
                                       self.dbDateFormat)
             # Otherwise, make it from finish
             else:
-                f = datetime.strptime(_finish(t), self.pyDateFormat)
-                days = _workDays(t)
-                s = f + _calendarOffset(-1*days, f)
+                finish = datetime.strptime(_finish(ticket), self.pyDateFormat)
+                days = _workDays(ticket)
+                start = finish + _calendarOffset(-1*days, finish)
 
-            return s.strftime(self.pyDateFormat)
+            return start.strftime(self.pyDateFormat)
             
 
         # TODO: If we have start and estimate, we can figure out
         # finish (opposite case of figuring out start from finish and
         # estimate as we do now).  
 
+        # TODO: If we have no finish but we have a milestone, the
+        # implicit finish is the milestone's due date.
+
         # Return task finish as a date string in the format jsGantt.js
         # expects it.
-        def _finish(t):
+        def _finish(ticket):
             # If we have a finish, parse it
-            if self.fields['finish'] and t[self.fields['finish']] != '':
-                f = datetime.strptime(t[self.fields['finish']],
-                                      self.dbDateFormat)
+            if self.fields['finish'] and ticket[self.fields['finish']] != '':
+                finish = datetime.strptime(ticket[self.fields['finish']],
+                                           self.dbDateFormat)
             # Otherwise, default to today.
             else:
-                f = date.today()
+                finish = date.today()
 
-            return f.strftime(self.pyDateFormat)
+            return finish.strftime(self.pyDateFormat)
 
-        def _safeStr(s):
+        def _safeStr(str):
             # No new lines
-            s = s.replace('\r\n','\\n')
+            str = str.replace('\r\n','\\n')
             # Quoted quotes
-            s = s.replace("'","\\'")
-            s = s.replace('"','\\"')
-            return s
+            str = str.replace("'","\\'")
+            str = str.replace('"','\\"')
+            return str
 
         task = ''
 
         # pID, pName
-        if t['type'] == self.milestoneType:
-            name = t['summary']
+        if ticket['type'] == self.milestoneType:
+            name = ticket['summary']
         else:
-            name = "#%d:%s" % (t['id'], t['summary'])
-        task += 't = new JSGantt.TaskItem(%d,"%s",' % (t['id'], _safeStr(name))
+            name = "#%d:%s" % (ticket['id'], ticket['summary'])
+        task += 't = new JSGantt.TaskItem(%d,"%s",' % (ticket['id'], _safeStr(name))
 
         # pStart, pEnd
-        task += '"%s",' % _start(t)
-        task += '"%s",' % _finish(t)
+        task += '"%s",' % _start(ticket)
+        task += '"%s",' % _finish(ticket)
 
         # pDisplay
-        task += '"%s",' % self._task_display(t, options)
+        task += '"%s",' % self._task_display(ticket, options)
 
         # pLink
-        task += '"%s",' % t['link']
+        task += '"%s",' % ticket['link']
 
         # pMile
-        if t['type'] == self.milestoneType:
+        if ticket['type'] == self.milestoneType:
             task += '1,'
         else:
             task += '0,'
 
         # pRes (owner)
-        task += '"%s",' % _owner(t)
+        task += '"%s",' % _owner(ticket)
 
         # pComp (percent complete); integer 0..100
-        task += '%d,' % _percent(t)
+        task += '%d,' % _percent(ticket)
 
         # pGroup (has children)
-        task += '%s,' % (1 if t['children'] else 0)
+        task += '%s,' % (1 if ticket['children'] else 0)
 
         # pParent (parent task ID) 
         task += '%s,' % \
-            (t[self.fields['parent']] if self.fields['parent'] else 0)
+            (ticket[self.fields['parent']] if self.fields['parent'] else 0)
 
         # open
-        if t['level'] < options['openLevel']:
+        if ticket['level'] < options['openLevel']:
             open = 1
         else:
             open = 0
         task += '%d,' % open
 
         # predecessors
-        task += '"%s",' % t[self.fields['pred']] if self.fields['pred'] else ''
+        task += '"%s",' % ticket[self.fields['pred']] if self.fields['pred'] else ''
 
         # caption 
         # FIXME - this only shows up if caption is set to caption.
         # we're using caption=Resource.  Where can we show (status, type)?
-        task += '"%s (%s %s)"' % (_safeStr(t['description']), t['status'], t['type'])
+        task += '"%s (%s %s)"' % (_safeStr(ticket['description']), ticket['status'], ticket['type'])
 
         task += ');\n'
         task += 'g.AddTaskItem(t);\n'
