@@ -35,7 +35,29 @@ class PlanetForgeImportExportPlugin(Component):
     """
     def _do_export(self, todo):
         self.base_url = self.config.get('trac', 'base_url')
-        p = {
+        return {
+            'rdf:about': self.base_url,
+            'rdf:type' : 'http://planetforge.org/ns/forgeplucker_dump/project_dump#',
+            'prefixes': {
+                'dcterms'      : 'http://purl.org/dc/terms/',
+                'doap'         : 'http://usefulinc.com/ns/doap#',
+                'foaf'         : 'http://xmlns.com/foaf/0.1/',
+                'forgeplucker' : 'http://planetforge.org/ns/forgeplucker_dump/',
+                'oslc'         : 'http://open-services.net/ns/core#',
+                'oslc_cm'      : 'http://open-services.net/ns/cm#',
+                'planetforge'  : 'http://coclico-project.org/ontology/planetforge#',
+                'rdf'          : 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+                'sioc'         : 'http://rdfs.org/sioc/ns#'
+            },
+            'forgeplucker:project'   : self._do_export_project(todo),
+            'forgeplucker:tools'     : self._do_export_tools(todo),
+            'forgepluckers:trackers' : self._do_export_trackers(todo),
+            'forgeplucker:users'     : self._do_export_users(todo)
+            #'roles' : self._do_export_roles(todo),
+        }
+
+    def _do_export_project(self, todo):
+        return {
             'URL'            : self.base_url,
             'class'          : 'PROJET',
             'description'    : self.config.get('project', 'descr'), 
@@ -47,14 +69,7 @@ class PlanetForgeImportExportPlugin(Component):
             'registered'     : '?',
             'scm'            : self.base_url + "/browser",
             'scm_type'       : 'svn',
-            'tools'          : self._do_export_tools(todo),
             'trackers_list'  : [ self.base_url + '/report' ],
-        }
-        return {
-            'project'  : p,
-            'roles'    : self._do_export_roles(todo),
-            'trackers' : self._do_export_trackers(todo),
-            'users'    : self._do_export_users(todo)
         }
 
     def _do_export_tools(self, todo):
