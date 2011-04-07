@@ -151,7 +151,7 @@ class DownloadsConsoleAdmin(Component):
               value = identifier))
 
         # Delete download by ID.
-        api.remove_download(context, download)
+        api.delete_download(context, download_id)
 
         # Commit changes in DB.
         db.commit()

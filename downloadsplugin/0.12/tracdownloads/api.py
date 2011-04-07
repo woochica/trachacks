@@ -789,11 +789,8 @@ class DownloadsApi(Component):
 
         # Check correct file type.
         name, ext = os.path.splitext(download['file'])
-        if not 'all' in self.ext:
-            self.log.debug('file_ext: %s ext: %s' % (ext, self.ext))
-            if not ext[1:].lower() in self.ext:
-                raise TracError('Unsupported file type.')
-        else:
+        self.log.debug('file_ext: %s ext: %s' % (ext, self.ext))
+        if not (ext[1:].lower() in self.ext) and not ('all' in self.ext):
             raise TracError('Unsupported file type.')
 
         # Check for maximum file size.
