@@ -14,6 +14,13 @@ class IFieldHandler(Interface):
     def convert_req(self, field, req):
         """Converts a web request to a PyChef attribute value for saving."""
 
+# Helpers
+def get(field, item):
+    if hasattr(item.attributes, 'get_dotted'):
+        return item.attributes.get_dotted(field)
+    else:
+        return item[field]
+
 
 # Handlers
 
@@ -22,10 +29,7 @@ class DefaultHandler(Component):
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        if hasattr(item.attributes, 'get_dotted'):
-            return item.attributes.get_dotted(field)
-        else:
-            return item[field]
+        return get(field, item)
     
     def convert_req(self, field, req):
         return req.args.get(field)
@@ -43,7 +47,7 @@ class EpochHandler(DefaultHandler):
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        epoch = item and float(item.attributes.get_dotted(field)) or time.time()
+        epoch = item and float(get(field, item)) or time.time()
         return time.strftime("%Y-%m-%d %H:%M:%S UTC", time.localtime(epoch))
     
     def convert_req(self, field, req):
@@ -60,7 +64,7 @@ class AgoEpochHandler(DefaultHandler):
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        epoch = int(item.attributes.get_dotted(field))
+        epoch = int(get(field, item))
         ago = "%s ago" % timedelta(seconds=int(time.time()) - epoch)
         return ago
 
@@ -69,7 +73,7 @@ class AuthorHandler(DefaultHandler):
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        author = item and item.attributes.get_dotted(field) or req.authname
+        author = item and get(field, item) or req.authname
         return author
 
 class RunListHandler(DefaultHandler):
@@ -79,7 +83,7 @@ class RunListHandler(DefaultHandler):
     
     def convert_item(self, field, item, req):
         role_re = re.compile(r"role\[([^\]]+)]")
-        run_list = getattr(item, field, []) or item.attributes.get_dotted(field)
+        run_list = getattr(item, field, []) or get(field, item)
         roles = []
         for role in run_list:
             match = role_re.match(role)
@@ -94,13 +98,26 @@ class RunListHandler(DefaultHandler):
         if isinstance(roles,str) or isinstance(roles,unicode):
             roles = [roles]
         return ["role[%s]" % r for r in roles]
+
+class ListHandler(DefaultHandler):
+    """Handle a list of items."""
+    implements(IFieldHandler)
+    
+    def convert_item(self, field, item, req):
+        return ', '.join(get(field, item))
+    
+    def convert_req(self, field, req):
+        items = req.args.get(field, '')
+        if not isinstance(items, list):
+            items = items.split(',')
+        return [item.strip() for item in items]
     
 class HttpHandler(DefaultHandler):
     """Assemble an http link from the given hostname field."""
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        hostname = item.attributes.get_dotted(field)
+        hostname = get(field, item)
         url = 'http://' + hostname
         return (url,url)
     
@@ -109,7 +126,7 @@ class HttpsHandler(DefaultHandler):
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        hostname = item.attributes.get_dotted(field)
+        hostname = get(field, item)
         url = 'https://' + hostname
         return (url,url)
     
@@ -120,9 +137,9 @@ class HttpPortHandler(DefaultHandler):
     def convert_item(self, field, item, req):
         port = item.attributes.get_dotted(field)
         try:
-            hostname = item.attributes.get_dotted('ec2.public_hostname')
+            hostname = get('ec2.public_hostname', item)
         except KeyError:
-            hostname = item.attributes.get_dotted('public_hostname')
+            hostname = get('public_hostname', item)
         url = 'http://%s:%s' % (hostname,port)
         return (url,url)
     
@@ -131,11 +148,11 @@ class HttpsPortHandler(DefaultHandler):
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        port = item.attributes.get_dotted(field)
+        port = get(field, item)
         try:
-            hostname = item.attributes.get_dotted('ec2.public_hostname')
+            hostname = get('ec2.public_hostname', item)
         except KeyError:
-            hostname = item.attributes.get_dotted('public_hostname')
+            hostname = get('public_hostname', item)
         url = 'https://%s:%s' % (hostname,port)
         return (url,url)
     
@@ -144,6 +161,6 @@ class SshHandler(DefaultHandler):
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        hostname = item.attributes.get_dotted(field)
+        hostname = get(field, item)
         url = 'ssh://' + hostname
         return (url,hostname)

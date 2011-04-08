@@ -67,8 +67,19 @@ droplet_defaults = {
     'field.id.label': 'ID',
     'field.dbname': 'text',
     'field.dbname.label': 'DB Name',
-    'field.zone': 'text',
-    'field.zone.label': 'Zone',
+    'field.roles': 'multiselect',
+    'field.roles.label': 'Roles',
+    'field.roles.databag': 'roles', # special token
+    'field.roles.handler': 'ListHandler',
+    'field.created_by': 'text',
+    'field.created_by.label': 'Created By',
+    'field.created_by.handler': 'AuthorHandler',
+    'field.created_at': 'text',
+    'field.created_at.label': 'Created At',
+    'field.created_at.handler': 'EpochHandler',
+    'field.zone': 'select',
+    'field.zone.label': 'Availability Zone',
+    'field.zone.options': 'No preference|us-east-1a|us-east-1b|us-east-1c|us-east-1d',
     'field.multi_az': 'checkbox',
     'field.multi_az.label': 'Multi-AZ',
     'field.class': 'text',
@@ -80,13 +91,13 @@ droplet_defaults = {
     
     # create, read, update, delete views - chef resource name and fields
     'crud_resource': 'data',
-    'crud_view': 'id, dbname, zone, multi_az, class, storage',
-    'crud_new': 'id, dbname, zone, multi_az, class, storage',
-    'crud_edit': 'id*, dbname*, zone, multi_az, class, storage, cmd_apply_now',
+    'crud_view': 'id, dbname, roles, created_by, created_at, zone, multi_az, class, storage',
+    'crud_new': 'id, dbname, roles, created_by, created_at, zone, multi_az, class, storage',
+    'crud_edit': 'id*, dbname*, roles, created_by, created_at*, zone, multi_az, class, storage, cmd_apply_now',
     
     # grid view - chef search index and fields
     'grid_index': 'rds', # data bag name, must match droplet name
-    'grid_columns': 'id, dbname, zone, multi_az, class, storage',
+    'grid_columns': 'id, dbname, roles, created_by, created_at, zone, multi_az, class, storage',
     'grid_sort': 'id',
     'grid_asc': 1,
   },
