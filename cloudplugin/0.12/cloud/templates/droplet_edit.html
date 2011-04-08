@@ -33,8 +33,11 @@
                             selected="${value == field.get(item,req) or None}"
                             value="$value">$name</option>
                   </select>
+                  <input py:when="'checkbox'" id="$field.name" name="$field.name" value="1"
+                         checked="${field.get(item,req) or None}"
+                         type="checkbox" size="50"/>
                   <input py:otherwise="" id="$field.name" name="$field.name" value="${field.get(item,req)}"
-                         type="text" size="50"/>
+                         type="$field.kind" size="50"/>
                 </div>
               </py:when>
                 

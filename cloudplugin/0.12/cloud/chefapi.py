@@ -1,9 +1,11 @@
 import os
 import time
 import signal
+import urllib2
 from subprocess import Popen, STDOUT, PIPE
 
 import chef
+from chef.exceptions import ChefServerNotFoundError
 from timer import Timer
 
 class ChefApi(object):
@@ -24,7 +26,7 @@ class ChefApi(object):
         self.sudo = sudo
         self.log = log
         self.chef = chef.autoconfigure(self.base_path)
-        
+    
     def search(self, index, sort=None, asc=1, limit=0, offset=0, q='*:*'):
         """Search the chefserver and return a list of dict items."""
         # setup the params
@@ -48,8 +50,10 @@ class ChefApi(object):
                     raise
                 self.log.debug("Encountered error %s, retrying.." % str(e))
                 time.sleep(1.0)
+            except ChefServerNotFoundError:
+                return [], 0
     
-    def resource(self, resource, id=None):
+    def resource(self, resource, id=None, name=None):
         """Query chef for a resource and return the result as a dict (or
         dict-like) record.  A dict-like record is returned for 'nodes'
         and 'roles' resources which lazy-loads its value."""
@@ -63,8 +67,10 @@ class ChefApi(object):
                 return chef.role.Role(id, self.chef)
             return chef.role.Role.list(self.chef)
         if resource == 'data':
-            if id:
-                return chef.data_bag.DataBag(id, self.chef)
+            if id and name:
+                return chef.data_bag.DataBagItem(name, id, self.chef)
+            if name:
+                return chef.data_bag.DataBag(name, self.chef)
             return chef.data_bag.DataBag.list(self.chef)
         if resource == 'clients':
             if id:
@@ -72,31 +78,57 @@ class ChefApi(object):
             return chef.client.Client.list(self.chef)
         raise Exception("Unknown resource '%s'" % resource)
     
-    def create(self, resource, id):
+    def create(self, resource, id=None, name=None):
         """Creates the given chef resource."""
         if resource == 'nodes':
             return chef.node.Node.create(id, self.chef)
         if resource == 'roles':
             return chef.role.Role.create(id, self.chef)
         if resource == 'data':
-            return chef.data_bag.DataBag.create(id, self.chef)
+            if id and name:
+                return chef.data_bag.DataBagItem.create(name, id, self.chef)
+            if name:
+                bag = chef.data_bag.DataBag.create(name, self.chef)
+                if not bag.exists:
+                    bag.save()
         if resource == 'clients':
             return chef.client.Client.create(id, self.chef)
         raise Exception("Unknown resource '%s'" % resource)
     
-    def databag(self, bag, id=None):
+    def databag(self, bag_name, id=None):
         """If id is provided, then the specific data bag is returned.
         Else a list of all data items (dicts) in the given data bag
         will be returned.  If a data item has an 'order' field,
         it will be used to order the returned list."""
-        databag = chef.data_bag.DataBag(bag, self.chef)
-        ids = id and [id] or databag
+        bag = chef.data_bag.DataBag(bag_name, self.chef)
+        ids = id and [id] or bag
         
         items = []
         for id in ids:
-            item = chef.data_bag.DataBagItem(bag, id, self.chef)
+#            item = chef.data_bag.DataBagItem(bag_name, id, self.chef)
+            item = self.databagitem(bag, id)
             items.append( (item.get('order',99),item) )
-        return [item for (order,item) in sorted(items)]
+        return [item for (u_order,item) in sorted(items)]
+    
+    def databagitem(self, bag, id, create=False, timeout=45.0):
+        """Returns the named data bag item from the provided data bag."""
+        timer = Timer(timeout)
+        while timer.running:
+            try:
+                if create:
+                    self.log.debug("Creating %s/%s data bag item" % (bag.name,id))
+                    return chef.data_bag.DataBagItem.create(bag.name, id, self.chef)
+                else:
+                    self.log.debug("Getting data bag item %s/%s.." % (bag.name,id))
+                    return bag[id]
+            except KeyError:
+                create = True
+                return self.databagitem(bag, id, create, timeout)
+            except urllib2.URLError, e:
+                self.log.debug(".. got %s, retrying.." % str(e))
+                time.sleep(1.0)
+        self.log.debug("Timeout on data bag item %s/%s" % (bag.name,id))
+        return None
     
     def bootstrap(self, id, hostname, timeout=300):
         """Bootstraps an ec2 instance by calling out to "knife bootstrap".

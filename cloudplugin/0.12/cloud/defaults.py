@@ -4,8 +4,8 @@ droplet_defaults = {
   'cloud.instance': {
     'class': 'Ec2Instance', # must exactly match corresponding Python class name
     'description': 'AWS EC2 instances.',
-    'title': 'Instances',
-    'label': 'Instance',
+    'title': 'EC2 Instances',
+    'label': 'EC2 Instance',
     'order': 1, # order in contextual nav from left to right
     'id_field': 'name',
     
@@ -53,5 +53,41 @@ droplet_defaults = {
     'grid_sort': 'created_at',
     'grid_asc': 0,
     'grid_group': 'environment',
+  },
+  'cloud.rds': {
+    'class': 'RdsInstance', # must exactly match corresponding Python class name
+    'description': 'AWS RDS instances.',
+    'title': 'RDS Instances',
+    'label': 'RDS Instance',
+    'order': 2, # order in contextual nav from left to right
+    'id_field': 'id',
+    
+    # field definitions
+    'field.id': 'text',
+    'field.id.label': 'ID',
+    'field.dbname': 'text',
+    'field.dbname.label': 'DB Name',
+    'field.zone': 'text',
+    'field.zone.label': 'Zone',
+    'field.multi_az': 'checkbox',
+    'field.multi_az.label': 'Multi-AZ',
+    'field.class': 'text',
+    'field.class.label': 'Class',
+    'field.storage': 'text',
+    'field.storage.label': 'Storage',
+    'field.cmd_apply_now': 'checkbox',
+    'field.cmd_apply_now.label': 'Apply Immediately',
+    
+    # create, read, update, delete views - chef resource name and fields
+    'crud_resource': 'data',
+    'crud_view': 'id, dbname, zone, multi_az, class, storage',
+    'crud_new': 'id, dbname, zone, multi_az, class, storage',
+    'crud_edit': 'id*, dbname*, zone, multi_az, class, storage, cmd_apply_now',
+    
+    # grid view - chef search index and fields
+    'grid_index': 'rds', # data bag name, must match droplet name
+    'grid_columns': 'id, dbname, zone, multi_az, class, storage',
+    'grid_sort': 'id',
+    'grid_asc': 1,
   },
 }

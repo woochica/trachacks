@@ -7,7 +7,7 @@
       xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="layout.html" />
   <head>
-    <title>$title</title>
+    <title>$label Progress</title>
     <script type="text/javascript">
       
       var update_progress = function(){
@@ -28,6 +28,8 @@
       }
 
       var display = function(progress){
+        jQuery("#title").text(progress['title'])
+        
         var done = false;
         var error = false;
         var steps = jQuery('#steps').empty();
@@ -50,12 +52,13 @@
               
             } else {
               if (progress['error']){
-                var div = '<div class="system-message">'
-                        + '  <strong>Error:</strong> ' + progress['error']
-                        + '</div>';
-                jQuery('#error').append(div);
-                error = true;
-                
+                if (!error){ // only add once
+                  var div = '<div class="system-message">'
+                          + '  <strong>Error:</strong> ' + progress['error']
+                          + '</div>';
+                  jQuery('#error').append(div);
+                  error = true;
+                }
                 src = "${href.chrome('/cloud/error.png')}";
               } else {
                 var now = progress['now'];
@@ -79,6 +82,8 @@
         if (done){
           // see http://stackoverflow.com/questions/979024/changing-the-action-of-a-form-with-javascript-jquery/3863869#3863869
           jQuery('#buttons-form').get(0).setAttribute('action','/cloud/${droplet_name}/'+progress['id']);
+          if (progress['id'] == '')
+            jQuery('#view').attr('value','View ${title}');
           jQuery('#view').removeAttr('disabled');
         }
         
@@ -93,7 +98,7 @@
 
   <body>
     <div id="content" class="droplet">
-      <h1>$title</h1>
+      <h1>$label <span id="title"></span></h1>
 	  
       <div id="progress">
         <table id="steps"/>

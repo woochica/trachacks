@@ -1,19 +1,18 @@
 import copy
-import time
 import os
 import json
-import tempfile
 import subprocess
 from trac.resource import Resource
 from trac.util import as_int
 from trac.util.presentation import Paginator
 from trac.util.text import to_unicode
-from trac.web.chrome import Chrome, add_link, add_notice, add_warning
+from trac.web.chrome import add_link, add_notice, add_warning
 from trac.mimeview import Context
 from trac.util.translation import _
 
 from fields import Fields
 from defaults import droplet_defaults
+from progress import Progress
 
 class Droplet(object):
     """Generic class for a cloud resource that I'm calling a 'droplet'
@@ -200,7 +199,7 @@ class Droplet(object):
         #  * col_ means finish the current group and start a new one
         
         header_groups = [[]]
-        for idx, field in enumerate(columns):
+        for field in columns:
             header = {
                 'col': field.name,
                 'title': field.label,
@@ -259,36 +258,36 @@ class Droplet(object):
                      'numrows': numrows,
                      'sorting_enabled': len(row_groups) == 1})
         
-        if format == 'rss':
-            data['email_map'] = Chrome(self.env).get_email_map()
-            data['context'] = Context.from_request(req, report_resource,
-                                                   absurls=True)
-            return 'report.rss', data, 'application/rss+xml'
-        elif format == 'csv':
-            filename = id and 'report_%s.csv' % id or 'report.csv'
-            self._send_csv(req, cols, authorized_results, mimetype='text/csv',
-                           filename=filename)
-        elif format == 'tab':
-            filename = id and 'report_%s.tsv' % id or 'report.tsv'
-            self._send_csv(req, cols, authorized_results, '\t',
-                           mimetype='text/tab-separated-values',
-                           filename=filename)
-        else:
-            p = max is not None and page or None
-            add_link(req, 'alternate', droplet_href(format='rss', page=None),
-                     _('RSS Feed'), 'application/rss+xml', 'rss')
-            add_link(req, 'alternate', droplet_href(format='csv', page=p),
-                     _('Comma-delimited Text'), 'text/plain')
-            add_link(req, 'alternate', droplet_href(format='tab', page=p),
-                     _('Tab-delimited Text'), 'text/plain')
+#        if format == 'rss':
+#            data['email_map'] = Chrome(self.env).get_email_map()
+#            data['context'] = Context.from_request(req, report_resource,
+#                                                   absurls=True)
+#            return 'report.rss', data, 'application/rss+xml'
+#        elif format == 'csv':
+#            filename = id and 'report_%s.csv' % id or 'report.csv'
+#            self._send_csv(req, cols, authorized_results, mimetype='text/csv',
+#                           filename=filename)
+#        elif format == 'tab':
+#            filename = id and 'report_%s.tsv' % id or 'report.tsv'
+#            self._send_csv(req, cols, authorized_results, '\t',
+#                           mimetype='text/tab-separated-values',
+#                           filename=filename)
+#        else:
+        page = max is not None and page or None
+        add_link(req, 'alternate', droplet_href(format='rss', page=None),
+                 _('RSS Feed'), 'application/rss+xml', 'rss')
+        add_link(req, 'alternate', droplet_href(format='csv', page=page),
+                 _('Comma-delimited Text'), 'text/plain')
+        add_link(req, 'alternate', droplet_href(format='tab', page=page),
+                 _('Tab-delimited Text'), 'text/plain')
 
-            self.log.debug('Rendered grid')
-            return 'droplet_grid.html', data, None
+        self.log.debug('Rendered grid')
+        return 'droplet_grid.html', data, None
     
     def render_view(self, req, id):
         self.log.debug('Rendering view..')
         req.perm.require('CLOUD_VIEW')
-        item = self.chefapi.resource(self.crud_resource, id)
+        item = self.chefapi.resource(self.crud_resource, id, self.name)
         
         data = {
             'title': _('%(label)s %(id)s', label=self.label, id=id),
@@ -307,7 +306,7 @@ class Droplet(object):
     def render_edit(self, req, id):
         self.log.debug('Rendering edit/new..')
         if id:
-            item = self.chefapi.resource(self.crud_resource, id)
+            item = self.chefapi.resource(self.crud_resource, id, self.name)
         else:
             item = None
         
@@ -355,11 +354,11 @@ class Droplet(object):
         req.perm.require('CLOUD_MODIFY')
         
         data = {
-            'title': _('%(label)s Progress', label=self.label),
+            'title': self.title,
+            'label': self.label,
             'action': 'progress',
             'file': file,
             'droplet_name': self.name,
-            'label': self.label,
             'req': req,
             'error': req.args.get('error')}
         
@@ -375,31 +374,28 @@ class Droplet(object):
     def delete(self, req, id):
         pass
     
+    def audit(self, req, id=None, redirect=True):
+        req.redirect(req.href.cloud(self.name))
+    
 
 class Ec2Instance(Droplet):
     """An EC2 instance cloud droplet."""
     
     def create(self, req):
         req.perm.require('CLOUD_CREATE')
-        dir = tempfile.gettempdir()
-        prefix = 'progress-'
+        progress_file = Progress.get_file()
+        exe = os.path.join(os.path.dirname(__file__),'daemon_ec2_launch.py')
         
-        # delete old progress files
-        for file in os.listdir(dir):
-            if file.startswith(prefix):
-                path = os.path.join(dir,file)
-                mtime = os.stat(path).st_mtime
-                if (time.time() - mtime) > 60 * 60 * 24: # 24+ hours old
-                    self.log.debug('Deleting old progress file %s' % path)
-                    os.remove(path)
+        # prepare launch data
+        launch_data = {
+            'zone': req.args.get('ec2.placement_availability_zone',''),
+            'image_id': req.args.get('ec2.ami_id'),
+            'instance_type': req.args.get('ec2.instance_type'),
+        }
+        if launch_data['zone'] in ('No preference',''):
+            launch_data['zone'] = None
         
-        # prepare the command
-        exe = os.path.join(os.path.dirname(__file__),'launcher.py')
-        f = tempfile.NamedTemporaryFile(dir=dir, prefix=prefix, delete=False)
-        progress_file = f.name
-        placement = req.args.get('ec2.placement_availability_zone','')
-        if placement in ('No preference',''):
-            placement = None
+        # prepare attributes
         attributes = {}
         fields = self.fields.get_list('crud_new', filter=r"ec2\..*")
         for field in fields:
@@ -416,9 +412,9 @@ class Ec2Instance(Droplet):
            '--aws-keypair="%s"' % self.cloudapi.keypair,
            '--aws-keypair-pem="%s"' % self.chefapi.keypair_pem,
            '--aws-username="%s"' % self.chefapi.user,
-           '--placement="%s"' % placement,
-           '--image-id="%s"' % req.args.get('ec2.ami_id'),
-           '--instance-type="%s"' % req.args.get('ec2.instance_type'),
+           '--rds-username="%s"' % self.cloudapi.username,
+           '--rds-password="%s"' % self.cloudapi.password,
+           "--launch-data='%s'" % json.dumps(launch_data),
            "--attributes='%s'" % json.dumps(attributes),
         ]
         cmd += ['--chef-boot-run-list="%s"' % \
@@ -428,9 +424,9 @@ class Ec2Instance(Droplet):
         cmd = ' '.join(cmd)
         
         # Spawn command as daemon to launch and bootstrap instance in background
-        self.log.debug('Launching command: %s' % cmd)
+        self.log.debug('Daemonizing command: %s' % cmd)
         if subprocess.call(cmd, shell=True):
-            add_warning(req, _("Error launching command: %(cmd)s", cmd=cmd))
+            add_warning(req, _("Error daemonizing: %(cmd)s", cmd=cmd))
             req.redirect(req.href.cloud(self.name))
         req.redirect(req.href.cloud(self.name, action='progress',
                                                file=progress_file))
@@ -463,7 +459,7 @@ class Ec2Instance(Droplet):
         instance_id = 'undefined'
         try:
             instance_id = node.attributes.get_dotted('ec2.instance_id')
-            terminated = self.cloudapi.terminate_instance(instance_id)
+            terminated = self.cloudapi.terminate_ec2_instance(instance_id)
             self.log.info('Terminated instance %s (%s)' % (instance_id,terminated))
         except Exception, e:
             self.log.warn('Error terminating instance %s:\n%s' % (instance_id,str(e)))
@@ -489,3 +485,186 @@ class Ec2Instance(Droplet):
                   "Please check in the AWS Management Console directly.",
                   label=self.label, id=id, instance_id=instance_id))
         req.redirect(req.href.cloud(self.name))
+        
+    def audit(self, req):
+        req.perm.require('CLOUD_VIEW')
+        progress_file = Progress.get_file()
+        exe = os.path.join(os.path.dirname(__file__),'daemon_ec2_audit.py')
+        
+        # create the command
+        cmd = [
+           '/usr/bin/python', exe, '--daemonize',
+           '--progress-file="%s"' % progress_file,
+           '--log-file="%s"' %  self.log.handlers[0].stream.name, # TODO: more robust way to get this info?
+           '--chef-base-path="%s"' % self.chefapi.base_path,
+           '--aws-key="%s"' % self.cloudapi.key,
+           '--aws-secret="%s"' % self.cloudapi.secret,
+           '--aws-keypair="%s"' % self.cloudapi.keypair,
+           '--aws-keypair-pem="%s"' % self.chefapi.keypair_pem,
+           '--aws-username="%s"' % self.chefapi.user,
+           '--rds-username="%s"' % self.cloudapi.username,
+           '--rds-password="%s"' % self.cloudapi.password,
+        ]
+        cmd += ['--chef-boot-run-list="%s"' % \
+            r for r in self.chefapi.boot_run_list]
+        if self.chefapi.sudo:
+            cmd += ['--chef-boot-sudo']
+        cmd = ' '.join(cmd)
+        
+        # Spawn command as daemon to audit instance in background
+        self.log.debug('Daemonizing command: %s' % cmd)
+        if subprocess.call(cmd, shell=True):
+            add_warning(req, _("Error daemonizing: %(cmd)s", cmd=cmd))
+            req.redirect(req.href.cloud(self.name))
+        req.redirect(req.href.cloud(self.name, action='progress',
+                                               file=progress_file))
+    
+    
+
+class RdsInstance(Droplet):
+    """An RDS instance cloud droplet."""
+    
+    def create(self, req):
+        req.perm.require('CLOUD_CREATE')
+        progress_file = Progress.get_file()
+        exe = os.path.join(os.path.dirname(__file__),'daemon_rds_launch.py')
+        
+        # prepare launch data
+        launch_data = {}
+        for field in ['id','storage','class','dbname','zone','multi_az']:
+            launch_data[field] = req.args.get(field,'')
+        if launch_data['zone'] in ('No preference',''):
+            launch_data['zone'] = None
+        launch_data['multi_az'] = launch_data['multi_az'] == '1'
+        
+        # prepare attributes
+        attributes = copy.copy(launch_data)
+        filter = '('+'|'.join(launch_data.keys())+')'
+        fields = self.fields.get_list('crud_new', filter=filter)
+        for field in fields:
+            field.set_dict(attributes, req=req, default='')
+        
+        # create the command
+        cmd = [
+           '/usr/bin/python', exe, '--daemonize',
+           '--progress-file="%s"' % progress_file,
+           '--log-file="%s"' %  self.log.handlers[0].stream.name, # TODO: more robust way to get this info?
+           '--chef-base-path="%s"' % self.chefapi.base_path,
+           '--aws-key="%s"' % self.cloudapi.key,
+           '--aws-secret="%s"' % self.cloudapi.secret,
+           '--aws-keypair="%s"' % self.cloudapi.keypair,
+           '--aws-keypair-pem="%s"' % self.chefapi.keypair_pem,
+           '--aws-username="%s"' % self.chefapi.user,
+           '--rds-username="%s"' % self.cloudapi.username,
+           '--rds-password="%s"' % self.cloudapi.password,
+           '--databag="%s"' % self.name,
+           "--launch-data='%s'" % json.dumps(launch_data),
+           "--attributes='%s'" % json.dumps(attributes),
+        ]
+        cmd += ['--chef-boot-run-list="%s"' % \
+            r for r in self.chefapi.boot_run_list]
+        if self.chefapi.sudo:
+            cmd += ['--chef-boot-sudo']
+        cmd = ' '.join(cmd)
+        
+        # Spawn command as daemon to launch and bootstrap instance in background
+        self.log.debug('Daemonizing command: %s' % cmd)
+        if subprocess.call(cmd, shell=True):
+            add_warning(req, _("Error daemonizing: %(cmd)s", cmd=cmd))
+            req.redirect(req.href.cloud(self.name))
+        req.redirect(req.href.cloud(self.name, action='progress',
+                                               file=progress_file))
+    
+    def save(self, req, id, fields=None, redirect=True):
+        req.perm.require('CLOUD_MODIFY')
+        self.log.debug('Saving data bag item %s/%s..' % (self.name,id))
+        item = self.chefapi.resource(self.crud_resource, id, self.name)
+        
+        # prepare modify data
+        self.cloudapi.modify_rds_instance(id,
+            storage = req.args.get('storage'),
+            class_ = req.args.get('class'),
+            multi_az = req.args.get('multi_az'),
+            apply_immediately = req.args.get('cmd_apply_now'))
+
+        # prepare fields; remove command fields
+        if fields is None:
+            fields = self.fields.get_list('crud_edit', filter=r"cmd_.*")
+        for field in fields:
+            field.set(item, req)
+        item['multi_az'] = item['multi_az'] == '1'
+        item.save()
+        self.log.info('Saved data bag item %s/%s' % (self.name,id))
+        
+        if redirect:
+            # show the view
+            add_notice(req, _('%(label)s %(id)s has been saved.',
+                              label=self.label, id=id))
+            req.redirect(req.href.cloud(self.name, id))
+        
+    def delete(self, req, id):
+        req.perm.require('CLOUD_DELETE')
+        self.log.debug('Deleting rds instance and data bag item..')
+        item = self.chefapi.resource(self.crud_resource, id, self.name)
+        
+        # delete the rds instance
+        terminated = False
+        id = 'undefined'
+        try:
+            id = item['id']
+            self.cloudapi.delete_rds_instance(id)
+            terminated = True
+            self.log.info('Deleted rds instance %s' % id)
+        except Exception, e:
+            self.log.warn('Error deleting rds instance %s:\n%s' % (id,str(e)))
+        
+        # delete item from chef
+        item.delete()
+        self.log.info('Deleted data bag item %s/%s' % (self.name,id))
+        
+        # show the grid
+        if terminated:
+            add_notice(req, _('%(label)s %(id)s has been deleted.',
+                              label=self.label, id=id))
+        else:
+            add_warning(req,
+                _("%(label)s %(id)s was not terminated as expected, " + \
+                  "but its chef data bag item was deleted. " + \
+                  "Please check in the AWS Management Console directly.",
+                  label=self.label, id=id))
+        req.redirect(req.href.cloud(self.name))
+        
+    def audit(self, req):
+        req.perm.require('CLOUD_VIEW')
+        progress_file = Progress.get_file()
+        exe = os.path.join(os.path.dirname(__file__),'daemon_rds_audit.py')
+        
+        # create the command
+        cmd = [
+           '/usr/bin/python', exe, '--daemonize',
+           '--progress-file="%s"' % progress_file,
+           '--log-file="%s"' %  self.log.handlers[0].stream.name, # TODO: more robust way to get this info?
+           '--chef-base-path="%s"' % self.chefapi.base_path,
+           '--aws-key="%s"' % self.cloudapi.key,
+           '--aws-secret="%s"' % self.cloudapi.secret,
+           '--aws-keypair="%s"' % self.cloudapi.keypair,
+           '--aws-keypair-pem="%s"' % self.chefapi.keypair_pem,
+           '--aws-username="%s"' % self.chefapi.user,
+           '--rds-username="%s"' % self.cloudapi.username,
+           '--rds-password="%s"' % self.cloudapi.password,
+           '--databag="%s"' % self.name,
+        ]
+        cmd += ['--chef-boot-run-list="%s"' % \
+            r for r in self.chefapi.boot_run_list]
+        if self.chefapi.sudo:
+            cmd += ['--chef-boot-sudo']
+        cmd = ' '.join(cmd)
+        
+        # Spawn command as daemon to audit instance in background
+        self.log.debug('Daemonizing command: %s' % cmd)
+        if subprocess.call(cmd, shell=True):
+            add_warning(req, _("Error daemonizing: %(cmd)s", cmd=cmd))
+            req.redirect(req.href.cloud(self.name))
+        req.redirect(req.href.cloud(self.name, action='progress',
+                                               file=progress_file))
+    

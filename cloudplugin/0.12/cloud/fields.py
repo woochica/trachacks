@@ -1,6 +1,6 @@
 import re
 
-KINDS = ('text','select','multiselect')
+KINDS = ('text','checkbox','select','multiselect')
 
 class Fields(object):
     """Manages the data conversion of fields into and out of views from
@@ -233,7 +233,7 @@ class Field(object):
                 opts = [(rec['name'],rec['value']) for rec in bag]
         except Exception, e:
             self._log.debug("Could not access databag '%s'\n%s" % \
-                            (self._databag),str(e))
+                            (self._databag,str(e)))
         return opts
     
     def get(self, item=None, req=None, default=None, raw=False):
@@ -256,7 +256,10 @@ class Field(object):
                 v = self._handler.convert_item(self.name, item, req)
             else:
                 if item:
-                    v = item.attributes.get_dotted(self.name)
+                    if hasattr(item.attributes, 'get_dotted'):
+                        v = item.attributes.get_dotted(self.name)
+                    else:
+                        v = item[self.name]
                 else:
                     v = req.args.get(self.name,get_default())
         except (KeyError, AttributeError):
@@ -278,7 +281,10 @@ class Field(object):
                 return
         else:
             v = req.args.get(self.name,default)
-        item.attributes.set_dotted(self.name, v)
+        if hasattr(item.attributes, 'set_dotted'):
+            item.attributes.set_dotted(self.name, v)
+        else:
+            item[self.name] = v
         self._log.debug("Item %s field %s set to %s" % (item,self.name,v))
     
     def set_dict(self, d, req, default='', raw=False):

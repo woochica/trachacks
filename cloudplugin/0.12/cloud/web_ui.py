@@ -3,7 +3,7 @@ import time
 import json
 from genshi.builder import tag
 from trac.config import Option, BoolOption, IntOption, ListOption
-from trac.core import *
+from trac.core import * #@UnusedWildImport
 from trac.perm import IPermissionRequestor
 from trac.resource import ResourceNotFound
 from trac.util.translation import _
@@ -39,6 +39,12 @@ class CloudModule(Component):
     aws_username = Option('cloud', 'aws_username', 'ubuntu',
         _("AWS/EC2 ssh username."))
     
+    rds_username = Option('cloud', 'rds_username', '',
+        _("AWS/RDS master username."))
+    
+    rds_password = Option('cloud', 'rds_password', '',
+        _("AWS/RDS master username."))
+    
     chef_base_path = Option('cloud', 'chef_base_path', '',
         _("Directory where .chef configs can be found."))
     
@@ -66,11 +72,11 @@ class CloudModule(Component):
     # ITemplateProvider methods
     
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
+        from pkg_resources import resource_filename #@UnresolvedImport
         return [('cloud', resource_filename(__name__, 'htdocs'))]
     
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
+        from pkg_resources import resource_filename #@UnresolvedImport
         return [resource_filename(__name__, 'templates')]
     
     
@@ -119,12 +125,14 @@ class CloudModule(Component):
             cloudapi = AwsApi(self.aws_key,
                               self.aws_secret,
                               self.aws_keypair,
+                              self.rds_username,
+                              self.rds_password,
                               self.log)
             
             # instantiate each droplet (singletons)
             self.droplets = {}
             self.titles = Droplet.titles(self.env)
-            for order_,droplet_name,title_ in self.titles:
+            for u_order,droplet_name,u_title in self.titles:
                 self.droplets[droplet_name] = Droplet.new(self.env,
                     droplet_name, chefapi, cloudapi,
                     self.field_handlers, self.log)
@@ -143,7 +151,7 @@ class CloudModule(Component):
         if not droplet_name:
             droplet_name = self.default_resource
             if not droplet_name:
-                o_,droplet_name,t_ = self.titles[0]
+                u_,droplet_name,u_ = self.titles[0]
             req.redirect(req.href.cloud(droplet_name))
         
         # check for valid kind
@@ -166,6 +174,8 @@ class CloudModule(Component):
                 droplet.delete(req, id)
             elif action == 'edit':
                 droplet.save(req, id)
+            elif action == 'audit':
+                droplet.audit(req)
         else: # req.method == 'GET':
             if action in ('edit', 'new'):
                 template, data, content_type = droplet.render_edit(req, id)
@@ -184,7 +194,7 @@ class CloudModule(Component):
                     return template, data, content_type
         
         # add contextual nav
-        for order_,droplet_name,title in self.titles:
+        for u_order,droplet_name,title in self.titles:
             add_ctxtnav(req, title, href=req.href.cloud(droplet_name))
         
         add_stylesheet(req, 'common/css/report.css') # reuse css
@@ -212,7 +222,7 @@ class CloudFileAjaxModule(Component):
             msg = json.dumps(data)
             req.send_response(200)
             req.send_header('Content-Type', 'application/json')
-        except Exception, e:
+        except Exception:
             import traceback;
             msg = "Oops...\n" + traceback.format_exc()+"\n"
             req.send_response(500)

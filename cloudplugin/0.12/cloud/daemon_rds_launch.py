@@ -12,92 +12,80 @@ from progress import Progress
 from chefapi import ChefApi
 from awsapi import AwsApi
 
-class Launcher(Daemon):
-    """Launches and bootstraps an ec2 instance in a separate process."""
+class RdsLauncher(Daemon):
+    """Launches and bootstraps an rds instance in a separate process."""
     
     STEPS = [
-        'Launching the instance',
-        'Starting up the instance',
-        'Bootstrapping the instance',
-        'Applying the chef roles',
+        'Launching the rds instance',
+        'Starting up the rds instance',
+        'Saving the chef roles and attributes',
     ]
     
-    def __init__(self, progress_file, chefapi, cloudapi,
+    def __init__(self, progress_file, databag, chefapi, cloudapi,
                  launch_data, attributes, log):
         pidfile = tempfile.NamedTemporaryFile(delete=False).name
         Daemon.__init__(self, pidfile, log)
-        self.progress = Progress(progress_file, self.pidfile, self.STEPS)
+        self.progress = Progress(progress_file, self.pidfile, self.STEPS,
+                                 title="Launch Progress")
         self.chefapi = chefapi
         self.cloudapi = cloudapi
+        self.databag = databag
         self.launch_data = launch_data
         self.attributes = attributes
         
     def run(self, sysexit=True):
-        # Step 1. Launching the instance
-        self.log.debug('Launching instance..')
+        # Step 1. Launching the rds instance
+        self.log.debug('Launching rds instance..')
         self.progress.start(0)
-        instance = self.cloudapi.launch_instance(
-            image_id = self.launch_data['image_id'],
-            instance_type = self.launch_data['instance_type'],
-            placement = self.launch_data['placement'])
+        id = self.launch_data['id']
+        instance = self.cloudapi.launch_rds_instance(
+            id = id,
+            storage = self.launch_data['storage'],
+            class_ = self.launch_data['class'],
+            dbname = self.launch_data['dbname'],
+            zone = self.launch_data['zone'],
+            multi_az = self.launch_data['multi_az'])
         self.progress.done(0)
         
         # update step 1 with id
-        self.log.debug('Adding instance.id %s to progress' % instance.id)
-        progress = self.progress.get()
-        progress['steps'][0] += ' (%s)' % instance.id
-        self.progress.set(progress)
-        
-        # Step 2. Starting up the instance
-        self.log.debug('Starting up the instance..')
-        self.progress.start(1)
-        time.sleep(2.0) # instance can be a tad cranky when it launches
-        self.cloudapi.wait_until_running(instance,timeout=600)
-        if instance.state != 'running':
-            msg = "Instance %s was launched" % instance.id + \
-                  " but isn't running.  Check in the AWS" + \
-                  " Management Console directly."
-            self.log.error(msg)
-            self.progress.error(msg)
-            sys.exit(1)
-        time.sleep(10.0) # instance is cranky when it wakes up
-        self.progress.done(1)
-        
-        # add id to progress, update step 2 with public dns
-        id = instance.private_dns_name
         self.log.debug('Adding id %s to progress' % id)
         progress = self.progress.get()
         progress['id'] = id
-        progress['steps'][1] += ' (%s)' % instance.public_dns_name
+        progress['steps'][0] += ' (%s)' % id
         self.progress.set(progress)
         
-        # Step 3. Bootstrapping the instance
-        self.log.debug('Bootstrapping the instance..')
-        self.progress.start(2)
-        public_hostname = instance.public_dns_name
-        node = self.chefapi.bootstrap(id, public_hostname, timeout=360)
-        if node is None:
-            msg = "Instance %s is running" % instance.id + \
-                  " but not bootstrapped. Login to" + \
-                  " %s to investigate." % instance.public_dns_name
+        # Step 2. Starting up the rds instance
+        self.log.debug('Starting up the rds instance..')
+        self.progress.start(1)
+        time.sleep(2.0) # instance can be a tad cranky when it launches
+        self.cloudapi.wait_until_endpoint(instance, timeout=1800)
+        if instance.endpoint == None:
+            msg = "RDS Instance %s was launched" % id + \
+                  " but doesn't have an endpoint (yet).  Check" + \
+                  " in the AWS Management Console directly."
             self.log.error(msg)
             self.progress.error(msg)
             sys.exit(1)
-        self.progress.done(2)
+        self.progress.done(1)
         
-        # Step 4. Applying the chef roles
-        self.log.debug('Applying chef roles..')
-        self.progress.start(3)
-        self.log.debug('Saving node..')
-        node = self.chefapi.resource('nodes', id)
+        # add id to progress, update step 2 with public dns
+        endpoint = "%s:%s" % instance.endpoint
+        self.log.debug('Adding endpoint %s to progress' % endpoint)
+        progress = self.progress.get()
+        progress['steps'][1] += ' (%s)' % endpoint
+        self.progress.set(progress)
+        
+        # Step 4. Applying the chef roles and attributes
+        self.log.debug('Applying chef roles and attributes..')
+        self.progress.start(2)
+        self.log.debug('Saving data bag item %s/%s..' % (self.databag,id))
+        rds = self.chefapi.resource('data', name=self.databag)
+        item = self.chefapi.databagitem(rds, id)
         for field,value in self.attributes.items():
-            if field == 'run_list':
-                node.run_list = value # roles
-            else:
-                node.attributes.set_dotted(field, value)
-        node.save()
-        self.log.info('Saved node %s' % id)
-        self.progress.done(3)
+            item[field] = value
+        item.save()
+        self.log.info('Saved data bag item %s/%s..' % (self.databag,id))
+        self.progress.done(2)
         
         if sysexit:
             sys.exit(0) # success
@@ -118,14 +106,15 @@ if __name__ == "__main__":
     parser.add_option("--aws-keypair")
     parser.add_option("--aws-keypair-pem")
     parser.add_option("--aws-username")
-    parser.add_option("--placement")
-    parser.add_option("--image-id")
-    parser.add_option("--instance-type")
+    parser.add_option("--rds-username")
+    parser.add_option("--rds-password")
+    parser.add_option("--databag")
+    parser.add_option("--launch-data", default='{}', help="JSON dict")
     parser.add_option("--attributes", default='{}', help="JSON dict")
     (options, _args) = parser.parse_args()
     
     # setup logging (presumes something else will rotate it)
-    log = logging.getLogger("Launcher")
+    log = logging.getLogger("RdsLauncher")
     log.setLevel(options.log_level)
     handler = logging.FileHandler(options.log_file)
     handler.setLevel(options.log_level)
@@ -144,30 +133,26 @@ if __name__ == "__main__":
     cloudapi = AwsApi(options.aws_key,
                       options.aws_secret,
                       options.aws_keypair,
+                      options.rds_username,
+                      options.rds_password,
                       log)
     
     # prepare the data
-    launch_data = {
-        'placement': options.placement,
-        'image_id':  options.image_id,
-        'instance_type': options.instance_type,
-    }
-    
+    launch_data = json.loads(options.launch_data)
     attributes = json.loads(options.attributes)
     
     # launch
-    launcher = Launcher(options.progress_file,
-                        chefapi, cloudapi,
-                        launch_data, attributes, log)
+    daemon = RdsLauncher(options.progress_file, options.databag,
+                         chefapi, cloudapi, launch_data, attributes, log)
     try:
         if options.daemonize:
-            launcher.start()
+            daemon.start()
         else:
-            launcher.run()
+            daemon.run()
     except Exception, e:
             import traceback
-            msg = "Launcher error: " + traceback.format_exc()+"\n"
-            launcher.progress.error(msg)
+            msg = "RdsLauncher error: " + traceback.format_exc()+"\n"
+            daemon.progress.error(msg)
             log.error(msg)
             handler.flush()
             sys.exit(1)

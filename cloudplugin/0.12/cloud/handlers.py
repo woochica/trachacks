@@ -22,7 +22,10 @@ class DefaultHandler(Component):
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        return item.attributes.get_dotted(field)
+        if hasattr(item.attributes, 'get_dotted'):
+            return item.attributes.get_dotted(field)
+        else:
+            return item[field]
     
     def convert_req(self, field, req):
         return req.args.get(field)
