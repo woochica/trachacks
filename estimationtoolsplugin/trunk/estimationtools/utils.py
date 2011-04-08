@@ -40,7 +40,8 @@ def get_serverside_charts():
         doc="""Generate charts links internally and fetch charts server-side
         before returning to client, instead of generating Google links that the
         users browser fetches directly. Particularly useful for sites served behind SSL.
-        Defaults to false.""")
+        Server-side charts uses POST requests internally, increasing chart data size
+        from 2K to 16K. Defaults to false.""")
 
 class EstimationToolsBase(Component):
     """ Base class EstimationTools components that auto-disables if
@@ -64,9 +65,11 @@ class GoogleChartProxy(EstimationToolsBase):
         return req.path_info == '/estimationtools/chart'
     def process_request(self, req):
         req.perm.require('TICKET_VIEW')
-        url = 'http://chart.apis.google.com/chart?%s' % req.args.get('data', '')
-        self.log.debug("Fetching chart using url: %s" % repr(url))
-        chart = urllib2.urlopen(url.encode('utf-8'))
+        data = req.args.get('data', '')
+        opener = urllib2.build_opener(urllib2.HTTPHandler())
+        chart_req = urllib2.Request('http://chart.apis.google.com/chart', data=data)
+        self.log.debug("Fetch chart, %r + data: %r" % (chart_req.get_method(), data))
+        chart = opener.open(chart_req)
         for header, value in chart.headers.items():
             req.send_header(header, value)
         req.write(chart.read())
