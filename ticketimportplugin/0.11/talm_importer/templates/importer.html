@@ -67,21 +67,25 @@ If the spreadsheet contains a Comment column, this column will be added as comme
      <label for="import-file">File to import:</label>
        <input type="file" name="import-file" />
    </div>
-   <br/>
    <div class="field">
-     <label for="sheet">For an Excel spreadsheet, index of the worksheet to import:</label>
-       <select name="sheet">
-       <option value="1">1</option>
-       <option value="2">2</option>
-       <option value="3">3</option>
-       <option value="4">4</option>
-       <option value="5">5</option>
-       <option value="6">6</option>
-       <option value="7">7</option>
-       <option value="8">8</option>
-       <option value="9">9</option>
+     <label for="importer-sheet">For an Excel spreadsheet, index of the worksheet to import:
+       <select id="importer-sheet" name="sheet">
+         <option py:for="i in xrange(1, 10)" value="$i">$i</option>
        </select>
-       <i>Note: worksheets containing non-data (e.g., charts) are skipped when counting the worksheets.</i>
+     </label>
+     <br />
+     <span class="hint">
+       <strong>Note:</strong> worksheets containing non-data (e.g., charts) are skipped when counting the worksheets.
+     </span>
+   </div>
+   <div class="field">
+     <label for="importer-encoding">For a CSV file, select charset encoding of the file:
+       <select id="importer-encoding" name="encoding">
+         <option py:for="encoding in encodings"
+                 selected="${encoding == csv_default_encoding and 'selected'}"
+           >$encoding</option>
+       </select>
+     </label>
    </div>
   <div class="buttons">
    <input type="hidden" name="action" value="upload" />

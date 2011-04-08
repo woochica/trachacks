@@ -10,6 +10,7 @@ from trac.ticket import Ticket, model
 from trac.util import get_reporter_id
 from trac.util.datefmt import format_datetime
 from trac.util.html import Markup
+from trac.util.text import to_unicode
 from trac.wiki import wiki_to_html
 
 
@@ -176,7 +177,7 @@ class PreviewProcessor(object):
     def start(self, importedfields, reconciliate_by_owner_also, has_comments):
         self.data['title'] = 'Preview Import'
 
-        self.message = ''
+        self.message = u''
 
         if 'ticket' in [f.lower() for f in importedfields]:
             self.message += ' * A \'\'\'ticket\'\'\' column was found: Existing tickets will be updated with the values from the file. Values that are changing appear in italics in the preview below.\n' 
@@ -206,19 +207,21 @@ class PreviewProcessor(object):
         self.message += ' * Some Trac fields are not present in the import. They will default to:\n\n'
         self.message += "   ||'''field'''||'''Default value'''||\n"
         if missingemptyfields != []:
-            self.message += '   ||' + ', '.join([x.capitalize() for x in missingemptyfields]) + '||' + "''(Empty value)''" + '||\n'
+            self.message += u"   ||%s||''(Empty value)''||\n" \
+                            % u', '.join([to_unicode(x.capitalize()) for x in missingemptyfields])
             
         if missingdefaultedfields != []:
             for f in missingdefaultedfields:
-                self.message += '   ||' + f.capitalize() + '||' + str(computedfields[f]['value']) + '||\n'
+                self.message += u'   ||%s||%s||\n' % (to_unicode(f.capitalize()), computedfields[f]['value'])
 
         self.message += '(You can change some of these default values in the Trac Admin module, if you are administrator; or you can add the corresponding column to your spreadsheet and re-upload it).\n'
 
     def process_notimported_fields(self, notimportedfields):
-        self.message += ' * Some fields will not be imported because they don\'t exist in Trac: ' + ', '.join([x and x or "''(empty name)''" for x in notimportedfields])  + '.\n'
+        self.message += u' * Some fields will not be imported because they don\'t exist in Trac: %s.\n' \
+                        % u', '.join([x and to_unicode(x) or u"''(empty name)''" for x in notimportedfields])
 
     def process_comment_field(self, comment):
-        self.message += ' * The field "%s" will be used as comment when modifying tickets, and appended to the description for new tickets.\n' % comment
+        self.message += u' * The field "%s" will be used as comment when modifying tickets, and appended to the description for new tickets.\n' % comment
 
     def start_process_row(self, row_idx, ticket_id):
         from ticket import PatchedTicket
@@ -263,22 +266,23 @@ class PreviewProcessor(object):
     def process_new_lookups(self, newvalues):
         if 'status' in newvalues:
             if len(newvalues['status']) > 1:
-                msg = ' * Some values for the "Status" field do not exist: %s. They will be imported, but will result in invalid status.\n\n'
+                msg = u' * Some values for the "Status" field do not exist: %s. They will be imported, but will result in invalid status.\n\n'
             else:
-                msg = ' * A value for the "Status" field does not exist: %s. It will be imported, but will result in an invalid status.\n\n'
+                msg = u' * A value for the "Status" field does not exist: %s. It will be imported, but will result in an invalid status.\n\n'
                 
-            self.message += (msg % ','.join(newvalues['status']))
+            self.message += (msg % u','.join(newvalues['status']))
             del newvalues['status']
             
         if newvalues:
             self.message += ' * Some lookup values are not found and will be added to the possible list of values:\n\n'
             self.message += "   ||'''field'''||'''New values'''||\n"
             for field, values in newvalues.iteritems():                
-                self.message += "   ||" + field.capitalize() + "||" + ', '.join(values) + "||\n"
+                self.message += u"   ||%s||%s||\n" % (to_unicode(field.capitalize()), u', '.join(values))
             
 
     def process_new_users(self, newusers):
-        self.message += ' * Some user names do not exist in the system: ' + ', '.join(newusers) + '. Make sure that they are valid users.\n'
+        self.message += u' * Some user names do not exist in the system: %s. Make sure that they are valid users.\n' % (u', '.join(newusers))
+
             
     def end_process(self, numrows):
         self.message = 'Scroll to see a preview of the tickets as they will be imported. If the data is correct, select the \'\'\'Execute Import\'\'\' button.\n' + ' * ' + str(numrows) + ' tickets will be imported (' + str(self.added) + ' added, ' + str(self.modifiedcount) + ' modified, ' + str(self.notmodifiedcount) + ' unchanged).\n' + self.message

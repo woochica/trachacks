@@ -44,7 +44,7 @@ class ImporterTestCase(unittest.TestCase):
            pass
         req.authname = 'testuser'
         #req.hdf = HDFWrapper([]) # replace by this if you want to generate HTML: req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
-        template, data, content_type = ImportModule(env)._do_preview(filename, 1, req)
+        template, data, content_type = ImportModule(env)._do_preview(filename, 1, req, encoding='cp1252')
         #sys.stdout = tempstdout
         #req.display(template, content_type or 'text/html')
         #open('/tmp/out.html', 'w').write(req.hdf.render(template, None))
@@ -69,7 +69,8 @@ class ImporterTestCase(unittest.TestCase):
         #print enums_before
         # when testing, always use the same time so that the results are comparable
         #print "importing " + filename + " with tickettime " + str(ImporterTestCase.TICKET_TIME)
-        template, data, content_type = ImportModule(env)._do_import(filename, sheet, req, filename, ImporterTestCase.TICKET_TIME)
+        template, data, content_type = ImportModule(env)._do_import(filename, sheet, req, filename,
+                                                                    ImporterTestCase.TICKET_TIME, encoding='cp1252')
         #sys.stdout = tempstdout
         #req.display(template, content_type or 'text/html')
         #open('/tmp/out.html', 'w').write(req.hdf.render(template, None))

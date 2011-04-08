@@ -5,6 +5,7 @@
 # Licensed under the same license as Trac - http://trac.edgewall.org/wiki/TracLicense
 #
 
+import encodings
 import os
 import re
 import shutil
@@ -15,10 +16,12 @@ import unicodedata
 from trac.core import *
 from trac.attachment import AttachmentModule
 from trac.core import Component
+from trac.config import Option
 from trac.perm import IPermissionRequestor
 from trac.ticket import TicketSystem
 from trac.ticket import model
 from trac.util import get_reporter_id
+from trac.util.compat import set, sorted
 from trac.util.html import html
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
@@ -29,6 +32,8 @@ from talm_importer.readers import get_reader
 
 
 class ImportModule(Component):
+    csv_default_encoding = Option('importer', 'csv_default_encoding', 'utf-8',
+        doc="Default encoding of CSV file")
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler, ITemplateProvider)
 
@@ -61,26 +66,32 @@ class ImportModule(Component):
             req.redirect(req.href('importer'))
                 
         if action == 'upload' and req.method == 'POST':
-            req.session['uploadedfile'] = None
+            req.session['importer.uploadedfile'] = None
             uploadedfilename, uploadedfile = self._save_uploaded_file(req)
-            req.session['sheet'] = req.args['sheet']
-            req.session['uploadedfile'] = uploadedfile
-            req.session['uploadedfilename'] = uploadedfilename
-            req.session['tickettime'] = str(int(time.time()))
-            return self._do_preview(uploadedfile, int(req.session['sheet']), req)
+            req.session['importer.sheet'] = req.args['sheet']
+            req.session['importer.encoding'] = req.args['encoding']
+            req.session['importer.uploadedfile'] = uploadedfile
+            req.session['importer.uploadedfilename'] = uploadedfilename
+            req.session['importer.tickettime'] = str(int(time.time()))
+            return self._do_preview(uploadedfile, int(req.session['importer.sheet']), req,
+                                    encoding=req.session['importer.encoding'])
         elif action == 'import' and req.method == 'POST':
-            tickettime = int(req.session['tickettime'])
+            tickettime = int(req.session['importer.tickettime'])
             if tickettime == 0:
                 raise TracError('No time set since preview, unable to import: please upload the file again')
 
-            return self._do_import(req.session['uploadedfile'], int(req.session['sheet']), req, req.session['uploadedfilename'], tickettime)
+            return self._do_import(req.session['importer.uploadedfile'], int(req.session['importer.sheet']),
+                                   req, req.session['importer.uploadedfilename'], tickettime,
+                                   encoding=req.session['importer.encoding'])
             
         else:
-            req.session['uploadedfile'] = None
-            req.session['uploadedfilename'] = None
+            req.session['importer.uploadedfile'] = None
+            req.session['importer.uploadedfilename'] = None
 
             data = { 'reconciliate_by_owner_also': self._reconciliate_by_owner_also(),
-                     'fields': ['ticket or id'] + [field['name'] for field in TicketSystem(self.env).get_ticket_fields()] }
+                     'fields': ['ticket or id'] + [field['name'] for field in TicketSystem(self.env).get_ticket_fields()],
+                     'csv_default_encoding': self.csv_default_encoding,
+                     'encodings': self._get_encodings() }
 
             return 'importer.html', data, None
 
@@ -104,15 +115,15 @@ class ImportModule(Component):
     def _datetime_format(self):
         return str(self.config.get('importer', 'datetime_format', '%x')) # default is Locale's appropriate date representation
 
-    def _do_preview(self, uploadedfile, sheet, req):
-        filereader = get_reader(uploadedfile, sheet, self._datetime_format())
+    def _do_preview(self, uploadedfile, sheet, req, encoding=None):
+        filereader = get_reader(uploadedfile, sheet, self._datetime_format(), encoding=encoding)
         try:
             return self._process(filereader, get_reporter_id(req), PreviewProcessor(self.env, req))
         finally:
             filereader.close()
 
-    def _do_import(self, uploadedfile, sheet, req, uploadedfilename, tickettime):
-        filereader = get_reader(uploadedfile, sheet, self._datetime_format())
+    def _do_import(self, uploadedfile, sheet, req, uploadedfilename, tickettime, encoding=None):
+        filereader = get_reader(uploadedfile, sheet, self._datetime_format(), encoding=encoding)
         try:
             try:
                 return self._process(filereader, get_reporter_id(req), ImportProcessor(self.env, req, uploadedfilename, tickettime))
@@ -463,6 +474,13 @@ class ImportModule(Component):
         if not row:
             raise TracError('Ticket %s found in file, but not present in Trac: cannot import.' % str(ticket_id))
         return row[0]
+
+    def _get_encodings(self):
+        encs = set(encodings.aliases.aliases.values())
+        for enc in ('base64_codec', 'bz2_codec', 'hex_codec', 'quopri_codec',
+                    'rot_13', 'uu_codec', 'zlib_codec'):
+            encs.discard(enc)
+        return sorted(list(enc.replace('_', '-') for enc in encs))
         
 if __name__ == '__main__': 
     import doctest
