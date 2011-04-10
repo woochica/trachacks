@@ -1,5 +1,33 @@
 #!/usr/bin/env python
 """
+ tracbib/bibtexparser.py
+
+ Copyright (C) 2011 Roman Fenkhuber
+
+ Tracbib is a trac plugin hosted on trac-hacks.org. It brings support for
+ citing from bibtex files in the Trac wiki from different sources.
+
+
+ This File mostly bases on the version offered by Vidar Bronken Gundersen 
+ and Sara Sprenkle. See the copyright notices below. I just provide the function
+ authors(data) which returns correctly split author strings, as described on 
+ http://artis.imag.fr/~Xavier.Decoret/resources/xdkbibtex/bibtex_summary.html.
+
+ tracbib is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ tracbib is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with tracbib.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+"""
   Yet another Parser for bibtex files
   Usage: python bibtexparse.py bibfile.bib 
          output will be bibfile.xml
@@ -173,8 +201,166 @@ def bibtexkeyword(data):
     keyword = keyword.strip()
     bibtex.append(removebraces(keyword).strip())
   return bibtex
+   
+# @return an array containing a dictionary for each author, split into 'first',
+# 'last', 'von' and 'jr'
+# @param data -> The 'authors' BibTex field
+def authors(data):
+
+    tokenized = []
+    a = []
+    sticky = (None,"")
+    #determine the case of the word
+    for i in re.finditer("(?P<caseless>[{\\\][^,\s]*)|(?P<separator>,)|(?P<word>[^\s,]+)|(?P<space>\s)",data):
+
+        if not sticky[0] and re.search("{",i.group(0)) and not match_pair(i.group(0)): #brace not closed?
+            if i.group("caseless"):
+                sticky = ("caseless",i.group(0))
+            elif i.group("word"):
+                sticky = ("word",i.group(0))
+            continue
+        elif sticky[0] and not match_pair(sticky[1] + i.group(0)): 
+            sticky = (sticky[0],sticky[1] + i.group(0))
+            continue
+
+        if sticky[0]:
+            match = sticky[1] + i.group(0)
+            token = sticky[0]
+            sticky = (None,"")
+        else:
+            match=i.group(0)
+            if i.group("caseless"):
+                token = "caseless"
+            if i.group("word"):
+                token = "word"
+            if i.group("separator"):
+                a.append("separator") 
+                token = "separator"
+            if i.group("space"):
+                token = "space"
+
+        if token == "caseless":
+            m = (0,0)
+            caseless = match
+            while m: 
+                m= match_pair(caseless)
+                if m and m[0] == 0: 
+                    caseless = caseless[m[1]:]
+                else:
+                    break
+            w = re.search("[\w]",caseless)
+            if len(caseless) > 0 and w:
+                if w.group(0).islower() or w.group(0).isdigit():
+                    a.append(("lowercase",match))
+                else:
+                    a.append(("uppercase",match))
+            else:
+                a.append(("caseless",match)) 
+
+        elif token == "word":
+            if match == "and":
+                tokenized.append(a)
+                a = []
+            elif match[0].islower() or match[0].isdigit():
+                a.append(("lowercase",match))
+            else:
+                a.append(("uppercase",match))
+
+    if sticky[0]:
+        pass
+        #raise Exception("Brace error!")
 
 
+    tokenized.append(a)
+
+    #determine the cite structure
+
+    ret = []
+    for author in tokenized:
+        count = author.count("separator")
+        a = { "first" : "", "von":"", "last":"", "jr" : ""  }
+
+        #First von Last
+        if count == 0:
+            index = 0
+            
+            #first
+            for index,word in enumerate(author):
+                if index+1 < len(author) and word[0] != "lowercase":
+                    a["first"] += " " + word[1]
+                else:
+                    author = author[index:]
+                    break;
+
+            #von
+            caseless = []
+            for index,word in enumerate(author):
+                if index+1 < len(author) and word[0] != "uppercase":
+                    if word[0] == "caseless":
+                        caseless.append(word[1]) 
+                    elif word[0] == "lowercase":
+                        for w in caseless:
+                            a["von"] += " " + w
+                        caseless = []
+                        a["von"] += " " + word[1]
+                else:
+                    author = author[index:]
+
+            #last
+            for word in caseless:
+                a["last"] += " " + word
+            for index,word in enumerate(author):
+                a["last"] += " " + word[1]
+
+        #von Last, [jr ,] First
+        elif count > 0:
+
+            #von
+            upper = []
+            for index,word in enumerate(author):
+                if author[index+1] == "separator":
+                    upper.append(word[1])
+                    author = author[index+2:]
+                    break
+                if word == "uppercase":
+                    upper.append(word)
+                elif word != "separator":
+                    for w in upper:
+                        a["von"] += " " + w
+                    upper= []
+                    a["von"] += " " + word[1]
+                else:
+                    author = author[index+1:]
+                    break;
+
+            #last
+            for word in upper:
+                a["last"] += " " + word
+            
+            #jr
+            if count > 1:
+                for index,word in enumerate(author):
+                    if word != "separator":
+                        a["jr"] += " " + word[1]
+                    else:
+                        author = author[index+1:]
+                        break
+
+            #first
+            for index,word in enumerate(author):
+                if word != "separator":
+                    a["first"] += " " + word[1]
+                else:
+                    a["first"] += ","
+
+        elif count > 1:
+            pass
+        
+        for k in a:
+            a[k] = a[k].lstrip()
+        ret.append(a)
+
+    return ret
 
 # data = title string
 # @return the capitalized title (first letter is capitalized), rest are capitalized
@@ -184,6 +370,7 @@ def capitalizetitle(data):
   title = ''
   count = 0
   for phrase in title_list:
+    #print phrase
     check = string.lstrip(phrase)
 
 	 # keep phrase's capitalization the same
