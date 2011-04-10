@@ -1,10 +1,43 @@
+"""
+ tracbib/tracbib.py
+
+ Copyright (C) 2011 Roman Fenkhuber
+
+ Tracbib is a trac plugin hosted on trac-hacks.org. It brings support for
+ citing from bibtex files in the Trac wiki from different sources.
+
+ This file contains all Trac macros for the tracbib plugin.
+ Thanks to 'runlevel0' and 'abeld' for some suggestions and bugfixes.
+
+ tracbib is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ tracbib is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with tracbib.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 from trac.core import *
+from api import *
+from source import *
+from formatter import *
+import re
 from trac.wiki.api import IWikiMacroProvider
-from helper import def_strings, replace_tags
+
+try:
+  from genshi.builder import tag
+except ImportError: # for trac 0.10:
+  from trac.util.html import html as tag
+
 try:
   from trac.wiki.api import parse_args
 except ImportError: # for trac 0.10:
-  import re
   # following is from
   # http://trac.edgewall.org/browser/trunk/trac/wiki/api.py
   def parse_args(args, strict=True):
@@ -49,242 +82,201 @@ except ImportError: # for trac 0.10:
                   largs.append(arg)
       return largs, kwargs
 
+  # Dummy Formatter class, Trac 0.10 only provides req
+  class Formatter:
+    req = None
+    def __init__(self,req):
+        self.req = req
+
 from trac.wiki.macros import WikiMacroBase
-from trac.attachment import Attachment
-try:
-  from genshi.builder import tag
-except ImportError: # for trac 0.10:
-  from trac.util.html import html as tag
 from trac.wiki.model import WikiPage
-from trac.wiki.formatter import WikiProcessor
-from trac.util.html import escape
-from genshi import Markup
 
-import re
-import bibtexparse
+class Cite(Component,dict):
+    pass
 
-BIBDB = 'bibtex - database'
-CITELIST = 'referenced elements'
+class AutoLoaded(Component,dict):
+    pass
 
-BIBTEX_KEYS = [
-    'author',
-    'editor',
-    'title',
-    'intype',
-    'booktitle',
-    'edition',
-   'doi',
-    'series',
-    'journal',
-    'volume',
-    'number',
-    'organization',
-    'institution',
-    'publisher',
-    'school',
-    'howpublished',
-    'day',
-    'month',
-    'year',
-    'chapter',
-    'volume',
-    'paper',
-    'type',
-    'revision',
-    'isbn',
-    'pages',
-]
-def extract_entries(text):
-  strings,bibdb=bibtexparse.bibtexload(text.splitlines())
-  for k,bib in bibdb.iteritems():
-      bibtexparse.replace_abbrev(bib,def_strings)
-      bibtexparse.replace_abbrev(bib,strings)
-      for key,value in bib.iteritems() :
-        bib[key] = replace_tags(value)
-  return bibdb
+from trac.web.api import IRequestFilter
+
+class TracBibRequestFilter(Component):
+    sources = ExtensionPoint(IBibSourceProvider)
+    implements(IRequestFilter)
+
+    def pre_process_request(self,req, handler):
+        ''' load entries from the special wiki page 'BibTex' '''
+        match = re.match(r'(^/wiki$)|(^/wiki/*)|(^/$)',req.path_info)
+        if match:
+            source = BibtexSourceWiki(self.env)
+            if WikiPage(self.env,"BibTex").exists:
+                source.source_init(req,"wiki:BibTex")
+                auto = AutoLoaded(self.env)
+                for key in source:
+                    auto[key] = ''
+        return handler
+
+    #Trac 0.11
+    def post_process_request(self,req, template, data, content_type):
+        return (template,data,content_type)
+    
+    #Trac 0.10
+    def post_process_request(self,req, template, content_type):
+        return (template,content_type)
+
 
 class BibAddMacro(WikiMacroBase):
-  implements(IWikiMacroProvider)
+    sources = ExtensionPoint(IBibSourceProvider)
+    implements(IWikiMacroProvider)
 
-  def render_macro(self, request,name,content):
-    return self.expand_macro(request,name,content)
+    # Trac 0.10
+    def render_macro(self, request,name,content):
+        return self.expand_macro(Formatter(request),name,content)
 
-  def expand_macro(self,formatter,name,content):
-    args, kwargs = parse_args(content, strict=False)
-    if len(args) != 1:
-      raise TracError('[[Usage: BibAdd(source:file@rev) or BibAdd(attachment:wikipage/file) or BibAdd(attachment:file)]] ')
-    
-    whom = re.compile(":|@").split(args[0])
-    file = None
-    rev = None
-    pos = None
-    path = None
-    entry = None
-    entries = None
+    # Trac 0.11
+    def expand_macro(self,formatter,name,content):
+        args, kwargs = parse_args(content, strict=False)
+        if len(args) != 1:
+            raise TracError('[[Usage: BibAdd(source:file@rev) or BibAdd(attachment:wikipage/file) or BibAdd(attachment:file)]] ')
 
-    # load the file from the repository
-    if whom[0] == 'source':
-      if len(whom) < 2:
-        raise TracError('[[Missing argument(s) for citing from source; Usage: BibAdd(source:file@rev)]]')
-      elif len(whom) == 2:
-        rev = 'latest'
-      else:
-        rev = whom[2]
-
-      file = whom[1]
-
-      repos = self.env.get_repository()
-      bib = repos.get_node(file, rev)
-      file = bib.get_content()
-      string = file.read()
-
-    # load the file from the wiki attachments
-    elif whom[0] == 'attachment':
-      if (len(whom) != 2):
-        raise TracError('Wrong syntax for environment \'attachment\'; Usage: BibAdd(attachment:file)')
-
-      pos = 'wiki'
-      page = None
-      file = whom[1]
-      path_info = whom[1].split('/',1)
-      if len(path_info) == 2:
-        page = path_info[0]
-        file = path_info[1]
-      else:
-        page = formatter.req.args.get('page')
-        if (page == None):
-          page = 'WikiStart'
-
-      bib = Attachment(self.env,pos,page,file)
-      file = bib.open()
-      string = file.read()
-
-    # use wiki page itself
-    elif whom[0] == 'wiki':
-      if (len(whom) != 2):
-        raise TracError('Wrong syntax for environment \'wiki\'; Usage BibAdd(wiki:page)')
-      
-      page = WikiPage(self.env,whom[1])
-      if page.exists:
-        if '{{{' in page.text and '}}}' in page.text:
-          tmp = re.compile('{{{|}}}',2).split(page.text)
-          string = tmp[1]
-        else:
-          raise TracError('No code block on page \'' + whom[1] + '\' found.')
-      else:
-        raise TracError('No wiki page named \'' + whom[1] + '\' found.')
-    else:
-      raise TracError('Unknown location \''+ whom[0] +'\'')
-    try:
-        # handle all data as unicode objects
-        try:
-            u = unicode(string,"utf-8")
-        except TypeError:
-            u = string
-        entries = extract_entries(u)
-    except UnicodeDecodeError:
-        raise TracError("A UnicodeDecodeError occured while loading the data. Try to save the file in UTF-8 encoding.")
-    if entries == None:
-      raise TracError('No entries from file \''+ args[0] +'\' loaded.')
-    
-    bibdb = getattr(formatter, BIBDB,{})
-    bibdb.update(entries)
-    setattr(formatter,BIBDB,bibdb)
+        arg = re.compile(":").split(args[0])
+        type = arg[0]
+        for source in self.sources:
+            if source.source_type() == type:
+                source.source_init(formatter.req,args[0])
+                return
+        raise TracError("Unknown container type: '"+ type +"'")
 
 class BibCiteMacro(WikiMacroBase):
-  implements(IWikiMacroProvider)
+    implements(IWikiMacroProvider)
+    sources = ExtensionPoint(IBibSourceProvider)
+    formatter = ExtensionPoint(IBibRefFormatter)
 
-  def render_macro(self, request,name,content):
-    return self.expand_macro(request,name,content)
-  
-  def expand_macro(self,formatter,name,content):
+    # Trac 0.10
+    def render_macro(self, request,name,content):
+        return self.expand_macro(Formatter(request),name,content)
 
-    args, kwargs = parse_args(content, strict=False)
+    # Trac 0.11
+    def expand_macro(self,formatter,name,content):
 
-    if len(args) > 1:
-      raise TracError('Usage: [[BibCite(BibTexKey)]]')
-    elif len(args) < 1:
-      raise TracError('Usage: [[BibCite(BibTexKey)]]')
-    
-    key = args[0];
+        args, kwargs = parse_args(content, strict=False)
 
-    bibdb = getattr(formatter, BIBDB,{})
-    citelist = getattr(formatter, CITELIST,[])
-    
-    if key not in citelist:
-      citelist.append(key)
-      setattr(formatter,CITELIST,citelist)
-    
-    index = citelist.index(key) + 1
-  
-    return ''.join(['[', str(tag.a(name='cite_%s' % key)), str(tag.a(href='#%s' % key)('%d' % index)), ']'])
+        if len(args) > 1:
+            raise TracError('Usage: [[BibCite(BibTexKey)]]')
+        elif len(args) < 1:
+            raise TracError('Usage: [[BibCite(BibTexKey)]]')
+
+        key = args[0];
+
+        cite = Cite(self.env)
+        auto = AutoLoaded(self.env)
+
+        if key not in cite:
+            found = False
+            for source in self.sources:
+                if source.has_key(key):
+                    found = True
+                    cite[key] = source[key]
+                    if auto.has_key(key):
+                        del auto[key]
+                    for format in self.formatter:
+                        format.pre_process_entry(key,cite)
+            if not found:
+                raise TracError("Unknown key '"+key +"'")
+
+        for format in self.formatter:
+            entry = format.format_cite(key,cite[key])
+
+        return entry
 
 class BibNoCiteMacro(WikiMacroBase):
-  implements(IWikiMacroProvider)
+    implements(IWikiMacroProvider)
+    sources = ExtensionPoint(IBibSourceProvider)
   
-  def render_macro(self, request,name,content):
-    return self.expand_macro(request,name,content)
+    # Trac 0.10
+    def render_macro(self, request,name,content):
+        return self.expand_macro(Formatter(request),name,content)
 
-  def expand_macro(self,formatter,name,content):
+    # Trac 0.11
+    def expand_macro(self,formatter,name,content):
 
-    args, kwargs = parse_args(content, strict=False)
+        args, kwargs = parse_args(content, strict=False)
 
-    if len(args) > 1:
-      raise TracError('Usage: [[BibNoCite(BibTexKey)]]')
-    elif len(args) < 1:
-      raise TracError('Usage: [[BibNoCite(BibTexKey)]]')
-    
-    key = args[0];
+        if len(args) > 1:
+            raise TracError('Usage: [[BibNoCite(BibTexKey)]]')
+        elif len(args) < 1:
+            raise TracError('Usage: [[BibNoCite(BibTexKey)]]')
+ 
+        key = args[0];
 
-    bibdb = getattr(formatter, BIBDB,{})
-    citelist = getattr(formatter, CITELIST,[])
-    
-    if key not in citelist:
-      citelist.append(key)
-      setattr(formatter,CITELIST,citelist)
-  
-    return
+        cite = Cite(self.env)
+        auto = AutoLoaded(self.env)
 
+        if key not in cite:
+            found = False
+            for source in self.sources:
+                if source.has_key(key):
+                    found = True
+                    if auto.has_key(key):
+                        del auto[key]
+                    cite[key] = source[key]
+            if not found:
+                raise TracError("Unknown key '"+key +"'")
+        return
 
 class BibRefMacro(WikiMacroBase):
-  implements(IWikiMacroProvider)
+    formatter = ExtensionPoint(IBibRefFormatter)
+    sources = ExtensionPoint(IBibSourceProvider)
+    implements(IWikiMacroProvider)
+    
+    # Trac 0.10
+    def render_macro(self, request,name,content):
+        return self.expand_macro(Formatter(request),name,content)
 
-  def render_macro(self, request,name,content):
-    return self.expand_macro(request,name,content)
+    # Trac 0.11
+    def expand_macro(self,formatter,name,content):
+        cite = Cite(self.env)
+        items = cite.items()
 
-  def expand_macro(self,formatter,name,content):
-    citelist = getattr(formatter, CITELIST,[])
-    bibdb = getattr(formatter, BIBDB,{})
+        try:
+            for format in self.formatter:
+                tags = format.format_ref(items,'References')
+        finally:
+            # CLEANUP: outdated entries might survive in memory, so clear the container
+            cite.clear()
+            for source in self.sources:
+                source.clear()
+       
+        return tag.div(id='References')(*tags)
 
-    page = WikiPage(self.env,'BibTex')
-    if page.exists:
-      if '{{{' in page.text and '}}}' in page.text:
-        tmp = re.compile('{{{|}}}',2).split(page.text)
-        bibdb.update(extract_entries(tmp[1]))
-        setattr(formatter,BIBDB,bibdb)
+class BibFullRefMacro(WikiMacroBase):
+    formatter = ExtensionPoint(IBibRefFormatter)
+    sources = ExtensionPoint(IBibSourceProvider)
+    implements(IWikiMacroProvider)
+    
+    # Trac 0.10
+    def render_macro(self, request,name,content):
+        return self.expand_macro(Formatter(request),name,content)
+    
+    # Trac 0.11
+    def expand_macro(self,formatter,name,content):
+        cite = Cite(self.env)
+        auto = AutoLoaded(self.env)
+        items = cite.items()
 
-    str = ''
-    for k in citelist:
-      if bibdb.has_key(k) == False:
-        str +='No entry ' + k + ' found.\n'
-    if str != '':
-      raise TracError('[[' + str + ']]')
+        try:
+            for source in self.sources:
+                for key,value in source.items():
+                    if auto.has_key(key) and not cite.has_key(key):
+                        next
+                    cite[key]=value
 
-    l = []
-    for k in citelist:
-      content = []
-      for bibkey in BIBTEX_KEYS:
-        if bibdb[k].has_key(bibkey):
-          content.append(tag.span(Markup(bibdb[k][bibkey] + ', ')))
-      if bibdb[k].has_key('url') == False:
-        l.append(tag.li(tag.a(name=k), tag.a(href='#cite_%s' % k)('^') ,content))
-      else:
-        url = bibdb[k]['url']
-        l.append(tag.li(tag.a(name=k), tag.a(href='#cite_%s' % k)('^') ,content, tag.br(),tag.a(href=url)(url)))
+            for format in self.formatter:
+                tags = format.format_fullref(cite.items(),'Bibliography')
+        finally:
+            # CLEANUP: outdated entries might survive in memory, so clear the container
+            cite.clear()
+            for source in self.sources:
+                source.clear()
+       
+        return tag.div(id='References')(*tags)
 
-    ol = tag.ol(*l)
-    tags = []
-    tags.append(tag.h1(id='References')('References'))
-    tags.append(ol)
-
-    return tag.div(id='References')(*tags)
