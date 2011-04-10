@@ -155,7 +155,9 @@ function createEl(eltype,options,vl,elm) {
 			var so = options.value.split(";"),sv, ov;
 			elem = document.createElement("select");
 			var msl =  options.multiple === true ? true : false;
-			jQuery(elem).attr({id:options.id,name:options.name,size:Math.min(options.size,so.length), multiple:msl });
+			jQuery(elem).attr({
+				id: options.id, name: options.name, multiple: msl,
+				size: Math.min(options.size, so.length) || undefined });
 			for(var i=0; i<so.length;i++){
 				sv = so[i].split(":");
 				ov = document.createElement("option");
