@@ -1,5 +1,6 @@
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
+from helper import def_strings, replace_tags
 try:
   from trac.wiki.api import parse_args
 except ImportError: # for trac 0.10:
@@ -50,14 +51,14 @@ except ImportError: # for trac 0.10:
 
 from trac.wiki.macros import WikiMacroBase
 from trac.attachment import Attachment
-from trac.env import Environment
 try:
   from genshi.builder import tag
 except ImportError: # for trac 0.10:
   from trac.util.html import html as tag
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import WikiProcessor
-from trac.util.text import to_unicode
+from trac.util.html import escape
+from genshi import Markup
 
 import re
 import bibtexparse
@@ -94,26 +95,12 @@ BIBTEX_KEYS = [
     'pages',
 ]
 def extract_entries(text):
-  """
-  bibdb = {}
-  bibfile = _bibtex.open_string('temporary archive',text,True)
-  entry = _bibtex.next(bibfile)
-
-  if entry == None :
-    return None
-  
-  while entry != None:
-    contentdb = {}
-    items = entry[4]
-    key = entry[0]
-    for k in items.keys():
-      contentdb[k] = _bibtex.expand(bibfile, items[k],-1)[2]
-    
-    bibdb[key] = contentdb
-    entry = _bibtex.next(bibfile)
-  """
-  a,bibdb=bibtexparse.bibtexload(text.splitlines())
-
+  strings,bibdb=bibtexparse.bibtexload(text.splitlines())
+  for k,bib in bibdb.iteritems():
+      bibtexparse.replace_abbrev(bib,def_strings)
+      bibtexparse.replace_abbrev(bib,strings)
+      for key,value in bib.iteritems() :
+        bib[key] = replace_tags(value)
   return bibdb
 
 class BibAddMacro(WikiMacroBase):
@@ -285,10 +272,10 @@ class BibRefMacro(WikiMacroBase):
 
     l = []
     for k in citelist:
-      content = ''
+      content = []
       for bibkey in BIBTEX_KEYS:
         if bibdb[k].has_key(bibkey):
-          content +=bibdb[k][bibkey] + ', '
+          content.append(tag.span(Markup(bibdb[k][bibkey] + ', ')))
       if bibdb[k].has_key('url') == False:
         l.append(tag.li(tag.a(name=k), tag.a(href='#cite_%s' % k)('^') ,content))
       else:
