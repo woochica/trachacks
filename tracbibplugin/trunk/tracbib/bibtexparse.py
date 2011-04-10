@@ -1,5 +1,30 @@
 #!/usr/bin/env python
 """
+ tracbib/bibtexparser.py
+
+ Copyright (C) 2011 Roman Fenkhuber
+
+ Tracbib is a trac plugin hosted on trac-hacks.org. It brings support for
+ citing from bibtex files in the Trac wiki from different sources.
+
+ This File mostly bases on the version offered by Vidar Bronken Gundersen 
+ and Sara Sprenkle. See the copyright notices below. 
+ 
+ tracbib is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ tracbib is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ 
+ You should have received a copy of the GNU General Public License
+ along with tracbib.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+"""
   Yet another Parser for bibtex files
   Usage: python bibtexparse.py bibfile.bib 
          output will be bibfile.xml
@@ -82,10 +107,7 @@
 
   ----------------------------------------------------------------------
 
-
-
 """
-
 import sys
 import string, re
 from helper import match_pair, filter_bib, replace_tags, def_strings
