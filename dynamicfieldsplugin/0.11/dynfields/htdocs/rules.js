@@ -169,9 +169,20 @@ hiderule.apply = function(input, spec){
         
         // let's also clear out the field's value to avoid confusion
         if (spec.clear_on_hide.toLowerCase() == 'true' &&
-            field.val() && field.val().length) // Chrome fix - see #8654
-            field.val('').change(); // cascade rules
-            
+            field.val() && field.val().length){ // Chrome fix - see #8654
+            if (field.attr('type') == 'checkbox'){
+                if (field.is(':checked')){
+                    field.removeAttr('checked').change();
+                }
+            } else {
+                // only cascade rules if value changes
+                var oldval = field.val();
+                var newval = field.val('').val();
+                if (oldval != newval)
+                    field.change(); // cascade rules
+            }
+        }
+        
         // hide field in the header if cleared or always hidden
         if (spec.clear_on_hide.toLowerCase() == 'true' ||
             spec.hide_always.toLowerCase() == 'true'){
