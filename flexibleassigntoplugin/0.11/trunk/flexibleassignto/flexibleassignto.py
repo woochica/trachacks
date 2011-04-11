@@ -193,7 +193,9 @@ class FlexibleAssignTo(Component):
             self._ensure_user_data(user_objs)
         # check to see if the current owner is in the list of valid owners;
         #  if so, pre-select them in the select control
-        id = nextActionName + '_reassign_owner'
+        #id = nextActionName + '_reassign_owner'
+        ## updated for changed control name (0.11 release and higher) - thanks to chris on http://trac-hacks.org/ticket/3494
+        id = 'action_' + nextActionName + '_reassign_owner'
         selected_owner = req.args.get(id, req.authname)
         # build the actual options tag objects 
         option_tags = []

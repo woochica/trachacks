@@ -49,16 +49,18 @@ is unavailable.
 
 How do I install it?
 ====================
-Just like any other Trac (0.11) plugin -- see step [1] in the 
+Just like any other Trac (0.11+) plugin -- see step [1] in the 
 "How do I use it?" section below for details.  Note that by itself,
 this plugin doesn't do anything
 
 
 Prerequisites
 =============
- - Trac 0.11+ (built and tested against 0.11dev trunk r6047)
+Built and tested most recently against 0.13dev-r10668 & Python 2.7.1, but it 
+should work fine with at least:
+ - Trac 0.11+
  - Python 2.5+
-
+ 
 
 How do I use it?
 ================
@@ -208,6 +210,6 @@ key to your workflow state:
 
 What License is it released under?
 ==================================
-(c) Robert Morris <gt4329b@pobox.com> 2007
+(c) Robert Morris <gt4329b@pobox.com> 2007-2011
 Licensed under the (GPL-compatible) BSD License:
 http://www.opensource.org/licenses/bsd-license.php
