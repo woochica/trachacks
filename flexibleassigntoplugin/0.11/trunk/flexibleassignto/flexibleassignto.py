@@ -26,7 +26,7 @@ from genshi.builder import tag
 
 ## versioning crud
 # $Id$
-__version__ = '0.6'
+__version__ = '0.7.13'
 __revision__ = "$Revision$".replace('Revision:','').replace('$','').strip()
 version = __version__
 fullversion = ".".join([__version__, __revision__])
