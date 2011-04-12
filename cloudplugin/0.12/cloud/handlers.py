@@ -164,3 +164,13 @@ class SshHandler(DefaultHandler):
         hostname = get(field, item)
         url = 'ssh://' + hostname
         return (url,hostname)
+    
+class MysqlDsnHandler(DefaultHandler):
+    """Assemble a mysql DSN from the given field and associated port field."""
+    implements(IFieldHandler)
+    
+    def convert_item(self, field, item, req):
+        port = get(field+'_port', item)
+        endpoint = get(field, item)
+        url = 'mysql://%s:%s' % (endpoint,port)
+        return (url,endpoint)

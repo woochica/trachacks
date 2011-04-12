@@ -61,13 +61,14 @@ class RdsAuditor(Daemon):
                     self.log.debug(msg)
                     self.progress.error(msg)
                     sys.exit(1)
-                item['id'] = id
-                item['storage'] = instance.allocated_storage
-                item['class'] = instance.instance_class
-                item['zone'] = instance.availability_zone
-                item['multi_az'] = instance.multi_az
-                if hasattr(instance, 'DBName'):
-                    item['dbname'] = instance.DBName
+                
+                # copy all instance's string attributes
+                for field,value in instance.__dict__.items():
+                    if type(value) in (unicode,str,int,float,bool):
+                        item[field.lower()] = value
+                item['endpoint'] = instance.endpoint[0]
+                item['endpoint_port'] = instance.endpoint[1]
+                
                 self.log.debug('Saving data bag item %s/%s..' % (bag.name,id))
                 item.save()
                 self.log.debug('Saved data bag item %s/%s' % (bag.name,id))

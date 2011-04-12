@@ -70,16 +70,19 @@ class AwsApi(object):
     
     # RDS Instances
     
-    def launch_rds_instance(self, id, storage, class_, dbname,
-                            zone, multi_az=False, timeout=0):
+    def launch_rds_instance(self, id, dbname, allocated_storage, instance_class,
+                            availability_zone, multi_az=False, timeout=0):
         """Launch an rds instance.  If timeout is > 0, then this method
         won't return until the rds instance is fully running or the timeout
         duration expires."""
         # TODO: support multiple regions (and multiple security groups)
+#        import logging
+#        boto.set_file_logger('rds', '/tmp/boto.log', level=logging.DEBUG)
+#        conn = boto.connect_rds(self.key, self.secret, debug=2)
         conn = boto.connect_rds(self.key, self.secret)
-        instance = conn.create_dbinstance(id, storage, class_,
+        instance = conn.create_dbinstance(id, allocated_storage, instance_class,
                         self.username, self.password, db_name=dbname,
-                        availability_zone=zone, multi_az=multi_az)
+                        availability_zone=availability_zone, multi_az=multi_az)
         self.log.info('Launched rds instance %s' % instance.id)
         
         if timeout:
@@ -98,13 +101,14 @@ class AwsApi(object):
             instance.update()
         return timer.running
 
-    def modify_rds_instance(self, id, storage=None, class_=None,
-                            multi_az=None, apply_immediately=False):
+    def modify_rds_instance(self, id, allocated_storage=None,
+                            instance_class=None, multi_az=None,
+                            apply_immediately=False):
         """Modify an rds instance."""
         conn = boto.connect_rds(self.key, self.secret)
         conn.modify_dbinstance(id,
-            allocated_storage = storage,
-            instance_class = class_,
+            allocated_storage = allocated_storage,
+            instance_class = instance_class,
             multi_az = multi_az,
             apply_immediately = apply_immediately)
         self.log.info('Modified rds instance %s' % id)

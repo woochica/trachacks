@@ -34,16 +34,16 @@ class RdsLauncher(Daemon):
         self.attributes = attributes
         
     def run(self, sysexit=True):
-        # Step 1. Launching the rds instance
-        self.log.debug('Launching rds instance..')
+        # Step 1. Launching the bag instance
+        self.log.debug('Launching bag instance..')
         self.progress.start(0)
         id = self.launch_data['id']
         instance = self.cloudapi.launch_rds_instance(
             id = id,
-            storage = self.launch_data['storage'],
-            class_ = self.launch_data['class'],
             dbname = self.launch_data['dbname'],
-            zone = self.launch_data['zone'],
+            allocated_storage = self.launch_data['allocated_storage'],
+            instance_class = self.launch_data['instance_class'],
+            availability_zone = self.launch_data['availability_zone'],
             multi_az = self.launch_data['multi_az'])
         self.progress.done(0)
         
@@ -54,8 +54,8 @@ class RdsLauncher(Daemon):
         progress['steps'][0] += ' (%s)' % id
         self.progress.set(progress)
         
-        # Step 2. Starting up the rds instance
-        self.log.debug('Starting up the rds instance..')
+        # Step 2. Starting up the bag instance
+        self.log.debug('Starting up the bag instance..')
         self.progress.start(1)
         time.sleep(2.0) # instance can be a tad cranky when it launches
         self.cloudapi.wait_until_endpoint(instance, timeout=1800)
@@ -79,10 +79,20 @@ class RdsLauncher(Daemon):
         self.log.debug('Applying chef roles and attributes..')
         self.progress.start(2)
         self.log.debug('Saving data bag item %s/%s..' % (self.databag,id))
-        rds = self.chefapi.resource('data', name=self.databag)
-        item = self.chefapi.databagitem(rds, id)
+        bag = self.chefapi.resource('data', name=self.databag)
+        item = self.chefapi.databagitem(bag, id)
+        
+        # copy all instance's string attributes
+        for field,value in instance.__dict__.items():
+            if isinstance(value,unicode) or isinstance(value,str):
+                item[field.lower()] = value
+        item['endpoint'] = instance.endpoint[0]
+        item['endpoint_port'] = instance.endpoint[1]
+        
+        # set the passed in attributes
         for field,value in self.attributes.items():
             item[field] = value
+            
         item.save()
         self.log.info('Saved data bag item %s/%s..' % (self.databag,id))
         self.progress.done(2)

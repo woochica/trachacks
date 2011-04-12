@@ -531,10 +531,11 @@ class RdsInstance(Droplet):
         
         # prepare launch data
         launch_data = {}
-        for field in ['id','storage','class','dbname','zone','multi_az']:
+        for field in ['id','dbname','allocated_storage','instance_class',
+                      'availability_zone','multi_az']:
             launch_data[field] = req.args.get(field,'')
-        if launch_data['zone'] in ('No preference',''):
-            launch_data['zone'] = None
+        if launch_data['availability_zone'] in ('No preference',''):
+            launch_data['availability_zone'] = None
         launch_data['multi_az'] = launch_data['multi_az'] == '1'
         
         # prepare attributes
@@ -582,8 +583,8 @@ class RdsInstance(Droplet):
         
         # prepare modify data
         self.cloudapi.modify_rds_instance(id,
-            storage = req.args.get('storage'),
-            class_ = req.args.get('class'),
+            allocated_storage = req.args.get('allocated_storage'),
+            instance_class = req.args.get('instance_class'),
             multi_az = req.args.get('multi_az'),
             apply_immediately = req.args.get('cmd_apply_now'))
 
