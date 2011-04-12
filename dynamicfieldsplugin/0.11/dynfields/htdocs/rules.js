@@ -27,11 +27,15 @@ clearrule.apply = function(input, spec){
     if (spec.clear_on_change == undefined)
         return;
     
-    var fld = jQuery('#field-'+target);
-    if (fld.hasClass('clearable')){
-        fld.val('').change();
+    var field = jQuery('#field-'+target);
+    if (field.hasClass('clearable')){
+        // only cascade rules if value changes
+        var oldval = field.val();
+        var newval = field.val('').val();
+        if (oldval != newval)
+            field.change(); // cascade rules
     } else {
-        fld.addClass('clearable');
+        field.addClass('clearable');
     }
 };
 
@@ -48,31 +52,31 @@ copyrule.apply = function(input, spec){
     if (spec.value == undefined)
         return;
         
-    var fld = jQuery('#field-'+target);
+    var field = jQuery('#field-'+target);
     if (spec.overwrite.toLowerCase() == 'false'){
-        if (fld.val() != '' || fld.is(":hidden"))
+        if (field.val() != '' || field.is(":hidden"))
             return;
     }
     
-    if (fld.hasClass('copyable')){
+    if (field.hasClass('copyable')){
         // only do effect if value is changing
         var doit = true;
-        if (fld.get(0).tagName.toLowerCase() == 'select'){
+        if (field.get(0).tagName.toLowerCase() == 'select'){
             var opts = new Array();
-            fld.find('option').each(function(i,e){
+            field.find('option').each(function(i,e){
                 opts.push(jQuery(e).text());
             });
             if (jQuery.inArray(input.val(), opts) == -1){
                 doit = false;
             }
-        } 
-        if (doit){
-            fld.hide();
-            fld.val(input.val()).change();
-            fld.fadeIn('slow');
+        }
+        if (doit && field.val() != input.val()){
+            field.hide();
+            field.val(input.val()).change();
+            field.fadeIn('slow');
         }
     } else {
-        fld.addClass('copyable');
+        field.addClass('copyable');
     }
 };
 
@@ -84,16 +88,16 @@ var defaultrule = new Rule('DefaultValueRule'); // must match python class name 
 
 // apply
 defaultrule.apply = function(input, spec){
-    var fld = jQuery('#field-'+spec.target);
-    if (!fld.hasClass('defaulted')){
-        fld.addClass('defaulted');
+    var field = jQuery('#field-'+spec.target);
+    if (!field.hasClass('defaulted')){
+        field.addClass('defaulted');
         var doit = true;
         var value = spec.value;
         
         // ensure default value is in list of select options
-        if (fld.get(0).tagName.toLowerCase() == 'select'){
+        if (field.get(0).tagName.toLowerCase() == 'select'){
             var opts = new Array();
-            fld.find('option').each(function(i,e){
+            field.find('option').each(function(i,e){
                 opts.push(jQuery(e).text());
             });
             if (jQuery.inArray(value, opts) == -1)
@@ -101,13 +105,13 @@ defaultrule.apply = function(input, spec){
         }
             
         // ensure an 'empty' option value for existing tickets (unless appending)
-        if (fld.val().length > 1 &&
+        if (field.val().length > 1 &&
            window.location.pathname.indexOf('/ticket') > -1){
             doit = spec.append.toLowerCase() == 'true';
             if (doit){
                 // append preference to text field's value
                 var values = new Array();
-                jQuery(fld.val().split(',')).each(function(i,v){
+                jQuery(field.val().split(',')).each(function(i,v){
                     values.push(jQuery.trim(v));
                 });
                 // the preference value could be comma-delimited list itself
@@ -122,7 +126,7 @@ defaultrule.apply = function(input, spec){
         }
         
         if (doit)
-            fld.val(value).change(); // cascade rules
+            field.val(value).change(); // cascade rules
     }
 };
 
