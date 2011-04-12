@@ -44,6 +44,7 @@ from trac.core import Component, implements
 from trac.wiki.api import WikiSystem, IWikiMacroProvider
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.wiki.api import parse_args
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import Formatter, OneLinerFormatter
 from trac.util.html import Markup
@@ -57,9 +58,9 @@ class NoteBox(Component):
     def get_macros(self):
         yield 'NoteBox'
 
-    def expand_macro(self, formatter, name, args):
+    def expand_macro(self, formatter, name, content):
+        args, kwargs = parse_args(content)
         buf = StringIO()
-        args = args.split(', ',1)
         buf.write('<div class="notebox')
         buf.write(args[0])
         buf.write('">')
