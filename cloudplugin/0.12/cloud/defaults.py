@@ -96,13 +96,13 @@ droplet_defaults = {
     
     # create, read, update, delete views - chef resource name and fields
     'crud_resource': 'data',
-    'crud_view': 'id, dbname, roles, created_by, created_at, availability_zone, multi_az, instance_class, allocated_storage, endpoint, endpoint_port',
+    'crud_view': 'id, dbname, roles, created_by, created_at, availability_zone, multi_az, instance_class, allocated_storage, endpoint',
     'crud_new': 'id, dbname, roles, created_by, created_at, availability_zone, multi_az, instance_class, allocated_storage',
-    'crud_edit': 'id*, dbname*, roles, endpoint, created_by, created_at*, availability_zone*, multi_az, instance_class, allocated_storage, cmd_apply_now',
+    'crud_edit': 'id*, dbname*, roles, created_by, created_at*, availability_zone*, multi_az, instance_class, allocated_storage, cmd_apply_now',
     
     # grid view - chef search index and fields
     'grid_index': 'rds', # data bag name, must match droplet name
-    'grid_columns': 'id, dbname, roles, endpoint, created_by, created_at, availability_zone, multi_az, instance_class, allocated_storage',
+    'grid_columns': 'id, dbname, roles, created_by, created_at, availability_zone, multi_az, instance_class, allocated_storage, endpoint',
     'grid_sort': 'id',
     'grid_asc': 1,
   },
