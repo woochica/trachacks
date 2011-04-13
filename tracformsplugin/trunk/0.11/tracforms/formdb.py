@@ -41,9 +41,9 @@ class FormDBComponent(DBComponent):
                 ids.append(tuple([form_id, subcontext]))
         else:
             raise ResourceNotFound(
-                _("""No data recorded for a TracForms form in
-                  %(realm)s:%(resource_id)s
-                  """, realm=realm, resource_id=resource_id))
+                    _("""No data recorded for a TracForms form in
+                      %(realm)s:%(parent_id)s
+                      """, realm=realm, parent_id=resource_id))
         return ids
 
     def get_tracform_meta(self, src, cursor=None):

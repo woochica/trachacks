@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracForms 0.3\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2011-04-06 00:25+0200\n"
+"POT-Creation-Date: 2011-04-13 23:39+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,23 +18,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.0dev-r482\n"
 
-#: tracforms/api.py:158
+#: tracforms/api.py:161
 #, python-format
 msgid "Unparented form %(id)s"
 msgstr ""
 
-#: tracforms/api.py:167
+#: tracforms/api.py:170
 #, python-format
 msgid "Form %(id)s (in %(parent)s)"
 msgstr ""
 
-#: tracforms/api.py:170
+#: tracforms/api.py:173
 #, python-format
 msgid "Forms of %(parent)s"
 msgstr ""
 
 #. TRANSLATOR: HTTP error message
-#: tracforms/api.py:209
+#: tracforms/api.py:223
 msgid "__context__ is required"
 msgstr ""
 
@@ -60,7 +60,15 @@ msgstr ""
 msgid "ERROR: No TracForms command '%r'"
 msgstr ""
 
-#: tracforms/formdb.py:166
+#: tracforms/formdb.py:44 tracforms/model.py:64
+#, python-format
+msgid ""
+"No data recorded for a TracForms form in\n"
+"                      %(realm)s:%(parent_id)s\n"
+"                      "
+msgstr ""
+
+#: tracforms/formdb.py:191
 msgid "Conflict"
 msgstr ""
 
@@ -70,16 +78,72 @@ msgid "ERROR: No TracForms command '%s'"
 msgstr ""
 
 #. TRANSLATOR: Default submit button label
-#: tracforms/macros.py:171
+#: tracforms/macros.py:172
 msgid "Update Form"
 msgstr ""
 
-#: tracforms/macros.py:480 tracforms/macros.py:486
+#: tracforms/macros.py:481 tracforms/macros.py:487
 msgid "unknown"
 msgstr ""
 
+#: tracforms/model.py:35
+#, python-format
+msgid "TracForm %(id)s does not exist."
+msgstr ""
+
+#: tracforms/model.py:36
+msgid "Invalid form number"
+msgstr ""
+
+#: tracforms/model.py:67
+#, python-format
+msgid "with subcontext %(subcontext)s"
+msgstr ""
+
+#: tracforms/web_ui.py:54
+msgid "Form history"
+msgstr ""
+
+#: tracforms/web_ui.py:55
+msgid "Review form changes"
+msgstr ""
+
+#. TRANSLATOR: The title printed in form history page
+#: tracforms/web_ui.py:103
+#, python-format
+msgid "History of form %(form_id)s (in "
+msgstr ""
+
+#. TRANSLATOR: Title HTML tag, usually browsers window title
+#: tracforms/web_ui.py:106
+#, python-format
+msgid "Form %(form_id)s (history)"
+msgstr ""
+
+#. TRANSLATOR: The title printed in form select page
+#: tracforms/web_ui.py:117
+#, python-format
+msgid "Form data for %(parent)s"
+msgstr ""
+
+#. TRANSLATOR: Title HTML tag, usually browsers window title
+#: tracforms/web_ui.py:119
+#, python-format
+msgid "Saved forms (%(parent)s)"
+msgstr ""
+
+#: tracforms/web_ui.py:122
+#, python-format
+msgid "Form %(form_id)s"
+msgstr ""
+
+#: tracforms/web_ui.py:127
+#, python-format
+msgid "%(form_id)s (subcontext = '%(subcontext)s')"
+msgstr ""
+
 #. TRANSLATOR: The realm name used as TracSearch filter label
-#: tracforms/web_ui.py:25
+#: tracforms/web_ui.py:137
 msgid "Forms"
 msgstr ""
 

@@ -61,7 +61,7 @@ class Form(object):
                                 ).child('form', self.form_id, version)
             else:
                 raise ResourceNotFound(
-                    _("""No data recorded for a TracForm in
+                    _("""No data recorded for a TracForms form in
                       %(realm)s:%(parent_id)s
                       """, realm=parent_realm, parent_id=parent_id),
                     subcontext and _('with subcontext %(subcontext)s',
