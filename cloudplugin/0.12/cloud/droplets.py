@@ -377,35 +377,15 @@ class Droplet(object):
     def audit(self, req, id=None, redirect=True):
         req.redirect(req.href.cloud(self.name))
     
-
-class Ec2Instance(Droplet):
-    """An EC2 instance cloud droplet."""
-    
-    def create(self, req):
-        req.perm.require('CLOUD_CREATE')
+    def _spwan(self, req, exe, launch_data, attributes):
+        """Helper function to spawn processes with progress tracking."""
         progress_file = Progress.get_file()
-        exe = os.path.join(os.path.dirname(__file__),'daemon_ec2_launch.py')
-        
-        # prepare launch data
-        launch_data = {
-            'zone': req.args.get('ec2.placement_availability_zone',''),
-            'image_id': req.args.get('ec2.ami_id'),
-            'instance_type': req.args.get('ec2.instance_type'),
-        }
-        if launch_data['zone'] in ('No preference',''):
-            launch_data['zone'] = None
-        
-        # prepare attributes
-        attributes = {}
-        fields = self.fields.get_list('crud_new', filter=r"ec2\..*")
-        for field in fields:
-            field.set_dict(attributes, req=req, default='')
         
         # create the command
         cmd = [
            '/usr/bin/python', exe, '--daemonize',
            '--progress-file="%s"' % progress_file,
-           '--log-file="%s"' %  self.log.handlers[0].stream.name, # TODO: more robust way to get this info?
+           '--log-file="%s"' %  self.log.handlers[0].stream.name,
            '--chef-base-path="%s"' % self.chefapi.base_path,
            '--aws-key="%s"' % self.cloudapi.key,
            '--aws-secret="%s"' % self.cloudapi.secret,
@@ -414,6 +394,7 @@ class Ec2Instance(Droplet):
            '--aws-username="%s"' % self.chefapi.user,
            '--rds-username="%s"' % self.cloudapi.username,
            '--rds-password="%s"' % self.cloudapi.password,
+           '--databag="%s"' % self.name,
            "--launch-data='%s'" % json.dumps(launch_data),
            "--attributes='%s'" % json.dumps(attributes),
         ]
@@ -430,6 +411,31 @@ class Ec2Instance(Droplet):
             req.redirect(req.href.cloud(self.name))
         req.redirect(req.href.cloud(self.name, action='progress',
                                                file=progress_file))
+    
+
+class Ec2Instance(Droplet):
+    """An EC2 instance cloud droplet."""
+    
+    def create(self, req):
+        req.perm.require('CLOUD_CREATE')
+        
+        # prepare launch data
+        launch_data = {
+            'zone': req.args.get('ec2.placement_availability_zone',''),
+            'image_id': req.args.get('ec2.ami_id'),
+            'instance_type': req.args.get('ec2.instance_type'),
+        }
+        if launch_data['zone'] in ('No preference',''):
+            launch_data['zone'] = None
+        
+        # prepare attributes
+        attributes = {}
+        fields = self.fields.get_list('crud_new', filter=r"ec2\..*")
+        for field in fields:
+            field.set_dict(attributes, req=req, default='')
+        
+        exe = os.path.join(os.path.dirname(__file__),'daemon_ec2_launch.py')
+        self._spwan(req, exe, launch_data, attributes)
     
     def save(self, req, id, fields=None, redirect=True):
         req.perm.require('CLOUD_MODIFY')
@@ -487,38 +493,9 @@ class Ec2Instance(Droplet):
         req.redirect(req.href.cloud(self.name))
         
     def audit(self, req):
-        req.perm.require('CLOUD_VIEW')
-        progress_file = Progress.get_file()
+        req.perm.require('CLOUD_MODIFY')
         exe = os.path.join(os.path.dirname(__file__),'daemon_ec2_audit.py')
-        
-        # create the command
-        cmd = [
-           '/usr/bin/python', exe, '--daemonize',
-           '--progress-file="%s"' % progress_file,
-           '--log-file="%s"' %  self.log.handlers[0].stream.name, # TODO: more robust way to get this info?
-           '--chef-base-path="%s"' % self.chefapi.base_path,
-           '--aws-key="%s"' % self.cloudapi.key,
-           '--aws-secret="%s"' % self.cloudapi.secret,
-           '--aws-keypair="%s"' % self.cloudapi.keypair,
-           '--aws-keypair-pem="%s"' % self.chefapi.keypair_pem,
-           '--aws-username="%s"' % self.chefapi.user,
-           '--rds-username="%s"' % self.cloudapi.username,
-           '--rds-password="%s"' % self.cloudapi.password,
-        ]
-        cmd += ['--chef-boot-run-list="%s"' % \
-            r for r in self.chefapi.boot_run_list]
-        if self.chefapi.sudo:
-            cmd += ['--chef-boot-sudo']
-        cmd = ' '.join(cmd)
-        
-        # Spawn command as daemon to audit instance in background
-        self.log.debug('Daemonizing command: %s' % cmd)
-        if subprocess.call(cmd, shell=True):
-            add_warning(req, _("Error daemonizing: %(cmd)s", cmd=cmd))
-            req.redirect(req.href.cloud(self.name))
-        req.redirect(req.href.cloud(self.name, action='progress',
-                                               file=progress_file))
-    
+        self._spwan(req, exe, {}, {})
     
 
 class RdsInstance(Droplet):
@@ -526,8 +503,6 @@ class RdsInstance(Droplet):
     
     def create(self, req):
         req.perm.require('CLOUD_CREATE')
-        progress_file = Progress.get_file()
-        exe = os.path.join(os.path.dirname(__file__),'daemon_rds_launch.py')
         
         # prepare launch data
         launch_data = {}
@@ -545,36 +520,8 @@ class RdsInstance(Droplet):
         for field in fields:
             field.set_dict(attributes, req=req, default='')
         
-        # create the command
-        cmd = [
-           '/usr/bin/python', exe, '--daemonize',
-           '--progress-file="%s"' % progress_file,
-           '--log-file="%s"' %  self.log.handlers[0].stream.name, # TODO: more robust way to get this info?
-           '--chef-base-path="%s"' % self.chefapi.base_path,
-           '--aws-key="%s"' % self.cloudapi.key,
-           '--aws-secret="%s"' % self.cloudapi.secret,
-           '--aws-keypair="%s"' % self.cloudapi.keypair,
-           '--aws-keypair-pem="%s"' % self.chefapi.keypair_pem,
-           '--aws-username="%s"' % self.chefapi.user,
-           '--rds-username="%s"' % self.cloudapi.username,
-           '--rds-password="%s"' % self.cloudapi.password,
-           '--databag="%s"' % self.name,
-           "--launch-data='%s'" % json.dumps(launch_data),
-           "--attributes='%s'" % json.dumps(attributes),
-        ]
-        cmd += ['--chef-boot-run-list="%s"' % \
-            r for r in self.chefapi.boot_run_list]
-        if self.chefapi.sudo:
-            cmd += ['--chef-boot-sudo']
-        cmd = ' '.join(cmd)
-        
-        # Spawn command as daemon to launch and bootstrap instance in background
-        self.log.debug('Daemonizing command: %s' % cmd)
-        if subprocess.call(cmd, shell=True):
-            add_warning(req, _("Error daemonizing: %(cmd)s", cmd=cmd))
-            req.redirect(req.href.cloud(self.name))
-        req.redirect(req.href.cloud(self.name, action='progress',
-                                               file=progress_file))
+        exe = os.path.join(os.path.dirname(__file__),'daemon_rds_create.py')
+        self._spwan(req, exe, launch_data, attributes)
     
     def save(self, req, id, fields=None, redirect=True):
         req.perm.require('CLOUD_MODIFY')
@@ -636,36 +583,6 @@ class RdsInstance(Droplet):
         req.redirect(req.href.cloud(self.name))
         
     def audit(self, req):
-        req.perm.require('CLOUD_VIEW')
-        progress_file = Progress.get_file()
+        req.perm.require('CLOUD_MODIFY')
         exe = os.path.join(os.path.dirname(__file__),'daemon_rds_audit.py')
-        
-        # create the command
-        cmd = [
-           '/usr/bin/python', exe, '--daemonize',
-           '--progress-file="%s"' % progress_file,
-           '--log-file="%s"' %  self.log.handlers[0].stream.name, # TODO: more robust way to get this info?
-           '--chef-base-path="%s"' % self.chefapi.base_path,
-           '--aws-key="%s"' % self.cloudapi.key,
-           '--aws-secret="%s"' % self.cloudapi.secret,
-           '--aws-keypair="%s"' % self.cloudapi.keypair,
-           '--aws-keypair-pem="%s"' % self.chefapi.keypair_pem,
-           '--aws-username="%s"' % self.chefapi.user,
-           '--rds-username="%s"' % self.cloudapi.username,
-           '--rds-password="%s"' % self.cloudapi.password,
-           '--databag="%s"' % self.name,
-        ]
-        cmd += ['--chef-boot-run-list="%s"' % \
-            r for r in self.chefapi.boot_run_list]
-        if self.chefapi.sudo:
-            cmd += ['--chef-boot-sudo']
-        cmd = ' '.join(cmd)
-        
-        # Spawn command as daemon to audit instance in background
-        self.log.debug('Daemonizing command: %s' % cmd)
-        if subprocess.call(cmd, shell=True):
-            add_warning(req, _("Error daemonizing: %(cmd)s", cmd=cmd))
-            req.redirect(req.href.cloud(self.name))
-        req.redirect(req.href.cloud(self.name, action='progress',
-                                               file=progress_file))
-    
+        self._spwan(req, exe, {}, {})

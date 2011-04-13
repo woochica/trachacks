@@ -3,16 +3,79 @@
 
 import sys, os, time, atexit
 from signal import SIGTERM 
+import json
+import tempfile
+import logging
+from optparse import OptionParser
+
+from progress import Progress
+from chefapi import ChefApi
+from awsapi import AwsApi
 
 class Daemon(object):
     """
-    A generic daemon class.
+    A generic daemon class with added support for chef/cloud apis and
+    communicating with other processes via a progress file.
     
     Usage: subclass the Daemon class and override the run() method
     """
-    def __init__(self, pidfile, log):
-        self.pidfile = pidfile
-        self.log = log
+    def __init__(self, steps, title):
+        # setup command line parsing
+        parser = OptionParser()
+        parser.add_option("-d","--daemonize",default=False,action="store_true")
+        parser.add_option("--progress-file")
+        parser.add_option("--log-file")
+        parser.add_option("--log-level", default=logging.DEBUG)
+        parser.add_option("--chef-base-path")
+        parser.add_option("--chef-boot-run-list", default=[], action='append')
+        parser.add_option("--chef-boot-sudo",default=False, action="store_true")
+        parser.add_option("--aws-key")
+        parser.add_option("--aws-secret")
+        parser.add_option("--aws-keypair")
+        parser.add_option("--aws-keypair-pem")
+        parser.add_option("--aws-username")
+        parser.add_option("--rds-username")
+        parser.add_option("--rds-password")
+        parser.add_option("--databag")
+        parser.add_option("--launch-data", default='{}', help="JSON dict")
+        parser.add_option("--attributes", default='{}', help="JSON dict")
+        (self.options, _args) = parser.parse_args()
+        
+        # setup logging (presumes something else will rotate it)
+        self.log = logging.getLogger("Ec2Launcher")
+        self.log.setLevel(self.options.log_level)
+        self.handler = logging.FileHandler(self.options.log_file)
+        self.handler.setLevel(self.options.log_level)
+        format = "%(asctime)s %(name)s[%(process)d] %(levelname)s: %(message)s"
+        self.handler.setFormatter(logging.Formatter(format))
+        self.log.addHandler(self.handler)
+        
+        # setup apis
+        self.chefapi = ChefApi(self.options.chef_base_path,
+                               self.options.aws_keypair_pem,
+                               self.options.aws_username,
+                               self.options.chef_boot_run_list,
+                               self.options.chef_boot_sudo,
+                               self.log)
+        
+        self.cloudapi = AwsApi(self.options.aws_key,
+                               self.options.aws_secret,
+                               self.options.aws_keypair,
+                               self.options.rds_username,
+                               self.options.rds_password,
+                               self.log)
+        
+        # prepare the data
+        self.databag = self.options.databag
+        self.launch_data = json.loads(self.options.launch_data)
+        self.attributes = json.loads(self.options.attributes)
+        
+        # prepare progress
+        self.pidfile = tempfile.NamedTemporaryFile(delete=False).name
+        self.progress = Progress(self.options.progress_file,
+                                 self.pidfile, steps, title,
+                                 {'0':(time.time(),None)})
+        
     
     def daemonize(self):
         """

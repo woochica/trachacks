@@ -36,8 +36,8 @@ class Progress(object):
         f = tempfile.NamedTemporaryFile(dir=dir, prefix=prefix, delete=False)
         return f.name
     
-    def __init__(self, file, pidfile=None, steps=None, status=None,
-                 id=None, title=None):
+    def __init__(self, file, pidfile=None, steps=None, title=None,
+                 status=None, id=None):
         self.file = file
         progress = {'pidfile': pidfile or '',
                     'title': title or '',
