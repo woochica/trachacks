@@ -193,9 +193,6 @@ class ImportModule(Component):
 
         columns, rows = filereader.readers()
 
-        # defensive: columns could be non-string, make sure they are
-        columns = map(str, columns)
-
         importedfields = [f for f in columns if f.lower() in tracfields]
         notimportedfields = [f for f in columns if f.lower() not in tracfields + ['comment']]
         commentfields = [f for f in columns if f.lower() == 'comment']

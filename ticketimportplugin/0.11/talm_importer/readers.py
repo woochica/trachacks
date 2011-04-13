@@ -38,6 +38,11 @@ def get_reader(filename, sheet_index, datetime_format, encoding='utf-8'):
             message = 'XLS reading is not configured, and this file is not a valid CSV file: unable to read file.'
         raise TracError(message)
 
+def _to_unicode(val):
+    if val is None or isinstance(val, unicode):
+        return val
+    return val.decode('utf-8')
+
 class UTF8Reader(object):
     def __init__(self, file, encoding):
         self.reader = codecs.getreader(encoding)(file, 'replace')
@@ -49,24 +54,20 @@ class UTF8Reader(object):
         return self.reader.next().encode("utf-8")
 
 class CSVDictReader(csv.DictReader):
-    def __init__(self, reader, fieldnames):
-        csv.DictReader.__init__(self, reader, fieldnames)
-
     def next(self):
         d = csv.DictReader.next(self)
-        def to_unicode(arg):
-            return arg and arg.decode('utf-8')
-        return dict((to_unicode(key), to_unicode(value)) for key, value in d.iteritems())
+        return dict((_to_unicode(key), _to_unicode(val)) for key, val in d.iteritems())
 
 class CSVReader(object):
     def __init__(self, filename, encoding):
         self.file = open(filename, 'rb')
         self.file_reader = UTF8Reader(self.file, encoding)
         self.csv_reader = csv.reader(self.file_reader)
-        self.csvfields = self.csv_reader.next()
-        if self.csvfields and self.csvfields[0].startswith('\xEF\xBB\xBF'):
+        fields = [_to_unicode(val) for val in self.csv_reader.next()]
+        if fields and fields[0] and fields[0].startswith(u'\uFEFF'):
             # Skip BOM
-            self.csvfields[0] = self.csvfields[0][3:]
+            fields[0] = fields[0][1:]
+        self.csvfields = fields
         
     def get_sheet_count(self):
         return 1
