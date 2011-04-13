@@ -12,9 +12,10 @@ from trac.resource import IResourceManager, Resource, ResourceNotFound, \
 # by keeping Babel optional here.
 try:
     from trac.util.translation import domain_functions
-    add_domain, _, ngettext = \
-        domain_functions('tracforms', ('add_domain', '_', 'ngettext'))
+    add_domain, _, ngettext, tag_ = \
+        domain_functions('tracforms', ('add_domain', '_', 'ngettext', 'tag_'))
 except ImportError:
+    from genshi.builder import tag as tag_
     from trac.util.translation import gettext
     _ = gettext
     ngettext = _
@@ -55,6 +56,9 @@ class IFormChangeListener(Interface):
 
 
 class IFormDBObserver(Interface):
+    def get_tracform_ids(self, src, cursor=None):
+        pass
+
     def get_tracform_meta(self, src, cursor=None):
         pass
 
@@ -103,6 +107,10 @@ class FormDBUser(Component):
         return self.tracformdb_observers
 
     @tracob_first
+    def get_tracform_ids(self, *_args, **_kw):
+        return self.tracformdb_observers
+
+    @tracob_first
     def get_tracform_meta(self, *_args, **_kw):
         return self.tracformdb_observers
 
@@ -132,12 +140,7 @@ class FormBase(Component):
         add_domain(self.env.path, locale_dir)
 
 
-# deferred imports to avoid circular dependencies
-from formdb import FormDBComponent
-#from model import Form
-
-
-class FormSystem(FormBase):
+class FormSystem(FormBase, FormDBUser):
     """Provides permissions and access to TracForms as resource 'form'."""
 
     implements(IPermissionRequestor, IResourceManager)
@@ -163,11 +166,22 @@ class FormSystem(FormBase):
         #elif format == 'summary':
         #    return Form(self.env, resource).description
         if resource.id:
-            return _("Form %(id)s in %(parent)s", id=resource.id,
+            return _("Form %(id)s (in %(parent)s)", id=resource.id,
                      parent=get_resource_name(self.env, resource.parent))
         else:
             return _("Forms of %(parent)s",
                      parent=get_resource_name(self.env, resource.parent))
+
+    def get_resource_url(resource, href, **kwargs):
+        # DEVEL: dedicated resource url not implemented yet
+        pass
+
+    def resource_exists(self, resource):
+        try:
+            if get_tracform_meta(resource.id)[1] is not None:
+               return True
+        except ResourceNotFound:
+            return False
 
 
 class PasswordStoreUser(Component):

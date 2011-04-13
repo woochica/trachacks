@@ -10,7 +10,8 @@ try:
     if cmdclass:
         extra['cmdclass'] = cmdclass
         extractors = [
-            ('**.py', 'python', None),
+            ('**.py',                'python', None),
+            ('**/templates/**.html', 'genshi', None),
         ]
         extra['message_extractors'] = {
             'tracforms': extractors,
@@ -36,6 +37,7 @@ setup(
     package_data = {
         'tracforms': [
             'locale/*/LC_MESSAGES/*.mo', 'locale/.placeholder',
+            'templates/*.html',
         ]
     },
     zip_safe = True,
@@ -44,6 +46,7 @@ setup(
     entry_points = {
         'trac.plugins': [
             'tracforms.api = tracforms.api',
+            'tracforms.formdb = tracforms.formdb',
             'tracforms.macros = tracforms.macros',
             'tracforms.web_ui = tracforms.web_ui',
         ]

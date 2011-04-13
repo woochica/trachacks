@@ -111,8 +111,9 @@ class FormProcessor(object):
                 textlines.extend(srciter)
 
         # Determine our destination context and load the current state.
-        self.context = (realm, resource_id, self.subcontext is not None and \
-                                            self.subcontext or '')
+        self.context = tuple([realm, resource_id,
+                              self.subcontext is not None and \
+                              self.subcontext or ''])
         state = self.macro.get_tracform_state(self.context)
         self.formatter.env.log.debug(
             'TracForms state = ' + (state is not None and state or ''))

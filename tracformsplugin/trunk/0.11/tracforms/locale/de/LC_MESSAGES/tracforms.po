@@ -25,8 +25,8 @@ msgstr "Nicht verankertes Formular %(id)s"
 
 #: tracforms/api.py:167
 #, python-format
-msgid "Form %(id)s in %(parent)s"
-msgstr "Formular %(id)s in %(parent)s"
+msgid "Form %(id)s (in %(parent)s)"
+msgstr "Formular %(id)s (in %(parent)s)"
 
 #: tracforms/api.py:170
 #, python-format
@@ -46,10 +46,10 @@ msgstr "Zu viele Ergebnisse für Einzelstück %r"
 #: tracforms/errors.py:18
 #, python-format
 msgid ""
-"ERROR: Too many values for TracForms variable %r\n"
+"ERROR: Too many values for TracForms form variable %r\n"
 "        (maybe the same field is being used multiple times?)"
 msgstr ""
-"FEHLER: Zu viele Werte für TracForms-Variable %r (möglicherweise wird das "
+"FEHLER: Zu viele Werte für TracForms Formular-Variable %r (möglicherweise wird das "
 "selbe Feld mehrfach verwendet?)"
 
 #: tracforms/errors.py:27

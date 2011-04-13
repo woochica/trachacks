@@ -16,7 +16,7 @@ class FormTooManyValuesError(FormError):
         FormError.__init__(self, name)
 
     message = _(
-        """ERROR: Too many values for TracForms variable %r
+        """ERROR: Too many values for TracForms form variable %r
         (maybe the same field is being used multiple times?)""")
 
 

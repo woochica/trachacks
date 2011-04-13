@@ -22,6 +22,30 @@ class FormDBComponent(DBComponent):
 
     # abstract TracForms update methods
 
+    def get_tracform_ids(self, src, cursor=None):
+        """Returns all child forms of resource specified by parent realm and
+        parent id as a list of tuples (form_id and corresponding subcontext).
+        """
+        cursor = self.get_cursor(cursor)
+        sql = """
+            SELECT  id,
+                    subcontext
+            FROM    forms
+            WHERE   realm = %s
+                AND resource_id = %s
+            """
+        ids = []
+        results = cursor(sql, *src)
+        if results is not None:
+            for form_id, subcontext in results:
+                ids.append(tuple([form_id, subcontext]))
+        else:
+            raise ResourceNotFound(
+                _("""No data recorded for a TracForms form in
+                  %(realm)s:%(resource_id)s
+                  """, realm=realm, resource_id=resource_id))
+        return ids
+
     def get_tracform_meta(self, src, cursor=None):
         """
         Returns the meta information about a form based on a form id (int or
@@ -57,6 +81,7 @@ class FormDBComponent(DBComponent):
             realm, resource_id, subcontext = src
         else:
             form_id = src
+            src = tuple([src],)
         return (cursor(sql, *src).firstrow or
             (form_id, realm, resource_id, subcontext, None, None, None, None))
 
