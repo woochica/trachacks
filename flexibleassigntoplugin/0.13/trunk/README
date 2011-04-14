@@ -1,0 +1,215 @@
+**********************************
+ FlexibleAssignTo - a Trac Plugin
+**********************************
+
+What is it?
+===========
+
+FlexibleAssignTo finally gives long-suffering Trac admins a way to 
+easily customize the "assign to" field on tickets.  It provides several 
+base classes for you to override and implement your own methods for
+providing lists of valid users -- you can even customize valid users for 
+each state in your workflow.
+
+Key features:
+* adds new Extension point, IValidOwnerProvider, for plugging in your own
+    components
+
+* provides SimpleUser base class and helper methods (getlist, getbool) to 
+    streamline implementation of your IValidOwnerProvider component(s)
+
+* data-source agnostic -- FlexibleAssignTo abstracts the nastiness of building
+    a customized "assign to" select box.  All your custom code has to do is
+    decide what users are valid for a particular state and then return them.
+
+* optional "ensure_user_data" capability so that users who appear as valid 
+    "assign to" targets get their key data (username, fullname, email) 
+    stored in the Trac session_attribute table.  The motivation for this 
+    was so notification emails could be sent to these users even if they've 
+    never logged in and set their preferences.
+
+* optional get_known_users() replacement that changes Trac's "known users"
+    concept such that users' name & email data is retrieved from the 
+    session_attribute table (designed to work in concert with the 
+    "ensure_user_data" capability).
+
+* FlexibleAssignTo processing can be selectively disabled for individual 
+    workflow states
+
+* Example implementation included (SampleValidOwnerProvider.py)    
+    
+
+Where do I get it?
+==================
+http://www.trac-hacks.org/
+If trac-hacks.org isn't available, check in IRC channel #trac on 
+freenode -- someone there will know how to find plugins if trac-hacks 
+is unavailable.
+
+
+How do I install it?
+====================
+Just like any other Trac (0.11+) plugin -- see step [1] in the 
+"How do I use it?" section below for details.  Note that by itself,
+this plugin doesn't do anything
+
+
+Prerequisites
+=============
+Built and tested most recently against 0.13dev-r10668 & Python 2.7.1, but it 
+should work fine with at least:
+ - Trac 0.11+
+ - Python 2.5+
+ 
+
+How do I use it?
+================
+
+[1] Install FlexibleAssignTo plugin
+
+To get started, install the base FlexibleAssignTo plugin.  Build the
+.egg file following the plugin packaging instructions here:
+	http://projects.edgewall.com/trac/wiki/TracDev/PluginDevelopment
+If you already have setuptools (v0.6+) installed, your command is
+	python setup.py bdist_egg
+Once you've built the .egg, copy it into your Trac environment's 
+plugin directory.  You still need to activate the plugin -- in trac.ini:
+	[components]
+	flexibleassignto.* = enabled
+
+** NOTE: the plugin by itself doesn't do anything -- you have to write
+your own plugin/component that implements IValidOwnerProvider.
+
+
+[1a] Try out the demo 
+
+Once you've install the base FlexibleAssignTo plugin, copy the 
+SampleValidOwnerProvider.py file from the install package into your Trac
+environment's plugin directory (alongside the FlexibleAssignTo .egg).
+Restart your server and note the new entries in your "assign to" dropdowns.
+
+
+[2] Create your IValidOwnerProvider component
+
+Create a .py file in your Trac environment's plugins directory --
+this module is where you'll write your own class that implements the 
+IValidOwnerProvider Extension point provided by FlexibleAssignTo.  This is 
+where your custom logic goes for deciding what users should appear as valid
+"assign to" targets for each state -- whether that logic involves querying 
+a database, an LDAP directory, or getting input from your custom array of 
+highly trained homing pigeons.  See the SampleValidOwnerProvider.py module 
+included with this plugin for a simple example on how it works.  
+
+
+[2a] IValidOwnerProvider component requirements
+
+If you want to just jump right in, then all you really need to know is the 
+following:
+  - The class should declare that it implements IValidOwnerProvider
+  - The class should provide a getUsers method that takes a 
+    "next_action_obj" as it's sole param and returns a list of instances
+    of SimpleUser (or a subclass) representing valid owners of that 
+    next state.  If this sounds confusing, just look at the getUsers()
+    method in SampleValidOwnerProvider.py
+
+
+[2b] the getUsers() method
+
+The sole param to getUsers(), next_action_obj, represents a workflow 
+state that is available from the current ticket state AND that implements 
+the "set_owner" operation (if you really want to get into the nitty gritty,
+next_action_obj is identical to the objects in the 
+ConfigurableTicketWorkflow.actions list in trac/ticket/default_workflow.py).
+next_action_obj is provided to getUsers for the sole purpose of providing 
+a way to look up custom workflow state params.
+For example, if you had a workflow state defined in your trac.ini like this:
+	mystate = oldstate -> mystate
+	mystate.name = my whoopass state
+	mystate.operations = set_owner
+	mystate.permissions = TICKET_MODIFY
+	; .valid_user_groups is a param that you add -- it's not part of the
+	;    default Trac workflow syntax
+	mystate.valid_user_groups = Development Managers, Admins
+
+Then in your getUsers method your code would look like:
+	allowed_groups = getlist(next_action_obj, 'valid_user_groups')
+
+You could then use the 'allowed_groups' list to query a database (or do 
+whatever else you need to do) to get back a list of user information -- in 
+this case, (presumably) return the users who are members of either the 
+"Admins" or "Development Managers" group.  Each user's info should be packed 
+into an instance of SimpleUser (or a subclass).  The final return from 
+getUsers() should be a *unique* list of SimpleUser instances (no checks for 
+uniqueness are guaranteed to be performed on the list of returned users).  
+Again, see SampleValidOwnerProvider.py for a fairly straightforward example.
+
+Individual workflow states can be disabled; see item [4], "Enable/disable 
+individual workflow states", below.
+
+
+[2c] the SimpleUser class
+
+There are three fields in SimpleUser that you *must* set.
+Not having these set (e.g., left as their default, None) will lead 
+to assert exceptions from FlexibleAssignTo:
+	SimpleUser.username 
+	SimpleUser.option_value
+	SimpleUser.option_display
+There are standard get/set methods for these; see the SimpleUser class 
+for protos.  
+** NOTE: the format of username values *must* match the 
+format of usernames for logged-in users -- so if John Doe logs in with 
+the username "jdoe", then a SimpleUser instance representing John Doe 
+should be created with a username "jdoe".
+
+
+[3] Config options
+
+(All of the following options should be specified in the [subscribetoticket]
+section of your trac.ini)
+
+ensure_user_data
+  Defaults to false.  
+  FlexibleAssignTo also provides functionality to ensure
+  that key user data (username, fullname, email) is added to the trac 
+  session_attribute table as said user data is retrieved for "assign to" 
+  use, so that ticket assign/modification emails will be sent to the 
+  assigned user's email address.
+  ** NOTE: this feature will not overwrite session_attribute data already 
+  present.
+
+use_custom_get_known_users
+  Defaults to false.  
+  Overrides the default get_known_users capability 
+  provided by default Trac (trac.env) method of the same name: whereas 
+  the Trac default get_known_users returns info only for those users 
+  who have logged in, this method returns info for every user who has 
+  data in the session_attribute table and is flagged authenticated 
+  (e.g., session_attribute.authenticated = 1).
+  This functionality was designed to work in concert with the 
+  "ensure_user_data" feature, which autopopulates user email & name 
+  in the session_attribute table.  See the README for more about this 
+  capability.  Generates one tuple for every user, of the form
+  (username, name, email), ordered alpha-numerically by username.
+  ** NOTE: Changes to this setting *require* a server restart to take effect!
+  ** NOTE: It is recommended that you also enable the ensure_user_data option
+  if you use this method -- otherwise the behavior will be superficially
+  no different than the default Trac get_known_users functionality.
+
+
+[4] Enable/disable individual workflow states 
+
+Finally, note that by default FlexibleAssignTo operates on EVERY state
+in your workflow, replacing the "assign to" field for every state
+with a "set_owner" operation.  To disable FlexibleAssignTo for particular
+states (without having to disable the entire plugin), add the following
+key to your workflow state:
+	mystate.use_flexibleassignto = false
+
+
+
+What License is it released under?
+==================================
+(c) Robert Morris <gt4329b@pobox.com> 2007-2011
+Licensed under the (GPL-compatible) BSD License:
+http://www.opensource.org/licenses/bsd-license.php
