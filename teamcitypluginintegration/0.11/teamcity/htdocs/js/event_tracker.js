@@ -1,9 +1,15 @@
+var pos = window.location.pathname.indexOf('/builds');
+if (pos >= 0) {
+	var base_url = window.location.pathname.substring(0,pos) + '/builds/';
+} else {
+	var base_url = 'builds/';
+}
 function build_selected(event) {
 	$("input:checked").each(function() {
 		var checkbox = this
 		var bt_id = $(this).val();
 		$.ajax({
-			url: "builds/proxy/action.html?agentId=allEnabledCompatible&add2Queue="+bt_id,
+			url: base_url + "proxy/action.html?agentId=allEnabledCompatible&add2Queue="+bt_id,
 			success: function() {
 				// remove "checked" from checkbox
 				$(checkbox).removeAttr("checked");
@@ -18,7 +24,7 @@ function build_selected(event) {
 
 function get_running_builds() {
 	$.ajax({
-		url: "builds/proxy/ajax.html?getRunningBuilds=1",
+		url: base_url + "proxy/ajax.html?getRunningBuilds=1",
 		dataType: "xml",
 		success: function(response,t_status,xhr) {
 			update_builds_status(response)
@@ -97,7 +103,7 @@ function show_error(xhr,t_status,err) {
 
 function cancel_build(build_id) {
 	$.ajax({
-		url: "builds/proxy/ajax.html?comment=TracCancel&submit=Stop&kill&buildId="+build_id,
+		url: base_url + "proxy/ajax.html?comment=TracCancel&submit=Stop&kill&buildId="+build_id,
 		error: show_error,
 	});
 }

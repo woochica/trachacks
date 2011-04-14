@@ -23,7 +23,7 @@
 			<div class="inner-build ${b['build']['status']}" id="header-${b['btype_id']}">
 				<py:choose>
 					<py:when test="b['build']['id']">
-						<a href="builds/download/${b['build']['id']}">Last build #${b['build']['number']}: ${b['build']['end_date']} (duration: ${b['build']['duration']})</a>
+						<a href="${dpath}/${b['build']['id']}">Last build #${b['build']['number']}: ${b['build']['end_date']} (duration: ${b['build']['duration']})</a>
 					</py:when>
 					<py:otherwise>
 						<span>Build history is empty</span>

@@ -126,7 +126,7 @@ class TeamCityLogLoader(Component):
 
 
 class TeamCityBuildPage(Component):
-	"""Renders pages  with build results."""
+	"""Renders pages with build results."""
 	implements(IRequestHandler,INavigationContributor,IPermissionRequestor)
 
 	# IPermissionRequestor
@@ -251,7 +251,11 @@ class TeamCityBuildPage(Component):
 		add_stylesheet(req,'teamcity/css/teamcity.css')
 		add_javascript(req,'teamcity/js/jquery.timers-1.2.js')
 		add_javascript(req,'teamcity/js/event_tracker.js')
-		return 'teamcity_builds.html', {'projects':projects}, None
+		download_path = os.path.join(req.path_info, 'builds/download')
+		return 'teamcity_builds.html', {
+					'projects':projects,
+					'dpath':download_path
+					}, None
 
 class TeamCityProxy(Component):
 	implements(IRequestHandler)

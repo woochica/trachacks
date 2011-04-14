@@ -53,9 +53,13 @@ class TeamCityTimeline(Component):
 		# get rss feed 
 		query_string =  "&".join(['buildTypeId=%s' % id for id in self.options['builds']])
 		query_string += '&sinceDate=-%d' % self.options['limit']
-		feed_url = "%s/feed.html?%s" % (self.options['base_url'], query_string)
+		feed_url = "%s/httpAuth/feed.html?%s" % (self.options['base_url'], query_string)
 		tc = TeamCityQuery(self.options)
-		feed = tc.xml_query(feed_url)
+		try:
+			feed = tc.xml_query(feed_url)
+		except TeamCityError as e:
+			self.log.error("Error while proceed TeamCity events: %s" % e)
+			return
 		if feed is None:
 			self.log.error("Can't get teamcity feed")
 			return

@@ -6,6 +6,9 @@ setup(
 	author_email='siniy@unigine.com',
 	version='0.3',
 	packages=find_packages(exclude=['*.tests*']),
+	install_requires=[
+		"lxml>=2.2",
+	],
 	entry_points = """
 	[trac.plugins]
 	teamcity.web_ui = teamcity.web_ui
