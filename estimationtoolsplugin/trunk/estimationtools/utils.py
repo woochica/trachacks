@@ -85,6 +85,7 @@ def parse_options(db, content, options):
     _, parsed_options = parse_args(content, strict=False)
 
     options.update(parsed_options)
+    today = datetime.now().date()
 
     startdatearg = options.get('startdate')
     if startdatearg:
@@ -106,14 +107,13 @@ def parse_options(db, content, options):
         if row[0]:
             options['enddate'] = from_timestamp(row[0]).date()
         elif row[1]:
-            options['enddate'] = from_timestamp(row[1]).date()
+            due = from_timestamp(row[1]).date()
+            if due >= today:
+                options['enddate'] = due
 
-    if not options['enddate']:
-            options['enddate'] = datetime.now().date()
-    todayarg = options.get('today')
-    if not todayarg:
-        options['today'] = datetime.now().date()
-        
+    options['enddate'] = options['enddate'] or today
+    options['today'] = options.get('today') or today
+
     if options.get('weekends'):
         options['weekends'] = parse_bool(options['weekends'] )
 
