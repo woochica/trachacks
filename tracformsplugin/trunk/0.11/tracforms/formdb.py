@@ -6,6 +6,7 @@ import unittest
 
 from trac.core import Component, implements
 from trac.resource import Resource, resource_exists
+from trac.search.api import search_to_sql
 
 from api import IFormDBObserver, _
 from compat import json, parse_qs
@@ -210,6 +211,7 @@ class FormDBComponent(DBComponent):
             """, form_id)
 
     def get_tracform_fieldinfo(self, src, field, cursor=None):
+        """Retrieve author and time of last change per field."""
         cursor = self.get_cursor(cursor)
         form_id = self.get_tracform_meta(src, cursor=cursor)[0]
         return cursor("""
@@ -218,6 +220,18 @@ class FormDBComponent(DBComponent):
             WHERE   id = %s
                 AND field = %s
             """, form_id, field).firstrow or (None, None)
+
+    def search_tracforms(self, env, terms, cursor=None):
+        """Backend method for TracForms ISearchSource implementation."""
+        cursor = self.get_cursor(cursor)
+        db = env.get_db_cnx()
+        sql, args = search_to_sql(db, ['resource_id', 'subcontext', 'author',
+                                       'state', db.cast('id', 'text')], terms)
+        return cursor("""
+            SELECT id,realm,resource_id,subcontext,state,author,time
+            FROM forms
+            WHERE %s
+            """ % (sql), *args)
 
     ##########################################################################
     # TracForms schemas

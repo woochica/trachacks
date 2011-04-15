@@ -79,6 +79,9 @@ class IFormDBObserver(Interface):
     def get_tracfrom_fieldinfo(self, src, field, cursor=None):
         pass
 
+    def search_tracforms(self, env, terms, cursor=None):
+        pass
+
 
 def tracob_first(fn=None, default=None):
     if fn is None:
@@ -128,6 +131,10 @@ class FormDBUser(Component):
 
     @tracob_first
     def get_tracform_fieldinfo(self, *_args, **_kw):
+        return self.tracformdb_observers
+
+    @tracob_first
+    def search_tracforms(self, *_args, **_kw):
         return self.tracformdb_observers
 
 

@@ -8,7 +8,7 @@ from pkg_resources import resource_filename
 from trac.core import Component, implements
 from trac.resource import get_resource_description, \
                           get_resource_name, get_resource_url
-from trac.search.api import ISearchSource, search_to_sql, shorten_result
+from trac.search.api import ISearchSource, shorten_result
 from trac.util.datefmt import to_datetime
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_ctxtnav
@@ -140,17 +140,9 @@ class FormUI(Component):
         if not 'form' in filters:
             return
         env = self.env
-        db = env.get_db_cnx()
-        cursor = DBCursor(db, self.log)
-        sql, args = search_to_sql(db, ['resource_id', 'subcontext', 'author',
-                                       'state', db.cast('id', 'text')], terms)
-        cursor.execute("""
-            SELECT id,realm,resource_id,subcontext,state,author,time
-            FROM forms
-            WHERE %s
-            """ % (sql), *args)
+        results = self.search_tracforms(env, terms)
 
-        for id, realm, parent, subctxt, state, author, updated_on in cursor:
+        for id, realm, parent, subctxt, state, author, updated_on in results:
             # DEVEL: support for handling form revisions not implemented yet
             #form = Form(env, realm, parent, subctxt, id, version)
             form = Form(env, realm, parent, subctxt, id)
