@@ -16,6 +16,16 @@
   <body>
     <div id="content">
       <h1 py:if="page_title">${page_title}</h1>
+      <a href="${select}" title="Back to forms list"
+         py:if="select">&lt;&lt;</a>
+      <form id="form_reset" method="post"
+            py:if="allow_reset is True">
+        <div class="buttons">
+          <input type="submit" name="reset"
+                 value="${dgettext('tracforms', 'Reset form')}" />
+          <input type="hidden" name="action" value="reset"/>
+        </div>
+      </form>
       <p py:for="change in history">
         ${change.old_state}<br />
         by ${change.author} - ${change.time}

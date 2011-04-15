@@ -5,7 +5,7 @@ import re
 from genshi.builder import tag
 from pkg_resources import resource_filename
 
-from trac.core import Component, implements
+from trac.core import implements
 from trac.resource import get_resource_description, \
                           get_resource_name, get_resource_url
 from trac.search.api import ISearchSource, shorten_result
@@ -13,13 +13,13 @@ from trac.util.datefmt import to_datetime
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_ctxtnav
 
-from api import _, tag_
+from api import FormDBUser, _, tag_
 from model import Form
 from tracdb import DBCursor
 from util import format_values, resource_from_page
 
 
-class FormUI(Component):
+class FormUI(FormDBUser):
     """Provides TracSearch support for TracForms."""
 
     implements(IRequestFilter, IRequestHandler, ISearchSource,
@@ -85,6 +85,11 @@ class FormUI(Component):
             if req.args.get('action') == 'history':
                 return self._do_history(env, req, form)
 
+            if req.method == 'POST':
+                req.perm(form).require('FORM_RESET')
+                if req.args.get('action') == 'reset':
+                    return self._do_reset(env, req, form)
+
         realm=req.args.get('realm')
         resource_id=req.args.get('resource_id')
         if realm is not None and resource_id is not None: 
@@ -104,7 +109,11 @@ class FormUI(Component):
             form_id=form_id), tag.a(parent_name, href=parent_url), ')')
         # TRANSLATOR: Title HTML tag, usually browsers window title
         data['title'] = _('Form %(form_id)s (history)', form_id=form_id)
+        if len(form.siblings) > 1:
+            data['select'] = req.href.form(action='select',
+                realm=form.parent_realm, resource_id=form.parent_id)
         data['history'] = form.get_history()
+        data['allow_reset'] = req.perm.has_permission('FORM_RESET')
         return 'history.html', data, None
 
     def _do_switch(self, env, req, form):
@@ -128,6 +137,15 @@ class FormUI(Component):
                               "%(form_id)s (subcontext = '%(subcontext)s')",
                               form_id=form_id, subcontext = sibling[1]))
         return 'switch.html', data, None
+
+    def _do_reset(self, env, req, form):
+        author = req.authname
+        if form.form_id is not None:
+            self.reset_tracform(form.form_id, author=author)
+        else:
+            self.reset_tracform(
+                tuple([form.parent_realm, form.parent_id]), author=author)
+        return self._do_switch(env, req, form)
 
     # ISearchSource methods
 

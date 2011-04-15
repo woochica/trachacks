@@ -221,6 +221,47 @@ class FormDBComponent(DBComponent):
                 AND field = %s
             """, form_id, field).firstrow or (None, None)
 
+    def reset_tracform(self, src, field=None, author=None, cursor=None):
+        """Delete method for all TracForms db tables.
+
+        Note, that we only delete recorded values and history here, while
+        the form definition (being part of forms parent resource) is retained.
+        """
+        # DEVEL: reset of single fields not implemented yet
+        cursor = self.get_cursor(cursor)
+        form_ids = []
+        # collect form_id(s) to reset
+        if isinstance(src, int):
+            form_ids.append(src)
+        elif isinstance(src, tuple) and len(src) == 3:
+            if src[-1] is None:
+                # no subcontext given, reset all forms of the parent resource
+                for form_id in self.get_tracform_ids(src[0], src[1],
+                        cursor=cursor):
+                    form_ids.append(form_id)
+            else:
+                form_ids.append(self.get_tracform_meta(src, cursor=cursor)[0])
+        for form_id in form_ids:
+            cursor("""
+                DELETE
+                FROM    forms_history
+                WHERE   id = %s
+                """, form_id)
+            cursor("""
+                DELETE
+                FROM    forms_fields
+                WHERE   id = %s
+                """, form_id)
+            # don't delete basic form reference but save reset as form change
+            # to prevent creation of new form id for further retention data
+            cursor("""
+                UPDATE  forms
+                    SET state = %s,
+                        author = %s,
+                        time = %s
+                WHERE   id = %s
+                """, '{}', author, int(time.time()), form_id)
+
     def search_tracforms(self, env, terms, cursor=None):
         """Backend method for TracForms ISearchSource implementation."""
         cursor = self.get_cursor(cursor)
