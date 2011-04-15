@@ -50,7 +50,8 @@ class DBCursor(object):
         try:
             self.cursor.execute(sql, params)
         except Exception, e:
-            self.log.error('EXECUTING SQL:\n%s\n\t%r' % (sql, params))
+            self.log.error(
+                'EXECUTING SQL:\n%s\n\t%r\n\tSQL ERROR: %s' % (sql, params, e))
             self.rollback()
             raise e
         return self
