@@ -31,8 +31,8 @@ class Form(object):
                         self.form_id = int(form_id)
                 except ValueError:
                     raise ResourceNotFound(
-                        _('TracForm %(id)s does not exist.', id=form_id),
-                        _('Invalid form number'))
+                        _("TracForm %(id)s does not exist.", id=form_id),
+                        _("Invalid form number"))
             else:
                 self.form_id = None
             if self.form_id is not None and (parent_realm is None or \
@@ -63,7 +63,7 @@ class Form(object):
                     _("""No data recorded for a TracForms form in
                       %(realm)s:%(parent_id)s
                       """, realm=parent_realm, parent_id=parent_id),
-                    subcontext and _('with subcontext %(subcontext)s',
+                    subcontext and _("with subcontext %(subcontext)s",
                     subcontext=subcontext) or '')
 
                 self.resource = None

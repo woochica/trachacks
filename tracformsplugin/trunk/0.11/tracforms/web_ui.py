@@ -54,8 +54,8 @@ class FormUI(FormDBUser):
                     # multiple forms found
                     href = req.href.form(action='select', realm=realm,
                                          resource_id=resource_id)
-                add_ctxtnav(req, _('Form history'), href=href,
-                            title=_('Review form changes'))
+                add_ctxtnav(req, _("Form history"), href=href,
+                            title=_("Review form changes"))
         elif page.startswith('/form') and req.args.get('action') == 'history':
             form = Form(env, form_id=resource_id)
             if len(form.siblings) > 1:
@@ -114,10 +114,10 @@ class FormUI(FormDBUser):
         parent_name = get_resource_name(env, parent)
         parent_url = get_resource_url(env, parent, req.href)
         # TRANSLATOR: The title printed in form history page
-        data['page_title'] = tag(_('Form %(form_id)s (in ',
-            form_id=form_id), tag.a(parent_name, href=parent_url), ')')
+        data['page_title'] = tag_("Form %(form_id)s (in %(parent)s)",
+            form_id=form_id, parent=tag.a(parent_name, href=parent_url))
         # TRANSLATOR: Title HTML tag, usually browsers window title
-        data['title'] = _('Form %(form_id)s (history)', form_id=form_id)
+        data['title'] = _("Form %(form_id)s (history)", form_id=form_id)
         author, time = self.get_tracform_meta(int(form_id))[4:6]
         state = self.get_tracform_state(int(form_id))
         history = [{'author': author, 'time': time,
@@ -135,13 +135,13 @@ class FormUI(FormDBUser):
         parent_name = get_resource_name(env, parent)
         parent_url = get_resource_url(env, parent, req.href)
         # TRANSLATOR: The title printed in form select page
-        data['page_title'] = tag_('Forms in %(parent)s',
+        data['page_title'] = tag_("Forms in %(parent)s",
             parent=tag.a(parent_name, href=parent_url))
         # TRANSLATOR: Title HTML tag, usually browsers window title
-        data['title'] = _('Forms (%(parent)s)', parent=parent_name)
+        data['title'] = _("Forms (%(parent)s)", parent=parent_name)
         data['siblings'] = []
         for sibling in form.siblings:
-            form_id = tag.strong(tag.a(_('Form %(form_id)s',
+            form_id = tag.strong(tag.a(_("Form %(form_id)s",
                                          form_id=sibling[0]),
                                          href=req.href.form(sibling[0],
                                                        action='history')))
