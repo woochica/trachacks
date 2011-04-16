@@ -13,6 +13,7 @@ except ImportError:
     xlrd = None
 
 from trac.core import TracError
+from trac.util.text import to_unicode
 
 
 def get_reader(filename, sheet_index, datetime_format, encoding='utf-8'):
@@ -91,17 +92,16 @@ class XLSReader(object):
     def readers(self):
         # TODO: do something with sh.name. Probably add it as a column. 
         # TODO: read the other sheets. What if they don't have the same columns ?
-        header = []
-        for cx in range(self.sh.ncols):
-            header.append(self.sh.cell_value(rowx=0, colx=cx))
+        header = [to_unicode(self.sh.cell_value(rowx=0, colx=cx))
+                  for cx in xrange(self.sh.ncols)]
 
         data = []
-        for rx in range(self.sh.nrows):
+        for rx in xrange(self.sh.nrows):
             if rx == 0:
                 continue
             row = {}
             i = 0
-            for cx in range(self.sh.ncols):
+            for cx in xrange(self.sh.ncols):
                 row[header[i]] = self.sh.cell_value(rx, cx)
                 if self.sh.cell_type(rx, cx) == xlrd.XL_CELL_DATE:
                     row[header[i]] = datetime.datetime(*xlrd.xldate_as_tuple(row[header[i]], self.book.datemode)).strftime(self._datetime_format)
