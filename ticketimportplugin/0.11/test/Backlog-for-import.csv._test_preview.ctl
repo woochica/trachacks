@@ -2,7 +2,48 @@
                    {'col': 'summary', 'title': 'Summary'},
                    {'col': 'component', 'title': 'Component'},
                    {'col': 'milestone', 'title': 'Milestone'}],
-    'message': <Markup u'<style type="text/css">\n.ticket-imported, .modified-ticket-imported { width: 40px; }\n.color-new-odd td, .color-new-even td, .modified-ticket-imported, .modified-summary, .modified-component, .modified-milestone { font-style: italic; }\n</style>\n<p>\nScroll to see a preview of the tickets as they will be imported. If the data is correct, select the <strong>Execute Import</strong> button.\n</p>\n<ul><li>61 tickets will be imported (61 added, 0 modified, 0 unchanged).\n</li><li>A <strong>ticket</strong> column was not found: tickets will be reconciliated by summary. If an existing ticket with the same summary is found, values that are changing appear in italics in the preview below. If no ticket with same summary is found, the whole line appears in italics below, and a new ticket will be added.\n</li><li>Some Trac fields are not present in the import. They will default to:\n</li></ul><blockquote>\n<blockquote>\n<table class="wiki">\n<tr><td><strong>field</strong></td><td><strong>Default value</strong>\n</td></tr><tr><td>Description, Cc, Keywords, Version, Mycustomfield, Severity</td><td><i>(Empty value)</i>\n</td></tr><tr><td>Status</td><td>new\n</td></tr><tr><td>Changetime</td><td><i>(now)</i>\n</td></tr><tr><td>Reporter</td><td>testuser\n</td></tr><tr><td>Type</td><td>task\n</td></tr><tr><td>Priority</td><td>major\n</td></tr><tr><td>Time</td><td><i>(now)</i>\n</td></tr><tr><td>Owner</td><td>Computed from component\n</td></tr><tr><td>Resolution</td><td><i>(None)</i>\n</td></tr></table>\n</blockquote>\n</blockquote>\n<p>\n(You can change some of these default values in the Trac Admin module, if you are administrator; or you can add the corresponding column to your spreadsheet and re-upload it).\n</p>\n<ul><li>Some fields will not be imported because they don\'t exist in Trac: Dev, Initial, 5/4, 5/7, 5/8, 5/9, 5/10, 5/11, 5/14, 5/15, 5/16, 5/17, 5/18, 5/21, 5/22, 5/23, 5/24, 5/25, 5/28, 5/29, 5/30, 5/31, 6/1, 6/4, 6/5, 6/6, 6/7, 6/8, 6/11, 6/12, 6/13, 6/14, 6/15, 6/18, 6/19, 6/20, 6/21, 6/22, 6/25, 6/26, 6/27, 6/28, 6/29, 7/2, 7/3, 7/4, 7/5, 7/6, 7/9, 7/10, 7/11, 7/12, 7/13, 7/16, 7/17, 7/18, 7/19, 7/20, 7/23, 7/24.\n</li><li>Some lookup values are not found and will be added to the possible list of values:\n</li></ul><blockquote>\n<blockquote>\n<table class="wiki">\n<tr><td><strong>field</strong></td><td><strong>New values</strong>\n</td></tr><tr><td>Component</td><td>architecture, zarkitek, builder, flat_place, flat_route, verification, timing annalysis, Optimization, release\n</td></tr><tr><td>Milestone</td><td>Alpha 3_0\n</td></tr></table>\n</blockquote>\n</blockquote>\n<br/>'>,
+    'message': Markup(u"""\
+<style type="text/css">
+.ticket-imported, .modified-ticket-imported { width: 40px; }
+.color-new-odd td, .color-new-even td, .modified-ticket-imported, .modified-summary, .modified-component, .modified-milestone { font-style: italic; }
+</style>
+<p>
+Scroll to see a preview of the tickets as they will be imported. If the data is correct, select the <strong>Execute Import</strong> button.
+</p>
+<ul><li>61 tickets will be imported (61 added, 0 modified, 0 unchanged).
+</li><li>A <strong>ticket</strong> column was not found: tickets will be reconciliated by summary. If an existing ticket with the same summary is found, values that are changing appear in italics in the preview below. If no ticket with same summary is found, the whole line appears in italics below, and a new ticket will be added.
+</li><li>Some Trac fields are not present in the import. They will default to:
+</li></ul><blockquote>
+<blockquote>
+<table class="wiki">
+<tr><td><strong>field</strong></td><td><strong>Default value</strong>
+</td></tr><tr><td>Description, Cc, Keywords, Version, Mycustomfield, Severity</td><td><i>(Empty value)</i>
+</td></tr><tr><td>Status</td><td>new
+</td></tr><tr><td>Changetime</td><td><i>(now)</i>
+</td></tr><tr><td>Reporter</td><td>testuser
+</td></tr><tr><td>Type</td><td>task
+</td></tr><tr><td>Priority</td><td>major
+</td></tr><tr><td>Time</td><td><i>(now)</i>
+</td></tr><tr><td>Owner</td><td>Computed from component
+</td></tr><tr><td>Resolution</td><td><i>(None)</i>
+</td></tr></table>
+</blockquote>
+</blockquote>
+<p>
+(You can change some of these default values in the Trac Admin module, if you are administrator; or you can add the corresponding column to your spreadsheet and re-upload it).
+</p>
+<ul><li>Some fields will not be imported because they don\'t exist in Trac: Dev, Initial, 5/4, 5/7, 5/8, 5/9, 5/10, 5/11, 5/14, 5/15, 5/16, 5/17, 5/18, 5/21, 5/22, 5/23, 5/24, 5/25, 5/28, 5/29, 5/30, 5/31, 6/1, 6/4, 6/5, 6/6, 6/7, 6/8, 6/11, 6/12, 6/13, 6/14, 6/15, 6/18, 6/19, 6/20, 6/21, 6/22, 6/25, 6/26, 6/27, 6/28, 6/29, 7/2, 7/3, 7/4, 7/5, 7/6, 7/9, 7/10, 7/11, 7/12, 7/13, 7/16, 7/17, 7/18, 7/19, 7/20, 7/23, 7/24.
+</li><li>Some lookup values are not found and will be added to the possible list of values:
+</li></ul><blockquote>
+<blockquote>
+<table class="wiki">
+<tr><td><strong>field</strong></td><td><strong>New values</strong>
+</td></tr><tr><td>Component</td><td>architecture, zarkitek, builder, flat_place, flat_route, verification, timing annalysis, Optimization, release
+</td></tr><tr><td>Milestone</td><td>Alpha 3_0
+</td></tr></table>
+</blockquote>
+</blockquote>
+<br/>"""),
     'rows': [   {   'cells': [   {   'col': 'ticket',
                                      'style': '',
                                      'value': '(new)'},

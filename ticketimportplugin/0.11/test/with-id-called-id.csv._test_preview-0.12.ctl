@@ -3,7 +3,47 @@
                    {'col': 'priority', 'title': 'Priority'},
                    {'col': 'component', 'title': 'Component'},
                    {'col': 'mycustomfield', 'title': 'Mycustomfield'}],
-    'message': <Markup u'<style type="text/css">\n.ticket-imported, .modified-ticket-imported { width: 40px; }\n.color-new-odd td, .color-new-even td, .modified-ticket-imported, .modified-owner, .modified-priority, .modified-component, .modified-mycustomfield { font-style: italic; }\n</style>\n<p>\nScroll to see a preview of the tickets as they will be imported. If the data is correct, select the <strong>Execute Import</strong> button.\n</p>\n<ul><li>3 tickets will be imported (1 added, 2 modified, 0 unchanged).\n</li><li>A <strong>id</strong> column was found: Existing tickets will be updated with the values from the file. Values that are changing appear in italics in the preview below.\n</li><li>Some Trac fields are not present in the import. They will default to:\n</li></ul><blockquote>\n<blockquote>\n<table class="wiki">\n<tr><td><strong>field</strong></td><td><strong>Default value</strong>\n</td></tr><tr><td>Description, Cc, Milestone, Version, Keywords, Severity</td><td><em>(Empty value)</em>\n</td></tr><tr><td>Status</td><td>new\n</td></tr><tr><td>Changetime</td><td><em>(now)</em>\n</td></tr><tr><td>Reporter</td><td>testuser\n</td></tr><tr><td>Resolution</td><td><em>(None)</em>\n</td></tr><tr><td>Time</td><td><em>(now)</em>\n</td></tr><tr><td>Type</td><td>task\n</td></tr></table>\n</blockquote>\n</blockquote>\n<p>\n(You can change some of these default values in the Trac Admin module, if you are administrator; or you can add the corresponding column to your spreadsheet and re-upload it).\n</p>\n<ul><li>Some fields will not be imported because they don\'t exist in Trac: anyotherfield.\n</li><li>Some lookup values are not found and will be added to the possible list of values:\n</li></ul><blockquote>\n<blockquote>\n<table class="wiki">\n<tr><td><strong>field</strong></td><td><strong>New values</strong>\n</td></tr><tr><td>Priority</td><td>herpriority\n</td></tr><tr><td>Component</td><td>hercomp\n</td></tr></table>\n</blockquote>\n</blockquote>\n<ul><li>Some user names do not exist in the system: me, you, she. Make sure that they are valid users.\n</li></ul><br/>'>,
+    'message': Markup(u"""\
+<style type="text/css">
+.ticket-imported, .modified-ticket-imported { width: 40px; }
+.color-new-odd td, .color-new-even td, .modified-ticket-imported, .modified-owner, .modified-priority, .modified-component, .modified-mycustomfield { font-style: italic; }
+</style>
+<p>
+Scroll to see a preview of the tickets as they will be imported. If the data is correct, select the <strong>Execute Import</strong> button.
+</p>
+<ul><li>3 tickets will be imported (1 added, 2 modified, 0 unchanged).
+</li><li>A <strong>id</strong> column was found: Existing tickets will be updated with the values from the file. Values that are changing appear in italics in the preview below.
+</li><li>Some Trac fields are not present in the import. They will default to:
+</li></ul><blockquote>
+<blockquote>
+<table class="wiki">
+<tr><td><strong>field</strong></td><td><strong>Default value</strong>
+</td></tr><tr><td>Description, Cc, Milestone, Version, Keywords, Severity</td><td><em>(Empty value)</em>
+</td></tr><tr><td>Status</td><td>new
+</td></tr><tr><td>Changetime</td><td><em>(now)</em>
+</td></tr><tr><td>Reporter</td><td>testuser
+</td></tr><tr><td>Resolution</td><td><em>(None)</em>
+</td></tr><tr><td>Time</td><td><em>(now)</em>
+</td></tr><tr><td>Type</td><td>task
+</td></tr></table>
+</blockquote>
+</blockquote>
+<p>
+(You can change some of these default values in the Trac Admin module, if you are administrator; or you can add the corresponding column to your spreadsheet and re-upload it).
+</p>
+<ul><li>Some fields will not be imported because they don\'t exist in Trac: anyotherfield.
+</li><li>Some lookup values are not found and will be added to the possible list of values:
+</li></ul><blockquote>
+<blockquote>
+<table class="wiki">
+<tr><td><strong>field</strong></td><td><strong>New values</strong>
+</td></tr><tr><td>Priority</td><td>herpriority
+</td></tr><tr><td>Component</td><td>hercomp
+</td></tr></table>
+</blockquote>
+</blockquote>
+<ul><li>Some user names do not exist in the system: me, you, she. Make sure that they are valid users.
+</li></ul><br/>"""),
     'rows': [   {   'cells': [   {'col': 'ticket', 'style': '', 'value': 1},
                                  {   'col': 'owner',
                                      'style': 'modified-owner',

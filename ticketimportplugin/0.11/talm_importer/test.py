@@ -4,13 +4,15 @@
 # Licensed under the same license as Trac - http://trac.edgewall.org/wiki/TracLicense
 #
 
+import re
 import sys
 import os
 import tempfile
 import shutil
 import unittest
 import pprint
-import filecmp
+import difflib
+from genshi.core import Markup
 
 from trac.web.api import Request
 from trac.env import Environment
@@ -33,7 +35,34 @@ def _exec(cursor, sql, args = None): cursor.execute(sql, args)
 def _printme(something): pass # print something
 
 
+class PrinterMarkupWrapper(object):
+    def __init__(self, data):
+        self.data = data
+
+    _stringify_re = re.compile(r'\\.')
+
+    def __repr__(self):
+        def replace(match):
+            val = match.group(0)
+            if val == r'\n':
+                return '\n'
+            return val
+        data = repr(self.data)[len("<Markup u'"):-len("'>")]
+        return 'Markup(u"""\\\n' + self._stringify_re.sub(replace, data) + '""")'
+
+
+class PrettyPrinter(pprint.PrettyPrinter):
+    def format(self, object, context, maxlevels, level):
+        if isinstance(object, Markup):
+            object = PrinterMarkupWrapper(object)
+        elif isinstance(object, str):
+            object = object.decode('utf-8')
+        return pprint.PrettyPrinter.format(self, object, context, maxlevels, level)
+
+
 class ImporterTestCase(unittest.TestCase):
+    def _pformat(self, data):
+        return PrettyPrinter(indent=4).pformat(data)
 
     def _test_preview(self, env, filename):
         req = Request({'SERVER_PORT': 0, 'SERVER_NAME': 'any', 'wsgi.url_scheme': 'any', 'wsgi.input': 'any', 'REQUEST_METHOD': 'GET' }, lambda x, y: _printme)
@@ -48,8 +77,7 @@ class ImporterTestCase(unittest.TestCase):
         #sys.stdout = tempstdout
         #req.display(template, content_type or 'text/html')
         #open('/tmp/out.html', 'w').write(req.hdf.render(template, None))
-        pp = pprint.PrettyPrinter(indent=4)
-        return (pp.pformat(data) or '') + "\n"
+        return self._pformat(data)
 
     def _test_import(self, env, filename, sheet = 1):
         req = Request({'SERVER_PORT': 0, 'SERVER_NAME': 'any', 'wsgi.url_scheme': 'any', 'wsgi.input': 'any', 'REQUEST_METHOD': 'GET' }, lambda x, y: _printme)
@@ -84,31 +112,45 @@ class ImporterTestCase(unittest.TestCase):
         enums = [f for f in set(cursor.fetchall()) - set(enums_before)]
         _exec(cursor, "select * from component")
         components = [f for f in set(cursor.fetchall()) - set(components_before)]
-        pp = pprint.PrettyPrinter(indent=4)
-        return pp.pformat([ tickets, tickets_custom, tickets_change, enums, components ])
+        return self._pformat([ tickets, tickets_custom, tickets_change, enums, components ])
+
+    def _readfile(self, path):
+        f = open(path, 'rb')
+        try:
+            return f.read()
+        finally:
+            f.close()
+
+    def _writefile(self, path, data):
+        f = open(path, 'wb')
+        try:
+            return f.write(data)
+        finally:
+            f.close()
+
+    def _evalfile(self, path):
+        contents = self._readfile(path)
+        return eval(contents), contents
 
     def _do_test(self, env, filename, testfun):
         from os.path import join, dirname
         testdir = join(dirname(dirname(dirname(testfolder))), 'test')
         outfilename = join(testdir, filename + '.' + testfun.__name__ + '.out')
         ctlfilename = join(testdir, filename + '.' + testfun.__name__ + CTL_EXT)
-        open(outfilename, 'w').write(testfun(env, join(testdir, filename)))
-        return filecmp.cmp(outfilename, ctlfilename)
+        self._writefile(outfilename, testfun(env, join(testdir, filename)))
+        outdata, outprint = self._evalfile(outfilename)
+        ctldata, ctlprint = self._evalfile(ctlfilename)
+        try:
+            self.assertEquals(ctldata, outdata)
+        except AssertionError, e:
+            ctlprint = self._pformat(ctldata)
+            diffs = difflib.ndiff(ctlprint.splitlines(), outprint.splitlines())
+            raise AssertionError('Two objects do not match\n' +
+                                 '\n'.join(diff.strip() for diff in list(diffs)
+                                           if not diff.startswith(' ')))
 
     def _do_test_diffs(self, env, filename, testfun):
         self._do_test(env, filename, testfun)
-        from os.path import join, dirname
-        testdir = join(dirname(dirname(dirname(testfolder))), 'test')
-        import sys
-        from difflib import Differ
-        d = Differ()
-        def readall(ext): return open(join(testdir, filename + ext), 'rb').readlines()
-        result = d.compare(readall('.' + testfun.__name__ + CTL_EXT), 
-                           readall('.' + testfun.__name__ + '.out'))
-        lines = [ line for line in result if line[0] != ' ']
-        # Uncomment this line to see the difference between expected (.ctl) output files and actual test output files (.out)
-        sys.stdout.writelines(lines)
-        self.assertEquals(0, len(lines)) 
 
     def _do_test_with_exception(self, env, filename, testfun):
         try:
@@ -143,10 +185,10 @@ class ImporterTestCase(unittest.TestCase):
         self._do_test_diffs(env, 'Backlog-for-import.csv', self._test_preview)
         self._do_test_diffs(env, 'simple.csv', self._test_preview)
         self._do_test_diffs(env, 'simple.csv', self._test_preview)
-        self.assert_(self._do_test(env, 'simple.csv', self._test_import))
+        self._do_test(env, 'simple.csv', self._test_import)
         # Run again, to make sure that the lookups are done correctly
         ImporterTestCase.TICKET_TIME = 1190909221
-        self.assert_(self._do_test(env, 'simple-copy.csv', self._test_import))
+        self._do_test(env, 'simple-copy.csv', self._test_import)
         # import after modification should throw exception
         _exec(cursor, "update ticket set changetime = " + str(ImporterTestCase.TICKET_TIME + 10) + " where id = 1245")
         db.commit()
@@ -184,7 +226,7 @@ class ImporterTestCase(unittest.TestCase):
     def test_import_2(self):
         env = self._setup()
         self._do_test_diffs(env, 'various-charsets.xls', self._test_preview)
-        self.assert_(self._do_test(env, 'various-charsets.xls', self._test_import))
+        self._do_test(env, 'various-charsets.xls', self._test_import)
 
     def test_import_3(self):
         env = self._setup()
@@ -206,7 +248,7 @@ class ImporterTestCase(unittest.TestCase):
         _exec(cursor, "insert into component values (%s, %s, %s)", ['yourcomp', '', ''])
         db.commit()
         self._do_test_diffs(env, 'with-id.csv', self._test_preview)
-        self.assert_(self._do_test(env, 'with-id.csv', self._test_import))
+        self._do_test(env, 'with-id.csv', self._test_import)
 
     def test_import_5(self):
         env = self._setup()
@@ -233,7 +275,7 @@ class ImporterTestCase(unittest.TestCase):
         shutil.copyfile(os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(testfolder))), 'test'), TICKETS_DB), _dbfile)
         open(os.path.join(os.path.join(instancedir, 'conf'), 'trac.ini'), 'a').write('\n[ticket-custom]\ndomain = text\ndomain.label = Domain\nstage = text\nstage.label = Stage\nusers = text\nusers.label = Users\n')
         env = Environment(instancedir)
-        self.assert_(self._do_test(env, 'ticket-13.xls', self._test_import))
+        self._do_test(env, 'ticket-13.xls', self._test_import)
 
     def test_import_with_ticket_types(self):
         env = self._setup()
@@ -245,7 +287,7 @@ class ImporterTestCase(unittest.TestCase):
         This test covers the two option flags "reconciliate_by_owner_also" and "skip_lines_with_empty_owner".
         '''
         env = self._setup('\n[ticket-custom]\neffort = text\neffort.label = My Effort\n\n[importer]\nreconciliate_by_owner_also = true\nskip_lines_with_empty_owner = true\n')
-        self.assert_(self._do_test(env, 'same-summary-different-owners-for-reconcilation-with-owner.xls', self._test_import))
+        self._do_test(env, 'same-summary-different-owners-for-reconcilation-with-owner.xls', self._test_import)
 
     def test_import_csv_bug(self):
         '''
@@ -254,7 +296,7 @@ class ImporterTestCase(unittest.TestCase):
         The problem disapeared when I fixed the issue in test_import_with_reconciliation_by_owner
         '''
         env = self._setup('\n[ticket-custom]\neffort = text\neffort.label = My Effort\n\n[importer]\nreconciliate_by_owner_also = true\nskip_lines_with_empty_owner = true\n')
-        self.assert_(self._do_test(env, 'same-summary-different-owners-for-reconcilation-with-owner.csv', self._test_import))
+        self._do_test(env, 'same-summary-different-owners-for-reconcilation-with-owner.csv', self._test_import)
 
     def test_import_not_first_worksheet(self):
         '''
@@ -268,7 +310,7 @@ class ImporterTestCase(unittest.TestCase):
         '''
         env = self._setup('\n[ticket-custom]\neffort = text\neffort.label = My Effort\n\n[importer]\nreconciliate_by_owner_also = true\nskip_lines_with_empty_owner = true\n')
         def _test_import_fourth_sheet(env, filename): return self._test_import(env, filename, 4)
-        self.assert_(self._do_test(env, 'Backlog.xls', _test_import_fourth_sheet))
+        self._do_test(env, 'Backlog.xls', _test_import_fourth_sheet)
 
     def test_import_with_id_called_id(self):
         env = self._setup()
@@ -282,7 +324,7 @@ class ImporterTestCase(unittest.TestCase):
         _exec(cursor, "insert into component values (%s, %s, %s)", ['yourcomp', '', ''])
         db.commit()
         self._do_test_diffs(env, 'with-id-called-id.csv', self._test_preview)
-        self.assert_(self._do_test(env, 'with-id-called-id.csv', self._test_import))
+        self._do_test(env, 'with-id-called-id.csv', self._test_import)
 
     def test_import_non_ascii_ticket_4458(self):
         env = self._setup()
