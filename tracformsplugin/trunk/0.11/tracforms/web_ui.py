@@ -202,7 +202,7 @@ class FormUI(FormDBUser):
     def _render_change(self, old, new):
         rendered = None
         if old and not new:
-            rendered = tag_("from %(value)s reset to default value",
+            rendered = tag_("%(value)s reset to default value",
                                 value=tag.em(old))
         elif new and not old:
             rendered = tag_("from default value set to %(value)s",

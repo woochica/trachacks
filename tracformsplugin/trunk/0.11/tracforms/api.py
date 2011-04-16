@@ -180,7 +180,7 @@ class FormSystem(FormBase, FormDBUser):
         #elif format == 'summary':
         #    return Form(self.env, resource).description
         if resource.id:
-            return _("Form %(id)s (in %(parent)s)", id=resource.id,
+            return _("Form %(form_id)s (in %(parent)s)", form_id=resource.id,
                      parent=get_resource_name(self.env, resource.parent))
         else:
             return _("Forms of %(parent)s",

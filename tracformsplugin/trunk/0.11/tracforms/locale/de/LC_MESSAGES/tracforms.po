@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracForms 0.3\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2011-04-13 23:39+0200\n"
+"POT-Creation-Date: 2011-04-16 21:29+0200\n"
 "PO-Revision-Date: 2011-04-03 15:02+0200\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
@@ -18,23 +18,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.0dev-r482\n"
 
-#: tracforms/api.py:161
+#: tracforms/api.py:175
 #, python-format
 msgid "Unparented form %(id)s"
 msgstr "Nicht verankertes Formular %(id)s"
 
-#: tracforms/api.py:170
+#. TRANSLATOR: The title printed in form history page
+#: tracforms/api.py:184 tracforms/web_ui.py:118
 #, python-format
-msgid "Form %(id)s (in %(parent)s)"
-msgstr "Formular %(id)s (in %(parent)s)"
+msgid "Form %(form_id)s (in %(parent)s)"
+msgstr "Formular %(form_id)s (in %(parent)s)"
 
-#: tracforms/api.py:173
+#: tracforms/api.py:187
 #, python-format
 msgid "Forms of %(parent)s"
 msgstr "Formulare von %(parent)s"
 
 #. TRANSLATOR: HTTP error message
-#: tracforms/api.py:223
+#: tracforms/api.py:237
 msgid "__context__ is required"
 msgstr "__context__ ist erforderlich"
 
@@ -62,7 +63,7 @@ msgstr "FEHLER: Unbekannte TracForms-Operation '%r'"
 msgid "ERROR: No TracForms command '%r'"
 msgstr "FEHLER: Unbekannte TracForms-Anweisung '%r'"
 
-#: tracforms/formdb.py:44 tracforms/model.py:64
+#: tracforms/formdb.py:45 tracforms/model.py:63
 #, python-format
 msgid ""
 "No data recorded for a TracForms form in\n"
@@ -72,7 +73,7 @@ msgstr ""
 "Keine Daten gesichert für ein TracForms-Formular in "
 "%(realm)s:%(parent_id)s"
 
-#: tracforms/formdb.py:191
+#: tracforms/formdb.py:193
 msgid "Conflict"
 msgstr "Konflikt"
 
@@ -90,64 +91,102 @@ msgstr "Formular aktualisieren"
 msgid "unknown"
 msgstr "unbekannt"
 
-#: tracforms/model.py:35
+#: tracforms/model.py:34
 #, python-format
 msgid "TracForm %(id)s does not exist."
 msgstr "TracForm %(id)s existiert nicht."
 
-#: tracforms/model.py:36
+#: tracforms/model.py:35
 msgid "Invalid form number"
 msgstr "Ungültige Formularnummer"
 
-#: tracforms/model.py:67
+#: tracforms/model.py:66
 #, python-format
 msgid "with subcontext %(subcontext)s"
-msgstr "mit Gliederungskennung %(subcontext)s"
+msgstr "mit Kennung %(subcontext)s"
 
-#: tracforms/web_ui.py:54
+#: tracforms/web_ui.py:57
 msgid "Form history"
 msgstr "Formular-Änderungshistorie"
 
-#: tracforms/web_ui.py:55
+#: tracforms/web_ui.py:58
 msgid "Review form changes"
 msgstr "Formular-Änderungen durchsehen"
 
-#. TRANSLATOR: The title printed in form history page
-#: tracforms/web_ui.py:103
-#, python-format
-msgid "History of form %(form_id)s (in "
-msgstr "Änderungshistorie von Formular %(form_id)s (in "
+#: tracforms/web_ui.py:64
+msgid "Back to forms list"
+msgstr "Zurück zur Formularliste"
 
 #. TRANSLATOR: Title HTML tag, usually browsers window title
-#: tracforms/web_ui.py:106
+#: tracforms/web_ui.py:120
 #, python-format
 msgid "Form %(form_id)s (history)"
 msgstr "Formular %(form_id)s (Änderungshistorie)"
 
 #. TRANSLATOR: The title printed in form select page
-#: tracforms/web_ui.py:117
+#: tracforms/web_ui.py:139
 #, python-format
-msgid "Form data for %(parent)s"
-msgstr "Formulardaten für %(parent)s"
+msgid "Forms in %(parent)s"
+msgstr "Formulare in %(parent)s"
 
 #. TRANSLATOR: Title HTML tag, usually browsers window title
-#: tracforms/web_ui.py:119
+#: tracforms/web_ui.py:141
 #, python-format
-msgid "Saved forms (%(parent)s)"
-msgstr "Gespeicherte Formulare (%(parent)s)"
+msgid "Forms (%(parent)s)"
+msgstr "Formulare (%(parent)s)"
 
-#: tracforms/web_ui.py:122
+#: tracforms/web_ui.py:144
 #, python-format
 msgid "Form %(form_id)s"
 msgstr "Formular %(form_id)s"
 
-#: tracforms/web_ui.py:127
+#: tracforms/web_ui.py:151
 #, python-format
 msgid "%(form_id)s (subcontext = '%(subcontext)s')"
-msgstr "%(form_id)s (subcontext = '%(subcontext)s')"
+msgstr "%(form_id)s (Kennung = '%(subcontext)s')"
+
+#: tracforms/web_ui.py:206
+#, python-format
+msgid "%(value)s reset to default value"
+msgstr "%(value)s zurückgesetzt auf Standardwert"
+
+#: tracforms/web_ui.py:209
+#, python-format
+msgid "from default value set to %(value)s"
+msgstr "von Standardwert auf %(value)s gesetzt"
+
+#: tracforms/web_ui.py:212
+#, python-format
+msgid "changed from %(old)s to %(new)s"
+msgstr "von %(old)s nach %(new)s geändert"
 
 #. TRANSLATOR: The realm name used as TracSearch filter label
-#: tracforms/web_ui.py:137
+#: tracforms/web_ui.py:220
 msgid "Forms"
 msgstr "Formulare"
+
+#: tracforms/templates/history.html:20
+msgid "Change History"
+msgstr "Änderungshistorie"
+
+#: tracforms/templates/history.html:24
+#, python-format
+msgid "Changed on %(time)s by %(author)s:"
+msgstr "Geändert am %(time)s von %(author)s:"
+
+#: tracforms/templates/history.html:34
+msgid "(No change recorded)"
+msgstr "(Keine Änderungsaufzeichnung)"
+
+#: tracforms/templates/history.html:40
+msgid "Reset form"
+msgstr "Formular zurücksetzen"
+
+#: tracforms/templates/switch.html:21
+msgid "Available records"
+msgstr "Verfügbare Aufzeichnungen"
+
+#: tracforms/templates/switch.html:26
+msgid "(No form data recorded)"
+msgstr "(Formulardaten nicht gespeichert)"
 
