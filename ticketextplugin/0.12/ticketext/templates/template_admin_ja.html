@@ -1,0 +1,73 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      lang="ja" xml:lang="ja">
+<xi:include href="admin.html" />
+
+<head>
+  <title>チケットテンプレート</title>
+</head>
+
+<body>
+
+<h2>チケットテンプレートの管理</h2>
+
+<form class="mod" id="modtemplate" method="post">
+  <fieldset>
+    <legend>チケットテンプレートの変更</legend>
+    <div class="field">
+      <label for="type">チケットの分類:</label><br />
+      <select id="type" name="type">
+        <div py:for="type in template.types">
+        <option py:if="type.selected" value="${type.name}" selected="selected">${type.name}</option>
+        <option py:if="not type.selected" value="${type.name}">${type.name}</option>
+        </div>
+      </select>
+    </div>
+    <div class="field">
+      <label for="template">テンプレートの内容(<a tabindex="42" href="${href.wiki('WikiFormatting')}">WikiFormatting</a>を使用できます):</label><br />
+      <textarea id="template" name="template" class="wikitext" rows="10" cols="78" style="{width : 98%}">${template.template}</textarea>
+    </div>
+  </fieldset>
+  
+  <br />
+  
+  <fieldset>
+    <legend>利用するカスタムフィールド</legend>
+    <table py:if="len(template.customfields)" id="cflist" class="listing">
+      <thead>
+        <tr>
+          <th class="sel">&nbsp;</th>
+          <th>名前</th>
+          <th>タイプ</th>
+          <th>ラベル</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr py:for="cf in template.customfields">
+          <td>
+            <input py:if="cf.enable" type="checkbox" name="cf-enable" value="${cf.name}" checked="checked" />
+            <input py:if="not cf.enable" type="checkbox" name="cf-enable" value="${cf.name}" />
+          </td>
+          <td>${cf.name}</td>
+          <td>${cf.type}</td>
+          <td>${cf.label}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p py:if="not len(template.customfields)" class="help">カスタムフィールドは定義されていません。</p>
+  </fieldset>
+  
+  <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+  
+  <div class="buttons">
+    <input type="submit" value="変更を適用" />
+  </div>
+</form>
+
+</body>
+
+</html>

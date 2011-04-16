@@ -1,0 +1,73 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      lang="en" xml:lang="en">
+<xi:include href="admin.html" />
+
+<head>
+  <title>Ticket Template</title>
+</head>
+
+<body>
+
+<h2>Manage Ticket Template</h2>
+
+<form class="mod" id="modtemplate" method="post">
+  <fieldset>
+    <legend>Change the ticket template</legend>
+    <div class="field">
+      <label for="type">Ticket Type:</label><br />
+      <select id="type" name="type">
+        <div py:for="type in template.types">
+        <option py:if="type.selected" value="${type.name}" selected="selected">${type.name}</option>
+        <option py:if="not type.selected" value="${type.name}">${type.name}</option>
+        </div>
+      </select>
+    </div>
+    <div class="field">
+      <label for="template">Ticket Description(you may use <a tabindex="42" href="${href.wiki('WikiFormatting')}">WikiFormatting</a>):</label><br />
+      <textarea id="template" name="template" class="wikitext" rows="10" cols="78" style="{width : 98%}">${template.template}</textarea>
+    </div>
+  </fieldset>
+  
+  <br />
+  
+  <fieldset>
+    <legend>Enable custom fields</legend>
+    <table py:if="len(template.customfields)" id="cflist" class="listing">
+      <thead>
+        <tr>
+          <th class="sel">&nbsp;</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Label</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr py:for="cf in template.customfields">
+          <td>
+            <input py:if="cf.enable" type="checkbox" name="cf-enable" value="${cf.name}" checked="checked" />
+            <input py:if="not cf.enable" type="checkbox" name="cf-enable" value="${cf.name}" />
+          </td>
+          <td>${cf.name}</td>
+          <td>${cf.type}</td>
+          <td>${cf.label}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p py:if="not len(template.customfields)" class="help">No Custom Fields defined for this project.</p>
+  </fieldset>
+  
+  <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+  
+  <div class="buttons">
+    <input type="submit" value="Apply changes" />
+  </div>
+</form>
+
+</body>
+
+</html>
