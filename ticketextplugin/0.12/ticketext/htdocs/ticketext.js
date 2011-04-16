@@ -188,7 +188,7 @@ ticketext.TicketTemplate.prototype.selectTemplate = function(typeElem) {
             if (typeof(jsonData) == "string") {
                 responseData = eval("(" + jsonData + ")");
             } else {
-                responseData = eval("(" + jsonData.responseText + ")");
+                responseData = jsonData;
             }
             
             self.applyTemplate(responseData);
@@ -396,7 +396,11 @@ ticketext.TicketTemplate.prototype.setReadyCustomfields = function(readyCustomfi
  *            execute function
  */
 ticketext.TicketTemplate.prototype.execFunctionWithTracWysiwygPlugin = function(func) {
-    if (typeof TracWysiwyg != "function" && typeof func != "function") {
+    
+    if (typeof TracWysiwyg != "function") {
+        if (typeof func == "function") {
+            func();
+        }
         return;
     }
     

@@ -86,7 +86,7 @@ class TicketTemplateAdmin(Component):
         
         # check enable customfield
         customfields_api = CustomFields(self.env)
-        customfields = customfields_api.get_custom_fields(self.env)
+        customfields = customfields_api.get_custom_fields()
         enable_list = ticket_template['enablefields'].split(',')
         for cf in customfields:
             cf['enable'] = False

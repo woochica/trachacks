@@ -56,10 +56,10 @@ class TicketTemplate:
         
         req.send_response(200)
         req.send_header('Content-Type', 'content=application/json; charset=UTF-8')
-        req.send_header('Content-Length', len(response.encode("UTF-8")))
+        req.send_header('Content-Length', len(response.encode('utf-8')))
         req.end_headers()
         
-        req.write(response)
+        req.write(response.encode('utf-8'))
         
     def get_template_field(self, env, type_name):
         """Get the ticket template field by the ticket type name.
