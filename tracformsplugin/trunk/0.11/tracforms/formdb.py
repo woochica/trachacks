@@ -102,6 +102,7 @@ class FormDBComponent(DBComponent):
             sql += """
                 WHERE   id = %s
                 """
+            src = tuple([src],)
         return cursor(sql, *src).value
 
     def save_tracform(self, src, state, author,

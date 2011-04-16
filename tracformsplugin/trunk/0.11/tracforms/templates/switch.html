@@ -10,15 +10,21 @@
   <xi:include href="macros.html" />
 
   <head>
-    <title py:if="page_title">$title</title>
+    <title py:if="title">$title</title>
   </head>
 
   <body>
-    <div id="content">
+    <div id="content" class="tracforms">
       <h1 py:if="page_title">${page_title}</h1>
-      <p py:for="sibling in siblings">
-        ${sibling}
-      </p>
+      <div py:choose="">
+        <div py:when="siblings">
+          <h2>Available records</h2>
+          <ul py:for="sibling in siblings">
+            <li>${sibling}</li>
+          </ul>
+        </div>
+        <div py:otherwise="">(No form data recorded)</div>
+      </div>
     </div>
   </body>
 </html>

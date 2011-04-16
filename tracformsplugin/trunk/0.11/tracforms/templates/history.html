@@ -10,14 +10,30 @@
   <xi:include href="macros.html" />
 
   <head>
-    <title py:if="page_title">$title</title>
+    <title py:if="title">$title</title>
   </head>
 
   <body>
-    <div id="content">
+    <div id="content" class="tracforms">
       <h1 py:if="page_title">${page_title}</h1>
-      <a href="${select}" title="Back to forms list"
-         py:if="select">&lt;&lt;</a>
+      <div>
+        <h2>Change History</h2>
+        <div id="changelog" py:choose="">
+          <py:when test="history" py:for="changeset in history">
+            <div id="change">
+              <h3 class="change" i18n:msg="time, author">
+                Changed on ${changeset.time} by ${changeset.author}:
+              </h3>
+              <ul class="changes">
+                <li py:for="change in changeset.changes">
+                  ${change['field']} ${change['change']}
+                </li>
+              </ul>
+            </div>
+          </py:when>
+          <py:otherwise>(No change recorded)</py:otherwise>
+        </div>
+      </div>
       <form id="form_reset" method="post"
             py:if="allow_reset is True">
         <div class="buttons">
@@ -26,10 +42,6 @@
           <input type="hidden" name="action" value="reset"/>
         </div>
       </form>
-      <p py:for="change in history">
-        ${change.old_state}<br />
-        by ${change.author} - ${change.time}
-      </p>
     </div>
   </body>
 </html>

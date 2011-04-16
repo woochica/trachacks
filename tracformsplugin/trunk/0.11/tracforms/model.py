@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from trac.resource import Resource, ResourceNotFound
-from trac.util.datefmt import format_datetime
 
 from api import FormSystem, _
 
@@ -87,7 +86,7 @@ class Form(object):
         history = []
         records = self.forms.get_tracform_history(self.form_id)
         for author, time, old_state in records:
-            history.append({'author': author, 'time': format_datetime(time),
+            history.append({'author': author, 'time': time,
                             'old_state': old_state})
         return history
 

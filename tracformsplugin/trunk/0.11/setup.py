@@ -36,7 +36,7 @@ setup(
     packages = ['tracforms'],
     package_data = {
         'tracforms': [
-            'locale/*/LC_MESSAGES/*.mo', 'locale/.placeholder',
+            'htdocs/*', 'locale/*/LC_MESSAGES/*.mo', 'locale/.placeholder',
             'templates/*.html',
         ]
     },
