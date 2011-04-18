@@ -11,11 +11,10 @@ from trac.util.text import to_unicode
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
 
-import errors # various TracForms exceptions
-
 from api import FormDBUser, PasswordStoreUser, _
 from compat import json
 from environment import FormEnvironment
+from errors import FormError, FormTooManyValuesError
 from util import resource_from_page, xml_escape
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
