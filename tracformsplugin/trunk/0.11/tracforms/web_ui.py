@@ -58,9 +58,10 @@ class FormUI(FormDBUser):
                             title=_("Review form changes"))
         elif page.startswith('/form') and req.args.get('action') == 'history':
             form = Form(env, form_id=resource_id)
+            parent = form.resource.parent
             if len(form.siblings) > 1:
-                href = req.href.form(action='select',
-                    realm=form.parent_realm, resource_id=form.parent_id)
+                href = req.href.form(action='select', realm=parent.realm,
+                                     resource_id=parent.id)
                 add_ctxtnav(req, _("Back to forms list"), href=href)
         return (template, data, content_type)
 
@@ -161,11 +162,11 @@ class FormUI(FormDBUser):
 
     def _do_reset(self, env, req, form):
         author = req.authname
-        if form.form_id is not None:
-            self.reset_tracform(form.form_id, author=author)
+        if form.resource.id is not None:
+            self.reset_tracform(form.resource.id, author=author)
         else:
             self.reset_tracform(
-                tuple([form.parent_realm, form.parent_id]), author=author)
+                tuple([form.parent.realm, form.parent.id]), author=author)
         return self._do_switch(env, req, form)
 
     def _render_history(self, changes):
