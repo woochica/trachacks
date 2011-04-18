@@ -48,14 +48,14 @@ class FormUI(FormDBUser):
                     return (template, data, content_type)
                 elif form.resource.id is not None:
                     # single form record found
-                    href = req.href.form(form.resource.id, action='history')
+                    href = req.href.form(form.resource.id)
                 else:
                     # multiple form records found
                     href = req.href.form(action='select', realm=realm,
                                          resource_id=resource_id)
-                add_ctxtnav(req, _("Form history"), href=href,
-                            title=_("Review form changes"))
-        elif page.startswith('/form') and req.args.get('action') == 'history':
+                add_ctxtnav(req, _("Form details"), href=href,
+                            title=_("Review form data"))
+        elif page.startswith('/form') and not resource_id == '':
             form = Form(env, form_id=resource_id)
             parent = form.resource.parent
             if len(form.siblings) > 1:
@@ -94,14 +94,13 @@ class FormUI(FormDBUser):
             form_id = None
         if form_id is not None:
             form = Form(env, form_id=form_id)
-            req.perm(form).require('FORM_VIEW')
-            if req.args.get('action') == 'history':
-                return self._do_history(env, req, form)
-
             if req.method == 'POST':
                 req.perm(form).require('FORM_RESET')
                 if req.args.get('action') == 'reset':
                     return self._do_reset(env, req, form)
+
+            req.perm(form).require('FORM_VIEW')
+            return self._do_history(env, req, form)
 
         realm=req.args.get('realm')
         resource_id=req.args.get('resource_id')
@@ -142,8 +141,7 @@ class FormUI(FormDBUser):
         for sibling in form.siblings:
             form_id = tag.strong(tag.a(_("Form %(form_id)s",
                                          form_id=sibling[0]),
-                                         href=req.href.form(sibling[0],
-                                                       action='history')))
+                                         href=req.href.form(sibling[0])))
             if sibling[1] == '':
                 data['siblings'].append(form_id)
             else:
