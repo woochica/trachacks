@@ -41,7 +41,7 @@ class FormUI(FormDBUser):
             if page == '/wiki' or page == '/wiki/':
                 page = '/wiki/WikiStart'
             form = Form(env, realm, resource_id)
-            if 'FORM_VIEW' in req.perm:
+            if 'FORM_VIEW' in req.perm(form.resource):
                 if len(form.siblings) == 0:
                     # no form record found for this parent resource
                     href = req.href.form()
@@ -95,19 +95,19 @@ class FormUI(FormDBUser):
         if form_id is not None:
             form = Form(env, form_id=form_id)
             if req.method == 'POST':
-                req.perm(form).require('FORM_RESET')
                 if req.args.get('action') == 'reset':
+                    req.perm(form.resource).require('FORM_RESET')
                     return self._do_reset(env, req, form)
 
-            req.perm(form).require('FORM_VIEW')
+            req.perm(form.resource).require('FORM_VIEW')
             return self._do_history(env, req, form)
 
-        realm=req.args.get('realm')
-        resource_id=req.args.get('resource_id')
-        if realm is not None and resource_id is not None: 
-            form = Form(env, realm, resource_id)
-            req.perm(form).require('FORM_VIEW')
-            if req.args.get('action') == 'select':
+        if req.args.get('action') == 'select':
+            realm=req.args.get('realm')
+            resource_id=req.args.get('resource_id')
+            if realm is not None and resource_id is not None: 
+                form = Form(env, realm, resource_id)
+                req.perm(form.resource).require('FORM_VIEW')
                 return self._do_switch(env, req, form)
 
     def _do_history(self, env, req, form):
@@ -127,8 +127,11 @@ class FormUI(FormDBUser):
             history.append({'author': author, 'time': time,
                             'old_state': old_state})
         data['history'] = self._render_history(history)
-        data['allow_reset'] = (req.perm.has_permission('FORM_RESET') and \
-            self.get_tracform_fields(form_id).firstrow is not None)
+        # show reset button in case of existing data and proper permission
+        data['allow_reset'] = req.perm(form.resource) \
+                              .has_permission('FORM_RESET') and \
+                              self.get_tracform_fields(form_id) \
+                              .firstrow is not None
         add_stylesheet(req, 'tracforms/tracforms.css')
         return 'form.html', data, None
 
