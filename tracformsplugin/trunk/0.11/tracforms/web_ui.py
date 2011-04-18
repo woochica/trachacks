@@ -118,16 +118,21 @@ class FormUI(FormDBUser):
             form_id=form_id, parent=tag.a(parent_name, href=parent_url))
         # TRANSLATOR: Title HTML tag, usually browsers window title
         data['title'] = _("Form %(form_id)s (history)", form_id=form_id)
+        # prime list with current state
         author, time = self.get_tracform_meta(int(form_id))[4:6]
         state = self.get_tracform_state(int(form_id))
         history = [{'author': author, 'time': time,
                     'old_state': state}]
-        history.extend(form.get_history())
+        # add recorded old_state
+        records = self.get_tracform_history(int(form_id))
+        for author, time, old_state in records:
+            history.append({'author': author, 'time': time,
+                            'old_state': old_state})
         data['history'] = self._render_history(history)
         data['allow_reset'] = (req.perm.has_permission('FORM_RESET') and \
             self.get_tracform_fields(int(form_id)).firstrow is not None)
         add_stylesheet(req, 'tracforms/tracforms.css')
-        return 'history.html', data, None
+        return 'form.html', data, None
 
     def _do_switch(self, env, req, form):
         data = {}

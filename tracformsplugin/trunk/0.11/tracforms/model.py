@@ -81,12 +81,3 @@ class Form(object):
                     self.subcontext = self.siblings[0][1]
         self.env = env
 
-    def get_history(self):
-        """Return recorded old states of current form."""
-        history = []
-        records = self.forms.get_tracform_history(self.form_id)
-        for author, time, old_state in records:
-            history.append({'author': author, 'time': time,
-                            'old_state': old_state})
-        return history
-
