@@ -66,7 +66,8 @@ def resource_from_page(env, page):
             resource_realm = realm
             break
     if resource_realm is not None:
-        return resource_realm, re.sub('/' + resource_realm + '/', '', page)
+        return (resource_realm,
+                re.sub('/' + resource_realm, '', page).lstrip('/'))
     else:
         return page, None
 
