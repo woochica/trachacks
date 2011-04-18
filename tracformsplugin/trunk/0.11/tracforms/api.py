@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
+from genshi.builder import tag
 from pkg_resources import resource_filename
 from urllib import unquote_plus
 
 from trac.core import Component, ExtensionPoint, Interface, implements
 from trac.perm import IPermissionRequestor
 from trac.resource import IResourceManager, Resource, ResourceNotFound, \
-                          get_resource_name, get_resource_shortname
+                          get_resource_name, get_resource_shortname, \
+                          get_resource_url
 
 # Import i18n methods.  Fallback modules maintain compatibility to Trac 0.11
 # by keeping Babel optional here.
@@ -171,24 +173,34 @@ class FormSystem(FormBase, FormDBUser):
         yield 'form'
 
     def get_resource_description(self, resource, format=None, **kwargs):
-        if not resource.parent:
+        env = self.env
+        href = kwargs.get('href')
+        if resource.parent is None:
             return _("Unparented form %(id)s", id=resource.id)
-        if format == 'compact':
-            return '%s (%s)' % (resource.id,
-                   get_resource_shortname(self.env, resource.parent))
+        parent_name = get_resource_name(env, resource.parent)
+        parent_url = href and \
+                     get_resource_url(env, resource.parent, href) or None
+        parent = parent_url is not None and \
+                 tag.a(parent_name, href=parent_url) or parent_name
         # DEVEL: resource description not implemented yet
-        #elif format == 'summary':
+        #if format == 'summary':
         #    return Form(self.env, resource).description
         if resource.id:
-            return _("Form %(form_id)s (in %(parent)s)", form_id=resource.id,
-                     parent=get_resource_name(self.env, resource.parent))
+            if format == 'compact':
+                return _("Form %(form_id)s (%(parent)s)", form_id=resource.id,
+                         parent=get_resource_shortname(env, resource.parent))
+            # TRANSLATOR: Most verbose title, i.e. for form history page
+            return tag_("Form %(form_id)s (in %(parent)s)",
+                        form_id=resource.id, parent=parent)
         else:
-            return _("Forms of %(parent)s",
-                     parent=get_resource_name(self.env, resource.parent))
+            # TRANSLATOR: Title printed i.e. in form select page
+            if format == 'compact':
+                return tag_("Forms (%(parent)s)", parent=parent)
+            return tag_("Forms in %(parent)s", parent=parent)
 
-    def get_resource_url(resource, href, **kwargs):
-        # DEVEL: dedicated resource url not implemented yet
-        pass
+    def get_resource_url(self, resource, href, **kwargs):
+        # use parent's url instead
+        return get_resource_url(self.env, resource.parent, href)        
 
     def resource_exists(self, resource):
         try:

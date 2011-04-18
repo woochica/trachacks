@@ -8,7 +8,7 @@ from pkg_resources import resource_filename
 from trac.core import implements
 from trac.util.datefmt import format_datetime
 from trac.resource import get_resource_description, \
-                          get_resource_name, get_resource_url
+                          get_resource_shortname, get_resource_url
 from trac.search.api import ISearchSource, shorten_result
 from trac.util.datefmt import to_datetime
 from trac.web.api import IRequestFilter, IRequestHandler
@@ -40,18 +40,17 @@ class FormUI(FormDBUser):
         if not page.startswith('/form') and resource_id is not None:
             if page == '/wiki' or page == '/wiki/':
                 page = '/wiki/WikiStart'
-            resource = Form(env, realm, resource_id).resource
+            form = Form(env, realm, resource_id)
             if 'FORM_VIEW' in req.perm:
-                if resource is None or len(self.get_tracform_ids(
-                                    tuple([realm, resource_id]))) == 0:
-                    # no form found
+                if len(form.siblings) == 0:
+                    # no form record found for this parent resource
                     href = req.href.form()
                     return (template, data, content_type)
-                elif resource.id is not None:
-                    # exactly one form found
-                    href = req.href.form(resource.id, action='history')
+                elif form.resource.id is not None:
+                    # single form record found
+                    href = req.href.form(form.resource.id, action='history')
                 else:
-                    # multiple forms found
+                    # multiple form records found
                     href = req.href.form(action='select', realm=realm,
                                          resource_id=resource_id)
                 add_ctxtnav(req, _("Form history"), href=href,
@@ -88,7 +87,11 @@ class FormUI(FormDBUser):
 
     def process_request(self, req):
         env = self.env
-        form_id = req.args.get('id')
+        id_hint = req.args.get('id')
+        if id_hint is not None and Form.id_is_valid(id_hint):
+            form_id = int(id_hint)
+        else:
+            form_id = None
         if form_id is not None:
             form = Form(env, form_id=form_id)
             req.perm(form).require('FORM_VIEW')
@@ -110,41 +113,31 @@ class FormUI(FormDBUser):
 
     def _do_history(self, env, req, form):
         data = {}
-        form_id = req.args.get('id')
-        parent = form.resource.parent
-        parent_name = get_resource_name(env, parent)
-        parent_url = get_resource_url(env, parent, req.href)
-        # TRANSLATOR: The title printed in form history page
-        data['page_title'] = tag_("Form %(form_id)s (in %(parent)s)",
-            form_id=form_id, parent=tag.a(parent_name, href=parent_url))
-        # TRANSLATOR: Title HTML tag, usually browsers window title
-        data['title'] = _("Form %(form_id)s (history)", form_id=form_id)
+        form_id = form.resource.id
+        data['page_title'] = get_resource_description(env, form.resource,
+                                                      href=req.href)
+        data['title'] = get_resource_shortname(env, form.resource)
         # prime list with current state
-        author, time = self.get_tracform_meta(int(form_id))[4:6]
-        state = self.get_tracform_state(int(form_id))
+        author, time = self.get_tracform_meta(form_id)[4:6]
+        state = self.get_tracform_state(form_id)
         history = [{'author': author, 'time': time,
                     'old_state': state}]
         # add recorded old_state
-        records = self.get_tracform_history(int(form_id))
+        records = self.get_tracform_history(form_id)
         for author, time, old_state in records:
             history.append({'author': author, 'time': time,
                             'old_state': old_state})
         data['history'] = self._render_history(history)
         data['allow_reset'] = (req.perm.has_permission('FORM_RESET') and \
-            self.get_tracform_fields(int(form_id)).firstrow is not None)
+            self.get_tracform_fields(form_id).firstrow is not None)
         add_stylesheet(req, 'tracforms/tracforms.css')
         return 'form.html', data, None
 
     def _do_switch(self, env, req, form):
         data = {}
-        parent = form.resource.parent
-        parent_name = get_resource_name(env, parent)
-        parent_url = get_resource_url(env, parent, req.href)
-        # TRANSLATOR: The title printed in form select page
-        data['page_title'] = tag_("Forms in %(parent)s",
-            parent=tag.a(parent_name, href=parent_url))
-        # TRANSLATOR: Title HTML tag, usually browsers window title
-        data['title'] = _("Forms (%(parent)s)", parent=parent_name)
+        data['page_title'] = get_resource_description(env, form.resource,
+                                                      href=req.href)
+        data['title'] = get_resource_shortname(env, form.resource)
         data['siblings'] = []
         for sibling in form.siblings:
             form_id = tag.strong(tag.a(_("Form %(form_id)s",
@@ -154,6 +147,7 @@ class FormUI(FormDBUser):
             if sibling[1] == '':
                 data['siblings'].append(form_id)
             else:
+                # TRANSLATOR: Form list entry for form select page
                 data['siblings'].append(tag_(
                               "%(form_id)s (subcontext = '%(subcontext)s')",
                               form_id=form_id, subcontext = sibling[1]))
@@ -240,7 +234,7 @@ class FormUI(FormDBUser):
                 # build a more human-readable form values representation,
                 # especially with unicode character escapes removed
                 state = format_values(state)
-                yield (get_resource_url(env, form.parent, req.href),
+                yield (get_resource_url(env, form, req.href),
                        get_resource_description(env, form),
                        to_datetime(updated_on), author,
                        shorten_result(state, terms))
