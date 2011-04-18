@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracForms 0.3\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2011-04-16 21:29+0200\n"
+"POT-Creation-Date: 2011-04-18 22:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,24 +18,35 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.0dev-r482\n"
 
-#: tracforms/api.py:175
+#: tracforms/api.py:179
 #, python-format
 msgid "Unparented form %(id)s"
 msgstr ""
 
-#. TRANSLATOR: The title printed in form history page
-#: tracforms/api.py:184 tracforms/web_ui.py:118
+#: tracforms/api.py:191
+#, python-format
+msgid "Form %(form_id)s (%(parent)s)"
+msgstr ""
+
+#. TRANSLATOR: Most verbose title, i.e. for form history page
+#: tracforms/api.py:193
 #, python-format
 msgid "Form %(form_id)s (in %(parent)s)"
 msgstr ""
 
-#: tracforms/api.py:187
+#. TRANSLATOR: Title printed i.e. in form select page
+#: tracforms/api.py:198
 #, python-format
-msgid "Forms of %(parent)s"
+msgid "Forms (%(parent)s)"
+msgstr ""
+
+#: tracforms/api.py:199
+#, python-format
+msgid "Forms in %(parent)s"
 msgstr ""
 
 #. TRANSLATOR: HTTP error message
-#: tracforms/api.py:237
+#: tracforms/api.py:249
 msgid "__context__ is required"
 msgstr ""
 
@@ -61,7 +72,7 @@ msgstr ""
 msgid "ERROR: No TracForms command '%r'"
 msgstr ""
 
-#: tracforms/formdb.py:45 tracforms/model.py:63
+#: tracforms/formdb.py:45 tracforms/model.py:62
 #, python-format
 msgid ""
 "No data recorded for a TracForms form in\n"
@@ -87,94 +98,77 @@ msgstr ""
 msgid "unknown"
 msgstr ""
 
-#: tracforms/model.py:34
+#: tracforms/model.py:19
 #, python-format
-msgid "TracForm %(id)s does not exist."
+msgid "TracForm %(form_id)s does not exist."
 msgstr ""
 
-#: tracforms/model.py:35
+#: tracforms/model.py:20
 msgid "Invalid form number"
 msgstr ""
 
-#: tracforms/model.py:66
+#: tracforms/model.py:65
 #, python-format
 msgid "with subcontext %(subcontext)s"
 msgstr ""
 
-#: tracforms/web_ui.py:57
-msgid "Form history"
+#: tracforms/web_ui.py:56
+msgid "Form details"
 msgstr ""
 
-#: tracforms/web_ui.py:58
-msgid "Review form changes"
+#: tracforms/web_ui.py:57
+msgid "Review form data"
 msgstr ""
 
 #: tracforms/web_ui.py:64
 msgid "Back to forms list"
 msgstr ""
 
-#. TRANSLATOR: Title HTML tag, usually browsers window title
-#: tracforms/web_ui.py:120
-#, python-format
-msgid "Form %(form_id)s (history)"
-msgstr ""
-
-#. TRANSLATOR: The title printed in form select page
-#: tracforms/web_ui.py:139
-#, python-format
-msgid "Forms in %(parent)s"
-msgstr ""
-
-#. TRANSLATOR: Title HTML tag, usually browsers window title
-#: tracforms/web_ui.py:141
-#, python-format
-msgid "Forms (%(parent)s)"
-msgstr ""
-
-#: tracforms/web_ui.py:144
+#: tracforms/web_ui.py:145
 #, python-format
 msgid "Form %(form_id)s"
 msgstr ""
 
-#: tracforms/web_ui.py:151
+#. TRANSLATOR: Form list entry for form select page
+#: tracforms/web_ui.py:152
 #, python-format
 msgid "%(form_id)s (subcontext = '%(subcontext)s')"
 msgstr ""
 
-#: tracforms/web_ui.py:206
+#: tracforms/web_ui.py:207
 #, python-format
 msgid "%(value)s reset to default value"
 msgstr ""
 
-#: tracforms/web_ui.py:209
+#: tracforms/web_ui.py:210
 #, python-format
 msgid "from default value set to %(value)s"
 msgstr ""
 
-#: tracforms/web_ui.py:212
+#: tracforms/web_ui.py:213
 #, python-format
 msgid "changed from %(old)s to %(new)s"
 msgstr ""
 
 #. TRANSLATOR: The realm name used as TracSearch filter label
-#: tracforms/web_ui.py:220
+#: tracforms/web_ui.py:221
 msgid "Forms"
 msgstr ""
 
-#: tracforms/templates/history.html:20
+#: tracforms/templates/form.html:20
 msgid "Change History"
 msgstr ""
 
-#: tracforms/templates/history.html:24
+#: tracforms/templates/form.html:24
 #, python-format
 msgid "Changed on %(time)s by %(author)s:"
 msgstr ""
 
-#: tracforms/templates/history.html:34
+#: tracforms/templates/form.html:34
 msgid "(No change recorded)"
 msgstr ""
 
-#: tracforms/templates/history.html:40
+#: tracforms/templates/form.html:40
 msgid "Reset form"
 msgstr ""
 
