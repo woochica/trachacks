@@ -168,6 +168,8 @@ class CloudModule(Component):
         if req.method == 'POST':
             if 'cancel' in req.args:
                 req.redirect(req.href.cloud(droplet_name,id))
+            elif 'execute' in req.args or action == 'execute':
+                droplet.execute(req, id)
             elif action == 'new':
                 droplet.create(req)
             elif action == 'delete':
@@ -178,20 +180,20 @@ class CloudModule(Component):
                 droplet.audit(req)
         else: # req.method == 'GET':
             if action in ('edit', 'new'):
-                template, data, content_type = droplet.render_edit(req, id)
+                template,data,content_type = droplet.render_edit(req, id)
                 Chrome(self.env).add_wiki_toolbars(req)
             elif action == 'delete':
-                template, data, content_type = droplet.render_delete(req, id)
+                template,data,content_type = droplet.render_delete(req, id)
             elif action == 'progress':
-                template, data, content_type = droplet.render_progress(req,file)
+                template,data,content_type = droplet.render_progress(req,file)
             elif id == '':
-                template, data, content_type = droplet.render_grid(req)
+                template,data,content_type = droplet.render_grid(req)
                 if content_type: # i.e. alternate format
-                    return template, data, content_type
+                    return template,data,content_type
             else:
-                template, data, content_type = droplet.render_view(req, id)
+                template,data,content_type = droplet.render_view(req, id)
                 if content_type: # i.e. alternate format
-                    return template, data, content_type
+                    return template,data,content_type
         
         # add contextual nav
         for u_order,droplet_name,title in self.titles:

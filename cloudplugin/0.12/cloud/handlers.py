@@ -108,6 +108,8 @@ class ListHandler(DefaultHandler):
     
     def convert_req(self, field, req):
         items = req.args.get(field, '')
+        if not items:
+            return []
         if not isinstance(items, list):
             items = items.split(',')
         return [item.strip() for item in items]

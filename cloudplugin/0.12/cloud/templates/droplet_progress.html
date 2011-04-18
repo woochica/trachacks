@@ -29,6 +29,7 @@
 
       var display = function(progress){
         jQuery("#title").text(progress['title'])
+        jQuery("#description").text(progress['description'])
         
         var done = false;
         var error = false;
@@ -99,6 +100,7 @@
   <body>
     <div id="content" class="droplet">
       <h1>$label <span id="title"></span></h1>
+      <p id="description" />
 	  
       <div id="progress">
         <table id="steps"/>

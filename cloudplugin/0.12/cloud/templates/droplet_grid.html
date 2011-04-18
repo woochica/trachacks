@@ -63,12 +63,12 @@
             <input type="submit" value="${_('Create New %(label)s', label=label) }" />
           </div>
         </form>
-        <form py:if="'CLOUD_VIEW' in perm(resource)" action="" method="post">
-          <div>
-            <input type="hidden" name="action" value="audit" />
-            <input type="submit" value="${_('Audit %(title)s', title=title) }" />
-          </div>
+        
+        <form py:if="'CLOUD_MODIFY' in perm(resource)" py:for="action,value in buttons" action="" method="post">
+          <input type="hidden" name="action" value="${action}" />
+          <input type="submit" value="${value}"/>
         </form>
+        
       </div>
       <h2 class="report-result" py:if="paginator.has_more_pages">
         Results <span class="numresults">(${paginator.displayed_items()})</span>

@@ -19,7 +19,7 @@ class Daemon(object):
     
     Usage: subclass the Daemon class and override the run() method
     """
-    def __init__(self, steps, title):
+    def __init__(self, steps, title, description=''):
         # setup command line parsing
         parser = OptionParser()
         parser.add_option("-d","--daemonize",default=False,action="store_true")
@@ -73,7 +73,7 @@ class Daemon(object):
         # prepare progress
         self.pidfile = tempfile.NamedTemporaryFile(delete=False).name
         self.progress = Progress(self.options.progress_file,
-                                 self.pidfile, steps, title,
+                                 self.pidfile, steps, title, description,
                                  {'0':(time.time(),None)})
         
     

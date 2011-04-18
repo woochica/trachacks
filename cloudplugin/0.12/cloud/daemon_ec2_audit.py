@@ -7,7 +7,8 @@ class Ec2Auditor(Daemon):
     """Audits the ec2 instances in a separate process."""
     
     def __init__(self):
-        Daemon.__init__(self, ['Determining differences..'], "Audit Progress")
+        Daemon.__init__(self, ['Determining differences..'], "Audit Progress",
+            "Auditing actual EC2 instances for discrepancies with chef")
         
     def run(self, sysexit=True):
         # first determine the steps

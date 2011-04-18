@@ -22,7 +22,7 @@
               <py:when test="False">
                 <label for="$field.name">$field.label:</label><br />
                 <div py:choose="field.kind">
-                  <select py:when="'multiselect'" id="$field.name" name="$field.name" size="10"
+                  <select py:when="'multiselect'" id="$field.name" name="$field.name" size="${min(len(field.options),10)}"
                           py:attrs="{'class':'multiselect','multiple':'multiple'}">
                     <option py:for="name,value in field.options"
                             selected="${value in field.get(item,req) or None}"
@@ -45,7 +45,7 @@
                 <label for="${field.name+'-disabled'}">${field.label}:</label><br />
                 <input id="${field.name+'-disabled'}" name="${field.name+'-disabled'}" value="${field.get(item,req)}"
                        py:attrs="{'disabled':'disabled'}" type="text" size="50"/>
-                <input type="hidden" id="$field.name" name="$field.name" value="${field.get(item,req)}" />
+                <input type="hidden" id="$field.name" name="$field.name" value="${field.get(item,req)}" /><br />
               </py:otherwise>
           
             </py:choose>
@@ -59,7 +59,7 @@
           </div>
           
           <div class="buttons">
-            <input type="submit" value="$button"/>
+            <input py:for="name,value in buttons" type="submit" name="${name}" value="${value}"/>
             <input type="submit" name="cancel" value="${_('Cancel')}"/>
           </div>
           

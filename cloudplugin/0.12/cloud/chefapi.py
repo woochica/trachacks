@@ -27,7 +27,7 @@ class ChefApi(object):
         self.log = log
         self.chef = chef.autoconfigure(self.base_path)
     
-    def search(self, index, sort=None, asc=1, limit=0, offset=0, q='*:*'):
+    def search(self, index, sort=None, asc=1, limit=1000, offset=0, q='*:*'):
         """Search the chefserver and return a list of dict items."""
         # setup the params
         if not sort:
@@ -70,7 +70,10 @@ class ChefApi(object):
             if id and name:
                 return chef.data_bag.DataBagItem(name, id, self.chef)
             if name:
-                return chef.data_bag.DataBag(name, self.chef)
+                bag = chef.data_bag.DataBag(name, self.chef)
+                if not bag.exists:
+                    bag.save()
+                return bag
             return chef.data_bag.DataBag.list(self.chef)
         if resource == 'clients':
             if id:
@@ -105,9 +108,8 @@ class ChefApi(object):
         
         items = []
         for id in ids:
-#            item = chef.data_bag.DataBagItem(bag_name, id, self.chef)
             item = self.databagitem(bag, id)
-            items.append( (item.get('order',99),item) )
+            items.append( (int(item.get('order',99)),item) )
         return [item for (u_order,item) in sorted(items)]
     
     def databagitem(self, bag, id, create=False, timeout=45.0):

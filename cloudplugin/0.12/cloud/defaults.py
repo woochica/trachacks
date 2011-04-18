@@ -17,6 +17,9 @@ droplet_defaults = {
     'field.run_list.label': 'Roles',
     'field.run_list.databag': 'roles', # special token
     'field.run_list.handler': 'RunListHandler',
+    'field.environment': 'select',
+    'field.environment.label': 'Environment',
+    'field.environment.databag': 'environment',
     'field.created_by': 'text',
     'field.created_by.label': 'Created By',
     'field.created_by.handler': 'AuthorHandler',
@@ -100,6 +103,82 @@ droplet_defaults = {
     'grid_index': 'rds', # data bag name, must match droplet name
     'grid_columns': 'id, dbname, created_by, created_at, availability_zone, multi_az, instance_class, allocated_storage, endpoint',
     'grid_sort': 'id',
+    'grid_asc': 1,
+  },
+  'cloud.command': {
+    'class': 'Command', # must exactly match corresponding Python class name
+    'description': "Commands to execute on ec2 instances by environment and role.  A command with an ID of 'deploy' will be used for deployments to environments.",
+    'title': 'Commands',
+    'label': 'Command',
+    'order': 3, # order in contextual nav from left to right
+    'id_field': 'name',
+    'node_ref_field': 'alias',
+    
+    # field definitions
+    'field.name': 'text',
+    'field.name.label': 'ID',
+    'field.description': 'text',
+    'field.description.label': 'Description',
+    'field.command': 'text',
+    'field.command.label': 'Command',
+    'field.cmd_environments': 'multiselect',
+    'field.cmd_environments.label': 'Execute in Environments',
+    'field.cmd_environments.databag': 'environment',
+    'field.cmd_environments.handler': 'ListHandler',
+    'field.cmd_roles': 'multiselect',
+    'field.cmd_roles.label': 'Execute for Roles',
+    'field.cmd_roles.databag': 'roles', # special token
+    'field.cmd_roles.handler': 'ListHandler',
+    
+    # create, read, update, delete views - chef resource name and fields
+    'crud_resource': 'data',
+    'crud_view': 'name, description, command, cmd_environments, cmd_roles',
+    'crud_new': 'name, description, command',
+    'crud_edit': 'name*, description,  command',
+    
+    # grid view - chef search index and fields
+    'grid_index': 'command', # data bag name, must match droplet name
+    'grid_columns': 'name, description',
+    'grid_sort': '',
+    'grid_asc': 1,
+  },
+  'cloud.environment': {
+    'class': 'Environment', # must exactly match corresponding Python class name
+    'description': 'Per-environment/profile configuration.',
+    'title': 'Environments',
+    'label': 'Environment',
+    'order': 4, # order in contextual nav from left to right
+    'id_field': 'name',
+    'node_ref_field': 'alias',
+    
+    # field definitions
+    'field.order': 'text',
+    'field.order.label': 'Order',
+    'field.name': 'text',
+    'field.name.label': 'Name',
+    'field.value': 'text',
+    'field.value.label': 'Value',
+    'field.branch': 'text',
+    'field.branch.label': 'Branch',
+    'field.rev': 'text',
+    'field.rev.label': 'Revision',
+    'field.last_rev_deployed': 'text',
+    'field.last_rev_deployed.label': 'Last Revision Deployed',
+    'field.cmd_roles': 'multiselect',
+    'field.cmd_roles.label': 'Deploy to Roles',
+    'field.cmd_roles.databag': 'roles', # special token
+    'field.cmd_roles.handler': 'ListHandler',
+    
+    # create, read, update, delete views - chef resource name and fields
+    'crud_resource': 'data',
+    'crud_view': 'order, name, value, branch, rev, last_rev_deployed, cmd_roles',
+    'crud_new': 'order, name, value, branch, rev',
+    'crud_edit': 'order, name, value, branch, rev',
+    
+    # grid view - chef search index and fields
+    'grid_index': 'environment', # data bag name, must match droplet name
+    'grid_columns': 'order, name, branch, rev, last_rev_deployed',
+    'grid_sort': 'order',
     'grid_asc': 1,
   },
 }

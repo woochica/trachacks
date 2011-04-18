@@ -24,13 +24,37 @@
         </tr>
       </table>
 	  
-      <div class="field">
-        <div class="system-message" py:if="error">
-          <strong>Error:</strong> $error
-        </div>
-      </div>
-      
       <div class="buttons">
+        <form py:if="'CLOUD_MODIFY' in perm(resource)" action="" method="post">
+          <div class="field" py:for="field in cmd_fields">
+            <br />
+            <label for="$field.name">$field.label:</label><br />
+            <div py:choose="field.kind">
+              <select py:when="'multiselect'" id="$field.name" name="$field.name" size="${min(len(field.options),10)}"
+                      py:attrs="{'class':'multiselect','multiple':'multiple'}">
+                <option py:for="name,value in field.options"
+                        selected="${value in field.get(item,req) or None}"
+                        value="$value">$name</option>
+              </select>
+              <select py:when="'select'" id="$field.name" name="$field.name">
+                <option py:for="name,value in field.options"
+                        selected="${value == field.get(item,req) or None}"
+                        value="$value">$name</option>
+              </select>
+              <input py:when="'checkbox'" id="$field.name" name="$field.name" value="1"
+                     checked="${field.get(item,req) or None}"
+                     type="checkbox" size="50"/>
+              <input py:otherwise="" id="$field.name" name="$field.name" value="${field.get(item,req)}"
+                     type="$field.kind" size="50"/>
+            </div>
+            <br />
+          </div>
+          <div py:for="action,value in buttons">
+            <input type="hidden" name="action" value="${action}" />
+            <input type="submit" value="${value}"/>
+          </div>
+        </form>
+        
         <form py:if="'CLOUD_MODIFY' in perm(resource)" action="" method="get">
           <input type="hidden" name="action" value="edit" />
           <input type="submit" value="${_('Edit %(label)s', label=label)}"/>

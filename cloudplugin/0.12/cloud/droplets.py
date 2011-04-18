@@ -145,6 +145,7 @@ class Droplet(object):
             return req.href.cloud(self.name, params)
         
         data = {'action': 'view',
+                'buttons': [],
                 'resource': resource,
                 'context': context,
                 'title': self.title,
@@ -291,11 +292,13 @@ class Droplet(object):
         
         data = {
             'title': _('%(label)s %(id)s', label=self.label, id=id),
+            'buttons': [],
             'action': 'view',
             'droplet_name': self.name,
             'id': id,
             'label': self.label,
-            'fields': self.fields.get_list('crud_view'),
+            'fields': self.fields.get_list('crud_view', filter=r"cmd_.*"),
+            'cmd_fields': self.fields.get_list('crud_view', filter=r"(?!cmd_)"),
             'item': item,
             'req': req,
             'error': req.args.get('error')}
@@ -323,14 +326,14 @@ class Droplet(object):
             req.perm.require('CLOUD_MODIFY')
             data.update({
                 'title': _('Edit  %(label)s %(id)s', label=self.label, id=id),
-                'button': _('Save %(label)s', label=self.label),
+                'buttons': [('save',_('Save %(label)s', label=self.label))],
                 'action': 'edit',
                 'fields': self.fields.get_list('crud_edit')})
         else:
             req.perm.require('CLOUD_CREATE')
             data.update({
                 'title': _('Create New %(label)s', label=self.label),
-                'button': _('Create %(label)s', label=self.label),
+                'buttons': [('new',_('Create %(label)s', label=self.label))],
                 'action': 'new',
                 'fields': self.fields.get_list('crud_new')})
         
@@ -366,18 +369,44 @@ class Droplet(object):
         return 'droplet_progress.html', data, None
     
     def create(self, req):
-        pass
+        req.perm.require('CLOUD_CREATE')
+        id = req.args.get('name')
+        self.log.debug('Creating data bag item %s/%s..' % (self.name,id))
+        fields = self.fields.get_list('crud_new', filter=r"cmd_.*")
+        self.save(req, id, fields, redirect=False)
+        add_notice(req, _('%(label)s %(id)s has been created.',
+                          label=self.label, id=id))
+        req.redirect(req.href.cloud(self.name, id))
     
-    def save(self, req):
-        pass
-    
+    def save(self, req, id, fields=None, redirect=True):
+        req.perm.require('CLOUD_MODIFY')
+        bag = self.chefapi.resource('data', name=self.name)
+        item = self.chefapi.databagitem(bag, id)
+        fields = fields or self.fields.get_list('crud_edit', filter=r"cmd_.*")
+        for field in fields:
+            field.set(item, req, default='')
+        item.save()
+        self.log.info('Saved data bag item %s/%s..' % (bag.name,id))
+        if redirect:
+            add_notice(req, _('%(label)s %(id)s has been saved.',
+                              label=self.label, id=id))
+            req.redirect(req.href.cloud(self.name, id))
+        
     def delete(self, req, id):
-        pass
-    
+        req.perm.require('CLOUD_DELETE')
+        self.log.debug('Deleting data bag item %s/%s..' % (self.name,id))
+        bag = self.chefapi.resource('data', name=self.name)
+        item = self.chefapi.databagitem(bag, id)
+        item.delete()
+        self.log.info('Deleted data bag item %s/%s' % (self.name,id))
+        add_notice(req, _('%(label)s %(id)s has been deleted.',
+                          label=self.label, id=id))
+        req.redirect(req.href.cloud(self.name))
+        
     def audit(self, req, id=None, redirect=True):
         req.redirect(req.href.cloud(self.name))
     
-    def _spwan(self, req, exe, launch_data, attributes):
+    def _spawn(self, req, exe, launch_data, attributes):
         """Helper function to spawn processes with progress tracking."""
         progress_file = Progress.get_file()
         
@@ -416,6 +445,12 @@ class Droplet(object):
 class Ec2Instance(Droplet):
     """An EC2 instance cloud droplet."""
     
+    def render_grid(self, req):
+        template,data,content_type = Droplet.render_grid(self, req)
+        button = ('audit',_('Audit %(title)s',title=self.title))
+        data['buttons'].append(button),
+        return template, data, content_type
+    
     def create(self, req):
         req.perm.require('CLOUD_CREATE')
         
@@ -430,12 +465,12 @@ class Ec2Instance(Droplet):
         
         # prepare attributes
         attributes = {}
-        fields = self.fields.get_list('crud_new', filter=r"ec2\..*")
+        fields = self.fields.get_list('crud_new', filter=r"(cmd_|ec2\.).*")
         for field in fields:
             field.set_dict(attributes, req=req, default='')
         
         exe = os.path.join(os.path.dirname(__file__),'daemon_ec2_launch.py')
-        self._spwan(req, exe, launch_data, attributes)
+        self._spawn(req, exe, launch_data, attributes)
     
     def save(self, req, id, fields=None, redirect=True):
         req.perm.require('CLOUD_MODIFY')
@@ -444,7 +479,7 @@ class Ec2Instance(Droplet):
         
         # prepare fields; remove automatic (ec2) fields
         if fields is None:
-            fields = self.fields.get_list('crud_edit', filter=r"ec2\..*")
+            fields = self.fields.get_list('crud_edit', filter=r"(cmd_|ec2\.).*")
         for field in fields:
             field.set(node, req)
         node.save()
@@ -495,11 +530,17 @@ class Ec2Instance(Droplet):
     def audit(self, req):
         req.perm.require('CLOUD_MODIFY')
         exe = os.path.join(os.path.dirname(__file__),'daemon_ec2_audit.py')
-        self._spwan(req, exe, {}, {})
+        self._spawn(req, exe, {}, {})
     
 
 class RdsInstance(Droplet):
     """An RDS instance cloud droplet."""
+    
+    def render_grid(self, req):
+        template,data,content_type = Droplet.render_grid(self, req)
+        button = ('audit',_('Audit %(title)s',title=self.title))
+        data['buttons'].append(button),
+        return template, data, content_type
     
     def create(self, req):
         req.perm.require('CLOUD_CREATE')
@@ -521,7 +562,7 @@ class RdsInstance(Droplet):
             field.set_dict(attributes, req=req, default='')
         
         exe = os.path.join(os.path.dirname(__file__),'daemon_rds_create.py')
-        self._spwan(req, exe, launch_data, attributes)
+        self._spawn(req, exe, launch_data, attributes)
     
     def save(self, req, id, fields=None, redirect=True):
         req.perm.require('CLOUD_MODIFY')
@@ -585,4 +626,61 @@ class RdsInstance(Droplet):
     def audit(self, req):
         req.perm.require('CLOUD_MODIFY')
         exe = os.path.join(os.path.dirname(__file__),'daemon_rds_audit.py')
-        self._spwan(req, exe, {}, {})
+        self._spawn(req, exe, {}, {})
+
+
+class Command(Droplet):
+    """A Command cloud droplet."""
+
+    def render_view(self, req, id):
+        template,data,content_type = Droplet.render_view(self, req, id)
+        button = ('execute',_('Execute %(label)s',label=self.label))
+        data['buttons'].append(button),
+        return template, data, content_type
+    
+    def _get_data(self, req, id):
+        req.perm.require('CLOUD_MODIFY')
+        item = self.chefapi.resource(self.crud_resource, id, self.name)
+        
+        # prepare launch data
+        launch_data = {'node_ref_field':self.node_ref_field}
+        for field in self.fields.get_list('crud_view', filter=r"(?!cmd_)"):
+            field.set_dict(launch_data, req=req)
+        
+        # prepare attributes
+        attributes = {}
+        for field in self.fields.get_list('crud_new', filter=r"cmd_.*"):
+            attributes[field.name] = field.get(item)
+            
+        exe = os.path.join(os.path.dirname(__file__),'daemon_ec2_command.py')
+        return launch_data, attributes, exe
+    
+    def execute(self, req, id, args=None):
+        launch_data, attributes, exe = self._get_data(req, id)
+        self._spawn(req, exe, launch_data, attributes)
+        
+
+class Environment(Command):
+    """An Environment cloud droplet."""
+    
+    def render_view(self, req, id):
+        template,data,content_type = Droplet.render_view(self, req, id)
+        if self._get_deploy_command():
+            button = ('execute',_('Deploy to %(label)s',label=self.label))
+            data['buttons'].append(button),
+        else:
+            data['cmd_fields'] = []
+        return template, data, content_type
+    
+    def _get_deploy_command(self):
+        try:
+            return self.chefapi.resource('data', 'deploy', 'command')
+        except:
+            return None
+    
+    def execute(self, req, id):
+        launch_data, attributes, exe = self._get_data(req, id)
+        launch_data['cmd_environments'] = [attributes['name']]
+        deploy = self._get_deploy_command()
+        attributes['command'] = deploy['command']
+        self._spawn(req, exe, launch_data, attributes)

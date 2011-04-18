@@ -9,6 +9,7 @@ class Progress(object):
     format:
     
       {'title': 'Progress',
+       'description': 'Progress on task blah',
        'steps': ['step1','step2','step3'],
        'status': {'0':(1298924180,1298924380),'1':(1298924381,None)},
        'id': 'ip-12-132-9-186.ec2.internal',
@@ -37,10 +38,11 @@ class Progress(object):
         return f.name
     
     def __init__(self, file, pidfile=None, steps=None, title=None,
-                 status=None, id=None):
+                 description=None, status=None, id=None):
         self.file = file
         progress = {'pidfile': pidfile or '',
                     'title': title or '',
+                    'description': description or '',
                     'steps': steps or [],
                     'status': status or {},
                     'id': id or '',
@@ -52,6 +54,11 @@ class Progress(object):
     def title(self, title):
         progress = self.get()
         progress['title'] = title
+        self.set(progress)
+        
+    def description(self, description):
+        progress = self.get()
+        progress['description'] = description
         self.set(progress)
         
     def steps(self, steps):

@@ -7,7 +7,8 @@ class RdsAuditor(Daemon):
     """Audits the rds instances in a separate process."""
     
     def __init__(self):
-        Daemon.__init__(self, ['Determining differences..'], "Audit Progress")
+        Daemon.__init__(self, ['Determining differences..'], "Audit Progress",
+            "Auditing actual RDS instances for discrepancies with chef")
         
     def run(self, sysexit=True):
         # first determine the steps
