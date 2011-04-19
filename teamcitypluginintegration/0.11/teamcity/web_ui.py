@@ -180,7 +180,8 @@ class TeamCityBuildPage(Component):
 				build_xml = tc.xml_query(url)
 				if build_xml is None:
 					continue
-				# here build as man info as possible and continue
+				proj_id = build_xml.xpath('/buildType/project/@id')[0]
+				# collect here as many build info as possible and continue
 				build_info = {
 					'btype_id': build_type,
 					'btype_name': build_xml.attrib['name'],
