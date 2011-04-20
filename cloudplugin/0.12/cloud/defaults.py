@@ -107,7 +107,7 @@ droplet_defaults = {
   },
   'cloud.command': {
     'class': 'Command', # must exactly match corresponding Python class name
-    'description': "Commands to execute on ec2 instances by environment and role.  A command with an ID of 'deploy' will be used for deployments to environments.",
+    'description': "Commands to execute on ec2 instances by environment and role.  Commands with an ID of 'deploy' and 'audit' will be used for deployments to and audits of environments, respectively.",
     'title': 'Commands',
     'label': 'Command',
     'order': 3, # order in contextual nav from left to right
@@ -158,14 +158,14 @@ droplet_defaults = {
     'field.name.label': 'Name',
     'field.value': 'text',
     'field.value.label': 'Value',
+    'field.dir': 'text',
+    'field.dir.label': 'Directory',
     'field.branch': 'text',
     'field.branch.label': 'Branch',
     'field.rev': 'text',
     'field.rev.label': 'Revision',
-    'field.last_rev_deployed': 'text',
-    'field.last_rev_deployed.label': 'Last Revision Deployed',
     'field.cmd_roles': 'multiselect',
-    'field.cmd_roles.label': 'Deploy to Roles',
+    'field.cmd_roles.label': 'Deploy to/Audit Roles',
     'field.cmd_roles.databag': 'roles', # special token
     'field.cmd_roles.handler': 'ListHandler',
     

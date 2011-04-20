@@ -168,16 +168,16 @@ class CloudModule(Component):
         if req.method == 'POST':
             if 'cancel' in req.args:
                 req.redirect(req.href.cloud(droplet_name,id))
-            elif 'execute' in req.args or action == 'execute':
-                droplet.execute(req, id)
             elif action == 'new':
                 droplet.create(req)
             elif action == 'delete':
                 droplet.delete(req, id)
             elif action == 'edit':
                 droplet.save(req, id)
-            elif action == 'audit':
-                droplet.audit(req)
+            elif action == 'audit' or 'audit' in req.args:
+                droplet.audit(req, id)
+            elif action == 'execute' or 'execute' in req.args:
+                droplet.execute(req, id)
         else: # req.method == 'GET':
             if action in ('edit', 'new'):
                 template,data,content_type = droplet.render_edit(req, id)

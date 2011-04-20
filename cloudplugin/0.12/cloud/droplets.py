@@ -527,7 +527,7 @@ class Ec2Instance(Droplet):
                   label=self.label, id=id, instance_id=instance_id))
         req.redirect(req.href.cloud(self.name))
         
-    def audit(self, req):
+    def audit(self, req, id):
         req.perm.require('CLOUD_MODIFY')
         exe = os.path.join(os.path.dirname(__file__),'daemon_ec2_audit.py')
         self._spawn(req, exe, {}, {})
@@ -623,7 +623,7 @@ class RdsInstance(Droplet):
                   label=self.label, id=id))
         req.redirect(req.href.cloud(self.name))
         
-    def audit(self, req):
+    def audit(self, req, id):
         req.perm.require('CLOUD_MODIFY')
         exe = os.path.join(os.path.dirname(__file__),'daemon_rds_audit.py')
         self._spawn(req, exe, {}, {})
@@ -665,22 +665,35 @@ class Environment(Command):
     
     def render_view(self, req, id):
         template,data,content_type = Droplet.render_view(self, req, id)
-        if self._get_deploy_command():
-            button = ('execute',_('Deploy to %(label)s',label=self.label))
-            data['buttons'].append(button),
+        deploy = self._get_command('deploy')
+        audit = self._get_command('audit')
+        if deploy or audit:
+            if deploy:
+                button = ('execute',_('Deploy to %(label)s',label=self.label))
+                data['buttons'].append(button)
+            if audit:
+                button = ('audit',_('Audit %(label)s',label=self.label))
+                data['buttons'].append(button)
         else:
             data['cmd_fields'] = []
         return template, data, content_type
     
-    def _get_deploy_command(self):
+    def _get_command(self, id):
         try:
-            return self.chefapi.resource('data', 'deploy', 'command')
+            return self.chefapi.resource('data', id, 'command')
         except:
             return None
     
     def execute(self, req, id):
         launch_data, attributes, exe = self._get_data(req, id)
         launch_data['cmd_environments'] = [attributes['name']]
-        deploy = self._get_deploy_command()
+        deploy = self._get_command('deploy')
+        attributes['command'] = deploy['command']
+        self._spawn(req, exe, launch_data, attributes)
+    
+    def audit(self, req, id):
+        launch_data, attributes, exe = self._get_data(req, id)
+        launch_data['cmd_environments'] = [attributes['name']]
+        deploy = self._get_command('audit')
         attributes['command'] = deploy['command']
         self._spawn(req, exe, launch_data, attributes)

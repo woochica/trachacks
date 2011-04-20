@@ -21,14 +21,20 @@ class Ec2Commander(Daemon):
         
     def run(self, sysexit=True):
         self.progress.description("Executing: %s" % self.attributes['command'])
-        
-        # first determine the steps
         ref_field = self.launch_data['node_ref_field']
-        environments = self.launch_data['cmd_environments']
+        
+        # build the query
+        queries = []
+        envs = self.launch_data['cmd_environments']
+        if envs:
+            query = '('+' OR '.join(['environment:%s' % e for e in envs])+')'
+            queries.append(query)
         roles = self.launch_data['cmd_roles']
-        eq = ' OR '.join(['environment:%s' % e for e in environments])
-        rq = ' OR '.join(['role:%s' % r for r in roles])
-        q = '(%s) AND (%s)' % (eq,rq)
+        if roles:
+            query = '('+' OR '.join(['role:%s' % r for r in roles])+')'
+            queries.append(query)
+        q = ' AND '.join(queries) or '*:*'
+        
         self.log.debug('Querying for nodes with query %s' % q)
         nodes,total = self.chefapi.search('node', sort=ref_field, q=q)
         if len(nodes)> 0:
@@ -38,7 +44,7 @@ class Ec2Commander(Daemon):
         else:
             self.progress.error("No nodes found for query '%s'" % q)
         
-        # Deploy to each instance
+        # Execute for each instance
         step = 0
         for node in nodes:
             self.progress.start(step)
@@ -51,7 +57,19 @@ class Ec2Commander(Daemon):
             cmd = self.attributes['command'] % self.attributes
             
             # execute the command
-            self._execute(cmd)
+            out = self._execute(cmd).strip()
+            
+            # check to update step
+            lastline = out.split('\n')[-1] # skips any warnings, etc.
+            try:
+                data = json.loads(lastline)
+                if isinstance(data,list):
+                    progress = self.progress.get()
+                    progress['steps'][step] += ''.join(data)
+                    self.progress.set(progress)
+            except:
+                pass
+            
             self.progress.done(step)
             step += 1
         
@@ -71,6 +89,7 @@ class Ec2Commander(Daemon):
             raise CommandError(p.returncode, cmd, out)
         else:
             self.log.info("%s\nSuccessfully ran: %s" % (out,cmd))
+            return out
 
 
 if __name__ == "__main__":
