@@ -82,7 +82,19 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         for i in xrange(len(releases) - 2):
             prev, cur, next = releases[i : i + 3]
 
-            if prev == None:
+            if prev == None and next == None:
+                # no releases yet, just show trunk
+                items.append(
+                    " * "
+                    " [/browser/%(path)s/trunk trunk]"
+                    " ("
+                    "[/log/%(path)s/trunk changes]"
+                    " [/changeset?new_path=%(path)s/trunk diffs]"
+                    ")"
+                % {
+                    'path': path,
+                })
+            elif prev == None:
                 # first entry = trunk
                 items.append(
                     " * "
