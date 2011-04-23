@@ -53,9 +53,15 @@ class RdsAuditor(Daemon):
                 for field,value in instance.__dict__.items():
                     if type(value) in (unicode,str,int,float,bool):
                         item[field.lower()] = value
-                item['endpoint'] = instance.endpoint[0]
-                item['endpoint_port'] = instance.endpoint[1]
-                
+                if hasattr(instance, 'endpoint') and instance.endpoint:
+                    item['endpoint'] = instance.endpoint[0]
+                    item['endpoint_port'] = instance.endpoint[1]
+                else:
+                    self.log.debug('No endpoint (yet) for rds instance %s' % id)
+                    progress = self.progress.get()
+                    progress['steps'][step] += ' <i>(no endpoint)</i>'
+                    self.progress.set(progress)
+                    
                 self.log.debug('Saving data bag item %s/%s..' % (bag.name,id))
                 item.save()
                 self.log.debug('Saved data bag item %s/%s' % (bag.name,id))

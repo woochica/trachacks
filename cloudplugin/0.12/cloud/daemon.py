@@ -42,7 +42,7 @@ class Daemon(object):
         (self.options, _args) = parser.parse_args()
         
         # setup logging (presumes something else will rotate it)
-        self.log = logging.getLogger("Ec2Launcher")
+        self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(self.options.log_level)
         self.handler = logging.FileHandler(self.options.log_file)
         self.handler.setLevel(self.options.log_level)
