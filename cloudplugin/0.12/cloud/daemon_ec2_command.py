@@ -36,10 +36,13 @@ class Ec2Commander(Daemon):
         q = ' AND '.join(queries) or '*:*'
         
         self.log.debug('Querying for nodes with query %s' % q)
-        nodes,total = self.chefapi.search('node', sort=ref_field, q=q)
+        nodes,_ = self.chefapi.search('node', sort=ref_field, q=q)
         if len(nodes)> 0:
             self.log.debug('Generating steps for %d nodes..' % len(nodes))
-            steps = ["Executing for node %s" % n[ref_field] for n in nodes]
+            try:
+                steps = ["Executing for node %s" % n[ref_field] for n in nodes]
+            except KeyError:
+                steps = ["Executing for node %s" % n.name for n in nodes]
             self.progress.steps(steps)
         else:
             self.progress.error("No nodes found for query '%s'" % q)
