@@ -10,6 +10,6 @@ class QueryWebUiAddon(Component):
 
     def post_process_request(self, req, template, data, content_type):
         if template == 'query.html':
-            add_script(req, req.href.chrome("billing/query.js"))        
+            add_script(req, "billing/query.js")
             
         return (template, data, content_type)   
