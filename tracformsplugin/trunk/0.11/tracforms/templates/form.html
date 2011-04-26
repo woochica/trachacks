@@ -62,6 +62,9 @@
           <input type="submit" name="reset"
                  title="Reset fields and delete history"
                  value="${dgettext('tracforms', 'Reset form')}" />
+          <input type="submit" name="rewind"
+                 value="${dgettext('tracforms', 'Revert latest change')}"
+                 py:if="history" />
         </div>
       </form>
     </div>

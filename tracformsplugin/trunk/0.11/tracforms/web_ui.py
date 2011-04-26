@@ -159,11 +159,15 @@ class FormUI(FormDBUser):
 
     def _do_reset(self, env, req, form):
         author = req.authname
+        if 'rewind' in req.args:
+            step = -1
+        elif 'reset' in req.args:
+            step = 0
         if form.resource.id is not None:
-            self.reset_tracform(form.resource.id, author=author)
+            self.reset_tracform(form.resource.id, author=author, step=step)
         else:
-            self.reset_tracform(
-                tuple([form.parent.realm, form.parent.id]), author=author)
+            self.reset_tracform(tuple([form.parent.realm, form.parent.id]),
+                                author=author, step=step)
         return self._do_view(env, req, form)
 
     def _render_fields(self, form_id, state):
