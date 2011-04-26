@@ -81,7 +81,8 @@ class IFormDBObserver(Interface):
     def get_tracfrom_fieldinfo(self, src, field, cursor=None):
         pass
 
-    def reset_tracform(self, src, field=None, author=None, cursor=None):
+    def reset_tracform(self, src, field=None, author=None, step=0,
+                        cursor=None):
         pass
 
     def search_tracforms(self, env, terms, cursor=None):

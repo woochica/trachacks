@@ -213,14 +213,24 @@ class FormUI(FormDBUser):
                        shorten_result(state, terms))
 
 
-def parse_history(changes):
-    """Flexible history parser for TracForms.
+def parse_history(changes, fieldwise=False):
+    """Versatile history parser for TracForms.
 
     Returns either a list of dicts for changeset display in form view or
     a dict of field change lists for stepwise form reset.
     """
     fieldhistory = {}
     history = []
+    if not fieldwise == False:
+        def _add_change(fieldhistory, field, author, time, old, new):
+            if field not in fieldhistory.keys():
+                fieldhistory[field] = [{'author': author, 'time': time,
+                                        'old': old, 'new': new}]
+            else:
+                fieldhistory[field].append({'author': author, 'time': time,
+                                            'old': old, 'new': new})
+            return fieldhistory
+
     new_fields = None
     for changeset in changes:
         # break down old and new version
@@ -240,21 +250,31 @@ def parse_history(changes):
         for field, old_value in old_fields.iteritems():
             new_value = new_fields.get(field)
             if new_value != old_value:
-                change = _render_change(old_value, new_value)
-                if change is not None:
-                    updated_fields[field] = change
+                if fieldwise == False:
+                    change = _render_change(old_value, new_value)
+                    if change is not None:
+                        updated_fields[field] = change
+                else:
+                    fieldhistory = _add_change(fieldhistory, field,
+                                               last_author, last_change,
+                                               old_value, new_value)
         for field in new_fields:
             if old_fields.get(field) is None:
-                change = _render_change(None, new_fields[field])
-                if change is not None:
-                    updated_fields[field] = change
+                if fieldwise == False:
+                    change = _render_change(None, new_fields[field])
+                    if change is not None:
+                        updated_fields[field] = change
+                else:
+                    fieldhistory = _add_change(fieldhistory, field,
+                                               last_author, last_change,
+                                               None, new_fields[field])
         new_fields = old_fields
         history.append({'author': last_author,
                         'time': format_datetime(last_change),
                         'changes': updated_fields})
         last_author = changeset['author']
         last_change = changeset['time']
-    return history
+    return fieldwise == False and history or fieldhistory
 
 def _render_change(old, new):
     rendered = None

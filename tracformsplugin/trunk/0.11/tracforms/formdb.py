@@ -12,6 +12,7 @@ from api import IFormDBObserver, _
 from compat import json, parse_qs
 from tracdb import DBComponent
 from util import resource_from_page, xml_unescape
+from web_ui import parse_history
 
 
 class FormDBComponent(DBComponent):
@@ -231,16 +232,18 @@ class FormDBComponent(DBComponent):
                 AND field = %s
             """, form_id, field).firstrow or (None, None)
 
-    def reset_tracform(self, src, field=None, author=None, cursor=None):
+    def reset_tracform(self, src, field=None,
+                        author=None, step=0, cursor=None):
         """Delete method for all TracForms db tables.
 
         Note, that we only delete recorded values and history here, while
         the form definition (being part of forms parent resource) is retained.
+        Reset of single fields is not implemented, because this would require
+        cumbersome and error prown history rewriting - not worth the hassle.
         """
-        # DEVEL: reset of single fields not implemented yet
         cursor = self.get_cursor(cursor)
         form_ids = []
-        # collect form_id(s) to reset
+        # identify form_id(s) to reset
         if isinstance(src, int):
             form_ids.append(src)
         elif isinstance(src, tuple) and len(src) == 3:
@@ -251,26 +254,84 @@ class FormDBComponent(DBComponent):
                     form_ids.append(form_id)
             else:
                 form_ids.append(self.get_tracform_meta(src, cursor=cursor)[0])
-        for form_id in form_ids:
-            cursor("""
-                DELETE
-                FROM    forms_history
-                WHERE   id = %s
-                """, form_id)
-            cursor("""
-                DELETE
-                FROM    forms_fields
-                WHERE   id = %s
-                """, form_id)
-            # don't delete basic form reference but save reset as form change
-            # to prevent creation of new form id for further retention data
-            cursor("""
-                UPDATE  forms
-                    SET state = %s,
-                        author = %s,
-                        time = %s
-                WHERE   id = %s
-                """, '{}', author, int(time.time()), form_id)
+        # restore of old values for multiple forms is not meaningful
+        if step == -1 and len(form_ids) == 1:
+            form_id = form_ids[0]
+            now = int(time.time())
+            author, updated_on, old_state = self.get_tracform_history(
+                                            form_id, cursor=cursor) \
+                                            .firstrow or (author, now, '{}')
+            if updated_on == now:
+                # no history recorded, so only form values can be reset
+                step = 0
+            else:
+                # copy last old_state to current
+                cursor("""
+                    UPDATE forms
+                        SET author = %s,
+                            time = %s,
+                            state = %s
+                    WHERE   id = %s
+                    """, author, updated_on, old_state, form_id)
+                history = []
+                records = self.get_tracform_history(form_id, cursor=cursor)
+                for history_author, history_time, old_state in records:
+                    history.append({'author': history_author,
+                                    'time': history_time,
+                                    'old_state': old_state})
+                history = parse_history(history, fieldwise=True)
+                # delete restored history entry
+                cursor("""
+                    DELETE
+                    FROM    forms_history
+                    WHERE   id = %s
+                        AND time = %s
+                    """, form_id, updated_on)
+                # rollback field info changes
+                for field in history.keys():
+                    changes = history[field]
+                    if len(changes) > 0:
+                        # restore last field info, unconditional by intention
+                        # i.e. to not create entries, if track_fields is False
+                        cursor("""
+                            UPDATE  forms_fields
+                                SET author = %s,
+                                    time = %s
+                            WHERE   id = %s
+                                AND field = %s
+                            """, changes[0]['author'], changes[0]['time'],
+                                 form_id, field)
+                    else:
+                        # delete current field info
+                        cursor("""
+                            DELETE
+                            FROM    forms_fields
+                            WHERE   id = %s
+                               AND  field = %s
+                            """, form_id, field)
+        if step == 0:
+            # reset all fields and delete full history
+            for form_id in form_ids:
+                cursor("""
+                    DELETE
+                    FROM    forms_history
+                    WHERE   id = %s
+                    """, form_id)
+                cursor("""
+                    DELETE
+                    FROM    forms_fields
+                    WHERE   id = %s
+                    """, form_id)
+                # don't delete basic form reference but save the reset
+                # as a form change to prevent creation of a new form_id
+                # for further retention data
+                cursor("""
+                    UPDATE  forms
+                        SET author = %s,
+                            time = %s,
+                            state = %s
+                    WHERE   id = %s
+                    """, author, int(time.time()), '{}', form_id)
 
     def search_tracforms(self, env, terms, cursor=None):
         """Backend method for TracForms ISearchSource implementation."""
