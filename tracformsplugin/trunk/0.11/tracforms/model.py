@@ -71,6 +71,6 @@ class Form(object):
                                                            parent_id]))
         if len(self.siblings) == 1:
             # form_id in single form situation
-            self.id = int(self.siblings[0][0])
+            self.id = self.siblings[0][0]
             self.subcontext = self.siblings[0][1]
 

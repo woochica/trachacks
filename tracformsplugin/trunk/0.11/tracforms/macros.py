@@ -127,6 +127,7 @@ class FormProcessor(object):
             self.form_subcontext, self.form_updater, self.form_updated_on,
             self.form_keep_history, self.form_track_fields) = \
             self.macro.get_tracform_meta(self.context)
+        self.form_id = self.form_id is not None and int(self.form_id) or None
 
         # Wiki-ize the text, this will allow other macros to execute after
         # which we can do our own replacements within whatever formatted

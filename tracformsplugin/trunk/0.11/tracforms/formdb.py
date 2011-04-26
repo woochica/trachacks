@@ -39,7 +39,7 @@ class FormDBComponent(DBComponent):
         results = cursor(sql, *src)
         if results is not None:
             for form_id, subcontext in results:
-                ids.append(tuple([form_id, subcontext]))
+                ids.append(tuple([int(form_id), subcontext]))
         else:
             raise ResourceNotFound(
                     _("""No data recorded for a TracForms form in
@@ -194,7 +194,10 @@ class FormDBComponent(DBComponent):
 
     def get_tracform_history(self, src, cursor=None):
         cursor = self.get_cursor(cursor)
-        form_id = self.get_tracform_meta(src, cursor=cursor)[0]
+        if isinstance(src, int):
+            form_id = src
+        else:
+            form_id = self.get_tracform_meta(src, cursor=cursor)[0]
         return cursor("""
             SELECT  author, time, old_state
             FROM    forms_history
@@ -204,7 +207,10 @@ class FormDBComponent(DBComponent):
 
     def get_tracform_fields(self, src, cursor=None):
         cursor = self.get_cursor(cursor)
-        form_id = self.get_tracform_meta(src, cursor=cursor)[0]
+        if isinstance(src, int):
+            form_id = src
+        else:
+            form_id = self.get_tracform_meta(src, cursor=cursor)[0]
         return cursor("""
             SELECT  field, author, time
             FROM    forms_fields
@@ -214,7 +220,10 @@ class FormDBComponent(DBComponent):
     def get_tracform_fieldinfo(self, src, field, cursor=None):
         """Retrieve author and time of last change per field."""
         cursor = self.get_cursor(cursor)
-        form_id = self.get_tracform_meta(src, cursor=cursor)[0]
+        if isinstance(src, int):
+            form_id = src
+        else:
+            form_id = self.get_tracform_meta(src, cursor=cursor)[0]
         return cursor("""
             SELECT  author, time
             FROM    forms_fields
