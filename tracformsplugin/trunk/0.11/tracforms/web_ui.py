@@ -119,8 +119,11 @@ class FormUI(FormDBUser):
                                                       href=req.href)
         data['title'] = get_resource_shortname(env, form.resource)
         # prime list with current state
-        author, time = self.get_tracform_meta(form_id)[4:6]
+        subcontext, author, time = self.get_tracform_meta(form_id)[3:6]
+        if not subcontext == '':
+            data['subcontext'] = subcontext
         state = self.get_tracform_state(form_id)
+        data['fields'] = self._render_fields(form_id, state)
         history = [{'author': author, 'time': time,
                     'old_state': state}]
         # add recorded old_state
@@ -165,6 +168,25 @@ class FormUI(FormDBUser):
             self.reset_tracform(
                 tuple([form.parent.realm, form.parent.id]), author=author)
         return self._do_switch(env, req, form)
+
+    def _render_fields(self, form_id, state):
+        fields = json.loads(state is not None and state or '{}')
+        rendered = []
+        for name, value in fields.iteritems():
+            if value == 'on':
+               value = _("checked (checkbox)")
+            elif value == '':
+               value = _("empty (text field)")
+            else:
+               value = '\'' + value + '\''
+            author, time = self.get_tracform_fieldinfo(form_id, name)
+            rendered.append(
+                {'name': name, 'value': value,
+                 'author': tag.span(tag_("by %(author)s", author=author),
+                                    class_='author'),
+                 'time': time is not None and tag.span(
+                         format_datetime(time), class_='date') or None})
+        return rendered
 
     # ISearchSource methods
 
