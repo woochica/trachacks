@@ -74,3 +74,12 @@ class Form(object):
             self.id = self.siblings[0][0]
             self.subcontext = self.siblings[0][1]
 
+    @property
+    def has_data(self):
+        """Return whether there is any form content stored."""
+        return (self.forms.get_tracform_fields(self.id) \
+                .firstrow is not None or \
+                self.forms.get_tracform_history(self.id) \
+                .firstrow is not None or \
+                self.forms.get_tracform_state(self.id) not in [None, '{}'])
+

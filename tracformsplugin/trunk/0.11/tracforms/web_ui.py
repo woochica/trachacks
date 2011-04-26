@@ -2,7 +2,7 @@
 
 import re
 
-from genshi.builder import tag
+from genshi.builder import Markup, tag
 from pkg_resources import resource_filename
 
 from trac.core import implements
@@ -134,9 +134,7 @@ class FormUI(FormDBUser):
         data['history'] = parse_history(history)
         # show reset button in case of existing data and proper permission
         data['allow_reset'] = req.perm(form.resource) \
-                              .has_permission('FORM_RESET') and \
-                              self.get_tracform_fields(form_id) \
-                              .firstrow is not None
+                              .has_permission('FORM_RESET') and form.has_data
         add_stylesheet(req, 'tracforms/tracforms.css')
         return 'form.html', data, None
 
@@ -268,8 +266,14 @@ def _render_change(old, new):
         rendered = tag_("from default value set to %(value)s",
                             value=tag.em(new))
     elif old and new:
-        rendered = tag_("changed from %(old)s to %(new)s",
+        if len(old) < 20 and len(new) < 20:
+            rendered = tag_("changed from %(old)s to %(new)s",
                             old=tag.em(old), new=tag.em(new))
+        else:
+            nbsp = Markup('<br />')
+            # TRANSLATOR: same as before, but with additional line breaks
+            rendered = tag_("changed from %(old)s to %(new)s",
+                            old=tag.em(nbsp, old), new=tag.em(nbsp, new))
     return rendered
 
 def _render_values(state):
