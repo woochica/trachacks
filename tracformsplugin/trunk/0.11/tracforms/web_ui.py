@@ -21,7 +21,7 @@ from tracdb import DBCursor
 from util import resource_from_page
 
 tfpageRE = re.compile('/form(/\d+|$)')
- 
+
 
 class FormUI(FormDBUser):
     """Provides TracSearch support for TracForms."""
@@ -102,7 +102,7 @@ class FormUI(FormDBUser):
                     return self._do_reset(env, req, form)
 
             req.perm(form.resource).require('FORM_VIEW')
-            return self._do_history(env, req, form)
+            return self._do_view(env, req, form)
 
         if req.args.get('action') == 'select':
             realm=req.args.get('realm')
@@ -112,7 +112,7 @@ class FormUI(FormDBUser):
                 req.perm(form.resource).require('FORM_VIEW')
                 return self._do_switch(env, req, form)
 
-    def _do_history(self, env, req, form):
+    def _do_view(self, env, req, form):
         data = {}
         form_id = form.resource.id
         data['page_title'] = get_resource_description(env, form.resource,
@@ -128,7 +128,7 @@ class FormUI(FormDBUser):
         for author, time, old_state in records:
             history.append({'author': author, 'time': time,
                             'old_state': old_state})
-        data['history'] = self._render_history(history)
+        data['history'] = parse_history(history)
         # show reset button in case of existing data and proper permission
         data['allow_reset'] = req.perm(form.resource) \
                               .has_permission('FORM_RESET') and \
@@ -166,55 +166,6 @@ class FormUI(FormDBUser):
                 tuple([form.parent.realm, form.parent.id]), author=author)
         return self._do_switch(env, req, form)
 
-    def _render_history(self, changes):
-        history = []
-        new_fields = None
-        for changeset in changes:
-            # break down old and new version
-            try:
-                old_fields = json.loads(changeset.get('old_state', '{}'))
-            except ValueError:
-                # skip invalid history
-                old_fields = {}
-                pass
-            if new_fields is None:
-                new_fields = old_fields
-                last_change = changeset['time']
-                continue
-            updated_fields = []
-            for field, old_value in old_fields.iteritems():
-                if new_fields.get(field) != old_value:
-                    change = self._render_change(old_value,
-                                                 new_fields.get(field))
-                    if change is not None:
-                        updated_fields.append({'field': tag.strong(field),
-                                               'change': change})
-            for field in new_fields:
-                if old_fields.get(field) is None:
-                    change = self._render_change(None, new_fields[field])
-                    if change is not None:
-                        updated_fields.append({'field': tag.strong(field),
-                                               'change': change})
-            new_fields = old_fields
-            history.append({'author': changeset['author'],
-                            'time': format_datetime(last_change),
-                            'changes': updated_fields})
-            last_change = changeset['time']
-        return history
-
-    def _render_change(self, old, new):
-        rendered = None
-        if old and not new:
-            rendered = tag_("%(value)s reset to default value",
-                                value=tag.em(old))
-        elif new and not old:
-            rendered = tag_("from default value set to %(value)s",
-                                value=tag.em(new))
-        elif old and new:
-            rendered = tag_("changed from %(old)s to %(new)s",
-                                old=tag.em(old), new=tag.em(new))
-        return rendered
-
     # ISearchSource methods
 
     def get_search_filters(self, req):
@@ -242,6 +193,62 @@ class FormUI(FormDBUser):
                        to_datetime(updated_on), author,
                        shorten_result(state, terms))
 
+
+def parse_history(changes):
+    """Flexible history parser for TracForms.
+
+    Returns either a list of dicts for changeset display in form view or
+    a dict of field change lists for stepwise form reset.
+    """
+    fieldhistory = {}
+    history = []
+    new_fields = None
+    for changeset in changes:
+        # break down old and new version
+        try:
+            old_fields = json.loads(changeset.get('old_state', '{}'))
+        except ValueError:
+            # skip invalid history
+            old_fields = {}
+            pass
+        if new_fields is None:
+            # first loop cycle: only load values for comparison next time
+            new_fields = old_fields
+            last_author = changeset['author']
+            last_change = changeset['time']
+            continue
+        updated_fields = {}
+        for field, old_value in old_fields.iteritems():
+            new_value = new_fields.get(field)
+            if new_value != old_value:
+                change = _render_change(old_value, new_value)
+                if change is not None:
+                    updated_fields[field] = change
+        for field in new_fields:
+            if old_fields.get(field) is None:
+                change = _render_change(None, new_fields[field])
+                if change is not None:
+                    updated_fields[field] = change
+        new_fields = old_fields
+        history.append({'author': last_author,
+                        'time': format_datetime(last_change),
+                        'changes': updated_fields})
+        last_author = changeset['author']
+        last_change = changeset['time']
+    return history
+
+def _render_change(old, new):
+    rendered = None
+    if old and not new:
+        rendered = tag_("%(value)s reset to default value",
+                            value=tag.em(old))
+    elif new and not old:
+        rendered = tag_("from default value set to %(value)s",
+                            value=tag.em(new))
+    elif old and new:
+        rendered = tag_("changed from %(old)s to %(new)s",
+                            old=tag.em(old), new=tag.em(new))
+    return rendered
 
 def _render_values(state):
     fields = []
