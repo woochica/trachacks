@@ -152,7 +152,7 @@ class FormProcessor(object):
             form_class = self.form_class
             form_cssid = self.form_cssid or self.subcontext
             form_name = self.form_name or self.subcontext
-            dest = self.formatter.req.href('/formdata/update')
+            dest = self.formatter.req.href('/form/update')
             yield ('<FORM class="printableform" ' +
                     'method="POST" action=%r' % str(dest) +
                     (form_cssid is not None 

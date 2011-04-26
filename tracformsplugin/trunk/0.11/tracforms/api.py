@@ -229,7 +229,7 @@ class FormUpdater(FormDBUser, PasswordStoreUser):
     implements(IRequestHandler)
 
     def match_request(self, req):
-        return req.path_info.endswith('/formdata/update')
+        return req.path_info.endswith('/form/update')
 
     def process_request(self, req):
         req.perm.require('FORM_EDIT_VAL')

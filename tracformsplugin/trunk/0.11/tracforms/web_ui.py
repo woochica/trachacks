@@ -20,6 +20,8 @@ from model import Form
 from tracdb import DBCursor
 from util import format_values, resource_from_page
 
+tfpageRE = re.compile('/form(/\d+|$)')
+ 
 
 class FormUI(FormDBUser):
     """Provides TracSearch support for TracForms."""
@@ -37,7 +39,7 @@ class FormUI(FormDBUser):
         page = req.path_info
         realm, resource_id = resource_from_page(env, page)
         # break (recursive) search for form in forms realm
-        if not page.startswith('/form') and resource_id is not None:
+        if tfpageRE.match(page) == None and resource_id is not None:
             if page == '/wiki' or page == '/wiki/':
                 page = '/wiki/WikiStart'
             form = Form(env, realm, resource_id)
