@@ -97,9 +97,8 @@ class FormUI(FormDBUser):
         if form_id is not None:
             form = Form(env, form_id=form_id)
             if req.method == 'POST':
-                if req.args.get('action') == 'reset':
-                    req.perm(form.resource).require('FORM_RESET')
-                    return self._do_reset(env, req, form)
+                req.perm(form.resource).require('FORM_RESET')
+                return self._do_reset(env, req, form)
 
             req.perm(form.resource).require('FORM_VIEW')
             return self._do_view(env, req, form)
@@ -165,7 +164,7 @@ class FormUI(FormDBUser):
         else:
             self.reset_tracform(
                 tuple([form.parent.realm, form.parent.id]), author=author)
-        return self._do_switch(env, req, form)
+        return self._do_view(env, req, form)
 
     def _render_fields(self, form_id, state):
         fields = json.loads(state is not None and state or '{}')

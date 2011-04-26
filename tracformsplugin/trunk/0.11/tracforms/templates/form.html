@@ -58,10 +58,10 @@
       </div>
       <form id="form_reset" method="post"
             py:if="allow_reset is True">
-        <div class="buttons">
+        <div class="buttons" id="reset">
           <input type="submit" name="reset"
+                 title="Reset fields and delete history"
                  value="${dgettext('tracforms', 'Reset form')}" />
-          <input type="hidden" name="action" value="reset"/>
         </div>
       </form>
     </div>
