@@ -13,8 +13,7 @@ from trac.util.text  import to_unicode
 
 from compat          import json
 
-__all__ = ['format_values', 'resource_from_page', 'xml_escape',
-           'xml_unescape']
+__all__ = ['resource_from_page', 'xml_escape', 'xml_unescape']
 
 
 # code from an article published by Uche Ogbuji on 15-Jun-2005 at
@@ -51,12 +50,6 @@ def _replace_entities(match):
     else:
         repl = ent
     return repl
-
-def format_values(state):
-    fields = []
-    for name, value in json.loads(state or '{}').iteritems():
-        fields.append(name + ': ' + value)
-    return '; '.join(fields)
 
 def resource_from_page(env, page):
     resource_realm = None

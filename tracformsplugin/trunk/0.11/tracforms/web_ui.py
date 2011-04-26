@@ -18,7 +18,7 @@ from api import FormDBUser, _, tag_
 from compat import json
 from model import Form
 from tracdb import DBCursor
-from util import format_values, resource_from_page
+from util import resource_from_page
 
 tfpageRE = re.compile('/form(/\d+|$)')
  
@@ -236,9 +236,16 @@ class FormUI(FormDBUser):
                 form = form.resource
                 # build a more human-readable form values representation,
                 # especially with unicode character escapes removed
-                state = format_values(state)
+                state = _render_values(state)
                 yield (get_resource_url(env, form, req.href),
                        get_resource_description(env, form),
                        to_datetime(updated_on), author,
                        shorten_result(state, terms))
+
+
+def _render_values(state):
+    fields = []
+    for name, value in json.loads(state or '{}').iteritems():
+        fields.append(name + ': ' + value)
+    return '; '.join(fields)
 
