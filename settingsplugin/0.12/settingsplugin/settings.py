@@ -14,6 +14,7 @@ Extends command `trac-admin` with some more commands:
  - `component removeall <pattern>`: Remove all components with a specific pattern
  - `milestone removeall <pattern>`: Remove all milestones with a specific pattern
  - `version removeall <pattern>`: Remove all versions with a specific pattern
+ - `permission removeall <user_pattern>`: Remove all permissions of users with a specific pattern
  - `ticket_type removeall <pattern>`: Remove all ticket_types with a specific pattern
  - `priority removeall <pattern>`: Remove all priorities with a specific pattern
  - `config setall <path/to/file>`: Set all config options from file to `trac.ini`
@@ -24,6 +25,8 @@ Pattern can have wildcards (%). Examples usage of commands:
 trac-admin </path/to/projenv> component removeall component%
 # removes ALL (!) versions
 trac-admin </path/to/projenv> version removeall %
+# removes all permissions of user anonymous
+trac-admin </path/to/projenv> permission removeall anonymous
 # overrides and creates all config entries from `company.ini`
 trac-admin </path/to/projenv> config setall company.ini
 }}}
@@ -41,6 +44,9 @@ trac-admin </path/to/projenv> config setall company.ini
         yield ('version removeall', '<pattern>',
                'Remove all versions with a specific pattern (see settingsplugin)',
                None, self._do_remove_all_versions)
+        yield ('permission removeall', '<user_pattern>',
+               'Remove all permissions of users with a specific pattern (see settingsplugin)',
+               None, self._do_remove_all_permissions)
         yield ('ticket_type removeall', '<pattern>',
                'Remove all ticket_types with a specific pattern (see settingsplugin)',
                None, self._do_remove_all_ticket_types)
@@ -74,6 +80,14 @@ trac-admin </path/to/projenv> config setall company.ini
             cursor.execute("delete from version where name like '%s'" % pattern)
             db.commit()
             print "successfully removed versions with name like %s" % pattern
+    
+    def _do_remove_all_permissions(self, pattern):
+        @self.env.with_transaction()
+        def do_remove(db):
+            cursor = db.cursor()
+            cursor.execute("delete from permission where username like '%s'" % pattern)
+            db.commit()
+            print "successfully removed permissions with user name like %s" % pattern
     
     def _do_remove_all_prioritys(self, pattern):
         @self.env.with_transaction()
