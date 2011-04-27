@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracForms 0.3\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2011-04-18 22:47+0200\n"
-"PO-Revision-Date: 2011-04-18 22:55+0200\n"
+"POT-Creation-Date: 2011-04-27 22:47+0200\n"
+"PO-Revision-Date: 2011-04-27 22:55+0200\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -18,35 +18,35 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.0dev-r482\n"
 
-#: tracforms/api.py:179
+#: tracforms/api.py:180
 #, python-format
 msgid "Unparented form %(id)s"
 msgstr "Nicht verankertes Formular %(id)s"
 
-#: tracforms/api.py:191
+#: tracforms/api.py:192
 #, python-format
 msgid "Form %(form_id)s (%(parent)s)"
 msgstr "Formular %(form_id)s (%(parent)s)"
 
 #. TRANSLATOR: Most verbose title, i.e. for form history page
-#: tracforms/api.py:193
+#: tracforms/api.py:194
 #, python-format
 msgid "Form %(form_id)s (in %(parent)s)"
 msgstr "Formular %(form_id)s (in %(parent)s)"
 
 #. TRANSLATOR: Title printed i.e. in form select page
-#: tracforms/api.py:198
+#: tracforms/api.py:199
 #, python-format
 msgid "Forms (%(parent)s)"
 msgstr "Formulare (%(parent)s)"
 
-#: tracforms/api.py:199
+#: tracforms/api.py:200
 #, python-format
 msgid "Forms in %(parent)s"
 msgstr "Formulare in %(parent)s"
 
 #. TRANSLATOR: HTTP error message
-#: tracforms/api.py:249
+#: tracforms/api.py:250
 msgid "__context__ is required"
 msgstr "__context__ ist erforderlich"
 
@@ -74,7 +74,7 @@ msgstr "FEHLER: Unbekannte TracForms-Operation '%r'"
 msgid "ERROR: No TracForms command '%r'"
 msgstr "FEHLER: Unbekannte TracForms-Anweisung '%r'"
 
-#: tracforms/formdb.py:45 tracforms/model.py:62
+#: tracforms/formdb.py:46 tracforms/model.py:62
 #, python-format
 msgid ""
 "No data recorded for a TracForms form in\n"
@@ -84,11 +84,11 @@ msgstr ""
 "Keine Daten gesichert für ein TracForms-Formular in "
 "%(realm)s:%(parent_id)s"
 
-#: tracforms/formdb.py:193
+#: tracforms/formdb.py:194
 msgid "Conflict"
 msgstr "Konflikt"
 
-#: tracforms/macros.py:99
+#: tracforms/macros.py:98
 #, python-format
 msgid "ERROR: No TracForms command '%s'"
 msgstr "FEHLER: Unbekannte TracForms-Anweisung '%s'"
@@ -116,71 +116,110 @@ msgstr "Ungültige Formularnummer"
 msgid "with subcontext %(subcontext)s"
 msgstr "mit Kennung %(subcontext)s"
 
-#: tracforms/web_ui.py:56
+#: tracforms/web_ui.py:63
 msgid "Form details"
 msgstr "Formulardetails"
 
-#: tracforms/web_ui.py:57
+#: tracforms/web_ui.py:64
 msgid "Review form data"
 msgstr "Formulardaten durchsehen"
 
-#: tracforms/web_ui.py:64
+#: tracforms/web_ui.py:71
 msgid "Back to forms list"
 msgstr "Zurück zur Formularliste"
 
-#: tracforms/web_ui.py:145
+#: tracforms/web_ui.py:152
 #, python-format
 msgid "Form %(form_id)s"
 msgstr "Formular %(form_id)s"
 
 #. TRANSLATOR: Form list entry for form select page
-#: tracforms/web_ui.py:152
+#: tracforms/web_ui.py:159
 #, python-format
 msgid "%(form_id)s (subcontext = '%(subcontext)s')"
 msgstr "%(form_id)s (Kennung = '%(subcontext)s')"
 
-#: tracforms/web_ui.py:207
+#: tracforms/web_ui.py:183
+msgid "checked (checkbox)"
+msgstr "gewählt (Ankreuzfeld)"
+
+#: tracforms/web_ui.py:185
+msgid "empty (text field)"
+msgstr "leer (Textfeld)"
+
+#: tracforms/web_ui.py:191
+#, python-format
+msgid "by %(author)s"
+msgstr "von %(author)s"
+
+#. TRANSLATOR: The realm name used as TracSearch filter label
+#: tracforms/web_ui.py:202
+msgid "Forms"
+msgstr "Formulare"
+
+#: tracforms/web_ui.py:292
 #, python-format
 msgid "%(value)s reset to default value"
 msgstr "%(value)s zurückgesetzt auf Standardwert"
 
-#: tracforms/web_ui.py:210
+#: tracforms/web_ui.py:295
 #, python-format
 msgid "from default value set to %(value)s"
 msgstr "von Standardwert auf %(value)s gesetzt"
 
-#: tracforms/web_ui.py:213
+#. TRANSLATOR: same as before, but with additional line breaks
+#: tracforms/web_ui.py:299 tracforms/web_ui.py:304
 #, python-format
 msgid "changed from %(old)s to %(new)s"
 msgstr "von %(old)s nach %(new)s geändert"
 
-#. TRANSLATOR: The realm name used as TracSearch filter label
-#: tracforms/web_ui.py:221
-msgid "Forms"
-msgstr "Formulare"
+#: tracforms/templates/form.html:19
+msgid "Go down to reset fields and delete history"
+msgstr "Springe nach unten zum Rücksetzen der Felder und Löschen der Historie"
 
 #: tracforms/templates/form.html:20
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+#: tracforms/templates/form.html:24
+msgid "Saved Values"
+msgstr "Gespeicherte Werte"
+
+#: tracforms/templates/form.html:25
+msgid "in subcontext '"
+msgstr "mit Kennung '"
+
+#: tracforms/templates/form.html:29
+#, python-format
+msgid "%(name)s:"
+msgstr "%(name)s:"
+
+#: tracforms/templates/form.html:40 tracforms/templates/switch.html:26
+msgid "(No form data recorded)"
+msgstr "(Formulardaten nicht gespeichert)"
+
+#: tracforms/templates/form.html:43
 msgid "Change History"
 msgstr "Änderungshistorie"
 
-#: tracforms/templates/form.html:24
+#: tracforms/templates/form.html:47
 #, python-format
 msgid "Changed on %(time)s by %(author)s:"
 msgstr "Geändert am %(time)s von %(author)s:"
 
-#: tracforms/templates/form.html:34
-msgid "(No change recorded)"
-msgstr "(Keine Änderungsaufzeichnung)"
+#: tracforms/templates/form.html:62
+msgid "Reset fields and delete history"
+msgstr "Rücksetzen der Felder und Löschen der Historie"
 
-#: tracforms/templates/form.html:40
+#: tracforms/templates/form.html:62
 msgid "Reset form"
 msgstr "Formular Zurücksetzen"
+
+#: tracforms/templates/form.html:65
+msgid "Revert latest change"
+msgstr "Letzte Änderung Zurücknehmen"
 
 #: tracforms/templates/switch.html:21
 msgid "Available records"
 msgstr "Verfügbare Aufzeichnungen"
-
-#: tracforms/templates/switch.html:26
-msgid "(No form data recorded)"
-msgstr "(Formulardaten nicht gespeichert)"
 

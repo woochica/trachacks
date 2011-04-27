@@ -24,7 +24,12 @@ tfpageRE = re.compile('/form(/\d+|$)')
 
 
 class FormUI(FormDBUser):
-    """Provides TracSearch support for TracForms."""
+    """Provides form views for reviewing and managing TracForm data.
+
+    Extensions for the Trac web user interface display saved field values,
+    metadata and history. TracSearch support for TracForms is included here
+    and administrative actions to revert form changes are embedded as well.
+    """
 
     implements(IRequestFilter, IRequestHandler, ISearchSource,
                ITemplateProvider)
