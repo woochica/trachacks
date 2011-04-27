@@ -26,13 +26,17 @@ class Ec2Commander(Daemon):
         # build the query
         queries = []
         envs = self.launch_data['cmd_environments']
-        if envs:
-            query = '('+' OR '.join(['environment:%s' % e for e in envs])+')'
-            queries.append(query)
+        if not envs:
+            self.progress.error("No environment(s) selected")
+            sys.exit(1)
+        query = '('+' OR '.join(['environment:%s' % e for e in envs])+')'
+        queries.append(query)
         roles = self.launch_data['cmd_roles']
-        if roles:
-            query = '('+' OR '.join(['role:%s' % r for r in roles])+')'
-            queries.append(query)
+        if not roles:
+            self.progress.error("No role(s) selected")
+            sys.exit(1)
+        query = '('+' OR '.join(['role:%s' % r for r in roles])+')'
+        queries.append(query)
         q = ' AND '.join(queries) or '*:*'
         
         self.log.debug('Querying for nodes with query %s' % q)
