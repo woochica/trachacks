@@ -23,6 +23,10 @@
 		  </td>
         </tr>
       </table>
+      
+      <div id="message" py:if="message">
+          <br/><p><i>$message</i></p>
+      </div>
 	  
       <div class="buttons">
         <form py:if="'CLOUD_MODIFY' in perm(resource)" action="" method="post">

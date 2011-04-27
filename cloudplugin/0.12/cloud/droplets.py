@@ -301,7 +301,7 @@ class Droplet(object):
             'cmd_fields': self.fields.get_list('crud_view', filter=r"(?!cmd_)"),
             'item': item,
             'req': req,
-            'error': req.args.get('error')}
+            'message': req.args.get('message')}
         
         self.log.debug('Rendered view')
         return 'droplet_view.html', data, None
@@ -634,8 +634,13 @@ class Command(Droplet):
 
     def render_view(self, req, id):
         template,data,content_type = Droplet.render_view(self, req, id)
-        button = ('execute',_('Execute %(label)s',label=self.label))
-        data['buttons'].append(button),
+        if id in ('deploy','audit'):
+            data['cmd_fields'] = [] # clear command fields
+            data['message'] = 'To %s, use the respective button' % id + \
+              ' in an Environment\'s view.' 
+        else:
+            button = ('execute',_('Execute %(label)s',label=self.label))
+            data['buttons'].append(button)
         return template, data, content_type
     
     def _get_data(self, req, id):
