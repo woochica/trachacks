@@ -108,13 +108,17 @@
       var get_blame_done = function(progress,completed_at){
         // return the blame line - Started by XXX at nnn
         var msg = get_blame(progress);
-        return msg + ', done at ' + new Date(completed_at*1000).toUTCString().replace('GMT','UTC');
+        var started_at = progress['status']['0'][0];
+        msg += ', done at ' + new Date(completed_at*1000).toUTCString().replace('GMT','UTC');
+        msg += ' (' + (completed_at - started_at).toFixed(1) + ' secs total duration)';
+        return msg;
       }
       
       var get_blame_error = function(progress){
         // return the blame line - Started by XXX at nnn
         var msg = get_blame(progress);
-        return msg + ', errored at ' + new Date(progress['now']*1000).toUTCString().replace('GMT','UTC');
+        msg += ', errored at ' + new Date(progress['now']*1000).toUTCString().replace('GMT','UTC');
+        return msg;
       }
       
       jQuery(document).ready(function(){
