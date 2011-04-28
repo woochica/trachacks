@@ -39,6 +39,7 @@ class Daemon(object):
         parser.add_option("--databag")
         parser.add_option("--launch-data", default='{}', help="JSON dict")
         parser.add_option("--attributes", default='{}', help="JSON dict")
+        parser.add_option("--started-by")
         (self.options, _args) = parser.parse_args()
         
         # setup logging (presumes something else will rotate it)
@@ -74,7 +75,8 @@ class Daemon(object):
         self.pidfile = tempfile.NamedTemporaryFile(delete=False).name
         self.progress = Progress(self.options.progress_file,
                                  self.pidfile, steps, title, description,
-                                 {'0':(time.time(),None)})
+                                 {'0':(time.time(),None)},
+                                 started_by=self.options.started_by)
         
     
     def daemonize(self):

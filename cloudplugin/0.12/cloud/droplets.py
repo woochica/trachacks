@@ -426,6 +426,7 @@ class Droplet(object):
            '--databag="%s"' % self.name,
            "--launch-data='%s'" % json.dumps(launch_data),
            "--attributes='%s'" % json.dumps(attributes),
+           '--started-by="%s"' % req.authname,
         ]
         cmd += ['--chef-boot-run-list="%s"' % \
             r for r in self.chefapi.boot_run_list]

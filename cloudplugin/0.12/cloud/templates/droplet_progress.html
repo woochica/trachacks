@@ -28,8 +28,9 @@
       }
 
       var display = function(progress){
-        jQuery("#title").text(progress['title'])
-        jQuery("#description").text(progress['description'])
+        jQuery("#title").text(progress['title']);
+        jQuery("#blame").text(get_blame(progress));
+        jQuery("#description").text(progress['description']);
         
         var done = false;
         var error = false;
@@ -48,8 +49,10 @@
               src = "${href.chrome('/cloud/ok.png')}";
               
               // check for done
-              if (i == progress['steps'].length-1)
+              if (i == progress['steps'].length-1){
+                jQuery("#blame").text(get_blame_done(progress,completed));
                 done = true;
+              }
               
             } else {
               if (progress['error']){
@@ -58,6 +61,7 @@
                           + '  <strong>Error:</strong> ' + progress['error']
                           + '</div>';
                   jQuery('#error').append(div);
+                  jQuery("#blame").text(get_blame_error(progress));
                   error = true;
                 }
                 src = "${href.chrome('/cloud/error.png')}";
@@ -91,6 +95,28 @@
         return !(done || error);
       }
       
+      var get_blame = function(progress){
+        // return the blame line - Started by XXX at nnn
+        var msg = 'Started';
+        if (progress['started_by'])
+          msg += ' by ' + progress['started_by'];
+        if (progress['status'])
+          msg += ' at ' + new Date(progress['status']['0'][0]*1000).toUTCString().replace('GMT','UTC');
+        return msg;
+      }
+      
+      var get_blame_done = function(progress,completed_at){
+        // return the blame line - Started by XXX at nnn
+        var msg = get_blame(progress);
+        return msg + ', done at ' + new Date(completed_at*1000).toUTCString().replace('GMT','UTC');
+      }
+      
+      var get_blame_error = function(progress){
+        // return the blame line - Started by XXX at nnn
+        var msg = get_blame(progress);
+        return msg + ', errored at ' + new Date(progress['now']*1000).toUTCString().replace('GMT','UTC');
+      }
+      
       jQuery(document).ready(function(){
         update_progress();
       });
@@ -100,6 +126,7 @@
   <body>
     <div id="content" class="droplet">
       <h1>$label <span id="title"></span></h1>
+      <p id="blame" />
       <p id="description" />
 	  
       <div id="progress">

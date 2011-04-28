@@ -10,10 +10,12 @@ class Progress(object):
     
       {'title': 'Progress',
        'description': 'Progress on task blah',
+       'started_by': 'rob',
        'steps': ['step1','step2','step3'],
        'status': {'0':(1298924180,1298924380),'1':(1298924381,None)},
        'id': 'ip-12-132-9-186.ec2.internal',
        'error': '',
+       'errored_at': nil,
        'pidfile': '/tmp/pidfile'}
     
     The 'progress' attribute is a list if start and end times of the
@@ -38,15 +40,17 @@ class Progress(object):
         return f.name
     
     def __init__(self, file, pidfile=None, steps=None, title=None,
-                 description=None, status=None, id=None):
+                 description=None, status=None, id=None, started_by=None):
         self.file = file
         progress = {'pidfile': pidfile or '',
                     'title': title or '',
                     'description': description or '',
+                    'started_by': started_by or [],
                     'steps': steps or [],
                     'status': status or {},
                     'id': id or '',
                     'error': '',
+                    'errored_at': None,
                     }
         if not os.path.exists(file) or os.path.getsize(file) == 0:
             self.set(progress)
@@ -59,6 +63,11 @@ class Progress(object):
     def description(self, description):
         progress = self.get()
         progress['description'] = description
+        self.set(progress)
+        
+    def started_by(self, started_by):
+        progress = self.get()
+        progress['started_by'] = started_by
         self.set(progress)
         
     def steps(self, steps):
@@ -74,6 +83,7 @@ class Progress(object):
     def error(self, msg):
         progress = self.get()
         progress['error'] = msg
+        progress['errored_at'] = time.time()
         self.set(progress)
         
     def start(self, step, start_time=None):
