@@ -12,6 +12,11 @@ from progress import Progress
 from chefapi import ChefApi
 from awsapi import AwsApi
 
+try:
+    import xmpp
+except:
+    pass
+
 class Daemon(object):
     """
     A generic daemon class with added support for chef/cloud apis and
@@ -23,6 +28,7 @@ class Daemon(object):
         # setup command line parsing
         parser = OptionParser()
         parser.add_option("-d","--daemonize",default=False,action="store_true")
+        parser.add_option("--trac-base-url")
         parser.add_option("--progress-file")
         parser.add_option("--log-file")
         parser.add_option("--log-level", default=logging.DEBUG)
@@ -40,6 +46,12 @@ class Daemon(object):
         parser.add_option("--launch-data", default='{}', help="JSON dict")
         parser.add_option("--attributes", default='{}', help="JSON dict")
         parser.add_option("--started-by")
+        parser.add_option("--notify-jabber")
+        parser.add_option("--jabber-server")
+        parser.add_option("--jabber-port")
+        parser.add_option("--jabber-username")
+        parser.add_option("--jabber-password")
+        parser.add_option("--jabber-channel")
         (self.options, _args) = parser.parse_args()
         
         # setup logging (presumes something else will rotate it)
@@ -181,3 +193,30 @@ class Daemon(object):
         You should override this method when you subclass Daemon. It will be
         called after the process has been daemonized by start() or restart().
         """
+        
+    def notify_jabber(self, message):
+        """Sends a message to a jabber channel."""
+        if self.options.notify_jabber == '0':
+            return
+        
+        jid = xmpp.protocol.JID(self.options.jabber_username)
+        cl = xmpp.Client(jid.getDomain(), debug=[])
+        
+        if not cl.connect(server=(self.options.jabber_server,
+                                  int(self.options.jabber_port)),use_srv=False):
+            raise Exception("Could not connect to jabber server %s:%s" % \
+                                (self.options.jabber_server,
+                                 self.options.jabber_port))
+            
+        if not cl.auth(jid.getNode(), self.options.jabber_password):
+            raise Exception("Could not authenticate jabber user '%s'" % \
+                                self.options.jabber_username)
+        
+        user = self.options.jabber_username.split('@')[0]
+        cl.send(xmpp.Presence('%s/%s' % (self.options.jabber_channel,user)))
+#        cl.sendInitPresence(requestRoster=0)
+        msg = xmpp.Message(self.options.jabber_channel, message)
+        msg.setType('groupchat')
+        cl.send(msg)
+        time.sleep(1)
+        cl.disconnect()

@@ -8,6 +8,7 @@ droplet_defaults = {
     'label': 'EC2 Instance',
     'order': 1, # order in contextual nav from left to right
     'id_field': 'name',
+    'notify_jabber': '0',
     
     # field definitions
     'field.name': 'text',
@@ -64,6 +65,7 @@ droplet_defaults = {
     'label': 'RDS Instance',
     'order': 2, # order in contextual nav from left to right
     'id_field': 'id',
+    'notify_jabber': '0',
     
     # field definitions
     'field.id': 'text',
@@ -113,6 +115,7 @@ droplet_defaults = {
     'order': 3, # order in contextual nav from left to right
     'id_field': 'name',
     'node_ref_field': 'alias',
+    'notify_jabber': '0',
     
     # field definitions
     'field.name': 'text',
@@ -150,6 +153,7 @@ droplet_defaults = {
     'order': 4, # order in contextual nav from left to right
     'id_field': 'name',
     'node_ref_field': 'alias',
+    'notify_jabber': 'deploy',
     
     # field definitions
     'field.order': 'text',

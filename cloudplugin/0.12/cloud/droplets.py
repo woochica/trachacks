@@ -55,6 +55,7 @@ class Droplet(object):
             if not section.startswith('cloud.'):
                 continue
             opts = copy.copy(dict(env.config.options('cloud'))) # main section
+            opts['trac_base_url'] = env.config.get('trac','base_url')
             opts.update(droplet_defaults.get(section,{}))       # defaults
             opts.update(env.config.options(section))            # overrides
             options[section.replace('cloud.','',1)] = opts
@@ -413,6 +414,7 @@ class Droplet(object):
         # create the command
         cmd = [
            '/usr/bin/python', exe, '--daemonize',
+           '--trac-base-url="%s"' % self.trac_base_url,
            '--progress-file="%s"' % progress_file,
            '--log-file="%s"' %  self.log.handlers[0].stream.name,
            '--chef-base-path="%s"' % self.chefapi.base_path,
@@ -427,6 +429,13 @@ class Droplet(object):
            "--launch-data='%s'" % json.dumps(launch_data),
            "--attributes='%s'" % json.dumps(attributes),
            '--started-by="%s"' % req.authname,
+           '--notify-jabber="%s"' % self.notify_jabber,
+           '--jabber-server="%s"' % self.jabber_server,
+           '--jabber-port="%s"' % self.jabber_port,
+           '--jabber-server="%s"' % self.jabber_server,
+           '--jabber-username="%s"' % self.jabber_username,
+           '--jabber-password="%s"' % self.jabber_password,
+           '--jabber-channel="%s"' % self.jabber_channel,
         ]
         cmd += ['--chef-boot-run-list="%s"' % \
             r for r in self.chefapi.boot_run_list]
@@ -652,6 +661,7 @@ class Command(Droplet):
         launch_data = {'node_ref_field':self.node_ref_field}
         for field in self.fields.get_list('crud_view', filter=r"(?!cmd_)"):
             field.set_dict(launch_data, req=req)
+        launch_data['command_id'] = id
         
         # prepare attributes
         attributes = {}
@@ -693,6 +703,7 @@ class Environment(Command):
     def execute(self, req, id):
         launch_data, attributes, exe = self._get_data(req, id)
         launch_data['cmd_environments'] = [attributes['name']]
+        launch_data['command_id'] = 'deploy'
         deploy = self._get_command('deploy')
         attributes['command'] = deploy['command']
         self._spawn(req, exe, launch_data, attributes)
@@ -700,6 +711,7 @@ class Environment(Command):
     def audit(self, req, id):
         launch_data, attributes, exe = self._get_data(req, id)
         launch_data['cmd_environments'] = [attributes['name']]
-        deploy = self._get_command('audit')
-        attributes['command'] = deploy['command']
+        launch_data['command_id'] = 'audit'
+        audit = self._get_command('audit')
+        attributes['command'] = audit['command']
         self._spawn(req, exe, launch_data, attributes)

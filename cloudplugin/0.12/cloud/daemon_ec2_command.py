@@ -17,7 +17,11 @@ class Ec2Commander(Daemon):
     """Executes commands for each node specified by environments and roles."""
     
     def __init__(self):
-        Daemon.__init__(self, ['Determining instances..'], "Execute Progress")
+        Daemon.__init__(self, ['Determining instances..'], "Execution Progress")
+        if self.launch_data['command_id'] == 'deploy':
+            self.progress.title("Deployment Progress")
+        elif self.launch_data['command_id'] == 'audit':
+            self.progress.title("Auditing Progress")
         
     def run(self, sysexit=True):
         self.progress.description("Executing: %s" % self.attributes['command'])
@@ -50,6 +54,20 @@ class Ec2Commander(Daemon):
             self.progress.steps(steps)
         else:
             self.progress.error("No nodes found for query '%s'" % q)
+            sys.exit(1)
+        
+        # send starting jabber message
+        if self.launch_data['command_id'] == 'deploy':
+            msg = "%s is deploying to %d %s instances" % \
+                    (self.options.started_by,len(nodes),', '.join(envs))
+        elif self.launch_data['command_id'] == 'audit':
+            msg = "%s is auditing %d %s instances" % \
+                    (self.options.started_by,len(nodes),', '.join(envs))
+        else:
+            msg = "%s is executing '%s' to %d %s instances" % \
+                    (self.options.started_by,self.launch_data['command_id'],
+                     len(nodes),', '.join(envs))
+        self._notify_jabber(msg)
         
         # Execute for each instance
         step = 0
@@ -80,6 +98,11 @@ class Ec2Commander(Daemon):
             self.progress.done(step)
             step += 1
         
+        # send ending jabber message
+        msg = "%s successfully completed '%s'" % \
+                (self.options.started_by,self.launch_data['command_id'])
+        self._notify_jabber(msg)
+        
         if sysexit:
             sys.exit(0) # success
     
@@ -97,6 +120,18 @@ class Ec2Commander(Daemon):
         else:
             self.log.info("%s\nSuccessfully ran: %s" % (out,cmd))
             return out
+        
+    def _notify_jabber(self, msg):
+        if self.launch_data['command_id'] not in self.options.notify_jabber:
+            return
+        
+        if not self.options.trac_base_url.endswith('/'):
+            self.options.trac_base_url += '/'
+        url = self.options.trac_base_url + \
+                'cloud/command?action=progress&file=%s' % \
+                self.options.progress_file
+        msg += ': %s' % url
+        self.notify_jabber(msg)
 
 
 if __name__ == "__main__":
@@ -112,4 +147,6 @@ if __name__ == "__main__":
             daemon.progress.error(msg)
             daemon.log.error(msg)
             daemon.handler.flush()
+            msg = "%s's execution errored" % daemon.options.started_by
+            daemon._notify_jabber(msg)
             sys.exit(1)

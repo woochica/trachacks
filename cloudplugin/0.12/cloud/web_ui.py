@@ -54,6 +54,18 @@ class CloudModule(Component):
     chef_boot_sudo = BoolOption('cloud', 'chef_boot_sudo', True,
         _("Whether the chef knife bootstrap should be run as sudo."))
     
+    jabber_server = Option('cloud', 'jabber_server', '', _("Jabber server."))
+    
+    jabber_port = Option('cloud', 'jabber_port', '', _("Jabber port."))
+    
+    jabber_username = Option('cloud', 'jabber_username', '',
+        _("Jabber username."))
+    
+    jabber_password = Option('cloud', 'jabber_password', '',
+        _("Jabber password."))
+    
+    jabber_channel = Option('cloud', 'jabber_channel', '', _("Jabber channel."))
+    
     default_resource = Option('cloud', 'default_resource', '',
         _("Name of the AWS resource to show if not provided in url."))
     
