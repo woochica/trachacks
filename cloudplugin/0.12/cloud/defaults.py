@@ -153,7 +153,7 @@ droplet_defaults = {
     'order': 4, # order in contextual nav from left to right
     'id_field': 'name',
     'node_ref_field': 'alias',
-    'notify_jabber': 'deploy',
+    'notify_jabber': '0',
     
     # field definitions
     'field.order': 'text',
