@@ -253,23 +253,25 @@ class FormUpdater(FormDBUser, PasswordStoreUser):
             self.save_tracform(context, result, who, basever,
                                 keep_history=keep_history,
                                 track_fields=track_fields)
+            buffer = 'OK'
             if backpath is not None:
                 req.send_response(302)
                 req.send_header('Content-Type', 'text/plain')
                 req.send_header('Location', backpath)
-                req.send_header('Content-Length', len('OK'))
+                req.send_header('Content-Length', str(len(buffer)))
                 req.end_headers()
-                req.write('OK')
+                req.write(buffer)
             else:
                 req.send_response(200)
                 req.send_header('Content-Type', 'text/plain')
-                req.send_header('Content-Length', len('OK'))
+                req.send_header('Content-Length', str(len(buffer)))
                 req.end_headers()
-                req.write('OK')
+                req.write(buffer)
         except Exception, e:
+            buffer = str(e)
             req.send_response(500)
             req.send_header('Content-type', 'text/plain')
-            req.send_header('Content-Length', len(str(e)))
+            req.send_header('Content-Length', str(len(buffer)))
             req.end_headers()
-            req.write(str(e))
+            req.write(buffer)
 
