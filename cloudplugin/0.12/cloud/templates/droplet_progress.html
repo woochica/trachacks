@@ -64,7 +64,7 @@
                   jQuery("#blame").text(get_blame_error(progress));
                   jQuery('#stop').attr('disabled','disabled');
                   if (progress['command']){
-                    btn = '<input type="button" id="continue" value="Retry" onclick="continue_progress();" />';
+                    btn = '<input type="button" id="continue" value=" Continue / Retry" onclick="continue_progress();" />';
                     jQuery('#stop').after(btn);
                   }
                   error = true;
@@ -137,10 +137,6 @@
           'data': {path:'${file}',stop:1},
           'success': function(data){
             display(data);
-            if (data['command']){
-              btn = '<input type="button" id="continue" value="Continue" onclick="continue_progress();" />';
-              jQuery('#stop').after(btn);
-            }
           },
           'error': function(r){
             alert("Error stopping:\n\n"+r.responseText);
