@@ -21,7 +21,7 @@ except ImportError:
     pass
 
 
-VERSION = '0.4'
+VERSION = '0.3'
 
 setup(
     name = 'TracForms',
