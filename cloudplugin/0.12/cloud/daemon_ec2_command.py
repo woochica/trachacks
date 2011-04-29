@@ -17,7 +17,8 @@ class Ec2Commander(Daemon):
     """Executes commands for each node specified by environments and roles."""
     
     def __init__(self):
-        Daemon.__init__(self, ['Determining instances..'], "Execution Progress")
+        steps = ['Determining instances..']
+        Daemon.__init__(self, steps, "Execution Progress", can_continue=True)
         if self.launch_data['command_id'] == 'deploy':
             self.progress.title("Deployment Progress")
         elif self.launch_data['command_id'] == 'audit':
@@ -47,10 +48,19 @@ class Ec2Commander(Daemon):
         nodes,_ = self.chefapi.search('node', sort=ref_field, q=q)
         if len(nodes)> 0:
             self.log.debug('Generating steps for %d nodes..' % len(nodes))
-            try:
-                steps = ["Executing for node %s" % n[ref_field] for n in nodes]
-            except KeyError:
-                steps = ["Executing for node %s" % n.name for n in nodes]
+            step = 0
+            steps = []
+            for node in nodes:
+                if self.progress.is_done(step):
+                    steps.append(self.progress.get()['steps'][step])
+                    step += 1
+                    continue
+                try:
+                    ref = node[ref_field]
+                except KeyError:
+                    ref = node.name
+                steps.append("Executing for node %s" % ref)
+                step += 1
             self.progress.steps(steps)
         else:
             self.progress.error("No nodes found for query '%s'" % q)
@@ -72,6 +82,10 @@ class Ec2Commander(Daemon):
         # Execute for each instance
         step = 0
         for node in nodes:
+            # check if we restarted a prior run
+            if self.progress.is_done(step):
+                step += 1
+                continue
             self.progress.start(step)
             host = node['ec2']['public_hostname']
             

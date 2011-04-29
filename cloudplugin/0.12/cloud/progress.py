@@ -3,6 +3,8 @@ import stat
 import time
 import json
 import tempfile
+import signal
+import subprocess
 
 class Progress(object):
     """Manages status information in a (JSON) file.  An example JSON file
@@ -16,6 +18,7 @@ class Progress(object):
        'id': 'ip-12-132-9-186.ec2.internal',
        'error': '',
        'errored_at': nil,
+       'command': 'python blah blah',
        'pidfile': '/tmp/pidfile'}
     
     The 'progress' attribute is a list if start and end times of the
@@ -40,7 +43,8 @@ class Progress(object):
         return f.name
     
     def __init__(self, file, pidfile=None, steps=None, title=None,
-                 description=None, status=None, id=None, started_by=None):
+                 description=None, status=None, id=None, started_by=None,
+                 command=None):
         self.file = file
         progress = {'pidfile': pidfile or '',
                     'title': title or '',
@@ -51,9 +55,15 @@ class Progress(object):
                     'id': id or '',
                     'error': '',
                     'errored_at': None,
+                    'command': command or '',
                     }
         if not os.path.exists(file) or os.path.getsize(file) == 0:
             self.set(progress)
+    
+    def pidfile(self, pidfile):
+        progress = self.get()
+        progress['pidfile'] = pidfile
+        self.set(progress)
     
     def title(self, title):
         progress = self.get()
@@ -86,6 +96,11 @@ class Progress(object):
         progress['errored_at'] = time.time()
         self.set(progress)
         
+    def command(self, command):
+        progress = self.get()
+        progress['command'] = command
+        self.set(progress)
+        
     def start(self, step, start_time=None):
         """0-indexed steps."""
         step = str(step)
@@ -100,6 +115,29 @@ class Progress(object):
         start_time = progress['status'][step][0]
         progress['status'][step] = (start_time,end_time or time.time())
         self.set(progress)
+    
+    def is_done(self, step):
+        """0-indexed steps."""
+        step = str(step)
+        progress = self.get()
+        if step not in progress['status']:
+            return False
+        return progress['status'][step][1] and True or False
+    
+    def stop(self, sig=signal.SIGTERM):
+        """Stop/kill the daemon."""
+        progress = self.get()
+        f = open(progress['pidfile'],'r')
+        pid = int(f.read().strip())
+        f.close()
+        os.kill(pid, sig)
+    
+    def restart(self):
+        """Restarts daemon which is expected to continue where it left off."""
+        progress = self.get()
+        cmd = progress['command']
+        if subprocess.call(cmd):
+            raise Exception("Error restarting command: %s" % cmd)
     
     def set(self, progress):
         f = open(self.file, 'w')

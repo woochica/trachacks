@@ -24,7 +24,7 @@ class Daemon(object):
     
     Usage: subclass the Daemon class and override the run() method
     """
-    def __init__(self, steps, title, description=''):
+    def __init__(self, steps, title, description='', can_continue=False):
         # setup command line parsing
         parser = OptionParser()
         parser.add_option("-d","--daemonize",default=False,action="store_true")
@@ -84,11 +84,16 @@ class Daemon(object):
         self.attributes = json.loads(self.options.attributes)
         
         # prepare progress
+        command = ''
+        if can_continue:
+            command = ['/usr/bin/python'] + sys.argv
         self.pidfile = tempfile.NamedTemporaryFile(delete=False).name
         self.progress = Progress(self.options.progress_file,
                                  self.pidfile, steps, title, description,
                                  {'0':(time.time(),None)},
-                                 started_by=self.options.started_by)
+                                 started_by=self.options.started_by,
+                                 command=command)
+        self.progress.pidfile(self.pidfile) # in case this is a restart
         
     
     def daemonize(self):

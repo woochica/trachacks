@@ -26,7 +26,7 @@
           }
         });
       }
-
+      
       var display = function(progress){
         jQuery("#title").text(progress['title']);
         jQuery("#blame").text(get_blame(progress));
@@ -62,6 +62,11 @@
                           + '</div>';
                   jQuery('#error').append(div);
                   jQuery("#blame").text(get_blame_error(progress));
+                  jQuery('#stop').attr('disabled','disabled');
+                  if (progress['command']){
+                    btn = '<input type="button" id="continue" value="Retry" onclick="continue_progress();" />';
+                    jQuery('#stop').after(btn);
+                  }
                   error = true;
                 }
                 src = "${href.chrome('/cloud/error.png')}";
@@ -90,6 +95,7 @@
           if (progress['id'] == '')
             jQuery('#view').attr('value','View ${title}');
           jQuery('#view').removeAttr('disabled');
+          jQuery('#stop').attr('disabled','disabled');
         }
         
         return !(done || error);
@@ -121,6 +127,44 @@
         return msg;
       }
       
+      var stop_progress = function(){
+        jQuery('#stop').attr('disabled','disabled');
+        var url = jQuery('link[rel="search"]').attr('href').replace(/\/search/, '');
+        url += '/cloudajax/file';
+        jQuery.ajax({
+          'type': "GET",
+          'url': url,
+          'data': {path:'${file}',stop:1},
+          'success': function(data){
+            display(data);
+            if (data['command']){
+              btn = '<input type="button" id="continue" value="Continue" onclick="continue_progress();" />';
+              jQuery('#stop').after(btn);
+            }
+          },
+          'error': function(r){
+            alert("Error stopping:\n\n"+r.responseText);
+          }
+        });
+      }
+      
+      var continue_progress = function(){
+        jQuery('#continue').remove();
+        var url = jQuery('link[rel="search"]').attr('href').replace(/\/search/, '');
+        url += '/cloudajax/file';
+        jQuery.ajax({
+          'type': "GET",
+          'url': url,
+          'data': {path:'${file}',restart:1},
+          'success': function(data){
+            window.location.href = window.location.href;
+          },
+          'error': function(r){
+            alert("Error continuing:\n\n"+r.responseText);
+          }
+        });
+      }
+      
       jQuery(document).ready(function(){
         update_progress();
       });
@@ -144,6 +188,7 @@
           <input type="hidden" name="action" value="view" />
           <input type="submit" id="view" value="${_('View %(label)s', label=label)}" disabled="disabled" />
         </form>
+        <input type="button" id="stop" value="${_('Stop')}" onclick="stop_progress();" />
       </div>
       
     </div>

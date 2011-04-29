@@ -231,6 +231,12 @@ class CloudFileAjaxModule(Component):
         try:
             progress = Progress(req.args['path'])
             data = progress.get()
+            if int(req.args.get('restart',0)) == 1:
+                progress.restart()
+                progress.error('') # clear error
+            elif int(req.args.get('stop',0)) == 1:
+                progress.stop()
+                progress.error("Stopped on user request.")
             if int(req.args.get('set_time',0)) == 1:
                 data['now'] = time.time()
             msg = json.dumps(data)
