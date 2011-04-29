@@ -11,7 +11,7 @@ tracforms-0.3 (yet unreleased):
    allowing non-ASCII characters in user input and for submit button label
 
  new features
- * #3550: Integrate search with TracFormsPlugin
+ * #3500: Integrate search with TracFormsPlugin
    by an own TracSearch provider (ISearchSource)
  * mandatory permissions added: 'FORM_VIEW', 'FORM_EDIT_VAL', 'FORM_RESET'
    so all actions can be restricted per form
