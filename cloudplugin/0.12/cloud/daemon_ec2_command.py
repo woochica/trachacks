@@ -58,13 +58,13 @@ class Ec2Commander(Daemon):
         
         # send starting jabber message
         if self.launch_data['command_id'] == 'deploy':
-            msg = "%s is deploying to %d %s instances" % \
+            msg = "%s is deploying to %d %s instance(s)" % \
                     (self.options.started_by,len(nodes),', '.join(envs))
         elif self.launch_data['command_id'] == 'audit':
-            msg = "%s is auditing %d %s instances" % \
+            msg = "%s is auditing %d %s instance(s)" % \
                     (self.options.started_by,len(nodes),', '.join(envs))
         else:
-            msg = "%s is executing '%s' to %d %s instances" % \
+            msg = "%s is executing '%s' to %d %s instance(s)" % \
                     (self.options.started_by,self.launch_data['command_id'],
                      len(nodes),', '.join(envs))
         self._notify_jabber(msg)
@@ -99,7 +99,7 @@ class Ec2Commander(Daemon):
             step += 1
         
         # send ending jabber message
-        msg = "%s successfully completed '%s'" % \
+        msg = "%s's %s was successfully completed" % \
                 (self.options.started_by,self.launch_data['command_id'])
         self._notify_jabber(msg)
         
@@ -124,13 +124,6 @@ class Ec2Commander(Daemon):
     def _notify_jabber(self, msg):
         if self.launch_data['command_id'] not in self.options.notify_jabber:
             return
-        
-        if not self.options.trac_base_url.endswith('/'):
-            self.options.trac_base_url += '/'
-        url = self.options.trac_base_url + \
-                'cloud/command?action=progress&file=%s' % \
-                self.options.progress_file
-        msg += ': %s' % url
         self.notify_jabber(msg)
 
 

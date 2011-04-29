@@ -194,29 +194,42 @@ class Daemon(object):
         called after the process has been daemonized by start() or restart().
         """
         
-    def notify_jabber(self, message):
+    def notify_jabber(self, message, ignore_errors=True):
         """Sends a message to a jabber channel."""
-        if self.options.notify_jabber == '0':
+        if not self.options.notify_jabber:
             return
         
-        jid = xmpp.protocol.JID(self.options.jabber_username)
-        cl = xmpp.Client(jid.getDomain(), debug=[])
+        # append progress url to message
+        if not self.options.trac_base_url.endswith('/'):
+            self.options.trac_base_url += '/'
+        url = self.options.trac_base_url + \
+                'cloud/command?action=progress&file=%s' % \
+                self.options.progress_file
+        message += ': %s' % url
         
-        if not cl.connect(server=(self.options.jabber_server,
-                                  int(self.options.jabber_port)),use_srv=False):
-            raise Exception("Could not connect to jabber server %s:%s" % \
-                                (self.options.jabber_server,
-                                 self.options.jabber_port))
+        try:
+            # send message
+            jid = xmpp.protocol.JID(self.options.jabber_username)
+            cl = xmpp.Client(jid.getDomain(), debug=[])
             
-        if not cl.auth(jid.getNode(), self.options.jabber_password):
-            raise Exception("Could not authenticate jabber user '%s'" % \
-                                self.options.jabber_username)
-        
-        user = self.options.jabber_username.split('@')[0]
-        cl.send(xmpp.Presence('%s/%s' % (self.options.jabber_channel,user)))
-#        cl.sendInitPresence(requestRoster=0)
-        msg = xmpp.Message(self.options.jabber_channel, message)
-        msg.setType('groupchat')
-        cl.send(msg)
-        time.sleep(1)
-        cl.disconnect()
+            server = (self.options.jabber_server,int(self.options.jabber_port))
+            if not cl.connect(server=server, use_srv=False):
+                raise Exception("Could not connect to jabber server %s:%s" % \
+                                    server)
+                
+            if not cl.auth(jid.getNode(), self.options.jabber_password):
+                raise Exception("Could not authenticate jabber user '%s'" % \
+                                    self.options.jabber_username)
+            
+            user = self.options.jabber_username.split('@')[0]
+            cl.send(xmpp.Presence('%s/%s' % (self.options.jabber_channel,user)))
+            #cl.sendInitPresence(requestRoster=0)
+            msg = xmpp.Message(self.options.jabber_channel, message)
+            msg.setType('groupchat')
+            cl.send(msg)
+            time.sleep(1)
+            cl.disconnect()
+        except:
+            if not ignore_errors:
+                raise
+            # don't let a jabber issue block deployment or other commands
