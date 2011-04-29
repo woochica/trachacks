@@ -1,6 +1,7 @@
 tracforms-0.2.1:
 * Fixed #3300 : /wiki versus /wiki/WikiStart
 * Fixed #3326 : field %r and dealing with errors.
+* Fixed #3290 : Added compatibly with MySQL
 
 tracforms-0.2:
 * Fixed #3262 : Added option drop-down lists.
