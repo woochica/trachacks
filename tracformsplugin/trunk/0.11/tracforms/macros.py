@@ -552,7 +552,7 @@ class FormProcessor(object):
         return ' '.join(' '.join(str(item) for item in level)
                         for level in zipped)
 
-    def op_env_debug(self, pattern):
+    def op_env_debug(self, pattern='*'):
         result = []
         for key in fnmatch.filter(self.get_sorted_env(), pattern):
             result.append('%s = %s<BR>' % (key, self.env[key]))
