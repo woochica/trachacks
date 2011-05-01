@@ -238,10 +238,9 @@ class FormUpdater(FormDBUser, PasswordStoreUser):
             self.log.debug('UPDATE ARGS:' + str(req.args))
             args = dict(req.args)
             backpath = args.pop('__backpath__', None)
-            context = json.loads(
-                unquote_plus(args.pop('__context__', None)) or \
-                '(None, None, None)')
-            if context is None:
+            context = json.loads(unquote_plus(
+                          args.pop('__context__', '[null, null, null]')))
+            if None in context:
                 # TRANSLATOR: HTTP error message
                 raise HTTPBadRequest(_("__context__ is required"))
             basever = args.pop('__basever__', None)
