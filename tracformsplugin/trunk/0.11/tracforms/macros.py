@@ -411,14 +411,16 @@ class FormProcessor(object):
                 raise FormTooManyValuesError(str(name))
         return current
 
-    def op_input(self, field, size=None, _id=None, _class=None):
+    def op_input(self, field, content=None, size=None, _id=None, _class=None):
         current = self.get_field(field)
+        if current is not None:
+            content = current
         return ("<INPUT name='%s'" % field +
                 (size is not None and ' size="%s"' % size or '') +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
-                (current is not None and (" value=%r" % xml_escape(
-                                                     current)) or '') +
+                (content is not None and (" value=%r" % xml_escape(
+                                                     content)) or '') +
                 '>')
 
     def op_checkbox(self, field, value=None, _id=None, _class=None):
