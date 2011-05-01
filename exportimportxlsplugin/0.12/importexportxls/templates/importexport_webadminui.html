@@ -31,12 +31,14 @@
                   <td>${fieldsFormat[fd.name]}</td>
                   <td>
                     <py:choose test="">
+                      <input py:when="fd.name in exportForced" checked="checked" disabled="disabled" name="${fd.name}.export" type="checkbox" value="True" />
                       <input py:when="fieldsExport[fd.name] == True" checked="checked" name="${fd.name}.export" type="checkbox" value="True" />
                       <input py:otherwise="" name="${fd.name}.export" type="checkbox" value="True" />
                     </py:choose>
                   </td>
                   <td>
                     <py:choose test="">
+                      <input py:when="fd.name in importForbidden" disabled="disabled" name="${fd.name}.import" type="checkbox" value="True" />
                       <input py:when="fieldsImport[fd.name] == True" checked="checked" name="${fd.name}.import" type="checkbox" value="True" />
                       <input py:otherwise="" name="${fd.name}.import" type="checkbox" value="True" />
                     </py:choose>
@@ -96,7 +98,7 @@
                 <label for="import-file">File to import:</label>
                 <input type="file" name="import-file" />
                 <br /> <br />
-                <input type="submit" name="import" value="Import Tickets (Preview)" />
+                <input type="submit" name="import_preview" value="Import Tickets (Preview)" />
             </div>
         </fieldset>
     </form>

@@ -22,8 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import sys
+import os
+import tempfile
+import shutil
 import time
 import xlwt
+import xlrd
 
 from io import BytesIO
 
@@ -38,8 +43,10 @@ from trac.ticket.admin import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider, Chrome
 from trac.ticket.api import TicketSystem
 from trac.ticket.query import Query
+from trac.ticket.model import Ticket
 from trac.mimeview.api import Mimeview, Context
 from trac.resource import Resource
+from trac.attachment import AttachmentModule
 
 from importexportxls.formats import *
 
@@ -52,10 +59,14 @@ class ImportExportAdminPanel(Component):
 
     def __init__(self):
         self.formats = {}
-        self.formats['number'] = NumberFormat()
-        self.formats['date'] = DateFormat()
-        self.formats['text'] = TextFormat()
-        self.formats['boolean'] = BooleanFormat()
+        self.formats['number'] = NumberFormat(self.config)
+        self.formats['datetime'] = DateTimeFormat(self.config)
+        self.formats['date'] = DateFormat(self.config)
+        self.formats['text'] = TextFormat(self.config)
+        self.formats['boolean'] = BooleanFormat(self.config)
+        
+        self.exportForced = ['id', 'summary']
+        self.importForbidden = ['id', 'summary', 'time', 'changetime']
 
     def get_admin_panels(self, req):
         if 'TICKET_ADMIN' in req.perm:
@@ -63,6 +74,8 @@ class ImportExportAdminPanel(Component):
 
     def render_admin_panel(self, req, cat, page, version):
         req.perm.require('TICKET_ADMIN')
+        
+        template = 'importexport_webadminui.html'
         
         allfields = [ {'name':'id', 'label':'id'} ]
         allfields.extend( TicketSystem(self.env).get_ticket_fields() )
@@ -76,16 +89,20 @@ class ImportExportAdminPanel(Component):
         fieldsExport = self._get_fields_export(allfields)
         fieldsImport = self._get_fields_import(allfields)
         
+        settings = {}
+        
         if req.method == 'POST':
             # change custom fields excel types
             if req.args.get('save'):
                 # clear actual config
                 for name, value in self.config.options('import-export-xls'):
                     self.config.remove('import-export-xls', name)
+                # change custom fields excel types
                 for cf in customfields:
                     fmt = req.args.get(cf['name']+'.format', 'text')
                     self.config.set('import-export-xls', cf['name']+'.format', fmt)
                     fieldsFormat[cf['name']] = fmt
+                # change fields exported and imported
                 for cf in allfields:
                     fexport = bool( req.args.get(cf['name']+'.export', False) )
                     fimport = bool( req.args.get(cf['name']+'.import', False) )
@@ -96,19 +113,27 @@ class ImportExportAdminPanel(Component):
                     fieldsExport[cf['name']] = fexport
                     fieldsImport[cf['name']] = fimport
                 self.config.save()
-            # change custom fields excel types
             if req.args.get('export'):
                 self._send_export(req)
+            if req.args.get('import_preview'):
+                (settings['tickets'], settings['importedFields'], settings['warnings']) = self._get_import_preview(req)
+                template = 'importexport_preview.html'
+            if req.args.get('import'):
+                settings = self._process_import(req)
+                template = 'importexport_done.html'
         
         
-        settings = {}
+        settings['endofline'] = self.config.get('import-export-xls', 'endofline', 'LF')
         settings['defaultfields'] = defaultfields
         settings['customfields'] = customfields
         settings['formats'] = self.formats
         settings['fieldsFormat'] = fieldsFormat
         settings['fieldsExport'] = fieldsExport
         settings['fieldsImport'] = fieldsImport
-        return 'importexport_webadminui.html', settings
+        settings['exportForced'] = self.exportForced
+        settings['importForbidden'] = self.importForbidden
+        settings['req'] = req
+        return template, settings
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
@@ -141,7 +166,7 @@ class ImportExportAdminPanel(Component):
                 if fd['name'] in ['id']:
                     ftype = 'number'
                 elif fd['name'] in ['time', 'changetime']:
-                    ftype = 'date'
+                    ftype = 'datetime'
                 fieldsFormat[fd['name']] = ftype
         
         return fieldsFormat
@@ -172,6 +197,9 @@ class ImportExportAdminPanel(Component):
             if fd['name'] in fieldnames:
                 fieldsExport[fd['name']] = self.config.getbool('import-export-xls', fd['name']+'.export', True)
         
+        for fd in self.exportForced:
+            fieldsExport[fd] = True
+        
         return fieldsExport
 
     def _get_fields_import(self, fields = None):
@@ -197,6 +225,10 @@ class ImportExportAdminPanel(Component):
             if fd['name'] in fieldnames:
                 fieldsImport[fd['name']] = self.config.getbool('import-export-xls', fd['name']+'.import', True)
         
+        
+        for fd in self.importForbidden:
+            fieldsImport[fd] = False
+        
         return fieldsImport
 
     def _send_export(self, req):
@@ -220,10 +252,7 @@ class ImportExportAdminPanel(Component):
         fields = [c for c in fields if fieldsExport[ c['name'] ] ]
         fieldnames = [c['name'] for c in fields]
         
-        query = Query(self.env, cols=fieldnames, order='id')
-        
         content = BytesIO()
-        cols = query.get_columns()
         
         headerStyle = xlwt.easyxf('font: bold on; pattern: pattern solid, fore-colour grey25; borders: top thin, bottom thin, left thin, right thin')
         
@@ -237,9 +266,10 @@ class ImportExportAdminPanel(Component):
             colIndex[f['name']] = c
             c += 1
         
-        context = Context.from_request(req)
+        query = Query(self.env, cols=fieldnames, order='id', max=sys.maxint)
         results = query.execute(req)
         r = 0
+        cols = query.get_columns()
         for result in results:
             c = 0
             r += 1
@@ -252,4 +282,150 @@ class ImportExportAdminPanel(Component):
                 c += 1
         wb.save(content)
         return (content.getvalue(), 'application/excel')
+    
+    
+    def _get_import_preview(self, req):
+        req.perm.assert_permission('TICKET_ADMIN')
         
+        tempfile = self._save_uploaded_file(req)
+        
+        if req.session.has_key('importexportxls.tempfile'):
+            os.remove( req.session['importexportxls.tempfile'] )
+        
+        req.session['importexportxls.tempfile'] = tempfile
+        
+        return self._get_tickets(tempfile)
+
+    def _process_import(self, req):
+        req.perm.assert_permission('TICKET_ADMIN')
+        
+        added = 0
+        modified = 0;        
+        
+        if req.session.has_key('importexportxls.tempfile'):
+          tempfile = req.session['importexportxls.tempfile']
+          del req.session['importexportxls.tempfile']
+          
+          tickets, importFields, warnings = self._get_tickets(tempfile)
+          os.remove( tempfile )
+          
+          for i, t in enumerate(tickets):
+            if bool( req.args.get('ticket.'+unicode(i), False) ):
+              if t.exists:
+                if t.save_changes():
+                  modified += 1
+              else:
+                t.insert()
+                added += 1
+        return {'added':added,'modified':modified}
+    
+    def _get_tickets(self, filename):
+        fieldsLabels = TicketSystem(self.env).get_ticket_field_labels()
+        fieldsLabels['id'] = 'id'
+        
+        invFieldsLabels = {}
+        for k in fieldsLabels.keys():
+            invFieldsLabels[fieldsLabels[k]] = k
+        
+        book = xlrd.open_workbook(filename)
+        sh = book.sheet_by_index(0)
+        columns = [unicode(sh.cell_value(0, c)) for c in range(sh.ncols)]
+        
+        # columns "id" and "summary" are needed
+        if 'id' not in columns and fieldsLabels['id'] not in columns:
+            raise TracError('Column "id" not found')
+        if 'summary' not in columns and fieldsLabels['summary'] not in columns:
+            raise TracError('Column "summary" not found')
+        
+        fieldsImport = self._get_fields_import()
+        
+        importFields = []
+        columnsIds = {}
+        idx = 0
+        idIndex = 0
+        summaryIndex = 0
+        creationIndex = None
+        modificationIndex = None
+        for c in columns:
+            if c not in fieldsLabels.keys() and c in fieldsLabels.values():
+                columnsIds[idx] = invFieldsLabels[c]
+                if fieldsImport[invFieldsLabels[c]]:
+                    importFields.append({'name':invFieldsLabels[c], 'label':c})
+            elif c in fieldsLabels.keys() and c not in fieldsLabels.values():
+                columnsIds[idx] = c
+                if fieldsImport[c]:
+                    importFields.append({'name':c, 'label':fieldsLabels[c]})
+            else:
+                columnsIds[idx] = None
+            if columnsIds[idx] == 'id':
+                idIndex = idx
+            if columnsIds[idx] == 'summary':
+                summaryIndex = idx
+            if columnsIds[idx] == 'time':
+                creationIndex = idx
+            if columnsIds[idx] == 'changetime':
+                modificationIndex = idx
+            idx += 1
+                      
+        fieldsFormat = self._get_fields_format( importFields + [{'name':'id', 'label':'id'}, {'name':'summary', 'label':fieldsLabels['summary']}] )
+        
+        warnings = []
+        preview = []
+        for r in range(1, sh.nrows):
+            tid = self.formats['number'].restore( sh.cell_value(r, idIndex) )
+            summary = self.formats['text'].restore( sh.cell_value(r, summaryIndex) )
+            if tid == '' or tid == None:
+                ticket = Ticket(self.env)
+                ticket['summary'] = summary
+            else:
+                ticket = Ticket(self.env, tkt_id=tid)
+                if ticket['summary'] != summary:
+                    warnings.append('You cannot modify the summary for the ticket #'+unicode(tid))
+            
+            for idx in columnsIds.keys():
+                col = columnsIds[idx]
+                if col != None and idx not in [idIndex, summaryIndex, creationIndex, modificationIndex] and col in fieldsFormat.keys():
+                    converterId = fieldsFormat[col]
+                    converter = self.formats[converterId];
+                    value = sh.cell_value(r, idx)
+                    value = converter.restore( value )
+                    if converter.convert( value ) != converter.convert( ticket[col] ) and converter.convert( value ) != unicode('--'):
+                        ticket[col] = value
+            preview.append(ticket)
+            
+        return (preview, importFields, warnings)
+    
+    def _save_uploaded_file(self, req):
+        req.perm.assert_permission('TICKET_ADMIN')
+        
+        upload = req.args['import-file']
+        if not hasattr(upload, 'filename') or not upload.filename:
+            raise TracError('No file uploaded')
+        if hasattr(upload.file, 'fileno'):
+            size = os.fstat(upload.file.fileno())[6]
+        else:
+            upload.file.seek(0, 2) # seek to end of file
+            size = upload.file.tell()
+            upload.file.seek(0)
+        if size == 0:
+            raise TracError("Can't upload empty file")
+        
+        # Maximum file size (in bytes)
+        max_size = AttachmentModule.max_size
+        if max_size >= 0 and size > max_size:
+            raise TracError('Maximum file size (same as attachment size, set in trac.ini configuration file): %d bytes' % max_size,
+                            'Upload failed')
+        
+        # temp folder
+        tempuploadedfile = tempfile.mktemp()
+
+        flags = os.O_CREAT + os.O_WRONLY + os.O_EXCL
+        if hasattr(os, 'O_BINARY'):
+            flags += os.O_BINARY
+        targetfile = os.fdopen(os.open(tempuploadedfile, flags), 'w')
+ 
+        try:
+            shutil.copyfileobj(upload.file, targetfile)
+        finally:
+            targetfile.close()
+        return tempuploadedfile
