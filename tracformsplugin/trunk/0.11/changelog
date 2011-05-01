@@ -1,7 +1,12 @@
 Author: Rich Harkins <rich@worldsinfinite.com>
 Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
-tracforms-0.3 (yet unreleased):
+tracforms-0.3.1 (yet unreleased):
+ resolved issues
+ * #8751 Form update failure: HTTP request has not JSON serializable argument
+
+
+tracforms-0.3 (30-Apr-2011):
  resolved issues
  * #3388: Couldn't print TracForms
  * #6993: Form Submission returns 'RuntimeError: No Content-Length header set'
