@@ -116,10 +116,14 @@ class Progress(object):
         progress['status'][step] = (start_time,end_time or time.time())
         self.set(progress)
     
-    def is_done(self, step):
+    def is_done(self, step=None):
         """0-indexed steps."""
-        step = str(step)
         progress = self.get()
+        if step is None:
+            if progress['error']:
+                return True
+            step = len(progress['steps'])-1
+        step = str(step)
         if step not in progress['status']:
             return False
         return progress['status'][step][1] and True or False

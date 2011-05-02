@@ -199,7 +199,7 @@ class Daemon(object):
         called after the process has been daemonized by start() or restart().
         """
         
-    def notify_jabber(self, message, ignore_errors=True):
+    def notify_jabber(self, message, resource='command', ignore_errors=True):
         """Sends a message to a jabber channel."""
         if not self.options.notify_jabber:
             return
@@ -208,8 +208,8 @@ class Daemon(object):
         if not self.options.trac_base_url.endswith('/'):
             self.options.trac_base_url += '/'
         url = self.options.trac_base_url + \
-                'cloud/command?action=progress&file=%s' % \
-                self.options.progress_file
+                'cloud/%s?action=progress&file=%s' % \
+                (resource,self.options.progress_file)
         message += ': %s' % url
         
         try:

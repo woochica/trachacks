@@ -7,8 +7,8 @@ from trac.core import * #@UnusedWildImport
 from trac.perm import IPermissionRequestor
 from trac.resource import ResourceNotFound
 from trac.util.translation import _
-from trac.web.api import IRequestHandler
-from trac.web.chrome import Chrome, add_ctxtnav, add_stylesheet, \
+from trac.web.api import IRequestFilter, IRequestHandler
+from trac.web.chrome import Chrome, add_ctxtnav, add_script, add_stylesheet, \
                             INavigationContributor, ITemplateProvider
 from handlers import IFieldHandler
 from droplets import Droplet
@@ -22,7 +22,7 @@ class CloudModule(Component):
     and PyChef and borrowed much from the built-in report component."""
 
     implements(ITemplateProvider, INavigationContributor, IPermissionRequestor,
-               IRequestHandler)
+               IRequestFilter, IRequestHandler)
     
     # trac.ini options
     nav_label = Option('cloud', 'nav_label', _('Cloud'), _("Top nav label."))
@@ -108,6 +108,17 @@ class CloudModule(Component):
     def get_permission_actions(self):  
         actions = ['CLOUD_CREATE','CLOUD_DELETE','CLOUD_MODIFY','CLOUD_VIEW']  
         return actions + [('CLOUD_ADMIN',actions)]  
+    
+    
+    # IRequestFilter methods
+    
+    def pre_process_request(self, req, handler):
+        return handler
+    
+    def post_process_request(self, req, template, data, content_type):
+        if req.path_info.startswith('/cloud'):
+            add_script(req, 'cloud/droplet.js')
+        return template, data, content_type
     
     
     # IRequestHandler methods

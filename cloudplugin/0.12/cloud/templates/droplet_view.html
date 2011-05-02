@@ -8,6 +8,12 @@
   <xi:include href="layout.html" />
   <head>
     <title>$title</title>
+    <script type="text/javascript">
+      jQuery(document).ready(function(){
+        if ("${message}".length)
+          warning('${message}');
+      });
+    </script>
   </head>
 
   <body>
@@ -24,10 +30,6 @@
         </tr>
       </table>
       
-      <div id="message" py:if="message">
-          <br/><p><i>$message</i></p>
-      </div>
-	  
       <div class="buttons">
         <form py:if="'CLOUD_MODIFY' in perm(resource)" action="" method="post">
           <div class="field" py:for="field in cmd_fields">
@@ -53,7 +55,7 @@
             </div>
             <br />
           </div>
-          <input py:for="name,value in buttons" type="submit" name="${name}" value="${value}"/>
+          <input py:for="name,value,attrs in buttons" type="submit" name="${name}" value="${value}" py:attrs="attrs" />
         </form>
         
         <form py:if="'CLOUD_MODIFY' in perm(resource)" action="" method="get">

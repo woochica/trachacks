@@ -68,16 +68,19 @@ class Ec2Commander(Daemon):
         
         # send starting jabber message
         if self.launch_data['command_id'] == 'deploy':
+            resource = 'environment'
             msg = "%s is deploying to %d %s instance(s)" % \
                     (self.options.started_by,len(nodes),', '.join(envs))
         elif self.launch_data['command_id'] == 'audit':
+            resource = 'environment'
             msg = "%s is auditing %d %s instance(s)" % \
                     (self.options.started_by,len(nodes),', '.join(envs))
         else:
+            resource = 'command'
             msg = "%s is executing '%s' to %d %s instance(s)" % \
                     (self.options.started_by,self.launch_data['command_id'],
                      len(nodes),', '.join(envs))
-        self._notify_jabber(msg)
+        self._notify_jabber(msg, resource)
         
         # Execute for each instance
         step = 0
@@ -115,7 +118,7 @@ class Ec2Commander(Daemon):
         # send ending jabber message
         msg = "%s's %s was successfully completed" % \
                 (self.options.started_by,self.launch_data['command_id'])
-        self._notify_jabber(msg)
+        self._notify_jabber(msg, resource)
         
         if sysexit:
             sys.exit(0) # success
@@ -135,10 +138,10 @@ class Ec2Commander(Daemon):
             self.log.info("%s\nSuccessfully ran: %s" % (out,cmd))
             return out
         
-    def _notify_jabber(self, msg):
+    def _notify_jabber(self, msg, resource='command'):
         if self.launch_data['command_id'] not in self.options.notify_jabber:
             return
-        self.notify_jabber(msg)
+        self.notify_jabber(msg, resource)
 
 
 if __name__ == "__main__":
