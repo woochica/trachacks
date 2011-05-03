@@ -40,8 +40,8 @@ PATT_INPUT_TAGS =     ('(?P<ur>%s)|(?P<sq>%s)|(?P<dq>%s)|(?P<op>%s)|(?P<ct>%s)|(
 
 #######   Regular Expressions   #######
 REGEX_CRLF = re.compile('''(\r\n|\r|\n)''')
-REGEXP_LINE_MATCHER = re.compile(
-		PATT_PRIMARYINPUT + '|' + PATT_DELAYEDINPUT + '|' + PATT_NOTE + '|' + 
+REGEXP_LINE_MATCHER = re.compile(PATT_NOTE + '|' + 
+		PATT_PRIMARYINPUT + '|' + PATT_DELAYEDINPUT + '|' + 
 		PATT_SNIPPEDOUTPUT + '|' + PATT_OUTPUT, re.M | re.S)
 REGEXP_TAGS = re.compile(PATT_INPUT_TAGS, re.S)
 REGEXP_UR = re.compile("(%s)" % (PATT_USERREPLACEMENT))
