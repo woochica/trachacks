@@ -6,7 +6,7 @@ from trac.resource import Resource
 from trac.util import as_int
 from trac.util.presentation import Paginator
 from trac.util.text import to_unicode
-from trac.web.chrome import add_link, add_notice, add_warning
+from trac.web.chrome import add_link, add_notice, add_warning, Chrome
 from trac.mimeview import Context
 from trac.util.translation import _
 
@@ -123,11 +123,14 @@ class Droplet(object):
                        'csv': 0,
                        'tab': 0}.get(format, self.items_per_page)
         max = req.args.get('max')
+        query = req.args.get('query')
+        groupby = req.args.get('groupby', self.grid_group)
+        groupby_fields = [(field.label,field.name) for field in columns]
         limit = as_int(max, default_max, min=0) # explicit max takes precedence
         offset = (page - 1) * limit
         
         # explicit sort takes precedence over config
-        sort = req.args.get('sort', self.grid_sort)
+        sort = groupby or req.args.get('sort', self.grid_sort)
         asc = req.args.get('asc', self.grid_asc)
         asc = bool(int(asc)) # string '0' or '1' to int/boolean
         
@@ -141,6 +144,10 @@ class Droplet(object):
             params['page'] = page
             if max:
                 params['max'] = max
+            if query:
+                params['query'] = query
+            if groupby:
+                params['groupby'] = groupby
             params.update(kwargs)
             params['asc'] = params.get('asc', asc) and '1' or '0'            
             return req.href.cloud(self.name, params)
@@ -155,6 +162,9 @@ class Droplet(object):
                 'columns': columns,
                 'id_field': self.id_field,
                 'max': limit,
+                'query': query,
+                'groupby': groupby,
+                'groupby_fields': [('','')] + groupby_fields,
                 'message': None,
                 'paginator': None,
                 'droplet_href': droplet_href,
@@ -163,7 +173,8 @@ class Droplet(object):
         try:
             self.log.debug('About to search chef..')
             sort_ = sort.strip('_') # handle dynamic attributes
-            rows,total = self.chefapi.search(index, sort_, asc, limit, offset)
+            rows,total = self.chefapi.search(index, sort_, asc,
+                                             limit, offset, query or '*:*')
             numrows = len(rows)
             self.log.debug('Chef search returned %s rows' % numrows)
         except Exception:
@@ -234,8 +245,9 @@ class Droplet(object):
                     cell = {'value': value, 'header': header, 'index': col_idx}
                     col_idx += 1
                     # Detect and create new group
-                    if col == '__group__' and value != prev_group_value:
+                    if col == groupby and value != prev_group_value:
                         prev_group_value = value
+                        row_groups.append( (value,[]) )
                     # Other row properties
                     row['__idx__'] = row_idx
                     if col == self.id_field:

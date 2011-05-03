@@ -54,9 +54,9 @@ droplet_defaults = {
     # grid view - chef search index and fields
     'grid_index': 'node',
     'grid_columns': 'name, run_list, created_by, created_at, ohai_time, ec2.instance_type, ec2.public_hostname, ec2.placement_availability_zone, ec2.ami_id',
-    'grid_sort': 'created_at',
-    'grid_asc': 0,
     'grid_group': 'environment',
+    'grid_sort': 'environment',
+    'grid_asc': 0,
   },
   'cloud.rds': {
     'class': 'RdsInstance', # must exactly match corresponding Python class name
@@ -104,6 +104,7 @@ droplet_defaults = {
     # grid view - chef search index and fields
     'grid_index': 'rds', # data bag name, must match droplet name
     'grid_columns': 'id, dbname, created_by, created_at, availability_zone, multi_az, instance_class, allocated_storage, endpoint',
+    'grid_group': '',
     'grid_sort': 'id',
     'grid_asc': 1,
   },
@@ -142,7 +143,8 @@ droplet_defaults = {
     # grid view - chef search index and fields
     'grid_index': 'command', # data bag name, must match droplet name
     'grid_columns': 'name, description',
-    'grid_sort': '',
+    'grid_group': '',
+    'grid_sort': 'name',
     'grid_asc': 1,
   },
   'cloud.environment': {
@@ -182,6 +184,7 @@ droplet_defaults = {
     # grid view - chef search index and fields
     'grid_index': 'environment', # data bag name, must match droplet name
     'grid_columns': 'order, name, branch, rev, last_rev_deployed',
+    'grid_group': '',
     'grid_sort': 'order',
     'grid_asc': 1,
   },

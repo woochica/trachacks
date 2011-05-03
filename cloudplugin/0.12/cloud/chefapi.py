@@ -28,22 +28,31 @@ class ChefApi(object):
         self.chef = chef.autoconfigure(self.base_path)
     
     def search(self, index, sort=None, asc=1, limit=1000, offset=0, q='*:*'):
-        """Search the chefserver and return a list of dict items."""
-        # setup the params
-        if not sort:
-            sort = 'X_CHEF_id_CHEF_X'
-        sort += asc and ' asc' or ' desc'
+        """Search the chefserver and return a list of dict items.  Since
+        sorting only partially worked in chef 0.9 and doesn't work at all
+        in chef 0.10, we do sorting here on the client."""
+        
+        def get_value(item):
+            if sort == 'name':
+                return item.name
+            if sort == 'run_list':
+                return item.run_list
+            if hasattr(item.attributes, 'get_dotted'):
+                return item.attributes.get_dotted(sort)
+            return item[sort]
         
         # convert rows to resource objects (e.g., nodes)
         timer = Timer(60.0)
         while True:
             try:
                 rows = []
-                search = chef.search.Search(index, q, sort, limit, offset, self.chef)
+                search = chef.search.Search(index, q, rows=10000, api=self.chef)
                 self.log.debug("About to query chef at %s" % search.url)
                 for result in search:
                     rows.append(result.object)
-                return rows, search.total
+                if sort:
+                    rows.sort(key=get_value, reverse=not asc)
+                return rows[offset:offset+limit], search.total
             except TypeError, e:
                 # workaround for race condition when row was just deleted
                 if not timer.running:

@@ -28,22 +28,20 @@
               Max items per page
               <input type="text" name="max" size="10" value="${max}" />
             </label>
-            <fieldset id="reportfilters" py:if="show_args_form">
-              <legend class="foldable">Arguments</legend>
-              <table summary="Report arguments">
-                <tbody>
-                  <tr style="height: 1px"><td colspan="2"></td></tr>
-                </tbody>
-                <tbody py:for="(name, value) in sorted(args.items())" py:if="name != 'USER'">
-                  <tr>
-                    <th scope="row"><label>${name}</label></th>
-                    <td class="filter">
-                      <input type="text" name="${name}" value="${value or None}" size="42" />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </fieldset>
+          </div>
+          <div py:if="groupby_fields">
+            <label>
+              Group by
+              <select id="groupby" name="groupby">
+                <option py:for="label,value in groupby_fields" value="${value}" selected="${groupby == value or None}">${label}</option>
+              </select>
+            </label>
+          </div>
+          <div>
+            <label>
+              Query
+              <input type="text" name="query" size="40" value="${query}" />
+            </label>
           </div>
           <div class="buttons">
             <input type="submit" value="${_('Update')}" />
@@ -76,7 +74,7 @@
       <xi:include href="page_index.html" />
       <py:for each="value_for_group, row_group in row_groups">
         <h2 class="report-result" py:if="value_for_group">
-          <a py:strip="'__grouplink__' not in row_group[0]" href="${row_group[0]['__grouplink__']}">$value_for_group</a>
+          $value_for_group
           <span class="numrows" py:with="cnt = len(row_group)">
             (${cnt and ngettext('%(num)s match', '%(num)s matches', cnt) or _('No matches found.')})
           </span>
