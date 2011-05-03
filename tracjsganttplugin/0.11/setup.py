@@ -8,7 +8,7 @@ setup(
     author = 'Chris Nelson',
     author_email = 'Chris.Nelson@SIXNET.com',
     description = 'Trac plugin displaying jsGantt charts in Trac',
-    version = '0.4',
+    version = '0.5',
     url = 'http://trac-hacks.org/wiki/TracJsGanttPlugin',
     license='BSD',
     packages=['tracjsgantt'],

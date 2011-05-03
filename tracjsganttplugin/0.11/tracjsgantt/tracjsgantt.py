@@ -124,6 +124,7 @@ class TracJSGanttChart(WikiMacroBase):
         text += '<script language="javascript">\n'
         text += 'var g = new JSGantt.GanttChart("g",document.getElementById("GanttChartDIV"), "%s");\n' % format
         text += 'var t;\n'
+        text += 'window.addEventListener("resize", function () { g.Draw();\n }, false);'
         return text
 
     def _end_gantt(self):

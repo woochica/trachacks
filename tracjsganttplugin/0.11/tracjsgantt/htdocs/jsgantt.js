@@ -1596,8 +1596,18 @@ Complete-Displays task percent complete</p>
 
          vMainTable += vRightTable + '</DIV></body></HTML>';
 
-		   vDiv.innerHTML = vMainTable;
+	 vDiv.innerHTML = vMainTable;
 
+	 // Sane defaults for most screens these days. In the worst
+	 // case, it will scroll
+	 var width = "1000px";
+         if (typeof window.innerWidth != 'undefined')
+         {
+	     // 95% of overall window width
+	     width = window.innerWidth * 0.95 + 'px';
+         }
+
+	 vDiv.style.width = width;
       }
 
    }; //this.draw
