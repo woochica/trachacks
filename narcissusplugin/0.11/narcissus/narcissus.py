@@ -1,3 +1,4 @@
+# vim: et
 #
 # Narcissus plugin for Trac
 #
@@ -7,7 +8,7 @@
 
 import os
 import sys
-import sha
+import hashlib
 import time
 import datetime
 
@@ -42,6 +43,7 @@ _CMD_PATHS = {'linux2': '/usr/bin',
               'win32': 'c:\\Program Files\\ATT\\Graphviz\\bin',
               'freebsd6': '/usr/local/bin',
               'freebsd5': '/usr/local/bin',
+              'darwin': '/opt/local/bin/',
              }
 # purple; blue; green; yellow; orange; red; grey;
 _RED = [189, 20, 23, 230, 230, 204, 128]
@@ -129,9 +131,12 @@ class NarcissusPlugin(Component):
         else:
             view = req.args.get('view', 'group')
             params['view'] = view
-            if view == 'group': self._draw_group(req, params)
-            elif view == 'project': self._draw_project(req, params),
-            elif view == 'ticket': self._draw_ticket(req, params)
+            if view == 'group':
+                self._draw_group(req, params)
+            elif view == 'project':
+                self._draw_project(req, params),
+            elif view == 'ticket':
+                self._draw_ticket(req, params)
 
         #print>>sys.stderr, 'return request'
         return 'narcissus.xhtml', params, None
@@ -168,7 +173,7 @@ class NarcissusPlugin(Component):
             if start_version == 1:
                 new_page = WikiPage(self.env, page, 1)
                 add = len(new_page.text.splitlines())
-                if (new_page.author in members) and (new_page.time > last_update):
+                if (new_page.author in members) and (new_page.time.date() > last_update):
                     self._insert_data(new_page.author, new_page.time, 
                         new_page.name, 'wiki', 'add', add)
                 start_version += 1
@@ -344,7 +349,7 @@ class NarcissusPlugin(Component):
             x, y = memx + 10, name_offset * 0.4
             draw.text((x, y), mem, fill=(0, 0, 0, 255), font=self._ttf)
 
-        params['map'] = map
+        params['mapItems'] = map
 
 
         # draw summary bars
@@ -438,7 +443,7 @@ class NarcissusPlugin(Component):
                     map.append(item)
                 x += widths[j]
             idate += datetime.timedelta(days=1)
-        params['map'] = map
+        params['mapItems'] = map
 
         img = Image.composite(layer, img, layer)
         params['vis'] = self._cache_image(req, params, img, 'vis')
@@ -580,7 +585,7 @@ class NarcissusPlugin(Component):
             # increment the horizontal point for the next member
             memx += colw + bar_gap
 
-        params['map'] = map
+        params['mapItems'] = map
         params['vis'] = self._cache_image(req, params, img, 'vis')
 
     def _write_dates(self, start_pos, idate, days, draw):
@@ -606,7 +611,7 @@ class NarcissusPlugin(Component):
         # Use hash to determine image name for cache
         view = req.args.get('view', 'group')
         sha_text = '%s%s%s' % (view, name, time.time())
-        sha_key = sha.new(sha_text).hexdigest()
+        sha_key = hashlib.sha1(sha_text).hexdigest()
 
         img_name = '%s.png' % (sha_key)
         img_path = os.path.join(self.cache_dir, img_name)
@@ -822,8 +827,10 @@ class NarcissusPlugin(Component):
         # Determine the difference between two text items.
         if old_content == new_content:
             return None
-        old_content = old_content.decode("utf-8") # FIXME - always UTF8?
-        new_content = new_content.decode("utf-8")
+        #old_content = self._decode_string(old_content)) # FIXME - always UTF8?
+        #new_content = self._decode_string(new_content)
+        old_content = unicode(old_content, "iso-8859-1")
+        new_content = unicode(new_content, "iso-8859-1")
         return diff_blocks(old_content.splitlines(),
                            new_content.splitlines(),
                            0, tabwidth=8,
@@ -860,3 +867,12 @@ class NarcissusPlugin(Component):
         if v < a: return a
         elif v > b: return b
         return v
+
+    def _decode_string(self, v):
+        try:
+            return v.decode('utf-8')
+        except UnicodeDecodeError:
+            return v
+        except UnicodeEncodeError:
+            return v
+

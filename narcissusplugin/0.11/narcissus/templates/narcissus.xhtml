@@ -45,13 +45,18 @@
 </div>
 
 <div id="nar-visualisation">
-	<p>${msg}</p>
-	<map name="vis">
-		<py:for each="item in map">
-		<area href="${item['href']}" shape="rect" coords="${item['x1']},${item['y1']},${item['x2']},${item['y2']}" border="1" />
-		</py:for>
-	</map>
-	<img src="${vis['href']}" border="0" width="${vis['width']}" height="${vis['height']}" usemap="#vis" />
+	<py:choose test="msg">
+		<py:when test="''">
+			<map name="vis">
+				<py:for each="item in mapItems">
+				<area href="${item['href']}" shape="rect" coords="${item['x1']},${item['y1']},${item['x2']},${item['y2']}" border="1" />
+				</py:for>
+			</map>
+			<img src="${vis['href']}" border="0" width="${vis['width']}" height="${vis['height']}" usemap="#vis" />
+		</py:when><py:otherwise>
+			<p>${msg}</p>
+		</py:otherwise>
+	</py:choose>
 </div>
 
 </py:when>
