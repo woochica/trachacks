@@ -429,9 +429,11 @@ class TracJSGanttChart(WikiMacroBase):
             if t['milestone'] != '' and t['milestone'] not in milestones:
                 milestones.append(t['milestone'])
 
+        self.firstMilestoneID = 9999
+
+        # Need a unique ID for each task.
         if len(milestones) > 0:
-            # Need a unique ID for each task.
-            id = 9999
+            id = self.firstMilestoneID
             for t in self.tickets:
                 if t['id'] > id:
                     id = t['id']
