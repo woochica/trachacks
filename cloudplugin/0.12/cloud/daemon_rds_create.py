@@ -51,14 +51,14 @@ class RdsCreator(Daemon):
             sys.exit(1)
         self.progress.done(1)
         
-        # add id to progress, update step 2 with public dns
+        # update step 2 with endpoint
         endpoint = "%s:%s" % instance.endpoint
         self.log.debug('Adding endpoint %s to progress' % endpoint)
         progress = self.progress.get()
         progress['steps'][1] += ' (%s)' % endpoint
         self.progress.set(progress)
         
-        # Step 4. Applying the chef roles and attributes
+        # Step 3. Applying the chef roles and attributes
         self.log.debug('Applying chef roles and attributes..')
         self.progress.start(2)
         self.log.debug('Saving data bag item %s/%s..' % (self.databag,id))

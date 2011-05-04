@@ -1,9 +1,26 @@
 # Default droplet config options that can be overridden in the trac.ini file.
 
 droplet_defaults = {
+  'cloud': {
+    'class': 'Ec2Instance', # must exactly match corresponding Python class name
+    'aws_key': '',
+    'aws_keypair': '',
+    'aws_keypair_pem': '',
+    'aws_secret': '',
+    'aws_username': '',
+    'chef_base_path': '',
+    'chef_boot_run_list': '',
+    'jabber_channel': '',
+    'jabber_password': '',
+    'jabber_port': 5222,
+    'jabber_server': '',
+    'jabber_username': '',
+    'rds_password': '',
+    'rds_username': '',
+  },
   'cloud.instance': {
     'class': 'Ec2Instance', # must exactly match corresponding Python class name
-    'description': 'AWS EC2 instances.',
+    'description': 'AWS Elastic Compute Cloud (EC2) instances.',
     'title': 'EC2 Instances',
     'label': 'EC2 Instance',
     'order': 1, # order in contextual nav from left to right
@@ -60,7 +77,7 @@ droplet_defaults = {
   },
   'cloud.rds': {
     'class': 'RdsInstance', # must exactly match corresponding Python class name
-    'description': 'AWS RDS instances.',
+    'description': 'AWS Relational Database System (RDS) instances.',
     'title': 'RDS Instances',
     'label': 'RDS Instance',
     'order': 2, # order in contextual nav from left to right
@@ -108,12 +125,53 @@ droplet_defaults = {
     'grid_sort': 'id',
     'grid_asc': 1,
   },
+  'cloud.eip': {
+    'class': 'EipAddress', # must exactly match corresponding Python class name
+    'description': 'AWS Elastic IP (EIP) addresses.',
+    'title': 'EIP Addresses',
+    'label': 'EIP Address',
+    'order': 3, # order in contextual nav from left to right
+    'id_field': 'public_ip',
+    'notify_jabber': '',
+    
+    # field definitions
+    'field.id': 'text',
+    'field.id.label': 'ID',
+    'field.public_ip': 'text',
+    'field.public_ip.label': 'Address',
+    'field.name': 'text',
+    'field.name.label': 'Name',
+    'field.description': 'text',
+    'field.description.label': 'Description',
+    'field.instance_id': 'select',
+    'field.instance_id.label': 'Instance',
+    'field.instance_id.databag': 'nodes',
+    'field.created_by': 'text',
+    'field.created_by.label': 'Created By',
+    'field.created_by.handler': 'AuthorHandler',
+    'field.created_at': 'text',
+    'field.created_at.label': 'Created At',
+    'field.created_at.handler': 'EpochHandler',
+    
+    # create, read, update, delete views - chef resource name and fields
+    'crud_resource': 'data',
+    'crud_view': 'public_ip, name, description, instance_id, created_by, created_at',
+    'crud_new': 'name, description, instance_id, created_by, created_at',
+    'crud_edit': 'public_ip*, name, description, instance_id, created_by, created_at*',
+    
+    # grid view - chef search index and fields
+    'grid_index': 'eip', # data bag name, must match droplet name
+    'grid_columns': 'public_ip, name, description, instance_id, created_by, created_at',
+    'grid_group': '',
+    'grid_sort': 'name',
+    'grid_asc': 1,
+  },
   'cloud.command': {
     'class': 'Command', # must exactly match corresponding Python class name
     'description': "Commands to execute on ec2 instances by environment and role.  Commands with an ID of 'deploy' and 'audit' will be used for deployments to and audits of environments, respectively.",
     'title': 'Commands',
     'label': 'Command',
-    'order': 3, # order in contextual nav from left to right
+    'order': 4, # order in contextual nav from left to right
     'id_field': 'name',
     'node_ref_field': 'alias',
     'notify_jabber': '',
@@ -152,7 +210,7 @@ droplet_defaults = {
     'description': 'Per-environment/profile configuration.',
     'title': 'Environments',
     'label': 'Environment',
-    'order': 4, # order in contextual nav from left to right
+    'order': 5, # order in contextual nav from left to right
     'id_field': 'name',
     'node_ref_field': 'alias',
     'notify_jabber': '',

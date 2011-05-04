@@ -37,9 +37,12 @@ class ChefApi(object):
                 return item.name
             if sort == 'run_list':
                 return item.run_list
-            if hasattr(item.attributes, 'get_dotted'):
-                return item.attributes.get_dotted(sort)
-            return item[sort]
+            try:
+                if hasattr(item.attributes, 'get_dotted'):
+                    return item.attributes.get_dotted(sort)
+                return item[sort]
+            except KeyError:
+                return ''
         
         # convert rows to resource objects (e.g., nodes)
         timer = Timer(60.0)

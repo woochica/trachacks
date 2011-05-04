@@ -214,6 +214,7 @@ class Field(object):
         its contents will be returned.  The special databags are:
         
          * roles - returns the roles as options
+         * nodes - returns the nodes as options
         """
         if self._opts:
             return [(o,o) for o in self._opts]
@@ -224,10 +225,25 @@ class Field(object):
         # get options from databag
         opts = []
         try:
-            if self._databag == 'roles':
+            if self._databag.startswith('roles'):
                 # handle special case
                 roles = self._chefapi.resource('roles')
                 opts = sorted([(r,r) for r in roles])
+            elif self._databag.startswith('nodes'):
+                # handle special case
+                if ':' in self._databag:
+                    name,value = self._databag.split(':')[1:3]
+                else:
+                    name = value = 'ec2.instance_id'
+                nodes,u_total = self._chefapi.search('node')
+                opts = [('','')]
+                for node in nodes:
+                    try:
+                        opts.append( (node.attributes.get_dotted(name),
+                                      node.attributes.get_dotted(value)) )
+                    except KeyError:
+                        pass # skip nodes with missing keys
+                opts.sort()
             else:
                 bag = self._chefapi.databag(self._databag)
                 opts = [(rec['name'],rec['value']) for rec in bag]

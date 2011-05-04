@@ -125,3 +125,44 @@ class AwsApi(object):
         self.log.info('Geting rds instances (id=%s)..' % id)
         conn = boto.connect_rds(self.key, self.secret)
         return conn.get_all_dbinstances(id)
+    
+    
+    # EIP Addresses
+    
+    def allocate_eip_address(self):
+        """Allocate a new eip address."""
+        conn = boto.connect_ec2(self.key, self.secret)
+        address = conn.allocate_address()
+        self.log.info('Created eip address %s' % address)
+        return address
+
+    def modify_eip_association(self, ip, instance_id=None):
+        """Associate an eip address with an ec2 instance if provided,
+        else it disassociates the eip address from any ec2 instance."""
+        conn = boto.connect_ec2(self.key, self.secret)
+        if instance_id:
+            result = conn.associate_address(instance_id, ip)
+            self.log.info('Associated ec2 instance %s with eip address %s' % \
+                            (instance_id, ip))
+        else:
+            result = conn.disassociate_address(ip)
+            self.log.info('Disassociated eip address %s' % ip)
+        return result
+    
+    def release_eip_address(self, ip):
+        """Release eip address."""
+        self.log.info('Release eip address %s..' % ip)
+        conn = boto.connect_ec2(self.key, self.secret)
+        result = conn.release_address(ip)
+        self.log.info('Released eip address %s' % ip)
+        return result
+    
+    def get_eip_addresses(self, ip=None):
+        """Retrieve rds instance(s)."""
+        if ip is None:
+            ip = []
+        elif isinstance(ip,str):
+            ip = [ip]
+        self.log.info('Geting eip addresses (ip=%s)..' % ip)
+        conn = boto.connect_ec2(self.key, self.secret)
+        return conn.get_all_addresses(ip)
