@@ -131,7 +131,7 @@ droplet_defaults = {
     'title': 'EIP Addresses',
     'label': 'EIP Address',
     'order': 3, # order in contextual nav from left to right
-    'id_field': 'public_ip',
+    'id_field': 'id',
     'notify_jabber': '',
     
     # field definitions
@@ -161,7 +161,7 @@ droplet_defaults = {
     
     # grid view - chef search index and fields
     'grid_index': 'eip', # data bag name, must match droplet name
-    'grid_columns': 'public_ip, name, description, instance_id, created_by, created_at',
+    'grid_columns': 'id, public_ip, name, description, instance_id, created_by, created_at',
     'grid_group': '',
     'grid_sort': 'name',
     'grid_asc': 1,
