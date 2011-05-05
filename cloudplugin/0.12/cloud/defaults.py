@@ -61,12 +61,15 @@ droplet_defaults = {
     'field.ec2.placement_availability_zone.options': 'No preference|us-east-1a|us-east-1b|us-east-1c|us-east-1d',
     'field.ec2.ami_id': 'text',
     'field.ec2.ami_id.label': 'Image ID',
+    'field.disable_api_termination': 'checkbox',
+    'field.disable_api_termination.label': 'Disable API Termination',
+    'field.disable_api_termination.handler': 'BooleanHandler',
     
     # create, read, update, delete views - chef resource name and fields
     'crud_resource': 'nodes',
-    'crud_view': 'name, ec2.instance_id, run_list, created_by, created_at, ohai_time, ec2.instance_type, ec2.hostname, ec2.public_hostname, ec2.placement_availability_zone, ec2.ami_id',
-    'crud_new': 'run_list, created_by, created_at, ec2.instance_type, ec2.ami_id, ec2.placement_availability_zone',
-    'crud_edit': 'run_list, created_by, created_at*, ec2.instance_type*, ec2.ami_id*, ec2.placement_availability_zone*',
+    'crud_view': 'name, ec2.instance_id, run_list, created_by, created_at, ohai_time, ec2.instance_type, ec2.hostname, ec2.public_hostname, ec2.placement_availability_zone, ec2.ami_id, disable_api_termination',
+    'crud_new': 'run_list, created_by, created_at, ec2.instance_type, ec2.ami_id, ec2.placement_availability_zone, disable_api_termination',
+    'crud_edit': 'run_list, created_by, created_at*, ec2.instance_type*, ec2.ami_id*, ec2.placement_availability_zone*, disable_api_termination',
     
     # grid view - chef search index and fields
     'grid_index': 'node',

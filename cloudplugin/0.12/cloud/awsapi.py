@@ -20,8 +20,8 @@ class AwsApi(object):
     
     # EC2 Instances
     
-    def launch_ec2_instance(self, image_id, instance_type, zone,
-                            user_data=None, timeout=0):
+    def launch_ec2_instance(self, image_id, instance_type, zone, user_data=None,
+                            disable_api_termination=False, timeout=0):
         """Launch an ec2 instance.  If timeout is > 0, then this method
         won't return until the instance is fully running or the timeout
         duration expires."""
@@ -32,7 +32,8 @@ class AwsApi(object):
             instance_type=instance_type,
             placement=zone,
             user_data=user_data,
-            key_name=self.keypair)
+            key_name=self.keypair,
+            disable_api_termination=disable_api_termination)
         instance = reservation.instances[0]
         self.log.info('Launched ec2 instance %s' % instance.id)
         
@@ -51,9 +52,27 @@ class AwsApi(object):
             instance.update()
         return timer.running
     
+    def modify_ec2_instance(self, id, disable_api_termination):
+        """Modify an ec2 instance."""
+        instance = self.get_ec2_instances(id)[0]
+        result = instance.modify_attribute('disableApiTermination',
+                                            disable_api_termination)
+        return result
+    
     def terminate_ec2_instance(self, id):
-        """Terminate an ec2 instance."""
+        """Terminate an ec2 instance.  Returns True if terminated
+        successfully, False if terminated unsuccessfuly, and None
+        if the disable_api_termination attribute is enabled."""
         conn = boto.connect_ec2(self.key, self.secret)
+        
+        # first check if termination is protected
+        import pydevd; pydevd.settrace('10.0.2.15')
+        instance = self.get_ec2_instances(id)[0]
+        attr = instance.get_attribute('disableApiTermination')
+        if attr['disableApiTermination'] == 'true':
+            return None
+        
+        # not protected so terminate
         terminated = conn.terminate_instances([id])
         if terminated:
             terminated = terminated[0].id
@@ -64,6 +83,8 @@ class AwsApi(object):
         """Retrieve ec2 instance(s)."""
         self.log.info('Geting ec2 instances (id=%s)..' % id)
         conn = boto.connect_ec2(self.key, self.secret)
+        if isinstance(id,str) or isinstance(id,unicode):
+            id = [id]
         reservations = conn.get_all_instances(id)
         return [reservation.instances[0] for reservation in reservations]
     

@@ -246,7 +246,7 @@ class CloudFileAjaxModule(Component):
                 progress.restart()
                 progress.error('') # clear error
             elif int(req.args.get('stop',0)) == 1:
-                progress.stop()
+                progress.kill()
                 progress.error("Stopped on user request.")
             if int(req.args.get('set_time',0)) == 1:
                 data['now'] = time.time()

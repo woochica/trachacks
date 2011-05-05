@@ -114,6 +114,20 @@ class ListHandler(DefaultHandler):
             items = items.split(',')
         return [item.strip() for item in items]
     
+class BooleanHandler(DefaultHandler):
+    """Handle a boolean item."""
+    implements(IFieldHandler)
+    
+    def convert_item(self, field, item, req):
+        if get(field, item) in ('1','true'):
+            return 'true'
+        return 'false'
+    
+    def convert_req(self, field, req):
+        if req.args.get(field) in ('1','true'):
+            return 'true'
+        return 'false'
+    
 class HttpHandler(DefaultHandler):
     """Assemble an http link from the given hostname field."""
     implements(IFieldHandler)

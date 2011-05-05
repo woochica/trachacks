@@ -474,6 +474,20 @@ class Ec2Instance(Droplet):
         data['buttons'].append(button),
         return template, data, content_type
     
+    def render_view(self, req, id):
+        template,data,content_type = Droplet.render_view(self, req, id)
+        if self._is_disable_api_termination(req, id):
+            attrs = data.get('delete_attrs',{})
+            attrs['disabled'] = 'disabled'
+            data['delete_attrs'] = attrs
+        return template, data, content_type
+    
+    def _is_disable_api_termination(self, req, id):
+        # check chef data (not ec2 instance attribute data)
+        node = self.chefapi.resource(self.crud_resource, id)
+        field = self.fields['disable_api_termination']
+        return field.get(node, req) in ('1','true')
+    
     def create(self, req):
         req.perm.require('CLOUD_CREATE')
         
@@ -482,6 +496,8 @@ class Ec2Instance(Droplet):
             'zone': req.args.get('ec2.placement_availability_zone',''),
             'image_id': req.args.get('ec2.ami_id'),
             'instance_type': req.args.get('ec2.instance_type'),
+            'disable_api_termination':
+                req.args.get('disable_api_termination') in ('1','true'),
         }
         if launch_data['zone'] in ('No preference',''):
             launch_data['zone'] = None
@@ -499,6 +515,11 @@ class Ec2Instance(Droplet):
         req.perm.require('CLOUD_MODIFY')
         self.log.debug('Saving node..')
         node = self.chefapi.resource(self.crud_resource, id)
+        
+        # update instance attributes
+        instance_id = node.attributes.get_dotted('ec2.instance_id')
+        self.cloudapi.modify_ec2_instance(instance_id,
+            req.args.get('disable_api_termination') in ('1','true'))
         
         # prepare fields; remove automatic (ec2) fields
         if fields is None:
@@ -524,10 +545,22 @@ class Ec2Instance(Droplet):
         try:
             instance_id = node.attributes.get_dotted('ec2.instance_id')
             terminated = self.cloudapi.terminate_ec2_instance(instance_id)
-            self.log.info('Terminated instance %s (%s)' % (instance_id,terminated))
+            if terminated:
+                self.log.info('Terminated instance %s (%s)' % \
+                              (instance_id,terminated))
         except Exception, e:
-            self.log.warn('Error terminating instance %s:\n%s' % (instance_id,str(e)))
+            self.log.warn('Error terminating instance %s:\n%s' % \
+                          (instance_id,str(e)))
             terminated = False
+        
+        if terminated is None:
+            # disable_api_termination is enabled
+            add_warning(req,
+                _("%(label)s %(id)s (id=%(instance_id)s) was not " + \
+                  "terminated; it's protected from termination. " + \
+                  "Run an audit to update the chef data.",
+                  label=self.label, id=id, instance_id=instance_id))
+            req.redirect(req.href.cloud(self.name,id))
         
         # delete node from chef
         node.delete()

@@ -128,7 +128,7 @@ class Progress(object):
             return False
         return progress['status'][step][1] and True or False
     
-    def stop(self, sig=signal.SIGTERM):
+    def kill(self, sig=signal.SIGTERM):
         """Stop/kill the daemon."""
         progress = self.get()
         f = open(progress['pidfile'],'r')

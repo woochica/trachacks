@@ -24,7 +24,9 @@ class Ec2Launcher(Daemon):
         instance = self.cloudapi.launch_ec2_instance(
             image_id = self.launch_data['image_id'],
             instance_type = self.launch_data['instance_type'],
-            zone = self.launch_data['zone'])
+            zone = self.launch_data['zone'],
+            disable_api_termination =
+                self.launch_data['disable_api_termination'])
         self.progress.done(0)
         
         # update step 1 with id

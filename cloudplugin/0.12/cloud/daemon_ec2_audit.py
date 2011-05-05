@@ -18,32 +18,48 @@ class Ec2Auditor(Daemon):
         self.log.debug('Determining id deltas..')
         chef_names = [name for name in nodes]
         cloud_names = [instance.private_dns_name for instance in instances]
-        adds = [id for id in cloud_names if id not in chef_names]
-        deletes = [id for id in chef_names if id not in cloud_names]
+        adds = [id for id in cloud_names if id and id not in chef_names]
+        updates = [id for id in cloud_names if id and id in chef_names]
+        deletes = [id for id in chef_names if id and id not in cloud_names]
         
         self.log.debug('Generating steps..')
         steps = []
+        for id in updates:
+            steps.append("Updating ec2 instance '%s' in chef" % id)
         for id in adds:
             steps.append("Missing ec2 instance '%s' in chef" % id)
         for id in deletes:
             steps.append("Extra ec2 instance '%s' in chef" % id)
         self.progress.steps(steps)
         
-        # Indicate differences (as errors)
-        for step in range(len(steps)):
+        # update chef
+        for step in range(len(updates)):
+            self.progress.start(step)
+            id = updates[step]
+            node = nodes[id]
+            instance_id = node.attributes.get_dotted('ec2.instance_id')
+            instance = self.cloudapi.get_ec2_instances(instance_id)[0]
+            attr = instance.get_attribute('disableApiTermination')
+            node['disable_api_termination'] = attr['disableApiTermination']
+            node.save()
+            self.progress.done(step)
+        
+        # indicate differences (as errors)
+        for step in range(len(updates), len(steps)):
             self.progress.start(step)
         
-        # Reveal discrepancies
-        if steps:
+        # reveal discrepancies
+        if adds or deletes:
             msg = "The above discrepancies must be resolved manually. " + \
                   " The AWS Management Console may be of some help."
             self.progress.error(msg)
             sys.exit(1)
         
         # No discrepancies
-        self.progress.steps(['No discrepancies'])
-        self.progress.start(0)
-        self.progress.done(0)
+        if not steps:
+            self.progress.steps(['No discrepancies'])
+            self.progress.start(0)
+            self.progress.done(0)
         
         if sysexit:
             sys.exit(0) # success

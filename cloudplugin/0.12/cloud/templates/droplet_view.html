@@ -60,12 +60,12 @@
         
         <form py:if="'CLOUD_MODIFY' in perm(resource)" action="" method="get">
           <input type="hidden" name="action" value="edit" />
-          <input type="submit" value="${_('Edit %(label)s', label=label)}"/>
+          <input type="submit" value="${_('Edit %(label)s', label=label)}" py:attrs="edit_attrs" />
         </form>
         
         <form py:if="'CLOUD_MODIFY' in perm(resource)" action="" method="get">
           <input type="hidden" name="action" value="delete" />
-          <input type="submit" value="${_('Delete %(label)s', label=label)}"/>
+          <input type="submit" value="${_('Delete %(label)s', label=label)}" py:attrs="delete_attrs" />
         </form>
 	  </div>
       
