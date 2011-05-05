@@ -66,7 +66,6 @@ class AwsApi(object):
         conn = boto.connect_ec2(self.key, self.secret)
         
         # first check if termination is protected
-        import pydevd; pydevd.settrace('10.0.2.15')
         instance = self.get_ec2_instances(id)[0]
         attr = instance.get_attribute('disableApiTermination')
         if attr['disableApiTermination'] == 'true':
