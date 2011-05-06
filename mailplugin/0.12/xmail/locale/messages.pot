@@ -1,0 +1,170 @@
+# Translations template for XMail-Plugin. 
+# Copyright (C) 2010 ORGANIZATION 
+# This file is distributed under the same license as the 
+# XMail project. 
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010. 
+# 
+# copied from TracSubTicketsPlugin project, see 
+# http://trac.edgewall.org/attachment/wiki/CookBook/PluginL10N/trac-subtickets-plugin_i18n-l10n.patch
+#, fuzzy 
+msgid "" 
+msgstr "" 
+"Project-Id-Version: XMail 0.0.x\n" 
+"POT-Creation-Date: 2010-05-04 01:38+0200\n" 
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n" 
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n" 
+"Language-Team: LANGUAGE <trac-dev@googlegroups.com>\n" 
+"MIME-Version: 1.0\n" 
+"Content-Type: text/plain; charset=utf-8\n" 
+"Content-Transfer-Encoding: 8bit\n" 
+"Generated-By: Babel 1.0dev-r482\n"
+ 
+#: xmail/XMailMainView.py:166 
+msgid "id" 
+msgstr "" 
+
+msgid "filter name" 
+msgstr "" 
+
+msgid "user name" 
+msgstr "" 
+
+msgid "next execution" 
+msgstr "" 
+
+msgid "last successful execution" 
+msgstr "" 
+
+msgid "interval in sec" 
+msgstr "" 
+
+msgid "change fields" 
+msgstr "" 
+
+msgid "actions" 
+msgstr "" 
+
+msgid "edit" 
+msgstr "" 
+
+msgid "New filter" 
+msgstr "" 
+
+msgid "edit filter" 
+msgstr "" 
+
+msgid "delete" 
+msgstr "" 
+
+msgid "activate" 
+msgstr "" 
+
+msgid "deactivate" 
+msgstr "" 
+
+msgid "No email specified" 
+msgstr "" 
+
+msgid "You are not allowed to create a new filter. Please login." 
+msgstr "" 
+
+#: xmail/templates/xmail-mainview.html:18
+msgid "XMail user preferences" 
+msgstr ""
+ 
+msgid "User" 
+msgstr "" 
+ 
+msgid "Email address" 
+msgstr "" 
+ 
+msgid "First execution" 
+msgstr "" 
+ 
+msgid "Interval" 
+msgstr "" 
+ 
+msgid "Active filter" 
+msgstr "" 
+ 
+msgid "Configure your filter" 
+msgstr "" 
+ 
+msgid "Select fields" 
+msgstr "" 
+ 
+msgid "select all" 
+msgstr "" 
+ 
+msgid "deselect all" 
+msgstr "" 
+
+ #: xmail/templates/xmail-edit.html:18
+msgid "immediately" 
+msgstr "" 
+
+msgid "daily" 
+msgstr "" 
+
+msgid "weekly" 
+msgstr "" 
+
+# for email template
+msgid "New tickets:" 
+msgstr "" 
+
+msgid "Changed tickets:" 
+msgstr "" 
+
+# ticket fields
+msgid "To change the filter go to %(link)s" 
+msgstr "" 
+
+msgid "component" 
+msgstr "" 
+
+msgid "type" 
+msgstr "" 
+
+msgid "priority" 
+msgstr "" 
+
+msgid "milestone" 
+msgstr "" 
+
+msgid "version" 
+msgstr "" 
+
+msgid "status" 
+msgstr "" 
+
+msgid "owner" 
+msgstr "" 
+
+msgid "reporter" 
+msgstr "" 
+
+msgid "time" 
+msgstr "" 
+
+msgid "changetime" 
+msgstr "" 
+
+msgid "Available fields (SQL-commands are written in UPPER letters):" 
+msgstr ""
+ 
+msgid "Condition (where clause)" 
+msgstr "" 
+
+msgid "All filters will also have a filter condition upon configuration of 'Interval'; so if you have a filter on 'daily' you will get all changes since you have gotten the last mail." 
+msgstr "" 
+
+msgid "For detailed information see" 
+msgstr "" 
+
+msgid "active" 
+msgstr "" 
+
+msgid "in-active" 
+msgstr "" 
+

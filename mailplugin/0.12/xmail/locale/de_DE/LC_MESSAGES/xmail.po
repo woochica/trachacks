@@ -1,0 +1,182 @@
+# German (Germany) translations for XMail-Plugin.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the
+# XMail project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+# copied from TracSubTicketsPlugin project, see
+#
+# http://trac.edgewall.org/attachment/wiki/CookBook/PluginL10N/trac-subtickets-plugin_i18n-l10n.patch
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: XMail 0.0.x\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2010-05-04 01:38+0200\n"
+"PO-Revision-Date: 2011-04-04 11:01+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: de_DE <trac-dev@googlegroups.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.5\n"
+
+#: xmail/XMailMainView.py:166
+msgid "id"
+msgstr "Id"
+
+msgid "filter name"
+msgstr "Filtername"
+
+msgid "user name"
+msgstr "Benutzername"
+
+msgid "next execution"
+msgstr "Nächste Ausführung"
+
+msgid "last successful execution"
+msgstr "Letzte erfolgreiche Ausführung"
+
+msgid "interval in sec"
+msgstr "Interval (in Sek)"
+
+msgid "change fields"
+msgstr "Änderungen"
+
+msgid "actions"
+msgstr "Aktionen"
+
+msgid "edit"
+msgstr "ändern"
+
+msgid "New filter"
+msgstr "Neuer Filter"
+
+msgid "edit filter"
+msgstr "Filter ändern"
+
+msgid "delete"
+msgstr "löschen"
+
+msgid "activate"
+msgstr "aktivieren"
+
+msgid "deactivate"
+msgstr "deaktivieren"
+
+msgid "No email specified"
+msgstr "Keine E-Mail-Adresse angegeben"
+
+msgid "You are not allowed to create a new filter. Please login."
+msgstr ""
+"Sie sind nicht berechtigt einen neuen Filter anzulegen. Bitte loggen Sie "
+"sich ein."
+
+#: xmail/templates/xmail-mainview.html:18
+msgid "XMail user preferences"
+msgstr "XMail Benutzereinstellungen"
+
+msgid "User"
+msgstr "Benutzer"
+
+msgid "Email address"
+msgstr "E-Mail Adresse"
+
+msgid "First execution"
+msgstr "Erste Ausführung"
+
+msgid "Interval"
+msgstr "Interval (in Sek)"
+
+msgid "Active filter"
+msgstr "Filter ist aktiv"
+
+msgid "Configure your filter"
+msgstr "Filter konfigurieren"
+
+msgid "Select fields"
+msgstr "Selektierte Felder"
+
+msgid "select all"
+msgstr "selektiere alle"
+
+msgid "deselect all"
+msgstr "deselektiere alle"
+
+#: xmail/templates/xmail-edit.html:18
+msgid "immediately"
+msgstr "sofort"
+
+msgid "daily"
+msgstr "täglich"
+
+msgid "weekly"
+msgstr "wöchentlich"
+
+# for email template
+msgid "New tickets:"
+msgstr "Neue Tickets:"
+
+msgid "Changed tickets:"
+msgstr "Tickets mit Änderungen:"
+
+# ticket fields
+#, python-format
+msgid "To change the filter go to %(link)s"
+msgstr "Ändern des Filters: %(link)s"
+
+msgid "component"
+msgstr "Komponente"
+
+msgid "type"
+msgstr "Typ"
+
+msgid "priority"
+msgstr "Priorität"
+
+msgid "milestone"
+msgstr "Meilenstein"
+
+msgid "version"
+msgstr "Version"
+
+msgid "status"
+msgstr "Status"
+
+msgid "owner"
+msgstr "Verantwortlicher"
+
+msgid "reporter"
+msgstr "Ersteller"
+
+msgid "time"
+msgstr "Erstellungsdatum"
+
+msgid "changetime"
+msgstr "Änderungsdatum"
+
+msgid "Available fields (SQL-commands are written in UPPER letters):"
+msgstr "Verfügbare Felder (SQL-Befehle sind in Großbuchstaben geschrieben):"
+
+msgid "Condition (where clause)"
+msgstr "Bedingung (where-Bedingung)"
+
+msgid ""
+"All filters will also have a filter condition upon configuration of "
+"'Interval'; so if you have a filter on 'daily' you will get all changes "
+"since you have gotten the last mail."
+msgstr ""
+"Alle Filter haben zusätzlich eine Bedingung je nach Konfiguration des "
+"'Intervals'; wenn also z.B. 'täglich' ausgewählt wurde, dann bekommt man "
+"alle Tickets, die seit der letzten Mail geändert worden sind."
+
+msgid "For detailed information see"
+msgstr "Für detailierte Info siehe"
+
+msgid "active"
+msgstr "aktiv"
+
+msgid "in-active"
+msgstr "inaktiv"
+

@@ -1,0 +1,22 @@
+.filter_name {
+	font-weight: bold;
+}
+
+/*
+.xmail_header1 {
+	font-size: 18pt;
+	font-weight: bold;
+}
+
+.xmail_header2 {
+	font-size: 16pt;
+	font-weight: bold;
+}
+*/
+.xmailerror {
+	color: red
+}
+
+.samplecode {
+	font-family: monospace;
+}
