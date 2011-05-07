@@ -371,6 +371,15 @@ class FormDBComponent(DBComponent):
                 updated_on      INTEGER NOT NULL,
                 PRIMARY KEY     (tracform_id)
                 )
+            """,
+            postgres = """
+            CREATE TABLE tracform_forms(
+                tracform_id     SERIAL PRIMARY KEY NOT NULL,
+                context         VARCHAR(255) NOT NULL,
+                state           TEXT NOT NULL,
+                updater         VARCHAR(127) NOT NULL,
+                updated_on      INTEGER NOT NULL
+                )
             """)
         cursor("""
             CREATE TABLE tracform_history(
@@ -378,14 +387,23 @@ class FormDBComponent(DBComponent):
                 updated_on      INTEGER NOT NULL,
                 updater         TEXT NOT NULL,
                 old_states      TEXT NOT NULL
-                );
-            """, mysql="""
+                )
+            """,
+            mysql = """
             CREATE TABLE tracform_history(
                 tracform_id     INTEGER NOT NULL,
                 updated_on      INTEGER NOT NULL,
                 updater         VARCHAR(127) NOT NULL,
                 old_states      TEXT NOT NULL
-                );
+                )
+            """,
+            postgres = """
+            CREATE TABLE tracform_history(
+                tracform_id     INTEGER NOT NULL,
+                updated_on      INTEGER NOT NULL,
+                updater         VARCHAR(127) NOT NULL,
+                old_states      TEXT NOT NULL
+                )
             """)
 
     def db01(self, cursor):
@@ -416,6 +434,10 @@ class FormDBComponent(DBComponent):
         cursor("""
             CREATE INDEX tracform_history_updated_on
                 ON tracform_history(updated_on DESC)
+            """,
+            postgres = """
+            CREATE INDEX tracform_history_updated_on
+                ON tracform_history(updated_on)
             """)
         cursor("""
             CREATE INDEX tracform_history_updater
@@ -423,15 +445,23 @@ class FormDBComponent(DBComponent):
             """)
 
     def db04(self, cursor):
-        """Recreating updated_on index for tracform_forms to be descending."""
+        """Recreating updated_on index for tracform_forms to be descending.
+
+        Only PostgreSQL doesn't like DESC, so omit it.
+        """
         cursor("""
             DROP INDEX tracform_forms_updated_on
-            """, mysql="""
+            """,
+            mysql = """
             ALTER TABLE tracform_forms DROP INDEX tracform_forms_updated_on
             """)
         cursor("""
             CREATE INDEX tracform_froms_updated_on
                 ON tracform_forms(updated_on DESC)
+            """,
+            postgres = """
+            CREATE INDEX tracform_froms_updated_on
+                ON tracform_forms(updated_on)
             """)
 
     def db10(self, cursor):
@@ -445,7 +475,8 @@ class FormDBComponent(DBComponent):
         """Make the context a unique index."""
         cursor("""
             DROP INDEX tracform_forms_context
-            """, mysql="""
+            """,
+            mysql = """
             ALTER TABLE tracform_forms DROP INDEX tracform_forms_context
             """)
         cursor("""
@@ -466,7 +497,16 @@ class FormDBComponent(DBComponent):
                 updater         TEXT NOT NULL,
                 updated_on      INTEGER NOT NULL
                 )
-            """, mysql="""
+            """,
+            mysql = """
+            CREATE TABLE tracform_fields(
+                tracform_id     INTEGER NOT NULL,
+                field           VARCHAR(127) NOT NULL,
+                updater         VARCHAR(127) NOT NULL,
+                updated_on      INTEGER NOT NULL
+                )
+            """,
+            postgres = """
             CREATE TABLE tracform_fields(
                 tracform_id     INTEGER NOT NULL,
                 field           VARCHAR(127) NOT NULL,
@@ -506,6 +546,17 @@ class FormDBComponent(DBComponent):
                 track_fields    INTEGER,
                 PRIMARY KEY     (id)
                 )
+            """,
+            postgres = """
+            CREATE TABLE forms(
+                id              SERIAL PRIMARY KEY NOT NULL,
+                context         VARCHAR(255) NOT NULL,
+                state           TEXT NOT NULL,
+                author          VARCHAR(127) NOT NULL,
+                time            INTEGER NOT NULL,
+                keep_history    INTEGER,
+                track_fields    INTEGER
+                )
             """)
 
         forms_columns = ('tracform_id', 'context', 'state', 'updater',
@@ -538,7 +589,8 @@ class FormDBComponent(DBComponent):
 
         cursor("""
             DROP INDEX tracform_forms_context
-            """, mysql="""
+            """,
+            mysql = """
             ALTER TABLE tracform_forms DROP INDEX tracform_forms_context
             """)
         # append common suffix for Trac db indexes to new TracForms indexes
@@ -548,7 +600,8 @@ class FormDBComponent(DBComponent):
             """)
         cursor("""
             DROP INDEX tracform_forms_updater
-            """, mysql="""
+            """,
+            mysql = """
             ALTER TABLE tracform_forms DROP INDEX tracform_forms_updater
             """)
         cursor("""
@@ -558,12 +611,17 @@ class FormDBComponent(DBComponent):
         # remove misspelled index name
         cursor("""
             DROP INDEX tracform_froms_updated_on
-            """, mysql="""
+            """,
+            mysql = """
             ALTER TABLE tracform_forms DROP INDEX tracform_froms_updated_on
             """)
         cursor("""
             CREATE INDEX forms_time_idx
                 ON forms(time DESC)
+            """,
+            postgres = """
+            CREATE INDEX forms_time_idx
+                ON forms(time)
             """)
         cursor("""
             DROP TABLE tracform_forms
@@ -574,6 +632,13 @@ class FormDBComponent(DBComponent):
                 AS SELECT
                      tracform_id 'id', updated_on 'time',
                      updater 'author', old_states 'old_state'
+                FROM tracform_history
+            """,
+            postgres = """
+            CREATE TABLE forms_history
+                AS SELECT
+                     tracform_id AS id, updated_on AS time,
+                     updater AS author, old_states AS old_state
                 FROM tracform_history
             """)
 
@@ -599,7 +664,8 @@ class FormDBComponent(DBComponent):
 
         cursor("""
             DROP INDEX tracform_history_tracform_id
-            """, mysql="""
+            """,
+            mysql = """
             ALTER TABLE tracform_history DROP INDEX tracform_history_tracform_id
             """)
         cursor("""
@@ -608,16 +674,22 @@ class FormDBComponent(DBComponent):
             """)
         cursor("""
             DROP INDEX tracform_history_updated_on
-            """, mysql="""
+            """,
+            mysql = """
             ALTER TABLE tracform_history DROP INDEX tracform_history_updated_on
             """)
         cursor("""
             CREATE INDEX forms_history_time_idx
                 ON forms_history(time DESC)
+            """,
+            postgres = """
+            CREATE INDEX forms_history_time_idx
+                ON forms_history(time)
             """)
         cursor("""
             DROP INDEX tracform_history_updater
-            """, mysql="""
+            """,
+            mysql = """
             ALTER TABLE tracform_history DROP INDEX tracform_history_updater
             """)
         cursor("""
@@ -634,10 +706,18 @@ class FormDBComponent(DBComponent):
                      tracform_id 'id', field, 
                      updater 'author', updated_on 'time'
                 FROM tracform_fields
+            """,
+            postgres = """
+            CREATE TABLE forms_fields
+                AS SELECT
+                     tracform_id AS id, field,
+                     updater AS author, updated_on AS time
+                FROM tracform_fields
             """)
         cursor("""
             DROP INDEX tracform_fields_tracform_id_field
-            """, mysql="""
+            """,
+            mysql = """
             ALTER TABLE tracform_fields
                 DROP INDEX tracform_fields_tracform_id_field
             """)
@@ -689,6 +769,19 @@ class FormDBComponent(DBComponent):
                 track_fields    INTEGER,
                 PRIMARY KEY     (id)
                 )
+            """,
+            postgres = """
+            CREATE TABLE forms(
+                id              SERIAL PRIMARY KEY NOT NULL,
+                realm           VARCHAR(127) NOT NULL,
+                resource_id     VARCHAR(255) NOT NULL,
+                subcontext      VARCHAR(127),
+                state           TEXT NOT NULL,
+                author          VARCHAR(127) NOT NULL,
+                time            INTEGER NOT NULL,
+                keep_history    INTEGER,
+                track_fields    INTEGER
+                )
             """)
 
         forms_columns = ('id', 'context', 'state', 'author',
@@ -723,6 +816,10 @@ class FormDBComponent(DBComponent):
         cursor("""
             CREATE INDEX forms_time_idx
                 ON forms(time DESC)
+            """,
+            postgres = """
+            CREATE INDEX forms_time_idx
+                ON forms(time)
             """)
         cursor("""
             DROP TABLE forms_old
