@@ -127,6 +127,21 @@ class WikiCalendarMacros(Component):
 
         return markup
 
+    def _gen_wiki_links(self, wiki, label, url, wiki_page_template):
+        if WikiSystem(self.env).has_page(wiki):
+            a_class = "day_haspage"
+            title = _("Go to page %s") % wiki
+        else:
+            a_class = "day"
+            url += "?action=edit"
+            # adding template name, if specified
+            if wiki_page_template != "":
+                url += "&template=" + wiki_page_template
+            title = _("Create page %s") % wiki
+        link = tag.a(tag.b(label), href=url)
+        link(class_=a_class, title_=title)
+        return link
+
     def _gen_ticket_entry(self, t, a_class=''):
         id = str(t.get('id'))
         status = t.get('status')
@@ -281,6 +296,11 @@ class WikiCalendarMacros(Component):
             except KeyError:
                 cal_width = args[8]
 
+        # multiple wiki (sub)pages per day
+        wiki_subpages = []
+        if kwargs.has_key('subpages'):
+            wiki_subpages = kwargs['subpages'].split('|')
+
 
         # Can use this to change the day the week starts on,
         # but this is a system-wide setting.
@@ -388,25 +408,25 @@ class WikiCalendarMacros(Component):
                     # 'wiki_page_format'
                     wiki = format_date(self._mkdatetime(year, month, day),
                                                          wiki_page_format)
-                    url = self.env.href.wiki(wiki)
-                    if WikiSystem(self.env).has_page(wiki):
-                        a_class = "day_haspage"
-                        title = _("Go to page %s") % wiki
+                    if len(wiki_subpages) > 0:
+                        pages = tag(day, Markup('<br />'))
+                        for page in wiki_subpages:
+                            label = tag(' ', page[0])
+                            page = wiki + '/' + page
+                            url = self.env.href.wiki(page)
+                            pages(self._gen_wiki_links(page, label, url,
+                                                       wiki_page_template))
                     else:
-                        a_class = "day"
-                        url += "?action=edit"
-                        # adding template name, if specified
-                        if wiki_page_template != "":
-                            url += "&template=" + wiki_page_template
-                        title = _("Create page %s") % wiki
+                        url = self.env.href.wiki(wiki)
+                        pages = self._gen_wiki_links(wiki, day, url,
+                                                    wiki_page_template)
+
                     if day == curr_day:
                         td_class = 'today'
                     else:
                         td_class = 'day'
 
-                    cell = tag.a(tag.b(day), href=url)
-                    cell(class_=a_class, title_=title)
-                    cell = tag.td(cell)
+                    cell = tag.td(pages)
                     cell(class_=td_class, valign='top')
 
                     day_dt = self._mkdatetime(year, month, day)
