@@ -128,7 +128,7 @@ class WikiCalendarMacros(Component):
         return markup
 
     def _gen_wiki_links(self, wiki, label, url, wiki_page_template):
-        if WikiSystem(self.env).has_page(wiki):
+        if WikiSystem(self.env).has_page(wiki.lstrip('/')):
             a_class = "day_haspage"
             title = _("Go to page %s") % wiki
         else:
