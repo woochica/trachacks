@@ -238,9 +238,8 @@ class FormUpdater(FormDBUser, PasswordStoreUser):
             self.log.debug('UPDATE ARGS:' + str(req.args))
             args = dict(req.args)
             backpath = args.pop('__backpath__', None)
-            context = json.loads(
-                unquote_plus(args.pop('__context__', None)) or \
-                '(None, None, None)')
+            context = json.loads(unquote_plus(
+                          args.pop('__context__', '[null, null, null]')))
             basever = args.pop('__basever__', None)
             keep_history = args.pop('__keep_history__', None)
             track_fields = args.pop('__track_fields__', None)
@@ -248,6 +247,16 @@ class FormUpdater(FormDBUser, PasswordStoreUser):
             if context is None:
                 # TRANSLATOR: HTTP error message
                 raise HTTPBadRequest(_("__context__ is required"))
+            # wipe not JSON serializable arguments
+            rejargs = []
+            for key, value in args.iteritems():
+                try:
+                    len(value)
+                except AttributeError:
+                    rejargs.append(key)
+                    pass
+            for key in rejargs:
+                args.pop(key)
             who = req.authname
             result = json.dumps(args, separators=(',', ':'))
             self.save_tracform(context, result, who, basever,

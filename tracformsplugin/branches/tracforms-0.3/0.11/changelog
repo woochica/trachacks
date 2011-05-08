@@ -1,6 +1,13 @@
 Author: Rich Harkins <rich@worldsinfinite.com>
 Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
+tracforms-0.3.1 (09-May-2011):
+ resolved issues
+ * #8751: Form update failure: HTTP request has not JSON serializable argument
+ * fix last_id property of 'INSERT' SQL statement for new forms
+ * fix handling of HTML 'POST' request argument `__context__`
+
+
 tracforms-0.3 (30-Apr-2011):
  resolved issues
  * #3388: Couldn't print TracForms

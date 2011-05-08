@@ -135,7 +135,7 @@ class FormDBComponent(DBComponent):
                             VALUES (%s, %s, %s, %s, %s, %s)
                         """, realm, resource_id, subcontext,
                         state, author, updated_on) \
-                        .last_id('forms', 'id')
+                        .last_id(cursor, 'forms', 'id')
                 else:
                     cursor("""
                         UPDATE  forms
