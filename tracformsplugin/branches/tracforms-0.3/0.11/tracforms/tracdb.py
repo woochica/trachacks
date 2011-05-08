@@ -1,12 +1,25 @@
+# -*- coding: utf-8 -*-
+
+import os
+import sys
+
+from datetime import datetime
 
 from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
-from datetime import datetime
-import os, sys
 
 DEBUG_SQL = os.environ.get('DEBUG_SQL', False)
 
+def _db_to_version(name):
+    return int(name.lstrip('db'))
+
+
 class DBCursor(object):
+    """Custom layer for TracForms on top of the Trac database.
+
+    Support for db-specific SQL syntax, SQL statement logging,
+    and special result access methods are provide by this class.
+    """
     cursor = None
 
     def __init__(self, db, log):
@@ -37,7 +50,8 @@ class DBCursor(object):
         try:
             self.cursor.execute(sql, params)
         except Exception, e:
-            self.log.error('EXECUTING SQL:\n%s\n\t%r' % (sql, params))
+            self.log.error(
+                'EXECUTING SQL:\n%s\n\t%r\n\tSQL ERROR: %s' % (sql, params, e))
             self.rollback()
             raise e
         return self
@@ -89,23 +103,29 @@ class DBCursor(object):
     def last_id(self, cursor, table, column='id'):
         return self.db.get_last_id(self, table, column)
 
-class DBComponent(Component):
-    implements(IEnvironmentSetupParticipant)
-    applySchema = False
+    @property
+    def lastrowid(self):
+        return self.cursor.lastrowid
 
-    ###########################################################################
-    #
-    #   IEnvironmentSetupParticipant
-    #
-    ###########################################################################
+
+class DBComponent(Component):
+    """Provides TracForms db schema management methods."""
+
+    implements(IEnvironmentSetupParticipant)
+
+    applySchema = False
+    plugin_name = 'forms'
+
+    # IEnvironmentSetupParticipant methods
+
     def environment_created(self):
         pass
 
     def environment_needs_upgrade(self, db):
         if not type(self).__dict__.get('applySchema', False):
-            self.log.debug(
-                'Not checking schema for "%s", since applyScheme is not '
-                'defined or is False.' % type(self).__name__)
+            self.log.debug("""Not checking schema for \"%s\",
+                           since applySchema is not defined or is False.
+                           """ % type(self).__name__)
             return False
         cursor = self.get_cursor(db)
         installed = self.get_installed_version(cursor)
@@ -121,9 +141,9 @@ class DBComponent(Component):
 
     def upgrade_environment(self, db):
         if not type(self).__dict__.get('applySchema', False):
-            self.log.debug(
-                'Not updating schema for "%s", since applyScheme is not '
-                'defined or is False.' % type(self).__name__)
+            self.log.debug("""Not updating schema for \"%s\",
+                           since applySchema is not defined or is False.
+                           """ % type(self).__name__)
             return
         self.log.debug(
             'Upgrading schema for "%s".' % type(self).__name__)
@@ -132,7 +152,7 @@ class DBComponent(Component):
         for version, fn in self.get_schema_functions():
             if version > installed:
                 self.log.info(
-                    'Upgrading TracForm Plugin Schema to %s' % version)
+                    'Upgrading TracForm plugin schema to %s' % version)
                 self.log.info('- %s: %s' % (fn.__name__, fn.__doc__))
                 fn(cursor)
                 self.set_installed_version(cursor, version)
@@ -140,38 +160,39 @@ class DBComponent(Component):
                 installed = version
                 self.log.info('Upgrade to %s successful.' % version)
 
-    ###########################################################################
-    #
-    #   Schema Management
-    #
-    ###########################################################################
+    # TracForms db schema management methods
+
     def get_installed_version(self, cursor):
         cursor = self.get_cursor(cursor)
-        return self.get_system_value(
-            cursor, type(self).__name__ + ':version', -1)
+        version = self.get_system_value(
+            cursor, self.plugin_name + '_version', -1)
+        if version is None:
+            # check for old naming schema
+            oldversion = self.get_system_value(
+                cursor, 'TracFormDBComponent:version', -1)
+            version = _db_oldversion_dict.get(oldversion)
+        if version is None:
+            return version
+        return int(version)
 
-    def get_schema_functions(self, prefix='dbschema_'):
+    def get_schema_functions(self, prefix='db'):
         fns = []
         for name in self.__dict__:
             if name.startswith(prefix):
-                fns.append((name, getattr(self, name)))
+                fns.append((_db_to_version(name), getattr(self, name)))
         for cls in type(self).__mro__:
             for name in cls.__dict__:
                 if name.startswith(prefix):
-                    fns.append((name, getattr(self, name)))
+                    fns.append((_db_to_version(name), getattr(self, name)))
         fns.sort()
         return tuple(fns)
 
     def set_installed_version(self, cursor, version):
         cursor = self.get_cursor(cursor)
-        self.set_system_value(
-            cursor, type(self).__name__ + ':version', version)
+        self.set_system_value(cursor, self.plugin_name + '_version', version)
 
-    ###########################################################################
-    #
-    #   System Value Management
-    #
-    ###########################################################################
+    # Trac db 'system' table management methods for TracForms entry
+
     def get_system_value(self, cursor, key, default=None):
         return self.get_cursor(cursor).execute(
             'SELECT value FROM system WHERE name=%s', key) \
@@ -185,15 +206,20 @@ class DBComponent(Component):
             return self.get_cursor(cursor).execute(
                 'INSERT INTO system(name, value) VALUES(%s, %s)', key, value)
 
-    ###########################################################################
-    #
-    #   Cursor/Low Level Database Management
-    #
-    ###########################################################################
+    # Cursor/low level database management
+
     def get_cursor(self, db_or_cursor=None):
         if db_or_cursor is None:
             db_or_cursor = self.env.get_db_cnx()
         if not isinstance(db_or_cursor, DBCursor):
             db_or_cursor = DBCursor(db_or_cursor, self.log)
         return db_or_cursor
+
+
+_db_oldversion_dict = {
+    'dbschema_2008_06_15_0000': 0, 'dbschema_2008_06_15_0001': 1,
+    'dbschema_2008_06_14_0002': 2, 'dbschema_2008_06_15_0003': 3,
+    'dbschema_2008_06_15_0004': 4, 'dbschema_2008_06_15_0010': 10,
+    'dbschema_2008_06_15_0011': 11, 'dbschema_2008_06_15_0012': 12,
+    }
 

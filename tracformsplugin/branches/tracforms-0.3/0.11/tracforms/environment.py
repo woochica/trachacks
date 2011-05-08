@@ -1,12 +1,23 @@
-"""
-Handles the environment used by TracForm macros.  This dictionary is stackable
-and provides recursive context for pseudo-variables.
+# -*- coding: utf-8 -*-
 
->>> outer = TracFormEnvironment(None)
+import fnmatch
+import re
+
+from api import _
+from compat import json
+
+
+class FormEnvironment(dict):
+    """Handles the environment used by TracForms macros.
+
+This dictionary is stackable and provides recursive context
+for pseudo-variables.
+
+>>> outer = FormEnvironment(None)
 >>> outer['hello'] = 'World'
 >>> outer['test:ACK'] = 'OOP'
 >>> outer['test:FOO'] = 'BAR'
->>> inner = TracFormEnvironment(outer, ('test:',))
+>>> inner = FormEnvironment(outer, ('test:',))
 >>> inner['hello']
 'World'
 >>> inner['ACK']
@@ -23,15 +34,12 @@ and provides recursive context for pseudo-variables.
 ('hello', 'test:ACK', 'test:FOO')
 >>> inner.getmany('/.el/')
 ('World',)
->>> web = TracFormEnvironment(None, ('test',))
+>>> web = FormEnvironment(None, ('test',))
 >>> web.addform('a=5&a=7&b=hello', 'test')
 >>> web['a']
 '5\t7'
-"""
+    """
 
-import fnmatch, sys, re, cgi
-
-class TracFormEnvironment(dict):
     def __init__(self, base=None, prefixes=()):
         if base is not None:
             self.update(base)
@@ -54,7 +62,8 @@ class TracFormEnvironment(dict):
             elif len(values) == 1:
                 return values[0]
             else:
-                raise ValueError('Too many results for singleton %r' % key)
+                raise ValueError(
+                    _("Too many results for singleton %r" % key))
         else:
             return values
 
@@ -94,7 +103,7 @@ class TracFormEnvironment(dict):
         return self.get(search, singleton=False, all=all)
 
     def addform(self, data):
-        for name, value in cgi.parse_qs(state or '').iteritems():
+        for name, value in json.loads(state or '{}').iteritems():
             keys = [prefix + ':' + name for prefix in self.prefixes]
             for key in keys:
                 self[key] = tuple(value)

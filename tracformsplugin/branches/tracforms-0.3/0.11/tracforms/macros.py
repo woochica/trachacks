@@ -1,13 +1,21 @@
+# -*- coding: utf-8 -*-
 
+import StringIO
+import fnmatch
+import re
+import time
+import traceback
+
+from trac.util.datefmt import format_datetime
+from trac.util.text import to_unicode
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter
-import sys, StringIO, re, traceback, cgi, time, fnmatch
-from iface import TracFormDBUser, TracPasswordStoreUser
-from environment import TracFormEnvironment
-from errors import TracFormError, \
-    TracFormTooManyValuesError, \
-    TracFormNoOperationError, \
-    TracFormNoCommandError
+
+from api import FormDBUser, PasswordStoreUser, _
+from compat import json
+from environment import FormEnvironment
+from errors import FormError, FormTooManyValuesError
+from util import resource_from_page, xml_escape
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
 argstrRE = re.compile('%(.*?)%')
@@ -20,25 +28,27 @@ kwtrans = {
     'id'        : '_id',
     }
 
-class TracFormMacro(WikiMacroBase, TracFormDBUser, TracPasswordStoreUser):
-    """
-    Docs for TracForm macro...
-    """
+
+class TracFormMacro(WikiMacroBase, FormDBUser, PasswordStoreUser):
+    """Docs for TracForms macro..."""
 
     def expand_macro(self, formatter, name, args):
-        processor = TracFormProcessor(self, formatter, name, args)
+        processor = FormProcessor(self, formatter, name, args)
         return processor.execute()
 
-class TracFormProcessor(object):
+
+class FormProcessor(object):
+    """Core parser and processor logic for TracForms markup."""
+
     # Default state (beyond what is set in expand_macro).
     showErrors = True
     page = None
     subcontext = None
     default_op = 'checkbox'
-    needs_submit = True
+    allow_submit = False
     keep_history = False
     track_fields = True
-    submit_label = 'Update Form'
+    submit_label = None
     submit_name = None
     form_class = None
     form_cssid = None
@@ -66,6 +76,7 @@ class TracFormProcessor(object):
         self.page = formatter.req.path_info
         if self.page == '/wiki' or self.page == '/wiki/':
             self.page = '/wiki/WikiStart'
+        realm, resource_id = resource_from_page(formatter.env, self.page)
 
         # Remove leading comments and process commands.
         textlines = []
@@ -84,11 +95,11 @@ class TracFormProcessor(object):
                         fn = getattr(self, 'cmd_' + cmd.lower(), None)
                         if fn is None:
                             errors.append(
-                                'ERROR: No TracForm command "%s"' % cmd)
+                                _("ERROR: No TracForms command '%s'" % cmd))
                         else:
                             try:
                                 fn(*args, **kw)
-                            except TracFormError, e:
+                            except FormError, e:
                                 errors.append(str(e))
                             except Exception, e:
                                 errors.append(traceback.format_exc())
@@ -99,20 +110,24 @@ class TracFormProcessor(object):
                 textlines.extend(srciter)
 
         # Determine our destination context and load the current state.
-        self.context = self.page
-        if self.subcontext:
-            self.context += ':' + self.subcontext
+        self.context = tuple([realm, resource_id,
+                              self.subcontext is not None and \
+                              self.subcontext or ''])
         state = self.macro.get_tracform_state(self.context)
-        #self.state = cgi.parse_qs(state or '')
-        for name, value in cgi.parse_qs(state or '').iteritems():
-            self.env[self.context + ':' + name] = value
+        self.formatter.env.log.debug(
+            'TracForms state = ' + (state is not None and state or ''))
+        for name, value in json.loads(state or '{}').iteritems():
+            self.env[name] = value
+            self.formatter.env.log.debug(
+                name + ' = ' + to_unicode(value))
             if self.subcontext is not None:
                 self.env[self.subcontext + ':' + name] = value
         self.sorted_env = None
-        (self.form_id, self.form_context,
-            self.form_updater, self.form_updated_on,
+        (self.form_id, self.form_realm, self.form_resource_id,
+            self.form_subcontext, self.form_updater, self.form_updated_on,
             self.form_keep_history, self.form_track_fields) = \
             self.macro.get_tracform_meta(self.context)
+        self.form_id = self.form_id is not None and int(self.form_id) or None
 
         # Wiki-ize the text, this will allow other macros to execute after
         # which we can do our own replacements within whatever formatted
@@ -128,6 +143,9 @@ class TracFormProcessor(object):
             text = tfRE.sub(self.process, text)
         setattr(formatter.req, type(self).__name__, None)
 
+        self.formatter.env.log.debug('TracForms parsing finished')
+        if 'FORM_EDIT_VAL' in formatter.perm:
+            self.allow_submit = True
         return ''.join(self.build_form(text))
 
     def build_form(self, text):
@@ -135,8 +153,9 @@ class TracFormProcessor(object):
             form_class = self.form_class
             form_cssid = self.form_cssid or self.subcontext
             form_name = self.form_name or self.subcontext
-            dest = self.formatter.req.href('/formdata/update')
-            yield ('<FORM method="POST" action=%r' % str(dest) + 
+            dest = self.formatter.req.href('/form/update')
+            yield ('<FORM class="printableform" ' +
+                    'method="POST" action=%r' % str(dest) +
                     (form_cssid is not None 
                         and ' id="%s"' % form_cssid
                         or '') +
@@ -148,11 +167,13 @@ class TracFormProcessor(object):
                         or '') +
                     '>')
             yield text
-            if self.needs_submit:
-                yield '<INPUT type="submit"'
+            if self.allow_submit:
+                # TRANSLATOR: Default submit button label
+                submit_label = self.submit_label or _("Update Form")
+                yield '<INPUT class="buttons" type="submit"'
                 if self.submit_name:
                     yield ' name=%r' % str(self.submit_name)
-                yield ' value=%r' % str(self.submit_label)
+                yield ' value=%r' % xml_escape(submit_label)
                 yield '>'
             if self.keep_history:
                 yield '<INPUT type="hidden"'
@@ -163,8 +184,10 @@ class TracFormProcessor(object):
             if self.form_updated_on is not None:
                 yield '<INPUT type="hidden" name="__basever__"'
                 yield ' value="' + str(self.form_updated_on) + '">'
+            context = json.dumps(
+                self.context, separators=(',', ':'))
             yield '<INPUT type="hidden" ' + \
-                'name="__context__" value=%r>' % str(self.context)
+                'name="__context__" value=%r>' % context
             backpath = self.formatter.req.href(self.formatter.req.path_info)
             yield '<INPUT type="hidden" ' \
                     'name="__backpath__" value=%s>' % str(backpath)
@@ -200,7 +223,7 @@ class TracFormProcessor(object):
         if '*' in name or '?' in name or '[' in name:
             value = []
             keys = self.get_sorted_env()
-            for key in fnmatch.filter(keys, self.context + ':' + name):
+            for key in fnmatch.filter(keys, name):
                 obj = self.env[key]
                 if isinstance(obj, (tuple, list)):
                     value.extend(obj)
@@ -228,7 +251,7 @@ class TracFormProcessor(object):
                     else:
                         value.append(obj)
         else:
-            value = self.env.get(self.context + ':' + name, NOT_FOUND)
+            value = self.env.get(name, NOT_FOUND)
             if self.page is not None and value is NOT_FOUND:
                 value = self.env.get(self.page + ':' + name, NOT_FOUND)
             if self.subcontext is not None and value is NOT_FOUND:
@@ -268,10 +291,10 @@ class TracFormProcessor(object):
         return time.strftime(time.localtime(time.time()))
 
     def cmd_errors(self, show):
-        self.showErrors = show.upper() in ('SHOW', 'YES')
+        self.showErrors = show.upper() in ('SHOW', 'TRUE', 'YES')
 
     def cmd_page(self, page):
-        if page.upper() in ('NONE', 'DEFAULT', 'CURRENt'):
+        if page.upper() in ('NONE', 'DEFAULT', 'CURRENT'):
             self.page = None
         else:
             self.page = page
@@ -287,7 +310,7 @@ class TracFormProcessor(object):
             page = self.page
         context = page + ':' + subcontext
         state = self.macro.get_tracform_state(context)
-        for name, value in cgi.parse_qs(state or '').iteritems():
+        for name, value in json.loads(state or '{}').iteritems():
             self.env[context + ':' + name] = value
             if self.subcontext is not None:
                 self.env[self.subcontext + ':' + name] = value
@@ -329,7 +352,7 @@ class TracFormProcessor(object):
             _op, _args = _args[0], _args[1:]
         op = getattr(_self, 'op_' + _op, None)
         if op is None:
-            raise TracFormTooManyValuesError(str(_name))
+            raise FormTooManyValuesError(str(_name))
         def partial(*_newargs, **_newkw):
             if _kw or _newkw:
                 kw = dict(_kw)
@@ -348,20 +371,25 @@ class TracFormProcessor(object):
         self.updated = True
         op, argstr = m.groups()
         op = op or self.default_op
+        self.formatter.env.log.debug('Converting TracForms op: ' + str(op))
         kw = {}
         args = tuple(self.getargs(argstr, kw))
         fn = self.env.get('op:' + op.lower())
         if fn is None:
             fn = getattr(self, 'op_' + op.lower(), None)
         if fn is None:
-            raise TracFormTooManyValuesError(str(op))
+            raise FormTooManyValuesError(str(op))
         else:
             try:
                 if op[:5] == 'wikiop_':
+                    self.formatter.env.log.debug(
+                        'TracForms wiki value: ' + self.wiki(str(fn(*args))))
                     return self.wiki(str(fn(*args)))
                 else:
-                    return str(fn(*args, **kw))
-            except TracFormError, e:
+                    self.formatter.env.log.debug(
+                        'TracForms value: ' + to_unicode(fn(*args, **kw)))
+                    return to_unicode(fn(*args, **kw))
+            except FormError, e:
                 return '<PRE>' + str(e) + '</PRE>'
             except Exception, e:
                 return '<PRE>' + traceback.format_exc() + '</PRE>'
@@ -373,14 +401,14 @@ class TracFormProcessor(object):
         return 'VALUE=' + field
 
     def get_field(self, name, default=None, make_single=True):
-        current = self.env.get(self.context + ':' + name, default)
+        current = self.env.get(name, default)
         if make_single and isinstance(current, (tuple, list)):
             if len(current) == 0:
                 current = default
             elif len(current) == 1:
                 current = current[0]
             else:
-                raise TracFormTooManyValuesError(str(name))
+                raise FormTooManyValuesError(str(name))
         return current
 
     def op_input(self, field, _id=None, _class=None):
@@ -388,7 +416,8 @@ class TracFormProcessor(object):
         return ("<INPUT name='%s'" % field +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
-                (current is not None and (" value=%r" % str(current)) or '') +
+                (current is not None and (" value=%r" % xml_escape(
+                                                     current)) or '') +
                 '>')
 
     def op_checkbox(self, field, value=None, _id=None, _class=None):
@@ -447,15 +476,15 @@ class TracFormProcessor(object):
         return str(self.context)
 
     def op_who(self, field):
+        # TRANSLATOR: Default updater name
         who = self.macro.get_tracform_fieldinfo(
-            self.context, field)[0] or 'unknown'
+                self.context, field)[0] or _("unknown")
         return who
         
     def op_when(self, field, format='%m/%d/%Y %H:%M:%S'):
         when = self.macro.get_tracform_fieldinfo(self.context, field)[1]
-        if when is not None:
-            when = time.strftime(format, time.localtime(when))
-        return when
+        return (when is not None and format_datetime(
+                when, format=str(format)) or _("unknown"))
 
     def op_id(self):
         return id(self)

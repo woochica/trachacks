@@ -1,0 +1,56 @@
+Author: Rich Harkins <rich@worldsinfinite.com>
+Maintainer: Steffen Hoffmann <hoff.st@web.de>
+
+tracforms-0.3 (30-Apr-2011):
+ resolved issues
+ * #3388: Couldn't print TracForms
+ * #6993: Form Submission returns 'RuntimeError: No Content-Length header set'
+   fixing HTTP request handling in Trac >= 0.12
+ * fix error "'DBCursor' object has no attribute 'lastrowid'"
+ * #3741: Tracforms can't handle mutated vowel
+   allowing non-ASCII characters in user input and for submit button label
+
+ new features
+ * #3500: Integrate search with TracFormsPlugin
+   by an own TracSearch provider (ISearchSource)
+ * mandatory permissions added: 'FORM_VIEW', 'FORM_EDIT_VAL', 'FORM_RESET'
+   so all actions can be restricted per form
+ * #8258: Add i18n support
+   including German translations, maintained with further code changes
+ * #4759: Revision handling for submit changes
+   by a form history display like for ticket changes
+ * #3445: Reset form, esp if 'tf.who' is stored with form
+   by not only one option but full and stepwise administrative form reset
+
+ other stuff
+ * new dependency on JSON (`simplejson` for Python<2.6)
+ * major Trac db schema changes
+ * major code reorganization including module renaming
+ * improved SQL debug logging shows SQL error messages
+
+
+tracforms-0.2.1:
+* Fixed #3300 : /wiki versus /wiki/WikiStart
+* Fixed #3326 : field %r and dealing with errors.
+* Fixed #3290 : Added compatibly with MySQL
+
+tracforms-0.2:
+* Fixed #3262 : Added option drop-down lists.
+* Fixed #3261 : Added support for textarea.  This also triggered the ability
+                to add -class and -id as well as commands to set the form's
+                CSS state.
+* Fixed #3267 : Added operation templates
+* Fixed #3268 : Added sum, sumif, count, countif, sumprod, zip, filter, int
+                quote, and value functions.
+
+tracforms-0.1.2:
+* Fixed #3259 : Problems with multiple forms on the same page.
+* Fixed #3258 : Radio wasn't working.
+* Fixed #3240 : User wasn't being recorded properly.
+
+tracforms-0.1.1:
+* Fixed #3215 : Assuming AccountManagerPlugin was installed.
+
+tracforms-0.1:
+* Original release
+
