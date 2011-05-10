@@ -16,28 +16,37 @@ class Ec2Launcher(Daemon):
     
     def __init__(self):
         Daemon.__init__(self, self.STEPS, "Launch Progress")
+        self.volume_id = self.launch_data['volume']
+        self.device = self.launch_data['device']
+        if self.volume_id:
+            steps = self.STEPS[:2]+['Attaching the ebs volume']+self.STEPS[2:]
+            progress = self.progress.get()
+            progress['steps'] = steps
+            self.progress.set(progress)
         
     def run(self, sysexit=True):
         # Step 1. Launching the instance
+        step = 0
         self.log.debug('Launching instance..')
-        self.progress.start(0)
+        self.progress.start(step)
         instance = self.cloudapi.launch_ec2_instance(
             image_id = self.launch_data['image_id'],
             instance_type = self.launch_data['instance_type'],
             zone = self.launch_data['zone'],
             disable_api_termination =
                 self.launch_data['disable_api_termination'])
-        self.progress.done(0)
+        self.progress.done(step)
         
         # update step 1 with id
         self.log.debug('Adding instance.id %s to progress' % instance.id)
         progress = self.progress.get()
-        progress['steps'][0] += ' (%s)' % instance.id
+        progress['steps'][step] += ' (%s)' % instance.id
         self.progress.set(progress)
         
         # Step 2. Starting up the instance
+        step += 1
         self.log.debug('Starting up the instance..')
-        self.progress.start(1)
+        self.progress.start(step)
         time.sleep(2.0) # instance can be a tad cranky when it launches
         self.cloudapi.wait_until_running(instance, timeout=600)
         if instance.state != 'running':
@@ -48,19 +57,50 @@ class Ec2Launcher(Daemon):
             self.progress.error(msg)
             sys.exit(1)
         time.sleep(10.0) # instance is cranky when it wakes up
-        self.progress.done(1)
+        self.progress.done(step)
         
         # add id to progress, update step 2 with public dns
         id = instance.private_dns_name
         self.log.debug('Adding id %s to progress' % id)
         progress = self.progress.get()
         progress['id'] = id
-        progress['steps'][1] += ' (%s)' % instance.public_dns_name
+        progress['steps'][step] += ' (%s)' % instance.public_dns_name
         self.progress.set(progress)
         
-        # Step 3. Bootstrapping the instance
+        # Step 3 (optional). Attaching the ebs volume
+        if self.volume_id:
+            step += 1
+            self.log.debug('Attaching the ebs volume..')
+            self.progress.start(step)
+            status = self.cloudapi.attach_ebs_volume(
+                id = self.volume_id,
+                instance_id = instance.id,
+                device = self.device)
+            if status != "in-use":
+                msg = "Error attaching volume %s" % self.volume_id + \
+                      " to instance %s.  Status is '%s'" % (instance.id,status)
+                self.log.error(msg)
+                self.progress.error(msg)
+                sys.exit(1)
+            progress = self.progress.get()
+            progress['steps'][step] += ' (%s)' % self.volume_id
+            self.progress.set(progress)
+            
+            # save the volume and device info to its data bag
+            self.log.debug('Saving ebs data bag %s..' % self.volume_id)
+            bag = self.chefapi.resource('data', name='ebs')
+            item = self.chefapi.databagitem(bag, self.volume_id)
+            item['instance_id'] = instance.id
+            item['device'] = self.device
+            item['status'] = status
+            item.save()
+            self.log.info('Saved ebs data bag %s' % self.volume_id)
+            self.progress.done(step)
+        
+        # Step 4. Bootstrapping the instance
+        step += 1
         self.log.debug('Bootstrapping the instance..')
-        self.progress.start(2)
+        self.progress.start(step)
         public_hostname = instance.public_dns_name
         node = self.chefapi.bootstrap(id, public_hostname, timeout=360)
         if node is None:
@@ -70,11 +110,12 @@ class Ec2Launcher(Daemon):
             self.log.error(msg)
             self.progress.error(msg)
             sys.exit(1)
-        self.progress.done(2)
+        self.progress.done(step)
         
-        # Step 4. Applying the chef roles
+        # Step 5. Applying the chef roles
+        step += 1
         self.log.debug('Applying chef roles..')
-        self.progress.start(3)
+        self.progress.start(step)
         self.log.debug('Saving node..')
         node = self.chefapi.resource('nodes', id)
         for field,value in self.attributes.items():
@@ -84,7 +125,7 @@ class Ec2Launcher(Daemon):
                 node.attributes.set_dotted(field, value)
         node.save()
         self.log.info('Saved node %s' % id)
-        self.progress.done(3)
+        self.progress.done(step)
         
         if sysexit:
             sys.exit(0) # success

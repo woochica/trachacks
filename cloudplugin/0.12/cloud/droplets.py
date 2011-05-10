@@ -97,7 +97,8 @@ class Droplet(object):
         self.log.debug('Instantiating droplet %s' % name)
         
         prefix = 'field.'
-        self.fields = Fields(options, field_handlers, chefapi, log, prefix)
+        self.fields = Fields(options, field_handlers, chefapi, cloudapi,
+                             log, prefix)
         
         for k,v in options.items():
             if k.startswith(prefix):
@@ -496,6 +497,8 @@ class Ec2Instance(Droplet):
             'zone': req.args.get('ec2.placement_availability_zone',''),
             'image_id': req.args.get('ec2.ami_id'),
             'instance_type': req.args.get('ec2.instance_type'),
+            'volume': req.args.get('cmd_volume',''),
+            'device': req.args.get('cmd_device',''),
             'disable_api_termination':
                 req.args.get('disable_api_termination') in ('1','true'),
         }
@@ -608,7 +611,7 @@ class RdsInstance(Droplet):
             launch_data[field] = req.args.get(field,'')
         if launch_data['availability_zone'] in ('No preference',''):
             launch_data['availability_zone'] = None
-        launch_data['multi_az'] = launch_data['multi_az'] == '1'
+        launch_data['multi_az'] = launch_data['multi_az'] in ('1','true')
         
         # prepare attributes
         attributes = copy.copy(launch_data)
@@ -637,7 +640,7 @@ class RdsInstance(Droplet):
             fields = self.fields.get_list('crud_edit', filter=r"cmd_.*")
         for field in fields:
             field.set(item, req)
-        item['multi_az'] = item['multi_az'] == '1'
+        item['multi_az'] = item['multi_az'] in ('1','true')
         item.save()
         self.log.info('Saved data bag item %s/%s' % (self.name,id))
         
@@ -682,6 +685,100 @@ class RdsInstance(Droplet):
     def audit(self, req, id):
         req.perm.require('CLOUD_MODIFY')
         exe = os.path.join(os.path.dirname(__file__),'daemon_rds_audit.py')
+        self._spawn(req, exe, {}, {})
+    
+
+class EbsVolume(Droplet):
+    """An EBS volume cloud droplet."""
+    
+    def render_grid(self, req):
+        template,data,content_type = Droplet.render_grid(self, req)
+        button = ('audit',_('Audit %(title)s',title=self.title))
+        data['buttons'].append(button),
+        return template, data, content_type
+    
+    def create(self, req):
+        req.perm.require('CLOUD_CREATE')
+        
+        # prepare launch data
+        launch_data = {}
+        for field in ['size','zone','snapshot']:
+            launch_data[field] = req.args.get(field,'')
+        
+        # prepare attributes
+        attributes = {}
+        fields = self.fields.get_list('crud_new', filter=r"cmd_.*")
+        for field in fields:
+            field.set_dict(attributes, req=req, default='')
+        
+        exe = os.path.join(os.path.dirname(__file__),'daemon_ebs_create.py')
+        self._spawn(req, exe, launch_data, attributes)
+    
+    def save(self, req, id):
+        req.perm.require('CLOUD_MODIFY')
+        self.log.debug('Saving data bag item %s/%s..' % (self.name,id))
+        item = self.chefapi.resource(self.crud_resource, id, self.name)
+        
+        # check to attach and/or detach volume to/from instance(s)
+        new_instance_id = req.args.get('instance_id','')
+        if item['instance_id'] != new_instance_id:
+            # check if attaching or detaching
+            if item['instance_id']: # detach
+                req.args['status'] = self.cloudapi.detach_ebs_volume(id,
+                    item['instance_id'], item['device'])
+            if new_instance_id: # attach
+                req.args['status'] = self.cloudapi.attach_ebs_volume(id,
+                    new_instance_id, req.args.get('device',''))
+            else:
+                req.args['device'] = ''
+        
+        # prepare fields; remove command fields
+        fields = self.fields.get_list('crud_edit', filter=r"cmd_.*")
+        for field in fields:
+            field.set(item, req)
+        item.save()
+        self.log.info('Saved data bag item %s/%s' % (self.name,id))
+        
+        # show the view
+        add_notice(req, _('%(label)s %(id)s has been saved.',
+                          label=self.label, id=id))
+        req.redirect(req.href.cloud(self.name, id))
+        
+    def delete(self, req, id):
+        req.perm.require('CLOUD_DELETE')
+        self.log.debug('Deleting ebs volume and data bag item..')
+        item = self.chefapi.resource(self.crud_resource, id, self.name)
+        
+        # delete the rds instance
+        terminated = False
+        id = 'undefined'
+        try:
+            id = item['id']
+            self.cloudapi.delete_ebs_volume(id)
+            terminated = True
+            self.log.info('Deleted ebs volume %s' % id)
+        except Exception, e:
+            self.log.warn('Error deleting ebs volume %s:\n%s' % (id,str(e)))
+        
+        # delete item from chef
+        item.delete()
+        self.log.info('Deleted data bag item %s/%s' % (self.name,id))
+        
+        # show the grid
+        if terminated:
+            add_notice(req, _('%(label)s %(id)s has been deleted.',
+                              label=self.label, id=id))
+        else:
+            add_warning(req,
+                _("%(label)s %(id)s was not deleted as expected, " + \
+                  "but its chef data bag item was deleted. " + \
+                  "Please check in the AWS Management Console directly.",
+                  label=self.label, id=id))
+        req.redirect(req.href.cloud(self.name))
+        
+    def audit(self, req, id):
+        req.perm.require('CLOUD_MODIFY')
+        exe = os.path.join(os.path.dirname(__file__),'daemon_ebs_audit.py')
         self._spawn(req, exe, {}, {})
     
 

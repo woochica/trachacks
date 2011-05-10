@@ -110,20 +110,6 @@ class ChefApi(object):
             return chef.client.Client.create(id, self.chef)
         raise Exception("Unknown resource '%s'" % resource)
     
-    def databag(self, bag_name, id=None):
-        """If id is provided, then the specific data bag is returned.
-        Else a list of all data items (dicts) in the given data bag
-        will be returned.  If a data item has an 'order' field,
-        it will be used to order the returned list."""
-        bag = chef.data_bag.DataBag(bag_name, self.chef)
-        ids = id and [id] or bag
-        
-        items = []
-        for id in ids:
-            item = self.databagitem(bag, id)
-            items.append( (int(item.get('order',99)),item) )
-        return [item for (u_order,item) in sorted(items)]
-    
     def databagitem(self, bag, id, create=False, timeout=45.0):
         """Returns the named data bag item from the provided data bag."""
         timer = Timer(timeout)
@@ -136,8 +122,7 @@ class ChefApi(object):
                     self.log.debug("Getting data bag item %s/%s.." % (bag.name,id))
                     return bag[id]
             except KeyError:
-                create = True
-                return self.databagitem(bag, id, create, timeout)
+                return self.databagitem(bag, id, create=True, timeout=timeout)
             except urllib2.URLError, e:
                 self.log.debug(".. got %s, retrying.." % str(e))
                 time.sleep(1.0)

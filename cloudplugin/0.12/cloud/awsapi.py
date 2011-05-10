@@ -142,9 +142,100 @@ class AwsApi(object):
     
     def get_rds_instances(self, id=None):
         """Retrieve rds instance(s)."""
+        if isinstance(id,str) or isinstance(id,unicode):
+            id = [id]
         self.log.info('Geting rds instances (id=%s)..' % id)
         conn = boto.connect_rds(self.key, self.secret)
         return conn.get_all_dbinstances(id)
+    
+    
+    # EBS Volumes
+    
+    def create_ebs_volume(self, size, zone, snapshot=None, timeout=0):
+        """Create an ebs volume.  If timeout is > 0, then this method
+        won't return until the ebs volume is available or the timeout
+        duration expires."""
+        # TODO: support multiple regions (and multiple security groups)
+        conn = boto.connect_ec2(self.key, self.secret)
+        volume = conn.create_volume(size, zone, snapshot)
+        self.log.info('Created ebs volume %s' % volume.id)
+        
+        if timeout:
+            time.sleep(1.0)
+            self.wait_until_available(volume, timeout)
+        
+        return volume
+    
+    def wait_until_available(self, volume, timeout=120):
+        """Returns after the ebs volume's status is 'available'.  Returns
+        True if the instance is running before the 'timeout' duration
+        (seconds)."""
+        timer = Timer(timeout)
+        while volume.status != 'available' and timer.running:
+            time.sleep(1.0)
+            volume.update()
+        return volume.status
+
+    def attach_ebs_volume(self, id, instance_id, device, timeout=120):
+        """Attach an ebs volume to an ec2 instance.  If timeout is > 0,
+        then this method won't return until the ebs volume is in-use or
+        the timeout duration expires."""
+        self.log.info('Attaching ebs volume %s to ec2 instance %s..' % \
+                      (id,instance_id))
+        conn = boto.connect_ec2(self.key, self.secret)
+        status = conn.attach_volume(id, instance_id, device)
+        self.log.info('Attached ebs volume %s to ec2 instance %s..' % \
+                      (id,instance_id))
+        
+        if status and timeout:
+            time.sleep(1.0)
+            status = self.wait_until_inuse(id, timeout)
+        
+        return status
+    
+    def wait_until_inuse(self, id, timeout=120):
+        """Returns after the ebs volume's status is 'in-use'.  Returns
+        True if the instance is running before the 'timeout' duration
+        (seconds)."""
+        volume = self.get_ebs_volumes(id)[0]
+        timer = Timer(timeout)
+        while volume.status != 'in-use' and timer.running:
+            time.sleep(1.0)
+            volume.update()
+        return volume.status
+
+    def detach_ebs_volume(self, id, instance_id, device, timeout=120):
+        """Detach an ebs volume from an ec2 instance.  If timeout is > 0,
+        then this method won't return until the ebs volume is in-use or
+        the timeout duration expires."""
+        self.log.info('Detaching ebs volume %s to ec2 instance %s..' % \
+                      (id,instance_id))
+        conn = boto.connect_ec2(self.key, self.secret)
+        status = conn.detach_volume(id, instance_id, device)
+        self.log.info('Detached ebs volume %s from ec2 instance %s..' % \
+                      (id,instance_id))
+        
+        if timeout:
+            time.sleep(1.0)
+            volume = self.get_ebs_volumes(id)[0]
+            status = self.wait_until_available(volume, timeout)
+        
+        return status
+    
+    def delete_ebs_volume(self, id):
+        """Delete an ebs volume."""
+        self.log.info('Deleting ebs volume %s..' % id)
+        conn = boto.connect_ec2(self.key, self.secret)
+        conn.delete_volume(id)
+        self.log.info('Deleted rds instance %s' % id)
+    
+    def get_ebs_volumes(self, id=None):
+        """Retrieve ebs volume(s)."""
+        if isinstance(id,str) or isinstance(id,unicode):
+            id = [id]
+        self.log.info('Geting ebs volumes (id=%s)..' % id)
+        conn = boto.connect_ec2(self.key, self.secret)
+        return conn.get_all_volumes(id)
     
     
     # EIP Addresses
@@ -179,9 +270,7 @@ class AwsApi(object):
     
     def get_eip_addresses(self, ip=None):
         """Retrieve rds instance(s)."""
-        if ip is None:
-            ip = []
-        elif isinstance(ip,str):
+        if isinstance(ip,str) or isinstance(id,unicode):
             ip = [ip]
         self.log.info('Geting eip addresses (ip=%s)..' % ip)
         conn = boto.connect_ec2(self.key, self.secret)

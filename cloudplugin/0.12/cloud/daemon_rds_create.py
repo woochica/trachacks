@@ -17,7 +17,7 @@ class RdsCreator(Daemon):
         Daemon.__init__(self, self.STEPS, "Create Progress")
         
     def run(self, sysexit=True):
-        # Step 1. Launching the bag instance
+        # Step 1. Launching the rds instance
         self.log.debug('Creating rds instance..')
         self.progress.start(0)
         id = self.launch_data['id']
@@ -37,7 +37,7 @@ class RdsCreator(Daemon):
         progress['steps'][0] += ' (%s)' % id
         self.progress.set(progress)
         
-        # Step 2. Starting up the bag instance
+        # Step 2. Starting up the rds instance
         self.log.debug('Starting up the rds instance..')
         self.progress.start(1)
         time.sleep(2.0) # instance can be a tad cranky when it launches

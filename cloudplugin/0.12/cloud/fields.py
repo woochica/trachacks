@@ -7,7 +7,8 @@ class Fields(object):
     PyChef objects and web request objects.  Fields are configured in
     trac.ini."""
     
-    def __init__(self, options, handlers, chefapi, log, prefix='field.'):
+    def __init__(self, options, handlers, chefapi, cloudapi, log,
+                 prefix='field.'):
         """The Droplet class handles part of a droplet's configuration,
         and this Fields class handles the rest - namely, processing a
         chef resource's fields.  The trac.ini configuration below is
@@ -20,7 +21,7 @@ class Fields(object):
           field.name.handler = NameHandler
           field.run_list = multiselect
           field.run_list.label = Roles
-          field.run_list.databag = roles  # special token
+          field.run_list.index = role
           field.run_list.handler = RunListHandler
           field.ec2.placement_availability_zone = select
           field.ec2.placement_availability_zone.label = Availability Zone
@@ -40,23 +41,24 @@ class Fields(object):
         There are some important differences to Trac custom fields,
         however:
         
-         * A field can define a databag instead of options
+         * A field can define a chef search index instead of options
          * A field can define a "field handler"
         
-        DATA BAGS FOR OPTIONS
-        ---------------------
+        SEARCH INDEXES FOR OPTIONS
+        --------------------------
         You may prefer to define a select (or multiselect) field's
-        options by using a chef data bag instead of listing them in
-        the trac.ini file.  For example, a field defined like this:
+        options by using a chef data bag or built-in index instead
+        of listing them in the trac.ini file.  For example, a field
+        defined like this:
         
           [cloud.instance]
           ..
           field.ec2.ami_id = select
           field.ec2.ami_id.label = Image ID
-          field.ec2.ami_id.databag = ec2_ami_id
+          field.ec2.ami_id.index = ec2_ami_id
 
-        Will query for and use the 'ec2_ami_id' data bag items.  The
-        individual data bag items should be formatted like this:
+        Will query chef for and use the 'ec2_ami_id' data bag items.
+        The individual data bag items should be formatted like this:
         
           {
             "id": "ami-xxxxxxxx",
@@ -70,8 +72,23 @@ class Fields(object):
         field is provided, it will be used to order the options
         accordingly (much like custom field ordering).
         
-        Specifying 'roles' as a databag has a special meaning - chef
-        will be queried for the list of roles instead of a data bag.
+        You can also specify a built-in search index such as 'role'
+        for the defined roles and 'node' for the list of nodes.
+        
+        For both data bags and builtin indexes, you can further
+        specify which attributes should be used for the name and
+        value portion of the select dropdown:
+        
+          [cloud.eip]
+          ..
+          field.instance_id = select
+          field.instance_id.label = Instance
+          field.instance_id.index = node:alias:ec2.instance_id:-
+        
+        The above specifies using an 'alias' attribute for the name,
+        the 'ec2.instance_id' attribute for the value, and do not
+        prepend any option to the list (specified by '-').  Instead
+        of '-', you can specify a value to prepend to the list.
         
         FIELD HAMDLERS
         --------------
@@ -99,8 +116,8 @@ class Fields(object):
           ..
           crud_resource = nodes
           crud_view = name, ec2.instance_type, ohai_time, ..
-          crud_new = roles, created_by, created_at, ..
-          crud_edit = roles, created_by, created_at*, ..
+          crud_new = run_list, created_by, created_at, ..
+          crud_edit = run_list, created_by, created_at*, ..
           
           grid_index = node
           grid_columns = name, ec2.instance_type, ohai_time, ..
@@ -142,7 +159,7 @@ class Fields(object):
             label = options.get(key+'.label',name)
             opts = options.get(key+'.options','')
             opts = opts and opts.split('|') or []
-            databag = options.get(key+'.databag')
+            index = options.get(key+'.index')
             default = options.get(key+'.value','')
             handler_name = options.get(key+'.handler','DefaultHandler')
             for h in handlers:
@@ -152,7 +169,8 @@ class Fields(object):
             else:
                 raise Exception("Field handler '%s' not found" % handler_name)
             self._fields[name] = Field(
-                name,kind,label,opts,databag,default,handler,chefapi,log)
+                name, kind, label, opts, index, default, handler,
+                chefapi, cloudapi, log)
     
     def __getitem__(self, field_name):
         return self._fields[field_name]
@@ -182,15 +200,17 @@ class Fields(object):
 
 class Field(object):
     
-    def __init__(self,name,kind,label,opts,databag,default,handler,chefapi,log):
+    def __init__(self, name, kind, label, opts, index, default, handler,
+                 chefapi, cloudapi, log):
         self.name = name
         self.kind = kind
         self.label = label
         self._opts = opts
-        self._databag = databag
+        self._index = index
         self._default = default
         self._handler = handler
         self._chefapi = chefapi
+        self._cloudapi = cloudapi
         self._log = log
         self._readonly = []
         self._list_name = None
@@ -211,46 +231,84 @@ class Field(object):
         """Return a list of (name,value) tuples of the field's list of
         options.  If an explicit list was provided in the config file,
         then that will be returned; else if a data bag was provided,
-        its contents will be returned.  The special databags are:
+        its contents will be returned.  The special indexes are:
         
-         * roles - returns the roles as options
-         * nodes - returns the nodes as options
+         * role - returns the roles as options
+         * node - returns the nodes as options
         """
         if self._opts:
             return [(o,o) for o in self._opts]
-        if not self._databag:
+        if not self._index:
             self._log.debug("No options provided for field %s" % self.name)
             return []
         
-        # get options from databag
-        opts = []
-        try:
-            if self._databag.startswith('roles'):
-                # handle special case
-                roles = self._chefapi.resource('roles')
-                opts = sorted([(r,r) for r in roles])
-            elif self._databag.startswith('nodes'):
-                # handle special case
-                if ':' in self._databag:
-                    name,value = self._databag.split(':')[1:3]
-                else:
-                    name = value = 'ec2.instance_id'
-                nodes,u_total = self._chefapi.search('node')
-                opts = [('','')]
-                for node in nodes:
-                    try:
-                        opts.append( (node.attributes.get_dotted(name),
-                                      node.attributes.get_dotted(value)) )
-                    except KeyError:
-                        pass # skip nodes with missing keys
-                opts.sort()
-            else:
-                bag = self._chefapi.databag(self._databag)
-                opts = [(rec['name'],rec['value']) for rec in bag]
-        except Exception, e:
-            self._log.debug("Could not access databag '%s'\n%s" % \
-                            (self._databag,str(e)))
+        # get options from index
+        if self._index:
+            opts = []
+            try:
+                opts = self._chef_options(self._index)
+            except Exception, e:
+                self._log.debug("Could not access index '%s'\n%s" % \
+                                (self._index,str(e)))
+        
         return opts
+    
+    def _chef_options(self, index):
+        """Returns a list of tuples (name,value) by querying the
+        provided chef search index.  The index value can have
+        appended to it the field names to be used for the name
+        and value:
+        
+         node:alias:ec2.instance_id:
+         
+        If not provided, then the fields 'name' and 'value' will
+        be assumed.  If 'value' is not found, then 'name' will be
+        used also for value.
+        """
+        opts = []
+        
+        # process spec
+        if ':' in index:
+            index,name,value,first = index.split(':')[0:4]
+            first = first == '-' and None or first
+        else:
+            name = 'name'
+            value = 'value'
+            first = None
+        
+        # search index
+        items,u_total = self._chefapi.search(index)
+        
+        # check to add an initial value
+        if first is not None:
+            opts = [(0,first,first)]
+        
+        for item in items:
+            # get the order
+            try:
+                order = int(item.get('order',99))
+            except AttributeError:
+                order = 99
+                
+            # extract the tuple
+            try:
+                if hasattr(item.attributes, 'get_dotted'):
+                    tup = (order,
+                           item.attributes.get_dotted(name),
+                           item.attributes.get_dotted(value))
+                else:
+                    try:
+                        tup = (order,item[name],item[value])
+                    except:
+                        try:
+                            tup = (order,item[name],item[name])
+                        except:
+                            tup = (order,item.name,item.name)
+                opts.append( tup )
+            except:
+                pass # skip nodes with missing keys
+        
+        return [(n,v) for u_order,n,v in sorted(opts)]
     
     def get(self, item=None, req=None, default=None, raw=False):
         """Returns the given key's value from the given PyChef object
@@ -325,7 +383,7 @@ class FixedField(Field):
         self.kind = field.kind
         self.label = field.label
         self._opts = field._opts
-        self._databag = field._databag
+        self._index = field._index
         self._default = field._default
         self._handler = field._handler
         self._chefapi = field._chefapi
