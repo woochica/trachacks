@@ -135,7 +135,7 @@ class WorkLogManager:
         if self.config.getbool('worklog', 'autostopstart'):
             # Don't care if this fails, as with these arguments the only failure
             # point is if there is no active task... which is the desired scenario :)
-            self.stop_work()
+            self.stop_work(comment='Stopping work on this ticket to start work on #%s.' % (ticket))
             self.explanation = ''
  
         @self.env.with_transaction()
