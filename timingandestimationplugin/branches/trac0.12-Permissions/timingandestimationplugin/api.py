@@ -158,9 +158,6 @@ class TimeTrackingSetupParticipant(Component):
         ticket_custom = "ticket-custom"
         return not ( self.config.get( ticket_custom, "totalhours" ) and \
                          self.config.get( ticket_custom, "hours" ) and \
-                         self.config.get( ticket_custom, "totalhours.order") and \
-                         self.config.get( ticket_custom, "hours.order") and \
-                         self.config.get( ticket_custom, "estimatedhours.order") and \
                          self.config.get( ticket_custom, "estimatedhours") and \
                          self.config.get( ticket_custom, "internal") and \
                          "InternalTicketsPolicy" in self.config.getlist("trac", "permission_policies"))
