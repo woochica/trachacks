@@ -1,0 +1,45 @@
+body {
+   	margin-left:10px;
+	margin-top:0px ! important; 
+	margin-right:10px;
+	margin-bottom:10px; 
+                    
+} 
+#top1 {
+	top:0px;
+	width:99%;
+	visibility:hidden; z-index: 1;
+}
+#top2 {
+	position:fixed;
+	margin-top:0px; 
+	width:99%;
+	background:white;
+	visibility: visible; z-index: 3;
+}
+#top3 {
+	top:0px;
+	width:99%;
+	visibility:hidden; z-index: 1;
+}
+#top4 {
+	position:fixed;
+	width:99%;
+	background:white;
+	visibility: visible; z-index: 3;
+}
+#left {
+	padding:1em;
+	width:80%;
+	visibility: visible; z-index: 1;
+}
+#right {
+	background:#FFFFDD;
+	right:1%;
+    border:1px outset #DDDDCC;
+	margin:0 0 2em 1em;
+    padding:0.5em 1em;
+	position:fixed;	
+
+
+} 
