@@ -95,7 +95,7 @@ class SupoSERequestHandler(Component):
             repo = self.env.get_repository(authname=req.authname)
             # Index with SupoSE
             youngest = int( repo.youngest_rev )
-            
+            #raise Exception( int( indexedrev ) < youngest )
             base = re.search("(svn:.*:)(.*:.*)", repo.get_base() )
             base = base.group(2)
             base = "file:///" +  base
@@ -111,7 +111,7 @@ class SupoSERequestHandler(Component):
                            youngest)
                 self.env.config.save()
                 indexedrev = int( indexedrev )
-            if indexedrev < youngest:
+            if int( indexedrev ) < youngest:
                 new_index_cmd = supose + " scan --url "
                 new_index_cmd += base
                 new_index_cmd += " --fromrev " + str( indexedrev )
@@ -206,7 +206,7 @@ class SupoSERequestHandler(Component):
                 req.redirect(quickjump_href)
     def _prepare_results(self, req, filters, results):
         page = int(req.args.get('page', '1'))
-        results = Paginator(results, page - 1, 10)
+        results = Paginator(results, page - 1, 100)
         for idx, result in enumerate(results):
             results[idx] = {'href': result[0], 'title': result[1],
                             'date': format_datetime(result[2]),
