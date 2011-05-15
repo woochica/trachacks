@@ -85,7 +85,7 @@ class SupoSERequestHandler(Component):
         
         to_unicode = Mimeview(self.env).to_unicode
         if query:
-            data['quickjump'] = self._check_quickjump(req, query)
+            data['quickjump'] = self._check_quickjump(req, query, path)
             if not req.perm.has_permission('REPO_SEARCH'):
                 return
             
@@ -178,7 +178,7 @@ class SupoSERequestHandler(Component):
                              'active': f[0] in filters}
                             for f in available_filters],
                 'query': query, 'quickjump': None, 'results': []}
-    def _check_quickjump(self, req, kwd):
+    def _check_quickjump(self, req, kwd,spath):
         """Look for search shortcuts"""
         noquickjump = int(req.args.get('noquickjump', '0'))
         # Source quickjump   FIXME: delegate to ISearchSource.search_quickjump
@@ -194,6 +194,7 @@ class SupoSERequestHandler(Component):
                 quickjump_href = link.attrib.get('href')
                 name = link.children
                 description = link.attrib.get('title', '')
+        
         if quickjump_href:
             # Only automatically redirect to local quickjump links
             if not quickjump_href.startswith(req.base_path or '/'):
@@ -216,6 +217,7 @@ class SupoSERequestHandler(Component):
         for shown_page in shown_pages:
             page_href = req.href.reposearch([(f, 'on') for f in filters],
                                         q=req.args.get('q'),
+                                        p=req.args.get('p'),
                                         page=shown_page, noquickjump=1)
             pagedata.append([page_href, None, str(shown_page),
                              'page ' + str(shown_page)])
@@ -229,17 +231,22 @@ class SupoSERequestHandler(Component):
 
         if results.has_next_page:
             next_href = req.href.reposearch(zip(filters, ['on'] * len(filters)),
-                                        q=req.args.get('q'), page=page + 1,
+                                        q=req.args.get('q'), 
+                                        p=req.args.get('p'),
+                                        page=page + 1,
                                         noquickjump=1)
             add_link(req, 'next', next_href, 'Next Page')
 
         if results.has_previous_page:
             prev_href = req.href.reposearch(zip(filters, ['on'] * len(filters)),
-                                        q=req.args.get('q'), page=page - 1,
+                                        q=req.args.get('q'), 
+                                        p=req.args.get('p'),
+                                        page=page - 1,
                                         noquickjump=1)
             add_link(req, 'prev', prev_href, 'Previous Page')
 
         page_href = req.href.reposearch(
             zip(filters, ['on'] * len(filters)), q=req.args.get('q'),
+            p=req.args.get('p'),
             noquickjump=1)
         return {'results': results, 'page_href': page_href}
