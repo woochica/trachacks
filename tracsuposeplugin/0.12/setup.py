@@ -8,7 +8,7 @@ setup(name='tracsupose',
       author='Bangyou Zheng',
       maintainer='Bangyou Zheng',
       maintainer_email='zheng.bangyou@gmail.com',
-      url="http://trac-hacks.org/wiki/TracSupoSE",
+      url="http://trac-hacks.org/wiki/TracSupose",
       license='BSD',
       scripts=['update-index'],
       entry_points = {'trac.plugins': ['tracsupose = tracsupose']})
