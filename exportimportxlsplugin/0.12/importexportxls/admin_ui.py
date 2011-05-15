@@ -139,6 +139,9 @@ class ImportExportAdminPanel(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
+    def get_htdocs_dirs(self):
+        return []
+
     def _get_fields_format(self, fields = None):
         fieldsFormat = {}
         
