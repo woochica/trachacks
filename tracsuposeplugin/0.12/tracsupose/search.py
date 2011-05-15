@@ -23,7 +23,6 @@ import string
 from fnmatch import fnmatch
 
   
-
 class SupoSEPlugin(Component):
     implements(ITemplateStreamFilter, IPermissionRequestor)
     # ITemplateStreamFilter methods
@@ -36,19 +35,22 @@ class SupoSEPlugin(Component):
             path = data.get('created_path')
             repo = self.env.get_repository(authname=req.authname)
             node = get_existing_node(req, repo, path, repo.youngest_rev)
+            file = ""
             if node:
                 if node.isfile:
-                   path = re.search( "(^.*)(/.+$)", path )
-                   path = path.group(1)
+                    file = posixpath.basename(path)
+                    path = posixpath.dirname(path)
+
             #raise Exception( path )
             filter = Transformer('//div[@id="jumprev"]')
             search = tag.div( tag.form( 
             # tag.div( "Repository search" ),
                 tag.input( type = "text", id = "suquery", 
                     name = "q", size = 13, value = ""),
-                
                 tag.input( type = "hidden", id = "suquerypath", 
                     name = "p", size = 13, value = path),
+                tag.input( type = "hidden", id = "suqueryfile", 
+                    name = "f", size = 13, value = file),
                 tag.input( type = "submit", value="Repo Search"),
                 action=req.href.reposearch(),
                 method="get", id="reposearch" ) )
@@ -78,6 +80,7 @@ class SupoSERequestHandler(Component):
         # raise Exception( path )
         query = req.args.get('q', '')
         path = req.args.get('p', '')
+        file = req.args.get('f', '')
         if not path:
             path = "/"
         data = self._prepare_data(req, query, "", "")
@@ -138,7 +141,8 @@ class SupoSERequestHandler(Component):
                     if path[len(path)-1] !="/":
                         supose_cmd += "/"
                     supose_cmd += "*"
-            
+            if file:
+                supose_cmd += " +filename:"+file
             repo_res = os.popen( supose_cmd ).read()
             
             
