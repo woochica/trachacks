@@ -2,6 +2,7 @@ from trac.core import *
 from trac.util.datefmt import format_datetime
 from trac.web.api import IRequestHandler
 from trac.web.chrome import ITemplateProvider, INavigationContributor, \
+                            ITemplateStreamFilter, \
                             add_stylesheet, add_ctxtnav, add_link
 from trac.search import ISearchSource, shorten_result
 from trac.util.presentation import Paginator
@@ -10,9 +11,8 @@ from trac.perm import IPermissionRequestor
 from trac.util import Markup, escape
 from trac.versioncontrol.web_ui.util import *
 from trac.mimeview.api import Mimeview
-from trac.web.chrome import ITemplateStreamFilter
 from genshi.filters.transform import Transformer, StreamBuffer
-from genshi.builder import tag
+from genshi.builder import tag as builder
 from trac.wiki.formatter import extract_link
 from trac.mimeview import Context
 from genshi.builder import tag, Element
@@ -22,8 +22,17 @@ import os
 import string
 from fnmatch import fnmatch
 
-  
+class SupoSENaviContributor(Component):
+    implements( INavigationContributor )
+    def get_active_navigation_item(self, req):
+        if 'REPO_SEARCH' in req.perm:
+            return 'reposearch'
 
+    def get_navigation_items(self, req):
+        if 'REPO_SEARCH' in req.perm:
+            label = "Repo Search"
+            yield ('mainnav', 'reposearch',
+                   builder.a(label, href=req.href.reposearch()) )
 
 class SupoSERequestHandler(Component):
     implements( ITemplateStreamFilter, IPermissionRequestor, 
