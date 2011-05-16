@@ -1,0 +1,78 @@
+# Translations template for XMail-Plugin. 
+# Copyright (C) 2010 ORGANIZATION 
+# This file is distributed under the same license as the 
+# XMail project. 
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010. 
+# 
+# copied from TracSubTicketsPlugin project, see 
+# http://trac.edgewall.org/attachment/wiki/CookBook/PluginL10N/trac-subtickets-plugin_i18n-l10n.patch
+#, fuzzy 
+msgid "" 
+msgstr "" 
+"Project-Id-Version: XMail 0.0.x\n" 
+"POT-Creation-Date: 2010-05-04 01:38+0200\n" 
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n" 
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n" 
+"Language-Team: LANGUAGE <trac-dev@googlegroups.com>\n" 
+"MIME-Version: 1.0\n" 
+"Content-Type: text/plain; charset=utf-8\n" 
+"Content-Transfer-Encoding: 8bit\n" 
+"Generated-By: Babel 1.0dev-r482\n"
+
+msgid "Budget Estimation"
+msgstr ""
+
+msgid "Add a new row"
+msgstr ""
+
+msgid "Person"
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Estimation"
+msgstr ""
+
+msgid "Cost"
+msgstr ""
+
+msgid "State"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Budget in hours"
+msgstr ""
+
+msgid "in hours"
+msgstr ""
+
+msgid "report_title_90"
+msgstr "[budget] All tickets"
+
+msgid "report_description_90"
+msgstr ""
+"{{{#!th width='50%'\n"
+"'''Description'''\n"
+"}}}\n"
+"{{{#!th width='50%'\n"
+"'''Example'''\n"
+"}}}\n"
+"|----------------\n"
+"{{{#!td width='50%'\n"
+"All tickets with budget data filtered by milestone, component and owner \n"
+"(by default the values are '%' for milestone and component; and logged in user for owner). \n"
+"Results will initially be sorted by milestones. Tickets with more cost than estimation will be displayed with orange background.\n"
+"\n"
+"MILESTONE, COMPONENT and OWNER can be filtered by wildcards (%). "
+"OWNER will also search for username in budget table.\n"
+"}}}\n"
+"{{{#!td width='50%'\n"
+"{{{\n"
+"COMPONENT: %\n"
+"MILESTONE: 4.%\n"
+"OWNER:     unassigned\n"
+"}}}\n"
+"}}}\n"
