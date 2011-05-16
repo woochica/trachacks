@@ -23,9 +23,12 @@ import string
 from fnmatch import fnmatch
 
   
-class SupoSEPlugin(Component):
-    implements(ITemplateStreamFilter, IPermissionRequestor)
-    # ITemplateStreamFilter methods
+
+
+class SupoSERequestHandler(Component):
+    implements( ITemplateStreamFilter, IPermissionRequestor, 
+        IRequestHandler, ITemplateProvider)
+    
     def get_permission_actions(self):
         yield 'REPO_SEARCH'
     def filter_stream(self, req, method, filename, stream, data):
@@ -58,22 +61,15 @@ class SupoSEPlugin(Component):
             
             return stream | filter.after(search)
         return stream
-class SupoSETemplateProvider(Component):
-    """Provides templates and static resources for the tags plugin."""
 
-    implements(ITemplateProvider)
+    
 
-    # ITemplateProvider methods
     def get_templates_dirs(self):
-        """
-        Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
-
-class SupoSERequestHandler(Component):
-    implements(  IRequestHandler)
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('hw', resource_filename(__name__, 'htdocs'))]
     def match_request(self, req):
         return req.path_info.startswith('/reposearch')
     def process_request(self, req):
