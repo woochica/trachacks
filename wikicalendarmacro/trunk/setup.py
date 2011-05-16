@@ -82,9 +82,7 @@ with one or more of it's corresponding attributes.
     extras_require = {'Babel': 'Babel>= 0.9.5', 'Trac': 'Trac >= 0.12'},
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
-        'wikicalendar': [
-            'htdocs/css/*.css', 'locale/*/LC_MESSAGES/*.mo',
-        ],
+        'wikicalendar': ['htdocs/*.css', 'locale/*/LC_MESSAGES/*.mo'],
     },
     zip_safe = True,
     entry_points = {

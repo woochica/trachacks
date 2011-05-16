@@ -1,0 +1,108 @@
+/* styles for WikiCalendar and WikiTicketCalendar */
+
+table.wiki-calendar {
+  margin: 0; border: none; padding: 0; border-collapse: collapse;
+  }
+table.wiki-calendar caption { font-size: 120%; white-space: nowrap; }
+table.wiki-calendar caption a {
+  display: inline; margin: 0; border: 0; padding: 0;
+  background-color: transparent; color: #b00; text-decoration: none;
+  }
+/* table.wiki-calendar caption a.prev { padding-right: 12px; font-size:9pt; }
+table.wiki-calendar caption a.prevm { padding-right: 0px;font-size:9pt; }
+table.wiki-calendar caption a.next { padding-left: 12px;font-size:9pt; }
+table.wiki-calendar caption a.nextm { padding-left: 0px;font-size:9pt; } */
+table.wiki-calendar td.x {}
+table.wiki-calendar td.y {
+  text-align:center; width:120%;font-size: 10pt;font-weight: bold;
+  }
+table.wiki-calendar caption a:hover { background-color: #eee; }
+table.wiki-calendar th {
+  border: none; border-bottom: 2px solid #000;
+  text-align: center; font-weight: bold;
+  }
+table.wiki-calendar td { padding: 0; border: none; text-align: right; }
+table.wiki-calendar a.day {
+  display: block; width: 2em; height: 100%; margin: 0; border: 2px solid #fff;
+  padding: 0; background-color: #fff; color: #888; text-decoration: none;
+  }
+table.wiki-calendar a.day:hover {
+  border-color: #eee; background-color: #eee; color: #000;
+  }
+table.wiki-calendar a.today { border-color: #b00 !important; }
+table.wiki-calendar a.adjacent_month {
+  border-color: #f0f0f0; background-color: #f0f0f0;
+  }
+table.wiki-calendar a.milestone { font-weight: bold; }
+table.wiki-calendar a.page { color: #b00 !important; }
+
+table.wikitcalendar th { font-weight: bold; }
+table.wikitcalendar th.workday { width: 17%; }
+table.wikitcalendar th.weekend { width: 7%; }
+table.wikitcalendar caption table { margin: auto; }
+table.wikitcalendar caption .x, table.wikitcalendar caption .y {
+    font-size: 120%; white-space: nowrap;
+    }
+table.wikitcalendar caption .y { font-weight: bold; }
+table.wikitcalendar caption a {
+    display: inline; margin: 0; border: 0; padding: 0;
+    background-color: transparent; color: #b00; text-decoration: none;
+    }
+table.wikitcalendar caption a.prev { padding-right: 5px; font: bold; }
+table.wikitcalendar caption a.next { padding-left: 5px; font: bold; }
+table.wikitcalendar caption a:hover { background-color: #eee; }
+table.wikitcalendar td.today {
+    background: #fbfbfb; border-color: #444444; color: #444;
+    border-style: solid; border-width: 1px;
+    }
+table.wikitcalendar td.day {
+    background: #e5e5e5; border-color: #444444; color: #333;
+    border-style: solid; border-width: 1px;
+    }
+table.wikitcalendar td.adjacent_month {
+    background: #eee; border-color: #ccc;
+    border-style: solid; border-width: 1px;
+    }
+table.wikitcalendar div.milestone {
+    font-size: 9px; background: #f7f7f0; border: 1px solid #d7d7d7;
+    border-bottom-color: #999; text-align: left;
+    }
+table.wikitcalendar a.day, table.wikitcalendar a.subpage {
+    width: 2em; height: 100%; margin: 0; border: 0px; padding: 0;
+    color: #333; text-decoration: none; font-weight: bold;
+    }
+table.wikitcalendar a.page {
+    width: 2em; height: 100%; margin: 0; border: 0px; padding: 0;
+    color: #b00 !important; text-decoration: none;
+    }
+table.wikitcalendar a.day:hover {
+    border-color: #eee; background-color: #eee; color: #000;
+    }
+table.wikitcalendar div.open, span.open   {
+    font-size: 9px; color: #000000;
+    }
+table.wikitcalendar div.closed, span.closed {
+    font-size: 9px; color: #777777; text-decoration: line-through;
+    }
+table.wikitcalendar div.opendate_open, span.opendate_open {
+    font-size: 9px; color: #000077;
+    }
+table.wikitcalendar div.opendate_closed, span.opendate_closed {
+    font-size: 9px; color: #000077; text-decoration: line-through;
+    }
+table.wikitcalendar div.condense { background-color: #e5e5e5; }
+table.wikitcalendar div.opendate_condense { background-color: #cdcdfa; }
+
+/* pure CSS style tooltip for WikiTicketCalendar */
+a.tip {
+    position: relative; cursor: help;
+    }
+a.tip span { display: none; }
+a.tip:hover span {
+    display: block; z-index: 1;
+    font-size: 0.75em; text-decoration: none;
+    /* big left move because of z-index render bug in IE<8 */
+    position: absolute; top: 0.8em; left: 6em;
+    border: 1px solid #000; background-color: #fff; padding: 5px;
+    }
+
