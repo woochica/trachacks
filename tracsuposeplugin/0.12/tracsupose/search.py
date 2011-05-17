@@ -98,7 +98,11 @@ class SupoSERequestHandler(Component):
                 return
             
             supose = self.env.config.get('supose', 'supose' )
+            if not supose:
+                raise Exception( "supose have to be specified in the section supose of trac.ini" )
             index = self.env.config.get('supose', 'index' )
+            if not index:
+                raise Exception( "index folder have to be specified in the section supose of trac.ini" )
             indexedrev = self.env.config.get('supose', 'indexedrev' )
             repo = self.env.get_repository(authname=req.authname)
             # Index with SupoSE
@@ -133,23 +137,23 @@ class SupoSERequestHandler(Component):
             supose_cmd = str( supose )
             supose_cmd += " search --fields revision " 
             supose_cmd += "filename path contents --index "
-            supose_cmd += index + " --query \""
+            supose_cmd += index + " --query "
             
-            supose_cmd += query + "\""
+            supose_query = "\"" + query + "\""
             if path:
                 if path != "/":
                     if path[0] != "/":
-                        supose_cmd += " +path:/"
+                        supose_query += " +path:/"
                     else:
-                        supose_cmd += " +path:"
-                    supose_cmd += path
+                        supose_query += " +path:"
+                    supose_query += path
                     if path[len(path)-1] !="/":
-                        supose_cmd += "/"
-                    supose_cmd += "*"
+                        supose_query += "/"
+                    supose_query += "*"
             if file:
-                supose_cmd += " +filename:"+file
-            repo_res = os.popen( supose_cmd ).read()
-            
+                supose_query += " +filename:"+file
+            repo_res = os.popen( supose_cmd + supose_query ).read()
+            data['querystring'] = supose_query
             
             
             repo_reg = "(.*[\d]+:[ ]+REVISION:)([\d]+)"

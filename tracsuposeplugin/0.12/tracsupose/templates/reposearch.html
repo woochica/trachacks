@@ -33,7 +33,9 @@
         </p>
        
       </form>
-
+    <div id="query" class="nav">
+        Query: ${querystring}
+    </div>
       <py:if test="results or quickjump"><hr />
         <h2 py:if="results">
           Results <span class="numresults">(${results.displayed_items()})</span>
