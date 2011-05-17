@@ -1,0 +1,17 @@
+###################################
+TracBlockdiagPlugin Release Notes
+###################################
+
+TracBlockdiagPlugin 0.4.0
+##########################
+:release date: 2011-05-18
+
+Improvements
+************
+* Add actdiag and nwdiag support
+
+Bug Fixes
+*********
+* Does not work with Python 2.4
+
+.. vim: set ft=rst :
