@@ -49,7 +49,7 @@ class IExportFormat(Interface):
         """Return the value to the well TRAC type.
         """
 
-class NumberFormat():
+class NumberFormat:
     
     implements(IExportFormat)
     
@@ -75,7 +75,7 @@ class NumberFormat():
             ret = ret.rstrip('.')
         return ret
 
-class DateFormat():
+class DateFormat:
     
     implements(IExportFormat)
     
@@ -146,7 +146,7 @@ class DateFormat():
         return ret
 
 
-class DateTimeFormat():
+class DateTimeFormat:
     
     implements(IExportFormat)
     
@@ -188,7 +188,7 @@ class DateTimeFormat():
         return format_datetime(ret)
 
 
-class TextFormat():
+class TextFormat:
     
     implements(IExportFormat)
     
@@ -218,7 +218,7 @@ class TextFormat():
         return value
 
 
-class BooleanFormat():
+class BooleanFormat:
     
     implements(IExportFormat)
     
