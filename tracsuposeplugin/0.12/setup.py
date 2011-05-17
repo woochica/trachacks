@@ -11,5 +11,4 @@ setup(name=PACKAGE,
       description='Search SVN repository history with SupoSE',
       url="http://trac-hacks.org/wiki/TracSuposePlugin",
       license='BSD',
-      scripts=['update-index'],
       entry_points = {'trac.plugins': '%s = tracsupose' % PACKAGE})
