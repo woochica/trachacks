@@ -50,7 +50,6 @@ class FormUI(FormDBUser):
             if 'FORM_VIEW' in req.perm(form.resource):
                 if len(form.siblings) == 0:
                     # no form record found for this parent resource
-                    href = req.href.form()
                     return (template, data, content_type)
                 elif form.resource.id is not None:
                     # single form record found
