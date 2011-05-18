@@ -12,6 +12,7 @@ tracforms-0.4 (yet unreleased):
    by recognizing optional attributes similar to textarea fields
  * arbitrary floating point precision support for aggregation functions
    by an algorithm independent of native support in Python >= 2.6
+ * support for negative values as arguments of aggregation functions
 
 tracforms-0.3.1 (09-May-2011):
  resolved issues

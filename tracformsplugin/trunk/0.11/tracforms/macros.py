@@ -207,8 +207,13 @@ class FormProcessor(object):
             if arg[:1] in '"\'':
                 arg = arg[1:-1]
             if arg[:1] == '-':
-                name, value = (arg[1:].split('=', 1) + [True])[:2]
-                kw[str(kwtrans.get(name, name))] = value
+                try:
+                    arg = (str(float(arg)))
+                    yield arg
+                except ValueError, e:
+                    name, value = (arg[1:].split('=', 1) + [True])[:2]
+                    kw[str(kwtrans.get(name, name))] = value
+                    pass
             else:
                 yield arg
 
