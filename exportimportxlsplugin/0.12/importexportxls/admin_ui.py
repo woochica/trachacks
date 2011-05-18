@@ -147,8 +147,6 @@ class ImportExportAdminPanel(Component):
     def _get_fields_format(self, fields = None):
         fieldsFormat = {}
         
-        fieldnames = [f['name'] for f in fields]
-        
         allfields = [ {'name':'id', 'label':'id'} ]
         allfields.extend( TicketSystem(self.env).get_ticket_fields() )
         customfields = TicketSystem(self.env).get_custom_fields()
@@ -264,7 +262,11 @@ class ImportExportAdminPanel(Component):
         headerStyle = xlwt.easyxf('font: bold on; pattern: pattern solid, fore-colour grey25; borders: top thin, bottom thin, left thin, right thin')
         
         wb = xlwt.Workbook()
-        ws = wb.add_sheet('Tickets - %s' % self.config.get('project','name', '') )
+        try:
+          ws = wb.add_sheet('Tickets - %s' % self.config.get('project','name', '') )
+        except:
+          # Project name incompatible with sheet name constraints.
+          ws = wb.add_sheet('Tickets')
         
         colIndex = {}
         c = 0
@@ -296,9 +298,12 @@ class ImportExportAdminPanel(Component):
         
         tempfile = self._save_uploaded_file(req)
         
-        if req.session.has_key('importexportxls.tempfile'):
+        if req.session.has_key('importexportxls.tempfile') and os.path.isfile(req.session['importexportxls.tempfile']):
+          try:
+            # some times tempfile leave opened
             os.remove( req.session['importexportxls.tempfile'] )
-        
+          except:
+            exc = sys.exc_info()
         req.session['importexportxls.tempfile'] = tempfile
         
         return self._get_tickets(tempfile)
@@ -314,7 +319,11 @@ class ImportExportAdminPanel(Component):
           del req.session['importexportxls.tempfile']
           
           tickets, importFields, warnings = self._get_tickets(tempfile)
-          os.remove( tempfile )
+          try:
+            # some times tempfile leave opened
+            os.remove( tempfile )
+          except:
+            exc = sys.exc_info()
           
           for i, t in enumerate(tickets):
             if bool( req.args.get('ticket.'+unicode(i), False) ):
