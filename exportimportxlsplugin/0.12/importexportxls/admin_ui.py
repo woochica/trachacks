@@ -30,7 +30,9 @@ import time
 import xlwt
 import xlrd
 
-from io import BytesIO
+# ticket #8805 : unavailable for python 2.4 or 2.5
+# from io import BytesIO
+import cStringIO
 
 
 from trac import ticket
@@ -255,7 +257,9 @@ class ImportExportAdminPanel(Component):
         fields = [c for c in fields if fieldsExport[ c['name'] ] ]
         fieldnames = [c['name'] for c in fields]
         
-        content = BytesIO()
+        # ticket #8805 : unavailable for python 2.4 or 2.5
+        #content = BytesIO()
+        content = cStringIO.StringIO()
         
         headerStyle = xlwt.easyxf('font: bold on; pattern: pattern solid, fore-colour grey25; borders: top thin, bottom thin, left thin, right thin')
         
