@@ -1,111 +1,53 @@
 # -*- coding: utf-8 -*-
 
-import os
-import sys
-
-from datetime import datetime
-
 from trac.core import Component, implements
+from trac.db import Column, DatabaseManager, Index, Table
 from trac.env import IEnvironmentSetupParticipant
 
-DEBUG_SQL = os.environ.get('DEBUG_SQL', False)
+# Database version identifier. Used for automatic upgrades.
+db_version = 14
+
+##
+# Database schema
+
+schema = [
+    # root table
+    Table('forms', key='id')[
+        Column('id', auto_increment=True),
+        Column('realm'),
+        Column('resource_id'),
+        Column('subcontext'),
+        Column('state'),
+        Column('author'),
+        Column('time', type='int'),
+        Column('keep_history', type='int'),
+        Column('track_fields', type='int'),
+        Index(['realm', 'resource_id', 'subcontext'], unique=True),
+        Index(['author']),
+        Index(['time'])],
+
+    # field changes tracking
+    Table('forms_fields')[
+        Column('id', type='int'),
+        Column('field'),
+        Column('author'),
+        Column('time', type='int'),
+        Index(['id', 'field'], unique=True)],
+
+    # change history
+    Table('forms_history')[
+        Column('id', type='int'),
+        Column('author'),
+        Column('time', type='int'),
+        Column('old_state'),
+        Index(['id']),
+        Index(['author']),
+        Index(['time'])],
+]
+
 
 def _db_to_version(name):
     return int(name.lstrip('db'))
-
-
-class DBCursor(object):
-    """Custom layer for TracForms on top of the Trac database.
-
-    Support for db-specific SQL syntax, SQL statement logging,
-    and special result access methods are provide by this class.
-    """
-    cursor = None
-
-    def __init__(self, db, log):
-        self.db = db
-        self.cursor = db.cursor()
-        self.log = log
-        # Please, please tell me there's a better way to do this...
-        dbtypename = type(self.db.cnx).__name__.split('.')[-1]
-        self.dbtype = (
-            (dbtypename == 'MySQLConnection' and 'mysql') or
-            (dbtypename == 'PostgreSQLConnection' and 'postgres') or
-            'sqlite')
-
-    def __del__(self):
-        self.db.commit()
-
-    def rollback(self):
-        self.db.rollback()
-
-    def commit(self):
-        self.db.commit()
-
-    def execute(self, sql, *params, **variants):
-        if DEBUG_SQL:
-            print >>sys.stderr, 'EXECUTING SQL:\n%s\n\t%r' % (sql, params)
-        sql = variants.get(self.dbtype, sql)
-        self.log.debug('EXECUTING SQL:\n%s\n\t%r' % (sql, params))
-        try:
-            self.cursor.execute(sql, params)
-        except Exception, e:
-            self.log.error(
-                'EXECUTING SQL:\n%s\n\t%r\n\tSQL ERROR: %s' % (sql, params, e))
-            self.rollback()
-            raise e
-        return self
-
-    def __iter__(self):
-        while True:
-            row = self.cursor.fetchone()
-            if row is None:
-                break
-            else:
-                yield row
-
-    def row(self, rowno=0):
-        if rowno > 0:
-            self.fetchmany(rowno)
-        return self.cursor.fetchone()
-
-    @property
-    def firstrow(self):
-        return self.row(0)
-
-    def col(self, colno=0):
-        def gen():
-            for row in self:
-                if colno >= len(row):
-                    yield None
-                else:
-                    yield row[colno]
-        return tuple(gen())
-
-    @property
-    def firstcol(self):
-        return self.col(0)
-
-    def at(self, default=None, rowno=0, colno=0):
-        row = self.row(rowno)
-        if row is None or colno >= len(row):
-            return default
-        else:
-            return row[colno]
-
-    @property
-    def value(self):
-        return self.at(None, 0, 0)
-
-    def __call__(self, sql, *args, **variants):
-        return self.execute(sql, *args, **variants)
-
-    def last_id(self, cursor, table, column='id'):
-        return self.db.get_last_id(self, table, column)
-
-    @property
-    def lastrowid(self):
-        return self.cursor.lastrowid
 
 
 class DBComponent(Component):
@@ -127,8 +69,7 @@ class DBComponent(Component):
                            since applySchema is not defined or is False.
                            """ % type(self).__name__)
             return False
-        cursor = self.get_cursor(db)
-        installed = self.get_installed_version(cursor)
+        installed = self.get_installed_version(db)
         for version, fn in self.get_schema_functions():
             if version > installed:
                 self.log.debug(
@@ -145,31 +86,41 @@ class DBComponent(Component):
                            since applySchema is not defined or is False.
                            """ % type(self).__name__)
             return
+        installed = self.get_installed_version(db)
+        if installed is None:
+            self.log.info(
+                    'Installing TracForm plugin schema %s' % db_version)
+            db_connector, _ = DatabaseManager(self.env)._get_connector()
+            db = self._get_db(db)
+            cursor = db.cursor()
+            for table in schema:
+                for stmt in db_connector.to_sql(table):
+                    cursor.execute(stmt)
+                self.set_installed_version(db, db_version)
+            self.log.info('Installation of %s successful.' % db_version)
+            return
         self.log.debug(
             'Upgrading schema for "%s".' % type(self).__name__)
-        cursor = self.get_cursor(db)
-        installed = self.get_installed_version(cursor)
         for version, fn in self.get_schema_functions():
             if version > installed:
                 self.log.info(
                     'Upgrading TracForm plugin schema to %s' % version)
                 self.log.info('- %s: %s' % (fn.__name__, fn.__doc__))
-                fn(cursor)
-                self.set_installed_version(cursor, version)
-                cursor.commit()
+                db = self._get_db(db)
+                cursor = db.cursor()
+                fn(self.env, cursor)
+                self.set_installed_version(db, version)
                 installed = version
                 self.log.info('Upgrade to %s successful.' % version)
 
     # TracForms db schema management methods
 
-    def get_installed_version(self, cursor):
-        cursor = self.get_cursor(cursor)
-        version = self.get_system_value(
-            cursor, self.plugin_name + '_version', -1)
+    def get_installed_version(self, db):
+        version = self.get_system_value(db, self.plugin_name + '_version', -1)
         if version is None:
             # check for old naming schema
             oldversion = self.get_system_value(
-                cursor, 'TracFormDBComponent:version', -1)
+                db, 'TracFormDBComponent:version', -1)
             version = _db_oldversion_dict.get(oldversion)
         if version is None:
             return version
@@ -187,33 +138,33 @@ class DBComponent(Component):
         fns.sort()
         return tuple(fns)
 
-    def set_installed_version(self, cursor, version):
-        cursor = self.get_cursor(cursor)
-        self.set_system_value(cursor, self.plugin_name + '_version', version)
+    def set_installed_version(self, db, version):
+        self.set_system_value(db, self.plugin_name + '_version', version)
 
     # Trac db 'system' table management methods for TracForms entry
 
-    def get_system_value(self, cursor, key, default=None):
-        return self.get_cursor(cursor).execute(
-            'SELECT value FROM system WHERE name=%s', key) \
-            .value
+    def get_system_value(self, db, key, default=None):
+        db = self._get_db(db)
+        cursor = db.cursor()
+        cursor.execute("SELECT value FROM system WHERE name=%s", (key,))
+        row = cursor.fetchone()
+        return row and row[0]
 
-    def set_system_value(self, cursor, key, value):
-        if self.get_system_value(cursor, key) is not None:
-            return self.get_cursor(cursor).execute(
-                'UPDATE system SET value=%s WHERE name=%s', value, key)
-        else:
-            return self.get_cursor(cursor).execute(
-                'INSERT INTO system(name, value) VALUES(%s, %s)', key, value)
+    def set_system_value(self, db, key, value):
+        """Atomic UPSERT db transaction to save TracForms version."""
+        db = self._get_db(db)
+        cursor = db.cursor()
+        cursor.execute(
+                "UPDATE system SET value=%s WHERE name=%s", (value, key))
+        cursor.execute("SELECT value FROM system WHERE name=%s", (key,))
+        if not cursor.fetchone():
+            cursor.execute(
+                "INSERT INTO system(name, value) VALUES(%s, %s)", (key,
+                                                                   value))
 
-    # Cursor/low level database management
-
-    def get_cursor(self, db_or_cursor=None):
-        if db_or_cursor is None:
-            db_or_cursor = self.env.get_db_cnx()
-        if not isinstance(db_or_cursor, DBCursor):
-            db_or_cursor = DBCursor(db_or_cursor, self.log)
-        return db_or_cursor
+    # Low level database connection management
+    def _get_db(self, db=None):
+        return db or self.env.get_db_cnx()
 
 
 _db_oldversion_dict = {

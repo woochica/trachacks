@@ -17,7 +17,6 @@ from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_stylesheet
 from api import FormDBUser, _, tag_
 from compat import json
 from model import Form
-from tracdb import DBCursor
 from util import resource_from_page
 
 tfpageRE = re.compile('/form(/\d+|$)')

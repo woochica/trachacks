@@ -68,7 +68,7 @@ class Form(object):
     def _get_siblings(self, parent_realm, parent_id):
         """Add siblings list including self to form resource object."""
         self.siblings = self.forms.get_tracform_ids(tuple([parent_realm,
-                                                           parent_id]))
+                                                           parent_id])) or []
         if len(self.siblings) == 1:
             # form_id in single form situation
             self.id = self.siblings[0][0]
@@ -77,9 +77,7 @@ class Form(object):
     @property
     def has_data(self):
         """Return whether there is any form content stored."""
-        return (self.forms.get_tracform_fields(self.id) \
-                .firstrow is not None or \
-                self.forms.get_tracform_history(self.id) \
-                .firstrow is not None or \
+        return (self.forms.get_tracform_fields(self.id) is not None or \
+                self.forms.get_tracform_history(self.id) is not None or \
                 self.forms.get_tracform_state(self.id) not in [None, '{}'])
 

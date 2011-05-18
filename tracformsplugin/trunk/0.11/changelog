@@ -1,6 +1,17 @@
 Author: Rich Harkins <rich@worldsinfinite.com>
 Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
+tracforms-0.4 (yet unreleased):
+ resolved issues
+ * #5608: trac-admin upgrade with PostgreSQL fails due to specific SQL syntax
+ * #5667: Added compatibility with PostgreSQL
+   both by full replacement of proprietary db cursor with generic Trac code
+
+ new features
+ * #5318: Unable to specify the width of input fields
+   by recognizing optional attributes similar to textarea fields
+
+
 tracforms-0.3.1 (09-May-2011):
  resolved issues
  * #8751: Form update failure: HTTP request has not JSON serializable argument
