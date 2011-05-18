@@ -10,7 +10,8 @@ tracforms-0.4 (yet unreleased):
  new features
  * #5318: Unable to specify the width of input fields
    by recognizing optional attributes similar to textarea fields
-
+ * arbitrary floating point precision support for aggregation functions
+   by an algorithm independent of native support in Python >= 2.6
 
 tracforms-0.3.1 (09-May-2011):
  resolved issues

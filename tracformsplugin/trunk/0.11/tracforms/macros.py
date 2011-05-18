@@ -6,6 +6,8 @@ import re
 import time
 import traceback
 
+from math import modf
+
 from trac.util.datefmt import format_datetime
 from trac.util.text import to_unicode
 from trac.wiki.macros import WikiMacroBase
@@ -508,7 +510,30 @@ class FormProcessor(object):
         return time.strftime(format, time.localtime(self.form_updated_on))
 
     def op_sum(self, *values):
-        return str(sum(float(value) for value in values))
+        """Full precision summation using multiple floats for intermediate
+           values
+        """
+        ## msum() from http://code.activestate.com/recipes/393090/ (r5)
+        # Depends on IEEE-754 arithmetic guarantees.
+        partials = []               # sorted, non-overlapping partial sums
+        for x in values:
+            x = float(x)
+            i = 0
+            for y in partials:
+                if abs(x) < abs(y):
+                    x, y = y, x
+                hi = x + y
+                lo = y - (hi - x)
+                if lo:
+                    partials[i] = lo
+                    i += 1
+                x = hi
+            partials[i:] = [x]
+        result = sum(partials, 0.0)
+        # finally reduce display precision to integer, if possible
+        if modf(result)[0] == 0:
+            return str(int(result))
+        return str(result)
 
     def op_sumif(self, check, *values):
         return self.op_sum(*self.filter(check, values))
