@@ -558,7 +558,7 @@ class FormProcessor(object):
         elif '*' in check or '?' in check or '[' in check:
             return fnmatch.filter(values, check)
         else:
-            return [i for i in n if check == i]
+            return [i for i in values if check == i]
 
     def op_sumprod(self, *values, **kw):
         stride = int(kw.pop('stride', 2))

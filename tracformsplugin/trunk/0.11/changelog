@@ -6,6 +6,8 @@ tracforms-0.4 (yet unreleased):
  * #5608: trac-admin upgrade with PostgreSQL fails due to specific SQL syntax
  * #5667: Added compatibility with PostgreSQL
    both by full replacement of proprietary db cursor with generic Trac code
+ * fix `filter` used for TracForms *if operations, what seems
+   broken since initial implementation in 0.2
 
  new features
  * #5318: Unable to specify the width of input fields
