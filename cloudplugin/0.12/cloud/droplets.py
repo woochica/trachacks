@@ -721,9 +721,9 @@ class EbsVolume(Droplet):
         
         # check to attach and/or detach volume to/from instance(s)
         new_instance_id = req.args.get('instance_id','')
-        if item['instance_id'] != new_instance_id:
+        if 'instance_id' not in item or item['instance_id'] != new_instance_id:
             # check if attaching or detaching
-            if item['instance_id']: # detach
+            if 'instance_id' in item and item['instance_id']: # detach
                 req.args['status'] = self.cloudapi.detach_ebs_volume(id,
                     item['instance_id'], item['device'])
             if new_instance_id: # attach
