@@ -3,7 +3,7 @@ from trac.util.datefmt import format_datetime
 from trac.web.api import IRequestHandler
 from trac.web.chrome import ITemplateProvider, INavigationContributor, \
                             ITemplateStreamFilter, \
-                            add_stylesheet, add_ctxtnav, add_link
+                            add_stylesheet, add_ctxtnav, add_link, add_script
 from trac.search import ISearchSource, shorten_result
 from trac.util.presentation import Paginator
 from trac.versioncontrol.api import Node
@@ -78,10 +78,15 @@ class SupoSERequestHandler(Component):
         return [resource_filename(__name__, 'templates')]
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-        return [('hw', resource_filename(__name__, 'htdocs'))]
+        return [('supose', resource_filename(__name__, 'htdocs'))]
     def match_request(self, req):
         return req.path_info.startswith('/reposearch')
     def process_request(self, req):
+        add_stylesheet(req, 'common/css/trac.css')
+        add_stylesheet(req, 'common/css/search.css')
+        add_script(req, 'common/js/jquery.js')
+        add_script(req, 'common/js/folding.js')
+        add_stylesheet(req, 'supose/css/supose.css')
         # raise Exception( path )
         query = req.args.get('q', '')
         path = req.args.get('p', '')
@@ -90,6 +95,7 @@ class SupoSERequestHandler(Component):
             path = "/"
         data = self._prepare_data(req, query, "", "")
         data['path'] = path
+        data['file'] = file
         
         to_unicode = Mimeview(self.env).to_unicode
         if query:

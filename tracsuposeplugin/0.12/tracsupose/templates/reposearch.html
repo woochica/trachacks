@@ -16,23 +16,54 @@
     <script type="text/javascript">
       jQuery(document).ready(function($) {$("#q").get(0).focus()});
     </script>
+	<script type="text/javascript" py:choose="">
+      jQuery(document).ready(function($) {
+        $("div.description").find("h1,h2,h3,h4,h5,h6").addAnchor(_("Link to this section"));
+        $(".foldable").enableFolding(false, true);
+      });
+    </script>
   </head>
   <body>
     <div id="content" class="search">
-
       <h1><label for="q">Repository Search</label></h1>
-      <form id="fullsearch" action="${href.reposearch()}" method="get">
-        <p>
-          <input type="text" id="p" name="p" size="40" value="${path}" />
-          <label for="p">Path</label>
-        </p>
-        <p>
-          <input type="text" id="q" name="q" size="40" value="${query}" />
-          <input type="hidden" name="noquickjump" value="1" />
-          <input type="submit" value="${_('Repository Search')}" />
-        </p>
-       
-      </form>
+		<form id="fullsearch" action="${href.reposearch()}" method="get">
+		<div id="reposearch">
+			<h2 class="foldable">Options</h2>
+			<div id="reposearchquery">
+				
+					<table border="0">
+					  <tr>
+						<th align="right">Path:</th>
+						<td align="left">
+							<input type="text" id="p" name="p" size="40" value="${path}" />
+						</td>
+					  </tr>
+					  <tr>
+						<th align="right">File:</th>
+						<td align="left">
+							<input type="text" id="f" name="f" size="40" value="${file}" />
+						</td>
+					  </tr>
+					  <!--
+					  <tr>
+						<th align="right">Revisions:</th>
+						<td align="left">
+							From: <input type="text" id="revf" name="revf" size="5" value="${revf}" />
+							To: <input type="text" id="revt" name="revt" size="6" value="${revt}" />
+						</td>
+					  </tr>
+					  -->
+					</table>
+				
+			</div>
+		</div>
+    <p>
+		<input type="text" id="q" name="q" size="40" value="${query}" />
+		<input type="hidden" name="noquickjump" value="1" />
+		<input type="submit" value="${_('Search')}" />
+	</p>
+    </form>
+      
     <div id="query" class="nav">
         Query: ${querystring}
     </div>

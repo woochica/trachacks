@@ -1,3 +1,5 @@
-div.tracsupose h1 {
-	color: red;
-}
+/* Styles for the list of childtickets. */
+#reposearch > div { border: 1px outset #996; padding: 1em }
+#reposearch .reposearch { margin-left: 2em; padding: 0 }
+#reposearch dt { display: list-item; list-style: square; }
+#reposearch	 dd { font-style: italic; margin-left: 0; padding-left: 0; }
