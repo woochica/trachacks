@@ -114,7 +114,6 @@ class SupoSERequestHandler(Component):
             
             autoindex = self.config.getbool('supose', 'autoindex')
             if autoindex:
-                raise Exception( autoindex )
                 indexedrev = BoolOption('supose', 'indexedrev' )
                 # Index with SupoSE
                 
