@@ -109,36 +109,42 @@ class SupoSERequestHandler(Component):
             index = self.env.config.get('supose', 'index' )
             if not index:
                 raise Exception( "index folder have to be specified in the section supose of trac.ini" )
-            indexedrev = self.env.config.get('supose', 'indexedrev' )
+            
             repo = self.env.get_repository(authname=req.authname)
-            # Index with SupoSE
-            youngest = int( repo.youngest_rev )
-            #raise Exception( int( indexedrev ) < youngest )
-            base = re.search("(svn:.*:)(.*:.*)", repo.get_base() )
-            base = base.group(2)
-            base = "file:///" +  base
-            if not indexedrev:
-                # First Scan
-                first_scan_cmd = supose + " scan --url "
-                first_scan_cmd += base
-                first_scan_cmd += " --create --index "
-                first_scan_cmd += index
-                scan_res = os.popen( first_scan_cmd ).read()
-                indexedrev = youngest
-                self.env.config.set('supose', 'indexedrev',
-                           youngest)
-                self.env.config.save()
-                indexedrev = int( indexedrev )
-            if int( indexedrev ) < youngest:
-                new_index_cmd = supose + " scan --url "
-                new_index_cmd += base
-                new_index_cmd += " --fromrev " + str( indexedrev )
-                new_index_cmd += " --index " + index
-                scan_res = os.popen( new_index_cmd ).read()
-                # raise Exception( new_index_cmd )
-                self.env.config.set('supose', 'indexedrev',
-                           youngest)
-                self.env.config.save()
+            
+            autoindex = self.config.getbool('supose', 'autoindex')
+            if autoindex:
+                raise Exception( autoindex )
+                indexedrev = BoolOption('supose', 'indexedrev' )
+                # Index with SupoSE
+                
+                youngest = int( repo.youngest_rev )
+                #raise Exception( int( indexedrev ) < youngest )
+                base = re.search("(svn:.*:)(.*:.*)", repo.get_base() )
+                base = base.group(2)
+                base = "file:///" +  base
+                if not indexedrev:
+                    # First Scan
+                    first_scan_cmd = supose + " scan --url "
+                    first_scan_cmd += base
+                    first_scan_cmd += " --create --index "
+                    first_scan_cmd += index
+                    scan_res = os.popen( first_scan_cmd ).read()
+                    indexedrev = youngest
+                    self.env.config.set('supose', 'indexedrev',
+                               youngest)
+                    self.env.config.save()
+                    indexedrev = int( indexedrev )
+                if int( indexedrev ) < youngest:
+                    new_index_cmd = supose + " scan --url "
+                    new_index_cmd += base
+                    new_index_cmd += " --fromrev " + str( indexedrev )
+                    new_index_cmd += " --index " + index
+                    scan_res = os.popen( new_index_cmd ).read()
+                    # raise Exception( new_index_cmd )
+                    self.env.config.set('supose', 'indexedrev',
+                               youngest)
+                    self.env.config.save()
             # SupoSE search
             supose_cmd = str( supose )
             supose_cmd += " search --fields revision " 
