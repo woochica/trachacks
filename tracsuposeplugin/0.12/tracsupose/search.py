@@ -114,7 +114,7 @@ class SupoSERequestHandler(Component):
             
             autoindex = self.config.getbool('supose', 'autoindex')
             if autoindex:
-                indexedrev = BoolOption('supose', 'indexedrev' )
+                indexedrev = self.env.config.get('supose', 'indexedrev' )
                 # Index with SupoSE
                 
                 youngest = int( repo.youngest_rev )
