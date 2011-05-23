@@ -15,7 +15,8 @@
 
   <body>
     <div id="content" class="tracforms">
-      <div py:if="len(history) > 5" class="trac-topnav">
+      <div class="trac-topnav" 
+           py:if="len(history) > 5 and allow_reset is True">
         <a href="#reset"
            title="Go down to reset fields and delete history">Reset</a> &darr;
       </div>
