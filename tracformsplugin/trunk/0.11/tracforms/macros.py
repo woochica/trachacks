@@ -488,11 +488,14 @@ class FormProcessor(object):
     def op_who(self, field):
         # TRANSLATOR: Default updater name
         who = self.macro.get_tracform_fieldinfo(
-                self.context, field)[0] or _("unknown")
+                self.form_id is not None and self.form_id or self.context,
+                field)[0] or _("unknown")
         return who
         
     def op_when(self, field, format='%m/%d/%Y %H:%M:%S'):
-        when = self.macro.get_tracform_fieldinfo(self.context, field)[1]
+        when = self.macro.get_tracform_fieldinfo(
+            self.form_id is not None and self.form_id or \
+            self.context, field)[1]
         return (when is not None and format_datetime(
                 when, format=str(format)) or _("unknown"))
 
