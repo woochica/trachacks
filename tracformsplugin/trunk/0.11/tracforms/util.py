@@ -7,13 +7,100 @@ import re
 import unittest
 
 from codecs          import getencoder
+from genshi.builder  import tag
 
 from trac.resource   import ResourceSystem
+from trac.util.datefmt import format_datetime
 from trac.util.text  import to_unicode
 
+from api             import _, tag_
 from compat          import json
 
-__all__ = ['resource_from_page', 'xml_escape', 'xml_unescape']
+__all__ = ['parse_history', 'resource_from_page',
+           'xml_escape', 'xml_unescape']
+
+
+def parse_history(changes, fieldwise=False):
+    """Versatile history parser for TracForms.
+
+    Returns either a list of dicts for changeset display in form view or
+    a dict of field change lists for stepwise form reset.
+    """
+    fieldhistory = {}
+    history = []
+    if not fieldwise == False:
+        def _add_change(fieldhistory, field, author, time, old, new):
+            if field not in fieldhistory.keys():
+                fieldhistory[field] = [{'author': author, 'time': time,
+                                        'old': old, 'new': new}]
+            else:
+                fieldhistory[field].append({'author': author, 'time': time,
+                                            'old': old, 'new': new})
+            return fieldhistory
+
+    new_fields = None
+    for changeset in changes:
+        # break down old and new version
+        try:
+            old_fields = json.loads(changeset.get('old_state', '{}'))
+        except ValueError:
+            # skip invalid history
+            old_fields = {}
+            pass
+        if new_fields is None:
+            # first loop cycle: only load values for comparison next time
+            new_fields = old_fields
+            last_author = changeset['author']
+            last_change = changeset['time']
+            continue
+        updated_fields = {}
+        for field, old_value in old_fields.iteritems():
+            new_value = new_fields.get(field)
+            if new_value != old_value:
+                if fieldwise == False:
+                    change = _render_change(old_value, new_value)
+                    if change is not None:
+                        updated_fields[field] = change
+                else:
+                    fieldhistory = _add_change(fieldhistory, field,
+                                               last_author, last_change,
+                                               old_value, new_value)
+        for field in new_fields:
+            if old_fields.get(field) is None:
+                if fieldwise == False:
+                    change = _render_change(None, new_fields[field])
+                    if change is not None:
+                        updated_fields[field] = change
+                else:
+                    fieldhistory = _add_change(fieldhistory, field,
+                                               last_author, last_change,
+                                               None, new_fields[field])
+        new_fields = old_fields
+        history.append({'author': last_author,
+                        'time': format_datetime(last_change),
+                        'changes': updated_fields})
+        last_author = changeset['author']
+        last_change = changeset['time']
+    return fieldwise == False and history or fieldhistory
+
+def _render_change(old, new):
+    rendered = None
+    if old and not new:
+        rendered = tag_("%(value)s reset to default value",
+                            value=tag.em(old))
+    elif new and not old:
+        rendered = tag_("from default value set to %(value)s",
+                            value=tag.em(new))
+    elif old and new:
+        if len(old) < 20 and len(new) < 20:
+            rendered = tag_("changed from %(old)s to %(new)s",
+                            old=tag.em(old), new=tag.em(new))
+        else:
+            nbsp = tag.br()
+            # TRANSLATOR: same as before, but with additional line breaks
+            rendered = tag_("changed from %(old)s to %(new)s",
+                            old=tag.em(nbsp, old), new=tag.em(nbsp, new))
+    return rendered
 
 
 # code from an article published by Uche Ogbuji on 15-Jun-2005 at

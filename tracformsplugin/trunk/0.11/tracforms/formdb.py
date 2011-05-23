@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+#import copy
 import re
 import time
 import unittest
@@ -12,8 +13,9 @@ from trac.search.api import search_to_sql
 from api import IFormDBObserver, _
 from compat import json, parse_qs
 from tracdb import DBComponent
-from util import resource_from_page, xml_unescape
-from web_ui import parse_history
+from util import parse_history, resource_from_page, xml_unescape
+
+__all__ = ['FormDBComponent']
 
 
 class FormDBComponent(DBComponent):

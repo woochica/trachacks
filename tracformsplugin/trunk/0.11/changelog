@@ -1,6 +1,10 @@
 Author: Rich Harkins <rich@worldsinfinite.com>
 Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
+tracforms-0.5 (yet unreleased):
+ resolved issues
+
+
 tracforms-0.4 (18-May-2011):
  resolved issues
  * #5608: trac-admin upgrade with PostgreSQL fails due to specific SQL syntax
