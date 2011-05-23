@@ -220,9 +220,9 @@ class FormUI(FormDBUser):
                        shorten_result(state, terms))
 
 
-def _render_values(state):
+def _render_values(state, delimiter=': '):
     fields = []
     for name, value in json.loads(state or '{}').iteritems():
-        fields.append(name + ': ' + value)
+        fields.append(''.join([name, delimiter, value]))
     return '; '.join(fields)
 
