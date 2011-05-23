@@ -16,6 +16,7 @@ from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_stylesheet
 
 from api import FormDBUser, _, tag_
 from compat import json
+from formdb import format_author
 from model import Form
 from util import parse_history, resource_from_page
 
@@ -122,15 +123,17 @@ class FormUI(FormDBUser):
         data['title'] = get_resource_shortname(env, form.resource)
         # prime list with current state
         subcontext, author, time = self.get_tracform_meta(form_id)[3:6]
+        author = format_author(self.env, req, author, 'change')
         if not subcontext == '':
             data['subcontext'] = subcontext
         state = self.get_tracform_state(form_id)
-        data['fields'] = self._render_fields(form_id, state)
+        data['fields'] = self._render_fields(req, form_id, state)
         history = [{'author': author, 'time': time,
                     'old_state': state}]
         # add recorded old_state
         records = self.get_tracform_history(form_id)
         for author, time, old_state in records:
+            author = format_author(self.env, req, author, 'change')
             history.append({'author': author, 'time': time,
                             'old_state': old_state})
         data['history'] = parse_history(history)
@@ -173,7 +176,7 @@ class FormUI(FormDBUser):
                                 author=author, step=step)
         return self._do_view(env, req, form)
 
-    def _render_fields(self, form_id, state):
+    def _render_fields(self, req, form_id, state):
         fields = json.loads(state is not None and state or '{}')
         rendered = []
         for name, value in fields.iteritems():
@@ -184,6 +187,7 @@ class FormUI(FormDBUser):
             else:
                value = '\'' + value + '\''
             author, time = self.get_tracform_fieldinfo(form_id, name)
+            author = format_author(self.env, req, author, 'value')
             rendered.append(
                 {'name': name, 'value': value,
                  'author': tag.span(tag_("by %(author)s", author=author),

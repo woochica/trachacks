@@ -3,6 +3,8 @@ Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
 tracforms-0.5 (yet unreleased):
  resolved issues
+ * #6033: tf.who should be passed through format_author
+   adding a private, optionally cached version of `env.get_known_users()`
 
 
 tracforms-0.4 (18-May-2011):

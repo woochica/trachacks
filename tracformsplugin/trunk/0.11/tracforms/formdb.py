@@ -5,17 +5,19 @@ import re
 import time
 import unittest
 
+from trac.config import BoolOption, ListOption
 from trac.core import Component, implements
 from trac.db import Column, DatabaseManager, Index, Table
 from trac.resource import Resource, resource_exists
 from trac.search.api import search_to_sql
+from trac.web.chrome import Chrome
 
 from api import IFormDBObserver, _
 from compat import json, parse_qs
 from tracdb import DBComponent
 from util import parse_history, resource_from_page, xml_unescape
 
-__all__ = ['FormDBComponent']
+__all__ = ['FormDBComponent', 'format_author']
 
 
 class FormDBComponent(DBComponent):
@@ -24,6 +26,16 @@ class FormDBComponent(DBComponent):
     implements(IFormDBObserver)
 
     applySchema = True
+
+    show_fullname = BoolOption(
+        'forms', 'show_fullname', False,
+        doc="Display full names instead of usernames if available.")
+    show_fullname_pos = ListOption(
+        'forms', 'show_fullname_position', 'macro',
+        doc="""Comma-separated list containing one or more of the possible
+            positional descriptors 'change', 'macro', 'value'.  Default is
+            to show full names in 'macro' content only.
+            """)
 
     # abstract TracForms update methods
 
@@ -359,6 +371,48 @@ class FormDBComponent(DBComponent):
             """ % sql, args)
         return cursor.fetchall()
 
+    def get_known_users(self):
+        # A reference is enough, as long as we ensure strictly read-only
+        # access and short lifetime of the reference. Change later, if needed.
+        #users = copy.deepcopy(self.known_users)
+        users = self.known_users
+        return users
+
+    try:
+        from trac.cache import cached
+
+        @cached
+        def known_users(self, db=None):
+            """Cached version of trac.env.get_known_users() for TracForms."""
+            db = self._get_db(db)
+            cursor = db.cursor()
+            cursor.execute("""
+                SELECT DISTINCT s.sid, n.value, e.value
+                  FROM session AS s
+                  LEFT JOIN session_attribute AS n
+                      ON (n.sid=s.sid
+                          AND n.authenticated=1
+                          AND n.name = 'name')
+                  LEFT JOIN session_attribute AS e
+                      ON (e.sid=s.sid
+                          AND e.authenticated=1
+                          AND e.name = 'email')
+                 WHERE s.authenticated=1
+                 ORDER BY s.sid
+                """)
+            users = []
+            for username, name, email in cursor:
+                users.append(tuple([username, name, email]))
+            return users
+    except ImportError:
+        @property
+        def known_users(self, db=None):
+            # Pass through to Trac's old, uncached method
+            users = []
+            for username, name, email in self.env.get_known_users():
+                users.append(tuple([username, name, email]))
+            return users
+
     ##########################################################################
     # TracForms schemas
     # Hint: See older versions of this file for the original SQL statements.
@@ -655,6 +709,19 @@ class FormDBComponent(DBComponent):
             DROP TABLE forms_old
             """)
 
+
+def format_author(env, req, author=None, position='macro'):
+    """Return user properties.
+
+    This is a private method optionally using CacheManager (since Trac 0.12)
+    to reduce costly access to env.get_known_users() .
+    """
+    formdb = FormDBComponent(env)
+    if formdb.show_fullname is True and position in formdb.show_fullname_pos:
+        for username, name, email in formdb.get_known_users():
+            if author == username and name:
+                author = name
+    return Chrome(env).format_author(req, author)
 
 def _url_to_json(state_url):
     """Convert urlencoded state serial to JSON state serial."""

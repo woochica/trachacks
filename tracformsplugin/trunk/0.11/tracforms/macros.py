@@ -17,6 +17,7 @@ from api import FormDBUser, PasswordStoreUser, _
 from compat import json
 from environment import FormEnvironment
 from errors import FormError, FormTooManyValuesError
+from formdb import format_author
 from util import resource_from_page, xml_escape
 
 argRE = re.compile('\s*(".*?"|\'.*?\'|\S+)\s*')
@@ -490,7 +491,7 @@ class FormProcessor(object):
         who = self.macro.get_tracform_fieldinfo(
                 self.form_id is not None and self.form_id or self.context,
                 field)[0] or _("unknown")
-        return who
+        return format_author(self.formatter.env, self.formatter.req, who)
         
     def op_when(self, field, format='%m/%d/%Y %H:%M:%S'):
         when = self.macro.get_tracform_fieldinfo(
@@ -512,7 +513,8 @@ class FormProcessor(object):
         return self.form_context
 
     def op_form_updater(self):
-        return self.form_updater
+        return format_author(self.formatter.env, self.formatter.req,
+                             self.form_updater)
 
     def op_form_updated_on(self, format='%m/%d/%Y %H:%M:%S'):
         return time.strftime(format, time.localtime(self.form_updated_on))
