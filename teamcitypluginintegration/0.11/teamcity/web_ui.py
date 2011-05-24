@@ -252,10 +252,9 @@ class TeamCityBuildPage(Component):
 		add_stylesheet(req,'teamcity/css/teamcity.css')
 		add_javascript(req,'teamcity/js/jquery.timers-1.2.js')
 		add_javascript(req,'teamcity/js/event_tracker.js')
-		download_path = os.path.join(req.path_info, 'builds/download')
 		return 'teamcity_builds.html', {
 					'projects':projects,
-					'dpath':download_path
+					'dpath':req.href('builds/download')
 					}, None
 
 class TeamCityProxy(Component):

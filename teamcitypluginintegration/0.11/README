@@ -1,0 +1,28 @@
+INSTALLATION:
+
+Get latest version from svn:
+  svn co svn+ssh://studio/repos/web/trac-plugins/teamcity-plugin/trunk teamcity
+
+Build egg:
+  cd teamcity
+  python setup.py bdist_egg
+
+Copy egg file to trac plugins dir:
+  cp dist/TeamCityPlugin-X.X-pyY.Y.egg /path/to/trac/instance/plugins/
+
+Edit Trac config.ini, enable plugin:
+  [components]
+  teamcity.* = enabled
+
+Add permissions to users allowed to build and/or configure plugin. There are two trac permissions: TEAMCITY_BUILD (allows to view /trac-instance/builds page and run builds) and TEAMCITY_ADMIN (allows to edit plugin settings). 
+  trac-admin /path/to/trac/instance permission add authenticated TEAMCITY_BUILD
+
+Edit plugin settings. All plugin settings are stored in config.ini, so you can add a new section to config.ini or go to trac-instance/admin/teamcity/builds and fill the web-form. Settings: 
+  [teamcity]
+  base_url = http://<your_ci_server>:<port>  # base url to TC server, WITHOUT trailing slash
+  username = trac 
+  password = trac                 # TC credentials which plugin will use to access TC server
+  cache_dir = /tmp/teamcity_cache # Plugin will cache here build logs from teamcity
+  builds = bt1,bt2                # a list of buildTypeId from TC to follow
+  limit = 10080                   # Number of minutes for timeline. 
+                                  # Plugin will add events to timeline for builds which are newer then now()-limit

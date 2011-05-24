@@ -16,6 +16,9 @@ class TeamCityAdmin(Component):
 			raise HTTPForbidden('You are not allowed to configure TC plugin')
 		if req.method == 'POST':
 			options,errors = self._save_options(req.args)
+			if not errors:
+				# redirect here
+				req.redirect(req.href(req.path_info))
 		else:
 			options,errors = get_options(self.config),[]
 		tc = TeamCityQuery(options)
@@ -66,12 +69,12 @@ class TeamCityAdmin(Component):
 			errors.append('Password is required')
 		if args.get('builds',False):
 			if type(args['builds']) is list:
-				new_options['builds'] = ",".join(args['builds'])
-			else: # only one build was specified
 				new_options['builds'] = args['builds']
+			else: # only one build was specified
+				new_options['builds'] = [args['builds']]
 		else:
 			# no builds was specified
-			new_options['builds'] = ''
+			new_options['builds'] = []
 		if args.get('cache_dir',False):
 			new_options['cache_dir'] = args['cache_dir']
 		if args.get('limit',False):
@@ -81,6 +84,8 @@ class TeamCityAdmin(Component):
 				errors.append("Invalid limit value: %s" % e)
 		if not errors:
 			for key,value in new_options.items():
+				if type(value) is list:
+					value = ",".join(value)
 				self.config.set('teamcity',key,value)
 			self.config.save()
 		return new_options,errors
