@@ -367,6 +367,14 @@ class ImporterTestCase(unittest.TestCase):
         self._do_test_diffs(env, 'datetimes_formatted.xls', self._test_preview) 
         self._do_test_diffs(env, 'datetimes_formatted.xls', self._test_import)
 
+    def test_celltypes_ticket_8804(self):
+        env = self._setup("""\
+[importer]
+datetime_format=%Y-%m-%d %H:%M
+""")
+        self._do_test_diffs(env, 'celltypes-ticket-8804.xls', self._test_preview)
+        self._do_test_diffs(env, 'celltypes-ticket-8804.xls', self._test_import)
+
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')

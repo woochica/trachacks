@@ -102,9 +102,18 @@ class XLSReader(object):
             row = {}
             i = 0
             for cx in xrange(self.sh.ncols):
-                row[header[i]] = self.sh.cell_value(rx, cx)
-                if self.sh.cell_type(rx, cx) == xlrd.XL_CELL_DATE:
-                    row[header[i]] = datetime.datetime(*xlrd.xldate_as_tuple(row[header[i]], self.book.datemode)).strftime(self._datetime_format)
+                val = self.sh.cell_value(rx, cx)
+                cell_type = self.sh.cell_type(rx, cx)
+                if cell_type == xlrd.XL_CELL_NUMBER:
+                    val = '%g' % val
+                elif cell_type == xlrd.XL_CELL_DATE:
+                    val = datetime.datetime(*xlrd.xldate_as_tuple(val, self.book.datemode))
+                    val = val.strftime(self._datetime_format)
+                elif cell_type == xlrd.XL_CELL_BOOLEAN:
+                    val = ('FALSE', 'TRUE')[val]
+                elif cell_type == xlrd.XL_CELL_ERROR:
+                    val = xlrd.error_text_from_code.get(val) or '#ERR%d' % val
+                row[header[i]] = val
 
                 i += 1
             data.append(row)
