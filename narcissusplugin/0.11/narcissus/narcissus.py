@@ -229,7 +229,8 @@ class NarcissusPlugin(Component):
 
         # populate table with svn activity
         repos = self.env.get_repository()
-        for rev in xrange(start_rev, int(repos.youngest_rev.split(':')[0] or 0) + 1):
+        youngest_rev = str(repos.youngest_rev or 0).split(':')[0]
+        for rev in xrange(start_rev, int(youngest_rev) + 1):
             cs = repos.get_changeset(rev)
             add, edit = 0, 0
             for path, _, change, base_path, base_rev in cs.get_changes():
@@ -834,12 +835,22 @@ class NarcissusPlugin(Component):
         # Determine the difference between two text items.
         if old_content == new_content:
             return None
-        return diff_blocks(old_content.splitlines(),
-                           new_content.splitlines(),
-                           0, tabwidth=8,
-                           ignore_blank_lines=True,
-                           ignore_case=True,
-                           ignore_space_changes=True)
+        try:
+            return diff_blocks(old_content.splitlines(),
+                               new_content.splitlines(),
+                               0, tabwidth=8,
+                               ignore_blank_lines=True,
+                               ignore_case=True,
+                               ignore_space_changes=True)
+        except UnicodeDecodeError:
+            old_content = unicode(old_content, "iso-8859-1")
+            new_content = unicode(new_content, "iso-8859-1")
+            return diff_blocks(old_content.splitlines(),
+                               new_content.splitlines(),
+                               0, tabwidth=8,
+                               ignore_blank_lines=True,
+                               ignore_case=True,
+                               ignore_space_changes=True)
 
     def _my_svn_diff(self, repos, args):
         # Determine the difference between repository versions.
