@@ -91,11 +91,15 @@ class SupoSERequestHandler(Component):
         query = req.args.get('q', '')
         path = req.args.get('p', '')
         file = req.args.get('f', '')
+        others = req.args.get('o', '')
+        revisions = req.args.get('r', '')
         if not path:
             path = "/"
         data = self._prepare_data(req, query, "", "")
         data['path'] = path
         data['file'] = file
+        data['others'] = others
+        data['revs'] = revisions
         
         to_unicode = Mimeview(self.env).to_unicode
         if query:
@@ -150,7 +154,7 @@ class SupoSERequestHandler(Component):
             supose_cmd += "filename path contents --index "
             supose_cmd += index + " --query "
             
-            supose_query = "\"" + query + "\""
+            supose_query = "+contents:\"" + query + "\""
             if path:
                 if path != "/":
                     if path[0] != "/":
@@ -163,16 +167,27 @@ class SupoSERequestHandler(Component):
                     supose_query += "*"
             if file:
                 supose_query += " +filename:"+file
-            repo_res = os.popen( supose_cmd + supose_query ).read()
-            data['querystring'] = supose_query
             
+            
+            if revisions:
+                revqrange = re.split( "-", revisions )
+                if len(revqrange) == 1:
+                    supose_query += " +revision:" + revisions
+                if len(revqrange) == 2:
+                    supose_query += " +revision:[" + revqrange[0] + " TO " + revqrange[1] + "]"
+                    
+            if others:
+                supose_query += " " + others
+            repo_res = os.popen( supose_cmd + supose_query ).read()
+           
+            data['querystring'] = supose_query
             
             repo_reg = "(.*[\d]+:[ ]+REVISION:)([\d]+)"
             repo_reg += "( +FILENAME:)(.+)"
             repo_reg += "( +PATH:)(.+)"
             repo_reg += "( +CONTENTS:)"
-            
             hits = re.split( repo_reg, repo_res ) 
+            
             # raise Exception( hits )
             spit_len = 8
             rng = range( 1, len(hits), spit_len )
