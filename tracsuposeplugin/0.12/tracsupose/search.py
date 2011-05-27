@@ -91,6 +91,7 @@ class SupoSERequestHandler(Component):
         query = req.args.get('q', '')
         path = req.args.get('p', '')
         file = req.args.get('f', '')
+        contents = req.args.get('c', '')
         others = req.args.get('o', '')
         revisions = req.args.get('r', '')
         if not path:
@@ -100,10 +101,15 @@ class SupoSERequestHandler(Component):
         data['file'] = file
         data['others'] = others
         data['revs'] = revisions
-        
+        data['content'] = contents
         to_unicode = Mimeview(self.env).to_unicode
-        if query:
-            data['quickjump'] = self._check_quickjump(req, query, path)
+        if query or contents or others:
+            if query:
+                data['quickjump'] = self._check_quickjump(req, query, path)
+            elif contents:
+                data['quickjump'] = self._check_quickjump(req, contents, path)
+            elif others:
+                data['quickjump'] = self._check_quickjump(req, others, path)
             if not req.perm.has_permission('REPO_SEARCH'):
                 return
             
@@ -154,7 +160,9 @@ class SupoSERequestHandler(Component):
             supose_cmd += "filename path contents --index "
             supose_cmd += index + " --query "
             
-            supose_query = "+contents:\"" + query + "\""
+            supose_query = "\"" + query + "\""
+            if contents:
+                supose_query = "+contents:\"" + contents + "\""
             if path:
                 if path != "/":
                     if path[0] != "/":
@@ -261,6 +269,10 @@ class SupoSERequestHandler(Component):
             page_href = req.href.reposearch([(f, 'on') for f in filters],
                                         q=req.args.get('q'),
                                         p=req.args.get('p'),
+                                        f=req.args.get('f'),
+                                        o=req.args.get('o'),
+                                        r=req.args.get('r'),
+                                        c=req.args.get('c'),
                                         page=shown_page, noquickjump=1)
             pagedata.append([page_href, None, str(shown_page),
                              'page ' + str(shown_page)])
@@ -276,6 +288,10 @@ class SupoSERequestHandler(Component):
             next_href = req.href.reposearch(zip(filters, ['on'] * len(filters)),
                                         q=req.args.get('q'), 
                                         p=req.args.get('p'),
+                                        f=req.args.get('f'),
+                                        o=req.args.get('o'),
+                                        r=req.args.get('r'),
+                                        c=req.args.get('c'),
                                         page=page + 1,
                                         noquickjump=1)
             add_link(req, 'next', next_href, 'Next Page')
@@ -284,12 +300,21 @@ class SupoSERequestHandler(Component):
             prev_href = req.href.reposearch(zip(filters, ['on'] * len(filters)),
                                         q=req.args.get('q'), 
                                         p=req.args.get('p'),
+                                        f=req.args.get('f'),
+                                        o=req.args.get('o'),
+                                        r=req.args.get('r'),
+                                        c=req.args.get('c'),
                                         page=page - 1,
                                         noquickjump=1)
             add_link(req, 'prev', prev_href, 'Previous Page')
 
         page_href = req.href.reposearch(
-            zip(filters, ['on'] * len(filters)), q=req.args.get('q'),
-            p=req.args.get('p'),
+            zip(filters, ['on'] * len(filters)), 
+            q=req.args.get('q'),
+            p=req.args.get('p'), 
+            f=req.args.get('f'),
+            o=req.args.get('o'),
+            r=req.args.get('r'),
+            c=req.args.get('c'),
             noquickjump=1)
         return {'results': results, 'page_href': page_href}
