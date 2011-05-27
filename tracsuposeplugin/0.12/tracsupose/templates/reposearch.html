@@ -28,14 +28,17 @@
       <h1><label for="q">Repository Search</label></h1>
 		<form id="fullsearch" action="${href.reposearch()}" method="get">
 		<div id="reposearch">
-			<h2 class="foldable">Options</h2>
+			<h3 class="foldable">Options</h3>
 			<div id="reposearchquery">
 				
-					<table border="0">
+					<table id = "soptions" border="0">
 					  <tr>
 						<th align="right">Path:</th>
 						<td align="left">
 							<input type="text" id="p" name="p" size="40" value="${path}" />
+						</td>
+						<td align="left">
+							<small>+path</small>
 						</td>
 					  </tr>
 					  <tr>
@@ -43,18 +46,26 @@
 						<td align="left">
 							<input type="text" id="f" name="f" size="40" value="${file}" />
 						</td>
+						<td align="left">
+							<small>+filename</small>
+						</td>
 					  </tr>
 					  <tr>
 						<th align="right">Revisions:</th>
 						<td align="left">
-							<input type="text" id="r" name="r" size="20" value="${revs}" />
-							<small>Example:10 or 10-20</small>
+							<input type="text" id="r" name="r" size="40" value="${revs}" />
+						</td>
+						<td align="left">
+							<small>+revision, i.e. 10 or 10-20</small>
 						</td>
 					  </tr>
 					   <tr>
 						<th align="right">Others:</th>
 						<td align="left">
 							<input type="text" id="o" name="o" size="40" value="${others}" />
+						</td>
+						<td align="left">
+							<small>+svn, +tags, etc.</small>
 						</td>
 					  </tr>
 					</table>

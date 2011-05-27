@@ -3,3 +3,12 @@
 #reposearch .reposearch { margin-left: 2em; padding: 0 }
 #reposearch dt { display: list-item; list-style: square; }
 #reposearch	 dd { font-style: italic; margin-left: 0; padding-left: 0; }
+
+#soptions, #jumploc { font-size: 10px; margin: 0 0 0.6em }
+#soptions form, #jumploc form { margin: 0 }
+#soptions input, #jumploc select, #jumploc input { 
+  font-size: 10px; 
+  margin: 0; 
+}
+#jumploc div.buttons { margin: 0;}
+#jumploc { margin-right: 2em;}

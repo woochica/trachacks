@@ -193,19 +193,23 @@ class SupoSERequestHandler(Component):
             rng = range( 1, len(hits), spit_len )
             search_res = tag.div( "testing", id = "reposearch")
             results = []
+            exist_file = []
             for r in rng:
                 rev = hits[r+1]
                 filename = hits[r+3]
                 path = hits[r+5]
-                contents = to_unicode( hits[r+7] )
-                change = repo.get_changeset(rev)
-                href = self.env.href.browser( path + filename ) + "?rev=" + rev
-                title = path + filename + "@" + rev
-                date = change.date
-                author = change.author
-                excerpt = shorten_result( contents, query )
-                results.extend( self.generate_result( href, 
-                        title, date, author, excerpt ) )
+                full_path = path+filename+rev
+                if not full_path in exist_file:
+                    exist_file.append( full_path )
+                    contents = to_unicode( hits[r+7] )
+                    change = repo.get_changeset(rev)
+                    href = self.env.href.browser( path + filename ) + "?rev=" + rev
+                    title = path + filename + "@" + rev
+                    date = change.date
+                    author = change.author
+                    excerpt = shorten_result( contents, query )
+                    results.extend( self.generate_result( href, 
+                            title, date, author, excerpt ) )
             if results:
                     data.update(self._prepare_results(req, "", results))
            
