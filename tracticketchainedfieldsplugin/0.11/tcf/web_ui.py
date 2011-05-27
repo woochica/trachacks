@@ -155,7 +155,10 @@ class TracTicketChainedFieldsModule(Component):
             result["chained_fields"] = chained_fields
             
             tcf_define = TracTicketChainedFields_List.get_tcf_define(self.env)
-            result["tcf_define"] = simplejson.loads(tcf_define)
+            try:
+                result["tcf_define"] = simplejson.loads(tcf_define)
+            except:
+                pass
             
             if req.args.has_key("warning"):
                 result["warning"] = "1"
@@ -172,7 +175,10 @@ class TracTicketChainedFieldsModule(Component):
                 result["status"] = "0"
                 
             tcf_define = TracTicketChainedFields_List.get_tcf_define(self.env)
-            tcf_define_target = simplejson.loads(tcf_define)
+            try:
+                tcf_define_target = simplejson.loads(tcf_define)
+            except:
+                pass
             
             target_field = ""
             target_options = []
