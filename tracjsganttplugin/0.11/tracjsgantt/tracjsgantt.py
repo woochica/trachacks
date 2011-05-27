@@ -358,8 +358,11 @@ class TracJSGanttChart(WikiMacroBase):
             dow = fromDate.weekday()
             # If new dow ends up in a weekend, adjust by weekend length
             if ((dow + days) % 7) > 4:
-                days += 2 * (1 if days > 0 else -1)
-
+                if days > 0:
+                    days += 2
+                else:
+                    days -= 2
+                
             return timedelta(days=days)            
 
 
@@ -646,11 +649,16 @@ class TracJSGanttChart(WikiMacroBase):
         task += '%d,' % _percent(ticket)
 
         # pGroup (has children)
-        task += '%s,' % (1 if ticket['children'] else 0)
-
+        if ticket['children']:
+            task += '%s,' % 1
+        else:
+            task += '%s,' % 0
+        
         # pParent (parent task ID) 
-        task += '%s,' % \
-            (ticket[self.fields['parent']] if self.fields['parent'] else 0)
+        if self.fields['parent']:
+            task += '%s,' % ticket[self.fields['parent']]
+        else:
+            task += '%s,' % 0
 
         # open
         if ticket['level'] < options['openLevel']:
@@ -660,9 +668,11 @@ class TracJSGanttChart(WikiMacroBase):
         task += '%d,' % open
 
         # predecessors
-        task += '"%s",' % ','.join(ticket[self.fields['pred']]) \
-            if self.fields['pred'] else ''
-
+        if self.fields['pred']:
+            task += '"%s",' % ','.join(ticket[self.fields['pred']])
+        else:
+            task += '"%s",' % ','.join('')
+        
         # caption 
         # FIXME - this only shows up if caption is set to caption.
         # we're using caption=Resource.  Where can we show (status, type)?
