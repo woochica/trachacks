@@ -4,19 +4,19 @@
 from setuptools import setup, find_packages
 
 setup(
-    name = 'CKEditorPlugin',
-    version = '0.1',
-    description = 'Trac wiki WYSIWYG editor based on CKEditor',
-    author = 'Edan Maor',
-    author_email = 'edanm@btlms.com',
+    name = 'CKIntegration',
+    version = '1.0dev',
+    description = 'CKEditor integration for Trac',
+    author = 'Itamar Ostricher, Edan Maor',
+    author_email = 'itamarost@gmail.com, edanm@btlms.com',
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
-        'ckeditortrac' : [ 'htdocs/*.js', 'htdocs/*.css', 'htdocs/*.png'],
+        'ckintegration' : ['htdocs/*.js'],
 
     },
     entry_points = {
         'trac.plugins': [
-            'ckeditortrac = ckeditortrac',
+            'ckintegration = ckintegration',
         ],
     }
 )
