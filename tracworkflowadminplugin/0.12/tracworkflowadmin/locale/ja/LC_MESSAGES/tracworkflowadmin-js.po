@@ -1,0 +1,70 @@
+# Japanese translations for TracWorkflowAdmin.
+# Copyright (C) 2011 OpenGroove,Inc.
+# This file is distributed under the same license as the
+# TracWorkflowAdmin project.
+# OpenGroove <trac@opengroove.com>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TracWorkflowAdmin 0.1.0\n"
+"Report-Msgid-Bugs-To: trac@opengroove.com\n"
+"POT-Creation-Date: 2011-05-19 20:59+0900\n"
+"PO-Revision-Date: 2011-05-22 21:19+0900\n"
+"Last-Translator: Jun Omae <omae@opengroove.com>\n"
+"Language-Team: OpenGroove <trac@opengroove.com>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.5\n"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:242
+#: tracworkflowadmin/htdocs/scripts/main.js:253
+#: tracworkflowadmin/htdocs/scripts/main.js:730
+#: tracworkflowadmin/htdocs/scripts/main.js:736
+#: tracworkflowadmin/htdocs/scripts/main.js:739
+msgid "There was an internal error."
+msgstr "内部エラーが発生しました。"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:386
+#: tracworkflowadmin/htdocs/scripts/main.js:406
+#: tracworkflowadmin/htdocs/scripts/main.js:426
+msgid "No row selected. Please select row."
+msgstr "選択している行がありません。行を選択してください。"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:429
+msgid "Are you sure you want to remove selected row?"
+msgstr "選択している行を削除しますか?"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:443
+msgid "Add new action; Enter new action that consists of alphabet or digits."
+msgstr "アクション追加: 新しいアクション名を英数字で入力してください。"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:559
+msgid "This status is in use. Are you sure you want to remove forcibly it?"
+msgstr "このステータスは使われています。強制的に削除しますか?"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:560
+msgid "Are you sure you want to remove this status?"
+msgstr "このステータスを削除しますか?"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:585
+msgid "Add new status; Enter new status name that consists of alphabet or digits."
+msgstr "ステータス追加: 新しいステータス名を英数字で入力してください。"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:624
+msgid "Too many statuses. Please remove unnecessary statuses."
+msgstr "ステータスが多すぎます。必要のないステータスを削除してください。"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:724
+msgid "Your changes has been saved."
+msgstr "変更を保存しました。"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:746
+msgid "Are you sure you want to cancel?"
+msgstr "取り消ししますか?"
+
+#: tracworkflowadmin/htdocs/scripts/main.js:756
+msgid "Are you sure you want to restore initial workflow?"
+msgstr "初期状態に戻しますか?"
+

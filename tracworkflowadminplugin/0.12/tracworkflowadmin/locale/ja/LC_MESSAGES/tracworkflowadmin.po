@@ -1,0 +1,208 @@
+# Japanese translations for TracWorkflowAdmin.
+# Copyright (C) 2011 OpenGroove,Inc.
+# This file is distributed under the same license as the
+# TracWorkflowAdmin project.
+# OpenGroove <trac@opengroove.com>, 2011.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TracWorkflowAdmin 0.1.0\n"
+"Report-Msgid-Bugs-To: trac@opengroove.com\n"
+"POT-Creation-Date: 2011-05-17 15:32+0900\n"
+"PO-Revision-Date: 2011-05-30 11:15+0900\n"
+"Last-Translator: Jun Omae <omae@opengroove.com>\n"
+"Language-Team: OpenGroove <trac@opengroov.com>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.5\n"
+
+#: tracworkflowadmin/web_ui.py:75
+#: tracworkflowadmin/templates/tracworkflowadmin.html:13
+#: tracworkflowadmin/templates/tracworkflowadmin.html:17
+msgid "Workflow Admin"
+msgstr "ワークフロー管理"
+
+#: tracworkflowadmin/web_ui.py:264
+msgid "Leave"
+msgstr "変更しない"
+
+#: tracworkflowadmin/web_ui.py:268
+msgid "Accept"
+msgstr "担当する"
+
+#: tracworkflowadmin/web_ui.py:273
+msgid "Reassign"
+msgstr "担当を変える"
+
+#: tracworkflowadmin/web_ui.py:278
+msgid "Reopen"
+msgstr "再オープンする"
+
+#: tracworkflowadmin/web_ui.py:283
+msgid "Resolve"
+msgstr "解決にする"
+
+#: tracworkflowadmin/web_ui.py:306
+msgid "Invalid request without actions. Please restart your browser and retry."
+msgstr "アクションがない不正なリクエストです。ブラウザを再起動してやり直してください。"
+
+#: tracworkflowadmin/web_ui.py:308
+msgid "Need at least one action."
+msgstr "少なくともアクションが1つ必要です。"
+
+#: tracworkflowadmin/web_ui.py:310
+msgid "Invalid request without statuses. Please restart your browser and retry."
+msgstr "ステータスがない不正なリクエストです。ブラウザを再起動してやり直してください。"
+
+#: tracworkflowadmin/web_ui.py:312
+msgid "Need at least one status."
+msgstr "少なくともステータスが1つ必要です。"
+
+#: tracworkflowadmin/web_ui.py:323
+#, python-format
+msgid "Line %(num)d: No action name"
+msgstr "%(num)d行目: アクション名がありません"
+
+#: tracworkflowadmin/web_ui.py:325
+#, python-format
+msgid ""
+"Line %(num)d: Action names can contain only alphabetic and numeric "
+"characters."
+msgstr "%(num)d行目: アクション名には英数字のみが使えます。"
+
+#: tracworkflowadmin/web_ui.py:328
+#, python-format
+msgid "Line %(num)d: Action name is duplicated. The name must be unique."
+msgstr "%(num)d行目: アクション名が重複しています。一意でなければなりません。"
+
+#: tracworkflowadmin/web_ui.py:332
+#, python-format
+msgid "Line %(num)d: No display name."
+msgstr "%(num)d行目: 表示名がありません"
+
+#: tracworkflowadmin/web_ui.py:335
+#, python-format
+msgid "Line %(num)d: Unknown operator."
+msgstr "%(num)d行目: 未知の操作です。"
+
+#: tracworkflowadmin/web_ui.py:338
+#, python-format
+msgid "Line %(num)d: Unknown permission."
+msgstr "%(num)d行目: 未知の権限です。"
+
+#: tracworkflowadmin/web_ui.py:340
+#, python-format
+msgid "Line %(num)d: No next status."
+msgstr "%(num)d行目: 次のステータスがありません。"
+
+#: tracworkflowadmin/web_ui.py:342
+#, python-format
+msgid "Line %(num)d: '%(status)s' is invalid next status."
+msgstr "%(num)d行目: '%(status)s' は次のステータスとして正しくありません。"
+
+#: tracworkflowadmin/web_ui.py:345
+#, python-format
+msgid "Line %(num)d: Statuses is empty."
+msgstr "%(num)d行目: ステータスが空です。"
+
+#: tracworkflowadmin/web_ui.py:349
+#, python-format
+msgid "Line %(num)d: Status '%(status)s' is invalid."
+msgstr "%(num)d行目: ステータス '%(status)s' は正しくありません。"
+
+#: tracworkflowadmin/web_ui.py:371
+#, python-format
+msgid "Status column %(num)d: Status name is empty."
+msgstr "ステータス%(num)d列目: ステータス名が空です。"
+
+#: tracworkflowadmin/web_ui.py:373
+#, python-format
+msgid ""
+"Status column %(num)d: The characters '#' and ';' cannot be used for "
+"status name."
+msgstr "ステータス%(num)d列目: ステータス名には '#' と ';' は利用できません。"
+
+#: tracworkflowadmin/web_ui.py:376
+#, python-format
+msgid "Status column %(num)d: Status name is duplicated. The name must be unique."
+msgstr "ステータス%(num)d列目: ステータス名が重複しています。一意でなければなりません。"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:20
+#: tracworkflowadmin/templates/tracworkflowadmin.html:50
+msgid "Actions"
+msgstr "アクション"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:22
+msgid "Move up"
+msgstr "上に移動"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:23
+msgid "Move down"
+msgstr "下に移動"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:24
+msgid "Remove"
+msgstr "削除"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:28
+msgid "Columns"
+msgstr "列"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:31
+#: tracworkflowadmin/templates/tracworkflowadmin.html:52
+msgid "Display name"
+msgstr "表示名"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:34
+#: tracworkflowadmin/templates/tracworkflowadmin.html:53
+msgid "Operations"
+msgstr "操作"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:37
+#: tracworkflowadmin/templates/tracworkflowadmin.html:54
+msgid "Permissions"
+msgstr "権限"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:40
+#: tracworkflowadmin/templates/tracworkflowadmin.html:55
+msgid "Next status"
+msgstr "次のステータス"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:57
+msgid "Statuses"
+msgstr "ステータス"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:82
+msgid "action"
+msgstr "アクション"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:83
+msgid "Action name"
+msgstr "アクション名"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:149
+msgid "Save changes"
+msgstr "保存する"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:150
+msgid "Cancel"
+msgstr "取り消し"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:151
+msgid "Restore initial state"
+msgstr "初期状態に戻す"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:155
+msgid "Workflow diagram"
+msgstr "ワークフローダイアグラム"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:156
+msgid "Update"
+msgstr "更新する"
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:156
+msgid "Updating..."
+msgstr "更新中…"
+

@@ -1,0 +1,267 @@
+a {
+ overflow: hidden; /* for text-indent of firefox */
+}
+
+#table-wrapper {
+ clear: both;
+ overflow: auto;
+ display: none;
+}
+
+#table-wrapper input {
+}
+
+#elements {
+ border: 1px solid #d7d7d7;
+ border-collapse: collapse;
+}
+
+#elements .ui-icon {
+ display: inline;
+ vertical-align: middle;
+ cursor: pointer;
+ width: 16px;
+ height: 16px;
+ line-height: 16px;
+ padding: 0;
+ -webkit-user-select: none;
+ -khtml-user-select: none;
+ -moz-user-select: none;
+ user-select: none;
+}
+
+#elements .ui-widget {
+ font-size: 100%;
+}
+
+#elements .editable input {
+ display: none;
+}
+
+#elements .editable a {
+ display: none;
+}
+
+#elements .editable select {
+ display: none;
+}
+
+#elements .editable span {
+ padding: 0 4px 0 4px;
+ text-decoration: underline;
+}
+
+#elements th {
+ border-style: solid;
+ border-width: 1px;
+ border-color: #D7D7D7 #D7D7D7 #999999;
+ background:  #F7F7F0;
+ white-space: nowrap;
+}
+
+#elements tr#status-editor-2 th {
+ min-width: 60px;
+}
+
+#elements th.editable {
+ padding-bottom: 2px;
+}
+
+#elements tfoot {
+ display: none;
+}
+
+#elements td {
+ border: 1px dotted #dddddd;
+ white-space: nowrap;
+}
+
+#elements tbody tr .col-before-status {
+ text-align: center;
+}
+#elements tbody tr .col-before-status .ui-icon {
+ visibility: hidden;
+}
+#elements tbody tr .status-checked .ui-icon {
+ visibility: visible;
+}
+
+#elements tbody tr:hover {
+ background: #cff;
+}
+
+#elements tbody tr.current-line {
+ background: #9cf;
+}
+
+#elements tbody tr:hover td.editable:hover {
+ cursor: pointer;
+}
+
+#elements tbody tr:hover td.before-status:hover {
+ cursor: pointer;
+}
+
+#elements thead tr th.editable:hover {
+ cursor: pointer;
+ background: #eeeeee;
+ 
+}
+
+#elements th a {
+ padding: 1px;
+}
+
+#elements th {
+ padding: 0;
+}
+
+#elements td {
+ padding: 0;
+}
+
+div.ui-multiselect-menu ul li label div.sorter {
+ display: block;
+ visibility: hidden;
+ width: 40px;
+ height; 16px;
+ float: right;
+ margin: 0 0 0 4px;
+}
+
+div.ui-multiselect-menu ul li label.ui-state-hover div.sorter {
+ visibility: visible;
+}
+
+div.ui-multiselect-menu ul li div.sorter span {
+ display: block;
+ float: left;
+ width: 16px;
+ height: 16px;
+ text-indent: -1000em;
+ cursor: pointer;
+ background-repeat: no-repeat;
+}
+
+div.ui-multiselect-menu ul li div.sorter span:hover {
+ background-color: #ffffcc;
+}
+
+table#elements .col-line-select {
+ padding: 0 1px;
+}
+table#elements .col-line-select .ui-icon {
+ visibility: hidden;
+}
+table#elements .current-line .col-line-select .ui-icon {
+ visibility: visible;
+}
+
+table#elements thead th.col-action {
+ width: 140px;
+ min-width: 140px;
+}
+
+table#elements thead th.col-logname {
+ width: 140px;
+ min-width: 140px;
+}
+
+table#elements thead th.col-operations {
+ width: 180px;
+}
+
+table#elements thead th.col-permissions {
+ width: 180px;
+}
+
+table#elements thead th.col-next-status {
+ width: 120px;
+}
+
+table#elements tbody tr button {
+ background: #fff;
+ border: 1px solid #fff;
+}
+
+table#elements tbody tr.current-line button,
+table#elements tbody tr.current-line:hover button {
+ background: #9cf;
+ border: 1px solid #9cf;
+}
+
+table#elements tbody tr:hover button {
+ background: #cff;
+ border: 1px solid #cff;
+}
+
+#elements #add-action {
+ border: none;
+ background-color: transparent;
+}
+
+#elements #add-action:hover {
+ background-color: #ffc;
+}
+
+#elements #add-status {
+ border: none;
+ background-color: transparent;
+}
+
+#elements #add-status:hover {
+ background-color: #ffc;
+}
+
+#elements .left-status {
+}
+
+#elements .left-status:hover {
+ background-color: #ffc;
+}
+
+#elements .right-status {
+}
+
+#elements .right-status:hover {
+ background-color: #ffc;
+}
+
+#elements .del-status {
+}
+
+#elements .del-status:hover {
+ background-color: #ffc;
+}
+
+#dummy-form fieldset {
+ float: left;
+ height: 4em;
+ padding: 0 0.5em 0.5em 0.5em;
+ margin-right: 1em;
+}
+
+#main-form {
+ clear: both;
+}
+
+#main-form p {
+ display: none;
+}
+
+fieldset#chart-area {
+ width: 620px;
+ height: 640px;
+ float:left;
+}
+
+p#image-area {
+ width: 600px;
+ height: 600px;
+ position: relative;
+ display: none;
+}
+
+#chart-update-button {
+ display:none;
+}

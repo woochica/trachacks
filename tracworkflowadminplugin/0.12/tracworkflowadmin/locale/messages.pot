@@ -1,0 +1,214 @@
+# Translations template for TracWorkflowAdmin.
+# Copyright (C) 2011 ORGANIZATION
+# This file is distributed under the same license as the
+# TracWorkflowAdmin project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TracWorkflowAdmin 0.12.0.1\n"
+"Report-Msgid-Bugs-To: ciklone@opengroove.com\n"
+"POT-Creation-Date: 2011-05-30 11:15+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.5\n"
+
+#: tracworkflowadmin/web_ui.py:75
+#: tracworkflowadmin/templates/tracworkflowadmin.html:13
+#: tracworkflowadmin/templates/tracworkflowadmin.html:17
+msgid "Workflow Admin"
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:264
+msgid "Leave"
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:268
+msgid "Accept"
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:273
+msgid "Reassign"
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:278
+msgid "Reopen"
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:283
+msgid "Resolve"
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:306
+msgid ""
+"Invalid request without actions. Please restart your browser and "
+"retry."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:308
+msgid "Need at least one action."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:310
+msgid ""
+"Invalid request without statuses. Please restart your browser and "
+"retry."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:312
+msgid "Need at least one status."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:323
+#, python-format
+msgid "Line %(num)d: No action name"
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:325
+#, python-format
+msgid ""
+"Line %(num)d: Action names can contain only alphabetic and numeric "
+"characters."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:328
+#, python-format
+msgid "Line %(num)d: Action name is duplicated. The name must be unique."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:332
+#, python-format
+msgid "Line %(num)d: No display name."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:335
+#, python-format
+msgid "Line %(num)d: Unknown operator."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:338
+#, python-format
+msgid "Line %(num)d: Unknown permission."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:340
+#, python-format
+msgid "Line %(num)d: No next status."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:342
+#, python-format
+msgid "Line %(num)d: '%(status)s' is invalid next status."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:345
+#, python-format
+msgid "Line %(num)d: Statuses is empty."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:349
+#, python-format
+msgid "Line %(num)d: Status '%(status)s' is invalid."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:371
+#, python-format
+msgid "Status column %(num)d: Status name is empty."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:373
+#, python-format
+msgid ""
+"Status column %(num)d: The characters '#' and ';' cannot be used for "
+"status name."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:376
+#, python-format
+msgid ""
+"Status column %(num)d: Status name is duplicated. The name must be "
+"unique."
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:20
+#: tracworkflowadmin/templates/tracworkflowadmin.html:50
+msgid "Actions"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:22
+msgid "Move up"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:23
+msgid "Move down"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:24
+msgid "Remove"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:28
+msgid "Columns"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:31
+#: tracworkflowadmin/templates/tracworkflowadmin.html:52
+msgid "Display name"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:34
+#: tracworkflowadmin/templates/tracworkflowadmin.html:53
+msgid "Operations"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:37
+#: tracworkflowadmin/templates/tracworkflowadmin.html:54
+msgid "Permissions"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:40
+#: tracworkflowadmin/templates/tracworkflowadmin.html:55
+msgid "Next status"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:57
+msgid "Statuses"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:82
+msgid "action"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:83
+msgid "Action name"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:149
+msgid "Save changes"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:150
+msgid "Cancel"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:151
+msgid "Restore initial state"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:155
+msgid "Workflow diagram"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:156
+msgid "Update"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:156
+msgid "Updating..."
+msgstr ""
+
