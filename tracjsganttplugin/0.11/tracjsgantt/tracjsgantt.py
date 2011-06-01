@@ -1,4 +1,6 @@
-from datetime import timedelta, date, datetime
+import time
+import datetime
+from datetime import timedelta, date
 from operator import itemgetter, attrgetter
 
 
@@ -371,14 +373,13 @@ class TracJSGanttChart(WikiMacroBase):
         def _start(ticket):
             # Milestones have no duration, start on their finish date.
             if ticket['type'] == self.milestoneType:
-                start = datetime.strptime(_finish(ticket), self.pyDateFormat)
+                start = datetime.datetime(*time.strptime(_finish(ticket), self.pyDateFormat)[0:7])
             # If we have a start, parse it
             elif self.fields['start'] and ticket[self.fields['start']] != '':
-                start = datetime.strptime(ticket[self.fields['start']],
-                                      self.dbDateFormat)
+                start = datetime.datetime(*time.strptime(ticket[self.fields['start']], self.dbDateFormat)[0:7])
             # Otherwise, make it from finish
             else:
-                finish = datetime.strptime(_finish(ticket), self.pyDateFormat)
+                finish = datetime.datetime(*time.strptime(_finish(ticket), self.pyDateFormat)[0:7])
                 days = _workDays(ticket)
                 start = finish + _calendarOffset(-1*days, finish)
 
@@ -394,8 +395,7 @@ class TracJSGanttChart(WikiMacroBase):
         def _finish(ticket):
             # If we have a finish, parse it
             if self.fields['finish'] and ticket[self.fields['finish']] != '':
-                finish = datetime.strptime(ticket[self.fields['finish']],
-                                           self.dbDateFormat)
+                finish = datetime.datetime(*time.strptime(ticket[self.fields['finish']], self.dbDateFormat)[0:7])                
             # If there are successors, this ticket's finish is the earliest
             # start of any successor
             elif ticket[self.fields['succ']] != []:
@@ -404,8 +404,7 @@ class TracJSGanttChart(WikiMacroBase):
                     if int(tid) in self.ticketsByID:
                         succ = self.ticketsByID[int(tid)]
                         if succ['type'] == self.milestoneType:
-                            f = datetime.strptime(succ[self.fields['finish']],
-                                                  self.dbDateFormat)
+                            f = datetime.datetime(*time.strptime(succ[self.fields['finish']], self.dbDateFormat)[0:7])
                             if finish == None or finish > f:
                                 finish = f
                 if finish == None:
