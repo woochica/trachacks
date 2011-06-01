@@ -115,11 +115,11 @@ class TracJSGanttChart(WikiMacroBase):
         for username, name, email in self.env.get_known_users():
             self.user_map[username] = name
 
+    def _getOpt(self, options, name):
+        return options.get(name) or self.options[name]
+
     def _begin_gantt(self, options):
-        if options.get('format'):
-            format = options['format']
-        else:
-            format = 'day'
+        format = self._getOpt(options,'format')
 
         text = ''
         text += '<div style="position:relative" class="gantt" id="GanttChartDIV"></div>\n'
@@ -137,27 +137,23 @@ class TracJSGanttChart(WikiMacroBase):
         return chart
 
     def _gantt_options(self, options):
-
-        def g(name):
-            return (options[name] if options.get(name) else self.options[name])
-
         opt = ''
-        opt += 'g.setShowRes(%s);\n' % g('res')
-        opt += 'g.setShowDur(%s);\n' % g('dur')
-        opt += 'g.setShowComp(%s);\n' % g('comp')
-        w = g('lwidth')
+        opt += 'g.setShowRes(%s);\n' % self._getOpt(options, 'res')
+        opt += 'g.setShowDur(%s);\n' % self._getOpt(options, 'dur')
+        opt += 'g.setShowComp(%s);\n' % self._getOpt(options, 'comp')
+        w = self._getOpt(options, 'lwidth')
         if w:
             opt += 'g.setLeftWidth(%s);\n' % w
             
 
-        opt += 'g.setCaptionType("%s");\n' % g('caption')
+        opt += 'g.setCaptionType("%s");\n' % self._getOpt(options, 'caption')
 
-        opt += 'g.setShowStartDate(%s);\n' % g('startDate')
-        opt += 'g.setShowEndDate(%s);\n' % g('endDate')
+        opt += 'g.setShowStartDate(%s);\n' % self._getOpt(options, 'startDate')
+        opt += 'g.setShowEndDate(%s);\n' % self._getOpt(options, 'endDate')
 
         opt += 'g.setDateInputFormat("%s");\n' % self.jsDateFormat
 
-        opt += 'g.setDateDisplayFormat("%s");\n' % g('dateDisplay')
+        opt += 'g.setDateDisplayFormat("%s");\n' % self._getOpt(options, 'dateDisplay')
 
         opt += 'g.setFormatArr("day","week","month","quarter");\n'
         opt += 'g.setPopupFeatures("location=1,scrollbars=1");\n'
