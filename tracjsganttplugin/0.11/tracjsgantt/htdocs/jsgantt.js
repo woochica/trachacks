@@ -552,7 +552,7 @@ document.getElementById('GanttChartDIV') - reference to the DIV that will hold t
 
 /* FIXME - should be able to set Today color (or in CSS?) */
 
-JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat)
+JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat, pShowDep)
 {
 /**
 * The name of the gantt chart variable
@@ -575,6 +575,13 @@ JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat)
 * @default pFormat
 * @private
 */ var vFormat   = pFormat;
+/**                                                                                                                                                          
+* Whether or not to draw dependency lines
+* @property vShowDep
+* @type Character
+* @default pShowDep
+* @private
+*/ var vShowDep = pShowDep;
 /**
 * Show resource column 
 * @property vShowRes 
@@ -674,6 +681,12 @@ JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat)
 * @method setShowDur
 * @return {void}
 */ this.setShowDur  = function(pShow) { vShowDur  = pShow; };
+/**
+* Whether or not to show depedency lines
+* @param pShowDep{Character} 1=show,0=Hide
+* @method setShowDep
+* #return {void}
+*/this.setShowDep = function(pShowDep){vShowDep = pShowDep};
 /**
 * Show/Hide completed column
 * @param pShow {Number} 1=Show,0=Hide
@@ -938,30 +951,31 @@ Complete-Displays task percent complete</p>
 * @method DrawDependencies
 * @return {Void}
 */  this.DrawDependencies = function () {
+	 if (vShowDep=="1"){
+             //First recalculate the x,y
+             this.CalcTaskXY();
 
-         //First recalculate the x,y
-         this.CalcTaskXY();
+             this.clearDependencies();
 
-         this.clearDependencies();
+             var vList = this.getList();
+             for(var i = 0; i < vList.length; i++)
+             {
 
-         var vList = this.getList();
-         for(var i = 0; i < vList.length; i++)
-         {
-
-            vDepend = vList[i].getDepend();
-            if(vDepend) {
+                vDepend = vList[i].getDepend();
+                if(vDepend) {
          
-               var vDependStr = vDepend + '';
-               var vDepList = vDependStr.split(',');
-               var n = vDepList.length;
+                   var vDependStr = vDepend + '';
+                   var vDepList = vDependStr.split(',');
+                   var n = vDepList.length;
 
-               for(var k=0;k<n;k++) {
-                  var vTask = this.getArrayLocationByID(vDepList[k]);
+                   for(var k=0;k<n;k++) {
+                      var vTask = this.getArrayLocationByID(vDepList[k]);
 
-                  if(vTask != undefined && vList[vTask].getVisible()==1)
-                     this.drawDependency(vList[vTask].getEndX(),vList[vTask].getEndY(),vList[i].getStartX()-1,vList[i].getStartY())
-               }
-  	    }
+                      if(vTask != undefined && vList[vTask].getVisible()==1)
+                         this.drawDependency(vList[vTask].getEndX(),vList[vTask].getEndY(),vList[i].getStartX()-1,vList[i].getStartY())
+                   }
+  	        }
+             }
          }
       };
 

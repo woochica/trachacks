@@ -58,6 +58,7 @@ class TracJSGanttChart(WikiMacroBase):
             'colorBy' : 'priority',
             'lwidth' : None,
             'root' : None,
+            'showdep' : '1',
             }
 
         # Configuration fields
@@ -120,19 +121,20 @@ class TracJSGanttChart(WikiMacroBase):
 
     def _begin_gantt(self, options):
         format = self._getOpt(options,'format')
-
+        showdep = int(self._getOpt(options, 'showdep'))
         text = ''
         text += '<div style="position:relative" class="gantt" id="GanttChartDIV"></div>\n'
         text += '<script language="javascript">\n'
-        text += 'var g = new JSGantt.GanttChart("g",document.getElementById("GanttChartDIV"), "%s");\n' % format
+        text += 'var g = new JSGantt.GanttChart("g",document.getElementById("GanttChartDIV"), "%s", "%d");\n' % (format, showdep)
         text += 'var t;\n'
         text += 'window.addEventListener("resize", function () { g.Draw();\n }, false);'
         return text
 
-    def _end_gantt(self):
+    def _end_gantt(self, options):
         chart = ''
-        chart += 'g.Draw();\n'
-        chart += 'g.DrawDependencies();\n'
+        chart += 'g.Draw();\n' 
+        if self._getOpt(options, 'showdep'):
+            chart += 'g.DrawDependencies();\n'
         chart += '</script>\n'
         return chart
 
@@ -732,6 +734,6 @@ class TracJSGanttChart(WikiMacroBase):
             chart += self._begin_gantt(options)
             chart += self._gantt_options(options)
             chart += tasks
-            chart += self._end_gantt()
+            chart += self._end_gantt(options)
 
         return chart
