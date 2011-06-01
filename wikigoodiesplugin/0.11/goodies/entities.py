@@ -83,5 +83,5 @@ class Entities(Component):
 
     def render_macro(self, req, name, content):
         return render_table(["&%s;" % e for e in ENTITIES], content,
-                            lambda e: self._format_entity(req, e, None))
+                            lambda e: Markup(' ' + e)) # see #G429
 
