@@ -256,7 +256,6 @@ class Droplet(object):
                     cell_group.append(cell)
                 cell_groups.append(cell_group)
             resource = Resource('cloud', '%s/%s' % (self.name,row['id']))
-            # FIXME: for now, we still need to hardcode the realm in the action
             if 'CLOUD_VIEW' not in req.perm(resource):
                 continue
             authorized_results.append(item)
@@ -272,7 +271,7 @@ class Droplet(object):
                      'row_groups': row_groups,
                      'numrows': numrows,
                      'sorting_enabled': len(row_groups) == 1})
-        
+# FIXME: implement formats        
 #        if format == 'rss':
 #            data['email_map'] = Chrome(self.env).get_email_map()
 #            data['context'] = Context.from_request(req, report_resource,
