@@ -94,7 +94,10 @@ class Ec2Commander(Daemon):
             
             # prepare the command
             self.attributes['host'] = host
-            self.attributes['roles_on_host'] = ','.join(node['roles'])
+            try:
+                self.attributes['roles_on_host'] = ','.join(node['roles'])
+            except KeyError:
+                self.attributes['roles_on_host'] = self._extract_roles(node)
             self.attributes['keypair_pem'] = self.chefapi.keypair_pem
             cmd = self.attributes['command'] % self.attributes
             
@@ -122,6 +125,13 @@ class Ec2Commander(Daemon):
         
         if sysexit:
             sys.exit(0) # success
+            
+    def _extract_roles(self, node):
+        """Extract roles from run_list"""
+        roles = []
+        for role in node.run_list:
+            roles.append(role[5:-1])
+        return ','.join(roles)
     
     def _execute(self, cmd, attempt=1, max=5):
         retry_returncode = int(self.launch_data.get('retry_returncode',0))
