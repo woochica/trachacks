@@ -9,15 +9,20 @@ from genshi.filters.transform import Transformer
 import re, cPickle
 from trac.perm import IPermissionRequestor
 
+def textOf(self, **keys):
+    return self.render('text', None, **keys)
+
+Stream.textOf = textOf
+
 #@staticmethod
 def disable_field(stream, field):
     def select_helper(stream):
         s = Stream(stream)
-        name = s.select('@name').render()
+        name = s.select('@name').textOf()
         opt = s.select('//option[@selected]')
         if not opt: s.select('//option[position()=1]')
-        text = opt.select("text()").render()
-        value = s.select('@value').render()
+        text = opt.select("text()").textOf()
+        value = s.select('@value').textOf()
         if not value: value = text
 
         for kind,data,pos in tag.span(text, id=("field-%s"%field)).generate():
@@ -28,8 +33,8 @@ def disable_field(stream, field):
 
     def helper(field_stream):
         s = Stream(field_stream)
-        value = s.select('@value').render()
-        name = s.select('@name').render()
+        value = s.select('@value').textOf()
+        name = s.select('@name').textOf()
         for kind,data,pos in tag.span(value, id=("field-%s"%field)).generate():
             yield kind,data,pos
         for kind,data,pos in tag.input(value=value, name=name, type="hidden").generate():
@@ -52,7 +57,7 @@ def remove_changelog(stream, field):
     """ Removes entries from the visible changelog"""
     def helper(field_stream):
         s =  Stream(field_stream)
-        f = s.select('//strong/text()').render()
+        f = s.select('//strong/text()').textOf()
         if field != f: #if we are the field just skip it
             #identity stream filter
             for kind, data, pos in s:
@@ -64,26 +69,26 @@ def remove_changelog(stream, field):
 def hide_field(stream , field):
     """ Replaces a field from the form area with an input type=hidden"""
     def helper (field_stream):
-        type = Stream(field_stream).select('@type').render()
+        type = Stream(field_stream).select('@type').textOf()
         if type == 'checkbox':
-            if Stream(field_stream).select('@checked').render() == "checked":
+            if Stream(field_stream).select('@checked').textOf() == "checked":
                 value = 1
             else:
                 value = 0
         else:
-            value = Stream(field_stream).select('@value').render()
-        name = Stream(field_stream).select('@name').render()
+            value = Stream(field_stream).select('@value').textOf()
+        name = Stream(field_stream).select('@name').textOf()
         for kind,data,pos in tag.input( value=value,
                                         type="hidden", name=name).generate():
             yield kind,data,pos
 
     def select_helper(stream):
         s = Stream(stream)
-        name = s.select('@name').render()
+        name = s.select('@name').textOf()
         opt = s.select('//option[@selected]')
         if not opt: s.select('//option[position()=1]')
-        text = opt.select("text()").render()
-        value = s.select('@value').render()
+        text = opt.select("text()").textOf()
+        value = s.select('@value').textOf()
         if not value: value = text
         for kind,data,pos in tag.input(value=value, name=name, type="hidden").generate():
             yield kind,data,pos
