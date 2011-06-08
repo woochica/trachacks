@@ -1,0 +1,13 @@
+ShellExample 0.12.2 (8 June, 2011)
+ * fixed a problem where the shell prompt was matching inappropriately
+ * removed a oneliner that may have been causing a problem Ticket #8858
+
+ShellExample 0.12.1 (25 January, 2011)
+ * made all patterns and regular expressions globals
+ * changed the style names
+
+ShellExample 0.12.0 (25 January, 2011)
+ * First release by Nathaniel Madura <nmadura@umich.edu>
+
+ShellExample 0.8.0 (Unknown)
+ * Relased by mOo <moolighttpd@gmail.com>
