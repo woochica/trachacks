@@ -5,15 +5,28 @@
 # but has been signifigantly updated
 
 
-VERSION = '0.12.1'
+VERSION = '0.12.2'
 PACKAGE = 'ShellExampleProcessor'
 import os
-from setuptools import find_packages, setup
+from distutils.command.clean import clean as _clean
+from setuptools import setup
+from distutils.dir_util import remove_tree
 
 def read(fname):
 	return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+class clean(_clean):
+
+	def run(args):
+		# run the base method
+		_clean.run(args)
+		remove_tree("build")
+		remove_tree("dist")
+		remove_tree("ShellExampleProcessor.egg-info")
+
+
 setup(
+		cmdclass = {'clean': clean},
 		name = PACKAGE,
 		version = VERSION,
 		packages = ['shellexample'],

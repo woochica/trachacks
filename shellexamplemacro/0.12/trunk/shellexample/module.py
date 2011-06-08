@@ -109,7 +109,14 @@ class ShellExample(WikiMacroBase):
 				return '<span class="se-input"><span class="se-input-delayed">' + inputdelayed + '</span></span>'
 			if match.group('snippedoutput'):
 				m = match.group('snippedoutput')
-				sniptext = "&lt;Output Snipped&gt;" if len(m) == 5 else m[6:]
+				# some one reported that this one-liner was causing a problem, but gave no details.
+				# it does seem to work for me, however I have expanded it just in case. Ternary syntax
+				# wasn't approved in python until 2.5 see Ticket #8858
+				# sniptext = "&lt;Output Snipped&gt;" if len(m) == 5 else m[6:]
+				if len(m) == 5:
+					sniptext = "&lt;Output Snipped&gt;" 
+				else:
+					sniptext = m[6:]
 				return '<span class="se-output"><span class="se-output-snipped">' + sniptext + '</span></span>'
 			if match.group('output'):
 				return '<span class="se-output">' + match.group('output') + '</span>'
