@@ -227,8 +227,10 @@ hiderule.query = function(spec){
         jQuery('input[value="'+spec.target+'"]')
               .attr('checked',false)
               .parent().hide();
-        // hide from column filter/dropdown
-        jQuery('#add_filter option[value="'+spec.target+'"]')
+        // hide from and/or column filters/dropdowns
+        jQuery('#add_filter option[value="'+spec.target+'"]') // trac <= 0.12.1
+              .hide();
+        jQuery('.actions option[value="'+spec.target+'"]') // trac 0.12.2
               .hide();
     }
 };
