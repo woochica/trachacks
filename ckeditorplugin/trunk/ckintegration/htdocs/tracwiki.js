@@ -49,7 +49,7 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 				//success: this.ajaxSuccess, error: this.ajaxError
 				});
 			// @todo: Error handling for AJAX request
-			data = ajaxResponse.response;
+			data = ajaxResponse.responseText;
 			return data;
 		},
 		
