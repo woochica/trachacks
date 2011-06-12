@@ -308,6 +308,7 @@ class Boxes(Component):
                 styling of the box. See also the `box`, `rbox` and `newsbox`
                 macros (processors).
                 """)
+
     def _get_type(self, word):
         # Accept unique abbrevs. of type
         if not word:
@@ -370,10 +371,12 @@ class Boxes(Component):
         if width:
             if width.isdigit():
                 width += 'px'
-            if self._has_icon(type):
-                # compensate for icon width
-                if width.endswith('px'):
-                    width = '%dpx' % (int(width[:-2]) - 37)
+            if width.endswith('px'):
+                # compensate for padding
+                if self._has_icon(type):
+                    width = '%dpx' % (int(width[:-2]) - 57)
+                else:
+                    width = '%dpx' % (int(width[:-2]) - 22)
             style_list.append('width:' + width)
         elif align=='center':
             style_list.append('width:0') # for the table below
