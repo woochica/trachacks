@@ -8,7 +8,7 @@ setup(
     keywords='trac wiki plugin icons smileys entities symbols color phrases '
              'boxes',
     url='http://trac-hacks.org/wiki/WikiExtrasPlugin',
-    version='0.13',
+    version='0.13.1',
     license='BSD',
     author='Mikael Relbe',
     author_email='mikael@relbe.se',
