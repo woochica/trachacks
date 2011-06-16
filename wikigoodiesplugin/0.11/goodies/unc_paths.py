@@ -38,11 +38,11 @@ class UNCPathLink(Component):
             elif match[0] in '"<':
                 match = match[1:-1]
             return tag.a(label or match,
-                         href='file://' + match.replace('\\', '/'))
+                         href='file:///' + match.replace('\\', '/'))
         yield (self._unc_path_regexp, filelink)
 
     def get_link_resolvers(self):
         def filelink(formatter, ns, target, label):
             return tag.a(label or target,
-                         href='file://' + target.replace('\\', '/'))           
+                         href='file:///' + target.replace('\\', '/'))           
         yield ('unc', filelink)
