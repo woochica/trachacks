@@ -50,7 +50,7 @@ def render_table(items, colspec, render_item, colspace=1):
     #noinspection PyUnusedLocal
     if width:
         # empirical...
-        value_style = '%s;width:%dem' % (value_style, int(width*2/3))
+        value_style = '%s;width:%dem' % (value_style, width*2/3)
 
     def render_def(s):
         rendered = s and render_item(s) or None
