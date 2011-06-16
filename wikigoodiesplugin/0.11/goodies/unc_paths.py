@@ -25,14 +25,24 @@ class UNCPathLink(Component):
         r'!?(?:\\\\[^\s\\\\/]+(?:[\\/][^\s\\]*)+' # \\host\share[\path]
         r'|"\\\\[^"\s\\\\/]+(?:[\\/][^"\\]*)+"' # "\\host\share[\path ...]"
         r'|<\\\\[^>\s\\\\/]+(?:[\\/][^>\\]*)+>' # <\\host\share[\path ...]>
+        r'|\[(?P<unc_path>\\\\[^\s\\\\/]+(?:[\\/][^\s\\]*)+)'
+        r'(?P<unc_label>\s+[^]]+)?\]' # [\\host\share\path label]
         r')')
 
     def get_wiki_syntax(self):
         def filelink(formatter, match, fullmatch):
-            if match[0] in '"<':
+            label = None
+            if match[0] == '[':
+                match, label = (fullmatch.group('unc_path'),
+                                fullmatch.group('unc_label'))
+            elif match[0] in '"<':
                 match = match[1:-1]
-            return tag.a(match, href='file://' + match.replace('\\', '/'))
+            return tag.a(label or match,
+                         href='file://' + match.replace('\\', '/'))
         yield (self._unc_path_regexp, filelink)
 
     def get_link_resolvers(self):
-        return []
+        def filelink(formatter, ns, target, label):
+            return tag.a(label or target,
+                         href='file://' + target.replace('\\', '/'))           
+        yield ('unc', filelink)
