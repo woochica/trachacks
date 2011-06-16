@@ -78,13 +78,15 @@ class Phrases(Component):
                                  ('done', self.done_phrases)]:
             for phrase in phrases:
                 self.text[phrase] = html % (shadow, style, phrase)
-                self.text['!'+phrase] = phrase
+                self.text['!%s' % phrase] = phrase
                 for (d1, d2) in [(':', ':'), ('<', '>'), ('(', ')')]:
-                    self.text[d1+phrase+d2] = html % (shadow, style, phrase)
-                    self.text['!'+d1+phrase+d2] = phrase
+                    wiki = '%s%s%s' % (d1, phrase, d2)
+                    self.text[wiki] = html % (shadow, style, phrase)
+                    self.text['!%s' % wiki] = wiki
                 for d2 in [':']:
-                    self.text[phrase+d2] = html % (shadow, style, phrase)
-                    self.text['!'+phrase+d2] = phrase
+                    wiki = '%s%s' % (phrase, d2)
+                    self.text[wiki] = html % (shadow, style, phrase)
+                    self.text['!%s' % wiki] = wiki
 
     # IRequestFilter methods
 

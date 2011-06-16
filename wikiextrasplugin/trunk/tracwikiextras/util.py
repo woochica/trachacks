@@ -48,7 +48,9 @@ def render_table(items, colspec, render_item, colspace=1):
             width = len(i)
     value_style = 'border:none'
     #noinspection PyUnusedLocal
-    value_style += ';width:%dem' % (width*2/3) if width else '' # empirical...
+    if width:
+        # empirical...
+        value_style = '%s;width:%dem' % (value_style, int(width*2/3))
 
     def render_def(s):
         rendered = s and render_item(s) or None

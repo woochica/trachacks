@@ -110,7 +110,7 @@ class Color(Component):
             if text.endswith(u' '):
                 space_end = Markup('&nbsp')
         if style_values['font-size'].isdigit():
-            style_values['font-size'] += '%'
+            style_values['font-size'] = '%s%%' % style_values['font-size']
         style = ';'.join('%s:%s' % (k, v) for (k, v) in
                          style_values.iteritems() if v)
         return tag.span(space_start, html, space_end, style=style)

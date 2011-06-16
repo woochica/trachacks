@@ -177,7 +177,7 @@ class Boxes(Component):
             urgency[urg][1].append(type)
             for w in words:
                 urgency[urg][1].append(w)
-        descr = [line_prefix + "||= Urgency ''(box color)'' =||= `type` =||"]
+        descr = ["%s||= Urgency ''(box color)'' =||= `type` =||" % line_prefix]
         for urg, label in self.urgency_label:
             data = urgency[urg]
             color = data[0]
@@ -370,14 +370,14 @@ class Boxes(Component):
         width = args.get('width', '')
         if width:
             if width.isdigit():
-                width += 'px'
+                width = '%spx' % width
             if width.endswith('px'):
                 # compensate for padding
                 if self._has_icon(type):
                     width = '%dpx' % (int(width[:-2]) - 57)
                 else:
                     width = '%dpx' % (int(width[:-2]) - 22)
-            style_list.append('width:' + width)
+            style_list.append('width:%s' % width)
         elif align=='center':
             style_list.append('width:0') # for the table below
 

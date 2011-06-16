@@ -136,7 +136,7 @@ class Icons(Component):
                     formatter, 2, name, size, True, self.icon_limit)
         else:
             loc = self.icon_location(size)
-            return tag.img(src=formatter.href.chrome(loc[0], name + '.png'),
+            return tag.img(src=formatter.href.chrome(loc[0], '%s.png' % name),
                            alt=name, style="vertical-align: text-bottom")
 
     # ITemplateProvider methods
@@ -237,7 +237,7 @@ class ShowIcons(Component):
         #noinspection PyArgumentList
         icon = Icons(self.env)
         icon_dir = icon.icon_location(size)[1]
-        files = fnmatch.filter(os.listdir(icon_dir), name_pat + '.png')
+        files = fnmatch.filter(os.listdir(icon_dir), '%s.png' % name_pat)
         icon_names = [os.path.splitext(p)[0] for p in files]
         if limit:
             displayed_icon_names = reduce_names(icon_names, limit)
@@ -454,7 +454,7 @@ class Smileys(Component):
                 if not icon_name.startswith('_remove'):
                     icon_file = icon_name
                     if not icon_file.endswith('.png'):
-                        icon_file += '.png'
+                        icon_file = '%s.png' % icon_file
                     if value:
                         for keyword in value.split():
                             self.smileys[keyword.strip()] = icon_file

@@ -119,7 +119,7 @@ class Symbols(Component):
                     del self.symbols[keyword]
 
         if self.symbols:
-            yield ("!?" + prepare_regexp(self.symbols), self._format_symbol)
+            yield ('!?%s' % prepare_regexp(self.symbols), self._format_symbol)
         else:
             yield (None, None)
 
