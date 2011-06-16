@@ -21,12 +21,18 @@ class UNCPathLink(Component):
 
     # IWikiSyntaxProvider methods
 
-    _unc_path_regexp = r"!?\\\\[^\s\\]+(?:\\[^\s\\]*)*"
-    
+    _unc_path_regexp = (
+        r'!?(?:\\\\[^\s\\\\/]+(?:[\\/][^\\\\]*)+' # \\host\share[\path]
+        r'|"\\\\[^"\s\\\\/]+(?:[\\/][^"\\\\]*)+"' # "\\host\share[\path ...]"
+        r'|<\\\\[^>\s\\\\/]+(?:[\\/][^>\\\\]*)+>' # <\\host\share[\path ...]>
+        r')')
+
     def get_wiki_syntax(self):
-        yield (self._unc_path_regexp,
-               (lambda x, y, z:
-                tag.a(y, href='file:///'+y.replace('\\', '/'))))
+        def filelink(x, y, z):
+            if y[0] in '"<':
+                y = y[1:-1]
+            return tag.a(y, href='file://' + y.replace('\\', '/'))
+        yield (self._unc_path_regexp, filelink)
 
     def get_link_resolvers(self):
         return []
