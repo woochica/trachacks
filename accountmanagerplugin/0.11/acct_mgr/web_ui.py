@@ -221,6 +221,11 @@ class AccountModule(Component):
             return {'error': 'Username is required'}
         if not email:
             return {'error': 'Email is required'}
+        for username_, name, email_ in self.env.get_known_users():
+            if username_ == username and email_ == email:
+                break
+        else:
+            return {'error': 'Username and email must match.'}
 
         new_password = self._random_password()
         mgr = AccountManager(self.env)
@@ -241,7 +246,6 @@ class AccountModule(Component):
                                "VALUES (%s,1,%s,%s)",
                                (username, "force_change_passwd", 1))
             db.commit()
-
         return {'sent_to_email': email}
 
     def _random_password(self):

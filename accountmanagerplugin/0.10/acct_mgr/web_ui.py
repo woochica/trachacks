@@ -194,6 +194,12 @@ class AccountModule(Component):
             if not email:
                 req.hdf['reset.error'] = 'Email is required'
                 return
+            for username_, name, email_ in self.env.get_known_users():
+                if username_ == username and email_ == email:
+                    break
+            else:
+                req.hdf['reset.error'] = 'Username and email must match.'
+                return
 
             notifier = PasswordResetNotification(self.env)
 
