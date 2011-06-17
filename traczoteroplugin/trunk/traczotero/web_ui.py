@@ -404,7 +404,7 @@ def generate_home(self, req):
         years.append(tag.span(' | '))
     years = tag.tr(tag.th( tag.b('Years:'), 
             tag.td(years, 
-                   tag.a('more...', href = req.href.zotero('cloud', t = 'publisher' ))),
+                   tag.a('more...', href = req.href.zotero('cloud', t = 'year' ))),
             valign="top", style="text-align: right; width: 15%;"))
     # For recently add
     recent_ids = model.get_recents()
