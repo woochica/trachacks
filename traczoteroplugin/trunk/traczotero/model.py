@@ -194,7 +194,7 @@ class ZoteroModelProvider(Component):
         return [i for i in c]
     def get_creators(self,item_id):
         if item_id:
-            sql = 'SELECT IC.itemID, CD.creatorDataID, CD.firstName, CD.lastName FROM itemCreators IC NATURAL JOIN creators' \
+            sql = 'SELECT IC.itemID, IC.creatorID, CD.firstName, CD.lastName FROM itemCreators IC NATURAL JOIN creators' \
                 + ' NATURAL JOIN creatorData CD WHERE itemID=' \
                 + str(item_id) \
                 + ' ORDER BY orderIndex'
