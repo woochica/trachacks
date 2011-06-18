@@ -93,9 +93,17 @@ class ZoteroModelProvider(Component):
         return items
     def get_items_id(self,keys):
         if keys:
+            real_keys = []
+            for key in keys: 
+                k = []
+                if key[0:2] == '0_':
+                    k = key[2:10]
+                else:
+                    k = key[0:8]
+                real_keys.append(k)
             sql = 'SELECT itemID FROM items ' \
                 + 'WHERE key in (' \
-                + ', '.join(['\'' + str(x) + '\'' for x in keys]) \
+                + ', '.join(['\'' + str(x) + '\'' for x in real_keys]) \
                 + ')'
             c = self.db.cursor()
             c.execute( sql )
