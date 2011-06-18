@@ -44,16 +44,18 @@ class TracZotero(Component):
     field_mapping['accessDate'] = 'Access'
     field_mapping['url'] = 'URL'
     def get_active_navigation_item(self, req):
-        if 'ZOTERO' in req.perm:
+        if 'ZOTERO_VIEW' in req.perm:
             return 'zotero'
 
     def get_navigation_items(self, req):
-        if 'ZOTERO' in req.perm:
+        if 'ZOTERO_VIEW' in req.perm:
             label = "Zotero"
             yield ('mainnav', 'zotero',
                    tag.a(label, href=req.href.zotero()) )
     def get_permission_actions(self):
-        yield 'ZOTERO'
+        return ['ZOTERO_VIEW',
+                ('ZOTERO_ATTACHMENT', ['ZOTERO_VIEW']),
+                ]
     def filter_stream(self, req, method, filename, stream, data):
         # Get path
         if filename == 'zotero.html':
@@ -72,6 +74,9 @@ class TracZotero(Component):
     def match_request(self, req):
         return req.path_info.startswith('/zotero')
     def process_request(self, req):
+        if 'ZOTERO_VIEW' not in req.perm:
+            raise Exception( 'ZOTERO permission required' )
+            
         add_script(req, 'zt/jquery.treeview/lib/jquery.js')
         add_script(req, 'zt/jquery.treeview/lib/jquery.cookie.js')
         add_script(req, 'zt/jquery.treeview/jquery.treeview.js')
@@ -243,8 +248,12 @@ class TracZotero(Component):
                         path = self.env.config.get('zotero', 'path' )
                         
                         href = req.href.chrome('site',path,'storage',a[4],file_name)
-                    a_value.append(tag.a(file_name, href = href))
-                    a_value.append(tag.br())
+                    if 'ZOTERO_ATTACHMENT' in req.perm:
+                        a_value.append(tag.a(file_name, href = href))
+                        a_value.append(tag.br())
+                    else:
+                        a_value.append(tag.span(file_name))
+                        a_value.append(tag.br())
                 a_value.pop()
                 attachment['value'] = tag.span( a_value )
                 item.append(attachment)
