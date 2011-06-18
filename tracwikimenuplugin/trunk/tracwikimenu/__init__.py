@@ -1,0 +1,1 @@
+from tracwikimenu.wiki import *
