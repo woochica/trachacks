@@ -1,34 +1,39 @@
-from model import *
-from trac.core import *
-from trac.util.datefmt import format_datetime
-from trac.web.api import IRequestHandler
-from trac.web.chrome import ITemplateProvider, INavigationContributor, \
-                            ITemplateStreamFilter, \
-                            add_stylesheet, add_ctxtnav, add_link, add_script
-from trac.search import ISearchSource, shorten_result
-from trac.util.presentation import Paginator
-from trac.versioncontrol.api import Node
-from trac.perm import IPermissionRequestor
-from trac.util import Markup, escape
-from trac.versioncontrol.web_ui.util import *
-from trac.mimeview.api import Mimeview
-from genshi.filters.transform import Transformer, StreamBuffer
-from genshi.builder import tag as builder
-from trac.wiki.formatter import extract_link
-from trac.mimeview import Context
-from genshi.builder import tag
 import re
 import posixpath
 import os
 import string
+from model import *
+from trac.core import *
+from trac.util.datefmt import format_datetime
+from trac.web.api import IRequestHandler
+
+from trac.web.chrome import ITemplateProvider, INavigationContributor, \
+                            ITemplateStreamFilter, \
+                            add_stylesheet, add_ctxtnav, add_link, add_script
+
+from trac.perm import IPermissionRequestor
+from trac.wiki.api import IWikiSyntaxProvider
+
+from trac.search import ISearchSource, shorten_result
+from trac.util.presentation import Paginator
+from trac.versioncontrol.api import Node
+from trac.util import Markup, escape
+from trac.versioncontrol.web_ui.util import *
+from trac.mimeview.api import Mimeview
+from genshi.filters.transform import Transformer, StreamBuffer
+from trac.wiki.formatter import extract_link
+from trac.mimeview import Context
+from genshi.builder import tag
+
+
 from fnmatch import fnmatch
 import sqlite3
 from trac.cache import cached
 from trac.wiki.formatter import format_to, format_to_oneliner
-from trac.mimeview import Context
 
-class TracZoteroRequestHandler(Component):
-    implements( ITemplateStreamFilter, IPermissionRequestor, 
+
+class TracZotero(Component):
+    implements( ITemplateStreamFilter, IPermissionRequestor, IWikiSyntaxProvider,
         IRequestHandler, ITemplateProvider, INavigationContributor)
     collectiontree = []
     field_mapping = {}
@@ -46,7 +51,7 @@ class TracZoteroRequestHandler(Component):
         if 'ZOTERO' in req.perm:
             label = "Zotero"
             yield ('mainnav', 'zotero',
-                   builder.a(label, href=req.href.zotero()) )
+                   tag.a(label, href=req.href.zotero()) )
     def get_permission_actions(self):
         yield 'ZOTERO'
     def filter_stream(self, req, method, filename, stream, data):
@@ -316,6 +321,21 @@ class TracZoteroRequestHandler(Component):
             command = path_items[1].lower()
             pagename = '/'.join(path_items[2:])
         return (command, pagename)
+    # IWikiSyntaxProvider methods
+
+    def get_wiki_syntax(self):
+        return []
+    
+    def get_link_resolvers(self):
+        yield ('zot', self._zotlink_formatter)
+    
+    def _zotlink_formatter(self, formatter, ns, target, label):
+        model = ZoteroModelProvider(self.env)
+        id = model.get_items_id([target])
+        if id:
+            return tag.a(label, href = formatter.href.zotero('item',id[0]))
+        return label
+    
 def render_refs_box(self, req, ids, order = 'year', desc = 1, headhref=False,command=[],page=[] ):
     # Check parameters
     if not ids:
@@ -461,10 +481,12 @@ def render_cloud(self, req, type, renderer=None ):
     last = len(value) - 1
     for i, label in enumerate(labels):
         percent = size_lut[value[i]] * scale
-        li = builder.li(renderer(label, value[i], links[i], percent))
+        li = tag.li(renderer(label, value[i], links[i], percent))
         if i == last:
             li(class_='last')
         li()
         ul(li, ' ')
     return ul
     return []
+
+    

@@ -271,7 +271,7 @@ class ZoteroModelProvider(Component):
             + '( SELECT * FROM (SELECT creatorID, count(itemID) AS cnum' \
             + ' FROM itemCreators IC WHERE 1 GROUP BY creatorID) WHERE 1 )' \
             + ' NATURAL JOIN creators C ) ' \
-            + 'NATURAL JOIN creatorData CD'
+            + 'NATURAL JOIN creatorData CD WHERE 1 ORDER BY lastName'
         c = self.db.cursor()
         c.execute( sql )
         return [iid for iid in c]
