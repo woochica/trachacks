@@ -193,4 +193,5 @@ panel of your Trac environment.
 This plugin is based on the
 [http://trac-hacks.org/wiki/WikiGoodiesPlugin WikiGoodiesPlugin] by
 [http://trac-hacks.org/wiki/cboos cboos]. [[BR]]
-Also, kudos to [wiki:cboos] (again) for the icon wiki markup idea: `(|name|)`
+Also, kudos to [http://trac-hacks.org/wiki/cboos cboos] (again) for the icon
+wiki markup idea: `(|name|)`
