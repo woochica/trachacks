@@ -1,11 +1,19 @@
 Fugue Icons Addendum
 
-Copyright (C) 2011 Mikael Relbe.
-All rights reserved.
-
 Following icons have been added to the Fugue icon library
 for release with the WikiExtrasPlugin for Trac, see
 http://trac-hacks.org/wiki/WikiExtrasPlugin
+
+---------------------------------------------------------------------
+
+- priority1.png
+- priority2.png
+- priority3.png
+
+Copyright (C) 2011 Mikael Relbe.
+All rights reserved.
+
+Same license terms as stipulated by Edgewall Software, see below.
 
 ---------------------------------------------------------------------
 
@@ -28,7 +36,7 @@ are met:
     products derived from this software without specific prior
     written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND ANY EXPRESS
 OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY

@@ -1,13 +1,13 @@
-[[PageOutline(2-5,Contents,pullout)]]
-
 = Wiki Extras for Trac =
+[[PageOutline(2-5,Contents,pullout)]]
 
 
 == Description ==
 
  '''''This plugin is made for the upcoming Trac 0.13, and will be updated along
- with changes to Trac 0.13dev! ''' (This plugin should work with Trac 0.12, but
- the visual impression will not be as intended.) ''
+ with changes to Trac 0.13dev! ''' [[BR]]
+ (This plugin could work with Trac 0.12, but the visual impression may not be 
+ as intended.) ''
 
 The [http://trac-hacks.org/wiki/WikiExtrasPlugin WikiExtrasPlugin] extends the
 Trac Wiki in several ways:
@@ -62,9 +62,10 @@ All rights reserved.
 
 == See Also ==
 
-The [http://trac-hacks.org/wiki/ColorMacro ColorMacro],
+[http://trac-hacks.org/wiki/ColorMacro ColorMacro],
 [http://trac-hacks.org/wiki/EmoticonsPlugin EmoticonsPlugin],
-[http://trac-hacks.org/wiki/NewsFlashMacro NewsFlashMacro] and
+[http://trac-hacks.org/wiki/NewsFlashMacro NewsFlashMacro],
+[http://trac-hacks.org/wiki/TracFigureMacro TracFigureMacro] and
 [http://trac-hacks.org/wiki/WikiGoodiesPlugin WikiGoodiesPlugin].
 
 
@@ -145,6 +146,21 @@ _remove_defaults = true
 &hearts; = <3
 }}}
 
+[http://trac-hacks.org/wiki/WikiGoodiesPlugin WikiGoodiesPlugin] refugees might 
+find the following compatibility definitions useful:
+{{{
+[wikiextras-smileys]
+exclamation--frame = /!\
+exclamation-diamond-frame = <!>
+thumb = {DN} {!OK}
+thumb-up = {UP} {OK}
+star = {*}
+star-empty = {o}
+light-bulb = (!)
+priority1 = {p1} {P1}
+priority2 = {p2} {P2}
+priority3 = {p3} {P3}
+}}}
 
 == Example ==
 
@@ -176,4 +192,5 @@ panel of your Trac environment.
 
 This plugin is based on the
 [http://trac-hacks.org/wiki/WikiGoodiesPlugin WikiGoodiesPlugin] by
-[http://trac-hacks.org/wiki/cboos cboos].
+[http://trac-hacks.org/wiki/cboos cboos]. [[BR]]
+Also, kudos to [wiki:cboos] (again) for the icon wiki markup idea: `(|name|)`
