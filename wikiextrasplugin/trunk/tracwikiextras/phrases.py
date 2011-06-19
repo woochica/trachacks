@@ -33,7 +33,6 @@ from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki import IWikiSyntaxProvider, IWikiMacroProvider, format_to_html
 
-from tracwikiextras.icons import Icons
 from tracwikiextras.util import prepare_regexp, render_table
 
 
@@ -71,22 +70,17 @@ class Phrases(Component):
     def __init__(self):
         self.text = {}
         #noinspection PyArgumentList
-        shadow = '' if Icons(self.env).shadowless else 'shadow'
-        html = '<span class="wikiextras %s phrase %s">%s</span>'
+        html_form = '<span class="wikiextras phrase %s">%s</span>'
         for (style, phrases) in [('fixme', self.fixme_phrases), 
                                  ('todo', self.todo_phrases),
                                  ('done', self.done_phrases)]:
             for phrase in phrases:
-                self.text[phrase] = html % (shadow, style, phrase)
-                self.text['!%s' % phrase] = phrase
+                html = html_form % (style, phrase)
+                self.text[phrase] = html
                 for (d1, d2) in [(':', ':'), ('<', '>'), ('(', ')')]:
-                    wiki = '%s%s%s' % (d1, phrase, d2)
-                    self.text[wiki] = html % (shadow, style, phrase)
-                    self.text['!%s' % wiki] = wiki
+                    self.text['%s%s%s' % (d1, phrase, d2)] = html
                 for d2 in [':']:
-                    wiki = '%s%s' % (phrase, d2)
-                    self.text[wiki] = html % (shadow, style, phrase)
-                    self.text['!%s' % wiki] = wiki
+                    self.text['%s%s' % (phrase, d2)] = html
 
     # IRequestFilter methods
 
@@ -109,7 +103,7 @@ class Phrases(Component):
     # IWikiSyntaxProvider methods
 
     def get_wiki_syntax(self):
-        yield (prepare_regexp(self.text), self._format_phrase)
+        yield ('!?(?:%s)' % prepare_regexp(self.text), self._format_phrase)
 
     def get_link_resolvers(self):
         return []

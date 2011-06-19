@@ -4,10 +4,10 @@ span.wikiextras.phrase {
     font-family: Verdana,Arial,'Bitstream Vera Sans',Helvetica,sans-serif;
     font-size: 0.7em;
     font-weight: bold;
+    font-style: normal;
     /*  vertical-align: 20%; */ /* Renders incorrectly in IE9 */
     padding: 1px 1.2em;
 }
-/* span.wikiextras.phrase.shadow { box-shadow: 1px 1px 1px 0 #777; } */
 
 span.wikiextras.phrase.fixme { background-color: #b22222; }
 
