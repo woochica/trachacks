@@ -24,5 +24,5 @@ fi
 
 echo "TracEnv:$TRAC_ENV Repo:$REPOS Rev:$REV Auth:$AUTHOR" | log
 
-/usr/bin/python /var/trac/trac-post-commit.py -p "$TRAC_ENV" -r "$REV" -u "$AUTHOR" -m "$MESSAGE" 2>&1 | log
+/usr/bin/python /var/trac/trac-post-commit.py -p "$TRAC_ENV" -r "$REV" -R "$CNAME" -u "$AUTHOR" -m "$MESSAGE" 2>&1 | log
 

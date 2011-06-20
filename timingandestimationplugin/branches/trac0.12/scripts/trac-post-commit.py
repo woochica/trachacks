@@ -115,6 +115,8 @@ parser.add_option('-p', '--project', dest='project',
                   help='Path to the Trac project.')
 parser.add_option('-r', '--revision', dest='rev',
                   help='Repository revision number.')
+parser.add_option('-R', '--repository', dest='repos',
+				  help='Repository name (or default if not set).')
 parser.add_option('-u', '--user', dest='user',
                   help='The user who is responsible for this action '+depr)
 parser.add_option('-m', '--msg', dest='msg',
@@ -210,9 +212,15 @@ ticket_re = re.compile(ticket_prefix + '([0-9]+)' + time_pattern, re.IGNORECASE)
 
 class CommitHook:
     def __init__(self, project=options.project, author=options.user,
-                 rev=options.rev, url=options.url):
+                 rev=options.rev, url=options.url, reponame=options.repos):
         self.env = open_environment(project)
-        repos = self.env.get_repository()
+        self.reponame = reponame
+        if reponame:
+            repos = self.env.get_repository(reponame)
+            revstring = rev + '/' + reponame
+        else:
+		    repos = self.env.get_repository()
+            revstring = rev
         repos.sync()
         
         # Instead of bothering with the encoding, we'll use unicode data
@@ -223,7 +231,7 @@ class CommitHook:
             return # out of scope changesets are not cached
         self.author = chgset.author
         self.rev = rev
-        self.msg = "(In [%s]) %s" % (rev, chgset.message)
+        self.msg = "(In [%s]) %s" % (revstring, chgset.message)
         self.now = datetime.now(utc)
 
         cmd_groups = command_re.findall(self.msg)
