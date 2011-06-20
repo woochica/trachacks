@@ -68,7 +68,7 @@ class UNCPathLink(Component):
         yield (self._unc_path_regexp, filelink)
 
     def get_link_resolvers(self):
-        def filelink(formatter, ns, target, label):
+        def filelink(formatter, ns, target, label, fullmatch=None):
             return tag.a(label or target,
                          href='file:///%s' % target.replace('\\', '/'))
         yield ('unc', filelink)
