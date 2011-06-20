@@ -13,11 +13,12 @@ setup(
     author='Mikael Relbe',
     author_email='mikael@relbe.se',
     long_description="""
-        This Trac 0.13 plugin extends the Trac Wiki by providing support
-        for icons and smileys, HTML entities and other frequently used symbols,
-        highlighted attentional phrases, colored text, and wiki processors
-        for inserting visually appealing boxes to give wiki pages a modern
-        look.
+        This Trac 0.13 plugin extends the Trac Wiki by providing support for:
+         * Icons and smileys.
+         * HTML entities and other frequently used symbols.
+         * Highlighting attentional phrases.
+         * Coloring text.
+         * Visually appealing and modern looking text and image boxes.
 
         The Fugue icon library is contained within this distribution for
         convenience (though installation time is taking a hit), which contains
