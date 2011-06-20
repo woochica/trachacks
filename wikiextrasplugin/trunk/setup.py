@@ -10,8 +10,8 @@ setup(
     url='http://trac-hacks.org/wiki/WikiExtrasPlugin',
     version='0.13.1',
     license='BSD',
-    author='Mikael Relbe',
-    author_email='mikael@relbe.se',
+    author='Mikael Relbe and Christian Boos',
+    author_email='mikael@relbe.se; cboos@neuf.fr',
     long_description="""
         This Trac 0.13 plugin extends the Trac Wiki by providing support for:
          * Icons and smileys.
@@ -19,6 +19,7 @@ setup(
          * Highlighting attentional phrases.
          * Coloring text.
          * Visually appealing and modern looking text and image boxes.
+         * Transformation of UNC paths to "file://" links.
 
         The Fugue icon library is contained within this distribution for
         convenience (though installation time is taking a hit), which contains
