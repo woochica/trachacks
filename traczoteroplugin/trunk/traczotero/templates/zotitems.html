@@ -1,0 +1,17 @@
+<div xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:i18n="http://genshi.edgewall.org/i18n"
+     xmlns:xi="http://www.w3.org/2001/XInclude">
+  <h2 class="report-result" py:if="paginator.has_more_pages">
+    Item list <span class="numresults">(${paginator.displayed_items()})</span>
+  </h2>
+  <div align="center">
+  <xi:include py:if="paginator.show_index" href="page_index.html" />
+  </div>
+  ${items}
+  <div align="center">
+  <xi:include py:if="paginator.show_index" href="page_index.html" />
+  </div>
+</div>
+
+

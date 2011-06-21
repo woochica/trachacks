@@ -17,14 +17,21 @@
 				${collectiontree}
 				</td>
 				<td style="width: 80%;">
+					<py:if test="command == 'collection'">
+						<py:if test="paginator">
+							<xi:include href="zotitems.html" />
+						</py:if>
+					</py:if>
+					<py:if test="command == 'qjump'">
+						<py:if test="paginator">
+							<xi:include href="zotitems.html" />
+						</py:if>
+					</py:if>
 					<py:if test="home">
 						${home}
 					</py:if>
-					<py:if test="cloud">
+					<py:if test="command == 'cloud'">
 						${cloud}
-					</py:if>
-					<py:if test="items">
-						${items}
 					</py:if>
 					<py:if test="item">
 					<table border="0" cellpadding="2" cellspacing="2">
@@ -45,6 +52,45 @@
 							
 						</py:if>
 					</table>
+					</py:if>
+					<py:if test="command == 'search'">
+						<h1>Basic Search</h1>
+						<form id="fullsearch" action="${href.zotero('search')}" method="get">
+
+						<p>
+							<input type="text" id="q" name="q" size="60" value="${query}" />
+							<input type="submit" value="${_('Search')}" />
+						</p>
+						<p class="filters">
+						<py:choose test="allfields">
+							<py:when test="allfields">
+							<input type="checkbox" id="allfields" name="allfields" checked="checked" />
+							</py:when>
+							<py:otherwise>
+							<input type="checkbox" id="allfields" name="allfields" />
+							</py:otherwise>
+						</py:choose>
+						
+							<label for="changeset">All fields</label>
+						<py:choose test="fulltext">
+							<py:when test="fulltext">
+							<input type="checkbox" id="fulltext" name="fulltext" checked="checked" />
+							</py:when>
+							<py:otherwise>
+							<input type="checkbox" id="fulltext" name="fulltext"  />
+							</py:otherwise>
+						</py:choose>
+							<label for="changeset">Full text</label>
+					   </p>
+						</form>
+						<p>
+						<py:if test="paginator">
+							<xi:include href="zotitems.html" />
+						</py:if>
+						</p>
+					</py:if>
+					<py:if test="command == 'advsearch'">
+						<xi:include href="zotadvsearch.html" />
 					</py:if>
 				</td>
 			</tr>

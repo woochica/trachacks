@@ -40,7 +40,7 @@ class ZotCiteMacro(WikiMacroBase):
         setattr(formatter,CITELIST,citelist)     
         
         model = ZoteroModelProvider(self.env)
-        item_id = model.get_items_id( keys )
+        item_id = model.get_items_ids_by_keys( keys )
         if not item_id:
             raise TracError( 'Some key(s) in ' + ', '.join(keys) + ' can not be found')
         item_cites = model.get_item_cites(item_id)
@@ -55,16 +55,16 @@ class ZotCiteMacro(WikiMacroBase):
 
 class ZotRefMacro(WikiMacroBase):
   implements(IWikiMacroProvider)
-
+  
   def render_macro(self, request,name,content):
     return self.expand_macro(request,name,content)
 
   def expand_macro(self,formatter,name,content):
     citelist = getattr(formatter, CITELIST,[])
-    fields = ['itemTypeID','firstCreator','year', 'publicationTitle','volume','issue','pages','title','url']
+    columns = ['itemTypeID','firstCreator','year', 'publicationTitle','volume','issue','pages','title','url']
     model = ZoteroModelProvider(self.env)
-    item_ids = model.get_items_id( citelist )
-    item_data = model.get_item_fields(item_ids,fields)
+    item_ids = model.get_items_ids_by_keys( citelist )
+    item_data = model.get_item_columns(item_ids,columns)
     refs = []
 
     for itemID, itemTypeID, firstCreator, year, publicationTitle, volume, issue, pages, title, url in item_data:
@@ -113,16 +113,16 @@ class ZotRelatedMacro(WikiMacroBase):
             key = key[2:10]
         else:
             key = key[0:8]
-        fields = self.env.config.get('zotero', 'fields','firstCreator, year, publicationTitle, title' )
-        fields = fields.split(',')
-        fields = [f.strip() for f in fields]
+        columns = self.env.config.get('zotero', 'columns','firstCreator, year, publicationTitle, title' )
+        columns = columns.split(',')
+        columns = [c.strip() for c in columns]
         labels = self.env.config.get('zotero', 'labels','Authors, Year, Publication, Title' )
         labels = labels.split(',')
-        labels = [f.strip() for f in labels]
+        labels = [l.strip() for l in labels]
         
         model = ZoteroModelProvider(self.env)
-        item_ids = model.get_items_id( key )
-        rids = model.get_related(item_ids)
+        item_ids = model.get_items_ids_by_keys( key )
+        rids = model.get_items_related(item_ids)
         rids_all = []
 
         for id, lid in rids:
@@ -132,6 +132,6 @@ class ZotRelatedMacro(WikiMacroBase):
                 rids_all.append(id)
 
         if len(rids_all) > 0:
-            item_mata = model.get_item_fields(rids_all,fields)
+            item_mata = model.get_item_columns(rids_all,columns)
             return render_refs_box(self,formatter.req, rids_all)
     
