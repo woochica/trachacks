@@ -33,6 +33,8 @@ Trac Wiki in several ways:
    (e.g. arrows, fractions, etc.) ''(Same as in
    [http://trac-hacks.org/wiki/WikiGoodiesPlugin WikiGoodiesPlugin], but
    configurable.)''
+ * Replace `\\...` UNC paths with `file:///` links. (Same as in
+   [http://trac-hacks.org/wiki/WikiGoodiesPlugin WikiGoodiesPlugin])
 
 Each feature can be disabled individually if needed.
 
@@ -186,9 +188,10 @@ panel of your Trac environment.
 
 == Author / Contributors ==
 
-'''Author:''' [http://trac-hacks.org/wiki/mrelbe mrelbe] [[BR]]
+'''Author:''' [http://trac-hacks.org/wiki/mrelbe mrelbe] and
+[http://trac-hacks.org/wiki/cboos cboos] [[BR]]
 '''Maintainer:''' [http://trac-hacks.org/wiki/mrelbe  mrelbe] [[BR]]
-'''Contributors:''' [http://trac-hacks.org/wiki/cboos cboos] [[BR]]
+'''Contributors:''' [[BR]]
 
 This plugin is based on the
 [http://trac-hacks.org/wiki/WikiGoodiesPlugin WikiGoodiesPlugin] by
