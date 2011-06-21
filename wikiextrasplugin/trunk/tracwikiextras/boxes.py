@@ -177,7 +177,7 @@ class Boxes(Component):
             urgency[urg][1].append(type)
             for w in words:
                 urgency[urg][1].append(w)
-        descr = ["%s||= Urgency ''(box color)'' =||= `type` =||" % line_prefix]
+        descr = ["%s||= Urgency ''(box color)'' =||= type =||" % line_prefix]
         for urg, label in self.urgency_label:
             data = urgency[urg]
             color = data[0]
@@ -197,8 +197,12 @@ class Boxes(Component):
                 Syntax:
                 {{{
                 {{{#!box type=... align=... width=...
-                ...
+                wiki text
                 }}}
+                }}}
+                or preferably when content is short:
+                {{{
+                [[box(wiki text, type=..., align=..., width=...)]]
                 }}}
                 where
                  * `type` is optional and is used to call for attention
@@ -217,11 +221,14 @@ class Boxes(Component):
                    width). `width` should be set when `align=center` for
                    proper results.
 
-                Example:
+                Examples:
                 {{{
                 {{{#!box type=warn
-                ...
+                = Warning
+                Beware of the bugs
                 }}}
+
+                [[box(Beware of the bugs, type=warn)]]
                 }}}
 
                 A `style` parameter is also accepted, to allow for custom
@@ -237,8 +244,12 @@ class Boxes(Component):
                 Syntax:
                 {{{
                 {{{#!rbox type=... width=...
-                ...
+                wiki text
                 }}}
+                }}}
+                or preferably when content is short:
+                {{{
+                [[rbox(wiki text, type=..., width=...)]]
                 }}}
                 where
                  * `type` is optional and is used to call for attention
@@ -251,13 +262,17 @@ class Boxes(Component):
                  `type` may be abbreviated as long as the abbreviation is
                  unique for one of the keywords above.
                  * `width` is optional and sets the width of the box (defaults
-                   a fixed width).
+                   a fixed width). Use `width=auto` for an automatically sized
+                   box.
 
                 Example:
                 {{{
                 {{{#!rbox type=warn
-                ...
+                = Warning
+                Beware of the bugs
                 }}}
+
+                [[rbox(Beware of the bugs, type=warn)]]
                 }}}
 
                 A `style` parameter is also accepted, to allow for custom
@@ -272,7 +287,7 @@ class Boxes(Component):
                 Syntax:
                 {{{
                 {{{#!newsbox
-                ...
+                wiki text
                 }}}
                 }}}
 
@@ -288,7 +303,7 @@ class Boxes(Component):
                 Syntax:
                 {{{
                 {{{#!imagebox
-                ...
+                wiki text
                 }}}
                 }}}
 

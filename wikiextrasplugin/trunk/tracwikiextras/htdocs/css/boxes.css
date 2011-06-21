@@ -4,7 +4,7 @@
     border-radius: 11px;
     box-shadow: .2em .2em .7em 0 #777;
     font-size: 0.85em;
-    margin: 2em 0 2em 1.75em;
+    margin: 1em 0 2em 1.75em;
     overflow: auto;
     padding: 0 11px;
 }
@@ -83,8 +83,9 @@
 
 /* Box alignment */
 .wikiextras.box.center {
-    margin: 1em auto;
     display: table;
+    margin-left: auto;
+    margin-right: auto;
 }
 .wikiextras.box.left {
     clear: left;
@@ -182,22 +183,19 @@
 .wikiextras.box.icon {
     background-repeat: no-repeat;
     background-position: 11px 11px;
-    min-height: 48px;
+    min-height: 46px;
     padding-left: 46px;
 }
 .wikiextras.box.icon h1, .wikiextras.box.icon h2, .wikiextras.box.icon h3,
 .wikiextras.box.icon h4, .wikiextras.box.icon h5, .wikiextras.box.icon h6 {
     background: none;
     border: none;
-}
-.wikiextras.box.icon h1 {
     border-radius: 0;
-    line-height: 24px;
-    margin: 11px 0 0 0;
-    padding: 0;
+    margin-left: 0;
+    padding: 0 11px 0 0;
 }
-.wikiextras.box.icon h1 + * {
-    margin-top: 0.2em;
+.wikiextras.box.icon *:first-child {
+    margin-top: 15px;
 }
 .wikiextras.box.icon * + h1 {
     margin-top: 1.5em;
@@ -304,4 +302,7 @@
 }
 #prefs {
     margin: 0 0 2em 2em !important;
+}
+#attachments, .buttons {
+    clear: both;
 }

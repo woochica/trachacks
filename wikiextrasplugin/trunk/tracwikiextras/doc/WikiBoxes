@@ -66,22 +66,30 @@ fixed with. Use this for side notes, references etc.
 }}}
 
 
-=== box types
+=== Box types
+The box type can optionally be stated. Here are all box
+types demonstrated. When `box` and `rbox` co-exist, they will share the page
+width.
 
-Here are all box types demonstrated. When `box` and `rbox` co-exist, they will
-share the page width.\\
-\\
 
-{{{#!rbox type=configure  style="margin-top:0"
+{{{#!rbox type=configure style="margin-top:0"
 = configure, configuration, tool
+This box is created by the wiki markup
+{{{
+{{{#!rbox type=configure
+...
 }}}
+}}}
+}}}
+
 {{{#!rbox type=details
-= details
+= details, look, magnifier
 }}}
 
 {{{#!rbox type=stop
 = critical, stop
 }}}
+
 {{{#!rbox type=warning
 = bug, error, important, warning
 }}}
@@ -89,9 +97,11 @@ share the page width.\\
 {{{#!rbox type=information
 = information, note
 }}}
+
 {{{#!rbox type=question
 = help, question
 }}}
+
 {{{#!rbox type=tips
 = tips
 }}}
@@ -99,28 +109,36 @@ share the page width.\\
 {{{#!rbox type=comment
 = comment
 }}}
+
 {{{#!rbox type=discussion
 = chat, discussion, talk
 }}}
+
 {{{#!rbox type=yes
 = ok, good, yes
 }}}
+
 {{{#!rbox type=no
 = bad, no, nok
 }}}
 
 
-
-
 {{{#!box type=configure style="margin-top:0"
 = configure, configuration, tool
-A `box` with `type=configure`, `configuration` or `tool` looks like this.
-
-Following boxes beneath this one are all `box`'es with different `type`'s.
-}}}
-{{{#!box type=details
-= details
 White boxes are part of the normal content.
+
+This box is created by the wiki markup
+{{{
+{{{#!box type=configure
+...
+}}}
+}}}
+Alternatively, `configuration` or `tool` may be used too, as well as a unique
+abbreviation like `config`.
+}}}
+
+{{{#!box type=details
+= details, look, magnifier
 }}}
 
 {{{#!box type=stop
@@ -128,6 +146,7 @@ White boxes are part of the normal content.
 Red boxes contain some really important information! Pay close attention to
 these to avoid running into problems.
 }}}
+
 {{{#!box type=warning
 = bug, error, important, warning
 }}}
@@ -136,24 +155,29 @@ these to avoid running into problems.
 = information, note
 Yellow boxes contain essential, but not critical information.
 }}}
+
 {{{#!box type=question
 = help, question
 }}}
+
 {{{#!box type=tips
 = tips
 }}}
 
 {{{#!box type=comment
 = comment
-Blue boxes contain elaborating information; they are used to elaborate on-going
+Blue boxes contain elaborative information; they are used to elaborate on-going
 work and should not, ideally, be left behind when work is done.
 }}}
+
 {{{#!box type=discussion
 = chat, discussion, talk
 }}}
+
 {{{#!box type=yes
 = ok, good, yes
 }}}
+
 {{{#!box type=no
 = bad, no, nok
 }}}
@@ -299,6 +323,27 @@ Original ticket workflow
 Original ticket workflow
 }}}
 }}}
+
+
+== Macro syntax examples
+The macro syntax may be preferable for shorter content:
+
+[[rbox(FIXME: This is wrong)]]
+{{{
+[[rbox(FIXME: This is wrong)]]
+}}}
+
+The type can be set as a parameter:
+[[rbox(= FIXME: This is wrong, type=warn)]]
+{{{
+[[rbox(= FIXME: This is wrong, type=warn)]]
+}}}
+
+Alignment too:
+{{{
+[[box(TODO: Learn how to use boxes, align=center)]]
+}}}
+[[box(TODO: Learn how to use boxes, align=center)]]
 
 
 == Macro instructions
