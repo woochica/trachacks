@@ -83,6 +83,8 @@
 
 /* Box alignment */
 .wikiextras.box.center {
+    margin: 1em auto;
+    display: table;
 }
 .wikiextras.box.left {
     clear: left;
@@ -102,10 +104,6 @@
 /* Box for presentation of image */
 .wikiextras.box.image {
     text-align: center;
-}
-table.wikiextras.center-box {
-    margin: 1em 0;
-    width: 100%;
 }
 
 /* Colored boxes */

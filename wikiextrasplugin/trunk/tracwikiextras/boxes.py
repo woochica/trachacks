@@ -23,7 +23,7 @@ from trac.config import BoolOption, IntOption
 from trac.core import implements, Component
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet
-from trac.wiki import IWikiMacroProvider, format_to_html
+from trac.wiki import IWikiMacroProvider, format_to_html, parse_args
 
 from tracwikiextras.icons import Icons
 
@@ -332,6 +332,8 @@ class Boxes(Component):
     def expand_macro(self, formatter, name, content, args=None):
         class_list = ['wikiextras', 'box']
         style_list = []
+        if args is None:
+            content, args = parse_args(content)
 
         #noinspection PyArgumentList
         if not Icons(self.env).shadowless:
@@ -347,9 +349,18 @@ class Boxes(Component):
         if align:
             class_list.append(align)
 
-        type = 'news' if name=='newsbox' else \
-               'image' if name=='imagebox' else \
-               self._get_type(args.get('type'))
+        if name == 'newsbox':
+            type = 'news'
+        elif name == 'imagebox':
+            type = 'image'
+        else:
+            type = args.get('type')
+            if not type:
+                for flag, value in args.iteritems():
+                    if value is True:
+                        type = flag
+                        break
+            type = self._get_type(type)
         if type in self.types:
             td = self.types[type] # type data
             if td[1]: #icon
@@ -378,20 +389,12 @@ class Boxes(Component):
                 else:
                     width = '%dpx' % (int(width[:-2]) - 22)
             style_list.append('width:%s' % width)
-        elif align=='center':
-            style_list.append('width:0') # for the table below
 
         html = format_to_html(self.env, formatter.context, content)
         class_ = ' '.join(class_list)
         style = ';'.join(style_list)
 
-        if align=='center':
-            return tag.table(tag.tr(tag.td(),
-                                    tag.td(html, class_=class_, style=style),
-                                    tag.td()),
-                             class_='wikiextras center-box')
-        else:
-            return tag.div(html, class_=class_, style=style)
+        return tag.div(html, class_=class_, style=style)
 
 
 class AboutWikiBoxes(Component):
