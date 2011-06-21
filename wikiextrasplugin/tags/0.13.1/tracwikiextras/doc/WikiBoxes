@@ -1,0 +1,353 @@
+= Wiki Boxes
+[[PageOutline(2-3, Content)]]
+
+To highlight a section on a wiki page, use the `box`, `rbox`, `newsbox` and
+`imagebox` WikiProcessors:
+
+{{{
+{{{#!box type=... align=... width=...
+...
+}}}
+
+{{{#!rbox type=...
+...
+}}}
+
+{{{#!newsbox
+...
+}}}
+
+{{{#!imagebox
+...
+}}}
+}}}
+
+Following sections demonstrates each box and how to use the  parameters.
+
+
+== box and rbox
+
+The normal `box` looks like this, and is as wide as the page.
+
+{{{#!box
+= box
+This is a normal box.
+== Subheading
+Some text
+= Second Heading 1
+Some text
+}}}
+
+{{{
+{{{#!box
+= box
+This is a normal box.
+== Subheading
+Some text
+= Second Heading 1
+Some text
+}}}
+}}}
+
+An `rbox` is aligned to the right of the page, with a fixed width.
+
+{{{#!rbox
+= rbox
+An `rbox` is aligned to the right of the page, with a
+fixed with. Use this for side notes, references etc.
+}}}
+
+{{{
+{{{#!rbox
+= rbox
+An `rbox` is aligned to the right of the page, with a
+fixed with. Use this for side notes, references etc.
+}}}
+}}}
+
+
+=== Box types
+The box type can optionally be stated. Here are all box
+types demonstrated. When `box` and `rbox` co-exist, they will share the page
+width.
+
+
+{{{#!rbox type=configure style="margin-top:0"
+= configure, configuration, tool
+This box is created by the wiki markup
+{{{
+{{{#!rbox type=configure
+...
+}}}
+}}}
+}}}
+
+{{{#!rbox type=details
+= details, look, magnifier
+}}}
+
+{{{#!rbox type=stop
+= critical, stop
+}}}
+
+{{{#!rbox type=warning
+= bug, error, important, warning
+}}}
+
+{{{#!rbox type=information
+= information, note
+}}}
+
+{{{#!rbox type=question
+= help, question
+}}}
+
+{{{#!rbox type=tips
+= tips
+}}}
+
+{{{#!rbox type=comment
+= comment
+}}}
+
+{{{#!rbox type=discussion
+= chat, discussion, talk
+}}}
+
+{{{#!rbox type=yes
+= ok, good, yes
+}}}
+
+{{{#!rbox type=no
+= bad, no, nok
+}}}
+
+
+{{{#!box type=configure style="margin-top:0"
+= configure, configuration, tool
+White boxes are part of the normal content.
+
+This box is created by the wiki markup
+{{{
+{{{#!box type=configure
+...
+}}}
+}}}
+Alternatively, `configuration` or `tool` may be used too, as well as a unique
+abbreviation like `config`.
+}}}
+
+{{{#!box type=details
+= details, look, magnifier
+}}}
+
+{{{#!box type=stop
+= critical, stop
+Red boxes contain some really important information! Pay close attention to
+these to avoid running into problems.
+}}}
+
+{{{#!box type=warning
+= bug, error, important, warning
+}}}
+
+{{{#!box type=information
+= information, note
+Yellow boxes contain essential, but not critical information.
+}}}
+
+{{{#!box type=question
+= help, question
+}}}
+
+{{{#!box type=tips
+= tips
+}}}
+
+{{{#!box type=comment
+= comment
+Blue boxes contain elaborative information; they are used to elaborate on-going
+work and should not, ideally, be left behind when work is done.
+}}}
+
+{{{#!box type=discussion
+= chat, discussion, talk
+}}}
+
+{{{#!box type=yes
+= ok, good, yes
+}}}
+
+{{{#!box type=no
+= bad, no, nok
+}}}
+
+
+=== Specify width
+Use the `width` parameter to set the width of the box:
+
+{{{#!box width=6em
+Small box
+}}}
+
+{{{
+{{{#!box width=6em
+Small box
+}}}
+}}}
+
+Use `width=auto` to auto-size right-aligned boxes:
+{{{#!rbox width=auto
+Auto-sized rbox
+}}}
+{{{
+{{{#!rbox width=auto
+Auto-sized rbox
+}}}
+}}}
+(`width=auto` does not have this effect on `box` since this is the default
+width for it, which is the whole page width.)
+
+
+=== Center-aligned box
+
+Boxes can be center-aligned too. Default width is always `auto`, which causes
+the box to become as narrow as possible.
+
+{{{#!box align=center
+Center-aligned box
+}}}
+
+{{{
+{{{#!box align=center
+Center-aligned box
+}}}
+}}}
+
+Define `width`, or apply a custom style, for widening the centered box.
+
+Width:
+
+{{{#!box align=center width=14em
+Center-aligned box with defined width
+}}}
+
+{{{
+{{{#!box align=center width=14em
+Center-aligned box with defined width
+}}}
+}}}
+
+Custom style:
+
+{{{#!box align=center style="white-space:nowrap"
+Center-aligned box with no white space\\
+wrapping
+}}}
+
+{{{
+{{{#!box align=center style="white-space:nowrap"
+Center-aligned box with no white space\\
+wrapping
+}}}
+}}}
+
+
+=== Left-aligned box
+
+{{{#!box align=left
+Left-aligned box
+}}}
+
+Boxes can be left-aligned too, text will flow to the right of it. The width
+will adapt to its content (i.e. default width is `auto`).
+
+{{{
+{{{#!box align=left
+Left-aligned box
+}}}
+}}}
+
+
+=== Custom styling
+{{{
+#!box type=config style="background-color:white; border:2pt inset gray; max-width:350px; border-radius:0; box-shadow:none"
+= Customizable
+You can also apply some custom styling to text boxes.
+}}}
+
+{{{
+{{{
+#!box type=config style="background-color:white; border:2pt inset gray; max-width:350px; border-radius:0; box-shadow:none"
+= Customizable
+You can also apply some custom styling to text boxes.
+}}}
+}}}
+
+
+
+
+== newsbox
+
+A newsbox is very simple to use.
+
+{{{#!newsbox 
+= Headline
+A `newsbox` is aligned to the right of the page,
+with a fixed with. Use this for announcements etc.
+}}}
+
+{{{
+{{{#!newsbox 
+= Headline
+A `newsbox` is aligned to the right of the page,
+with a fixed with. Use this for announcements etc.
+}}}
+}}}
+
+
+== imagebox
+
+Use the `imagebox` to show a single image with caption.
+
+{{{#!imagebox
+[[Image(htdocs:../common/guide/original-workflow.png, border=1, link=)]]
+
+Original ticket workflow
+}}}
+
+{{{
+{{{#!imagebox
+[[Image(htdocs:../common/guide/original-workflow.png, border=1, link=)]]
+
+Original ticket workflow
+}}}
+}}}
+
+
+== Macro syntax examples
+The macro syntax may be preferable for shorter content:
+
+[[rbox(A short comment)]]
+{{{
+[[rbox(A short comment)]]
+}}}
+
+The type can be set as a parameter:
+[[rbox(A short comment, type=comment)]]
+{{{
+[[rbox(A short comment, type=comment)]]
+}}}
+
+Alignment too:
+{{{
+[[box(Learn how to use boxes, align=center)]]
+}}}
+[[box(Learn how to use boxes, align=center)]]
+
+
+== Macro instructions
+Here follows the built in macro instructions concerning boxes, as they appear
+on WikiMacros.
+
+[[box?]]
