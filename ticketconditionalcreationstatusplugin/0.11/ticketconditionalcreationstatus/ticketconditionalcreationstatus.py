@@ -5,18 +5,14 @@ from trac.config import Option
 class TicketConditionalCreationStatus(Component):
     implements(ITicketChangeListener)
  
-    unowned = dict()
-    owned = dict()
+    unowned = {}
+    owned = {}
 
     def __init__(self):
-        criteria = self.config.get('ticketconditionalcreationstatus', 'criteria', '');
+        criteria = self._ccs_config('criteria');
         for c in (x.strip() for x in criteria.split(',')):
-            config = self.config.get('ticketconditionalcreationstatus', '%s.unowned' % c, '')
-            if config != '':
-                self.unowned = self._ccs_parse(self.unowned, c, config)
-            config = self.config.get('ticketconditionalcreationstatus', '%s.owned' % c, '')
-            if config != '':
-                self.owned = self._ccs_parse(self.owned, c, config)
+	    self.unowned = self._ccs_parse(self.unowned, c, 'unowned')
+	    self.owned = self._ccs_parse(self.owned, c, 'owned')
 
     def ticket_created(self, ticket):
         status = None
@@ -39,20 +35,31 @@ class TicketConditionalCreationStatus(Component):
     def ticket_deleted(self, ticket):
         pass 
 
-    def _ccs_parse(self, criteria, criterium, config):
-        try:
-            values, state = [x.strip() for x in config.split('->')]
-        except ValueError:
-            raise Exception('Bad option "%s"' % (config, ))
-        for v in (x.strip() for x in values.split(',')):
-            if not criterium in criteria:
-                   criteria[criterium] = dict()
-            criteria[criterium][v] = state
-        return criteria
-    
     def _ccs_newstatus(self, criteria, ticket):
         for criterium, values in criteria.items():
             for value, newstatus in values.items():
                 if ticket[criterium] == value:
                     return newstatus
         return None
+
+    def _ccs_parse(self, criteria, criterium, kind):
+        config = self._ccs_config('%s.%s' % (criterium, kind))
+	if config:
+	    for part in (x.strip() for x in config.split(',')):
+		criteria = self._ccs_parse_one(criteria, criterium, part)
+        return criteria
+
+    def _ccs_parse_one(self, criteria, criterium, config):
+	try:
+	    values, state = [x.strip() for x in config.split('->')]
+	except ValueError:
+	    raise Exception('Bad option "%s"' % (config, ))
+	for v in (x.strip() for x in values.split('|')):
+	    if not criterium in criteria:
+		   criteria[criterium] = {}
+	    criteria[criterium][v] = state
+        return criteria
+
+    def _ccs_config(self, varname):
+        return self.config.get('ticketconditionalcreationstatus', varname, '')
+
