@@ -64,7 +64,7 @@ class ZotRefMacro(WikiMacroBase):
     columns = ['itemTypeID','firstCreator','year', 'publicationTitle','volume','issue','pages','title','url']
     model = ZoteroModelProvider(self.env)
     item_ids = model.get_items_ids_by_keys( citelist )
-    item_data = model.get_item_columns(item_ids,columns)
+    item_data = model.get_item_columns_by_iids(item_ids,columns)
     refs = []
 
     for itemID, itemTypeID, firstCreator, year, publicationTitle, volume, issue, pages, title, url in item_data:
@@ -132,6 +132,6 @@ class ZotRelatedMacro(WikiMacroBase):
                 rids_all.append(id)
 
         if len(rids_all) > 0:
-            item_mata = model.get_item_columns(rids_all,columns)
+            item_mata = model.get_item_columns_by_iids(rids_all,columns)
             return render_refs_box(self,formatter.req, rids_all)
     
