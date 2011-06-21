@@ -95,6 +95,12 @@ You can check out
 [http://trac-hacks.org/browser/wikiextrasplugin browse the source] with Trac.
 
 
+== Install ==
+
+See generic instructions in
+[http://trac.edgewall.org/wiki/TracPlugins#InstallingaTracPlugin Trac:TracPlugins#InstallingaTracPlugin].
+
+
 == Configuration ==
 
 Activate the plugin:
