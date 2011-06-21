@@ -328,22 +328,22 @@ Original ticket workflow
 == Macro syntax examples
 The macro syntax may be preferable for shorter content:
 
-[[rbox(FIXME: This is wrong)]]
+[[rbox(A short comment)]]
 {{{
-[[rbox(FIXME: This is wrong)]]
+[[rbox(A short comment)]]
 }}}
 
 The type can be set as a parameter:
-[[rbox(= FIXME: This is wrong, type=warn)]]
+[[rbox(A short comment, type=comment)]]
 {{{
-[[rbox(= FIXME: This is wrong, type=warn)]]
+[[rbox(A short comment, type=comment)]]
 }}}
 
 Alignment too:
 {{{
-[[box(TODO: Learn how to use boxes, align=center)]]
+[[box(Learn how to use boxes, align=center)]]
 }}}
-[[box(TODO: Learn how to use boxes, align=center)]]
+[[box(Learn how to use boxes, align=center)]]
 
 
 == Macro instructions
