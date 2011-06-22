@@ -196,7 +196,7 @@ class Boxes(Component):
 
                 Syntax:
                 {{{
-                {{{#!box type=... align=... width=...
+                {{{#!box type align=... width=...
                 wiki text
                 }}}
                 }}}
@@ -205,15 +205,13 @@ class Boxes(Component):
                 [[box(wiki text, type=..., align=..., width=...)]]
                 }}}
                 where
-                 * `type` is optional and is used to call for attention
-                   depending on type of matter. When `type` is set, the box is
-                   decorated with an icon (except for `news`) and colored,
-                   depending on what ''urgency'' the type represents:
-
+                 * `type` is an optional flag, or parameter, to call for
+                   attention depending on type of matter. When `type` is set,
+                   the box is decorated with an icon (except for `news`) and
+                   colored, depending on what ''urgency'' the type represents:
                 %s
-
-                 `type` may be abbreviated as long as the abbreviation is
-                 unique for one of the keywords above.
+                     `type` may be abbreviated as long as the abbreviation is
+                     unique for one of the keywords above.
                  * `align` is optionally one of `right`, `left` or `center`.
                    The `rbox` macro is an alias for `align=right`.
                  * `width` is optional and sets the width of the box (defaults
@@ -223,7 +221,7 @@ class Boxes(Component):
 
                 Examples:
                 {{{
-                {{{#!box type=warn
+                {{{#!box warn
                 = Warning
                 Beware of the bugs
                 }}}
@@ -234,7 +232,7 @@ class Boxes(Component):
                 A `style` parameter is also accepted, to allow for custom
                 styling of the box. See also the `rbox`, `newsbox` and
                 `imagebox` macros (processors).
-                """) % self._get_type_description(' ')
+                """) % self._get_type_description(' ' * 5)
         elif name == 'rbox':
             return cleandoc("""\
 
@@ -243,7 +241,7 @@ class Boxes(Component):
 
                 Syntax:
                 {{{
-                {{{#!rbox type=... width=...
+                {{{#!rbox type width=...
                 wiki text
                 }}}
                 }}}
@@ -252,22 +250,20 @@ class Boxes(Component):
                 [[rbox(wiki text, type=..., width=...)]]
                 }}}
                 where
-                 * `type` is optional and is used to call for attention
-                   depending on type of matter. When `type` is set, the box is
-                   decorated with an icon (except for `news`) and colored,
-                   depending what ''urgency'' the type represents:
-
+                 * `type` is an optional flag, or parameter, to call for
+                   attention depending on type of matter. When `type` is set,
+                   the box is decorated with an icon (except for `news`) and
+                   colored, depending on what ''urgency'' the type represents:
                 %s
-
-                 `type` may be abbreviated as long as the abbreviation is
-                 unique for one of the keywords above.
+                     `type` may be abbreviated as long as the abbreviation is
+                     unique for one of the keywords above.
                  * `width` is optional and sets the width of the box (defaults
                    a fixed width). Use `width=auto` for an automatically sized
                    box.
 
-                Example:
+                Examples:
                 {{{
-                {{{#!rbox type=warn
+                {{{#!rbox warn
                 = Warning
                 Beware of the bugs
                 }}}
@@ -278,11 +274,11 @@ class Boxes(Component):
                 A `style` parameter is also accepted, to allow for custom
                 styling of the box. See also the `box`, `newsbox` and
                 `imagebox` macros (processors).
-                """) % self._get_type_description(' ')
+                """) % self._get_type_description(' ' * 5)
         elif name == 'newsbox':
             return cleandoc("""\
                 Present a news box to the right. (This is a shorthand for
-                `rbox type=news`)
+                `rbox news`)
 
                 Syntax:
                 {{{
@@ -291,10 +287,14 @@ class Boxes(Component):
                 }}}
                 }}}
 
-                A `style` parameter is also accepted, to allow for custom
-                styling of the box. See also the `box`, `rbox` and `imagebox`
-                macros (processors). ''(Comment: This box corresponds to the
-                well-known ''`NewsFlash`'' macro.)''
+                The following parameters are also accepted:
+                 * `width` -- Set the width of the box (defaults a fixed
+                   width).
+                 * `style` -- Custom styling of the box.
+
+                See also the `box`, `rbox` and `imagebox` macros (processors).
+                ''(Comment: This box corresponds to the well-known
+                ''`NewsFlash`'' macro.)''
                 """)
         elif name == 'imagebox':
             return cleandoc("""\
@@ -319,9 +319,14 @@ class Boxes(Component):
                 Note that the `size` parameter of the `Image` macro may not
                 behave as expected when using relative sizes (`%`).
 
-                A `style` parameter is also accepted, to allow for custom
-                styling of the box. See also the `box`, `rbox` and `newsbox`
-                macros (processors).
+                The following parameters are also accepted:
+                 * `align` -- One of `right`, `left` or `center` (defaults
+                   `center`).
+                 * `width` -- Set the width of the box (defaults `auto` except
+                   for right aligned boxes which defaults a fixed width).
+                 * `style` -- Custom styling of the box.
+
+                See also the `box`, `rbox` and `newsbox` macros (processors).
                 """)
 
     def _get_type(self, word):

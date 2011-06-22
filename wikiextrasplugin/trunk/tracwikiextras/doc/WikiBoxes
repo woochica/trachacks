@@ -5,11 +5,11 @@ To highlight a section on a wiki page, use the `box`, `rbox`, `newsbox` and
 `imagebox` WikiProcessors:
 
 {{{
-{{{#!box type=... align=... width=...
+{{{#!box type align=... width=...
 ...
 }}}
 
-{{{#!rbox type=...
+{{{#!rbox type width=...
 ...
 }}}
 
@@ -20,6 +20,17 @@ To highlight a section on a wiki page, use the `box`, `rbox`, `newsbox` and
 {{{#!imagebox
 ...
 }}}
+}}}
+
+For shorter content, macro syntax may be preferable:
+{{{
+[[box(..., type=..., align=..., width=...)]]
+
+[[rbox(..., type=..., width=...)]]
+
+[[newsbox(...)]]
+
+[[imagebox(...)]]
 }}}
 
 Following sections demonstrates each box and how to use the  parameters.
@@ -67,67 +78,74 @@ fixed with. Use this for side notes, references etc.
 
 
 === Box types
-The box type can optionally be stated. Here are all box
-types demonstrated. When `box` and `rbox` co-exist, they will share the page
-width.
+The box type can optionally be stated, either as a flag or as a parameter
+`type=...`. Here are all box types demonstrated. When `box` and `rbox`
+co-exist, they will share the page width.
 
 
-{{{#!rbox type=configure style="margin-top:0"
+{{{#!rbox configure style="margin-top:0"
 = configure, configuration, tool
 This box is created by the wiki markup
 {{{
-{{{#!rbox type=configure
+{{{#!rbox configure
 ...
 }}}
 }}}
+See the box description to the left for more details.
 }}}
 
-{{{#!rbox type=details
+{{{#!rbox details
 = details, look, magnifier
 }}}
 
-{{{#!rbox type=stop
+{{{#!rbox stop
 = critical, stop
 }}}
 
-{{{#!rbox type=warning
+{{{#!rbox warning
 = bug, error, important, warning
 }}}
 
-{{{#!rbox type=information
+{{{#!rbox information
 = information, note
 }}}
 
-{{{#!rbox type=question
+{{{#!rbox question
 = help, question
 }}}
 
-{{{#!rbox type=tips
+{{{#!rbox tips
 = tips
 }}}
 
-{{{#!rbox type=comment
+{{{#!rbox comment
 = comment
 }}}
 
-{{{#!rbox type=discussion
+{{{#!rbox discussion
 = chat, discussion, talk
 }}}
 
-{{{#!rbox type=yes
+{{{#!rbox yes
 = ok, good, yes
 }}}
 
-{{{#!rbox type=no
+{{{#!rbox no
 = bad, no, nok
 }}}
 
 
-{{{#!box type=configure style="margin-top:0"
+{{{#!box configure style="margin-top:0"
 = configure, configuration, tool
 White boxes are part of the normal content.
 
 This box is created by the wiki markup
+{{{
+{{{#!box configure
+...
+}}}
+}}}
+or
 {{{
 {{{#!box type=configure
 ...
@@ -137,48 +155,48 @@ Alternatively, `configuration` or `tool` may be used too, as well as a unique
 abbreviation like `config`.
 }}}
 
-{{{#!box type=details
+{{{#!box details
 = details, look, magnifier
 }}}
 
-{{{#!box type=stop
+{{{#!box stop
 = critical, stop
 Red boxes contain some really important information! Pay close attention to
 these to avoid running into problems.
 }}}
 
-{{{#!box type=warning
+{{{#!box warning
 = bug, error, important, warning
 }}}
 
-{{{#!box type=information
+{{{#!box information
 = information, note
 Yellow boxes contain essential, but not critical information.
 }}}
 
-{{{#!box type=question
+{{{#!box question
 = help, question
 }}}
 
-{{{#!box type=tips
+{{{#!box tips
 = tips
 }}}
 
-{{{#!box type=comment
+{{{#!box comment
 = comment
 Blue boxes contain elaborative information; they are used to elaborate on-going
 work and should not, ideally, be left behind when work is done.
 }}}
 
-{{{#!box type=discussion
+{{{#!box discussion
 = chat, discussion, talk
 }}}
 
-{{{#!box type=yes
+{{{#!box yes
 = ok, good, yes
 }}}
 
-{{{#!box type=no
+{{{#!box no
 = bad, no, nok
 }}}
 
@@ -285,8 +303,6 @@ You can also apply some custom styling to text boxes.
 }}}
 
 
-
-
 == newsbox
 
 A newsbox is very simple to use.
@@ -304,6 +320,9 @@ A `newsbox` is aligned to the right of the page,
 with a fixed with. Use this for announcements etc.
 }}}
 }}}
+
+A newsbox accepts the same parameters as an ordinary box, but are normally not
+used.
 
 
 == imagebox
@@ -323,6 +342,9 @@ Original ticket workflow
 Original ticket workflow
 }}}
 }}}
+
+An imagebox accepts the same parameters as an ordinary box, but are normally
+not used.
 
 
 == Macro syntax examples
@@ -344,6 +366,12 @@ Alignment too:
 [[box(Learn how to use boxes, align=center)]]
 }}}
 [[box(Learn how to use boxes, align=center)]]
+
+Finally, width as well:
+[[rbox(Auto-sized rbox, width=auto)]]
+{{{
+[[rbox(Auto-sized rbox, width=auto)]]
+}}}
 
 
 == Macro instructions
