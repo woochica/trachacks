@@ -4,7 +4,7 @@ Trac WebAdmin plugin for administration of custom fields.
 
 License: BSD
 
-(c) 2005-2009 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2005-2011 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 (c) 2007-2009 ::: www.Optaros.com (.....)
 """
 
@@ -35,13 +35,13 @@ class CustomFieldAdminPage(Component):
         add_script(req, 'customfieldadmin/js/customfieldadmin.js')
 
         def _customfield_from_req(self, req):
-            cfdict = {'name': req.args.get('name').encode('utf-8'),
-                      'label': req.args.get('label').encode('utf-8'),
-                      'type': req.args.get('type').encode('utf-8'),
-                      'value': req.args.get('value').encode('utf-8'),
-                      'options': [x.strip().encode('utf-8') for x in req.args.get('options').split("\n")],
-                      'cols': req.args.get('cols').encode('utf-8'),
-                      'rows': req.args.get('rows').encode('utf-8'),
+            cfdict = {'name': req.args.get('name','').encode('utf-8'),
+                      'label': req.args.get('label','').encode('utf-8'),
+                      'type': req.args.get('type','').encode('utf-8'),
+                      'value': req.args.get('value','').encode('utf-8'),
+                      'options': [x.strip().encode('utf-8') for x in req.args.get('options','').split("\n")],
+                      'cols': req.args.get('cols','').encode('utf-8'),
+                      'rows': req.args.get('rows','').encode('utf-8'),
                       'order': req.args.get('order', '').encode('utf-8'),
                       'format': req.args.get('format', '').encode('utf-8')}
             return cfdict

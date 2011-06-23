@@ -5,13 +5,13 @@ Supports creating, getting, updating and deleting custom fields.
 
 License: BSD
 
-(c) 2005-2009 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2005-2011 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
 import re
 
 from trac.core import *
-from trac.ticket.model import TicketSystem
+from trac.ticket.api import TicketSystem
 
 __all__ = ['CustomFields']
 
@@ -30,6 +30,7 @@ class CustomFields(Component):
         cols = number of columns for text area
         rows = number of rows for text area
         order = specify sort order for field
+        format = text|wiki (for text and textarea)
     """
     
     implements()
@@ -80,8 +81,13 @@ class CustomFields(Component):
         if 'value' in customfield:
             self.config.set('ticket-custom', customfield['name'] + '.value', customfield['value'])
         if 'options' in customfield:
-            self.config.set('ticket-custom', customfield['name'] + '.options', '|'.join(customfield['options']))
-        if 'format' in customfield:
+            if customfield.get('optional', False):
+                self.config.set('ticket-custom', customfield['name'] + '.options',
+                                '|' + '|'.join(customfield['options']))
+            else:
+                self.config.set('ticket-custom', customfield['name'] + '.options',
+                               '|'.join(customfield['options'])) 
+        if 'format' in customfield and customfield['type'] in ('text', 'textarea'):
             self.config.set('ticket-custom', customfield['name'] + '.format', customfield['format'])
         # Textarea
         if customfield['type'] == 'textarea':
