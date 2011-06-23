@@ -36,9 +36,17 @@ class NoAnonymousModule(Component):
             for p in paths:
                 if req.path_info.startswith(p):
                     return handler
-                    
+
+            # Reconstruct return URL
+            if req.path_info.startswith('/logout'):
+                returl = None
+            else:
+                returl = req.base_url + req.path_info
+                if req.query_string:
+                    returl += '?' + req.query_string
+
             # Anonymous user redirect to log in.
-            req.redirect(req.href.login())
+            req.redirect(req.href.login(referer=returl))
             # The request above raises RequestDone exception, so we
             # do not have to bother what happens below
 
