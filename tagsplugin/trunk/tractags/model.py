@@ -22,11 +22,12 @@ class TagModelProvider(Component):
     def environment_needs_upgrade(self, db):
         if self._need_migration(db):
             return True
-        cursor = db.cursor()
         try:
+            cursor = db.cursor()
             cursor.execute("select count(*) from tags")
             cursor.fetchone()
             return False
+        # FIXME: Be careful not to catch too many exceptions here.
         except:
             db.rollback()
             return True
@@ -35,12 +36,13 @@ class TagModelProvider(Component):
         self._upgrade_db(db)
 
     def _need_migration(self, db):
-        cursor = db.cursor()
         try:
+            cursor = db.cursor()
             cursor.execute("select count(*) from wiki_namespace")
             cursor.fetchone()
             self.env.log.debug("tractags needs to migrate old data")
             return True
+        # FIXME: Be careful not to catch too many exceptions here.
         except:
             db.rollback()
             return False
