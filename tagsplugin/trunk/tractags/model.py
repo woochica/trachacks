@@ -24,7 +24,7 @@ class TagModelProvider(Component):
             return True
         try:
             cursor = db.cursor()
-            cursor.execute("select count(*) from tags")
+            cursor.execute("SELECT COUNT(*) FROM tags")
             cursor.fetchone()
             return False
         # FIXME: Be careful not to catch too many exceptions here.
@@ -38,7 +38,7 @@ class TagModelProvider(Component):
     def _need_migration(self, db):
         try:
             cursor = db.cursor()
-            cursor.execute("select count(*) from wiki_namespace")
+            cursor.execute("SELECT COUNT(*) FROM wiki_namespace")
             cursor.fetchone()
             self.env.log.debug("tractags needs to migrate old data")
             return True
@@ -65,8 +65,12 @@ class TagModelProvider(Component):
             # Migrate old data
             if self._need_migration(db):
                 cursor = db.cursor()
-                cursor.execute("INSERT INTO tags (tagspace, name, tag) SELECT "
-                               "'wiki', name, namespace FROM wiki_namespace")
+                cursor.execute("""
+                    INSERT INTO tags
+                            (tagspace, name, tag)
+                        SELECT 'wiki', name, namespace
+                        FROM    wiki_namespace
+                    """)
                 cursor.execute("DROP TABLE wiki_namespace")
                 db.commit()
         except:
