@@ -27,8 +27,8 @@ class TagModelProvider(Component):
             cursor.execute("select count(*) from tags")
             cursor.fetchone()
             return False
-        # FIXME: Be careful not to catch too many exceptions here.
-        except:
+        except Exception, e:
+            self.log.error("DatabaseError: %s", e)
             db.rollback()
             return True
 
@@ -42,8 +42,8 @@ class TagModelProvider(Component):
             cursor.fetchone()
             self.env.log.debug("tractags needs to migrate old data")
             return True
-        # FIXME: Be careful not to catch too many exceptions here.
-        except:
+        except Exception, e:
+            self.log.error("DatabaseError: %s", e)
             db.rollback()
             return False
 
@@ -69,7 +69,8 @@ class TagModelProvider(Component):
                                "'wiki', name, namespace FROM wiki_namespace")
                 cursor.execute("DROP TABLE wiki_namespace")
                 db.commit()
-        except:
+        except Exception, e:
+            self.log.error("DatabaseError: %s", e)
             db.rollback()
             raise
 
