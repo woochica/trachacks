@@ -334,6 +334,21 @@ class TracJSGanttChart(WikiMacroBase):
                     not in self.ticketsByID.keys():
                 wbs = _setLevel(t['id'], wbs, 1)
 
+
+    def _calc_end(self):      
+        for t in self.tickets:
+            if t['children']:
+                min = None
+                for i in t['children']:
+                    if min == None:
+                        min = self.ticketsByID[i]['calc_finish']
+                    else:
+                        if self.ticketsByID[i]['calc_finish'] < min:
+                            min = self.ticketsByID[i]['calc_finish']
+                t['tempEnd'] = min
+            else:
+                t['tempEnd'] = t['calc_finish']
+
     def _schedule_tasks(self):
         def _workDays(ticket):
             if self.fields['estimate'] \
@@ -680,6 +695,16 @@ class TracJSGanttChart(WikiMacroBase):
         return task
 
     def _add_tasks(self, options):
+        def _sort_children(a,b):
+            if self.ticketsByID[a]['tempEnd'] < self.ticketsByID[b]['tempEnd']:
+                return -1
+            elif self.ticketsByID[a]['tempEnd'] > self.ticketsByID[b]['tempEnd']:
+                return 1
+            elif self.ticketsByID[a]['calc_start'] > self.ticketsByID[b]['calc_start']:
+                return 1
+            else:
+                return -1
+
         if options.get('sample'):
             tasks = self._add_sample_tasks()
         else:
@@ -698,10 +723,15 @@ class TracJSGanttChart(WikiMacroBase):
             for t in self.tickets:
                 self.ticketsByID[t['id']] = t
 
-            self._compute_wbs()
-
             self._schedule_tasks()
+            self._calc_end()
+            self.tickets.sort(key=itemgetter('calc_start'))            
+            self.tickets.sort(key=itemgetter('tempEnd'))            
 
+            for i in self.tickets:
+                if i['children']:
+                    i['children'].sort(_sort_children)
+            self._compute_wbs()                
             self.tickets.sort(key=itemgetter('wbs'))
 
             for ticket in self.tickets:
