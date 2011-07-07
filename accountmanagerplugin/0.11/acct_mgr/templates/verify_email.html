@@ -3,7 +3,9 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:py="http://genshi.edgewall.org/"
-      xmlns:xi="http://www.w3.org/2001/XInclude">
+      xmlns:xi="http://www.w3.org/2001/XInclude" 
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="acct_mgr">
   <xi:include href="layout.html" />
   <head>
     <title>Verify Email</title>
@@ -15,15 +17,15 @@
   </head>
 
   <body>
-    <div id="content" class="login">
+    <div id="content" class="verify_email">
 
       <h1>Verify Email</h1>
       
-      <p class="help">An email was sent to $req.session.email with a token to
-      verify your new address.  Please check your email and enter the token
-      in the form below.</p>
-      <p>You can <a href="${href.prefs()}">change your email address</a> if it
-      is incorrect.</p>
+      <p class="help" i18n:msg="email">An email was sent to
+        $req.session.email with a token to verify your new address.
+        Please check your email and enter the token in the form below.</p>
+      <p i18n:msg="">You can <a href="${href.prefs()}">change your
+        email address</a>, if it is incorrect.</p>
 
       <form method="post" action="" id="acctmgr_verify_email">
         <div>
@@ -32,8 +34,10 @@
                  size="10" value="${value_of('token')}" />
         </div>
         <div class="button central nav buttons">
-          <input type="submit" name="verify" value="Verify" />
-          <input type="submit" name="resend" value="Resend Email" />
+          <input type="submit" name="verify" py:attrs="button_state"
+                 value="${dgettext('acct_mgr', 'Verify')}" />
+          <input type="submit" name="resend" py:attrs="button_state"
+                 value="${dgettext('acct_mgr', 'Resend Email')}" />
         </div>
       </form>
 

@@ -78,6 +78,15 @@ class HtDigestTestCase(_BaseTestCase):
         self.assertTrue(self.store.delete_user(user))
         self.assertEqual([], list(self.store.get_users()))
 
+    def test_update_password(self):
+        self._init_password_file('test_passwdupd', '')
+        self.store.set_password('foo', 'pass1')
+        self.assertFalse(self.store.check_password('foo', 'pass2'))
+        self.store.set_password('foo', 'pass2')
+        self.assertTrue(self.store.check_password('foo', 'pass2'))
+        self.store.set_password('foo', 'pass3', 'pass2')
+        self.assertTrue(self.store.check_password('foo', 'pass3'))
+
 
 class HtPasswdTestCase(_BaseTestCase):
     def setUp(self):
@@ -121,6 +130,36 @@ class HtPasswdTestCase(_BaseTestCase):
         self.assertTrue(self.store.delete_user(user))
         self.assertEqual([], list(self.store.get_users()))
 
+    def test_update_password(self):
+        self._init_password_file('test_passwdupd', '')
+        self.store.set_password('foo', 'pass1')
+        self.assertFalse(self.store.check_password('foo', 'pass2'))
+        self.store.set_password('foo', 'pass2')
+        self.assertTrue(self.store.check_password('foo', 'pass2'))
+        self.store.set_password('foo', 'pass3', 'pass2')
+        self.assertTrue(self.store.check_password('foo', 'pass3'))
+
+    def test_create_hash(self):
+        self._init_password_file('test_hash', '')
+        self.env.config.set('account-manager', 'htpasswd_hash_type', 'bad')
+        self.assertTrue(self.store.userline('user',
+                                            'password').startswith('user:'))
+        self.assertFalse(self.store.userline('user', 'password'
+                                            ).startswith('user:$apr1$'))
+        self.assertFalse(self.store.userline('user', 'password'
+                                            ).startswith('user:{SHA}'))
+        self.store.set_password('user', 'password')
+        self.assertTrue(self.store.check_password('user', 'password'))
+        self.env.config.set('account-manager', 'htpasswd_hash_type', 'md5')
+        self.assertTrue(self.store.userline('user', 'password'
+                                           ).startswith('user:$apr1$'))
+        self.store.set_password('user', 'password')
+        self.assertTrue(self.store.check_password('user', 'password'))
+        self.env.config.set('account-manager', 'htpasswd_hash_type', 'sha')
+        self.assertTrue(self.store.userline('user', 'password'
+                                           ).startswith('user:{SHA}'))
+        self.store.set_password('user', 'password')
+        self.assertTrue(self.store.check_password('user', 'password'))
 
 def suite():
     suite = unittest.TestSuite()

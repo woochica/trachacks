@@ -9,8 +9,28 @@
 #
 # Author: Matthew Good <trac@matt-good.net>
 
-from trac.core import *
-from trac.config import Option, BoolOption, ExtensionOption, OrderedExtensionsOption
+from pkg_resources  import resource_filename
+
+from trac.config    import  BoolOption, Configuration, ExtensionOption, \
+                    Option, OrderedExtensionsOption
+from trac.core      import *
+
+# Import i18n methods.  Fallback modules maintain compatibility to Trac 0.11
+# by keeping Babel optional here.
+try:
+    from  trac.util.translation  import  domain_functions
+    add_domain, _, N_, gettext, ngettext, tag_ = \
+        domain_functions('acct_mgr', ('add_domain', '_', 'N_', 'gettext',
+                                      'ngettext', 'tag_'))
+except ImportError:
+    from  genshi.builder         import  tag as tag_
+    from  trac.util.translation  import  gettext
+    _ = gettext
+    N_ = lambda text: text
+    ngettext = _
+    def add_domain(a,b,c=None):
+        pass
+
 
 class IPasswordStore(Interface):
     """An interface for Components that provide a storage method for users and
@@ -30,14 +50,18 @@ class IPasswordStore(Interface):
         """
 
     def get_users(self):
-        """Returns an iterable of the known usernames
+        """Returns an iterable of the known usernames.
         """
 
     def has_user(self, user):
         """Returns whether the user account exists.
         """
 
-    def set_password(self, user, password):
+    def has_email(self, address):
+        """Returns whether a user account with that email address exists.
+        """
+
+    def set_password(self, user, password, old_password = None):
         """Sets the password for the user.  This should create the user account
         if it doesn't already exist.
         Returns True if a new account was created, False if an existing account
@@ -94,26 +118,47 @@ class AccountManager(Component):
     setting.
 
     The "account-manager.password_store" may be an ordered list of password
-    stores.  if it is a list, then each password store is queried in turn.
+    stores.  If it is a list, then each password store is queried in turn.
     """
 
     implements(IAccountChangeListener)
 
-    _password_store = OrderedExtensionsOption('account-manager', 'password_store',
-                                              IPasswordStore, include_missing=False)
+    _password_store = OrderedExtensionsOption(
+        'account-manager', 'password_store', IPasswordStore,
+        include_missing=False)
     _password_format = Option('account-manager', 'password_format')
     stores = ExtensionPoint(IPasswordStore)
     change_listeners = ExtensionPoint(IAccountChangeListener)
-    force_passwd_change = BoolOption('account-manager', 'force_passwd_change',
-                                     True, doc="Force the user to change "
-                                     "password when it's reset.")
-    persistent_sessions = BoolOption('account-manager', 'persistent_sessions',
-                                     False, doc="Allow the user to be "
-                                     "remembered across sessions without "
-                                     "needing to re-authenticate. This is, "
-                                     "user checks a \"Remember Me\" checkbox "
-                                     "and, next time he visits the site, he'll "
-                                     "be remembered")
+    allow_delete_account = BoolOption(
+        'account-manager', 'allow_delete_account', True,
+        doc="Allow users to delete their own account.")
+    force_passwd_change = BoolOption(
+        'account-manager', 'force_passwd_change', True,
+        doc="Force the user to change password when it's reset.")
+    persistent_sessions = BoolOption(
+        'account-manager', 'persistent_sessions', False,
+        doc="""Allow the user to be remembered across sessions without
+            needing to re-authenticate. This is, user checks a
+            \"Remember Me\" checkbox and, next time he visits the site,
+            he'll be remembered.""")
+    refresh_passwd = BoolOption(
+        'account-manager', 'refresh_passwd', False,
+        doc="""Re-set passwords on successful authentication.
+            This is most useful to move users to a new password store or
+            enforce new store configuration (i.e. changed hash type),
+            but should be disabled/unset otherwise.""")
+    verify_email = BoolOption(
+        'account-manager', 'verify_email', True,
+        doc="Verify the email address of Trac users.")
+    username_char_blacklist = Option(
+        'account-manager', 'username_char_blacklist', ':[]',
+        doc="""Always exclude some special characters from usernames.
+            This is enforced upon new user registration.""")
+
+    def __init__(self):
+        # bind the 'acct_mgr' catalog to the specified locale directory
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
 
     # Public API
 
@@ -125,6 +170,7 @@ class AccountManager(Component):
 
     def has_user(self, user):
         exists = False
+        user = self.handle_username_casing(user)
         for store in self._password_store:
             if store.has_user(user):
                 exists = True
@@ -132,41 +178,168 @@ class AccountManager(Component):
             continue
         return exists
 
-    def set_password(self, user, password):
+    def has_email(self, email):
+        """Returns whether a user account with that email address exists.
+
+        Check db directly - email addresses are not backend-specific.
+        """
+        exists = False
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT value
+              FROM session_attribute
+             WHERE authenticated=1 AND name='email' AND value=%s
+            """, (email,))
+        for row in cursor:
+            exists = True
+            break
+        return exists
+
+    def email_verified(self, user, email):
+        """Returns whether the account and email has been verified.
+
+        Use with care, as it returns the private token string,
+        if verification is pending.
+        """
+        if (self.user_known(user) is False or
+               email is None) or email == '':
+            # nothing to check here
+            return None
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT value
+              FROM session_attribute
+             WHERE sid=%s AND name='email_verification_sent_to'
+            """, (user,))
+        for row in cursor:
+            self.log.debug('AcctMgr:api:email_verify for user \"' + \
+                user + '\", email \"' + str(email) + '\": ' + str(row[0]))
+            if row[0] != email:
+                # verification has been sent to different email address
+                return None
+        cursor.execute("""
+            SELECT value
+              FROM session_attribute
+             WHERE sid=%s AND name='email_verification_token'
+            """, (user,))
+        for row in cursor:
+            # verification token still unverified
+            self.log.debug('AcctMgr:api:email_verify for user \"' + \
+                user + '\", email \"' + str(email) + '\": ' + str(row[0]))
+            return row[0]
+        return True
+
+    def user_known(self, user):
+        """Returns whether the user has ever been authenticated before.
+        """
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT *
+              FROM session
+             WHERE authenticated=1 AND sid=%s
+            """, (user,))
+        for row in cursor:
+            return True
+        return False
+
+    def last_seen(self, user = None):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        sql = """
+            SELECT sid,last_visit
+              FROM session
+             WHERE authenticated=1
+            """
+        if user:
+            sql = "%s AND sid='%s'" % (sql, user)
+        cursor.execute(sql)
+        return cursor or None
+
+    def set_password(self, user, password, old_password = None):
+        user = self.handle_username_casing(user)
         store = self.find_user_store(user)
         if store and not hasattr(store, 'set_password'):
-            raise TracError('The authentication backend for the user, %s, '
-                            'does not support setting the password' % user)
+            raise TracError(_(
+                """The authentication backend for user %s does not support
+                setting the password.
+                """ % user))
         elif not store:
             store = self.get_supporting_store('set_password')
         if store:
-            if store.set_password(user, password):
+            if store.set_password(user, password, old_password):
                 self._notify('created', user, password)
             else:
                 self._notify('password_changed', user, password)
         else:
-            raise TracError('None of the IPasswordStore components listed in '
-                            'the trac.ini support setting the password or '
-                            'creating users')
+            raise TracError(_(
+                """None of the IPasswordStore components listed in the
+                trac.ini supports setting the password or creating users.
+                """))
 
     def check_password(self, user, password):
         valid = False
+        user = self.handle_username_casing(user)
         for store in self._password_store:
             valid = store.check_password(user, password)
-            if valid  or (valid == False):
+            if valid:
+                if valid == True and (self.refresh_passwd == True) and \
+                        self.get_supporting_store('set_password'):
+                    db = self.env.get_db_cnx()
+                    cursor = db.cursor()
+                    sql = """
+                        SELECT  sid
+                          FROM  session_attribute
+                        WHERE   sid=%s
+                            AND name='password_refreshed'
+                            AND value=1
+                        """
+                    cursor.execute(sql, (user,))
+                    if cursor.fetchone() is None:
+                        self.log.debug('refresh password for user: %s' % user)
+                        store = self.find_user_store(user)
+                        pwstore = self.get_supporting_store('set_password')
+                        if pwstore.set_password(user, password) == True:
+                            # Account re-created according to current settings
+                            if store and not \
+                                    (store.delete_user(user) == True):
+                                self.log.warn("""
+                                    failed to remove old entry for user '%s'
+                                    """ % user)
+                        cursor.execute("""
+                            UPDATE  session_attribute
+                                SET value='1'
+                            WHERE   sid=%s
+                                AND name='password_refreshed'
+                            """, (user,))
+                        cursor.execute(sql, (user,))
+                        if cursor.fetchone() is None:
+                            cursor.execute("""
+                                INSERT INTO session_attribute
+                                        (sid,authenticated,name,value)
+                                VALUES  (%s,1,'password_refreshed',1)
+                                """, (user,))
+                        db.commit()
                 break
-            continue
         return valid
 
     def delete_user(self, user):
+        user = self.handle_username_casing(user)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        # Delete session attributes 
-        cursor.execute("DELETE FROM session_attribute where sid=%s", (user,))
-        # Delete session 
-        cursor.execute("DELETE FROM session where sid=%s", (user,))
-        # Delete any custom permissions set for the user 
-        cursor.execute("DELETE FROM permission where username=%s", (user,))
+        # Delete session attributes, session and any custom permissions
+        # set for the user.
+        for table in ['session_attribute', 'session', 'permission']:
+            key = (table == 'permission') and 'username' or 'sid'
+            # Preseed with table name, that is not allowed as SQL argument.
+            sql = """
+                DELETE
+                FROM   %s
+                WHERE  %%s=%%s
+                """ % table
+            cursor.execute(sql, (key, user))
         db.commit()
         db.close()
         # Delete from password store 
@@ -201,12 +374,13 @@ class AccountManager(Component):
                     return [store]
             # if the "password_format" is not set re-raise the AttributeError
             raise
+
     password_store = property(password_store)
 
     def get_supporting_store(self, operation):
-        """Returns the IPasswordStore that implements the specified operaion
+        """Returns the IPasswordStore that implements the specified operation.
 
-        None is returned if no supporting store can be found
+        None is returned if no supporting store can be found.
         """
         supports = False
         for store in self.password_store:
@@ -230,9 +404,9 @@ class AccountManager(Component):
         """Locates which store contains the user specified.
 
         If the user isn't found in any IPasswordStore in the chain, None is
-        returned
+        returned.
         """
-        ignore_auth_case = self.env.config.get('trac', 'ignore_auth_case')
+        ignore_auth_case = self.config.getbool('trac', 'ignore_auth_case')
         user_stores = []
         for store in self._password_store:
             userlist = store.get_users()
@@ -240,12 +414,21 @@ class AccountManager(Component):
                 userlist = [u.lower() for u in userlist]
             user_stores.append((store, userlist))
             continue
-        user = ignore_auth_case and user.lower() or user
+        user = self.handle_username_casing(user)
         for store in user_stores:
             if user in store[1]:
                 return store[0]
             continue
         return None
+
+    def handle_username_casing(self, user):
+        """Enforce lowercase usernames if required.
+
+        Comply with Trac's own behavior, when case-insensitive
+        user authentication is set to True.
+        """
+        ignore_auth_case = self.config.getbool('trac', 'ignore_auth_case')
+        return ignore_auth_case and user.lower() or user
 
     def _notify(self, func, *args):
         func = 'user_' + func
@@ -269,4 +452,32 @@ class AccountManager(Component):
     def user_email_verification_requested(self, user, token):
         self.log.info('Email verification requested user: %s' % user)
 
+
+def set_user_attribute(env, username, attribute, value, db=None):
+    """Set or update a Trac user attribute within an atomic db transaction."""
+    db = _get_db(env, db)
+    cursor = db.cursor()
+    sql = """
+        WHERE   sid=%s
+            AND authenticated=1
+            AND name=%s
+        """
+    cursor.execute("""
+        UPDATE  session_attribute
+            SET value=%s
+        """ + sql, (value, username, attribute))
+    cursor.execute("""
+        SELECT  value
+          FROM  session_attribute
+        """ + sql, (username, attribute))
+    if cursor.fetchone() is None:
+        cursor.execute("""
+            INSERT INTO session_attribute
+                    (sid,authenticated,name,value)
+            VALUES  (%s,1,%s,%s)
+            """, (username, attribute, value))
+    db.commit()
+
+def _get_db(env, db=None):
+    return db or env.get_db_cnx()
 

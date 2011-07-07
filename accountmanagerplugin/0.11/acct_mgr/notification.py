@@ -17,13 +17,11 @@ from trac.admin import IAdminPanelProvider
 from trac.config import Option, ListOption
 from trac.web.chrome import ITemplateProvider
 from trac.notification import NotifyEmail
-from trac.util.text import CRLF
-from trac.util.translation import _
 
 
 from pkg_resources import resource_filename
 
-from api import IAccountChangeListener
+from acct_mgr.api import IAccountChangeListener, _
 
 class AccountChangeListener(Component):
     implements(IAccountChangeListener)
@@ -53,13 +51,14 @@ class AccountChangeListener(Component):
     def user_password_reset(self, username, email, password):
         notifier = PasswordResetNotification(self.env)
         if email != notifier.email_map.get(username):
-            raise Exception('The email and username do not '
-                            'match a known account.')
+            raise Exception(
+                _("The email and username do not match a known account."))
         notifier.notify(username, password)
 
     def user_email_verification_requested(self, username, token):
         notifier = EmailVerificationNotification(self.env)
         notifier.notify(username, token)
+
 
 class AccountChangeNotification(NotifyEmail):
     template_name = 'user_changes_email.txt'
@@ -89,81 +88,6 @@ class AccountChangeNotification(NotifyEmail):
 
         NotifyEmail.notify(self, username, subject)
 
-    def send(self, torcpts, ccrcpts, mime_headers={}):
-        from email.MIMEText import MIMEText
-        from email.Utils import formatdate
-        stream = self.template.generate(**self.data)
-        body = stream.render('text')
-        projname = self.config.get('project', 'name')
-        public_cc = self.config.getbool('notification', 'use_public_cc')
-        headers = {}
-        headers['X-Mailer'] = 'Trac %s, by Edgewall Software' % __version__
-        headers['X-Trac-Version'] =  __version__
-        headers['X-Trac-Project'] =  projname
-        headers['X-URL'] = self.config.get('project', 'url')
-        headers['Precedence'] = 'bulk'
-        headers['Auto-Submitted'] = 'auto-generated'
-        headers['Subject'] = self.subject
-        headers['From'] = (self.from_name or projname, self.from_email)
-        headers['Reply-To'] = self.replyto_email
-
-        def build_addresses(rcpts):
-            """Format and remove invalid addresses"""
-            return filter(lambda x: x, \
-                          [self.get_smtp_address(addr) for addr in rcpts])
-
-        def remove_dup(rcpts, all):
-            """Remove duplicates"""
-            tmp = []
-            for rcpt in rcpts:
-                if not rcpt in all:
-                    tmp.append(rcpt)
-                    all.append(rcpt)
-            return (tmp, all)
-
-        toaddrs = build_addresses(torcpts)
-        ccaddrs = build_addresses(ccrcpts)
-
-        recipients = []
-        (toaddrs, recipients) = remove_dup(toaddrs, recipients)
-        (ccaddrs, recipients) = remove_dup(ccaddrs, recipients)
-
-        # if there is not valid recipient, leave immediately
-        if len(recipients) < 1:
-            self.env.log.info('no recipient for account change notification')
-            return
-
-        pcc = []
-        if public_cc:
-            pcc += ccaddrs
-            if toaddrs:
-                headers['To'] = ', '.join(toaddrs)
-        if pcc:
-            headers['Cc'] = ', '.join(pcc)
-        headers['Date'] = formatdate()
-        # sanity check
-        if not self._charset.body_encoding:
-            try:
-                dummy = body.encode('ascii')
-            except UnicodeDecodeError:
-                raise TracError(_("Ticket contains non-ASCII chars. " \
-                                  "Please change encoding setting"))
-        msg = MIMEText(body, 'plain')
-        # Message class computes the wrong type from MIMEText constructor,
-        # which does not take a Charset object as initializer. Reset the
-        # encoding type to force a new, valid evaluation
-        del msg['Content-Transfer-Encoding']
-        msg.set_charset(self._charset)
-        self.add_headers(msg, headers);
-        self.add_headers(msg, mime_headers);
-        self.env.log.info("Sending SMTP notification to %s:%d to %s"
-                           % (self.smtp_server, self.smtp_port, recipients))
-        msgtext = msg.as_string()
-        # Ensure the message complies with RFC2822: use CRLF line endings
-        recrlf = re.compile("\r?\n")
-        msgtext = CRLF.join(recrlf.split(msgtext))
-        self.server.sendmail(msg['From'], recipients, msgtext)
-
 
 class SingleUserNotification(NotifyEmail):
     """Helper class used for account email notifications which should only be
@@ -191,8 +115,11 @@ class SingleUserNotification(NotifyEmail):
         self.config.set('notification', 'use_public_cc', 'true')
         try:
             NotifyEmail.notify(self, username, subject)
-        finally:
-            self.config.set('notification', 'use_public_cc', old_public_cc)
+        # DEVEL: Better use new 'finally' statement here, but
+        #   still need to care for Python 2.4 (RHEL5.x) for now
+        except:
+            pass
+        self.config.set('notification', 'use_public_cc', old_public_cc)
 
 
 class PasswordResetNotification(SingleUserNotification):
@@ -225,7 +152,7 @@ class EmailVerificationNotification(SingleUserNotification):
                 'token': token,
             },
             'verify': {
-                'link': self.env.abs_href.verify_email(token=token),
+                'link': self.env.abs_href.verify_email(token=token,verify=1),
             }
         })
 
@@ -240,8 +167,8 @@ class AccountChangeNotificationAdminPanel(Component):
 
     # IAdminPageProvider
     def get_admin_panels(self, req):
-        if req.perm.has_permission('TRAC_ADMIN'):
-            yield ('accounts', 'Accounts', 'notification', 'Notification')
+        if req.perm.has_permission('ACCTMGR_CONFIG_ADMIN'):
+            yield ('accounts', _("Accounts"), 'notification', _("Notification"))
 
     def render_admin_panel(self, req, cat, page, path_info):
         if page == 'notification':
@@ -265,7 +192,7 @@ class AccountChangeNotificationAdminPanel(Component):
                     notify_addresses=notify_addresses)
         return 'admin_accountsnotification.html', data
 
-    # ITemplateProvider
+    # ITemplateProvider methods
     def get_htdocs_dirs(self):
         return []
 

@@ -23,14 +23,25 @@ class EnvRelativePathOption(Option):
             return path
         return os.path.normpath(os.path.join(instance.env.path, path))
 
+# taken from a comment of Horst Hansen
+# at http://code.activestate.com/recipes/65441
+def containsAny(str, set):
+    for c in set:
+        if c in str:
+            return True
+    return False
 
-# os.urandom was added in Python 2.4
-# try to fall back on pseudo-random values if it's not available
-try:
-    from os import urandom
-except ImportError:
-    from random import randrange
-    def urandom(n):
-        return ''.join([chr(randrange(256)) for _ in xrange(n)])
+# Compatibility code for `ComponentManager.is_enabled`
+# (available since Trac 0.12)
+def is_enabled(env, cls):
+    """Return whether the given component class is enabled.
 
+    For Trac 0.11 the missing algorithm is included as fallback.
+    """
+    try:
+        return env.is_enabled(cls)
+    except AttributeError:
+        if cls not in env.enabled:
+            env.enabled[cls] = env.is_component_enabled(cls)
+        return env.enabled[cls]
 

@@ -12,82 +12,118 @@
 from trac.core import *
 from trac.config import ExtensionOption
 
-from api import IPasswordStore
-from pwhash import IPasswordHashMethod
+from acct_mgr.api import IPasswordStore, _, N_
+from acct_mgr.pwhash import IPasswordHashMethod
+
 
 class SessionStore(Component):
     implements(IPasswordStore)
 
     hash_method = ExtensionOption('account-manager', 'hash_method',
-                                  IPasswordHashMethod, 'HtDigestHashMethod')
+        IPasswordHashMethod, 'HtDigestHashMethod',
+        doc = N_("Default hash type of new/updated passwords"))
+
+    def __init__(self):
+        self.key = 'password'
 
     def get_users(self):
-        """Returns an iterable of the known usernames
-        """
+        """Returns an iterable of the known usernames."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT DISTINCT sid FROM session_attribute "
-                       "WHERE authenticated=1 AND name='password'")
+        cursor.execute("""
+            SELECT DISTINCT sid
+            FROM    session_attribute
+            WHERE   authenticated=1
+                AND name=%s
+            """, (self.key,))
         for sid, in cursor:
             yield sid
  
     def has_user(self, user):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT * FROM session_attribute "
-                       "WHERE authenticated=1 AND name='password' "
-                       "AND sid=%s", (user,))
+        cursor.execute("""
+            SELECT  *
+            FROM    session_attribute
+            WHERE   authenticated=1
+                AND name=%s
+                AND sid=%s
+            """, (self.key, user))
         for row in cursor:
             return True
         return False
 
-    def set_password(self, user, password):
-        """Sets the password for the user.  This should create the user account
-        if it doesn't already exist.
-        Returns True if a new account was created, False if an existing account
-        was updated.
+    def set_password(self, user, password, old_password=None):
+        """Sets the password for the user.
+
+        This should create the user account, if it doesn't already exist.
+        Returns True, if a new account was created, and False,
+        if an existing account was updated.
         """
         hash = self.hash_method.generate_hash(user, password)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("UPDATE session_attribute "
-                       "SET value=%s "
-                       "WHERE authenticated=1 AND name='password' "
-                       "AND sid=%s", (hash, user))
-        if cursor.rowcount > 0:
-            db.commit()
-            return False # updated existing password
-        cursor.execute("INSERT INTO session_attribute "
-                       "(sid,authenticated,name,value) "
-                       "VALUES (%s,1,'password',%s)",
-                       (user, hash))
+        sql = """
+            WHERE   authenticated=1
+                AND name=%s
+                AND sid=%s
+            """
+        cursor.execute("""
+            UPDATE  session_attribute
+                SET value=%s
+            """ + sql, (hash, self.key, user))
+        cursor.execute("""
+            SELECT  value
+            FROM    session_attribute
+            """ + sql, (self.key, user))
+        not_exists = cursor.fetchone() is None
+        if not_exists:
+            cursor.execute("""
+                INSERT INTO session_attribute
+                        (sid,authenticated,name,value)
+                VALUES  (%s,1,%s,%s)
+                """, (user, self.key, hash))
         db.commit()
-        return True
+        return not_exists
 
     def check_password(self, user, password):
-        """Checks if the password is valid for the user.
-        """
+        """Checks if the password is valid for the user."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("SELECT value FROM session_attribute "
-                       "WHERE authenticated=1 AND name='password' "
-                       "AND sid=%s", (user,))
+        cursor.execute("""
+            SELECT  value
+            FROM    session_attribute
+            WHERE   authenticated=1
+                AND name=%s
+                AND sid=%s
+            """, (self.key, user))
         for hash, in cursor:
             return self.hash_method.check_hash(user, password, hash)
         return None
 
     def delete_user(self, user):
         """Deletes the user account.
-        Returns True if the account existed and was deleted, False otherwise.
+
+        Returns True, if the account existed and was deleted, False otherwise.
         """
-        if not self.has_user(user):
-            return False
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute("DELETE FROM session_attribute "
-                       "WHERE authenticated=1 AND name='password' "
-                       "AND sid=%s", (user,))
-        # TODO cursor.rowcount doesn't seem to get # deleted
-        # is there another way to get count instead of using has_user?
-        db.commit()
-        return True
+        sql = """
+            WHERE   authenticated=1
+                AND name=%s
+                AND sid=%s
+            """
+        # Avoid has_user() to make this transaction atomic.
+        cursor.execute("""
+            SELECT  *
+            FROM    session_attribute
+            """ + sql, (self.key, user))
+        exists = cursor.fetchone() is not None
+        if exists:
+            cursor.execute("""
+                DELETE
+                FROM    session_attribute
+                """ + sql, (self.key, user))
+            db.commit()
+        return exists
+

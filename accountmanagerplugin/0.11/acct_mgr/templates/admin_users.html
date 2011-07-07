@@ -3,7 +3,9 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:xi="http://www.w3.org/2001/XInclude"
-      xmlns:py="http://genshi.edgewall.org/">
+      xmlns:py="http://genshi.edgewall.org/" 
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="acct_mgr">
   <xi:include href="admin.html" />
   <head>
     <title>Accounts</title>
@@ -12,52 +14,56 @@
   <body>
     <h2>Manage User Accounts</h2>
 
-    <form id="addaccount" class="addnew" method="post" py:if="create_enabled">
+    <form id="account-editor" class="addnew" method="post">
       <fieldset>
-        <div class="system-message"
-             py:if="registration_error"><p>${registration_error}</p></div>
+        <div class="system-message" py:if="editor_error">
+          <p>${editor_error}</p>
+        </div>
+        <div class="notice system-message" py:if="success">
+          <p i18n:msg="success">
+            Successfully updated: ${', '.join(success)}
+          </p>
+        </div>
 
-        <legend>Add Account:</legend>
+        <legend>Add/Edit Account:</legend>
         <div class="field">
-          <label>Username: <input type="text" name="user" class="textwidget" value="${acctmgr.username}" /></label>
+          <label>Username:<br />
+            <input type="text" name="username" id="username"
+                   class="textwidget" value="${account.username}" /></label>
         </div>
         <div class="field">
-          <label>Password: <input type="password" name="password" class="textwidget" /></label>
+          <label py:choose="">Password:<br />
+            <input type="password" name="password" class="textwidget"
+                   py:when="create_enabled or password_change_enabled" />
+            <input type="password" name="password" class="textwidget"
+                   py:otherwise="" disabled="disabled" />
+          </label>
         </div>
         <div class="field">
-          <label>Confirm password: <input type="password" name="password_confirm" class="textwidget" /></label>
+          <label py:choose="">Confirm Password:<br />
+            <input type="password" name="password_confirm" class="textwidget"
+                   py:when="create_enabled or password_change_enabled" />
+            <input type="password" name="password_confirm" class="textwidget"
+                   py:otherwise="" disabled="disabled" />
+          </label>
         </div>
         <div class="field">
-          <label>Name: <input type="text" name="name" class="textwidget" value="${acctmgr.name}" /></label>
+          <label>Pre-/Surname (Nickname):<br />
+            <input type="text" name="name" class="textwidget"
+                   value="${account.name}" /></label>
         </div>
         <div class="field">
-          <label>Email: <input type="text" name="email" class="textwidget" value="${acctmgr.email}" /></label>
+          <label>Email Address:<br />
+            <input type="text" name="email" class="textwidget"
+                   value="${account.email}" /></label>
         </div>
-        <p class="help">Add a new user account.</p>
+        <p class="help">Add a new user account or edit an existing one.</p>
         <div class="buttons">
-          <input type="submit" name="add" value=" Add " />
-        </div>
-      </fieldset>
-    </form>
-
-    <form id="changepassword" class="addnew" method="post" py:if="password_change_enabled">
-      <fieldset>
-        <div class="system-message"
-             py:if="password_change_error"><p>${password_change_error}</p></div>
-
-        <legend>Change Password:</legend>
-        <div class="field">
-          <label>Username: <input type="text" name="change_user" class="textwidget" value="${acctmgr.change_username}" /></label>
-        </div>
-        <div class="field">
-          <label>Password: <input type="password" name="change_password" class="textwidget" /></label>
-        </div>
-        <div class="field">
-          <label>Confirm password: <input type="password" name="change_password_confirm" class="textwidget" /></label>
-        </div>
-        <p class="help">Change a user's password.</p>
-        <div class="buttons">
-          <input type="submit" name="change" value=" Change " />
+          <input type="submit" name="add"
+                 py:if="create_enabled"
+                 value="${dgettext('acct_mgr', ' Add ')}" />
+          <input type="submit" name="change"
+                 value="${dgettext('acct_mgr', ' Change ')}" />
         </div>
       </fieldset>
     </form>
@@ -65,32 +71,52 @@
     <py:choose>
     <div class="system-message"
          py:when="not listing_enabled">
-      <p>This password store does not support listing users</p>
+      <p>This password store does not support listing users.</p>
     </div>
     <form method="post" py:otherwise="" py:strip="not delete_enabled">
       <div class="system-message"
            py:if="deletion_error"><p>${deletion_error}</p></div>
-      <table class="listing" id="accountlist">
-        <thead>
-          <tr>
-            <th class="sel" py:if="delete_enabled">&nbsp;</th>
-            <th>Account</th><th>Name</th><th>Email</th><th>Last Login</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr py:for="account in accounts">
-            <td py:if="delete_enabled">
-              <input type="checkbox" name="sel" value="${account.username}" />
-            </td>
-            <td>${account.username}</td>
-            <td>${account.name}</td>
-            <td>${account.email}</td>
-            <td>${account.last_visit}</td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="buttons" py:if="delete_enabled">
-        <input type="submit" name="remove" value="Remove selected accounts" />
+      <div id="accountlist">
+        <table class="listing" id="accountlist">
+          <thead>
+            <tr>
+              <th class="sel" py:if="delete_enabled">&nbsp;</th>
+              <th>Account</th><th>Name</th><th>Email</th><th>Last Login</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr py:for="acct in accounts">
+              <td py:if="delete_enabled">
+                <input type="checkbox" name="sel"
+                       value="${acct.username}" />
+              </td>
+              <td>${acct.username}
+                <py:choose py:if="acct.locked">
+                  <a href="${acct.review_url}"
+                     py:when="acct.release_hint"
+                     title="${acct.release_hint}">
+                    <img src="${href.chrome('/acct_mgr/time-locked.png')}" />
+                  </a>
+                  <a href="${acct.review_url}" py:otherwise=""
+                     title="${dgettext('acct_mgr', 'Permanently locked')}">
+                    <img src="${href.chrome('/acct_mgr/locked.png')}" />
+                  </a>
+                </py:choose>
+              </td>
+              <td>${acct.name}</td>
+              <td>${acct.email}</td>
+              <td>${acct.last_visit}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="buttons">
+        <input type="submit" name="reset"
+               py:if="password_reset_enabled"
+               value="${dgettext('acct_mgr', 'Reset passwords')}" />
+        <input type="submit" name="remove"
+               py:if="delete_enabled"
+               value="${dgettext('acct_mgr', 'Remove selected accounts')}" />
       </div>
     </form>
     </py:choose>

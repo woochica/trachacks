@@ -12,23 +12,27 @@
 from urllib2 import build_opener, HTTPBasicAuthHandler, \
                     HTTPDigestAuthHandler, HTTPPasswordMgrWithDefaultRealm
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.config import Option
 
-from api import IPasswordStore
+from acct_mgr.api import IPasswordStore, _, N_
+
 
 class HttpAuthStore(Component):
     implements(IPasswordStore)
 
-    auth_url = Option('account-manager', 'authentication_url')
+    auth_url = Option('account-manager', 'authentication_url', '',
+        doc = N_("URL of the HTTP authentication service"))
 
     def check_password(self, user, password):
-        mgr = HTTPPasswordMgrWithDefaultRealm()
-        mgr.add_password(None, self.auth_url, user, password)
+        acctmgr = HTTPPasswordMgrWithDefaultRealm()
+        acctmgr.add_password(None, self.auth_url, user, password)
         try:
-            build_opener(HTTPBasicAuthHandler(mgr),
-                         HTTPDigestAuthHandler(mgr)).open(self.auth_url)
+            build_opener(HTTPBasicAuthHandler(acctmgr),
+                         HTTPDigestAuthHandler(acctmgr)).open(self.auth_url)
         except IOError:
+            return None
+        except ValueError:
             return None
         else:
             return True
