@@ -1484,8 +1484,8 @@ Complete-Displays task percent complete</p>
                vTaskRight = 1;
 
   	            vRightTable +=
-                  '<div id=bardiv_' + vID + ' style="position:absolute; top:0px; left:' + Math.ceil((vTaskLeft * (vDayWidth) + 1)) + 'px; height: 18px; width:160px; overflow:hidden;">' +
-                  '  <div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" style="height: 16px; width:12px; overflow:hidden; cursor: pointer;" onclick=JSGantt.taskLink"' + vTaskList[i].getLink() + '","'+vPopupFeatures+'");>';
+                  '<div id=bardiv_' + vID + ' style="position:absolute; top:0px; left:' + Math.ceil((vTaskLeft * (vDayWidth) + 1)) + 'px; height: 18px; overflow:hidden;">' +
+                  '  <div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" style="height: 16px; overflow:hidden; cursor: pointer;" onclick=JSGantt.taskLink"' + vTaskList[i].getLink() + '","'+vPopupFeatures+'");>';
 
                if(vTaskList[i].getCompVal() < 100)
  		            {vRightTable += '&loz;</div>' ;}
