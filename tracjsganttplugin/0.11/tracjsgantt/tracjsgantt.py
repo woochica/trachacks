@@ -411,7 +411,7 @@ class TracJSGanttChart(WikiMacroBase):
                 finish = datetime.datetime(*time.strptime(ticket[self.fields['finish']], self.dbDateFormat)[0:7])                
             # If there are successors, this ticket's finish is the earliest
             # start of any successor
-            elif ticket[self.fields['succ']] != []:
+            elif self.fields['succ'] and ticket[self.fields['succ']] != []: 
                 finish = None
                 for tid in ticket[self.fields['succ']]:
                     if int(tid) in self.ticketsByID:
