@@ -1021,6 +1021,7 @@ Complete-Displays task percent complete</p>
       var vStr = "";
       var vNameWidth = vLeftWidth;
       var vStatusWidth = 70;
+      var vRadioSpan = 1;
 
       if(vTaskList.length > 0)
       {
@@ -1072,18 +1073,33 @@ Complete-Displays task percent complete</p>
 
          vMainTable = ''
 
-         if(vShowRes ==1) vNameWidth-=vStatusWidth;
-         if(vShowDur ==1) vNameWidth-=vStatusWidth;
-         if(vShowComp==1) vNameWidth-=vStatusWidth;
-	 if(vShowStartDate==1) vNameWidth-=vStatusWidth;
-	 if(vShowEndDate==1) vNameWidth-=vStatusWidth;
+         if (vShowRes == 1) { 
+	     vNameWidth -= vStatusWidth; 
+	     vRadioSpan += 1;
+	 }
+         if (vShowDur == 1) { 
+	     vNameWidth -= vStatusWidth;
+	     vRadioSpan += 1;
+	 }
+         if (vShowComp == 1) { 
+	     vNameWidth -= vStatusWidth;
+	     vRadioSpan += 1;
+	 }
+	 if (vShowStartDate == 1) {
+	     vNameWidth -= vStatusWidth;
+	     vRadioSpan += 1;
+	 }
+	 if (vShowEndDate == 1) { 
+	     vNameWidth -= vStatusWidth;
+	     vRadioSpan += 1;
+	 }
         
 		   // DRAW the Left-side of the chart (names, resources, comp%)
          vLeftTable =
             '<DIV class=scroll id=leftside style="width:' + vLeftWidth + 'px"><TABLE cellSpacing=0 cellPadding=0 border=0><TBODY>' +
             '<TR style="HEIGHT: 17px">' +
             '  <TD style="WIDTH: 15px; HEIGHT: 17px"></TD>' +
-	    '  <TD style="WIDTH: ' + vNameWidth + 'px; HEIGHT: 17px; border:1; colspan:5; align:left BORDER-TOP: #efefef 1px solid; FONT-SIZE: 11px; BORDER-LEFT: #efefef 1px solid;">';
+	    '  <TD style="WIDTH: ' + vNameWidth + 'px; HEIGHT: 17px; border:1;align:left BORDER-TOP: #efefef 1px solid; FONT-SIZE: 11px; BORDER-LEFT: #efefef 1px solid;" colspan = ' + vRadioSpan + '>';
 
 	 vLeftTable += 'Format:';
 	 if (vFormatArr.join().indexOf("minute")!=-1) { 
@@ -1120,11 +1136,6 @@ Complete-Displays task percent complete</p>
 
 	 vLeftTable += ' </TD>'; 
 
-         if(vShowRes ==1) vLeftTable += '  <TD style="WIDTH: ' + vStatusWidth + 'px; HEIGHT: 17px"></TD>' ;
-         if(vShowDur ==1) vLeftTable += '  <TD style="WIDTH: ' + vStatusWidth + 'px; HEIGHT: 17px"></TD>' ;
-         if(vShowComp==1) vLeftTable += '  <TD style="WIDTH: ' + vStatusWidth + 'px; HEIGHT: 17px"></TD>' ;
-			if(vShowStartDate==1) vLeftTable += '  <TD style="WIDTH: ' + vStatusWidth + 'px; HEIGHT: 17px"></TD>' ;
-			if(vShowEndDate==1) vLeftTable += '  <TD style="WIDTH: ' + vStatusWidth + 'px; HEIGHT: 17px"></TD>' ;
 
          vLeftTable +=
             '<TR style="HEIGHT: 20px">' +
