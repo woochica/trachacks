@@ -1,3 +1,0 @@
-[trac.plugins]
-datefield.filter = datefield.filter
-
