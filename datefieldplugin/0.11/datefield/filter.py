@@ -149,7 +149,7 @@ class DateFieldModule(Component):
     def _date_fields(self):
         # XXX: Will this work when there is no ticket-custom section? <NPK>
         for key, value in self.config['ticket-custom'].options():
-            if key.endswith('.date'):
+            if key.endswith('.date') and value == "true":
                 yield key.split('.', 1)[0]
     
 
