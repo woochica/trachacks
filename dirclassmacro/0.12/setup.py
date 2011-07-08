@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'DirClassMacro',
-    version = '0.12-1',
+    version = '0.12-2',
     packages = ['dirclass'],
     package_data = { 'dirclass': ['htdocs/css/*.css' ] },
 

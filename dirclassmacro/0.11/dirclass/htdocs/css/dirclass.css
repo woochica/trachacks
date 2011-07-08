@@ -1,3 +1,4 @@
 /* Styles related to RTL support */
 .rtl { direction: rtl }
 .rtl div.wiki-toc { float: left }
+.rtl .wiki-toc ul ul, .wiki-toc ol ol { padding-right: 1.2em }
