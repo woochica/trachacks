@@ -116,6 +116,10 @@ class TracJSGanttChart(WikiMacroBase):
         for username, name, email in self.env.get_known_users():
             self.user_map[username] = name
 
+	# Parent format option
+	self.parent_format = \
+		self.config.get('trac-jsgantt','parent_format', default='%s')
+
     def _getOpt(self, options, name):
         return options.get(name) or self.options[name]
 
@@ -195,6 +199,7 @@ class TracJSGanttChart(WikiMacroBase):
             if len(parents) == 0:
                 return []
 
+            parent_list = [self.parent_format % id for id in parents]
             db = self.env.get_db_cnx()
             cursor = db.cursor()
             cursor.execute("SELECT t.id "
@@ -203,7 +208,7 @@ class TracJSGanttChart(WikiMacroBase):
                            "    (t.id=p.ticket AND p.name='%s') "
                            "WHERE p.value IN (%s)" % 
                            (self.fields['parent'],
-                            "'" + "','".join(parents) + "'"))
+                            "'" + "','".join(parent_list) + "'"))
             children = ['%s'%row[0] for row in cursor] 
 
             return parents + _children(children)
