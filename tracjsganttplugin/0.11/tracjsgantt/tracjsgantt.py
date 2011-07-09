@@ -3,7 +3,7 @@ import datetime
 from datetime import timedelta, date
 from operator import itemgetter, attrgetter
 
-
+from trac.util.datefmt import format_date
 from trac.util.html import Markup
 from trac.wiki.macros import WikiMacroBase
 from trac.web.chrome import Chrome
@@ -478,16 +478,11 @@ class TracJSGanttChart(WikiMacroBase):
                 milestoneTicket['status'] = ''
                 # Milestones are always shown
                 milestoneTicket['level'] = 0
-
-                us = row[1]
+                
                 # If there's no due date, default to today
-                if us == 0:
-                    finish = date.today()
-                else:
-                    seconds = us / 1000000
-                    finish = date.fromtimestamp(seconds)
+                ts = row[1] or None
                 milestoneTicket[self.fields['finish']] = \
-                    finish.strftime(self.pyDateFormat)
+                    format_date(ts, self.dbDateFormat)
 
                 # jsGantt ignores start for a milestone but we use it
                 # for scheduling.
