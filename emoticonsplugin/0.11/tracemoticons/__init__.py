@@ -63,7 +63,6 @@ class EmoticonsSupport(Component):
                    'height="18" style="vertical-align: middle" />' % \
                    (escape(src), escape(match.group(0)))
         pattern = '|'.join([re.escape(pattern) for pattern in EMOTICONS])
-        print pattern
         yield r'!?(?:%s)' % pattern, _replace
 
     def get_link_resolvers(self):
