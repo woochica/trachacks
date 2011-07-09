@@ -60,10 +60,11 @@ class EmoticonsSupport(Component):
         def _replace(formatter, namespace, match):
             src = self.env.href.chrome('emoticons', EMOTICONS[match.group(0)])
             return '<img src="%s" alt="%s" class="emoticon" width="18" ' \
-                   'height="18" style="vertical-align: middle" />' % (
-                   escape(src), escape(match.group(0)))
+                   'height="18" style="vertical-align: middle" />' % \
+                   (escape(src), escape(match.group(0)))
         pattern = '|'.join([re.escape(pattern) for pattern in EMOTICONS])
-        yield '\b' + pattern + '\b', _replace
+        print pattern
+        yield r'!?(?:%s)' % pattern, _replace
 
     def get_link_resolvers(self):
         return []
