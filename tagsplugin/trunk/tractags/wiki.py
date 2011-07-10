@@ -8,7 +8,7 @@
 
 import re
 from trac.core import *
-from tractags.api import DefaultTagProvider, TagSystem, _, tag_
+from tractags.api import DefaultTagProvider, TagSystem, _
 from trac.web.chrome import add_stylesheet, add_script
 from trac.wiki.api import IWikiSyntaxProvider
 from trac.resource import Resource, render_resource_link, get_resource_url
@@ -133,17 +133,16 @@ class WikiTagInterface(Component):
         return False
 
     def _wiki_edit(self, req, stream):
-
         # TRANSLATOR: Label text for link to '/tags'.
-        tags_link = tag.a(_("view all tags"), href=req.href.tags())
-        insert = tag.div(class_='field')(
-            tag.label(
-                tag_("Tag under: (%(tags_link)s)", tags_link=tags_link),
-                tag.br(),
-                tag.input(id='tags', type='text', name='tags', size='50',
-                          value=req.args.get('tags', ' '.join(self._page_tags(req)))),
-                )
-            )
+        link = tag.a(_("view all tags"), href=req.href.tags())
+        # TRANSLATOR: ... (view all tags)
+        insert = tag(_("Tag under: (%(tags_link)s)", tags_link=link))
+        insert(
+            tag.br(),
+            tag.input(id='tags', type='text', name='tags', size='50',
+                value=req.args.get('tags', ' '.join(self._page_tags(req))))
+        )
+        insert = tag.div(tag.label(insert), class_='field')
         return stream | Transformer('//div[@id="changeinfo1"]').append(insert)
 
 
