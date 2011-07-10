@@ -60,6 +60,7 @@ class TracJSGanttChart(WikiMacroBase):
             'lwidth' : None,
             'root' : None,
             'showdep' : 1,
+            'userMap': 1,
             }
 
         # self.options defaults are configurable from trac.ini
@@ -120,10 +121,9 @@ class TracJSGanttChart(WikiMacroBase):
                                          'days_per_estimate', 
                                          default='0.125'))
 
-        # User name map
-        self.user_map = {}
-        for username, name, email in self.env.get_known_users():
-            self.user_map[username] = name
+        # User map (login -> realname) is loaded on demand, once.
+        # Initialization to None means it is not yet initialized.
+        self.user_map = None
 
 	# Parent format option
 	self.parent_format = \
@@ -586,10 +586,15 @@ class TracJSGanttChart(WikiMacroBase):
         def _owner(ticket):
             if ticket['type'] == self.milestoneType:
                 owner_name = ''
-            elif ticket['owner'] in self.user_map:
-                owner_name = self.user_map[ticket['owner']]
             else:
                 owner_name = ticket['owner']
+                if options['userMap']:
+                    if self.user_map is None:
+                        self.user_map = {}
+                        for username, name, email in self.env.get_known_users():
+                            self.user_map[username] = name
+                    if ticket['owner'] in self.user_map:
+                        owner_name = self.user_map[ticket['owner']]
             return owner_name
             
         # FIXME - perhaps a closed ticket should always be 100% done.
