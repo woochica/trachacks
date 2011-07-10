@@ -61,6 +61,7 @@ class TracJSGanttChart(WikiMacroBase):
             'root' : None,
             'showdep' : 1,
             'userMap': 1,
+            'omitMilestones': 0,
             }
 
         # self.options defaults are configurable from trac.ini
@@ -458,9 +459,10 @@ class TracJSGanttChart(WikiMacroBase):
         else:
             milestones = []
 
-        for t in self.tickets:
-            if t['milestone'] != '' and t['milestone'] not in milestones:
-                milestones.append(t['milestone'])
+        if not options['omitMilestones']:
+            for t in self.tickets:
+                if t['milestone'] != '' and t['milestone'] not in milestones:
+                    milestones.append(t['milestone'])
 
         self.firstMilestoneID = 9999
 
