@@ -20,8 +20,10 @@ from genshi.filters.transform import Transformer
 class WikiSectionEditModule(Component):
     implements(IRequestFilter, ITemplateStreamFilter, ITemplateProvider)
     
-    preview_whole_page = BoolOption('section-edit', 'preview_whole_page', True)
-    serve_ui_files = BoolOption('section-edit', 'serve_ui_files', True)
+    preview_whole_page = BoolOption('section-edit', 'preview_whole_page', True, 
+                                    'Whether to preview the entire page or just the section.')
+    serve_ui_files = BoolOption('section-edit', 'serve_ui_files', True,
+                                '???')
 
     # ITemplateProvider
     def get_templates_dirs(self):
