@@ -48,19 +48,27 @@ class TracJSGanttChart(WikiMacroBase):
         self.options = {
             'format': 'day',
             'sample': 0,
-            'res': '1',
-            'dur': '1',
-            'comp': '1',
+            'res': 1,
+            'dur': 1,
+            'comp': 1,
             'caption': 'Resource',
-            'startDate': '1',
-            'endDate': '1',
+            'startDate': 1,
+            'endDate': 1,
             'dateDisplay': 'mm/dd/yyyy',
             'openLevel': 999,
             'colorBy' : 'priority',
             'lwidth' : None,
             'root' : None,
-            'showdep' : '1',
+            'showdep' : 1,
             }
+
+        # self.options defaults are configurable from trac.ini
+        for opt in self.options.keys():
+            v = self.config.get('trac-jsgantt','option.%s' % opt, default=self)
+            if v != self:
+                if isinstance(self.options[opt], (int, long)):
+                    v = int(v)
+                self.options[opt] = v
 
         # Configuration fields
         self.fields = {}
@@ -121,12 +129,9 @@ class TracJSGanttChart(WikiMacroBase):
 	self.parent_format = \
 		self.config.get('trac-jsgantt','parent_format', default='%s')
 
-    def _getOpt(self, options, name):
-        return options.get(name) or self.options[name]
-
     def _begin_gantt(self, options):
-        format = self._getOpt(options,'format')
-        showdep = int(self._getOpt(options, 'showdep'))
+        format = options['format']
+        showdep = options['showdep']
         text = ''
         text += '<div style="position:relative" class="gantt" id="GanttChartDIV"></div>\n'
         text += '<script language="javascript">\n'
@@ -138,29 +143,29 @@ class TracJSGanttChart(WikiMacroBase):
     def _end_gantt(self, options):
         chart = ''
         chart += 'g.Draw();\n' 
-        if self._getOpt(options, 'showdep'):
+        if options['showdep']:
             chart += 'g.DrawDependencies();\n'
         chart += '</script>\n'
         return chart
 
     def _gantt_options(self, options):
         opt = ''
-        opt += 'g.setShowRes(%s);\n' % self._getOpt(options, 'res')
-        opt += 'g.setShowDur(%s);\n' % self._getOpt(options, 'dur')
-        opt += 'g.setShowComp(%s);\n' % self._getOpt(options, 'comp')
-        w = self._getOpt(options, 'lwidth')
+        opt += 'g.setShowRes(%s);\n' % options['res']
+        opt += 'g.setShowDur(%s);\n' % options['dur']
+        opt += 'g.setShowComp(%s);\n' % options['comp']
+        w = options['lwidth']
         if w:
             opt += 'g.setLeftWidth(%s);\n' % w
             
 
-        opt += 'g.setCaptionType("%s");\n' % self._getOpt(options, 'caption')
+        opt += 'g.setCaptionType("%s");\n' % options['caption']
 
-        opt += 'g.setShowStartDate(%s);\n' % self._getOpt(options, 'startDate')
-        opt += 'g.setShowEndDate(%s);\n' % self._getOpt(options, 'endDate')
+        opt += 'g.setShowStartDate(%s);\n' % options['startDate']
+        opt += 'g.setShowEndDate(%s);\n' % options['endDate']
 
         opt += 'g.setDateInputFormat("%s");\n' % self.jsDateFormat
 
-        opt += 'g.setDateDisplayFormat("%s");\n' % self._getOpt(options, 'dateDisplay')
+        opt += 'g.setDateDisplayFormat("%s");\n' % options['dateDisplay']
 
         opt += 'g.setFormatArr("day","week","month","quarter");\n'
         opt += 'g.setPopupFeatures("location=1,scrollbars=1");\n'
@@ -219,7 +224,7 @@ class TracJSGanttChart(WikiMacroBase):
             if not key in self.options:
                 query_args[key] = options[key]
 
-        if 'root' in options:
+        if options['root']:
             if options['root'] == 'self':
                 this_ticket = self._this_ticket()
                 if this_ticket:
@@ -540,11 +545,6 @@ class TracJSGanttChart(WikiMacroBase):
                 self.classMap[name] = value
 
         display = None
-
-        # Use the default if no user specification
-        if not options.get('colorBy'):
-            options['colorBy'] = self.options['colorBy']
-
         colorBy = options['colorBy']
 
         # Build the map the first time we need it
@@ -749,11 +749,13 @@ class TracJSGanttChart(WikiMacroBase):
     def _parse_options(self, content):
         _, options = parse_args(content, strict=False)
 
-        if options.get('openLevel'):
-            options['openLevel'] = int(options['openLevel'])
-        else:
-            options['openLevel'] = self.options['openLevel']
-        
+        for opt in self.options.keys():
+            if opt in options:
+                if isinstance(self.options[opt], (int, long)):
+                    options[opt] = int(options[opt])
+            else:
+                options[opt] = self.options[opt]
+
         return options
  
     def _this_ticket(self):
