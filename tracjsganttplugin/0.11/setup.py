@@ -1,4 +1,4 @@
-1;2305;0c#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: iso-8859-1 -*-
 
 from setuptools import setup
