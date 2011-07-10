@@ -1,3 +1,4 @@
+import re
 import time
 import datetime
 from datetime import timedelta, date
@@ -219,8 +220,14 @@ class TracJSGanttChart(WikiMacroBase):
                 query_args[key] = options[key]
 
         if 'root' in options:
-            parents = options['root'].split('|')
-            query_args['id'] = '|'.join(_children(parents))
+            if options['root'] == 'self':
+                this_ticket = self._this_ticket()
+                if this_ticket:
+                    parents = [ this_ticket ]
+                    query_args['id'] = '|'.join(_children(parents))
+            else:
+                parents = options['root'].split('|')
+                query_args['id'] = '|'.join(_children(parents))
 
         # Start with values that are always needed
         fields = [
@@ -748,7 +755,13 @@ class TracJSGanttChart(WikiMacroBase):
             options['openLevel'] = self.options['openLevel']
         
         return options
-        
+ 
+    def _this_ticket(self):
+        matches = re.match('/ticket/(\d+)', self.req.path_info)
+        if not matches:
+            return None
+        return matches.group(1)
+
     def expand_macro(self, formatter, name, content):
         self.req = formatter.req
 
