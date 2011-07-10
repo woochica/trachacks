@@ -35,7 +35,8 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, \
 from genshi.core import Markup
 from genshi.builder import tag
 
-from acct_mgr.api import AccountManager, _, ngettext, tag_, set_user_attribute
+from acct_mgr.api import AccountManager, _, dgettext, ngettext, tag_, \
+                         set_user_attribute
 from acct_mgr.db import SessionStore
 from acct_mgr.guard import AccountGuard
 from acct_mgr.util import containsAny, is_enabled
@@ -220,7 +221,9 @@ class AccountModule(Component):
                 yield 'account', _("Account")
 
     def render_preference_panel(self, req, panel):
-        data = {'account': self._do_account(req)}
+        data = {'account': self._do_account(req),
+                '_dgettext': dgettext,
+               }
         return 'prefs_account.html', data
 
     # IRequestHandler methods
@@ -230,7 +233,9 @@ class AccountModule(Component):
                self._reset_password_enabled(log=True)
 
     def process_request(self, req):
-        data = {'reset': self._do_reset_password(req)}
+        data = {'_dgettext': dgettext,
+                'reset': self._do_reset_password(req)
+               }
         return 'reset_password.html', data, None
 
     # IRequestFilter methods
@@ -441,6 +446,7 @@ class RegistrationModule(Component):
                               'name' : None,
                               'email' : None,
                             },
+                '_dgettext': dgettext,
                }
         data['verify_account_enabled'] = is_enabled(self.env,
                                                     EmailVerificationModule)
@@ -451,10 +457,10 @@ class RegistrationModule(Component):
                 data['registration_error'] = e.message
                 data['acctmgr'] = getattr(e, 'acctmgr', '')
             else:
-                chrome.add_notice(req, Markup(tag.span(tag_(
+                chrome.add_notice(req, Markup(tag.span(tag(_(
                      """Registration has been finished successfully.
                      You may login as user %(user)s now.""",
-                     user=tag.b(req.args.get('username'))))))
+                     user=tag.b(req.args.get('username')))))))
                 req.redirect(req.href.login())
         data['reset_password_enabled'] = AccountModule(self.env
                                                       ).reset_password_enabled
@@ -544,16 +550,21 @@ class LoginModule(auth.LoginModule):
         env = self.env
         if req.path_info.startswith('/login') and req.authname == 'anonymous':
             guard = AccountGuard(env)
-            referrer = self._referer(req)
+            try:
+                referer = self._referer(req)
+            except AttributeError:
+                # Fallback for Trac 0.11 compatibility.
+                referer = req.get_header('Referer')
             # Steer clear of requests going nowhere or loop to self
-            if referrer is None or \
-                   referrer.startswith(str(req.abs_href()) + '/login'):
-                referrer = req.abs_href()
+            if referer is None or \
+                    referer.startswith(str(req.abs_href()) + '/login'):
+                referer = req.abs_href()
             data = {
+                '_dgettext': dgettext,
                 'login_opt_list': self.login_opt_list == True,
                 'persistent_sessions': AccountManager(env
                                        ).persistent_sessions,
-                'referer': referrer,
+                'referer': referer,
                 'registration_enabled': RegistrationModule(env).enabled,
                 'reset_password_enabled': AccountModule(env
                                           ).reset_password_enabled
@@ -639,7 +650,11 @@ class LoginModule(auth.LoginModule):
 
             # check for properties to be set in auth cookies,
             # defined since Trac 0.12
-            cookie_path = self.auth_cookie_path or req.base_path or '/'
+            try:
+                cookie_path = self.auth_cookie_path or req.base_path or '/'
+            except AttributeError:
+                # Fallback for Trac 0.11 compatibility
+                cookie_path = req.base_path or '/'
             req.outcookie['trac_auth'] = cookie.value
             req.outcookie['trac_auth']['path'] = cookie_path
 
@@ -648,9 +663,15 @@ class LoginModule(auth.LoginModule):
                                          'trac', 'auth_cookie_lifetime', t)
             if cookie_lifetime > 0:
                 req.outcookie['trac_auth']['expires'] = cookie_lifetime
-            if self.env.secure_cookies:
-                req.outcookie['trac_auth']['secure'] = True
-
+            try:
+                if self.env.secure_cookies:
+                    req.outcookie['trac_auth']['secure'] = True
+            except AttributeError:
+                # Report details about Trac compatibility for the feature.
+                self.env.log.warn(
+                    """Restricting cookies to HTTPS connections is requested,
+                    but is supported only by Trac 0.11.2 or later version.
+                    """)
             req.outcookie['trac_auth_session'] = 1
             req.outcookie['trac_auth_session']['path'] = cookie_path
             if cookie_lifetime > 0:
@@ -660,12 +681,26 @@ class LoginModule(auth.LoginModule):
     # overrides
     def _do_login(self, req):
         if not req.remote_user:
+            if req.method == 'GET':
+                # Trac before 0.12 has known weak redirect loop protection.
+                # Adding redirect fix from Trac 0.12, and especially avert
+                # from 'self._redirect_back', when we see a 'GET' here.
+                referer = req.get_header('Referer')
+                # Steer clear of requests going nowhere or loop to self
+                if referer is None or \
+                        referer.startswith(str(req.abs_href()) + '/login'):
+                    referer = req.abs_href()
+                req.redirect(referer)
             self._redirect_back(req)
         res = auth.LoginModule._do_login(self, req)
         if req.args.get('rememberme', '0') == '1':
             # check for properties to be set in auth cookies,
             # defined since Trac 0.12
-            cookie_path = self.auth_cookie_path or req.base_path or '/'
+            try:
+                cookie_path = self.auth_cookie_path or req.base_path or '/'
+            except AttributeError:
+                # Fallback for Trac 0.11 compatibility
+                cookie_path = req.base_path or '/'
             t = 86400 * 30 # AcctMgr default - Trac core defaults to 0 instead
             cookie_lifetime = self.env.config.getint(
                                          'trac', 'auth_cookie_lifetime', t)
@@ -688,7 +723,11 @@ class LoginModule(auth.LoginModule):
         auth.LoginModule._do_logout(self, req)
         
         # Expire the persistent session cookie
-        cookie_path = self.auth_cookie_path or req.base_path or '/'
+        try:
+            cookie_path = self.auth_cookie_path or req.base_path or '/'
+        except AttributeError:
+            # Fallback for Trac 0.11 compatibility
+            cookie_path = req.base_path or '/'
         req.outcookie['trac_auth_session'] = ''
         req.outcookie['trac_auth_session']['path'] = cookie_path
         req.outcookie['trac_auth_session']['expires'] = -10000
@@ -860,7 +899,7 @@ class EmailVerificationModule(Component):
                 req.redirect(req.href.prefs())
             else:
                 chrome.add_warning(req, _("Invalid verification token"))
-        data = {}
+        data = {'_dgettext': dgettext}
         if 'token' in req.args:
             data['token'] = req.args['token']
         if 'email_verification_token' not in req.session:
