@@ -1,0 +1,107 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>Version ${version.name}</title>
+    <script type="text/javascript">
+      jQuery(document).ready(function($) {
+        $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+      });
+    </script>
+    <link rel="stylesheet" type="text/css"
+          href="${chrome.htdocs_location}css/roadmap.css" />
+  </head>
+
+  <body>
+    <!--div id="content" class="version"!-->
+    <div id="content" class="version">
+      <h1>Version ${version.name}</h1>
+      <div class="info">
+        <py:choose>
+          <p py:when="is_released" class="date">
+            Released ${dateinfo(version.time)} ago
+            (${format_datetime(version.time)})
+          </p>
+          <p py:when="version.time" class="date">
+            Due in ${dateinfo(version.time)}
+            (${format_date(version.time)})
+          </p>
+          <p py:otherwise="" class="date">
+            No date set
+          </p>
+        </py:choose>
+        <py:if test="stats.count">${progress_bar(stats, interval_hrefs)}</py:if>
+      </div>
+
+      <div class="description" xml:space="preserve">
+        ${wiki_to_html(context, version.description)}
+      </div>
+
+      <div py:if="milestones">
+        <h2>Milestones</h2>
+        <table class="milestones" style="width: 100%">
+        <py:for each="idx, milestone in enumerate(milestones)">
+          <tr class="milestone">
+            <td class="info">
+              <h2><a href="${href.milestone(milestone.name)}">
+                <em>${milestone.name}</em>
+              </a></h2>
+              <py:choose>
+                <p py:when="milestone.completed" class="date">
+                  Completed ${dateinfo(milestone.completed)} ago
+                  (${format_date(milestone.completed)})
+                </p>
+                <p py:when="milestone.is_late" class="date">
+                  <strong>${dateinfo(milestone.due)} late</strong>
+                  (${format_date(milestone.due)})
+                </p>
+                <p py:when="milestone.due" class="date">
+                  Due in ${dateinfo(milestone.due)}
+                  (${format_date(milestone.due)})
+                </p>
+                <p py:otherwise="" class="date">
+                  No date set
+                </p>
+              </py:choose>
+            </td>
+            <td py:with="mstats = milestone_stats[idx]" class="info">
+              <py:if test="mstats.stats.count">${progress_bar(mstats.stats, mstats.interval_hrefs, stats_href=mstats.stats_href)}</py:if>
+            </td>
+          </tr> 
+          <tr py:if="show_milestone_description"> 
+            <td class="description" colspan="2" xml:space="preserve"> 
+              ${wiki_to_html(context(milestone.resource), milestone.description)} 
+            </td> 
+          </tr>
+        </py:for>
+        </table>
+      </div>
+      ${list_of_attachments(attachments, compact=True)}
+
+      <div py:if="'VERSION_MODIFY' in perm(resource) or
+                  'VERSION_DELETE' in perm(resource) or
+                  attachments.can_create"
+           class="buttons">
+        <form py:if="'VERSION_MODIFY' in perm(resource)" method="get" action="" id="editversion">
+          <div>
+            <input type="hidden" name="action" value="edit" />
+            <input type="submit" value="Edit version" />
+          </div>
+        </form>
+        <form py:if="'VERSION_DELETE' in perm(resource)" method="get" action="" id="deleteversion">
+          <div>
+            <input type="hidden" name="action" value="delete" />
+            <input type="submit" value="Delete version" />
+          </div>
+        </form>
+        ${attach_file_form(attachments)}
+      </div>
+
+    </div>
+  </body>
+</html>
