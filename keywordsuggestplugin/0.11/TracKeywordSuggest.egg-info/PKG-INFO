@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: TracKeywordSuggest
+Version: 0.3
+Summary: Add suggestions to ticket 'keywords' field
+Home-page: http://trac-hacks.org/wiki/KeywordSuggestPlugin
+Author: Ryan J Ollos
+Author-email: ryan.j.ollos@gmail.com
+License: BSD
+Description: UNKNOWN
+Platform: UNKNOWN

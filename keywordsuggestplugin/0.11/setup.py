@@ -5,9 +5,11 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name='TracKeywordSuggest',
-    version = '0.2',
+    version = '0.3',
     author = 'Dmitry Dianov',
     author_email = 'scratcha at google mail',
+    maintainer = 'Ryan J Ollos',
+    maintainer_email = 'ryan.j.ollos@gmail.com',
     description = "Add suggestions to ticket 'keywords' field",
     license = "BSD",
     url = 'http://trac-hacks.org/wiki/KeywordSuggestPlugin',

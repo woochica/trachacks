@@ -1,5 +1,6 @@
 # copyright (c) 2008 Dmitry Dianov. All rights reserved.
 
+from trac.config import Option, BoolOption, ListOption
 from trac.core import Component, implements
 from trac.web.api import ITemplateStreamFilter
 from genshi.builder import tag
@@ -12,24 +13,44 @@ from trac.web import IRequestFilter
 class KeywordSuggestModule(Component):
     implements (ITemplateStreamFilter, ITemplateProvider, IRequestFilter)
 
+    keywords = ListOption('keywordsuggest', 'keywords', '', ',',
+                          doc="""A list of comma separated values available for input.""")
+
+    mustmatch = BoolOption('keywordsuggest', 'mustmatch', False,
+                           """If true, 'keywords' field accepts values from the keywords list only.""")
+
+    matchcontains = BoolOption('keywordsuggest','matchcontains', True,
+                               """Include partial matches in suggestion list. Default is true.""")
+
+    multipleseparator = Option('keywordsuggest','multipleseparator', "', '",
+                               """Character(s) to use as separators between keywords.
+
+Must be enclosed with quotes or other characters. Default is ', '.""")
+
+    helppage = Option('keywordsuggest','helppage', None,
+                      """If specified, 'keywords' label will be turned into a link to this URL.""")
+
+    helppagenewwindow = BoolOption('keywordsuggest','helppage.newwindow', False,
+                                   """If true and helppage specified, wiki page will open in a new window. Default is false.""")
+
     # ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):
         if (filename <> 'ticket.html'):
-            return stream
-       
-        keywords = self.config.getlist('keywordsuggest','keywords')
-        if not keywords:
+            return stream       
+
+        if not self.keywords:
             self.log.debug('List of keywords not found in trac.ini. '\
                            'Plugin keywordsuggest disabled.')
             return stream
 
-        keywords = ','.join(("'%s'" % keyword for keyword in keywords))
+        keywords = ','.join(("'%s'" % keyword for keyword in self.keywords))
+
         mustmatch = 'mustMatch: true,'
-        if not self.config.getbool('keywordsuggest','mustmatch'):
+        if not self.mustmatch:
             mustmatch = ""
-        sep = self.config.get('keywordsuggest','multipleseparator', '')[1:-1] or ', '
+
         matchcontains = 'matchContains: true,'
-        if not self.config.getbool('keywordsuggest','matchcontains',True):
+        if not self.matchcontains:
             matchcontains = ""
 
         # inject transient part of javascript directly into ticket.html template
@@ -45,16 +66,15 @@ class KeywordSuggestModule(Component):
                   $("input#field-keywords").attr('value', keywords.substring(0, keywords.length-sep.length))
               }
           });
-        });""" % (sep, keywords, matchcontains, mustmatch)
+        });""" % (self.multipleseparator[1:-1], # remember to chop the quotes
+                  keywords, matchcontains, mustmatch)
         stream = stream | Transformer('.//head').append \
                           (tag.script(Markup(js), type='text/javascript'))
 
         # turn keywords field label into link to wiki page
-        helppage = self.config.get('keywordsuggest','helppage')
-        if helppage:
-            link = tag.a(href='wiki/%s' % helppage, target='blank')
-            if not self.config.getbool('keywordsuggest','helppage.newwindow',
-                                       'false'):
+        if self.helppage:
+            link = tag.a(href='%s' % self.helppage, target='blank')
+            if not self.helppagenewwindow:
                 link.attrib -= 'target'
             stream = stream | Transformer\
                          ('//label[@for="field-keywords"]/text()').wrap(link)
