@@ -1,3 +1,4 @@
+setup.cfg
 setup.py
 TracKeywordSuggest.egg-info/PKG-INFO
 TracKeywordSuggest.egg-info/SOURCES.txt
