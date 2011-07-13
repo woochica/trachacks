@@ -12,7 +12,7 @@ c9ef45681efefb313e5bacd088cf1322 /data/trac/th_devel/acct_mgr_build/acct_mgr/tem
 fc4f4ce0daf89d03510600f1a1cd5c00 /data/trac/th_devel/acct_mgr_build/acct_mgr/md5crypt.py
 dae1127195c2dcc63eaf27dac3b7ef42 /data/trac/th_devel/acct_mgr_build/acct_mgr/locale/fr/LC_MESSAGES/acct_mgr.po
 c8f5183f05d06e9cd746281ba597ab0d /data/trac/th_devel/acct_mgr_build/contrib/signatures.py
-9ac0388c55fe687759e7a7c0e29d5cbf /data/trac/th_devel/acct_mgr_build/acct_mgr/admin.py
+aab3f8b67e4476dbf51a5bebe0560064 /data/trac/th_devel/acct_mgr_build/acct_mgr/admin.py
 548c47106b3eb60ea6b2105827d11905 /data/trac/th_devel/acct_mgr_build/acct_mgr/tests/functional/__init__.py
 423b8efec0be40962b9e2189f27f04b4 /data/trac/th_devel/acct_mgr_build/acct_mgr/locale/cs/LC_MESSAGES/acct_mgr.po
 275e57082b5ecf9ba47d946300b86ab6 /data/trac/th_devel/acct_mgr_build/acct_mgr/locale/ja/LC_MESSAGES/acct_mgr.po
@@ -31,18 +31,18 @@ a6b47d6b847dac2eb454e43b0d959018 /data/trac/th_devel/acct_mgr_build/acct_mgr/not
 1fbce6790724050f30e03e78fc138fef /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/user_changes_email.txt
 5c2b90a26aac975e1fb14e8846db3ed9 /data/trac/th_devel/acct_mgr_build/acct_mgr/locale/it/LC_MESSAGES/acct_mgr.po
 7be32664b8f9016041c29d11e483ae64 /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/prefs_account.html
-609f28dc323e901c04e1efe80c22b5f1 /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/admin_accountsconfig.html
+f94288a0ff495af0b88cf6944e0f23cb /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/admin_accountsconfig.html
 8e9d8b002817e71f75a07d7403031c50 /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/login.html
-f7d9848c659ee543c380cd624652582f /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/account_details.html
+e9159083bb4016f5379895a994775136 /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/account_details.html
 894be80462f73dfaa3bddd114bf8211b /data/trac/th_devel/acct_mgr_build/acct_mgr/htdocs/locked.png
 80d33a38a41a4c55dd6c1bdfcba0139f /data/trac/th_devel/acct_mgr_build/contrib/style.css
 866abfd25e4bc0a591e457193497e86a /data/trac/th_devel/acct_mgr_build/README
 d41d8cd98f00b204e9800998ecf8427e /data/trac/th_devel/acct_mgr_build/acct_mgr/__init__.py
 9b15fd4fcb184b1e8bc0e1280f31f847 /data/trac/th_devel/acct_mgr_build/acct_mgr/pwhash.py
-845c27d0495176c4bf0e901c81c874ae /data/trac/th_devel/acct_mgr_build/acct_mgr/api.py
+236af0046178bb59ba03d1de542c0691 /data/trac/th_devel/acct_mgr_build/acct_mgr/api.py
 fad19e9d27595300bff869730e8f01f0 /data/trac/th_devel/acct_mgr_build/acct_mgr/tests/functional/testenv.py
 0bd248f9ffbab67bfacbb57521f2d219 /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/admin_accountsnotification.html
-d51ccb147ca10e5c2fd3e76f45b6a79e /data/trac/th_devel/acct_mgr_build/setup.py
+4773c693c1e66421213eb33cd597f41a /data/trac/th_devel/acct_mgr_build/setup.py
 751a75f9e223074c188c828643eeb81a /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/register.html
 2090b58e87ba577c88fcbf1b6440fc84 /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/reset_password_email.txt
 9451eab60dc400d73f41e57b91b1f441 /data/trac/th_devel/acct_mgr_build/acct_mgr/http.py
@@ -53,4 +53,4 @@ c4a2b8dd3460a1ce8926a8e7e5f258f0 /data/trac/th_devel/acct_mgr_build/acct_mgr/htf
 321b2a2050ad0745085c448a765bb7fc /data/trac/th_devel/acct_mgr_build/acct_mgr/tests/__init__.py
 1233ff1bbdce74f62ee3b4fa66ae5811 /data/trac/th_devel/acct_mgr_build/acct_mgr/templates/admin_users.html
 5a32e33d2ff224053a4babcaa48c0381 /data/trac/th_devel/acct_mgr_build/acct_mgr/locale/sv/LC_MESSAGES/acct_mgr.po
-4049599fd06891b9b38aef5e5e904309 /data/trac/th_devel/acct_mgr_build/changelog
+25ba97c9d16f6922ecfcdd2b598c4928 /data/trac/th_devel/acct_mgr_build/changelog

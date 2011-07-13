@@ -24,7 +24,7 @@ from trac.web.chrome    import ITemplateProvider, add_notice, \
 from trac.admin         import IAdminPanelProvider
 
 from acct_mgr.api       import AccountManager, _, dgettext, gettext, tag_, \
-                               set_user_attribute
+                               del_user_attribute, set_user_attribute
 from acct_mgr.guard     import AccountGuard
 from acct_mgr.web_ui    import _create_user, AccountModule, \
                                EmailVerificationModule
@@ -141,6 +141,10 @@ class AccountManagerAdminPages(Component):
         stores = StoreOrder(stores=self.acctmgr.stores,
                             list=self.acctmgr.password_store)
         if req.method == 'POST':
+            if req.args.get('restart'):
+                del_user_attribute(self.env, None, 'password_refreshed')
+                req.redirect(req.href.admin('accounts', 'config',
+                                            done='restart'))
             _setorder(req, stores)
             self.config.set('account-manager', 'password_store',
                             ','.join(stores.get_enabled_store_names()))
@@ -197,6 +201,9 @@ class AccountManagerAdminPages(Component):
             'verify_email': self.acctmgr.verify_email,
             'refresh_passwd': self.acctmgr.refresh_passwd,
             }
+        result = req.args.get('done')
+        if result == 'restart':
+            data['result'] = _("Password hash refresh procedure restarted.")
         return 'admin_accountsconfig.html', data
 
     def _do_users(self, req):
@@ -334,7 +341,7 @@ class AccountManagerAdminPages(Component):
     def _do_acct_details(self, req):
         username = req.args.get('user')
         if not username:
-            # Accessing user account details directly is not useful,
+            # Accessing user account details without username is not useful,
             # so we revert such request immediately. 
             add_warning(req, Markup(tag.span(tag_(
                 "Please choose account by username from list to proceed."
@@ -351,10 +358,10 @@ class AccountManagerAdminPages(Component):
             if req.args.get('delete') or req.args.get('release'):
                 # delete failed login attempts, evaluating attempts count
                 if guard.failed_count(username, reset=True) > 0:
-                    add_notice(req, Markup(tag.span(tag_(
+                    add_notice(req, Markup(tag.span(tag(_(
                         "Failed login attempts for user %(user)s deleted",
-                        user=tag.b(username)
-                        ))))
+                        user=Markup(tag.b(username))
+                        )))))
             req.redirect(req.href.admin('accounts', 'users'))
 
         data = {'_dgettext': dgettext,
@@ -405,7 +412,7 @@ class AccountManagerAdminPages(Component):
                 str(data['email_verified']))
 
         add_stylesheet(req, 'acct_mgr/acct_mgr.css')
-        #req.href.admin('accounts', 'details', user=username)
+        data['url'] = req.href.admin('accounts', 'details')
         return 'account_details.html', data
 
     # ITemplateProvider methods
