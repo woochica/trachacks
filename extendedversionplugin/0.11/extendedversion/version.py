@@ -159,6 +159,45 @@ class VisibleVersion(Component):
     def get_link_resolvers(self):
         yield ('version', self._format_link)
 
+    # Utility methods
+        
+    def get_version_data(self, req, db, version):
+    
+        db = self.env.get_db_cnx()
+        sql = "SELECT name,due,completed,description FROM milestone " \
+              "INNER JOIN milestone_version ON (name = milestone) " \
+              "WHERE version = %s " \
+              "ORDER BY name "
+        cursor = db.cursor()
+        cursor.execute(sql, (version.name,))
+    
+        milestones = []
+        tickets = []
+        milestone_stats = []
+    
+        for row in cursor:
+            milestone = Milestone(self.env)
+            milestone._from_database(row)
+            milestones.append(milestone)
+    
+            mtickets = get_tickets_for_milestone(self.env, db, milestone.name,
+                                                'owner')
+            mtickets = apply_ticket_permissions(self.env, req, mtickets)
+            tickets += mtickets
+            stat = get_ticket_stats(self.milestone_stats_provider, mtickets)
+            milestone_stats.append(milestone_stats_data(self.env, req, stat, milestone.name))
+    
+        stats = get_ticket_stats(self.version_stats_provider, tickets)
+        interval_hrefs = version_interval_hrefs(self.env, req, stats, [ milestone.name for milestone in milestones ])
+        data = {
+            'stats' : stats,
+            'interval_hrefs' : interval_hrefs,
+            'milestones' : milestones,
+            'milestone_stats' : milestone_stats,
+        }
+        return data
+
+
     # Internal methods
 
     def _do_delete(self, req, db, version):
@@ -291,34 +330,7 @@ class VisibleVersion(Component):
         
     def _render_view(self, req, db, version):
 
-        db = self.env.get_db_cnx()
-        sql = "SELECT name,due,completed,description FROM milestone " \
-              "INNER JOIN milestone_version ON (name = milestone) " \
-              "WHERE version = %s " \
-              "ORDER BY name "
-        cursor = db.cursor()
-        cursor.execute(sql, (version.name,))
-
-        milestones = []
-        tickets = []
-        milestone_stats = []
-
-        for row in cursor:
-            milestone = Milestone(self.env)
-            milestone._from_database(row)
-            milestones.append(milestone)
-
-            mtickets = get_tickets_for_milestone(self.env, db, milestone.name,
-                                                'owner')
-            mtickets = apply_ticket_permissions(self.env, req, mtickets)
-            tickets += mtickets
-            stat = get_ticket_stats(self.milestone_stats_provider, mtickets)
-            milestone_stats.append(milestone_stats_data(self.env, req, stat, milestone.name))
-
-        stats = get_ticket_stats(self.version_stats_provider, tickets)
-        interval_hrefs = version_interval_hrefs(self.env, req, stats,
-		[ milestone.name for milestone in milestones ])
-
+        version_data = self.get_version_data(req, db, version)
         resource = Resource('version', version.name)
         context = Context.from_request(req, resource)
         add_stylesheet(req, 'extendedversion/css/extendedversion.css')
@@ -328,11 +340,11 @@ class VisibleVersion(Component):
             'resource': resource,
             'version': version,
             'is_released': version.time and version.time.date() < date.today(),
-            'stats': stats,
-            'interval_hrefs': interval_hrefs,
+            'stats': version_data['stats'],
+            'interval_hrefs': version_data['interval_hrefs'],
             'attachments': AttachmentModule(self.env).attachment_data(context),
-            'milestones': milestones,
-            'milestone_stats': milestone_stats,
+            'milestones': version_data['milestones'],
+            'milestone_stats': version_data['milestone_stats'],
             'show_milestone_description': self.show_milestone_description,
             }
 

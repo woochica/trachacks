@@ -10,6 +10,8 @@
     <title>Roadmap</title>
     <link rel="stylesheet" type="text/css"
           href="${chrome.htdocs_location}css/roadmap.css" />
+    <link rel="stylesheet" type="text/css"
+          href="${chrome.htdocs_location}css/roadmap.css" />
   </head>
 
   <body>
@@ -47,12 +49,39 @@
                 No date set
               </p>
             </py:choose>
+            <py:if test="show_tickets_in_overview and version_datasets[idx].stats.count">
+              <table><tr>
+                <td>
+                  Milestone tickets
+                </td>
+                <td>
+                   ${progress_bar(version_datasets[idx].stats, version_datasets[idx].interval_hrefs)}
+                </td>
+              </tr></table>
+            </py:if>
           </div>
 
           <div class="description" xml:space="preserve">
             ${wiki_to_html(context(resources[idx]), version.description)}
           </div>
-
+  
+          <div py:if="show_milestones_in_overview and version_datasets[idx].milestones">
+            <h3>Milestones</h3>
+            <table class="milestones">
+            <py:for each="idx2, milestone in enumerate(version_datasets[idx].milestones)">
+              <tr class="milestone">
+                <td class="info">
+                  <a href="${href.milestone(milestone.name)}">
+                    ${milestone.name}
+                  </a>
+                </td>
+                <td py:with="mstats = version_datasets[idx].milestone_stats[idx2]" class="info">
+                  <py:if test="mstats.stats.count">${progress_bar(mstats.stats, mstats.interval_hrefs, legend=False, stats_href=mstats.stats_href)}</py:if>
+                </td>
+              </tr> 
+            </py:for>
+            </table>
+          </div>
         </li>
       </ul>
 
