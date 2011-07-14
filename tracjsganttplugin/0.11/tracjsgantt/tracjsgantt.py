@@ -681,7 +681,7 @@ class TracJSGanttChart(WikiMacroBase):
             task += '%s,' % 0
         
         # pParent (parent task ID) 
-        if self.fields['parent']:
+        if options['root'] and str(ticket['id']) not in options['root'].split('|') and self.fields['parent']:
             task += '%s,' % ticket[self.fields['parent']]
         else:
             task += '%s,' % 0
