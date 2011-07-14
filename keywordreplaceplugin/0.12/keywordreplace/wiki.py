@@ -39,7 +39,7 @@ class KeywordReplace(Component):
                     self.env.log.warning("Invalid replaces line: %s", line)
         keys = reversed(sorted(self.replace.keys(), key=lambda a: len(a)))
         self.compiled_replace = \
-            r'''\b(?P<replaces>%s)(?P<replacesselector>\w*)\b''' % '|'.join(keys)
+            r'''\b(?P<replaces>%s)\b''' % '|'.join(keys)
         
         # XXX Very ugly, but only "reliable" way?
         from trac.wiki.parser import WikiParser
@@ -47,17 +47,10 @@ class KeywordReplace(Component):
 
     def _replaces_formatter(self, formatter, ns, match):
         replaces = match.group('replaces')
-        selector = match.group('replacesselector')
-        self.env.log.warning('formatter: %s ns: %s' % (formatter, ns))
         
         if replaces not in self.replace:
             return match.group(0)
         title = self.replace[replaces]
-        # Perform basic variable substitution
-        title = title.replace('$1', selector).strip()
-        suffix = ''
-        if selector:
-            suffix = selector
         
         context = Context.from_request(formatter.req, formatter.resource)
         
