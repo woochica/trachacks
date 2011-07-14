@@ -59,6 +59,7 @@ class TracJSGanttChart(WikiMacroBase):
             'colorBy' : 'priority',
             'lwidth' : None,
             'root' : None,
+            'goal' : None,
             'showdep' : 1,
             'userMap': 1,
             'omitMilestones': 0,
@@ -202,11 +203,11 @@ class TracJSGanttChart(WikiMacroBase):
     # criteria in options.
     def _query_tickets(self, options):
         # Parents is a list of strings
-        def _children(parents):
-            if len(parents) == 0:
+        def _expand(origins, field, format):
+            if len(origins) == 0:
                 return []
 
-            parent_list = [self.parent_format % id for id in parents]
+            node_list = [format % id for id in origins]
             db = self.env.get_db_cnx()
             cursor = db.cursor()
             cursor.execute("SELECT t.id "
@@ -214,11 +215,12 @@ class TracJSGanttChart(WikiMacroBase):
                            "LEFT OUTER JOIN ticket_custom AS p ON "
                            "    (t.id=p.ticket AND p.name='%s') "
                            "WHERE p.value IN (%s)" % 
-                           (self.fields['parent'],
-                            "'" + "','".join(parent_list) + "'"))
-            children = ['%s'%row[0] for row in cursor] 
+                           (field,
+                            "'" + "','".join(node_list) + "'"))
+            nodes = ['%s'%row[0] for row in cursor] 
 
-            return parents + _children(children)
+            return origins + _expand(nodes, field, format)
+
 
         query_args = {}
         for key in options.keys():
@@ -226,14 +228,33 @@ class TracJSGanttChart(WikiMacroBase):
                 query_args[key] = options[key]
 
         if options['root']:
+            if 'id' in query_args:
+                query_args['id'] += '|'
+            else:
+                query_args['id'] = ''
             if options['root'] == 'self':
                 this_ticket = self._this_ticket()
                 if this_ticket:
-                    parents = [ this_ticket ]
-                    query_args['id'] = '|'.join(_children(parents))
+                    nodes = [ this_ticket ]
+                    query_args['id'] += '|'.join(_expand(nodes, self.fields['parent'], self.parent_format))
             else:
-                parents = options['root'].split('|')
-                query_args['id'] = '|'.join(_children(parents))
+                nodes = options['root'].split('|')
+                query_args['id'] += '|'.join(_expand(nodes, self.fields['parent'], self.parent_format))
+
+        if options['goal']:
+            if 'id' in query_args:            
+                query_args['id'] += '|'
+            else:
+                query_args['id'] = ''
+            if options['goal'] == 'self':
+                this_ticket = self._this_ticket()
+                if this_ticket:
+                    nodes = [ this_ticket ]
+                    query_args['id'] += '|'.join(_expand(nodes, self.fields['succ'], '%s'))
+            else:
+                nodes = options['goal'].split('|')
+                query_args['id'] += '|'.join(_expand(nodes, self.fields['succ'], '%s'))
+
 
         # Start with values that are always needed
         fields = [
