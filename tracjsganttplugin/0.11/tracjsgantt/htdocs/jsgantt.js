@@ -1002,6 +1002,7 @@ Complete-Displays task percent complete</p>
       var vMaxDate = new Date();
       var vMinDate = new Date();	
       var vTmpDate = new Date();
+      var vTmpMonth = new Date();
       var vNxtDate = new Date();
       var vCurrDate = new Date();
       var vTaskLeft = 0;
@@ -1245,14 +1246,19 @@ Complete-Displays task percent complete</p>
                 vRightTable += JSGantt.formatDateStr(vTmpDate, vDateDisplayFormat) + '</td>';
                 vTmpDate.setDate(vTmpDate.getDate()+1);
             }
-            
-  	         if(vFormat == 'day')
-            {
-			      vRightTable += '<td class=gdatehead style="FONT-SIZE: 12px; HEIGHT: 19px;" align=center colspan=7>' +
-			      JSGantt.formatDateStr(vTmpDate,vDateDisplayFormat.substring(0,5)) + ' - ';
-               vTmpDate.setDate(vTmpDate.getDate()+6);
-		         vRightTable += JSGantt.formatDateStr(vTmpDate, vDateDisplayFormat) + '</td>';
-               vTmpDate.setDate(vTmpDate.getDate()+1);
+
+            if(vFormat == 'day')
+            {    
+		vRightTable += '<td class=gdatehead style="FONT-SIZE: 12px; HEIGHT: 19px;" align=center colspan=7>';
+		var vTmpMonth = vTmpDate.getMonth();
+		vTmpDate.setDate(vTmpDate.getDate()+6);
+   
+		if (vTmpMonth == vTmpDate.getMonth()) 
+		    vRightTable += vMonthArr[vTmpDate.getMonth()].substr(0,3) + "   "+ vTmpDate.getFullYear();
+		else
+		    vRightTable += vMonthArr[vTmpMonth].substr(0,3) +"-"+vMonthArr[vTmpDate.getMonth()].substr(0,3) + "   "+ vTmpDate.getFullYear();
+
+		vTmpDate.setDate(vTmpDate.getDate()+1);
             }
             else if(vFormat == 'week')
             {
