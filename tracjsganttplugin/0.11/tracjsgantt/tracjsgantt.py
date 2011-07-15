@@ -702,10 +702,16 @@ class TracJSGanttChart(WikiMacroBase):
             task += '%s,' % 0
         
         # pParent (parent task ID) 
-        if options['root'] and str(ticket['id']) not in options['root'].split('|') and self.fields['parent']:
-            task += '%s,' % ticket[self.fields['parent']]
-        else:
+        # If there's no parent field configured, don't link to parents
+        if not self.fields['parent']:
             task += '%s,' % 0
+        # If there's a parent field, but the ticket is in root, don't
+        # link to parent
+        elif options['root'] and str(ticket['id']) in options['root'].split('|'):
+            task += '%s,' % 0
+        # If there's a parent, and the ticket is not a root, link to parent
+        else:
+            task += '%s,' % ticket[self.fields['parent']]
 
         # open
         if ticket['level'] < options['openLevel']:
