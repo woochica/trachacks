@@ -17,7 +17,7 @@ from trac.web.api import ITemplateStreamFilter
 from trac.wiki.api import IWikiPageManipulator, IWikiChangeListener
 from trac.wiki.model import WikiPage
 from trac.util.compat import sorted
-from genshi.builder import tag
+from genshi.builder import Markup, tag
 from genshi.filters.transform import Transformer
 
 
@@ -136,7 +136,7 @@ class WikiTagInterface(Component):
         # TRANSLATOR: Label text for link to '/tags'.
         link = tag.a(_("view all tags"), href=req.href.tags())
         # TRANSLATOR: ... (view all tags)
-        insert = tag(_("Tag under: (%(tags_link)s)", tags_link=link))
+        insert = tag(Markup(_("Tag under: (%(tags_link)s)", tags_link=link)))
         insert(
             tag.br(),
             tag.input(id='tags', type='text', name='tags', size='50',
