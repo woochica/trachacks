@@ -7,6 +7,11 @@ tracforms-0.5 (yet unreleased):
    adding a private, optionally cached version of `env.get_known_users()`
 
 
+tracforms-0.4.1 (yet unrelease):
+ resolved issues
+ * #9000: Plugin uninstallable in Trac 0.11 - sample crashes wiki, more issues
+
+
 tracforms-0.4 (18-May-2011):
  resolved issues
  * #5608: trac-admin upgrade with PostgreSQL fails due to specific SQL syntax

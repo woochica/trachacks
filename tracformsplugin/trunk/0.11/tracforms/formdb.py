@@ -8,12 +8,12 @@ import unittest
 from trac.config import BoolOption, ListOption
 from trac.core import Component, implements
 from trac.db import Column, DatabaseManager, Index, Table
-from trac.resource import Resource, resource_exists
+from trac.resource import Resource
 from trac.search.api import search_to_sql
 from trac.web.chrome import Chrome
 
 from api import IFormDBObserver, _
-from compat import json, parse_qs
+from compat import json, parse_qs, resource_exists
 from tracdb import DBComponent
 from util import parse_history, resource_from_page, xml_unescape
 
