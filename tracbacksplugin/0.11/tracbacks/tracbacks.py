@@ -94,13 +94,16 @@ class TracBacksPlugin(Component):
                 # comment 4, the string will be '4.8'. The index is used
                 # by the TicketChangePlugin to identify the comment being
                 # edited, so we make sure to add it here.
+                cnum_thischange = 1                
                 change_log = t.get_changelog()
-                lastchange = change_log[-1]
-                cnum_lastchange = lastchange[3].rsplit('.', 1)
-                cnum_lastcomment = int(cnum_lastchange[-1])
-                cnum_thischange = str(cnum_lastcomment + 1)
-                                
+                if change_log != []:
+                    lastchange = change_log[-1]
+                    cnum_lastchange = lastchange[3].rsplit('.', 1)
+                    cnum_lastcomment = int(cnum_lastchange[-1])
+                    cnum_thischange = str(cnum_lastcomment + 1)
+                                                    
                 t.save_changes(author, tracback, cnum=cnum_thischange)
+                    
 
     def ticket_deleted(self, ticket):
         pass
