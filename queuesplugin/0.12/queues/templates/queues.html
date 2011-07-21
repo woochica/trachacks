@@ -110,7 +110,7 @@ var change = function(changes, cells){
                     num = Math.min(num,${data.max_position});
                 }
                 var new_pos = pad(num, ${data.pad_length});
-                if (jQuery.trim(cell.text()) != new_pos){
+                if (!ignore(jQuery.trim(cell.text()), new_pos)){
                     // returned args look like: id5=position1 amp id23=position2
                     var id = cell.siblings('.ticket').text().replace(/[^\d]/g,'');
                     var field = cell.attr('class').replace(/ /g,'').toLowerCase();
@@ -137,6 +137,17 @@ var change = function(changes, cells){
         });
     });
     return len;
+}
+
+var ignore = function(old_s, new_s){
+    // the current/old position value should be ignored if:
+    //  * it has a value that is not a number, -OR-
+    //  * it's value matches the expected/new value
+    if (old_s.length == 0)
+        return false;
+    if (isNaN(parseInt(old_s)))
+        return true;
+    return old_s == new_s;
 }
 
 var pad = function(num, len, char){
