@@ -129,9 +129,14 @@ class SupoSERequestHandler(Component):
                 
                 youngest = int( repo.youngest_rev )
                 #raise Exception( int( indexedrev ) < youngest )
-                base = re.search("(svn:.*:)(.*:.*)", repo.get_base() )
+                base = re.search("(svn:.*:)(.*:.*)", repo.get_base())
+                if not base:
+                    base = re.search("(svn:.*:)(.*)", repo.get_base())
                 base = base.group(2)
-                base = "file:///" +  base
+                if base.startswith('/'):
+                    base = "file://" +  base
+                else:
+                    base = "file:///" +  base
                 if not indexedrev:
                     # First Scan
                     first_scan_cmd = supose + " scan --url "
