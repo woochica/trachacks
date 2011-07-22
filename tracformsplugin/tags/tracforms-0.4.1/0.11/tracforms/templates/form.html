@@ -1,0 +1,76 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"      
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="tracforms">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+
+  <?python
+    if _dgettext is not None:
+        dgettext = _dgettext ?>
+  <head>
+    <title py:if="title">$title</title>
+  </head>
+
+  <body>
+    <div id="content" class="tracforms">
+      <div class="trac-topnav"
+           py:if="len(history) > 5 and allow_reset is True">
+        <a href="#reset"
+           title="Go down to reset fields and delete history">Reset</a> &darr;
+      </div>
+      <h1>$page_title</h1>
+      <div id="form" py:choose="">
+        <h2 py:if="fields">Saved Values</h2>
+        <p py:if="subcontext">in subcontext '${subcontext}'</p>
+        <table class="properties" py:when="fields">
+          <py:for each="field in fields">
+            <tr>
+              <th i18n:msg="name">${field.name}:</th>
+              <td>${field.value}</td>
+              <td py:choose="">
+                <py:when test="field.time is not None">
+                  ${field.author} &mdash; ${field.time}
+                </py:when>
+                <py:otherwise>&nbsp;</py:otherwise>
+              </td>
+            </tr>
+          </py:for>
+        </table>
+        <py:otherwise><h2>(No form data recorded)</h2></py:otherwise>
+      </div>
+      <div py:if="history">
+        <h2>Change History</h2>
+        <div id="changelog" py:choose="">
+          <py:for each="changeset in history">
+            <div id="change">
+              <h3 class="change" i18n:msg="time, author">
+                Changed on ${changeset.time} by ${changeset.author}:
+              </h3>
+              <ul class="changes">
+                <li py:for="field,change in changeset.changes.iteritems()">
+                  <strong>${field}</strong> ${change}
+                </li>
+              </ul>
+            </div>
+          </py:for>
+        </div>
+      </div>
+      <form id="form_reset" method="post"
+            py:if="allow_reset is True">
+        <div class="buttons" id="reset">
+          <input type="submit" name="reset"
+                 title="Reset fields and delete history"
+                 value="${dgettext('tracforms', 'Reset form')}" />
+          <input type="submit" name="rewind"
+                 value="${dgettext('tracforms', 'Revert latest change')}"
+                 py:if="history" />
+        </div>
+      </form>
+    </div>
+  </body>
+</html>
