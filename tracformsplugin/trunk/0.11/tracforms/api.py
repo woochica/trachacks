@@ -14,15 +14,24 @@ from trac.resource import IResourceManager, Resource, ResourceNotFound, \
 # by keeping Babel optional here.
 try:
     from trac.util.translation import domain_functions
-    add_domain, _, ngettext, tag_ = \
-        domain_functions('tracforms', ('add_domain', '_', 'ngettext', 'tag_'))
+    add_domain, _, tag_ = \
+        domain_functions('tracforms', ('add_domain', '_', 'tag_'))
+    dgettext = None
 except ImportError:
     from genshi.builder import tag as tag_
     from trac.util.translation import gettext
     _ = gettext
-    ngettext = _
     def add_domain(a,b,c=None):
         pass
+    def dgettext(domain, string, **kwargs):
+        return safefmt(string, kwargs)
+    def safefmt(string, kwargs):
+        if kwargs:
+            try:
+                return string % kwargs
+            except KeyError:
+                pass
+        return string
 
 from trac.web import IRequestHandler
 from trac.web.api import HTTPBadRequest, HTTPUnauthorized

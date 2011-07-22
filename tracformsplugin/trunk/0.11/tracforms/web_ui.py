@@ -14,7 +14,7 @@ from trac.util.datefmt import to_datetime
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_stylesheet
 
-from api import FormDBUser, _, tag_
+from api import FormDBUser, _, dgettext, tag_
 from compat import json
 from formdb import format_author
 from model import Form
@@ -116,7 +116,7 @@ class FormUI(FormDBUser):
                 return self._do_switch(env, req, form)
 
     def _do_view(self, env, req, form):
-        data = {}
+        data = {'_dgettext': dgettext}
         form_id = form.resource.id
         data['page_title'] = get_resource_description(env, form.resource,
                                                       href=req.href)
@@ -144,7 +144,7 @@ class FormUI(FormDBUser):
         return 'form.html', data, None
 
     def _do_switch(self, env, req, form):
-        data = {}
+        data = {'_dgettext': dgettext}
         data['page_title'] = get_resource_description(env, form.resource,
                                                       href=req.href)
         data['title'] = get_resource_shortname(env, form.resource)

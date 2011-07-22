@@ -9,6 +9,9 @@
   <xi:include href="layout.html" />
   <xi:include href="macros.html" />
 
+  <?python
+    if _dgettext is not None:
+        dgettext = _dgettext ?>
   <head>
     <title py:if="title">$title</title>
   </head>
