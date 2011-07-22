@@ -174,8 +174,10 @@ class FormSystem(FormBase, FormDBUser):
     # IPermissionRequestor method
 
     def get_permission_actions(self):
-        return ['FORM_VIEW', 'FORM_EDIT_VAL', 'FORM_RESET',
-                ('FORM_ADMIN', ['FORM_VIEW', 'FORM_EDIT_VAL', 'FORM_RESET'])]
+        action = ['FORM_VIEW', 'FORM_EDIT_VAL', 'FORM_RESET']
+        actions = [action[0], (action[1], [action[0]]),
+                   (action[2], [action[0]]), ('FORM_ADMIN', action)]
+        return actions
 
     # IResourceManager methods
 
