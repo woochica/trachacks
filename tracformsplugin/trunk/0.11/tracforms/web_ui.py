@@ -2,7 +2,7 @@
 
 import re
 
-from genshi.builder import tag
+from genshi.builder import Markup, tag
 from pkg_resources import resource_filename
 
 from trac.core import implements
@@ -14,7 +14,7 @@ from trac.util.datefmt import to_datetime
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_stylesheet
 
-from api import FormDBUser, _, dgettext, tag_
+from api import FormDBUser, _, dgettext
 from compat import json
 from formdb import format_author
 from model import Form
@@ -150,16 +150,16 @@ class FormUI(FormDBUser):
         data['title'] = get_resource_shortname(env, form.resource)
         data['siblings'] = []
         for sibling in form.siblings:
-            form_id = tag.strong(tag.a(_("Form %(form_id)s",
-                                         form_id=sibling[0]),
-                                         href=req.href.form(sibling[0])))
+            form_id = tag.strong(tag.a(
+                          _("Form %(form_id)s", form_id=sibling[0]),
+                            href=req.href.form(sibling[0])))
             if sibling[1] == '':
                 data['siblings'].append(form_id)
             else:
                 # TRANSLATOR: Form list entry for form select page
-                data['siblings'].append(tag_(
+                data['siblings'].append(tag(Markup(_(
                               "%(form_id)s (subcontext = '%(subcontext)s')",
-                              form_id=form_id, subcontext = sibling[1]))
+                              form_id=form_id, subcontext = sibling[1]))))
         add_stylesheet(req, 'tracforms/tracforms.css')
         return 'switch.html', data, None
 
@@ -190,7 +190,7 @@ class FormUI(FormDBUser):
             author = format_author(self.env, req, author, 'value')
             rendered.append(
                 {'name': name, 'value': value,
-                 'author': tag.span(tag_("by %(author)s", author=author),
+                 'author': tag.span(tag(_("by %(author)s", author=author)),
                                     class_='author'),
                  'time': time is not None and tag.span(
                          format_datetime(time), class_='date') or None})

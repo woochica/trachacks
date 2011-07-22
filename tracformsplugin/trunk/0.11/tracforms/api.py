@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from genshi.builder import tag
+from genshi.builder import Markup, tag
 from pkg_resources import resource_filename
 from urllib import unquote_plus
 
@@ -200,13 +200,13 @@ class FormSystem(FormBase, FormDBUser):
                 return _("Form %(form_id)s (%(parent)s)", form_id=resource.id,
                          parent=get_resource_shortname(env, resource.parent))
             # TRANSLATOR: Most verbose title, i.e. for form history page
-            return tag_("Form %(form_id)s (in %(parent)s)",
-                        form_id=resource.id, parent=parent)
+            return tag(Markup(_("Form %(form_id)s (in %(parent)s)",
+                        form_id=resource.id, parent=parent)))
         else:
             # TRANSLATOR: Title printed i.e. in form select page
             if format == 'compact':
-                return tag_("Forms (%(parent)s)", parent=parent)
-            return tag_("Forms in %(parent)s", parent=parent)
+                return tag(Markup(_("Forms (%(parent)s)", parent=parent)))
+            return tag(Markup(_("Forms in %(parent)s", parent=parent)))
 
     def get_resource_url(self, resource, href, **kwargs):
         # use parent's url instead
