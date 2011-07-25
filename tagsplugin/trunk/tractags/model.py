@@ -74,7 +74,7 @@ class TagModelProvider(Component):
                 cursor.execute("DROP TABLE wiki_namespace")
                 db.commit()
         except Exception, e:
-            self.log.error("DatabaseError: %s", e)
+            # The expected outcome for any new/updated installation.
             db.rollback()
             raise
 
