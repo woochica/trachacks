@@ -46,7 +46,8 @@ class TracJSGanttChart(WikiMacroBase):
         # All the macro's options with default values.
         # Anything else passed to the macro is a TracQuery field.
         self.options = {
-            'format': 'day',
+            'format': None,
+            'formats': 'day|week|month|quarter',
             'sample': 0,
             'res': 1,
             'dur': 1,
@@ -132,7 +133,10 @@ class TracJSGanttChart(WikiMacroBase):
 		self.config.get('trac-jsgantt','parent_format', default='%s')
 
     def _begin_gantt(self, options):
-        format = options['format']
+        if options['format']:
+            format = options['format']
+        else:
+            format = options['formats'].split('|')[0]
         showdep = options['showdep']
         text = ''
         text += '<div style="position:relative" class="gantt" id="GanttChartDIV"></div>\n'
@@ -169,7 +173,7 @@ class TracJSGanttChart(WikiMacroBase):
 
         opt += 'g.setDateDisplayFormat("%s");\n' % options['dateDisplay']
 
-        opt += 'g.setFormatArr("day","week","month","quarter");\n'
+        opt += 'g.setFormatArr("%s");\n' % options['formats'].split('|')
         opt += 'g.setPopupFeatures("location=1,scrollbars=1");\n'
         return opt
 
