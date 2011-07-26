@@ -1,0 +1,314 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?metadataRepository class='org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository' version='1.0.0'?>
+<repository name='Trac WikiEditor 4 Eclipse ~ org.trachacks.wikieditor.eclipse.site' type='org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository' version='1'>
+  <properties size='2'>
+    <property name='p2.compressed' value='false'/>
+    <property name='p2.timestamp' value='1255629160331'/>
+  </properties>
+  <units size='7'>
+    <unit id='org.trachacks.wikieditor.eclipse.feature.feature.jar' version='0.0.6.200910151952'>
+      <update id='org.trachacks.wikieditor.eclipse.feature.feature.jar' range='[0.0.0,0.0.6.200910151952)' severity='0'/>
+      <properties size='4'>
+        <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse'/>
+        <property name='org.eclipse.equinox.p2.description' value='A new plug-in providing Trac Wiki editing capabilities to&#xA;Eclipse IDE'/>
+        <property name='org.eclipse.equinox.p2.description.url' value='http://trac-hacks.org/wiki/WikiEditorForEclipsePlugin'/>
+        <property name='org.eclipse.equinox.p2.provider' value='TracWikiEditor4Eclipse @ trac-hacks.org'/>
+      </properties>
+      <provides size='3'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.jar' version='0.0.6.200910151952'/>
+        <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='feature' version='1.0.0'/>
+        <provided namespace='org.eclipse.update.feature' name='org.trachacks.wikieditor.eclipse.feature' version='0.0.6.200910151952'/>
+      </provides>
+      <filter>
+        (org.eclipse.update.install.features=true)
+      </filter>
+      <artifacts size='1'>
+        <artifact classifier='org.eclipse.update.feature' id='org.trachacks.wikieditor.eclipse.feature' version='0.0.6.200910151952'/>
+      </artifacts>
+      <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
+      <touchpointData size='1'>
+        <instructions size='1'>
+          <instruction key='zipped'>
+            true
+          </instruction>
+        </instructions>
+      </touchpointData>
+      <licenses size='1'>
+        <license url='http://www.apache.org/licenses/LICENSE-2.0'>
+          Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);&#xA;you may not use this file except in compliance with the License.&#xA;You may obtain a copy of the License at &#xA;&#xA;http://www.apache.org/licenses/LICENSE-2.0 &#xA;&#xA;Unless required by applicable law or agreed to in writing, software&#xA;distributed under the License is distributed on an &quot;AS IS&quot; BASIS,&#xA;WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&#xA;&#xA;See the License for the specific language governing permissions and&#xA;limitations under the License.
+        </license>
+      </licenses>
+      <copyright>
+        Copyright (c) 2007 - Iván García Sainz-Aja &lt;ivangsa@gmail.com&gt;
+      </copyright>
+    </unit>
+    <unit id='org.trachacks.wikieditor.eclipse.feature.feature.group' version='0.0.6.200910151952' singleton='false'>
+      <update id='org.trachacks.wikieditor.eclipse.feature.feature.group' range='[0.0.0,0.0.6.200910151952)' severity='0'/>
+      <properties size='5'>
+        <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse'/>
+        <property name='org.eclipse.equinox.p2.description' value='A new plug-in providing Trac Wiki editing capabilities to&#xA;Eclipse IDE'/>
+        <property name='org.eclipse.equinox.p2.description.url' value='http://trac-hacks.org/wiki/WikiEditorForEclipsePlugin'/>
+        <property name='org.eclipse.equinox.p2.provider' value='TracWikiEditor4Eclipse @ trac-hacks.org'/>
+        <property name='org.eclipse.equinox.p2.type.group' value='true'/>
+      </properties>
+      <provides size='1'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.group' version='0.0.6.200910151952'/>
+      </provides>
+      <requires size='13'>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.core.runtime' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.jface.text' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.core.resources' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.ide' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.editors' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.workbench.texteditor' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.navigator' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.ui.views' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.eclipse.compare' range='0.0.0'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.core' range='[0.0.6.200910151952,0.0.6.200910151952]'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.plugin' range='[0.0.6.200910151952,0.0.6.200910151952]'/>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.jar' range='[0.0.6.200910151952,0.0.6.200910151952]'>
+          <filter>
+            (org.eclipse.update.install.features=true)
+          </filter>
+        </required>
+      </requires>
+      <touchpoint id='null' version='0.0.0'/>
+      <licenses size='1'>
+        <license url='http://www.apache.org/licenses/LICENSE-2.0'>
+          Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);&#xA;you may not use this file except in compliance with the License.&#xA;You may obtain a copy of the License at &#xA;&#xA;http://www.apache.org/licenses/LICENSE-2.0 &#xA;&#xA;Unless required by applicable law or agreed to in writing, software&#xA;distributed under the License is distributed on an &quot;AS IS&quot; BASIS,&#xA;WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.&#xA;&#xA;See the License for the specific language governing permissions and&#xA;limitations under the License.
+        </license>
+      </licenses>
+      <copyright>
+        Copyright (c) 2007 - Iván García Sainz-Aja &lt;ivangsa@gmail.com&gt;
+      </copyright>
+    </unit>
+    <unit id='org.trachacks.wikieditor.eclipse.core' version='0.0.6.200910151952' singleton='false'>
+      <update id='org.trachacks.wikieditor.eclipse.core' range='[0.0.0,0.0.6.200910151952)' severity='0'/>
+      <properties size='2'>
+        <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse Core'/>
+        <property name='org.eclipse.equinox.p2.provider' value='TracWikiEditor4Eclipse @ trac-hacks.org'/>
+      </properties>
+      <provides size='10'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.core' version='0.0.6.200910151952'/>
+        <provided namespace='osgi.bundle' name='org.trachacks.wikieditor.eclipse.core' version='0.0.6.200910151952'/>
+        <provided namespace='java.package' name='org.apache.commons.lang' version='0.0.0'/>
+        <provided namespace='java.package' name='org.apache.commons.lang.builder' version='0.0.0'/>
+        <provided namespace='java.package' name='org.apache.commons.lang.exception' version='0.0.0'/>
+        <provided namespace='java.package' name='org.apache.commons.lang.math' version='0.0.0'/>
+        <provided namespace='java.package' name='org.trachacks.wikieditor.model' version='0.0.0'/>
+        <provided namespace='java.package' name='org.trachacks.wikieditor.model.exception' version='0.0.0'/>
+        <provided namespace='java.package' name='org.trachacks.wikieditor.service' version='0.0.0'/>
+        <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='bundle' version='1.0.0'/>
+      </provides>
+      <artifacts size='1'>
+        <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.core' version='0.0.6.200910151952'/>
+      </artifacts>
+      <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
+      <touchpointData size='1'>
+        <instructions size='2'>
+          <instruction key='manifest'>
+            MavenArtifact-BaseVersion: 0.0.6-SNAPSHOT&#xA;Built-By: ivan&#xA;Bundle-ManifestVersion: 2&#xA;Build-Jdk: 1.6.0_0&#xA;Created-By: Apache Maven&#xA;Manifest-Version: 1.0&#xA;Bundle-ClassPath: target/lib/commons-codec-1.2.jar,target/lib/commons-httpclient-3.1.jar,target/lib/commons-lang-2.3.jar,target/lib/commons-logging-1.0.4.jar,target/lib/wikieditor-core-0.0.6.jar,target/lib/ws-commons-util-1.0.2.jar,target/lib/xmlrpc-client-3.1.2.jar,target/lib/xmlrpc-common-3.1.2.jar&#xA;Bundle-Vendor: TracWikiEditor4Eclipse @ trac-hacks.org&#xA;Implementation-Title: org.trachacks.wikieditor.eclipse.core&#xA;Archiver-Version: Plexus Archiver&#xA;Bundle-Name: TracWikiEditor4Eclipse Core&#xA;MavenArtifact-GroupId: org.trachacks.wikieditor&#xA;Bundle-Version: 0.0.6.200910151952&#xA;Bundle-RequiredExecutionEnvironment: J2SE-1.5&#xA;Export-Package: org.apache.commons.lang,org.apache.commons.lang.builder,org.apache.commons.lang.exception,org.apache.commons.lang.math,org.trachacks.wikieditor.model,org.trachacks.wikieditor.model.exception,org.trachacks.wikieditor.service&#xA;Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.core&#xA;Extension-Name: org.trachacks.wikieditor.eclipse.core&#xA;Implementation-Version: 0.0.6-SNAPSHOT&#xA;
+          </instruction>
+          <instruction key='zipped'>
+            true
+          </instruction>
+        </instructions>
+      </touchpointData>
+    </unit>
+    <unit id='config.a.jre' version='1.6.0' singleton='false'>
+      <hostRequirements size='1'>
+        <required namespace='org.eclipse.equinox.p2.iu' name='a.jre' range='1.6.0'/>
+      </hostRequirements>
+      <properties size='1'>
+        <property name='org.eclipse.equinox.p2.type.fragment' value='true'/>
+      </properties>
+      <provides size='1'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='config.a.jre' version='1.6.0'/>
+      </provides>
+      <requires size='1'>
+        <required namespace='org.eclipse.equinox.p2.iu' name='a.jre' range='1.6.0'/>
+      </requires>
+      <touchpoint id='org.eclipse.equinox.p2.native' version='1.0.0'/>
+      <touchpointData size='1'>
+        <instructions size='1'>
+          <instruction key='install'>
+
+          </instruction>
+        </instructions>
+      </touchpointData>
+    </unit>
+    <unit id='Trac Wiki Editor' version='0.0.0'>
+      <properties size='2'>
+        <property name='org.eclipse.equinox.p2.name' value='Trac Wiki Editor'/>
+        <property name='org.eclipse.equinox.p2.type.category' value='true'/>
+      </properties>
+      <provides size='1'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='Trac Wiki Editor' version='0.0.0'/>
+      </provides>
+      <requires size='1'>
+        <required namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.feature.feature.group' range='[0.0.6.200910151952,0.0.6.200910151952]'/>
+      </requires>
+      <touchpoint id='null' version='0.0.0'/>
+    </unit>
+    <unit id='org.trachacks.wikieditor.eclipse.plugin' version='0.0.6.200910151952'>
+      <update id='org.trachacks.wikieditor.eclipse.plugin' range='[0.0.0,0.0.6.200910151952)' severity='0'/>
+      <properties size='2'>
+        <property name='org.eclipse.equinox.p2.name' value='TracWikiEditor4Eclipse Plug-in'/>
+        <property name='org.eclipse.equinox.p2.provider' value='TracWikiEditor4Eclipse @ trachacks.org'/>
+      </properties>
+      <provides size='3'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='org.trachacks.wikieditor.eclipse.plugin' version='0.0.6.200910151952'/>
+        <provided namespace='osgi.bundle' name='org.trachacks.wikieditor.eclipse.plugin' version='0.0.6.200910151952'/>
+        <provided namespace='org.eclipse.equinox.p2.eclipse.type' name='bundle' version='1.0.0'/>
+      </provides>
+      <requires size='12'>
+        <required namespace='osgi.bundle' name='org.trachacks.wikieditor.eclipse.core' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.core.runtime' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.jface.text' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.core.resources' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.ide' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.editors' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.workbench.texteditor' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.navigator' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.ui.views' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.compare' range='0.0.0'/>
+        <required namespace='osgi.bundle' name='org.eclipse.core.net' range='0.0.0'/>
+      </requires>
+      <artifacts size='1'>
+        <artifact classifier='osgi.bundle' id='org.trachacks.wikieditor.eclipse.plugin' version='0.0.6.200910151952'/>
+      </artifacts>
+      <touchpoint id='org.eclipse.equinox.p2.osgi' version='1.0.0'/>
+      <touchpointData size='1'>
+        <instructions size='1'>
+          <instruction key='manifest'>
+            Bundle-Name: TracWikiEditor4Eclipse Plug-in&#xA;MavenArtifact-GroupId: org.trachacks.wikieditor&#xA;Build-Jdk: 1.6.0_0&#xA;MavenArtifact-BaseVersion: 0.0.6-SNAPSHOT&#xA;Implementation-Version: 0.0.6-SNAPSHOT&#xA;Created-By: Apache Maven&#xA;Bundle-ActivationPolicy: lazy&#xA;Bundle-Vendor: TracWikiEditor4Eclipse @ trachacks.org&#xA;Bundle-ManifestVersion: 2&#xA;Manifest-Version: 1.0&#xA;Bundle-Version: 0.0.6.200910151952&#xA;Archiver-Version: Plexus Archiver&#xA;Require-Bundle: org.trachacks.wikieditor.eclipse.core;bundle-version=&quot;0.0.0&quot;,org.eclipse.ui,org.eclipse.core.runtime,org.eclipse.jface.text,org.eclipse.core.resources,org.eclipse.ui.ide,org.eclipse.ui.editors,org.eclipse.ui.workbench.texteditor,org.eclipse.ui.navigator,org.eclipse.ui.views,org.eclipse.compare,org.eclipse.core.net&#xA;Implementation-Title: org.trachacks.wikieditor.eclipse.plugin&#xA;Built-By: ivan&#xA;Bundle-RequiredExecutionEnvironment: J2SE-1.5&#xA;Bundle-Activator: org.trachacks.wikieditor.eclipse.plugin.Activator&#xA;Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.plugin; singleton:=true&#xA;Extension-Name: org.trachacks.wikieditor.eclipse.plugin&#xA;
+          </instruction>
+        </instructions>
+      </touchpointData>
+    </unit>
+    <unit id='a.jre' version='1.6.0' singleton='false'>
+      <provides size='117'>
+        <provided namespace='org.eclipse.equinox.p2.iu' name='a.jre' version='1.6.0'/>
+        <provided namespace='java.package' name='javax.accessibility' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.activity' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.crypto' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.crypto.interfaces' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.crypto.spec' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.imageio' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.imageio.event' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.imageio.metadata' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.imageio.plugins.bmp' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.imageio.plugins.jpeg' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.imageio.spi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.imageio.stream' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.management' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.management.loading' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.management.modelmbean' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.management.monitor' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.management.openmbean' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.management.relation' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.management.remote' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.management.remote.rmi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.management.timer' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.naming' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.naming.directory' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.naming.event' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.naming.ldap' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.naming.spi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.net' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.net.ssl' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.print' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.print.attribute' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.print.attribute.standard' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.print.event' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.rmi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.rmi.CORBA' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.rmi.ssl' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.security.auth' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.security.auth.callback' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.security.auth.kerberos' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.security.auth.login' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.security.auth.spi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.security.auth.x500' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.security.cert' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.security.sasl' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.sound.midi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.sound.midi.spi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.sound.sampled' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.sound.sampled.spi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.sql' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.sql.rowset' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.sql.rowset.serial' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.sql.rowset.spi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.border' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.colorchooser' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.event' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.filechooser' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.plaf' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.plaf.basic' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.plaf.metal' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.plaf.multi' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.plaf.synth' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.table' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.text' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.text.html' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.text.html.parser' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.text.rtf' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.tree' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.swing.undo' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.transaction' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.transaction.xa' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml.datatype' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml.namespace' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml.parsers' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml.transform' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml.transform.dom' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml.transform.sax' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml.transform.stream' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml.validation' version='0.0.0'/>
+        <provided namespace='java.package' name='javax.xml.xpath' version='0.0.0'/>
+        <provided namespace='java.package' name='org.ietf.jgss' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CORBA' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CORBA_2_3' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CORBA_2_3.portable' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CORBA.DynAnyPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CORBA.ORBPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CORBA.portable' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CORBA.TypeCodePackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CosNaming' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CosNaming.NamingContextExtPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.CosNaming.NamingContextPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.Dynamic' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.DynamicAny' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.DynamicAny.DynAnyFactoryPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.DynamicAny.DynAnyPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.IOP' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.IOP.CodecFactoryPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.IOP.CodecPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.Messaging' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.PortableInterceptor' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.PortableInterceptor.ORBInitInfoPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.PortableServer' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.PortableServer.CurrentPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.PortableServer.POAManagerPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.PortableServer.POAPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.PortableServer.portable' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.PortableServer.ServantLocatorPackage' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.SendingContext' version='0.0.0'/>
+        <provided namespace='java.package' name='org.omg.stub.java.rmi' version='0.0.0'/>
+        <provided namespace='java.package' name='org.w3c.dom' version='0.0.0'/>
+        <provided namespace='java.package' name='org.w3c.dom.bootstrap' version='0.0.0'/>
+        <provided namespace='java.package' name='org.w3c.dom.events' version='0.0.0'/>
+        <provided namespace='java.package' name='org.w3c.dom.ls' version='0.0.0'/>
+        <provided namespace='java.package' name='org.xml.sax' version='0.0.0'/>
+        <provided namespace='java.package' name='org.xml.sax.ext' version='0.0.0'/>
+        <provided namespace='java.package' name='org.xml.sax.helpers' version='0.0.0'/>
+      </provides>
+      <touchpoint id='org.eclipse.equinox.p2.native' version='1.0.0'/>
+    </unit>
+  </units>
+</repository>
