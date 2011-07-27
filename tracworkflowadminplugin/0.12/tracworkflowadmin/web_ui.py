@@ -88,12 +88,16 @@ class TracWorkflowAdminModule(Component):
         if req.method == 'POST':
             self._parse_request(req)
 
+        statuses_set = set()
         statuses = []
         for name, value in self.config.options('ticket-workflow'):
             if name.endswith('.operations') and value == 'leave_status':
                 value = self.config.get('ticket-workflow', name[0:-11])
-                statuses.extend(name.strip() for name in value.split('->')[0].split(','))
-        statuses_set = set(statuses)
+                for name in value.split('->')[0].split(','):
+                    name = name.strip()
+                    if name != '*' and name not in statuses_set:
+                        statuses_set.add(name)
+                        statuses.append(name)
         actions = {}
 
         for name, value in self.config.options('ticket-workflow'):
@@ -104,27 +108,21 @@ class TracWorkflowAdminModule(Component):
             if len(param) == 1:
                 regKey = 'status'
                 pieces = [val.strip() for val in value.split('->')]
-                before = pieces[0]
-                next = '*'
+                before = [val.strip() for val in pieces[0].split(',')]
                 if len(pieces) > 1:
-                    next = pieces[1]
-                regValue = {'next': next, 'before': {}}
-                if next != '*':
-                    if next not in statuses_set:
-                        statuses.append(next)
-                        statuses_set.add(next)
-                for val in value.split('->')[0].split(','):
-                    tmp = val.strip()
-                    regValue['before'][tmp] = 1
-                    if tmp != '*':
-                        statuses_set.add(tmp)
+                    next = pieces[1].strip()
+                else:
+                    next = '*'
+                regValue = {'next': next,
+                            'before': dict((key, 1) for key in before)}
+                for val in before + [next]:
+                    if val != '*' and val not in statuses_set:
+                        statuses.append(val)
+                        statuses_set.add(val)
             else:
                 regKey = param[1].strip()
                 if regKey == 'permissions' or regKey == 'operations':
-                    tmp = []
-                    for v in value.strip().split(','):
-                        tmp.append(v.strip())
-                    regValue = tmp
+                    regValue = [val.strip() for val in value.split(',')]
                 else:
                     regValue = value.strip()
             if not actions.has_key(actionName):
