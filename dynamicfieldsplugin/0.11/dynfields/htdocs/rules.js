@@ -53,10 +53,8 @@ copyrule.apply = function(input, spec){
         return;
         
     var field = jQuery('#field-'+target);
-    if (spec.overwrite.toLowerCase() == 'false'){
-        if (field.val() != '' || field.is(":hidden"))
-            return;
-    }
+    if (spec.overwrite.toLowerCase() == 'false' && field.val() != '')
+        return;
     
     if (field.hasClass('copyable')){
         // only do effect if value is changing
