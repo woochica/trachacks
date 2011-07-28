@@ -289,6 +289,8 @@ The Macro accepts arguments as well:
                     if not basename in base_pages:
                         base_pages.append(basename)
                     resargs += self._check_args(page, regres.group(1), lang_code)
+                    if self.languages.get(lang_code, None) == None:
+                      respages += "||[wiki:/%s]||Translated page language code unknown||\n" % page
 
         base_pages.sort()
         for base_page in base_pages:
