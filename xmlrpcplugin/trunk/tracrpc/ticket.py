@@ -168,10 +168,6 @@ class TicketRPC(Component):
                     "non-current timestamp (%r)", req.authname, when)
             when = None
         t.insert(when=when)
-        # Call ticket change listeners
-        ts = TicketSystem(self.env)
-        for listener in ts.change_listeners:
-            listener.ticket_created(t)
         if notify:
             try:
                 tn = TicketNotifyEmail(self.env)
@@ -250,9 +246,6 @@ class TicketRPC(Component):
                 # Apply workflow side-effects
                 for controller in controllers:
                     controller.apply_action_side_effects(req, t, action)
-                # Call ticket change listeners
-                for listener in ts.change_listeners:
-                    listener.ticket_changed(t, comment, author, t._old)
         if notify:
             try:
                 tn = TicketNotifyEmail(self.env)
@@ -267,10 +260,6 @@ class TicketRPC(Component):
         t = model.Ticket(self.env, id)
         req.perm(t.resource).require('TICKET_ADMIN')
         t.delete()
-        ts = TicketSystem(self.env)
-        # Call ticket change listeners
-        for listener in ts.change_listeners:
-            listener.ticket_deleted(t)
 
     def changeLog(self, req, id, when=0):
         t = model.Ticket(self.env, id)
