@@ -106,8 +106,20 @@ class DynamicVariablesModule(Component):
         return args
     
     def _get_options(self, field_name):
-        """Return a list of options for the given select field.  Returns an
-        empty list if the field is not a select field."""
+        """Return a list of options for the given [dynvars] field:
+        
+         [dynvars]
+         myfield.options = value1|value2|value3
+        
+        If no [dynvars] field is found, a select field is searched
+        and its options returned.  If no select field is found, then
+        an empty list is returned."""
+        # look for [dynvars] field
+        for key,val in self.env.config.options('dynvars'):
+            if key == field_name+'.options':
+                return val.split('|')
+        
+        # lookup select field
         for field in TicketSystem(self.env).get_ticket_fields():
             if field['name'] == field_name and 'options' in field:
                 return field['options']
