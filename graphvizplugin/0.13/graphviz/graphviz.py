@@ -30,7 +30,7 @@ from genshi.core import Markup
 from trac.config import BoolOption, IntOption, Option
 from trac.core import *
 from trac.mimeview.api import Context, IHTMLPreviewRenderer, MIME_MAP
-from trac.util import escape
+from trac.util.html import escape, find_element
 from trac.util.text import to_unicode
 from trac.util.translation import _
 from trac.web.api import IRequestHandler
@@ -423,7 +423,8 @@ class Graphviz(Component):
         def expand(match):
             wiki_text = match.groups()[0] # TracLink ([1], source:file/, ...)
             link = extract_link(self.env, context, wiki_text)
-            if isinstance(link, Element):
+            link = find_element(link, 'href')
+            if link:
                 href = link.attrib.get('href')
                 name = link.children
                 description = link.attrib.get('title', '')

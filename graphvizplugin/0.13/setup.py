@@ -12,7 +12,7 @@ __revision__  = '$LastChangedRevision$'
 __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 __docformat__ = 'restructuredtext'
-__version__   = '0.7.6dev'
+__version__   = '0.13.0.6'
 
 from setuptools import setup, find_packages
 
@@ -27,7 +27,7 @@ setup (
     author_email = "pkropf@gmail.com",
     keywords = "trac graphviz",
     url = "http://trac-hacks.org/wiki/GraphvizPlugin",
-    description = "Graphviz plugin for Trac 0.11",
+    description = "Graphviz plugin for Trac 0.13",
     long_description = """
     The graphviz wiki processor is a plugin for Trac that allows the
 dynamic generation of diagrams by the various graphviz programs. The
