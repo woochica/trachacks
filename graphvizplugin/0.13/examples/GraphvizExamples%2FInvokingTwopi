@@ -1,0 +1,10 @@
+= Graphviz Example Invoking Twopi =
+{{{
+#!graphviz.twopi
+digraph G {
+    Hello->World
+    Hello->Goodbye
+    World->Graphviz
+    Graphviz->Rules
+}
+}}}

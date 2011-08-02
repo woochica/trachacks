@@ -1,0 +1,10 @@
+= Graphviz Example Invoking Neato =
+{{{
+#!graphviz.neato
+digraph G {
+    Hello->World
+    Hello->Goodbye
+    World->Graphviz
+    Graphviz->Rules
+}
+}}}

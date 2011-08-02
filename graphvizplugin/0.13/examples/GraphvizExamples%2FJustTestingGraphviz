@@ -1,0 +1,17 @@
+{{{
+#!graphviz.circo
+digraph G {
+    Hello->World
+    Hello->Goodbye
+    World->Graphviz
+    Graphviz->Rules
+    Hello->Mary
+    Hello->Peter
+    Peter->Loves
+    Loves->Mary
+    Mary->Loves
+    Loves->Peter
+    Loves->Rio
+    Loves->Mocha
+}
+}}}

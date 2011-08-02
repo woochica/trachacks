@@ -1,0 +1,28 @@
+= Graphviz Example Wiki Links, PNG Image =
+
+The links in the diagram use Trac wiki links to point to various places:
+ * '''Ticket 1''' points to ticket:1
+ * '''Report 1''' points to report:1
+ * '''Changeset 1''' points to changeset:1
+ * '''Graphviz Examples''' points to wiki:GraphvizExamples
+ * '''Milestone 1''' points to milestone:milestone1
+ * '''Source Link''' points to source:Readme.txt
+
+{{{
+#!graphviz.circo/png
+digraph G {
+    "Ticket 1"          [style=filled, fillcolor=white, URL="ticket:1"];
+    "Report 1"          [style=filled, fillcolor=white, URL="report:1"];
+    "Changeset 1"       [style=filled, fillcolor=white, URL="changeset:1"];
+    "Graphviz Examples" [style=filled, fillcolor=white, URL="wiki:GraphvizExamples"];
+    "Milestone 1"       [style=filled, fillcolor=white, URL="milestone:milestone1"];
+    "Readme.txt"        [style=filled, fillcolor=white, URL="source:Readme.txt"];
+
+    "Ticket 1";
+    "Report 1";
+    "Changeset 1";
+    "Graphviz Examples";
+    "Milestone 1";
+    "Readme.txt";
+}
+}}}

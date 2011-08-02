@@ -1,0 +1,10 @@
+= Graphviz Example Invoking Fdp =
+{{{
+#!graphviz.fdp
+digraph G {
+    Hello->World
+    Hello->Goodbye
+    World->Graphviz
+    Graphviz->Rules
+}
+}}}

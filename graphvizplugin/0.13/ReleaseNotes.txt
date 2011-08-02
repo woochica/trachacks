@@ -1,0 +1,297 @@
+Trac Graphviz Plugin v0.7.1 Release Notes
+=========================================
+March 18, 2008
+
+Graphviz plugin v0.7.1 for Trac is now available. The v0.7.x series
+provides support for Trac 0.11. The Graphviz wiki processor is a
+plugin for Trac that allows the the dynamic generation of diagrams by
+the various graphviz programs. The text of a wiki page can contain the
+source text for graphviz and the web browser will show the resulting
+image.
+
+
+Changes for release v0.7.1
+--------------------------
+
+* Changed the interfaces used to communicate w/ Trac to support Trac
+  0.11.
+
+* Replaced the use of os.popen3 with subprocess.Popen to better
+  support running on Windows. This implies that the Graphviz plugin
+  requires Python 2.4 and above.
+
+* Renamed GraphvizMacro to Graphviz.
+
+* Added support for OS X when searching for the Graphviz executable
+  programs. Fixes #1999.
+
+* Expanded the default locations used when searching for the Graphviz
+  executable programs.
+
+
+Changes for release v0.7.0
+--------------------------
+
+* Internal release.
+
+
+Changes for release v0.6.8
+--------------------------
+
+* Added better support for non-ascii characters in graphviz wiki
+  documents.
+
+
+Changes for release v0.6.7
+--------------------------
+
+* The GraphvizMacro v0.6.5 release introduced a bug with the now
+  optional cmd_path. If run on a platform whose sys.platform name is
+  not in the GraphvizMacro.cmd_paths dictionary, the self.cmd_path
+  variable isn't initialized. This caused a wee problem and stack
+  trace in Trac.
+
+
+Changes for release v0.6.6
+--------------------------
+
+* The GraphvizMacro v0.6.5 release introduced a bug with the
+  IHTMLPreviewRenderer interface. The render method assumed that the
+  content parameter was an object with a read method. Under trac 0.10
+  with a Subversion repository, this object is a svn.core.Stream.
+  Under trac 0.9 the object is a string with the contents from the
+  repository. As a result, the v0.6.5 wouldn't render the images and
+  the raw text was displayed.
+
+
+Changes for release v0.6.5
+--------------------------
+
+* The default graphviz processor is now the only processor that must
+  be found on the system. GraphvizMacro will not work without it. If
+  any of the other processors are missing, a warning message will be
+  sent to the trac log, the processor will be removed from the list of
+  known GraphvizMacro processors and GraphvizMacro will continue.
+  Resolves issue http://trac-hacks.org/ticket/159.
+
+* The cmd_path configuration parameter in trac.ini is now
+  optional. Reasonable default values have been set for Linux, Win32
+  and FreeBSD6.
+
+* Altered the way the GraphvizMacro description is returned in
+  get_macro_description. Instead of returning a description for each
+  variant (graphviz, graphviz/png, graphviz/svg, etc.) only return a
+  description for graphviz. This will cleanup the WikiMacros page a
+  bit to hopefully make it easier to navigate. It isn't a perfect
+  solution since all the graphviz macro names are still displayed but
+  it no longer repeats the same description for each
+  permutation. Resolves issue http://trac-hacks.org/ticket/284.
+
+* Implemented the IRequestHandler interface to return graphviz
+  generated images. This means that graphviz images can be referenced
+  via http://URL_TO_TRAC_SERVER/graphviz/HASH_KEY. As a result of this
+  change, the prefix_url configuration parameter is no longer needed
+  in the trac.ini file. Resolves issue
+  http://trac-hacks.org/ticket/86.
+
+* Links within images that are rendered as SVG are now automatically
+  prefixed with javascript:window.parent.location.href= to force the
+  link to be displayed in the parent window instead of the SVG object
+  window. Resolves issue http://trac-hacks.org/ticket/560.
+
+* Included the processor options when calculating the sha key used for
+  the image file name. This should help in testing various graphviz
+  settings in trac.ini. Resolves issue
+  http://trac-hacks.org/ticket/575.
+
+* Fixed expand_wiki_links to allow for javascript URL
+  references. Resolves issue http://trac-hacks.org/ticket/559.
+
+* GraphvizMacro is now also an IHTMLPreviewRenderer. This was done by
+  adding application/graphviz as the mimetype for files with the
+  extension of .graphviz, .dot, .neato, .twopi, .circo and .fdp. When
+  browsing the source code in the respoitory, any files with those
+  extensions will be treated as graphviz programs and will be rendered
+  via the GraphvizMacro. Resolves issue
+  http://trac-hacks.org/attachment/ticket/576.
+
+* Escaped the error message before displaying it. Resolves issue
+  http://trac-hacks.org/ticket/574.
+
+
+Changes for release v0.6.4
+--------------------------
+
+* Fixed problem where boolean values in the trac.ini file for Graphviz
+  would always evaluate to True.  Resolves issue
+  http://trac-hacks.org/ticket/373.
+
+
+Changes for release v0.6.3
+--------------------------
+
+* Corrected Trac 0.10 specific config API calls to allow the plugin to
+  work with 0.9 as well as 0.10 releases of Trac.
+
+
+Changes for release v0.6.2
+--------------------------
+
+* Simplify the code to read the configuration files. Instead of having
+  lots of if structures, default values are passed as a parameter to
+  the self.config.get call.
+
+* Renamed Readme.txt to README.txt.
+
+* Added a additional comment to README.txt about rsvg not being
+  available on Windows.
+
+* Changed plugin structure to use entry_points in setup.py instead of
+  graphviz.egg-info/trac_plugin.txt.
+
+* Removed graphviz.egg-info from svn repository. It is generated via
+  "python setup.py bdist_egg" and shouldn't be in the repository.
+
+* Added Windows trac.ini [graphviz] example.
+
+* Fixed access to global vs local config variables. Resolves issue
+  http://trac-hacks.org/ticket/242.
+
+
+Changes for release v0.6.1
+--------------------------
+
+* Applied patch from eblot to correct the regular expression for
+  embedded URLs. Resolves issue http://trac-hacks.org/ticket/161.
+
+* Renamed module variable __version__ to __revision__ to better
+  reflect the intent.
+
+* Moved the release version number from setup.py to
+  graphviz/graphviz.py. The version number is now logged when the
+  graphviz module is initialized.
+
+* Commented out the many self.log.debug messages. As pointed out in,
+  http://trac-hacks.org/ticket/238, the core seems to be mostly stable
+  and having lots and lots of debugging messages may no longer be
+  needed.
+
+* Added defaults for the cache management control values:
+
+  * cache_max_size = 10,000,000
+  * cache_min_size = 5,000,000
+  * cache_max_count = 2,000
+  * cache_min_count = 1,500
+
+  The resolves issue http://trac-hacks.org/ticket/160.
+
+
+Changes for release v0.6
+------------------------
+
+ * In render_macro, corrected the self.log.debug statements that were
+   printing out the req.args and req.base_url. They are not always
+   available. Removed the reference to req.base_url since it was not
+   being used and may not always be an attribute to req.  Resolves
+   issue http://trac-hacks.org/ticket/193.
+
+ * Added import for the inspect module. Resolves issue
+   http://trac-hacks.org/ticket/236.
+
+
+Changes for release v0.5.1
+--------------------------
+
+ * Corrected typo in graphviz.py where the wrong internal variable was
+   being used to display an error message.
+
+
+Changes for release v0.5
+------------------------
+
+ * Added a note in the Readme.txt wrt using load_examples.py to import
+   the Graphviz examples into a wiki. Fixed load_examples.py so that
+   it correctly looks for Graphviz examples in directories other than
+   the working directory.
+
+ * Fixed a bug whereby image maps were a bit off when using the png
+   antialiasing option.
+
+ * URL= strings in diagrams can now have Trac wiki links like
+   ticket:1, report:7, changeset:47, wiki:CamelCasePage,
+   milestone:milestone1 and source:Readme.txt.
+
+ * Added additional examples for links in SVG images and using Trac
+   wiki links.
+
+ * Fixed the bug #102 (http://trac-hacks.swapoff.org/ticket/102)
+   whereby popen2.Popen3 is not available on Windows.
+
+
+Changes for release v0.4
+------------------------
+
+ * Map support for bitmap images, allowing to use URL="" attributes in
+   graphs. Maps are only generated if the URL= string is found in the
+   Graphviz diagram.
+
+ * Antialiasing on PNG images, using rsvg, from
+   <http://librsvg.sf.net>.
+
+ * Better display of SVG images and IE support.
+
+ * Display errors graphviz may produce.
+
+ * Support for global graph options.
+
+ * Updated documentation.
+
+ * Example graphs have been created to outline the basic capabilities
+   of the plugin.
+
+ * The tmp_dir is no longer needed. Instead of creating temp files to
+   be processed by graphviz, the plugin now communicates with the
+   graphviz programs through pipes.
+
+ * Expanded info and debugging messages to allow for better debugging
+   of the running environment.
+
+ * Error messages that occur when running the grapviz programs will
+   now be displayed in the browser. This should help in resolving
+   syntax problems with graphviz code.
+
+ * Graphviz program paths are now enclosed in quotes. This should
+   resolve the problem when there are spaces in the path as is typical
+   on Windows.
+
+
+Changes for release v0.3
+------------------------
+
+ * A simple cache manager has been added to keep the cache disk space
+   and directory entry count under control. A series of parameters in
+   the [graphviz] section of the trac.ini configuration file are used
+   to control the cache manager.
+
+ * The tmp files used in processing the graphviz language are now
+   deleted after the new image is created.
+
+ * A series of debugging statements are now in the code. See the Trac
+   logging documentation section for details on how logging works.
+
+
+More Information
+----------------
+
+The graphviz plugin macro home page can be found at:
+https://trac-hacks.swapoff.org/wiki/GraphvizPlugin
+
+The plugin has been tested on a Linux x86 system running python 2.4
+and the latest version of trac from subversion. Testing on other
+platforms would be appreciated.
+
+Bugs and enhancement requests can be submitted at:
+http://trac-hacks.swapoff.org/newticket?component=GraphvizPlugin&owner=pkropf
+
+
+$Id$
