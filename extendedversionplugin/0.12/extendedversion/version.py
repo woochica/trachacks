@@ -102,7 +102,7 @@ class VisibleVersion(Component):
     # INavigationContributor methods
 
     def get_active_navigation_item(self, req):
-        return self.navigation_item
+        return 'versions'
 
     def get_navigation_items(self, req):
         return []
@@ -127,7 +127,7 @@ class VisibleVersion(Component):
         version_id = req.args.get('id')
         req.perm('version', version_id).require('VERSION_VIEW')
         
-        db = self.env.get_db_cnx() # TODO: db can be removed
+        db = self.env.get_read_db() # TODO: db can be removed
         version = Version(self.env, version_id, db)
         action = req.args.get('action', 'view')
 
@@ -291,7 +291,7 @@ class VisibleVersion(Component):
         
     def _render_view(self, req, db, version):
 
-        db = self.env.get_db_cnx()
+        db = self.env.get_read_db()
         sql = "SELECT name,due,completed,description FROM milestone " \
               "INNER JOIN milestone_version ON (name = milestone) " \
               "WHERE version = %s " \

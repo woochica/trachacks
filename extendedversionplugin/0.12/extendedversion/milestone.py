@@ -30,7 +30,7 @@ class MilestoneVersion(Component):
 
             old_name = req.args.get('id')
             new_name = req.args.get('name')
-            db = self.env.get_db_cnx()
+            db = self.env.get_read_db()
 
             if old_name and old_name != new_name:
                 self._delete_milestone_version(db, old_name)
@@ -86,7 +86,7 @@ class MilestoneVersion(Component):
         return stream | filter
 
     def _version_display(self, req, milestone):
-        cursor = self.env.get_db_cnx().cursor()
+        cursor = self.env.get_read_db().cursor()
         cursor.execute("SELECT version FROM milestone_version WHERE milestone=%s", (milestone,))
         row = cursor.fetchone()
 
@@ -100,7 +100,7 @@ class MilestoneVersion(Component):
 
     def _version_edit(self, data):
         milestone = data.get('milestone').name
-        cursor = self.env.get_db_cnx().cursor()
+        cursor = self.env.get_read_db().cursor()
         cursor.execute("SELECT version FROM milestone_version WHERE milestone=%s", (milestone,))
         row = cursor.fetchone()
         value = row and row[0]
