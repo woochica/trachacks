@@ -16,7 +16,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.trachacks.wikieditor.eclipse.plugin.Activator;
 import org.trachacks.wikieditor.eclipse.plugin.Logger;
-import org.trachacks.wikieditor.eclipse.plugin.editor.WikiPageEditorInput;
+import org.trachacks.wikieditor.eclipse.plugin.editor.WikiEditorInput;
 import org.trachacks.wikieditor.eclipse.plugin.model.Page;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.Labels;
 
@@ -51,7 +51,7 @@ public abstract class AbstractBaseAction extends Action {
 	 * @param page
 	 */
 	protected void closeOpenEditor(Page page) {
-		WikiPageEditorInput editorInput = new WikiPageEditorInput(page);
+		WikiEditorInput editorInput = new WikiEditorInput(page);
 		IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
 		for (int j = 0; j < windows.length; j++) {
 			IWorkbenchWindow workbenchWindow = windows[j];

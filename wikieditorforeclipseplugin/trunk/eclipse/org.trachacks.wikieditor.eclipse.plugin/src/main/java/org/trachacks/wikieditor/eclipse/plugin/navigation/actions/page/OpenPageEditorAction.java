@@ -10,8 +10,8 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
-import org.trachacks.wikieditor.eclipse.plugin.editor.WikiEditor;
-import org.trachacks.wikieditor.eclipse.plugin.editor.WikiPageEditorInput;
+import org.trachacks.wikieditor.eclipse.plugin.editor.TracWikiMarkupEditor;
+import org.trachacks.wikieditor.eclipse.plugin.editor.WikiEditorInput;
 import org.trachacks.wikieditor.eclipse.plugin.model.Page;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.AbstractBaseAction;
 
@@ -36,13 +36,15 @@ public class OpenPageEditorAction extends AbstractBaseAction {
 		Page page = getSingleSelection(viewer, Page.class);
         if (page != null) {
 
-        	WikiPageEditorInput wikiEditorInput = new WikiPageEditorInput(page);
 			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 			IWorkbenchPage workbenchPage = window.getActivePage();
 			
+        	WikiEditorInput editorInput = new WikiEditorInput(page);
+//			IFile file = ResourcesPlugin.getWorkspace().getRoot().getFile(new Path("/Project/test.tracwiki"));
+//			FileEditorInput editorInput = new FileEditorInput(file);
 			
 	
-			IDE.openEditor(workbenchPage, wikiEditorInput, WikiEditor.class.getName());
+			IDE.openEditor(workbenchPage, editorInput, TracWikiMarkupEditor.ID);
 
 		} 
 	}

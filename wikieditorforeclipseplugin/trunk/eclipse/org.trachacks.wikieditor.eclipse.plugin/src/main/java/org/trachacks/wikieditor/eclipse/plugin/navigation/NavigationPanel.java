@@ -26,7 +26,7 @@ import org.eclipse.ui.part.IShowInTarget;
 import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.part.ViewPart;
 import org.trachacks.wikieditor.eclipse.plugin.Activator;
-import org.trachacks.wikieditor.eclipse.plugin.editor.WikiPageEditorInput;
+import org.trachacks.wikieditor.eclipse.plugin.editor.WikiEditorInput;
 import org.trachacks.wikieditor.eclipse.plugin.model.ServerList;
 import org.trachacks.wikieditor.eclipse.plugin.model.util.IModelChangeListener;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.PageActionsManager;
@@ -139,8 +139,8 @@ public class NavigationPanel extends ViewPart implements IModelChangeListener, I
 	public boolean show(ShowInContext context) {
 		if (viewer != null && context != null) {
 			Object input = context.getInput();
-			if (input instanceof WikiPageEditorInput) {
-				viewer.setSelection(new StructuredSelection(((WikiPageEditorInput) input).getWikiPage()));
+			if (input instanceof WikiEditorInput) {
+				viewer.setSelection(new StructuredSelection(((WikiEditorInput) input).getWikiPage()));
 				return true;
 			}
 		}

@@ -43,7 +43,6 @@ public class ConnectServerAction extends AbstractLongRunningBaseAction {
 				server.connect();
 			}
 			else {
-				// TODO popup login window
 				LoginWindow loginDialog = new LoginWindow(viewer.getControl().getShell(), server.getServerDetails().getName());
 				loginDialog.open();
 				if(loginDialog.getReturnCode() == Dialog.OK) {
