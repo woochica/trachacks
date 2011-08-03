@@ -713,6 +713,10 @@ class TracJSGanttChart(WikiMacroBase):
         # link to parent
         elif options['root'] and str(ticket['id']) in options['root'].split('|'):
             task += '%s,' % 0
+        # If there's a parent field, root == self and this ticket is self, 
+        # don't link to parents
+        elif options['root'] and options['root'] == 'self' and str(ticket['id']) == self._this_ticket():
+            task += '%s,' % 0
         # If there's a parent, and the ticket is not a root, link to parent
         else:
             task += '%s,' % ticket[self.fields['parent']]
