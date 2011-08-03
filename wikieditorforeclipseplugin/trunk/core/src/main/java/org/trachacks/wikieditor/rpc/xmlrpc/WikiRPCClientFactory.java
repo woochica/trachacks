@@ -37,6 +37,7 @@ import org.trachacks.wikieditor.model.exception.UnknownServerException;
  */
 public class WikiRPCClientFactory{
 
+	private static int TIMEOUT = 30000;
 
 	private static final TypeConverterFactory typeConverterFactory = new TypeConverterFactoryImpl();
 
@@ -73,6 +74,9 @@ public class WikiRPCClientFactory{
 			config.setBasicUserName(server.getUsername());
 			config.setBasicPassword(server.getPassword());
 		}
+		
+		config.setConnectionTimeout(TIMEOUT);
+		config.setReplyTimeout(TIMEOUT);
 		
 		return config;
 	}
@@ -178,7 +182,7 @@ public class WikiRPCClientFactory{
 				} catch (MalformedURLException ignored) {}
 			}
 			
-			return false;
+			throw new RuntimeException(cause);
 		}
 	}
 	
