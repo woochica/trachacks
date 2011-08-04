@@ -180,8 +180,8 @@ public class Server extends AbstractBaseObject {
 	public void connect() throws UnknownServerException, ConnectionRefusedException, BadCredentialsException, PermissionDeniedException {
 		testConnection(serverDetails);
 		this.wikiService = ServiceFactory.getWikiService(serverDetails, getProxySettings(serverDetails));
-		buildTree();
 		connected = true;
+		buildTree();
 		notifyChanged();
 	}
 	
