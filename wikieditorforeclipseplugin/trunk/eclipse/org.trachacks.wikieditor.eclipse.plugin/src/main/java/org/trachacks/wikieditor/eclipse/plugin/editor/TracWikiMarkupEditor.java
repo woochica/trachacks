@@ -38,7 +38,6 @@ public class TracWikiMarkupEditor extends WikiTextSourceEditor {
 	public TracWikiMarkupEditor() {
 		super();
 		setDocumentProvider(new TracWikiDocumentProvider());
-//		setMarkupLanguage(WikiText.getMarkupLanguage(TRACWIKI_MARKUP_LANGUAGE));
 	}
 
 
@@ -47,8 +46,6 @@ public class TracWikiMarkupEditor extends WikiTextSourceEditor {
 	protected ISourceViewer createSourceViewer(Composite parent,	IVerticalRuler ruler, int styles) {
 		setMarkupLanguage(WikiText.getMarkupLanguage(TRACWIKI_MARKUP_LANGUAGE));
 
-		if(true) return super.createSourceViewer(parent, ruler, styles);
-		
 		tabFolder = new CTabFolder(parent, SWT.BOTTOM);
 		ISourceViewer viewer = super.createSourceViewer(tabFolder, ruler, styles);
 		
