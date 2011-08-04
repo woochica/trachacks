@@ -21,7 +21,6 @@ import org.trachacks.wikieditor.model.exception.PermissionDeniedException;
 import org.trachacks.wikieditor.model.exception.ProxyAuthenticationRequiredException;
 import org.trachacks.wikieditor.model.exception.UnknownServerException;
 
-import com.sun.jmx.remote.internal.ProxyRef;
 
 /**
  * @author ivan

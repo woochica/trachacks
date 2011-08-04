@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: TracWikiEditor4Eclipse Plug-in
-Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.plugin; singleton:=true
+Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.plugin;singleton:=true
 Bundle-Version: 0.1.0.qualifier
 Bundle-Activator: org.trachacks.wikieditor.eclipse.plugin.Activator
 Bundle-Vendor: TracWikiEditor4Eclipse @ trachacks.org
@@ -16,10 +16,20 @@ Require-Bundle: org.trachacks.wikieditor.eclipse.core;bundle-version="0.0.0",
  org.eclipse.ui.navigator,
  org.eclipse.ui.views,
  org.eclipse.compare,
-  org.eclipse.core.net,
- org.eclipse.mylyn.wikitext.core;bundle-version="1.0.1",
- org.eclipse.mylyn.wikitext.tracwiki.core;bundle-version="1.0.1",
- org.eclipse.mylyn.wikitext.ui;bundle-version="1.0.1",
- org.eclipse.mylyn.wikitext.ui.source;bundle-version="1.0.1"
+ org.eclipse.core.net,
+ org.eclipse.mylyn.wikitext.core,
+ org.eclipse.mylyn.wikitext.tracwiki.core,
+ org.eclipse.mylyn.wikitext.ui
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-ActivationPolicy: lazy
+Export-Package: org.trachacks.wikieditor.eclipse.plugin,
+ org.trachacks.wikieditor.eclipse.plugin.comparation,
+ org.trachacks.wikieditor.eclipse.plugin.editor,
+ org.trachacks.wikieditor.eclipse.plugin.model,
+ org.trachacks.wikieditor.eclipse.plugin.model.util,
+ org.trachacks.wikieditor.eclipse.plugin.navigation,
+ org.trachacks.wikieditor.eclipse.plugin.navigation.actions,
+ org.trachacks.wikieditor.eclipse.plugin.navigation.actions.page,
+ org.trachacks.wikieditor.eclipse.plugin.navigation.actions.server,
+ org.trachacks.wikieditor.eclipse.plugin.views,
+ org.trachacks.wikieditor.eclipse.plugin.views.util

@@ -39,9 +39,9 @@
 	
 	<dependencies> <!-- These are ignored by tycho eclipse-plugin -->
         <dependency>
-            <groupId>${pom.groupId}</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>wikieditor-core</artifactId>
-            <version>${pom.version}</version>
+            <version>${project.version}</version>
             <!-- <version>0.1.0-SNAPSHOT</version> -->
             </dependency>
     </dependencies>	  
