@@ -48,7 +48,7 @@
             class="org.trachacks.wikieditor.eclipse.plugin.editor.TracWikiMarkupEditor"
             icon="icons/trac_16.png"
             id="org.trachacks.wikieditor.eclipse.plugin.editor.TracWikiMarkupEditor"
-            name="WikiText Editor">
+            name="Trac WikiText Editor">
       </editor>
    </extension>
    <extension
