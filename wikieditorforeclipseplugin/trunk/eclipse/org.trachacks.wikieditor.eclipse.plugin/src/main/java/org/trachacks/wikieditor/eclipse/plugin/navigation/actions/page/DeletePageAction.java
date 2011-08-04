@@ -16,7 +16,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
 import org.trachacks.wikieditor.eclipse.plugin.Activator;
 import org.trachacks.wikieditor.eclipse.plugin.Images;
-import org.trachacks.wikieditor.eclipse.plugin.editor.WikiPageEditorInput;
 import org.trachacks.wikieditor.eclipse.plugin.model.Page;
 import org.trachacks.wikieditor.eclipse.plugin.navigation.actions.AbstractBaseAction;
 import org.trachacks.wikieditor.eclipse.plugin.views.util.Labels;
