@@ -7,6 +7,7 @@ import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.mylyn.wikitext.core.WikiText;
+import org.eclipse.mylyn.wikitext.ui.editor.MarkupSourceViewerConfiguration;
 import org.eclipse.mylyn.wikitext.ui.editor.WikiTextSourceEditor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -38,12 +39,13 @@ public class TracWikiMarkupEditor extends WikiTextSourceEditor {
 	public TracWikiMarkupEditor() {
 		super();
 		setDocumentProvider(new TracWikiDocumentProvider());
+		setSourceViewerConfiguration(new TracMarkupSourceViewerConfiguration(getPreferenceStore()));
 	}
 
 
 
 	@Override
-	protected ISourceViewer createSourceViewer(Composite parent,	IVerticalRuler ruler, int styles) {
+	protected ISourceViewer createSourceViewer(Composite parent, IVerticalRuler ruler, int styles) {
 		setMarkupLanguage(WikiText.getMarkupLanguage(TRACWIKI_MARKUP_LANGUAGE));
 
 		tabFolder = new CTabFolder(parent, SWT.BOTTOM);
