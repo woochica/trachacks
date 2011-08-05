@@ -1,0 +1,22 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: TracWikiEditor4Eclipse Core
+Bundle-SymbolicName: org.trachacks.wikieditor.eclipse.core
+Bundle-Version: 0.1.0.qualifier
+Bundle-ClassPath: target/lib/commons-codec-1.2.jar,
+ target/lib/commons-httpclient-3.1.jar,
+ target/lib/commons-lang-2.3.jar,
+ target/lib/commons-logging-1.0.4.jar,
+ target/lib/wikieditor-core-0.1.0-SNAPSHOT.jar,
+ target/lib/ws-commons-util-1.0.2.jar,
+ target/lib/xmlrpc-client-3.1.2.jar,
+ target/lib/xmlrpc-common-3.1.2.jar
+Bundle-Vendor: TracWikiEditor4Eclipse @ trac-hacks.org
+Export-Package: org.apache.commons.lang,
+ org.apache.commons.lang.builder,
+ org.apache.commons.lang.exception,
+ org.apache.commons.lang.math,
+ org.trachacks.wikieditor.model,
+ org.trachacks.wikieditor.model.exception,
+ org.trachacks.wikieditor.service
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
