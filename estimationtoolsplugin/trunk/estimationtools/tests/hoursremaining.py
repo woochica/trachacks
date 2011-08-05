@@ -18,13 +18,17 @@ class HoursRemainingTestCase(unittest.TestCase):
                         tz='')
         self.formatter = Mock(req=self.req)
        
-    def _insert_ticket(self, estimation, status='open'):
+    def _insert_ticket(self, estimation, fields=None):
+        fields = fields or {}
         ticket = Ticket(self.env)
         ticket['summary'] = 'Test Ticket'
         ticket['hours_remaining'] = estimation
         ticket['milestone'] = 'milestone1'
-        ticket['status'] = status
-        return ticket.insert()
+        ticket['status'] = 'open'
+        for field, value in fields.items():
+            ticket[field] = value
+        ticket.insert()
+        return ticket
 
     def test_basic(self):
         hoursRemaining = HoursRemaining(self.env)
@@ -56,7 +60,7 @@ class HoursRemainingTestCase(unittest.TestCase):
         self._insert_ticket('10')
         self._insert_ticket('20.1')
         self._insert_ticket('30')
-        self._insert_ticket('30', status='closed')
+        self._insert_ticket('30', fields={'status': 'closed'})
         result = hoursRemaining.expand_macro(self.formatter, "", "status!=closed, milestone=milestone1")
         self.assertEqual(result, '60.1')
 
@@ -66,3 +70,10 @@ class HoursRemainingTestCase(unittest.TestCase):
             self._insert_ticket('1')
         result = hoursRemaining.expand_macro(self.formatter, "", "milestone=milestone1")
         self.assertEqual(result, '200')
+
+    def test_url_encode(self):
+        hoursRemaining = HoursRemaining(self.env)
+        self._insert_ticket('10', fields={'summary': 'Test#One'})
+        result = hoursRemaining.expand_macro(self.formatter, "", "summary=Test#One")
+        self.assertEquals(result, '10')
+

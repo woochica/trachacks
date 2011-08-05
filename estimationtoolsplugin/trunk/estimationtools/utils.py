@@ -128,7 +128,11 @@ def execute_query(env, req, query_args):
     # set maximum number of returned tickets to 0 to get all tickets at once
     query_args['max'] = 0
     # urlencode the args, converting back a few vital exceptions:
-    query_string = unicode_urlencode(query_args).replace('%21=', '!=').replace('%7C', '|').replace('+', ' ')
+    query_string = unicode_urlencode(query_args)\
+                        .replace('%21=', '!=')\
+                        .replace('%7C', '|')\
+                        .replace('+', ' ')\
+                        .replace('%23', '#')
     env.log.debug("query_string: %s" % query_string)
     query = Query.from_string(env, query_string)
 
