@@ -57,6 +57,7 @@ class TracJSGanttChart(WikiMacroBase):
             'endDate': 1,
             'dateDisplay': 'mm/dd/yyyy',
             'openLevel': 999,
+            'openClosedTickets': 1,
             'colorBy' : 'priority',
             'lwidth' : None,
             'root' : None,
@@ -722,7 +723,9 @@ class TracJSGanttChart(WikiMacroBase):
             task += '%s,' % ticket[self.fields['parent']]
 
         # open
-        if ticket['level'] < options['openLevel']:
+        if ticket['level'] < options['openLevel'] and \
+                ((options['openClosedTickets'] != 0) or \
+                     (ticket['status'] != 'closed')):
             open = 1
         else:
             open = 0
