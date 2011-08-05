@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="Trac Wiki Editor"
+            id="org.trachacks.wikieditor">
+      </category>
+      <view
+            name="Servers Navigator"
+            icon="icons/trac_16.png"
+            category="org.trachacks.wikieditor"
+            class="org.trachacks.wikieditor.eclipse.plugin.navigation.NavigationPanel"
+            id="org.trachacks.wikieditor.eclipse.plugin.navigation.NavigationPanel">
+      </view>
+      <view
+            category="org.trachacks.wikieditor"
+            class="org.trachacks.wikieditor.eclipse.plugin.views.PageHistoryView"
+            icon="icons/trac_16.png"
+            id="org.trachacks.wikieditor.eclipse.plugin.views.PageHistoryView"
+            name="Wiki Page History">
+      </view>          
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="org.trachacks.wikieditor.eclipse.plugin.PerspectiveFactory"
+            fixed="false"
+            icon="icons/trac_16.png"
+            id="org.trachacks.wikieditor.eclipse.Perspective"
+            name="TracWikiEditor">
+      </perspective>
+   </extension>
+   <extension
+      point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension targetID="org.trachacks.wikieditor.eclipse.Perspective">
+			<showInPart id="org.trachacks.wikieditor.eclipse.plugin.navigation.NavigationPanel"/>
+   <showInPart
+         id="org.trachacks.wikieditor.eclipse.plugin.views.PageHistoryView">
+   </showInPart>
+      </perspectiveExtension>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="org.trachacks.wikieditor.eclipse.plugin.editor.TracWikiMarkupEditor"
+            icon="icons/trac_16.png"
+            id="org.trachacks.wikieditor.eclipse.plugin.editor.TracWikiMarkupEditor"
+            name="Trac WikiText Editor">
+      </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.decorators">
+      <decorator
+            adaptable="true"
+            class="org.trachacks.wikieditor.eclipse.plugin.navigation.NavigatorLabelDecorator"
+            id="org.trachacks.wikieditor.eclipse.plugin.navigation.NavigatorLabelDecorator"
+            label="Wiki Navigation Decorator"
+            lightweight="true"
+            state="true">
+         <enablement>
+            <or>
+               <objectClass
+                     name="org.trachacks.wikieditor.eclipse.plugin.model.Server">
+               </objectClass>
+               <objectClass
+                     name="org.trachacks.wikieditor.eclipse.plugin.model.Page">
+               </objectClass>
+            </or>
+         </enablement>
+      </decorator>
+   </extension>
+
+</plugin>
