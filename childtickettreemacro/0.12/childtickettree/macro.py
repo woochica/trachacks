@@ -21,12 +21,13 @@ class ChildTicketTreeMacro(WikiMacroBase):
     [[ChildTicketTree]] - Used alone in a ticket field, will take the current ticket as the top level and print the tree.
     [[ChildTicketTree(#1)]] - Can be used in any wiki page anywhere and provides a tree for ticket with id '#1' ('1' ie. without '#' also accepted).
     [[ChildTicketTree(ticket=1)]] - The ticket number can also be explicitly given as an argument.
-    [[ChildTicketTree(style=progress)]] - (Not yet implemented) Shows a progress bar instead of a 'list'.
+    [[ChildTicketTree(#1,border=true,root=true)]] - Show the complete tree (including original parent) within a border.
     }}}
 
     Args:
         ticket  - The ticket number to 'query'. The number can also be provided as a single stand alone argument. If no ticket is supplied and the macro is used within a ticket, the ticket number will be taken as the intended.
         root    - Boolean value indicating whether the parent ticket should be listed in tree (default: false).
+        border  - If true, a border will be drawn around the child ticket list (default: false).
 
     """
 
@@ -75,7 +76,20 @@ class ChildTicketTreeMacro(WikiMacroBase):
         def ticket_anchor(t):
             return tag.a( '#%s' % t.id, class_=t['status'], href=req.href.t(int(t.id)), title="%s : %s : %s" % (t['type'],t['owner'],t['status']))
 
-        return tag.div( tag.dl( [( tag.dt(ticket_anchor(t),style='padding-left: %spx;' % (t['indent']*20)), tag.dd("%s" % t['summary'])) for t in self.tickets], class_='wiki compact'))
+        def_list = tag.dl(
+                [( tag.dt(ticket_anchor(t),style='padding-left: %spx;' % (t['indent']*20)), tag.dd("%s" % t['summary'])) for t in self.tickets],
+                class_='wiki compact',
+                )
+
+        if as_bool( kwargs.get('border') ):
+            return tag.fieldset(
+                    def_list,
+                    tag.legend('Ticket Child Tree (#%s)' % ticket.id),
+                    class_='description',
+                    )
+        else:
+            return tag.div(def_list)
+
 
     def indent_children(self, ticket, indent=0):
         if ticket.id in self.childtickets:
