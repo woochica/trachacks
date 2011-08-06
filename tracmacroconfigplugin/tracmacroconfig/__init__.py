@@ -1,1 +1,1 @@
-from tracmacroconfig import TracMacroConfig
+from tracmacroconfig import *
