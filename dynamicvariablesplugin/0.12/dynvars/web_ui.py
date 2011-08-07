@@ -2,7 +2,7 @@ import re
 from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_script
 from trac.web.main import IRequestFilter, IRequestHandler
-from trac.ticket import TicketSystem
+from trac.ticket import TicketSystem, Milestone
 
 class DynamicVariablesModule(Component):
     implements(IRequestHandler, ITemplateProvider, IRequestFilter)
@@ -119,9 +119,13 @@ class DynamicVariablesModule(Component):
             if key == field_name+'.options':
                 return val.split('|')
         
+        # handle milestone special - skip completed milestones
+        if field_name == 'milestone':
+            return [m.name for m in
+                    Milestone.select(self.env, include_completed=False)]
+        
         # lookup select field
         for field in TicketSystem(self.env).get_ticket_fields():
             if field['name'] == field_name and 'options' in field:
                 return field['options']
         return []
-    
