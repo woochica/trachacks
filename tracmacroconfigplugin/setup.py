@@ -15,7 +15,7 @@ setup(
         'trac.plugins': [
             'tracmacroconfig.examplemacro = tracmacroconfig.examplemacro',
         ],
-    }
+    },
 
     install_requires = ['Trac >= 0.11.7'],
     classifiers = [
