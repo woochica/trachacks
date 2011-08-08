@@ -109,6 +109,36 @@ class TracJSGanttSupport(Component):
         return template, data, content_type
 
 class TracJSGanttChart(WikiMacroBase):
+    """
+Displays a Gantt chart for the specified tickets.
+
+The chart display can be controlled with a number of macro arguments:
+
+||'''Argument'''||'''Description'''||'''Default'''||
+|| `formats`||What to display in the format control.  A pipe-separated list of `minute`, `hour`, `day`, `week`, `month`, and `quarter` (though `minute` may not be very useful). ||'day|week|month|quarter'||
+|| `format`||Initial display format, one of those listed in `formats` || First format ||
+|| `sample`||Display sample tasks (1) or not (0) || 0 ||
+|| `res`||Show resource column (1) or not (0) || 1 ||
+|| `dur`||Show duration colunn (1) or not (0) || 1 ||
+|| `comp`||Show percent complete column (1) or not (0) || 1 ||
+|| `caption`||Caption to place to right of tasks: None, Caption, Resource, Duration, %Complete || Resource ||
+|| `startDate`||Show start date column (1) or not (0) || 1 ||
+|| `endDate`||Show end date column (1) or not (0) || 1 ||
+|| `dateDisplay`||Date display format: 'mm/dd/yyyy', 'dd/mm/yyyy', or 'yyyy-mm-dd' || 'mm/dd/yyyy' ||
+|| `openLevel`||Number of levels of tasks to show.  1 = only top level task.  || 999 ||
+|| `colorBy`||Field to use to choose task colors.  Each unique value of the field will have a different color task.  Other likely useful values are owner and milestone but any field can be used. || priority ||
+|| `root`||When using something like Subtickets plugin to maintain a tree of tickets and subtickets, you may create a Gantt showing a ticket and all of its descendants with `root=<ticket#>`.  The macro uses the configured `parent` field to find all descendant tasks and build an `id=` argument for Trac's native query handler.[[br]][[br]]Multiple roots may be provided like `root=1|12|32`.[[br]][[br]]When used in a ticket description or comment, `root=self` will display the current ticket's descendants.||None||
+|| `goal`||When using something like MasterTickets plugin to maintain ticket dependencies, you may create a Gantt showing a ticket and all of its predecessors with `goal=<ticket#>`.  The macro uses the configured `succ` field to find all predecessor tasks and build an `id=` argument for Trac's native query handler.[[br]][[br]]Multiple goals may be provided like `goal=1|12|32`.[[br]][[br]]When used in a ticket description or comment, `goal=self` will display the current ticket's predecessors.||None||
+|| `lwidth`||The width, in pixels, of the table of task names, etc. on the left of the Gantt. || ||
+|| `showdep`||Show dependencies (1) or not (0)||1||
+|| `userMap`||Map user !IDs to full names (1) or not (0).||1||
+|| `omitMilestones`||Show milestones for displayed tickets (0) or only those specified by `milestone=` (1)||0||
+
+Site-wide defaults for macro arguments may be set in `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
+
+All other macro arguments are treated as TracQuery specification (e.g., milestone=!MS1|!MS2) to control which tickets are displayed.
+
+    """
     def __init__(self):
         # All the macro's options with default values.
         # Anything else passed to the macro is a TracQuery field.
