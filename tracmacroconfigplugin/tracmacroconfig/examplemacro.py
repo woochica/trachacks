@@ -19,7 +19,7 @@ class TracMacroConfigExample(WikiMacroBase):
     mo_bool = mc.BoolOption('bool', default=True,
                     doc='''A bool macro option''')
 
-    mo_int = mc.IntOption('int', default=23,
+    mo_int = mc.IntOption('int', default=42,
                     doc='''An integer macro option''')
 
     mo_list = mc.ListOption('list', default=['first', 'last'], sep='|',
