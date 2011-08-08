@@ -11,6 +11,7 @@ from trac.web.chrome import Chrome
 import copy
 from trac.ticket.query import Query
 
+from trac.config import IntOption, Option
 from trac.core import implements, Component
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
@@ -21,6 +22,72 @@ from trac.wiki.api import parse_args
 
 class TracJSGanttSupport(Component):
     implements(IRequestFilter, ITemplateProvider)
+    
+    Option('trac-jsgantt', 'fields.percent', None,
+           """Ticket field to use as the data source for the percent 
+              complete column.""")
+    Option('trac-jsgantt', 'fields.estimate', None, 
+           """Ticket field to use as the data source for estimated work""")
+    Option('trac-jsgantt', 'days_per_estimate', '0.125', 
+           """Days represented by each unit of estimated worke""")
+    Option('trac-jsgantt', 'fields.worked', None,
+           """Ticket field to use as the data source for completed work""")
+    Option('trac-jsgantt', 'fields.start', None, 
+           """Ticket field to use as the data source for start date""")
+    Option('trac-jsgantt', 'fields.finish', None, 
+           """Ticket field to use as the data source for finish date""" )
+    Option('trac-jsgantt', 'date_format', '%Y-%m-%d', 
+           """Format for state and finish date strings""")    
+    Option('trac-jsgantt', 'fields.pred', None,
+           """Ticket field to use as the data source for predecessor list""")
+    Option('trac-jsgantt', 'fields.succ', None,
+           """Ticket field to use as the data source for successor list""")
+    Option('trac-jsgantt', 'fields.parent', None,
+           """Tield field to use as the data source for the parent""")
+    Option('trac-jsgantt', 'parent_format', '%s',
+           """Format of ticket IDs in parent field""")
+    Option('trac-jsgantt', 'milestone_type', 'milestone', 
+           """Ticket type for milestone-like tickets""")
+    
+    Option('trac-jsgantt', 'option.format', 'day', 
+           """Initial format of Gantt chart""")
+    Option('trac-jsgantt', 'option.formats', 'day|week|month|quarter', 
+           """Formats to show for Gantt chart""")
+    IntOption('trac-jsgantt', 'option.sample', 0,
+              """Show sample""")
+    IntOption('trac-jsgantt', 'option.res', 1, 
+              """Show resource column""")
+    IntOption('trac-jsgantt', 'option.dur', 1, 
+              """Show duration column""")              
+    IntOption('trac-jsgantt', 'option.comp', 1,
+              """Show percent complete column""")              
+    Option('trac-jsgantt', 'option.caption', 'Resource',
+           """Caption to follow task in Gantt""")
+    IntOption('trac-jsgantt', 'option.startDate', 1, 
+              """Show start date column""")
+    IntOption('trac-jsgantt', 'option.endDate', 1, 
+              """Show finish date column""")
+    Option('trac-jsgantt', 'option.date_display', 'mm/dd/yyyy', 
+           """Format to display dates""")
+    IntOption('trac-jsgantt', 'option.openLevel', 999, 
+              """How many levels of ticket hierarchy to show open""")
+    IntOption('trac-jsgantt', 'option.openClosedTickets', 1, 
+              """Open closed tickets in the task hierarchy""")
+    Option('trac-jsgantt', 'option.colorBy', 'priority', 
+           """Field to use to color tasks""")
+    IntOption('trac-jsgantt', 'option.lwidth', None, 
+              """Width (in pixels) of left table""")
+    IntOption('trac-jsgantt', 'option.root', None,
+              """Ticket(s) to show descendants of""")
+    IntOption('trac-jsgantt', 'option.goal', None,
+              """Ticket(s) to show predecessors of""")
+    IntOption('trac-jsgantt', 'option.showdep', 1, 
+              """Show dependencies in Gantt""")
+    IntOption('trac-jsgantt', 'option.userMap', 1, 
+              """Map user IDs to user names""")
+    IntOption('trac-jsgantt', 'option.omitMilestones', 0,
+              """Omit milestones""")
+     
 
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
@@ -45,60 +112,36 @@ class TracJSGanttChart(WikiMacroBase):
     def __init__(self):
         # All the macro's options with default values.
         # Anything else passed to the macro is a TracQuery field.
-        self.options = {
-            'format': None,
-            'formats': 'day|week|month|quarter',
-            'sample': 0,
-            'res': 1,
-            'dur': 1,
-            'comp': 1,
-            'caption': 'Resource',
-            'startDate': 1,
-            'endDate': 1,
-            'dateDisplay': 'mm/dd/yyyy',
-            'openLevel': 999,
-            'openClosedTickets': 1,
-            'colorBy' : 'priority',
-            'lwidth' : None,
-            'root' : None,
-            'goal' : None,
-            'showdep' : 1,
-            'userMap': 1,
-            'omitMilestones': 0,
-            }
-
-        # self.options defaults are configurable from trac.ini
-        for opt in self.options.keys():
-            v = self.config.get('trac-jsgantt','option.%s' % opt, default=self)
-            if v != self:
-                if isinstance(self.options[opt], (int, long)):
-                    v = int(v)
-                self.options[opt] = v
+        options = ('format', 'formats', 'sample', 'res', 'dur', 'comp', 
+                   'caption', 'startDate', 'endDate', 'dateDisplay', 
+                   'openLevel', 'openClosedTickets', 'colorBy', 'lwidth', 
+                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones')
+        self.options = {}
+        for opt in options:
+            self.options[opt] = self.config.get('trac-jsgantt',
+                                                'option.%s' % opt)
 
         # Configuration fields
         self.fields = {}
         self.fields['percent'] = \
-            self.config.get('trac-jsgantt','fields.percent', default=None)
+            self.config.get('trac-jsgantt','fields.percent')
         self.fields['estimate'] = \
-            self.config.get('trac-jsgantt','fields.estimate', default=None)
+            self.config.get('trac-jsgantt','fields.estimate')
         self.fields['worked'] = \
-            self.config.get('trac-jsgantt','fields.worked', default=None)
+            self.config.get('trac-jsgantt','fields.worked')
         self.fields['start'] = \
-            self.config.get('trac-jsgantt','fields.start', default=None)
+            self.config.get('trac-jsgantt','fields.start')
         self.fields['finish'] = \
-            self.config.get('trac-jsgantt','fields.finish', default=None)
+            self.config.get('trac-jsgantt','fields.finish')
         self.fields['pred'] = \
-            self.config.get('trac-jsgantt','fields.pred', default=None)
+            self.config.get('trac-jsgantt','fields.pred')
         self.fields['succ'] = \
-            self.config.get('trac-jsgantt','fields.succ', default=None)
+            self.config.get('trac-jsgantt','fields.succ')
         self.fields['parent'] = \
-            self.config.get('trac-jsgantt','fields.parent', default=None)
+            self.config.get('trac-jsgantt','fields.parent')
 
         # This is the format of start and finish in the Trac database
-        self.dbDateFormat = \
-            str(self.config.get('trac-jsgantt',
-                                'date_format', 
-                                default='%Y-%m-%d'))
+        self.dbDateFormat = self.config.get('trac-jsgantt', 'date_format') 
 
         # These have to be in sync.  jsDateFormat is the date format
         # that the JavaScript expects dates in.  It can be one of
@@ -109,9 +152,7 @@ class TracJSGanttChart(WikiMacroBase):
         self.pyDateFormat = '%Y-%m-%d'
 
         # Tickets of this type will be displayed as milestones.
-        self.milestoneType = self.config.get('trac-jsgantt',
-                                             'milestone_type', 
-                                             default='milestone')
+        self.milestoneType = self.config.get('trac-jsgantt', 'milestone_type')
 
         # Days per estimate unit.  
         #
@@ -121,17 +162,14 @@ class TracJSGanttChart(WikiMacroBase):
         # 
         # float('1/6') is an error so the value must be a number, not
         # an equation.
-        self.dpe = float(self.config.get('trac-jsgantt',
-                                         'days_per_estimate', 
-                                         default='0.125'))
+        self.dpe = float(self.config.get('trac-jsgantt', 'days_per_estimate'))
 
         # User map (login -> realname) is loaded on demand, once.
         # Initialization to None means it is not yet initialized.
         self.user_map = None
 
 	# Parent format option
-	self.parent_format = \
-		self.config.get('trac-jsgantt','parent_format', default='%s')
+	self.parent_format = self.config.get('trac-jsgantt','parent_format')
 
     def _begin_gantt(self, options):
         if options['format']:
