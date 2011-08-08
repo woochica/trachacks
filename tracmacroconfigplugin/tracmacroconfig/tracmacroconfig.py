@@ -3,8 +3,8 @@
 By itself, the module does nothing.
 """
 
-from trac.config import Option, BoolOption, IntOption, ListOption, \
-                        _TRUE_VALUES, ConfigurationError
+from trac.core import TracError
+from trac.config import _TRUE_VALUES, ConfigurationError
 from trac.wiki.api import parse_args
 from trac.util.translation import _
 
@@ -24,10 +24,10 @@ class TracMacroConfig(object):
     The option lookup even supports inheritance.
     """
 
-    _is_default = object()
-    _is_macroarg = object()
-    _is_extra = object()
-    _is_funny = [ _is_default, _is_macroarg, _is_extra, None ]
+    _is_default = 'default'
+    _is_macroarg = 'macroarg'
+    _is_extra = 'extra'
+    _is_funny = [ _is_default, _is_macroarg, _is_extra ]
 
     def __init__(self, section, prefix = 'macro', config = 'config'):
         """
@@ -46,7 +46,7 @@ class TracMacroConfig(object):
                          the full option names during the search in trac.ini.
         """
         self.tracconfig = None
-        self.env = None
+        self.tracenv = None
         self.wanted = {}
         self.section = section
         self.prefix = prefix
@@ -64,8 +64,8 @@ class TracMacroConfig(object):
         """
         self.tracconfig = config
         if env:
-            self.env = env
-        self._log('setup(env=%s, config=%s)' % (self.env, self.tracconfig))
+            self.tracenv = env
+        self._log('setup(env=%s, config=%s)' % (self.tracenv, self.tracconfig))
 
     def Option(self, *args, **kwargs):
         return MacroOption(self, *args, **kwargs)
@@ -101,10 +101,10 @@ class TracMacroConfig(object):
             raise Exception('TracMacroConfig not setup properly - no config')
         _, options = parse_args(content, strict=False)
         self._parse(options)
-        return_options = {}
+        results = {}
         for key, ent in self.results.iteritems():
-            return_options[key] = ent[0]
-        return return_options
+            results[key] = ent[0]
+        return results
 
     def extras(self, options=None, remove=False):
         """
@@ -122,7 +122,7 @@ class TracMacroConfig(object):
         extras = {}
         if not options:
             for opt, ent in self.results.iteritems():
-                if not ent[2]:
+                if ent[1] is self._is_extra:
                     extras[opt] = ent[0]
         else:
             for opt in options.keys():
@@ -154,14 +154,18 @@ class TracMacroConfig(object):
         not a registered option. Return False otherwise."""
         return opt in self.results and self.results[opt][1] is self._is_extra
 
-    def option_from_trac_ini(self, opt):
+    def option_qualified_name(self, opt):
         """Given an option name as you would use it in a macro call,
-        and regarding the current self.results set, return None if
-        the option was not taken from trac.ini, or the full name
-        in trac.ini where the value was taken from."""
-        if opt in self.results and not self.results[opt][1] in self._is_funny:
-            return self.results[opt][1]
-        return ''
+        return its qualified name, a pair (two-element tuple), with
+        the first element being one of 'trac.ini', 'default', 'macroarg',
+        or 'extra', and the second element being the full name from trac.ini,
+        or the option name itself otherwise."""
+        if not opt in self.results:
+            return ('unknown', opt)
+        elif not self.results[opt][1] in self._is_funny:
+            return ('trac.ini', self.results[opt][1])
+        else:
+            return (self.results[opt][1], opt)
 
     def _parse(self, options):
         """
@@ -182,7 +186,7 @@ class TracMacroConfig(object):
         wanted = self.wanted.copy()
         for opt in wanted.keys():
             if opt in options:
-                self.results[opt] = self._retrieve(wanted, opt, options[opt])
+                self.results[opt] = self._access(wanted, opt, options[opt])
 
         '''As all registered options, in trac.ini, have composite names,
         consisting of a prefix and the option name separated by a dot,
@@ -201,13 +205,20 @@ class TracMacroConfig(object):
 
         '''Set all still unresolved registered options, to their defaults'''
         for opt in wanted.keys():
-            if opt not in options:
-                self.results[opt] = ( wanted[opt].default, self._is_default, wanted[opt] )
+            self.results[opt] = (
+                wanted[opt].default,
+                self._is_default,
+                wanted[opt]
+            )
 
         '''Move over all UNregistered options as they were passed in.'''
         for opt in options.keys():
             if not opt in self.results:
-                self.results[opt] = ( options[opt], self._is_extra, None )
+                self.results[opt] = (
+                    options[opt],
+                    self._is_extra,
+                    None
+                )
 
     def _inherit(self, options, parents, wanted, seen):
         """
@@ -235,11 +246,11 @@ class TracMacroConfig(object):
                 fullname = '%s.%s' % (other, opt)
                 v = self.tracconfig.get(self.section, fullname, default=self)
                 if not v is self:
-                    self.results[opt] = self._retrieve(wanted, opt, v, fullname)
+                    self.results[opt] = self._access(wanted, opt, v, fullname)
             if parents and len(wanted) > 0:
                 self._inherit(options, parents, wanted, seen)
 
-    def _retrieve(self, wanted, opt, value, fullname=_is_macroarg):
+    def _access(self, wanted, opt, value, fullname=_is_macroarg):
         """Upon access, convert the option value to its correct form
         for usage by calling code, as directed by the MacroOption accessor.
         
@@ -247,10 +258,8 @@ class TracMacroConfig(object):
         value, its fullname, and the MacroOption it is based on.
 
         Also remove wanted[opt] to prevent later processing."""
-        _name = fullname or opt
-        self._log('_access(%s) value="%s"' % (_name, value))
         result = (
-            wanted[opt]._mc_accessor(_name, value),
+            wanted[opt]._access(value),
             fullname,
             wanted[opt]
         )
@@ -262,7 +271,7 @@ class TracMacroConfig(object):
         configured at the specific prefix, and return a list of new
         parents."""
         if self.inherit:
-            suffix = self.inherit.suffix
+            suffix = self.inherit.name
             value = self.tracconfig.get(
                 self.section, '%s.%s' % (prefix, suffix), default=None)
             if value:
@@ -278,13 +287,31 @@ class TracMacroConfig(object):
         if isinstance(option, MacroInheritOption):
             self.inherit = option
         elif isinstance(option, MacroOption):
-            self.wanted[option.suffix] = option
+            self.wanted[option.name] = option
         else:
             raise Exception('TracMacroConfig._register needs a MacroOption')
 
+    def _raise_value_error(self, option, typestring, value):
+        """Helper for Macro*Option classes to raise an appropriate
+        value error when a malformed value is supplied for an option."""
+        qual = option._qualified_name()
+        if qual[0] == 'trac.ini':
+            raise ConfigurationError(
+                _('trac.ini [%(sec)s] %(opt)s = "%(val)s": invalid %(type)s',
+                  sec=self.section, opt=qual[1],
+                  type=typestring, val=repr(value)))
+        if qual[0] == 'macroarg':
+            raise ValueError(
+                _('macro argument %(opt)s = "%(val)s": invalid %(type)s',
+                  opt=qual[1], type=typestring, val=repr(value)))
+        if qual[0] == 'default':
+            raise TracError(
+                _('plugin default %(opt)s = "%(val)s": invalid %(type)s',
+                  opt=qual[1], type=typestring, val=repr(value)))
+
     def _log(self, msg):
-        if self.env:
-            self.env.log.debug('TracMacroConfig %s' % msg)
+        if self.tracenv:
+            self.tracenv.log.debug('TracMacroConfig %s' % msg)
 
 class MacroOption(object):
     """Descriptor for string macro options. Also the base class
@@ -292,8 +319,7 @@ class MacroOption(object):
 
     def __init__(self, mc, name, default=None, doc=''):
         self.mc = mc
-        self.suffix = name
-        self.name = mc.prefix + '.' + name
+        self.name = name
         self.default = default
         self.__doc__ = doc
         mc._register(self)
@@ -301,50 +327,54 @@ class MacroOption(object):
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        if not self.suffix in self.mc.results:
+        if not self.name in self.mc.results:
             return None
-        return self._mc_accessor(self.name, self.mc.results[self.suffix][0])
-
-    def _mc_accessor(self, key, value):
-        self.mc._log('MacroOption key="%s" value="%s"' % (key, value))
-        return value
+        return self._access(self.mc.results[self.name][0])
 
     def __set__(self, instance, value):
         raise AttributeError, 'can\'t set attribute'
 
     def __repr__(self):
-        return '<%s [%s] "%s">' % (self.__class__.__name__, self.mc.section,
-                                   self.name)
+        return '<%s [%s] "%s">' % (
+            self.__class__.__name__, self.mc.section, self.name)
+
+    def _qualified_name(self):
+        return self.mc.option_qualified_name(self.name)
+
+    def _access(self, value):
+        self._log_access('value="%s"' % value)
+        return value
+
+    def _log_access(self, valueinfo):
+        qual = self._qualified_name()
+        source = qual[0]
+        if source == 'trac.ini':
+            source += ' [%s]' % self.mc.section
+        self.mc._log('%s source="%s" key=%s %s' % (
+            self.__class__, source, qual[1], valueinfo))
 
 class MacroBoolOption(MacroOption):
     """Descriptor for boolean macro options."""
 
-    def __init__(self, mc, name, default=None, doc=''):
-        super(MacroBoolOption, self).__init__(mc, name, default, doc)
-
-    def _mc_accessor(self, key, value):
-        if isinstance(value, basestring):
-            value = value.lower() in _TRUE_VALUES
-        self.mc._log('MacroBoolOption key="%s" value=%s' % (key, value))
-        return bool(value)
+    def _access(self, value):
+        if not value is None:
+            if isinstance(value, basestring):
+                value = value.lower() in _TRUE_VALUES
+            value = bool(value)
+        self._log_access('value=%s' % str(value))
+        return value
 
 
 class MacroIntOption(MacroOption):
     """Descriptor for int macro options."""
 
-    def __init__(self, mc, name, default=None, doc=''):
-        super(MacroIntOption, self).__init__(mc, name, default, doc)
-
-    def _mc_accessor(self, key, value):
-        if value is None:
-            return None
-        try:
-            value = int(value)
-        except ValueError:
-            raise ConfigurationError(
-                   _('[%(section)s] %(entry)s: expected integer, got %(value)s',
-                      section=self.mc.section, entry=key, value=repr(value)))
-        self.mc._log('MacroIntOption key="%s" value=%s' % (key, value))
+    def _access(self, value):
+        if not value is None:
+            try:
+                value = int(value)
+            except ValueError:
+                self.mc._raise_value_error(self, 'integer', value)
+        self._log_access('value=%s' % str(value))
         return value
 
 class MacroListOption(MacroOption):
@@ -352,23 +382,20 @@ class MacroListOption(MacroOption):
 
     def __init__(self, mc, name, default=None,
                  sep=',', keep_empty=False, doc=''):
-        super(MacroListOption, self).__init__(mc, name, default, doc)
         self.sep = sep
         self.keep_empty = keep_empty
+        super(MacroListOption, self).__init__(mc, name, default, doc)
 
-    def _mc_accessor(self, key, value):
-        if value:
+    def _access(self, value):
+        if not value is None:
             if isinstance(value, basestring):
-                items = [item.strip() for item in value.split(self.sep)]
+                value = [item.strip() for item in value.split(self.sep)]
             else:
-                items = list(value)
+                value = list(value)
             if not self.keep_empty:
-                items = filter(None, items)
-        else:
-            items = []
-        self.mc._log('MacroListOption key="%s" sep="%s" value=%s' % (
-            key, self.sep, items))
-        return items
+                value = filter(None, value)
+        self._log_access('sep="%s" value=%s' % (self.sep, value))
+        return value
 
 
 class MacroInheritOption(MacroOption):

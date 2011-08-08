@@ -19,7 +19,7 @@ class TracMacroConfigExample(WikiMacroBase):
     mo_bool = mc.BoolOption('bool', default=True,
                     doc='''A bool macro option''')
 
-    mo_int = mc.IntOption('int', default=42,
+    mo_int = mc.IntOption('int', default=23,
                     doc='''An integer macro option''')
 
     mo_list = mc.ListOption('list', default=['first', 'last'], sep='|',
@@ -52,7 +52,7 @@ class TracMacroConfigExample(WikiMacroBase):
             tag.h3('[[%s(%s)]]' % ( name, arguments )),
             tag.table(
               tag.tr(
-                tag.th('Name'), tag.th('Value'), tag.th('ini Name'),
+                tag.th('Name'), tag.th('Value'), tag.th('Qualified'),
                 tag.th('Default?'), tag.th('Macroarg?'), tag.th('Extra?'),
                 tag.th('Known?'), tag.th('Default'), tag.th('Documentation')
               ),
@@ -81,7 +81,7 @@ class TracMacroConfigExample(WikiMacroBase):
         return tag.tr(
           tag.td('%s' % name),
           tag.td('%s' % val),
-          tag.td('%s' % self.mc.option_from_trac_ini(name)),
+          tag.td('%s %s' % self.mc.option_qualified_name(name)),
           tag.td('%s' % self.mc.option_is_default(name)),
           tag.td('%s' % self.mc.option_is_macroarg(name)),
           tag.td('%s' % self.mc.option_is_extra(name)),
@@ -94,7 +94,7 @@ class TracMacroConfigExample(WikiMacroBase):
         return tag.tr(
           tag.td('%s' % name),
           tag.td('%s' % val),
-          tag.td('%s' % self.mc.option_from_trac_ini(name)),
+          tag.td('%s %s' % self.mc.option_qualified_name(name)),
           tag.td('%s' % self.mc.option_is_default(name)),
           tag.td('%s' % self.mc.option_is_macroarg(name)),
           tag.td('%s' % self.mc.option_is_extra(name)),
