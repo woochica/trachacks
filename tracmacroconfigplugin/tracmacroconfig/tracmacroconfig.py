@@ -100,10 +100,12 @@ class TracMacroConfig(object):
         if not self.tracconfig:
             raise Exception('TracMacroConfig not setup properly - no config')
         _, options = parse_args(content, strict=False)
+        self._log('parse incoming %s' % options)
         self._parse(options)
         results = {}
         for key, ent in self.results.iteritems():
             results[key] = ent[0]
+        self._log('parse results %s' % results)
         return results
 
     def extras(self, options=None, remove=False):
@@ -131,6 +133,13 @@ class TracMacroConfig(object):
                     if remove:
                         del options[opt]
         return extras
+
+    def extra(self, opt):
+        """Get the value for the extra option named opt, or None if missing."""
+        if self.option_is_extra(opt):
+            return self.results[opt][0]
+        else:
+            return None
 
     def option_is_known(self, opt):
         """Return True if the option is known in any way, False otherwise."""
@@ -240,6 +249,7 @@ class TracMacroConfig(object):
         for other in parents:
             if other in seen:
                 continue
+            self._log('try remaining options "%s.*"' % other)
             seen[other] = 1
             parents = self._parents(other)
             for opt in wanted.keys():
@@ -311,7 +321,7 @@ class TracMacroConfig(object):
 
     def _log(self, msg):
         if self.tracenv:
-            self.tracenv.log.debug('TracMacroConfig %s' % msg)
+            self.tracenv.log.debug(str(msg))
 
 class MacroOption(object):
     """Descriptor for string macro options. Also the base class
@@ -351,7 +361,7 @@ class MacroOption(object):
         if source == 'trac.ini':
             source += ' [%s]' % self.mc.section
         self.mc._log('%s source="%s" key=%s %s' % (
-            self.__class__, source, qual[1], valueinfo))
+            self.__class__.__name__, source, qual[1], valueinfo))
 
 class MacroBoolOption(MacroOption):
     """Descriptor for boolean macro options."""
