@@ -654,7 +654,14 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # Set display based on class map
         if t[colorBy] in self.classMap:
             display = 'class=ticket-class%d' % self.classMap[t[colorBy]]
-        
+
+        # Add closed status for strike through
+        if t['status'] == 'closed':
+            if display == None:
+                display = 'class=ticket-closed'
+            else:
+                display += ' ticket-closed'
+
         if display == None:
             display = '#ff7f3f'
         return display

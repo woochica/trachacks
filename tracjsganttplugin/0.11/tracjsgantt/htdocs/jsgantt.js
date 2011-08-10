@@ -1190,7 +1190,7 @@ Complete-Displays task percent complete</p>
                }
 
                vLeftTable += 
-		   '<span ' +
+		   '<span ' +'class="'+vTaskList[i].getClass()+'" '+
 		   'onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '","'+vPopupFeatures+'"); ' +
 		   'style="cursor:pointer; display:inline-block;width:'+vNameWidth+'px;overflow:hidden;padding:0px" ' +
 		   'title="'+vTaskList[i].getName()+'"> ' + vTaskList[i].getName() + 
