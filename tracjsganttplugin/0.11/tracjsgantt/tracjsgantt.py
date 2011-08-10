@@ -70,9 +70,9 @@ class TracJSGanttSupport(Component):
     Option('trac-jsgantt', 'option.date_display', 'mm/dd/yyyy', 
            """Format to display dates""")
     IntOption('trac-jsgantt', 'option.openLevel', 999, 
-              """How many levels of ticket hierarchy to show open""")
-    IntOption('trac-jsgantt', 'option.openClosedTickets', 1, 
-              """Open closed tickets in the task hierarchy""")
+              """How many levels of task hierarchy to show open""")
+    IntOption('trac-jsgantt', 'option.expandClosedTickets', 1, 
+              """Show children of closed tasks in the task hierarchy""")
     Option('trac-jsgantt', 'option.colorBy', 'priority', 
            """Field to use to color tasks""")
     IntOption('trac-jsgantt', 'option.lwidth', None, 
@@ -144,8 +144,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # Anything else passed to the macro is a TracQuery field.
         options = ('format', 'formats', 'sample', 'res', 'dur', 'comp', 
                    'caption', 'startDate', 'endDate', 'dateDisplay', 
-                   'openLevel', 'openClosedTickets', 'colorBy', 'lwidth', 
-                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones')
+                   'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
+                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
+                   'schedule')
+
         self.options = {}
         for opt in options:
             self.options[opt] = self.config.get('trac-jsgantt',
@@ -799,7 +801,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         # open
         if ticket['level'] < options['openLevel'] and \
-                ((options['openClosedTickets'] != 0) or \
+                ((options['expandClosedTickets'] != 0) or \
                      (ticket['status'] != 'closed')):
             open = 1
         else:
