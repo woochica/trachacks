@@ -130,11 +130,11 @@ if (pDisplay.indexOf('=') == -1) {
     switch (pDisplay[0]) {
     case 'class':
         vStyle = '';
-        vClass = 'gtask '+pDisplay[1];
+        vClass = pDisplay[1];
         break;
     case 'style':
         vStyle = pDisplay[1];
-        vClass = 'gtask';
+        vClass = '';
         break;
     }
 }
@@ -1561,7 +1561,7 @@ Complete-Displays task percent complete</p>
                      '<TR id=childrow_' + vID + ' class=yesdisplay style="HEIGHT: 20px" bgColor=#f3f3f3 onMouseover=g.mouseOver(this,' + vID + ',"right","group") onMouseout=g.mouseOut(this,' + vID + ',"right","group")>' + vItemRowStr + '</TR></TABLE></DIV>';
                   vRightTable +=
                      '<div id=bardiv_' + vID + ' style="position:absolute; top:5px; left:' + Math.ceil(vTaskLeft * (vDayWidth) + 1) + 'px; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px">' +
-		      '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="'+vTaskList[i].getClass()+'" style="background-color:#000000; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) -1) + 'px;  cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'">' +
+		      '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="gtask '+vTaskList[i].getClass()+'" style="background-color:#000000; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) -1) + 'px;  cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'">' +
                          '<div style="Z-INDEX: -4; float:left; background-color:#666666; height:3px; overflow: hidden; margin-top:1px; ' +
                                'margin-left:1px; margin-right:1px; filter: alpha(opacity=80); opacity:0.8; width:' + vTaskList[i].getCompStr() + '; ' + 
                                'cursor: pointer;" onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '","'+vPopupFeatures+'");>' +
@@ -1599,7 +1599,7 @@ Complete-Displays task percent complete</p>
                   // Draw Task Bar  which has outer DIV with enclosed colored bar div, and opaque completion div
 	            vRightTable +=
                      '<div id=bardiv_' + vID + ' style="position:absolute; top:4px; left:' + Math.ceil(vTaskLeft * (vDayWidth) + 1) + 'px; height:18px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px">' +
-                        '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="'+vTaskList[i].getClass()+'" style="background-color:' + vTaskList[i].getColor() +'; height: 13px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px; cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'" ' +
+                        '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="gtask '+vTaskList[i].getClass()+'" style="background-color:' + vTaskList[i].getColor() +'; height: 13px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px; cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'" ' +
                            'onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '","'+vPopupFeatures+'"); >' +
                            '<div class=gcomplete style="Z-INDEX: -4; float:left; background-color:black; height:5px; overflow: auto; margin-top:4px; filter: alpha(opacity=40); opacity:0.4; width:' + vTaskList[i].getCompStr() + '; overflow:hidden">' +
                            '</div>' +

@@ -3,16 +3,11 @@
  * The border-color is a medium-dark gray so that tasks are more visible.
  */
 
-span.ticket-closed {
+.ticket-closed {
   text-decoration: line-through;
 }
 
-span.ticket-class1, span.ticket-class2, span.ticket-class3, span.ticket-class4, span.ticket-class5, span.ticket-class6 { 
-  text-align: left;
-}
-
-
-div.ticket-class1, span.ticket-class1 { 
+.ticket-class1 {
   background-color: #fdc; 
 }
 
@@ -24,7 +19,7 @@ div.ticket-class1 {
 }
 
 
-div.ticket-class2, span.ticket-class2 { 
+.ticket-class2 { 
   background-color: #ffb; 
 }
 
@@ -36,7 +31,7 @@ div.ticket-class2 {
 }
 
 
-div.ticket-class3, span.ticket-class3 { 
+.ticket-class3 { 
   background-color: #fbfbfb; 
 }
 
@@ -48,7 +43,7 @@ div.ticket-class3 {
 }
 
 
-div.ticket-class4, span.ticket-class4 { 
+.ticket-class4 { 
   background-color: #e7ffff; 
 }
 
@@ -60,7 +55,7 @@ div.ticket-class4 {
 }
 
 
-div.ticket-class5, span.ticket-class5 { 
+.ticket-class5 { 
   background-color: #e7eeff; 
 }
 
@@ -72,7 +67,7 @@ div.ticket-class5 {
 }
 
 
-div.ticket-class6,  span.ticket-class6 { 
+.ticket-class6 { 
   background-color: #f0f0f0;
 }
 
