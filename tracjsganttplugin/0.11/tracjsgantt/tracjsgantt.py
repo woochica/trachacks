@@ -136,7 +136,7 @@ The chart display can be controlled with a number of macro arguments:
 
 Site-wide defaults for macro arguments may be set in `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
 
-All other macro arguments are treated as TracQuery specification (e.g., milestone=!MS1|!MS2) to control which tickets are displayed.
+All other macro arguments are treated as TracQuery specification (e.g., milestone=ms1|ms2) to control which tickets are displayed.
 
     """
     def __init__(self):
