@@ -145,8 +145,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         options = ('format', 'formats', 'sample', 'res', 'dur', 'comp', 
                    'caption', 'startDate', 'endDate', 'dateDisplay', 
                    'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
-                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
-                   'schedule')
+                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones')
 
         self.options = {}
         for opt in options:
