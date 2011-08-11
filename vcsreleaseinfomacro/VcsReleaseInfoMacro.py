@@ -87,28 +87,28 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 items.append(
                     " * "
                     " [/browser/%(path)s/trunk trunk]"
-					" @[changeset:%(rev)s %(rev)s]"
+                    " @[changeset:%(rev)s %(rev)s]"
                     " ("
                     "[/log/%(path)s/trunk changes]"
                     " [/changeset?new_path=%(path)s/trunk diffs]"
                     ")"
                 % {
                     'path': path,
-					'rev': cur['rev'],
+                    'rev': cur['rev'],
                 })
             elif prev == None:
                 # first entry = trunk
                 items.append(
                     " * "
                     " [/browser/%(path)s/trunk trunk]"
-					" @[changeset:%(rev)s %(rev)s]"
+                    " @[changeset:%(rev)s %(rev)s]"
                     " ("
                     "[/log/%(path)s/trunk?stop_rev=%(stop_rev)s changes]"
                     " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/trunk diffs]"
                     ")"
                 % {
                     'path': path,
-					'rev' : cur['rev'],
+                    'rev' : cur['rev'],
                     'old_tag' : next['version'],
                     'stop_rev' : next['rev'],
                 })
@@ -117,7 +117,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 items.append(
                     " * '''%(date)s'''"
                     " [/log/%(path)s/tags/%(new_tag)s %(new_tag)s]"
-					" @[changeset:%(rev)s %(rev)s]"
+                    " @[changeset:%(rev)s %(rev)s]"
                     " by %(author)s"
                     " ("
                     "[/log/%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s changes]"
@@ -137,7 +137,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 items.append(
                     " * '''%(date)s'''"
                     " [/log/%(path)s/tags/%(new_tag)s?rev=%(rev)s&mode=follow_copy %(new_tag)s]"
-					" @[changeset:%(rev)s %(rev)s]"
+                    " @[changeset:%(rev)s %(rev)s]"
                     " by %(author)s"
                 % {
                     'path': path,
@@ -148,3 +148,5 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 })
 
         return '<div class="releases">\n' + str(wiki_to_html("\n".join(items), self.env, req))  + '</div>\n'
+
+# vim:et:ts=4:sw=4
