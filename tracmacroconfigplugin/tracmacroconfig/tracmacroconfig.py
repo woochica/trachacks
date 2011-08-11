@@ -82,7 +82,7 @@ class TracMacroConfig(object):
     def InheritOption(self, *args, **kwargs):
         return MacroInheritOption(self, *args, **kwargs)
 
-    def options(self, content):
+    def options(self, content, result='all'):
         """
         Parse macro args given in content, returning an options dict.
 
@@ -99,12 +99,22 @@ class TracMacroConfig(object):
         """
         if not self.tracconfig:
             raise Exception('TracMacroConfig not setup properly - no config')
+        good_result = [ 'all', 'wellknown', 'extra', 'nothing' ]
+        if not result is None and not result in good_result:
+            raise ValueError("TracMacroConfig.options(result='%s') invalid;"
+                             " use one of %s, or None." % (
+                result, ','.join([ "%s" % x for x in good_result ])))
         _, options = parse_args(content, strict=False)
         self._log('parse incoming %s' % options)
         self._parse(options)
+        if result is None or result == 'nothing':
+            return None
         results = {}
         for key, ent in self.results.iteritems():
-            results[key] = ent[0]
+            if result == 'all' or \
+               (result == 'wellknown' and key in self.wanted) or \
+               (result == 'extra' and not key in self.wanted):
+               results[key] = ent[0]
         self._log('parse results %s' % results)
         return results
 
