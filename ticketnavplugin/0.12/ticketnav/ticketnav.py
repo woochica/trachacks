@@ -21,7 +21,7 @@ from trac.config import Option
 from trac.attachment import IAttachmentChangeListener, IAttachmentManipulator
 
 # domain name has to be the same entry_points, described in setup.py
-_, tag_, N_, add_domain = domain_functions('ticketnav',  '_', 'tag_', 'N_', 'add_domain')
+_, tag_, N_, add_domain = domain_functions('ticketnav', '_', 'tag_', 'N_', 'add_domain')
 
 #===============================================================================
 # Tested if copying ticket-box.html is working, but it is not!
@@ -84,12 +84,12 @@ description_descr =
 descr_template = <div style="white-space: normal; height: 250px; overflow:scroll;" class="system-message">%s<div>
 }}}
     """
-    implements(ITemplateStreamFilter)
+    implements(ITemplateStreamFilter, IRequestFilter, ITemplateProvider)
     
     description_descr = Option('ticket', 'description_descr', '',
         """Explaination of description.""")
-    descr_template = Option('ticket', 'descr_template', 
-        '<div style="white-space: normal; height: 250px; overflow:scroll;" class="system-message">%s<div>',
+    descr_template = Option('ticket', 'descr_template',
+        '<div style="white-space: normal; width: 250px; height: 250px; overflow:scroll;" class="%s">%s<div>',
         """Explaination of description.""")
        
     def filter_stream(self, req, method, filename, stream, data):
@@ -98,22 +98,45 @@ descr_template = <div style="white-space: normal; height: 250px; overflow:scroll
             fields = data['fields']
             if self.description_descr:
 #                print "having description_descr: %s" % self.description_descr
-                html_d = self.descr_template % self.description_descr
+#                print "having description_template: %s" % self.descr_template
+                html_d = self.descr_template % ('ticket-rndescr',self.description_descr)
                 stream |= Transformer('.//th/label[@for="field-description"]').after(HTML(html_d))
                 
             for f in fields:
                 if f['skip'] or not f['type'] == 'textarea': # or not f.has_key('descr'):
                     continue 
                  
-                descr = self.config.get('ticket-custom', '%s.descr' % f['name'] )
+                descr = self.config.get('ticket-custom', '%s.descr' % f['name'])
                 if descr:
 #                    print "processing field %s" % f
+                    css_class = self.config.get('ticket-custom', '%s.css_class' % f['name'])
+#                    print css_class
                     field_name = 'field-%s' % f['name']
                     tr_str = './/label[@for="%s"]' % field_name
-                    html = self.descr_template % descr
+                    html = self.descr_template % (css_class, descr)
                     stream |= Transformer(tr_str).after(HTML(html))
-            
         return stream
+    
+    # IRequestHandler methods
+    def pre_process_request(self, req, handler):        
+        return handler
+    #===========================================================================
+    # Add JavaScript an an additional css to ticket template
+    #===========================================================================
+#    def post_process_request(self, req, template, data, content_type):
+#        if req.path_info .startswith('/newticket')or \
+#            req.path_info .startswith('/ticket'):
+#            add_stylesheet(req, 'ticketnav/css/ticket_descr.css')
+#        return template, data, content_type
+    def post_process_request(self, req, template, data, content_type):
+        add_stylesheet(req, 'hw/css/ticket_descr.css')
+        return template, data, content_type
+    
+    def get_templates_dirs(self):
+        return #[resource_filename(__name__, 'templates')]
+    
+    def get_htdocs_dirs(self):
+        return [('hw', resource_filename(__name__, 'htdocs'))]
         
 class HtmlContent(Component):
     """Enables HTML content in description, adding Javascript editor and 
@@ -165,7 +188,7 @@ Line 3 has to be inserted into `py:choose` block in above template-snippet.
 Also `py:choose` block has to be added into div-block near the end of file (see above template-snippet)."""
     implements(IRequestFilter, ITemplateStreamFilter)
     
-    description_format = Option('ticket', 'description_format', 'wiki',
+    description_format = Option('ticket', 'description_format', '',
         """Format of description.
         Empty or wiki is Trac Standard; html formats description as HTML.""")
     
@@ -211,7 +234,7 @@ Also `py:choose` block has to be added into div-block near the end of file (see 
                 add_editor = self.editor_replace.replace("@FIELD_NAME@", field_name)
                 html = HTML(add_editor)
                 tr_str = './/textarea[@name="%s"]' % field_name
-                self.log.debug ("add_editor for field %s is %s; tr_str is %s" % (field_name, add_editor, tr_str) )
+                self.log.debug ("add_editor for field %s is %s; tr_str is %s" % (field_name, add_editor, tr_str))
                 stream |= Transformer(tr_str).after(html)
             
         return stream
@@ -349,16 +372,16 @@ You might restart your webserver after installing this plugin, since it doesn't 
     
     def post_process_request(self, req, template, data, content_type):
         if data and template == 'ticket.html':
-            self.log.info( "[post_process_request] called this method with data with template: %s" % template )
+            self.log.info("[post_process_request] called this method with data with template: %s" % template)
             def dateinfo_abs(date):
-                self.log.info( "[post_process_request] called method 'dateinfo'" )
+                self.log.info("[post_process_request] called method 'dateinfo'")
                 return tag.span(format_datetime(date),
-                                title=pretty_timedelta(date) )
+                                title=pretty_timedelta(date))
             data['date_format'] = self.date_format
             if self.date_format == "absolute":
                 data['dateinfo_abs'] = dateinfo_abs
             
-            self.log.debug( "data %r" % data )
+            self.log.debug("data %r" % data)
         return template, data, content_type
     
     def filter_stream(self, req, method, filename, stream, data):
@@ -450,7 +473,7 @@ class TicketNavigation(Component):
         an several div areas an providing a "jump-to" to
         the anker with are represented in the navigation box
     """  
-    implements(ITemplateStreamFilter, IRequestFilter,ITemplateProvider) 
+    implements(ITemplateStreamFilter, IRequestFilter, ITemplateProvider) 
             
     css_banner_top1 = tag.div(id_='top1');    
     css_banner_top2 = tag.div(id_='top2');
@@ -463,7 +486,7 @@ class TicketNavigation(Component):
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'ticket.html' or filename == 'newticket':
             stream = self.__getAnchors(stream)
-            stream =  self._customize_View(stream)
+            stream = self._customize_View(stream)
             return stream
         return stream;         
                   
@@ -478,7 +501,7 @@ class TicketNavigation(Component):
         if req.path_info .startswith('/newticket')or \
             req.path_info .startswith('/ticket'):
             add_script(req, 'hw/js/scrollup.js')
-            add_stylesheet(req,'hw/css/navstyle.css')
+            add_stylesheet(req, 'hw/css/navstyle.css')
         return template, data, content_type
     
     #===============================================================================
@@ -499,7 +522,7 @@ class TicketNavigation(Component):
     # Search for the defined anchors in the webdocume, in order to print them
     # in the document navigation menue
     #===========================================================================
-    def __getAnchors(self,stream):
+    def __getAnchors(self, stream):
         #=======================================================================
         # this code fragment is evil, since it raises an error on imported umlauts:
         # newStream = HTML(stream)
@@ -537,21 +560,21 @@ class TicketNavigation(Component):
         headline = newStream.select('//h1 [@id="trac-ticket-title"]//a/text()')
         if headline:
             for item in headline:
-                self.anchors[item[1]]=''
+                self.anchors[item[1]] = ''
                 self.keylist.append(item[1])
 
         #further entities
         list = newStream.select('//h2 [@class="foldable"]/text()')
         if list:
             for index, item in enumerate(list):
-                self.anchors[item[1]]="no%s"%str(index+1)
+                self.anchors[item[1]] = "no%s" % str(index + 1)
                 self.keylist.append(item[1])
         list = newStream.select('//form [@id="propertyform"]//fieldset/@id')
         
         #comment
         comment = newStream.select('//h2 [@id="trac-add-comment"]//a/text()')        
         for com in comment:
-            self.anchors[com[1]]="comment"
+            self.anchors[com[1]] = "comment"
             self.keylist.append(com[1])
 
         return newStream
@@ -566,32 +589,32 @@ class TicketNavigation(Component):
         stream = stream | filter.wrap(self.css_banner_top2);
           
         buffer = StreamBuffer();
-        stream =  stream | Transformer('.//div [@id="banner"]').copy(buffer) \
+        stream = stream | Transformer('.//div [@id="banner"]').copy(buffer) \
               .end().select('.//div [@id="top2"]').after(tag.div(id_='top1')(buffer));
                 
         filter = Transformer('.//div [@id="mainnav"]');
         stream = stream | filter.wrap(self.css_banner_top4);
             
         buffer = StreamBuffer();
-        stream =  stream | Transformer('.//div [@id="mainnav"]').copy(buffer) \
+        stream = stream | Transformer('.//div [@id="mainnav"]').copy(buffer) \
               .end().select('.//div [@id="top4"]').after(tag.div(id_='top3')(buffer));    
         
         filter = Transformer('.//div [@id="top3"]');
-        stream= stream | filter.after(tag.div(id_='right')(tag.p()))
+        stream = stream | filter.after(tag.div(id_='right')(tag.p()))
         
         filter = Transformer('.//div [@id="right"]')  
-        stream = stream | filter.append(tag.div(class_='wiki-toc')(tag.h4( _('Table of Contents') )))   
+        stream = stream | filter.append(tag.div(class_='wiki-toc')(tag.h4(_('Table of Contents'))))   
         
         # just for the menu / TOC
         filter = Transformer('.//div [@class="wiki-toc"]')                        
         
         if self.anchors and self.keylist:
             for key in self.keylist:
-                stream = stream | filter.append(tag.a(key, 
-                                                      href='#'+ self.anchors.get(key), 
-                                                      onclick="scrollup();")+tag.br())
+                stream = stream | filter.append(tag.a(key,
+                                                      href='#' + self.anchors.get(key),
+                                                      onclick="scrollup();") + tag.br())
         filter = Transformer('.//div [@id="main"]')
-        stream =  stream | filter.wrap(self.css_left)
+        stream = stream | filter.wrap(self.css_left)
             
         return stream;
         

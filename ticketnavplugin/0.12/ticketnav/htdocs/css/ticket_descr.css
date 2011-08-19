@@ -1,0 +1,15 @@
+#properties table tbody tr th div.ticket-rndescr {
+ background: #fdc;
+ border: 2px solid #d00;
+ color: #500;
+ padding: .5em;
+ margin: 1em 0;
+}
+
+#properties table tbody tr th div.ticket-descr {
+ background: #eef;
+ border: 2px solid #00d;
+ color: #005;
+ padding: .5em;
+ margin: 1em 0;
+}
