@@ -25,7 +25,22 @@ msgstr ""
 msgid "Show milestone descriptions"
 msgstr ""
 
+msgid "Descending"
+msgstr ""
+
+msgid "Ascending"
+msgstr ""
+
+msgid "Due"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
 msgid "Filter: "
+msgstr ""
+
+msgid "Sort by: "
 msgstr ""
 
 msgid "available prefixes: contains: ~, starts with: ^, ends with: $"

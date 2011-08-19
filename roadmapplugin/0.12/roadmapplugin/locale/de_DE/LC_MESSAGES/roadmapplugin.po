@@ -1,34 +1,46 @@
-# German (Germany) translations for Roadmap-Plugin.
-# Copyright (C) 2010 ORGANIZATION
-# This file is distributed under the same license as the
-# RoadmapPlugin project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+# German (Germany) translations for PROJECT.
+# Copyright (C) 2011 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
 #
-# copied from TracSubTicketsPlugin project, see
-#
-# http://trac.edgewall.org/attachment/wiki/CookBook/PluginL10N/trac-subtickets-plugin_i18n-l10n.patch
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: RoadmapPlugin 0.0.x\n"
+"Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2011-03-10 01:38+0200\n"
-"PO-Revision-Date: 2011-03-10 15:21+0100\n"
+"PO-Revision-Date: 2011-08-05 11:17+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: de_DE <trac-dev@googlegroups.com>\n"
+"Language-Team: de_DE <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 0.9.5\n"
+"Generated-By: Babel 0.9.6\n"
 
 msgid "Sort descending"
-msgstr "Meilensteine absteigend sortieren"
+msgstr "Meilensteine absteigend nach Namen sortieren"
 
 msgid "Show milestone descriptions"
 msgstr "Zeige Beschreibung der Meilensteine an"
 
+msgid "Descending"
+msgstr "Absteigend"
+
+msgid "Ascending"
+msgstr "Aufsteigend"
+
+msgid "Due"
+msgstr "Fälligkeit"
+
+msgid "Name"
+msgstr "Name"
+
 msgid "Filter: "
 msgstr "Filter: "
+
+msgid "Sort by: "
+msgstr "Sortierung: "
 
 msgid "available prefixes: contains: ~, starts with: ^, ends with: $"
 msgstr "Verfügbare Prefixes: enhält: ~, beginnt mit: ^, endet mit: $"

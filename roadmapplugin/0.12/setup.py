@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name='Roadmap Plugin', 
-    version='0.4.0',
+    version='0.4.1',
     author = 'Franz Mayer, Gefasoft AG',
     author_email = 'franz.mayer@gefasoft.de', 
     description = 'Sorts roadmap in descending order and adds an filter fields.',
