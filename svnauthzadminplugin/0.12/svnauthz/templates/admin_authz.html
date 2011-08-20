@@ -15,6 +15,7 @@
   <body>
   <h2>Manage Subversion Access Rights</h2>
 
+<py:if test="not(read_only_display)">
 <py:if test="editgroup_name">
 <form id="addgroupmember" class="addnew"  method="post">
  <input type="hidden" name="editgroup" value="${editgroup_url}" />
@@ -30,6 +31,7 @@
      <option py:for="candidate in editgroup_candidates" value="$candidate">$candidate</option>
     </select>
    </label>
+   <input type="text" name="subject2" class="textwidget" />
   </div>
   <p class="help">Add a new subject to a Subversion group.</p>
   <div class="buttons">
@@ -38,7 +40,9 @@
  </fieldset>
 </form>
 </py:if>
+</py:if>
 
+<py:if test="not(read_only_display)">
 <py:if test="editpath_name">
 <form id="addpathmember" class="addnew" method="post">
  <input type="hidden" name="editpath" value="${editpath_url}" />
@@ -50,10 +54,11 @@
   <legend>Add Path Member to $editpath_name</legend>
   <div class="field">
    <label>Subject:
-   <select name="subject">
-        <option py:for="candidate in editpath_candidates" value="$candidate">$candidate</option>
-	    </select>
+    <select name="subject">
+     <option py:for="candidate in editpath_candidates" value="$candidate">$candidate</option>
+    </select>
    </label>
+   <input type="text" name="subject2" class="textwidget" />
   </div>
   <div class="field">
    <label>Read: <input type="checkbox" name="addpathmember_acl" value="R"/>
@@ -70,9 +75,9 @@
  </fieldset>
 </form>
 </py:if>
+</py:if>
 
-
-
+<py:if test="not(read_only_display)">
 <form id="addgroup" class="addnew" method="post"> 
  <fieldset>
   <py:if test="addgroup and addgroup.error">
@@ -89,7 +94,9 @@
   </div>
  </fieldset>
 </form>
+</py:if>
 
+<py:if test="not(read_only_display)">
 <form id="addpath" class="addnew" method="post">
  <fieldset>
   <py:if test="addpath_error">
@@ -111,6 +118,7 @@
   </div>
  </fieldset>
 </form>
+</py:if>
 
 <form method="post">
   <py:if test="delgroup_error">
@@ -118,11 +126,11 @@
   </py:if>
  <table class="listing" id="grouplist">
   <thead>
-   <tr><th class="sel">&nbsp;</th><th>Subversion Groups</th></tr>
+   <tr><th py:if="not(read_only_display)" class="sel">&nbsp;</th><th>Subversion Groups</th></tr>
   </thead><tbody>
   <py:for each="group in groups">
    <tr>
-    <td><input type="checkbox" name="selgroup" value="${group.url}" /></td>
+     <td py:if="not(read_only_display)"><input type="checkbox" name="selgroup" value="${group.url}" /></td>
     <td><a href="${group.href}">${group.name}</a>
 	<py:if test="editgroup_url == group.url"> 
 		  <py:if test="delgroupmember_error">
@@ -132,27 +140,31 @@
   			<input type="hidden" name="editgroup" value="${editgroup_url}" />
 		<table class="listing" id="editgrouplist">
   			<thead>
-   				<tr><th class="sel">&nbsp;</th><th>Group Members</th></tr>
+   				<tr><th py:if="not(read_only_display)" class="sel">&nbsp;</th><th>Group Members</th></tr>
   			</thead><tbody>			
   			<py:for each="groupmember in editgroup_members">
 			<tr>
-			<td><input type="checkbox" name="selgroupmember" value="$groupmember"/></td>
+			<td py:if="not(read_only_display)"><input type="checkbox" name="selgroupmember" value="$groupmember"/></td>
 			<td>$groupmember</td>
 			</tr>
 			</py:for>
 		</tbody></table>
+                <py:if test="not(read_only_display)">
 		<div class="buttons">
   			<input type="submit" name="removegroupmembers" value="Remove selected group members" />
  		</div>
+                </py:if>
 	</py:if>    
     </td>
    </tr>
   </py:for>
   </tbody>
  </table>
+<py:if test="not(read_only_display)">
  <div class="buttons">
   <input type="submit" name="removegroups" value="Remove selected groups" />
  </div>
+</py:if>
 </form>
 
 <form method="post">
@@ -161,10 +173,10 @@
   </py:if>
  <table class="listing" id="pathlist">
   <thead>
-   <tr><th class="sel">&nbsp;</th><th>Subversion Paths</th></tr>
+   <tr><th py:if="not(read_only_display)" class="sel">&nbsp;</th><th>Subversion Paths</th></tr>
   </thead><tbody><py:for each="path in paths">
    <tr>
-    <td><input type="checkbox" name="selpath" value="${path.url}" /></td>
+    <td py:if="not(read_only_display)"><input type="checkbox" name="selpath" value="${path.url}" /></td>
     <td><a href="${path.href}">${path.name}</a>
 	<py:if test="path and editpath_url == path.url">
 		  <py:if test="changepathmember_error">
@@ -174,38 +186,50 @@
   			<input type="hidden" name="editpath" value="${editpath_url}" />
 		<table class="listing" id="editpathlist">
   			<thead>
-   				<tr><th class="sel">Remove</th><th>Path Members</th><th>Read</th><th>Write</th></tr>
+   				<tr><th py:if="not(read_only_display)" class="sel">Remove</th><th>Path Members</th><th>Read</th><th>Write</th></tr>
   			</thead><tbody>			
   			<py:for each="pathmember in editpath_members">
 			<tr>
-			<td><input type="checkbox" name="selpathmember" value="${pathmember.subject}"/></td>
+			<td py:if="not(read_only_display)"><input type="checkbox" name="selpathmember" value="${pathmember.subject}"/></td>
 			<td>${pathmember.subject}</td>
-			<py:if test="pathmember.read == 'checked'">
-				<td><input type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_R" checked="checked" /></td>
-			</py:if>
-			<py:if test="pathmember.read != 'checked'">
-			      <td><input type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_R" /></td>
+                        <py:if test="read_only_display">
+                        <td py:choose="pathmember.read">
+                            <input py:when="'checked'" type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_R" checked="checked" disabled="disabled" />
+                            <input py:otherwise="" type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_R" disabled="disabled" />
+                        </td>
+                        <td py:choose="pathmember.write">
+                            <input py:when="'checked'" type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_W" checked="checked" disabled="disabled" />
+                            <input py:otherwise="" type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_W" disabled="disabled" />
+                        </td>
                         </py:if>
-		        <py:if test="pathmember.write == 'checked'">
-                                <td><input type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_W" checked="checked" /></td>
-                        </py:if>
-                        <py:if test="pathmember.write != 'checked'">
-                              <td><input type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_W" /></td>
+                        <py:if test="not(read_only_display)">
+                        <td py:choose="pathmember.read">
+                            <input py:when="'checked'" type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_R" checked="checked" />
+                            <input py:otherwise="" type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_R" />
+                        </td>
+                        <td py:choose="pathmember.write">
+                            <input py:when="'checked'" type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_W" checked="checked" />
+                            <input py:otherwise="" type="checkbox" name="selpathmember_acl" value="${pathmember.subject}_W" />
+                        </td>
                         </py:if>
 			</tr>
 			</py:for>
 		</tbody></table>
+                <py:if test="not(read_only_display)">
 		<div class="buttons">
   			<input type="submit" name="changepathmembers" value="Change path members" />
  		</div>
+                </py:if>
 	</py:if>    
     </td>
    </tr></py:for>
   </tbody>
  </table>
+<py:if test="not(read_only_display)">
  <div class="buttons">
   <input type="submit" name="removepaths" value="Remove selected paths" />
  </div>
+</py:if>
 </form>
 </body>
 </html>

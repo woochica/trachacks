@@ -3,12 +3,14 @@ from trac.core import *
 from trac.perm import PermissionSystem
 
 from trac.util import sorted
-from trac.config import Option
+from trac.config import BoolOption
 from trac.admin.api import IAdminPanelProvider
 
 from model import *
 from io import *
 from trac.web.chrome import ITemplateProvider
+
+from trac.versioncontrol import RepositoryManager
 
 from urllib import pathname2url, url2pathname
 
@@ -24,13 +26,25 @@ EDIT_PATH=2
 class SvnAuthzAdminPage(Component):
     implements(IAdminPanelProvider, ITemplateProvider)
 
+    show_all_repos = BoolOption(
+        'svnauthzadmin', 'show_all_repos', False,
+        """Enabling this option will allow the Trac project to view
+        the entire contents of the SVN trac|authz_file.""")
+    read_only_display = BoolOption(
+        'svnauthzadmin', 'read_only_display', False,
+        """Enabling this option will prevent the Trac project from
+        changing the contents of the SVN trac|authz_file.""")
+
     def __init__(self):
-        self.authz_file = self.env.config.get("trac", "authz_file")
-        self.authz_module = self.env.config.get("trac", "authz_module_name")
-        self.show_all_repos = self.env.config.getbool("svnauthzadmin", "show_all_repos")
-        if self.authz_module != None and self.authz_module.strip() == "":
-            self.authz_module = None
-    
+        self.authz_file = self.config.get("trac", "authz_file")
+
+        # Retrieve info for all repositories associated with this project
+        rm = RepositoryManager(self.env)
+        all_repos = rm.get_all_repositories()
+        self.project_repos = []
+        for (reponame, info) in all_repos.iteritems():
+            self.project_repos.append(reponame)
+        self.env.log.debug("SvnAuthzAdminPlugin: project_repos: '%s'" % self.project_repos)
 
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
@@ -42,7 +56,7 @@ class SvnAuthzAdminPage(Component):
     # IAdminPanelProvider
     def get_admin_panels(self, req):
         if req.perm.has_permission('TRAC_ADMIN'):
-            yield ('subversion', 'Subversion', 'svnauthz', 'Subversion Access')
+            yield ('versioncontrol', 'Version Control', 'svnauthz', 'Subversion Access')
 
     def render_admin_panel(self, req, cat, page, path_info):
         data = {}
@@ -80,36 +94,41 @@ class SvnAuthzAdminPage(Component):
 
         paths_disp = []
         for repository, path in [(p.get_repo(), p.get_path()) for p in self.authz.get_paths()]:
-            if repository != self.authz_module and not self.show_all_repos:
-                # We ignore the paths from other modules from the display 
+            if not self.show_all_repos and repository not in self.project_repos:
+                # We eliminate repos associated with other Trac projects
+                # unless show_all_repos is true
                 continue
             path_disp = self._get_disp_path_name(repository, path)
-            path_disp_url = pathname2url("%s:%s" % (repository, path))
+            path_disp_url = pathname2url(path_disp)
             if editpath and editpath == path_disp_url:
-                path_disp_href = req.href.admin('subversion', 'svnauthz')
+                path_disp_href = req.href.admin('versioncontrol', 'svnauthz')
             else:
-                path_disp_href = req.href.admin('subversion', 'svnauthz', 'editpath')
+                path_disp_href = req.href.admin('versioncontrol', 'svnauthz', 'editpath')
                 path_disp_href += "/" + path_disp_url                              
             paths_disp.append({ 'name' : path_disp,
                                 'url' : path_disp_url,
                                 'href': path_disp_href
                                 })
-        data['paths'] = sorted(paths_disp)
+        data['paths'] = sorted(paths_disp, key=lambda path : path['href'].lower())
+        self.env.log.debug("SvnAuthzAdminPlugin: paths: '%s'" % data['paths'])
         
         groups_disp = []
         for group_disp in sorted([g.get_name() for g in self.authz.get_groups()]):
             group_disp_url = pathname2url(group_disp)
             if editgroup and editgroup == group_disp_url:
-                group_disp_href = req.href.admin('subversion', 'svnauthz')
+                group_disp_href = req.href.admin('versioncontrol', 'svnauthz')
             else:
-                group_disp_href = req.href.admin('subversion', 'svnauthz', 'editgroup',
+                group_disp_href = req.href.admin('versioncontrol', 'svnauthz', 'editgroup',
                                               group_disp_url)
                 
             groups_disp.append({ 'name': group_disp,
                                  'url': group_disp_url,
                                  'href': group_disp_href
                                 })
-        data['groups'] = groups_disp
+        data['groups'] = sorted(groups_disp, key=lambda path : path['href'].lower())
+        self.env.log.debug("SvnAuthzAdminPlugin: groups: '%s'" % data['groups'])
+
+        data['read_only_display'] = self.read_only_display
 
         self._persist_model(self.authz)
 
@@ -160,7 +179,7 @@ class SvnAuthzAdminPage(Component):
  	    repository = repository.strip() 
  	    path = path.strip() 
  	else: 
- 	    repository = self.authz_module 
+ 	    repository = self.project_repos[0]
  	    path = tmppath.strip() 
         try:
             self.authz.add_path(Path(path, [], repository))
@@ -171,6 +190,10 @@ class SvnAuthzAdminPage(Component):
     def _add_group_member(self, req):
         editgroup = url2pathname(req.args.get('editgroup'))
         subject = req.args.get('subject')
+        if subject == '':
+            subject = req.args.get('subject2')
+        if subject == '':
+            return {'addgroupmember_error': "No member specified" }
         group = self.authz.find_group(editgroup)
         if (group == None):
             return {'addgroupmember_error': "Group %s does not exist" % editgroup }
@@ -185,6 +208,10 @@ class SvnAuthzAdminPage(Component):
     def _add_path_member(self, req):
         editpath = url2pathname(req.args.get('editpath'))
         subject = req.args.get('subject')
+        if subject == '':
+            subject = req.args.get('subject2')
+        if subject == '':
+            return {'addpathmember_error': "No member specified" }
         acls = req.args.get('addpathmember_acl')
         paths = [(p.get_repo(), p.get_path()) for p in self.authz.get_paths()]
         validpath = self._get_valid_path(paths, editpath)
@@ -296,7 +323,7 @@ class SvnAuthzAdminPage(Component):
         if group != None:
             data['editgroup_name'] = editgroup
             data['editgroup_url'] = pathname2url(editgroup)
-            data['editgroup_members'] = [m.__str__() for m in group]
+            data['editgroup_members'] = sorted([m.__str__() for m in group], key=lambda member : member.lower())
             
             # Populate member candidates
             not_in_list = [m.__str__() for m in group]
@@ -305,7 +332,7 @@ class SvnAuthzAdminPage(Component):
             if candidates != []:
                 data['editgroup_candidates'] = candidates
             return data['editgroup_url'], data
-	self.env.log.debug("SvnAdminAuthz: Group %s not found." % editgroup)
+	self.env.log.debug("SvnAuthzAdminPlugin: Group %s not found." % editgroup)
         return None, {} 
 
     def _get_all_users(self):
@@ -324,7 +351,7 @@ class SvnAuthzAdminPage(Component):
       return users	
 
     def _get_candidate_subjects(self, not_in_list = []):
-        candidates = []
+        candidates = ['']
         users = [user for user in self._get_all_users() 
                  if user not in not_in_list]
         candidates += sorted(users)
@@ -345,7 +372,7 @@ class SvnAuthzAdminPage(Component):
         paths = [(p.get_repo(), p.get_path()) for p in self.authz.get_paths()]
         validpath = self._get_valid_path(paths, editpath)
         if validpath:
-            data['editpath_name'] = self._get_disp_path_name(validpath[0], validpath[1])
+            data['editpath_name'] = editpath
             data['editpath_url'] = pathname2url(editpath)
             pathmembers = self.authz.find_path(validpath[1], validpath[0])
             editpath_members = []
@@ -359,7 +386,7 @@ class SvnAuthzAdminPage(Component):
                 editpath_members.append({'subject' : member.get_member().__str__(),
                                          'read' : read,
                                          'write' : write})
-            data['editpath_members'] = editpath_members 
+            data['editpath_members'] = sorted(editpath_members, key=lambda member : member['subject'].lower())
             
             # Populate member candidates
             not_in_list = [m.get_member().__str__() for m in pathmembers]
@@ -371,18 +398,15 @@ class SvnAuthzAdminPage(Component):
 
     def _get_valid_path(self, pathlist, path):
         for repository, pathname in pathlist:
-            if "%s:%s" % (repository, pathname) == path:
+            if self._get_disp_path_name(repository, pathname) == path:
                 return (repository, pathname)
         return (None, path)
     
     def _get_disp_path_name(self, repository, path):
-        if self.show_all_repos: 
- 	    if repository == None: 
- 	        return "*:%s" % path 
- 	    else: 
- 	        return "%s:%s" % (repository, path) 
+ 	if repository == None: 
+ 	    return "*:%s" % path 
  	else: 
- 	    return path 
+ 	    return "%s:%s" % (repository, path) 
 
     def _get_model(self):
        r = AuthzFileReader()
