@@ -1,0 +1,28 @@
+      
+# This file is identical to testdata, except for comments  
+
+[groups]
+# Comment 1 
+alfa = user1,@beta,user2,user4
+		# Comment 2
+beta = user4,@gamma
+		# Comment 3
+
+gamma = user5
+delta =
+
+# Comment 4
+
+[/]
+# Comment 5
+@alfa = r
+@beta = rw
+@gamma = rw
+user2 = 
+
+[izee:/bigyo]
+@gamma = r
+			# Comment 6
+user2 = rw
+
+# Comment 7
