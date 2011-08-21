@@ -304,6 +304,34 @@ class RpcTicketTestCase(TracRpcTestCase):
             self.assertTrue("no such column" in str(e))
         self.admin.ticket.delete(tid)
 
+    def test_create_ticket_9096(self):
+        # See http://trac-hacks.org/ticket/9096
+        import urllib2, base64
+        body = """<?xml version="1.0"?>
+                    <methodCall>
+                        <methodName>ticket.create</methodName>
+                        <params>
+                            <param><string>test summary</string></param>
+                            <param><string>test desc</string></param>
+                        </params>
+                    </methodCall>"""
+        request = urllib2.Request(rpc_testenv.url + '/login/rpc', data=body)
+        request.add_header('Content-Type', 'application/xml')
+        request.add_header('Content-Length', str(len(body)))
+        request.add_header('Authorization', 'Basic %s' \
+                                 % base64.encodestring('admin:admin')[:-1])
+        self.assertEquals('POST', request.get_method())
+        response = urllib2.urlopen(request)
+        self.assertEquals(200, response.code)
+        self.assertEquals("<?xml version='1.0'?>\n"
+                          "<methodResponse>\n"
+                          "<params>\n"
+                          "<param>\n"
+                          "<value><int>1</int></value>\n"
+                          "</param>\n"
+                          "</params>\n"
+                          "</methodResponse>\n", response.read())
+        self.admin.ticket.delete(1)
 
 class RpcTicketVersionTestCase(TracRpcTestCase):
     
