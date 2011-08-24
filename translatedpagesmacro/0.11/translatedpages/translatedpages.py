@@ -69,7 +69,7 @@ The Macro accepts arguments as well:
     outdated_tx = "<p style=\"background-color:rgb(253,255,221);padding: 10pt; border-color:rgb(128,128,128);border-style: solid; border-width: 1px;\">%s</p>\n"
 
     macro_re = re.compile(u"\[\[TranslatedPages(?:\((.+)\))?\]\]")
-    revision_re = re.compile(u"\[\[TranslatedPages(?:\(.*?revision=(\d+).*?\))?\]\]")
+    revision_re = re.compile(u"\[\[TranslatedPages(?:\(.*?revision=(-?\d+).*?\))?\]\]")
     outdated_re = re.compile(u"\[\[TranslatedPages(?:\(.*?outdated=(.*)\))?\]\]")
 
     def __init__(self):
@@ -164,16 +164,21 @@ The Macro accepts arguments as well:
             pagetext = WikiPage(self.env, page).text
             regres = self.revision_re.search(pagetext)
             out = self.outdated_re.search(pagetext)
+            outcode = ""
+            outver = ""
             if out != None and out.group(1) != None:
-                res += " * [wiki:/%s] ({{{%s}}})\n" % (page, out.group(1))
-                found += 1
-            elif regres != None and regres.group(1) != None:
+                outcode = "{{{%s}}}" % out.group(1).replace("\,",",")
+            if regres != None and regres.group(1) != None:
                 prefix, base_page_name, lang_code = self._get_page_info(page)
                 if lang_code != self.base_lang and (lang == None or lang == lang_code):
                     newver = WikiPage(self.env, base_page_name).version
-                    if(newver != int(regres.group(1))):
-                        res += " * [wiki:/%s]\n" % page
-                        found += 1
+                    oldver = abs(int(regres.group(1)))
+                    if(newver != oldver):
+                        outver = "[wiki:/%s?action=diff&old_version=%s @%s-@%s]" \
+                        % (base_page_name, oldver, oldver, newver)
+            if outcode != "" or outver != "":
+                res += "|| [wiki:/%s] || %s || %s ||\n" % (page, outver, outcode)
+                found += 1
 
         if found == 0:
             res += u'none\n'
