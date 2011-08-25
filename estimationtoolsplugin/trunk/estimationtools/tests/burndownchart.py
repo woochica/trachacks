@@ -204,6 +204,30 @@ class BurndownChartTestCase(unittest.TestCase):
                         "milestone=One & Two, startdate=%s, enddate=%s" % (start, end))
         self.failUnless("&amp;chtt=One+%26+Two&amp;" in str(result))
 
+    def test_url_encode_parenthesis(self):
+        # http://trac-hacks.org/ticket/8299
+        start = (datetime.now(utc).date() - timedelta(days=1)).strftime('%Y-%m-%d')
+        end = (datetime.now(utc).date() + timedelta(days=1)).strftime('%Y-%m-%d')
+        chart = BurndownChart(self.env)
+        def verify_milestone(milestone):
+            t = Ticket(self.env, self._insert_ticket('12'))
+            t['milestone'] = milestone
+            t.save_changes('', '')
+            result = chart.expand_macro(self.formatter, 'BurndownChart',
+                        "milestone=%s, startdate=%s, enddate=%s" \
+                        % (milestone, start, end))
+            args = self._extract_query(result)
+            # data
+            self.assertEquals((milestone, args['chd']),
+                              (milestone, [u't:0.00,50.00,100.00|0.00,100.00,-1']))
+            # scaling / axis
+            self.assertEquals((milestone, args['chxr']), (milestone, [u'2,0,12']))
+            # title
+            self.assertEquals(args['chtt'], [milestone])
+        verify_milestone('Test')
+        verify_milestone('T(es)t')
+        verify_milestone('(Test)')
+
     def test_expected_y_axis(self):
         start = datetime.now(utc).date()
         end = (start + timedelta(days=5)).strftime('%Y-%m-%d')
