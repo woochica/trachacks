@@ -85,6 +85,7 @@ def sign(action='r'):
     for path in walktree(top, filter):
         f = _open(path, 'rb')
         lines = f.readlines()
+        path = path[len(top) + 1:]
 
         hashes[path] = {}
         m = md5()

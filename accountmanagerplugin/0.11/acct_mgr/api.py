@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005 Matthew Good <trac@matt-good.net>
+# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
 #
 # "THE BEER-WARE LICENSE" (Revision 42):
 # <trac@matt-good.net> wrote this file.  As long as you retain this notice you
@@ -33,7 +34,7 @@ except ImportError:
     def dgettext(domain, string, **kwargs):
         return safefmt(string, kwargs)
     def ngettext(singular, plural, num, **kwargs):
-        string = singular if num == 1 else plural
+        string = num == 1 and singular or plural
         kwargs.setdefault('num', num)
         return safefmt(string, kwargs)
     def safefmt(string, kwargs):
@@ -43,6 +44,8 @@ except ImportError:
             except KeyError:
                 pass
         return string
+
+from acct_mgr.hashlib_compat  import md5
 
 
 class IPasswordStore(Interface):
@@ -304,41 +307,7 @@ class AccountManager(Component):
             if valid:
                 if valid == True and (self.refresh_passwd == True) and \
                         self.get_supporting_store('set_password'):
-                    db = self.env.get_db_cnx()
-                    cursor = db.cursor()
-                    sql = """
-                        SELECT  sid
-                          FROM  session_attribute
-                        WHERE   sid=%s
-                            AND name='password_refreshed'
-                            AND value=1
-                        """
-                    cursor.execute(sql, (user,))
-                    if cursor.fetchone() is None:
-                        self.log.debug('refresh password for user: %s' % user)
-                        store = self.find_user_store(user)
-                        pwstore = self.get_supporting_store('set_password')
-                        if pwstore.set_password(user, password) == True:
-                            # Account re-created according to current settings
-                            if store and not \
-                                    (store.delete_user(user) == True):
-                                self.log.warn("""
-                                    failed to remove old entry for user '%s'
-                                    """ % user)
-                        cursor.execute("""
-                            UPDATE  session_attribute
-                                SET value='1'
-                            WHERE   sid=%s
-                                AND name='password_refreshed'
-                            """, (user,))
-                        cursor.execute(sql, (user,))
-                        if cursor.fetchone() is None:
-                            cursor.execute("""
-                                INSERT INTO session_attribute
-                                        (sid,authenticated,name,value)
-                                VALUES  (%s,1,'password_refreshed',1)
-                                """, (user,))
-                        db.commit()
+                    self._maybe_update_hash(user, password)
                 break
         return valid
 
@@ -350,13 +319,14 @@ class AccountManager(Component):
         # set for the user.
         for table in ['session_attribute', 'session', 'permission']:
             key = (table == 'permission') and 'username' or 'sid'
-            # Preseed with table name, that is not allowed as SQL argument.
+            # Preseed, since variable table and column names are allowed
+            # as SQL arguments (security measure agains SQL injections).
             sql = """
                 DELETE
                 FROM   %s
-                WHERE  %%s=%%s
-                """ % table
-            cursor.execute(sql, (key, user))
+                WHERE  %s=%%s
+                """ % (table, key)
+            cursor.execute(sql, (user,))
         db.commit()
         db.close()
         # Delete from password store 
@@ -427,8 +397,6 @@ class AccountManager(Component):
         user_stores = []
         for store in self._password_store:
             userlist = store.get_users()
-            if ignore_auth_case:
-                userlist = [u.lower() for u in userlist]
             user_stores.append((store, userlist))
             continue
         user = self.handle_username_casing(user)
@@ -446,6 +414,41 @@ class AccountManager(Component):
         """
         ignore_auth_case = self.config.getbool('trac', 'ignore_auth_case')
         return ignore_auth_case and user.lower() or user
+
+    def _maybe_update_hash(self, user, password):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        sql = """
+            SELECT  sid
+              FROM  session_attribute
+            WHERE   sid=%s
+                AND name='password_refreshed'
+                AND value=1
+            """
+        cursor.execute(sql, (user,))
+        if cursor.fetchone() is None:
+            self.log.debug('refresh password for user: %s' % user)
+            store = self.find_user_store(user)
+            pwstore = self.get_supporting_store('set_password')
+            if pwstore.set_password(user, password) == True:
+                # Account re-created according to current settings
+                if store and not (store.delete_user(user) == True):
+                    self.log.warn(
+                        "failed to remove old entry for user '%s'" % user)
+            cursor.execute("""
+                UPDATE  session_attribute
+                    SET value='1'
+                WHERE   sid=%s
+                    AND name='password_refreshed'
+                """, (user,))
+            cursor.execute(sql, (user,))
+            if cursor.fetchone() is None:
+                cursor.execute("""
+                    INSERT INTO session_attribute
+                            (sid,authenticated,name,value)
+                    VALUES  (%s,1,'password_refreshed',1)
+                    """, (user,))
+            db.commit()
 
     def _notify(self, func, *args):
         func = 'user_' + func
@@ -469,6 +472,91 @@ class AccountManager(Component):
     def user_email_verification_requested(self, user, token):
         self.log.info('Email verification requested user: %s' % user)
 
+
+def get_user_attribute(env, username=None, authenticated=1, attribute=None,
+                       value=None, db=None):
+    """Return user attributes."""
+    ALL_COLS = ('sid', 'authenticated', 'name', 'value')
+    columns = []
+    constraints = []
+    if username is not None:
+        columns.append('sid')
+        constraints.append(username)
+    if authenticated is not None:
+        columns.append('authenticated')
+        constraints.append(authenticated)
+    if attribute is not None:
+        columns.append('name')
+        constraints.append(attribute)
+    if value is not None:
+        columns.append('value')
+        constraints.append(value)
+    sel_columns = [col for col in ALL_COLS if col not in columns]
+    if len(sel_columns) == 0:
+        # No variable left, so only COUNTing is as a sensible task here. 
+        sel_stmt = 'COUNT(*)'
+    else:
+        if 'sid' not in sel_columns:
+            sel_columns.append('sid')
+        sel_stmt = ','.join(sel_columns)
+    if len(columns) > 0:
+        where_stmt = ''.join(['WHERE ', '=%s AND '.join(columns), '=%s'])
+    else:
+        where_stmt = ''
+    sql = """
+        SELECT  %s
+          FROM  session_attribute
+        %s
+        """ % (sel_stmt, where_stmt)
+    sql_args = tuple(constraints)
+
+    db = _get_db(env, db)
+    cursor = db.cursor()
+    cursor.execute(sql, sql_args)
+    rows = cursor.fetchall()
+    if rows is None:
+        return {}
+    res = {}
+    for row in rows:
+        if sel_stmt == 'COUNT(*)':
+            return [row[0]]
+        res_row = {}
+        res_row.update(zip(sel_columns, row))
+        # Merge with constraints, that are constants for this SQL query.
+        res_row.update(zip(columns, constraints))
+        account = res_row.pop('sid')
+        authenticated = res_row.pop('authenticated')
+        # Create single unique attribute ID.
+        m = md5()
+        m.update(''.join([account, str(authenticated),
+                           res_row.get('name')]).encode('utf-8'))
+        row_id = m.hexdigest()
+        if account in res:
+            if authenticated in res[account]:
+                res[account][authenticated].update({
+                    res_row['name']: res_row['value']
+                })
+                res[account][authenticated]['id'].update({
+                    res_row['name']: row_id
+                })
+            else:
+                res[account][authenticated] = {
+                    res_row['name']: res_row['value'],
+                    'id': {res_row['name']: row_id}
+                }
+                # Create account ID for additional authentication state.
+                m = md5()
+                m.update(''.join([account,
+                                  str(authenticated)]).encode('utf-8'))
+                res[account]['id'][authenticated] = m.hexdigest()
+        else:
+            # Create account ID for authentication state.
+            m = md5()
+            m.update(''.join([account, str(authenticated)]).encode('utf-8'))
+            res[account] = {authenticated: {res_row['name']: res_row['value'],
+                                            'id': {res_row['name']: row_id}},
+                            'id': {authenticated: m.hexdigest()}}
+    return res
 
 def set_user_attribute(env, username, attribute, value, db=None):
     """Set or update a Trac user attribute within an atomic db transaction."""
@@ -495,21 +583,34 @@ def set_user_attribute(env, username, attribute, value, db=None):
             """, (username, attribute, value))
     db.commit()
 
-def del_user_attribute(env, username, attribute, db=None):
-    """Delete a Trac user attribute for one user or for all users."""
-    db = _get_db(env, db)
-    cursor = db.cursor()
+def del_user_attribute(env, username=None, authenticated=1, attribute=None,
+                       db=None):
+    """Delete one or more Trac user attributes for one or more users."""
+    columns = []
+    constraints = []
+    if username is not None:
+        columns.append('sid')
+        constraints.append(username)
+    if authenticated is not None:
+        columns.append('authenticated')
+        constraints.append(authenticated)
+    if attribute is not None:
+        columns.append('name')
+        constraints.append(attribute)
+    if len(columns) > 0:
+        where_stmt = ''.join(['WHERE ', '=%s AND '.join(columns), '=%s'])
+    else:
+        where_stmt = ''
     sql = """
         DELETE
         FROM    session_attribute
-        WHERE   name=%s
-        """
-    if username:
-        cursor.execute(sql + """
-            AND sid=%s
-        """, (attribute, username))
-    else:
-        cursor.execute(sql, (attribute,))
+        %s
+        """ % where_stmt
+    sql_args = tuple(constraints)
+
+    db = _get_db(env, db)
+    cursor = db.cursor()
+    cursor.execute(sql, sql_args)
     db.commit()
 
 def _get_db(env, db=None):

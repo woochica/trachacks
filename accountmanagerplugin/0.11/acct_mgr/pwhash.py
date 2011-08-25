@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 #
 # Copyright (C) 2007 Matthew Good <trac@matt-good.net>
+# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
 #
 # "THE BEER-WARE LICENSE" (Revision 42):
 # <trac@matt-good.net> wrote this file.  As long as you retain this notice you
@@ -15,7 +16,7 @@ from os import urandom
 from trac.core import *
 from trac.config import Option
 
-from acct_mgr.api import AccountManager, _
+from acct_mgr.api import AccountManager, _, N_
 from acct_mgr.hashlib_compat import md5, sha1
 from acct_mgr.md5crypt import md5crypt
 
@@ -32,7 +33,7 @@ class HtPasswdHashMethod(Component):
     implements(IPasswordHashMethod)
 
     hash_type = Option('account-manager', 'htpasswd_hash_type', 'crypt',
-        doc = "Default hash type of new/updated passwords")
+        doc = N_("Default hash type of new/updated passwords"))
 
     def generate_hash(self, user, password):
         password = password.encode('utf-8')
@@ -63,7 +64,7 @@ def _encode(*args):
 
 # check for the availability of the "crypt" module for checking passwords on
 # Unix-like platforms
-# MD5 is still used when adding/updating passwords
+# MD5 is still used when adding/updating passwords with htdigest
 try:
     from crypt import crypt
 except ImportError:
@@ -112,3 +113,4 @@ def mkhtpasswd(password, hash_type=''):
 def htdigest(user, realm, password):
     p = ':'.join([user, realm, password])
     return md5(p).hexdigest()
+

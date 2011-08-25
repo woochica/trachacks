@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005 Matthew Good <trac@matt-good.net>
+# Copyright (C) 2010,2011 Steffen Hoffmann <hoff.st@web.de>
 #
 # "THE BEER-WARE LICENSE" (Revision 42):
 # <trac@matt-good.net> wrote this file.  As long as you retain this notice you
@@ -24,7 +25,8 @@ from trac.web.chrome    import ITemplateProvider, add_notice, \
 from trac.admin         import IAdminPanelProvider
 
 from acct_mgr.api       import AccountManager, _, dgettext, gettext, tag_, \
-                               del_user_attribute, set_user_attribute
+                               del_user_attribute, get_user_attribute, \
+                               set_user_attribute
 from acct_mgr.guard     import AccountGuard
 from acct_mgr.web_ui    import _create_user, AccountModule, \
                                EmailVerificationModule
@@ -109,7 +111,7 @@ class StoreOrder(dict):
 
 class AccountManagerAdminPages(Component):
 
-    implements(IPermissionRequestor, IAdminPanelProvider, ITemplateProvider)
+    implements(IAdminPanelProvider, IPermissionRequestor, ITemplateProvider)
 
     def __init__(self):
         self.acctmgr = AccountManager(self.env)
@@ -127,22 +129,19 @@ class AccountManagerAdminPages(Component):
             yield ('accounts', _("Accounts"), 'config', _("Configuration"))
         if req.perm.has_permission('ACCTMGR_USER_ADMIN'):
             yield ('accounts', _("Accounts"), 'users', _("Users"))
-            yield ('accounts', _("Accounts"), 'details', _("Account details"))
 
     def render_admin_panel(self, req, cat, page, path_info):
         if page == 'config':
             return self._do_config(req)
         elif page == 'users':
             return self._do_users(req)
-        elif page == 'details':
-            return self._do_acct_details(req)
 
     def _do_config(self, req):
         stores = StoreOrder(stores=self.acctmgr.stores,
                             list=self.acctmgr.password_store)
         if req.method == 'POST':
             if req.args.get('restart'):
-                del_user_attribute(self.env, None, 'password_refreshed')
+                del_user_attribute(self.env, attribute='password_refreshed')
                 req.redirect(req.href.admin('accounts', 'config',
                                             done='restart'))
             _setorder(req, stores)
@@ -230,6 +229,9 @@ class AccountManagerAdminPages(Component):
                           'email' : None,
                         }
         }
+        if req.method == 'GET':
+            if 'user' in req.args.iterkeys():
+                return self._do_acct_details(req)
 
         if req.method == 'POST':
             if req.args.get('add'):
@@ -309,11 +311,11 @@ class AccountManagerAdminPages(Component):
         if listing_enabled:
             accounts = {}
             for username in acctmgr.get_users():
-                accounts[username] = {'username': username}
+                url = req.href.admin('accounts', 'users', user=username)
+                accounts[username] = {'username': username,
+                                      'review_url': url}
                 if guard.user_locked(username):
                     accounts[username]['locked'] = True
-                    url = req.href.admin('accounts', 'details', user=username)
-                    accounts[username]['review_url'] = url
                     t_lock = guard.lock_time(username)
                     if t_lock > 0:
                         t_release = guard.pretty_release_time(req, username)
@@ -321,18 +323,22 @@ class AccountManagerAdminPages(Component):
                             "Locked until %(t_release)s",
                             t_release=t_release)
 
-            for username, name, email in env.get_known_users():
-                account = accounts.get(username)
-                if account:
-                    account['name'] = name
-                    account['email'] = email
+            for acct, status in get_user_attribute(env, username=None,
+                                       authenticated=None).iteritems():
+                account = accounts.get(acct)
+                if account is not None and 1 in status:
+                    # Only use attributes related to authenticated
+                    # accounts.
+                    account['name'] = status[1].get('name')
+                    account['email'] = status[1].get('email')
 
-            cursor = acctmgr.last_seen()
-            for username, last_visit in cursor:
-                account = accounts.get(username)
-                if account and last_visit:
-                    account['last_visit'] = format_datetime(last_visit, 
-                                                            tzinfo=req.tz)
+            ts_seen = acctmgr.last_seen()
+            if ts_seen is not None:
+                for username, last_visit in ts_seen:
+                    account = accounts.get(username)
+                    if account and last_visit:
+                        account['last_visit'] = format_datetime(last_visit,
+                                                                tzinfo=req.tz)
             data['accounts'] = sorted(accounts.itervalues(),
                                       key=lambda acct: acct['username'])
         add_stylesheet(req, 'acct_mgr/acct_mgr.css')
@@ -351,17 +357,17 @@ class AccountManagerAdminPages(Component):
         acctmgr = self.acctmgr
         guard = self.guard
 
-        if req.method == 'POST':
-            if req.args.get('update'):
-                req.redirect(req.href.admin('accounts', 'details',
-                                            user=username))
-            if req.args.get('delete') or req.args.get('release'):
-                # delete failed login attempts, evaluating attempts count
-                if guard.failed_count(username, reset=True) > 0:
-                    add_notice(req, Markup(tag.span(tag(_(
-                        "Failed login attempts for user %(user)s deleted",
-                        user=Markup(tag.b(username))
-                        )))))
+        if req.args.get('update'):
+            req.redirect(req.href.admin('accounts', 'users',
+                                        user=username))
+        elif req.args.get('delete') or req.args.get('release'):
+            # delete failed login attempts, evaluating attempts count
+            if guard.failed_count(username, reset=True) > 0:
+                add_notice(req, Markup(tag.span(Markup(_(
+                    "Failed login attempts for user %(user)s deleted",
+                    user=tag.b(username)
+                    )))))
+        elif req.args.get('list'):
             req.redirect(req.href.admin('accounts', 'users'))
 
         data = {'_dgettext': dgettext,
@@ -382,11 +388,9 @@ class AccountManagerAdminPages(Component):
                 if email:
                     data['email'] = email
                 break
-        ts_seen = None
-        for row in acctmgr.last_seen(username):
-            if row[0] == username and row[1]:
-                data['last_visit'] = format_datetime(row[1], tzinfo=req.tz)
-                break
+        ts_seen = acctmgr.last_seen(username)
+        if ts_seen is not None:
+            data['last_visit'] = format_datetime(ts_seen[0][1], tzinfo=req.tz)
 
         attempts = []
         attempts_count = guard.failed_count(username, reset = None)
@@ -412,7 +416,7 @@ class AccountManagerAdminPages(Component):
                 str(data['email_verified']))
 
         add_stylesheet(req, 'acct_mgr/acct_mgr.css')
-        data['url'] = req.href.admin('accounts', 'details')
+        data['url'] = req.href.admin('accounts', 'users', user=username)
         return 'account_details.html', data
 
     # ITemplateProvider methods

@@ -5,3 +5,4 @@ except ImportError:
     md5 = md5.new
     import sha
     sha1 = sha.new
+

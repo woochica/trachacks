@@ -147,27 +147,28 @@ def _create_user(req, env, check_permissions=True):
 
     acctmgr.set_password(username, password)
 
+    # INSERT new sid, needed as foreign key in some db schemata later on,
+    # at least for PostgreSQL.
     db = env.get_db_cnx()
     cursor = db.cursor()
     cursor.execute("""
         SELECT  COUNT(*)
         FROM    session
         WHERE   sid=%s
-            AND authenticated=1
         """, (username,))
     exists = cursor.fetchone()
     if not exists:
         cursor.execute("""
             INSERT INTO session
                     (sid,authenticated,last_visit)
-            VALUES  (%s,1,0)
+            VALUES  (%s,0,0)
             """, (username,))
 
     for attribute in ('name', 'email'):
         value = req.args.get(attribute)
         if not value:
             continue
-        set_user_attribute(env, username, attribute, value, db)
+        set_user_attribute(env, username, attribute, value)
 
 
 class ResetPwStore(SessionStore):
@@ -448,8 +449,8 @@ class RegistrationModule(Component):
                             },
                 '_dgettext': dgettext,
                }
-        data['verify_account_enabled'] = is_enabled(self.env,
-                                                    EmailVerificationModule)
+        data['verify_account_enabled'] = is_enabled(
+            self.env, EmailVerificationModule) and self.acctmgr.verify_email
         if req.method == 'POST' and action == 'create':
             try:
                 _create_user(req, self.env)
@@ -457,7 +458,7 @@ class RegistrationModule(Component):
                 data['registration_error'] = e.message
                 data['acctmgr'] = getattr(e, 'acctmgr', '')
             else:
-                chrome.add_notice(req, Markup(tag.span(tag(_(
+                chrome.add_notice(req, Markup(tag.span(Markup(_(
                      """Registration has been finished successfully.
                      You may login as user %(user)s now.""",
                      user=tag.b(req.args.get('username')))))))
@@ -646,36 +647,28 @@ class LoginModule(auth.LoginModule):
             # TODO Change session id (cookie.value) now and then as it
             #   otherwise never would change at all (i.e. stay the same
             #   indefinitely and therefore is vulnerable to be hacked).
-            req.outcookie['trac_auth'] = cookie.value
-
-            # check for properties to be set in auth cookies,
-            # defined since Trac 0.12
-            try:
-                cookie_path = self.auth_cookie_path or req.base_path or '/'
-            except AttributeError:
-                # Fallback for Trac 0.11 compatibility
-                cookie_path = req.base_path or '/'
-            req.outcookie['trac_auth'] = cookie.value
-            req.outcookie['trac_auth']['path'] = cookie_path
-
+            cookie_path = self._get_cookie_path(req)
             t = 86400 * 30 # AcctMgr default - Trac core defaults to 0 instead
             cookie_lifetime = self.env.config.getint(
                                          'trac', 'auth_cookie_lifetime', t)
+            req.outcookie['trac_auth'] = cookie.value
+            req.outcookie['trac_auth']['path'] = cookie_path
             if cookie_lifetime > 0:
                 req.outcookie['trac_auth']['expires'] = cookie_lifetime
-            try:
-                if self.env.secure_cookies:
-                    req.outcookie['trac_auth']['secure'] = True
-            except AttributeError:
-                # Report details about Trac compatibility for the feature.
-                self.env.log.warn(
-                    """Restricting cookies to HTTPS connections is requested,
-                    but is supported only by Trac 0.11.2 or later version.
-                    """)
             req.outcookie['trac_auth_session'] = 1
             req.outcookie['trac_auth_session']['path'] = cookie_path
             if cookie_lifetime > 0:
                 req.outcookie['trac_auth_session']['expires'] = cookie_lifetime
+            try:
+                if self.env.secure_cookies:
+                    req.outcookie['trac_auth']['secure'] = True
+                    req.outcookie['trac_auth_session']['secure'] = True
+            except AttributeError:
+                # Report details about Trac compatibility for the feature.
+                self.env.log.debug(
+                    """Restricting cookies to HTTPS connections is requested,
+                    but is supported only by Trac 0.11.2 or later version.
+                    """)
         return name
 
     # overrides
@@ -694,13 +687,8 @@ class LoginModule(auth.LoginModule):
             self._redirect_back(req)
         res = auth.LoginModule._do_login(self, req)
         if req.args.get('rememberme', '0') == '1':
-            # check for properties to be set in auth cookies,
-            # defined since Trac 0.12
-            try:
-                cookie_path = self.auth_cookie_path or req.base_path or '/'
-            except AttributeError:
-                # Fallback for Trac 0.11 compatibility
-                cookie_path = req.base_path or '/'
+            # Check for properties to be set in auth cookie.
+            cookie_path = self._get_cookie_path(req)
             t = 86400 * 30 # AcctMgr default - Trac core defaults to 0 instead
             cookie_lifetime = self.env.config.getint(
                                          'trac', 'auth_cookie_lifetime', t)
@@ -716,21 +704,76 @@ class LoginModule(auth.LoginModule):
             req.outcookie['trac_auth_session']['path'] = cookie_path
             if cookie_lifetime > 0:
                 req.outcookie['trac_auth_session']['expires'] = cookie_lifetime
+            try:
+                if self.env.secure_cookies:
+                    req.outcookie['trac_auth_session']['secure'] = True
+            except AttributeError:
+                # Report details about Trac compatibility for the feature.
+                self.env.log.debug(
+                    """Restricting cookies to HTTPS connections is requested,
+                    but is supported only by Trac 0.11.2 or later version.
+                    """)
+        else:
+            # In Trac 0.12 the built-in authentication module may have already
+            # set cookie's expires attribute, so because the user did not
+            # check 'remember me' we need to delete it here to ensure that the
+            # cookie will still expire at the end of the session.
+            try:
+                del req.outcookie['trac_auth']['expires']
+            except KeyError:
+                pass
+            # If there is a left-over session cookie from a previous
+            # authentication session, expire it now.
+            if 'trac_auth_session' in req.incookie:
+                self._expire_session_cookie(req)
         return res
 
-    # overrides
-    def _do_logout(self, req):
-        auth.LoginModule._do_logout(self, req)
-        
-        # Expire the persistent session cookie
+    def _get_cookie_path(self, req):
+        """Check request object for "path" cookie property.
+
+        There is even a configuration option (since Trac 0.12).
+        """
         try:
             cookie_path = self.auth_cookie_path or req.base_path or '/'
         except AttributeError:
             # Fallback for Trac 0.11 compatibility
             cookie_path = req.base_path or '/'
+        return cookie_path
+
+    # overrides
+    def _expire_cookie(self, req):
+        """Instruct the user agent to drop the auth_session cookie by setting
+        the "expires" property to a date in the past.
+
+        Basically, whenever "trac_auth" cookie gets expired, expire
+        "trac_auth_session" too.
+        """
+        # First of all expire trac_auth_session cookie, if it exists.
+        if 'trac_auth_session' in req.incookie:
+            self._expire_session_cookie(req)
+        # And then let auth.LoginModule expire all other cookies.
+        auth.LoginModule._expire_cookie(self, req)
+
+    # Keep this code in a separate methode to be able to expire the session
+    # cookie trac_auth_session independently of the trac_auth cookie.
+    def _expire_session_cookie(self, req):
+        """Instruct the user agent to drop the session cookie.
+
+        This is achieved by setting "expires" property to a date in the past.
+        """
+        cookie_path = self._get_cookie_path(req)
         req.outcookie['trac_auth_session'] = ''
         req.outcookie['trac_auth_session']['path'] = cookie_path
         req.outcookie['trac_auth_session']['expires'] = -10000
+        try:
+            if self.env.secure_cookies:
+                req.outcookie['trac_auth_session']['secure'] = True
+        except AttributeError:
+            # Report details about Trac compatibility for the feature.
+            self.env.log.debug(
+                """Restricting cookies to HTTPS connections is requested,
+                but is supported only by Trac 0.11.2 or later version.
+                """)
 
     def _remote_user(self, req):
         """The real authentication using configured providers and stores."""
@@ -834,9 +877,9 @@ class EmailVerificationModule(Component):
             link = tag.a(_("verify your email address"),
                          href=req.href.verify_email())
             # TRANSLATOR: ... verify your email address
-            chrome.add_warning(req, Markup(tag.span(tag_(
+            chrome.add_warning(req, Markup(tag.span(Markup(_(
                 "Your permissions have been limited until you %(link)s.",
-                link=link))))
+                link=link)))))
             req.perm = perm.PermissionCache(self.env, 'anonymous')
         return handler
 
@@ -863,10 +906,10 @@ class EmailVerificationModule(Component):
             link = tag.a(_("verify your new email address"),
                          href=req.href.verify_email())
             # TRANSLATOR: ... verify your new email address
-            chrome.add_notice(req, Markup(tag.span(tag_(
+            chrome.add_notice(req, Markup(tag.span(Markup(_(
                 """An email has been sent to %(email)s with a token to
                 %(link)s.""",
-                email=email, link=link))))
+                email=email, link=link)))))
         return template, data, content_type
 
     # IRequestHandler methods
