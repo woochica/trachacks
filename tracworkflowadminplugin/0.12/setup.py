@@ -27,6 +27,7 @@ setup(
             'htdocs/scripts/messages/*.js',
             'htdocs/themes/*/*.css',
             'htdocs/themes/*/images/*.png',
+            'locale/*.*',
             'locale/*/LC_MESSAGES/*.mo',
         ],
     },
