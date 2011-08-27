@@ -9,7 +9,9 @@
 import re
 from pkg_resources import resource_filename
 
-from trac.core import *
+from trac.config import BoolOption
+from trac.core import Component, ExtensionPoint, Interface, TracError, \
+                      implements
 from trac.resource import Resource
 from trac.perm import IPermissionRequestor, PermissionError
 from trac.web.chrome import add_warning
@@ -17,7 +19,7 @@ from trac.wiki.model import WikiPage
 from trac.util.text import to_unicode
 from trac.util.compat import set, groupby
 from trac.resource import IResourceManager, get_resource_url, \
-    get_resource_description
+                          get_resource_description
 from genshi import Markup
 
 # Import translation functions.
@@ -183,6 +185,9 @@ class TagSystem(Component):
 
     tag_providers = ExtensionPoint(ITagProvider)
 
+    wiki_page_link = BoolOption('tags', 'wiki_page_link', True, 
+        doc="Link a tag to the wiki page with same name, if it exists.")
+
     # Internal variables
     _realm = re.compile('realm:(\w+)', re.U | re.I)
     _tag_split = re.compile('[,\s]+')
@@ -303,17 +308,21 @@ class TagSystem(Component):
         yield 'tag'
 
     def get_resource_url(self, resource, href, **kwargs):
-        page = WikiPage(self.env, resource.id)
-        if page.exists:
-            return get_resource_url(self.env, page.resource, href, **kwargs)
+        if self.wiki_page_link:
+            page = WikiPage(self.env, resource.id)
+            if page.exists:
+                return get_resource_url(self.env, page.resource, href,
+                                        **kwargs)
         return href("tags/'%s'" % unicode(resource.id).replace("'", "\\'"))
 
-    def get_resource_description(self, resource, format='default', context=None,
-                                 **kwargs):
-        page = WikiPage(self.env, resource.id)
-        if page.exists:
-            return get_resource_description(self.env, page.resource, format,
-                                            **kwargs)
+
+    def get_resource_description(self, resource, format='default',
+                                 context=None, **kwargs):
+        if self.wiki_page_link:
+            page = WikiPage(self.env, resource.id)
+            if page.exists:
+                return get_resource_description(self.env, page.resource,
+                                                format, **kwargs)
         rid = to_unicode(resource.id)
         if format in ('compact', 'default'):
             return rid
