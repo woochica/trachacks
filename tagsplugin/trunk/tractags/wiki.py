@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
+# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -14,7 +15,7 @@ from trac.core import Component, ExtensionPoint, implements
 from trac.mimeview.api import Context
 from trac.resource import Resource, render_resource_link, get_resource_url
 from trac.util.compat import sorted
-from trac.web.api import ITemplateStreamFilter
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import add_stylesheet
 from trac.wiki.api import IWikiChangeListener, IWikiPageManipulator, \
                           IWikiSyntaxProvider
@@ -47,8 +48,36 @@ class WikiTagProvider(DefaultTagProvider):
 
 class WikiTagInterface(TagTemplateProvider):
     """Implement the user interface for tagging Wiki pages."""
-    implements(ITemplateStreamFilter, IWikiChangeListener,
-               IWikiPageManipulator)
+    implements(IRequestFilter, ITemplateStreamFilter,
+               IWikiChangeListener, IWikiPageManipulator)
+
+    PAGE_TEMPLATES_PREFIX = 'PageTemplates/'
+
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if req.method == 'GET' and req.path_info.startswith('/wiki/') and \
+                req.args.get('action') == 'edit' and \
+                req.args.get('template') and 'tags' not in req.args:
+            # Retrieve template resource to be queried for tags.
+            template_page = WikiPage(self.env,''.join(
+                                     [self.PAGE_TEMPLATES_PREFIX,
+                                      req.args.get('template')]))
+            if template_page and template_page.exists and \
+                    'TAGS_VIEW' in req.perm(template_page.resource):
+                ts = TagSystem(self.env)
+                tags = sorted(ts.get_tags(req, template_page.resource))
+                # Prepare tags as content for the editor field.
+                tags_str = ' '.join(tags)
+                self.env.log.debug("Tags retrieved from template: 's%'",
+                                   unicode(tags_str).encode('utf-8'))
+                # DEVEL: More arguments need to be propagated here?
+                req.redirect(req.href(req.path_info,
+                                      action='edit', tags=tags,
+                                      template=req.args.get('template')))
+        return (template, data, content_type)
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
