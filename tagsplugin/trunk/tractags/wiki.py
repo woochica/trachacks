@@ -26,10 +26,10 @@ from tractags.web_ui import TagTemplateProvider
 
 
 class WikiTagProvider(DefaultTagProvider):
-    """Tag provider for the Wiki."""
+    """Tag provider for Trac wiki."""
     realm = 'wiki'
 
-    first_head = re.compile('=\s+([^=]*)=') 
+    first_head = re.compile('=\s+([^=\n]*)={0,1}')
 
     def check_permission(self, perm, operation):
         map = {'view': 'WIKI_VIEW', 'modify': 'WIKI_MODIFY'}
