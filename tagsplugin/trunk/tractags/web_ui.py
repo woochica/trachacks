@@ -8,20 +8,23 @@
 
 import re
 import math
-from trac.core import *
+
+from genshi.builder import tag as builder
+from pkg_resources import resource_filename
+from trac.core import Component, ExtensionPoint, implements
+from trac.mimeview import Context
+from trac.resource import Resource
+from trac.util import to_unicode
+from trac.util.compat import sorted, set, any
+from trac.util.text import CRLF
 from trac.web.api import IRequestHandler
 from trac.web.chrome import ITemplateProvider, INavigationContributor, \
                             add_stylesheet, add_ctxtnav
-from genshi.builder import tag as builder
-from trac.util import to_unicode
-from trac.util.text import CRLF
-from trac.util.compat import sorted, set, any
-from tractags.api import TagSystem, ITagProvider, _, tag_
-from tractags.query import InvalidQuery
-from trac.resource import Resource
-from trac.mimeview import Context
 from trac.wiki.formatter import Formatter
 from trac.wiki.model import WikiPage
+
+from tractags.api import TagSystem, ITagProvider, _, tag_
+from tractags.query import InvalidQuery
 
 
 class TagTemplateProvider(Component):
@@ -29,27 +32,26 @@ class TagTemplateProvider(Component):
 
     implements(ITemplateProvider)
 
+    abstract = True
+
     # ITemplateProvider methods
     def get_templates_dirs(self):
+        """Return the absolute path of the directory containing the provided
+        Genshi templates.
         """
-        Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
-        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
         """Return the absolute path of a directory containing additional
         static resources (such as images, style sheets, etc).
         """
-        from pkg_resources import resource_filename
         return [('tags', resource_filename(__name__, 'htdocs'))]
 
 
-class TagRequestHandler(Component):
+class TagRequestHandler(TagTemplateProvider):
     """Implements the /tags handler."""
 
-    implements(IRequestHandler, INavigationContributor)
+    implements(INavigationContributor, IRequestHandler)
 
     tag_providers = ExtensionPoint(ITagProvider)
 
@@ -112,3 +114,4 @@ class TagRequestHandler(Component):
             data['tag_query_error'] = to_unicode(e)
             data['tag_body'] = macros.expand_macro(formatter, 'TagCloud', '')
         return 'tag_view.html', data, None
+

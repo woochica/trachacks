@@ -8,7 +8,7 @@
 
 from genshi.builder import tag as builder
 
-from trac.core import Component, implements
+from trac.core import implements
 from trac.resource import Resource, get_resource_url, render_resource_link
 from trac.util import embedded_numbers
 from trac.util.compat import sorted, set
@@ -17,6 +17,7 @@ from trac.web.chrome import add_stylesheet
 from trac.wiki import IWikiMacroProvider
 
 from tractags.api import TagSystem, _
+from tractags.web_ui import TagTemplateProvider
 
 
 def render_cloud(env, req, cloud, renderer=None):
@@ -58,7 +59,7 @@ def render_cloud(env, req, cloud, renderer=None):
     return ul
 
 
-class TagWikiMacros(Component):
+class TagWikiMacros(TagTemplateProvider):
     """Provides macros, that utilize the tagging system in wiki."""
 
     implements(IWikiMacroProvider)

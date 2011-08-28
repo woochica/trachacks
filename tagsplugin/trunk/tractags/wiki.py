@@ -7,18 +7,21 @@
 #
 
 import re
-from trac.core import *
-from tractags.api import DefaultTagProvider, TagSystem, _
-from trac.web.chrome import add_stylesheet, add_script
-from trac.wiki.api import IWikiSyntaxProvider
-from trac.resource import Resource, render_resource_link, get_resource_url
-from trac.mimeview.api import Context
-from trac.web.api import ITemplateStreamFilter
-from trac.wiki.api import IWikiPageManipulator, IWikiChangeListener
-from trac.wiki.model import WikiPage
-from trac.util.compat import sorted
+
 from genshi.builder import Markup, tag
 from genshi.filters.transform import Transformer
+from trac.core import Component, ExtensionPoint, implements
+from trac.mimeview.api import Context
+from trac.resource import Resource, render_resource_link, get_resource_url
+from trac.util.compat import sorted
+from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import add_stylesheet
+from trac.wiki.api import IWikiChangeListener, IWikiPageManipulator, \
+                          IWikiSyntaxProvider
+from trac.wiki.model import WikiPage
+
+from tractags.api import DefaultTagProvider, TagSystem, _
+from tractags.web_ui import TagTemplateProvider
 
 
 class WikiTagProvider(DefaultTagProvider):
@@ -42,10 +45,10 @@ class WikiTagProvider(DefaultTagProvider):
         return ''
 
 
-class WikiTagInterface(Component):
+class WikiTagInterface(TagTemplateProvider):
     """Implement the user interface for tagging Wiki pages."""
-    implements(ITemplateStreamFilter, IWikiPageManipulator,
-               IWikiChangeListener)
+    implements(ITemplateStreamFilter, IWikiChangeListener,
+               IWikiPageManipulator)
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):

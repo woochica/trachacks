@@ -28,6 +28,7 @@ setup(
         'locale/*/LC_MESSAGES/*.mo', 'locale/.placeholder']},
     # With acknowledgement to Muness Albrae for the original idea :)
     author='Alec Thomas',
+    author_email='alec@swapoff.org',
     license='BSD',
     url='http://trac-hacks.org/wiki/TagsPlugin',
     description='Tags plugin for Trac',
