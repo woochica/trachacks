@@ -301,7 +301,10 @@ class TagSystem(Component):
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
-        return ['TAGS_VIEW', 'TAGS_MODIFY']
+        action = ['TAGS_VIEW', 'TAGS_MODIFY']
+        actions = [action[0], (action[1], [action[0]]),
+                   ('TAGS_ADMIN', action)]
+        return actions
 
     # IResourceManager methods
     def get_resource_realms(self):
