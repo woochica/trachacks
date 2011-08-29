@@ -18,18 +18,48 @@ import reports
 
 #get_statuses = api.get_statuses
 
+
+validTimeFormats=[
+    '%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %I:%M:%S.%f %p',
+    '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %I:%M:%S %p',
+    '%Y-%m-%d %H:%M', '%Y-%m-%d %I:%M %p',
+    '%Y-%m-%d %H', '%Y-%m-%d %I %p',
+    
+    '%Y/%m/%d %H:%M:%S.%f', '%Y/%m/%d %I:%M:%S.%f %p',
+    '%Y/%m/%d %H:%M:%S', '%Y/%m/%d %I:%M:%S %p',
+    '%Y/%m/%d %H:%M', '%Y/%m/%d %I:%M %p',
+    '%Y/%m/%d %H', '%Y/%m/%d %H %p',
+    
+    '%Y.%m.%d %H:%M:%S.%f', '%Y.%m.%d %I:%M:%S.%f %p',
+    '%Y.%m.%d %H:%M:%S', '%Y.%m.%d %I:%M:%S %p',
+    '%Y.%m.%d %H:%M', '%Y.%m.%d %I:%M %p',
+    '%Y.%m.%d %H', '%Y.%m.%d %I %p',
+    ]
+def parsetime(val, tzinfo):
+    if not val: return None
+    val = val.strip()
+    if not val: return None
+    it = None
+    for f in validTimeFormats:
+        #print f, datetime.datetime.strptime(val, f)
+        try: return datetime.datetime.strptime(val, f).replace(tzinfo=tzinfo)
+        except ValueError: pass
+    raise TracError('Unable to convert bill date %s to a time, please provide a date in yyyy-mm-dd hh:mm:ss format' % val)
+
+
 class TimingEstimationAndBillingPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
     def __init__(self):
         pass
 
-    def set_bill_date(self, username="Timing and Estimation Plugin",  when=0):
+    def set_bill_date(self, username="Timing and Estimation Plugin",  when=None):
         now = trac.util.datefmt.to_datetime(None)#get now
-        if not when:
-            when = now
+        if isinstance(when, str) or isinstance(when, unicode):
+            when = parsetime(when, now.tzinfo)
+        if not when: when = now
 
-        strwhen = "%s-%s-%s %#02d:%#02d:%#02d" % \
+        strwhen = "%#04d-%#02d-%#02d %#02d:%#02d:%#02d" % \
                 (when.year, when.month, when.day, when.hour,when.minute, when.second)
         sql = """
         INSERT INTO bill_date (time, set_when, str_value)
@@ -82,7 +112,7 @@ class TimingEstimationAndBillingPage(Component):
 
         if req.method == 'POST':
             if req.args.has_key('setbillingtime'):
-                self.set_bill_date(req.authname)
+                self.set_bill_date(req.authname, req.args.get('newbilltime'))
                 addMessage("All tickets last bill date updated")
 
         mgr = CustomReportManager(self.env, self.log)

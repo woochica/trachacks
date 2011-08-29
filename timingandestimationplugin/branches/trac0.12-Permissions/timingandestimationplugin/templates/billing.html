@@ -97,10 +97,15 @@
   </py:for>
 
   </ul>
-  <input 
-   py:if="is_time_admin"
-   type="submit" name="setbillingtime" value="Set Billing Time" onclick="return confirm('Are you sure that you want to create a billed date?')" />&nbsp;
 
+  <hr />
+  <div class="" py:if="is_time_admin">
+  <label for="newbilltime">New bill time
+    <span class="note">(leave blank for now)</span>
+  </label>
+  <input type="text" value="" name="newbilltime" />
+  <input type="submit" name="setbillingtime" value="Set Billing Time" onclick="return confirm('Are you sure that you want to create a billed date?')" />&nbsp;
+  </div>
 </div>
 </form>
 </body>
