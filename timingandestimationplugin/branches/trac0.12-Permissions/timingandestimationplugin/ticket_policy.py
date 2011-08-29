@@ -1,5 +1,5 @@
 from trac.core import *
-from trac.perm import PermissionCache, IPermissionRequestor, IPermissionGroupProvider, IPermissionPolicy, PermissionSystem
+from trac.perm import PermissionCache, IPermissionRequestor, IPermissionGroupProvider, IPermissionPolicy, PermissionSystem, DefaultPermissionStore, PermissionError
 from trac.ticket.model import Ticket
 from trac.config import IntOption, ListOption
 from trac.util.compat import set
@@ -32,15 +32,23 @@ class InternalTicketsPolicy(Component):
         for provider in self.group_providers:
             for group in provider.get_permission_groups(user):
                 groups.add(group)
-        
-        perms = PermissionSystem(self.env).get_all_permissions()
-        repeat = True
-        while repeat:
-            repeat = False
-            for subject, action in perms:
-                if subject in groups and action.islower() and action not in groups:
-                    groups.add(action)
-                    repeat = True 
+
+        # Essentially the default trac PermissionStore ignores user provided
+        # groups so we have to look them up manually: 
+
+        # changed this to only do this for the default permission
+        # store this has been reported as broken/very slow for the
+        # LDAP permission store
+        ps = PermissionSystem(self.env) 
+        if isinstance(ps.store, DefaultPermissionStore):
+            perms = ps.get_all_permissions()
+            repeat = True
+            while repeat:
+                repeat = False
+                for subject, action in perms:
+                    if subject in groups and not action.isupper() and action not in groups:
+                        groups.add(action)
+                        repeat = True 
         
         return groups    
 
@@ -59,5 +67,7 @@ class InternalTicketsPolicy(Component):
             perm = PermissionCache(self.env, self.username, None, perm._cache)
             groups = self._get_groups(user)
             perm_or_group = self.config.get('ticket', 'internalgroup', 'TIME_ADMIN' )
-            return perm_or_group in groups or perm.has_permission(perm_or_group)
+            it = perm_or_group in groups or perm.has_permission(perm_or_group)
+            if not it: raise PermissionError(perm_or_group, res, self.env)
+            return it
         return None
