@@ -224,10 +224,10 @@ class TagSystem(Component):
                              req.href('tags'))
             add_warning(req, message)
         query = Query(query, attribute_handlers=all_attribute_handlers)
-        providers = []
+        providers = set()
         for m in self._realm.finditer(query.as_string()):
             realm = m.group(1)
-            providers.append(self._get_provider(realm))
+            providers.add(self._get_provider(realm))
         if not providers:
             providers = self.tag_providers
 
