@@ -43,7 +43,7 @@ class TagModelProvider(Component):
             self.env.log.debug("tractags needs to migrate old data")
             return True
         except Exception, e:
-            self.log.error("DatabaseError: %s", e)
+            # The expected outcome for any new/updated installation.
             db.rollback()
             return False
 
@@ -74,7 +74,7 @@ class TagModelProvider(Component):
                 cursor.execute("DROP TABLE wiki_namespace")
                 db.commit()
         except Exception, e:
-            # The expected outcome for any new/updated installation.
+            self.log.error("DatabaseError: %s", e)
             db.rollback()
             raise
 
