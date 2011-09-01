@@ -117,9 +117,21 @@ class WikiTagInterface(TagTemplateProvider):
     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
         pass
 
+    def wiki_page_renamed(self, page, old_name):
+        """Called when a page has been renamed (since Trac 0.12)."""
+        new_resource = Resource('wiki', page.name)
+        old_resource = Resource('wiki', old_name)
+        self.log.debug("Moving tags from %s to %s",
+                       old_resource.id, new_resource.id)
+        tag_system = TagSystem(self.env)
+        # XXX Ugh. Hopefully this will be sufficient to fool any endpoints.
+        from trac.test import Mock, MockPerm
+        req = Mock(authname='anonymous', perm=MockPerm())
+        tag_system.reparent_resource_tags(req, old_resource, new_resource)
+
     def wiki_page_deleted(self, page):
         tag_system = TagSystem(self.env)
-        # XXX Ugh. Hopefully this will be sufficient to full any endpoints.
+        # XXX Ugh. Hopefully this will be sufficient to fool any endpoints.
         from trac.test import Mock, MockPerm
         req = Mock(authname='anonymous', perm=MockPerm())
         tag_system.delete_tags(req, page.resource)

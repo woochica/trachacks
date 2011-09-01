@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
+# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -61,6 +62,9 @@ class ITagProvider(Interface):
 
     def set_resource_tags(req, resource, tags):
         """Set tags for a resource."""
+
+    def reparent_resource_tags(self, req, old_resource, new_resource):
+        """Move tags, typically when renaming an existing resource."""
 
     def remove_resource_tags(req, resource):
         """Remove all tags from a resource."""
@@ -155,6 +159,26 @@ class DefaultTagProvider(Component):
                 cursor.execute('INSERT INTO tags (tagspace, name, tag) '
                                'VALUES (%s, %s, %s)',
                                (self.realm, resource.id, tag))
+            db.commit()
+        except:
+            db.rollback()
+            raise
+
+    def reparent_resource_tags(self, req, old_resource, new_resource):
+        assert old_resource.realm == self.realm
+        assert new_resource.realm == self.realm
+        if not self.check_permission(req.perm(old_resource), 'modify') or \
+                not self.check_permission(req.perm(new_resource), 'modify'):
+            raise PermissionError(resource=resource, env=self.env)
+        db = self.env.get_db_cnx()
+        try:
+            cursor = db.cursor()
+            cursor.execute("""
+                UPDATE  tags
+                    SET name=%s
+                WHERE   tagspace=%s
+                    AND name=%s
+                """, (new_resource.id, self.realm, old_resource.id))
             db.commit()
         except:
             db.rollback()
@@ -270,6 +294,14 @@ class TagSystem(Component):
         tags = set(tags)
         tags.update(self.get_tags(req, resource))
         self.set_tags(req, resource, tags)
+
+    def reparent_resource_tags(self, req, old_resource, new_resource):
+        """Move tags, typically when renaming an existing resource.
+
+        Tags can't be moved between different tag realms with intention.
+        """
+        provider = self._get_provider(old_resource.realm) 
+        provider.reparent_resource_tags(req, old_resource, new_resource)        
 
     def delete_tags(self, req, resource, tags=None):
         """Delete tags on a resource.
