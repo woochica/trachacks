@@ -40,7 +40,7 @@ ba933fa0519234f875b58218bca57fd4 acct_mgr/api.py
 b8422abe2bbcf281db17359dcd803270 acct_mgr/tests/functional/tester.py
 a6b47d6b847dac2eb454e43b0d959018 acct_mgr/notification.py
 17a9edd785c5d7b807a6380515cc7779 acct_mgr/svnserve.py
-f9f903c30b2029c34f3743aecae37961 changelog
+17f234c317d5901100b93ce841faf8d2 changelog
 a3cee8fdfc8eae33385f27737cb8a513 acct_mgr/util.py
 894be80462f73dfaa3bddd114bf8211b acct_mgr/htdocs/locked.png
 321b2a2050ad0745085c448a765bb7fc acct_mgr/tests/__init__.py
