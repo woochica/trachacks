@@ -94,16 +94,20 @@ class ImportProcessor(object):
             tickettime = self.tickettime
                 
         if self.ticket.id == None:
-            for f in self.missingemptyfields:
-                if self.ticket.values.has_key(f) and self.ticket[f] == None:
-                    self.ticket[f] = ''
+            if self.missingemptyfields:
+                for f in self.missingemptyfields:
+                    if f in self.ticket.values and self.ticket[f] is None:
+                        self.ticket[f] = ''
 
             if self.comment:
                 self.ticket['description'] = self.ticket['description'] + "\n[[BR]][[BR]]\n''Batch insert from file " + self.filename + ":''\n" + self.comment
 
-            for f in self.computedfields:
-                if f not in self.lowercaseimportedfields and self.computedfields[f] != None and self.computedfields[f]['set']:
-                    self.ticket[f] = self.computedfields[f]['value']
+            if self.computedfields:
+                for f in self.computedfields:
+                    if f not in self.lowercaseimportedfields and \
+                            self.computedfields[f] is not None and \
+                            self.computedfields[f]['set']:
+                        self.ticket[f] = self.computedfields[f]['value']
 
             
             self.added += 1
