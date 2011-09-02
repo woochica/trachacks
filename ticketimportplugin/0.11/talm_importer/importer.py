@@ -294,19 +294,20 @@ class ImportModule(Component):
             newvalues[name] = []
             
 
-        def add_sql_result(db, sql, list):
+        def add_sql_result(db, sql, aset):
             cursor = db.cursor()
             cursor.execute(sql)
             for result in cursor:
-                list += result
+                aset.add(result[0])
 
             
-        existingusers = []
+        existingusers = set()
         db = self.env.get_db_cnx()
         add_sql_result(db, "SELECT DISTINCT reporter FROM ticket", existingusers)
         add_sql_result(db, "SELECT DISTINCT owner FROM ticket", existingusers)
         add_sql_result(db, "SELECT DISTINCT owner FROM component", existingusers)
-        add_sql_result(db, "SELECT DISTINCT sid FROM session WHERE authenticated > 0", existingusers)
+        for username, name, email in self.env.get_known_users(db):
+            existingusers.add(username)
         newusers = []
 
         duplicate_summaries = []
