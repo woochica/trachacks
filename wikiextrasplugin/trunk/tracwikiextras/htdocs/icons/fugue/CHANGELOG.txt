@@ -1,3 +1,53 @@
+Version 3.1.6 (September 2, 2011)
+- Add <download-cloud>.
+- Add <ribbon>.
+- Add <upload-cloud>.
+- Add <24/arrow-circle*>, <24/arrow-curve*>,
+  <24/arrow-join*>, <24/arrow-merge*>, <24/arrow-repeat*>,
+  <24/arrow-retweet> and <24/arrow-split*>.
+- Add <24/blue-document-text-image>.
+- Add <24/counter>.
+- Add <24/document-text-image>.
+- Add <32/blue-document-text-image>.
+- Add <32/counter>.
+- Add <32/document-text-image>.
+------------------------------------------------------------
+Version 3.1.5 (August 26, 2011)
+- Add <church>.
+- Add <film-timeline>.
+- Add <lighthouse*>.
+- Add <molecule>.
+- Add <rubber-balloon*>.
+- Add <upload*>.
+------------------------------------------------------------
+Version 3.1.4 (August 10, 2011)
+- Add <animal-penguin>.
+- Add <clock-moon-phase>.
+- Add <download*>.
+- Add <mac-os>.
+- Add <power-supply>.
+- Add <table-draw> and <table-heatmap>.
+- Add <windows>.
+------------------------------------------------------------
+Version 3.1.3 (August 5, 2011)
+- Add <application-plus*> and <application-sub>.
+- Add <shoe*>.
+- Add <train*>.
+- Add <web-slice*>.
+------------------------------------------------------------
+Version 3.1.2 (July 27, 2011)
+- Add <box-document>.
+- Add <car-taxi>.
+- Add <graduation-hat>.
+- Add <stairs>.
+- Add <tag-hash>.
+- Add <animated/application-terminal>.
+- Add <animated/counter*>.
+- Add <animated/selection*>.
+- Add <animated/terminal*>.
+- Add <animated/ui-progress-bar-indeterminate>.
+- Add <animated/24/terminal>.
+------------------------------------------------------------
 Version 3.1.1 (June 31, 2011)
 - Add <animal>.
 - Add <bauble>.

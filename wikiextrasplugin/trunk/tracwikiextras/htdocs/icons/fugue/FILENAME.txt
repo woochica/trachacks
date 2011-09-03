@@ -23,6 +23,7 @@ animal.png
 animal-dog.png
 animal-monkey.png
 animal-monkey-sulky.png
+animal-penguin.png
 application.png
 application--arrow.png
 application--exclamation.png
@@ -52,6 +53,8 @@ application-list.png
 application-medium.png
 application-monitor.png
 application-network.png
+application-plus.png
+application-plus-black.png
 application-rename.png
 application-resize.png
 application-resize-actual.png
@@ -70,6 +73,7 @@ application-small-list-blue.png
 application-split.png
 application-split-tile.png
 application-split-vertical.png
+application-sub.png
 application-table.png
 application-task.png
 application-terminal.png
@@ -564,6 +568,7 @@ box--exclamation.png
 box--minus.png
 box--pencil.png
 box--plus.png
+box-document.png
 box-label.png
 box-medium.png
 box-search-result.png
@@ -692,6 +697,7 @@ car--minus.png
 car--pencil.png
 car--plus.png
 car-red.png
+car-taxi.png
 card.png
 card--arrow.png
 card--exclamation.png
@@ -749,6 +755,7 @@ chevron.png
 chevron-expand.png
 chevron-small.png
 chevron-small-expand.png
+church.png
 cigarette.png
 cigarette-stop.png
 clapperboard.png
@@ -784,6 +791,7 @@ clock--plus.png
 clock-frame.png
 clock-history.png
 clock-history-frame.png
+clock-moon-phase.png
 clock-network.png
 clock-select.png
 clock-select-remain.png
@@ -1141,6 +1149,10 @@ door--plus.png
 door-open.png
 door-open-in.png
 door-open-out.png
+download.png
+download-cloud.png
+download-linux.png
+download-mac-os.png
 drawer.png
 drawer--arrow.png
 drawer--exclamation.png
@@ -1316,6 +1328,7 @@ film--plus.png
 film-cast.png
 film-medium.png
 film-small.png
+film-timeline.png
 films.png
 fingerprint.png
 fingerprint-recognition.png
@@ -1452,6 +1465,7 @@ globe-small.png
 globe-small-green.png
 gradient.png
 gradient-small.png
+graduation-hat.png
 graphic-card.png
 grid.png
 grid-dot.png
@@ -1731,6 +1745,8 @@ light-bulb-code.png
 light-bulb-off.png
 light-bulb-small.png
 light-bulb-small-off.png
+lighthouse.png
+lighthouse-shine.png
 lightning.png
 lightning--arrow.png
 lightning--exclamation.png
@@ -1755,6 +1771,7 @@ luggage--minus.png
 luggage--pencil.png
 luggage--plus.png
 luggage-tag.png
+mac-os.png
 magnet.png
 magnet--arrow.png
 magnet--exclamation.png
@@ -1916,6 +1933,7 @@ mobile-phone--plus.png
 mobile-phone-cast.png
 mobile-phone-medium.png
 mobile-phone-off.png
+molecule.png
 money.png
 money--arrow.png
 money--exclamation.png
@@ -2205,6 +2223,7 @@ postage-stamp--exclamation.png
 postage-stamp--minus.png
 postage-stamp--pencil.png
 postage-stamp--plus.png
+power-supply.png
 present.png
 present--arrow.png
 present--exclamation.png
@@ -2301,6 +2320,7 @@ report-word.png
 reports.png
 reports-stack.png
 resource-monitor.png
+ribbon.png
 ring.png
 road-sign.png
 robot.png
@@ -2312,6 +2332,8 @@ rocket--minus.png
 rocket--pencil.png
 rocket--plus.png
 rocket-fly.png
+rubber-balloon.png
+rubber-balloons.png
 ruby.png
 ruler.png
 ruler--arrow.png
@@ -2429,6 +2451,13 @@ shield--exclamation.png
 shield--minus.png
 shield--pencil.png
 shield--plus.png
+shoe.png
+shoe--arrow.png
+shoe--exclamation.png
+shoe--minus.png
+shoe--pencil.png
+shoe--plus.png
+shoe-high.png
 shopping-basket.png
 shopping-basket--arrow.png
 shopping-basket--exclamation.png
@@ -2574,6 +2603,7 @@ sql-join-outer.png
 sql-join-outer-exclude.png
 sql-join-right.png
 sql-join-right-exclude.png
+stairs.png
 stamp.png
 stamp--arrow.png
 stamp--exclamation.png
@@ -2658,8 +2688,10 @@ table--plus.png
 table-delete.png
 table-delete-column.png
 table-delete-row.png
+table-draw.png
 table-excel.png
 table-export.png
+table-heatmap.png
 table-import.png
 table-insert.png
 table-insert-column.png
@@ -2693,6 +2725,7 @@ tag--pencil.png
 tag--plus.png
 tag-cloud.png
 tag-export.png
+tag-hash.png
 tag-import.png
 tag-label.png
 tag-label-black.png
@@ -2808,6 +2841,12 @@ traffic-light--minus.png
 traffic-light--pencil.png
 traffic-light--plus.png
 traffic-light-off.png
+train.png
+train--arrow.png
+train--exclamation.png
+train--minus.png
+train--pencil.png
+train--plus.png
 trophy.png
 trophy--arrow.png
 trophy--exclamation.png
@@ -2941,6 +2980,10 @@ umbrella--minus.png
 umbrella--pencil.png
 umbrella--plus.png
 universal.png
+upload.png
+upload-cloud.png
+upload-linux.png
+upload-mac-os.png
 usb-flash-drive.png
 usb-flash-drive--arrow.png
 usb-flash-drive--exclamation.png
@@ -3042,6 +3085,10 @@ weather-moon-fog.png
 weather-rain.png
 weather-snow.png
 weather-tornado.png
+web-slice.png
+web-slice-balloon.png
+web-slice-document.png
+web-slice-small.png
 webcam.png
 webcam--arrow.png
 webcam--exclamation.png
@@ -3058,6 +3105,7 @@ weight--minus.png
 weight--pencil.png
 weight--plus.png
 wheel.png
+windows.png
 wooden-box.png
 wooden-box--arrow.png
 wooden-box--exclamation.png
