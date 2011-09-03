@@ -10,6 +10,7 @@ import re
 from trac.core import *
 from tractags.api import TagSystem, ITagProvider, _
 from trac.ticket.model import Ticket
+from trac.util import get_reporter_id
 from trac.util.text import to_unicode
 from trac.util.compat import set, sorted
 from trac.config import *
@@ -89,13 +90,13 @@ class TicketTagProvider(Component):
         keywords = split_into_tags(ticket['keywords'])
         tags.difference_update(all.difference(keywords))
         ticket['keywords'] = u' '.join(sorted(map(to_unicode, tags)))
-        ticket.save_changes(req.username, u'')
+        ticket.save_changes(get_reporter_id(req), u'')
 
     def remove_resource_tags(self, req, resource):
         req.perm.require('TICKET_MODIFY', resource)
         ticket = Ticket(self.env, resource.id)
         ticket['keywords'] = u''
-        ticket.save_changes(req.username, u'')
+        ticket.save_changes(get_reporter_id(req), u'')
 
     def describe_tagged_resource(self, req, resource):
         if not 'TICKET_VIEW' in req.perm(resource):
