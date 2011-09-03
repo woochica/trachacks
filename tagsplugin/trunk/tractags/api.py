@@ -63,7 +63,7 @@ class ITagProvider(Interface):
     def set_resource_tags(req, resource, tags):
         """Set tags for a resource."""
 
-    def reparent_resource_tags(self, req, old_resource, new_resource):
+    def reparent_resource_tags(req, old_resource, new_resource):
         """Move tags, typically when renaming an existing resource."""
 
     def remove_resource_tags(req, resource):
