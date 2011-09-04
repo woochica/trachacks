@@ -319,6 +319,29 @@ class TagSystem(Component):
         provider.reparent_resource_tags(req, old_resource, new_resource,
                                         comment)        
 
+    def replace_tag(self, req, old_tags, new_tag=None, comment=u'',
+                    allow_delete=False):
+        """Replace one or more tags in all resources it exists/they exist in.
+
+        Tag deletion is optionally allowed for convenience as well.
+        """
+        # Provide list regardless of attribute type.
+        for resource_provider in self.tag_providers:
+            for resource, tags in \
+                    resource_provider.get_tagged_resources(req, old_tags):
+                old_tags = set(old_tags)
+                tags = set(tags)
+                if old_tags >= tags and not new_tag:
+                    if allow_delete:
+                        self.delete_tags(req, resource, None, comment)
+                else:
+                    eff_tags = tags - old_tags
+                    if new_tag:
+                        eff_tags.add(new_tag)
+                    # Prevent to touch resources without effective change.
+                    if not eff_tags == tags and (allow_delete or new_tag):
+                        self.set_tags(req, resource, eff_tags, comment)
+
     def delete_tags(self, req, resource, tags=None, comment=u''):
         """Delete tags on a resource.
 
@@ -355,7 +378,7 @@ class TagSystem(Component):
             self.env.log.warning('ITagProvider %r does not implement '
                                  'describe_tagged_resource()' % provider)
             return ''
-
+    
     # IPermissionRequestor methods
     def get_permission_actions(self):
         action = ['TAGS_VIEW', 'TAGS_MODIFY']
