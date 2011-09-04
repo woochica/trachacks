@@ -82,7 +82,7 @@ class TicketTagProvider(Component):
         ticket = Ticket(self.env, resource.id)
         return self._ticket_tags(ticket)
 
-    def set_resource_tags(self, req, resource, tags):
+    def set_resource_tags(self, req, resource, tags, comment=u''):
         req.perm.require('TICKET_MODIFY', resource)
         split_into_tags = TagSystem(self.env).split_into_tags
         ticket = Ticket(self.env, resource.id)
@@ -90,13 +90,13 @@ class TicketTagProvider(Component):
         keywords = split_into_tags(ticket['keywords'])
         tags.difference_update(all.difference(keywords))
         ticket['keywords'] = u' '.join(sorted(map(to_unicode, tags)))
-        ticket.save_changes(get_reporter_id(req), u'')
+        ticket.save_changes(get_reporter_id(req), comment)
 
-    def remove_resource_tags(self, req, resource):
+    def remove_resource_tags(self, req, resource, comment=u''):
         req.perm.require('TICKET_MODIFY', resource)
         ticket = Ticket(self.env, resource.id)
         ticket['keywords'] = u''
-        ticket.save_changes(get_reporter_id(req), u'')
+        ticket.save_changes(get_reporter_id(req), comment)
 
     def describe_tagged_resource(self, req, resource):
         if not 'TICKET_VIEW' in req.perm(resource):

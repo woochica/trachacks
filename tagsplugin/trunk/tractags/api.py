@@ -45,6 +45,11 @@ class InvalidTagRealm(TracError):
 
 
 class ITagProvider(Interface):
+    """The interface for Components providing per-realm tag storage and
+    manipulation methods.
+
+    Change comments and reparenting are supported since tags-0.7.
+    """
     def get_taggable_realm():
         """Return the realm this provider supports tags on."""
 
@@ -60,13 +65,13 @@ class ITagProvider(Interface):
     def get_resource_tags(req, resource):
         """Get tags for a Resource object."""
 
-    def set_resource_tags(req, resource, tags):
+    def set_resource_tags(req, resource, tags, comment=u''):
         """Set tags for a resource."""
 
-    def reparent_resource_tags(req, old_resource, new_resource):
+    def reparent_resource_tags(req, old_resource, new_resource, comment=u''):
         """Move tags, typically when renaming an existing resource."""
 
-    def remove_resource_tags(req, resource):
+    def remove_resource_tags(req, resource, comment=u''):
         """Remove all tags from a resource."""
 
     def describe_tagged_resource(req, resource):
@@ -123,7 +128,7 @@ class DefaultTagProvider(Component):
                 resources[resource.id] = resource
 
         if not resources:
-          return
+            return
 
         args = [self.realm] + list(resources)
         # XXX Is this going to be excruciatingly slow?
@@ -146,7 +151,7 @@ class DefaultTagProvider(Component):
         for row in cursor:
             yield row[0]
 
-    def set_resource_tags(self, req, resource, tags):
+    def set_resource_tags(self, req, resource, tags, comment=u''):
         assert resource.realm == self.realm
         if not self.check_permission(req.perm(resource), 'modify'):
             raise PermissionError(resource=resource, env=self.env)
@@ -164,7 +169,8 @@ class DefaultTagProvider(Component):
             db.rollback()
             raise
 
-    def reparent_resource_tags(self, req, old_resource, new_resource):
+    def reparent_resource_tags(self, req, old_resource, new_resource,
+                               comment=u''):
         assert old_resource.realm == self.realm
         assert new_resource.realm == self.realm
         if not self.check_permission(req.perm(old_resource), 'modify') or \
@@ -184,7 +190,7 @@ class DefaultTagProvider(Component):
             db.rollback()
             raise
 
-    def remove_resource_tags(self, req, resource):
+    def remove_resource_tags(self, req, resource, comment=u''):
         assert resource.realm == self.realm
         if not self.check_permission(req.perm(resource), 'modify'):
             raise PermissionError(resource=resource, env=self.env)
@@ -281,41 +287,60 @@ class TagSystem(Component):
         return set(self._get_provider(resource.realm) \
                    .get_resource_tags(req, resource))
 
-    def set_tags(self, req, resource, tags):
+    def set_tags(self, req, resource, tags, comment=u''):
         """Set tags on a resource.
 
         Existing tags are replaced.
         """
-        return self._get_provider(resource.realm) \
-            .set_resource_tags(req, resource, set(tags))
+        try:
+            return self._get_provider(resource.realm) \
+                   .set_resource_tags(req, resource, set(tags), comment)
+        except TypeError:
+            # Handle old style tag providers gracefully.
+            return self._get_provider(resource.realm) \
+                   .set_resource_tags(req, resource, set(tags))
 
-    def add_tags(self, req, resource, tags):
+    def add_tags(self, req, resource, tags, comment=u''):
         """Add to existing tags on a resource."""
         tags = set(tags)
         tags.update(self.get_tags(req, resource))
-        self.set_tags(req, resource, tags)
+        try:
+            self.set_tags(req, resource, tags, comment)
+        except TypeError:
+            # Handle old style tag providers gracefully.
+            self.set_tags(req, resource, tags)
 
-    def reparent_resource_tags(self, req, old_resource, new_resource):
+    def reparent_tags(self, req, old_resource, new_resource, comment=u''):
         """Move tags, typically when renaming an existing resource.
 
         Tags can't be moved between different tag realms with intention.
         """
         provider = self._get_provider(old_resource.realm) 
-        provider.reparent_resource_tags(req, old_resource, new_resource)        
+        provider.reparent_resource_tags(req, old_resource, new_resource,
+                                        comment)        
 
-    def delete_tags(self, req, resource, tags=None):
+    def delete_tags(self, req, resource, tags=None, comment=u''):
         """Delete tags on a resource.
 
         If tags is None, remove all tags on the resource.
         """
         provider = self._get_provider(resource.realm)
         if tags is None:
-            provider.remove_resource_tags(req, resource)
+            try:
+                provider.remove_resource_tags(req, resource, comment)
+            except TypeError:
+                 # Handle old style tag providers gracefully.
+                provider.remove_resource_tags(req, resource)
         else:
             tags = set(tags)
             current_tags = set(provider.get_resource_tags(req, resource))
             current_tags.difference_update(tags)
-            provider.set_resource_tags(req, resource, current_tags)
+            try:
+                provider.set_resource_tags(req, resource, current_tags,
+                                           comment)
+            except TypeError:
+                 # Handle old style tag providers gracefully.
+                provider.set_resource_tags(req, resource, current_tags)
 
     def split_into_tags(self, text):
         """Split plain text into tags."""
