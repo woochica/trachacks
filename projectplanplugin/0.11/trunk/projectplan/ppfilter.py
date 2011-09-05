@@ -15,7 +15,7 @@ class BaseFilter():
   '''
 
   # dont retrive the description, this is pure bloat
-  IGNORE_FIELDS= [ u'description' ]
+  IGNORE_FIELDS= [] # e.g. [ u'description' ]
 
   def __init__( self, macroenv ):
     '''
@@ -171,7 +171,7 @@ class QueryFilter( ParamFilter ):
     querystr = '%s&%s' % ( querystr, self.colsstr ) # choose columns 
     
     
-    #self.macroenv.tracenv.log.debug('get_tickets_list: '+querystr )
+    #self.macroenv.tracenv.log.warning('get_tickets_list: '+querystr )
     q = Query.from_string(self.macroenv.tracenv, querystr, max=self.max_ticket_number_at_filters , order='id' )
     return q.execute( self.macroenv.tracreq )
 

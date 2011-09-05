@@ -3,8 +3,10 @@
 import re
 import os
 from datetime import *
-from genshi.builder import tag
 import random
+
+from genshi.builder import tag
+from trac.wiki.formatter import wiki_to_html
 
 
 class RenderImpl():
@@ -165,6 +167,13 @@ class RenderImpl():
     # nr = random.randrange(0, 9) # randomize server
     
     return('https://%s?chf=bg,s,FFFFFF00&cht=p3&chd=t:%s&chs=170x50&chdl=%s&chco=%s' % (googlecharturl, ','.join(values), '|'.join(keys), ','.join(colors)) )
+  
+  def wiki2html( self, mystring ):
+    '''
+      transform wiki markup to HTML code
+    '''
+    return wiki_to_html(mystring, self.macroenv.tracenv, self.macroenv.tracreq)
+
 
   def render(self, ticketset):
     '''
