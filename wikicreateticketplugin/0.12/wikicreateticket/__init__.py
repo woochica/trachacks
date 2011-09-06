@@ -20,6 +20,15 @@ class WikiCreateTicket(Component):
     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
         self.__parse_wiki_and_create_ticket(page, version)
 
+    def wiki_page_deleted(self, page):
+        pass
+
+    def wiki_page_version_deleted(self, page):
+        pass
+
+    def wiki_page_renamed(self, page, old_name): 
+        pass
+
     def __parse_wiki_and_create_ticket(self, page, version):
         page = WikiPage(self.env, page.name, version)
 
