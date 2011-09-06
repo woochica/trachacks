@@ -1,0 +1,45 @@
+--- trac/ticket/notification_old.py	Mon Feb 28 17:43:47 2011
++++ trac/ticket/notification.py	Mon Feb 28 17:43:46 2011
+@@ -96,9 +96,15 @@
+                                                 ticket, self.db, when=modtime):
+                 if not change['permanent']: # attachment with same time...
+                     continue
++
++                if self._is_comment_private(ticket.id,int(change.get('cnum', ''))):
++                    comment_text = 'the ticket is processed internally'
++                else:
++                    comment_text = change['comment']
++
+                 change_data.update({
+                     'author': obfuscate_email_address(change['author']),
+-                    'comment': wrap(change['comment'], self.COLS, ' ', ' ',
++                    'comment': wrap(comment_text, self.COLS, ' ', ' ',
+                                     CRLF)
+                     })
+                 link += '#comment:%s' % str(change.get('cnum', ''))
+@@ -176,6 +182,25 @@
+             'change': change_data
+             })
+         NotifyEmail.notify(self, ticket.id, subject)
++
++    def _is_comment_private(self,ticket_id,comment_id):
++        cursor = self.db.cursor()
++        
++        sql = 'SELECT private FROM private_comment WHERE ticket_id=%d AND comment_id=%d' % \
++        (int(ticket_id),int(comment_id))
++        
++        cursor.execute(sql)
++        try:
++            private = cursor.fetchone()[0]
++        except:
++            private = 0
++            
++        cursor.close ()
++        
++        if private == 1:
++            return True
++        else:
++            return False
+ 
+     def format_props(self):
+         tkt = self.ticket
