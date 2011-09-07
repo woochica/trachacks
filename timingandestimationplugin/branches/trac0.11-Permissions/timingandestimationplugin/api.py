@@ -19,6 +19,7 @@ from reportmanager import CustomReportManager
 from statuses import *
 from reports import all_reports
 from stopwatch import *
+from hours_layout_changer import *
 
 ## report columns
 ## id|author|title|query|description
