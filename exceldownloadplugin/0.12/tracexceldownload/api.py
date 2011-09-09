@@ -170,11 +170,11 @@ def get_workbook_content(book):
         f = os.fdopen(fd)
         return f.read()
     finally:
-        os.unlink(path)
         if f is None:
             os.close(fd)
         else:
             f.close()
+        os.unlink(path)
 
 
 def get_literal(text):

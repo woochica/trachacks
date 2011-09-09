@@ -4,7 +4,6 @@ import os
 import re
 from datetime import datetime
 from itertools import chain
-from tempfile import mkstemp
 from xlwt import Workbook, Formula
 
 from trac.core import Component, implements
@@ -17,7 +16,7 @@ from trac.ticket.web_ui import TicketModule
 from trac.util.datefmt import from_utimestamp
 from trac.util.text import unicode_urlencode
 from trac.util.translation import dgettext, dngettext
-from trac.web.api import IRequestFilter
+from trac.web.api import IRequestFilter, RequestDone
 from trac.web.chrome import Chrome, add_link
 
 from tracexceldownload.api import WorksheetWriter, get_workbook_content, \
@@ -238,7 +237,6 @@ class ExcelReportModule(Component):
         if template == 'report_view.html' and req.args.get('id'):
             format = req.args.get('format')
             if format == 'xls':
-                content_type = 'application/vnd.ms-excel'
                 resource = Resource('report', req.args['id'])
                 data['context'] = Context.from_request(req, resource,
                                                        absurls=True)
@@ -288,13 +286,15 @@ class ExcelReportModule(Component):
 
         writer.set_col_widths()
 
-        fd, path = mkstemp()
-        try:
-            book.save(path)
-            req.send_file(path, 'application/vnd.ms-excel')
-        finally:
-            os.close(fd)
-            os.unlink(path)
+        content = get_workbook_content(book)
+        req.send_response(200)
+        req.send_header('Content-Type', 'application/vnd.ms-excel')
+        req.send_header('Content-Length', len(content))
+        req.send_header('Content-Disposition',
+                        'filename=report_%s.xls' % req.args['id'])
+        req.end_headers()
+        req.write(content)
+        raise RequestDone
 
     def _get_cell_data(self, req, col, cell, row, writer):
         value = cell['value']
