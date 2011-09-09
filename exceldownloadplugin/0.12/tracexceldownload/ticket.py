@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
 import re
 from datetime import datetime
 from itertools import chain
@@ -9,7 +8,6 @@ from xlwt import Workbook, Formula
 from trac.core import Component, implements
 from trac.mimeview.api import Context, IContentConverter
 from trac.resource import Resource, get_resource_url
-from trac.ticket.api import TicketSystem
 from trac.ticket.model import Ticket
 from trac.ticket.query import Query
 from trac.ticket.web_ui import TicketModule
@@ -127,10 +125,7 @@ class ExcelTicketModule(Component):
         sheet = book.add_sheet(dgettext("messages", "Change History"))
         writer = WorksheetWriter(sheet, req)
 
-        query = data['query']
         groups = data['groups']
-        fields = data['fields']
-        labels = TicketSystem(self.env).get_ticket_field_labels()
         headers = [header for header in data['headers']
                    if header['name'] not in ('id', 'time', 'changetime')]
         headers[0:0] = [
@@ -145,7 +140,6 @@ class ExcelTicketModule(Component):
             for idx, header in enumerate(headers))
 
         mod = TicketModule(self.env)
-        db = self.env.get_read_db()
         for result in chain(*[results for groupname, results in groups]):
             id = result['id']
             ticket = Ticket(self.env, id)
@@ -167,7 +161,6 @@ class ExcelTicketModule(Component):
                              'comment': '', 'author': ticket['reporter']}]
 
             for change in changes:
-                max_line = 1
                 cells = []
                 for idx, header in enumerate(headers):
                     name = header['name']
@@ -188,7 +181,6 @@ class ExcelTicketModule(Component):
                         style = '%s:change' % style
                     cells.append((value, style, width, line))
                 writer.write_row(cells)
-                prev_change = change
 
         writer.set_col_widths()
 
