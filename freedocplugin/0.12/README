@@ -1,0 +1,17 @@
+Usage sample fo FreeDocPlugin
+
+WWW: https://trac-hacks.org/wiki/FreeDocPlugin
+
+= Example(1) =
+
+To link to a certain man page use syntax like sshd(8) or nc(1)
+
+ 1. After every colon at the end of the line there will be an automagic return:
+   example# have your commands detected and formatted in pre
+   of course you could also use the non-root variant:
+   example$ echo "{{{ preserve command syntax till end of line }}}"
+ 1. Use a somehow more simple *bold* tag
+  Note: Will alert your readers to be careful by a drawing the attention using a grey box
+ 1. Linking to file:README or dir:/usr/local/etc will automatically syntax it.
+
+Important: Will draw a big fat warning altering your users of total disaster 
