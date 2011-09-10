@@ -58,6 +58,24 @@
   vertical-align: middle;
 }
 
+
+td.pptableticketperday { /* needed for good looking statistics */
+  position:relative;
+  padding-bottom:3ex !important;
+}
+
+.pptableticketperdaystatistics {
+  position:absolute;
+  bottom:0.2ex;
+  left:0;
+  width:100%;
+}
+
+.pptableticketperdaystatistics div {
+  text-align:center;
+}
+
+
 .ppticket .ppusecolors .ticket {
 /*   border-width: 2px; */
 /*   border-style: dotted; */
@@ -435,4 +453,7 @@ table.pplisting tbody td.ppimagecol {
 .bar_green {
   background-image:url(green3x3.png);
 }
+
+
+
 

@@ -38,11 +38,19 @@ class TicketsPerUserDay(RenderImpl):
       self.segments = [ self.parseTimeSegment(s.strip()) for s in segments.split(';') ] 
     
     
-    owners = self.macroenv.macrokw.get('owners')
-    if owners == None :
-      self.owners = []
+    rows = self.macroenv.macrokw.get('rows') # standard parameter
+    rowtype = self.macroenv.macrokw.get('rowtype') # standard parameter
+    
+    # backward compatibility
+    if rows == None :
+      rows = self.macroenv.macrokw.get('owners') # left for legacy reasons
+      rowtype = 'owner' # left for legacy reasons
+    
+    self.rowtype = rowtype
+    if rows == None :
+      self.rows = []
     else:
-      self.owners = [ o.strip() for o in owners.split(';') ] 
+      self.rows = [ o.strip() for o in rows.split(';') ] 
     
     cssclass = self.macroenv.macrokw.get('cssclass')
     if cssclass == None:
@@ -64,6 +72,22 @@ class TicketsPerUserDay(RenderImpl):
         self.showsummarypiechart = True
       else:
         pass
+
+    self.statistics_class = '' # default
+    try:
+      #self.macroenv.tracenv.log.error('fields: '+self.macroenv.macrokw.get('statistics'))
+      tmp = self.macroenv.macrokw.get('statistics').split('/')
+      self.statistics_fields = []
+      for field in tmp:
+        try:
+          if field != None and field != '' and field.strip() != '':
+            self.statistics_fields.append(field.strip())
+        except:
+          pass
+      self.statistics_class = 'pptableticketperday'
+    except Exception,e:
+      self.macroenv.tracenv.log.warning(repr(e))
+      self.statistics_fields = [] # fallback
     
     
     self.isShowAggregatedTicketState = self.macroenv.get_bool_arg('showaggregatedstate', False)
@@ -81,7 +105,39 @@ class TicketsPerUserDay(RenderImpl):
       return('%s: %s' % (self.FRAME_LABEL,title))
     else:
       return('%s' % (self.FRAME_LABEL,))
- 
+
+  def render_statistics(self,ticketlist):
+    # fallback if preconditions are not holding
+    if len(ticketlist) == 0 or self.statistics_fields == []:
+      return tag.span()
+    
+    # create a new map 
+    statistics_values = {}
+    for field in self.statistics_fields:
+      statistics_values[field] = 0
+    
+    # map containing titles
+    field_titles = {}
+    for field in self.statistics_fields:
+      field_titles[field] = 'sum of "%s"' % (field,)
+    
+    # summarize the field values of each ticket
+    html = tag.div()
+    for ticket in ticketlist:
+      for field in self.statistics_fields:
+        try:
+          statistics_values[field] += int(ticket.getfield(field))
+        except:
+          field_titles[field] = '"%s" could not be parsed to number' % (field,)
+
+    # create html construct
+    separator = ''
+    for field in self.statistics_fields:
+      html(separator, tag.span('%s' % (statistics_values[field],), title=field_titles[field]) )
+      separator = '/'
+
+    return tag.div(html, class_='pptableticketperdaystatistics')
+
   def render(self, ticketset):
     '''
       Generate HTML List
@@ -89,20 +145,20 @@ class TicketsPerUserDay(RenderImpl):
     '''
     orderedtickets = {}
     field = 'due_close'
-    owner = 'owner'
     weekdays = ['PLACEHOLDER', 'Mo','Tu','We','Th','Fr','Sa','Su']
     
     r = ''
     div = tag.div()
     
     div(class_=self.cssclass+' projectplanrender' )
-    #self.owners = ['somebody', 'anonymous' ]
-    #self.segments = ['08/01/2010', '09/01/2010', '10/01/2010','11/01/2010', '16/01/2010']
     
     # check for missing parameters 
     missingparameter = False
-    if self.owners == [] :
-      div(tag.div('Missing parameter: use a semicolon-separated list to input the "owners".', class_='ppwarning'))
+    if self.rows == [] :
+      div(tag.div('Missing parameter "rows": use a semicolon-separated list to input the "'+self.rowtype+'".', class_='ppwarning')) 
+      missingparameter = True
+    if self.rowtype == None or  str(self.rowtype).strip() == '':
+      div(tag.div('Missing parameter "rowtype": specifies the ticket attribute that should be showed.', class_='ppwarning')) 
       missingparameter = True
     if self.segments == [] :
       div(tag.div('Missing parameter: use a semicolon-separated list to input the "segments".', class_='ppwarning'))
@@ -113,7 +169,7 @@ class TicketsPerUserDay(RenderImpl):
     # init the matrix
     for segment in self.segments :
       orderedtickets[segment] = {}
-      for o in self.owners:
+      for o in self.rows:
         orderedtickets[segment][o] = []
     
     # fill up matrix
@@ -121,8 +177,7 @@ class TicketsPerUserDay(RenderImpl):
     for tid in ticketset.getIDList():
       try:
         ticket = ticketset.getTicket(tid)
-        #orderedtickets[ticket.getfield(field)][ticket.getfield(owner)].append(tag.a(href=self.env.href.wiki(str(tid)), str(tid)))
-        orderedtickets[ticket.getfield(field)][ticket.getfield(owner)].append(ticket)
+        orderedtickets[ticket.getfield(field)][ticket.getfield(self.rowtype)].append(ticket)
       except Exception,e:
         self.macroenv.tracenv.log.debug('fill up matrix: #'+str(tid)+' '+repr(e))
         pass
@@ -132,7 +187,7 @@ class TicketsPerUserDay(RenderImpl):
     currentDate = datetime.date.today()
     
     self.macroenv.tracenv.log.debug(repr(orderedtickets))
-    table = tag.table( class_="data" , border = "1", style = 'width:auto;')
+    table = tag.table( class_="data pptableticketperday" , border = "1", style = 'width:auto;')
     
     # standard values
     mystyle_org = ''
@@ -141,7 +196,7 @@ class TicketsPerUserDay(RenderImpl):
     
     # table header
     tr = tag.tr()
-    tr(tag.th('Ticket Owner'))
+    tr(tag.th(tag.h4(self.rowtype)))
     # TODO: add today css class
     for segment in self.segments:
       mystyle = mystyle_org
@@ -154,11 +209,7 @@ class TicketsPerUserDay(RenderImpl):
         calendar[segment]['date'] = consideredDate
         subtitle = weekdays[calendar[segment]['isocalendar'][2]] + ', week '+str(calendar[segment]['isocalendar'][1])
         if consideredDate == currentDate:
-          #self.macroenv.tracenv.log.debug('th.today')
           myclass = 'today' # overwrite
-        #else:
-          #self.macroenv.tracenv.log.debug('NO th.today')
-        #tr(tag.th(tag.h4(segment), tag.h5( subtitle))) # week day and number
       except Exception,e:
         self.macroenv.tracenv.log.error(str(e)+' '+segment)
         calendar[segment]['isocalendar'] = (None, None, None)
@@ -166,7 +217,6 @@ class TicketsPerUserDay(RenderImpl):
         subtitle = "--"
         mystyle = 'color:#000;'
         mytitle = 'date could not be resolved'
-        #tr(tag.th(tag.h4(segment), tag.h5( subtitle, style = 'color:#000;', title = 'date could not be resolved' ))) # HACK
       tr(tag.th(tag.h4(segment, class_ = myclass ), tag.h5( subtitle, style = mystyle, title = mytitle, class_ = myclass  ))) 
       counttickets[segment] = 0
     if self.showsummarypiechart:
@@ -180,7 +230,7 @@ class TicketsPerUserDay(RenderImpl):
     tbody = tag.tbody()
     counter=0
     
-    for o in self.owners:
+    for o in self.rows:
       if counter % 2 == 1:
         class_ = 'odd'
       else:
@@ -188,7 +238,7 @@ class TicketsPerUserDay(RenderImpl):
       counter += 1
       tr = tag.tr(class_ = class_)
       
-      tr( tag.td(tag.h5(tag.a( o, href=self.macroenv.tracenv.href()+('/query?owner=%s&order=status' % (o,)) )))) # query owner's tickets
+      tr( tag.td(tag.h5(tag.a( o, href=self.macroenv.tracenv.href()+('/query?%s=%s&order=status' % (self.rowtype,o,)) )))) # query owner's tickets
       countStatus = {} # summarize the status of a ticket 
       for segment in self.segments:
         class_ = ''
@@ -240,7 +290,7 @@ class TicketsPerUserDay(RenderImpl):
             countStatus[ticket.getfield('status')] = 1
         
         #tr(tag.td( tag.div( td_div, style = 'border-left:3px solid %s;' % (color) ) ) )
-        tr(tag.td( tag.div( td_div ), class_ = '%s %s' % (color_class, class_)  ) )
+        tr(tag.td( tag.div( td_div ), self.render_statistics(orderedtickets[segment][o]), class_ = '%s %s %s' % (color_class, class_, self.statistics_class)  ) )
       if self.showsummarypiechart:
         tr(tag.td(tag.img(src=self.createGoogleChartFromDict('ColorForStatus', countStatus)))) # Summary
       tbody(tr)
@@ -249,7 +299,7 @@ class TicketsPerUserDay(RenderImpl):
     countTickets = 0
     tfoot = tag.tfoot()
     tr = tag.tr()
-    tr(tag.td(tag.h5(str(len(self.owners))+' owners')))
+    tr(tag.td(tag.h5(self.rowtype+': '+str(len(self.rows)))))
     for segment in self.segments:
       tr(tag.td(tag.h5(str(counttickets[segment])+' tickets')))
       countTickets += counttickets[segment]

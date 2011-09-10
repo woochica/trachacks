@@ -895,7 +895,8 @@ class GVRenderer(RenderImpl):
 
 RenderRegister.add( GVRenderer, 'gvrender' )
 RenderRegister.add( GVRenderer, 'default' )
-RenderRegister.add( TicketsPerUserDay, 'tableticketperuserday' )
+RenderRegister.add( TicketsPerUserDay, 'tableticketperuserday' ) # legacy
+RenderRegister.add( TicketsPerUserDay, 'tableticketsperday' ) 
 RenderRegister.add( ReportRenderer, 'ticketlist' )
 
 

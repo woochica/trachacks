@@ -2,6 +2,8 @@
 
 '''
   refactored version of SortedReportRenderer
+  
+  known bugs: table sorter does not work while using showdescription parameter
 '''
 
 
@@ -198,6 +200,7 @@ class ReportRenderer(RenderImpl):
       Generate a HTML Table for the Fields/Extensions given
     '''
     # style overwritten to prevent browser rendering issues 
+    #outer = tag.table( class_="listing pptickettable tablesorter pplisting" , style = 'width:auto;')
     outer = tag.table( class_="listing pptickettable tablesorter pplisting" , style = 'width:auto;')
     srtlist = self.keysortedids( ticketset )
     tablehead = tag.thead()
@@ -214,6 +217,9 @@ class ReportRenderer(RenderImpl):
     # generate HTML: Table head
     for f in self.fields:
       cssheaderclass = self.getcssheaderclass(f)
+      if self.macroenv.get_bool_arg('showdescription', 'F') == True: # workaround for this parameter
+        cssheaderclass = '{sorter: false}'
+	
       self.macroenv.tracenv.log.debug('cssheaderclass of '+f+': '+cssheaderclass)
       if f in self.headermap:
         inner( tag.th( self.headermap[ f ] , title=f, class_ = cssheaderclass ) )
@@ -232,7 +238,6 @@ class ReportRenderer(RenderImpl):
     for k in srtlist:
       t = ticketset.getTicket( k )
       _odd = not _odd
-      self.macroenv.tracenv.log.warn('1: '+str(_odd))
       if _odd:
         inner = tag.tr( class_='odd' )
       else:
@@ -262,7 +267,6 @@ class ReportRenderer(RenderImpl):
       outer(inner)
       
       # if macro parameter "showdescription" is set to True, then a long description is rendered into a second row spanning of all cols
-      self.macroenv.tracenv.log.warn('2: '+str(_odd))
       if _odd:
         inner2 = tag.tr( class_='odd' )
       else:
