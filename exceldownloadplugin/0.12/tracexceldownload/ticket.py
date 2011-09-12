@@ -186,7 +186,7 @@ class ExcelTicketModule(Component):
 
     def _get_cell_data(self, name, value, req, context, writer):
         if name == 'id':
-            url = req.abs_href.ticket(value)
+            url = self.env.abs_href.ticket(value)
             value = '#%d' % value
             width = len(value)
             value = Formula('HYPERLINK("%s",%s)' % (url, get_literal(value)))
@@ -204,7 +204,7 @@ class ExcelTicketModule(Component):
             return value, name, None, None
 
         if name == 'milestone':
-            url = req.abs_href.milestone(value)
+            url = self.env.abs_href.milestone(value)
             width, line = writer.get_metrics(value)
             value = Formula('HYPERLINK("%s",%s)' % (url, get_literal(value)))
             return value, name, width, line
@@ -292,20 +292,20 @@ class ExcelReportModule(Component):
         value = cell['value']
 
         if col == 'report':
-            url = req.abs_href.report(value)
+            url = self.env.abs_href.report(value)
             width, line = writer.get_metrics(value)
             value = Formula('HYPERLINK("%s",%s)' % (url, get_literal(value)))
             return value, col, width, line
 
         if col in ('ticket', 'id'):
             value = '#%s' % cell['value']
-            url = get_resource_url(self.env, row['resource'], req.abs_href)
+            url = get_resource_url(self.env, row['resource'], self.env.abs_href)
             width = len(value)
             value = Formula('HYPERLINK("%s",%s)' % (url, get_literal(value)))
             return value, 'id', width, 1
 
         if col == 'milestone':
-            url = req.abs_href.milestone(value)
+            url = self.env.abs_href.milestone(value)
             width, line = writer.get_metrics(value)
             value = Formula('HYPERLINK("%s",%s)' % (url, get_literal(value)))
             return value, col, width, line
