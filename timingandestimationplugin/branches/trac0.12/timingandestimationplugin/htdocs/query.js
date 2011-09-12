@@ -1,13 +1,16 @@
 $(document).ready(function(){
   // Fields we will total
   var columns = ['totalhours','estimatedhours'];
-  var tbls = $('table.listing.tickets');
-  tbls.each(function(idx, tbl){
-    tbl = $(tbl);
+  var tbodies = $('table.listing.tickets tbody');
+
+  tbodies.each(function(idx, tbody){
+    tbody = $(tbody);
+    if(tbody.has('tr.even').length == 0) return true;
+    var tfoot = $('<tbody class="foot"></tbody>');
+    var totalsRow = $('tr:first-child',tbody).clone();
+    tfoot.append(totalsRow);
 
     // Build footer row
-    var tfoot = $('<tfoot></tfoot>');
-    var totalsRow = $('tbody tr:first-child',tbl).clone();
     $('td',totalsRow).empty()
       .css('background-color','#EEF')
       .css('text-align','right')
@@ -17,7 +20,7 @@ $(document).ready(function(){
     $.each(columns,function(idx, field){
       // count totals
       var total = 0;
-      $('tbody td.'+field,tbl).each(function(cidx, cell){
+      $('td.'+field,tbody).each(function(cidx, cell){
 	$(cell).css('text-align','right');
 	var val = Number($(cell).text());
 	if(!isNaN(val))total+=val;
@@ -28,7 +31,6 @@ $(document).ready(function(){
     });
 
     // attach footer row
-    tfoot.append(totalsRow);
-    tbl.append(tfoot);
+    tbody.after(tfoot);
   });
 });
