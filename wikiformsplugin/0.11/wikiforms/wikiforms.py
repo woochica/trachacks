@@ -17,6 +17,7 @@ from trac.util.datefmt    import format_datetime, utc, pretty_timedelta, timezon
 from trac.perm            import PermissionSystem, IPermissionRequestor ,PermissionError
 from trac.db.schema       import Table, Column
 
+import smtplib
 import sys
 import StringIO
 import re
@@ -169,10 +170,13 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	#}										         
     	#
     	#self.log.debug(req.args)
-    	backpath   = args.pop('__BACKPATH'  , None)
-    	form_token = args.pop('__FORM_TOKEN', None)
-    	submit     = args.pop('__SUBMIT'    , None)
-    	page	   = args.pop('__PAGE'      , None)
+    	backpath   	= args.pop('__BACKPATH'       , None)
+    	form_token 	= args.pop('__FORM_TOKEN'     , None)
+    	submit     	= args.pop('__SUBMIT'	      , None)
+    	page	   	= args.pop('__PAGE'	      , None)
+	notify_mailto   = args.pop('__NOTIFY_MAILTO'  , None)
+	notify_subject  = args.pop('__NOTIFY_SUBJECT' , None)
+	notify_body     = args.pop('__NOTIFY_BODY'    , None)
 
     	if page is None:
     	    raise HTTPBadRequest('__PAGE is required')
@@ -232,7 +236,50 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	# set form modification date...  						         
     	msg = self.set_tracform_field(db,page,'',authname)				         
 
+        if notify_mailto is not None:
+          #self.log.debug("notify >%s<,>%s<,>%s<" % (notify_mailto,notify_subject,notify_body));
+	  
+          if self.config.get('notification','smtp_enabled'):
+            smtp_from = self.config.get('notification','smtp_from')
+	    smtp_to   = notify_mailto.split(",")
+            smtp_msg  = []
+	  
+	    smtp_msg.append("From:    %s" % smtp_from)
+	    smtp_msg.append("To:      %s" % ", ".join(smtp_to))
+	    smtp_msg.append("Subject: %s" % notify_subject)
+	    smtp_msg.append("")
+
+            smtp_msg.append("Hello,")
+	    smtp_msg.append("")
+	    smtp_msg.append("please note that form '%s' was updated by user '%s'." % (page,req.authname))
+	    
+      	    if backpath is not None:
+	      smtp_msg.append("")
+	      smtp_msg.append("Link : %s%s" % (self.config.get('trac', 'base_url'),backpath))
+	    
+	    smtp_msg.append("")
+	    smtp_msg.append("Value(s) of field(s) in the form are:")
+          
+    	    msg,rows	   = self.get_tracform(db)									    
+
+            regexp = re.compile("%s\/(.*)" % page)
+   	    															  				       
+    	    for row in rows:
+    	      m = regexp.match(row['field']);											  				       
+    	      if m:
+  	    	smtp_msg.append("  %-15s : %s" % (m.group(1),row['value']))
+
+            if notify_body is not None:
+	      smtp_msg.append("")
+	      smtp_msg.append("Custom information follows:")
+  	      smtp_msg.append(notify_body)
+	      
+            smtp_server = smtplib.SMTP('localhost')
+            smtp_server.sendmail(smtp_from, smtp_to, "\r\n".join(smtp_msg))
+            smtp_server.quit()
+
     	if backpath is not None:
+	    #req.redirect(backpath)
     	    req.send_response(302)
     	    req.send_header('Content-type'  , 'text/plain')
     	    req.send_header('Location'      , backpath)
@@ -261,7 +308,7 @@ class WikiFormsMacro(WikiMacroBase,Component):
     # set defaults...																			   
     page    = formatter.req.path_info	     																   
     context = ''			     																   
-    db      = formatter.env.get_db_cnx()									        						   
+    db      = formatter.env.get_db_cnx()
 
     formatter.req.send_header('Pragma', 'no-cache')				 											   
     formatter.req.send_header('Cache-Control', 'no-cache')			 											   
@@ -437,6 +484,23 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	    if (permission['r'] == True):  
     	      result	 += "%s" % self.to_timestring(entry['updated_on'])												   
     	  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -		  
+    	  elif (command=='when2'):							  
+    	    # get updated_on of...										  
+    	    name,ignored = wikiforms_lib.get_piece(options)														   
+
+    	    resolved_name = self.resolve_name(page,context,name)													   
+    	    db  	  = formatter.env.get_db_cnx()
+    	    msg,entry	  = self.get_tracform_field(db,resolved_name)					  
+
+    	    if (permission['r'] == True):  
+    	      if (entry['field'] is not None):
+    	        last_modified = datetime.fromtimestamp(entry['updated_on'], utc)
+    	        now           = datetime.now(utc)
+    	        pretty_delta  = pretty_timedelta(now,last_modified)
+	      else:
+	        pretty_delta  = 'unset-time'													   
+    	      result	 += "%s, %s ago" % (self.to_timestring(entry['updated_on']),pretty_delta)												   
+    	  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -		  
     	  elif (command=='lastmodified'):							  
     	    # get updated_on,updated_by of...											  
     	    name,ignored = wikiforms_lib.get_piece(options)														   
@@ -547,7 +611,7 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	    placeholder_id   = self.get_placeholder_id()														   
     	    result	    += placeholder_id																   
     	    																				   
-    	    final_html[placeholder_id] = self.create_textarea(db,name,resolved_name,parameters,placeholder_id,permission)					      	     		 
+    	    final_html[placeholder_id] = self.create_textarea(db,name,resolved_name,parameters,placeholder_id,permission)
     	  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -		  
     	  elif (command=='select'):						  
     	    # create select...  									       
@@ -558,12 +622,22 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	    result	    += placeholder_id																   
     	    																				   
     	    final_html[placeholder_id] = self.create_select(db,name,resolved_name,parameters,placeholder_id,permission) 					      	     		 
-    	  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -		  
+     	  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -		  
+    	  elif (command=='notify'):						  
+    	    # create notify...  									       
+    	    resolved_name    = self.resolve_name(page,context,'')													   
+
+    	    placeholder_id   = self.get_placeholder_id()														   
+    	    result	    += placeholder_id																   
+    	    																				   
+    	    final_html[placeholder_id] = self.create_notify(db,'',resolved_name,options,placeholder_id) 					      	     		 
+     	  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -		  
     	  elif (command=='submit'):						  
     	    # create button...
     											        									   
     	    placeholder_id   = self.get_placeholder_id()														   
     	    result	    += placeholder_id																   
+    	    resolved_name    = self.resolve_name(page,context,name)													   
     	    																				   
     	    final_html[placeholder_id] = self.create_submit(name,resolved_name,options,placeholder_id,permission)						      	     	 
     	  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -847,7 +921,7 @@ class WikiFormsMacro(WikiMacroBase,Component):
 
     if (entry['field'] is not None):									      			 
       # ...overwrite hardcoded/user-defined default with database value...				      	    		 
-      text_def['cfg']['value'] = entry['value'] 							      			 
+      text_def['cfg']['value'] = entry['value']
 
     if (permission['w'] == False):										  
       access_flag = 'DISABLED'											  
@@ -870,7 +944,7 @@ class WikiFormsMacro(WikiMacroBase,Component):
     		       text_def['cfg']['cols' ],							      		       
     		       text_def['cfg']['rows' ],								  
     		       access_flag,									     	  
-    		       text_def['cfg']['value'] 							      		       
+    		       escape(text_def['cfg']['value']) 							      		       
     		      ) 										      		       
     return result											      		 
 
@@ -959,6 +1033,50 @@ class WikiFormsMacro(WikiMacroBase,Component):
 
   # --------------------------------------------------------------------------------------------------------------------------
 
+  def create_notify(self, db, name, resolved_name, parameters, placeholder_id):
+    # create notify...											         
+    result = '' 											         
+    notify_def = {'cfg'   : { 'mail_to' : 'default_receiver'					        	       
+    			     ,'subject' : 'wikiform updated'					        	       
+    			     ,'body'    : None					        	       
+    			    },  									        	       
+    		  'xtras' : [], 									        	       
+    		  'xtra'  : {}  									        	       
+    		 }											        	       
+
+    # ...overwrite hardcoded defaults with user-defined values...					        	       
+    notify_def = wikiforms_lib.parse_options(parameters,notify_def)					        		       
+    													        	       
+    result += """
+                   <INPUT 						       
+    	            type="hidden" 					       
+    	            name="__NOTIFY_MAILTO" 				       
+    	            value="%s"						       
+    	           >	
+               """ % notify_def['cfg']['mail_to'];
+
+    result += """
+                   <INPUT 						       
+    	            type="hidden" 					       
+    	            name="__NOTIFY_SUBJECT" 				       
+    	            value="%s"						       
+    	           >	
+               """ % notify_def['cfg']['subject'];
+
+    if (notify_def['cfg']['body'] is not None):
+      result += """
+        	     <INPUT		  
+        	      type="hidden"	  	   			       
+        	      name="__NOTIFY_BODY" 	   			       
+        	      value="%s"	  	   			       
+        	     >    			   			       
+        	 """ % notify_def['cfg']['body'];
+
+
+    return result											               
+
+  # --------------------------------------------------------------------------------------------------------------------------
+
   def create_submit(self, name, resolved_name, parameters, placeholder_id,permission):
     # create submit...												        
     result = '' 											                
@@ -1043,16 +1161,16 @@ class WikiFormsMacro(WikiMacroBase,Component):
     	      name="__PAGE" 
     	      value='%s'					       
     	     >							       
-    	    							       
+    	    	
     	     </FORM>						       
-    	  """ % (dest,  		 			       
-    		 form_name,					       
-    		 form_css_id,	   				       
-    		 form_css_class,   				       
-    		 form_body,					       
-    		 backpath,					       
-    		 form_token,					       
-    		 page)						       
+    	  """ % (dest  		 			       
+    		 ,form_name					       
+    		 ,form_css_id	   				       
+    		 ,form_css_class   				       
+    		 ,form_body					       
+    		 ,backpath					       
+    		 ,form_token					       
+    		 ,page)						       
         	   
   # --------------------------------------------------------------------------------------------------------------------------
 
