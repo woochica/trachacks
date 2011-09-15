@@ -14,19 +14,10 @@ Arguments:
      xmlns:py="http://genshi.edgewall.org/"
      xmlns:xi="http://www.w3.org/2001/XInclude"
      xmlns:i18n="http://genshi.edgewall.org/i18n"
-	 i18n:domain="ticketnav"
      id="ticket" class="${preview_mode and 'ticketdraft' or None}">
   <div class="date">
-	<py:choose>
-		<py:when test="date_format == 'absolute'">
-			<p i18n:msg="created" py:if="ticket.exists">Creation date: ${dateinfo_abs(ticket.time)}</p>
-			<p i18n:msg="modified" py:if="ticket.changetime != ticket.time">Modify date: ${dateinfo_abs(ticket.changetime)}</p>
-		</py:when>
-		<py:otherwise>
-			<p i18n:msg="created" py:if="ticket.exists">Opened ${dateinfo(ticket.time)} ago</p>
-			<p i18n:msg="modified" py:if="ticket.changetime != ticket.time">Last modified ${dateinfo(ticket.changetime)} ago</p>
-		</py:otherwise>
-	</py:choose>
+    <p i18n:msg="created" py:if="ticket.exists">Opened ${dateinfo(ticket.time)} ago</p>
+    <p i18n:msg="modified" py:if="ticket.changetime != ticket.time">Last modified ${dateinfo(ticket.changetime)} ago</p>
     <p py:if="not ticket.exists"><i>(ticket not yet created)</i></p>
   </div>
   <!--! use a placeholder if it's a new ticket -->
@@ -47,7 +38,7 @@ Arguments:
     <tr py:for="row in group(fields, 2, lambda f: f.type != 'textarea')"
       py:with="fullrow = len(row) == 1">
       <py:for each="idx, field in enumerate(row)">
-      <py:if test="field and field.type != 'textarea'">
+	  <py:if test="field and field.type != 'textarea'">
         <th py:if="idx == 0 or not fullrow"
             id="${field and 'h_' + field.name or None}">
           <py:if test="field"><i18n:msg params="field">${field.label or field.name}:</i18n:msg></py:if>
@@ -64,20 +55,19 @@ Arguments:
             </py:choose>
           </py:if>
         </td>
-        </py:if>
+	  </py:if>
       </py:for>
     </tr>
   </table>
-
   <!-- print textareas full width -->
   <py:for each="field in fields">
 	<py:if test="field.type == 'textarea'"> <!--  and field.name != 'description' -->
-	    <div class="description">
-		    <h2 class="foldable">${field.label}</h2>
+	    <div class="description"><!-- +collapsed???-->
+		    <h2 class="foldable" >${field.label}</h2>
 		    <div py:if="ticket[field.name]" class="searchable" xml:space="preserve">
-		      ${wiki_to_html(context, '{{{ \n#!html \n' + ticket[field.name] + '\n}}}', escape_newlines=preserve_newlines)}
-		    </div>
-	    </div>
+				${wiki_to_html(context, ticket[field.name], escape_newlines=preserve_newlines)}
+			</div>
+		</div>
 	</py:if>
   </py:for>
 </div>
