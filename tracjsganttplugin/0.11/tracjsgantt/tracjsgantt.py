@@ -67,7 +67,7 @@ class TracJSGanttSupport(Component):
               """Show start date column""")
     IntOption('trac-jsgantt', 'option.endDate', 1, 
               """Show finish date column""")
-    Option('trac-jsgantt', 'option.date_display', 'mm/dd/yyyy', 
+    Option('trac-jsgantt', 'option.dateDisplay', 'mm/dd/yyyy', 
            """Format to display dates""")
     IntOption('trac-jsgantt', 'option.openLevel', 999, 
               """How many levels of task hierarchy to show open""")
