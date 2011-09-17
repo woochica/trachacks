@@ -68,6 +68,21 @@ class WikiCalendarMacros(Component):
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
+        # Parse 'wikicalendar' configuration section for test instructions.
+        # Valid options are written as check.<item>.<test name>, where item
+        # is optional.  The value must be a SQL query with arguments depending
+        # on the item it applies to.
+        self.checks = {}
+        conf_section = self.config['wikicalendar']
+        for key, sql in conf_section.options():
+            if key.startswith('check.'):
+                check_type = key.split('.')
+                if len(check_type) in range(2,4):
+                    self.checks[check_type[-1]] = {'test': sql}
+                    if len(check_type) == 3:
+                        # We've got test type information too.
+                        self.checks[check_type[-1]]['type'] = check_type[1]
+
         # Read options from Trac configuration system, adjustable in trac.ini.
         #  [wiki] section
         self.sanitize = True
@@ -155,10 +170,25 @@ class WikiCalendarMacros(Component):
         markup = tag.td(markup)
         return markup(class_='x')
 
-    def _gen_wiki_links(self, wiki, label, a_class, url, wiki_page_template):
+    def _gen_wiki_links(self, wiki, label, a_class, url, wiki_page_template,
+                        check=None):
+        check_sign = None
         if WikiSystem(self.env).has_page(wiki.lstrip('/')):
             a_class += " page"
             title = _("Go to page %s") % wiki
+            if check and check[0] == 'link':
+                chrome_path = '/'.join([self.ref.req.base_path, 'chrome'])
+                ok_img = 'wikicalendar/check_ok.png'
+                ok = tag.image(src='/'.join([chrome_path, ok_img]),
+                               alt='ok', title='ok')
+                nok_img = 'wikicalendar/check_nok.png'
+                nok = tag.image(src='/'.join([chrome_path, nok_img]),
+                                alt='X', title='X')
+                unk_img = 'wikicalendar/check_unknown.png'
+                unk = tag.image(src='/'.join([chrome_path, unk_img]),
+                                alt='?', title='?')
+                result = self._do_check(check[1], wiki)
+                check_sign = result and (result == 1 and ok or nok) or unk
         else:
             url += "?action=edit"
             # adding template name, if specified
@@ -167,7 +197,7 @@ class WikiCalendarMacros(Component):
             title = _("Create page %s") % wiki
         link = tag.a(tag(label), href=url)
         link(class_=a_class, title_=title)
-        return link
+        return tag(link, check_sign)
 
     def _gen_ticket_entry(self, t, a_class=''):
         id = str(t.get('id'))
@@ -219,6 +249,20 @@ class WikiCalendarMacros(Component):
         ticket_short(class_=a_class)
 
         return ticket,ticket_short
+
+    def _do_check(self, test, item):
+        """Execute configurable tests per calendar item."""
+        # DEVEL: Fail condition not implemented yet, will need additional
+        #   configuration too.
+        if test in self.checks.keys():
+            sql = self.checks[test].get('test')
+            if sql:
+                db = self.env.get_db_cnx()
+                cursor = db.cursor()
+                cursor.execute(sql, (item,))
+                row = cursor.fetchone()
+                if row is not None:
+                    return 1
 
     # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
@@ -276,6 +320,12 @@ class WikiCalendarMacros(Component):
         show_t_open_dates = True
         wiki_page_template = ""
         wiki_subpages = []
+
+        # Read optional check plan.
+        check = []
+        if kwargs.has_key('check'):
+            check = kwargs['check'].split('.')
+
         if name == 'WikiTicketCalendar':
             if len(args) >= 5 or kwargs.has_key('cdate'):
                 try:
@@ -467,6 +517,8 @@ class WikiCalendarMacros(Component):
                         milestone = tag.div(tag.a(milestone, href=url))
                         milestone(class_='milestone')
 
+                    day = tag.span(day)
+                    day(class_='day')
                     if len(wiki_subpages) > 0:
                         pages = tag(day, Markup('<br />'))
                         for page in wiki_subpages:
@@ -474,11 +526,13 @@ class WikiCalendarMacros(Component):
                             page = wiki + '/' + page
                             url = self.env.href.wiki(page)
                             pages(self._gen_wiki_links(page, label, 'subpage',
-                                                     url, wiki_page_template))
+                                                     url, wiki_page_template,
+                                                     check))
                     else:
                         url = self.env.href.wiki(wiki)
                         pages = self._gen_wiki_links(wiki, day, a_class,
-                                                     url, wiki_page_template)
+                                                     url, wiki_page_template,
+                                                     check)
                     cell = tag.td(pages)
                     cell(class_=td_class, valign='top')
                     if name == 'WikiCalendar':
@@ -594,3 +648,4 @@ class WikiCalendarMacros(Component):
         # Add common CSS stylesheet
         add_stylesheet(self.ref.req, 'wikicalendar/wikicalendar.css')
         return buff
+

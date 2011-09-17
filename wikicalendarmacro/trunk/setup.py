@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2010, Steffen Hoffmann
+# Copyright (c) 2010,2011 Steffen Hoffmann
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -82,7 +82,7 @@ with one or more of it's corresponding attributes.
     extras_require = {'Babel': 'Babel>= 0.9.5', 'Trac': 'Trac >= 0.12'},
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
-        'wikicalendar': ['htdocs/*.css', 'locale/*/LC_MESSAGES/*.mo'],
+        'wikicalendar': ['htdocs/*', 'locale/*/LC_MESSAGES/*.mo'],
     },
     zip_safe = True,
     entry_points = {
