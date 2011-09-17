@@ -22,18 +22,15 @@ import datetime
 import re
 import sys
 
-from pkg_resources          import resource_filename
-from StringIO               import StringIO
-
 from genshi.builder         import tag
 from genshi.core            import escape, Markup
-from genshi.filters.html    import HTMLSanitizer
-from genshi.input           import HTMLParser, ParseError
+from pkg_resources          import resource_filename
+from sgmllib                import SGMLParser
 
 from trac.config            import Configuration, Option
 from trac.core              import Component, implements
 from trac.util.datefmt      import format_date, to_utimestamp
-from trac.util.text         import to_unicode
+from trac.util.text         import shorten_line, to_unicode
 from trac.web.href          import Href
 from trac.web.chrome        import add_stylesheet, ITemplateProvider
 from trac.wiki.api          import parse_args, IWikiMacroProvider, \
@@ -45,6 +42,22 @@ from ticket                 import WikiCalendarTicketProvider
 
 
 __all__ = ['WikiCalendarMacros']
+
+
+class TextExtractor(SGMLParser):
+    """A simple custom HTML-to-text parser without external dependencies.
+
+    Taken from http://stackoverflow.com/questions/3398852
+      /using-python-remove-html-tags-formatting-from-a-string/3399071#3399071
+    by Wai Yip Tung.
+    """
+    def __init__(self):
+        self.text = []
+        SGMLParser.__init__(self)
+    def handle_data(self, data):
+        self.text.append(data)
+    def getvalue(self):
+        return ''.join(self.text)
 
 
 class WikiCalendarMacros(Component):
@@ -204,34 +217,20 @@ class WikiCalendarMacros(Component):
         status = t.get('status')
         summary = to_unicode(t.get('summary'))
         owner = to_unicode(t.get('owner'))
-        description = to_unicode(t.get('description')[:1024])
+        description = to_unicode(t.get('description'))
         url = t.get('href')
 
         if status == 'closed':
             a_class = a_class + 'closed'
         else:
             a_class = a_class + 'open'
+
+        # Reduce content for tooltips.
         markup = format_to_html(self.env, self.ref.context, description)
-        # Escape, if requested
-        if self.sanitize is True:
-            try:
-                description = HTMLParser(StringIO(markup)
-                                           ).parse() | HTMLSanitizer()
-            except ParseError:
-                description = escape(markup)
-        else:
-            description = markup
+        extractor = TextExtractor()
+        extractor.feed(markup)
+        tip = tag.span(shorten_line(extractor.getvalue()))
 
-        # Replace tags that destruct tooltips too much
-        desc = self.end_RE.sub(']', Markup(description))
-        desc = self.del_RE.sub('', desc)
-        # need 2nd run after purging newline in table cells in 1st run
-        desc = self.del_RE.sub('', desc)
-        desc = self.item_RE.sub('X', desc)
-        desc = self.tab_RE.sub('[|||]', desc)
-        description = self.open_RE.sub('[', desc)
-
-        tip = tag.span(Markup(description))
         ticket = '#' + id
         ticket = tag.a(ticket, href=url)
         ticket(tip, class_='tip', target='_blank')
@@ -383,16 +382,6 @@ class WikiCalendarMacros(Component):
         curr_day = None
         if year == self.thistime.year and month == self.thistime.month:
             curr_day = self.thistime.day
-
-        # Compile regex pattern before use for better performance
-        pattern_del  = '(?:<span .*?>)|(?:</span>)'
-        pattern_del += '|(?:<p>)|(?:<p .*?>)|(?:</p>)'
-        pattern_del += '|(?:</table>)|(?:<td.*?\n)|(?:<tr.*?</tr>)'
-        self.end_RE  = re.compile('(?:</a>)')
-        self.del_RE  = re.compile(pattern_del)
-        self.item_RE = re.compile('(?:<img .*?>)')
-        self.open_RE = re.compile('(?:<a .*?>)')
-        self.tab_RE  = re.compile('(?:<table .*?>)')
 
         # for prev/next navigation links
         prevMonth = month - 1
