@@ -1,13 +1,17 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
+# Copyright (C) 2011 Itamar Ostricher <itamarost@gmail.com>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 #
 
+import re
+
 from genshi.builder import tag as builder
 
+from trac.config import ListOption
 from trac.core import implements
 from trac.resource import Resource, get_resource_url, render_resource_link
 from trac.util import embedded_numbers
@@ -64,6 +68,11 @@ class TagWikiMacros(TagTemplateProvider):
 
     implements(IWikiMacroProvider)
 
+    exclude_realms = ListOption('tags', 'listtagged_exclude_realms', [],
+        doc="""Comma-separated list of realms to exclude from tags queries
+            by default, unless specifically included using "realm:realm-name"
+            in a query.""")
+
     def __init__(self):
         # TRANSLATOR: Keep macro doc style formatting here, please.
         self.doc_cloud = _("""Display a tag cloud.
@@ -110,9 +119,19 @@ class TagWikiMacros(TagTemplateProvider):
             return render_cloud(self.env, req, all_tags)
 
         elif name == 'ListTagged':
+            query = content
             req = formatter.req
             tag_system = TagSystem(self.env)
-            query_result = tag_system.query(req, content)
+            realms = [p.get_taggable_realm() for p in tag_system.tag_providers]
+            for realm in self.exclude_realms:
+                if not re.search('(^|\W)realm:%s(\W|$)' % (realm), query):
+                    realms.remove(realm)
+            if len(realms) == 0:
+                return ''
+            query = '(%s) (%s)' % (query, ' or '.join(['realm:%s' % (r)
+                                                       for r in realms]))
+            self.env.log.debug('LISTTAGGED_QUERY: ' + query)
+            query_result = tag_system.query(req, query)
             add_stylesheet(req, 'tags/css/tractags.css')
 
             def _link(resource):
@@ -139,3 +158,4 @@ class TagWikiMacros(TagTemplateProvider):
                     li = builder.li(_link(resource), ' ', desc)
                 ul(li, '\n')
             return ul
+

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
+# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
+# Copyright (C) 2011 Itamar Ostricher <itamarost@gmail.com>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -11,6 +13,7 @@ import math
 
 from genshi.builder import tag as builder
 from pkg_resources import resource_filename
+from trac.config import ListOption
 from trac.core import Component, ExtensionPoint, implements
 from trac.mimeview import Context
 from trac.resource import Resource
@@ -55,6 +58,11 @@ class TagRequestHandler(TagTemplateProvider):
 
     tag_providers = ExtensionPoint(ITagProvider)
 
+    exclude_realms = ListOption('tags', 'exclude_realms', [],
+        doc="""Comma-separated list of realms to exclude from tags queries
+            by default, unless specifically included using "realm:realm-name"
+            in a query.""")
+
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
         if 'TAGS_VIEW' in req.perm:
@@ -85,8 +93,13 @@ class TagRequestHandler(TagTemplateProvider):
             )
 
         realms = [p.get_taggable_realm() for p in self.tag_providers]
-        checked_realms = [r for r in realms if r in req.args] or realms
-        data['tag_realms'] = [{'name': realm, 'checked': realm in checked_realms}
+        if not 'q' in req.args or [r for r in realms if r in req.args] == []: 
+            for realm in realms:
+                if not realm in self.exclude_realms:
+                    req.args[realm] = 'on'
+        checked_realms = [r for r in realms if r in req.args]
+        data['tag_realms'] = [{'name': realm,
+                               'checked': realm in checked_realms}
                               for realm in realms]
 
         single_page = re.match(r"""(['"]?)(\w+)\1$""", query)
@@ -109,7 +122,10 @@ class TagRequestHandler(TagTemplateProvider):
                                             if r in checked_realms]), query)
         self.env.log.debug('Tag query: %s', query)
         try:
-            data['tag_body'] = macros.expand_macro(formatter, macro, query)
+            # Query string without realm throws 'NotImplementedError'.
+            data['tag_body'] = len(checked_realms) > 0 and \
+                               macros.expand_macro(formatter, macro, query) \
+                               or ''
         except InvalidQuery, e:
             data['tag_query_error'] = to_unicode(e)
             data['tag_body'] = macros.expand_macro(formatter, 'TagCloud', '')
