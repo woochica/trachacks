@@ -260,6 +260,8 @@ validaterule.setup = function(input, spec){
         
         // listen for form submission
         form.submit(function(){
+            if (field.is(":hidden"))
+                return true;
             if ((spec.value == "" && input.val() == "") ||
                 (spec.value != "" && RegExp(spec.value).test(input.val()))){
                 // alert only once per form submission
