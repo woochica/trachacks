@@ -47,12 +47,18 @@ var copyrule = new Rule('CopyRule'); // must match python class name exactly
 
 // apply
 copyrule.apply = function(input, spec){
-    var target = spec.target;
-
     if (spec.value == undefined)
         return;
-        
-    var field = jQuery('#field-'+target);
+    
+    var field = jQuery('#field-'+spec.target);
+    
+    // 'owner' field is special case 
+    if (spec.target == 'owner' && field.length == 0) {
+		field = jQuery('#action_reassign_reassign_owner');
+		if (field.length == 0)
+		    field = jQuery('#action_assign_reassign_owner');
+	}
+    
     if (spec.overwrite.toLowerCase() == 'false' && field.val() != '')
         return;
     
@@ -258,7 +264,7 @@ validaterule.setup = function(input, spec){
     
     // 'owner' field is special case 
     if (spec.target == 'owner' &&
-        input.attr('id').indexOf('ssign_reassign_owner') != -1)
+        input.attr('id').indexOf('assign_reassign_owner') != -1)
         field = jQuery(input);
     
     // proceed only if input field matches the spec's target field
