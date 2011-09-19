@@ -242,12 +242,19 @@ var validaterule = new Rule('ValidateRule'); // must match python class name exa
 // setup
 validaterule.setup = function(input, spec){
     var field = jQuery('#field-'+spec.target);
-    var form = jQuery('input[name=submit]')
-                .click(function(){
-                    // reset "alert only once per form submission"
-                    $(this).parents('form').removeClass('validated');
-                 })
-                .parents('form');
+    var submit = jQuery('input[name=submit]');
+    var form = submit.parents('form');
+    
+    // reset "alert only once per form submission"
+    submit.click(function(){
+        if (jQuery(".validated").length){
+            form.removeClass('validated');
+            var a = jQuery("a:contains(Modify Ticket)");
+            var div = a.parent().parent();
+            if (div.hasClass('collapsed'))
+                a.click();
+        }
+     });        
     
     // 'owner' field is special case 
     if (spec.target == 'owner' &&
