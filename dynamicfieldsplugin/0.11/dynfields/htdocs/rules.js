@@ -232,3 +232,50 @@ hiderule.query = function(spec){
               .hide();
     }
 };
+
+
+/*
+ * ValidateRule implementation
+ */
+var validaterule = new Rule('ValidateRule'); // must match python class name exactly
+
+// setup
+validaterule.setup = function(input, spec){
+    var field = jQuery('#field-'+spec.target);
+    var form = jQuery('input[name=submit]')
+                .click(function(){
+                    // reset "alert only once per form submission"
+                    $(this).parents('form').removeClass('validated');
+                 })
+                .parents('form');
+    
+    // 'owner' field is special case 
+    if (spec.target == 'owner' &&
+        input.attr('id').indexOf('ssign_reassign_owner') != -1)
+        field = jQuery(input);
+    
+    // proceed only if input field matches the spec's target field
+    if (input.attr('id') == field.attr('id') && !field.hasClass('validated')){
+        field.addClass('validated');
+        
+        // listen for form submission
+        form.submit(function(){
+            if ((spec.value == "" && input.val() == "") ||
+                (spec.value != "" && RegExp(spec.value).test(input.val()))){
+                // alert only once per form submission
+                if (!form.hasClass('validated')){
+                    form.addClass('validated');
+                    if (spec.value == '')
+                        var e = 'be empty';
+                    else
+                        var e = 'equal '+spec.value;
+                    alert(spec.target+" must not "+e);
+                    field.focus();
+                }
+                return false;
+            } else {
+                return true;
+            }
+        });
+    }
+};

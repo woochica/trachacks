@@ -243,3 +243,28 @@ class HideRule(Component, Rule):
         if options and value and value not in options and '|' not in value:
             return spec['op'] == 'show'
         return False
+
+
+class ValidateRule(Component, Rule):
+    """Checks a field for an invalid value.
+    
+    Example trac.ini specs:
+    
+      [ticket-custom]
+      milestone.invalid_if = 
+    """
+    
+    implements(IRule)
+    
+    def get_trigger(self, target, key, opts):
+        if key == '%s.invalid_if' % target:
+            return target
+        return None
+    
+    def update_spec(self, req, key, opts, spec):
+        spec['op'] = 'validate'
+        spec['value'] = opts[key]
+    
+    def update_pref(self, req, trigger, target, key, opts, pref):
+        suffix = opts[key] and "= %s" % opts[key] or "is empty"
+        pref['label'] = "Invalid if %s %s" % (target, suffix)
