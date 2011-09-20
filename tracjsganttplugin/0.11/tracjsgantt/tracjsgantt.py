@@ -559,7 +559,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         if not options['omitMilestones']:
             for t in self.tickets:
-                if t['milestone'] != '' and t['milestone'] not in milestones:
+                if 'milestone' in t and \
+                        t['milestone'] != '' and \
+                        t['milestone'] not in milestones:
                     milestones.append(t['milestone'])
 
         self.firstMilestoneID = 9999
