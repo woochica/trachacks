@@ -530,7 +530,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     if int(tid) in self.ticketsByID:
                         succ = self.ticketsByID[int(tid)]
                         if succ['type'] == self.milestoneType:
-                            f = datetime.datetime(*time.strptime(succ[self.fields['finish']], self.dbDateFormat)[0:7])
+                            if succ[self.fields['finish']] == '':
+                                f = date.today()
+                            else:
+                                f = datetime.datetime(*time.strptime(succ[self.fields['finish']], self.dbDateFormat)[0:7])
                             if finish == None or finish > f:
                                 finish = f
                 if finish == None:
