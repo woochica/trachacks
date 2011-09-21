@@ -34,13 +34,13 @@ class StickyTicketModule(Component):
         add_domain(self.env.path, dir)
 
     # IEnvironmentSetupParticipant
-    def environment_created():
+    def environment_created(self):
         pass
 
-    def environment_needs_upgrade(db):
+    def environment_needs_upgrade(self, db):
         return False
 
-    def upgrade_environment(db):
+    def upgrade_environment(self, db):
         pass
 
     # IContentConverter
