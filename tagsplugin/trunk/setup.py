@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 extra = {}
 
@@ -22,7 +22,7 @@ except ImportError:
 setup(
     name='TracTags',
     version='0.7',
-    packages=['tractags'],
+    packages=find_packages(exclude=['*.tests']),
     package_data={'tractags' : [
         'templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css',
         'locale/*/LC_MESSAGES/*.mo', 'locale/.placeholder']},
@@ -36,5 +36,7 @@ setup(
     dependency_links=['http://svn.edgewall.org/repos/genshi/trunk#egg=Genshi-dev'],
     install_requires=['Genshi >= 0.5', 'Trac >= 0.11'],
     extras_require={'Babel': 'Babel>= 0.9.5', 'Trac': 'Trac >= 0.12'},
+    test_suite = 'tractags.tests.test_suite',
+    tests_require = [],
     **extra
     )
