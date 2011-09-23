@@ -16,7 +16,7 @@ from trac.resource import Resource
 from pkg_resources import resource_filename
 from trac.web.href import Href
 from trac.web.api import IAuthenticator
-from trac.config import Option
+from trac.config import Option, BoolOption
 import os
 import re
 
@@ -144,6 +144,8 @@ class WikiPrint(Component):
     extracontent_url = Option('wikiprint', 'extracontent_url')
     httpauth_user = Option('wikiprint', 'httpauth_user')
     httpauth_password = Option('wikiprint', 'httpauth_password')
+    omit_links = BoolOption('wikiprint', 'omit_links')
+    rebase_links = Option('wikiprint', 'rebase_links')
     default_charset = Option('trac', 'default_charset', 'utf-8')
     
     implements(IAuthenticator)
@@ -185,11 +187,9 @@ class WikiPrint(Component):
         for r in [re.compile(r'\[\[TOC(\(.*\))?\]\]'), re.compile(r'\[\[PageOutline(\(.*\))?\]\]')]:
             text = r.sub('![[pdf-toc]]', text)
 
-        omit_links = req.args.get('omit_links', '0')
         link_format = req.args.get('link_format', None)
-        rebase_links = req.args.get('rebase_links', None)
             
-        if omit_links <> '0':
+        if self.omit_links:
             r1 = re.compile(r'\[wiki:(.*?) (.*?)\]')
             text = r1.sub('[\g<2>]', text)            
             r2 = re.compile(r'\[wiki:(.*?)\]')
@@ -199,9 +199,9 @@ class WikiPrint(Component):
             r = re.compile(r'(?<=\[wiki:)(.*?)(?=(?: .*?)?\])')
             text = r.sub('\g<1>?format=%s&link_format=%s' % (link_format, link_format), text)
             
-        if rebase_links:
+        if self.rebase_links:
             r = re.compile(r'\[wiki:(.*?)\]')
-            text = r.sub('[%s/wiki/\g<1>]' % rebase_links, text)
+            text = r.sub('[%s/wiki/\g<1>]' % self.rebase_links, text)
 
         self.env.log.debug('WikiPrint => Wiki input for WikiPrint: %r' % text)
         
