@@ -42,7 +42,7 @@ from trac.perm import IPermissionRequestor, PermissionSystem
 from trac.util import Markup
 from trac.util.datefmt import to_datetime
 from trac.ticket.admin import IAdminPanelProvider
-from trac.web.chrome import ITemplateProvider, Chrome
+from trac.web.chrome import add_script, ITemplateProvider, Chrome
 from trac.ticket.api import TicketSystem
 from trac.ticket.query import Query
 from trac.ticket.model import Ticket
@@ -54,7 +54,7 @@ from importexportxls.formats import *
 
 class ImportExportAdminPanel(Component):
     
-    implements(ITemplateProvider, IAdminPanelProvider)
+    implements(ITemplateProvider, IPermissionRequestor, IAdminPanelProvider)
 
     _type = 'importexport'
     _label = ('Import/Export XLS', 'Import/Export XLS')
@@ -69,6 +69,10 @@ class ImportExportAdminPanel(Component):
         
         self.exportForced = ['id', 'summary']
         self.importForbidden = ['id', 'summary', 'time', 'changetime']
+
+    # IPermissionRequestor methods  
+    def get_permission_actions(self):  
+        return ['TICKET_ADMIN']  
 
     def get_admin_panels(self, req):
         if 'TICKET_ADMIN' in req.perm:
@@ -120,6 +124,7 @@ class ImportExportAdminPanel(Component):
             if req.args.get('import_preview'):
                 (settings['tickets'], settings['importedFields'], settings['warnings']) = self._get_import_preview(req)
                 template = 'importexport_preview.html'
+                add_script(req, "importexportxls/importexport_preview.js")
             if req.args.get('import'):
                 settings = self._process_import(req)
                 template = 'importexport_done.html'
@@ -142,7 +147,8 @@ class ImportExportAdminPanel(Component):
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        return []
+        from pkg_resources import resource_filename
+        return [('importexportxls', resource_filename(__name__, 'htdocs'))]
 
     def _get_fields_format(self, fields = None):
         fieldsFormat = {}
@@ -392,6 +398,8 @@ class ImportExportAdminPanel(Component):
             summary = self.formats['text'].restore( sh.cell_value(r, summaryIndex) )
             if tid == '' or tid == None:
                 ticket = Ticket(self.env)
+                for k in fieldsLabels.keys():
+                    ticket[k] = ticket.get_value_or_default(k)
                 ticket['summary'] = summary
             else:
                 ticket = Ticket(self.env, tkt_id=tid)

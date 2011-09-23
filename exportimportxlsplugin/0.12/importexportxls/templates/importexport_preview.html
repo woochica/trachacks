@@ -16,7 +16,10 @@
     <py:def function="print_ticket(t)">
       <py:for each="fd in importedFields">
         <py:choose test="">
-          <py:when test="t.exists and fd.name in t._old"><td class='modified'>${t[fd.name]}</td></py:when>
+          <py:when test="t.exists and fd.name in t._old">
+            <td class='modified'>${t[fd.name]}</td>
+            <script type="text/javascript">modified_tickets['ticket.${tickets.index(t)}']='ticket.${tickets.index(t)}';</script>
+          </py:when>
           <py:otherwise><td>${t[fd.name]}</td></py:otherwise>
         </py:choose>
       </py:for>
@@ -60,7 +63,8 @@
               <py:choose test="">
                 <py:when test="not t.exists">
                   <tr class='added'>
-                    <td><input type="checkbox" checked="checked" name="ticket.${tickets.index(t)}" value="True" /></td>
+                    <td><input type="checkbox" checked="checked" name="ticket.${tickets.index(t)}" id="ticket.${tickets.index(t)}" value="True" />
+                        <script type="text/javascript">added_tickets['ticket.${tickets.index(t)}']='ticket.${tickets.index(t)}';</script></td>
                     <td><a href="${req.href('ticket', t.id)}" target="_blank">#${t.id}</a></td>
                     <td>${t['summary']}</td>
                     ${print_ticket(t)}
@@ -68,7 +72,7 @@
                 </py:when>
                 <py:otherwise>
                   <tr>
-                    <td><input type="checkbox" checked="checked" name="ticket.${tickets.index(t)}" value="True" /></td>
+                    <td><input type="checkbox" checked="checked" name="ticket.${tickets.index(t)}" id="ticket.${tickets.index(t)}" value="True" /></td>
                     <td><a href="${req.href('ticket', t.id)}" target="_blank">#${t.id}</a></td>
                     <td>${t['summary']}</td>
                     ${print_ticket(t)}
@@ -79,6 +83,12 @@
           </tbody>
         </table>
         
+        <div class="buttons">
+          <input type="button" value="Select All" onclick="importexportxls_set_import_checkbox(true)" />
+          <input type="button" value="Uncheck All" onclick="importexportxls_set_import_checkbox(false)" />
+          <input type="button" value="Select modified" onclick="importexportxls_select(modified_tickets)" />
+          <input type="button" value="Select added" onclick="importexportxls_select(added_tickets)" />
+        </div>
         <div class="buttons">
           <input type="submit" name="import" value="Save" />
         </div>
