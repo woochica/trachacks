@@ -185,6 +185,24 @@ class WikiPrint(Component):
         for r in [re.compile(r'\[\[TOC(\(.*\))?\]\]'), re.compile(r'\[\[PageOutline(\(.*\))?\]\]')]:
             text = r.sub('![[pdf-toc]]', text)
 
+        omit_links = req.args.get('omit_links', '0')
+        link_format = req.args.get('link_format', None)
+        rebase_links = req.args.get('rebase_links', None)
+            
+        if omit_links <> '0':
+            r1 = re.compile(r'\[wiki:(.*?) (.*?)\]')
+            text = r1.sub('[\g<2>]', text)            
+            r2 = re.compile(r'\[wiki:(.*?)\]')
+            text = r2.sub('[\g<1>]', text)            
+        elif link_format:
+            #Keep links to the same export format
+            r = re.compile(r'(?<=\[wiki:)(.*?)(?=(?: .*?)?\])')
+            text = r.sub('\g<1>?format=%s&link_format=%s' % (link_format, link_format), text)
+            
+        if rebase_links:
+            r = re.compile(r'\[wiki:(.*?)\]')
+            text = r.sub('[%s/wiki/\g<1>]' % rebase_links, text)
+
         self.env.log.debug('WikiPrint => Wiki input for WikiPrint: %r' % text)
         
         #First create a Context object from the wiki page
