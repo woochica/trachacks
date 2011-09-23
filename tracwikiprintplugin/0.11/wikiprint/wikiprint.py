@@ -91,7 +91,7 @@ class linkLoader:
             suffix = ""
             if "." in path:
                 new_suffix = "." + path.split(".")[-1].lower()
-                if new_suffix in (".css", ".gif", ".jpg", ".png"):
+                if new_suffix in (".css", ".gif", ".jpg", ".png", ".ttf", ".ttc"):
                     suffix = new_suffix
             path = tempfile.mktemp(prefix="pisa-", suffix = suffix)          
             
