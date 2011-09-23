@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 
 # The MIT License
 # 
@@ -328,7 +328,7 @@ class ImportExportAdminPanel(Component):
           for i, t in enumerate(tickets):
             if bool( req.args.get('ticket.'+unicode(i), False) ):
               if t.exists:
-                if t.save_changes():
+                if t.save_changes(author=util.get_reporter_id(req)):
                   modified += 1
               else:
                 t.insert()
