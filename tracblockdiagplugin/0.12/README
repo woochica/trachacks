@@ -32,7 +32,7 @@ This plugin can be configured by trac.ini.
 
 default_type:
   'png' or 'svg'. Default is 'png'
-  this represent default image format.
+  this represents default image format.
 
 use_file_cache:
   True or False. Default is False.
