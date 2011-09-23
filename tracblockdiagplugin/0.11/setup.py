@@ -4,7 +4,7 @@ Author: IWATA Hidetaka <iwata0303@gmail.com>
 from setuptools import setup
 
 NAME = "BlockDiagPlugin"
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 
 setup(
     name = NAME,

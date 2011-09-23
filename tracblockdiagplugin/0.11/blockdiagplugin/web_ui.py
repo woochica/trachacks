@@ -6,12 +6,15 @@ from threading import Lock
 from tempfile import mktemp, NamedTemporaryFile
 from subprocess import Popen, PIPE
 
+
 from trac.core import *
 from trac.wiki import IWikiMacroProvider
 from trac.web import IRequestHandler 
 from trac.wiki.formatter import system_message
 
 from genshi.builder import tag
+
+from cache import Cache
 
 try:
     import hashlib
@@ -89,8 +92,10 @@ macro_defs = {  "blockdiag" : get_help(cmdname="blockdiag", diagtype="block", ex
 for cmd in macro_defs.keys():
     for type in ('svg', 'png'):
         macro_defs['%s_%s' % (cmd, type)] = 'Alternate of %s(type=%s) for Trac 0.11' % (cmd, type)
-
-_lock = Lock()
+        
+        
+class ImageGenerationError(Exception):
+    pass
 
 class BlockDiagPlugin(Component):
     """
@@ -101,15 +106,15 @@ class BlockDiagPlugin(Component):
     implements (IWikiMacroProvider, IRequestHandler)
     
     macros = None
-    cache = {}
 
     content_types = {
             "png" : "image/png",
             "svg" : "image/svg+xml",
             }
-
-    gc_time = 0 
     
+    def __init__(self):
+        self.cache = Cache(self.env)
+
     def get_macros(self):
         return macro_defs.keys()
 
@@ -126,112 +131,81 @@ class BlockDiagPlugin(Component):
             type = (args.get('type') or self.env.config.get('blockdiag', 'default_type', 'png')).lower()
             if type not in ('svg', 'png'):
                 return system_message("Invalid type(%s). Type must be 'svg' or 'png'" % type)
+                
+        font = self.env.config.get('blockdiag', 'font', '')
 
         # nonascii unicode can't be passed to hashlib.
-        id = make_hash('%s,%s,%r' % (name, type, content)).hexdigest()
+        id = make_hash('%s,%s,%s,%r' % (name, type, font, content)).hexdigest()
 
         ## Create img tag.
-        params = { "src": formatter.req.href("%s/%s" % (name, id)) }
+        params = { "src": formatter.req.href("%s/%s.%s" % (name, id, type)) }
         for key, value in args.iteritems():
             if key != "type":
                 params[key] = value
         output = tag.img(**params)
-        
-        ## Cleanup garbage.
-        self._cleanup_garbage_cache()
-
-        ## Check cache
-        if self.cache.has_key(id):
-            try:
-                _lock.acquire()
-                try:
-                    data, type, ts = self.cache[id]
-                    self.cache[id] = (data, type, time())
-                    return output
-                except ValueError:
-                    pass
-            finally:
-                _lock.release()
 
         ## Generate image and cache it.
-        infile = mktemp(prefix='%s-' % name)
-        outfile = mktemp(prefix='%s-' % name)
-        try:
+        def generate_image():
+            infile = mktemp(prefix='%s-' % name)
+            outfile = mktemp(prefix='%s-' % name)
             try:
-                f = codecs.open(infile, 'w', 'utf8')
                 try:
-                    f.write(content)
-                finally:
-                    f.close()
-                cmd = [name, '-a', '-T', type, '-o', outfile, infile]
-                self.env.log.debug('(%s) command: %r' % (name, cmd))
-                try:
-                    proc = Popen(cmd, stderr=PIPE)
-                    stderr_value = proc.communicate()[1]
+                    f = codecs.open(infile, 'w', 'utf8')
+                    try:
+                        f.write(content)
+                    finally:
+                        f.close()
+                    cmd = [name, '-a', '-T', type, '-o', outfile, infile]
+                    if font:
+                        cmd.extend(['-f', font])
+                    self.env.log.debug('(%s) command: %r' % (name, cmd))
+                    try:
+                        proc = Popen(cmd, stderr=PIPE)
+                        stderr_value = proc.communicate()[1]
+                    except Exception, e:
+                        self.env.log.error('(%s) %r' % (name, e))
+                        raise ImageGenerationError("Failed to generate diagram. (%s is not found.)" % name)
+    
+                    if proc.returncode != 0 or not os.path.isfile(outfile):
+                        self.env.log.error('(%s) %s' % (name, stderr_value))
+                        raise ImageGenerationError("Failed to generate diagram. (rc=%d)" % proc.returncode)
+                    f = open(outfile, 'rb')
+                    try:
+                        data = f.read()
+                    finally:
+                        f.close()
+                    return data
+                except ImageGenerationError:
+                    raise
                 except Exception, e:
                     self.env.log.error('(%s) %r' % (name, e))
-                    return system_message("Failed to generate diagram. (%s is not found.)" % name)
-
-                if proc.returncode != 0:
-                    self.env.log.error('(%s) %s' % (name, stderr_value))
-                    return system_message("Failed to generate diagram. (rc=%d)" % proc.returncode)
-                f = open(outfile, 'rb')
-                try:
-                    data = f.read()
-                finally:
-                    f.close()
-
-            except Exception, e:
-                self.env.log.error('(%s) %r' % (name, e))
-                return system_message("Failed to generate diagram.")
-        finally:
-            for path in (infile, outfile):
-                try:
-                    os.remove(path)
-                except:
-                    pass
-
+                    raise ImageGenerationError("Failed to generate diagram.")
+            finally:
+                for path in (infile, outfile):
+                    try:
+                        os.remove(path)
+                    except:
+                        pass
+                    
         try:
-            _lock.acquire()
-            if not self.cache.has_key(id):
-                self.cache[id] = (data, type, time())
-        finally:
-            _lock.release()
-
+            self.cache.cache(id, type, generate_image)
+        except ImageGenerationError, e:
+            return system_message(str(e))
+            
         return output
 
     def match_request(self, req):
         return re.match(r'/([a-z]+diag)/.+$', req.path_info)
 
     def process_request(self, req):
-        m = re.match(r'/([a-z]+diag)/(.+)$', req.path_info)
+        m = re.match(r'/([a-z]+diag)/(.+)\.(png|svg)$', req.path_info)
         if not m:
             return ""
-        try:
-            _lock.acquire()
-            data, type, ts = self.cache[m.group(2)]
-        finally:
-            _lock.release()
+        id, type = m.group(2), m.group(3)
+        data = self.cache.get(id, type)
+        if data:
+            req.send(data, self.content_types[type], status=200)
+        else:
+            self.env.log.error('(blockdiag) data not found by %s, %s' % (id, type))
             
-        req.send(data, self.content_types[type], status=200)
         return ""
-
-    def _cleanup_garbage_cache(self):
-        """Drop inactive cache."""
-        now = time()
-
-        if now < self.gc_time + 600:
-            return
-        try:
-            _lock.acquire()
-            if now < self.gc_time + 600: # double check
-                return
-            self.env.log.debug('(blockdiag/seqdiag) cleanup cache')
-            for k, (data, type, ts) in self.cache.items():
-                if ts < now - 3600:
-                    self.env.log.debug('(blockdiag/seqdiag) drop %s' % k)
-                    del(self.cache[k])
-            self.gc_time = now
-        finally:
-            _lock.release()
-
