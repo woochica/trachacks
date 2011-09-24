@@ -11,14 +11,16 @@ import re
 
 from genshi.builder import tag as builder
 
-from trac.config import ListOption
+from trac.config import ChoiceOption, ListOption, Option
 from trac.core import implements
-from trac.resource import Resource, get_resource_url, render_resource_link
+from trac.resource import Resource, get_resource_description, \
+                          get_resource_url, render_resource_link
+from trac.ticket.api import TicketSystem
 from trac.util import embedded_numbers
 from trac.util.compat import sorted, set
 from trac.util.text import to_unicode
 from trac.web.chrome import add_stylesheet
-from trac.wiki import IWikiMacroProvider
+from trac.wiki.api import IWikiMacroProvider, parse_args
 
 from tractags.api import TagSystem, _
 from tractags.web_ui import TagTemplateProvider
@@ -68,10 +70,27 @@ class TagWikiMacros(TagTemplateProvider):
 
     implements(IWikiMacroProvider)
 
+    default_cols = Option('tags', 'listtagged_default_table_cols',
+        'id|description|tags',
+        doc="""Select columns and order for table format using a "|"-separated
+            list of column names.
+
+            Supported columns: realm, id, description, tags
+            """)
+    default_format = ChoiceOption('tags', 'listtagged_default_format',
+        ['oldlist', 'compact', 'table'],
+        doc="""Set the default format for the handler of the `/tags` domain.
+
+            || `oldlist` (default value) || The original format with a
+            bulleted-list of "linked-id description (tags)" ||
+            || `compact` || bulleted-list of "linked-description" ||
+            || `table` || table... (see corresponding column option) ||
+            """)
     exclude_realms = ListOption('tags', 'listtagged_exclude_realms', [],
         doc="""Comma-separated list of realms to exclude from tags queries
             by default, unless specifically included using "realm:realm-name"
             in a query.""")
+    supported_cols = frozenset(['realm', 'id', 'description', 'tags'])
 
     def __init__(self):
         # TRANSLATOR: Keep macro doc style formatting here, please.
@@ -119,13 +138,24 @@ class TagWikiMacros(TagTemplateProvider):
             return render_cloud(self.env, req, all_tags)
 
         elif name == 'ListTagged':
-            query = content
+            args, kw = parse_args(content)
+            cols = 'cols' in kw and kw['cols'] or self.default_cols
+            format = 'format' in kw and kw['format'] or self.default_format
+            query = args and args[0].strip() or None
+            # Use TagsQuery arguments, if serving a web-UI call.
+            realms = 'realm' in kw and kw['realm'].split('|') or None
             req = formatter.req
             tag_system = TagSystem(self.env)
-            realms = [p.get_taggable_realm() for p in tag_system.tag_providers]
-            for realm in self.exclude_realms:
-                if not re.search('(^|\W)realm:%s(\W|$)' % (realm), query):
-                    realms.remove(realm)
+            all_realms = [p.get_taggable_realm()
+                          for p in tag_system.tag_providers]
+            if query and not realms:
+                # First read query arguments (most likely wiki macro calls).
+                for realm in all_realms:
+                    if re.search('(^|\W)realm:%s(\W|$)' % (realm), query):
+                        realms = realms and realms.append(realm) or [realm]
+                if not realms:
+                    # Apply ListTagged defaults to wiki macro call w/o realm.
+                    realms = set(all_realms)-set(self.exclude_realms)
             if len(realms) == 0:
                 return ''
             query = '(%s) (%s)' % (query, ' or '.join(['realm:%s' % (r)
@@ -138,24 +168,68 @@ class TagWikiMacros(TagTemplateProvider):
                 return render_resource_link(self.env, formatter.context,
                                             resource, 'compact')
 
-            ul = builder.ul(class_='taglist')
+            if format == 'table':
+                cols = [col for col in cols.split('|')
+                        if col in self.supported_cols]
+                # Use available translations from Trac core.
+                labels = TicketSystem(self.env).get_ticket_field_labels()
+                labels['realm'] = _('Realm')
+                labels['tags'] = _('Tags')
+                headers = [{'name': col,
+                            'label': labels.get(col)}
+                           for col in cols]
+                container = builder.table(class_='wiki')
+                thead = builder.thead()
+                for col in cols:
+                    for header in headers:
+                        if header['name'] == col:
+                            thead(builder.th(header['label']))
+                container(thead)
+            else:
+                container = builder.ul(class_='taglist')
             for resource, tags in sorted(query_result, key=lambda r: \
                                          embedded_numbers(
                                          to_unicode(r[0].id))):
-                tags = sorted(tags)
-
                 desc = tag_system.describe_tagged_resource(req, resource)
-
+                tags = sorted(tags)
                 if tags:
-                    rendered_tags = [
-                        _link(resource('tag', tag))
-                        for tag in tags
-                        ]
-                    li = builder.li(_link(resource), ' ', desc, ' (',
-                                    rendered_tags[0], [(' ', tag) for \
-                                        tag in rendered_tags[1:]], ')')
+                    rendered_tags = [_link(resource('tag', tag))
+                                     for tag in tags]
+                    if 'oldlist' == format:
+                        item = builder.li(_link(resource), ' ', desc, ' (',
+                                          rendered_tags[0],
+                                          [(' ', tag)
+                                           for tag in rendered_tags[1:]], ')'
+                               )
+                    else:
+                        context=formatter.context
+                        desc = desc or \
+                               get_resource_description(self.env, resource,
+                                                        context=context)
+                        link = builder.a(desc,
+                                         href=get_resource_url(self.env,
+                                                               resource,
+                                                               context.href)
+                               )
+                        if 'table' == format:
+                            item = builder.tr()
+                            for col in cols:
+                                if col == 'id':
+                                    item(builder.td(_link(resource)))
+                                # Don't duplicate links to resource in both.
+                                elif col == 'description' and 'id' in cols:
+                                    item(builder.td(desc))
+                                elif col == 'description':
+                                    item(builder.td(link))
+                                elif col == 'realm':
+                                    item(builder.td(resource.realm))
+                                elif col == 'tags':
+                                    item(builder.td([(tag, ' ')
+                                                 for tag in rendered_tags]))
+                        else:
+                            item = builder.li(link)
                 else:
-                    li = builder.li(_link(resource), ' ', desc)
-                ul(li, '\n')
-            return ul
+                    item = builder.li(_link(resource), ' ', desc)
+                container(item)
+            return container
 

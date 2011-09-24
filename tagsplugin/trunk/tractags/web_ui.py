@@ -13,7 +13,7 @@ import math
 
 from genshi.builder import tag as builder
 from pkg_resources import resource_filename
-from trac.config import ListOption
+from trac.config import ChoiceOption, ListOption, Option
 from trac.core import Component, ExtensionPoint, implements
 from trac.mimeview import Context
 from trac.resource import Resource
@@ -58,6 +58,21 @@ class TagRequestHandler(TagTemplateProvider):
 
     tag_providers = ExtensionPoint(ITagProvider)
 
+    default_cols = Option('tags', 'default_table_cols', 'id|description|tags',
+        doc="""Select columns and order for table format using a "|"-separated
+            list of column names.
+
+            Supported columns: realm, id, description, tags
+            """)
+    default_format = ChoiceOption('tags', 'default_format',
+        ['oldlist', 'compact', 'table'],
+        doc="""Set the default format for the handler of the `/tags` domain.
+
+            || `oldlist` (default value) || The original format with a
+            bulleted-list of "linked-id description (tags)" ||
+            || `compact` || bulleted-list of "linked-description" ||
+            || `table` || table... (see corresponding column option) ||
+            """)
     exclude_realms = ListOption('tags', 'exclude_realms', [],
         doc="""Comma-separated list of realms to exclude from tags queries
             by default, unless specifically included using "realm:realm-name"
@@ -116,10 +131,14 @@ class TagRequestHandler(TagTemplateProvider):
         macros = TagWikiMacros(self.env)
         if not query:
             macro = 'TagCloud'
+            query = '(%s) (%s)' % (' or '.join(['realm:' + \
+                                                r for r in checked_realms]),
+                                   query)
         else:
             macro = 'ListTagged'
-        query = '(%s) (%s)' % (' or '.join(['realm:' + r for r in realms
-                                            if r in checked_realms]), query)
+            query += ',format=%s,cols=%s,realm=%s' % (self.default_format,
+                                                      self.default_cols,
+                                                      '|'.join(checked_realms))
         self.env.log.debug('Tag query: %s', query)
         try:
             # Query string without realm throws 'NotImplementedError'.
