@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
+# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 #
 
 import re
-from trac.core import *
-from tractags.api import TagSystem, ITagProvider, _
+
+from trac.config import BoolOption, ListOption
+from trac.core import Component, implements
+from trac.resource import Resource
+from trac.ticket.api import TicketSystem
 from trac.ticket.model import Ticket
 from trac.util import get_reporter_id
-from trac.util.text import to_unicode
 from trac.util.compat import set, sorted
-from trac.config import *
-from trac.resource import Resource
+from trac.util.text import to_unicode
+
+from tractags.api import TagSystem, ITagProvider, _
 
 
 class TicketTagProvider(Component):
@@ -103,7 +107,9 @@ class TicketTagProvider(Component):
             return ''
         ticket = Ticket(self.env, resource.id)
         if ticket.exists:
-            return '%s (%s)' % (ticket['summary'], ticket['status'])
+            ticket_system = TicketSystem(self.env)
+            return ticket_system.get_resource_description(ticket.resource,
+                                                          format='summary')
         else:
             return ''
 
