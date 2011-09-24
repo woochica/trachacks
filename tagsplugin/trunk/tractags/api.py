@@ -15,7 +15,6 @@ from trac.core import Component, ExtensionPoint, Interface, TracError, \
                       implements
 from trac.resource import Resource
 from trac.perm import IPermissionRequestor, PermissionError
-from trac.web.chrome import add_warning
 from trac.wiki.model import WikiPage
 from trac.util.text import to_unicode
 from trac.util.compat import set, groupby
@@ -246,13 +245,6 @@ class TagSystem(Component):
             'realm': realm_handler,
             }
         all_attribute_handlers.update(attribute_handlers or {})
-        if re.search(r'(expression|tagspace|tagspaces|operation|showheadings'
-                     '|expression)=', query):
-            message = Markup('You seem to be using an old Tag query. '
-                             'Try using the <a href="%s">new syntax</a> in your '
-                             '<strong>ListTagged</strong> macro.',
-                             req.href('tags'))
-            add_warning(req, message)
         query = Query(query, attribute_handlers=all_attribute_handlers)
         providers = set()
         for m in self._realm.finditer(query.as_string()):

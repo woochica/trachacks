@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
 # Copyright (C) 2011 Itamar Ostricher <itamarost@gmail.com>
+# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -9,7 +10,7 @@
 
 import re
 
-from genshi.builder import tag as builder
+from genshi.builder import Markup, tag as builder
 
 from trac.config import ChoiceOption, ListOption, Option
 from trac.core import implements
@@ -24,6 +25,12 @@ from trac.wiki.api import IWikiMacroProvider, parse_args
 
 from tractags.api import TagSystem, _
 from tractags.web_ui import TagTemplateProvider
+
+
+# Check for unsupported pre-tags-0.6 macro keyword arguments.
+_OBSOLETE_ARGS_RE = re.compile(r"""
+    (expression|operation|showheadings|tagspace|tagspaces)=
+    """, re.VERBOSE)
 
 
 def render_cloud(env, req, cloud, renderer=None):
@@ -138,13 +145,21 @@ class TagWikiMacros(TagTemplateProvider):
             return render_cloud(self.env, req, all_tags)
 
         elif name == 'ListTagged':
+            message = None
+            req = formatter.req
+            if _OBSOLETE_ARGS_RE.search(content):
+                message = builder.div(builder.p(Markup(_("""
+                    You seem to be using an old Tag query. Try using the
+                    <a href="%(url)s">new syntax</a> in your
+                    <strong>ListTagged</strong> macro.
+                    """, url=req.href('tags')))),
+                    class_='central system-message warning')
             args, kw = parse_args(content)
             cols = 'cols' in kw and kw['cols'] or self.default_cols
             format = 'format' in kw and kw['format'] or self.default_format
             query = args and args[0].strip() or None
             # Use TagsQuery arguments, if serving a web-UI call.
             realms = 'realm' in kw and kw['realm'].split('|') or None
-            req = formatter.req
             tag_system = TagSystem(self.env)
             all_realms = [p.get_taggable_realm()
                           for p in tag_system.tag_providers]
@@ -231,5 +246,6 @@ class TagWikiMacros(TagTemplateProvider):
                 else:
                     item = builder.li(_link(resource), ' ', desc)
                 container(item)
+            container = builder(message, container)
             return container
 
