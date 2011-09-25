@@ -1,0 +1,70 @@
+Originally created by Muness Alrubaie, totally rewritten by
+Author: Alec Thomas <alec@swapoff.org>
+Maintainer: n.n.
+
+tractags-0.7 (not yet released)
+ resolved issues
+ * #1960: Tags from Tickets / Milestones split into multiple tags
+ * #2424: Lost wiki change when commiting tag changes
+ * #2493: Wiki page names can be in Unicode
+ * #2714: tractags.api.TagSystem.delete_tags broken
+ * #2749: ListTagged in 0.6 doesn't give title of wiki pages from first heading
+   by adding new method describe_tagged_resource
+   Note: This is a '''tag provider API change'''.
+ * #2939: Requirement.parse('Genshi==dev,>=0.5.dev-r698')
+ * #3145: Create New Wiki Page with a Tag
+ * #3206: Edit wiki page content and tag
+ * #3753: Carry over tags from PageTemplates/ (was: TagIt macro)
+ * #4164: Wiki pages without tags have no tag styles
+ * #4223: Bad CSS interpretation with IE
+ * #4996: TagsPlugin fails on upgrading
+ * #5345: TracError: The Trac Environment needs to be upgraded
+ * #5575: UnicodeEncodeError on Japanese tag
+ * #5714: No documentation on WikiMacros page
+ * #8352: Chinese character in wiki name cause UnicodeEncodeError
+ * #8684: Unexpected keyword argument 'tags_link'
+ * #8995: Some missing HTML on wiki edit page
+ * #9023: Remove superflous error message about wiki_namespace
+ * #9059: Various fixes and enhancements (detailed in #9060 - #9064)
+ * #9060: Query results are duplicated when realm-selection is repeated
+ * #9062: Wiki-page level-1-title broken on 0.12
+ * TagsQuery now supports a context object
+ * refactor cloud rendering so it can be used by other plugins
+ * fix regression related to missing IWikiChangeListener
+ * ensure tags stylesheet is added for macros 
+ * log warning for tag providers that don't implement describe_tagged_resource
+ * add plugin author email to display something at Trac 0.11 plugin admin page
+ * fix an AttributeError specific to the 0.6 release since [2953]
+
+ new features
+ * #2509: Create wiki page from /tags/<tag> page
+ * #2708: Add rel-tag microformat to tags list
+ * #3754: Tag redirects to existing wiki page instead of listing tagged pages
+ * #3851: TAGS_VIEW not showing page tags along for anonymous
+ * #7787: Add i18n support
+ * #8638: Should implement wiki_page_renamed of IWikiChangeListener interface
+ * #9058: Let `TAGS_MODIFY` inherited `TAGS_VIEW` for intuitive permissions
+ * #9061: Mass tag replacement functionality
+ * #9063: Allow excluding realms from queries by default
+ * #9064: More rendering options for ListTagged macro and tag-handler
+ * #9194: Add unittest and functional test infrastructure
+ * render_cloud() now passes a percent to renderers instead of font pixel size
+ * add `ignore_closed_tickets` option: skip closed tickets when collecting tags
+ * remove redundant JavaScript files
+ * move generic code from TagCloud into new TagSystem.get_all_tags() method
+ * widened Wiki tag input field slightly
+ * prepare translatable macro documentation
+ * fix a warning message for old TagsQuery syntax (<= tractags-0.5)
+ * let `describe_tagged_resource` method for tickets use Trac core with i18n
+ * review and improve code according to PEP 8, SQL statement's formatting too
+
+
+ToDo: add more historic entries
+
+tractags-0.6 - a total code rewrite (21-Jan-2008)
+
+tractags-0.5 - Trac 0.11 support (31-Dec-2007)
+
+tractags-0.4.1 (06-Jun-2007)
+
+tractags-0.4 (19-Apr-2006)
