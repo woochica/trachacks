@@ -50,7 +50,7 @@ class ScrippetMacro(WikiMacroBase):
         italic_re = re.compile('(\*{1}|\[i\])(.*?)(\*{1}|\[\/i\])')
         underline_re = re.compile('(_|\[u\])(.*?)(_|\[\/u\])')
         
-        theoutput = tag.div(class_="scrippet"+mode)
+        theoutput = tag.div(class_="scrippet"+mode)        
         _content = content
 #        self.log.debug("BEFORE SCENE: %s" % _content)
         _content = sceneheader_re.sub(r'<p class="sceneheader">\1\2\3\4</p>' + "\n",_content)
@@ -75,9 +75,10 @@ class ScrippetMacro(WikiMacroBase):
 #                self.log.debug("BODY: %s" % m.group('_body'))
 #                self.log.debug("CLASS: %s" % m.group('_class'))
                 if "FADE IN" in m.group('_body') and m.group('_class') == "transition":
-                    theoutput += tag.p(m.group('_body'),class_="action"+mode)
+                    theoutput.append(tag.p(m.group('_body'),class_="action"+mode))
                 else:
-                    theoutput += tag.p(m.group('_body'),class_=m.group('_class')+mode)
+                    theoutput.append(tag.p(m.group('_body'),class_=m.group('_class')+mode))
+#        self.log.debug("OUTPUT: %s" % theoutput)
         return theoutput
     
     ## ITemplateProvider

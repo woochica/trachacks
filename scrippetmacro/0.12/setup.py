@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracScrippetsMacro',
-    version = '0.3',
+    version = '0.4.1',
     packages = ['scrippets'],
     package_data={ 'scrippets' : [ 'htdocs/css/*.css' ] },
     author = "Benjamin Lau",
