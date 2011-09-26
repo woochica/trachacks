@@ -44,6 +44,10 @@ class TracJSGanttSupport(Component):
            """Days represented by each unit of estimated work""")
     Option('trac-jsgantt', 'hours_per_day', '8.0', 
            """Hours worked per day""")
+    Option('trac-jsgantt', 'default_estimate', '4.0', 
+           """Default work for an unestimated task, same units as estimate""")
+    Option('trac-jsgantt', 'estimate_pad', '0.0', 
+           """How much work may be remaining when a task goes over estimate, same units as estimate""")
     Option('trac-jsgantt', 'fields.worked', None,
            """Ticket field to use as the data source for completed work""")
     Option('trac-jsgantt', 'fields.start', None, 
@@ -211,6 +215,14 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # float('1/6') is an error so the value must be a number, not
         # an equation.
         self.dpe = float(self.config.get('trac-jsgantt', 'days_per_estimate'))
+
+        # Default work in an unestimated task
+        self.dftEst = float(self.config.get('trac-jsgantt', 
+                                            'default_estimate'))
+
+        # How much to pad an estimate when a task has run over
+        self.estPad = float(self.config.get('trac-jsgantt', 
+                                            'estimate_pad'))
 
         # Hours (worked) per day
         self.hpd = float(self.config.get('trac-jsgantt', 'hours_per_day'))
@@ -468,24 +480,41 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     not in self.ticketsByID.keys():
                 wbs = _setLevel(t['id'], wbs, 1)
 
+    # Return hours of work in ticket as a floating point number
+    def _workHours(self, ticket):
+        if self.fields['estimate']:
+            est = float(ticket[self.fields['estimate']])
+        else:
+            est = None
+
+        if self.fields['worked']:
+            work = float(ticket[self.fields['worked']])
+        else:
+            work = None
+
+        # Milestones have no work.
+        if ticket['type'] == self.milestoneType:
+            est = 0.0
+        # Closed tickets took as long as they took
+        elif ticket['status'] == 'closed' and work:
+            est = work
+        # If the task is over its estimate, assume it will take
+        # pad more time
+        elif work > est:
+            est = work + self.estPad
+        # If the task was estimated, use that number
+        elif self.fields['estimate'] and (est != 0):
+            est = float(ticket[self.fields['estimate']])
+        # Otherwise, use the default estimate
+        else:
+            est = self.dftEst
+
+        # Scale by days per estimate and hours per day
+        hours = (est * self.dpe) * self.hpd
+
+        return hours
+
     def _schedule_tasks(self, options):
-        # Return hours of work in ticket as a floating point number
-        def _workHours(ticket):
-            # FIXME - if worked configured and available and
-            # greater than estimate, use it instead.
-            if self.fields['estimate'] \
-                    and ticket[self.fields['estimate']] != '':
-                est = float(ticket[self.fields['estimate']])
-                days = est * self.dpe
-            else:
-                # FIXME = make this default duration configurable?
-                days = 1
-
-            # Scale days by hours per day
-            hours = days * self.hpd
-
-            return hours
-
         # Return a time delta for hours (positive or negative) from
         # fromDate, accounting for working hours and weekends.
         def _calendarOffset(hours, fromDate):
@@ -593,7 +622,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             finish -= timedelta(hours=(24-self.hpd)+48)
 
                 # start is finish minus duration
-                hours = _workHours(t)
+                hours = self._workHours(t)
                 start = finish + _calendarOffset(-1*hours, finish)
 
                 # Set the fields
@@ -662,7 +691,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             start += timedelta(hours=(24-self.hpd)+48)
 
                 # finish is start plus duration
-                hours = _workHours(t)
+                hours = self._workHours(t)
                 finish = start + _calendarOffset(+1*hours, start)
 
                 # Set the fields
@@ -840,7 +869,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         owner_name = self.user_map[ticket['owner']]
             return owner_name
             
-        # FIXME - perhaps a closed ticket should always be 100% done.
         def _percent(ticket):
             # Closed tickets are 100% complete
             if ticket['status'] == 'closed':
@@ -850,7 +878,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 # Try to compute the percent complete, default to 0
                 try:
                     worked = float(ticket[self.fields['worked']])
-                    estimate = float(ticket[self.fields['estimate']])
+                    estimate = (self._workHours(ticket) / self.hpd) / self.dpe
                     percent = int(100 * worked / estimate)
                 except:
                     # Don't bother logging because 0 for an estimate is common.
