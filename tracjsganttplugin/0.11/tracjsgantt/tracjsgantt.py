@@ -406,7 +406,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     if t[self.fields[field]] == '':
                         t[self.fields[field]] = []
                     else:
-                        t[self.fields[field]] = t[self.fields[field]].split(',')
+                        t[self.fields[field]] = \
+                            [s.strip() for s in t[self.fields[field]].split(',')]
 
 
 
@@ -610,6 +611,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             t[self.fields['succ']] = [ str(id) ]
                             pred.append(str(t['id']))
                     milestoneTicket[self.fields['pred']] = pred
+
+                # A Trac milestone has no successors
+                if self.fields['succ']:
+                    milestoneTicket[self.fields['succ']] = []
                 
                 self.tickets.append(milestoneTicket)
 
@@ -820,8 +825,16 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                                     self.ticketsByID[b])
 
         def _compare_tickets(t1, t2):
+            # If t2 depends on t1, t2 is first
+            if self.fields['succ'] and \
+                    str(t1['id']) in t2[self.fields['succ']]:
+                return 1
+            # If t1 depends on t2, t1 is first
+            elif self.fields['succ'] and \
+                    str(t2['id']) in t1[self.fields['succ']]:
+                return -1
             # If t1 ends first, it's first
-            if t1['calc_finish'] < t2['calc_finish']:
+            elif t1['calc_finish'] < t2['calc_finish']:
                 return -1
             # If t2 ends first, it's first
             elif t1['calc_finish'] > t2['calc_finish']:
@@ -831,7 +844,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 return 1
             # Otherwise, preserve order (assume t1 is before t2 when called)
             else:
-                return -1
+                return 0
 
         if options.get('sample'):
             tasks = self._add_sample_tasks()
