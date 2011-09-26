@@ -172,7 +172,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             self.config.get('trac-jsgantt','fields.parent')
 
         # This is the format of start and finish in the Trac database
-        self.dbDateFormat = self.config.get('trac-jsgantt', 'date_format') 
+        self.dbDateFormat = str(self.config.get('trac-jsgantt', 'date_format'))
 
         # These have to be in sync.  jsDateFormat is the date format
         # that the JavaScript expects dates in.  It can be one of
