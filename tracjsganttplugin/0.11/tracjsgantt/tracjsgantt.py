@@ -1,7 +1,7 @@
 import re
 import time
 import datetime
-from datetime import timedelta, date
+from datetime import timedelta, datetime
 from operator import itemgetter, attrgetter
 
 from trac.util.datefmt import format_date
@@ -19,6 +19,18 @@ from pkg_resources import resource_filename
 
 from trac.wiki.api import parse_args
 
+# A Note About Working Hours
+#
+# The naive scheduling algorithm in the plugin assumes all resources
+# work the same number of hours per day.  That limit can be configured
+# (hours_per_day) but defaults to 8.0.  While is is likely that these
+# hours are something like 8am to 4pm (or 8am to 5pm, minus an hour
+# lunch), daily scheduling isn't concerned with which hours are
+# worked, only how many are worked each day.  To simplify range
+# checking throughout the plugin, calculations are done as if the work
+# day starts at midnight (hour==0) and continues for the configured
+# number of hours per day (e.g., 00:00..08:00).
+
 
 class TracJSGanttSupport(Component):
     implements(IRequestFilter, ITemplateProvider)
@@ -29,7 +41,9 @@ class TracJSGanttSupport(Component):
     Option('trac-jsgantt', 'fields.estimate', None, 
            """Ticket field to use as the data source for estimated work""")
     Option('trac-jsgantt', 'days_per_estimate', '0.125', 
-           """Days represented by each unit of estimated worke""")
+           """Days represented by each unit of estimated work""")
+    Option('trac-jsgantt', 'hours_per_day', '8.0', 
+           """Hours worked per day""")
     Option('trac-jsgantt', 'fields.worked', None,
            """Ticket field to use as the data source for completed work""")
     Option('trac-jsgantt', 'fields.start', None, 
@@ -180,7 +194,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # is a strptime() format that matches jsDateFormat.  As long
         # as they are in sync, there's no real reason to change them.
         self.jsDateFormat = 'yyyy-mm-dd'
-        self.pyDateFormat = '%Y-%m-%d'
+        self.pyDateFormat = '%Y-%m-%d %H:%M'
 
         # Tickets of this type will be displayed as milestones.
         self.milestoneType = self.config.get('trac-jsgantt', 'milestone_type')
@@ -194,6 +208,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # float('1/6') is an error so the value must be a number, not
         # an equation.
         self.dpe = float(self.config.get('trac-jsgantt', 'days_per_estimate'))
+
+        # Hours (worked) per day
+        self.hpd = float(self.config.get('trac-jsgantt', 'hours_per_day'))
 
         # User map (login -> realname) is loaded on demand, once.
         # Initialization to None means it is not yet initialized.
@@ -450,35 +467,64 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
 
     def _schedule_tasks(self):
-        def _workDays(ticket):
+        # Return hours of work in ticket as a floating point number
+        def _workHours(ticket):
+            # FIXME - if worked configured and available and
+            # greater than estimate, use it instead.
             if self.fields['estimate'] \
                     and ticket[self.fields['estimate']] != '':
-                hours = float(ticket[self.fields['estimate']])
-                days = int(hours * self.dpe)
-                # FIXME - if worked configured and available and
-                # greater than estimate, use it instead.
+                est = float(ticket[self.fields['estimate']])
+                days = est * self.dpe
             else:
                 # FIXME = make this default duration configurable?
                 days = 1
 
-            return days
+            # Scale days by hours per day
+            hours = days * self.hpd
 
-        def _calendarOffset(days, fromDate):
+            return hours
+
+        # Return a time delta for hours (positive or negative) from
+        # fromDate, accounting for working hours and weekends.
+        def _calendarOffset(hours, fromDate):
+            if hours < 0:
+                sign = -1
+            else:
+                sign = 1
+
+            # Normalize hours into days and weeks.
+            # Note: hours, days, and weeks all have the same sign
+            # Figure out days from hours
+            days = int(hours / self.hpd)
+            hours -= (days * self.hpd)
             # Figure out weeks from days
             weeks = int(days / 7.0)
-            # For each week, adjust days for weekends
-            days += weeks * 2
-
-            # Get day of week from fromDate; 0 = Monday .. 6 = Sunday
-            dow = fromDate.weekday()
-            # If new dow ends up in a weekend, adjust by weekend length
-            if ((dow + days) % 7) > 4:
-                if days > 0:
-                    days += 2
-                else:
-                    days -= 2
+            days -= (weeks * 7)
+            
+            # If we're at the start of the work day and moving
+            # forwards or the end of the work day and moving
+            # backwards, one day of hours are worked today so move
+            # hours from days to hours
+            endOfDay = fromDate.replace(hour=0, minute=0)
+            if fromDate == endOfDay or \
+                    fromDate == endOfDay + timedelta(hours=self.hpd):
+                days -= 1 * sign
+                hours += self.hpd * sign
                 
-            return timedelta(days=days)            
+            # If the new time is outside business hours, skip
+            # non-business hours
+            toDate = fromDate + timedelta(weeks=weeks, days=days, hours=hours)
+            endOfDay = toDate.replace(hour=0, minute=0) + \
+                timedelta(hours=self.hpd)
+            if toDate > endOfDay:
+                hours += (24-self.hpd) * sign
+
+            # If the new time is on the weekend, skip the weekend
+            toDate = fromDate + timedelta(weeks=weeks, days=days, hours=hours)
+            if toDate.weekday() > 4:
+                days += 2 * sign
+                
+            return timedelta(weeks=weeks, days=days, hours=hours)            
 
 
         # Return task start as a date string in the format jsGantt.js
@@ -492,9 +538,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 start = datetime.datetime(*time.strptime(ticket[self.fields['start']], self.dbDateFormat)[0:7])
             # Otherwise, make it from finish
             else:
-                finish = datetime.datetime(*time.strptime(_finish(ticket), self.pyDateFormat)[0:7])
-                days = _workDays(ticket)
-                start = finish + _calendarOffset(-1*days, finish)
+                finish = datetime(*time.strptime(_finish(ticket), self.pyDateFormat)[0:7])
+                hours = _workHours(ticket)
+                start = finish + _calendarOffset(-1*hours, finish)
 
             return start.strftime(self.pyDateFormat)
             
@@ -508,7 +554,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         def _finish(ticket):
             # If we have a finish, parse it
             if self.fields['finish'] and ticket[self.fields['finish']] != '':
-                finish = datetime.datetime(*time.strptime(ticket[self.fields['finish']], self.dbDateFormat)[0:7])                
+                finish = datetime(*time.strptime(ticket[self.fields['finish']], self.dbDateFormat)[0:7])
+                finish += timedelta(hours=self.hpd)
             # If there are successors, this ticket's finish is the earliest
             # start of any successor
             elif self.fields['succ'] and ticket[self.fields['succ']] != []: 
@@ -518,16 +565,16 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         succ = self.ticketsByID[int(tid)]
                         if succ['type'] == self.milestoneType:
                             if succ[self.fields['finish']] == '':
-                                f = date.today()
+                                f = datetime.today() + timedelta(hours=self.hpd)
                             else:
-                                f = datetime.datetime(*time.strptime(succ[self.fields['finish']], self.dbDateFormat)[0:7])
+                                f = datetime(*time.strptime(succ[self.fields['finish']], self.dbDateFormat)[0:7])
                             if finish == None or finish > f:
                                 finish = f
                 if finish == None:
-                    finish = date.today()
-            # Otherwise, default to today.
+                    finish = datetime.today() + timedelta(hours=self.hpd)
+            # Otherwise, default to today at close of business
             else:
-                finish = date.today()
+                finish = datetime.today() + timedelta(hours.self.hpd)
 
             return finish.strftime(self.pyDateFormat)
         
@@ -535,7 +582,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         for t in self.tickets:
             t['calc_start'] = _start(t)
             t['calc_finish'] = _finish(t)
-
 
     # Add tasks for milestones related to the tickets
     def _add_milestones(self, options):
@@ -580,8 +626,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 # Milestones are always shown
                 milestoneTicket['level'] = 0
                 
-                # If there's no due date, default to today
-                ts = row[1] or None
+                # If there's no due date, default to today at close of business
+                ts = row[1] or (datetime.today() + timedelta(hours=self.hpd))
                 milestoneTicket[self.fields['finish']] = \
                     format_date(ts, self.dbDateFormat)
 
@@ -589,6 +635,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 # for scheduling.
                 milestoneTicket[self.fields['start']] = \
                     milestoneTicket[self.fields['finish']]
+                if self.fields['estimate']:
+                    milestoneTicket[self.fields['estimate']] = 0
                 # There is no percent complete for a milestone
                 milestoneTicket[self.fields['percent']] = 0
                 # A milestone has no children or parent
