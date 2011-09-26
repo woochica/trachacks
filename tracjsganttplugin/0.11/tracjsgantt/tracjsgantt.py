@@ -527,60 +527,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             return timedelta(weeks=weeks, days=days, hours=hours)            
 
 
-        # Return task start as a date string in the format jsGantt.js
-        # expects it.
-        def _start(ticket):
-            # Milestones have no duration, start on their finish date.
-            if ticket['type'] == self.milestoneType:
-                start = datetime.datetime(*time.strptime(_finish(ticket), self.pyDateFormat)[0:7])
-            # If we have a start, parse it
-            elif self.fields['start'] and ticket[self.fields['start']] != '':
-                start = datetime.datetime(*time.strptime(ticket[self.fields['start']], self.dbDateFormat)[0:7])
-            # Otherwise, make it from finish
-            else:
-                finish = datetime(*time.strptime(_finish(ticket), self.pyDateFormat)[0:7])
-                hours = _workHours(ticket)
-                start = finish + _calendarOffset(-1*hours, finish)
-
-            return start.strftime(self.pyDateFormat)
-            
-
         # TODO: If we have start and estimate, we can figure out
         # finish (opposite case of figuring out start from finish and
         # estimate as we do now).  
-
-        # Return task finish as a date string in the format jsGantt.js
-        # expects it.
-        def _finish(ticket):
-            # If we have a finish, parse it
-            if self.fields['finish'] and ticket[self.fields['finish']] != '':
-                finish = datetime(*time.strptime(ticket[self.fields['finish']], self.dbDateFormat)[0:7])
-                finish += timedelta(hours=self.hpd)
-            # If there are successors, this ticket's finish is the earliest
-            # start of any successor
-            elif self.fields['succ'] and ticket[self.fields['succ']] != []: 
-                finish = None
-                for tid in ticket[self.fields['succ']]:
-                    if int(tid) in self.ticketsByID:
-                        succ = self.ticketsByID[int(tid)]
-                        if succ['type'] == self.milestoneType:
-                            if succ[self.fields['finish']] == '':
-                                f = datetime.today() + timedelta(hours=self.hpd)
-                            else:
-                                f = datetime(*time.strptime(succ[self.fields['finish']], self.dbDateFormat)[0:7])
-                            if finish == None or finish > f:
-                                finish = f
-                if finish == None:
-                    finish = datetime.today() + timedelta(hours=self.hpd)
-            # Otherwise, default to today at close of business
-            else:
-                finish = datetime.today() + timedelta(hours.self.hpd)
-
-            return finish.strftime(self.pyDateFormat)
-
-        def _schedule_task_old(t):
-            t['calc_start'] = _start(t)
-            t['calc_finish'] = _finish(t)
 
         # Schedule a task As Late As Possible
         # Return the start of the task as a date object
