@@ -16,7 +16,7 @@ from trac.resource import Resource
 from pkg_resources import resource_filename
 from trac.web.href import Href
 from trac.web.api import IAuthenticator
-from trac.config import Option, BoolOption
+from trac.config import Option, BoolOption, ListOption
 import os
 import re
 
@@ -145,6 +145,7 @@ class WikiPrint(Component):
     httpauth_user = Option('wikiprint', 'httpauth_user')
     httpauth_password = Option('wikiprint', 'httpauth_password')
     omit_links = BoolOption('wikiprint', 'omit_links')
+    omit_macros = ListOption('wikiprint', 'omit_macros')
     rebase_links = Option('wikiprint', 'rebase_links')
     default_charset = Option('trac', 'default_charset', 'utf-8')
     
@@ -186,6 +187,12 @@ class WikiPrint(Component):
         #Escape [[PageOutline]], to avoid wiki processing
         for r in [re.compile(r'\[\[TOC(\(.*\))?\]\]'), re.compile(r'\[\[PageOutline(\(.*\))?\]\]')]:
             text = r.sub('![[pdf-toc]]', text)
+            
+        for macro in self.omit_macros:
+            r = re.compile(r'\[\[' + macro + r'\(.*?\]\]')
+            text = r.sub('', text)
+            r = re.compile(r'^\{\{\{\r?\n#!' + macro + r'\r?\n(^.*\r?\n)*?^\}\}\}', re.MULTILINE)
+            text = r.sub('', text)
 
         link_format = req.args.get('link_format', None)
             
