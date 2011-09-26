@@ -651,6 +651,75 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
             return t['calc_start']
 
+        # Schedule a task As Soon As Possible
+        # Return the finish of the task as a date object
+        def _schedule_task_asap(t):
+            # Find the start of the closest ancestor with one set (if any)
+            def _ancestor_start(t):
+                start = None
+                # If there are parent and start fields
+                if self.fields['start'] and self.fields['parent']:
+                    pid = int(t[self.fields['parent']])
+                    # If this ticket has a parent, process it
+                    if pid != 0:
+                        parent = self.ticketsByID[pid]
+                        _schedule_task_asap(parent)
+                        start = self.ticketsByID[pid]['calc_start']
+
+                return start
+
+            # Find the latest finish of any predecessor
+            def _latest_predecessor(t, finish):
+                if self.fields['pred'] and t[self.fields['pred']] != []:
+                    for id in t[self.fields['pred']]:
+                        f = _schedule_task_asap(self.ticketsByID[int(id)])
+                        if finish == None or f > finish:
+                            finish = f
+                            
+                return finish
+
+            # If we haven't scheduled this yet, do it now.
+            if t.get('calc_finish') == None:
+                # If there is a start set, use it
+                if self.fields['start'] and t[self.fields['start']] != '':
+                    start = datetime(*time.strptime(t[self.fields['start']], 
+                                                     self.dbDateFormat)[0:7])
+                    start = start.replace(hour=0, minute=0)
+                # Otherwise, compute start from dependencies.
+                else:
+                    start = _latest_predecessor(t, _ancestor_start(t))
+                    
+                    # If dependencies don't give a date, default to today
+                    if start == None:
+                        start = datetime.today().replace(hour=0, minute=0)
+
+                        # FIXME - do the converse in ALAP, too.
+                        # If today is on a weekend, move ahead to Monday
+                        if start.weekday() > 4:
+                            start += timedelta(days=7-start.weekday())
+                    # If we are to start at the end of the work
+                    # day, our start is really the beginning of the next
+                    # work day
+                    elif start == start.replace(hour=0, minute=0) + \
+                            timedelta(hours=self.hpd):
+                        # Monday-Thursday, move ahead to beginning of
+                        # previous day
+                        if start.weekday() < 4:
+                            start += timedelta(hours=24-self.hpd)
+                        # Friday, skip the weekend, too.
+                        else:
+                            start += timedelta(hours=(24-self.hpd)+48)
+
+                # finish is start plus duration
+                hours = _workHours(t)
+                finish = start + _calendarOffset(+1*hours, start)
+
+                # Set the fields
+                t['calc_finish'] = finish
+                t['calc_start'] = start
+
+            return t['calc_finish']
+
 
         for t in self.tickets:
             _schedule_task_alap(t)
