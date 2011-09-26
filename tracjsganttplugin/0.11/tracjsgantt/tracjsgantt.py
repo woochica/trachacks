@@ -448,20 +448,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 wbs = _setLevel(t['id'], wbs, 1)
 
 
-    def _calc_end(self):      
-        for t in self.tickets:
-            if t['children']:
-                min = None
-                for i in t['children']:
-                    if min == None:
-                        min = self.ticketsByID[i]['calc_finish']
-                    else:
-                        if self.ticketsByID[i]['calc_finish'] < min:
-                            min = self.ticketsByID[i]['calc_finish']
-                t['tempEnd'] = min
-            else:
-                t['tempEnd'] = t['calc_finish']
-
     def _schedule_tasks(self):
         def _workDays(ticket):
             if self.fields['estimate'] \
@@ -828,13 +814,22 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         return task
 
     def _add_tasks(self, options):
-        def _sort_children(a,b):
-            if self.ticketsByID[a]['tempEnd'] < self.ticketsByID[b]['tempEnd']:
+        # Return -1 if a should be before b, 1 otherwise.
+        def _compare_children(a, b):
+            return _compare_tickets(self.ticketsByID[a],
+                                    self.ticketsByID[b])
+
+        def _compare_tickets(t1, t2):
+            # If t1 ends first, it's first
+            if t1['calc_finish'] < t2['calc_finish']:
                 return -1
-            elif self.ticketsByID[a]['tempEnd'] > self.ticketsByID[b]['tempEnd']:
+            # If t2 ends first, it's first
+            elif t1['calc_finish'] > t2['calc_finish']:
                 return 1
-            elif self.ticketsByID[a]['calc_start'] > self.ticketsByID[b]['calc_start']:
+            # End dates are same. If t1 starts later, it's later
+            elif t1['calc_start'] > t2['calc_start']:
                 return 1
+            # Otherwise, preserve order (assume t1 is before t2 when called)
             else:
                 return -1
 
@@ -856,14 +851,11 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             for t in self.tickets:
                 self.ticketsByID[t['id']] = t
 
+            # Schedule the tasks and sort them by date for computing WBS
             self._schedule_tasks()
-            self._calc_end()
-            self.tickets.sort(key=itemgetter('calc_start'))            
-            self.tickets.sort(key=itemgetter('tempEnd'))            
+            self.tickets.sort(_compare_tickets)
 
-            for i in self.tickets:
-                if i['children']:
-                    i['children'].sort(_sort_children)
+            # Compute the WBS and sort them by WBS for display
             self._compute_wbs()                
             self.tickets.sort(key=itemgetter('wbs'))
 
