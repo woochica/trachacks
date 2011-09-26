@@ -101,6 +101,8 @@ class TracJSGanttSupport(Component):
               """Map user IDs to user names""")
     IntOption('trac-jsgantt', 'option.omitMilestones', 0,
               """Omit milestones""")
+    Option('trac-jsgantt', 'option.schedule', 'alap',
+           """Schedule algorithm: alap or asap""")
      
 
     # ITemplateProvider methods
@@ -147,7 +149,7 @@ The chart display can be controlled with a number of macro arguments:
 || `showdep`||Show dependencies (1) or not (0)||1||
 || `userMap`||Map user !IDs to full names (1) or not (0).||1||
 || `omitMilestones`||Show milestones for displayed tickets (0) or only those specified by `milestone=` (1)||0||
-
+|| `schedule`||Schedule tasks based on dependenies and estimates.  Either as soon as possible (asap) or as late as possible (alap)||alap||
 Site-wide defaults for macro arguments may be set in `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
 
 All other macro arguments are treated as TracQuery specification (e.g., milestone=ms1|ms2) to control which tickets are displayed.
@@ -159,7 +161,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         options = ('format', 'formats', 'sample', 'res', 'dur', 'comp', 
                    'caption', 'startDate', 'endDate', 'dateDisplay', 
                    'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
-                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones')
+                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
+                   'schedule')
 
         self.options = {}
         for opt in options:
@@ -465,8 +468,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     not in self.ticketsByID.keys():
                 wbs = _setLevel(t['id'], wbs, 1)
 
-
-    def _schedule_tasks(self):
+    def _schedule_tasks(self, options):
         # Return hours of work in ticket as a floating point number
         def _workHours(ticket):
             # FIXME - if worked configured and available and
@@ -671,7 +673,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
 
         for t in self.tickets:
-            _schedule_task_alap(t)
+            if options['schedule'] == 'alap':
+                _schedule_task_alap(t)
+            else:
+                _schedule_task_asap(t)
 
     # Add tasks for milestones related to the tickets
     def _add_milestones(self, options):
@@ -1003,7 +1008,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 self.ticketsByID[t['id']] = t
 
             # Schedule the tasks and sort them by date for computing WBS
-            self._schedule_tasks()
+            self._schedule_tasks(options)
             self.tickets.sort(_compare_tickets)
 
             # Compute the WBS and sort them by WBS for display
