@@ -577,11 +577,83 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 finish = datetime.today() + timedelta(hours.self.hpd)
 
             return finish.strftime(self.pyDateFormat)
-        
-        # FIXME - do this from milestones back to start
-        for t in self.tickets:
+
+        def _schedule_task_old(t):
             t['calc_start'] = _start(t)
             t['calc_finish'] = _finish(t)
+
+        # Schedule a task As Late As Possible
+        # Return the start of the task as a date object
+        def _schedule_task_alap(t):
+            # Find the finish of the closest ancestor with one set (if any)
+            def _ancestor_finish(t):
+                finish = None
+                # If there are parent and finish fields
+                if self.fields['finish'] and self.fields['parent']:
+                    pid = int(t[self.fields['parent']])
+                    # If this ticket has a parent, process it
+                    if pid != 0:
+                        parent = self.ticketsByID[pid]
+                        _schedule_task_alap(parent)
+                        finish = self.ticketsByID[pid]['calc_finish']
+
+                return finish
+
+            # Find the earliest start of any successor
+            def _earliest_successor(t, start):
+                if self.fields['succ'] and t[self.fields['succ']] != []:
+                    for id in t[self.fields['succ']]:
+                        s = _schedule_task_alap(self.ticketsByID[int(id)])
+                        if start == None or s < start:
+                            start = s
+                            
+                return start
+
+            # If we haven't scheduled this yet, do it now.
+            if t.get('calc_start') == None:
+                # If there is a finish set, use it
+                if self.fields['finish'] and t[self.fields['finish']] != '':
+                    finish = datetime(*time.strptime(t[self.fields['finish']], 
+                                                     self.dbDateFormat)[0:7])
+                    finish = finish.replace(hour=0, minute=0) + \
+                        timedelta(hours=self.hpd)
+                # Otherwise, compute finish from dependencies.
+                else:
+                    finish = _earliest_successor(t, _ancestor_finish(t))
+                    
+                    # If dependencies don't give a date, default to
+                    # today at close of business
+                    if finish == None:
+                        finish = datetime.today() + \
+                            finish.replace(hour=0, minute=0) + \
+                            timedelta(hours=self.hpd)
+                        # If today is on a weekend, move back to Friday
+                        if finish.weekday() > 4:
+                            finish += timedelta(days=7-start.weekday())
+                    # If we are to finish at the beginning of the work
+                    # day, our finish is really the end of the previous
+                    # work day
+                    elif finish == finish.replace(hour=0, minute=0):            
+                        # Tuesday-Friday, back up to end of previous day
+                        if finish.weekday() > 0:
+                            finish -= timedelta(hours=24-self.hpd)
+                        # Monday, skip the weekend, too.
+                        else:
+                            finish -= timedelta(hours=(24-self.hpd)+48)
+
+                # start is finish minus duration
+                hours = _workHours(t)
+                start = finish + _calendarOffset(-1*hours, finish)
+
+                # Set the fields
+                t['calc_finish'] = finish
+                t['calc_start'] = start
+
+            return t['calc_start']
+
+
+        for t in self.tickets:
+            _schedule_task_alap(t)
 
     # Add tasks for milestones related to the tickets
     def _add_milestones(self, options):
@@ -799,8 +871,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += 't = new JSGantt.TaskItem(%d,"%s",' % (ticket['id'], _safeStr(name))
 
         # pStart, pEnd
-        task += '"%s",' % ticket['calc_start']
-        task += '"%s",' % ticket['calc_finish']
+        task += '"%s",' % ticket['calc_start'].strftime(self.pyDateFormat)
+        task += '"%s",' % ticket['calc_finish'].strftime(self.pyDateFormat)
 
         # pDisplay
         task += '"%s",' % self._task_display(ticket, options)
