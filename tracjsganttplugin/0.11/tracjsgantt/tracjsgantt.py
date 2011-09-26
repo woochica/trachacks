@@ -604,8 +604,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     # If dependencies don't give a date, default to
                     # today at close of business
                     if finish == None:
-                        finish = datetime.today() + \
-                            finish.replace(hour=0, minute=0) + \
+                        finish = datetime.today().replace(hour=0, 
+                                                          minute=0) + \
                             timedelta(hours=self.hpd)
                         # If today is on a weekend, move back to Friday
                         if finish.weekday() > 4:
