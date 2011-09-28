@@ -487,7 +487,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         else:
             est = None
 
-        if self.fields['worked']:
+        if self.fields['worked'] and ticket.get(self.fields['worked']):
             work = float(ticket[self.fields['worked']])
         else:
             work = None
