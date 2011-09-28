@@ -193,7 +193,10 @@ TracWysiwyg.TestUnit = function() {
                     message = [ message, e.stack ].join("\n\n");
                 }
                 cell.replaceChild(
-                    element("textarea", { id: "testcase." + count + ".textarea", rows: message.split("\n").length, cols: 80 }),
+                    element("textarea", { id: "testcase." + count + ".textarea",
+                                          rows: message.split("\n").length,
+                                          cols: 80,
+                                          readonly: "readonly" }),
                     cell.firstChild);
                 $("testcase." + count + ".textarea").value = message;
             }
