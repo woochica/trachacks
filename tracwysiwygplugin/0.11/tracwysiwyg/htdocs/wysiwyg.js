@@ -1887,6 +1887,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument, o
         var cell = d.createElement("td");
         row.appendChild(cell);
         holder = cell;
+        decorationStatus = {};
     }
 
     function closeTable() {

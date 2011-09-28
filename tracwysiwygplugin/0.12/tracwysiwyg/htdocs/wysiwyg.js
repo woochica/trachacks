@@ -2070,6 +2070,7 @@ TracWysiwyg.prototype.wikitextToFragment = function(wikitext, contentDocument, o
         }
         row.appendChild(cell);
         holder = cell;
+        decorationStatus = {};
     }
 
     function closeTable() {

@@ -1229,6 +1229,19 @@ addEvent(window, "load", function() {
                 "|| 2.1[[BR]][[BR]] * item 3[[BR]] * item 4 ||" ].join("\n"));
         });
 
+        unit.add("table with incomplete markups", function() {
+            var dom = fragment(
+                element("table", { "class": "wiki" },
+                    element("tbody",
+                        element("tr",
+                            element("td", element("b", element("i", "'"))),
+                            element("td", element("b", "bold")))
+                    )
+                )
+            );
+            generateFragment.call(this, dom, "|| '''''' || '''bold''' ||");
+        });
+
         unit.add("table from word", function() {
             var dom = element("div");
             dom.innerHTML = [
