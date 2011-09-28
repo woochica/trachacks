@@ -28,3 +28,14 @@ msgstr ""
 msgid "Table of Contents"
 msgstr ""
 
+msgid "Clone"
+msgstr ""
+
+msgid "Create a copy of this ticket"
+msgstr ""
+
+msgid "%(summary)s (cloned from %(id)s)"
+msgstr ""
+
+msgid "Cloned from #%(id)s:\n----\n%(description)s"
+msgstr ""
