@@ -2,7 +2,8 @@
 
 import sys
 import time
-from daemon import Daemon
+
+from cloud.daemon import Daemon
 
 class Ec2Launcher(Daemon):
     """Launches and bootstraps an ec2 instance in a separate process."""
@@ -102,7 +103,8 @@ class Ec2Launcher(Daemon):
         self.log.debug('Bootstrapping the instance..')
         self.progress.start(step)
         public_hostname = instance.public_dns_name
-        node = self.chefapi.bootstrap(id, public_hostname, timeout=360)
+        run_list = self.attributes.get('run_list')
+        node = self.chefapi.bootstrap(id, public_hostname, run_list)
         if node is None:
             msg = "Instance %s is running" % instance.id + \
                   " but not bootstrapped. Login to" + \

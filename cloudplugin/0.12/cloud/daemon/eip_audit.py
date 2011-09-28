@@ -1,23 +1,24 @@
 #!/bin/python
 
 import sys
-from daemon import Daemon
 
-class RdsAuditor(Daemon):
-    """Audits the rds instances in a separate process."""
+from cloud.daemon import Daemon
+
+class EipAuditor(Daemon):
+    """Audits the eip addresses in a separate process."""
     
     def __init__(self):
         Daemon.__init__(self, ['Determining differences..'], "Audit Progress",
-            "Auditing actual RDS instances for discrepancies with chef")
+            "Auditing actual EIP addresses for discrepancies with chef")
         
     def run(self, sysexit=True):
         # first determine the steps
         bag = self.chefapi.resource('data', name=self.databag)
-        instances = self.cloudapi.get_rds_instances()
+        addresses = self.cloudapi.get_eip_addresses()
         
         self.log.debug('Determining id deltas..')
         chef_ids = [id for id in bag]
-        cloud_ids = [instance.id for instance in instances]
+        cloud_ids = [a.public_ip.replace('.','_') for a in addresses]
         adds = [id for id in cloud_ids if id not in chef_ids]
         updates = [id for id in cloud_ids if id in chef_ids]
         deletes = [id for id in chef_ids if id not in cloud_ids]
@@ -25,19 +26,19 @@ class RdsAuditor(Daemon):
         self.log.debug('Generating steps..')
         steps = []
         for id in adds:
-            steps.append("Add rds instance '%s' to chef" % id)
+            steps.append("Add eip instance '%s' to chef" % id)
         for id in updates:
-            steps.append("Update rds instance '%s' in chef" % id)
+            steps.append("Update eip instance '%s' in chef" % id)
         for id in deletes:
-            steps.append("Delete rds instance '%s' from chef" % id)
+            steps.append("Delete eip instance '%s' from chef" % id)
         self.progress.steps(steps)
         step = 0
         
         # Add and Updates Steps
         for ids in [adds,updates]:
-            for instance in instances:
+            for address in addresses:
                 self.progress.start(step)
-                id = instance.id
+                id = address.public_ip.replace('.','_')
                 if id not in ids: continue
                 
                 # update and save the audited fields
@@ -49,19 +50,8 @@ class RdsAuditor(Daemon):
                     self.progress.error(msg)
                     sys.exit(1)
                 
-                # copy all instance's string attributes
-                for field,value in instance.__dict__.items():
-                    if type(value) in (unicode,str,int,float,bool):
-                        item[field.lower()] = value
-                if hasattr(instance, 'endpoint') and instance.endpoint:
-                    item['endpoint'] = instance.endpoint[0]
-                    item['endpoint_port'] = instance.endpoint[1]
-                else:
-                    self.log.debug('No endpoint (yet) for rds instance %s' % id)
-                    progress = self.progress.get()
-                    progress['steps'][step] += ' <i>(no endpoint)</i>'
-                    self.progress.set(progress)
-                    
+                item['public_ip'] = address.public_ip
+                item['instance_id'] = address.instance_id
                 self.log.debug('Saving data bag item %s/%s..' % (bag.name,id))
                 item.save()
                 self.log.debug('Saved data bag item %s/%s' % (bag.name,id))
@@ -81,7 +71,7 @@ class RdsAuditor(Daemon):
 
 
 if __name__ == "__main__":
-    daemon = RdsAuditor()
+    daemon = EipAuditor()
     try:
         if daemon.options.daemonize:
             daemon.start()

@@ -4,7 +4,8 @@ import sys
 import json
 import time
 from subprocess import Popen, STDOUT, PIPE, CalledProcessError
-from daemon import Daemon
+
+from cloud.daemon import Daemon
 
 class CommandError(CalledProcessError):
     def __init__(self, returncode, cmd, out):

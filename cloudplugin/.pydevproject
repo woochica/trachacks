@@ -5,12 +5,11 @@
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_INTERPRETER">Default</pydev_property>
 <pydev_property name="org.python.pydev.PYTHON_PROJECT_VERSION">python 2.6</pydev_property>
 <pydev_pathproperty name="org.python.pydev.PROJECT_SOURCE_PATH">
-<path>/cloudplugin/0.12/cloud</path>
+<path>/cloudplugin/0.12</path>
 </pydev_pathproperty>
 <pydev_pathproperty name="org.python.pydev.PROJECT_EXTERNAL_SOURCE_PATH">
-<path>/home/rob/trac12/lib/python2.6/site-packages/Trac-0.12.2-py2.6.egg</path>
-<path>/usr/local/lib/python2.6/dist-packages/Genshi-0.6-py2.6.egg</path>
-<path>/home/rob/workspace/pychef</path>
-<path>/home/rob/trac12/lib/python2.6/site-packages/boto-2.0b4-py2.6.egg</path>
+<path>/Users/robguttman/Documents/workspace/pychef</path>
+<path>/Users/robguttman/Documents/workspace/trac12/lib/python2.6/site-packages/boto-2.0b4-py2.6.egg</path>
+<path>/Users/robguttman/Documents/workspace/trac12/lib/python2.6/site-packages/Trac-0.12.2-py2.6.egg</path>
 </pydev_pathproperty>
 </pydev_project>

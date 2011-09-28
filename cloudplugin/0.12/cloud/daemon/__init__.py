@@ -8,12 +8,12 @@ import tempfile
 import logging
 from optparse import OptionParser
 
-from progress import Progress
-from chefapi import ChefApi
-from awsapi import AwsApi
+from cloud.progress import Progress
+from cloud.api.chef2 import Chef
+from cloud.api.aws import Aws
 
 try:
-    import xmpp
+    import xmpp #@UnresolvedImport
 except:
     pass
 
@@ -35,11 +35,13 @@ class Daemon(object):
         parser.add_option("--chef-base-path")
         parser.add_option("--chef-boot-run-list", default=[], action='append')
         parser.add_option("--chef-boot-sudo",default=False, action="store_true")
+        parser.add_option("--chef-boot-version")
         parser.add_option("--aws-key")
         parser.add_option("--aws-secret")
         parser.add_option("--aws-keypair")
         parser.add_option("--aws-keypair-pem")
         parser.add_option("--aws-username")
+        parser.add_option("--aws-security-groups")
         parser.add_option("--rds-username")
         parser.add_option("--rds-password")
         parser.add_option("--databag")
@@ -64,16 +66,18 @@ class Daemon(object):
         self.log.addHandler(self.handler)
         
         # setup apis
-        self.chefapi = ChefApi(self.options.chef_base_path,
+        self.chefapi = Chef(self.options.chef_base_path,
                                self.options.aws_keypair_pem,
                                self.options.aws_username,
                                self.options.chef_boot_run_list,
                                self.options.chef_boot_sudo,
+                               self.options.chef_boot_version,
                                self.log)
         
-        self.cloudapi = AwsApi(self.options.aws_key,
+        self.cloudapi = Aws(self.options.aws_key,
                                self.options.aws_secret,
                                self.options.aws_keypair,
+                               self.options.aws_security_groups,
                                self.options.rds_username,
                                self.options.rds_password,
                                self.log)

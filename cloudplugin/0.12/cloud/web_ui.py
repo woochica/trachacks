@@ -1,7 +1,7 @@
 import re
 import time
 import json
-from genshi.builder import tag
+from genshi.builder import tag #@UnresolvedImport
 from trac.config import Option, BoolOption, IntOption, ListOption
 from trac.core import * #@UnusedWildImport
 from trac.perm import IPermissionRequestor
@@ -10,11 +10,12 @@ from trac.util.translation import _
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import Chrome, add_ctxtnav, add_script, add_stylesheet, \
                             INavigationContributor, ITemplateProvider
-from handlers import IFieldHandler
-from droplets import Droplet
-from chefapi import ChefApi
-from awsapi import AwsApi
-from progress import Progress
+
+from cloud.fields.handlers import IFieldHandler
+from cloud.droplet import Droplet
+from cloud.api.chef2 import Chef
+from cloud.api.aws import Aws
+from cloud.progress import Progress
 
 
 class CloudModule(Component):
@@ -39,6 +40,9 @@ class CloudModule(Component):
     aws_username = Option('cloud', 'aws_username', 'ubuntu',
         _("AWS/EC2 ssh username."))
     
+    aws_security_groups = Option('cloud', 'aws_security_groups', 'default',
+        _("AWS/EC2 security groups comma-separated list of strings."))
+    
     rds_username = Option('cloud', 'rds_username', '',
         _("AWS/RDS master username."))
     
@@ -53,6 +57,9 @@ class CloudModule(Component):
     
     chef_boot_sudo = BoolOption('cloud', 'chef_boot_sudo', True,
         _("Whether the chef knife bootstrap should be run as sudo."))
+    
+    chef_boot_version = Option('cloud', 'chef_boot_version', '',
+        _("Version of chef-client to install."))
     
     jabber_server = Option('cloud', 'jabber_server', '', _("Jabber server."))
     
@@ -138,16 +145,18 @@ class CloudModule(Component):
         # setup cloud droplets
         if not hasattr(self, 'droplets'):
             # setup chefapi and cloudapi
-            chefapi = ChefApi(self.chef_base_path,
+            chefapi = Chef(self.chef_base_path,
                               self.aws_keypair_pem,
                               self.aws_username,
                               self.chef_boot_run_list,
                               self.chef_boot_sudo,
+                              self.chef_boot_version,
                               self.log)
             
-            cloudapi = AwsApi(self.aws_key,
+            cloudapi = Aws(self.aws_key,
                               self.aws_secret,
                               self.aws_keypair,
+                              self.aws_security_groups,
                               self.rds_username,
                               self.rds_password,
                               self.log)
@@ -155,7 +164,7 @@ class CloudModule(Component):
             # instantiate each droplet (singletons)
             self.droplets = {}
             self.titles = Droplet.titles(self.env)
-            for u_order,droplet_name,u_title in self.titles:
+            for _order,droplet_name,_title in self.titles:
                 self.droplets[droplet_name] = Droplet.new(self.env,
                     droplet_name, chefapi, cloudapi,
                     self.field_handlers, self.log)
@@ -174,7 +183,7 @@ class CloudModule(Component):
         if not droplet_name:
             droplet_name = self.default_resource
             if not droplet_name:
-                u_,droplet_name,u_ = self.titles[0]
+                _order,droplet_name,_title = self.titles[0]
             req.redirect(req.href.cloud(droplet_name))
         
         # check for valid kind
@@ -219,7 +228,7 @@ class CloudModule(Component):
                     return template,data,content_type
         
         # add contextual nav
-        for u_order,droplet_name,title in self.titles:
+        for _order,droplet_name,title in self.titles:
             add_ctxtnav(req, title, href=req.href.cloud(droplet_name))
         
         add_stylesheet(req, 'common/css/report.css') # reuse css

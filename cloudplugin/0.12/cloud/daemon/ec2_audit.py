@@ -1,7 +1,8 @@
 #!/bin/python
 
 import sys
-from daemon import Daemon
+
+from cloud.daemon import Daemon
 
 class Ec2Auditor(Daemon):
     """Audits the ec2 instances in a separate process."""

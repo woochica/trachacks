@@ -7,8 +7,11 @@ droplet_defaults = {
     'aws_keypair_pem': '',
     'aws_secret': '',
     'aws_username': '',
+    'aws_security_groups': 'default',
     'chef_base_path': '',
     'chef_boot_run_list': '',
+    'chef_boot_sudo': True,
+    'chef_boot_version': '',
     'jabber_channel': '',
     'jabber_password': '',
     'jabber_port': 5222,
@@ -36,7 +39,7 @@ droplet_defaults = {
     'field.run_list.handler': 'RunListHandler',
     'field.environment': 'select',
     'field.environment.label': 'Environment',
-    'field.environment.index': 'environment',
+    'field.environment.index': 'env',
     'field.created_by': 'text',
     'field.created_by.label': 'Created By',
     'field.created_by.handler': 'AuthorHandler',
@@ -245,7 +248,7 @@ droplet_defaults = {
     'field.command.label': 'Command',
     'field.cmd_environments': 'multiselect',
     'field.cmd_environments.label': 'Execute in Environments',
-    'field.cmd_environments.index': 'environment',
+    'field.cmd_environments.index': 'env',
     'field.cmd_environments.handler': 'ListHandler',
     'field.cmd_roles': 'multiselect',
     'field.cmd_roles.label': 'Execute for Roles',
@@ -265,7 +268,7 @@ droplet_defaults = {
     'grid_sort': 'name',
     'grid_asc': 1,
   },
-  'cloud.environment': {
+  'cloud.env': {
     'class': 'Environment', # must exactly match corresponding Python class name
     'description': 'Per-environment/profile configuration.',
     'title': 'Environments',
@@ -280,8 +283,8 @@ droplet_defaults = {
     'field.order.label': 'Order',
     'field.name': 'text',
     'field.name.label': 'Name',
-    'field.dir': 'text',
-    'field.dir.label': 'Directory',
+    'field.description': 'text',
+    'field.description.label': 'Description',
     'field.branch': 'text',
     'field.branch.label': 'Branch',
     'field.rev': 'text',
@@ -293,13 +296,13 @@ droplet_defaults = {
     
     # create, read, update, delete views (CRUD) - chef resource name and fields
     'crud_resource': 'data',
-    'crud_new': 'order, name, branch, rev',
-    'crud_edit': 'order, name, branch, rev',
-    'crud_view': 'order, name, branch, rev, cmd_roles',
+    'crud_new': 'order, name, description, branch, rev',
+    'crud_edit': 'order, name, description, branch, rev',
+    'crud_view': 'order, name, description, branch, rev, cmd_roles',
     
     # grid view - chef search index and fields
-    'grid_index': 'environment', # data bag name, must match droplet name
-    'grid_columns': 'order, name, branch, rev',
+    'grid_index': 'env', # data bag name, must match droplet name
+    'grid_columns': 'order, name, description, branch, rev',
     'grid_group': '',
     'grid_sort': 'order',
     'grid_asc': 1,

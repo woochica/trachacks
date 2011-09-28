@@ -1,18 +1,20 @@
 import time
 import boto
 
-from timer import Timer
+from cloud.timer import Timer
 
-class AwsApi(object):
+class Aws(object):
     """Wraps boto with several conveniences including:
     
      * launch an ec2 instance in one call
     """
     
-    def __init__(self, key, secret, keypair, username, password, log):
+    def __init__(self, key, secret, keypair, security_groups,
+                 username, password, log):
         self.key = key.encode('ascii')
         self.secret = secret.encode('ascii')
         self.keypair = keypair
+        self.security_groups = security_groups
         self.username = username
         self.password = password
         self.log = log
@@ -25,7 +27,7 @@ class AwsApi(object):
         """Launch an ec2 instance.  If timeout is > 0, then this method
         won't return until the instance is fully running or the timeout
         duration expires."""
-        # TODO: support multiple regions (and multiple security groups)
+        # TODO: support multiple regions
         conn = boto.connect_ec2(self.key, self.secret)
         image = conn.get_image(image_id)
         reservation = image.run(
@@ -33,6 +35,8 @@ class AwsApi(object):
             placement=zone,
             user_data=user_data,
             key_name=self.keypair,
+            security_groups=\
+                [s.strip() for s in self.security_groups.split(',') if s],
             disable_api_termination=disable_api_termination)
         instance = reservation.instances[0]
         self.log.info('Launched ec2 instance %s' % instance.id)

@@ -2,7 +2,8 @@
 
 import sys
 import time
-from daemon import Daemon
+
+from cloud.daemon import Daemon
 
 class RdsCreator(Daemon):
     """Creates an rds instance in a separate process."""

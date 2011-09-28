@@ -3,12 +3,11 @@ import time
 import signal
 import urllib2
 from subprocess import Popen, STDOUT, PIPE
-
 import chef
-from chef.exceptions import ChefServerNotFoundError
-from timer import Timer
 
-class ChefApi(object):
+from cloud.timer import Timer
+
+class Chef(object):
     """Wraps pychef with several conveniences including:
     
       * search params and result conversion
@@ -18,12 +17,14 @@ class ChefApi(object):
       * ec2 instance bootstrapping
     """
     
-    def __init__(self, base_path, keypair_pem, user, boot_run_list, sudo, log):
+    def __init__(self, base_path, keypair_pem, user,
+                 run_list, boot_sudo, boot_version, log):
         self.base_path = os.path.abspath(base_path)
         self.keypair_pem = keypair_pem
         self.user = user
-        self.boot_run_list = boot_run_list
-        self.sudo = sudo
+        self.boot_run_list = run_list
+        self.boot_sudo = boot_sudo
+        self.boot_version = boot_version
         self.log = log
         self.chef = chef.autoconfigure(self.base_path)
     
@@ -62,7 +63,7 @@ class ChefApi(object):
                     raise
                 self.log.debug("Encountered error %s, retrying.." % str(e))
                 time.sleep(1.0)
-            except ChefServerNotFoundError:
+            except chef.exceptions.ChefServerNotFoundError:
                 return [], 0
     
     def resource(self, resource, id=None, name=None):
@@ -129,7 +130,7 @@ class ChefApi(object):
         self.log.debug("Timeout on data bag item %s/%s" % (bag.name,id))
         return None
     
-    def bootstrap(self, id, hostname, timeout=300):
+    def bootstrap(self, id, hostname, run_list, timeout=360):
         """Bootstraps an ec2 instance by calling out to "knife bootstrap".
         The result should be that the ec2 instance connects with the
         chefserver.
@@ -144,15 +145,20 @@ class ChefApi(object):
         class Alarm(Exception): pass
         def alarm_handler(signum, frame): raise Alarm
         
-        cmd = '/usr/bin/knife bootstrap %s' % hostname
-        cmd += ' -c %s' % os.path.join(self.base_path,'knife.rb')
+        cmd = 'export HOME=%s &&' % self.base_path
+        cmd += ' /usr/bin/knife bootstrap %s' % hostname
+        cmd += ' -c %s' % os.path.join(self.base_path,'.chef','knife.rb')
         cmd += ' -x %s' % self.user
         if self.keypair_pem:
             cmd += ' -i %s' % self.keypair_pem
         if self.boot_run_list:
             cmd += ' -r %s' % ','.join(r for r in self.boot_run_list)
-        if self.sudo:
+        elif run_list:
+            cmd += ' -r %s' % ','.join(r for r in run_list)
+        if self.boot_sudo:
             cmd += ' --sudo'
+        if self.boot_version:
+            cmd += ' --bootstrap-version %s' % self.boot_version
             
         expected_transient_errors = [
             "409 Conflict: Client already exists",

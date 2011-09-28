@@ -2,7 +2,8 @@
 
 import sys
 import time
-from daemon import Daemon
+
+from cloud.daemon import Daemon
 
 class EbsCreator(Daemon):
     """Creates an ebs volume in a separate process."""

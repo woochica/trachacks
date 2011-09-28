@@ -1,19 +1,20 @@
 #!/bin/python
 
 import sys
-from daemon import Daemon
 
-class EbsAuditor(Daemon):
-    """Audits the ebs volumes in a separate process."""
+from cloud.daemon import Daemon
+
+class RdsAuditor(Daemon):
+    """Audits the rds instances in a separate process."""
     
     def __init__(self):
         Daemon.__init__(self, ['Determining differences..'], "Audit Progress",
-            "Auditing actual EBS volumes for discrepancies with chef")
+            "Auditing actual RDS instances for discrepancies with chef")
         
     def run(self, sysexit=True):
         # first determine the steps
         bag = self.chefapi.resource('data', name=self.databag)
-        instances = self.cloudapi.get_ebs_volumes()
+        instances = self.cloudapi.get_rds_instances()
         
         self.log.debug('Determining id deltas..')
         chef_ids = [id for id in bag]
@@ -25,11 +26,11 @@ class EbsAuditor(Daemon):
         self.log.debug('Generating steps..')
         steps = []
         for id in adds:
-            steps.append("Add ebs volume '%s' to chef" % id)
+            steps.append("Add rds instance '%s' to chef" % id)
         for id in updates:
-            steps.append("Update ebs volume '%s' in chef" % id)
+            steps.append("Update rds instance '%s' in chef" % id)
         for id in deletes:
-            steps.append("Delete ebs volume '%s' from chef" % id)
+            steps.append("Delete rds instance '%s' from chef" % id)
         self.progress.steps(steps)
         step = 0
         
@@ -53,10 +54,14 @@ class EbsAuditor(Daemon):
                 for field,value in instance.__dict__.items():
                     if type(value) in (unicode,str,int,float,bool):
                         item[field.lower()] = value
-                
-                # extract attachment data
-                item['instance_id'] = instance.attach_data.instance_id or ''
-                item['device'] = instance.attach_data.device or ''
+                if hasattr(instance, 'endpoint') and instance.endpoint:
+                    item['endpoint'] = instance.endpoint[0]
+                    item['endpoint_port'] = instance.endpoint[1]
+                else:
+                    self.log.debug('No endpoint (yet) for rds instance %s' % id)
+                    progress = self.progress.get()
+                    progress['steps'][step] += ' <i>(no endpoint)</i>'
+                    self.progress.set(progress)
                     
                 self.log.debug('Saving data bag item %s/%s..' % (bag.name,id))
                 item.save()
@@ -77,7 +82,7 @@ class EbsAuditor(Daemon):
 
 
 if __name__ == "__main__":
-    daemon = EbsAuditor()
+    daemon = RdsAuditor()
     try:
         if daemon.options.daemonize:
             daemon.start()

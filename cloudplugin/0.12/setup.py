@@ -12,11 +12,15 @@ setup(
     author="Rob Guttman", author_email="guttman@alum.mit.edu",
     license='GPL', url='http://trac-hacks.org/wiki/CloudPlugin',
     packages = ['cloud'],
-    package_data = {'cloud':['templates/*.html',
+    package_data = {'cloud':['api/*.py',
+                             'daemon/*.py',
+                             'droplet/*.py',
+                             'fields/*.py',
+                             'templates/*.html',
                              'htdocs/*.js',
                              'htdocs/*.css',
                              'htdocs/*.png',
-                             'htdocs/*.gif']},
+                             'htdocs/*.gif',]},
     entry_points = {'trac.plugins':['cloud.web_ui = cloud.web_ui',
-                                    'cloud.handlers = cloud.handlers']}
+                                    'cloud.fields.handlers = cloud.fields.handlers']}
 )
