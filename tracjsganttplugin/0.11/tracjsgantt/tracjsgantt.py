@@ -572,10 +572,16 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 if self.fields['finish'] and self.fields['parent']:
                     pid = int(t[self.fields['parent']])
                     # If this ticket has a parent, process it
-                    if pid != 0 and pid in self.ticketsByID:
-                        parent = self.ticketsByID[pid]
-                        _schedule_task_alap(parent)
-                        finish = self.ticketsByID[pid]['calc_finish']
+                    if pid != 0:
+                        if pid in self.ticketsByID:
+                            parent = self.ticketsByID[pid]
+                            _schedule_task_alap(parent)
+                            finish = self.ticketsByID[pid]['calc_finish']
+                        else:
+                            self.env.log.info('Ticket %s has parent %s '+
+                                              'but %s is not in the chart.'+
+                                              ' Ancestor deadlines ignored.' %
+                                              (t['id'], pid, pid))
 
                 return finish
 
@@ -583,9 +589,16 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             def _earliest_successor(t, start):
                 if self.fields['succ'] and t[self.fields['succ']] != []:
                     for id in t[self.fields['succ']]:
-                        s = _schedule_task_alap(self.ticketsByID[int(id)])
-                        if start == None or s < start:
-                            start = s
+                        id = int(id)
+                        if id in self.ticketsByID:
+                            s = _schedule_task_alap(self.ticketsByID[id])
+                            if start == None or s < start:
+                                start = s
+                        else:
+                            self.env.log.info('Ticket %s depends on %s '+
+                                              'but %s is not in the chart.'+
+                                              ' Dependency deadlines ignored.' %
+                                              (t['id'], id, id))
                             
                 return start
 
@@ -641,10 +654,16 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 if self.fields['start'] and self.fields['parent']:
                     pid = int(t[self.fields['parent']])
                     # If this ticket has a parent, process it
-                    if pid != 0 and pid in self.ticketsByID:
-                        parent = self.ticketsByID[pid]
-                        _schedule_task_asap(parent)
-                        start = self.ticketsByID[pid]['calc_start']
+                    if pid != 0:
+                        if pid in self.ticketsByID:
+                            parent = self.ticketsByID[pid]
+                            _schedule_task_asap(parent)
+                            start = self.ticketsByID[pid]['calc_start']
+                        else:
+                            self.env.log.info('Ticket %s has parent %s '+
+                                              'but %s is not in the chart.'+
+                                              ' Ancestor deadlines ignored.' %
+                                              (t['id'], pid, pid))
 
                 return start
 
@@ -652,9 +671,16 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             def _latest_predecessor(t, finish):
                 if self.fields['pred'] and t[self.fields['pred']] != []:
                     for id in t[self.fields['pred']]:
-                        f = _schedule_task_asap(self.ticketsByID[int(id)])
-                        if finish == None or f > finish:
-                            finish = f
+                        id = int(id)
+                        if id in self.ticketsByID:
+                            f = _schedule_task_asap(self.ticketsByID[id])
+                            if finish == None or f > finish:
+                                finish = f
+                        else:
+                            self.env.log.info('Ticket %s depends on %s '+
+                                              'but %s is not in the chart.'+
+                                              ' Dependency deadlines ignored.' %
+                                              (t['id'], id, id))
                             
                 return finish
 
