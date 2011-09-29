@@ -572,7 +572,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 if self.fields['finish'] and self.fields['parent']:
                     pid = int(t[self.fields['parent']])
                     # If this ticket has a parent, process it
-                    if pid != 0:
+                    if pid != 0 and pid in self.ticketsByID:
                         parent = self.ticketsByID[pid]
                         _schedule_task_alap(parent)
                         finish = self.ticketsByID[pid]['calc_finish']
@@ -641,7 +641,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 if self.fields['start'] and self.fields['parent']:
                     pid = int(t[self.fields['parent']])
                     # If this ticket has a parent, process it
-                    if pid != 0:
+                    if pid != 0 and pid in self.ticketsByID:
                         parent = self.ticketsByID[pid]
                         _schedule_task_asap(parent)
                         start = self.ticketsByID[pid]['calc_start']
