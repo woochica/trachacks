@@ -186,7 +186,11 @@ class TagWikiMacros(TagTemplateProvider):
                 cols = [col for col in cols.split('|')
                         if col in self.supported_cols]
                 # Use available translations from Trac core.
-                labels = TicketSystem(self.env).get_ticket_field_labels()
+                try:
+                    labels = TicketSystem(self.env).get_ticket_field_labels()
+                except AttributeError:
+                    # Trac 0.11 neither has the attribute nor uses i18n.
+                    labels = {'id': 'Id', 'description': 'Description'}
                 labels['realm'] = _('Realm')
                 labels['tags'] = _('Tags')
                 headers = [{'name': col,
