@@ -13,7 +13,7 @@ import math
 
 from genshi.builder import tag as builder
 from pkg_resources import resource_filename
-from trac.config import ChoiceOption, ListOption, Option
+from trac.config import ListOption, Option
 from trac.core import Component, ExtensionPoint, implements
 from trac.mimeview import Context
 from trac.resource import Resource
@@ -64,8 +64,7 @@ class TagRequestHandler(TagTemplateProvider):
 
             Supported columns: realm, id, description, tags
             """)
-    default_format = ChoiceOption('tags', 'default_format',
-        ['oldlist', 'compact', 'table'],
+    default_format = Option('tags', 'default_format', 'oldlist',
         doc="""Set the default format for the handler of the `/tags` domain.
 
             || `oldlist` (default value) || The original format with a

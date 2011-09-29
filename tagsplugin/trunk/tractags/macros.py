@@ -12,7 +12,7 @@ import re
 
 from genshi.builder import Markup, tag as builder
 
-from trac.config import ChoiceOption, ListOption, Option
+from trac.config import ListOption, Option
 from trac.core import implements
 from trac.resource import Resource, get_resource_description, \
                           get_resource_url, render_resource_link
@@ -84,8 +84,7 @@ class TagWikiMacros(TagTemplateProvider):
 
             Supported columns: realm, id, description, tags
             """)
-    default_format = ChoiceOption('tags', 'listtagged_default_format',
-        ['oldlist', 'compact', 'table'],
+    default_format = Option('tags', 'listtagged_default_format', 'oldlist',
         doc="""Set the default format for the handler of the `/tags` domain.
 
             || `oldlist` (default value) || The original format with a
