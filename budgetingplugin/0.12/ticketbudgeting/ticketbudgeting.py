@@ -92,7 +92,7 @@ class Budget:
             return
         
 #        print "[do_action] ticket_id: %s, position: %s" % (ticket_id, position)
-        db = env.get_read_db()
+        db = env.get_db_cnx()
         cursor = db.cursor()
         
         flds = None
@@ -137,6 +137,7 @@ class Budget:
             db.commit()
         else:
             env.log.error('no appropriate action found! _action is: %s' % self._action)
+        db.close()
     
     def get_values(self):
         return self._budget_dict
