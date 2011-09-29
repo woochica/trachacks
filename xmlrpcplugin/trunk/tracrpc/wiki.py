@@ -66,8 +66,13 @@ class WikiRPC(Component):
         wiki_realm = Resource('wiki')
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT name, max(time), author, version, comment FROM wiki'
-                       ' WHERE time >= %s GROUP BY name ORDER BY max(time) DESC', (since,))
+        cursor.execute('SELECT name, time, author, version, comment '
+                       'FROM wiki w1 '
+                       'WHERE time >= %s '
+                       'AND version = (SELECT MAX(version) '
+                       '               FROM wiki w2 '
+                       '               WHERE w2.name=w1.name) '
+                       'ORDER BY time DESC', (since,))
         result = []
         for name, when, author, version, comment in cursor:
             if 'WIKI_VIEW' in req.perm(wiki_realm(id=name, version=version)):
