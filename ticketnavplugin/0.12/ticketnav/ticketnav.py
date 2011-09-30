@@ -193,7 +193,19 @@ Concretely:
 
     
 class SortMilestoneVersion(Component):
-    """Sorts drop-down lists of version and milestone. """
+    """Sorts drop-down lists of version and milestone regardless of the case and 
+make milestone a must field, when a default milestone is set.
+
+Default behavior of Trac for sorting milestones is:
+{{{
+inbox, v1, v2, Inbox, V1, V2
+}}}
+
+This plugin sorts it as following:
+{{{
+inbox, Inbox, v1, V1, v2, V2
+}}}
+"""
     implements (ITemplateStreamFilter)
     
     #ITemplateStreamFilter
@@ -210,6 +222,9 @@ class SortMilestoneVersion(Component):
                 version['options'].sort(key=unicode.lower)
                 
                 milestones = self.get_field_list(fields, 'milestone')
+                if self.config.get('ticket', 'default_milestone'):
+                    milestones['optional'] = False
+                    
                 for opt in milestones['optgroups']:
                     opt['options'].sort(key=unicode.lower)
                     
