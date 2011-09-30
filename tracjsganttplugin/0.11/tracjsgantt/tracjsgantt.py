@@ -4,7 +4,7 @@ import datetime
 from datetime import timedelta, datetime
 from operator import itemgetter, attrgetter
 
-from trac.util.datefmt import format_date
+from trac.util.datefmt import format_date, utc
 from trac.util.html import Markup
 from trac.wiki.macros import WikiMacroBase
 from trac.web.chrome import Chrome
@@ -12,7 +12,7 @@ import copy
 from trac.ticket.query import Query
 
 from trac.config import IntOption, Option
-from trac.core import implements, Component
+from trac.core import implements, Component, TracError
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from pkg_resources import resource_filename
@@ -416,7 +416,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                          'parent', 
                          'worked', 'estimate', 'percent' ]
             for field in nullable:
-                if self.fields.get(field) and t[self.fields[field]] == '--':
+                if self.fields[field] and self.fields[field] not in t:
+                    raise TracError( "%s is not a custom ticket field" % self.fields[field] )
+                
+                if self.fields[field] and t[self.fields[field]] == '--':
                     t[self.fields[field]] = ''
 
             # Get list of children
@@ -578,10 +581,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             _schedule_task_alap(parent)
                             finish = self.ticketsByID[pid]['calc_finish']
                         else:
-                            self.env.log.info('Ticket %s has parent %s '+
-                                              'but %s is not in the chart.'+
-                                              ' Ancestor deadlines ignored.' %
-                                              (t['id'], pid, pid))
+                            self.env.log.info("""Ticket %s has parent %s
+                                                 but %s is not in the chart.
+                                                 Ancestor deadlines ignored."""
+                                              % (t['id'], pid, pid))
 
                 return finish
 
@@ -595,10 +598,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             if start == None or s < start:
                                 start = s
                         else:
-                            self.env.log.info('Ticket %s depends on %s '+
-                                              'but %s is not in the chart.'+
-                                              ' Dependency deadlines ignored.' %
-                                              (t['id'], id, id))
+                            self.env.log.info("""Ticket %s has parent %s
+                                                 but %s is not in the chart.
+                                                 Ancestor deadlines ignored."""
+                                              % (t['id'], pid, pid))
                             
                 return start
 
@@ -660,10 +663,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             _schedule_task_asap(parent)
                             start = self.ticketsByID[pid]['calc_start']
                         else:
-                            self.env.log.info('Ticket %s has parent %s '+
-                                              'but %s is not in the chart.'+
-                                              ' Ancestor deadlines ignored.' %
-                                              (t['id'], pid, pid))
+                            self.env.log.info("""Ticket %s has parent %s
+                                                 but %s is not in the chart.
+                                                 Ancestor deadlines ignored."""
+                                              % (t['id'], pid, pid))
 
                 return start
 
@@ -677,10 +680,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             if finish == None or f > finish:
                                 finish = f
                         else:
-                            self.env.log.info('Ticket %s depends on %s '+
-                                              'but %s is not in the chart.'+
-                                              ' Dependency deadlines ignored.' %
-                                              (t['id'], id, id))
+                            self.env.log.info("""Ticket %s has parent %s
+                                                 but %s is not in the chart.
+                                                 Ancestor deadlines ignored."""
+                                              % (t['id'], pid, pid))
                             
                 return finish
 
@@ -777,7 +780,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 milestoneTicket['level'] = 0
                 
                 # If there's no due date, default to today at close of business
-                ts = row[1] or (datetime.today() + timedelta(hours=self.hpd))
+                ts = row[1] or (datetime.now(utc) + timedelta(hours=self.hpd))
                 milestoneTicket[self.fields['finish']] = \
                     format_date(ts, self.dbDateFormat)
 
