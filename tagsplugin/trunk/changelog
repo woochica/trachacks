@@ -39,6 +39,7 @@ tractags-0.7 (not yet released)
  new features
  * #2509: Create wiki page from /tags/<tag> page
  * #2708: Add rel-tag microformat to tags list
+ * #3610: ListTagged macro should have distinct formatting of closed tickets
  * #3754: Tag redirects to existing wiki page instead of listing tagged pages
  * #3851: TAGS_VIEW not showing page tags along for anonymous
  * #7787: Add i18n support

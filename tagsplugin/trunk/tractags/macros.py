@@ -17,9 +17,10 @@ from trac.core import implements
 from trac.resource import Resource, get_resource_description, \
                           get_resource_url, render_resource_link
 from trac.ticket.api import TicketSystem
+from trac.ticket.model import Ticket
 from trac.util import embedded_numbers
 from trac.util.compat import sorted, set
-from trac.util.text import to_unicode
+from trac.util.text import shorten_line, to_unicode
 from trac.web.chrome import add_stylesheet
 from trac.wiki.api import IWikiMacroProvider, parse_args
 
@@ -179,8 +180,17 @@ class TagWikiMacros(TagTemplateProvider):
             add_stylesheet(req, 'tags/css/tractags.css')
 
             def _link(resource):
-                return render_resource_link(self.env, formatter.context,
-                                            resource, 'compact')
+                if resource.realm == 'ticket':
+                    ticket = Ticket(self.env, resource.id)
+                    return _ticket_anchor(ticket)
+                else:
+                    return render_resource_link(self.env, formatter.context,
+                                                resource, 'compact')
+
+            def _ticket_anchor(ticket):
+                return builder.a('#%s' % ticket.id, class_=ticket['status'],
+                                 href=formatter.href.ticket(ticket.id),
+                                 title=shorten_line(ticket['summary']))
 
             if format == 'table':
                 cols = [col for col in cols.split('|')
