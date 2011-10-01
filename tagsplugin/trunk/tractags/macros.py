@@ -171,7 +171,7 @@ class TagWikiMacros(TagTemplateProvider):
                 if not realms:
                     # Apply ListTagged defaults to wiki macro call w/o realm.
                     realms = set(all_realms)-set(self.exclude_realms)
-            if len(realms) == 0:
+            if not realms:
                 return ''
             query = '(%s) (%s)' % (query, ' or '.join(['realm:%s' % (r)
                                                        for r in realms]))

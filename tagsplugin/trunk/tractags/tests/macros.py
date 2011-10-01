@@ -11,6 +11,8 @@ import shutil
 import tempfile
 
 from trac.test import EnvironmentStub, Mock
+from trac.perm import PermissionCache, PermissionSystem
+from trac.web.href import Href
 
 from tractags.model import TagModelProvider
 from tractags.macros import TagWikiMacros
@@ -23,16 +25,24 @@ class ListTaggedMacroTestCase(unittest.TestCase):
                 enable=['trac.*', 'tractags.*'])
         self.env.path = tempfile.mkdtemp()
         TagModelProvider(self.env).environment_created()
+        PermissionSystem(self.env).grant_permission('user', 'TAGS_VIEW')
         
         self.tag_twm = TagWikiMacros(self.env)
     
     def tearDown(self):
         shutil.rmtree(self.env.path)
     
-    def test_init(self):
-        # Empty test just to confirm that setUp and tearDown works
-        pass
-
+    def test_empty_content(self):
+        formatter = Mock(
+            req = Mock(args={},
+                       authname='user',
+                       perm=PermissionCache(self.env, 'user'),
+                       href=Href('/'),
+                       abs_href='http://example.org/trac/',
+                       chrome={},
+            ))
+        self.assertEquals('',
+                str(self.tag_twm.expand_macro(formatter, 'ListTagged', '')))
 
 class TagCloudMacroTestCase(unittest.TestCase):
     
