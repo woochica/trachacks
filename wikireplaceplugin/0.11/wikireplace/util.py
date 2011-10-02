@@ -9,6 +9,7 @@ import urllib
 
 from trac.core import *
 from trac.env import *
+from trac.util.datefmt import to_datetime, to_utimestamp, utc
 
 __all__ = ['main', 'wiki_text_replace']
 
@@ -57,7 +58,8 @@ def wiki_text_replace(env, oldtext, newtext, wikipages, user, ip, debug=False, d
             debug("Found a page with searched text in it: %s (v%s)", row[1], row[0])
             newcontent = re.sub(oldtext,newtext,row[2])
 
-            new_wiki_page = (row[1],row[0]+1,int(time.time()),user,ip,newcontent,'Replaced "%s" with "%s".'%(oldtext,newtext),0)
+            # name, version, now, user, ip, newcontent, replace comment
+            new_wiki_page = (row[1],row[0]+1,to_utimestamp(to_datetime(None, utc)),user,ip,newcontent,'Replaced "%s" with "%s".'%(oldtext,newtext),0)
 
             # Create a new page with the needed comment
             debug('Inserting new page %r', new_wiki_page)
