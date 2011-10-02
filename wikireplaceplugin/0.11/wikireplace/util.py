@@ -9,7 +9,14 @@ import urllib
 
 from trac.core import *
 from trac.env import *
-from trac.util.datefmt import to_datetime, to_utimestamp, utc
+from trac.util.datefmt import to_datetime, utc
+
+try:
+    # Micro-second support added to 0.12dev r9210
+    from trac.util.datefmt import to_utimestamp
+except ImportError:
+    from trac.util.datefmt import to_timestamp
+    to_utimestamp = to_timestamp
 
 __all__ = ['main', 'wiki_text_replace']
 
