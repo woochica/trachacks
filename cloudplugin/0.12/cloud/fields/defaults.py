@@ -37,9 +37,9 @@ droplet_defaults = {
     'field.run_list.label': 'Roles',
     'field.run_list.index': 'role',
     'field.run_list.handler': 'RunListHandler',
-    'field.environment': 'select',
-    'field.environment.label': 'Environment',
-    'field.environment.index': 'env',
+    'field.env': 'select',
+    'field.env.label': 'Environment',
+    'field.env.index': 'env',
     'field.created_by': 'text',
     'field.created_by.label': 'Created By',
     'field.created_by.handler': 'AuthorHandler',
@@ -82,8 +82,8 @@ droplet_defaults = {
     # grid view - chef search index and fields
     'grid_index': 'node',
     'grid_columns': 'name, run_list, created_by, created_at, ohai_time, ec2.instance_type, ec2.public_hostname, ec2.placement_availability_zone, ec2.ami_id',
-    'grid_group': 'environment',
-    'grid_sort': 'environment',
+    'grid_group': 'env',
+    'grid_sort': 'env',
     'grid_asc': 0,
   },
   'cloud.ebs': {
@@ -246,10 +246,10 @@ droplet_defaults = {
     'field.description.label': 'Description',
     'field.command': 'text',
     'field.command.label': 'Command',
-    'field.cmd_environments': 'multiselect',
-    'field.cmd_environments.label': 'Execute in Environments',
-    'field.cmd_environments.index': 'env',
-    'field.cmd_environments.handler': 'ListHandler',
+    'field.cmd_envs': 'multiselect',
+    'field.cmd_envs.label': 'Execute in Environments',
+    'field.cmd_envs.index': 'env',
+    'field.cmd_envs.handler': 'ListHandler',
     'field.cmd_roles': 'multiselect',
     'field.cmd_roles.label': 'Execute for Roles',
     'field.cmd_roles.index': 'role',
@@ -259,7 +259,7 @@ droplet_defaults = {
     'crud_resource': 'data',
     'crud_new': 'name, description, command',
     'crud_edit': 'name*, description,  command',
-    'crud_view': 'name, description, command, cmd_environments, cmd_roles',
+    'crud_view': 'name, description, command, cmd_envs, cmd_roles',
     
     # grid view - chef search index and fields
     'grid_index': 'command', # data bag name, must match droplet name
