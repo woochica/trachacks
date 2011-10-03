@@ -16,12 +16,16 @@ import org.trachacks.wikieditor.eclipse.plugin.model.Page;
 public class TracWikiDocumentProvider extends AbstractWikiTextDocumentProvider{
 
 	@Override
+	public String getDefaultEncoding() {
+		return TracWikiMarkupEditor.DEFAULT_ENCODING;
+	}
+
+	@Override
 	protected void doSaveDocument(IProgressMonitor monitor, Object element, IDocument document, boolean overwrite) throws CoreException {
 		String content = document.get();
 
 		Page page = (Page) ((WikiEditorInput) element).getAdapter(Page.class);
 		page.edit(content);
-		
 	}
 
 }

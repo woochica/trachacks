@@ -3,6 +3,8 @@
  */
 package org.trachacks.wikieditor.eclipse.plugin.editor;
 
+import java.nio.charset.Charset;
+
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.viewers.Viewer;
@@ -28,6 +30,9 @@ import org.trachacks.wikieditor.eclipse.plugin.model.Page;
 public class TracWikiMarkupEditor extends WikiTextSourceEditor {
 
 	public static final String ID = TracWikiMarkupEditor.class.getName();
+
+	private static final String UTF8 = "utf-8";
+	public static final String DEFAULT_ENCODING = (Charset.isSupported(UTF8)) ? UTF8 : Charset.defaultCharset().displayName();
 	
 	private static final String TRACWIKI_MARKUP_LANGUAGE = "TracWiki";
 

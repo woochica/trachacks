@@ -16,8 +16,6 @@ import org.trachacks.wikieditor.model.exception.PageNotFoundException;
 
 public class WikiEditorStorage implements IStorage {
 
-	private static final String UTF8 = "utf-8";
-
 	private boolean readonly = false;
 	private String encoding;
 	private Page page;
@@ -29,7 +27,7 @@ public class WikiEditorStorage implements IStorage {
 	public WikiEditorStorage(Page page) {
 		super();
 		this.page = page;
-		encoding = (Charset.isSupported(UTF8)) ? UTF8 : Charset.defaultCharset().displayName();
+		encoding = TracWikiMarkupEditor.DEFAULT_ENCODING;
 	}
 	/**
 	 * @param page
