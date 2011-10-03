@@ -8,8 +8,10 @@ __all__ = ['split_lang', 'make_page_name', 'get_preferred_langs',
 
 _re_page = re.compile(r'(.*)(?:\.([a-z][a-z](?:-[a-z][a-z])?))$')
 
-_re_lang = re.compile(r'^(?P<lang>[a-z]{1,8}(?:-[a-z]{1,8})?|\*)'
-                      +'(?:;\s*q=(?P<q>[0-9.]+))?$')
+_re_arg_lang = re.compile(r'^(?P<lang>[a-z]{1,8}(?:[-_][a-z]{1,8})?)$')
+
+_re_accept_lang = re.compile(r'^(?P<lang>[a-z]{1,8}(?:[-_][a-z]{1,8})?|\*)'
+                             +'(?:;\s*q=(?P<q>[0-9.]+))?$')
 
 def split_lang(page, lang=None):
     """Split page body name and suffixed language code from
@@ -85,17 +87,26 @@ def get_preferred_langs(req, default_lang=''):
     ['fr', 'ja', 'en-us', 'en']
     >>> req.session['wiki_lang'] = 'en'         # selected lang is existing
     >>> get_preferred_langs(req)                # it goes top of candidates
-    ['en', 'ja', 'en-us', 'en']
+    ['en', 'ja', 'en-us']
     >>> req.args['lang'] = 'de'                # selected lang in args
     >>> get_preferred_langs(req)               # it cause no other candidates
     ['de']
+
+    Invalid lang values should be ignored
     
+    >>> req.args['lang'] = '../../abc'          # insecure lang
+    >>> get_preferred_langs(req)                # should be ignored
+    []
     """
     # decide by language denotation in url parameter: '?lang=xx'
     if req.args.has_key('lang'):
         lang = req.args['lang']
-        req.session['wiki_lang'] = lang
-        return [lang]
+        if _re_arg_lang.match(lang):
+            req.session['wiki_lang'] = lang
+            return [lang]
+        else:
+            # bad lang keyword should be ignored for security reason
+            return []
     # otherwise, decide by http Accept-Language: header
     langs = _parse_langs(req.get_header('accept-language')
                          or default_lang)
@@ -124,7 +135,7 @@ def _parse_langs(al):
     """
     infos = []
     for item in al.split(','):
-        m = _re_lang.match(item.strip())
+        m = _re_accept_lang.match(item.strip())
         if m:
             lang, q = m.groups()
             infos.append((lang, float(q or '1.0')))
