@@ -9,6 +9,8 @@ from trac.perm import PermissionSystem, PermissionCache
 class RestrictOwnerToList(Component):
     implements(IRequestFilter)
     
+    owner = ListOption('ticket', 'restrict_owner_list', [])
+    
     def __init__(self):
         wrapfunc(TicketSystem, "eventually_restrict_owner", eventually_restrict_owner)
         self.env.log.info("RestrictOwnerToList replaced TicketSystem.eventually_restrict_owner")
@@ -23,5 +25,5 @@ class RestrictOwnerToList(Component):
 def eventually_restrict_owner(original_callable, self, field, ticket=None):
 
     field['type'] = 'select'    
-    field['options'] = self.env.config.getlist('restrictowners', 'userlist', [])
+    field['options'] = self.env.config.getlist('ticket', 'restrict_owner_list', [])
     field['optional'] = True
