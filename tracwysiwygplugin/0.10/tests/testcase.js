@@ -331,6 +331,58 @@ addEvent(window, "load", function() {
             var wikitext = "normal'''bold''italic__underline~~strike-through^superscript,,subscript''i__u~~strike^sup,,sub'''.";
             generateFragment.call(this, dom, wikitext);
         });
+        unit.add("repeated markups", function() {
+            generateWikitext.call(this,
+                element("p", "ab", element("b", "cd"), element("b", "ef"), "gh"),
+                "ab'''cdef'''gh");
+            generateWikitext.call(this,
+                element("p", "ab", element("i", "cd"), element("i", "ef"), "gh"),
+                "ab''cdef''gh");
+            generateWikitext.call(this,
+                element("p", "ab", element("u", "cd"), element("u", "ef"), "gh"),
+                "ab__cdef__gh");
+            generateWikitext.call(this,
+                element("p", "ab", element("sup", "cd"), element("sup", "ef"), "gh"),
+                "ab^cdef^gh");
+            generateWikitext.call(this,
+                element("p", "ab", element("sub", "cd"), element("sub", "ef"), "gh"),
+                "ab,,cdef,,gh");
+            generateWikitext.call(this,
+                element("p", "ab", element("tt", "cd"), element("tt", "ef"), "gh"),
+                "ab`cd``ef`gh");
+            generateWikitext.call(this,
+                element("p", "ab",
+                             element("i", element("b", "cd")),
+                             element("b", element("i", "ef")),
+                             "gh"),
+                "ab'''''cdef'''''gh");
+        });
+        unit.add("markups without text", function() {
+            generateWikitext.call(this,
+                element("p", "abc", element("b", ""), "def"),
+                "abcdef");
+            generateWikitext.call(this,
+                element("p", "abc", element("i", ""), "def"),
+                "abcdef");
+            generateWikitext.call(this,
+                element("p", "abc", element("u", ""), "def"),
+                "abcdef");
+            generateWikitext.call(this,
+                element("p", "abc", element("sup", ""), "def"),
+                "abcdef");
+            generateWikitext.call(this,
+                element("p", "abc", element("sub", ""), "def"),
+                "abcdef");
+            generateWikitext.call(this,
+                element("p", "abc", element("tt", ""), "def"),
+                "abcdef");
+            generateWikitext.call(this,
+                element("p", "abc", element("b", element("i", "")), "def"),
+                "abcdef");
+            generateWikitext.call(this,
+                element("p", "abc", element("i", element("b", "")), "def"),
+                "abcdef");
+        });
 
         unit.add("! bold italic", function() {
             var dom = element("p", element("b", element("i", "bold''''' italic")), ".");

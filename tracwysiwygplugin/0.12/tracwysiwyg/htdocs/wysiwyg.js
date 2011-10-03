@@ -2512,7 +2512,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
         case "sup":
             return wikiOpenTokens["sup"];
         }
-        return null;
+        return undefined;
     }
 
     function nodeDecorations(node) {
@@ -2601,7 +2601,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
         }
     }
 
-    function pushOpenToken(token) {
+    function pushToken(token) {
         var _texts = texts;
         var _decorationTokenPattern = decorationTokenPattern;
         var length = _texts.length;
@@ -2741,12 +2741,12 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
     }
 
     function open(name, node) {
-        if (skipNode) {
+        if (skipNode !== null) {
             return;
         }
         var _texts = texts;
         var token = wikiOpenTokens[name];
-        if (token) {
+        if (token !== undefined) {
             if (name in wikiBlockTags && self.isInlineNode(node.previousSibling)) {
                 _texts.push("\n");
             }
@@ -2754,7 +2754,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 if (name in wikiInlineTags && isTailEscape()) {
                     _texts.push(" ");
                 }
-                pushOpenToken(token);
+                pushToken(token);
             }
             openBracket = false;
         }
@@ -2978,11 +2978,11 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 }
                 else {
                     var token = tokenFromSpan(node);
-                    if (token) {
+                    if (token !== undefined) {
                         if (name in wikiInlineTags && isTailEscape()) {
                             _texts.push(" ");
                         }
-                        pushOpenToken(token);
+                        pushToken(token);
                     }
                 }
                 break;
@@ -2998,7 +2998,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
     }
 
     function close(name, node) {
-        if (skipNode) {
+        if (skipNode !== null) {
             if (skipNode == node) {
                 skipNode = null;
             }
@@ -3009,11 +3009,11 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
         if (token === true) {
             // nothing to do
         }
-        else if (token) {
+        else if (token !== undefined) {
             if (name in wikiInlineTags && isTailEscape()) {
                 _texts.push(" ");
             }
-            _texts.push(token);
+            pushToken(token);
         }
         else {
             switch (name) {
@@ -3066,7 +3066,7 @@ TracWysiwyg.prototype.domToWikitext = function(root, options) {
                 break;
             case "span":
                 var token = tokenFromSpan(node);
-                if (token) {
+                if (token !== undefined) {
                     if (name in wikiInlineTags && isTailEscape()) {
                         _texts.push(" ");
                     }
