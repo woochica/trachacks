@@ -277,7 +277,7 @@ like "test.py".
             langs = [x for x in langs if x not in self._invalid_suffixes]
             self.available_langs = langs        # cache
             self.available_pages = pages        # cache
-        return langs
+        return list(langs)                      # return copied list
 
     def _has_page(self, base, lang=None):
         return util.make_page_name(base, lang) in self.available_pages
