@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>wikieditor4eclipse</artifactId>
+    <groupId>org.trachacks.wikieditor</groupId>
+    <version>${project.version}</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <name>Trac WikiEditor 4 Eclipse ~ org.trachacks.wikieditor.eclipse.plugin</name>
+  <artifactId>org.trachacks.wikieditor.eclipse.plugin</artifactId>
+  <packaging>eclipse-plugin</packaging>
+</project>

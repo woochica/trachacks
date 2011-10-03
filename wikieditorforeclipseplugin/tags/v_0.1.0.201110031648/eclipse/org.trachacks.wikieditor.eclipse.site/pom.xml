@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>wikieditor4eclipse</artifactId>
+		<groupId>org.trachacks.wikieditor</groupId>
+		<version>${project.version}</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+	<name>Trac WikiEditor 4 Eclipse ~ org.trachacks.wikieditor.eclipse.site</name>
+	<artifactId>org.trachacks.wikieditor.eclipse.site</artifactId>
+	<packaging>eclipse-update-site</packaging>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.6</version>
+				<executions>
+					<execution>
+						<phase>install</phase>
+						<configuration>
+							<target>
+								<echo file="target/release.sh">
+svn -m "Taging release v_${plugin.version}.${buildQualifier}" cp ${project.svn.url}/${project.svn.tag} ${project.svn.url}/tags/v_${plugin.version}.${buildQualifier}
+svn -m "Release v_${plugin.version}.${buildQualifier}" import "${project.build.directory}${file.separator}site" ${project.svn.url}/update-site/v_${plugin.version}.${buildQualifier}
+svn -m "Removing previous update-site release" rm ${project.svn.url}/update-site/v_${plugin.version}.x
+svn -m "Current update-site is v_${plugin.version}.${buildQualifier}" cp ${project.svn.url}/update-site/v_${plugin.version}.${buildQualifier} ${project.svn.url}/update-site/v_${plugin.version}.x
+								</echo>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>	
+</project>

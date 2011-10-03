@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.trachacks.wikieditor</groupId>
+	<artifactId>wikieditor</artifactId>
+	<version>${project.version}</version>
+	<packaging>pom</packaging>
+	<name>Trac WikiEditor 4 Eclipse</name>
+	<url>http://trac-hacks.org/wiki/WikiEditorForEclipsePlugin</url>
+
+	<scm>
+		<url>${project.svn.url}</url>
+		<connection>scm:svn:http://trac-hacks.org/svn/wikieditorforeclipseplugin</connection>
+		<developerConnection>scm:svn:http://trac-hacks.org/svn/wikieditorforeclipseplugin</developerConnection>
+		<tag>trunk</tag>
+	</scm>
+
+
+	<modules>
+		<module>core</module>
+		<module>eclipse</module>
+	</modules>
+
+	<properties>
+		<plugin.version>0.1.0</plugin.version>
+		<project.version>${plugin.version}-SNAPSHOT</project.version>
+		<project.svn.url>http://trac-hacks.org/svn/wikieditorforeclipseplugin</project.svn.url>
+		<project.svn.tag>trunk</project.svn.tag>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<jdk.version>1.6</jdk.version>		
+		<compiler.plugin.version>2.0.2</compiler.plugin.version>
+	</properties>
+	
+	<build>
+		<plugins>
+			<!-- Compiler configuration -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${compiler.plugin.version}</version>
+				<configuration>
+					<verbose>true</verbose>
+					<source>${jdk.version}</source>
+					<target>${jdk.version}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
