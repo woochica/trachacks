@@ -5,6 +5,7 @@ from urlparse import urlparse
 from trac.core import Component, implements
 from trac.wiki import WikiSystem
 from trac.wiki.web_ui import WikiModule
+from trac.wiki.api import IWikiChangeListener
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.config import Option, BoolOption, ListOption
@@ -22,7 +23,7 @@ from wikinegotiator import util
 
 class WikiNegotiator(Component):
 
-    implements(IRequestFilter, ITemplateProvider)
+    implements(IRequestFilter, IWikiChangeListener, ITemplateProvider)
 
     # options
     _default_lang = Option('wiki', 'default_lang', 'en',
@@ -119,7 +120,28 @@ like "test.py".
                     hdf['chrome.nav.langmenu.%d.active' % idx] = 1
                 idx += 1
         return template, content_type
-    
+
+    # -- implementation of IWikiChangeListener --
+
+    def wiki_page_added(self, page):
+        """Called whenever a new Wiki page is added."""
+        self.available_langs = None             # forget to refresh
+
+    def wiki_page_changed(self, page, version, t, comment, author, ipnr):
+        """Called when a page has been modified."""
+        pass                                    # nothing to do
+
+    def wiki_page_deleted(self, page):
+        """Called when a page has been deleted."""
+        self.available_langs = None             # forget to refresh
+
+    def wiki_page_version_deleted(self, page):
+        """Called when a version of a page has been deleted."""
+        pass                                    # nothing to do
+
+    def wiki_page_renamed(self, page, old_name):
+        """Called when a page has been renamed."""
+        self.available_langs = None             # forget to refresh
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
