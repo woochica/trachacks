@@ -1,6 +1,7 @@
 TracWysiwyg.TestUnit = function() {
     this.cases = {};
-    this.assertCount = 0;
+    this.assertCounts = {};
+    this.current = null;
 };
 
 (function() {
@@ -119,24 +120,25 @@ TracWysiwyg.TestUnit = function() {
             throw "'" + name + "' is in use.";
         }
         this.cases[name] = method;
+        this.assertCounts[name] = 0;
     };
 
     prototype.assertEqual = function(expected, actual, label) {
-        this.assertCount++;
+        var count = ++this.assertCounts[this.current];
         if (typeof (expected) == typeof (actual) && expected == actual) {
             return true;
         }
-        throw (label || "") + "[@]\n".replace(/@/g, this.assertCount)
+        throw (label || "") + "[" + count + "]\n"
             + this.inspect(expected) + " (" + expected.length + ")\n"
             + this.inspect(actual) + " (" + actual.length + ")";
     };
 
     prototype.assertMatch = function(pattern, string, label) {
-        this.assertCount++;
+        var count = ++this.assertCounts[this.current];
         if (pattern.test(string)) {
             return true;
         }
-        throw (label || "") + "[@]\n".replace(/@/g, this.assertCount)
+        throw (label || "") + "[" + count + "]\n"
             + this.inspect(pattern) + "\n"
             + this.inspect(string) + " (" + string.length + ")";
     };
@@ -146,9 +148,11 @@ TracWysiwyg.TestUnit = function() {
         var $ = this.$, element = this.element, text = this.text;
         var d = document;
         var cases = this.cases;
+        var assertCounts = this.assertCounts;
         var names = [];
         for (var name in cases) {
             names.push(name);
+            assertCounts[name] = 0;
         }
 
         var container = $("testunit");
@@ -170,18 +174,20 @@ TracWysiwyg.TestUnit = function() {
                     element("td", { id: "testcase." + count }, "...")));
         }
 
-        this.assertCount = 0;
         count = 0;
         var success = 0;
         var invoke = function() {
             if (count >= names.length) {
+                self.current = null;
                 return;
             }
 
+            var current = names[count];
+            self.current = current;
             var cell = $("testcase." + count);
             cell.className = "current";
             try {
-                cases[names[count]].call(self);
+                cases[current].call(self);
                 cell.className = "success";
                 cell.replaceChild(text("OK"), cell.firstChild);
                 success++;
