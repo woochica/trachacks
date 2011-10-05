@@ -1,0 +1,66 @@
+<!--!
+       headers   - a sequence of header structure:
+                     .label    - what to display for this header
+
+-->
+<div xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:xi="http://www.w3.org/2001/XInclude"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:i18n="http://genshi.edgewall.org/i18n"
+     i18n:domain="tractags">
+  <div py:if="warning" class="central system-message warning">
+    <p>
+      You seem to be using an old Tag query. Try using the
+      <a href="${tags_url}">new syntax</a> in your
+      <strong>ListTagged</strong> macro.
+    </p>
+  </div>
+  <h2 class="report-result" py:if="paginator.has_more_pages">
+    Results <span class="numresults">(${paginator.displayed_items()})</span>
+  </h2>
+  <xi:include py:if="paginator.show_index" href="page_index.html" />
+
+    <py:choose>
+      <table py:when="format == 'table'" class="listing listtagged">
+        <thead>
+          <tr>
+            <th py:for="header in headers">
+              ${header.label}
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+        <tr py:if="not results" class="even">
+          <td colspan="${len(headers)}">
+            No resources found
+          </td>
+        </tr>
+        <py:for each="idx, result in enumerate(results)">
+          <tr class="${idx % 2 and 'odd' or 'even'}">
+            <td py:for="cell in result.cells">
+              ${cell}
+            </td>
+          </tr>
+        </py:for>
+        </tbody>
+      </table>
+      <ul py:otherwise="" class="taglist">
+        <py:choose>
+          <li py:for="result in results" py:when="format == 'oldlist'">
+            ${result.resource_link} ${result.desc}
+            <py:if test="result.rendered_tags">
+              (${result.rendered_tags[0]}
+              <py:for each="tag in result.rendered_tags[1:]"> ${tag}</py:for>)
+            </py:if>
+          </li>
+          <!--! alternative compact list -->
+          <li py:for="result in results" py:otherwise="">
+            ${result.resource_link}
+          </li>
+        </py:choose>
+      </ul>
+    </py:choose>
+
+  <xi:include py:if="paginator.show_index" href="page_index.html" />
+</div>

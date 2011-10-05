@@ -60,6 +60,7 @@ tractags-0.7 (not yet released)
  * fix a warning message for old TagsQuery syntax (<= tractags-0.5)
  * let `describe_tagged_resource` method for tickets use Trac core with i18n
  * review and improve code according to PEP 8, SQL statement's formatting too
+ * add pager for ListTagged, if matches exceed `listtagged_items_per_page`
 
 
 ToDo: add more historic entries
