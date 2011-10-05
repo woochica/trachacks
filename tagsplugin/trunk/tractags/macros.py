@@ -20,12 +20,29 @@ from trac.ticket.api import TicketSystem
 from trac.ticket.model import Ticket
 from trac.util import embedded_numbers
 from trac.util.compat import sorted, set
+from trac.util.presentation import Paginator
 from trac.util.text import shorten_line, to_unicode
-from trac.web.chrome import add_stylesheet
+from trac.web.chrome import add_link, add_stylesheet
 from trac.wiki.api import IWikiMacroProvider, parse_args
 
 from tractags.api import TagSystem, _
 from tractags.web_ui import TagTemplateProvider
+
+try:
+    from trac.util  import as_int
+except ImportError:
+    def as_int(s, default, min=None, max=None):
+        """Convert s to an int and limit it to the given range, or
+        return default if unsuccessful (copied verbatim from Trac0.12dev)."""
+        try:
+            value = int(s)
+        except (TypeError, ValueError):
+            return default
+        if min is not None and value < min:
+            value = min
+        if max is not None and value > max:
+            value = max
+        return value
 
 
 # Check for unsupported pre-tags-0.6 macro keyword arguments.
@@ -105,6 +122,9 @@ class TagWikiMacros(TagTemplateProvider):
         doc="""Comma-separated list of realms to exclude from tags queries
             by default, unless specifically included using "realm:realm-name"
             in a query.""")
+    items_per_page = Option('tags', 'listtagged_items_per_page', 100,
+        doc="""Number of tagged resources displayed per page in tag queries,
+            by default""")
     supported_cols = frozenset(['realm', 'id', 'description', 'tags'])
 
     def __init__(self):
@@ -145,17 +165,16 @@ class TagWikiMacros(TagTemplateProvider):
             return self.doc_cloud
 
     def expand_macro(self, formatter, name, content):
+        req = formatter.req
         if name == 'TagCloud':
             if not content:
                 content = ''
-            req = formatter.req
             all_tags = TagSystem(self.env).get_all_tags(req, content)
             return render_cloud(self.env, req, all_tags,
                                 caseless_sort=self.caseless_sort)
 
         elif name == 'ListTagged':
             message = None
-            req = formatter.req
             if _OBSOLETE_ARGS_RE.search(content):
                 message = builder.div(builder.p(Markup(_("""
                     You seem to be using an old Tag query. Try using the
@@ -207,6 +226,7 @@ class TagWikiMacros(TagTemplateProvider):
                 # Use available translations from Trac core.
                 try:
                     labels = TicketSystem(self.env).get_ticket_field_labels()
+                    labels['id'] = _('Id')
                 except AttributeError:
                     # Trac 0.11 neither has the attribute nor uses i18n.
                     labels = {'id': 'Id', 'description': 'Description'}
@@ -224,9 +244,10 @@ class TagWikiMacros(TagTemplateProvider):
                 container(thead)
             else:
                 container = builder.ul(class_='taglist')
-            for resource, tags in sorted(query_result, key=lambda r: \
-                                         embedded_numbers(
-                                         to_unicode(r[0].id))):
+            results = sorted(query_result, key=lambda r: \
+                             embedded_numbers(to_unicode(r[0].id)))
+            results = self._paginate(req, results)
+            for resource, tags in results:
                 desc = tag_system.describe_tagged_resource(req, resource)
                 tags = sorted(tags)
                 if tags:
@@ -269,5 +290,72 @@ class TagWikiMacros(TagTemplateProvider):
                     item = builder.li(_link(resource), ' ', desc)
                 container(item)
             container = builder(message, container)
-            return container
+            page_nav = self._pageindex(req, results)
+            results = builder.span('(', results.displayed_items(), ')',
+                                   class_="numresults")
+            return builder(builder.h2(Markup(_("Results %(results)s",
+                                      results=results)),
+                                      class_="report-result"),
+                           page_nav, container, page_nav)
+
+    def _paginate(self, req, results):
+        query = req.args.get('q', None)
+        current_page = as_int(req.args.get('listtagged_page'), 1)
+        items_per_page = as_int(req.args.get('listtagged_per_page'), None)
+        if items_per_page is None:
+            items_per_page = as_int(self.items_per_page, 100)
+        result = Paginator(results, current_page - 1, items_per_page)
+
+        pagedata = []
+        shown_pages = result.get_shown_pages(21)
+        for page in shown_pages:
+            page_href = req.href(req.path_info, q=query, listtagged_page=page,
+                                 listtagged_per_page=items_per_page)
+            pagedata.append([page_href, None, str(page),
+                             _("page %(num)s", num=str(page))])
+
+        attributes = ['href', 'class', 'string', 'title']
+        result.shown_pages = [dict(zip(attributes, p)) for p in pagedata]
+
+        result.current_page = {'href': None, 'class': 'current',
+                               'string': str(result.page + 1), 'title': None}
+
+        if result.has_next_page:
+            next_href = req.href(req.path_info, q=query,
+                                 listtagged_page=current_page + 1,
+                                 listtagged_per_page=items_per_page)
+            add_link(req, 'next', next_href, _('Next Page'))
+
+        if result.has_previous_page:
+            prev_href = req.href(req.path_info, q=query,
+                                 listtagged_page=current_page - 1,
+                                 listtagged_per_page=items_per_page)
+            add_link(req, 'prev', prev_href, _('Previous Page'))
+        return result
+
+    def _pageindex(self, req, results):
+        index = builder.div()
+        if results.has_more_pages:
+            index(class_="paging")
+        if results.has_previous_page:
+            prevlink = req.chrome['links']['prev'][0]
+            index(builder.span(builder.a(Markup('&larr;'),
+                                         href=prevlink['href'],
+                                         title=prevlink['title']),
+                               class_="previous"))
+        for page in results.shown_pages:
+            current_page = results.current_page
+            if page['string'] == current_page['string']:
+                index(builder.span(builder.span(current_page['string'],
+                                                class_=current_page['class'])))
+            else:
+                index(builder.span(builder.a(page['string'], href=page['href'],
+                                             title=page['title'])))
+        if results.has_next_page:
+            nextlink = req.chrome['links']['next'][0]
+            index(builder.span(builder.a(Markup('&rarr;'),
+                                         href=nextlink['href'],
+                                         title=nextlink['title']),
+                               class_="next"))
+        return index
 
