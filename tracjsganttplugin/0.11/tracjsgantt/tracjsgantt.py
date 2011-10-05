@@ -927,6 +927,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             return percent
 
         def _safeStr(str):
+            # Escape escapes
+            str = str.replace('\\','\\\\')
             # No new lines
             str = str.replace('\r\n','\\n')
             # Quoted quotes
