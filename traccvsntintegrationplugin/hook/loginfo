@@ -1,0 +1,10 @@
+# This program is free software; you can redistribute and/or modify it
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+ALL c:\python27\python C:\temp\trac\cvsnt-plugin\hook\loginfo_script.py %{svV} $USER
+
+
