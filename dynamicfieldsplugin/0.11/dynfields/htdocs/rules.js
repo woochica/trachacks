@@ -77,7 +77,7 @@ copyrule.apply = function(input, spec){
         if (doit && field.val() != input.val()){
             if (spec.target == 'owner' && !jQuery('#field-owner').length)
     			jQuery('#action_reassign').click();
-            field.hide();
+            field.hide().removeAttr('disabled');
             field.val(input.val()).change();
             field.fadeIn('slow');
         }
