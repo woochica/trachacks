@@ -42,6 +42,8 @@ tractags-0.7 (not yet released)
  * #3610: ListTagged macro should have distinct formatting of closed tickets
  * #3754: Tag redirects to existing wiki page instead of listing tagged pages
  * #3851: TAGS_VIEW not showing page tags along for anonymous
+ * #4799: TagCloud should optionally be case-insensitive
+   by adding a new option `cloud_caseless_sort`
  * #7787: Add i18n support
  * #8638: Should implement wiki_page_renamed of IWikiChangeListener interface
  * #9058: Let `TAGS_MODIFY` inherited `TAGS_VIEW` for intuitive permissions

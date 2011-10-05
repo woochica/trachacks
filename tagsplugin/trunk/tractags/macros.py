@@ -12,7 +12,7 @@ import re
 
 from genshi.builder import Markup, tag as builder
 
-from trac.config import ListOption, Option
+from trac.config import BoolOption, ListOption, Option
 from trac.core import implements
 from trac.resource import Resource, get_resource_description, \
                           get_resource_url, render_resource_link
@@ -34,7 +34,7 @@ _OBSOLETE_ARGS_RE = re.compile(r"""
     """, re.VERBOSE)
 
 
-def render_cloud(env, req, cloud, renderer=None):
+def render_cloud(env, req, cloud, renderer=None, caseless_sort=False):
     """Render a tag cloud
 
     :cloud: Dictionary of {object: count} representing the cloud.
@@ -63,7 +63,13 @@ def render_cloud(env, req, cloud, renderer=None):
 
     ul = builder.ul(class_='tagcloud')
     last = len(cloud) - 1
-    for i, (tag, count) in enumerate(sorted(cloud.iteritems())):
+    if caseless_sort:
+        # Preserve upper-case precedence within similar tags.
+        items = reversed(sorted(cloud.iteritems(), key=lambda t: t[0].lower(),
+                                reverse=True))
+    else:
+        items = sorted(cloud.iteritems())
+    for i, (tag, count) in enumerate(items):
         percent = size_lut[count] * scale
         li = builder.li(renderer(tag, count, percent))
         if i == last:
@@ -78,6 +84,8 @@ class TagWikiMacros(TagTemplateProvider):
 
     implements(IWikiMacroProvider)
 
+    caseless_sort = BoolOption('tags', 'cloud_caseless_sort', default=False,
+        doc="""Whether the tag cloud should be sorted case-sensitive.""")
     default_cols = Option('tags', 'listtagged_default_table_cols',
         'id|description|tags',
         doc="""Select columns and order for table format using a "|"-separated
@@ -142,7 +150,8 @@ class TagWikiMacros(TagTemplateProvider):
                 content = ''
             req = formatter.req
             all_tags = TagSystem(self.env).get_all_tags(req, content)
-            return render_cloud(self.env, req, all_tags)
+            return render_cloud(self.env, req, all_tags,
+                                caseless_sort=self.caseless_sort)
 
         elif name == 'ListTagged':
             message = None
