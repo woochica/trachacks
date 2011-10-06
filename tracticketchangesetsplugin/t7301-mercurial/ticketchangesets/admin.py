@@ -181,21 +181,20 @@ class TicketChangesetsAdmin(Component):
             cursor.execute('SELECT COUNT(*) FROM ticket_changesets')
             row = cursor.fetchone()
             return row and int(row[0]) or 0
-
+        
         for repos in repositories:
-            rev = repos.get_oldest_rev()
-            while True:
-                changeset = repos.get_changeset(rev)
+            rev_start = repos.get_changeset(repos.get_oldest_rev())
+            rev_end = repos.get_changeset(repos.get_youngest_rev())
+            changesets = repos.get_changesets(rev_start.date, rev_end.date)
+            i = 1
+            for changeset in changesets:        
                 tickets = ticket_updater.parse_message(changeset.message)
                 match = False
                 for tkt_id, cmds in tickets.iteritems():
-                    ticket_changesets.add(tkt_id, repos.id, rev)
+                    ticket_changesets.add(tkt_id, repos.id, changeset.rev)
                     match = True
                 if match:
                     n_changesets += 1
-                if rev == repos.get_youngest_rev():
-                    break
-                rev = repos.next_rev(rev)
         printout('Done, %d tickets related to %d changesets' %
                  (_count_affected_tickets(), n_changesets))
 

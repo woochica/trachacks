@@ -67,6 +67,9 @@ class ViewTicketChangesets(Component):
     compact = BoolOption('ticket-changesets', 'compact', 'true',
         """Make compact presentation of revision ranges, for example ![1-3]
         instead of ![1] ![2] ![3].""")
+        
+    showrevlog = BoolOption('ticket-changesets', 'showrevlog', 'true',
+        """Show 'Revision Log' link after revisions range.""")
     
     hide_when_none = BoolOption('ticket-changesets', 'hide_when_none', 'false',
         """Hide section on ticket page when no changesets relates to the
@@ -117,6 +120,7 @@ class TicketChangesetsFormatter(object):
         self.tkt_id = tkt_id
         self.hint = hint
         self.compact =  env.config.getbool('ticket-changesets', 'compact')
+        self.showrevlog =  env.config.getbool('ticket-changesets', 'showrevlog')        
         self.changesets = TicketChangesets(env).get(tkt_id)
 
     def exists(self):
@@ -141,11 +145,13 @@ class TicketChangesetsFormatter(object):
                 elif ix > 0:
                     yield ', '
             revs = changesets.wiki_revs(reponame, self.compact)
-            log = changesets.wiki_log(reponame)
-            message = revs + ' (' + log + ')'
+            message = revs
+            if self.showrevlog:
+                log = changesets.wiki_log(reponame, self.showrevlog)            
+                message += ' (' + log + ')'
             yield tag.span(format_to_oneliner(self.env, self.context, message,
                                               shorten=False),
-                           class_='ticketchangesets')
+                           class_='ticketchangesets')  
             ix += 1
 
 

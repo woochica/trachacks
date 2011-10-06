@@ -71,14 +71,14 @@ class TicketChangesets(object):
     
     def add(self, tkt_id, repo_id, rev):
         changesets = self._read(tkt_id, repo_id)
-        self.env.log.debug('ticketchangesets: Add rev %d to #%d' %
+        self.env.log.debug('ticketchangesets: Add rev %s to #%d' %
                            (rev, tkt_id))
         changesets.add(rev)
         self._write(tkt_id, repo_id, changesets)
 
     def remove(self, tkt_id, repo_id, rev):
         changesets = self._read(tkt_id, repo_id)
-        self.env.log.debug('ticketchangesets: Remove rev %d from #%d' %
+        self.env.log.debug('ticketchangesets: Remove rev %s from #%d' %
                            (rev, tkt_id))
         changesets.remove(rev)
         self._write(tkt_id, repo_id, changesets)
@@ -107,10 +107,10 @@ class Changesets(object):
         self.exists = revs is not None
         if revs:
             try:
-                self.revs = [int(x) for x in revs.split(',')]
+                self.revs = [str(x) for x in revs.split(',')]
             except:
                 try:
-                    self.revs = [int(self.revs)]
+                    self.revs = [str(self.revs)]
                 except:
                     self.revs = []
         else:
@@ -141,12 +141,12 @@ class Changesets(object):
 
     def add(self, rev):
         if not rev in self.revs:
-            self.revs.append(int(rev))
+            self.revs.append(str(rev))
             self.revs.sort()
 
     def remove(self, rev):
         try:
-            self.revs.remove(int(rev))
+            self.revs.remove(str(rev))
         except:
             pass
 
