@@ -1,0 +1,45 @@
+# English (United Kingdom) translations for TracTicketChangesets.
+# Copyright (C) 2010
+# This file is distributed under the same license as the
+# TracTicketChangesets project.
+# Mikael Relbe <mikael@relbe.se>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TracTicketChangesets 1.0\n"
+"Report-Msgid-Bugs-To: mikael@relbe.se\n"
+"POT-Creation-Date: 2010-06-13 17:03+0200\n"
+"PO-Revision-Date: 2010-06-13 18:41+0200\n"
+"Last-Translator: Mikael Relbe <mikael@relbe.se>\n"
+"Language-Team: en_GB <trac-dev@googlegroups.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.5\n"
+
+#: ticketchangesets/api.py:168 ticketchangesets/api.py:172
+msgid "Revision Log"
+msgstr "Revision log"
+
+#: ticketchangesets/web_ui.py:95 ticketchangesets/web_ui.py:101
+msgid "Repository Changesets"
+msgstr "Repository changesets"
+
+#: ticketchangesets/web_ui.py:100
+msgid "(none)"
+msgstr "(none)"
+
+#: ticketchangesets/web_ui.py:123
+#, python-format
+msgid "No changesets for #%s"
+msgstr "No changesets for #%s"
+
+#: ticketchangesets/web_ui.py:136
+msgid "Default Repository"
+msgstr "Default repository"
+
+#: ticketchangesets/web_ui.py:195
+msgid "(The changeset message doesn't reference this ticket)"
+msgstr "(The changeset message doesn't reference this ticket)"
+

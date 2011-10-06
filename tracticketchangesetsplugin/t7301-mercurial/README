@@ -1,0 +1,92 @@
+Notes
+=====
+
+The TracTicketChangesetsPlugin hooks into changeset notifications and searches
+commit messages for ticket references. Referenced tickets are updated with the
+commit message, and all concerning changesets for a ticket are presented in a
+separate section on ticket pages, just above the change history section.
+
+The plugin works with multiple repositories.
+Language is translated if Babel is installed.
+
+The implementation is mainly based on rev 9629 of
+http://svn.edgewall.org/repos/trac/trunk/tracopt/ticket/commit_updater.py
+
+
+This plugin is not compatible with Trac 0.11 or older versions.
+
+
+Configuration
+=============
+
+To enable the plugin::
+
+  [components]
+  ticketchangesets.* = enabled
+
+Add the section [ticket-changesets] to configure the behaviour::
+
+  [ticket-changesets]
+  check_perms = true
+  collapsed = false
+  commands.close = close closed closes fix fixed fixes
+  commands.refs = addresses re refs references see ticket tickets
+  compact = true
+  hide_when_none = false
+  notify = false
+  resolution = fixed
+
+
+Installation
+============
+
+1. The Trac environment needs to be upgraded::
+
+     trac-admin %ENV% upgrade
+
+2. Re-synchronize repositories (optional, but recommended before next step
+   which will scan all existing commit messages)::
+
+       trac-admin %ENV% repository resync "*"
+
+3. Build relations between tickets and changesets::
+
+       trac-admin %ENV% ticket_changesets resync
+
+4. Re-format existing ticket commit messages (DANGEROUS!)
+
+   a. Produce a diff-like output for your analysis, which does not affect the
+      database, before re-formatting existing commit messages::
+
+          trac-admin %ENV% ticket_changesets diff > out.diff
+
+      Examine out.diff and assert that re-formatting is sensible before next
+      step.
+
+   b. Re-format (DANGEROUS!)::
+
+          trac-admin %ENV% ticket_changesets reformat
+
+5. Setup hook-scripts (Windows example, does not differ from official
+   instructions applicable to Trac 0.12)
+
+   a. post-commit.cmd::
+
+          :: Trac 0.12 post-commit hook script for Windows
+          ::
+          @SET TRAC_ENV=...
+          @SET REPOS=%1
+          @SET REV=%2
+          @trac-admin "%TRAC_ENV%" changeset added "%REPOS%" "%REV%"
+
+   b. post-revprop-change.cmd::
+
+          :: Trac 0.12 post-revprop-change hook script for Windows
+          ::
+          @SET TRAC_ENV=...
+          @SET REPOS=%1
+          @SET REV=%2
+          @trac-admin "%TRAC_ENV%" changeset modified "%REPOS" "%REV%"
+
+From here-on, tickets will be updated when referenced in a commit message, and
+the relation between tickets and revisions are automatically tracked.
