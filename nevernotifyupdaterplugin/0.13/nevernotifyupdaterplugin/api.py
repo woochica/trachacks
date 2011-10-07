@@ -32,7 +32,7 @@ class NeverNotifyUpdaterSetupParticipant(Component):
         updater = None
         up_em = None
         with self.env.db_query as db:
-            cursor = self.db.cursor()
+            cursor = db.cursor()
             # Suppress the updater from the recipients
             cursor.execute("SELECT author FROM ticket_change WHERE ticket=%s "
                            "ORDER BY time DESC LIMIT 1", (tktid,))
