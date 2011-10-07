@@ -1,0 +1,58 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>PlanetForge Importer</title>
+  </head>
+
+  <body>
+    <h2>PlanetForge Importer</h2>
+
+<p>Based on <a href="http://trac-hacks.org/wiki/PlanetForgeImportExportPlugin">PlanetForge export/import plugin</a> r10740</p>.
+
+<py:if test="action == 'upload'">
+<h3> Available project dumps : </h3>
+
+<table class="listing" id="projlist">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Upload date</th>
+      <th>Size</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="?project=coclico-test1.dump.gz">coclico-test1.dump.gz</a></td>
+      <td>2011-09-03 14:25</td>
+      <td>564 kB</td>
+    </tr>
+  </tbody>
+</table>
+
+<form id="upload" method="post" enctype="multipart/form-data" action="">
+  <div class="field">
+    <label>File (size limit ? KB):<br /><input type="file" name="project" /></label>
+  </div>
+  <div class="buttons">
+    <input type="hidden" name="action" value="upload" />
+    <input type="submit" value="Upload" />
+  </div>
+</form>
+</py:if>
+
+
+<py:if test="action == 'preview'">
+<h3> Details for project dump ${project.name}  </h3>
+
+<p>...</p>
+</py:if>
+
+
+  </body>
+</html>
+

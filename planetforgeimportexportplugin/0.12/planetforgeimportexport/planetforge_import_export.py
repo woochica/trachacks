@@ -63,7 +63,7 @@ class PlanetForgeImportExportPlugin(Component):
             res = PlanetForgeExport(self.env).web_export(req)
         else :
             res = PlanetForgeExport(self.env).web_report(req)
-        return './planetforge_import_export.html', res
+        return './export.html', res
 
 
 
