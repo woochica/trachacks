@@ -94,8 +94,9 @@ class TagRequestHandler(TagTemplateProvider):
 
     def process_request(self, req):
         req.perm.require('TAGS_VIEW')
-        # TRANSLATOR: The meta-nav link label.
-        add_ctxtnav(req, _("Cloud"), req.href.tags())
+        if 'q' in req.args:
+            # TRANSLATOR: The meta-nav link label.
+            add_ctxtnav(req, _("Back to Cloud"), req.href.tags())
         match = re.match(r'/tags/?(.*)', req.path_info)
         if match.group(1):
             req.redirect(req.href('tags', q=match.group(1)))

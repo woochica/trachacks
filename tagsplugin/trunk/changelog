@@ -28,6 +28,7 @@ tractags-0.7 (not yet released)
  * #9059: Various fixes and enhancements (detailed in #9060 - #9064)
  * #9060: Query results are duplicated when realm-selection is repeated
  * #9062: Wiki-page level-1-title broken on 0.12
+ * #9210: /tags page should not have a contextual navigation link 'Cloud'
  * TagsQuery now supports a context object
  * refactor cloud rendering so it can be used by other plugins
  * fix regression related to missing IWikiChangeListener
