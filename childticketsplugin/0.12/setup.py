@@ -5,10 +5,10 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name = 'Tracchildtickets',
-    version = '2.4.4',
+    version = '2.4.5',
     packages = find_packages(),
     author = 'Mark Ryan',
-    author_email = 'walnut.trac.hacks@gmail.com',
+    author_email = 'fatrascal@bigfoot.com@gmail.com',
     description = 'Provides support for pseudo child-tickets and a visual reference to these within a parent ticket.',
     keywords = 'trac plugins ticket dependency childtickets',
     url = 'http://trac-hacks.org/wiki/ChildTicketsPlugin',
