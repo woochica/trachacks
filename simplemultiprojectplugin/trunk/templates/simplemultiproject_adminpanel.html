@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+    <xi:include href="admin.html" />
+    <head>
+        <title>Manage Projects</title>
+    </head>
+    <body>
+        <h2>Manage Projects</h2>
+        <py:choose test="view">
+            <form py:when="'detail'" class="mod" id="simplemultiproject" action="" method="post">
+                <fieldset>
+                    <legend>Modify Project</legend>
+                    <div class="field">
+                        <label>Name:<br />
+                            <input type="text" name="name" value="${project.name}"/>
+                        </label>
+                    </div>
+                    <div class="field">
+                        <label>Description:<br />
+                            <textarea cols="60" rows="10" class="wikitext trac-resizable"  name="description">${project.description}</textarea>
+                        </label>
+                    </div>
+                        <input type="hidden" name="id" value="${project.id}"/>
+                    <div class="buttons">
+                        <input type="submit" name="modify" value="Modify" />
+                        <input type="submit" name="cancel" value="Cancel" />
+                    </div>
+                </fieldset>
+            </form>
+            <py:otherwise>
+                <form class="addnew" id="simplemultiproject" action="" method="post">
+                    <fieldset>
+                        <legend>Add Project</legend>
+                        <div class="field">
+                            <label>Name:<br />
+                                <input type="text" name="name" value=""/>
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label>Description:<br />
+                                <textarea cols="48" rows="5" class="wikitext trac-resizable"  name="description"></textarea>
+                            </label>
+                        </div>
+                        <div class="buttons">
+                            <input type="submit" name="add" value="Add" />
+                        </div>
+                    </fieldset>
+                </form>
+                <py:choose>
+                    <form py:when="list" id="project_table" method="post" action="">
+                        <table class="listing" id="millist">
+                            <thead>
+                                <tr>
+                                    <th class="sel">&nbsp;</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr py:for="project in projects">
+                                    <td><input type="checkbox" name="sel" value="$project.id" /></td>
+                                    <td><a href="${href.admin('projects','simplemultiproject')}/${project.id}" method="post">${project.name}</a></td>
+                                    <td>${project.description}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="buttons">
+                            <input type="submit" name="remove" value="Remove selected items"/>
+                        </div>
+                    </form>
+                </py:choose>
+            </py:otherwise>
+        </py:choose>
+
+    </body>
+</html>
