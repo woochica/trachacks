@@ -24,22 +24,26 @@ class CvsntLoginfo():
         self.user = argv[2]
         #argv[1] contains the folder relative to the folder followed by triplets filename,revision_new,revision_old
         argv1split = argv[1].split() 
-        self.nfiles = len(argv1split)-1
-        files = ''
-        newrevs = ''
-        oldrevs = ''
+        #handle whitespaces in file names 
+        _argv1split = []
+        _argv1split_tmp = ''
+        for i in range(0, len(argv1split)):
+            _argv1split_tmp = _argv1split_tmp + argv1split[i]
+            if _argv1split_tmp.endswith('\\'):
+                l = len(_argv1split_tmp)
+                _argv1split_tmp = _argv1split_tmp[:l-1] + ' '
+            else:
+                _argv1split.append(_argv1split_tmp)
+                _argv1split_tmp = ''
+        self.nfiles = len(_argv1split)-1
+        self.files = []
+        self.newrevs = []
+        self.oldrevs = []
         for i in range(1, self.nfiles+1):
-            s = argv1split[i].rsplit(',',2)
-            if i != 1:
-                files += ' '
-                newrevs += ' '
-                oldrevs += ' '
-            files += s[0] 
-            newrevs += s[1] 
-            oldrevs += s[2] 
-        self.files = files.split()
-        self.newrevs = newrevs.split()
-        self.oldrevs = oldrevs.split()
+            s = _argv1split[i].rsplit(',',2)
+            self.files.append(s[0]) 
+            self.newrevs.append(s[1])
+            self.oldrevs.append(s[2])
 
     class ParseState:
         GET_PATH=0
