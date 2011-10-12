@@ -27,17 +27,51 @@ loginfo.get_loginfo_from_stdin()
 # cvsnt has no changeset database so we create our own ...
 db_connection = sqlite3.connect(database_name) 
 db_cursor = db_connection.cursor() 
-# create the table if it's not yet there
-try:     
-    strcreate = 'CREATE TABLE CHANGESET (id INTEGER PRIMARY KEY, description TEXT, path TEXT, user TEXT, datetime FLOAT);'
-    db_cursor.execute(strcreate) 
-except sqlite3.OperationalError, msg:
-    print msg
-try:     
-    strcreate = 'CREATE TABLE CHANGESET_FILES (changesetID INTEGER, filename TEXT, oldrev TEXT, newrev TEXT);'
-    db_cursor.execute(strcreate) 
-except sqlite3.OperationalError, msg:
-    print msg
+
+# create the tables if it's not yet there
+createdb = True
+if createdb:
+    try:     
+        strcreate = 'CREATE TABLE CHANGESET (id INTEGER PRIMARY KEY, description TEXT, path TEXT, user TEXT, datetime FLOAT);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE INDEX CHANGESET_DESCRIPTION ON CHANGESET (description);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE INDEX CHANGESET_DATETIME ON CHANGESET (datetime);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE INDEX CHANGESET_DESCRIPTION_DATETIME ON CHANGESET (description, datetime);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE TABLE CHANGESET_FILES (changesetID INTEGER, filename TEXT, oldrev TEXT, newrev TEXT);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE INDEX CHANGESET_FILES_ID ON CHANGESET_FILES (changesetID);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE INDEX CHANGESET_FILES_FILENAME ON CHANGESET_FILES (filename);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE INDEX CHANGESET_FILES_ID_FILENAME ON CHANGESET_FILES (changesetID, filename);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+
 # insert a new record
 try:     
     strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + loginfo.log_message + '\', \'' + loginfo.path + '\', \'' + loginfo.user + '\', \'' + repr(loginfo.datetime) + '\')'
