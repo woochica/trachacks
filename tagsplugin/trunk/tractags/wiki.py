@@ -71,11 +71,11 @@ class WikiTagInterface(TagTemplateProvider):
                 tags = sorted(ts.get_tags(req, template_page.resource))
                 # Prepare tags as content for the editor field.
                 tags_str = ' '.join(tags)
-                self.env.log.debug("Tags retrieved from template: 's%'",
-                                   unicode(tags_str).encode('utf-8'))
+                self.env.log.debug("Tags retrieved from template: '%s'" \
+                                   % unicode(tags_str).encode('utf-8'))
                 # DEVEL: More arguments need to be propagated here?
                 req.redirect(req.href(req.path_info,
-                                      action='edit', tags=tags,
+                                      action='edit', tags=tags_str,
                                       template=req.args.get('template')))
         return (template, data, content_type)
 
@@ -127,7 +127,7 @@ class WikiTagInterface(TagTemplateProvider):
         # XXX Ugh. Hopefully this will be sufficient to fool any endpoints.
         from trac.test import Mock, MockPerm
         req = Mock(authname='anonymous', perm=MockPerm())
-        tag_system.reparent_resource_tags(req, old_resource, new_resource)
+        tag_system.reparent_tags(req, old_resource, new_resource)
 
     def wiki_page_deleted(self, page):
         tag_system = TagSystem(self.env)
