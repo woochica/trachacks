@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from trac.core import *
 
 from trac.util.html import html
@@ -21,9 +22,15 @@ from urlparse import urlparse
 import json
 
 
+class PlanetForgeExport(Component):
+    implements(IAdminCommandProvider, IAdminPanelProvider, ITemplateProvider)
 
-class PlanetForgeExport(Component) :
 
+    # CLI part (trac-admin /path/to/trac planetforge [export|report] ...)
+
+    def get_admin_commands(self):
+        yield ('planetforge report', '', 'Report exportable items (size, quantity)', None, self.cli_report) # safe a component is a singleton
+        yield ('planetforge export', '', 'Export all Trac items in "PlanetForge" format', None, self.cli_export)
 
     # make a report on what can be exported from command line
     def cli_report(self) :
@@ -38,6 +45,33 @@ class PlanetForgeExport(Component) :
         print "Not implemented yet."
 
 
+    # WEB part (/admin/planetforge/export)
+
+    def get_templates_dirs(self):
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+
+
+    def get_htdocs_dirs(self):
+        return []
+
+    def get_admin_panels(self, req):
+        if 'TRAC_ADMIN' in req.perm:
+            yield ('planetforge', 'PlanetForge', 'export', 'Export')
+
+    def render_admin_panel(self, req, category, page, path_info):
+        req.perm.require('TRAC_ADMIN')
+        res = {'action' : 'report'}
+        action = req.args.get('action', '')
+        if action == 'export' :
+            ticket = req.args.get('ticket', '').strip() == 'on'
+            wiki = req.args.get('wiki', '').strip() == 'on' 
+            revision = req.args.get('revision', '').strip() == 'on' 
+            ticket_change = req.args.get('ticket_change', '').strip() == 'on'
+            res = self.web_export(req)
+        else : # action == 'report'
+            res = self.web_report(req)
+        return './export.html', res
 
     def web_report(self, req) :
         count   = self._get_item_count()
@@ -283,5 +317,4 @@ class PlanetForgeExport(Component) :
                 'role'      : '?'
             }
         return u
-
 

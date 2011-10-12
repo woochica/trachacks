@@ -1,3 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from planetforge_import_export import PlanetForgeImportExportPlugin
+from PlanetForgeExport import PlanetForgeExport
+from PlanetForgeImport import PlanetForgeImport
+from PlanetForgePubSub import PlanetForgePubSub
