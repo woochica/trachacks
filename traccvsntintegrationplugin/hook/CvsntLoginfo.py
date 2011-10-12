@@ -67,6 +67,10 @@ class CvsntLoginfo():
                     state = self.ParseState.SKIP_DIRECTORY
                 elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Modified Files:') == 0:
                     state = self.ParseState.SKIP_FILES
+                elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Added Files:') == 0:
+                    state = self.ParseState.SKIP_FILES
+                elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Removed Files:') == 0:
+                    state = self.ParseState.SKIP_FILES
                 elif state == self.ParseState.SKIP_FILES:
                     if nextline.find('Log Message:') == 0:
                         state = self.ParseState.GET_LOG_MESSAGE
