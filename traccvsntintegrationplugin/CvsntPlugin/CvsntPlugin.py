@@ -185,6 +185,8 @@ class CvsntChangeset(Changeset):
             changetype = Changeset.EDIT
             if changesetFilesRow[2] == 'NONE':
                 changetype = Changeset.ADD
+            elif changesetFilesRow[3] == 'NONE':
+                changetype = Changeset.DELETE
             changes.append([changesetFilesRow[1], Node.FILE, changetype, changesetFilesRow[1], prevrev])
         return changes
         
