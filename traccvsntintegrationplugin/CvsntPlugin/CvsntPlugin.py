@@ -181,7 +181,10 @@ class CvsntChangeset(Changeset):
             rowFileWasLastChanged = db_cursor.fetchone()
             if len(rowFileWasLastChanged) == 1:
                 prevrev = rowFileWasLastChanged[0]
-            changes.append([changesetFilesRow[1], Node.FILE, Changeset.EDIT, changesetFilesRow[1], prevrev])
+            changetype = Changeset.EDIT
+            if changesetFilesRow[2] == 'NONE':
+                changetype = Changeset.ADD
+            changes.append([changesetFilesRow[1], Node.FILE, changetype, changesetFilesRow[1], prevrev])
         return changes
         
 
