@@ -65,11 +65,12 @@ class CvsntRepository(Repository):
         db_cursor.execute(strselect)    
         changesetFilesRows = db_cursor.fetchall()
 
-        desc = 'User: ' + changesetRow[3] + '\n'
-        desc += 'Folder: ' +  changesetRow[2] + '\n'
-        for changesetFilesRow in changesetFilesRows:
-            desc += changesetFilesRow[1] + ' ' + changesetFilesRow[2] + ' -> ' + changesetFilesRow[3] + '\n'
-        desc += 'Log message:\n' + changesetRow[1]  
+        #desc = 'User: ' + changesetRow[3] + '\n'
+        #desc += 'Folder: ' +  changesetRow[2] + '\n'
+        #for changesetFilesRow in changesetFilesRows:
+        #    desc += changesetFilesRow[1] + ' ' + changesetFilesRow[2] + ' -> ' + changesetFilesRow[3] + '\n'
+        #desc += 'Log message:\n' + changesetRow[1]  
+        desc = changesetRow[1]  
         return CvsntChangeset(self, rev, desc, changesetRow[3], changesetRow[4], self.log)
 
 
