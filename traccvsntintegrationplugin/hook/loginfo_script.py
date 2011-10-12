@@ -32,6 +32,31 @@ db_cursor = db_connection.cursor()
 createdb = True
 if createdb:
     try:     
+        strcreate = 'CREATE TABLE LOGINFO_CALLS (id INTEGER PRIMARY KEY, datetime FLOAT);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE TABLE LOGINFO_CALLS_ARGV (loginfoID INTEGER, _index INTEGER, argv_index TEXT);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE INDEX LOGINFO_CALLS_ARGV_ID ON LOGINFO_CALLS_ARGV (loginfoID);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE TABLE LOGINFO_CALLS_STDOUT (loginfoID INTEGER, _index INTEGER, line_index TEXT);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
+        strcreate = 'CREATE INDEX LOGINFO_CALLS_STDOUT_ID ON LOGINFO_CALLS_STDOUT (loginfoID);'
+        db_cursor.execute(strcreate) 
+    except sqlite3.OperationalError, msg:
+        print msg
+    try:     
         strcreate = 'CREATE TABLE CHANGESET (id INTEGER PRIMARY KEY, description TEXT, path TEXT, user TEXT, datetime FLOAT);'
         db_cursor.execute(strcreate) 
     except sqlite3.OperationalError, msg:
@@ -72,14 +97,27 @@ if createdb:
     except sqlite3.OperationalError, msg:
         print msg
 
-# insert a new record
 try:     
+    # log the plain calls of this script by the loginfo hook (so we can replay later on without committing to CVS)
+    strinsert = 'INSERT INTO LOGINFO_CALLS VALUES(NULL, \'' + repr(loginfo.datetime) + '\')'
+    db_cursor.execute(strinsert)
+    newkey = db_cursor.lastrowid
+    for i in range(0, len(sys.argv)):
+        strinsert = 'INSERT INTO LOGINFO_CALLS_ARGV VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + sys.argv[i] + '\')'
+        db_cursor.execute(strinsert)
+    for i in range(0, len(loginfo.lines)):
+        strinsert = 'INSERT INTO LOGINFO_CALLS_STDOUT VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + loginfo.lines[i] + '\')'
+        db_cursor.execute(strinsert)
+
+
+    # insert a new changeset
     strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + loginfo.log_message + '\', \'' + loginfo.path + '\', \'' + loginfo.user + '\', \'' + repr(loginfo.datetime) + '\')'
     db_cursor.execute(strinsert)
     newkey = db_cursor.lastrowid
     for i in range(0, loginfo.nfiles):
         strinsert = 'INSERT INTO CHANGESET_FILES VALUES(' + repr(newkey) + ', \'' + loginfo.files[i] + '\', \'' + loginfo.oldrevs[i] + '\', \'' + loginfo.newrevs[i] + '\')'
         db_cursor.execute(strinsert)
+        
     db_connection.commit()
     db_connection.close()
 except sqlite3.OperationalError, msg:

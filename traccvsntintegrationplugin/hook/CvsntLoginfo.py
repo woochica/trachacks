@@ -13,6 +13,7 @@ class CvsntLoginfo():
         self.path = ''
         self.user = ''
         self.datetime = 0.0
+        self.lines = []
         self.nfiles = 0
         self.filenames = []
         self.newrevs = []
@@ -52,10 +53,12 @@ class CvsntLoginfo():
         GET_LOG_MESSAGE=3
 
     def get_loginfo_from_stdin(self):
+        self.lines = []
         state = self.ParseState.GET_PATH
         while True: 
             try: 
-                nextline = raw_input() 
+                nextline = raw_input()
+                self.lines.append(nextline)
 
                 strUpdateOfRepos = 'Update of ' + self.repos + '/';
 
