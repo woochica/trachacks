@@ -44,11 +44,8 @@ class TicketTagProvider(Component):
     def get_tagged_resources(self, req, tags):
         if 'TICKET_VIEW' not in req.perm:
             return
-
-        split_into_tags = TagSystem(self.env).split_into_tags
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        args = []
+        fields = ["COALESCE(%s, '')" % f for f in self.fields]
         ignore = ''
         if self.ignore_closed_tickets:
             ignore = " WHERE status != 'closed'"
@@ -56,28 +53,28 @@ class TicketTagProvider(Component):
             SELECT *
               FROM (SELECT id, %s, %s AS std_fields
                       FROM ticket%s) s
-            """ % (','.join(self.fields),
-                   '||'.join(["COALESCE(%s, '')" % f for f in self.fields]),
-                   ignore)
+            """ % (','.join(self.fields), db.concat(*fields), ignore)
+        args = []
         constraints = []
         if tags:
-            constraints.append(
-                "(" + ' OR '.join(["std_fields LIKE %s" for t in tags]) + ")")
-            args += ['%' + t + '%' for t in tags]
+            for tag in tags:
+                constraints.append("std_fields %s" % db.like())
+                args.append('%' + db.like_escape(tag) + '%')
         else:
             constraints.append("std_fields != ''")
 
         if constraints:
-            sql += " WHERE " + " AND ".join(constraints)
+            sql += " WHERE " + '(' + ' OR '.join(constraints) + ')'
         sql += " ORDER BY id"
         self.env.log.debug(sql)
+        cursor = db.cursor()
         cursor.execute(sql, args)
         for row in cursor:
             id, ttags = row[0], ' '.join([f for f in row[1:-1] if f])
             perm = req.perm('ticket', id)
             if 'TICKET_VIEW' not in perm or 'TAGS_VIEW' not in perm:
                 continue
-            ticket_tags = split_into_tags(ttags)
+            ticket_tags = TagSystem(self.env).split_into_tags(ttags)
             tags = set([to_unicode(x) for x in tags])
             if (not tags or ticket_tags.intersection(tags)):
                 yield Resource('ticket', id), ticket_tags

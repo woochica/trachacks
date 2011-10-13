@@ -18,6 +18,7 @@ tractags-0.7 (not yet released)
  * #3753: Carry over tags from PageTemplates/ (was: TagIt macro)
  * #4164: Wiki pages without tags have no tag styles
  * #4223: Bad CSS interpretation with IE
+ * #4277: Support for MySQL
  * #4996: TagsPlugin fails on upgrading
  * #5345: TracError: The Trac Environment needs to be upgraded
  * #5575: UnicodeEncodeError on Japanese tag
