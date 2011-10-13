@@ -18,6 +18,8 @@ from trac.loader import get_plugin_info
 from trac.ticket import model
 from trac.ticket.model import Ticket
 
+from trac.config import IntOption
+
 from urlparse import urlparse
 import json
 
@@ -25,6 +27,8 @@ import json
 class PlanetForgeImport(Component):
     implements(IAdminCommandProvider, IAdminPanelProvider, ITemplateProvider)
 
+    # Configure in .ini with [planetforge] import_max_size = (in bytes)
+    max_size = IntOption('planetforge', 'import_max_size', 2**20) # 1MB
 
     # CLI part (trac-admin /path/to/trac planetforge import foobar.coclico.gz)
 
@@ -62,5 +66,5 @@ class PlanetForgeImport(Component):
 
     def web_import(self, req):
         # TODO
-        return {}
+        return {'max_size': self.max_size, 'action': 'upload'}
 

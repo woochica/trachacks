@@ -34,9 +34,11 @@
   </tbody>
 </table>
 
+<h3> Upload a new project dump </h3>
+
 <form id="upload" method="post" enctype="multipart/form-data" action="">
   <div class="field">
-    <label>File (size limit ? KB):<br /><input type="file" name="project" /></label>
+    <label>File (size limit ${pretty_size(max_size)}):<br /><input type="file" name="project" /></label>
   </div>
   <div class="buttons">
     <input type="hidden" name="action" value="upload" />
