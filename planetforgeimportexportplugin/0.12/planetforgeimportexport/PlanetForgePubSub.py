@@ -12,7 +12,7 @@ from trac.web.chrome import INavigationContributor, ITemplateProvider, Chrome
 from trac.db.api import with_transaction
 
 from trac.admin.api import IAdminCommandProvider, IAdminPanelProvider
-
+from trac.ticket.api import ITicketChangeListener
 from trac.loader import get_plugin_info
 
 from trac.ticket import model
