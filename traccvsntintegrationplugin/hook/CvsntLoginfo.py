@@ -5,26 +5,48 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 
+import os
+import sqlite3
+import sys
 import time
 
 class CvsntLoginfo():
-    def __init__(self, repos):
-        self.repos = repos
+    def __init__(self, config):
+        self.config = config
+        self.argv = []
         self.path = ''
         self.user = ''
-        self.datetime = 0.0
+        self.datetime = time.time()
         self.lines = []
         self.nfiles = 0
         self.filenames = []
         self.newrevs = []
         self.oldrevs = []
         self.log_message = ''
+        self.newkey = -1
 
-    def get_loginfo_from_argv(self, argv):
-        self.datetime = time.time()
-        self.user = argv[2]
+
+    def get_raw_info_from_hook(self):
+        self.argv = sys.argv
+        self.lines = []
+        while True:
+	        try: 
+		        nextline = raw_input()
+		        self.lines.append(nextline)
+	        except EOFError: 
+		        break
+		    
+		    
+    def get_raw_info_from_db(self, callNo):
+        self.datetime = 0.0
+        self.lines = []
+        self.argv = []
+    
+    
+    def get_loginfo_from_argv(self):
+        self.user = self.argv[2]
         #argv[1] contains the folder relative to the folder followed by triplets filename,revision_new,revision_old
-        argv1split = argv[1].split() 
+        argv1split = self.argv[1].split() 
         #handle whitespaces in file names 
         _argv1split = []
         _argv1split_tmp = ''
@@ -46,6 +68,7 @@ class CvsntLoginfo():
             self.newrevs.append(s[1])
             self.oldrevs.append(s[2])
 
+
     class ParseState:
         GET_PATH=0
         SKIP_DIRECTORY=1
@@ -53,30 +76,156 @@ class CvsntLoginfo():
         GET_LOG_MESSAGE=3
 
     def get_loginfo_from_stdin(self):
-        self.lines = []
-        state = self.ParseState.GET_PATH
-        while True: 
-            try: 
-                nextline = raw_input()
-                self.lines.append(nextline)
+        state = self.ParseState.GET_PATH        
+        for nextline in self.lines:
+            strUpdateOfRepos = 'Update of ' + self.config.repos + '/';
 
-                strUpdateOfRepos = 'Update of ' + self.repos + '/';
+            if state == self.ParseState.GET_PATH and nextline.find(strUpdateOfRepos) == 0:
+                self.path = nextline.lstrip(strUpdateOfRepos)
+                state = self.ParseState.SKIP_DIRECTORY
+            elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Modified Files:') == 0:
+                state = self.ParseState.SKIP_FILES
+            elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Added Files:') == 0:
+                state = self.ParseState.SKIP_FILES
+            elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Removed Files:') == 0:
+                state = self.ParseState.SKIP_FILES
+            elif state == self.ParseState.SKIP_FILES:
+                if nextline.find('Log Message:') == 0:
+                    state = self.ParseState.GET_LOG_MESSAGE
+            elif state == self.ParseState.GET_LOG_MESSAGE:
+               if self.log_message != '':
+                   self.log_message += '\n'
+               self.log_message += nextline
+               
 
-                if state == self.ParseState.GET_PATH and nextline.find(strUpdateOfRepos) == 0:
-                    self.path = nextline.lstrip(strUpdateOfRepos)
-                    state = self.ParseState.SKIP_DIRECTORY
-                elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Modified Files:') == 0:
-                    state = self.ParseState.SKIP_FILES
-                elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Added Files:') == 0:
-                    state = self.ParseState.SKIP_FILES
-                elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Removed Files:') == 0:
-                    state = self.ParseState.SKIP_FILES
-                elif state == self.ParseState.SKIP_FILES:
-                    if nextline.find('Log Message:') == 0:
-                        state = self.ParseState.GET_LOG_MESSAGE
-                elif state == self.ParseState.GET_LOG_MESSAGE:
-                   if self.log_message != '':
-                       self.log_message += '\n'
-                   self.log_message += nextline               
-            except EOFError: 
-                break
+    def db_check_create_calls(self):
+        db_connection = sqlite3.connect(self.config.call_db) 
+        db_cursor = db_connection.cursor() 
+        
+        # loginfo calls table        
+        try:     
+            strcreate = 'CREATE TABLE LOGINFO_CALLS (id INTEGER PRIMARY KEY, datetime FLOAT);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+            
+        # loginfo calls argv table        
+        try:     
+            strcreate = 'CREATE TABLE LOGINFO_CALLS_ARGV (loginfoID INTEGER, _index INTEGER, argv_index TEXT);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+        # indices on loginfo calls argv table        
+        try:     
+            strcreate = 'CREATE INDEX LOGINFO_CALLS_ARGV_ID ON LOGINFO_CALLS_ARGV (loginfoID);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+
+        # loginfo calls stdout table        
+        try:     
+            strcreate = 'CREATE TABLE LOGINFO_CALLS_STDOUT (loginfoID INTEGER, _index INTEGER, line_index TEXT);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg            
+        # indices on loginfo calls stdout table        
+        try:     
+            strcreate = 'CREATE INDEX LOGINFO_CALLS_STDOUT_ID ON LOGINFO_CALLS_STDOUT (loginfoID);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+            
+        db_connection.commit()
+        db_connection.close()
+    
+    
+    def db_insert_call(self):
+        db_connection = sqlite3.connect(self.config.call_db) 
+        db_cursor = db_connection.cursor() 
+
+        strinsert = 'INSERT INTO LOGINFO_CALLS VALUES(NULL, \'' + repr(self.datetime) + '\')'
+        db_cursor.execute(strinsert)
+        newkey = db_cursor.lastrowid
+        for i in range(0, len(self.argv)):
+            strinsert = 'INSERT INTO LOGINFO_CALLS_ARGV VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + self.argv[i] + '\')'
+            db_cursor.execute(strinsert)
+        for i in range(0, len(self.lines)):
+            strinsert = 'INSERT INTO LOGINFO_CALLS_STDOUT VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + self.lines[i] + '\')'
+            db_cursor.execute(strinsert)
+                
+        db_connection.commit()
+        db_connection.close()
+
+    
+    def db_check_create_changeset(self):
+        db_connection = sqlite3.connect(self.config.changeset_db) 
+        db_cursor = db_connection.cursor() 
+
+        # changeset table        
+        try:     
+            strcreate = 'CREATE TABLE CHANGESET (id INTEGER PRIMARY KEY, description TEXT, path TEXT, user TEXT, datetime FLOAT);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg            
+        # indices on changeset table        
+        try:     
+            strcreate = 'CREATE INDEX CHANGESET_DESCRIPTION ON CHANGESET (description);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+        try:     
+            strcreate = 'CREATE INDEX CHANGESET_DATETIME ON CHANGESET (datetime);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+        try:     
+            strcreate = 'CREATE INDEX CHANGESET_DESCRIPTION_DATETIME ON CHANGESET (description, datetime);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+            
+        # changeset files table        
+        try:     
+            strcreate = 'CREATE TABLE CHANGESET_FILES (changesetID INTEGER, filename TEXT, oldrev TEXT, newrev TEXT);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+        # indices on changeset files table        
+        try:     
+            strcreate = 'CREATE INDEX CHANGESET_FILES_ID ON CHANGESET_FILES (changesetID);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+        try:     
+            strcreate = 'CREATE INDEX CHANGESET_FILES_FILENAME ON CHANGESET_FILES (filename);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+        try:     
+            strcreate = 'CREATE INDEX CHANGESET_FILES_ID_FILENAME ON CHANGESET_FILES (changesetID, filename);'
+            db_cursor.execute(strcreate) 
+        except sqlite3.OperationalError, msg:
+            print msg
+
+        db_connection.commit()
+        db_connection.close()
+        
+        
+    def db_insert_changeset(self):
+        db_connection = sqlite3.connect(self.config.changeset_db) 
+        db_cursor = db_connection.cursor() 
+        
+        strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + self.log_message + '\', \'' + self.path + '\', \'' + self.user + '\', \'' + repr(self.datetime) + '\')'
+        db_cursor.execute(strinsert)
+        self.newkey = db_cursor.lastrowid
+        for i in range(0, self.nfiles):
+            strinsert = 'INSERT INTO CHANGESET_FILES VALUES(' + repr(self.newkey) + ', \'' + self.files[i] + '\', \'' + self.oldrevs[i] + '\', \'' + self.newrevs[i] + '\')'
+            db_cursor.execute(strinsert)
+
+        db_connection.commit()
+        db_connection.close()
+        
+        
+    def trac_insert_changeset(self):
+        cmdtrac = self.config.tracpath + '/trac-admin' + ' ' + self.config.tracprojfolder + ' changeset added  ' + self.config.tracprojname + ' ' + repr(self.newkey)
+        os.system(cmdtrac) 

@@ -4,136 +4,32 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-
-import os
-import sqlite3
-import sys
 from CvsntLoginfo import CvsntLoginfo
+from ProjectConfig import ProjectConfig
 
-# edit these string constants to match your configuration
-repos          = '/repositories_cvs'                   # cvsnt repository name
-database_name  = 'c:/jeroen_cvs/CVSROOT/changesets.db' # path to new database file
-tracpath       = 'c:/temp/trac/scripts'                # path where trac was installed
-tracprojfolder = 'c:/temp/trac/test'                   # trac project folder
-tracprojname   = 'test'                                # trac project name
+# all 'intelligence' is implemented in the CvsntLoginfo class
+config = ProjectConfig()
+loginfo = CvsntLoginfo(config)
 
 
-# retrieve info from the cvsnt loginfo hook calling this script
-loginfo = CvsntLoginfo(repos)
-loginfo.get_loginfo_from_argv(sys.argv)
+# create the databases
+createdb = True # set to false once the database file is created
+if createdb:
+    loginfo.db_check_create_calls()
+    loginfo.db_check_create_changeset()
+        
+# retrieve raw info from the loginfo hook that is calling us 
+loginfo.get_raw_info_from_hook()
+
+# store raw info for replay/debug
+loginfo.db_insert_call()
+
+# parse raw info
+loginfo.get_loginfo_from_argv()
 loginfo.get_loginfo_from_stdin()
 
-
-# cvsnt has no changeset database so we create our own ...
-db_connection = sqlite3.connect(database_name) 
-db_cursor = db_connection.cursor() 
-
-# create the tables if it's not yet there
-createdb = True
-if createdb:
-    try:     
-        strcreate = 'CREATE TABLE LOGINFO_CALLS (id INTEGER PRIMARY KEY, datetime FLOAT);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE TABLE LOGINFO_CALLS_ARGV (loginfoID INTEGER, _index INTEGER, argv_index TEXT);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE INDEX LOGINFO_CALLS_ARGV_ID ON LOGINFO_CALLS_ARGV (loginfoID);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE TABLE LOGINFO_CALLS_STDOUT (loginfoID INTEGER, _index INTEGER, line_index TEXT);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE INDEX LOGINFO_CALLS_STDOUT_ID ON LOGINFO_CALLS_STDOUT (loginfoID);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE TABLE CHANGESET (id INTEGER PRIMARY KEY, description TEXT, path TEXT, user TEXT, datetime FLOAT);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE INDEX CHANGESET_DESCRIPTION ON CHANGESET (description);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE INDEX CHANGESET_DATETIME ON CHANGESET (datetime);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE INDEX CHANGESET_DESCRIPTION_DATETIME ON CHANGESET (description, datetime);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE TABLE CHANGESET_FILES (changesetID INTEGER, filename TEXT, oldrev TEXT, newrev TEXT);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE INDEX CHANGESET_FILES_ID ON CHANGESET_FILES (changesetID);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE INDEX CHANGESET_FILES_FILENAME ON CHANGESET_FILES (filename);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-    try:     
-        strcreate = 'CREATE INDEX CHANGESET_FILES_ID_FILENAME ON CHANGESET_FILES (changesetID, filename);'
-        db_cursor.execute(strcreate) 
-    except sqlite3.OperationalError, msg:
-        print msg
-
-try:     
-    # log the plain calls of this script by the loginfo hook (so we can replay later on without committing to CVS)
-    strinsert = 'INSERT INTO LOGINFO_CALLS VALUES(NULL, \'' + repr(loginfo.datetime) + '\')'
-    db_cursor.execute(strinsert)
-    newkey = db_cursor.lastrowid
-    for i in range(0, len(sys.argv)):
-        strinsert = 'INSERT INTO LOGINFO_CALLS_ARGV VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + sys.argv[i] + '\')'
-        db_cursor.execute(strinsert)
-    for i in range(0, len(loginfo.lines)):
-        strinsert = 'INSERT INTO LOGINFO_CALLS_STDOUT VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + loginfo.lines[i] + '\')'
-        db_cursor.execute(strinsert)
-
-
-    # insert a new changeset
-    strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + loginfo.log_message + '\', \'' + loginfo.path + '\', \'' + loginfo.user + '\', \'' + repr(loginfo.datetime) + '\')'
-    db_cursor.execute(strinsert)
-    newkey = db_cursor.lastrowid
-    for i in range(0, loginfo.nfiles):
-        strinsert = 'INSERT INTO CHANGESET_FILES VALUES(' + repr(newkey) + ', \'' + loginfo.files[i] + '\', \'' + loginfo.oldrevs[i] + '\', \'' + loginfo.newrevs[i] + '\')'
-        db_cursor.execute(strinsert)
+# insert changeset into the database
+loginfo.db_insert_changeset()
         
-    db_connection.commit()
-    db_connection.close()
-except sqlite3.OperationalError, msg:
-    print msg
-
-
 # now call trac (the cvsnt repository within trac will get the info from the record that we inserted above)
-cmdtrac = tracpath + '/trac-admin' + ' ' + tracprojfolder + ' changeset added  ' + tracprojname + ' ' + repr(newkey)
-print cmdtrac
-os.system(cmdtrac) 
-
-
-print "path: " + loginfo.path
-print "user: " + loginfo.user
-print "datetime: " + repr(loginfo.datetime)
-print "files: "
-for i in range(0, loginfo.nfiles):
-    print loginfo.files[i] + ' ' + loginfo.oldrevs[i] + ' -> ' + loginfo.newrevs[i]
-print "log message: " + loginfo.log_message
+loginfo.trac_insert_changeset()
