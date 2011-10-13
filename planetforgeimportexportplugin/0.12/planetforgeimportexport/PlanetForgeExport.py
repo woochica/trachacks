@@ -20,6 +20,9 @@ from trac.ticket.model import Ticket
 
 from urlparse import urlparse
 import json
+import tempfile
+from zipfile import ZipFile
+from datetime import date
 
 
 class PlanetForgeExport(Component):
@@ -92,7 +95,19 @@ class PlanetForgeExport(Component):
                 todo.append(i)
         data = self._do_export(todo)
         dump = json.dumps(data, sort_keys=True, indent=2)
-        return {'dump': dump, 'action' : 'export'}
+
+        tmpname = tempfile.mktemp()
+        tmp = ZipFile(tmpname, 'w') 
+        tmp.writestr('mimetype', 'application/x-planetforge-forge-export-coclicoformat')
+        tmp.writestr('Plucker/JSON_Pluck.txt', dump)
+        tmp.close()
+        req.send_header('Content-disposition', 'attachment; filename=%s-export-%s.zip' % (
+            self.config.get('project', 'name'),
+            date.today().strftime('%Y-%m-%d') ))
+        req.send_file(tmpname, 'application/x-planetforge-forge-export-coclicoformat')
+        os.remove(tmpname)
+        return {}
+        #return {'dump': dump, 'action' : 'export'}
     
     def _get_item_count(self) :
         res = {}
