@@ -51,12 +51,16 @@ _OBSOLETE_ARGS_RE = re.compile(r"""
     """, re.VERBOSE)
 
 
-def render_cloud(env, req, cloud, renderer=None, caseless_sort=False):
-    """Render a tag cloud
+def render_cloud(env, req, cloud, renderer=None, caseless_sort=False,
+                 mincount=None):
+    """Render a tag cloud.
 
     :cloud: Dictionary of {object: count} representing the cloud.
     :param renderer: A callable with signature (tag, count, percent) used to
                      render the cloud objects.
+    :param caseless_sort: Boolean, whether tag cloud should be sorted
+                          case-sensitive.
+    :param mincount: Integer threshold to hide tags with smaller count.
     """
     min_px = 10.0
     max_px = 30.0
@@ -78,22 +82,31 @@ def render_cloud(env, req, cloud, renderer=None, caseless_sort=False):
     if size_lut:
         scale = 1.0 / len(size_lut)
 
-    ul = builder.ul(class_='tagcloud')
-    last = len(cloud) - 1
     if caseless_sort:
         # Preserve upper-case precedence within similar tags.
         items = reversed(sorted(cloud.iteritems(), key=lambda t: t[0].lower(),
                                 reverse=True))
     else:
         items = sorted(cloud.iteritems())
+    ul = li = None
     for i, (tag, count) in enumerate(items):
         percent = size_lut[count] * scale
+        if mincount and count < as_int(mincount, 1):
+            # Tag count is too low.
+            continue
+        if ul:
+            # Found new tag for cloud; now add previously prepared one. 
+            ul('\n', li)
+        else:
+            # Found first tag for cloud; now create the list.
+            ul = builder.ul(class_='tagcloud')
+        # Prepare current tag entry.
         li = builder.li(renderer(tag, count, percent))
-        if i == last:
-            li(class_='last')
-        li()
-        ul(li, ' ')
-    return ul
+    if li:
+        # All tags checked; mark latest tag as last one (no tailing colon).
+        li(class_='last')
+        ul('\n', li, '\n')
+    return ul and ul or _("No tags found")
 
 
 class TagWikiMacros(TagTemplateProvider):
@@ -137,8 +150,10 @@ class TagWikiMacros(TagTemplateProvider):
     Usage:
 
     {{{
-    [[TagCloud(query)]]
+    [[TagCloud(query,mincount=<n>)]]
     }}}
+    mincount::
+      Optional integer threshold to hide tags with smaller count.
 
     See tags documentation for the query syntax.
     """)
@@ -169,10 +184,14 @@ class TagWikiMacros(TagTemplateProvider):
         req = formatter.req
         if name == 'TagCloud':
             if not content:
-                content = ''
-            all_tags = TagSystem(self.env).get_all_tags(req, content)
+                args = ''
+            else:
+                args, kw = parse_args(content)
+            all_tags = TagSystem(self.env).get_all_tags(req, ' '.join(args))
+            mincount = 'mincount' in kw and kw['mincount'] or None
             return render_cloud(self.env, req, all_tags,
-                                caseless_sort=self.caseless_sort)
+                                caseless_sort=self.caseless_sort,
+                                mincount=mincount)
 
         elif name == 'ListTagged':
             if _OBSOLETE_ARGS_RE.search(content):
