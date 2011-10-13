@@ -52,17 +52,20 @@ class TicketTagProvider(Component):
         ignore = ''
         if self.ignore_closed_tickets:
             ignore = " WHERE status != 'closed'"
-        sql = "SELECT * FROM (SELECT id, %s, %s AS fields FROM ticket%s) s" % (
-            ','.join(self.fields),
-            '||'.join(["COALESCE(%s, '')" % f for f in self.fields]),
-            ignore)
+        sql = """
+            SELECT *
+              FROM (SELECT id, %s, %s AS std_fields
+                      FROM ticket%s) s
+            """ % (','.join(self.fields),
+                   '||'.join(["COALESCE(%s, '')" % f for f in self.fields]),
+                   ignore)
         constraints = []
         if tags:
             constraints.append(
-                "(" + ' OR '.join(["fields LIKE %s" for t in tags]) + ")")
+                "(" + ' OR '.join(["std_fields LIKE %s" for t in tags]) + ")")
             args += ['%' + t + '%' for t in tags]
         else:
-            constraints.append("fields != ''")
+            constraints.append("std_fields != ''")
 
         if constraints:
             sql += " WHERE " + " AND ".join(constraints)

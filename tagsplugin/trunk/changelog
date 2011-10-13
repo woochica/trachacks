@@ -14,6 +14,7 @@ tractags-0.7 (not yet released)
  * #2939: Requirement.parse('Genshi==dev,>=0.5.dev-r698')
  * #3145: Create New Wiki Page with a Tag
  * #3206: Edit wiki page content and tag
+ * #3359: Tickets tags don't work when using MySQL 4.x
  * #3753: Carry over tags from PageTemplates/ (was: TagIt macro)
  * #4164: Wiki pages without tags have no tag styles
  * #4223: Bad CSS interpretation with IE
