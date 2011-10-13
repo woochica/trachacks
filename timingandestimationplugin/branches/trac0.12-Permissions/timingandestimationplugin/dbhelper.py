@@ -80,16 +80,14 @@ def execute_in_nested_trans(env, name, *args):
             raise e
     return result
 
-
 def db_table_exists(env,  table):
-    has_table = True;
-    try:
-        execute_in_nested_trans(
-            env, "db_table_exists",
-            ("SELECT * FROM %s LIMIT 1" % table,[]))
-    except:
-        has_table = False;
-    return has_table
+    db = env.get_read_db()
+    if(type(db.cnx) == trac.db.sqlite_backend.SQLiteConnection):
+        sql = "select count(*) from sqlite_master where type = 'table' and name = %s"
+    else:
+        sql = "SELECT count(*) FROM information_schema.tables WHERE table_name = %s"
+    cnt = get_scalar(env, sql, 0, table)
+    return cnt > 0
 
 def get_column_as_list(env, sql, col=0, *params):
     data = get_all(env, sql, *params)[1] or ()
