@@ -5,6 +5,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 
-ALL c:\python27\python C:\temp\trac\cvsnt-plugin\hook\loginfo_script.py %{svV} $USER
+ALL c:\python27\python C:\temp\trac\cvsnt-plugin\hook\loginfo_hook.py %{svV} $USER
 
 
