@@ -17,26 +17,7 @@ from trac.web.session import DetachedSession
 
 from tractags.api import TagSystem
 from tractags.model import TagModelProvider
-from tractags.web_ui import TagTemplateProvider, TagRequestHandler
-
-
-class TagTemplateProviderTestCase(unittest.TestCase):
-    
-    def setUp(self):
-        self.env = EnvironmentStub(
-                enable=['trac.*', 'tractags.*'])
-        self.env.path = tempfile.mkdtemp()
-        TagModelProvider(self.env).environment_created()
-        
-        # TagTemplateProvider is abstract, test using a subclass
-        self.tag_rh = TagRequestHandler(self.env)
-    
-    def tearDown(self):
-        shutil.rmtree(self.env.path)
-    
-    def test_template_dirs_added(self):
-        from trac.web.chrome import Chrome
-        self.assertTrue(self.tag_rh in Chrome(self.env).template_providers)
+from tractags.web_ui import TagRequestHandler
 
 
 class TagRequestHandlerTestCase(unittest.TestCase):
@@ -94,8 +75,8 @@ class TagRequestHandlerTestCase(unittest.TestCase):
         template, data, content_type = self.tag_rh.process_request(req)
         self.assertEquals('tag_view.html', template)
         self.assertEquals(None, content_type)
-        self.assertEquals(['tag_body', 'tag_query', 'tag_realms', 'title'],
-                          sorted(data.keys()))
+        self.assertEquals(['mincount', 'tag_body', 'tag_query', 'tag_realms',
+                           'title'], sorted(data.keys()))
     
     def test_get_main_page_no_permission(self):
         req = Mock(path_info='/tags',
@@ -107,7 +88,6 @@ class TagRequestHandlerTestCase(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(TagTemplateProviderTestCase, 'test'))
     suite.addTest(unittest.makeSuite(TagRequestHandlerTestCase, 'test'))
     return suite
 

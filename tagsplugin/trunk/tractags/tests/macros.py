@@ -15,7 +15,26 @@ from trac.perm import PermissionCache, PermissionSystem
 from trac.web.href import Href
 
 from tractags.model import TagModelProvider
-from tractags.macros import TagWikiMacros
+from tractags.macros import TagTemplateProvider, TagWikiMacros
+
+
+class TagTemplateProviderTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.env = EnvironmentStub(
+                enable=['trac.*', 'tractags.*'])
+        self.env.path = tempfile.mkdtemp()
+        TagModelProvider(self.env).environment_created()
+
+        # TagTemplateProvider is abstract, test using a subclass
+        self.tag_wm = TagWikiMacros(self.env)
+
+    def tearDown(self):
+        shutil.rmtree(self.env.path)
+
+    def test_template_dirs_added(self):
+        from trac.web.chrome import Chrome
+        self.assertTrue(self.tag_wm in Chrome(self.env).template_providers)
 
 
 class ListTaggedMacroTestCase(unittest.TestCase):
@@ -64,6 +83,7 @@ class TagCloudMacroTestCase(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(TagTemplateProviderTestCase, 'test'))
     suite.addTest(unittest.makeSuite(ListTaggedMacroTestCase, 'test'))
     suite.addTest(unittest.makeSuite(TagCloudMacroTestCase, 'test'))
     return suite

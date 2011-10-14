@@ -22,7 +22,7 @@ from trac.wiki.api import IWikiChangeListener, IWikiPageManipulator, \
 from trac.wiki.model import WikiPage
 
 from tractags.api import DefaultTagProvider, TagSystem, _
-from tractags.web_ui import TagTemplateProvider
+from tractags.macros import TagTemplateProvider
 
 
 class WikiTagProvider(DefaultTagProvider):

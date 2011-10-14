@@ -11,9 +11,10 @@
 import re
 
 from genshi.builder import Markup, tag as builder
+from pkg_resources import resource_filename
 
 from trac.config import BoolOption, ListOption, Option
-from trac.core import implements
+from trac.core import Component, implements
 from trac.resource import Resource, get_resource_description, \
                           get_resource_url, render_resource_link
 from trac.ticket.api import TicketSystem
@@ -22,11 +23,11 @@ from trac.util import embedded_numbers
 from trac.util.compat import sorted, set
 from trac.util.presentation import Paginator
 from trac.util.text import shorten_line, to_unicode
-from trac.web.chrome import Chrome, add_link, add_stylesheet
+from trac.web.chrome import Chrome, ITemplateProvider, \
+                            add_link, add_stylesheet
 from trac.wiki.api import IWikiMacroProvider, parse_args
 
 from tractags.api import TagSystem, _
-from tractags.web_ui import TagTemplateProvider
 
 try:
     from trac.util  import as_int
@@ -109,6 +110,27 @@ def render_cloud(env, req, cloud, renderer=None, caseless_sort=False,
     return ul and ul or _("No tags found")
 
 
+class TagTemplateProvider(Component):
+    """Provides templates and static resources for the tags plugin."""
+
+    implements(ITemplateProvider)
+
+    abstract = True
+
+    # ITemplateProvider methods
+    def get_templates_dirs(self):
+        """Return the absolute path of the directory containing the provided
+        Genshi templates.
+        """
+        return [resource_filename(__name__, 'templates')]
+
+    def get_htdocs_dirs(self):
+        """Return the absolute path of a directory containing additional
+        static resources (such as images, style sheets, etc).
+        """
+        return [('tags', resource_filename(__name__, 'htdocs'))]
+
+
 class TagWikiMacros(TagTemplateProvider):
     """Provides macros, that utilize the tagging system in wiki."""
 
@@ -150,8 +172,10 @@ class TagWikiMacros(TagTemplateProvider):
     Usage:
 
     {{{
-    [[TagCloud(query,mincount=<n>)]]
+    [[TagCloud(query,caseless_sort=<bool>,mincount=<n>)]]
     }}}
+    caseless_sort::
+      Whether the tag cloud should be sorted case-sensitive.
     mincount::
       Optional integer threshold to hide tags with smaller count.
 
@@ -184,9 +208,11 @@ class TagWikiMacros(TagTemplateProvider):
         req = formatter.req
         if name == 'TagCloud':
             if not content:
-                args = ''
+                args = []
             else:
                 args, kw = parse_args(content)
+            realms = 'realm' in kw and kw['realm'].split('|') or []
+            args.append(' or '.join(['realm:%s' % r for r in realms]))
             all_tags = TagSystem(self.env).get_all_tags(req, ' '.join(args))
             mincount = 'mincount' in kw and kw['mincount'] or None
             return render_cloud(self.env, req, all_tags,

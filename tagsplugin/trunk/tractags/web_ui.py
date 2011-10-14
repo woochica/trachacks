@@ -12,43 +12,22 @@ import re
 import math
 
 from genshi.builder import tag as builder
-from pkg_resources import resource_filename
 from trac.config import ListOption, Option
-from trac.core import Component, ExtensionPoint, implements
+from trac.core import ExtensionPoint, implements
 from trac.mimeview import Context
 from trac.resource import Resource
 from trac.util import to_unicode
 from trac.util.compat import sorted, set, any
 from trac.util.text import CRLF
 from trac.web.api import IRequestHandler
-from trac.web.chrome import ITemplateProvider, INavigationContributor, \
+from trac.web.chrome import INavigationContributor, \
                             add_stylesheet, add_ctxtnav
 from trac.wiki.formatter import Formatter
 from trac.wiki.model import WikiPage
 
 from tractags.api import TagSystem, ITagProvider, _, tag_
+from tractags.macros import TagTemplateProvider, as_int
 from tractags.query import InvalidQuery
-
-
-class TagTemplateProvider(Component):
-    """Provides templates and static resources for the tags plugin."""
-
-    implements(ITemplateProvider)
-
-    abstract = True
-
-    # ITemplateProvider methods
-    def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        Genshi templates.
-        """
-        return [resource_filename(__name__, 'templates')]
-
-    def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        return [('tags', resource_filename(__name__, 'htdocs'))]
 
 
 class TagRequestHandler(TagTemplateProvider):
@@ -131,19 +110,22 @@ class TagRequestHandler(TagTemplateProvider):
         macros = TagWikiMacros(self.env)
         if not query:
             macro = 'TagCloud'
-            query = '(%s) (%s)' % (' or '.join(['realm:' + \
-                                                r for r in checked_realms]),
-                                   query)
+            mincount = as_int(req.args.get('mincount', None), 1)
+            args = 'mincount=%s,realm=%s' % (mincount,
+                                             '|'.join(checked_realms))
+            data['mincount'] = mincount
         else:
             macro = 'ListTagged'
-            query += ',format=%s,cols=%s,realm=%s' % (self.default_format,
+            args = '%s,format=%s,cols=%s,realm=%s' % (query,
+                                                      self.default_format,
                                                       self.default_cols,
                                                       '|'.join(checked_realms))
-        self.env.log.debug('Tag query: %s', query)
+            data['mincount'] = None
+        self.env.log.debug('Tag macro arguments: %s', args)
         try:
             # Query string without realm throws 'NotImplementedError'.
             data['tag_body'] = len(checked_realms) > 0 and \
-                               macros.expand_macro(formatter, macro, query) \
+                               macros.expand_macro(formatter, macro, args) \
                                or ''
         except InvalidQuery, e:
             data['tag_query_error'] = to_unicode(e)

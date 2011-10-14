@@ -67,6 +67,10 @@
           </py:if>
         </h1>
         ${tag_body}
+        <p py:if="mincount > 1" i18n:msg="mincount">
+              Showing only tags with ${mincount} or more occurrences
+              (<a href="${href.tags()}">view all tags</a>).
+        </p>
       </div>
     </div>
   </body>
