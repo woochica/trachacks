@@ -166,10 +166,11 @@ The Macro accepts arguments as well:
             out = self.outdated_re.search(pagetext)
             outcode = ""
             outver = ""
-            if out != None and out.group(1) != None:
+            prefix, base_page_name, lang_code = self._get_page_info(page)
+            if out != None and out.group(1) != None and (lang == None \
+            or lang == lang_code or lang_code == self.base_lang):
                 outcode = "{{{%s}}}" % out.group(1).replace("\,",",")
             if regres != None and regres.group(1) != None:
-                prefix, base_page_name, lang_code = self._get_page_info(page)
                 if lang_code != self.base_lang and (lang == None or lang == lang_code):
                     newver = WikiPage(self.env, base_page_name).version
                     oldver = abs(int(regres.group(1)))
