@@ -15,21 +15,21 @@
 <p>Based on <a href="http://trac-hacks.org/wiki/PlanetForgeImportExportPlugin">PlanetForge import/export plugin</a> r10744.</p>
 
 <py:if test="action == 'upload'">
-<h3> Available project dumps : </h3>
+<h3> Available project dumps </h3>
 
 <table class="listing" id="projlist">
   <thead>
     <tr>
       <th>Name</th>
-      <th>Upload date</th>
+      <th>Uploaded</th>
       <th>Size</th>
     </tr>
   </thead>
   <tbody>
-    <tr>
-      <td><a href="?project=coclico-test1.dump.gz">coclico-test1.dump.gz</a></td>
-      <td>2011-09-03 14:25</td>
-      <td>564 kB</td>
+    <tr py:for="file in files">
+      <td><a href="?file=${file.name}">${file.name}</a></td>
+      <td>${dateinfo(file.date)} ago</td>
+      <td>${pretty_size(file.size)}</td>
     </tr>
   </tbody>
 </table>
@@ -41,7 +41,6 @@
     <label>File (size limit ${pretty_size(max_size)}):<br /><input type="file" name="project" /></label>
   </div>
   <div class="buttons">
-    <input type="hidden" name="action" value="upload" />
     <input type="submit" value="Upload" />
   </div>
 </form>
@@ -49,11 +48,40 @@
 
 
 <py:if test="action == 'preview'">
-<h3> Details for project dump ${project.name}  </h3>
+<h3> Details for project dump ${file} </h3>
 
-<p>...</p>
+<table class="listing" id="projlist">
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr py:for="info in infos">
+      <td>${info[0]}</td>
+      <td>${info[1]}</td>
+    </tr>
+  </tbody>
+</table>
+
+<p></p>
+<form id="import" action="" method="post">
+  <input type="hidden" name="action" value="import"> </input>
+  <input type="hidden" name="file" value="${file}"> </input>
+  <dt>
+    <input type="checkbox" name="reset" py:attrs="reset"> Reset this Trac instance first, don't merge artefacts (<strong>THINK TWICE !</strong>) </input>
+  </dt>
+  
+  <input type="submit" value=" Import "> </input>
+</form>
 </py:if>
 
+
+<py:if test="action == 'import'">
+<h3> Import result for ${file} </h3>
+<p>Not implemented.</p>
+</py:if>
 
   </body>
 </html>

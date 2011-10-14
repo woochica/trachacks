@@ -107,7 +107,6 @@ class PlanetForgeExport(Component):
         req.send_file(tmpname, 'application/x-planetforge-forge-export-coclicoformat')
         os.remove(tmpname)
         return {}
-        #return {'dump': dump, 'action' : 'export'}
     
     def _get_item_count(self) :
         res = {}
