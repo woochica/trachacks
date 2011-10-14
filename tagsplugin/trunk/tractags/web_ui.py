@@ -26,7 +26,7 @@ from trac.wiki.formatter import Formatter
 from trac.wiki.model import WikiPage
 
 from tractags.api import TagSystem, ITagProvider, _, tag_
-from tractags.macros import TagTemplateProvider, as_int
+from tractags.macros import TagTemplateProvider, TagWikiMacros, as_int
 from tractags.query import InvalidQuery
 
 
@@ -37,6 +37,8 @@ class TagRequestHandler(TagTemplateProvider):
 
     tag_providers = ExtensionPoint(ITagProvider)
 
+    cloud_mincount = Option('tags', 'cloud_mincount', 1,
+        doc="""Integer threshold to hide tags with smaller count.""")
     default_cols = Option('tags', 'default_table_cols', 'id|description|tags',
         doc="""Select columns and order for table format using a "|"-separated
             list of column names.
@@ -106,11 +108,11 @@ class TagRequestHandler(TagTemplateProvider):
             data['tag_title'] = _("Showing objects matching '%s'") % query
         data['tag_query'] = query
 
-        from tractags.macros import TagWikiMacros
         macros = TagWikiMacros(self.env)
         if not query:
             macro = 'TagCloud'
-            mincount = as_int(req.args.get('mincount', None), 1)
+            mincount = as_int(req.args.get('mincount', None),
+                              self.cloud_mincount)
             args = 'mincount=%s,realm=%s' % (mincount,
                                              '|'.join(checked_realms))
             data['mincount'] = mincount
