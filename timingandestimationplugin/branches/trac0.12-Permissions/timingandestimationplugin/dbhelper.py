@@ -1,3 +1,4 @@
+import trac.db.sqlite_backend
 
 def get_all(env, sql, *params):
     """Executes the query and returns the (description, data)"""
