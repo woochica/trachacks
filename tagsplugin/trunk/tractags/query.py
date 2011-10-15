@@ -140,7 +140,7 @@ class Query(QueryNode):
 
     _tokenise_re = re.compile(r"""
         (?P<not>-)|
-        (?P<or>or\s+)|
+        (?P<or>or)\s+|
         \"(?P<dquote>(?:\\.|[^\"])*)\"|
         '(?P<squote>(?:\\.|[^'])*)'|
         (?P<startsub>\()|
