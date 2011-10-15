@@ -27,7 +27,9 @@ debug=False
 
 
 #peer to notify
-peer='http://hub.coclico.bearstech.com/'
+# 2011-10-15 5:06 vcaron: makes import code b0rk while importing a bunch of tickets, disable
+peer=''
+#peer='http://hub.coclico.bearstech.com/'
 #peer='http://127.0.0.1:8001/'
 
 #use htaccess ?
@@ -46,6 +48,8 @@ functions = { #'status' : 'status/index.php',
               }
 
 def notify(field, args) :
+    if peer == '':
+        return
     #args['token'] = token
     if debug :
         log = open('/tmp/ticket_listener', 'a')

@@ -70,7 +70,10 @@
   <input type="hidden" name="action" value="import"> </input>
   <input type="hidden" name="file" value="${file}"> </input>
   <dt>
-    <input type="checkbox" name="reset" py:attrs="reset"> Reset this Trac instance first, don't merge artefacts (<strong>THINK TWICE !</strong>) </input>
+    <input type="checkbox" name="preserve" checked="checked"> Preserve your currently logged in account </input>
+  </dt>
+  <dt>
+    <input type="checkbox" name="reset"> Reset this Trac instance first, don't merge artefacts (<strong>THINK TWICE !</strong>) </input>
   </dt>
   
   <input type="submit" value=" Import "> </input>
@@ -80,7 +83,10 @@
 
 <py:if test="action == 'import'">
 <h3> Import result for ${file} </h3>
-<p>Not implemented.</p>
+
+<ul py:for="s in status">
+  <li>${s} : ${status[s]}</li>
+</ul>
 </py:if>
 
   </body>
