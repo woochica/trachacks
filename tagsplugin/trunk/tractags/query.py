@@ -141,12 +141,12 @@ class Query(QueryNode):
     _tokenise_re = re.compile(r"""
         (?P<not>-)|
         (?P<or>or)\s+|
-        \"(?P<dquote>(?:\\.|[^\"])*)\"|
-        '(?P<squote>(?:\\.|[^'])*)'|
+        (?P<dquote>"(?:\\.|[^"])*")|
+        (?P<squote>'(?:\\.|[^'])*')|
         (?P<startsub>\()|
         (?P<endsub>\))|
         (?P<attr>:)|
-        (?P<term>[^:()"'\s]+)""", re.UNICODE | re.IGNORECASE | re.VERBOSE)
+        (?P<term>[^:()\s]+)""", re.UNICODE | re.IGNORECASE | re.VERBOSE)
 
     _group_map = {'dquote': QueryNode.TERM, 'squote': QueryNode.TERM,
                   'term': QueryNode.TERM, 'not': QueryNode.NOT,
@@ -232,8 +232,10 @@ class Query(QueryNode):
         if not tokens:
             raise InvalidQuery(_("Unexpected end of string"))
         if tokens[0][0] in (QueryNode.TERM, QueryNode.OR):
-            token = tokens.pop(0)
-            return QueryNode(QueryNode.TERM, value=token[1])
+            token = tokens.pop(0)[1]
+            if token[0] in ('"', "'"):
+                token = re.sub(r'\\(.)', r'\1', token[1:-1])
+            return QueryNode(QueryNode.TERM, value=token)
         raise InvalidQuery(_("Expected terminal, got '%s'") % tokens[0][1])
 
     def terms(self, exclude_not=True):
@@ -380,9 +382,9 @@ class Query(QueryNode):
         >>> q._tokenise('one or two')
         [(1, 'one'), (4, 'or'), (1, 'two')]
         >>> q._tokenise('"one two"')
-        [(1, 'one two')]
+        [(1, '"one two"')]
         >>> q._tokenise("'one two'")
-        [(1, 'one two')]
+        [(1, "'one two'")]
         >>> q._tokenise('-one')
         [(2, '-'), (1, 'one')]
         """

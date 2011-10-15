@@ -29,6 +29,7 @@ tractags-0.7 (not yet released)
  * #8684: Unexpected keyword argument 'tags_link'
  * #8995: Some missing HTML on wiki edit page
  * #9023: Remove superflous error message about wiki_namespace
+ * #9057: Tags with single quote not tokenised correctly
  * #9059: Various fixes and enhancements (detailed in #9060 - #9064)
  * #9060: Query results are duplicated when realm-selection is repeated
  * #9062: Wiki-page level-1-title broken on 0.12
