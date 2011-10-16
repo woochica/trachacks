@@ -27,7 +27,7 @@
   </thead>
   <tbody>
     <tr py:for="file in files">
-      <td><a href="?file=${file.name}">${file.name}</a></td>
+      <td><a href="?file=${file.url}">${file.name}</a></td>
       <td>${dateinfo(file.date)} ago</td>
       <td>${pretty_size(file.size)}</td>
     </tr>
@@ -76,6 +76,7 @@
     <input type="checkbox" name="reset"> Reset this Trac instance first, don't merge artefacts (<strong>THINK TWICE !</strong>) </input>
   </dt>
   
+  <p></p>
   <input type="submit" value=" Import "> </input>
 </form>
 </py:if>

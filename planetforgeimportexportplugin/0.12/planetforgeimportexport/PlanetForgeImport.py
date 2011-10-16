@@ -83,11 +83,12 @@ class PlanetForgeImport(Component):
     def web_upload(self, req):
         # TODO: handle file upload when POSTing
         files = []
-        for fname in os.listdir(self._dump_path()):
+        for fname in sorted(os.listdir(self._dump_path())):
             fpath = os.path.join(self._dump_path(), fname)
             fstat = os.stat(fpath)
             files.append({
-                'name': unicode_quote(fname),
+                'name': fname,
+                'url' : unicode_quote(fname),
                 'size': fstat.st_size,
                 'date': fstat.st_mtime })
         return {'max_size': self.max_size, 'files': files, 'action': 'upload'}
