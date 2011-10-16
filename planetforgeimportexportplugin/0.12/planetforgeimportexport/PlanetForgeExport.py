@@ -19,10 +19,11 @@ from trac.ticket import model
 from trac.ticket.model import Ticket
 
 from urlparse import urlparse
+import os
 import json
 import tempfile
 from zipfile import ZipFile
-from datetime import date
+from datetime import date, datetime
 
 
 class PlanetForgeExport(Component):
@@ -79,28 +80,33 @@ class PlanetForgeExport(Component):
     def web_report(self, req) :
         count   = self._get_item_count()
         checked = {}
-        checked['wiki']       = {}
+        checked['wiki']       = { 'checked': 'checked' }
         checked['ticket']     = { 'checked': 'checked' }
-        checked['attachment'] = {}
+        checked['attachment'] = { 'checked': 'checked' }
         checked['session']    = { 'checked': 'checked' }
         checked['component']  = { 'checked': 'checked' }
         checked['milestone']  = { 'checked': 'checked' }
         checked['permission'] = { 'checked': 'checked' }
+        checked['debug']      = { }
         return {'count': count , 'checked': checked , 'action': 'report'}
 
     def web_export(self, req) :
-        todo = []
-        for i in [ 'wiki', 'ticket', 'attachement', 'session', 'component', 'milestone', 'permission' ] :
-            if req.args.get(i, '').strip() == 'on' :
-                todo.append(i)
-        data = self._do_export(todo)
-        dump = json.dumps(data, sort_keys=True, indent=2)
+        todo = {}
+        for i in [ 'wiki', 'ticket', 'attachment', 'session', 'component', 'milestone', 'permission', 'debug' ] :
+            todo[i] = req.args.get(i, '').strip() == 'on'
+        meta = self._do_export(todo)
+        dump = json.dumps(meta, sort_keys=True, indent=2)
+
+        if todo['debug']:
+            return {'action': 'debug', 'dump': dump}
 
         tmpname = tempfile.mktemp()
-        tmp = ZipFile(tmpname, 'w') 
-        tmp.writestr('mimetype', 'application/x-planetforge-forge-export-coclicoformat')
-        tmp.writestr('Plucker/JSON_Pluck.txt', dump)
-        tmp.close()
+        out = ZipFile(tmpname, 'w') 
+        out.writestr('mimetype', 'application/x-planetforge-forge-export-coclicoformat')
+        out.writestr('Plucker/JSON_Pluck.txt', dump)
+        if todo['attachment']:
+            self._do_export_files(out)
+        out.close()
         req.send_header('Content-disposition', 'attachment; filename=%s-export-%s.zip' % (
             self.config.get('project', 'name'),
             date.today().strftime('%Y-%m-%d') ))
@@ -147,13 +153,12 @@ class PlanetForgeExport(Component):
     * forgeversion: missing
     * users.role should be users.roles = [ ... ]
     * roles: check with http://trac.edgewall.org/wiki/TracPermissions (~40)
-    * wiki: todo
 
 
     """
     def _do_export(self, todo):
         self.base_url = self.config.get('trac', 'base_url')
-        return {
+        meta = {
             'rdf:about': self.base_url,
             'rdf:type' : 'http://planetforge.org/ns/forgeplucker_dump/project_dump#',
             'prefixes': {
@@ -167,14 +172,24 @@ class PlanetForgeExport(Component):
                 'rdf'          : 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
                 'sioc'         : 'http://rdfs.org/sioc/ns#'
             },
-            'forgeplucker:project'   : self._do_export_project(todo),
-            'forgeplucker:tools'     : self._do_export_tools(todo),
-            'forgepluckers:trackers' : self._do_export_trackers(todo),
-            'forgeplucker:users'     : self._do_export_users(todo)
-            #'roles' : self._do_export_roles(todo),
+            'forgeplucker:project'   : self._do_export_project(),
+            'forgeplucker:tools'     : self._do_export_tools(),
         }
+        if todo['ticket']:
+            meta['forgepluckers:trackers'] = self._do_export_trackers()
+        if todo['permission']:
+            meta['forgeplucker:roles'] = self._do_export_roles()
+        if todo['session']:
+            meta['forgeplucker:users'] = self._do_export_users()
+        if todo['wiki']:
+            meta['forgeplucker:wiki'] = self._do_export_wiki()
+        if todo['attachment']:
+            meta['forgeplucker:files'] = self._do_export_files_meta()
+        #if todo['milestone']:
+        #if todo['component']:
+        return meta
 
-    def _do_export_project(self, todo):
+    def _do_export_project(self):
         return {
             'URL'            : self.base_url,
             'class'          : 'PROJET',
@@ -190,7 +205,7 @@ class PlanetForgeExport(Component):
             'trackers_list'  : [ self.base_url + '/report' ],
         }
 
-    def _do_export_tools(self, todo):
+    def _do_export_tools(self):
         plugins = get_plugin_info(self.env, include_core=True)
         t = {}
         for p in plugins :
@@ -202,9 +217,7 @@ class PlanetForgeExport(Component):
                     }
         return t
 
-    def _do_export_roles(self, todo):
-        if not todo.count('permission') :
-            return {}
+    def _do_export_roles(self):
         return {
             'BROWSER_VIEW' : 'View directory listings in the repository browser',
             'LOG_VIEW' : 'View revision logs of files and directories in the repository browser',
@@ -253,10 +266,7 @@ class PlanetForgeExport(Component):
             'EMAIL_VIEW' : 'Shows email addresses even if trac show_email_addresses configuration option is false'
         }
 
-    def _do_export_trackers(self, todo):
-        if not todo.count('ticket') :
-            return []
-
+    def _do_export_trackers(self):
         ticket_ids = []
         @with_transaction(self.env)
         def get_tickets(db) :
@@ -301,10 +311,7 @@ class PlanetForgeExport(Component):
             t[val] = ticket.values.get(val.lower(), 'None')
         return t
 
-    def _do_export_users(self, todo):
-        if not todo.count('session') :
-            return {}
-
+    def _do_export_users(self):
         # First pass: gather uniques sid's
         sid = []
         @with_transaction(self.env)
@@ -331,4 +338,60 @@ class PlanetForgeExport(Component):
                 'role'      : '?'
             }
         return u
+
+    def _do_export_wiki(self):
+        wiki = {}
+        @with_transaction(self.env)
+        def getInfo(db) :
+            cursor = db.cursor()
+            cursor.execute("SELECT name,version,time,author,text,comment FROM wiki ORDER BY name,version")
+
+            curpage = []
+            curname = ''
+            for page in cursor:
+                if curname == '':
+                    curname = page[0]
+                if curname != page[0]:
+                    wiki[curname] = curpage
+                    curpage = []
+                    curname = page[0]
+                curpage.append({
+                    'version': page[1],
+                    'date':    datetime.utcfromtimestamp(page[2] / 10**6).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    'author':  page[3],
+                    'text':    page[4],
+                    'comment': page[5] or '',
+                })
+            wiki[curname] = curpage
+        return wiki
+
+    def _do_export_files_meta(self):
+        files = []
+        @with_transaction(self.env)
+        def getInfo(db) :
+            cursor = db.cursor()
+            cursor.execute("SELECT type,id,filename,size,time,description,author FROM attachment")
+
+            for att in cursor:
+                files.append({
+                    'filename'    : att[2],
+                    'filepath'    : '%s/%s/%s' % (att[0], att[1], att[2]),
+                    'relation'    : '%s#%s' % (att[0], att[1]),
+                    'size'        : att[3],
+                    'date'        : datetime.utcfromtimestamp(att[4] / 10**6).strftime('%Y-%m-%dT%H:%M:%SZ'),
+                    'description' : att[5],
+                    'author'      : att[6],
+                })
+        return files
+
+    def _do_export_files(self, out):
+        @with_transaction(self.env)
+        def getInfo(db) :
+            cursor = db.cursor()
+            cursor.execute("SELECT type,id,filename FROM attachment")
+
+            for att in cursor:
+                src = os.path.join(self.env.path, 'attachments', att[0], att[1], att[2])
+                arcname = '%s/%s/%s' % (att[0], att[1], att[2])
+                out.write(src, arcname)
 
