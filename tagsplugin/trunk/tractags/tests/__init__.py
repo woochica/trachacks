@@ -6,12 +6,11 @@
 # you should have received as part of this distribution.
 #
 
-from unittest import TestSuite
-
+import unittest
 
 
 def test_suite():
-    suite = TestSuite()
+    suite = unittest.TestSuite()
     
     import tractags.tests.admin
     suite.addTest(tractags.tests.admin.test_suite())
@@ -38,3 +37,10 @@ def test_suite():
     suite.addTest(tractags.tests.wiki.test_suite())
     
     return suite
+
+
+# Start test suite directly from command line like so:
+#   $> PYTHONPATH=$PWD python tractags/tests/__init__.py
+if __name__ == '__main__':
+    unittest.main(defaultTest='test_suite')
+
