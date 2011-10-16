@@ -31,10 +31,10 @@ class WikiTagProvider(DefaultTagProvider):
 
     first_head = re.compile('=\s+([^=\n]*)={0,1}')
 
-    def check_permission(self, perm, operation):
+    def check_permission(self, perm, action):
         map = {'view': 'WIKI_VIEW', 'modify': 'WIKI_MODIFY'}
-        return super(WikiTagProvider, self).check_permission(perm, operation) \
-            and map[operation] in perm
+        return super(WikiTagProvider, self).check_permission(perm, action) \
+            and map[action] in perm
 
     def describe_tagged_resource(self, req, resource):
         if not self.check_permission(req.perm(resource), 'view'):

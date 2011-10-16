@@ -94,14 +94,14 @@ class DefaultTagProvider(Component):
     realm = None
 
     # Public methods
-    def check_permission(self, perm, operation):
+    def check_permission(self, perm, action):
         """Delegate function for checking permissions.
 
         Override to implement custom permissions. Defaults to TAGS_VIEW and
         TAGS_MODIFY.
         """
         map = {'view': 'TAGS_VIEW', 'modify': 'TAGS_MODIFY'}
-        return map[operation] in perm('tag')
+        return map[action] in perm('tag')
 
     # ITagProvider methods
     def get_taggable_realm(self):

@@ -11,6 +11,7 @@ import re
 
 from trac.config import BoolOption, ListOption
 from trac.core import Component, implements
+from trac.perm import PermissionError
 from trac.resource import Resource
 from trac.ticket.api import TicketSystem
 from trac.ticket.model import Ticket
@@ -18,14 +19,15 @@ from trac.util import get_reporter_id
 from trac.util.compat import set, sorted
 from trac.util.text import to_unicode
 
-from tractags.api import TagSystem, ITagProvider, _
+from tractags.api import DefaultTagProvider, ITagProvider, TagSystem, _
 
 
-class TicketTagProvider(Component):
+class TicketTagProvider(DefaultTagProvider):
     """A tag provider using ticket fields as sources of tags.
 
     Currently does NOT support custom fields.
     """
+
     implements(ITagProvider)
 
     fields = ListOption('tags', 'ticket_fields', 'keywords',
@@ -37,12 +39,16 @@ class TicketTagProvider(Component):
 #    custom_fields = ListOption('tags', 'custom_ticket_fields',
 #        doc=_("List of custom ticket fields to expose as tags."))
 
-    # ITagProvider methods
-    def get_taggable_realm(self):
-        return 'ticket'
+    realm = 'ticket'
 
+    def check_permission(self, perm, action):
+        map = {'view': 'TICKET_VIEW', 'modify': 'TICKET_CHGPROP'}
+        return super(TicketTagProvider, self).check_permission(perm, action) \
+            and map[action] in perm
+
+    # ITagProvider methods
     def get_tagged_resources(self, req, tags):
-        if 'TICKET_VIEW' not in req.perm:
+        if not self.check_permission(req.perm, 'view'):
             return
         db = self.env.get_db_cnx()
         fields = ["COALESCE(%s, '')" % f for f in self.fields]
@@ -79,15 +85,17 @@ class TicketTagProvider(Component):
             if (not tags or ticket_tags.intersection(tags)):
                 yield Resource('ticket', id), ticket_tags
 
-
     def get_resource_tags(self, req, resource):
-        if 'TICKET_VIEW' not in req.perm(resource):
+        assert resource.realm == self.realm
+        if not self.check_permission(req.perm, 'view'):
             return
         ticket = Ticket(self.env, resource.id)
         return self._ticket_tags(ticket)
 
     def set_resource_tags(self, req, resource, tags, comment=u''):
-        req.perm.require('TICKET_MODIFY', resource)
+        assert resource.realm == self.realm
+        if not self.check_permission(req.perm(resource), 'modify'):
+            raise PermissionError(resource=resource, env=self.env)
         split_into_tags = TagSystem(self.env).split_into_tags
         ticket = Ticket(self.env, resource.id)
         all = self._ticket_tags(ticket)
@@ -97,13 +105,15 @@ class TicketTagProvider(Component):
         ticket.save_changes(get_reporter_id(req), comment)
 
     def remove_resource_tags(self, req, resource, comment=u''):
-        req.perm.require('TICKET_MODIFY', resource)
+        assert resource.realm == self.realm
+        if not self.check_permission(req.perm(resource), 'modify'):
+            raise PermissionError(resource=resource, env=self.env)
         ticket = Ticket(self.env, resource.id)
         ticket['keywords'] = u''
         ticket.save_changes(get_reporter_id(req), comment)
 
     def describe_tagged_resource(self, req, resource):
-        if not 'TICKET_VIEW' in req.perm(resource):
+        if not self.check_permission(req.perm, 'view'):
             return ''
         ticket = Ticket(self.env, resource.id)
         if ticket.exists:
@@ -118,3 +128,4 @@ class TicketTagProvider(Component):
         split_into_tags = TagSystem(self.env).split_into_tags
         return split_into_tags(
             ' '.join(filter(None, [ticket[f] for f in self.fields])))
+

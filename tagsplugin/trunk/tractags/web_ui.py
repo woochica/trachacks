@@ -88,7 +88,8 @@ class TagRequestHandler(TagTemplateProvider):
             self.env, Context.from_request(req, Resource('tag'))
             )
 
-        realms = [p.get_taggable_realm() for p in self.tag_providers]
+        realms = [p.get_taggable_realm() for p in self.tag_providers
+                  if p.check_permission(req.perm, 'view')]
         if not 'q' in req.args or [r for r in realms if r in req.args] == []: 
             for realm in realms:
                 if not realm in self.exclude_realms:
