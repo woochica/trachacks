@@ -63,6 +63,7 @@ class WorkLogSetupParticipant(Component):
                 # We've succeeded so we actually have version 1
                 self.db_installed_version = 1
             except:
+                cursor.connection.rollback()
                 self.db_installed_version = 0
         # End Legacy support hack
 
@@ -132,6 +133,7 @@ class WorkLogSetupParticipant(Component):
             cursor.execute('SELECT MAX(version) FROM wiki WHERE name=%s', (user_manual_wiki_title,))
             maxversion = int(cursor.fetchone()[0])
         except:
+            cursor.connection.rollback()
             maxversion = 0
 
         return maxversion < user_manual_version
