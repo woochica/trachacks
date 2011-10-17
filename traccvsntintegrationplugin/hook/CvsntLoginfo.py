@@ -41,6 +41,28 @@ class CvsntLoginfo():
         self.datetime = 0.0
         self.lines = []
         self.argv = []
+        
+        db_connection = sqlite3.connect(self.config.call_db) 
+        db_cursor = db_connection.cursor() 
+        
+        strselect='SELECT id, datetime FROM LOGINFO_CALLS WHERE id=' + repr(callNo)
+        db_cursor.execute(strselect)    
+        loginfoCallsRow = db_cursor.fetchone()
+        self.datetime = loginfoCallsRow[1]
+        
+        strselect='SELECT loginfoID, _index, argv_index FROM LOGINFO_CALLS_ARGV WHERE loginfoID=' + repr(callNo)
+        db_cursor.execute(strselect)    
+        loginfoCallsRows = db_cursor.fetchall()        
+        for row in loginfoCallsRows:
+            self.argv.append(row[2])
+
+        strselect='SELECT loginfoID, _index, line_index FROM LOGINFO_CALLS_STDOUT WHERE loginfoID=' + repr(callNo)
+        db_cursor.execute(strselect)    
+        loginfoCallsRows = db_cursor.fetchall()        
+        for row in loginfoCallsRows:
+            self.lines.append(row[2])
+        
+        db_connection.close()
     
     
     def get_loginfo_from_argv(self):
