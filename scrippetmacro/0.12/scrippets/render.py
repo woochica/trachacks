@@ -49,6 +49,8 @@ class ScrippetRenderer(Component):
                     ptype = "parenthetical"
                 elif ptype == "Scene Heading":
                     ptype = "sceneheader"
+                elif ptype == "Shot":
+                    ptype = "shot"
                 elif ptype == "Transition":
                     ptype = "transition"
                 elif ptype == "Teaser/Act One":
@@ -68,7 +70,7 @@ class ScrippetRenderer(Component):
                     if fd_text.text != None:
                         if "FADE IN:" in fd_text.text.upper():
                             fd_text.text = fd_text.text.upper()
-                        if ptype in ["character","transition","sceneheader","header"]:
+                        if ptype in ["character","transition","sceneheader","header","shot"]:
                             fd_text.text = fd_text.text.upper()
                         #clean smart quotes
                         fd_text.text = fd_text.text.replace(u"\u201c", "\"").replace(u"\u201d", "\"") #strip double curly quotes

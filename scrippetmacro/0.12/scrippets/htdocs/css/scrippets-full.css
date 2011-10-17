@@ -30,11 +30,13 @@ div.scrippet-full {
 }
 
 .sceneheader-full,
+.shot-full,
 .action-full {
         padding-left: 1.7in !important;
 	padding-right: 1.1in !important;
 }
 
+.shot-full,
 .sceneheader-full {
 	padding-top: 3ex !important;
 }
