@@ -62,7 +62,6 @@ class ScrippetRenderer(Component):
                 else:
                     ptype = "action"
                 #UNHANDLED FOR THE MOMENT
-                #Shot
                 #Show/Ep. Title
                 ptext = []
                 for fd_text in fd_paragraph.findall("Text"):
