@@ -36,8 +36,8 @@ except:
 loginfo.get_loginfo_from_argv()
 loginfo.get_loginfo_from_stdin()
 
-# insert changeset into the database
-loginfo.db_insert_changeset()
+# insert changeset into the database (either insert new record or append to recent record with same commit log message)
+loginfo.db_insert_append_changeset()
         
 # now call trac (the cvsnt repository within trac will get the info from the record that we inserted above)
 loginfo.trac_insert_changeset()

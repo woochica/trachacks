@@ -233,15 +233,27 @@ class CvsntLoginfo():
         db_connection.close()
         
         
-    def db_insert_changeset(self):
+    def db_insert_append_changeset(self):        
+        self.newkey = -1
+        key = -1
+        
         db_connection = sqlite3.connect(self.config.changeset_db) 
         db_cursor = db_connection.cursor() 
         
-        strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + self.log_message + '\', \'' + self.path + '\', \'' + self.user + '\', \'' + repr(self.datetime) + '\')'
-        db_cursor.execute(strinsert)
-        self.newkey = db_cursor.lastrowid
+        strselect='SELECT id, description, datetime FROM CHANGESET WHERE datetime>=' + repr(self.datetime-300) + ' AND description=\'' + self.log_message + '\''
+        db_cursor.execute(strselect)    
+        changesetRow = db_cursor.fetchone()
+
+        if changesetRow is None:       
+            strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + self.log_message + '\', \'' + self.path + '\', \'' + self.user + '\', \'' + repr(self.datetime) + '\')'
+            db_cursor.execute(strinsert)
+            self.newkey = db_cursor.lastrowid
+            key = self.newkey
+        else:
+            key = changesetRow[0]
+        
         for i in range(0, self.nfiles):
-            strinsert = 'INSERT INTO CHANGESET_FILES VALUES(' + repr(self.newkey) + ', \'' + self.files[i] + '\', \'' + self.oldrevs[i] + '\', \'' + self.newrevs[i] + '\')'
+            strinsert = 'INSERT INTO CHANGESET_FILES VALUES(' + repr(key) + ', \'' + self.path + '/' + self.files[i] + '\', \'' + self.oldrevs[i] + '\', \'' + self.newrevs[i] + '\')'
             db_cursor.execute(strinsert)
 
         db_connection.commit()
@@ -249,5 +261,6 @@ class CvsntLoginfo():
         
         
     def trac_insert_changeset(self):
-        cmdtrac = self.config.tracpath + '/trac-admin' + ' ' + self.config.tracprojfolder + ' changeset added  ' + self.config.tracprojname + ' ' + repr(self.newkey)
-        os.system(cmdtrac) 
+        if self.newkey <> -1:
+            cmdtrac = self.config.tracpath + '/trac-admin' + ' ' + self.config.tracprojfolder + ' changeset added  ' + self.config.tracprojname + ' ' + repr(self.newkey)
+            os.system(cmdtrac) 
