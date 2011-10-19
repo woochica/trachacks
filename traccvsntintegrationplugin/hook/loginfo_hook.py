@@ -4,6 +4,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
+import os
 from CvsntLoginfo import CvsntLoginfo
 from ProjectConfig import ProjectConfig
 
@@ -13,9 +14,9 @@ loginfo = CvsntLoginfo(config)
 
 
 # create the databases
-createdb = True # set to false once the database file is created
-if createdb:
+if not os.path.exists(config.call_db):
     loginfo.db_check_create_calls()
+if not os.path.exists(config.changeset_db):
     loginfo.db_check_create_changeset()
         
 # retrieve raw info from the loginfo hook that is calling us 
