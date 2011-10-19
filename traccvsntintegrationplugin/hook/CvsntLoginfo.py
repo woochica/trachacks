@@ -80,15 +80,17 @@ class CvsntLoginfo():
             else:
                 _argv1split.append(_argv1split_tmp)
                 _argv1split_tmp = ''
-        self.nfiles = len(_argv1split)-1
+        self.nfiles = 0
         self.files = []
         self.newrevs = []
         self.oldrevs = []
-        for i in range(1, self.nfiles+1):
+        for i in range(1, len(_argv1split)):
             s = _argv1split[i].rsplit(',',2)
-            self.files.append(s[0]) 
-            self.newrevs.append(s[1])
-            self.oldrevs.append(s[2])
+            if len(s) == 3:
+                self.files.append(s[0]) 
+                self.newrevs.append(s[1])
+                self.oldrevs.append(s[2])
+                self.nfiles = self.nfiles + 1
 
 
     class ParseState:
@@ -185,7 +187,7 @@ class CvsntLoginfo():
 
         # changeset table        
         try:     
-            strcreate = 'CREATE TABLE CHANGESET (id INTEGER PRIMARY KEY, description TEXT, path TEXT, user TEXT, datetime FLOAT);'
+            strcreate = 'CREATE TABLE CHANGESET (id INTEGER PRIMARY KEY, description TEXT, user TEXT, datetime FLOAT);'
             db_cursor.execute(strcreate) 
         except sqlite3.OperationalError, msg:
             print msg            
@@ -235,29 +237,30 @@ class CvsntLoginfo():
         
     def db_insert_append_changeset(self):        
         self.newkey = -1
-        key = -1
-        
-        db_connection = sqlite3.connect(self.config.changeset_db) 
-        db_cursor = db_connection.cursor() 
-        
-        strselect='SELECT id, description, datetime FROM CHANGESET WHERE datetime>=' + repr(self.datetime-300) + ' AND description=\'' + self.log_message + '\''
-        db_cursor.execute(strselect)    
-        changesetRow = db_cursor.fetchone()
+        if self.nfiles > 0:
+            key = -1
+            
+            db_connection = sqlite3.connect(self.config.changeset_db) 
+            db_cursor = db_connection.cursor() 
+            
+            strselect='SELECT id, description, datetime FROM CHANGESET WHERE datetime>=' + repr(self.datetime-300) + ' AND description=\'' + self.log_message + '\''
+            db_cursor.execute(strselect)    
+            changesetRow = db_cursor.fetchone()
 
-        if changesetRow is None:       
-            strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + self.log_message + '\', \'' + self.path + '\', \'' + self.user + '\', \'' + repr(self.datetime) + '\')'
-            db_cursor.execute(strinsert)
-            self.newkey = db_cursor.lastrowid
-            key = self.newkey
-        else:
-            key = changesetRow[0]
-        
-        for i in range(0, self.nfiles):
-            strinsert = 'INSERT INTO CHANGESET_FILES VALUES(' + repr(key) + ', \'' + self.path + '/' + self.files[i] + '\', \'' + self.oldrevs[i] + '\', \'' + self.newrevs[i] + '\')'
-            db_cursor.execute(strinsert)
+            if changesetRow is None:       
+                strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + self.log_message + '\', \'' + self.user + '\', \'' + repr(self.datetime) + '\')'
+                db_cursor.execute(strinsert)
+                self.newkey = db_cursor.lastrowid
+                key = self.newkey
+            else:
+                key = changesetRow[0]
+            
+            for i in range(0, self.nfiles):
+                strinsert = 'INSERT INTO CHANGESET_FILES VALUES(' + repr(key) + ', \'' + self.path + '/' + self.files[i] + '\', \'' + self.oldrevs[i] + '\', \'' + self.newrevs[i] + '\')'
+                db_cursor.execute(strinsert)
 
-        db_connection.commit()
-        db_connection.close()
+            db_connection.commit()
+            db_connection.close()
         
         
     def trac_insert_changeset(self):
