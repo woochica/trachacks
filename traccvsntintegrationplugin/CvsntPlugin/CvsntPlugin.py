@@ -58,20 +58,21 @@ class CvsntRepository(Repository):
         self.log.debug('get_changeset ' + database_name)
         db_connection = sqlite3.connect(database_name) 
         db_cursor = db_connection.cursor() 
-        strselect='SELECT id, description, path, user, datetime FROM CHANGESET WHERE id=' + repr(rev)
+        strselect='SELECT id, description, user, datetime FROM CHANGESET WHERE id=' + repr(rev)
         db_cursor.execute(strselect)    
         changesetRow = db_cursor.fetchone() 
         strselect='SELECT changesetID, filename, oldrev, newrev FROM CHANGESET_FILES WHERE changesetID=' + repr(rev)
         db_cursor.execute(strselect)    
         changesetFilesRows = db_cursor.fetchall()
-
+        db_connection.close()
+        
         #desc = 'User: ' + changesetRow[3] + '\n'
         #desc += 'Folder: ' +  changesetRow[2] + '\n'
         #for changesetFilesRow in changesetFilesRows:
         #    desc += changesetFilesRow[1] + ' ' + changesetFilesRow[2] + ' -> ' + changesetFilesRow[3] + '\n'
         #desc += 'Log message:\n' + changesetRow[1]  
         desc = changesetRow[1]  
-        return CvsntChangeset(self, rev, desc, changesetRow[3], changesetRow[4], self.log)
+        return CvsntChangeset(self, rev, desc, changesetRow[2], changesetRow[3], self.log)
 
 
     def get_oldest_rev(self):
@@ -81,6 +82,7 @@ class CvsntRepository(Repository):
         strselect = 'select min(id) from CHANGESET'
         db_cursor.execute(strselect)            
         row = db_cursor.fetchone()
+        db_connection.close()
         if len(row) == 1:
             return row[0]
         return None
@@ -92,6 +94,7 @@ class CvsntRepository(Repository):
         strselect = 'select max(id) from CHANGESET'
         db_cursor.execute(strselect)            
         row = db_cursor.fetchone()
+        db_connection.close()
         if len(row) == 1:
             return row[0]
         return None
@@ -106,6 +109,7 @@ class CvsntRepository(Repository):
         strselect = 'select min(id) from CHANGESET WHERE id > ' + repr(rev)
         db_cursor.execute(strselect)            
         row = db_cursor.fetchone()
+        db_connection.close()
         if len(row) == 1:
             self.log.debug('previous_rev return ' + repr(row[0]))
             return row[0]
@@ -219,7 +223,6 @@ class CvsntNode(Node):
         return self
         
     def read(self):
-        print('rrrrrrrrreeeeeeaaaaaddddddddd')
         result = '0'
         database_name = os.path.normpath(self.repos.path + '/' + self.repos.changeset_db_path)
         db_connection = sqlite3.connect(database_name) 
@@ -232,6 +235,5 @@ class CvsntNode(Node):
         db_cursor.execute(strselect)    
         changesetFileRows = db_cursor.fetchone()
         if len(changesetFileRows) == 1:
-            result = changesetFileRows[0]
-        print(result)
+            result = 'see cvsnt file revision ' + changesetFileRows[0]
         return result
