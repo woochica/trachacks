@@ -33,30 +33,26 @@ class CvsntRepositoryConnector(Component):
         yield ("cvsnt", 8)
 
     def get_repository(self, type, dir, params):
-        repos = CvsntRepository(dir, params, self.log)
+        repos = CvsntRepository(dir, params, self.env, self.log)
         repos.version_info = self._version_info
         return repos
 
 
 
 class CvsntRepository(Repository):
-
-    #no time to debug why this SH*T won't work ...  changeset_db_path = PathOption('cvsnt', 'changeset_db_path', doc='Path to changeset database created by the hook script')
-    changeset_db_path = '/CVSROOT/changesets.db'
-
-    def __init__(self, path, params, log):
+    def __init__(self, path, params, env, log):
         self.path = path
+        self.env = env
+        if not os.path.exists (self.env.path + '/cvsntplugin'):
+            os.mkdir(self.env.path + '/cvsntplugin')
+        self.database_name = self.env.path + '/cvsntplugin/changesets.db'
         Repository.__init__(self, path, params, log)
 
     def get_changeset(self, rev):
         rev = self.normalize_rev(rev)
         self.log.debug('get_changeset ' + repr(rev))
 
-        self.log.debug('get_changeset ' + self.path)
-        self.log.debug('get_changeset ' + self.changeset_db_path)
-        database_name = os.path.normpath(self.path + '/' + self.changeset_db_path)
-        self.log.debug('get_changeset ' + database_name)
-        db_connection = sqlite3.connect(database_name) 
+        db_connection = sqlite3.connect(self.database_name) 
         db_cursor = db_connection.cursor() 
         strselect='SELECT id, description, user, datetime FROM CHANGESET WHERE id=' + repr(rev)
         db_cursor.execute(strselect)    
@@ -76,8 +72,7 @@ class CvsntRepository(Repository):
 
 
     def get_oldest_rev(self):
-        database_name = "c:/jeroen_cvs/CVSROOT/changesets.db"
-        db_connection = sqlite3.connect(database_name) 
+        db_connection = sqlite3.connect(self.database_name) 
         db_cursor = db_connection.cursor() 
         strselect = 'select min(id) from CHANGESET'
         db_cursor.execute(strselect)            
@@ -88,8 +83,8 @@ class CvsntRepository(Repository):
         return None
         
     def get_youngest_rev(self):
-        database_name = "c:/jeroen_cvs/CVSROOT/changesets.db"
-        db_connection = sqlite3.connect(database_name) 
+        self.log.debug('get_youngest_rev  ' + self.database_name)
+        db_connection = sqlite3.connect(self.database_name) 
         db_cursor = db_connection.cursor() 
         strselect = 'select max(id) from CHANGESET'
         db_cursor.execute(strselect)            
@@ -103,8 +98,7 @@ class CvsntRepository(Repository):
         rev = self.normalize_rev(rev)
         self.log.debug('previous_rev ' + repr(rev))
 
-        database_name = "c:/jeroen_cvs/CVSROOT/changesets.db"
-        db_connection = sqlite3.connect(database_name) 
+        db_connection = sqlite3.connect(self.database_name) 
         db_cursor = db_connection.cursor() 
         strselect = 'select min(id) from CHANGESET WHERE id > ' + repr(rev)
         db_cursor.execute(strselect)            
@@ -120,8 +114,7 @@ class CvsntRepository(Repository):
         rev = self.normalize_rev(rev)
         self.log.debug('previous_rev ' + repr(rev))
 
-        database_name = "c:/jeroen_cvs/CVSROOT/changesets.db"
-        db_connection = sqlite3.connect(database_name) 
+        db_connection = sqlite3.connect(self.database_name) 
         db_cursor = db_connection.cursor() 
         strselect = 'select max(id) from CHANGESET WHERE id < ' + repr(rev)
         db_cursor.execute(strselect)            
@@ -171,8 +164,7 @@ class CvsntChangeset(Changeset):
 
     def get_changes(self):
         changes = []
-        database_name = os.path.normpath(self.repos.path + '/' + self.repos.changeset_db_path)
-        db_connection = sqlite3.connect(database_name) 
+        db_connection = sqlite3.connect(self.repos.database_name) 
         db_cursor = db_connection.cursor() 
         strselect='SELECT changesetID, filename, oldrev, newrev FROM CHANGESET_FILES WHERE changesetID=' + repr(self.rev)
         self.log.debug('get_changes ' + strselect)
@@ -224,8 +216,7 @@ class CvsntNode(Node):
         
     def read(self):
         result = '0'
-        database_name = os.path.normpath(self.repos.path + '/' + self.repos.changeset_db_path)
-        db_connection = sqlite3.connect(database_name) 
+        db_connection = sqlite3.connect(self.repos.database_name) 
         db_cursor = db_connection.cursor() 
         if self.rev is None:
             strselect='SELECT min(oldrev) FROM CHANGESET_FILES WHERE filename =\'' + self.path + '\''
