@@ -105,7 +105,7 @@ class CvsntLoginfo():
             strUpdateOfRepos = 'Update of ' + self.config.repos + '/';
 
             if state == self.ParseState.GET_PATH and nextline.find(strUpdateOfRepos) == 0:
-                self.path = nextline.lstrip(strUpdateOfRepos)
+                self.path = nextline[len(strUpdateOfRepos):]
                 state = self.ParseState.SKIP_DIRECTORY
             elif state == self.ParseState.SKIP_DIRECTORY and nextline.find('Modified Files:') == 0:
                 state = self.ParseState.SKIP_FILES
