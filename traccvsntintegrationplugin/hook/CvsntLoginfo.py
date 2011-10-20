@@ -265,5 +265,5 @@ class CvsntLoginfo():
         
     def trac_insert_changeset(self):
         if self.newkey <> -1:
-            cmdtrac = self.config.tracpath + '/trac-admin' + ' ' + self.config.tracprojfolder + ' changeset added  ' + self.config.tracprojname + ' ' + repr(self.newkey)
+            cmdtrac = self.config.tracpath + '/trac-admin' + ' ' + self.config.tracprojfolder + ' changeset added  ' + self.config.tracreponame + ' ' + repr(self.newkey)
             os.system(cmdtrac) 

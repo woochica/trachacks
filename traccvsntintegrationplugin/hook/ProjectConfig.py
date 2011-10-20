@@ -18,4 +18,4 @@ class ProjectConfig():
         self.changeset_db   = 'c:/jeroen_cvs/CVSROOT/changesets.db'          # path to new database file
         self.tracpath       = 'c:/temp/trac/scripts'                         # path where trac was installed
         self.tracprojfolder = 'c:/temp/trac/test'                            # trac project folder
-        self.tracprojname   = 'test'                                         # trac project name
+        self.tracreponame   = 'test'                                         # name of the repository within the trac project
