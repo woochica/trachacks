@@ -59,7 +59,7 @@ class TracJSGanttSupport(Component):
     Option('trac-jsgantt', 'fields.succ', None,
            """Ticket field to use as the data source for successor list""")
     Option('trac-jsgantt', 'fields.parent', None,
-           """Tield field to use as the data source for the parent""")
+           """Ticket field to use as the data source for the parent""")
     Option('trac-jsgantt', 'parent_format', '%s',
            """Format of ticket IDs in parent field""")
     Option('trac-jsgantt', 'milestone_type', 'milestone', 
