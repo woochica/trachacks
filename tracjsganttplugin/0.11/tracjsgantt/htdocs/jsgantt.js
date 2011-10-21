@@ -1726,8 +1726,8 @@ JSGantt.isIE = function () {
 * and identfy task level.
 *
 * @method processRows
-* @param pList {Array} - Array of TaskItem Objects
-* @param pID {Number} - task ID
+* @param pList {Array} - Array of all TaskItem Objects in the chart
+* @param pID {Number} - task ID of the parent to process
 * @param pRow {Number} - Row in chart
 * @param pLevel {Number} - Current tree level
 * @param pOpen {Boolean}
