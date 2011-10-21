@@ -40,8 +40,8 @@ class TracJSGanttSupport(Component):
               complete column.""")
     Option('trac-jsgantt', 'fields.estimate', None, 
            """Ticket field to use as the data source for estimated work""")
-    Option('trac-jsgantt', 'days_per_estimate', '0.125', 
-           """Days represented by each unit of estimated work""")
+    Option('trac-jsgantt', 'hours_per_estimate', '1', 
+           """Hours represented by each unit of estimated work""")
     Option('trac-jsgantt', 'hours_per_day', '8.0', 
            """Hours worked per day""")
     Option('trac-jsgantt', 'default_estimate', '4.0', 
@@ -206,15 +206,13 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # Tickets of this type will be displayed as milestones.
         self.milestoneType = self.config.get('trac-jsgantt', 'milestone_type')
 
-        # Days per estimate unit.  
+        # Hours per estimate unit.  
         #
-        # If estimate is in hours, and a day is 8 hours, this would be
-        # 1/8 or 0.125.  If you assume only 6 productive hours per day
-        # this is 1/6 or 0.1666.
-        # 
-        # float('1/6') is an error so the value must be a number, not
-        # an equation.
-        self.dpe = float(self.config.get('trac-jsgantt', 'days_per_estimate'))
+        # If estimate is in hours, this is 1.
+        #
+        # If estimate is in days, this is may be 8 or 24, depending on
+        # your needs and the setting of hoursPerDay
+        self.hpe = float(self.config.get('trac-jsgantt', 'hours_per_estimate'))
 
         # Default work in an unestimated task
         self.dftEst = float(self.config.get('trac-jsgantt', 
@@ -512,8 +510,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         else:
             est = self.dftEst
 
-        # Scale by days per estimate and hours per day
-        hours = (est * self.dpe) * self.hpd
+        # Scale by hours per estimate
+        hours = est * self.hpe
 
         return hours
 
@@ -907,7 +905,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 # Try to compute the percent complete, default to 0
                 try:
                     worked = float(ticket[self.fields['worked']])
-                    estimate = (self._workHours(ticket) / self.hpd) / self.dpe
+                    estimate = (self._workHours(ticket) / self.hpd) / self.hpe
                     percent = int(100 * worked / estimate)
                 except:
                     # Don't bother logging because 0 for an estimate is common.
