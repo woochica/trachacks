@@ -23,7 +23,7 @@ from trac.wiki.api import parse_args
 #
 # The naive scheduling algorithm in the plugin assumes all resources
 # work the same number of hours per day.  That limit can be configured
-# (hours_per_day) but defaults to 8.0.  While is is likely that these
+# (hoursPerDay) but defaults to 8.0.  While is is likely that these
 # hours are something like 8am to 4pm (or 8am to 5pm, minus an hour
 # lunch), daily scheduling isn't concerned with which hours are
 # worked, only how many are worked each day.  To simplify range
@@ -42,8 +42,6 @@ class TracJSGanttSupport(Component):
            """Ticket field to use as the data source for estimated work""")
     Option('trac-jsgantt', 'hours_per_estimate', '1', 
            """Hours represented by each unit of estimated work""")
-    Option('trac-jsgantt', 'hours_per_day', '8.0', 
-           """Hours worked per day""")
     Option('trac-jsgantt', 'default_estimate', '4.0', 
            """Default work for an unestimated task, same units as estimate""")
     Option('trac-jsgantt', 'estimate_pad', '0.0', 
@@ -107,6 +105,9 @@ class TracJSGanttSupport(Component):
               """Omit milestones""")
     Option('trac-jsgantt', 'option.schedule', 'alap',
            """Schedule algorithm: alap or asap""")
+    # This seems to be the first floating point option.
+    Option('trac-jsgantt', 'option.hoursPerDay', '8.0',
+                """Hours worked per day""")
      
 
     # ITemplateProvider methods
@@ -166,7 +167,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                    'caption', 'startDate', 'endDate', 'dateDisplay', 
                    'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
                    'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
-                   'schedule')
+                   'schedule', 'hoursPerDay')
 
         self.options = {}
         for opt in options:
@@ -221,9 +222,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # How much to pad an estimate when a task has run over
         self.estPad = float(self.config.get('trac-jsgantt', 
                                             'estimate_pad'))
-
-        # Hours (worked) per day
-        self.hpd = float(self.config.get('trac-jsgantt', 'hours_per_day'))
 
         # User map (login -> realname) is loaded on demand, once.
         # Initialization to None means it is not yet initialized.
@@ -398,7 +396,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         return tickets
 
     # Process the tickets to make displaying easy.
-    def _process_tickets(self):
+    def _process_tickets(self, options):
         # ChildTicketsPlugin puts '#' at the start of the parent
         # field.  Strip it for simplicity.
         for t in self.tickets:
@@ -482,7 +480,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 wbs = _setLevel(t['id'], wbs, 1)
 
     # Return hours of work in ticket as a floating point number
-    def _workHours(self, ticket):
+    def _workHours(self, options, ticket):
         if self.fields['estimate']:
             est = float(ticket[self.fields['estimate']])
         else:
@@ -527,8 +525,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             # Normalize hours into days and weeks.
             # Note: hours, days, and weeks all have the same sign
             # Figure out days from hours
-            days = int(hours / self.hpd)
-            hours -= (days * self.hpd)
+            days = int(hours / options['hoursPerDay'])
+            hours -= (days * options['hoursPerDay'])
             # Figure out weeks from days
             weeks = int(days / 7.0)
             days -= (weeks * 7)
@@ -539,17 +537,18 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             # hours from days to hours
             endOfDay = fromDate.replace(hour=0, minute=0)
             if fromDate == endOfDay or \
-                    fromDate == endOfDay + timedelta(hours=self.hpd):
+                    fromDate == endOfDay + \
+                    timedelta(hours=options['hoursPerDay']):
                 days -= 1 * sign
-                hours += self.hpd * sign
+                hours += options['hoursPerDay'] * sign
                 
             # If the new time is outside business hours, skip
             # non-business hours
             toDate = fromDate + timedelta(weeks=weeks, days=days, hours=hours)
             endOfDay = toDate.replace(hour=0, minute=0) + \
-                timedelta(hours=self.hpd)
+                timedelta(hours=options['hoursPerDay'])
             if toDate > endOfDay:
-                hours += (24-self.hpd) * sign
+                hours += (24-options['hoursPerDay']) * sign
 
             # If the new time is on the weekend, skip the weekend
             toDate = fromDate + timedelta(weeks=weeks, days=days, hours=hours)
@@ -610,7 +609,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     finish = datetime(*time.strptime(t[self.fields['finish']], 
                                                      self.dbDateFormat)[0:7])
                     finish = finish.replace(hour=0, minute=0) + \
-                        timedelta(hours=self.hpd)
+                        timedelta(hours=options['hoursPerDay'])
                 # Otherwise, compute finish from dependencies.
                 else:
                     finish = _earliest_successor(t, _ancestor_finish(t))
@@ -620,7 +619,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     if finish == None:
                         finish = datetime.today().replace(hour=0, 
                                                           minute=0) + \
-                            timedelta(hours=self.hpd)
+                            timedelta(hours=options['hoursPerDay'])
                         # If today is on a weekend, move back to Friday
                         if finish.weekday() > 4:
                             finish += timedelta(days=7-start.weekday())
@@ -630,13 +629,13 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     elif finish == finish.replace(hour=0, minute=0):            
                         # Tuesday-Friday, back up to end of previous day
                         if finish.weekday() > 0:
-                            finish -= timedelta(hours=24-self.hpd)
+                            finish -= timedelta(hours=24-options['hoursPerDay'])
                         # Monday, skip the weekend, too.
                         else:
-                            finish -= timedelta(hours=(24-self.hpd)+48)
+                            finish -= timedelta(hours=(24-options['hoursPerDay'])+48)
 
                 # start is finish minus duration
-                hours = self._workHours(t)
+                hours = self._workHours(options, t)
                 start = finish + _calendarOffset(-1*hours, finish)
 
                 # Set the fields
@@ -708,17 +707,17 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     # day, our start is really the beginning of the next
                     # work day
                     elif start == start.replace(hour=0, minute=0) + \
-                            timedelta(hours=self.hpd):
+                            timedelta(hours=options['hoursPerDay']):
                         # Monday-Thursday, move ahead to beginning of
                         # previous day
                         if start.weekday() < 4:
-                            start += timedelta(hours=24-self.hpd)
+                            start += timedelta(hours=24-options['hoursPerDay'])
                         # Friday, skip the weekend, too.
                         else:
-                            start += timedelta(hours=(24-self.hpd)+48)
+                            start += timedelta(hours=(24-options['hoursPerDay'])+48)
 
                 # finish is start plus duration
-                hours = self._workHours(t)
+                hours = self._workHours(options, t)
                 finish = start + _calendarOffset(+1*hours, start)
 
                 # Set the fields
@@ -778,7 +777,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 milestoneTicket['level'] = 0
                 
                 # If there's no due date, default to today at close of business
-                ts = row[1] or (datetime.now(utc) + timedelta(hours=self.hpd))
+                ts = row[1] or \
+                    (datetime.now(utc) + 
+                     timedelta(hours=options['hoursPerDay']))
                 milestoneTicket[self.fields['finish']] = \
                     format_date(ts, self.dbDateFormat)
 
@@ -905,7 +906,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 # Try to compute the percent complete, default to 0
                 try:
                     worked = float(ticket[self.fields['worked']])
-                    estimate = (self._workHours(ticket) / self.hpd) / self.hpe
+                    estimate = (self._workHours(options, ticket) / \
+                                options['hoursPerDay']) /  \
+                                self.hpe
                     percent = int(100 * worked / estimate)
                 except:
                     # Don't bother logging because 0 for an estimate is common.
@@ -1054,7 +1057,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
             # Post process the query to add and compute fields so
             # displaying the tickets is easy
-            self._process_tickets()
+            self._process_tickets(options)
 
             # Add the milestone(s) with all their tickets depending on them.
             self._add_milestones(options)
@@ -1082,10 +1085,14 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         for opt in self.options.keys():
             if opt in options:
+                # FIXME - test for success, log on failure
                 if isinstance(self.options[opt], (int, long)):
                     options[opt] = int(options[opt])
             else:
                 options[opt] = self.options[opt]
+
+        # FIXME - test for success, log on failure
+        options['hoursPerDay'] = float(options['hoursPerDay'])
 
         return options
  
