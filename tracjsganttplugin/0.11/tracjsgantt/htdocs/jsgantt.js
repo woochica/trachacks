@@ -346,7 +346,7 @@ this.getName     = function(){ return htmlspecialchars(vName) };
 /**
 * Returns task completion percent as numeric value
 * @method getCompVal
-* @return {Boolean}
+* @return {Number}
 */    this.getCompVal  = function(){ if(vComp) return vComp; else return 0; };
 
 /**
@@ -776,27 +776,27 @@ Complete-Displays task percent complete</p>
 /**
 * Returns whether resource column is shown
 * @method getShowRes
-* @return {Number}
+* @return {Boolean}
 */  this.getShowRes  = function(){ return vShowRes };
 /**
 * Returns whether duration column is shown
 * @method getShowDur
-* @return {Number}
+* @return {Boolean}
 */  this.getShowDur  = function(){ return vShowDur };
 /**
 * Returns whether percent complete column is shown
 * @method getShowComp
-* @return {Number}
+* @return {Boolean}
 */  this.getShowComp = function(){ return vShowComp };
 /**
 * Returns whether start date column is shown
 * @method getShowStartDate
-* @return {Number}
+* @return {Boolean}
 */  this.getShowStartDate = function(){ return vShowStartDate };
 /**
 * Returns whether end date column is shown
 * @method getShowEndDate
-* @return {Number}
+* @return {Boolean}
 */  this.getShowEndDate = function(){ return vShowEndDate };
 /**
 * Returns date input format 
