@@ -1,11 +1,11 @@
 import re
 import time
-import datetime
 from datetime import timedelta, datetime
 from operator import itemgetter, attrgetter
 
 from trac.util.datefmt import format_date, utc
 from trac.util.html import Markup
+from trac.util.text import javascript_quote
 from trac.wiki.macros import WikiMacroBase
 from trac.web.chrome import Chrome
 import copy
@@ -229,7 +229,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         text = ''
         text += '<div style="position:relative" class="gantt" id="GanttChartDIV"></div>\n'
         text += '<script language="javascript">\n'
-        text += 'var g = new JSGantt.GanttChart("g",document.getElementById("GanttChartDIV"), "%s", "%d");\n' % (format, showdep)
+        text += 'var g = new JSGantt.GanttChart("g",document.getElementById("GanttChartDIV"), "%s", "%d");\n' % \
+                (javascript_quote(format), showdep)
         text += 'var t;\n'
         text += 'window.addEventListener("resize", function () { g.Draw();\n }, false);'
         return text
@@ -252,16 +253,17 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             opt += 'g.setLeftWidth(%s);\n' % w
             
 
-        opt += 'g.setCaptionType("%s");\n' % options['caption']
+        opt += 'g.setCaptionType("%s");\n' % javascript_quote(options['caption'])
 
         opt += 'g.setShowStartDate(%s);\n' % options['startDate']
         opt += 'g.setShowEndDate(%s);\n' % options['endDate']
 
-        opt += 'g.setDateInputFormat("%s");\n' % self.jsDateFormat
+        opt += 'g.setDateInputFormat("%s");\n' % javascript_quote(self.jsDateFormat)
 
-        opt += 'g.setDateDisplayFormat("%s");\n' % options['dateDisplay']
+        opt += 'g.setDateDisplayFormat("%s");\n' % javascript_quote(options['dateDisplay'])
 
-        opt += 'g.setFormatArr("%s");\n' % options['formats'].split('|')
+        opt += 'g.setFormatArr([%s]);\n' % ','.join(
+                    '"%s"' % javascript_quote(f) for f in options['formats'].split('|'))
         opt += 'g.setPopupFeatures("location=1,scrollbars=1");\n'
         return opt
 
@@ -915,41 +917,32 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
             return percent
 
-        def _safeStr(str):
-            # Escape escapes
-            str = str.replace('\\','\\\\')
-            # No new lines
-            str = str.replace('\r\n','\\n')
-            # Quoted quotes
-            str = str.replace("'","\\'")
-            str = str.replace('"','\\"')
-            return str
-
         task = ''
 
         # pID, pName
         if ticket['type'] == self.milestoneType:
             if ticket['id'] < self.firstMilestoneID:
                 # Put ID number on inchpebbles
-                name = 'MS:%s (#%s)' % (ticket['summary'], ticket['id'])
+                name = 'MS:%s (#%s)' % (javascript_quote(ticket['summary']), ticket['id'])
             else:
                 # Don't show bogus ID of milestone pseudo tickets.
                 name = 'MS:%s' % ticket['summary']
         else:
             name = "#%d:%s (%s %s)" % \
-                (ticket['id'], ticket['summary'], 
-                 ticket['status'], ticket['type'])
-        task += 't = new JSGantt.TaskItem(%d,"%s",' % (ticket['id'], _safeStr(name))
+                   (ticket['id'], javascript_quote(ticket['summary']),
+                    javascript_quote(ticket['status']),
+                    javascript_quote(ticket['type']))
+        task += 't = new JSGantt.TaskItem(%d,"%s",' % (ticket['id'], javascript_quote(name))
 
         # pStart, pEnd
         task += '"%s",' % ticket['calc_start'].strftime(self.pyDateFormat)
         task += '"%s",' % ticket['calc_finish'].strftime(self.pyDateFormat)
 
         # pDisplay
-        task += '"%s",' % self._task_display(ticket, options)
+        task += '"%s",' % javascript_quote(self._task_display(ticket, options))
 
         # pLink
-        task += '"%s",' % ticket['link']
+        task += '"%s",' % javascript_quote(ticket['link'])
 
         # pMile
         if ticket['type'] == self.milestoneType:
@@ -958,7 +951,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             task += '0,'
 
         # pRes (owner)
-        task += '"%s",' % _owner(ticket)
+        task += '"%s",' % javascript_quote(_owner(ticket))
 
         # pComp (percent complete); integer 0..100
         task += '%d,' % _percent(ticket)
@@ -983,7 +976,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             task += '%s,' % 0
         # If there's a parent, and the ticket is not a root, link to parent
         else:
-            task += '%s,' % ticket[self.fields['parent']]
+            task += '%s,' % javascript_quote(ticket[self.fields['parent']])
 
         # open
         if ticket['level'] < options['openLevel'] and \
@@ -996,9 +989,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         # predecessors
         if self.fields['pred']:
-            task += '"%s",' % ','.join(ticket[self.fields['pred']])
+            task += '"%s",' % javascript_quote(','.join(ticket[self.fields['pred']]))
         else:
-            task += '"%s",' % ','.join('')
+            task += '"%s",' % javascript_quote(','.join(''))
         
         # caption 
         # FIXME - this only shows up if caption is set to caption.
@@ -1006,7 +999,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # FIXME - if caption isn't set to caption, use "" because the
         # description could be quite long and take a long time to make
         # safe and display.
-        task += '"%s (%s %s)"' % (_safeStr(ticket['description']), ticket['status'], ticket['type'])
+        task += '"%s (%s %s)"' % (javascript_quote(ticket['description']),
+                                  javascript_quote(ticket['status']),
+                                  javascript_quote(ticket['type']))
 
         task += ');\n'
         task += 'g.AddTaskItem(t);\n'
