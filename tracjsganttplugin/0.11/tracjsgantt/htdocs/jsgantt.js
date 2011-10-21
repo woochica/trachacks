@@ -1722,7 +1722,8 @@ JSGantt.isIE = function () {
 };
 	
 /**
-* Recursively process task tree ... set min, max dates of parent tasks and identfy task level.
+* Recursively process task tree ... set min, max dates of parent tasks
+* and identfy task level.
 *
 * @method processRows
 * @param pList {Array} - Array of TaskItem Objects
@@ -1735,54 +1736,53 @@ JSGantt.isIE = function () {
 JSGantt.processRows = function(pList, pID, pRow, pLevel, pOpen)
 {
 
-   var vMinDate = new Date();
-   var vMaxDate = new Date();
-   var vMinSet  = 0;
-   var vMaxSet  = 0;
-   var vList    = pList;
-   var vLevel   = pLevel;
-   var i        = 0;
-   var vNumKid  = 0;
-   var vCompSum = 0;
-   var vVisible = pOpen;
+    var vMinDate = new Date();
+    var vMaxDate = new Date();
+    var vMinSet  = 0;
+    var vMaxSet  = 0;
+    var vList    = pList;
+    var vLevel   = pLevel;
+    var i        = 0;
+    var vNumKid  = 0;
+    var vCompSum = 0;
+    var vVisible = pOpen;
    
-   for(i = 0; i < pList.length; i++)
-   {
-      if(pList[i].getParent() == pID) {
-		 vVisible = pOpen;
-         pList[i].setVisible(vVisible);
-         if(vVisible==1 && pList[i].getOpen() == 0) 
-           {vVisible = 0;}
+    for (i = 0; i < pList.length; i++) {
+        if (pList[i].getParent() == pID) {
+            vVisible = pOpen;
+            pList[i].setVisible(vVisible);
+            if (vVisible == 1 && pList[i].getOpen() == 0) {
+                vVisible = 0;
+            }
             
-         pList[i].setLevel(vLevel);
-         vNumKid++;
+            pList[i].setLevel(vLevel);
+            vNumKid++;
 
-         if(pList[i].getGroup() == 1) {
-            JSGantt.processRows(vList, pList[i].getID(), i, vLevel+1, vVisible);
-         };
+            if (pList[i].getGroup() == 1) {
+                JSGantt.processRows(vList, pList[i].getID(), i, 
+                                    vLevel+1, vVisible);
+            }
 
-         if( vMinSet==0 || pList[i].getStart() < vMinDate) {
-            vMinDate = pList[i].getStart();
-            vMinSet = 1;
-         };
+            if (vMinSet == 0 || pList[i].getStart() < vMinDate) {
+                vMinDate = pList[i].getStart();
+                vMinSet = 1;
+            }
 
-         if( vMaxSet==0 || pList[i].getEnd() > vMaxDate) {
-            vMaxDate = pList[i].getEnd();
-            vMaxSet = 1;
-         };
+            if (vMaxSet == 0 || pList[i].getEnd() > vMaxDate) {
+                vMaxDate = pList[i].getEnd();
+                vMaxSet = 1;
+            }
 
-         vCompSum += pList[i].getCompVal();
+            vCompSum += pList[i].getCompVal();
+        }
+    }
 
-      }
-   }
-
-   if(pRow >= 0) {
-      pList[pRow].setStart(vMinDate);
-      pList[pRow].setEnd(vMaxDate);
-      pList[pRow].setNumKid(vNumKid);
-      pList[pRow].setCompVal(Math.ceil(vCompSum/vNumKid));
-   }
-
+    if (pRow >= 0) {
+        pList[pRow].setStart(vMinDate);
+        pList[pRow].setEnd(vMaxDate);
+        pList[pRow].setNumKid(vNumKid);
+        pList[pRow].setCompVal(Math.ceil(vCompSum/vNumKid));
+    }
 };
 
 /**
