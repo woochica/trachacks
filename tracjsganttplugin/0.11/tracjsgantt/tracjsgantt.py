@@ -175,23 +175,13 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                                                 'option.%s' % opt)
 
         # Configuration fields
+        fields = ('percent', 'estimate', 'worked', 'start', 'finish',
+                  'pred', 'succ', 'parent')
+
         self.fields = {}
-        self.fields['percent'] = \
-            self.config.get('trac-jsgantt','fields.percent')
-        self.fields['estimate'] = \
-            self.config.get('trac-jsgantt','fields.estimate')
-        self.fields['worked'] = \
-            self.config.get('trac-jsgantt','fields.worked')
-        self.fields['start'] = \
-            self.config.get('trac-jsgantt','fields.start')
-        self.fields['finish'] = \
-            self.config.get('trac-jsgantt','fields.finish')
-        self.fields['pred'] = \
-            self.config.get('trac-jsgantt','fields.pred')
-        self.fields['succ'] = \
-            self.config.get('trac-jsgantt','fields.succ')
-        self.fields['parent'] = \
-            self.config.get('trac-jsgantt','fields.parent')
+        for field in fields:
+            self.fields[field] = self.config.get('trac-jsgantt',
+                                                 'fields.%s' % field)
 
         # This is the format of start and finish in the Trac database
         self.dbDateFormat = str(self.config.get('trac-jsgantt', 'date_format'))
