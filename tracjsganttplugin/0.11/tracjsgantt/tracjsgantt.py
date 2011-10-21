@@ -896,9 +896,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 # Try to compute the percent complete, default to 0
                 try:
                     worked = float(ticket[self.fields['worked']])
-                    estimate = (self._workHours(options, ticket) / \
-                                options['hoursPerDay']) /  \
-                                self.hpe
+                    estimate = self._workHours(options, ticket) / self.hpe
                     percent = int(100 * worked / estimate)
                 except:
                     # Don't bother logging because 0 for an estimate is common.
