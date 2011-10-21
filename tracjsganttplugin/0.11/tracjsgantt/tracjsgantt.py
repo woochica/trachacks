@@ -964,7 +964,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         
         # pParent (parent task ID) 
         # If there's no parent field configured, don't link to parents
-        if not self.fields['parent']:
+        if not self.fields['parent'] or not ticket[self.fields['parent']]:
             task += '%s,' % 0
         # If there's a parent field, but the ticket is in root, don't
         # link to parent
