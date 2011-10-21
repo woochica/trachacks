@@ -344,6 +344,18 @@ this.getName     = function(){ return htmlspecialchars(vName) };
 */    this.getResource = function(){ if(vRes) return vRes; else return '&nbsp';  };
 
 /**
+* Returns task estimate as a numeric value
+* @method getEstVal
+* @return {Number}
+*/    this.getEstVal  = function(){ if(vEst != null) return vEst; else return 100; };
+
+/**
+* Returns task work as numeric value
+* @method getWorkVal
+* @return {Number}
+*/    this.getWorkVal  = function(){ if(vAct != null) return vAct; else return vComp; };
+
+/**
 * Returns task completion percent as numeric value
 * @method getCompVal
 * @return {Number}
@@ -501,6 +513,22 @@ this.getName     = function(){ return htmlspecialchars(vName) };
 * @return {void}
 */    this.setNumKid   = function(pNumKid){ vNumKid = pNumKid;};
 
+/**
+* Set task work
+* @method setWorkVal
+* @param pWorkVal {Number} 
+* @return {void}
+*/    this.setWorkVal  = function(pWorkVal){ 
+    vAct = pWorkVal;
+};
+/**
+* Set task estimate
+* @method setEstVal
+* @param pEstVal {Number} 
+* @return {void}
+*/    this.setEstVal  = function(pEstVal){ 
+    vEst = pEstVal;
+};
 /**
 * Set task completion percentage
 * @method setCompVal
@@ -1744,7 +1772,8 @@ JSGantt.processRows = function(pList, pID, pRow, pLevel, pOpen)
     var vLevel   = pLevel;
     var i        = 0;
     var vNumKid  = 0;
-    var vCompSum = 0;
+    var vEstSum = 0;
+    var vWorkSum = 0;
     var vVisible = pOpen;
    
     for (i = 0; i < pList.length; i++) {
@@ -1773,7 +1802,8 @@ JSGantt.processRows = function(pList, pID, pRow, pLevel, pOpen)
                 vMaxSet = 1;
             }
 
-            vCompSum += pList[i].getCompVal();
+            vWorkSum += pList[i].getWorkVal();
+            vEstSum += pList[i].getEstVal();
         }
     }
 
@@ -1781,7 +1811,16 @@ JSGantt.processRows = function(pList, pID, pRow, pLevel, pOpen)
         pList[pRow].setStart(vMinDate);
         pList[pRow].setEnd(vMaxDate);
         pList[pRow].setNumKid(vNumKid);
-        pList[pRow].setCompVal(Math.ceil(vCompSum/vNumKid));
+        if (pList[pRow].getGroup() == 1) {
+            pList[pRow].setWorkVal(vWorkSum);
+            pList[pRow].setEstVal(vEstSum);
+        }
+        if (vEstSum == 0) {
+            pList[pRow].setCompVal(0);
+        }
+        else {
+            pList[pRow].setCompVal(Math.ceil(100 * vWorkSum / vEstSum));
+        }
     }
 };
 
