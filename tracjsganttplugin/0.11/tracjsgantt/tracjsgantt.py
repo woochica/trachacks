@@ -501,12 +501,11 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # pad more time
         elif work > est:
             est = work + self.estPad
-        # If the task was estimated, use that number
-        elif self.fields['estimate'] and (est != 0):
-            est = float(ticket[self.fields['estimate']])
-        # Otherwise, use the default estimate
-        else:
+        # If unestimated, use the default
+        elif est == 0:
             est = self.dftEst
+        # Otherwise, use the estimate parsed above.
+
 
         # Scale by hours per estimate
         hours = est * self.hpe
