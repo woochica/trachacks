@@ -413,7 +413,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                          'worked', 'estimate', 'percent' ]
             for field in nullable:
                 if self.fields[field] and self.fields[field] not in t:
-                    raise TracError( "%s is not a custom ticket field" % self.fields[field] )
+                    raise TracError('%s is not a custom ticket field' %
+                                    self.fields[field])
                 
                 if self.fields[field] and t[self.fields[field]] == '--':
                     t[self.fields[field]] = ''
@@ -577,10 +578,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             _schedule_task_alap(parent)
                             finish = self.ticketsByID[pid]['calc_finish']
                         else:
-                            self.env.log.info("""Ticket %s has parent %s
-                                                 but %s is not in the chart.
-                                                 Ancestor deadlines ignored."""
-                                              % (t['id'], pid, pid))
+                            self.env.log.info(('Ticket %s has parent %s ' +
+                                               'but %s is not in the chart.' +
+                                               'Ancestor deadlines ignored.') %
+                                              (t['id'], pid, pid))
 
                 return finish
 
@@ -594,10 +595,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             if start == None or s < start:
                                 start = s
                         else:
-                            self.env.log.info("""Ticket %s has parent %s
-                                                 but %s is not in the chart.
-                                                 Ancestor deadlines ignored."""
-                                              % (t['id'], pid, pid))
+                            self.env.log.info(('Ticket %s has successor %s ' +
+                                               'but %s is not in the chart. ' +
+                                               'Dependency deadlines ignored.') %
+                                              (t['id'], id, id))
                             
                 return start
 
@@ -659,10 +660,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             _schedule_task_asap(parent)
                             start = self.ticketsByID[pid]['calc_start']
                         else:
-                            self.env.log.info("""Ticket %s has parent %s
-                                                 but %s is not in the chart.
-                                                 Ancestor deadlines ignored."""
-                                              % (t['id'], pid, pid))
+                            self.env.log.info(('Ticket %s has parent %s ' +
+                                               'but %s is not in the chart. ' +
+                                               'Ancestor deadlines ignored.') %
+                                              (t['id'], pid, pid))
 
                 return start
 
@@ -676,10 +677,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             if finish == None or f > finish:
                                 finish = f
                         else:
-                            self.env.log.info("""Ticket %s has parent %s
-                                                 but %s is not in the chart.
-                                                 Ancestor deadlines ignored."""
-                                              % (t['id'], pid, pid))
+                            self.env.log.info(('Ticket %s has predecessor %s ' +
+                                               'but %s is not in the chart. ' +
+                                               'Dependency deadlines ignored.') %
+                                              (t['id'], id, id))
                             
                 return finish
 
