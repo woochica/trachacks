@@ -53,7 +53,7 @@ class TracJSGanttSupport(Component):
     Option('trac-jsgantt', 'fields.finish', None, 
            """Ticket field to use as the data source for finish date""" )
     Option('trac-jsgantt', 'date_format', '%Y-%m-%d', 
-           """Format for state and finish date strings""")    
+           """Format for ''start'' and ''finish'' date strings""")    
     Option('trac-jsgantt', 'fields.pred', None,
            """Ticket field to use as the data source for predecessor list""")
     Option('trac-jsgantt', 'fields.succ', None,
@@ -70,7 +70,7 @@ class TracJSGanttSupport(Component):
     Option('trac-jsgantt', 'option.formats', 'day|week|month|quarter', 
            """Formats to show for Gantt chart""")
     IntOption('trac-jsgantt', 'option.sample', 0,
-              """Show sample""")
+              """Show sample Gantt""")
     IntOption('trac-jsgantt', 'option.res', 1, 
               """Show resource column""")
     IntOption('trac-jsgantt', 'option.dur', 1, 
