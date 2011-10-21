@@ -169,7 +169,28 @@ var vRes   = pRes;
 * @default pComp
 * @private
 */    
-var vComp  = pComp;
+var vComp;
+var vEst;
+var vAct;
+if (pComp.indexOf('/') == -1) {
+    vComp = parseFloat(pComp);
+    vEst = null;
+    vAct = null;
+} else {
+    // Parse on /, do math, and assign
+    pComp = pComp.split('/'); 
+    vAct = parseFloat(pComp[0]);
+    vEst = parseFloat(pComp[1])
+    if (vAct == NaN || vEst == NaN) {
+        vComp = 0;
+    }
+    else if (vEst == 0) {
+        vComp = 0
+    }
+    else {
+        vComp = Math.round(100 * (vAct / vEst));
+    }
+}
 
 /**
 * @property vGroup 
