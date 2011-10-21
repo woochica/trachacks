@@ -472,7 +472,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
     # Return hours of work in ticket as a floating point number
     def _workHours(self, options, ticket):
-        if self.fields['estimate']:
+        if self.fields['estimate'] and ticket.get(self.fields['estimate']):
             est = float(ticket[self.fields['estimate']])
         else:
             est = None
