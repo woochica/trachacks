@@ -1003,6 +1003,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # caption 
         # FIXME - this only shows up if caption is set to caption.
         # we're using caption=Resource.  Where can we show (status, type)?
+        # FIXME - if caption isn't set to caption, use "" because the
+        # description could be quite long and take a long time to make
+        # safe and display.
         task += '"%s (%s %s)"' % (_safeStr(ticket['description']), ticket['status'], ticket['type'])
 
         task += ');\n'
