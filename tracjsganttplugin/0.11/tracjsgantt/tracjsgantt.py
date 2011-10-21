@@ -612,7 +612,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                             timedelta(hours=options['hoursPerDay'])
                         # If today is on a weekend, move back to Friday
                         if finish.weekday() > 4:
-                            finish += timedelta(days=7-start.weekday())
+                            finish += timedelta(days=7-finish.weekday())
                     # If we are to finish at the beginning of the work
                     # day, our finish is really the end of the previous
                     # work day
