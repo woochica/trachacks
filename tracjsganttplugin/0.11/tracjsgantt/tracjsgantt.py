@@ -864,7 +864,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     #   level - levels from root (0)
     #   link - What to link to
     #   owner - Used as resource name.
-    #   percent - integer percent complete, 0..100
+    #   percent - integer percent complete, 0..100 (or "act/est")
     #   priority - used to color the task
     #   self.fields[finish] - end date (ignored if children is not None)
     #   self.fields[parent] - parent ticket ID
@@ -890,19 +890,22 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             return owner_name
             
         def _percent(ticket):
-            # Closed tickets are 100% complete
-            if ticket['status'] == 'closed':
-                percent = 100
             # Compute percent complete if given estimate and worked
-            elif self.fields['estimate'] and self.fields['worked']:
+            if self.fields['estimate'] and self.fields['worked']:
                 # Try to compute the percent complete, default to 0
                 try:
                     worked = float(ticket[self.fields['worked']])
-                    estimate = self._workHours(options, ticket) / self.hpe
-                    percent = int(100 * worked / estimate)
+                    if ticket['status'] == 'closed':
+                        estimate = worked
+                    else:
+                        estimate = self._workHours(options, ticket) / self.hpe
+                    percent = '%s/%s' % (worked, estimate)
                 except:
                     # Don't bother logging because 0 for an estimate is common.
                     percent = 0
+            # Closed tickets are 100% complete
+            elif ticket['status'] == 'closed':
+                percent = 100
             # Use percent if provided
             elif self.fields.get('percent'):
                 self.env.log.debug('Parsing percent complete from %s' %
@@ -954,7 +957,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += '"%s",' % javascript_quote(_owner(ticket))
 
         # pComp (percent complete); integer 0..100
-        task += '%d,' % _percent(ticket)
+        task += '"%s",' % _percent(ticket)
 
         # pGroup (has children)
         if ticket['children']:
