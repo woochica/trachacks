@@ -74,7 +74,7 @@ class ChildTicketTreeMacro(WikiMacroBase):
         self.indent_children(ticket)
 
         def ticket_anchor(t):
-            return tag.a( '#%s' % t.id, class_=t['status'], href=req.href.t(int(t.id)), title="%s : %s : %s" % (t['type'],t['owner'],t['status']))
+            return tag.a( '#%s' % t.id, class_=t['status'], href=req.href.ticket(int(t.id)), title="%s : %s : %s" % (t['type'],t['owner'],t['status']))
 
         def_list = tag.dl(
                 [( tag.dt(ticket_anchor(t),style='padding-left: %spx;' % (t['indent']*20)), tag.dd("%s" % t['summary'])) for t in self.tickets],
