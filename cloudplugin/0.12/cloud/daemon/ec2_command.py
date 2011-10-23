@@ -35,7 +35,7 @@ class Ec2Commander(Daemon):
         if not envs:
             self.progress.error("No environment(s) selected")
             sys.exit(1)
-        query = '('+' OR '.join(['environment:%s' % e for e in envs])+')'
+        query = '('+' OR '.join(['env:%s' % e for e in envs])+')'
         queries.append(query)
         roles = self.launch_data['cmd_roles']
         if not roles:
@@ -69,11 +69,11 @@ class Ec2Commander(Daemon):
         
         # send starting jabber message
         if self.launch_data['command_id'] == 'deploy':
-            resource = 'environment'
+            resource = 'env'
             msg = "%s is deploying to %d %s instance(s)" % \
                     (self.options.started_by,len(nodes),', '.join(envs))
         elif self.launch_data['command_id'] == 'audit':
-            resource = 'environment'
+            resource = 'env'
             msg = "%s is auditing %d %s instance(s)" % \
                     (self.options.started_by,len(nodes),', '.join(envs))
         else:

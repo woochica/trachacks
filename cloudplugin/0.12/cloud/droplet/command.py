@@ -9,7 +9,7 @@ class Command(Droplet):
     def render_view(self, req, id):
         template,data,content_type = Droplet.render_view(self, req, id)
         if id in ('deploy','audit'):
-            href = req.href.cloud('environment')
+            href = req.href.cloud('env')
             data['message'] = 'To %s, use the respective button in an' % id + \
               ' <a href=\\"%s\\">Environment\\\'s view</a>.' % href
             data['cmd_fields'] = [] # clear command fields
