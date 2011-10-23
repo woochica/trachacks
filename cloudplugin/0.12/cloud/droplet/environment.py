@@ -73,7 +73,7 @@ class Environment(Command):
     def execute(self, req, id):
         """Deploy to an environment."""
         launch_data, attributes, exe = self._get_data(req, id)
-        launch_data['cmd_environments'] = [attributes['name']]
+        launch_data['cmd_envs'] = [attributes['name']]
         launch_data['command_id'] = 'deploy'
         deploy = self._get_command('deploy')
         attributes['command'] = deploy['command']
@@ -84,7 +84,7 @@ class Environment(Command):
     def audit(self, req, id):
         """Audit an environment."""
         launch_data, attributes, exe = self._get_data(req, id)
-        launch_data['cmd_environments'] = [attributes['name']]
+        launch_data['cmd_envs'] = [attributes['name']]
         launch_data['command_id'] = 'audit'
         audit = self._get_command('audit')
         attributes['command'] = audit['command']

@@ -31,7 +31,7 @@ class Ec2Commander(Daemon):
         
         # build the query
         queries = []
-        envs = self.launch_data['cmd_environments']
+        envs = self.launch_data['cmd_envs']
         if not envs:
             self.progress.error("No environment(s) selected")
             sys.exit(1)
