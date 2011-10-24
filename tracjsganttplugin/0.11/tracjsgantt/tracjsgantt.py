@@ -232,7 +232,11 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         text += 'var g = new JSGantt.GanttChart("g",document.getElementById("GanttChartDIV"), "%s", "%d");\n' % \
                 (javascript_quote(format), showdep)
         text += 'var t;\n'
-        text += 'window.addEventListener("resize", function () { g.Draw();\n }, false);'
+        text += 'if (window.addEventListener){\n'
+        text += '  window.addEventListener("resize", function() { g.Draw();\n }, false);\n'
+        text += '} else {\n'
+        text += '  window.attachEvent("onresize", function() { g.Draw();\n });\n'
+        text += '}\n'
         return text
 
     def _end_gantt(self, options):
