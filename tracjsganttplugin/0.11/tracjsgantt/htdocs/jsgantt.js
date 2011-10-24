@@ -1547,6 +1547,7 @@ Complete-Displays task percent complete</p>
                vDateRowStr = JSGantt.formatDateStr(vTaskStart,vDateDisplayFormat);
 
                vTaskLeft = (Date.parse(vTaskList[i].getStart()) - Date.parse(vMinDate)) / (24 * 60 * 60 * 1000);
+               vTaskLeft += 1.5;
                vTaskRight = 1;
 
   	            vRightTable +=
@@ -1594,7 +1595,6 @@ Complete-Displays task percent complete</p>
                     vTaskLeft = Math.ceil((Date.parse(vTaskList[i].getStart()) - Date.parse(vMinDate)) / (24 * 60 * 60 * 1000));
                     if (vFormat='day')
                     {
-                        vTaskLeft -= 1;
                         vTaskRight += 1;
                         var tTime=new Date();
                         tTime.setTime(Date.parse(vTaskList[i].getStart()));
