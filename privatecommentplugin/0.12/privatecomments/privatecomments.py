@@ -146,27 +146,31 @@ class PrivateComments(Component):
 			commentstream = ''
 			
 			for comment in comments_raw:
-				if comment != None and len(comment) != 0:
-					# determine comment id
-					find = comment.find('">')
-					if find == -1:
-						continue
-					comment_id = comment[:find]
-					# concat the delimiter and the comment again
-					comment_code = delimiter+comment
-					# if the user has the permission to see the comment 
-					# the commentcode will be appended to the commentstream
-					comment_private = self._is_comment_private(ticket_id,comment_id)
+				if comment == None or len(comment) < 1:
+					continue
 					
-					if comment_private:
-						comment_code = comment_code.replace(
-							'<span class="threading">',
-							'<span class="threading"> <span class="%s">this comment is private</span>' % \
-								(str(self.css_class_private_comment_marker))
-						)
+				# determine comment id
+				find = comment.find('">')
+				if find == -1:
+					continue
+				comment_id = comment[:find]
+				
+				# concat the delimiter and the comment again
+				comment_code = delimiter+comment
+				
+				# if the user has the permission to see the comment 
+				# the commentcode will be appended to the commentstream
+				comment_private = self._is_comment_private(ticket_id,comment_id)
+				
+				if comment_private:
+					comment_code = comment_code.replace(
+						'<span class="threading">',
+						'<span class="threading"> <span class="%s">this comment is private</span>' % \
+							(str(self.css_class_private_comment_marker))
+					)
 
-					if hasprivatepermission or not comment_private:
-						commentstream = commentstream + comment_code	
+				if hasprivatepermission or not comment_private:
+					commentstream = commentstream + comment_code	
 			
 			return HTML(commentstream)
 			
