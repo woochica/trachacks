@@ -1146,7 +1146,7 @@ Complete-Displays task percent complete</p>
         
 		   // DRAW the Left-side of the chart (names, resources, comp%)
          vLeftTable =
-            '<DIV class=scroll id=leftside style="width:' + vLeftWidth + 'px"><TABLE cellSpacing=0 cellPadding=0 border=0><TBODY>' +
+            '<DIV class=scroll id=leftside><TABLE cellSpacing=0 cellPadding=0 border=0><TBODY>' +
             '<TR style="HEIGHT: 17px">' +
             '  <TD style="WIDTH: 15px; HEIGHT: 17px"></TD>' +
 	    '  <TD style="WIDTH: ' + vNameWidth + 'px; HEIGHT: 17px; border:1;align:left BORDER-TOP: #efefef 1px solid; FONT-SIZE: 11px; BORDER-LEFT: #efefef 1px solid;" colspan = ' + vRadioSpan + '>';
