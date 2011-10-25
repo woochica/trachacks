@@ -1869,7 +1869,6 @@ JSGantt.getMinDate = function getMinDate(pList, pFormat)
 
          else if (pFormat=='week')
          {
-            vDate.setDate(vDate.getDate() - 7);
             while(vDate.getDay() % 7 > 0)
             {
                 vDate.setDate(vDate.getDate() - 1);
