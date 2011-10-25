@@ -38,29 +38,15 @@ class PrivateComments(Component):
 	
 	# IRequestFilter methods
 	def pre_process_request(self, req, handler):
-		if handler is not TicketModule(self.env):
+		if handler is not TicketModule(self.env) or req.method != 'POST':
 			return handler	
 		
-		if req.method != 'POST':
+		ticket_id = self._get_ticketid_from_url(req.path_info)
+		if not ticket_id:
 			return handler
-		
-		# only the ticket page
-		url = req.path_info
-		if url.find('/ticket') == -1:
-			return handler
-			
-		# determine the ticket id
-		find = url.rfind('/')
-		if find == -1 or find == 0:
-			return handler
-				
-		ticket_id = url[find+1:]
 		
 		# determine if the request is an editing request, the comment id and if the comment should be private
-		editing = -1
-		comment_id = -1
-		private = -1
-		
+		editing = comment_id = private = -1
 		arg_list = req.arg_list
 		for key,value in arg_list:
 			if key == 'comment':
@@ -88,10 +74,10 @@ class PrivateComments(Component):
 		cursor = db.cursor()
 		
 		try:
-			if editing == True:
+			if editing:
 				sql = 'UPDATE private_comment SET private=%d WHERE ticket_id=%d AND comment_id=%d' % \
 				(int(private),int(ticket_id),int(comment_id))	
-			elif editing == False:
+			else:
 				sql = 'INSERT INTO private_comment(ticket_id,comment_id,private) values(%d,%d,%d)' % \
 				(int(ticket_id),int(comment_id),int(private))
 				
@@ -138,16 +124,9 @@ class PrivateComments(Component):
 		if filename != 'ticket.html':
 			return stream
 		
-		# only the ticket page
-		url = req.path_info
-		if url.find('/ticket') == -1:
+		ticket_id = self._get_ticketid_from_url(req.path_info)
+		if not ticket_id:
 			return stream
-			
-		# determine ticket id
-		find = url.rfind('/')
-		if find == -1 or find == 0:
-			return stream	
-		ticket_id = int(url[find+1:])
 		
 		# determine the username of the current user
 		user = req.authname
@@ -212,12 +191,22 @@ class PrivateComments(Component):
 		return stream
 	
 	# internal methods
-	def _is_comment_private(self,ticket_id,comment_id):
+	def _get_ticketid_from_url(self, url):
+		if url.find('/ticket') == -1:
+			return None
+			
+		find = url.rfind('/')
+		if find < 1:
+			return None	
+		
+		return int(url[find + 1:])
+	
+	def _is_comment_private(self, ticket_id, comment_id):
 		db = self.env.get_db_cnx()
 		cursor = db.cursor()
 		
 		sql = 'SELECT private FROM private_comment WHERE ticket_id=%d AND comment_id=%d' % \
-		(int(ticket_id),int(comment_id))
+			(int(ticket_id),int(comment_id))
 		self.log.debug(sql)
 		
 		cursor.execute(sql)
@@ -228,7 +217,4 @@ class PrivateComments(Component):
 			
 		cursor.close ()
 		
-		if private == 1:
-			return True
-		else:
-			return False
+		return private == 1
