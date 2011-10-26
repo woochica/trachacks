@@ -1,10 +1,30 @@
+Version 3.2.2 (October 21, 2011)
+- Add <cheque*>.
+- Add <fill-medium*>.
+- Add <printer-color> and <printer-monochrome>.
+- Add <sealing-wax>.
+------------------------------------------------------------
+Version 3.2.1 (October 8, 2011)
+- Add <at-sign*>.
+- Add <building-hedge>.
+- Add <envelope-at-sign> and <envelope-string>.
+- Add <headstone*>.
+- Add <mail-at-sign>.
+- Add <milestone-calendar>.
+- Add <postage-stamp-at-sign>.
+- Add <skull*>.
+- Add <spectrum*>.
+- Add <traffic-light-single>.
+- Add <train-metro>.
+- Add <truck-box*>.
+------------------------------------------------------------
 Version 3.2 (October 1, 2011)
 - Add <ear*>.
 - Add <fingerprint-recognition-fail>.
 - Add <hard-hat-military-camouflage>.
 - Add <keyboard-full*>.
 - Add <paper-lantern*>.
-- Add <traffic-light-green>, <traffic-light-red> and
+- Add <traffic-light-green>, <traffic-light-red>, and
   <traffic-light-yellow>.
 ------------------------------------------------------------
 Version 3.1.8 (September 20, 2011)
@@ -37,7 +57,7 @@ Version 3.1.6 (September 2, 2011)
 - Add <upload-cloud>.
 - Add <24/arrow-circle*>, <24/arrow-curve*>,
   <24/arrow-join*>, <24/arrow-merge*>, <24/arrow-repeat*>,
-  <24/arrow-retweet> and <24/arrow-split*>.
+  <24/arrow-retweet>, and <24/arrow-split*>.
 - Add <24/blue-document-text-image>.
 - Add <24/counter>.
 - Add <24/document-text-image>.
@@ -114,7 +134,7 @@ Version 3.0.4 (June 10, 2011)
 Version 3.0.3 (May 31, 2011)
 - Add <android>.
 - Add <folding-fan>.
-- Add <hand-finger>, <hand-horns> and <hand-ily>.
+- Add <hand-finger>, <hand-horns>, and <hand-ily>.
 - Add <lollipop>.
 - Add <paper-bag-recycle>.
 - Add <piggy-bank*>.
@@ -130,7 +150,7 @@ Version 3.0.2 (May 22, 2011)
 - Add <certificate>.
 - Add <checkerboard>.
 - Add <co2>.
-- Add <leaf-plant>, <leaf-red> and <leaf-yellow>.
+- Add <leaf-plant>, <leaf-red>, and <leaf-yellow>.
 - Add <radar>.
 - Add <radioactivity*>.
 - Add <solar-panel>.
