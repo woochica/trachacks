@@ -131,32 +131,32 @@ def new_commits(gitdir, ref_updates) :
 
     #open the rev-list process and make a writer function to it.
     grl = gitPopen(gitdir, ["rev-list","--reverse", "--stdin",
-			    "--pretty=tformat:%an <%ae>%n%ci%n%s%n%+b"],
-		   stdin=PIPE, stdout=PIPE)
+                "--pretty=tformat:%an <%ae>%n%ci%n%s%n%+b"],
+           stdin=PIPE, stdout=PIPE)
     def w(ref) : grl.stdin.write(ref + "\n")
 
     for (old,new,ref) in ref_updates :
-	#branch deletion: newval is 00000, skip the ref, leave it in
-	#the list of prev_roots
-	if re.match("^0+$",new) : continue
+    #branch deletion: newval is 00000, skip the ref, leave it in
+    #the list of prev_roots
+    if re.match("^0+$",new) : continue
 
-	#Include the newrev as now reachable.
-	w(new)
+    #Include the newrev as now reachable.
+    w(new)
 
-	#a ref that is being updated should be removed from the
-	#previous list and ...
-	prev_roots.discard(ref)
-	#instead write out the negative line directly. However, if it
-	#is a new branch (denoted by all 0s) there is no negative to
-	#include for this ref.
-	if re.search("[1-9]",old) :
-	    w("^" + old)
-	else :
-	    log.info("New ref %r", ref)
+    #a ref that is being updated should be removed from the
+    #previous list and ...
+    prev_roots.discard(ref)
+    #instead write out the negative line directly. However, if it
+    #is a new branch (denoted by all 0s) there is no negative to
+    #include for this ref.
+    if re.search("[1-9]",old) :
+        w("^" + old)
+    else :
+        log.info("New ref %r", ref)
 
 
     log.debug("After discarding updates, writing %s prev_roots",
-	      len(prev_roots))
+          len(prev_roots))
     #write lines for (not reachable from anything else')
     for ref in prev_roots : w("^" + ref)
     grl.stdin.close()
@@ -170,35 +170,35 @@ def new_commits(gitdir, ref_updates) :
     commit = None
     msg = ""
     def finish() :
-	commit.append(msg[:-1]) #-1 to strip one \n from the pair.
-	log.info("New commit: %r", commit)
-	return commit
+    commit.append(msg[:-1]) #-1 to strip one \n from the pair.
+    log.info("New commit: %r", commit)
+    return commit
 
     while True :
-	line = grl.stdout.readline()
-	#blank line and exit code set, we're done here.
-	if line == '' and grl.poll() != None :
-	    if commit: yield finish()
-	    log.debug("Exiting loop: %s", grl.poll())
-	    break
+    line = grl.stdout.readline()
+    #blank line and exit code set, we're done here.
+    if line == '' and grl.poll() != None :
+        if commit: yield finish()
+        log.debug("Exiting loop: %s", grl.poll())
+        break
 
-	m = re.match("commit ([0-9a-f]+)$", line)
-	if m :  #start of a new commit
-	    if commit: yield finish()
-	    log.debug("Starting new commit: %s", m.group(1))
-	    hash = m.group(1)
-	    author = grl.stdout.readline().strip()
-	    date = grl.stdout.readline().strip()
-	    commit = [hash,author,date]
-	    msg = grl.stdout.readline()
-	else :
-	    msg += line
+    m = re.match("commit ([0-9a-f]+)$", line)
+    if m :  #start of a new commit
+        if commit: yield finish()
+        log.debug("Starting new commit: %s", m.group(1))
+        hash = m.group(1)
+        author = grl.stdout.readline().strip()
+        date = grl.stdout.readline().strip()
+        commit = [hash,author,date]
+        msg = grl.stdout.readline()
+    else :
+        msg += line
 
 def post(commits, gitdir, cname, trac_env) :
     for [rev,author,date,msg] in commits :
-	#this subprocess uses python logging with the same formatter,
-	#so tell it not to log, and pass through our streams and its
-	#logging should just fall in line.
+    #this subprocess uses python logging with the same formatter,
+    #so tell it not to log, and pass through our streams and its
+    #logging should just fall in line.
         log.debug("Posting %s to trac", rev)
         capturedCall(["python", TRAC_POST_COMMIT,
                            "-p", trac_env or "",
@@ -212,7 +212,7 @@ def post(commits, gitdir, cname, trac_env) :
 
 def process(gitdir, cname, trac_env, ref_updates) :
     log.info("Push by %r; CNAME: %r, TRAC_ENV: %r, updating %s refs",
-	     getpass.getuser(), cname, trac_env, len(updates))
+         getpass.getuser(), cname, trac_env, len(updates))
 
     post(new_commits(gitdir,ref_updates), gitdir, cname, trac_env)
     log.info("Finished commit hook loop, git-post-receive")
@@ -224,7 +224,7 @@ def process(gitdir, cname, trac_env, ref_updates) :
 
 parser = OptionParser(""" """)
 parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
-		  help="Show more verbose log messages.")
+          help="Show more verbose log messages.")
 
 
 if __name__ == "__main__":
@@ -237,12 +237,12 @@ if __name__ == "__main__":
 
     cname = os.getenv("CNAME")
     if cname == None :
-	if len(args) >= 1 :
-	    cname = args.pop(0)
-	else :
-	    #strip off .git if it is bare or /.git if it is a checkout.
-	    cname = re.sub("/?\.git$","", gitdir)
-	    cname = os.path.basename(cname)
+    if len(args) >= 1 :
+        cname = args.pop(0)
+    else :
+        #strip off .git if it is bare or /.git if it is a checkout.
+        cname = re.sub("/?\.git$","", gitdir)
+        cname = os.path.basename(cname)
     TRAC_ENV = os.getenv("TRAC_ENV") or os.path.join("/var/trac/",cname)
 
     #### Logging configuration
@@ -251,13 +251,13 @@ if __name__ == "__main__":
     logfile=os.path.join(logdir, "%s.git-post-receive.log" % cname)
     fh = logging.FileHandler(logfile,mode='a')
     fh.setFormatter(logging.Formatter('%(asctime)s %(name)s %(levelname)-8s %(message)s',
-				      datefmt='%Y%m%d %H:%M:%S'))
+                      datefmt='%Y%m%d %H:%M:%S'))
 
     ## and to standard error keep the level higher
     sh = logging.StreamHandler()
     sh.setLevel(options.verbose and logging.DEBUG or logging.INFO)
     sh.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)-8s %(message)s",
-				      datefmt='%H:%M:%S'))
+                      datefmt='%H:%M:%S'))
 
     log.addHandler(sh)
     log.addHandler(fh)

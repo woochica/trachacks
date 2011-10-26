@@ -116,7 +116,7 @@ parser.add_option('-p', '--project', dest='project',
 parser.add_option('-r', '--revision', dest='rev',
                   help='Repository revision number.')
 parser.add_option('-R', '--repository', dest='repos',
-				  help='Repository name (or default if not set).')
+                  help='Repository name (or default if not set).')
 parser.add_option('-u', '--user', dest='user',
                   help='The user who is responsible for this action '+depr)
 parser.add_option('-m', '--msg', dest='msg',
@@ -219,7 +219,7 @@ class CommitHook:
             repos = self.env.get_repository(reponame)
             revstring = rev + '/' + reponame
         else:
-		    repos = self.env.get_repository()
+            repos = self.env.get_repository()
             revstring = rev
         repos.sync()
         
