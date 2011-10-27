@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='CodeExample',
+    name='CodeExampleMacro',
     version='1.0',
     author='Alexander Slesarev',
     author_email='nuald@codedgers.com',
