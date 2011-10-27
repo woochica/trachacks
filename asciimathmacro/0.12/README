@@ -1,0 +1,53 @@
+ASCIIMath: Convert Simple ASCII to MathML
+=========================================
+
+Implements ASCIIMathML as a macro for Trac
+
+Description
+-----------
+This macro allows equations to be written in a simple text format using
+a subset of the ASCIIMathML syntax.  When the page is requested, the 
+ASCII text is transformed into MathML, which can be rendered in any
+capable browser (Firefox for sure, IE with MathPlayer plugin, maybe
+Opera).  
+
+See [https://github.com/favalex/python-asciimathml] for more info.
+        
+Usage
+-----
+This macro is relatively simple to use.  For example, to create a MathML 
+representation of the Pythagorean theorem, one would enter 
+
+{{{!#ASCIIMath
+a^2 + b^2 = c^2
+}}}
+
+and the resulting wiki page's source should now contain:
+
+<math><mstyle><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi>
+<mn>2</mn></msup><mo>=</mo><msup><mi>c</mi><mn>2</mn></msup></mstyle></math>
+
+For more information about formatting the ASCII code describing the equation,
+see http://www1.chapman.edu/~jipsen/mathml/asciimath.html.  Some items might
+not display exactly as shown.
+        
+Author and Licensing
+--------------------
+
+Copyright (c) 2011 Jeffrey Armstrong <jeff at approximatrix.com>
+Copyright (c) 2010-2011 Gabriele Favalessa
+
+This code is licensed under GNU GPL Version 3 as outlined in the COPYING file.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
