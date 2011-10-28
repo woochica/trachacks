@@ -39,16 +39,12 @@ permission_policy list and it works as follows:
 3. If the evaluation gets here the permission is ignored by the
    plugin and the next permission policy is checked. 
 
+If the boolean option `allowadmin` is true and the TRAC_ADMIN permission is not
+filtered out the users with this permission work as usual, but the rest don't.
+
 """
 
-# TODO for version 0.2:
-#
-# See if we can add a check_trac_admin boolean option to avoid removing a
-# permission if the user has the TRAC_ADMIN permission and the permission is
-# not on the permissions blacklist (when used) and it is on the whitelist
-# (when used)
-
-from trac.config import ListOption
+from trac.config import BoolOption,ListOption
 from trac.core import *
 from trac.perm import IPermissionPolicy
 
@@ -56,6 +52,12 @@ __all__ = ['PermissionFilter']
 
 class PermissionFilter(Component):
     implements(IPermissionPolicy)
+    allowadmin = BoolOption(
+        'permission-filter', 'allowadmin', False,
+        doc="""If this option is set to True and the TRAC_ADMIN permission is
+        not filtered the users with this permission don't see the effect of
+        the permission filter"""
+    )
     blacklist = ListOption(
         'permission-filter', 'blacklist', '',
         doc="""List of invalid permissions, the ones listed here are always False"""
@@ -65,10 +67,16 @@ class PermissionFilter(Component):
         doc="""List of valid permissions, the ones not listed here are always False"""
     )
     def check_permission(self, action, username, resource, perm):
-        if (self.blacklist and len(self.blacklist) != 0):
-            if action in self.blacklist:
-                return False
-            if (self.whitelist and len(self.whitelist) != 0):
-            if action not in self.whitelist:
-                return False
-        return
+        _admin = False
+        if self.allowadmin and action != 'TRAC_ADMIN':
+            if 'TRAC_ADMIN' in perm:
+		_admin = True
+        if self.blacklist and len(self.blacklist) != 0:
+            if not _admin or 'TRAC_ADMIN' in self.blacklist:
+                if action in self.blacklist:
+                    return False
+        if self.whitelist and len(self.whitelist) != 0:
+            if not _admin or 'TRAC_ADMIN' not in self.whitelist:
+                if action not in self.whitelist:
+                    return False
+        return 
