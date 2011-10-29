@@ -1,0 +1,35 @@
+<script type="text/javascript" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+
+var query = function(action){
+    var url = jQuery('link[rel="search"]').attr('href').replace(/\/search/, '');
+    jQuery.ajax({
+        'type': "GET",
+        'url': url+'/${id}/'+action,
+        'success': function(data){refresh(jQuery('#${id}'),data);},
+        'error': function(r){alert("ERROR:\n\n"+r.responseText);}
+    });
+}
+
+var refresh = function(a,data){
+    var o = jQuery.parseJSON(data);
+    a.text(o.label);
+    if (o.is_quiet)
+      jQuery('body').addClass('quiet');
+    else
+      jQuery('body').removeClass('quiet');
+}
+
+jQuery(document).ready(function(){
+	// set the visuals
+	query('status');
+	
+	// toggle on link click
+    jQuery('#${id}').click(function(e){
+        e.preventDefault();
+		query('toggle');
+        return false;
+    });
+});
+</script>

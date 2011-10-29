@@ -1,0 +1,6 @@
+body.quiet {
+	background-image: url("quiet.png");
+	background-repeat: repeat-y;
+	background-position: center;
+	background-color: #C2C2A3;
+}
