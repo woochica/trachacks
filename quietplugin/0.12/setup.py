@@ -4,7 +4,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracQuiet'
-VERSION = '0.0.1'
+VERSION = '1.0.0'
 
 setup(
     name=PACKAGE, version=VERSION,

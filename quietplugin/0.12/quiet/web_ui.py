@@ -8,7 +8,7 @@ from trac.perm import IPermissionRequestor
 from trac.config import Option
 from trac.util.translation import _
 
-PREF = 'quietmode'
+NAME = 'quietmode'
 
 # WARNING: dependency on Announcer plugin!
 from announcer.distributors.mail import EmailDistributor
@@ -27,7 +27,7 @@ class QuietEmailDistributor(EmailDistributor):
               FROM session_attribute
              WHERE sid=%s
                AND name=%s
-        """, (user,PREF))
+        """, (user,NAME))
         result = cursor.fetchone()
         if not result:
             return False
@@ -42,7 +42,7 @@ class QuietBase(object):
     
     def _is_quiet(self, req):
         """Returns true if the user requested quiet mode."""
-        val = req.session.get(PREF, '0')
+        val = req.session.get(NAME, '0')
         return val == '1'
     
     def _get_label(self, req, is_quiet=None):
@@ -53,7 +53,7 @@ class QuietBase(object):
     def _toggle_quiet(self, req):
         """Set or unset quiet mode for the user."""
         val = self._is_quiet(req) and '0' or '1' # toggle value
-        req.session[PREF] = val
+        req.session[NAME] = val
         req.session.save()
         return val == '1'
 
@@ -85,8 +85,8 @@ class QuietModule(Component,QuietBase):
             req.path_info.startswith('/newticket') or \
             req.path_info.startswith('/query') or \
             req.path_info.startswith('/report')):
-            href = req.href(PREF,'toggle')
-            a = tag.a(self._get_label(req), href=href, id=PREF)
+            href = req.href(NAME,'toggle')
+            a = tag.a(self._get_label(req), href=href, id=NAME)
             add_ctxtnav(req, a)
             add_script(req, '/quiet/quiet.html')
             add_stylesheet(req, 'quiet/quiet.css')
@@ -98,7 +98,7 @@ class QuietModule(Component,QuietBase):
     
     def process_request(self, req):
         req.perm.require('QUIET_MODE')
-        return 'quiet.html', {'id':PREF}, 'text/javascript'
+        return 'quiet.html', {'id':NAME}, 'text/javascript'
 
 
 class QuietAjaxModule(Component,QuietBase):
@@ -106,7 +106,7 @@ class QuietAjaxModule(Component,QuietBase):
     
     # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info.startswith('/'+PREF)
+        return req.path_info.startswith('/'+NAME)
     
     def process_request(self, req):
         try:
