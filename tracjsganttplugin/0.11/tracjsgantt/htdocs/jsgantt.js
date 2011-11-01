@@ -73,7 +73,7 @@ function htmlspecialchars(str) {
 * note : you should use setCaption("Caption") in order to display the caption
 * @return void
 */
-JSGantt.TaskItem = function(pID, pName, pStart, pEnd, pDisplay, pLink, pMile, pRes, pComp, pGroup, pParent, pOpen, pDepend, pCaption)
+JSGantt.TaskItem = function(pID, pName, pStart, pEnd, pDisplay, pLink, pMile, pRes, pComp, pGroup, pParent, pOpen, pDepend, pCaption, g)
 {
 
 /**
@@ -861,8 +861,8 @@ Complete-Displays task percent complete</p>
          {
             vID = vList[i].getID();
             vTaskDiv = document.getElementById("taskbar_"+vID);
-            vBarDiv  = document.getElementById("bardiv_"+vID);
-            vParDiv  = document.getElementById("childgrid_"+vID);
+            vBarDiv  = document.getElementById(pGanttVar+"_bardiv_"+vID);
+            vParDiv  = document.getElementById(pGanttVar+"_childgrid_"+vID);
 
             if(vBarDiv) {
                vList[i].setStartX( vBarDiv.offsetLeft );
@@ -888,16 +888,22 @@ Complete-Displays task percent complete</p>
 */ this.getList   = function() { return vTaskList };
 
 /**
+* Returns Gantt ID
+* @method getID
+* @return string
+*/ this.getID   = function() { return vGanttVar };
+
+/**
 * Clears dependency lines between tasks
 * @method clearDependencies
 * @return {Void}
 */ this.clearDependencies = function()
       {
-         var parent = document.getElementById('rightside');
+         var parent = document.getElementById('rightside_'+pGanttVar);
          var depLine;
          var vMaxId = vDepId;
          for ( i=1; i<vMaxId; i++ ) {
-            depLine = document.getElementById("line"+i);
+            depLine = document.getElementById(pGanttVar +"_line"+i);
             if (depLine) { parent.removeChild(depLine); }
          };
          vDepId = 1;
@@ -913,12 +919,12 @@ Complete-Displays task percent complete</p>
          vWid  = Math.abs(x2-x1) + 1;
          vHgt  = Math.abs(y2-y1) + 1;
 
-         vDoc = document.getElementById('rightside');
+         vDoc = document.getElementById('rightside_'+pGanttVar);
 
 		 // retrieve DIV
 		 var oDiv = document.createElement('div');
 	
-		 oDiv.id = "line"+vDepId++;
+		 oDiv.id = pGanttVar +"_line"+vDepId++;
 			 oDiv.style.position = "absolute";
 		 oDiv.style.margin = "0px";
 		 oDiv.style.padding = "0px";
@@ -1213,9 +1219,9 @@ Complete-Displays task percent complete</p>
                vID = vTaskList[i].getID();
 
   		         if(vTaskList[i].getVisible() == 0) 
-                  vLeftTable += '<TR id=child_' + vID + ' bgcolor=#' + vBGColor + ' style="display:none"  onMouseover=g.mouseOver(this,' + vID + ',"left","' + vRowType + '") onMouseout=g.mouseOut(this,' + vID + ',"left","' + vRowType + '")>' ;
+                  vLeftTable += '<TR id=child_' + vID + ' bgcolor=#' + vBGColor + ' style="display:none"  onMouseover='+pGanttVar+'.mouseOver(this,' + vID + ',"left","' + vRowType + '") onMouseout='+pGanttVar+'.mouseOut(this,' + vID + ',"left","' + vRowType + '")>' ;
 			      else
-                 vLeftTable += '<TR id=child_' + vID + ' bgcolor=#' + vBGColor + ' onMouseover=g.mouseOver(this,' + vID + ',"left","' + vRowType + '") onMouseout=g.mouseOut(this,' + vID + ',"left","' + vRowType + '")>' ;
+                 vLeftTable += '<TR id=child_' + vID + ' bgcolor=#' + vBGColor + ' onMouseover='+pGanttVar+'.mouseOver(this,' + vID + ',"left","' + vRowType + '") onMouseout='+pGanttVar+'.mouseOut(this,' + vID + ',"left","' + vRowType + '")>' ;
 
 			      vLeftTable += 
                   '  <TD class=gdatehead style="WIDTH: 15px; HEIGHT: 20px; BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid;">&nbsp;</TD>' +
@@ -1267,7 +1273,7 @@ Complete-Displays task percent complete</p>
 
             // Draw the Chart Rows
             vRightTable = 
-            '<DIV class=scroll2 id=rightside>' +
+            '<DIV class=scroll2 id=rightside_'+pGanttVar+'>' +
             '<TABLE style="width: ' + vChartWidth + 'px;" cellSpacing=0 cellPadding=0 border=0>' +
             '<TBODY><TR style="HEIGHT: 18px">';
 
@@ -1534,14 +1540,14 @@ Complete-Displays task percent complete</p>
 	       }
 	       
 	         if(vTaskList[i].getVisible() == 0) 
-               vRightTable += '<DIV id=childgrid_' + vID + ' style="position:relative; display:none;">';
+               vRightTable += '<DIV id='+pGanttVar+'_childgrid_' + vID + ' style="position:relative; display:none;">';
             else
-		         vRightTable += '<DIV id=childgrid_' + vID + ' style="position:relative">';
+		         vRightTable += '<DIV id='+pGanttVar+'_childgrid_' + vID + ' style="position:relative">';
             
             if( vTaskList[i].getMile()) {
 
                vRightTable += '<DIV><TABLE style="position:relative; top:0px; width: ' + vChartWidth + 'px;" cellSpacing=0 cellPadding=0 border=0>' +
-                  '<TR id=childrow_' + vID + ' class=yesdisplay style="HEIGHT: 20px" onMouseover=g.mouseOver(this,' + vID + ',"right","mile") onMouseout=g.mouseOut(this,' + vID + ',"right","mile")>' + vItemRowStr + '</TR></TABLE></DIV>';
+                  '<TR id=childrow_' + vID + ' class=yesdisplay style="HEIGHT: 20px" onMouseover='+pGanttVar+'.mouseOver(this,' + vID + ',"right","mile") onMouseout='+pGanttVar+'.mouseOut(this,' + vID + ',"right","mile")>' + vItemRowStr + '</TR></TABLE></DIV>';
 
                // Build date string for Title
                vDateRowStr = JSGantt.formatDateStr(vTaskStart,vDateDisplayFormat);
@@ -1551,7 +1557,7 @@ Complete-Displays task percent complete</p>
                vTaskRight = 1;
 
   	            vRightTable +=
-                  '<div id=bardiv_' + vID + ' style="position:absolute; top:0px; left:' + Math.ceil((vTaskLeft * (vDayWidth) + 1)) + 'px; height: 18px; overflow:hidden;">' +
+                  '<div id='+pGanttVar+'_bardiv_' + vID + ' style="position:absolute; top:0px; left:' + Math.ceil((vTaskLeft * (vDayWidth) + 1)) + 'px; height: 18px; overflow:hidden;">' +
                   '  <div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" style="height: 16px; overflow:hidden; cursor: pointer;" onclick=JSGantt.taskLink"' + vTaskList[i].getLink() + '","'+vPopupFeatures+'");>';
 
                if(vTaskList[i].getCompVal() < 100)
@@ -1559,9 +1565,9 @@ Complete-Displays task percent complete</p>
                else
  		           { vRightTable += '&diams;</div>' ;}
 
-                        if( g.getCaptionType() ) {
+                        if( this.getCaptionType() ) {
                            vCaptionStr = '';
-                           switch( g.getCaptionType() ) {           
+                           switch( this.getCaptionType() ) {           
                               case 'Caption':    vCaptionStr = vTaskList[i].getCaption();  break;
                               case 'Resource':   vCaptionStr = vTaskList[i].getResource();  break;
                               case 'Duration':   vCaptionStr = vTaskList[i].getDuration(vFormat);  break;
@@ -1607,9 +1613,9 @@ Complete-Displays task percent complete</p>
                // Draw Group Bar  which has outer div with inner group div and several small divs to left and right to create angled-end indicators
                if( vTaskList[i].getGroup()) {
                   vRightTable += '<DIV><TABLE style="position:relative; top:0px; width: ' + vChartWidth + 'px;" cellSpacing=0 cellPadding=0 border=0>' +
-                     '<TR id=childrow_' + vID + ' class=yesdisplay style="HEIGHT: 20px" bgColor=#f3f3f3 onMouseover=g.mouseOver(this,' + vID + ',"right","group") onMouseout=g.mouseOut(this,' + vID + ',"right","group")>' + vItemRowStr + '</TR></TABLE></DIV>';
+                     '<TR id=childrow_' + vID + ' class=yesdisplay style="HEIGHT: 20px" bgColor=#f3f3f3 onMouseover='+pGanttVar+'.mouseOver(this,' + vID + ',"right","group") onMouseout='+pGanttVar+'.mouseOut(this,' + vID + ',"right","group")>' + vItemRowStr + '</TR></TABLE></DIV>';
                   vRightTable +=
-                     '<div id=bardiv_' + vID + ' style="position:absolute; top:5px; left:' + Math.ceil(vTaskLeft * (vDayWidth) + 1) + 'px; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px">' +
+                     '<div id='+pGanttVar+'_bardiv_' + vID + ' style="position:absolute; top:5px; left:' + Math.ceil(vTaskLeft * (vDayWidth) + 1) + 'px; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px">' +
 		      '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="gtask '+vTaskList[i].getClass()+'" style="background-color:#000000; height: 7px; width:' + Math.ceil((vTaskRight) * (vDayWidth) -1) + 'px;  cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'">' +
                          '<div style="Z-INDEX: -4; float:left; background-color:#666666; height:3px; overflow: hidden; margin-top:1px; ' +
                                'margin-left:1px; margin-right:1px; filter: alpha(opacity=80); opacity:0.8; width:' + vTaskList[i].getCompStr() + '; ' + 
@@ -1625,9 +1631,9 @@ Complete-Displays task percent complete</p>
                         '<div style="Z-INDEX: -4; float:left; background-color:#000000; height:1px; overflow: hidden; width:1px;"></div>' +
                         '<div style="Z-INDEX: -4; float:right; background-color:#000000; height:1px; overflow: hidden; width:1px;"></div>' ;
 
-                        if( g.getCaptionType() ) {
+                        if( this.getCaptionType() ) {
                            vCaptionStr = '';
-                           switch( g.getCaptionType() ) {           
+                           switch( this.getCaptionType() ) {           
                               case 'Caption':    vCaptionStr = vTaskList[i].getCaption();  break;
                               case 'Resource':   vCaptionStr = vTaskList[i].getResource();  break;
                               case 'Duration':   vCaptionStr = vTaskList[i].getDuration(vFormat);  break;
@@ -1642,21 +1648,21 @@ Complete-Displays task percent complete</p>
                } else {
 
                   vDivStr = '<DIV><TABLE style="position:relative; top:0px; width: ' + vChartWidth + 'px;" cellSpacing=0 cellPadding=0 border=0>' +
-                     '<TR id=childrow_' + vID + ' class=yesdisplay style="HEIGHT: 20px" bgColor=#ffffff onMouseover=g.mouseOver(this,' + vID + ',"right","row") onMouseout=g.mouseOut(this,' + vID + ',"right","row")>' + vItemRowStr + '</TR></TABLE></DIV>';
+                     '<TR id=childrow_' + vID + ' class=yesdisplay style="HEIGHT: 20px" bgColor=#ffffff onMouseover='+pGanttVar+'.mouseOver(this,' + vID + ',"right","row") onMouseout='+pGanttVar+'.mouseOut(this,' + vID + ',"right","row")>' + vItemRowStr + '</TR></TABLE></DIV>';
                   vRightTable += vDivStr;
                   
                   // Draw Task Bar  which has outer DIV with enclosed colored bar div, and opaque completion div
 	            vRightTable +=
-                     '<div id=bardiv_' + vID + ' style="position:absolute; top:4px; left:' + Math.ceil(vTaskLeft * (vDayWidth) + 1) + 'px; height:18px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px">' +
+                     '<div id='+pGanttVar+'_bardiv_' + vID + ' style="position:absolute; top:4px; left:' + Math.ceil(vTaskLeft * (vDayWidth) + 1) + 'px; height:18px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px">' +
                         '<div id=taskbar_' + vID + ' title="' + vTaskList[i].getName() + ': ' + vDateRowStr + '" class="gtask '+vTaskList[i].getClass()+'" style="background-color:' + vTaskList[i].getColor() +'; height: 13px; width:' + Math.ceil((vTaskRight) * (vDayWidth) - 1) + 'px; cursor: pointer;opacity:0.9;'+vTaskList[i].getStyle()+'" ' +
                            'onclick=JSGantt.taskLink("' + vTaskList[i].getLink() + '","'+vPopupFeatures+'"); >' +
                            '<div class=gcomplete style="Z-INDEX: -4; float:left; background-color:black; height:5px; overflow: auto; margin-top:4px; filter: alpha(opacity=40); opacity:0.4; width:' + vTaskList[i].getCompStr() + '; overflow:hidden">' +
                            '</div>' +
                         '</div>';
 
-                        if( g.getCaptionType() ) {
+                        if( this.getCaptionType() ) {
                            vCaptionStr = '';
-                           switch( g.getCaptionType() ) {           
+                           switch( this.getCaptionType() ) {           
                               case 'Caption':    vCaptionStr = vTaskList[i].getCaption();  break;
                               case 'Resource':   vCaptionStr = vTaskList[i].getResource();  break;
                               case 'Duration':   vCaptionStr = vTaskList[i].getDuration(vFormat);  break;
@@ -2126,7 +2132,7 @@ JSGantt.hide=     function (pID,ganttObj) {
       if(vList[i].getParent() == pID) {
          vID = vList[i].getID();
          JSGantt.findObj('child_' + vID).style.display = "none";
-         JSGantt.findObj('childgrid_' + vID).style.display = "none";
+         JSGantt.findObj(ganttObj.getID()+'_childgrid_' + vID).style.display = "none";
          vList[i].setVisible(0);
          if(vList[i].getGroup() == 1) 
             {JSGantt.hide(vID,ganttObj);}
@@ -2156,7 +2162,7 @@ JSGantt.show =  function (pID, pTop, ganttObj) {
 
                if( JSGantt.findObj('group_'+pID).innerText == '+') {
                   JSGantt.findObj('child_'+vID).style.display = "";
-                  JSGantt.findObj('childgrid_'+vID).style.display = "";
+                  JSGantt.findObj(ganttObj.getID()+'_childgrid_'+vID).style.display = "";
                   vList[i].setVisible(1);
                }
 
@@ -2164,7 +2170,7 @@ JSGantt.show =  function (pID, pTop, ganttObj) {
  
                if( JSGantt.findObj('group_'+pID).textContent == '+') {
                   JSGantt.findObj('child_'+vID).style.display = "";
-                  JSGantt.findObj('childgrid_'+vID).style.display = "";
+                  JSGantt.findObj(ganttObj.getID()+'_childgrid_'+vID).style.display = "";
                   vList[i].setVisible(1);
                }
 
@@ -2175,7 +2181,7 @@ JSGantt.show =  function (pID, pTop, ganttObj) {
             if (JSGantt.isIE()) { // IE;
                if( JSGantt.findObj('group_'+pID).innerText == '-') {
                   JSGantt.findObj('child_'+vID).style.display = "";
-                  JSGantt.findObj('childgrid_'+vID).style.display = "";
+                  JSGantt.findObj(ganttObj.getID()+'_childgrid_'+vID).style.display = "";
                   vList[i].setVisible(1);
                }
 
@@ -2183,7 +2189,7 @@ JSGantt.show =  function (pID, pTop, ganttObj) {
 
                if( JSGantt.findObj('group_'+pID).textContent == '-') {
                   JSGantt.findObj('child_'+vID).style.display = "";
-                  JSGantt.findObj('childgrid_'+vID).style.display = "";
+                  JSGantt.findObj(ganttObj.getID()+'_childgrid_'+vID).style.display = "";
                   vList[i].setVisible(1);
                }
             }
@@ -2400,7 +2406,7 @@ JSGantt.AddXMLTask = function(pGanttVar){
 			
 			
 			// Finally add the task
-			pGanttVar.AddTaskItem(new JSGantt.TaskItem(pID , pName, pStart, pEnd, pColor,  pLink, pMile, pRes,  pComp, pGroup, pParent, pOpen, pDepend,pCaption));
+			pGanttVar.AddTaskItem(new JSGantt.TaskItem(pID , pName, pStart, pEnd, pColor,  pLink, pMile, pRes,  pComp, pGroup, pParent, pOpen, pDepend,pCaption, pGanttVar));
 		}
 	}
 };

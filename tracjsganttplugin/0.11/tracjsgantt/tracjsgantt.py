@@ -170,6 +170,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                    'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
                    'schedule', 'hoursPerDay')
 
+        self.GanttID = 'g'
         self.options = {}
         for opt in options:
             self.options[opt] = self.config.get('trac-jsgantt',
@@ -218,6 +219,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # Initialization to None means it is not yet initialized.
         self.user_map = None
 
+
 	# Parent format option
 	self.parent_format = self.config.get('trac-jsgantt','parent_format')
 
@@ -228,10 +230,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             format = options['formats'].split('|')[0]
         showdep = options['showdep']
         text = ''
-        text += '<div style="position:relative" class="gantt" id="GanttChartDIV"></div>\n'
+        text += '<div style="position:relative" class="gantt" id="GanttChartDIV_'+self.GanttID+'"></div>\n'
         text += '<script language="javascript">\n'
-        text += 'var g = new JSGantt.GanttChart("g",document.getElementById("GanttChartDIV"), "%s", "%d");\n' % \
-                (javascript_quote(format), showdep)
+        text += 'var '+self.GanttID+' = new JSGantt.GanttChart("'+self.GanttID+'",document.getElementById("GanttChartDIV_'+self.GanttID+'"), "%s", "%d");\n' % (javascript_quote(format), showdep)
         text += 'var t;\n'
         text += 'if (window.addEventListener){\n'
         text += '  window.addEventListener("resize", function() { g.Draw();\n }, false);\n'
@@ -242,60 +243,63 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
     def _end_gantt(self, options):
         chart = ''
-        chart += 'g.Draw();\n' 
+        chart += self.GanttID+'.Draw();\n' 
         if options['showdep']:
-            chart += 'g.DrawDependencies();\n'
+            chart += self.GanttID+'.DrawDependencies();\n'
         chart += '</script>\n'
         return chart
 
     def _gantt_options(self, options):
         opt = ''
-        opt += 'g.setShowRes(%s);\n' % options['res']
-        opt += 'g.setShowDur(%s);\n' % options['dur']
-        opt += 'g.setShowComp(%s);\n' % options['comp']
+        opt += self.GanttID+'.setShowRes(%s);\n' % options['res']
+        opt += self.GanttID+'.setShowDur(%s);\n' % options['dur']
+        opt += self.GanttID+'.setShowComp(%s);\n' % options['comp']
         w = options['lwidth']
         if w:
-            opt += 'g.setLeftWidth(%s);\n' % w
+            opt += self.GanttID+'.setLeftWidth(%s);\n' % w
             
 
-        opt += 'g.setCaptionType("%s");\n' % javascript_quote(options['caption'])
+        opt += self.GanttID+'.setCaptionType("%s");\n' % \
+            javascript_quote(options['caption'])
 
-        opt += 'g.setShowStartDate(%s);\n' % options['startDate']
-        opt += 'g.setShowEndDate(%s);\n' % options['endDate']
+        opt += self.GanttID+'.setShowStartDate(%s);\n' % options['startDate']
+        opt += self.GanttID+'.setShowEndDate(%s);\n' % options['endDate']
 
-        opt += 'g.setDateInputFormat("%s");\n' % javascript_quote(self.jsDateFormat)
+        opt += self.GanttID+'.setDateInputFormat("%s");\n' % \
+            javascript_quote(self.jsDateFormat)
 
-        opt += 'g.setDateDisplayFormat("%s");\n' % javascript_quote(options['dateDisplay'])
+        opt += self.GanttID+'.setDateDisplayFormat("%s");\n' % \
+            javascript_quote(options['dateDisplay'])
 
-        opt += 'g.setFormatArr([%s]);\n' % ','.join(
-                    '"%s"' % javascript_quote(f) for f in options['formats'].split('|'))
-        opt += 'g.setPopupFeatures("location=1,scrollbars=1");\n'
+        opt += self.GanttID+'.setFormatArr(%s);\n' % ','.join(
+            '"%s"' % javascript_quote(f) for f in options['formats'].split('|'))
+        opt += self.GanttID+'.setPopupFeatures("location=1,scrollbars=1");\n'
         return opt
 
     # TODO - use ticket-classN styles instead of colors?
     def _add_sample_tasks(self):
         tasks = ''
-        tasks = 'g.setDateInputFormat("mm/dd/yyyy");'
+        tasks = self.GanttID+'.setDateInputFormat("mm/dd/yyyy");'
 
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(1,   "Define Chart API",     "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(11,  "Chart Object",         "2/20/2011", "2/20/2011", "#ff00ff", "http://www.yahoo.com", 1, "Shlomy",  100, 0, 1, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(12,  "Task Objects",         "",          "",          "#00ff00", "", 0, "Shlomy",   40, 1, 1, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(121, "Constructor Proc",     "2/21/2011", "3/9/2011",  "#00ffff", "http://www.yahoo.com", 0, "Brian T.", 60, 0, 12, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(122, "Task Variables",       "3/6/2011",  "3/11/2011", "#ff0000", "http://help.com", 0, "",         60, 0, 12, 1,121));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(123, "Task Functions",       "3/9/2011",  "3/29/2011", "#ff0000", "http://help.com", 0, "Anyone",   60, 0, 12, 1, 0, "This is another caption"));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(2,   "Create HTML Shell",    "3/24/2011", "3/25/2011", "#ffff00", "http://help.com", 0, "Brian",    20, 0, 0, 1,122));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(3,   "Code Javascript",      "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1 ));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(31,  "Define Variables",     "2/25/2011", "3/17/2011", "#ff00ff", "http://help.com", 0, "Brian",    30, 0, 3, 1, 0,"Caption 1"));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(32,  "Calculate Chart Size", "3/15/2011", "3/24/2011", "#00ff00", "http://help.com", 0, "Shlomy",   40, 0, 3, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(33,  "Draw Taks Items",      "",          "",          "#00ff00", "http://help.com", 0, "Someone",  40, 1, 3, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(332, "Task Label Table",     "3/6/2011",  "3/11/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(333, "Task Scrolling Grid",  "3/9/2011",  "3/20/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(34,  "Draw Task Bars",       "",          "",          "#990000", "http://help.com", 0, "Anybody",  60, 1, 3, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(341, "Loop each Task",       "3/26/2011", "4/11/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, "332,333"));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(342, "Calculate Start/Stop", "4/12/2011", "5/18/2011", "#ff6666", "http://help.com", 0, "Brian",    60, 0, 34, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(343, "Draw Task Div",        "5/13/2011", "5/17/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(344, "Draw Completion Div",  "5/17/2011", "6/04/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1));\n'
-        tasks += 'g.AddTaskItem(new JSGantt.TaskItem(35,  "Make Updates",         "10/17/2011","12/04/2011","#f600f6", "http://help.com", 0, "Brian",    30, 0, 3,  1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(1,   "Define Chart API",     "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(11,  "Chart Object",         "2/20/2011", "2/20/2011", "#ff00ff", "http://www.yahoo.com", 1, "Shlomy",  100, 0, 1, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(12,  "Task Objects",         "",          "",          "#00ff00", "", 0, "Shlomy",   40, 1, 1, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(121, "Constructor Proc",     "2/21/2011", "3/9/2011",  "#00ffff", "http://www.yahoo.com", 0, "Brian T.", 60, 0, 12, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(122, "Task Variables",       "3/6/2011",  "3/11/2011", "#ff0000", "http://help.com", 0, "",         60, 0, 12, 1,121, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(123, "Task Functions",       "3/9/2011",  "3/29/2011", "#ff0000", "http://help.com", 0, "Anyone",   60, 0, 12, 1, 0, "This is another caption", '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(2,   "Create HTML Shell",    "3/24/2011", "3/25/2011", "#ffff00", "http://help.com", 0, "Brian",    20, 0, 0, 1,122, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(3,   "Code Javascript",      "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1 , '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(31,  "Define Variables",     "2/25/2011", "3/17/2011", "#ff00ff", "http://help.com", 0, "Brian",    30, 0, 3, 1, 0,"Caption 1", '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(32,  "Calculate Chart Size", "3/15/2011", "3/24/2011", "#00ff00", "http://help.com", 0, "Shlomy",   40, 0, 3, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(33,  "Draw Taks Items",      "",          "",          "#00ff00", "http://help.com", 0, "Someone",  40, 1, 3, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(332, "Task Label Table",     "3/6/2011",  "3/11/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(333, "Task Scrolling Grid",  "3/9/2011",  "3/20/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(34,  "Draw Task Bars",       "",          "",          "#990000", "http://help.com", 0, "Anybody",  60, 1, 3, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(341, "Loop each Task",       "3/26/2011", "4/11/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, "332,333", '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(342, "Calculate Start/Stop", "4/12/2011", "5/18/2011", "#ff6666", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(343, "Draw Task Div",        "5/13/2011", "5/17/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(344, "Draw Completion Div",  "5/17/2011", "6/04/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(35,  "Make Updates",         "10/17/2011","12/04/2011","#f600f6", "http://help.com", 0, "Brian",    30, 0, 3,  1, '+self.GanttID+'));\n'
         return tasks
 
     # Get the required columns for the tickets which match the
@@ -1008,9 +1012,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += '"%s (%s %s)"' % (javascript_quote(ticket['description']),
                                   javascript_quote(ticket['status']),
                                   javascript_quote(ticket['type']))
-
+        task += ', ' + self.GanttID
         task += ');\n'
-        task += 'g.AddTaskItem(t);\n'
+        task += self.GanttID+'.AddTaskItem(t);\n'
         return task
 
     def _add_tasks(self, options):
@@ -1101,6 +1105,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         self.classMap = None
 
         options = self._parse_options(content)
+
+        self.GanttID = 'g_'+ str(time.time()).replace('.','')
         chart = ''
         tasks = self._add_tasks(options)
         if len(tasks) == 0:
