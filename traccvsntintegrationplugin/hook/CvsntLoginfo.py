@@ -171,10 +171,10 @@ class CvsntLoginfo():
         db_cursor.execute(strinsert)
         newkey = db_cursor.lastrowid
         for i in range(0, len(self.argv)):
-            strinsert = 'INSERT INTO LOGINFO_CALLS_ARGV VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + self.argv[i] + '\')'
+            strinsert = 'INSERT INTO LOGINFO_CALLS_ARGV VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + self.argv[i].replace('\'','\'\'') + '\')'
             db_cursor.execute(strinsert)
         for i in range(0, len(self.lines)):
-            strinsert = 'INSERT INTO LOGINFO_CALLS_STDOUT VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + self.lines[i] + '\')'
+            strinsert = 'INSERT INTO LOGINFO_CALLS_STDOUT VALUES(' + repr(newkey) + ',' + repr(i) + ', \'' + self.lines[i].replace('\'','\'\'') + '\')'
             db_cursor.execute(strinsert)
                 
         db_connection.commit()
@@ -243,12 +243,12 @@ class CvsntLoginfo():
             db_connection = sqlite3.connect(self.config.changeset_db) 
             db_cursor = db_connection.cursor() 
             
-            strselect='SELECT id, description, datetime FROM CHANGESET WHERE datetime>=' + repr(self.datetime-300) + ' AND description=\'' + self.log_message + '\''
+            strselect='SELECT id, description, datetime FROM CHANGESET WHERE datetime>=' + repr(self.datetime-300) + ' AND description=\'' + self.log_message.replace('\'','\'\'') + '\''
             db_cursor.execute(strselect)    
             changesetRow = db_cursor.fetchone()
 
             if changesetRow is None:       
-                strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + self.log_message + '\', \'' + self.user + '\', \'' + repr(self.datetime) + '\')'
+                strinsert = 'INSERT INTO CHANGESET VALUES(NULL, \'' + self.log_message.replace('\'','\'\'') + '\', \'' + self.user + '\', \'' + repr(self.datetime) + '\')'
                 db_cursor.execute(strinsert)
                 self.newkey = db_cursor.lastrowid
                 key = self.newkey
