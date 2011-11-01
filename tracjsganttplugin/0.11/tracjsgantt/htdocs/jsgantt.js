@@ -1159,33 +1159,33 @@ Complete-Displays task percent complete</p>
 
 	 vLeftTable += 'Format:';
 	 if (vFormatArr.join().indexOf("minute")!=-1) { 
-	     if (vFormat=='minute') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" VALUE="minute" checked>Minute';
-	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" onclick=JSGantt.changeFormat("minute",'+vGanttVar+'); VALUE="minute">Minute';
+	     if (vFormat=='minute') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" VALUE="minute" checked>Minute';
+	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" onclick=JSGantt.changeFormat("minute",'+vGanttVar+'); VALUE="minute">Minute';
 	 }
 	 
 	 if (vFormatArr.join().indexOf("hour")!=-1) { 
-	     if (vFormat=='hour') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" VALUE="hour" checked>Hour';
-	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" onclick=JSGantt.changeFormat("hour",'+vGanttVar+'); VALUE="hour">Hour';
+	     if (vFormat=='hour') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" VALUE="hour" checked>Hour';
+	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" onclick=JSGantt.changeFormat("hour",'+vGanttVar+'); VALUE="hour">Hour';
 	 }
 	 
 	 if (vFormatArr.join().indexOf("day")!=-1) { 
-	     if (vFormat=='day') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" VALUE="day" checked>Day';
-	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" onclick=JSGantt.changeFormat("day",'+vGanttVar+'); VALUE="day">Day';
+	     if (vFormat=='day') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" VALUE="day" checked>Day';
+	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" onclick=JSGantt.changeFormat("day",'+vGanttVar+'); VALUE="day">Day';
 	 }
 	 
 	 if (vFormatArr.join().indexOf("week")!=-1) { 
-	     if (vFormat=='week') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" VALUE="week" checked>Week';
-	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" onclick=JSGantt.changeFormat("week",'+vGanttVar+') VALUE="week">Week';
+	     if (vFormat=='week') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" VALUE="week" checked>Week';
+	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" onclick=JSGantt.changeFormat("week",'+vGanttVar+') VALUE="week">Week';
 	 }
 	 
 	 if (vFormatArr.join().indexOf("month")!=-1) { 
-	     if (vFormat=='month') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" VALUE="month" checked>Month';
-	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" onclick=JSGantt.changeFormat("month",'+vGanttVar+') VALUE="month">Month';
+	     if (vFormat=='month') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" VALUE="month" checked>Month';
+	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" onclick=JSGantt.changeFormat("month",'+vGanttVar+') VALUE="month">Month';
 	 }
 	 
 	 if (vFormatArr.join().indexOf("quarter")!=-1) { 
-	     if (vFormat=='quarter') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" VALUE="quarter" checked>Quarter';
-	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat" onclick=JSGantt.changeFormat("quarter",'+vGanttVar+') VALUE="quarter">Quarter';
+	     if (vFormat=='quarter') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" VALUE="quarter" checked>Quarter';
+	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" onclick=JSGantt.changeFormat("quarter",'+vGanttVar+') VALUE="quarter">Quarter';
 	 }
 			
 //            vLeftTable += '<INPUT TYPE=RADIO NAME="other" VALUE="other" style="display:none"> .';
