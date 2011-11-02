@@ -504,7 +504,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         elif work > est:
             est = work + self.estPad
         # If unestimated, use the default
-        elif est == 0:
+        elif not est or est == 0:
             est = self.dftEst
         # Otherwise, use the estimate parsed above.
 
