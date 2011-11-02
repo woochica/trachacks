@@ -383,7 +383,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         # Construct the querystring. 
         query_string = '&'.join(['%s=%s' % 
-                                 item for item in query_args.iteritems()]) 
+                                 (f, str(v)) for (f,v) in query_args.iteritems()]) 
 
         # Get the Query Object. 
         query = Query.from_string(self.env, query_string)
