@@ -12,7 +12,7 @@ class RemoveQuotes(Component):
     implements(IEmailHandler)
 
     def match(self, message):
-        return False
+        return True
 
     def invoke(self, message, warnings):
         payload = message.get_payload()
