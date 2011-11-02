@@ -30,6 +30,7 @@ application--exclamation.png
 application--minus.png
 application--pencil.png
 application--plus.png
+application-ab.png
 application-block.png
 application-blog.png
 application-blue.png
@@ -244,6 +245,7 @@ balloon-facebook.png
 balloon-facebook-left.png
 balloon-left.png
 balloon-quotation.png
+balloon-slash.png
 balloon-small.png
 balloon-small-left.png
 balloon-smiley.png
@@ -769,7 +771,7 @@ chevron-small.png
 chevron-small-expand.png
 church.png
 cigarette.png
-cigarette-stop.png
+cigarette-slash.png
 clapperboard.png
 clapperboard--arrow.png
 clapperboard--exclamation.png
@@ -1036,7 +1038,7 @@ disk-small-black.png
 disks.png
 disks-black.png
 do-not-disturb-sign.png
-do-not-disturb-sign-cross.png
+do-not-disturb-sign-slash.png
 document.png
 document--arrow.png
 document--exclamation.png
@@ -1405,6 +1407,9 @@ flask--minus.png
 flask--pencil.png
 flask--plus.png
 flask-empty.png
+flower.png
+flower-face.png
+flower-pluck.png
 foaf.png
 folder.png
 folder--arrow.png
@@ -1517,6 +1522,8 @@ guitar--exclamation.png
 guitar--minus.png
 guitar--pencil.png
 guitar--plus.png
+haiku.png
+haiku-wide.png
 hamburger.png
 hammer.png
 hammer--arrow.png
@@ -1600,6 +1607,12 @@ ice--exclamation.png
 ice--minus.png
 ice--pencil.png
 ice--plus.png
+ice-cream.png
+ice-cream-blue-moon.png
+ice-cream-chocolate.png
+ice-cream-sprinkles.png
+ice-cream-sprinkles-blue-moon.png
+ice-cream-sprinkles-chocolate.png
 image.png
 image--arrow.png
 image--exclamation.png
@@ -1798,6 +1811,7 @@ lightning--pencil.png
 lightning--plus.png
 lightning-small.png
 locale.png
+locale-alternate.png
 lock.png
 lock--arrow.png
 lock--exclamation.png
@@ -1994,6 +2008,7 @@ monitor--exclamation.png
 monitor--minus.png
 monitor--pencil.png
 monitor--plus.png
+monitor-blue.png
 monitor-cast.png
 monitor-image.png
 monitor-medium.png
@@ -2093,6 +2108,7 @@ odata.png
 odata-balloon.png
 odata-document.png
 odata-small.png
+oil-barrel.png
 openid.png
 open-share.png
 open-share-balloon.png
@@ -2110,6 +2126,7 @@ paint-brush--minus.png
 paint-brush--pencil.png
 paint-brush--plus.png
 paint-brush-color.png
+paint-brush-slash.png
 paint-brush-small.png
 paint-can.png
 paint-can--arrow.png
@@ -2177,6 +2194,7 @@ pencil--plus.png
 pencil-color.png
 pencil-field.png
 pencil-ruler.png
+pencil-slash.png
 pencil-small.png
 photo-album.png
 photo-album--arrow.png
@@ -2335,6 +2353,7 @@ quill--arrow.png
 quill--exclamation.png
 quill--minus.png
 quill--plus.png
+quill-slash.png
 radar.png
 radioactivity.png
 radioactivity-drum.png
@@ -3158,6 +3177,7 @@ weather-lightning.png
 weather-moon.png
 weather-moon-clouds.png
 weather-moon-fog.png
+weather-moon-half.png
 weather-rain.png
 weather-snow.png
 weather-tornado.png

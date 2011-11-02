@@ -1,3 +1,19 @@
+Version 3.2.3 (October 29, 2011)
+- Add <application-ab>.
+- Add <balloon-slash>.
+- Add <flower*>.
+- Add <haiku*>.
+- Add <ice-cream*>.
+- Add <locale-alternate>.
+- Add <monitor-blue>.
+- Add <oil-barrel>.
+- Add <paint-brush-slash>.
+- Add <pencil-slash>.
+- Add <quill-slash>.
+- Add <weather-moon-half>.
+- Add <24/lock>.
+- Add <32/lock>.
+------------------------------------------------------------
 Version 3.2.2 (October 21, 2011)
 - Add <cheque*>.
 - Add <fill-medium*>.
