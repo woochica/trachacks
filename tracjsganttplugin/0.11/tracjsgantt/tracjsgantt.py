@@ -942,9 +942,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         else:
             name = "#%d:%s (%s %s)" % \
                    (ticket['id'], ticket['summary'],
-                    ticket['status'],
-                    ticket['type'])
-        task += 't = new JSGantt.TaskItem(%d,"%s",' % (ticket['id'], javascript_quote(name))
+                    ticket['status'], ticket['type'])
+        task += 't = new JSGantt.TaskItem(%d,"%s",' % \
+            (ticket['id'], javascript_quote(name))
 
         # pStart, pEnd
         task += '"%s",' % ticket['calc_start'].strftime(self.pyDateFormat)
