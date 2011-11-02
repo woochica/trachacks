@@ -786,8 +786,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
                 # jsGantt ignores start for a milestone but we use it
                 # for scheduling.
-                milestoneTicket[self.fields['start']] = \
-                    milestoneTicket[self.fields['finish']]
+                if self.fields['start'] and self.fields['finish']:
+                    milestoneTicket[self.fields['start']] = \
+                        milestoneTicket[self.fields['finish']]
                 if self.fields['estimate']:
                     milestoneTicket[self.fields['estimate']] = 0
                 # There is no percent complete for a milestone
