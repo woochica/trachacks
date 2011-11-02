@@ -97,12 +97,12 @@ def get_body_and_attachments(message, description=None, attachments=[]):
             continue
 
         ctype        = part.get_content_type()
+        ctype = ctype.split(';')[0]
         cdisposition = part.get('content-disposition')
         cdisposition = (cdisposition or '').split(';')[0].strip()
 
         
         if cdisposition != 'attachment':
-            ctype = ctype.split(';')[0]
             
             if ctype not in ('text/plain', 'text/html'):
                 continue
@@ -118,7 +118,7 @@ def get_body_and_attachments(message, description=None, attachments=[]):
 
                 contents[ctype] = payload
             continue
-        else :
+        elif (ctype not in ('application/pgp-signature')) :
             file_name = part.get_filename()
             attachments.append(part)
     return strip_quotes(contents['text/plain']), attachments
@@ -146,3 +146,8 @@ def strip_quotes(message):
     return body.strip()
 
 
+if __name__ == '__main__' :
+    s = ''
+    with open('/home/zitune/tmp/mail', 'r') as f :
+        s = f.read()
+    body, att = get_body_and_attachments(email.message_from_string(s))
