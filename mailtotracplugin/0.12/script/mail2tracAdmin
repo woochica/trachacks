@@ -1,0 +1,19 @@
+#!/bin/bash
+
+
+if [ $# -ne 1 ]
+then
+    echo "Usage : mail2tracAdmin path_to_trac"
+    echo "Take a mail from stdin and call trac-admin path_to_trac email2Trac"
+exit 1
+fi
+
+
+file=$(mktemp)
+
+cat  > $file 
+
+export PYTHON_EGG_CACHE=$1/.egg-cache
+trac-admin $1 email2Trac $file 
+
+rm $file
