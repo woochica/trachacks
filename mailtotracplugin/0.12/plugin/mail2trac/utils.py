@@ -4,20 +4,25 @@ import base64
 import email
 import email.Utils
 import re
+import os
 import smtplib
 from trac.attachment import Attachment
 from StringIO import StringIO
+
+
 
 
 ### Trac-specific functions
 
 def emailaddr2user(env, addr):
     """returns Trac user name from an email address"""
-
+    cnx = env.get_read_db()
     name, address = email.Utils.parseaddr(addr)
+    toto = env.get_known_users()
     for user in env.get_known_users():
-        if address == user[2]: # ?
+        if address == user[2]: # get_known_users return (username, name, email), we want the mail
             return user[0]
+
 
 def send_email(env, from_addr, recipients, message):
     """
@@ -45,10 +50,11 @@ def send_email(env, from_addr, recipients, message):
 def add_attachments(env, ticket, attachments):
     """add attachments to the ticket"""
     ctr = 1
+    if not attachments : return 
     for msg in attachments:
         attachment = Attachment(env, 'ticket', ticket.id)
         attachment.author = ticket['reporter']
-        attachment.description = ticket['summary']
+        #attachment.description = ticket['summary']
         payload = msg.get_payload()
         if msg.get('Content-Transfer-Encoding') == 'base64':
             payload = base64.b64decode(payload)
@@ -64,7 +70,7 @@ def add_attachments(env, ticket, attachments):
         print >> buffer, payload
         buffer.seek(0)
         attachment.insert(filename, buffer, size)
-        os.chmod(attachment._get_path(), 0666)
+        os.chmod(attachment.path, 0666)
         # TODO : should probably chown too
 
 ### generic email functions
@@ -78,32 +84,45 @@ def reply_body(body, message):
     """
     body appropriate to a reply message
     """
-    payload = message.get_payload()
+    payload = message.get_payload(decode = True)
     if isinstance(payload, basestring):
         body += '\n\nOriginal message:\n %s' % payload
     return body
 
-def get_description_and_attachments(message, description=None, attachments=None):
-    if attachments is None:
-        attachments = []
-    payload = message.get_payload()
-    if isinstance(payload, basestring):
+def get_body_and_attachments(message, description=None, attachments=[]):
+    contents = {}
+    attachments = []
+    for part in message.walk():
+        if part.get_content_maintype() == 'multipart':
+            continue
 
-        # XXX could instead use .is_multipart
-        if description is None and message.get('Content-Disposition', 'inline') == 'inline' and message.get_content_maintype() == 'text': 
+        ctype        = part.get_content_type()
+        cdisposition = part.get('content-disposition')
+        cdisposition = (cdisposition or '').split(';')[0].strip()
 
-            description = payload.strip()
-            if message.get_content_subtype() == 'html':
-                # markup html email
-                description = '{{{\n#!html\n' + description + '}}}'
-            else:
-                if payload.strip() != description:
-                    attachments.append(message)
-        else:
-            for _message in payload:
-                description, _attachments = get_description_and_attachments(_message, description, attachments)
+        
+        if cdisposition != 'attachment':
+            ctype = ctype.split(';')[0]
+            
+            if ctype not in ('text/plain', 'text/html'):
+                continue
+            
+            if not contents.has_key(ctype):
+                payload = part.get_payload(decode = True)
+                charset = part.get_charsets('ascii')[0]
+                    
+                try:
+                    payload = unicode(payload, charset, 'replace')
+                except LookupError:
+                    payload = unicode(payload, 'ISO-8859-1', 'replace')
 
-    return description, attachments
+                contents[ctype] = payload
+            continue
+        else :
+            file_name = part.get_filename()
+            attachments.append(part)
+    return strip_quotes(contents['text/plain']), attachments
+
 
 subject_re = re.compile('( *[Rr][Ee] *:? *)*(.*)')
 
@@ -125,3 +144,5 @@ def strip_quotes(message):
         body.append(line)
     body = '\n'.join(body)
     return body.strip()
+
+
