@@ -779,10 +779,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 
                 # If there's no due date, default to today at close of business
                 ts = row[1] or \
-                    (datetime.today().replace(hour=0, minute=0) + 
+                    (datetime.now(utc) + 
                      timedelta(hours=options['hoursPerDay']))
                 milestoneTicket[self.fields['finish']] = \
-                    ts.strftime(self.dbDateFormat)
+                    format_date(ts, self.dbDateFormat)
 
                 # jsGantt ignores start for a milestone but we use it
                 # for scheduling.
