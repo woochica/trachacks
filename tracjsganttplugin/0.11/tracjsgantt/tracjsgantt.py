@@ -935,15 +935,15 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         if ticket['type'] == self.milestoneType:
             if ticket['id'] < self.firstMilestoneID:
                 # Put ID number on inchpebbles
-                name = 'MS:%s (#%s)' % (javascript_quote(ticket['summary']), ticket['id'])
+                name = 'MS:%s (#%s)' % (ticket['summary'], ticket['id'])
             else:
                 # Don't show bogus ID of milestone pseudo tickets.
                 name = 'MS:%s' % ticket['summary']
         else:
             name = "#%d:%s (%s %s)" % \
-                   (ticket['id'], javascript_quote(ticket['summary']),
-                    javascript_quote(ticket['status']),
-                    javascript_quote(ticket['type']))
+                   (ticket['id'], ticket['summary'],
+                    ticket['status'],
+                    ticket['type'])
         task += 't = new JSGantt.TaskItem(%d,"%s",' % (ticket['id'], javascript_quote(name))
 
         # pStart, pEnd
