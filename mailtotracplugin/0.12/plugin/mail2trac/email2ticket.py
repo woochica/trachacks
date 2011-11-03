@@ -64,8 +64,7 @@ class EmailToTicket(Component):
         reporter = self._reporter(message)
         # get the description and attachments
         mailBody, attachments = get_body_and_attachments(message)
-        if mailBody is None:
-            mailBody = ''
+        mailBody += '\n'
 
 
         # get the ticket fields
@@ -158,8 +157,11 @@ class EmailToTicket(Component):
         mailBody, inBodyFields = self._get_in_body_fields(mailBody)
         #clean subject : the summary is the message subject, except the 'create:', so we take it after the first ':'
         subject = subject[subject.find(':')+1:].strip()
+	decoded_subject = ''
+	for x in decode_header(subject) : decoded_subject += x[0] + ' '
+	decoded_subject = unicode(decoded_subject.strip(), 'utf-8') 
         fields.update(dict(description = mailBody,
-                           summary = unicode(decode_header(subject)[0][0], 'utf-8'),
+                           summary = decoded_subject,
                            status='new',
                            resolution=''), **inBodyFields)
         
