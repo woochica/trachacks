@@ -6,6 +6,7 @@ import os, sys
 import re
 from datetime import datetime
 
+from email.header import decode_header
 
 from mail2trac.email2trac import EmailException
 from mail2trac.interface import IEmailHandler
@@ -68,7 +69,7 @@ class EmailToTicket(Component):
 
 
         # get the ticket fields
-        fields = self._fields(unicode(message['subject'], "utf8"), mailBody, _warnings, reporter=reporter)
+        fields = self._fields(message['subject'], mailBody, _warnings, reporter=reporter)
 
         # inset items from email
         ticket = Ticket(self.env)
@@ -158,7 +159,7 @@ class EmailToTicket(Component):
         #clean subject : the summary is the message subject, except the 'create:', so we take it after the first ':'
         subject = subject[subject.find(':')+1:].strip()
         fields.update(dict(description = mailBody,
-                           summary = subject,
+                           summary = unicode(decode_header(subject)[0][0], 'utf-8'),
                            status='new',
                            resolution=''), **inBodyFields)
         
