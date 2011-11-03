@@ -2,7 +2,7 @@
 Trac email handlers having to do with tickets
 """
 
-import os
+import os, sys
 import re
 from datetime import datetime
 
@@ -68,7 +68,7 @@ class EmailToTicket(Component):
 
 
         # get the ticket fields
-        fields = self._fields(message['subject'], mailBody, _warnings, reporter=reporter)
+        fields = self._fields(unicode(message['subject'], "utf8"), mailBody, _warnings, reporter=reporter)
 
         # inset items from email
         ticket = Ticket(self.env)
