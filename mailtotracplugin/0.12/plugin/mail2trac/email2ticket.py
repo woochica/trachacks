@@ -260,7 +260,7 @@ class ReplyToTicket(Component):
             controller.apply_action_side_effects(mockReq, ticket, action)
             # Call ticket change listeners
         for listener in ts.change_listeners:
-            listener.ticket_changed(t, comment, author, ticket._old)
+            listener.ticket_changed(ticket, mailBody, reporter, ticket._old)
 
         tn = TicketNotifyEmail(self.env)
         tn.notify(ticket, newticket=0, modtime=ticket.time_changed)
