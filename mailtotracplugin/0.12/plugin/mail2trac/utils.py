@@ -8,6 +8,7 @@ import os
 import smtplib
 from trac.attachment import Attachment
 from StringIO import StringIO
+from email.header import decode_header
 
 
 
@@ -35,6 +36,9 @@ def send_email(env, from_addr, recipients, message):
     smtp_port = int(env.config.get('notification', 'smtp_port') or 25)
     smtp_user = env.config.get('notification', 'smtp_user')
     smtp_password = env.config.get('notification', 'smtp_password')
+
+    print "smtp_server : %s\n, smtp_port :%s\ni, smtp_user :%s\n,  smtp_password :%s\n"%(smtp_server, smtp_port, smtp_user, smtp_password) 
+
 
     # ensure list of recipients
     if isinstance(recipients, basestring):
@@ -74,6 +78,15 @@ def add_attachments(env, ticket, attachments):
         # TODO : should probably chown too
 
 ### generic email functions
+
+
+def get_decoded_subject(message) :
+    #decode subject
+    decoded_subject = ''
+    for x in decode_header(message['subject']) : decoded_subject += x[0] + ' '
+    decoded_subject = unicode(decoded_subject.strip(), 'utf-8')
+    return decoded_subject
+        
     
 def reply_subject(subject):
     """subject line appropriate to reply"""
@@ -121,7 +134,7 @@ def get_body_and_attachments(message, description=None, attachments=[]):
         elif (ctype not in ('application/pgp-signature')) :
             file_name = part.get_filename()
             attachments.append(part)
-    return strip_quotes(contents['text/plain']), attachments
+    return contents['text/plain'], attachments
 
 
 subject_re = re.compile('( *[Rr][Ee] *:? *)*(.*)')
@@ -147,6 +160,8 @@ def strip_quotes(message):
 
 
 if __name__ == '__main__' :
+    send_mail()
+
     s = ''
     with open('/home/zitune/tmp/mail', 'r') as f :
         s = f.read()

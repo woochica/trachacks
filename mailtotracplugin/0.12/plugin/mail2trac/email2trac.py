@@ -6,6 +6,7 @@ http://trac.edgewall.org
 
 import email
 import email.Utils
+
 import os
 import sys, traceback
 import urllib
@@ -25,6 +26,8 @@ from trac.perm import IPermissionRequestor # new trac permission
 
 
 debug = True
+
+
 
 # exception classes
 class EmailException(Exception):
@@ -74,10 +77,8 @@ class Email2Trac(Component) :
         matches a message with the environment and returns the message;
         on lookup error, raises AddressLookupException
         """
-    
         message = email.message_from_string(message)
         
-    
         # if the message is not to this project, ignore it
         trac_address = self.env.config.get('mail', 'address')
         if not trac_address:
@@ -106,7 +107,10 @@ class Email2Trac(Component) :
     
         # keep copy of original message for error handling
         original_message = email.message_from_string(message)
-    
+   
+        #keep trac email : 
+        trac_mail = self.env.config.get('notification', 'smtp_replyto')
+ 
         # whether or not to email back on error
         email_errors = self.env.config.getbool('mail', 'email_errors', True)
     
@@ -123,10 +127,14 @@ class Email2Trac(Component) :
                     if h in handler_dict ]
         # handle the message
         warnings = []
+	#is this email treated ?
+	email_treated = False
         for handler in handlers:
             if not handler.match(message) :
                 continue
             try:
+		email_treated = True
+
                 message = handler.invoke(message, warnings)
             except Exception, e:
                 # handle the error
@@ -139,8 +147,8 @@ class Email2Trac(Component) :
                 if email_errors and original_message['from']:
                     subject = reply_subject(original_message['subject'])
                     response = 'Subject: %s\n\n%s' % (subject, reply_body(str(e), original_message))
-                    send_email(self.env, 
-                               original_message['to'],
+                    send_email(self.env,
+                               trac_mail,
                                [ original_message['from'] ],
                                response
                                )
@@ -153,6 +161,8 @@ class Email2Trac(Component) :
             if not message:
                 break
     
+	if not email_treated :
+	    warnings.append("Your email was not treated. It match none of the condition to be treated")
         # email warnings
         if warnings:
     
@@ -167,8 +177,8 @@ class Email2Trac(Component) :
             # notify the sender
             subject = reply_subject(original_message['subject'])
             response = 'Subject: %s\n\n%s' % (subject, reply_body(body, original_message))
-            send_email(self.env, 
-                       original_message['to'],
+            send_email(self.env,
+                       trac_mail,
                        [ original_message['from'] ],
                        response
                        )

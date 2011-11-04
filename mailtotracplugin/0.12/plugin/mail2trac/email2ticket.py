@@ -6,13 +6,11 @@ import os, sys
 import re
 from datetime import datetime
 
-from email.header import decode_header
-
 from mail2trac.email2trac import EmailException
 from mail2trac.interface import IEmailHandler
 from mail2trac.utils import add_attachments
 from mail2trac.utils import emailaddr2user
-from mail2trac.utils import get_body_and_attachments
+from mail2trac.utils import get_body_and_attachments, get_decoded_subject
 from mail2trac.utils import strip_res
 from trac.core import *
 from trac.mimeview.api import KNOWN_MIME_TYPES
@@ -33,6 +31,7 @@ from trac.util.datefmt import to_datetime, utc
 
 
 
+
 ##-----------------------------------------------------------------------------
 ## ticket creation 
 
@@ -41,15 +40,16 @@ class EmailToTicket(Component):
     """create a ticket from an email"""
     implements(IEmailHandler)
 
-
+    
     possibleFields = ['owner', 'type', 'status', 'priority', 'milestone', 'component', 'version', 'resolution', 'keywords', 'cc', 'time', 'changetime']
 
     ### methods for IEmailHandler
 
     # we detect a creation because the subject is "create: title"
     def match(self, message):
+        self.decoded_subject = get_decoded_subject(message)
         regexp = r' *create *:'
-        return bool(re.match(regexp, message['subject'].lower()))
+        return bool(re.match(regexp, self.decoded_subject.lower()))
 
 
     
@@ -68,7 +68,7 @@ class EmailToTicket(Component):
 
 
         # get the ticket fields
-        fields = self._fields(message['subject'], mailBody, _warnings, reporter=reporter)
+        fields = self._fields(mailBody, _warnings, reporter=reporter)
 
         # inset items from email
         ticket = Ticket(self.env)
@@ -150,18 +150,18 @@ class EmailToTicket(Component):
         reporter = user or message['from']
         return reporter
 
-    def _fields(self, subject, mailBody, warnings, **fields):
+    def _fields(self, mailBody, warnings, **fields):
 
         # effectively the interface for email -> ticket
 
         mailBody, inBodyFields = self._get_in_body_fields(mailBody)
         #clean subject : the summary is the message subject, except the 'create:', so we take it after the first ':'
-        subject = subject[subject.find(':')+1:].strip()
+        subject = self.decoded_subject[self.decoded_subject.find(':')+1:].strip()
 	decoded_subject = ''
 	for x in decode_header(subject) : decoded_subject += x[0] + ' '
 	decoded_subject = unicode(decoded_subject.strip(), 'utf-8') 
         fields.update(dict(description = mailBody,
-                           summary = decoded_subject,
+                           summary = subject,
                            status='new',
                            resolution=''), **inBodyFields)
         
@@ -193,7 +193,8 @@ class ReplyToTicket(Component):
 
     
     def match(self, message):
-        self.ticket = self._ticket(message)
+        self.decoded_subject = get_decoded_subject(message)
+        self.ticket = self._ticket(message, self.decoded_subject)
         return bool(self.ticket)
 
         
@@ -286,7 +287,7 @@ class ReplyToTicket(Component):
 
     ### internal methods
 
-    def _ticket(self, message):
+    def _ticket(self, message, subject):
         """
         return a ticket associated with a message subject,
         or None if not available
@@ -303,7 +304,7 @@ class ReplyToTicket(Component):
         subject_re = subject_template_escaped.replace('summary', '.*').replace('ticketid', '([0-9]+)').replace('prefix', '.*')
 
         # get the real subject
-        subject = strip_res(message['subject'])
+        subject = strip_res(subject)
         # see if it matches the regex
         match = re.match(subject_re, subject)
         if not match:
