@@ -82,9 +82,13 @@ def add_attachments(env, ticket, attachments):
 
 def get_decoded_subject(message) :
     #decode subject
-    decoded_subject = ''
-    for x in decode_header(message['subject']) : decoded_subject += x[0] + ' '
-    decoded_subject = unicode(decoded_subject.strip(), 'utf-8')
+    decoded_subject = u''
+    for x in decode_header(message['subject']) :
+        if x[1] : #specific encoding
+            decoded_subject += unicode(x[0], x[1]) + u' '
+        else :
+            decoded_subject += x[0] + u' '
+    decoded_subject = decoded_subject.strip()
     return decoded_subject
         
     
