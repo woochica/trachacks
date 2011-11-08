@@ -99,6 +99,11 @@ class BreadCrumbsSystem(Component):
                         supported = True
                         break
 
+                # Prevent tracking of prefetched pages as reported for
+                #   Mozilla browsers.
+                if req.get_header("X-Moz") == "prefetch":
+                    supported = False
+
                 if not supported or (self.compiled_ignore_pattern and
                             self.compiled_ignore_pattern.match(resource)):
                     return template, data, content_type
