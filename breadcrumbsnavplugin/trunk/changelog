@@ -5,6 +5,7 @@ breadcrumbsnav-0.2 (not yet released)
  resolved issues
  #2463: Shows non-visited tickets
  #3965: BreadCrumbsNavPlugin produces invalid xhtml (strict)
+ #4037: Default configuration for "paths" configuration seems unintended
  #4411: breadcrumbs.css contains invalid rule
  #7036: ignore_pattern option doesn't work
 

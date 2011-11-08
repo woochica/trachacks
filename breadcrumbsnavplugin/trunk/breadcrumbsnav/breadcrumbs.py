@@ -30,7 +30,7 @@ class BreadCrumbsSystem(Component):
         doc="""Indicates maximum number of breadcrumbs to store per user.""")
 
     supported_paths = ListOption('breadcrumbs', 'paths',
-        '/wiki*,/ticket*,/milestone*',
+        '/wiki/,/ticket/,/milestone/',
         doc="""List of URL paths to allow breadcrumb tracking.
             Globs are supported.""")
 
