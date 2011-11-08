@@ -172,7 +172,7 @@ class BreadCrumbsSystem(Component):
             )
 
         insert = tag.ul(class_="nav", id="breadcrumbs"
-                     )(tag.lh("Breadcrumbs:"), li)
+                     )(tag.li("Breadcrumbs:"), li)
 
         return stream | Transformer('//div[@id="metanav"]/ul').after(insert)
 
