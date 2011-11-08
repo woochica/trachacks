@@ -1,0 +1,11 @@
+Author: Stephen Hansen <shansen@advpubtech.com>
+Maintainer: Steffen Hoffmann <hoff.st@web.de>
+
+breadcrumbsnav-0.2 (not yet released)
+ resolved issues
+ #7036: ignore_pattern option doesn't work
+
+
+breadcrumbsnav-0.1 (14-Jan-2008)
+ initial release
+  update: add option to configure bread-crumb-trackable resources (16-Jan-2008)

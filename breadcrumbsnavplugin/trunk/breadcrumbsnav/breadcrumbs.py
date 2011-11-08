@@ -22,7 +22,7 @@ class BreadCrumbsSystem(Component):
     implements(IEnvironmentSetupParticipant, IRequestFilter,
                ITemplateProvider, ITemplateStreamFilter)
 
-    ignore_pattern = Option('breadcrumbs', 'ignore pattern', None,
+    ignore_pattern = Option('breadcrumbs', 'ignore_pattern', None,
         doc="""Resource names that match this pattern will not be added to
             the breadcrumbs trail.""")
 
