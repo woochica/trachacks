@@ -3,6 +3,7 @@ Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
 breadcrumbsnav-0.2 (not yet released)
  resolved issues
+ #4411: breadcrumbs.css contains invalid rule
  #7036: ignore_pattern option doesn't work
 
 
