@@ -1,11 +1,12 @@
 /* CSS definitions for BreadCrumbsNavPlugin */
 
 #breadcrumbs { display: block; font-size: xx-small; padding-top: 5px; }
-ul#breadcrumbs li:first-child { color: #d1d1d1; }
+ul#breadcrumbs li:first-child { color: #d1d1d1; border-right: none }
+
+/*
 ul#breadcrumbs a { color: #e58579; }
 ul#breadcrumbs a:hover { color: #f00; }
 
-/*
 #breadcrumbs li ul {
  background: #f7f7f7; color: #ccc;
  border: 1px solid; padding: 0; display: inline; margin: 0;

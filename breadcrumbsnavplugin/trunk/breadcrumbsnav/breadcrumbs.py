@@ -158,7 +158,7 @@ class BreadCrumbsSystem(Component):
             return stream
 
         add_stylesheet(req, 'breadcrumbs/css/breadcrumbs.css')
-        li = []
+        ul = []
 
         href = req.href(req.base_path)
 
@@ -173,16 +173,17 @@ class BreadCrumbsSystem(Component):
 
             link = req.href(realm, resource)
 
-            li.append(
-                tag.li(
-                    tag.a(title=name, href=link,
-                    )(name)
-                )
-            )
+            first = ul == []
+            li = tag.li(tag.a(title=name, href=link)(name))
+            if first:
+                li(class_="first")
+            ul.append(li)
 
+        last = ul.pop()
+        ul.append(last(class_="last"))
         insert = tag.ul(class_="nav", id="breadcrumbs"
                      )(tag.li(self.label and self.label or \
-                              "Breadcrumbs:"), li)
+                              "Breadcrumbs:"), ul)
 
         return stream | Transformer('//div[@id="metanav"]/ul').after(insert)
 
