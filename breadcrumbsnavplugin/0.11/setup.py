@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+#
 # Copyright (c) 2008, Stephen Hansen
+# Copyright (c) 2011, Steffen Hoffmann
 # 
 # All rights reserved.
 # 
@@ -27,26 +30,26 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ----------------------------------------------------------------------------
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 setup(
-    name = 'BreadCrumbsNavPlugin', 
-    version = '0.1',
+    name = 'BreadCrumbsNav',
+    version = '0.1.1',
     author = 'Stephen Hansen',
     author_email = 'shansen@advpubtech.com',
+    maintainer = 'Steffen Hoffmann',
+    maintainer_email = 'hoff.st@web.de',
     description = "Shows the last several places that you have been.",
-    license = \
-    """Copyright (c) 2008, Stephen Hansen. All rights reserved. Released under the 3-clause BSD license. """,
+    license = """
+    Copyright (c) 2008, Stephen Hansen,
+    Copyright (c) 2011, Steffen Hoffmann.
+    All rights reserved. Released under the 3-clause BSD license.
+    """,
     url = "http://trac-hacks.org/wiki/BreadCrumbsNavPlugin",
-    packages = ['breadcrumbsnavplugin'],
-    package_data = {'breadcrumbsnavplugin' : ['templates/*.html', 'htdocs/js/*.js', 'htdocs/css/*.css']}, 
-    install_requires = [
-        #'trac>=0.11',
-    ],
+    packages = ['breadcrumbsnav'],
+    package_data = {'breadcrumbsnav': ['htdocs/css/*.css']},
+    install_requires = ['Genshi >= 0.5', 'Trac >= 0.11'],
     entry_points = {
-        'trac.plugins': [
-            'breadcrumbsnavplugin = breadcrumbsnavplugin',
-
-        ]    
+        'trac.plugins': ['breadcrumbsnav = breadcrumbsnav']
     }
 )
