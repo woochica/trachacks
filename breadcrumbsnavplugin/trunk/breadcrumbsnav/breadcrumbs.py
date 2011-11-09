@@ -26,6 +26,10 @@ class BreadCrumbsSystem(Component):
         doc="""Resource names that match this pattern will not be added to
             the breadcrumbs trail.""")
 
+    label = Option('breadcrumbs', 'label', '',
+        doc="""Text label to show before breadcrumb list. If empty,
+            'Breadcrumbs:' is used as default.""")
+
     max_crumbs = IntOption('breadcrumbs', 'max_crumbs', 6,
         doc="""Indicates maximum number of breadcrumbs to store per user.""")
 
@@ -177,7 +181,8 @@ class BreadCrumbsSystem(Component):
             )
 
         insert = tag.ul(class_="nav", id="breadcrumbs"
-                     )(tag.li("Breadcrumbs:"), li)
+                     )(tag.li(self.label and self.label or \
+                              "Breadcrumbs:"), li)
 
         return stream | Transformer('//div[@id="metanav"]/ul').after(insert)
 
