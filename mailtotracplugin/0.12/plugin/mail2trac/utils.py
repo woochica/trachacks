@@ -163,10 +163,3 @@ def strip_quotes(message):
     return body.strip()
 
 
-if __name__ == '__main__' :
-    send_mail()
-
-    s = ''
-    with open('/home/zitune/tmp/mail', 'r') as f :
-        s = f.read()
-    body, att = get_body_and_attachments(email.message_from_string(s))

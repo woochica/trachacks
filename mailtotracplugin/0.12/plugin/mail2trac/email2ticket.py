@@ -222,7 +222,9 @@ class ReplyToTicket(Component):
             if not perm.check_permission('MAIL2TICKET_PROPERTIES', reporter) : # None -> 'anoymous'
                 raise ("%s does not have MAIL2TICKET_PROPERTIES permissions" % (user or 'anonymous'))
 
-        action = actions.keys()[0] if actions else None 
+        action = None
+        if actions :
+            action = actions.keys()[0] 
         controllers = list(tm._get_action_controllers(mockReq, ticket, action))
         all_fields = [field['name'] for field in ts.get_ticket_fields()]
 
@@ -266,7 +268,7 @@ class ReplyToTicket(Component):
 
     #use a Mock Request to manage correctly permission throught ticketSystem
 
-    class _MockReq() :
+    class _MockReq :
 
         permissions = []
         args = {}
