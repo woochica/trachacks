@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2004-2009 Edgewall Software
-# Copyright (C) 2004 Daniel Lundin
+# Copyright (C) 2011 Boris Savelev
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -14,18 +13,26 @@
 #
 # Author: Boris Savelev <boris.savelev@gmail.com>
 
-"""Trac support for DOC format
+"""
+    Trac support for DOC, PDF format
 """
 
 from trac.core import *
+from trac.config import Option
 from trac.mimeview.api import IHTMLPreviewRenderer
 
 class DocRenderer(Component):
-    """Renders doc files as HTML."""
+    """Renders doc, pdf files as HTML."""
     implements(IHTMLPreviewRenderer)
 
+    pdftohtml = Option('attachment', 'pdftohtml_path', 'pdftohtml',
+                       'path to pdftohtml binary')
+
+    wvware = Option('attachment', 'wvware_path', 'wvware',
+                       'path to wvWare binary')
+
     def get_quality_ratio(self, mimetype):
-        if mimetype == "application/msword":
+        if mimetype in ["application/msword", "application/pdf"]:
             return 8
         return 0
 
@@ -38,11 +45,21 @@ class DocRenderer(Component):
         from tempfile import mkstemp
         temp = mkstemp()
         f = os.fdopen(temp[0], "w")
-        filename = temp[1]
+        tmp_filename = temp[1]
         f.write(content)
         f.close()
-        cmd = [u"/usr/bin/wvWare",u"--charset=utf8", u"%s" % filename]
-        self.log.debug('Trying to render HTML preview for doc file %s' % filename)
-        content_export = Popen(cmd, stdout=PIPE).communicate()[0]
-        os.unlink(filename)
+        content_export = ""
+        cmd = []
+        mimetype_clean = mimetype.split(';')[0].strip()
+        charset = mimetype.split(';')[1].split('=')[1].strip() or 'utf-8'
+        if mimetype_clean == "application/msword":
+            cmd = [self.wvware, u"--charset=%s" % charset, u"%s" % tmp_filename]
+        elif mimetype_clean == "application/pdf":
+            cmd = [self.pdftohtml, u"-q", u"-stdout", u'-i' , u'-enc %s' % charset.upper(), u"%s" % tmp_filename]
+        if cmd:
+            self.log.debug('Trying to render HTML preview for %s file %s using cmd: %s' % (mimetype, filename, " ".join(cmd)))
+            content_export = Popen(cmd, stdout=PIPE).communicate()[0]
+        else:
+            self.log.debug('Empty command! Mimetype is %s' % mimetype)
+        os.unlink(tmp_filename)
         return to_unicode(content_export)

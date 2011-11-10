@@ -2,7 +2,7 @@
 
 from setuptools import find_packages, setup
 
-version='0.1'
+version='0.2'
 
 setup(name='docrender',
       version=version,
@@ -10,7 +10,7 @@ setup(name='docrender',
       author='Boris Savelev',
       author_email='boris.savelev@gmail.com',
       url='http://trac-hacks.org/wiki/DocRenderPlugin',
-      keywords='trac plugin doc',
+      keywords='trac plugin doc pdf',
       license="GPL",
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
