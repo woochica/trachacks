@@ -108,18 +108,21 @@ class XMailMainView(Component):
                     save = req.args['Save']
                 except: pass
                 if id and not save:
-                    filter.load_filter(self.env.get_read_db(), id)
+                    filter.load_filter(self.env.get_db_cnx(), id)
                     return self.print_edit_view(req, filter=filter)
                 elif id and filter.check_filter(): 
                     #update existing data
                     try:
-                        filter.save(self.env.get_read_db(), True, id)
+                        filter.save(self.env.get_db_cnx(), True, id)
                         return self.print_main_view(req)
                     except Exception, e:
+                        self.xmaillog("DEBUG:XMailMainView.process_request: Exception risen by filter.save(self.env.get_db_cnx(), True, id)\n\t%s" % e.args[1])
+                        self.xmaillog("DEBUG:XMailMainView.process_request: sql_Statement was:\n%s" % str(e.args[0]))
+                        self.log.error( "[process_request] error while executing save occured: %s" % (e.args[1]) )
                         return self.print_edit_view(req, e, filter=filter)
                 elif filter.check_filter():
                     try:
-                        filter.save(self.env.get_read_db())
+                        filter.save(self.env.get_db_cnx())
                         return self.print_main_view(req)
                     except Exception, e:
                         #warning
@@ -175,7 +178,7 @@ class XMailMainView(Component):
         else:
             self.log.debug ( "check database" )
             sql = "select id from xmail;"
-            db = self.env.get_read_db()
+            db = self.env.get_db_cnx()
             myCursor = db.cursor()
             try:
                 myCursor.execute(sql)
@@ -224,7 +227,7 @@ class XMailMainView(Component):
         filter = self._getFilterObject(req)
 
         try:
-            db = self.env.get_read_db()
+            db = self.env.get_db_cnx()
             filter.load_filter(db, id)
             sql = filter.get_filter_select_from_db(db, id)
             sql_result, table_headers = filter.get_result(db, sql)
@@ -316,7 +319,7 @@ class XMailMainView(Component):
             self.log.debug( 'updated %s filter(s) -- ids: %s' % (len(action_sel), id_list) )            
     
     def get_data(self, sql):
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         myCursor = db.cursor()
         data = []
         col_list = []
@@ -384,7 +387,7 @@ class XMailMainView(Component):
             return None
         
     def execute_sql_query(self, sqlQuery, *params):
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         myCursor = db.cursor()
         sucess = False
         try:
@@ -397,3 +400,9 @@ class XMailMainView(Component):
         db.close()
             
         return sucess
+    
+    def xmaillog (self, message):
+        f = open('/opt/trac/projects/Legato/log/xmailplugin.log', 'r+')
+        f.seek(0,2)
+        f.write('%s\n' % message)
+        f.close()

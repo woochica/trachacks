@@ -255,15 +255,17 @@ class FilterObject(object):
         
     def _replace_sql_where_clause(self, where_clause, reverse=False):
         if where_clause:
+            #self.log.debug("DEBUG: XMailFilterObject._replace_sql_where_clause: where_clause = %s" % where_clause) 
+            self.log("DEBUG: XMailFilterObject._replace_sql_where_clause: where_clause = %s" % where_clause)
             replacements = {"(priority[\\s]*)([<>=]{1,2}[\\s]*'[\\d]{1,2}')": 
                             r"t.priority = e.name and e.type='priority' and e.value \2"}
             
             if reverse == True:
                 replacements = {"(t.priority = e.name and e.type='priority' and e.value )([<>=]{1,2}[\\s]*'[\\d]{1,2}')":
                                 r"priority \2"}
-            
             for repl in replacements.keys():
                 where_clause = re.sub(repl, replacements[repl], where_clause)
+            self.log("DEBUG: XMailFilterObject._replace_sql_where_clause: where_clause = %s" % where_clause)
             return where_clause
             
     def save(self, db, update=False, id=None):
@@ -302,6 +304,7 @@ class FilterObject(object):
                 elif col.name == "whereclause":
                     val = self._replace_sql_where_clause(val)
                     where_clause = val
+                    self.log("DEBUG: XMailFilterObject.save: where_clause = %s" % where_clause)                   
                     sql += "'" + encode_sql(val) + "'"
                 elif col.type == "int64":
                     # val is datetime
@@ -341,12 +344,23 @@ class FilterObject(object):
                 cursor.execute(filter_sql)
             except Exception, e:
                 try:
-                    db.rollback();
+                    self.log("DEBUG: XMailFilterObject.save: try db.rollback()")
+                    db.rollback()
+                    self.log("DEBUG: XMailFilterObject.save: try db.close()")
                     db.close()
-                except Exception: pass  
+                except Exception, e2:
+                    self.log("DEBUG: XMailFilterObject.save: db.rollback() db.close()\nException %s" % str(e2) ) 
+                    pass  
+                self.log("DEBUG: XMailFilterObject.save: try cursor.execute(filter_sql)\nException %s" % str(e) ) 
                 raise Warning(filter_sql,e)
             
         cursor.execute(sql)
         db.commit()
         db.close()
         return True
+
+    def log (self, message):
+        f = open('/opt/trac/projects/Legato/log/xmailplugin.log', 'r+')
+        f.seek(0,2)
+        f.write('%s\n' % message)
+        f.close()
