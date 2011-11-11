@@ -5,6 +5,9 @@ breadcrumbsnav-0.3 (not yet released)
  resolved issues
  fix handling of empty crumbs list an the list label in that situation
 
+ new features
+ #9529: Don't show the current resource as first item while watching it
+
 
 breadcrumbsnav-0.2 (09-Nov-2011) - branch 0.11
  resolved issues

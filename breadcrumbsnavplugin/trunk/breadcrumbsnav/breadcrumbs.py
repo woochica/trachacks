@@ -124,7 +124,9 @@ class BreadCrumbsSystem(Component):
                     crumbs.insert(0, current)
                 else:
                     crumbs.insert(0, current)
-                    crumbs = crumbs[0:self.max_crumbs]
+                    # Keep one over max for providing max length even
+                    # when hiding current in first position while viewing it.
+                    crumbs = crumbs[0:self.max_crumbs + 1]
 
                 sess['breadcrumbs_list'] = cPickle.dumps(crumbs)
         except:
@@ -160,9 +162,20 @@ class BreadCrumbsSystem(Component):
         add_stylesheet(req, 'breadcrumbs/css/breadcrumbs.css')
         ul = []
 
-        href = req.href(req.base_path)
+        path = req.path_info
+        if path.count('/') >= 2:
+            _, realm, resource = path.split('/', 2)
+            if '&' in resource:
+                resource = resource[0:resource.index('&')]
+            current = '/'.join( (realm, resource) )
+        else:
+            current = None
 
-        for crumb in crumbs:
+        href = req.href(req.base_path)
+        offset = 0
+        if crumbs and crumbs[0] == current:
+            offset = 1
+        for crumb in crumbs[offset:self.max_crumbs + offset]:
             realm, resource = crumb.split('/', 1)
             name = resource.replace('_', ' ')
 
