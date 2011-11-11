@@ -179,11 +179,14 @@ class BreadCrumbsSystem(Component):
                 li(class_="first")
             ul.append(li)
 
-        last = ul.pop()
-        ul.append(last(class_="last"))
-        insert = tag.ul(class_="nav", id="breadcrumbs"
+        if ul:
+            last = ul.pop()
+            ul.append(last(class_="last"))
+            insert = tag.ul(class_="nav", id="breadcrumbs"
                      )(tag.li(self.label and self.label or \
                               "Breadcrumbs:"), ul)
+        else:
+            insert = ''
 
         return stream | Transformer('//div[@id="metanav"]/ul').after(insert)
 
