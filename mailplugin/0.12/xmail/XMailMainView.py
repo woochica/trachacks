@@ -337,7 +337,7 @@ class XMailMainView(Component):
             db.commit()
         except Exception, e:
             self.log.error ( "[print_mail_list] SQL:\n %s \n produced exception: %s" % (sql,e))
-            db.rollback()
+            
         db.close()
         return data, col_list
     
@@ -356,7 +356,7 @@ class XMailMainView(Component):
             db.commit()
         except Exception, e:
             self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sql, e))
-            db.rollback();
+            db.rollback()
         
         if sqlResult and ( len(sqlResult) == 1 ):
             return sqlResult[0]
@@ -375,7 +375,7 @@ class XMailMainView(Component):
             db.commit()
         except Exception, e:
             self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sql, e))
-            db.rollback();
+            db.rollback()
         db.close()
         
         if sqlResult and ( len(sqlResult) == 1 ):
@@ -393,7 +393,7 @@ class XMailMainView(Component):
             sucess = True
         except Exception, e:
             self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sqlQuery,e))
-            db.rollback();
+            db.rollback()
         db.close()
             
         return sucess

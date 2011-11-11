@@ -38,7 +38,7 @@ XMAIL_TABLE = Table('xmail', key='id')[
 #===============================================================================
 def create_table(env):
     '''
-    Constructor, see trac/postgres_backend.py:95 (method init_db)
+    Constructor, see trac/db/postgres_backend.py:95 (method init_db)
     '''
     conn, dummyArgs = DatabaseManager(env).get_connector()
     db = env.get_read_db()
