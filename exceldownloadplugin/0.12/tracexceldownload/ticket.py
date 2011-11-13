@@ -11,18 +11,23 @@ from trac.resource import Resource, get_resource_url
 from trac.ticket.model import Ticket
 from trac.ticket.query import Query
 from trac.ticket.web_ui import TicketModule
-from trac.util.datefmt import from_utimestamp
 from trac.util.text import unicode_urlencode
-from trac.util.translation import dgettext, dngettext
 from trac.web.api import IRequestFilter, RequestDone
 from trac.web.chrome import Chrome, add_link
+try:
+    from trac.util.datefmt import from_utimestamp
+except ImportError:
+    from datetime import timedelta
+    from trac.util.datefmt import utc
+    _epoc = datetime(1970, 1, 1, tzinfo=utc)
+    from_utimestamp = lambda ts: _epoc + timedelta(seconds=ts or 0)
 
 from tracexceldownload.api import WorksheetWriter, get_workbook_content, \
                                   get_literal
-from tracexceldownload.translation import _
+from tracexceldownload.translation import _, dgettext, dngettext
 
 
-__all__ = ['ExcelTicketModule']
+__all__ = ['ExcelTicketModule', 'ExcelReportModule']
 
 
 class ExcelTicketModule(Component):
@@ -66,7 +71,10 @@ class ExcelTicketModule(Component):
                 cols.append(name)
         query.cols = cols
 
-        db = self.env.get_read_db()
+        if hasattr(self.env, 'get_read_db'):
+            db = self.env.get_read_db()
+        else:
+            db = self.env.get_db_cnx()
         tickets = query.execute(req, db)
         context = Context.from_request(req, 'query', absurls=True)
         data = query.template_data(context, tickets)
@@ -95,7 +103,7 @@ class ExcelTicketModule(Component):
             if groupname:
                 cell = fields[query.group]['label'] + ' '
                 if query.group in ('owner', 'reporter'):
-                    cell += Chrome(self.env).authorinfo(req, groupname)
+                    cell += Chrome(self.env).format_author(req, groupname)
                 else:
                     cell += groupname
                 cell += ' (%s)' % dngettext('messages', '%(num)s match',
@@ -156,7 +164,7 @@ class ExcelTicketModule(Component):
                 for name, field in change['fields'].iteritems():
                     if name in values:
                         values[name] = field['old']
-            changes[0:0] = [{'date': ticket['time'], 'fields': {},
+            changes[0:0] = [{'date': ticket.time_created, 'fields': {},
                              'values': values, 'cnum': None,
                              'comment': '', 'author': ticket['reporter']}]
 
@@ -196,7 +204,7 @@ class ExcelTicketModule(Component):
             return value, '[datetime]', None, None
 
         if value and name in ('reporter', 'owner'):
-            value = Chrome(self.env).authorinfo(req, value)
+            value = Chrome(self.env).format_author(req, value)
             return value, name, None, None
 
         if name == 'cc':

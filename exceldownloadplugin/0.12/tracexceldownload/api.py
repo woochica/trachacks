@@ -16,7 +16,10 @@ class WorksheetWriter(object):
         self.sheet = sheet
         self.req = req
         self.tz = req.tz
-        self.ambiwidth = (1, 2)[str(req.locale)[:2] in ('ja', 'kr', 'zh')]
+        if hasattr(req, 'locale'):
+            self.ambiwidth = (1, 2)[str(req.locale)[:2] in ('ja', 'kr', 'zh')]
+        else:
+            self.ambiwidth = 1
         self.styles = self._get_excel_styles()
         self.row_idx = 0
         self._col_widths = {}
