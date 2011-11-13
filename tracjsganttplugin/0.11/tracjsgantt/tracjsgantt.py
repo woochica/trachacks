@@ -1,3 +1,4 @@
+
 import re
 import time
 from datetime import timedelta, datetime
@@ -604,7 +605,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 return start
 
             # If we haven't scheduled this yet, do it now.
-            if t.get('calc_start') == None:
+            if t.get('calc_finish') == None:
                 # If there is a finish set, use it
                 if self.fields['finish'] and t[self.fields['finish']] != '':
                     finish = datetime(*time.strptime(t[self.fields['finish']], 
@@ -634,14 +635,20 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         # Monday, skip the weekend, too.
                         else:
                             finish -= timedelta(hours=(24-options['hoursPerDay'])+48)
-
-                # start is finish minus duration
-                hours = self._workHours(options, t)
-                start = finish + _calendarOffset(-1*hours, finish)
-
-                # Set the fields
+                # Set the field
                 t['calc_finish'] = finish
-                t['calc_start'] = start
+
+            if t.get('calc_start') == None:
+                if self.fields['start'] and t[self.fields['start']] != '':
+                    start = datetime(*time.strptime(t[self.fields['start']], 
+                                                     self.dbDateFormat)[0:7])
+                    start = start.replace(hour=0, minute=0) + \
+                        timedelta(hours=options['hoursPerDay'])
+                else:
+                    hours = self._workHours(options, t)
+                    start = t['calc_finish'] + \
+                        _calendarOffset(-1*hours, t['calc_finish'])
+                t['calc_start']=start
 
             return t['calc_start']
 
@@ -686,7 +693,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 return finish
 
             # If we haven't scheduled this yet, do it now.
-            if t.get('calc_finish') == None:
+            if t.get('calc_start') == None:
                 # If there is a start set, use it
                 if self.fields['start'] and t[self.fields['start']] != '':
                     start = datetime(*time.strptime(t[self.fields['start']], 
@@ -716,14 +723,20 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         # Friday, skip the weekend, too.
                         else:
                             start += timedelta(hours=(24-options['hoursPerDay'])+48)
-
-                # finish is start plus duration
-                hours = self._workHours(options, t)
-                finish = start + _calendarOffset(+1*hours, start)
-
-                # Set the fields
-                t['calc_finish'] = finish
+                
+                # Set the field
                 t['calc_start'] = start
+                
+            if t.get('calc_finish') == None:
+                if self.fields['finish'] and t[self.fields['finish']] != '':
+                    finish = datetime(*time.strptime(t[self.fields['finish']], 
+                                                     self.dbDateFormat)[0:7])
+                    finish = finish.replace(hour=0, minute=0)
+                else:
+                    hours = self._workHours(options, t)
+                    finish = t['calc_start'] + \
+                        _calendarOffset(+1*hours, t['calc_start'])
+                t['calc_finish']=finish
 
             return t['calc_finish']
 
