@@ -445,6 +445,28 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
 
 
+    def _compare_tickets(self, t1, t2):
+        # If t2 depends on t1, t2 is first
+        if self.fields['succ'] and \
+                str(t1['id']) in t2[self.fields['succ']]:
+            return 1
+        # If t1 depends on t2, t1 is first
+        elif self.fields['succ'] and \
+                str(t2['id']) in t1[self.fields['succ']]:
+            return -1
+        # If t1 ends first, it's first
+        elif t1['calc_finish'] < t2['calc_finish']:
+            return -1
+        # If t2 ends first, it's first
+        elif t1['calc_finish'] > t2['calc_finish']:
+            return 1
+        # End dates are same. If t1 starts later, it's later
+        elif t1['calc_start'] > t2['calc_start']:
+            return 1
+        # Otherwise, preserve order (assume t1 is before t2 when called)
+        else:
+            return 0
+
     # Compute WBS for sorting and figure out the tickets' levels for
     # controlling how many levels are open.  
     #
@@ -458,10 +480,15 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             self.ticketsByID[id]['wbs'] = copy.copy(wbs)
 
             # Recurse to children
-            if self.ticketsByID[id]['children']:
+            childIDs = self.ticketsByID[id]['children']
+            if childIDs:
+                childTickets = [self.ticketsByID[id] for id in childIDs]
+                childTickets.sort(self._compare_tickets)
+                childIDs = [ct['id'] for ct in childTickets]
+                
                 # Add another level
                 wbs.append(1)
-                for c in self.ticketsByID[id]['children']:
+                for c in childIDs:
                     wbs = _setLevel(c, wbs, level+1)
                 # Remove the level we added
                 wbs.pop()
@@ -1034,30 +1061,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     def _add_tasks(self, options):
         # Return -1 if a should be before b, 1 otherwise.
         def _compare_children(a, b):
-            return _compare_tickets(self.ticketsByID[a],
-                                    self.ticketsByID[b])
+            return self._compare_tickets(self.ticketsByID[a],
+                                         self.ticketsByID[b])
 
-        def _compare_tickets(t1, t2):
-            # If t2 depends on t1, t2 is first
-            if self.fields['succ'] and \
-                    str(t1['id']) in t2[self.fields['succ']]:
-                return 1
-            # If t1 depends on t2, t1 is first
-            elif self.fields['succ'] and \
-                    str(t2['id']) in t1[self.fields['succ']]:
-                return -1
-            # If t1 ends first, it's first
-            elif t1['calc_finish'] < t2['calc_finish']:
-                return -1
-            # If t2 ends first, it's first
-            elif t1['calc_finish'] > t2['calc_finish']:
-                return 1
-            # End dates are same. If t1 starts later, it's later
-            elif t1['calc_start'] > t2['calc_start']:
-                return 1
-            # Otherwise, preserve order (assume t1 is before t2 when called)
-            else:
-                return 0
 
         if options.get('sample'):
             tasks = self._add_sample_tasks()
@@ -1079,7 +1085,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
             # Schedule the tasks and sort them by date for computing WBS
             self._schedule_tasks(options)
-            self.tickets.sort(_compare_tickets)
+            self.tickets.sort(self._compare_tickets)
 
             # Compute the WBS and sort them by WBS for display
             self._compute_wbs()                
