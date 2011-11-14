@@ -137,7 +137,7 @@ class CopyRule(Component, Rule):
         pref['label'] = "Copy %s to %s" % (trigger, target)
 
 
-class DefaultValueRule(Component, Rule):
+class DefaultRule(Component, Rule):
     """Defaults a field to a user-specified value if empty.
     
     Example trac.ini specs:
@@ -268,3 +268,52 @@ class ValidateRule(Component, Rule):
     def update_pref(self, req, trigger, target, key, opts, pref):
         suffix = opts[key] and "= %s" % opts[key] or "is empty"
         pref['label'] = "Invalid if %s %s" % (target, suffix)
+
+
+class SetRule(Component, Rule):
+    """Sets a field based on another field's value.
+    
+    Example trac.ini specs:
+    
+      [ticket-custom]
+      milestone.set_when_phase = implementation|verifying|releasing
+      milestone.set_to = !
+      milestone.overwrite = false
+    
+    If 'overwrite' is true, then the milestone field's value will get
+    over-written even if it already has a value. The "!" is used only
+    for select fields to specify the first non-empty option; a common
+    use case is to auto-select the current milestone.
+    """
+    
+    implements(IRule)
+    
+    def get_trigger(self, target, key, opts):
+        rule_re = re.compile(r"%s.set_when_(?P<trigger>.*)" % target)
+        match = rule_re.match(key)
+        if match:
+            return match.groupdict()['trigger']
+        return None
+    
+    def update_spec(self, req, key, opts, spec):
+        spec['trigger_value'] = opts[key]
+        spec['set_to'] = opts.get("%s.set_to" % spec['target'],'invalid_value')
+        spec['overwrite'] = opts.get('%s.overwrite' % spec['target'],'false')
+    
+    def update_pref(self, req, trigger, target, key, opts, pref):
+        spec = {'target':target}
+        self.update_spec(req, key, opts, spec)
+        # "When trigger = value set target to"
+        trigval = spec['trigger_value'].replace('|',' or ')
+        if spec['set_to'] == 'invalid_value':
+            set_to = ''
+            if opts.get(target) == 'select':
+                pref['type'] = 'select'
+            else:
+                pref['type'] = 'text'
+        elif spec['set_to'] == '!':
+            set_to = 'the first non-empty option'
+        else:
+            set_to = spec['set_to']
+        pref['label'] = "When %s = %s, set %s to %s" % \
+                            (trigger, trigval, target, set_to)

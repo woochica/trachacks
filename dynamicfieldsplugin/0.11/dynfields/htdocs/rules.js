@@ -54,10 +54,10 @@ copyrule.apply = function(input, spec){
     
     // 'owner' field is special case 
     if (spec.target == 'owner' && field.length == 0) {
-		field = jQuery('#action_reassign_reassign_owner');
-		if (field.length == 0)
-		    field = jQuery('#action_assign_reassign_owner');
-	}
+        field = jQuery('#action_reassign_reassign_owner');
+        if (field.length == 0)
+            field = jQuery('#action_assign_reassign_owner');
+    }
     
     if (spec.overwrite.toLowerCase() == 'false' && field.val() != '')
         return;
@@ -76,7 +76,7 @@ copyrule.apply = function(input, spec){
         }
         if (doit && field.val() != input.val()){
             if (spec.target == 'owner' && !jQuery('#field-owner').length)
-    			jQuery('#action_reassign').click();
+                jQuery('#action_reassign').click();
             field.hide().removeAttr('disabled');
             field.val(input.val()).change();
             field.fadeIn('slow');
@@ -88,9 +88,9 @@ copyrule.apply = function(input, spec){
 
 
 /*
- * DefaultValueRule implementation
+ * DefaultRule implementation
  */
-var defaultrule = new Rule('DefaultValueRule'); // must match python class name exactly
+var defaultrule = new Rule('DefaultRule'); // must match python class name exactly
 
 // apply
 defaultrule.apply = function(input, spec){
@@ -294,5 +294,61 @@ validaterule.setup = function(input, spec){
                 return true;
             }
         });
+    }
+};
+
+
+/*
+ * SetRule implementation
+ */
+var setrule = new Rule('SetRule'); // must match python class name exactly
+
+// setup
+setrule.setup = function(input, spec){
+    if (spec.value == undefined)
+        return;
+    
+    // ensure trigger field's new value is in spec's list
+    if (jQuery.inArray(input.val(), spec.trigger_value.split('|')) == -1) // supports list of trigger values
+        return;
+    
+    var field = jQuery('#field-'+spec.target);
+    
+    // 'owner' field is special case 
+    if (spec.target == 'owner' && field.length == 0) {
+        field = jQuery('#action_reassign_reassign_owner');
+        if (field.length == 0)
+            field = jQuery('#action_assign_reassign_owner');
+    }
+    
+    if (spec.overwrite.toLowerCase() == 'false' && field.val() != '')
+        return;
+    
+    var set_to = spec.set_to;
+    if (set_to == 'invalid_value')
+        set_to = spec.value; // only use pref if set_to not set in trac.ini
+    
+    // only do effect if value is changing (i.e., is a select option)
+    var doit = false;
+    if (field.get(0).tagName.toLowerCase() == 'select'){
+        field.find('option').each(function(i,e){
+            var option = jQuery(e).text();
+            if (set_to == '!' && option.length) // special non-empty rule
+                set_to = option;
+            if (option == set_to) {
+                doit = true;
+                return;
+            }
+        });
+    } else {
+        doit = true;
+    }
+    
+    if (doit && field.val() != set_to){
+        if (spec.target == 'owner' && !jQuery('#field-owner').length)
+            jQuery('#action_reassign').click();
+        field.hide().removeAttr('disabled');
+        field.val(set_to).change();
+        field.fadeIn('slow');
     }
 };
