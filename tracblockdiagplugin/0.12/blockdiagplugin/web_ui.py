@@ -8,6 +8,7 @@ from subprocess import Popen, PIPE
 
 
 from trac.core import *
+from trac.config import Option
 from trac.wiki import IWikiMacroProvider
 from trac.web import IRequestHandler 
 from trac.wiki.formatter import system_message
@@ -104,6 +105,13 @@ class BlockDiagPlugin(Component):
         http://tk0miya.bitbucket.org/actdiag/build/html/index.html and http://tk0miya.bitbucket.org/nwdiag/build/html/index.html
     """
     implements (IWikiMacroProvider, IRequestHandler)
+
+    _default_type = Option('blockdiag', 'default_type', 'png',
+        doc="Default output format type which will be used when the type "
+            "isn't given.")
+
+    _font = Option('blockdiag', 'font', '',
+        doc="Path to a font file to draw a diagram.")
     
     macros = None
 
@@ -128,11 +136,11 @@ class BlockDiagPlugin(Component):
         if name[-4:] in ('_svg', '_png'):
             name, type = name.split('_')
         else:
-            type = (args.get('type') or self.env.config.get('blockdiag', 'default_type', 'png')).lower()
+            type = (args.get('type') or self._default_type).lower()
             if type not in ('svg', 'png'):
                 return system_message("Invalid type(%s). Type must be 'svg' or 'png'" % type)
                 
-        font = self.env.config.get('blockdiag', 'font', '')
+        font = self._font
 
         # nonascii unicode can't be passed to hashlib.
         id = make_hash('%s,%s,%s,%r' % (name, type, font, content)).hexdigest()
