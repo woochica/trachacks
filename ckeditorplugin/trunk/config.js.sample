@@ -1,0 +1,42 @@
+/*
+Sample configuration file for CKEditor in conjunction with CKEditorPlugin.
+
+All of these functions and styles are working with current version of 
+CKEditorPlugin (1.1dev).
+*/
+
+CKEDITOR.stylesSet.add( 'custom_styles',
+[
+ 	// see documentation at http://docs.cksource.com/CKEditor_3.x/Developers_Guide/Styles
+	// Block-level styles
+	{ name : 'Normal' , element : 'p', styles : { 'font-weight': 'normal' } },
+	{ name : 'Header 1', element : 'h1' },
+	{ name : 'Header 2' , element : 'h2'},
+ 
+	// Inline styles
+	{name:'yellow marker',element:'span',styles:{'background-color': 'yellow'}},
+	{name:'green marker',element:'span',styles:{'background-color': 'lime'}},
+	{name:'monospaced text',element:'tt'}
+]);
+
+CKEDITOR.editorConfig = function( config )
+{
+	config.toolbar = 'custom';
+	
+	// For full toolbar, see http://docs.cksource.com/CKEditor_3.x/Developers_Guide/Toolbar
+	config.toolbar_custom = [
+		['Source', 'Preview','-'],
+		['Cut','Copy','PasteFromWord','PasteCode','-'],
+		['Undo','Redo','-','Replace','-','RemoveFormat'],
+		['Bold','Italic','Underline','Strike','-','Subscript','Superscript'],
+		['NumberedList','BulletedList','-','Outdent','Indent'],
+		'/',
+		['Link','Unlink'],
+		['Image','Table','HorizontalRule','SpecialChar'],
+		['Styles','Format'],
+		['TextColor'],
+		['Maximize', 'ShowBlocks','-','About']
+	];
+	
+	config.stylesSet = 'custom_styles';
+};
