@@ -18,7 +18,6 @@ from trac.core import Component, implements
 from trac.web.api import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet,\
     add_script
-
 from trac.util.translation import domain_functions
 from xmail.XMailFilterObject import FilterObject, XMAIL_TABLE, create_table,\
     get_col_list
@@ -116,8 +115,6 @@ class XMailMainView(Component):
                         filter.save(self.env.get_db_cnx(), True, id)
                         return self.print_main_view(req)
                     except Exception, e:
-                        self.xmaillog("DEBUG:XMailMainView.process_request: Exception risen by filter.save(self.env.get_db_cnx(), True, id)\n\t%s" % e.args[1])
-                        self.xmaillog("DEBUG:XMailMainView.process_request: sql_Statement was:\n%s" % str(e.args[0]))
                         self.log.error( "[process_request] error while executing save occured: %s" % (e.args[1]) )
                         return self.print_edit_view(req, e, filter=filter)
                 elif filter.check_filter():
@@ -400,9 +397,3 @@ class XMailMainView(Component):
         db.close()
             
         return sucess
-    
-    def xmaillog (self, message):
-        f = open('/opt/trac/projects/Legato/log/xmailplugin.log', 'r+')
-        f.seek(0,2)
-        f.write('%s\n' % message)
-        f.close()
