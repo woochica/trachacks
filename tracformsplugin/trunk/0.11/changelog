@@ -5,6 +5,7 @@ tracforms-0.5 (yet unreleased):
  resolved issues
  * #6033: tf.who should be passed through format_author
    adding a private, optionally cached version of `env.get_known_users()`
+ * #9286: Only first update of Form works, all others fail
 
 
 tracforms-0.4.1 (22-Jul-2011):

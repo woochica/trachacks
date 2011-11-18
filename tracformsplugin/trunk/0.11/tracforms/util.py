@@ -103,13 +103,20 @@ def _render_change(old, new):
                                     new=tag.em(nbsp, new))))
     return rendered
 
+# adapted from code published by Daniel Goldberg on 09-Dec-2008 at
+# http://stackoverflow.com/questions/354038
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except (TypeError, ValueError):
+        return False
 
 # code from an article published by Uche Ogbuji on 15-Jun-2005 at
 # http://www.xml.com/pub/a/2005/06/15/py-xml.html
 def xml_escape(text):
     enc = getencoder('us-ascii')
     return enc(to_unicode(text), 'xmlcharrefreplace')[0]
-
 
 # adapted from code published by John J. Lee on 06-Jun-2007 at
 # http://www.velocityreviews.com/forums

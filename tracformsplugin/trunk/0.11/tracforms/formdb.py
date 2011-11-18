@@ -15,7 +15,7 @@ from trac.web.chrome import Chrome
 from api import IFormDBObserver, _
 from compat import json, parse_qs, resource_exists
 from tracdb import DBComponent
-from util import parse_history, resource_from_page, xml_unescape
+from util import is_number, parse_history, resource_from_page, xml_unescape
 
 __all__ = ['FormDBComponent', 'format_author']
 
@@ -75,7 +75,7 @@ class FormDBComponent(DBComponent):
                     track_fields
             FROM    forms
             """
-        if not isinstance(src, int):
+        if not is_number(src):
             sql += """
                 WHERE   realm=%s
                     AND resource_id=%s
@@ -89,7 +89,7 @@ class FormDBComponent(DBComponent):
         realm = None
         resource_id = None
         subcontext = None
-        if not isinstance(src, int):
+        if not is_number(src):
             realm, resource_id, subcontext = src
         else:
             form_id = src
@@ -106,7 +106,7 @@ class FormDBComponent(DBComponent):
             SELECT  state
             FROM    forms
             """
-        if not isinstance(src, int):
+        if not is_number(src):
             sql += """
                 WHERE   realm=%s
                     AND resource_id=%s
@@ -213,7 +213,7 @@ class FormDBComponent(DBComponent):
     def get_tracform_history(self, src, db=None):
         db = self._get_db(db)
         cursor = db.cursor()
-        if isinstance(src, int):
+        if is_number(src):
             form_id = src
         else:
             form_id = self.get_tracform_meta(src, db=db)[0]
@@ -228,7 +228,7 @@ class FormDBComponent(DBComponent):
     def get_tracform_fields(self, src, db=None):
         db = self._get_db(db)
         cursor = db.cursor()
-        if isinstance(src, int):
+        if is_number(src):
             form_id = src
         else:
             form_id = self.get_tracform_meta(src, db=db)[0]
@@ -243,7 +243,7 @@ class FormDBComponent(DBComponent):
         """Retrieve author and time of last change per field."""
         db = self._get_db(db)
         cursor = db.cursor()
-        if isinstance(src, int):
+        if is_number(src):
             form_id = src
         else:
             form_id = self.get_tracform_meta(src, db=db)[0]
@@ -267,7 +267,7 @@ class FormDBComponent(DBComponent):
         cursor = db.cursor()
         form_ids = []
         # identify form_id(s) to reset
-        if isinstance(src, int):
+        if is_number(src):
             form_ids.append(src)
         elif isinstance(src, tuple) and len(src) == 3:
             if src[-1] is None:
