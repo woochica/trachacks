@@ -233,7 +233,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         text = ''
         text += '<div style="position:relative" class="gantt" id="GanttChartDIV_'+self.GanttID+'"></div>\n'
         text += '<script language="javascript">\n'
-        text += 'var '+self.GanttID+' = new JSGantt.GanttChart("'+self.GanttID+'",document.getElementById("GanttChartDIV_'+self.GanttID+'"), "%s", "%d");\n' % (javascript_quote(format), showdep)
+        text += 'var '+self.GanttID+' = new JSGantt.GanttChart("'+self.GanttID+'",document.getElementById("GanttChartDIV_'+self.GanttID+'"), "%s", "%s");\n' % (javascript_quote(format), showdep)
         text += 'var t;\n'
         text += 'if (window.addEventListener){\n'
         text += '  window.addEventListener("resize", function() { g.Draw();\n }, false);\n'
