@@ -1,0 +1,72 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+<xi:include href="admin.html" />
+<head>
+  <title>Manage SQL Groups</title>
+</head>
+<body>
+<h2>Manage SQL Groups</h2>
+
+<div py:if="not listing_enabled" class="system-message">
+  <p>There are no groups defined. Use the add dialog to insert new users/groups.</p>
+</div>
+<div py:if="message" class="system-message">
+  <p py:content="message"></p>
+</div>
+
+<form id="addsubj" class="addnew" method="post" action="">
+ <!--input type="hidden" name="group" value="${group}" /-->
+ <fieldset>
+  <legend>Add User to Group:</legend>
+  <div class="field">
+   <label>User: <input type="text" name="user" /></label>
+  </div>
+  <div class="field">
+   <label>Group: <input type="text" name="group" value="${group}" /></label>
+  </div>
+  <p class="help">Add a user to an existing or new group. If the group doesn't exist yet, it will be created.</p>
+  <div class="buttons">
+   <input type="submit" name="add" value=" Add " />
+  </div>
+ </fieldset>
+</form>
+
+
+<form py:if="selection_enabled" name="groupselection" method="post" action="">
+  <fieldset>
+    <legend>Select group:</legend>
+    <select size="1" name="group" onChange="document.groupselection.submit()">
+      <py:for each="grp in groups">
+        <option py:if="group==grp" selected="selected" py:content="grp"></option>
+        <option py:if="group!=grp" py:content="grp"></option>
+      </py:for>
+    </select>
+  </fieldset>
+  <input type="submit" name="update" value="Refresh list" />
+</form>
+
+<py:if test="listing_enabled">
+ <h2>Editing group: <i>${group}</i></h2>
+ <form method="post">
+  <input type="hidden" name="group" value="${group}" />
+  <table class="listing" id="grouplist">
+   <thead>
+    <tr><th class="sel">&nbsp;</th><th>User</th></tr>
+   </thead><tbody>
+   <tr py:for="user in members">
+     <td><input type="checkbox" name="sel" value="${user}" /></td>
+     <td py:content="user"></td>
+    </tr>
+  </tbody>
+  </table>
+  <div class="buttons">
+   <input type="submit" name="remove" value="Remove selected users from '${group}'" />
+  </div>
+ </form>
+</py:if>
+</body>
+</html>
