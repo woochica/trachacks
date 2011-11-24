@@ -62,7 +62,7 @@ class LdapPermissionGroupProvider(Component):
         self._ldapcfg = {}
         for name,value in self.config.options('ldap'):
             if name in LDAP_DIRECTORY_PARAMS:
-                self._ldapcfg[name] = value
+                self._ldapcfg[str(name)] = value
         # user entry local cache
         self._cache = {}
         # max time to live for a cache entry
@@ -178,7 +178,7 @@ class LdapPermissionStore(Component):
         self._ldapcfg = {}
         for name,value in self.config.options('ldap'):
             if name in LDAP_DIRECTORY_PARAMS:
-                self._ldapcfg[name] = value
+                self._ldapcfg[str(name)] = value
         # user entry local cache
         self._cache = {}
         # max time to live for a cache entry
