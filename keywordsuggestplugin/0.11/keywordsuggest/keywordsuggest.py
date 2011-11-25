@@ -9,6 +9,13 @@ from genshi.filters.transform import Transformer
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from pkg_resources import resource_filename
 from trac.web import IRequestFilter
+try:
+    from tractags.api import TagSystem
+    tagsplugin_is_installed = True
+except ImportError:
+    # TagsPlugin not available
+    tagsplugin_is_installed = False
+import re
 
 class KeywordSuggestModule(Component):
     implements (ITemplateStreamFilter, ITemplateProvider, IRequestFilter)
@@ -22,10 +29,9 @@ class KeywordSuggestModule(Component):
     matchcontains = BoolOption('keywordsuggest','matchcontains', True,
                                """Include partial matches in suggestion list. Default is true.""")
 
-    multipleseparator = Option('keywordsuggest','multipleseparator', "', '",
+    multipleseparator = Option('keywordsuggest','multipleseparator', ",",
                                """Character(s) to use as separators between keywords.
-
-Must be enclosed with quotes or other characters. Default is ', '.""")
+                               Must be enclosed with quotes or other characters. Default is ', '.""")
 
     helppage = Option('keywordsuggest','helppage', None,
                       """If specified, 'keywords' label will be turned into a link to this URL.""")
@@ -35,15 +41,29 @@ Must be enclosed with quotes or other characters. Default is ', '.""")
 
     # ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):
-        if (filename <> 'ticket.html'):
-            return stream       
+        if (filename <> 'ticket.html' and filename <> 'wiki_edit.html'):
+            return stream
 
+        keywords = self.config.getlist('keywordsuggest','keywords') 
+        if tagsplugin_is_installed:
+            # '-invalid_keyword' is a workaround for a TagsPlugin regression, see th:#7856 and th:#7857
+            query_result = TagSystem(self.env).query(req, '-invalid_keyword')
+            for resource, tags in query_result:
+                for _tag in tags:
+                    if (_tag not in keywords):
+                        keywords.append(_tag)
+        
+        if keywords:
+            keywords = ','.join(("'%s'" % _keyword for _keyword in keywords))
+        else:
+            keywords = ''
+        
         if not self.keywords:
             self.log.debug('List of keywords not found in trac.ini. '\
                            'Plugin keywordsuggest disabled.')
             return stream
 
-        keywords = ','.join(("'%s'" % keyword for keyword in self.keywords))
+        multipleseparator = self.multipleseparator + ' '
 
         mustmatch = 'mustMatch: true,'
         if not self.mustmatch:
@@ -53,31 +73,52 @@ Must be enclosed with quotes or other characters. Default is ', '.""")
         if not self.matchcontains:
             matchcontains = ""
 
-        # inject transient part of javascript directly into ticket.html template
-        js = """
-        $(function($) {
-          var sep = '%s'
-          $('#field-keywords').autocomplete([%s], {multiple: true, %s
-                                            %s multipleSeparator: sep, autoFill: true}); 
-          $("form").submit(function() {
-              // remove trail separator if any
-              keywords = $("input#field-keywords").attr('value')
-              if (keywords.lastIndexOf(sep) + sep.length == keywords.length) {
-                  $("input#field-keywords").attr('value', keywords.substring(0, keywords.length-sep.length))
-              }
-          });
-        });""" % (self.multipleseparator[1:-1], # remember to chop the quotes
-                  keywords, matchcontains, mustmatch)
-        stream = stream | Transformer('.//head').append \
-                          (tag.script(Markup(js), type='text/javascript'))
+       # inject transient part of javascript directly into ticket.html template
+        if req.path_info.startswith('/ticket/') or \
+           req.path_info.startswith('/newticket'):
+            js_ticket = """
+            $(function($) {
+              var sep = '%s'
+              $('#field-keywords').autocomplete([%s], {multiple: true, %s
+                                                %s multipleSeparator: sep, autoFill: true}); 
+              $("form").submit(function() {
+                  // remove trail separator if any
+                  keywords = $("input#field-keywords").attr('value')
+                  if (keywords.lastIndexOf(sep) + sep.length == keywords.length) {
+                      $("input#field-keywords").attr('value', keywords.substring(0, keywords.length-sep.length))
+                  }
+              });
+            });""" % (multipleseparator, keywords, matchcontains, mustmatch)
+            stream = stream | Transformer('.//head').append \
+                              (tag.script(Markup(js_ticket), type='text/javascript'))
 
-        # turn keywords field label into link to wiki page
-        if self.helppage:
-            link = tag.a(href='%s' % self.helppage, target='blank')
-            if not self.helppagenewwindow:
-                link.attrib -= 'target'
-            stream = stream | Transformer\
-                         ('//label[@for="field-keywords"]/text()').wrap(link)
+            # turn keywords field label into link to wiki page
+            if self.helppage:
+                link = tag.a(href='%s' % self.helppage, target='blank')
+                print link
+                if not self.helppagenewwindow:
+                    link.attrib -= 'target'
+                    stream = stream | Transformer\
+                             ('//label[@for="field-keywords"]/text()').wrap(link)
+                             
+        # inject transient part of javascript directly into wiki.html template                             
+        elif req.path_info.startswith('/wiki/'):
+            js_wiki = """
+            $(function($) {
+              var sep = '%s'
+              $('#tags').autocomplete([%s], {multiple: true, %s
+                                      %s multipleSeparator: sep, autoFill: true}); 
+                                          $("form").submit(function() {
+                  // remove trail separator if any
+                  keywords = $("input#tags").attr('value')
+                  if (keywords.lastIndexOf(sep) + sep.length == keywords.length) {
+                      $("input#tags").attr('value', keywords.substring(0, keywords.length-sep.length))
+                  }
+              });
+            });""" % (multipleseparator, keywords, matchcontains, mustmatch)
+            stream = stream | Transformer('.//head').append \
+                              (tag.script(Markup(js_wiki), type='text/javascript'))
+                              
         return stream
 
     # ITemplateProvider methods
@@ -86,8 +127,8 @@ Must be enclosed with quotes or other characters. Default is ', '.""")
         static resources (such as images, style sheets, etc).
         """
         return [('keywordsuggest', resource_filename(__name__, 'htdocs'))]
-
     def get_templates_dirs(self):
+
         return [resource_filename(__name__, 'htdocs')]
 
     # IRequestFilter methods
@@ -96,7 +137,8 @@ Must be enclosed with quotes or other characters. Default is ', '.""")
     
     def post_process_request(self, req, template, data, content_type):
         if req.path_info.startswith('/ticket/') or \
-           req.path_info.startswith('/newticket'):
+           req.path_info.startswith('/newticket') or \
+           req.path_info.startswith('/wiki/'):
             add_script(req, 'keywordsuggest/jquery.bgiframe.min.js')
             add_script(req, 'keywordsuggest/jquery.autocomplete.pack.js')
             add_stylesheet(req, 'keywordsuggest/autocomplete.css')
