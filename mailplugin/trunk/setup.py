@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name='XMailPlugin', 
-    version='0.4.0',
+    version='0.4.1',
     author = 'Gefasoft AG, Franz Mayer', 
     description = 'Extented Mail Plugin (XMail)',
     long_description = """XMail plugin allows to send user-specific, timed (periodically executed) notifications of new / changed tickets """,

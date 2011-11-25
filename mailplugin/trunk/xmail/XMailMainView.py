@@ -107,19 +107,20 @@ class XMailMainView(Component):
                     save = req.args['Save']
                 except: pass
                 if id and not save:
-                    filter.load_filter(self.env.get_db_cnx(), id)
+                    filter.load_filter(self.env, id)
                     return self.print_edit_view(req, filter=filter)
                 elif id and filter.check_filter(): 
                     #update existing data
                     try:
-                        filter.save(self.env.get_db_cnx(), True, id)
+                        filter.save(self.env, True, id)
                         return self.print_main_view(req)
                     except Exception, e:
+                        self.log.error( "[process_request] error while executing save occured: %s" % (e) )
                         self.log.error( "[process_request] error while executing save occured: %s" % (e.args[1]) )
                         return self.print_edit_view(req, e, filter=filter)
                 elif filter.check_filter():
                     try:
-                        filter.save(self.env.get_db_cnx())
+                        filter.save(self.env)
                         return self.print_main_view(req)
                     except Exception, e:
                         #warning
@@ -175,16 +176,17 @@ class XMailMainView(Component):
         else:
             self.log.debug ( "check database" )
             sql = "select id from xmail;"
-            db = self.env.get_db_cnx()
-            myCursor = db.cursor()
-            try:
-                myCursor.execute(sql)
-                self.config.set(self._CONFIG_SECTION, 'name', 'xmail')
-                self.log.debug ( "created local ini entries with name xmail" )
-                return True
-            except Exception:
-                self.log.warn ( "[_check_init] error while checking database; table 'xmail' is probably not present" )
-            db.close()
+            with self.env.db_query as db:
+                myCursor = db.cursor()
+                try:
+                    myCursor.execute(sql)
+                    self.config.set(self._CONFIG_SECTION, 'name', 'xmail')
+                    self.log.debug ( "created local ini entries with name xmail" )
+                    return True
+                except Exception:
+                    self.log.warn ( "[_check_init] error while checking database; table 'xmail' is probably not present" )
+                finally:
+                    db.close()
 
         return False
     
@@ -222,12 +224,12 @@ class XMailMainView(Component):
         #req = self.buildSqlParts(req)
         id = req.args['id']
         filter = self._getFilterObject(req)
-
+#        data = None
+        
         try:
-            db = self.env.get_db_cnx()
-            filter.load_filter(db, id)
-            sql = filter.get_filter_select_from_db(db, id)
-            sql_result, table_headers = filter.get_result(db, sql)
+            filter.load_filter(self.env, id)
+            sql = filter.get_filter_select_from_db(self.env, id)
+            sql_result, table_headers = filter.get_result(self.env, sql)
             data = {'id': id, 'sql': sql,
                     'filter_name': filter.values['filtername'],
                     'table_headers': table_headers,
@@ -316,47 +318,46 @@ class XMailMainView(Component):
             self.log.debug( 'updated %s filter(s) -- ids: %s' % (len(action_sel), id_list) )            
     
     def get_data(self, sql):
-        db = self.env.get_db_cnx()
-        myCursor = db.cursor()
-        data = []
-        col_list = []
-        try:
-            myCursor.execute(sql)
-            cols = myCursor.description
-            for col in cols:
-                col_list.append(col[0])
+        with self.env.db_query as db:
+            myCursor = db.cursor()
+            data = []
+            col_list = []
+            try:
+                myCursor.execute(sql)
+                cols = myCursor.description
+                for col in cols:
+                    col_list.append(col[0])
+                    
+                for row in myCursor:
+                    newRow = {}
+    #                row = list(myCursor.fetchone())
+                    for i, col in enumerate(col_list):
+                        newRow[col] = row[i]
+                    data.append(newRow)
+    #            data = list(myCursor.fetchall())
                 
-            for row in myCursor:
-                newRow = {}
-#                row = list(myCursor.fetchone())
-                for i, col in enumerate(col_list):
-                    newRow[col] = row[i]
-                data.append(newRow)
-#            data = list(myCursor.fetchall())
-            
-            db.commit()
-        except Exception, e:
-            self.log.error ( "[print_mail_list] SQL:\n %s \n produced exception: %s" % (sql,e))
-            
-        db.close()
+            except Exception, e:
+                self.log.error ( "[print_mail_list] SQL:\n %s \n produced exception: %s" % (sql,e))
+            finally:    
+                db.close()
         return data, col_list
     
     """
         gets user email address
     """
     def get_user_email(self, username):
-        db = self.env.get_db_cnx()
-        myCursor = db.cursor()
         sql = "select value from session_attribute where sid='" + username + "' and name='email'"
         sqlResult = None
-        
-        try:
-            myCursor.execute(sql)
-            sqlResult = list(myCursor.fetchall())
-            db.commit()
-        except Exception, e:
-            self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sql, e))
-            db.rollback()
+        with self.env.db_query as db:
+            myCursor = db.cursor()
+            
+            try:
+                myCursor.execute(sql)
+                sqlResult = list(myCursor.fetchall())
+            except Exception, e:
+                self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sql, e))
+            finally:
+                db.close()
         
         if sqlResult and ( len(sqlResult) == 1 ):
             return sqlResult[0]
@@ -364,19 +365,18 @@ class XMailMainView(Component):
             return None
         
     def get_report_list(self, username):
-        db = self.env.get_db_cnx()
-        myCursor = db.cursor()
         sql = "select value from session_attribute where sid='" + username + "' and name='email'"
         sqlResult = None
-        
-        try:
-            myCursor.execute(sql)
-            sqlResult = list(myCursor.fetchall())
-            db.commit()
-        except Exception, e:
-            self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sql, e))
-            db.rollback()
-        db.close()
+        with self.env.db_query as db:
+            myCursor = db.cursor()
+            
+            try:
+                myCursor.execute(sql)
+                sqlResult = list(myCursor.fetchall())
+            except Exception, e:
+                self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sql, e))
+            finally:
+                db.close()
         
         if sqlResult and ( len(sqlResult) == 1 ):
             return sqlResult[0]
@@ -384,16 +384,15 @@ class XMailMainView(Component):
             return None
         
     def execute_sql_query(self, sqlQuery, *params):
-        db = self.env.get_db_cnx()
-        myCursor = db.cursor()
         sucess = False
-        try:
-            myCursor.execute(sqlQuery, params)
-            db.commit()
-            sucess = True
-        except Exception, e:
-            self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sqlQuery,e))
-            db.rollback()
-        db.close()
+        with self.env.db_query as db:
+            myCursor = db.cursor()
+            try:
+                myCursor.execute(sqlQuery, params)
+                sucess = True
+            except Exception, e:
+                self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sqlQuery,e))
+            finally:
+                db.close()
             
         return sucess

@@ -172,26 +172,27 @@ class FilterObject(object):
     #==================================================================
     # database and db-utils methods 
     #==================================================================    
-    def load_filter(self, db, id):
-        cursor = db.cursor()
+    def load_filter(self, env, id):
         try:
-            sql = ("select " + get_col_list() + " from " + XMAIL_TABLE.name 
-                        + " where id=%s" % id)
-            cursor.execute(sql)
-            result = cursor.fetchone()
-            self.id = id
-            
-            for i, col in enumerate(XMAIL_TABLE.columns):
-                if col.name == "selectfields":
-                    self.select_fields = self.get_select_fields_list(result[i])
-                elif col.name == "filtername":
-                    self.name = result[i]
-                        
-                if col.name == "whereclause":
-                    self.values[col.name] = self._replace_sql_where_clause(result[i], True)
-                else:    
-                    self.values[col.name] = result[i]
-                    
+            with env.db_query as db:
+                cursor = db.cursor()
+                sql = ("select " + get_col_list() + " from " + XMAIL_TABLE.name 
+                            + " where id=%s" % id)
+                cursor.execute(sql)
+                result = cursor.fetchone()
+                self.id = id
+                
+                for i, col in enumerate(XMAIL_TABLE.columns):
+                    if col.name == "selectfields":
+                        self.select_fields = self.get_select_fields_list(result[i])
+                    elif col.name == "filtername":
+                        self.name = result[i]
+                            
+                    if col.name == "whereclause":
+                        self.values[col.name] = self._replace_sql_where_clause(result[i], True)
+                    else:    
+                        self.values[col.name] = result[i]
+                            
         except Exception, e:
             raise Exception( "Xmail exception: ", e)
     
@@ -217,37 +218,39 @@ class FilterObject(object):
         
         return "select id,%s from ticket where %s" % (selectfields, whereclause)
         
-    def get_filter_select_from_db(self, db, id):
-        cursor = db.cursor()
+    def get_filter_select_from_db(self, env, id):
         sqlResult = {}
         try:
-            sql = ("select nextexe, interval, selectfields,"
-                   " whereclause from %s  where id=%s")%(XMAIL_TABLE.name,id)
-            
-            cursor.execute(sql)
-            sqlResult = list(cursor.fetchall())
+            with env.db_query as db:
+                cursor = db.cursor()
+                sql = ("select nextexe, interval, selectfields,"
+                       " whereclause from %s  where id=%s")%(XMAIL_TABLE.name,id)
+                
+                cursor.execute(sql)
+                sqlResult = list(cursor.fetchall())
 
-            if sqlResult and len(sqlResult) >0:
-                 # take just first row, nothing else
-                sqlResult = sqlResult[0]
-                if len(sqlResult) > 2 :
-                    sql_filter = self.get_filter_select(sqlResult[2],  sqlResult[3])
+                if sqlResult and len(sqlResult) >0:
+                     # take just first row, nothing else
+                    sqlResult = sqlResult[0]
+                    if len(sqlResult) > 2 :
+                        sql_filter = self.get_filter_select(sqlResult[2],  sqlResult[3])
 
         except Exception, e:
             raise Exception(e, "Error executing SQL Statement \n ( %s ) " % (sql))
         return sql_filter
     
-    def get_result(self, db, filter_sql, fetch_size=100):
-        cursor = db.cursor()
+    def get_result(self, env, filter_sql, fetch_size=100):
         sqlResult = {}
         sqlHeaders = {}
         try:
-            if fetch_size and filter_sql:
-                filter_sql = "%s LIMIT %s" % (filter_sql, fetch_size)
-            
-            cursor.execute(filter_sql)
-            sqlResult = list(cursor.fetchall())
-            sqlHeaders = cursor.description
+            with env.db_query as db:
+                cursor = db.cursor()
+                if fetch_size and filter_sql:
+                    filter_sql = "%s LIMIT %s" % (filter_sql, fetch_size)
+                
+                cursor.execute(filter_sql)
+                sqlResult = list(cursor.fetchall())
+                sqlHeaders = cursor.description
         except Exception, e:
             raise Exception(filter_sql,e)
         
@@ -265,7 +268,7 @@ class FilterObject(object):
                 where_clause = re.sub(repl, replacements[repl], where_clause)
             return where_clause
             
-    def save(self, db, update=False, id=None):
+    def save(self, env, update=False, id=None):
         sql = ""
         
         if update and not id:
@@ -332,21 +335,16 @@ class FilterObject(object):
             sql += ");"
         
         # now try select statement
-        cursor = db.cursor()
-        if sel_fields or where_clause:
-            filter_sql = self.get_filter_select(sel_fields, where_clause)
-            
-            try:
-                cursor.execute(filter_sql)
-            except Exception, e:
-                try:
-                    db.rollback()
-                    db.close()
-                except Exception, e2:
-                    pass  
-                raise Warning(filter_sql, e)
-            
-        cursor.execute(sql)
-        db.commit()
-        db.close()
+                
+        try:
+            if sel_fields or where_clause:
+                with env.db_query as db:
+                    cursor = db.cursor()
+                    filter_sql = self.get_filter_select(sel_fields, where_clause)
+                    cursor.execute(filter_sql)
+            with env.db_transaction as db:
+                db.cursor().execute(sql)
+        except Exception, e:
+            raise Warning(filter_sql, e)
+        
         return True
