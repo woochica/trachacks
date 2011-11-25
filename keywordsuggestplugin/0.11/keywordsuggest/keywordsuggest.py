@@ -94,12 +94,11 @@ class KeywordSuggestModule(Component):
 
             # turn keywords field label into link to wiki page
             if self.helppage:
-                link = tag.a(href='%s' % self.helppage, target='blank')
-                print link
+                link = tag.a(href=req.href(self.helppage), target='blank')
                 if not self.helppagenewwindow:
                     link.attrib -= 'target'
-                    stream = stream | Transformer\
-                             ('//label[@for="field-keywords"]/text()').wrap(link)
+                stream = stream | Transformer\
+                     ('//label[@for="field-keywords"]/text()').wrap(link)
                              
         # inject transient part of javascript directly into wiki.html template                             
         elif req.path_info.startswith('/wiki/'):
