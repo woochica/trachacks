@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+	  i18n:domain="xmail">
+  <xi:include href="layout.html" />
+  <head>
+    <title>list filter results</title>
+  </head>
+
+  <body>
+	<h2>XMail: List of Results
+	</h2>
+	<div id="content" class="${error and 'error' or None}">
+	<py:choose>
+		<py:when test="error">
+			<div class="message">
+				<strong>Invalid SQL-String:</strong><br/>
+				<pre>${sql}</pre><br/>
+				<strong>throws Exception:</strong><br/>
+				<pre>${error}</pre>
+			</div>
+		</py:when>
+		<py:otherwise>
+		<py:with vars="row_count = len(sql_result)">
+			<div>Found ${row_count} <span py:if="row_count == 100">(and more)</span> records for filter 
+				<span class="filter_name" title="${sql}">${filter_name}</span>:
+			</div>
+			<table class="listing tickets">
+			<thead>
+				<tr>
+				<py:for each="head in table_headers">
+					<th>${head[0]}</th>
+				</py:for>
+				</tr>
+			</thead>
+			<py:for each="row in sql_result">
+				<tr>
+				<py:for each="i, field in enumerate(row)">
+					<td>
+					<py:choose>
+						<py:when test="i == 0"><a href="${href.ticket(field)}">${field}</a></py:when>
+						<py:otherwise>${field}</py:otherwise>
+					</py:choose>
+					</td>
+				</py:for>
+				</tr>
+			</py:for>
+			</table>
+		</py:with>
+		</py:otherwise>
+	</py:choose>
+	
+    <p style="text-align: right"><a href="${href.xmail()}">back</a></p>
+    </div>
+  </body>
+</html>

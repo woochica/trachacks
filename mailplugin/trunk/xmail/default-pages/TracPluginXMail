@@ -1,0 +1,9 @@
+= XMail =
+
+== Where clause ==
+
+Im Feld "Where Clause" kann die SQL-Bedingung für den Filter angegeben werden.
+
+Als Felder stehen zur Verfügung:
+ - milestone: Meilenstein
+ - summary: Kurzbeschreibung

@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<div xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	xmlns:i18n="http://genshi.edgewall.org/i18n" i18n:domain="xmail">
+
+	<div>Available fields (SQL-commands are written in UPPER letters):<br /></div>
+	<table width="100%" class="listing tickets">
+		<thead>
+			<tr>
+				<th>Feld</th>
+				<th>Bedeutung</th>
+				<th>Beispiel</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td i18n:domain="none">milestone</td>
+				<td>Meilenstein</td>
+				<td>
+					<span class="samplecode" 
+						title="selects all milestones beginning with '4.1.'">milestone LIKE '4.1.%'</span>
+				</td>
+			</tr>
+			<tr>
+				<td i18n:domain="none">version</td>
+				<td>Version</td>
+				<td>
+					<span class="samplecode">version='4.0.0.0'</span>
+				</td>
+			</tr>
+			<tr>
+				<td i18n:domain="none">component</td>
+				<td>Komponente</td>
+				<td>
+					<span class="samplecode">component IN ('AE', 'WA')</span>
+				</td>
+			</tr>
+			<tr>
+				<td i18n:domain="none">type</td>
+				<td>Typ</td>
+				<td>
+					<span class="samplecode">type='Fehler'</span>
+				</td>
+			</tr>
+			<tr>
+				<td i18n:domain="none">priority</td>
+				<td>Priorität</td>
+				<td>
+					<span class="samplecode" title="selects all tickets with prio 'sehr hoch' and 'hoch'">priority&lt;='1'</span>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<!-- <ul>
+		<li>milestone: Meilenstein; Beispiele: <span class="samplecode">milestone='4.0.0.0'</span>,
+		<span class="samplecode">milestone LIKE '4.0.%'</span></li>
+		<li>version: Versionen; Beispiele: <span class="samplecode">version='4.0.0.0'</span>,
+		<span class="samplecode">version LIKE '4.0.%'</span></li>
+		<li>component: ; Beispiele: <span class="samplecode">component='AE'</span>,
+		<span class="samplecode">component IN ('AE', 'WA')</span></li>
+		<li>type: Typ; Beispiele: <span class="samplecode">type='Fehler'</span>,
+		<span class="samplecode">type IN ('Fehler', 'Produktpflege')</span></li>
+	</ul>
+	-->
+	
+	<p>All filters will also have a filter condition upon configuration of 'Interval'; so if you have a filter on 'daily' you will get all changes since you have gotten the last mail.</p>
+	<p><label>For detailed information see</label> 
+		<a href="${href.wiki('TracPluginXMail')}">TracPluginXMail</a>.</p>
+</div>

@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+	  i18n:domain="xmail">
+  <xi:include href="layout.html" />
+  <head>
+    <title>edit filter</title>
+  </head>
+
+  <body>
+	<h2>XMail:
+	<py:choose>
+		<py:when test="req.args['id']">
+			<label>edit filter</label>
+		</py:when>
+		<py:otherwise>New filter</py:otherwise>
+	</py:choose> 
+	</h2>
+	<div id="content" class="${error and 'error' or None}">
+	
+	<py:if test="error">
+		<div class="message">
+			<strong>Invalid SQL-String:</strong><br/>
+			<pre>${error[0]}</pre><br/>
+			<strong>throws Exception:</strong><br/>
+            <!--next line commented out because displaying error description causes failure-->
+			<!--pre>${error[1]}</pre--> 
+            <pre>ERROR IN SQL STATEMENT</pre>
+		</div>
+	</py:if>
+    
+    
+    <py:if test="warning">
+        <div class="warning system-message">
+            <strong>Illegal Arguments:</strong><br/>
+            <pre>${warning[0]}</pre><br/>
+            <strong>Further Informations:</strong><br/>
+            <pre>${warning[1]}</pre>
+        </div>
+    </py:if>
+  
+          
+    <form id="submitEditedFilter" action="" method="post">
+    <div id="editFilter">
+    	<input type="hidden" name="id" value="${req.args['id']}"/>
+    	<table width="800">
+    		<colgroup>
+    			<col width="50%"/>
+    			<col width="50%"/>
+    		</colgroup>
+    		<tr>
+    			<td><label>Name</label>:</td>
+    			<td><input id="filtername" name="filtername" type="text" value="${filter.values['filtername']}"/></td>
+    		</tr>
+    		<tr>
+    			<td><label>User</label>:</td>
+    			<td>${filter.username}<input type="hidden" name="username" value="${filter.username}"/></td>
+    		</tr>
+    		<tr>
+    			<td><label>Email address</label>:</td>
+    			<td>${userEmail}</td>
+    		</tr>
+    		<tr>
+    			<td><label>First execution</label>:</td>
+    			<td><input id="nextexe" name="nextexe" type="text" title="${_('Format: %(datehint)s', datehint=datetime_hint)}" 
+    					value="${filter.format_time(filter.values['nextexe'])}"/>
+    			<em i18n:msg="datehint">Format: ${datetime_hint}</em>
+    			</td>
+    		</tr>
+    		<tr>
+    			<td><label>Interval</label>:</td>
+    			<td>
+    			<input id="interval_i" name="interval" type="radio" value="0" checked="${filter.values['interval'] == None or filter.values['interval'] == 0 and 'checked' or None}"/>immediately<br/>
+    			<input id="interval_d" name="interval" type="radio" value="86400" checked="${str(filter.values['interval']) == '86400' and 'checked' or None}"/>daily<br/>
+    			<input id="interval_w" name="interval" type="radio" value="604800" checked="${str(filter.values['interval']) == '604800' and 'checked' or None}"/>weekly<br/>
+    			</td>
+    		</tr>
+    		<tr>
+    			<td><label>Active filter</label>:</td>
+    			<td>
+    			<input id="active" name="active" type="checkbox" value="1" checked="${filter.values['active'] == 1 or not req.args['id'] and 'checked' or None}"/>
+    			</td>
+    		</tr>
+    	</table>
+    	<hr/>
+    	<h3><label>Configure your filter</label>:</h3>
+    	<table width="100%">
+    		<tr>
+    			<td valign="top">
+    				<label>Select fields</label>:
+    				<br/><button type="button" onclick="javascript: selectAllFields('selectfields')">select all</button>
+    				<br/><button type="button" onclick="javascript: selectAllFields('selectfields', false)">deselect all</button>
+    			</td>
+    			<td>
+    				<py:for each="f in fields">
+    					<div><input type="checkbox" name="selectfields" value="${f.name}" checked="${filter.get_select_field(f.name) or not req.args['id'] and 'checked' or None}"/>${f.label}</div>
+    				</py:for>
+    			</td>
+    			<td rowspan="2" valign="bottom">
+    				<xi:include href="xmail-help_edit.html"/>
+    			</td>
+    		</tr>
+    		<tr>
+    			<td valign="top"><label>Condition (where clause)</label>:</td>
+    			<td>
+    				<div><textarea cols="30" rows="5" name="whereclause">${filter.values['whereclause']}</textarea></div>
+    			</td>
+    		</tr>    		
+    	</table>
+    	
+    	<input type="submit" name="Save" disabled="${submitDisabled and 'disabled' or None}"/>
+    </div>
+    </form>
+    <p style="text-align: right"><a href="${href.xmail()}">back</a></p>
+    </div>
+  </body>
+</html>

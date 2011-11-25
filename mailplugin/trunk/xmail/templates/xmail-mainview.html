@@ -1,0 +1,90 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+	  i18n:domain="xmail">
+  <xi:include href="layout.html" />
+  <head>
+    <title>XMail user preferences</title>
+  </head>
+
+  <body>
+
+	<div id="content">
+	<form id="submitXmailFilter" action="" method="post">
+    <div id="userInfo">
+	      <h2>XMail user preferences</h2>
+	      <p><label>User</label>: ${filter.username}</p>
+	      <p><label>Email address</label>: <label>${userEmail}</label></p>
+	      <py:choose>
+	      	<py:when test="filter.username == 'anonymous'">
+	      		<p class="xmailerror">You are not allowed to create a new filter. Please login.</p>
+	      	</py:when>
+	      	<py:otherwise>
+	      		<p><a href="${href.xmail('xmail-edit.html')}">New filter</a></p>
+	      	</py:otherwise>
+	      </py:choose>
+    </div>
+	
+    <div id="mailList" py:if="filter.username != 'anonymous'">
+		<table class="listing tickets">
+		    <thead>
+				<tr>
+					<th>&nbsp;</th>
+				<py:for each="head in table_headers">
+					<th>${head}</th>
+				</py:for>
+				</tr>
+			</thead>
+			<tbody>
+				<py:for each="row in sql_result">
+					<tr>
+						<td><input type="checkbox" name="action_sel" value="${row['id']}"/></td>
+					<py:for each="head in table_headers">
+						<td>
+						<py:choose>
+							<py:when test="head in ('id', 'filtername')">${row[head]}</py:when>
+							<py:when test="head == 'active'">
+								<py:choose>
+									<py:when test="row['active'] == 1">
+										<span style="color: green">active</span>
+									</py:when>
+									<py:otherwise>
+										<span style="color: red">in-active</span>
+									</py:otherwise>
+								</py:choose>
+							</py:when>
+							<py:when test="head == 'actions'">
+								<a href="${href.xmail('xmail-edit.html', id=row['id'])}">edit</a>, 
+								<a href="${href.xmail('xmail-listresults.html', id=row['id'])}">list</a>
+                                <!-- <a href="${href.xmail(id=row['id'],delete='delete')}"
+                                 onclick="return window.confirm('Delete filter ${row['filtername']}?');">delete</a> -->
+							</py:when>
+							<py:when test="head == 'interval'">
+								<span>${list_interval[row['interval']]}</span>
+							</py:when>							
+							<py:otherwise>${filter.format_time(row[head], False)}</py:otherwise>
+						</py:choose>
+						</td>
+					</py:for>
+					</tr>
+				</py:for>
+			</tbody>
+		</table>
+    </div> <!-- end of mailList -->
+	<p py:if="filter.username != 'anonymous'">
+		<input type="hidden" name="xmailAction" value="nothing"/>
+		<button type="button" name="delete" 
+			onclick="javascript: confirmSelection(this.form, 'action_sel', 'delete', true);">delete</button>
+		<button type="button" name="activate"
+			onclick="javascript: confirmSelection(this.form, 'action_sel', 'activate');">activate</button>
+		<button type="button" name="deactivate"
+			onclick="javascript: confirmSelection(this.form, 'action_sel', 'deactivate');">deactivate</button>
+	</p>    
+    </form>
+    </div> <!-- end of content -->
+  </body>
+</html>
