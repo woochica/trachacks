@@ -44,7 +44,8 @@ class KeywordSuggestModule(Component):
         if (filename <> 'ticket.html' and filename <> 'wiki_edit.html'):
             return stream
 
-        keywords = self.config.getlist('keywordsuggest','keywords') 
+        keywords = self.keywords
+         
         if tagsplugin_is_installed:
             # '-invalid_keyword' is a workaround for a TagsPlugin regression, see th:#7856 and th:#7857
             query_result = TagSystem(self.env).query(req, '-invalid_keyword')
@@ -58,9 +59,9 @@ class KeywordSuggestModule(Component):
         else:
             keywords = ''
         
-        if not self.keywords:
-            self.log.debug('List of keywords not found in trac.ini. '\
-                           'Plugin keywordsuggest disabled.')
+        if not keywords:
+            self.log.debug('No keywords found.'\
+                           'KeywordSuggestPlugin disabled.')
             return stream
 
         multipleseparator = self.multipleseparator + ' '
