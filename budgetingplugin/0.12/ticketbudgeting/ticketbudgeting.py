@@ -92,52 +92,52 @@ class Budget:
             return
         
 #        print "[do_action] ticket_id: %s, position: %s" % (ticket_id, position)
-        db = env.get_db_cnx()
-        cursor = db.cursor()
-        
-        flds = None
-        vals = None
-        
-        if not ticket_id or not position:
-            env.log.error('no ticket-id or position available!')
-        elif self._action == 1:
-#            print "do action 'insert' with budget_dict: %s" % self._budget_dict
-            for key, value in self._budget_dict.iteritems():
-                if not flds:    flds = key
-                else:           flds += "," + key
-                
-                if key in ('username', 'type', 'comment'): value = "'%s'" % value
+        with env.db_transaction as db:
+            cursor = db.cursor()
+            
+            flds = None
+            vals = None
+            
+            if not ticket_id or not position:
+                env.log.error('no ticket-id or position available!')
+            elif self._action == 1:
+#            	print "do action 'insert' with budget_dict: %s" % self._budget_dict
+                for key, value in self._budget_dict.iteritems():
+                    if not flds:    flds = key
+                    else:           flds += "," + key
+                    
+                    if key in ('username', 'type', 'comment'): value = "'%s'" % value
 
-                if not vals:    vals = str(value)
-                else:           vals += ",%s" % value
-                
-            sql = 'insert into %s (ticket, position, %s) values (%s, %s, %s)' % (BUDGETING_TABLE.name, flds, ticket_id, position, vals) 
-#            print "[action:insert] sql: %s" % sql
-            cursor.execute(sql)
-            db.commit()
-        elif self._action == 2:
-#            print "do action 'update' with budget_dict: %s" % self._budget_dict
-            sql = ''
-            i = 0
-            for key, value in self._budget_dict.iteritems():
-                if i > 0: sql += ","
-                if key in ('username', 'type', 'comment'): value = "'%s'" % value
-                
-                sql += "%s=%s" % (key, value)
-                i += 1 
-            sql = 'update %s set %s where ticket=%s and position=%s' % (BUDGETING_TABLE.name, sql, ticket_id, position) 
-#            print "[action:update] sql: %s" % sql
-            cursor.execute(sql)
-            db.commit()
-        elif self._action == 3:
-#            print "do action 'delete' with budget_dict: %s" % self._budget_dict
-            sql = 'delete from %s where ticket=%s and position=%s' % (BUDGETING_TABLE.name, ticket_id, position) 
-#            print "[action:delete] sql: %s" % sql
-            cursor.execute(sql)
-            db.commit()
-        else:
-            env.log.error('no appropriate action found! _action is: %s' % self._action)
-        db.close()
+                    if not vals:    vals = str(value)
+                    else:           vals += ",%s" % value
+                    
+                sql = 'insert into %s (ticket, position, %s) values (%s, %s, %s)' % ( BUDGETING_TABLE.name, flds, ticket_id, position, vals ) 
+#           	print "[action:insert] sql: %s" % sql
+                env.log.debug(sql)
+                cursor.execute(sql)
+                db.commit()
+            elif self._action == 2:
+    #            print "do action 'update' with budget_dict: %s" % self._budget_dict
+                sql = ''
+                i = 0
+                for key, value in self._budget_dict.iteritems():
+                    if i > 0: sql += ","
+                    if key in ('username', 'type', 'comment'): value = "'%s'" % value
+                    
+                    sql += "%s=%s" % (key, value)
+                    i += 1 
+                sql = 'update %s set %s where ticket=%s and position=%s' % ( BUDGETING_TABLE.name, sql, ticket_id, position ) 
+    #            print "[action:update] sql: %s" % sql
+                cursor.execute(sql)
+                db.commit()
+            elif self._action == 3:
+    #            print "do action 'delete' with budget_dict: %s" % self._budget_dict
+                sql = 'delete from %s where ticket=%s and position=%s' % ( BUDGETING_TABLE.name, ticket_id, position ) 
+    #            print "[action:delete] sql: %s" % sql
+                cursor.execute(sql)
+                db.commit()
+            else:
+                env.log.error('no appropriate action found! _action is: %s' % self._action)
     
     def get_values(self):
         return self._budget_dict
@@ -438,8 +438,6 @@ class TicketBudgetingView(Component):
     def _get_milestone_html(self, req, group_by):
         html = ''
         stats_by = ''
-        db = self.env.get_read_db()
-        cursor = db.cursor()
         ms = req.args['id']
         
         sql = "select sum(b.cost),sum(b.estimation), avg(b.status) from budgeting b, ticket t" \
@@ -447,19 +445,20 @@ class TicketBudgetingView(Component):
         
         try:
 #            print "milestone sql: %s" % sql
-            cursor.execute(sql)
-            for row in cursor:
-#                print "row"
-#                html = self._get_progress_html(row[0], row[1], row[2])
-                html = '<dl><dt>' + _('Budget in hours') + ':</dt><dd> </dd>' \
-                        '<dt>' + _('Cost') + ': <dd>%.2f</dd></dt>' \
-                        '<dt>' + _('Estimation') + ': <dd>%.2f</dd></dt>' \
-                        '<dt>' + _('Status') + ': <dd>%.1f%%</dd></dt></dl>'
-                html = html % (row[0], row[1], row[2])
-                html = self._get_progress_html(row[0], row[1], row[2]) + html
+            with self.env.db_query as db:
+                cursor = db.cursor()
+                cursor.execute(sql)
+                for row in cursor:
+    #                print "row"
+    #                html = self._get_progress_html(row[0], row[1], row[2])
+                    html = '<dl><dt>' + _('Budget in hours') + ':</dt><dd> </dd>' \
+                            '<dt>' + _('Cost') + ': <dd>%.2f</dd></dt>' \
+                            '<dt>' + _('Estimation') + ': <dd>%.2f</dd></dt>' \
+                            '<dt>' + _('Status') + ': <dd>%.1f%%</dd></dt></dl>'
+                    html = html % (row[0], row[1], row[2])
+                    html = self._get_progress_html(row[0], row[1], row[2]) + html
         except Exception, e:
             self.log.error("Error executing SQL Statement \n %s" % e)
-            db.rollback();
         
         if not group_by:
             return html, stats_by
@@ -470,19 +469,21 @@ class TicketBudgetingView(Component):
         
         try:
 #            print "sql: %s" % sql
-            cursor.execute(sql)
-            for row in cursor:
-                status_bar = self._get_progress_html(row[1], row[2], row[3], 75)
-                link = req.href.query({'milestone': ms, group_by: row[0]})
-                if group_by == 'component':
-                    link = req.href.report(BUDGET_REPORT_ALL_ID, {'MILESTONE': ms, 'COMPONENT': row[0], 'OWNER': '%'})
-                    
-                stats_by += '<tr><th scope="row"><a href="%s">' \
-                    '%s</a></th>' % (link, row[0])
-                stats_by += '<td>%s</td></tr>' % status_bar
+            with self.env.db_query as db:
+                cursor = db.cursor()
+                cursor.execute(sql)
+                for row in cursor:
+                    status_bar = self._get_progress_html(row[1], row[2], row[3], 75)
+                    link = req.href.query({'milestone': ms, group_by: row[0]})
+                    if group_by == 'component':
+                        link = req.href.report(BUDGET_REPORT_ALL_ID, {'MILESTONE': ms, 'COMPONENT': row[0], 'OWNER': '%'})
+                        
+                    stats_by += '<tr><th scope="row"><a href="%s">' \
+                        '%s</a></th>' % (link, row[0])
+                    stats_by += '<td>%s</td></tr>' % status_bar
         except Exception, e:
             self.log.error("Error executing SQL Statement \n %s" % e)
-            db.rollback();
+ 
         
         return html, stats_by
     
@@ -615,10 +616,10 @@ class TicketBudgetingView(Component):
         else:
             self.log.debug ("check database")
             sql = "select ticket from %s" % BUDGETING_TABLE.name
-            db = self.env.get_read_db()
-            myCursor = db.cursor()
             try:
-                myCursor.execute(sql)
+                with self.env.db_query as db:                
+                    myCursor = db.cursor()
+                    myCursor.execute(sql)
                 self.config.set(self._CONFIG_SECTION, 'version', '1')
                 self.config.save()
                 self.log.info ("created local ini entries with name budgeting")
@@ -626,7 +627,6 @@ class TicketBudgetingView(Component):
                 return True
             except Exception:
                 self.log.warn ("[_check_init] error while checking database; table 'budgeting' is probably not present")
-            db.close()
     
         return False
 
@@ -646,14 +646,14 @@ class TicketBudgetingView(Component):
         if not ticket_id:
             return
         
-        db = self.env.get_read_db()
-        cursor = db.cursor()
         sql = "SELECT position, username, type, estimation, cost, status, comment" \
               " FROM budgeting where ticket=%s order by position" % ticket_id
         
 #        print "[_load_budget] sql: %s " % sql
         try:
-            cursor.execute(sql)
+            with self.env.db_query as db:
+                cursor = db.cursor()
+                cursor.execute(sql)
             rows = list(cursor.fetchall())
 #            print "after execute -- rows: %s" % rows
             for row in rows:
@@ -668,8 +668,6 @@ class TicketBudgetingView(Component):
                 self.log.debug("[_load_budget] loaded budget: %s" % budget.get_values())
         except Exception, e:
             self.log.error("Error executing SQL Statement %s \n Error: %s" % (sql, e))
-            db.rollback();
-        db.close()
 #        print "[_load_budget] loaded self._budgets: %s for ticket %s" % (self._budgets, ticket_id)
         
     def _save_budget(self, tkt):
@@ -688,27 +686,25 @@ class TicketBudgetingView(Component):
         if not tkt or not tkt.id:
             return
         cur_time = self._get_current_time()
-        db = self.env.get_read_db()
         
         try:
-            for pos, budget in self._budgets.iteritems():
-                action = budget.get_action_name()
-                old_value = ''
-                new_value = ''
-                if action == 'insert':
-                   new_value = "%s, %s: %s" % (budget.get_value(1), budget.get_value(2), budget.get_value(6))
-                elif action == 'delete':
-                   old_value = "%s, %s: %s" % (budget.get_value(1), budget.get_value(2), budget.get_value(6))
-                elif action == 'update':
-                   continue
+            with self.env.db_transaction as db:
+                for pos, budget in self._budgets.iteritems():
+                    action = budget.get_action_name()
+                    old_value = ''
+                    new_value = ''
+                    if action == 'insert':
+                       new_value = "%s, %s: %s" % (budget.get_value(1), budget.get_value(2), budget.get_value(6))
+                    elif action == 'delete':
+                       old_value = "%s, %s: %s" % (budget.get_value(1), budget.get_value(2), budget.get_value(6))
+                    elif action == 'update':
+                       continue
+                    
+                    sql = "INSERT INTO ticket_change(ticket, time, author, field, oldvalue, newvalue)" \
+                                   " VALUES(%s, %s, '%s', 'budgeting.%s', '%s', '%s')" % (tkt.id, cur_time, change_user, pos, old_value, new_value)
+                    db.cursor().execute(sql)
+                    self.log.debug( "successfully logged budget, pos %s for ticket %s" % (pos, tkt.id) )
                 
-                sql = "INSERT INTO ticket_change(ticket, time, author, field, oldvalue, newvalue)" \
-                               " VALUES(%s, %s, '%s', 'budgeting.%s', '%s', '%s')" % (tkt.id, cur_time, change_user, pos, old_value, new_value)
-                db.cursor().execute(sql)
-                db.commit()
-                self.log.debug("successfully logged budget, pos %s for ticket %s" % (pos, tkt.id))
-            
-            db.close()
         except Exception, ex:
             self.log.error("Error while logging change: %s" % ex)
     
@@ -739,51 +735,42 @@ class TicketBudgetingView(Component):
         Constructor, see trac/postgres_backend.py:95 (method init_db)
         '''
         conn, dummyArgs = DatabaseManager(self.env).get_connector()
-        db = self.env.get_read_db()
-        cursor = db.cursor()
         try:
-            for stmt in conn.to_sql(BUDGETING_TABLE):
-                if db.schema:
-                    stmt = re.sub(r'CREATE TABLE ', 'CREATE TABLE "' 
-                                  + db.schema + '".', stmt) 
-                stmt = re.sub(r'(?i)bigint', 'NUMERIC(10,2)', stmt)
-                stmt += ";"
-                self.log.info("[INIT table] executing sql: %s" % stmt)
-                cursor.execute(stmt)
-                self.log.info("[INIT table] successfully created table %s" % BUDGETING_TABLE.name)
-            db.commit()
+            with self.env.db_transaction as db:
+                cursor = db.cursor()
+                for stmt in conn.to_sql(BUDGETING_TABLE):
+                    if db.schema:
+                        stmt = re.sub(r'CREATE TABLE ','CREATE TABLE "' 
+                                      + db.schema + '".', stmt) 
+                    stmt = re.sub(r'(?i)bigint', 'NUMERIC(10,2)', stmt)
+                    stmt += ";"
+                    self.log.info( "[INIT table] executing sql: %s" % stmt )
+                    cursor.execute(stmt)
+                    self.log.info( "[INIT table] successfully created table %s" % BUDGETING_TABLE.name )
         except Exception, e:
             self.log.error("[INIT table] Error executing SQL Statement \n %s" % e)
-            db.rollback();
-        finally:
-            db.close() 
         self.create_reports()
         
     def create_reports(self):
 #        print "[INIT report] create_reports: %s" % self.BUDGET_REPORTS
         for report in self.BUDGET_REPORTS:
             try:
-                db = self.env.get_read_db()
-                myCursor = db.cursor()
-                self.log.info("having myCursor")
-                descr = _(report[2])
-                self.log.info("descr: %s" % descr)
-                descr = re.sub(r"'", "''", descr)
-                self.log.info("report[3]: %s" % report[3])
-                self.log.info(" VALUES: %s, '%s', '%s'" % (report[0], _(report[1]), report[3]))
-                sql = "INSERT INTO report (id, author, title, query, description) "
-                sql += " VALUES(%s, null, '%s', '%s', '%s');" % (report[0], _(report[1]), report[3], descr)
-                self.log.info("[INIT reports] executing sql: %s" % sql)
-                myCursor.execute(sql)
-                db.commit()
-                self.log.info("[INIT reports] successfully created report with id %s" % report[0])
+                with self.env.db_transaction as db:
+                    myCursor = db.cursor()
+                    self.log.info( "having myCursor" )
+                    descr = _(report[2])
+                    self.log.info( "descr: %s" % descr)
+                    descr = re.sub(r"'", "''", descr)
+                    self.log.info( "report[3]: %s" % report[3])
+                    self.log.info( " VALUES: %s, '%s', '%s'" % (report[0], _(report[1]), report[3]))
+                    sql = "INSERT INTO report (id, author, title, query, description) "
+                    sql += " VALUES(%s, null, '%s', '%s', '%s');" % (report[0], _(report[1]), report[3],  descr)
+                    self.log.info( "[INIT reports] executing sql: %s" % sql )
+                    myCursor.execute(sql)
+                self.log.info( "[INIT reports] successfully created report with id %s" % report[0] )
             except Exception, e:
                 self.log.error("[INIT reports] Error executing SQL Statement \n %s" % e)
-                db.rollback();
                 raise e
-            finally:
-                db.close()
- 
                     
     def get_col_list(self, ignore_cols=None):
         """ return col list as string; usable for selecting all cols 
@@ -803,8 +790,6 @@ class TicketBudgetingView(Component):
     
     
     def get_user_list(self):
-        db = self.env.get_read_db()
-        myCursor = db.cursor()
         sqlResult = []
         
         sql = "select distinct sid from session where authenticated > 0 order by sid"
@@ -817,13 +802,13 @@ class TicketBudgetingView(Component):
                 sql = "%s where username not in (%s)" % (sql, excl_user)
             sql += " order by username"
         try:
-            myCursor.execute(sql)
-            for row in myCursor:
-                sqlResult.append(row[0])
+            with self.env.db_query as db:
+                myCursor = db.cursor()
+                myCursor.execute(sql)
+                for row in myCursor:
+                    sqlResult.append(row[0])
         except Exception, e:
             self.log.error("Error executing SQL Statement \n %s" % e)
-            db.rollback();
-        db.close()
         return sqlResult
     
     
