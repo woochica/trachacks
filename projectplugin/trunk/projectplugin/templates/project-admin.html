@@ -1,0 +1,90 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+	  i18n:domain="projectplugin">
+  <xi:include href="admin.html" />
+  <head>
+    <title>edit project assignments</title>
+  </head>
+
+  <body>
+  	<py:if test="errors">
+		<div class="system-message">
+			<strong>Error occured</strong>:<br/>
+			<pre>${errors}</pre>
+		</div>
+	</py:if>
+	<h2>Administrate project assignments</h2>
+	<form id="addproject" class="addnew" action="" method="post">
+		<fieldset>
+			<legend>Add project</legend>
+			<div class="field"><label>Type</label>:<br/>
+				<select id="type" name="type">
+				<option value="" selected="selected">Please select</option>
+				<py:for each="field in ticket_types">
+					<option>${field['name']}</option>
+				</py:for>
+				</select>
+			</div>
+			
+			<p><strong>or</strong></p>
+			
+			<div class="field"><label>Milestone</label>:<br/>
+				<select id="milestone" name="milestone">
+				<option value="" selected="selected">Please select</option>
+				<py:for each="ms in milestones">
+					<option>${ms}</option>
+				</py:for>
+				</select>
+			</div>
+			
+			<p>&nbsp;</p>
+			
+			<div class="field"><label>Project</label>:<br/>
+				<input id="projectname" name="projectname" type="text"/>
+			</div>
+			
+			<div class="buttons">
+				<input type="submit" value="${_('Add')}" name="add"/>
+			</div>
+		</fieldset>
+	</form>
+	
+	<form id="project_table" action="" method="post">
+		<py:if test="projects">
+			<table class="listing">
+				<thead>
+				<tr>
+					<th>&nbsp;</th>
+					<th>Field name</th>
+					<th>Field value</th>
+					<th>Project number</th>
+				</tr>
+				</thead>
+				<tbody>
+				<py:for each="i, opt in enumerate( projects )">
+					<tr>
+						<!-- ${i + 1} -->
+						<td><input name="selection" type="checkbox"/></td>
+						<td>${opt['field']}</td>
+						<td>${opt['value']}</td>
+						<td>${opt['project']}</td>
+					</tr>
+				</py:for>
+				</tbody>
+			</table>
+		</py:if>
+		
+		<div class="buttons">
+			<!-- py:if="can_remove" -->
+			<input type="submit" name="remove" value="${_('Remove selected items')}"/>
+		</div>
+	</form>
+
+	<p class="help">saving to trac.ini as following: order.[order-no].[fieldname] = [fieldvalue];[project number]<br/>
+	sample projectplugin.type.Fehler=112001</p>
+	
+  </body>
+</html>

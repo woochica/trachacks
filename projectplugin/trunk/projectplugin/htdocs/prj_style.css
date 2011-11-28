@@ -1,0 +1,8 @@
+
+#h_projectplugin, #field-projectplugin {
+	display: None
+}
+
+td[headers=h_projectplugin], label[for=field-projectplugin] { 
+	display: None
+}
