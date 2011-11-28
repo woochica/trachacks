@@ -1,0 +1,81 @@
+# German (Germany) translations for XMail-Plugin.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the
+# XMail project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+#
+# copied from TracSubTicketsPlugin project, see
+#
+# http://trac.edgewall.org/attachment/wiki/CookBook/PluginL10N/trac-subtickets-plugin_i18n-l10n.patch
+msgid ""
+msgstr ""
+"Project-Id-Version: XMail 0.0.x\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2010-05-04 01:38+0200\n"
+"PO-Revision-Date: 2011-03-18 12:11+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: de_DE <trac-dev@googlegroups.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.5\n"
+
+msgid "Budget Estimation"
+msgstr "Aufgabenverteilung"
+
+msgid "Add a new row"
+msgstr "Neue Zeile hinzufügen"
+
+msgid "Person"
+msgstr "Person"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Estimation"
+msgstr "Schätzung"
+
+msgid "Cost"
+msgstr "Aufwand"
+
+msgid "State"
+msgstr "Status in %%"
+
+msgid "Comment"
+msgstr "Kommentar"
+
+msgid "Budget in hours"
+msgstr "Aufwand in Stunden"
+
+msgid "in hours"
+msgstr "in Stunden"
+
+msgid "report_title_90"
+msgstr "[budget] Alle Tickets"
+
+msgid "report_description_90"
+msgstr ""
+"{{{#!th width='50%'\n"
+"'''Beschreibung'''\n"
+"}}}\n"
+"{{{#!th width='50%'\n"
+"'''Beispiel'''\n"
+"}}}\n"
+"|----------------\n"
+"{{{#!td width='50%'\n"
+"Alle Tickets mit Aufwandsschätzungen werden gefiltert nach Meilenstein, Komponente und Ersteller \n"
+"(standardmäßig werden für Meilenstein und Komponente die Werte '%' (alle) verwendet; als Ersteller (OWNER) der angemeldete Benutzer). \n"
+"Die Ergebnisse werden nach Meilensteinen sortiert. Tickets mit höheren Aufwand als Schätzung werden orange hinterlegt.\n"
+"\n"
+"MILESTONE, COMPONENT and OWNER können mit Platzhaltern  (%) gefiltert werden."
+"Variable OWNER sucht auch in den Aufwandsschätzungen.\n"
+"}}}\n"
+"{{{#!td width='50%'\n"
+"{{{\n"
+"COMPONENT: %\n"
+"MILESTONE: 4.%\n"
+"OWNER:     unassigned\n"
+"}}}\n"
+"}}}\n"
+
