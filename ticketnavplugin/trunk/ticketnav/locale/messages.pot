@@ -1,0 +1,41 @@
+# Translations template for XMail-Plugin. 
+# Copyright (C) 2010 ORGANIZATION 
+# This file is distributed under the same license as the 
+# XMail project. 
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2010. 
+# 
+# copied from TracSubTicketsPlugin project, see 
+# http://trac.edgewall.org/attachment/wiki/CookBook/PluginL10N/trac-subtickets-plugin_i18n-l10n.patch
+#, fuzzy 
+msgid "" 
+msgstr "" 
+"Project-Id-Version: XMail 0.0.x\n" 
+"POT-Creation-Date: 2010-05-04 01:38+0200\n" 
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n" 
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n" 
+"Language-Team: LANGUAGE <trac-dev@googlegroups.com>\n" 
+"MIME-Version: 1.0\n" 
+"Content-Type: text/plain; charset=utf-8\n" 
+"Content-Transfer-Encoding: 8bit\n" 
+"Generated-By: Babel 1.0dev-r482\n"
+
+msgid "Creation date: %(created)s"
+msgstr ""
+
+msgid "Modify date: %(modified)s"
+msgstr ""
+
+msgid "Table of Contents"
+msgstr ""
+
+msgid "Clone"
+msgstr ""
+
+msgid "Create a copy of this ticket"
+msgstr ""
+
+msgid "%(summary)s (cloned from %(id)s)"
+msgstr ""
+
+msgid "Cloned from #%(id)s:\n----\n%(description)s"
+msgstr ""
