@@ -26,13 +26,12 @@ def recipeFiles():
       file_list.append(files)
   return file_list
 
-def commitRecipe(trac_env, (name, path, active, recipe, min_rev, max_rev, label, description, placeholder)):
+def commitRecipe(env, (name, path, active, recipe, min_rev, max_rev, label, description, placeholder)):
   print 'Commiting to recipe:', name
   if min_rev == 'None':
     min_rev = ''
   if max_rev == 'None':
     max_rev = ''
-  env = Environment(trac_env)
   db = env.get_db_cnx()
   cursor = db.cursor()
   cursor.execute("UPDATE bitten_config SET name=%s,path=%s,active=%s,recipe=%s,min_rev=%s,max_rev=%s,label=%s,description=%s WHERE name=%s",
@@ -60,5 +59,6 @@ def process_args():
 
 if __name__ == '__main__':
   trac_env = process_args()
+  env = Environment(trac_env)
   for files in recipeFiles():
-    commitRecipe(trac_env, readFile(files))
+    commitRecipe(env, readFile(files))
