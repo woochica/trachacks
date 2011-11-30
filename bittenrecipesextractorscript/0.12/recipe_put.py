@@ -4,7 +4,7 @@ import getopt, sys, os, string
 # This script will attempt to update which ever recipe it finds listed (as filenames) in the current working directory
 # Such as:
 #
-# 049AppsbecauseofMOOSE.recipe (which is what we have named the 'All Applications because of MOOSE' recipt)
+# 049AppsbecauseofFRAMEWORK.recipe (which is what we have named the 'All Applications because of Framework' recipt)
 #
 # The name of the file denotes the name of the recipe. I am using two characters '^^' as the delimeter.
 # There is practically no error checking, so be careful with path names as the like.
@@ -19,15 +19,15 @@ def readFile(file_name):
   file_obj.close()
   return file_data.split('^^')
 
-def recipeFiles():
+def recipeFiles(trac_env):
   file_list = []
-  for files in os.listdir('.'):
+  for files in os.listdir(os.path.split(trac_env)[1]):
     if string.find(files, '.recipe') != -1:
-      file_list.append(files)
+      file_list.append(str(os.path.join(os.getcwd(), os.path.split(trac_env)[1], files)))
   return file_list
 
 def commitRecipe(env, (name, path, active, recipe, min_rev, max_rev, label, description, placeholder)):
-  print 'Commiting to recipe:', name
+  print 'Committing to recipe:', name
   if min_rev == 'None':
     min_rev = ''
   if max_rev == 'None':
@@ -45,7 +45,7 @@ def printUsage(message):
   else:
     sys.exit(1)
 
-def process_args():
+def processArgs():
   try:
     opts = getopt.getopt(sys.argv[1:], '')[1]
   except getopt.GetoptError:
@@ -58,7 +58,7 @@ def process_args():
     printUsage('Trac Environment not found')
 
 if __name__ == '__main__':
-  trac_env = process_args()
+  trac_env = processArgs()
   env = Environment(trac_env)
-  for files in recipeFiles():
+  for files in recipeFiles(trac_env):
     commitRecipe(env, readFile(files))

@@ -12,9 +12,12 @@ import getopt, sys, os
 _USAGE = """recipe_get.py <path to Trac Environment>
 """
 
-def writeFile(file_name, (path, active, recipe, min_rev, max_rev, label, description)):
-  print 'Saving:', file_name + '.recipe'
-  file_obj = open(os.path.join(os.getcwd(), file_name + '.recipe'), 'w')
+def writeFile(trac_env, file_name, (path, active, recipe, min_rev, max_rev, label, description)):
+  directory = os.path.split(trac_env)[1]
+  if not os.path.exists(os.path.join(os.getcwd(), directory)):
+    os.makedirs(os.path.join(os.getcwd(), directory))
+  print 'Saving:', file_name + '.recipe', 'to', os.getcwd() + '/' + directory
+  file_obj = open(os.path.join(os.getcwd(), directory, file_name + '.recipe'), 'w')
   file_obj.write(str(file_name) + '^^' + \
                  str(path) + '^^' + \
                  str(active) + '^^' + \
@@ -32,7 +35,7 @@ def fetchRecipes(trac_env):
   cursor.execute("SELECT path,active,recipe,min_rev,max_rev,label,description,name FROM bitten_config")
   for row in cursor:
     (path, active, recipe, min_rev, max_rev, label, description, name) = row
-    writeFile(name, (path, active, recipe, min_rev, max_rev, label, description))
+    writeFile(trac_env, name, (path, active, recipe, min_rev, max_rev, label, description))
     
 def printUsage(message):
   sys.stderr.write(_USAGE)
@@ -41,7 +44,7 @@ def printUsage(message):
   else:
     sys.exit(1)
 
-def process_args():
+def processArgs():
   try:
     opts = getopt.getopt(sys.argv[1:], '')[1]
   except getopt.GetoptError:
@@ -54,6 +57,6 @@ def process_args():
     printUsage('Trac Environment not found')
 
 if __name__ == '__main__':
-  trac_env = process_args()
+  trac_env = processArgs()
   print 'Using Trac Environment:', trac_env
   fetchRecipes(trac_env)
