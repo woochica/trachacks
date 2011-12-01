@@ -12,7 +12,7 @@ from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
 
 revision="$Rev$"
-url="$URL$"
+url="http://trac-hacks.org/wiki/PlannedMilestonesMacro"
 
 class PlannedMilestonesMacro(WikiMacroBase):
     """
