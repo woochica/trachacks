@@ -1,21 +1,22 @@
 # copyright (c) 2008 Dmitry Dianov. All rights reserved.
 
-from trac.config import Option, BoolOption, ListOption
-from trac.core import Component, implements
-from trac.web.api import ITemplateStreamFilter
 from genshi.builder import tag
 from genshi.core import Markup
 from genshi.filters.transform import Transformer
-from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from pkg_resources import resource_filename
+from trac.config import Option, BoolOption, ListOption
+from trac.core import Component, implements
+from trac.util.text import javascript_quote
 from trac.web import IRequestFilter
+from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
+
 try:
     from tractags.api import TagSystem
     tagsplugin_is_installed = True
 except ImportError:
     # TagsPlugin not available
     tagsplugin_is_installed = False
-import re
 
 class KeywordSuggestModule(Component):
     implements (ITemplateStreamFilter, ITemplateProvider, IRequestFilter)
@@ -41,7 +42,8 @@ class KeywordSuggestModule(Component):
 
     # ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):
-        if (filename <> 'ticket.html' and filename <> 'wiki_edit.html'):
+        if not (filename == 'ticket.html' or
+                (tagsplugin_is_installed and filename == 'wiki_edit.html')): 
             return stream
 
         keywords = self.keywords
@@ -55,7 +57,8 @@ class KeywordSuggestModule(Component):
                         keywords.append(_tag)
         
         if keywords:
-            keywords = ','.join(("'%s'" % _keyword for _keyword in keywords))
+            keywords = ','.join(("'%s'" % javascript_quote(_keyword)
+                                 for _keyword in keywords))
         else:
             keywords = ''
         
@@ -74,7 +77,7 @@ class KeywordSuggestModule(Component):
         if not self.matchcontains:
             matchcontains = ""
 
-       # inject transient part of javascript directly into ticket.html template
+        # inject transient part of javascript directly into ticket.html template
         if req.path_info.startswith('/ticket/') or \
            req.path_info.startswith('/newticket'):
             js_ticket = """
@@ -102,7 +105,7 @@ class KeywordSuggestModule(Component):
                      ('//label[@for="field-keywords"]/text()').wrap(link)
                              
         # inject transient part of javascript directly into wiki.html template                             
-        elif req.path_info.startswith('/wiki/'):
+        elif tagsplugin_is_installed and req.path_info.startswith('/wiki/'):
             js_wiki = """
             $(function($) {
               var sep = '%s'
@@ -138,7 +141,7 @@ class KeywordSuggestModule(Component):
     def post_process_request(self, req, template, data, content_type):
         if req.path_info.startswith('/ticket/') or \
            req.path_info.startswith('/newticket') or \
-           req.path_info.startswith('/wiki/'):
+           (tagsplugin_is_installed and req.path_info.startswith('/wiki/')):
             add_script(req, 'keywordsuggest/jquery.bgiframe.min.js')
             add_script(req, 'keywordsuggest/jquery.autocomplete.pack.js')
             add_stylesheet(req, 'keywordsuggest/autocomplete.css')

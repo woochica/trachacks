@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name='TracKeywordSuggest',
-    version = '0.4.2',
+    version = '0.4.3',
     author = 'Dmitry Dianov',
     author_email = 'scratcha at google mail',
     maintainer = 'Ryan J Ollos',
