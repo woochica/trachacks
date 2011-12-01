@@ -9,7 +9,7 @@ Author: andyhan
 from trac.wiki.macros import WikiMacroBase
 
 revision="$Rev$"
-url="$URL$"
+url="http://http://trac-hacks.org/wiki/ColorMacro"
 
 class ColorMacro(WikiMacroBase):
     """Usage:
