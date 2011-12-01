@@ -1,7 +1,7 @@
 from setuptools import setup
 
-PACKAGE = 'tractab'
-VERSION = '0.1.3-Genshi'
+PACKAGE = 'TracTab'
+VERSION = '0.1.4'
 
 setup(name=PACKAGE,
       version=VERSION,
