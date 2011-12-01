@@ -41,7 +41,7 @@ from api                    import add_domain, _, tag_
 from ticket                 import WikiCalendarTicketProvider
 
 
-__all__ = ['WikiCalendarMacros']
+__all__ = ['TextExtractor', 'WikiCalendarMacros']
 
 
 class TextExtractor(SGMLParser):

@@ -73,7 +73,7 @@ with one or more of it's corresponding attributes.
     keywords = "trac macro calendar milestone ticket",
     classifiers = ['Framework :: Trac'],
     license = """
-        Copyright (c), 2010.
+        Copyright (c), 2010,2011.
         Released under the 3-clause BSD license after initially being under
         THE BEER-WARE LICENSE, Copyright (c) Matthew Good.
         See changelog in source for contributors.
@@ -82,13 +82,15 @@ with one or more of it's corresponding attributes.
     extras_require = {'Babel': 'Babel>= 0.9.5', 'Trac': 'Trac >= 0.12'},
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
-        'wikicalendar': ['htdocs/*', 'locale/*/LC_MESSAGES/*.mo'],
+        'wikicalendar': [
+            'htdocs/*', 'locale/*/LC_MESSAGES/*.mo', 'locale/.placeholder',
+        ]
     },
     zip_safe = True,
     entry_points = {
         'trac.plugins': [
             'wikicalendar = wikicalendar.macros',
-        ],
+        ]
     },
     **extra
 )

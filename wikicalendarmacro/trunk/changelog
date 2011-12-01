@@ -1,0 +1,22 @@
+Author: Matthew Good <trac@matt-good.net>
+Author (wikiticketcalendar fork): Michael Comb <mcomb@mac.com>
+Maintainer: Steffen Hoffmann <hoff.st@web.de>
+
+Note: For more history details see older changelog files documenting plugin
+origin, the fork of WikiTicketCalendarMacro and separate development prior to
+formation of the current, bundled macros.
+
+
+wikicalendar-2.0.0 - new 'bundled macros' revision (not yet released)
+ resolved issues
+ * #64: utf-8 output not enforced
+   by totally relying on Genshi builder instructions to sanitize content and
+   guarantee Unicode encoded, valid XHTML output
+ * #578: Not all strftime format sequences allowed for wiki-page-format
+ * #6636: Failure on use: "day of month out of range" (in Python 2.4)
+ * #7564: Integrate re-worked WikiCalendarMacro in new trunk
+ * #9568: Can Babel be made an optional component for 0.12?
+
+ new features
+ * macro collection based on WikiTicketCalendar `trunk` branch pulled into
+   wikicalendar domain, extended to replicate WikiCalendar functionality too
