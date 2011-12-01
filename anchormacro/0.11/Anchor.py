@@ -3,7 +3,7 @@
 
 from trac.wiki.macros import WikiMacroBase
 
-revison="$Rev$"
+rev="$Rev$"
 url="http://trac-hacks.org/wiki/AnchorMacro"
 
 class AnchorMacro(WikiMacroBase):
