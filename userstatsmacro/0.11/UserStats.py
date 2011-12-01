@@ -12,7 +12,7 @@ from trac.wiki.formatter import format_to_html
 from trac.wiki.macros import WikiMacroBase
 
 revision="$Rev$"
-url="$URL"
+url="http://trac-hacks.org/wiki/UserStatsMacro"
 
 class UserStatsMacro(WikiMacroBase):
     """Produces a table with username, last login, elapsed time since last
