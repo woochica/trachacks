@@ -3,8 +3,8 @@
 
 from trac.wiki.macros import WikiMacroBase
 
-revison="$Rev: 8404 $"
-url="$URL: http://trac-hacks.org/svn/anchormacro/0.10/Anchor.py $"
+revison="$Rev$"
+url="http://trac-hacks.org/wiki/AnchorMacro"
 
 class AnchorMacro(WikiMacroBase):
         """
