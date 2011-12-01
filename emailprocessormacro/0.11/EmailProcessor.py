@@ -13,7 +13,7 @@ from trac.util import escape
 from trac.util.text import wrap
 
 revision="$Rev$"
-url="$URL$"
+url="http://trac-hacks.org/wiki/EmailProcessorMacro"
 
 __all__ = ['EmailMacro']
 
