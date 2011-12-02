@@ -1,19 +1,19 @@
 # Created by Noah Kantrowitz on 2008-03-11.
 # Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
 
-from trac.core import *
-from trac.web.api import IRequestFilter
-from trac.perm import IPermissionRequestor
 from trac.config import ListOption, BoolOption
+from trac.core import *
+from trac.perm import IPermissionRequestor, PermissionSystem
+from trac.web.api import IRequestFilter
 
 class SimpleTicketModule(Component):
     """A request filter to implement the SimpleTicket reduced ticket entry form."""
     
     hide_fields = ListOption('simpleticket', 'hide', default='',
-                             doc='What fields to hide for the simple ticket entry form.')
+                             doc='Fields to hide for the simple ticket entry form.')
     
     allow_override = BoolOption('simpleticket', 'allow_override', default=False,
-                              doc='Allow the user to use the normal entry form even if they have TICKET_CREATE_SIMPLE')
+                                doc='Allow the user to use the normal entry form even if they have TICKET_CREATE_SIMPLE')
 
     implements(IRequestFilter, IPermissionRequestor)
 
@@ -23,11 +23,11 @@ class SimpleTicketModule(Component):
             
     def post_process_request(self, req, template, data, content_type):
         if req.path_info == '/newticket':
-            do_filter = req.perm.has_permission('TICKET_CREATE_SIMPLE')
+            do_filter = 'TICKET_CREATE_SIMPLE' in req.perm
+                         and not 'TRAC_ADMIN' in req.perm
             
             # Should we allow a session override?
-            allow_override = self.allow_override or req.perm.has_permission('TRAC_ADMIN')
-            if allow_override:
+            if self.allow_override:
                 do_filter = req.session.get('simpleticket.do_filter', do_filter)
             
             if do_filter:
