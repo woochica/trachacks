@@ -3,7 +3,7 @@ from trac.util import escape, Markup
 from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import wiki_to_html
-from trac.util import format_datetime
+from trac.util import format_datetime, to_unicode
 from StringIO import StringIO
 from operator import itemgetter, attrgetter
 from trac.versioncontrol import Node
@@ -147,6 +147,6 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     'author': cur['author'],
                 })
 
-        return '<div class="releases">\n' + str(wiki_to_html("\n".join(items), self.env, req))  + '</div>\n'
+        return '<div class="releases">\n' + to_unicode(wiki_to_html("\n".join(items), self.env, req, absurls = True, escape_newlines=False))  + '</div>\n'
 
 # vim:et:ts=4:sw=4
