@@ -285,12 +285,15 @@ class XMailMainView(Component):
             return
         
         id_list = None
-        for id in action_sel:
-            if id and id > 0:
-                if id_list == None:
-                    id_list = "%s" % id
-                else:
-                    id_list += ",%s" % id
+        if type(action_sel) == unicode:
+            id_list = str(action_sel)
+        else:
+            for id in action_sel:
+                if id and id > 0:
+                    if id_list == None:
+                        id_list = "%s" % id
+                    else:
+                        id_list += ",%s" % id
                 
         if id_list:
             self.execute_sql_query('delete from %s where id in(%s)'%(XMAIL_TABLE.name,id_list))
@@ -305,12 +308,15 @@ class XMailMainView(Component):
             value = 'null'
         
         id_list = None
-        for id in action_sel:
-            if id and id > 0:
-                if id_list == None:
-                    id_list = "%s" % id
-                else:
-                    id_list += ",%s" % id
+        if type(action_sel) == unicode:
+            id_list = str(action_sel)
+        else:
+            for id in action_sel:
+                if id and id > 0:
+                    if id_list == None:
+                        id_list = "%s" % id
+                    else:
+                        id_list += ",%s" % id
                     
         if id_list:
             self.execute_sql_query('update %s set %s = %s where id in (%s)' %
@@ -385,14 +391,12 @@ class XMailMainView(Component):
         
     def execute_sql_query(self, sqlQuery, *params):
         sucess = False
-        with self.env.db_query as db:
-            myCursor = db.cursor()
-            try:
+        try:
+            with self.env.db_transaction as db:
+                myCursor = db.cursor()
                 myCursor.execute(sqlQuery, params)
                 sucess = True
-            except Exception, e:
-                self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sqlQuery,e))
-            finally:
-                db.close()
+        except Exception, e:
+            self.log.error ( "Error executing SQL Statement \n ( %s ) \n %s" % (sqlQuery,e))
             
         return sucess
