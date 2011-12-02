@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracSimpleTicket',
-    version = '2.0',
+    version = '3.0',
     packages = ['simpleticket'],
 
     author = 'Noah Kantrowitz',

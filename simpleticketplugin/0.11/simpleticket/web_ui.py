@@ -2,10 +2,9 @@
 # Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
 
 from trac.core import *
-from trac.web.api import IRequestFilter
+from trac.web import IRequestFilter
 from trac.perm import IPermissionRequestor
 from trac.config import ListOption, BoolOption
-from trac.util.compat import set
 
 class SimpleTicketModule(Component):
     """A request filter to implement the SimpleTicket reduced ticket entry form."""
@@ -32,12 +31,18 @@ class SimpleTicketModule(Component):
                 do_filter = req.session.get('simpleticket.do_filter', do_filter)
             
             if do_filter:
-                hide_fields = set(self.hide_fields)
-                self.log.debug('SimpleTicket: Filtering new ticket form for %s', req.authname)
-                data['fields'] = [f for f in data['fields'] if f['name'] not in hide_fields]
-                
+                #self.env.log.info(data)
+                for f in self.hide_fields:
+                    if data.has_key('fields'):
+                        for dict in data['fields']:
+                            if (dict['name'] == f ):
+#                                self.env.log.info(dict['name'])
+                                dict['skip'] = True
+                            dict['rendered'] = 'no'
+
         return template, data, content_type
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
         yield 'TICKET_CREATE_SIMPLE', ['TICKET_CREATE']
+
