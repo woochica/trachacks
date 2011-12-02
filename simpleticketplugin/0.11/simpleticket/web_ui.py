@@ -23,8 +23,7 @@ class SimpleTicketModule(Component):
             
     def post_process_request(self, req, template, data, content_type):
         if req.path_info == '/newticket':
-            do_filter = 'TICKET_CREATE_SIMPLE' in req.perm
-                         and not 'TRAC_ADMIN' in req.perm
+            do_filter = 'TICKET_CREATE_SIMPLE' in req.perm and not 'TRAC_ADMIN' in req.perm
             
             # Should we allow a session override?
             if self.allow_override:
