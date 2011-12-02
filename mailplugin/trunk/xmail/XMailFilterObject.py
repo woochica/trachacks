@@ -99,12 +99,12 @@ class FilterObject(object):
     name = None
     select_fields = None
     
-    def __init__(self, req_or_id, db=None):
+    def __init__(self, req_or_id, env=None):
         if not req_or_id: 
             return
         if type(req_or_id) == int:
-            if db:
-                self.load_filter(db, req_or_id)
+            if env:
+                self.load_filter(env, req_or_id)
             return
         self.parse_request(req_or_id)
         

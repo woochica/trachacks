@@ -111,7 +111,7 @@ class XMailEventHandler(Component):
             self.log.info ( "[XMail._sendAllMails] -- filter_id: %s -- username: %s" % (filter_id, username) )
             tickets = {}
             subject = "[%s] " % self.env.project_name
-            filter = FilterObject(filter_id, db=self.env.get_db_cnx())
+            filter = FilterObject(filter_id, self.env)
             
             # retrieve new tickets
             new_tickets = self._get_relevant_tickets('time', filter)
@@ -210,13 +210,13 @@ class XMailEventHandler(Component):
         
         data = None
         try:
-            db = self.env.get_db_cnx()
-            myCursor = db.cursor()
             result = []
 #            data_dict = {}
             try:
-                myCursor.execute(sql)
-                data = list(myCursor.fetchall())
+                with self.env.db_query as db:
+                    myCursor = db.cursor()
+                    myCursor.execute(sql)
+                    data = list(myCursor.fetchall())
             except Exception, e:
                 self.log.error("error while fetching data: %s" % e) 
             
@@ -243,15 +243,15 @@ class XMailEventHandler(Component):
     def _get_user_data(self, username):
         sql = ("select name, value from session_attribute where name in ('language', 'email')"
                " and sid='%s'" % username)
-        db = self.env.get_db_cnx()
-        myCursor = db.cursor()
         result = None
         try:
-            myCursor.execute(sql)
-            data = list( myCursor.fetchall() )
-            result = {}
-            for row in data:
-                result[row[0]] = row[1]
+            with self.env.db_query as db:
+                myCursor = db.cursor()
+                myCursor.execute(sql)
+                data = list( myCursor.fetchall() )
+                result = {}
+                for row in data:
+                    result[row[0]] = row[1]
         except Exception, e:
             self.log.debug( "e: %s" % e ) # TODO[fm]: remove in prod-mode 
         return result
@@ -266,12 +266,12 @@ class XMailEventHandler(Component):
             
         sql = "update xmail set nextexe=%i, lastsuccessexe=%i where id=%i" % (next_exe, current_time, filter.id)
         self.log.debug("[_set_next_exe] sql: %s" % sql)
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
         try:
-            cursor.execute(sql)
-            db.commit()
-            return True
+            with self.env.db_transaction as db:
+                cursor = db.cursor()
+                cursor.execute(sql)
+                db.commit()
+                return True
         except Exception, e:
             self.log.error('updating failed, because of error: %s' % e)
             
@@ -283,25 +283,24 @@ class XMailEventHandler(Component):
     def _execute_SQL_Query_and_Feedback(self, select, sqlQuery, *params):
 
         if sqlQuery != None and params != None:
-            db = self.env.get_db_cnx()
-            myCursor = db.cursor()
             data = {}
             try:
-                myCursor.execute(sqlQuery, params)
-                if(select == True):
-                    """ result is an 2-dimensinal array of the select results"""
-                    data = list(myCursor.fetchall())
-                else:
-                    """ Result is the amount of insered rows"""
-                    data = myCursor.rowcount
-                db.commit()
+                with self.env.db_query as db:
+                    myCursor = db.cursor()
+                    myCursor.execute(sqlQuery, params)
+                    if(select == True):
+                        """ result is an 2-dimensinal array of the select results"""
+                        data = list(myCursor.fetchall())
+                    else:
+                        """ Result is the amount of insered rows"""
+                        data = myCursor.rowcount
+                    # db.commit()
             except Exception, e:
                 self.log.error ("Error executing SQL Statement \n ( %s ) \n %s" % (sqlQuery, e))
-                db.rollback();
-            try:
-                db.close()
-            except e:
-                self.log.error("DB close fails. \n %s" % e)
+#            try:
+#                db.close()
+#            except e:
+#                self.log.error("DB close fails. \n %s" % e)
             return data       
 
     
@@ -364,7 +363,6 @@ class XMailTicketNotify(NotifyEmail):
         
         for ticket in tickets:
             id = ticket['id']
-            summary = ticket['summary']
             big_cols = []
             time_fld = ""
             
@@ -373,8 +371,8 @@ class XMailTicketNotify(NotifyEmail):
             else:
                 txt += "\n\n#%s" % id
                 
-            if summary:
-                txt += ": %s" % summary
+            if ticket.has_key('summary'):
+                txt += ": %s" % ticket['summary']
             txt += "\n%s/ticket/%s\n" % (href, id) # add link
             txt += sep
             for key in ticket.keys():
@@ -394,7 +392,7 @@ class XMailTicketNotify(NotifyEmail):
                     txt += "%s:\n%s" % (_(key), bg[key])
                 
         return txt
-        
+    
     
 #===============================================================================
 # Timer Implementation
