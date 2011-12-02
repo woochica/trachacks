@@ -207,7 +207,7 @@ class TicketBudgetingView(Component):
     BUDGET_REPORTS = [(BUDGET_REPORT_ALL_ID, 'report_title_90', 'report_description_90',
     u"""SELECT t.id, t.summary, t.milestone AS __group__, '../milestone/' || t.milestone AS __grouplink__, 
     t.owner, t.reporter, t.status, t.type, t.priority, t.component,
-    count(b.ticket) AS Anz, sum(b.cost) AS Aufwand, sum(b.estimation) AS Schätzung,
+    count(b.ticket) AS Anz, sum(b.cost) AS Aufwand, sum(b.estimation) AS Schaetzung,
     floor(avg(b.status)) || '%' AS "Status", 
     (CASE t.status 
       WHEN 'closed' THEN 'color: #777; background: #ddd; border-color: #ccc;'
