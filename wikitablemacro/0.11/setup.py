@@ -10,7 +10,7 @@ setup(
     maintainer = 'Ryan J Ollos',
     maintainer_email = 'ryano@physiosonics.com',
     description = 'Trac plugin for drawing a table from a SQL query in a wiki page',
-    url = 'http://trac-hacks.org/wiki/ProgressMeterMacro', 
+    url = 'http://trac-hacks.org/wiki/WikiTableMacro', 
     version = '0.1',
     license='BSD',
     packages=['wikitable'],
