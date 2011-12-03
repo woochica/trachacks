@@ -24,7 +24,7 @@ class DynamicVariablesModule(Component):
     
     def post_process_request(self, req, template, data, content_type):
         if self._validate_request(req):
-            add_script(req, '/dynvars/dynvars.js')
+            add_script(req, '/dynvars/dynvars.html')
         return template, data, content_type
     
     # IRequestHandler methods
@@ -62,7 +62,8 @@ class DynamicVariablesModule(Component):
             if var not in req.args:
                 options = self._get_options(var.lower())
                 if options:
-                    args.append('%s=%s' % (var,options[0]))
+                    val = options[0] or (len(options)>1 and options[1]) or ''
+                    args.append('%s=%s' % (var,val))
         if args:
             url = req.base_path + req.path_info + '?' + req.query_string
             if req.query_string:
@@ -112,8 +113,9 @@ class DynamicVariablesModule(Component):
          myfield.options = value1|value2|value3
         
         If no [dynvars] field is found, a select field is searched
-        and its options returned.  If no select field is found, then
-        an empty list is returned."""
+        and its options returned.  For the milestone field, completed
+        milestones are omitted.  If no select field is found, then an
+        empty list is returned."""
         # look for [dynvars] field
         for key,val in self.env.config.options('dynvars'):
             if key == field_name+'.options':
@@ -121,7 +123,7 @@ class DynamicVariablesModule(Component):
         
         # handle milestone special - skip completed milestones
         if field_name == 'milestone':
-            return [m.name for m in
+            return [''] + [m.name for m in
                     Milestone.select(self.env, include_completed=False)]
         
         # lookup select field
