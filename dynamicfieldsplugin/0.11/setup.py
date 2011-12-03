@@ -4,11 +4,12 @@
 from setuptools import setup
 
 PACKAGE = 'TracDynamicFields'
-VERSION = '1.2.2'
+VERSION = '1.2.3'
 
 setup(
     name=PACKAGE, version=VERSION,
-    description='Dynamically hide, default, copy, clear, validate, etc. ticket fields',
+    description='Dynamically hide, default, copy, clear,' +\
+                ' validate, set ticket fields',
     author="Rob Guttman", author_email="guttman@alum.mit.edu",
     license='GPL', url='http://trac-hacks.org/wiki/DynamicFieldsPlugin',
     packages = ['dynfields'],

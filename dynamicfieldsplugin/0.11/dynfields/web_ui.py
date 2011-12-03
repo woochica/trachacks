@@ -30,11 +30,13 @@ class DynamicFieldsModule(Component):
         return handler
     
     def post_process_request(self, req, template, data, content_type):
-        if ((req.path_info.startswith('/ticket') or
-            req.path_info.startswith('/newticket')) \
-           and req.perm.has_permission('TICKET_MODIFY')) \
-          or (req.path_info.startswith('/query') \
-           and req.perm.has_permission('REPORT_VIEW')):
+        if ((req.path_info.startswith('/ticket') and \
+             (req.perm.has_permission('TICKET_VIEW') or \
+              req.perm.has_permission('TICKET_MODIFY')))
+          or (req.path_info.startswith('/newticket')) and \
+              req.perm.has_permission('TICKET_CREATE')) \
+          or (req.path_info.startswith('/query') and \
+              req.perm.has_permission('REPORT_VIEW')):
             add_script(req, '/dynfields/dynfields.html')
             add_script(req, 'dynfields/rules.js')
             add_script(req, 'dynfields/layout.js')
@@ -69,9 +71,7 @@ class DynamicFieldsModule(Component):
                 spec = {'rule_name':rule.name, 'trigger':trigger,
                         'target':target, 'value':value}
                 rule.update_spec(req, key, opts, spec)
-                if trigger not in triggers:
-                    triggers[trigger] = [] # rule specs
-                triggers[trigger].append(spec)
+                triggers.setdefault(trigger, []).append(spec)
             
         return triggers
 
@@ -114,7 +114,6 @@ class DynamicFieldsModule(Component):
                 # this rule spec has a pref - so get it!
                 pref = opts.get_pref(req, target, key)
                 rule.update_pref(req, trigger, target, key, opts, pref)
-                if rule.title not in data:
-                    data[rule.title] = {'desc':rule.desc, 'prefs':[]}
+                data.setdefault(rule.title,{'desc':rule.desc,'prefs':[]})
                 data[rule.title]['prefs'].append(pref)
         return data
