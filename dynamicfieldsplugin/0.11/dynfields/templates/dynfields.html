@@ -1,6 +1,20 @@
 <script type="text/javascript" xmlns="http://www.w3.org/1999/xhtml"
       xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/" py:strip="">
+      	
+var get_selector = function(field_name){
+    var selector = '#field-'+field_name;
+    if (field_name == 'owner'){
+        if (jQuery(selector).length != 1){
+            if (jQuery('#action_assign_reassign_owner').length){
+                selector = '#action_assign_reassign_owner';
+            } else {
+                selector = '#action_reassign_reassign_owner';
+            }
+        }
+    }
+	return selector;
+}
 
 var get_triggers = function(){
     if (window.dynfields_rules == undefined)
@@ -9,19 +23,7 @@ var get_triggers = function(){
     var triggers = new Object();
     <py:for each="trigger,specs in data.triggers.items()" >
         triggers['${trigger}'] = new Array();
-        
-        // determine field selector; 'owner' field is special case 
-        var selector = '#field-${trigger}';
-        if ('${trigger}' == 'owner'){
-            if (jQuery(selector).length != 1){
-                if (jQuery('#action_assign_reassign_owner').length){
-                    selector = '#action_assign_reassign_owner';
-                } else {
-                    selector = '#action_reassign_reassign_owner';
-                }
-            }
-        }
-        triggers['${trigger}'].selector = selector;
+        triggers['${trigger}'].selector = get_selector('${trigger}');
         
         <py:for each="spec in specs" >
             var spec = new Object();

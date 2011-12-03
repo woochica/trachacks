@@ -50,15 +50,7 @@ copyrule.apply = function(input, spec){
     if (spec.value == undefined)
         return;
     
-    var field = jQuery('#field-'+spec.target);
-    
-    // 'owner' field is special case 
-    if (spec.target == 'owner' && field.length == 0) {
-        field = jQuery('#action_reassign_reassign_owner');
-        if (field.length == 0)
-            field = jQuery('#action_assign_reassign_owner');
-    }
-    
+    var field = jQuery(get_selector(spec.target));
     if (spec.overwrite.toLowerCase() == 'false' && field.val() != '')
         return;
     
@@ -94,7 +86,8 @@ var defaultrule = new Rule('DefaultRule'); // must match python class name exact
 
 // apply
 defaultrule.apply = function(input, spec){
-    var field = jQuery('#field-'+spec.target);
+    var field = jQuery(get_selector(spec.target));
+    
     if (!field.hasClass('defaulted')){
         field.addClass('defaulted');
         var doit = true;
@@ -109,7 +102,7 @@ defaultrule.apply = function(input, spec){
             if (jQuery.inArray(value, opts) == -1)
                 doit = false;
         }
-            
+        
         // ensure an 'empty' option value for existing tickets (unless appending)
         if (field.val().length > 1 &&
            window.location.pathname.indexOf('/ticket') > -1){
@@ -312,15 +305,7 @@ setrule.setup = function(input, spec){
     if (jQuery.inArray(input.val(), spec.trigger_value.split('|')) == -1) // supports list of trigger values
         return;
     
-    var field = jQuery('#field-'+spec.target);
-    
-    // 'owner' field is special case 
-    if (spec.target == 'owner' && field.length == 0) {
-        field = jQuery('#action_reassign_reassign_owner');
-        if (field.length == 0)
-            field = jQuery('#action_assign_reassign_owner');
-    }
-    
+    var field = jQuery(get_selector(spec.target));
     if (spec.overwrite.toLowerCase() == 'false' && field.val() != '')
         return;
     

@@ -16,6 +16,17 @@ var Layout = function(name){
     // Move a field's tds and ths to slot i
     this.move_field = function(field, i){}
     
+    // Returns true of the field needs its own row
+    this.needs_own_row = function(field){
+        var fld = jQuery('#field-'+field);
+        if (fld.length)
+            if (fld.get(0).tagName == 'TEXTAREA')
+              return true;
+            else
+              return false;
+        return false;
+    }
+    
     // Update the field layout given a spec
     this.update = function(spec){
         var this_ = this;
@@ -54,21 +65,31 @@ var Layout = function(name){
     
     this.order_fields = function(new_fields){
         var this_ = this;
+        var skip_slot = 0;
         
         // determine which fields need to move and move 'em!
         jQuery(this.selector).each(function(i,e){
-            var field = this_.get_field($(this));
-            if (field == ''){
-                var j = -1;
-            } else {
-                var j = jQuery.inArray(field, new_fields);
-            }
+            var old_field = this_.get_field($(this));
+            var old_slot = -1;
+            if (old_field.length)
+                old_slot = jQuery.inArray(old_field, new_fields);
+            var new_field = new_fields[i];
+            
+            // check to allow *this* field be in its own row
+            if (i%2==1 && old_field.length && this_.needs_own_row(new_field))
+                skip_slot += 1;
+            
+            var new_slot = i+skip_slot;
             
             // check if field is in the correct slot in the new order
-            if (i != j && i < new_fields.length){
+            if (new_slot != old_slot && i < new_fields.length){
                 // wrong order!
-                this_.move_field(new_fields[i], i);
+                this_.move_field(new_field, new_slot);
             }
+            
+            // check to move *next* field to its own row
+            if (old_field.length && this_.needs_own_row(new_field))
+                skip_slot += 1;
         });
     }
 };
