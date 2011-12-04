@@ -34,9 +34,8 @@ class KeywordSuggestModule(Component):
     matchcontains = BoolOption('keywordsuggest','matchcontains', True,
                                """Include partial matches in suggestion list. Default is true.""")
 
-    multipleseparator = Option('keywordsuggest','multipleseparator', ",",
-                               """Character(s) to use as separators between keywords.
-                               Must be enclosed with quotes or other characters. Default is ', '.""")
+    multipleseparator = Option('keywordsuggest','multipleseparator', ',',
+                               """Character(s) to use as separators between keywords.Default is `,`.""")
 
     helppage = Option('keywordsuggest','helppage', None,
                       """If specified, 'keywords' label will be turned into a link to this URL.""")
@@ -77,7 +76,7 @@ class KeywordSuggestModule(Component):
             
         js = """jQuery(document).ready(function($) {
                     var keywords = [ %(keywords)s ]
-                    var sep = '"%(multipleseparator)s"' + ' '
+                    var sep = '%(multipleseparator)s' + ' '
                     function split( val ) {
                         return val.split( /%(multipleseparator)s\s*/ );
                     }
