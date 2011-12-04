@@ -74,7 +74,7 @@ class KeywordSuggestModule(Component):
         multipleseparator = self.multipleseparator + ' '
 
         matchfromstart = '"^" +'
-        if not self.matchcontains:
+        if self.matchcontains:
             matchfromstart = ''
             
         js = """jQuery(document).ready(function($) {
