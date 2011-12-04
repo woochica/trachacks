@@ -59,6 +59,8 @@ class KeywordSuggestModule(Component):
                     if (_tag not in keywords):
                         keywords.append(_tag)
         
+        
+        keywords = sorted(keywords)
         if keywords:
             keywords = ','.join(("'%s'" % javascript_quote(_keyword)
                                  for _keyword in keywords))
