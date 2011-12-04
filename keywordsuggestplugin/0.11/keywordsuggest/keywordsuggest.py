@@ -21,6 +21,9 @@ except ImportError:
 class KeywordSuggestModule(Component):
     implements (ITemplateStreamFilter, ITemplateProvider, IRequestFilter)
 
+    field = Option('keywordsuggest', 'field', 'keywords',
+                   """Field to which the drop-down list should be attached.""")
+
     keywords = ListOption('keywordsuggest', 'keywords', '', ',',
                           doc="""A list of comma separated values available for input.""")
 
@@ -82,17 +85,18 @@ class KeywordSuggestModule(Component):
            req.path_info.startswith('/newticket'):
             js_ticket = """
             $(function($) {
-              var sep = '%s'
-              $('#field-keywords').autocomplete([%s], {multiple: true, %s
-                                                %s multipleSeparator: sep, autoFill: true}); 
+              var sep = '%(multipleseparator)s'
+              $('#field-%(field)s').autocomplete([%(keywords)s], {multiple: true, %(matchcontains)s
+                                                %(mustmatch)s multipleSeparator: sep, autoFill: true}); 
               $("form").submit(function() {
                   // remove trail separator if any
-                  keywords = $("input#field-keywords").attr('value')
+                  keywords = $("input#field-%(field)s").attr('value')
                   if (keywords.lastIndexOf(sep) + sep.length == keywords.length) {
-                      $("input#field-keywords").attr('value', keywords.substring(0, keywords.length-sep.length))
+                      $("input#field-%(field)s").attr('value', keywords.substring(0, keywords.length-sep.length))
                   }
               });
-            });""" % (multipleseparator, keywords, matchcontains, mustmatch)
+            });""" % {'field': self.field, 'multipleseparator': multipleseparator, 'keywords': keywords,
+                      'matchcontains': matchcontains, 'mustmatch': mustmatch}
             stream = stream | Transformer('.//head').append \
                               (tag.script(Markup(js_ticket), type='text/javascript'))
 
