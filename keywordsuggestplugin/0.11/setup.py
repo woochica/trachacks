@@ -14,7 +14,7 @@ setup(
     license = "BSD",
     url = 'http://trac-hacks.org/wiki/KeywordSuggestPlugin',
     packages=find_packages(exclude=['*.tests*']),
-    package_data = { 'keywordsuggest': ['htdocs/*.js','htdocs/*.css','htdocs/*.gif'] },
+    package_data = { 'keywordsuggest': ['htdocs/js/*.js','htdocs/css/ui-darkness/*.css','htdocs/css/ui-darkness/images/*.gif'] },
     entry_points = {
         'trac.plugins': [
             'keywordsuggest = keywordsuggest.keywordsuggest'

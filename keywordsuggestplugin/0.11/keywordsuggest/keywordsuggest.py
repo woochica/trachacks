@@ -27,8 +27,9 @@ class KeywordSuggestModule(Component):
     keywords = ListOption('keywordsuggest', 'keywords', '', ',',
                           doc="""A list of comma separated values available for input.""")
 
-    mustmatch = BoolOption('keywordsuggest', 'mustmatch', False,
-                           """If true, 'keywords' field accepts values from the keywords list only.""")
+# This needs to be reimplemented as part of the work on version 0.5, refs th:#8141
+#    mustmatch = BoolOption('keywordsuggest', 'mustmatch', False,
+#                           """If true, 'keywords' field accepts values from the keywords list only.""")
 
     matchcontains = BoolOption('keywordsuggest','matchcontains', True,
                                """Include partial matches in suggestion list. Default is true.""")
@@ -72,35 +73,45 @@ class KeywordSuggestModule(Component):
 
         multipleseparator = self.multipleseparator + ' '
 
-        mustmatch = 'mustMatch: true,'
-        if not self.mustmatch:
-            mustmatch = ""
-
-        matchcontains = 'matchContains: true,'
+        matchfromstart = '"^" +'
         if not self.matchcontains:
-            matchcontains = ""
+            matchfromstart = ''
+            
+        js = """jQuery(document).ready(function($) {
+                    var sep = '%(multipleseparator)s'
+                    $('%(field)s').autocomplete({
+                        delay: 0,
+                        minLength: 0, 
+                        source: function(request, response) {
+                            var re = $.ui.autocomplete.escapeRegex(request.term);
+                            var matcher = new RegExp( %(matchfromstart)s re );
+                            var a = $.grep( [%(keywords)s], function(item,index) {
+                                return matcher.test(item);
+                            });
+                            response( a );
+                        }
+                    });
+                    $("form").submit(function() {
+                        // remove trail separator if any
+                        keywords = $("input%(field)s").attr('value')
+                        if (keywords.lastIndexOf(sep) + sep.length == keywords.length) {
+                            $("input%(field)s").attr('value', keywords.substring(0, keywords.length-sep.length))
+                        }
+                    });
+                });"""
 
         # inject transient part of javascript directly into ticket.html template
         if req.path_info.startswith('/ticket/') or \
            req.path_info.startswith('/newticket'):
-            js_ticket = """
-            $(function($) {
-              var sep = '%(multipleseparator)s'
-              $('#field-%(field)s').autocomplete([%(keywords)s], {multiple: true, %(matchcontains)s
-                                                %(mustmatch)s multipleSeparator: sep, autoFill: true}); 
-              $("form").submit(function() {
-                  // remove trail separator if any
-                  keywords = $("input#field-%(field)s").attr('value')
-                  if (keywords.lastIndexOf(sep) + sep.length == keywords.length) {
-                      $("input#field-%(field)s").attr('value', keywords.substring(0, keywords.length-sep.length))
-                  }
-              });
-            });""" % {'field': self.field, 'multipleseparator': multipleseparator, 'keywords': keywords,
-                      'matchcontains': matchcontains, 'mustmatch': mustmatch}
+            js_ticket =  js % {'field': '#field-' + self.field, 
+                               'multipleseparator': multipleseparator,
+                               'keywords': keywords,
+                               'matchfromstart': matchfromstart}
             stream = stream | Transformer('.//head').append \
                               (tag.script(Markup(js_ticket), type='text/javascript'))
+            print js_ticket
 
-            # turn keywords field label into link to wiki page
+            # turn keywords field label into link to a wiki page
             if self.helppage:
                 link = tag.a(href=req.href(self.helppage), target='blank')
                 if not self.helppagenewwindow:
@@ -110,19 +121,10 @@ class KeywordSuggestModule(Component):
                              
         # inject transient part of javascript directly into wiki.html template                             
         elif tagsplugin_is_installed and req.path_info.startswith('/wiki/'):
-            js_wiki = """
-            $(function($) {
-              var sep = '%s'
-              $('#tags').autocomplete([%s], {multiple: true, %s
-                                      %s multipleSeparator: sep, autoFill: true}); 
-                                          $("form").submit(function() {
-                  // remove trail separator if any
-                  keywords = $("input#tags").attr('value')
-                  if (keywords.lastIndexOf(sep) + sep.length == keywords.length) {
-                      $("input#tags").attr('value', keywords.substring(0, keywords.length-sep.length))
-                  }
-              });
-            });""" % (multipleseparator, keywords, matchcontains, mustmatch)
+            js_wiki =  js % {'field': '#tags', 
+                             'multipleseparator': multipleseparator,
+                             'keywords': keywords,
+                             'matchfromstart': matchfromstart}
             stream = stream | Transformer('.//head').append \
                               (tag.script(Markup(js_wiki), type='text/javascript'))
                               
@@ -134,6 +136,7 @@ class KeywordSuggestModule(Component):
         static resources (such as images, style sheets, etc).
         """
         return [('keywordsuggest', resource_filename(__name__, 'htdocs'))]
+    
     def get_templates_dirs(self):
 
         return [resource_filename(__name__, 'htdocs')]
@@ -146,7 +149,6 @@ class KeywordSuggestModule(Component):
         if req.path_info.startswith('/ticket/') or \
            req.path_info.startswith('/newticket') or \
            (tagsplugin_is_installed and req.path_info.startswith('/wiki/')):
-            add_script(req, 'keywordsuggest/jquery.bgiframe.min.js')
-            add_script(req, 'keywordsuggest/jquery.autocomplete.pack.js')
-            add_stylesheet(req, 'keywordsuggest/autocomplete.css')
+            add_script(req, 'keywordsuggest/js/jquery-ui-1.8.16.custom.min.js')
+            add_stylesheet(req, 'keywordsuggest/css/ui-darkness/jquery-ui-1.8.16.custom.css')
         return template, data, content_type
