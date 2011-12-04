@@ -71,32 +71,51 @@ class KeywordSuggestModule(Component):
                            'KeywordSuggestPlugin disabled.')
             return stream
 
-        multipleseparator = self.multipleseparator + ' '
-
         matchfromstart = '"^" +'
         if self.matchcontains:
             matchfromstart = ''
             
         js = """jQuery(document).ready(function($) {
-                    var sep = '%(multipleseparator)s'
-                    $('%(field)s').autocomplete({
-                        delay: 0,
-                        minLength: 0, 
-                        source: function(request, response) {
-                            var re = $.ui.autocomplete.escapeRegex(request.term);
-                            var matcher = new RegExp( %(matchfromstart)s re );
-                            var a = $.grep( [%(keywords)s], function(item,index) {
-                                return matcher.test(item);
-                            });
-                            response( a );
-                        }
+                    var keywords = [ %(keywords)s ]
+                    var sep = '"%(multipleseparator)s"' + ' '
+                    function split( val ) {
+                        return val.split( /%(multipleseparator)s\s*/ );
+                    }
+                    function extractLast( term ) {
+                        return split( term ).pop();
+                    }                    
+                    $('%(field)s')
+                        // don't navigate away from the field on tab when selecting an item
+                        .bind( "keydown", function( event ) {
+                            if ( event.keyCode === $.ui.keyCode.TAB && $( this ).data( "autocomplete" ).menu.active ) {
+                                event.preventDefault();
+                            }
+                        })
+                        .autocomplete({
+                            delay: 0,
+                            minLength: 0,
+                            source: function( request, response ) {
+                                // delegate back to autocomplete, but extract the last term
+                                response( $.ui.autocomplete.filter(
+                                    keywords, extractLast( request.term ) ) );
+                            },
+                            select: function( event, ui ) {
+                                var terms = split( this.value );
+                                // remove the current input
+                                terms.pop();
+                                // add the selected item
+                                terms.push( ui.item.value );
+                                // add placeholder to get the comma-and-space at the end
+                                terms.push( "" );
+                                this.value = terms.join( sep );
+                                return false;
+                            }                        
                     });
                     $("form").submit(function() {
-                        // remove trail separator if any
                         keywords = $("input%(field)s").attr('value')
-                        if (keywords.lastIndexOf(sep) + sep.length == keywords.length) {
-                            $("input%(field)s").attr('value', keywords.substring(0, keywords.length-sep.length))
-                        }
+                        keywords = keywords.replace(/ /g, '')
+                        keywords = keywords.replace(/(\w+%(multipleseparator)s)/g, '$1 ')
+                        $("input%(field)s").attr('value', keywords)
                     });
                 });"""
 
@@ -104,12 +123,11 @@ class KeywordSuggestModule(Component):
         if req.path_info.startswith('/ticket/') or \
            req.path_info.startswith('/newticket'):
             js_ticket =  js % {'field': '#field-' + self.field, 
-                               'multipleseparator': multipleseparator,
+                               'multipleseparator': self.multipleseparator,
                                'keywords': keywords,
                                'matchfromstart': matchfromstart}
             stream = stream | Transformer('.//head').append \
                               (tag.script(Markup(js_ticket), type='text/javascript'))
-            print js_ticket
 
             # turn keywords field label into link to a wiki page
             if self.helppage:
@@ -122,7 +140,7 @@ class KeywordSuggestModule(Component):
         # inject transient part of javascript directly into wiki.html template                             
         elif tagsplugin_is_installed and req.path_info.startswith('/wiki/'):
             js_wiki =  js % {'field': '#tags', 
-                             'multipleseparator': multipleseparator,
+                             'multipleseparator': self.multipleseparator,
                              'keywords': keywords,
                              'matchfromstart': matchfromstart}
             stream = stream | Transformer('.//head').append \
