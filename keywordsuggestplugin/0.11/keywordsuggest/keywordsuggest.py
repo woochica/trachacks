@@ -111,8 +111,8 @@ class KeywordSuggestModule(Component):
                             }                        
                     });
                     $("form").submit(function() {
-                        keywords = $("input%(field)s").attr('value')
-                        keywords = keywords.replace(/ /g, '')
+                        keywords = $("input%(field)s").attr('value')                        
+                        keywords = keywords.replace(/ /g, '').replace(/(^\s*,)|(,\s*$)/g, '')
                         keywords = keywords.replace(/(\w+%(multipleseparator)s)/g, '$1 ')
                         $("input%(field)s").attr('value', keywords)
                     });
