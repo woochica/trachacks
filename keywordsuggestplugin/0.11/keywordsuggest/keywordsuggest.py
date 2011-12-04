@@ -126,7 +126,7 @@ class KeywordSuggestModule(Component):
                                'multipleseparator': self.multipleseparator,
                                'keywords': keywords,
                                'matchfromstart': matchfromstart}
-            stream = stream | Transformer('.//head').append \
+            stream = stream | Transformer('.//head').append\
                               (tag.script(Markup(js_ticket), type='text/javascript'))
 
             # turn keywords field label into link to a wiki page
@@ -167,6 +167,7 @@ class KeywordSuggestModule(Component):
         if req.path_info.startswith('/ticket/') or \
            req.path_info.startswith('/newticket') or \
            (tagsplugin_is_installed and req.path_info.startswith('/wiki/')):
+            add_script(req, 'keywordsuggest/js/jquery-1.6.2.min')
             add_script(req, 'keywordsuggest/js/jquery-ui-1.8.16.custom.min.js')
             add_stylesheet(req, 'keywordsuggest/css/ui-darkness/jquery-ui-1.8.16.custom.css')
         return template, data, content_type
