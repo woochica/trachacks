@@ -4,7 +4,8 @@ import re
 from datetime import datetime
 
 from trac.config import Option
-from trac.core import *
+from trac.core import Component
+from trac.core import implements
 from trac.ticket.api import ITicketChangeListener, TicketSystem
 from trac.ticket.model import Ticket
 from trac.util.datefmt import to_utimestamp, utc
@@ -13,7 +14,7 @@ class RelevantTicketPlugin(Component):
     implements(ITicketChangeListener)
     
     tfield = Option('relevant_ticket', 'target_field', 'relevant_tickets',
-                          doc="""The field name for inputing IDs of relevant ticket.""")
+                    doc="""The field name for inputing IDs of relevant ticket.""")
     
     def _check_field_existance(self):
         
@@ -27,14 +28,14 @@ class RelevantTicketPlugin(Component):
         
         return False
         
-    def _get_custom_value(self, id, field, db):
+    def _get_custom_value(self, ticket_id, field, db):
         
         row = None
         
         cursor = db.cursor()
         cursor.execute("""
             SELECT value FROM ticket_custom WHERE name=%s AND ticket=%s
-            """, (field, id))
+            """, (field, ticket_id))
         row = cursor.fetchone()
         
         if not row:
@@ -44,14 +45,14 @@ class RelevantTicketPlugin(Component):
         
     def _get_id_list(self, value):
         
-        format = re.compile('\#[0-9]+$')
+        pattern = re.compile('\#[0-9]+$')
         
         candidates = [candidate.strip() for candidate in value.split(',')]
-        id_list = [candidate for candidate in candidates if format.match(candidate)]
+        id_list = [candidate for candidate in candidates if pattern.match(candidate)]
         
         return id_list
         
-    def _get_comment_num(self, id, db):
+    def _get_comment_num(self, ticket_id, db):
         
         num = 0
         
@@ -64,7 +65,7 @@ class RelevantTicketPlugin(Component):
                  WHERE field='comment') AS tc2
               ON (tc1.time = tc2.time)
             WHERE ticket=%s ORDER BY tc1.time DESC
-            """, (id,))
+            """, (ticket_id,))
         for ts, old in cursor:
             try:
                 num += int(old.rsplit('.', 1)[-1])
