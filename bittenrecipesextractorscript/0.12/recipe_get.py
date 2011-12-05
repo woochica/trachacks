@@ -5,15 +5,17 @@ import getopt, sys, os
 # and save them as individual files. The file name itself denotes the unique rule name identifier.
 # Each column value is separated by ^^ as the delimiter.
 
-# IMPORTANT: Do not modify the first value... ever. 
-# This script is designed to function with the recipe_put.py script.
-# Run this script to obtain bitten rules, edit them, then run the recipe_put.py while in the same directory.
+# IMPORTANT: Do not modify the first value... ever.
+#
+# This script is designed to function with the recipe_put.py script located in the same directory.
+# Run this script to obtain bitten rules, edit them, then run the recipe_put.py with the same arguments.
+# The saved recipes will reside in a created directory with the same name as your Trac directory name appended with: _recipes
 
 _USAGE = """recipe_get.py <path to Trac Environment>
 """
 
 def writeFile(trac_env, file_name, (path, active, recipe, min_rev, max_rev, label, description)):
-  directory = os.path.split(trac_env)[1]
+  directory = os.path.split(trac_env)[1] + '_recipes'
   if not os.path.exists(os.path.join(os.getcwd(), directory)):
     os.makedirs(os.path.join(os.getcwd(), directory))
   print 'Saving:', file_name + '.recipe', 'to', os.getcwd() + '/' + directory

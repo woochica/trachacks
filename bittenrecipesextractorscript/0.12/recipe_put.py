@@ -1,14 +1,19 @@
 from trac.env import Environment
 import getopt, sys, os, string
 
-# This script will attempt to update which ever recipe it finds listed (as filenames) in the current working directory
+# This script will attempt to update which ever recipe it finds listed (as filenames) in the project's name directory. The project
+# directory should reside in the same directory as the recipe_put.py script.
 # Such as:
+# #~>ls
+# My_Trac_Site recipe_get.py recipe_put.py
 #
-# 049AppsbecauseofFRAMEWORK.recipe (which is what we have named the 'All Applications because of Framework' recipt)
+# Where My_Trac_Site is a directory containing the saved recipes:
+# #~>ls My_Trac_Site
+# 049AppsbecauseofFRAMEWORK.recipe application_001.recipe framework_before_update.recipe
 #
 # The name of the file denotes the name of the recipe. I am using two characters '^^' as the delimeter.
 # There is practically no error checking, so be careful with path names as the like.
-# I built this script to ease the burden of using the GUI to make many small changes to our growing list of bitten rules.
+# I built this script to ease the burden from using the GUI to make many small changes to a growing list of bitten rules.
 
 _USAGE = """recipe_put.py <path to Trac Environment>
 """
@@ -21,9 +26,9 @@ def readFile(file_name):
 
 def recipeFiles(trac_env):
   file_list = []
-  for files in os.listdir(os.path.split(trac_env)[1]):
+  for files in os.listdir(os.path.split(trac_env)[1] + '_recipes'):
     if string.find(files, '.recipe') != -1:
-      file_list.append(str(os.path.join(os.getcwd(), os.path.split(trac_env)[1], files)))
+      file_list.append(str(os.path.join(os.getcwd(), os.path.split(trac_env)[1] + '_recipes', files)))
   return file_list
 
 def commitRecipe(env, (name, path, active, recipe, min_rev, max_rev, label, description, placeholder)):
