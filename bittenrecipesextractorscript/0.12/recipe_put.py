@@ -53,9 +53,7 @@ def printUsage(message):
 def processArgs():
   try:
     opts = getopt.getopt(sys.argv[1:], '')[1]
-    print opts
     if opts[0][-1:] == os.sep:
-      print opts
       opts[0] = opts[0][:-1]
 
   except getopt.GetoptError:
@@ -69,7 +67,6 @@ def processArgs():
 
 if __name__ == '__main__':
   trac_env = processArgs()
-  print trac_env
   sys.exit(0)
   env = Environment(trac_env)
   for files in recipeFiles(trac_env):
