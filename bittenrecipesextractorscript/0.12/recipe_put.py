@@ -67,7 +67,6 @@ def processArgs():
 
 if __name__ == '__main__':
   trac_env = processArgs()
-  sys.exit(0)
   env = Environment(trac_env)
   for files in recipeFiles(trac_env):
     commitRecipe(env, readFile(files))
