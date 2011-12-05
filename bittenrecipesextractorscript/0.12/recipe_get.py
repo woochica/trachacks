@@ -49,8 +49,8 @@ def printUsage(message):
 def processArgs():
   try:
     opts = getopt.getopt(sys.argv[1:], '')[1]
-    if opts[-1:] == os.sep:
-      opts = opts[:-1]
+    if opts[0][-1:] == os.sep:
+      opts[0] = opts[0][:-1]
 
   except getopt.GetoptError:
     printUsage('Invalid arguments.')
