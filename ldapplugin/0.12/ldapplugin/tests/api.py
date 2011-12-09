@@ -27,7 +27,7 @@ class LdapGroupProviderTestCase(unittest.TestCase):
         self.env = EnvironmentStub(default_data=True)
         self.env.config.set('ldap', 'enable', 'true')
         self.env.config.set('ldap', 'basedn', 'dc=example,dc=org')
-        self.env.config.set('ldap', 'host', 'xebian')
+        self.env.config.set('ldap', 'host', 'localhost')
 
     def test_permissiongroup(self):
         gp = LdapPermissionGroupProvider(self.env)
@@ -41,9 +41,9 @@ class LdapPermissionStoreTestCase(unittest.TestCase):
         self.env = EnvironmentStub(default_data=True)
         self.env.config.set('ldap', 'enable', 'true')
         self.env.config.set('ldap', 'basedn', 'dc=example,dc=org')
-        self.env.config.set('ldap', 'host', 'xebian')
+        self.env.config.set('ldap', 'host', 'localhost')
         self.env.config.set('ldap', 'store_bind', 'true')
-        self.env.config.set('ldap', 'bind_user', 'trac')
+        self.env.config.set('ldap', 'bind_user', 'uid=trac,dc=example,dc=org')
         self.env.config.set('ldap', 'bind_passwd', 'Trac')
         self.env.config.set('ldap', 'permfilter', 'objectclass=groupofnames')
         self.action1 = 'FILE_VIEW'
