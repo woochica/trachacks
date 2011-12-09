@@ -1,1 +1,1 @@
-from api import AddStaticResourceComponent
+from api import AddStaticResourcesComponent

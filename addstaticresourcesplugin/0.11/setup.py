@@ -3,7 +3,7 @@ from setuptools import setup
 PACKAGE = 'addstaticresourcesplugin'
 
 setup(name="Add Static Resources Plugin",
-      version='0.0.2',
+      version='0.0.3',
       packages=[PACKAGE],
       url='http://www.trac-hacks.org/wiki/AddStaticResourcesPlugin',
       license='http://www.opensource.org/licenses/mit-license.php',
