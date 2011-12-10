@@ -34,7 +34,7 @@ class QueuesModule(Component):
     def post_process_request(self, req, template, data, content_type):
         if self._valid_request(req):
             add_stylesheet(req, 'queues/queues.css')
-            add_script(req, 'queues/jquery-ui-1.8.7.custom.min.js')
+            add_script(req, 'queues/jquery-ui-1.8.16.custom.min.js')
             add_script(req, '/queues/queues.js')
         return template, data, content_type
     
