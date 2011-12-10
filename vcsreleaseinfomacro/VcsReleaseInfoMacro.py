@@ -19,6 +19,11 @@ class VcsReleaseInfoMacro(WikiMacroBase):
 
     """
 
+    def __init__(self):
+        # baseurl for cvsweb for rpm .spec's
+        # TODO: make this configurable
+        self.spec_baseurl = None
+
     def get_releases(self, repo, path, rev):
         tagsnode = repo.get_node(path + "/tags", rev)
         releases = []
@@ -35,6 +40,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 'rev' : node.rev,
                 'author' : cs.author or 'anonymous',
                 'message' : cs.message,
+                'props' : cs.get_properties(),
             })
 
         releases = sorted(releases, key=itemgetter('time'), reverse=True)
@@ -48,6 +54,39 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         })
 
         return releases
+
+    # generate cvsweb annotate link for spec
+    def specurl_annotate(self, props):
+        if not self.spec_baseurl:
+            return None
+
+        if not props.has_key('props'):
+            return None
+        revprops = props['props']
+        if not revprops.has_key('rpm:spec') or not revprops.has_key('rpm:cvsrev'):
+            return None
+
+        return "%s/%s?annotate=%s" % (self.spec_baseurl, revprops['rpm:spec'], revprops['rpm:cvsrev'])
+
+    # generate cvsweb diff link for spec
+    def specurl_diff(self, prev, cur):
+        if not self.spec_baseurl:
+            return None
+
+        if not prev.has_key('props') or not cur.has_key('props'):
+            return None
+
+        revprops = prev['props']
+        if not revprops.has_key('rpm:spec') or not revprops.has_key('rpm:cvsrev'):
+            return None
+        r1 = revprops['rpm:cvsrev']
+
+        revprops = cur['props']
+        if not revprops.has_key('rpm:spec') or not revprops.has_key('rpm:cvsrev'):
+            return None
+        r2 = revprops['rpm:cvsrev']
+
+        return "%s/%s.diff?r1=%s;r2=%s;f=h" % (self.spec_baseurl, revprops['rpm:spec'], r1, r2)
 
     def expand_macro(self, formatter, name, content):
         req = formatter.req
@@ -131,7 +170,17 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     'old_tag' : next['version'],
                     'new_tag' : cur['version'],
                     'author': cur['author'],
+
                 })
+                url = self.specurl_annotate(cur);
+                if url != None:
+                    annotate = " spec: [%s annotate]" % url
+                    items.append(annotate)
+                    # check also diff link
+                    url = self.specurl_diff(cur, next);
+                    if url != None:
+                        annotate = " [%s diff]" % url
+                        items.append(annotate)
             else:
                 # last release
                 items.append(
@@ -147,6 +196,6 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     'author': cur['author'],
                 })
 
-        return '<div class="releases">\n' + to_unicode(wiki_to_html("\n".join(items), self.env, req, absurls = True, escape_newlines=False))  + '</div>\n'
+        return '<div class="releases">\n' + to_unicode(wiki_to_html("\n".join(items), self.env, req))  + '</div>\n'
 
 # vim:et:ts=4:sw=4
