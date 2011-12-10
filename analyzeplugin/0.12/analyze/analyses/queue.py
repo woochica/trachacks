@@ -120,7 +120,8 @@ def get_project_solutions(db, args):
         cursor.execute(sql)
         ids = [tid for (tid,) in cursor]
         if ids:
-            # solution n: move project n's tickets before other project's highest/lowest position
+            # solution n: move project i's tickets before project j's
+            #             highest/lowest position
             tix = ', '.join(["#%s" % tid for tid in ids])
             pos = stats[j]['result']
             new_pos = str(pos + (i or -1)) # either -1 or +1

@@ -15,7 +15,7 @@ class IAnalysis(Interface):
          * data - dict of data to use for the fix
         """
     def fix_issue(self, db, data):
-        """Execute the given solution from the given the data."""
+        """Execute the solution specified by the given data."""
        
 
 class Analysis(object):
@@ -34,8 +34,8 @@ class Analysis(object):
     @property
     def title(self):
         """Returns the analysis class' title used for display purposes.
-        This default implementation returns the analysis's name with any
-        camel case split into words."""
+        This default implementation returns the analysis's class name
+        with any camel case split into words."""
         # split CamelCase to Camel Case
         return self._split_camel_case(self.__class__.__name__)
     
@@ -46,15 +46,16 @@ class Analysis(object):
         return self.__doc__.split('\n')[0]
     
     def can_analyze(self, report):
-        """Returns True if the given report can be analyzed."""
+        """Returns True if this analysis can analyze the given report."""
         return True
     
     def fix_issue(self, db, data, author):
-        """Base fix is to update a ticket with the data values."""
+        """Base fix is to update a ticket with the data values which can
+        either be a dict of changes or a list of such dicts."""
         if not isinstance(data,list):
             data = [data]
         
-        # update each ticket
+        # update each ticket - TODO: honor queues audit config
         for changes in data:
             ticket = Ticket(self.env, changes['ticket'])
             del changes['ticket']

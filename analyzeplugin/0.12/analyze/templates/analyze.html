@@ -145,7 +145,6 @@ var ask_issue = function(rows, path, next, reload, issue){
     jQuery('.ui-dialog :button:first').focus();
 }
 
-
 var check_rows = function(rows, path, next, reload){
     color_rows(rows, 'yellow');
     jQuery.ajax({
@@ -176,6 +175,7 @@ var collect_rows = function(index, num, path, next, reload){
         check_rows(rows, path, next, reload);
     else
         if (reload) {
+            jQuery('#analyzebutton').get(0).scrollIntoView(false);
             var box = '<div id="reload" title="Done!">'
                     + '  <p>Reloading page in case fixes changed results..</p>'
                     + '</div>';
@@ -222,7 +222,6 @@ var collect_rows = function(index, num, path, next, reload){
 			});
         }
 }
-
 
 var ask_analyze = function(report){
     var id = "ask-analysis"+report;
