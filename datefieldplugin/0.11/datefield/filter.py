@@ -99,7 +99,6 @@ class DateFieldModule(Component):
                 break
 
         if match:
-            add_script(req, 'datefield/js/jquery-1.6.2.min.js')
             add_script(req, 'datefield/js/jquery-ui-1.8.16.custom.min.js')
             # virtual script
             add_script(req, '/datefield/datefield.js')
