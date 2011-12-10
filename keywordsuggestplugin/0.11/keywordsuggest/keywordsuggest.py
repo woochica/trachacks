@@ -100,6 +100,10 @@ class KeywordSuggestModule(Component):
                                 response( $.ui.autocomplete.filter(
                                     keywords, extractLast( request.term ) ) );
                             },
+                            focus: function() {
+                                // prevent value inserted on focus
+                                return false;
+                            },                            
                             select: function( event, ui ) {
                                 var terms = split( this.value );
                                 // remove the current input
