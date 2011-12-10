@@ -99,11 +99,11 @@ class DateFieldModule(Component):
                 break
 
         if match:
-            add_script(req, 'datefield/js/jquery-1.3.2.min.js')
-            add_script(req, 'datefield/js/jquery-ui-1.7.3.custom.min.js')
+            add_script(req, 'datefield/js/jquery-1.6.2.min.js')
+            add_script(req, 'datefield/js/jquery-ui-1.8.16.custom.min.js')
             # virtual script
             add_script(req, '/datefield/datefield.js')
-            add_stylesheet(req, 'datefield/css/jquery-ui-1.7.3.custom.css')
+            add_stylesheet(req, 'datefield/css/jquery-ui-1.8.16.custom.css')
         return template, data, content_type
         
     # ITemplateProvider methods
