@@ -110,8 +110,8 @@ class KeywordSuggestModule(Component):
                                 terms.push( "" );
                                 this.value = terms.join( sep );
                                 return false;
-                            }                        
-                    });
+                            }                            
+                        });
                     $("form").submit(function() {
                         keywords = $("input%(field)s").attr('value')                        
                         keywords = keywords.replace(/ /g, '').replace(/(^\s*,)|(,\s*$)/g, '')
@@ -168,7 +168,6 @@ class KeywordSuggestModule(Component):
         if req.path_info.startswith('/ticket/') or \
            req.path_info.startswith('/newticket') or \
            (tagsplugin_is_installed and req.path_info.startswith('/wiki/')):
-            add_script(req, 'keywordsuggest/js/jquery-1.6.2.min')
             add_script(req, 'keywordsuggest/js/jquery-ui-1.8.16.custom.min.js')
-            add_stylesheet(req, 'keywordsuggest/css/ui-darkness/jquery-ui-1.8.16.custom.css')
+            add_stylesheet(req, 'keywordsuggest/css/jquery-ui-1.8.16.custom.css')
         return template, data, content_type
