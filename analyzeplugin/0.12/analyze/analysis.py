@@ -8,15 +8,26 @@ from analyze.analyses import milestone, queue
 class IAnalysis(Interface):
     """An extension point interface for adding analyses."""
     
+    def can_analyze(self, report):
+        """Return True if this analysis can analyze the given report."""
+    
     def get_solutions(self, db, args, report):
         """Return a list of solution dicts comprising:
         
          * name - Text describing the solution
-         * data - dict of data to use for the fix
+         * data - any serializable python object that defines the fix/solution
+        
+        If data is a dict of field/value pairs of changes - or a list of
+        these - then the base implementation of fix_issue() below will
+        execute the fix upon user command.  Use 'ticket' as the field name
+        for the ticket's id value.
         """
     def fix_issue(self, db, data):
-        """Execute the solution specified by the given data."""
-       
+        """Execute the solution specified by the given data which was
+        previously returned from get_solutions() above.  This method
+        only needs to be defined if the data is not field/value pairs
+        of changes or a list of these - i.e., the fix is more involved."""
+
 
 class Analysis(object):
     """Abstract class for common analysis properties and utilities."""
