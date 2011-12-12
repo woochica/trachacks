@@ -110,7 +110,20 @@ class QueueDependencyAnalysis(Component, Analysis):
     This builds on mastertickets' blockedby relationships and
     the queue's position.  No blockedby ticket should be lower
     in the queue (i.e., have a larger position number) than
-    this ticket."""
+    this ticket.
+    
+    The queue_fields config option are the list of fields that
+    define a queue.  You can create report-specific versions:
+    
+     [analyze]
+     queue_fields = milestone,queue
+     queue_fields.2 = queue
+     queue_fields.9 = queue,phase!=verifying|readying
+    
+    The last example above includes a "filter" field (phase).
+    This is used to filter tickets whose values match (or don't
+    match with '!=') the pipe-delimited list of values.
+    """
     
     implements(IAnalysis)
     
@@ -132,15 +145,22 @@ class QueueDependencyAnalysis(Component, Analysis):
                         self.queue_fields) # fallback if not report-specific
         if not isinstance(queue_fields,list):
             queue_fields = [f.strip() for f in queue_fields.split(',')]
-        args['standard_fields'] = []
-        args['custom_fields'] = []
+        args['standard_fields'] = {}
+        args['custom_fields'] = {}
         for name in queue_fields:
+            vals = None
+            if '=' in name:
+                name,vals = name.split('=',1)
+                not_ = name.endswith('!')
+                if not_:
+                    name = name[:-1]
+                vals = [v.strip() for v in vals.split('|')] + [not_]
             for field in TicketSystem(self.env).get_ticket_fields():
                 if name == field['name']:
                     if 'custom' in field:
-                        args['custom_fields'].append(name)
+                        args['custom_fields'][name] = vals
                     else:
-                        args['standard_fields'].append(name)
+                        args['standard_fields'][name] = vals
                     break
             else:
                 raise Exception("Unknown queue field: %s" % name)
