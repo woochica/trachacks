@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import re
+try:
+    from babel.dates import format_datetime as babel_format_datetime
+except ImportError:
+    babel_format_datetime = None
 
 from reportlab.lib import pagesizes, units, enums
 from reportlab.lib.styles import ParagraphStyle
@@ -13,12 +17,18 @@ from reportlab.platypus.paragraph import Paragraph
 from reportlab.platypus.doctemplate import BaseDocTemplate, PageTemplate, \
                                            FrameBreak
 
-from trac.util.datefmt import format_datetime, pretty_timedelta
-from trac.util.translation import dgettext
+from trac.util.datefmt import format_datetime
+from trac.util.text import to_unicode
+try:
+    from trac.util.datefmt import user_time
+except ImportError:
+    user_time = None
 
 import tracstickyticket
 
+
 __all__ = ['PdfStickyTicket']
+
 
 class PdfStickyTicket(object):
     _stdfonts = (
@@ -34,14 +44,19 @@ class PdfStickyTicket(object):
         'HYSMyeongJo-Medium','HYGothic-Medium',
     )
 
-    def __init__(self, filename, tickets, pagesize='A4',
-                 stickysize=(75, 75), fontname='(auto)', locale=None):
+    def __init__(self, filename, tickets, fields, req, pagesize='A4',
+                 stickysize=(75, 75), fontname='(auto)'):
+        self.req = req
+        self.tz = req.tz
+        locale = None
+        if hasattr(req, 'locale'):
+            locale = req.locale
         self.filename = filename
         self.tickets = tickets
         self.pagesize = self._get_pagesize(pagesize)
         self.stickysize = [units.toLength('%gmm' % val) for val in stickysize]
-        self.locale = locale
         self.fontname = self._setup_font(fontname, locale)
+        self.fields = fields
 
     def generate(self):
         tickets = self.tickets
@@ -87,15 +102,12 @@ class PdfStickyTicket(object):
                 fontname = '(auto)'
 
         if fontname == '(auto)':
-            fontname = 'Helvetica'
-            if not locale:
-                pass
-            if locale == 'ja':
-                fontname = 'HeiseiKakuGo-W5'
-            elif locale == 'ko':
-                fontname = 'HYGothic-Medium'
-            elif locale.startswith('zh_'):
-                fontname = 'STSong-Light'
+            lang = None
+            if locale:
+                lang = str(locale).split('_', 1)[0]
+            fontname = {'ja': 'HeiseiKakuGo-W5',
+                        'ko': 'HYGothic-Medium',
+                        'zh': 'STSong-Light'}.get(lang, 'Helvetica')
 
         if fontname in self._stdfonts:
             font = TypeFace(fontname)
@@ -115,26 +127,27 @@ class PdfStickyTicket(object):
         return Paragraph(text, style)
 
     def _create_element_main(self, ticket, style):
-        time = ticket['time']
-        data = dict((key, _escape(val)) for key, val in ticket.iteritems())
-        data['time'] = format_datetime(time, '%Y-%m-%d %H:%M')
-        data['dateinfo'] = pretty_timedelta(time)
-        data['fontname'] = _escape(self.fontname)
-        data['label_reporter'] = _escape(dgettext('messages', ('Reporter')))
-        data['label_time'] = _escape(dgettext('messages', ('Created')))
-
+        def field_line(field):
+            name = field['name']
+            value = ticket[name]
+            if field['type'] == 'time':
+                value = _format_datetime(value, self.req)
+            elif value is None:
+                value = ''
+            return _escape('%s: %s' % (field['label'], to_unicode(value)))
         text = '<font name="Helvetica" size="36">' \
                '<b>#%(id)d</b></font><br/>' \
                '<br/>' \
                '<font name="%(fontname)s" size="12">' \
                '<b>%(summary)s</b></font><br/>' \
                '<br/>' \
-               '<font name="%(fontname)s" size="10.5">' \
-               '%(label_reporter)s: %(reporter)s<br/>' \
-               '%(label_time)s: %(time)s (%(dateinfo)s)' \
-               '</font>' % data
-
-        return Paragraph(text, style)
+               '<font name="%(fontname)s" size="10.5">%(fields)s</font>'
+        data = {
+            'id': ticket['id'], 'summary': _escape(ticket['summary']),
+            'fontname': _escape(self.fontname),
+            'fields': '<br/>'.join([field_line(f) for f in self.fields]),
+        }
+        return Paragraph(text % data, style)
 
     def _get_pagesize(self, name):
         name = name.strip().upper()
@@ -201,8 +214,23 @@ class StickyPage(PageTemplate):
 
         PageTemplate.__init__(self, id=id, frames=frames, pagesize=pagesize)
 
+
+if user_time:
+    def _format_datetime(t, req):
+        return user_time(req, format_datetime, t)
+elif babel_format_datetime:
+    def _format_datetime(t, req):
+        tz = getattr(req, 'tz', None)
+        locale = getattr(req, 'locale', None)
+        return babel_format_datetime(t, tzinfo=tz, locale=locale)
+else:
+    def _format_datetime(t, req):
+        tz = getattr(req, 'tz', None)
+        return format_datetime(t, tzinfo=tz)
+
+
 _escape_tab = {'&': '&amp;', '<': '&lt;', '>': '&gt;'}
-_escape_re = re.compile(r'[&<>]', re.U)
+_escape_re = re.compile(ur'[&<>]')
 
 def _escape(val):
     if not isinstance(val, basestring):
