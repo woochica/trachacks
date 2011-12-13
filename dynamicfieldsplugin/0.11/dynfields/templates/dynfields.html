@@ -1,7 +1,7 @@
 <script type="text/javascript" xmlns="http://www.w3.org/1999/xhtml"
       xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/" py:strip="">
-      	
+          
 var get_selector = function(field_name){
     var selector = '#field-'+field_name;
     if (field_name == 'owner'){
@@ -12,8 +12,12 @@ var get_selector = function(field_name){
                 selector = '#action_reassign_reassign_owner';
             }
         }
+    } else if (field_name == 'resolution'){
+        if (jQuery(selector).length != 1){
+            selector = '#action_resolve_resolve_resolution';
+        }
     }
-	return selector;
+    return selector;
 }
 
 var get_triggers = function(){
@@ -72,28 +76,28 @@ var apply_rules = function(){
 jQuery(document).ready(function($){
     var triggers = get_triggers(); // trigger fields
     
-	if (window.location.pathname.match(/\/query$/)){
+    if (window.location.pathname.match(/\/query$/)){
         // hide all "hide_always" fields
         jQuery.each(triggers, function(trigger,specs){
-			jQuery.each(specs, function(i,spec){
+            jQuery.each(specs, function(i,spec){
                 spec.rule.query(spec);
-			});
+            });
         });
-	} else {
-	    var inputs = new Array();
-	    
-	    // collect all input fields that trigger rules
-	    jQuery.each(triggers, function(trigger,specs){
-	        var input = jQuery(specs.selector).get(0);
-	        inputs.push(input);
-	    });
-	    inputs = jQuery.unique(inputs);
-	    
-	    // attach change event to each input and trigger first change
-	    jQuery.each(inputs, function(obj){
-	        $(this).change(apply_rules).change();
-	    });
-		
-	}
+    } else {
+        var inputs = new Array();
+        
+        // collect all input fields that trigger rules
+        jQuery.each(triggers, function(trigger,specs){
+            var input = jQuery(specs.selector).get(0);
+            inputs.push(input);
+        });
+        inputs = jQuery.unique(inputs);
+        
+        // attach change event to each input and trigger first change
+        jQuery.each(inputs, function(obj){
+            $(this).change(apply_rules).change();
+        });
+        
+    }
 });
 </script>
