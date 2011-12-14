@@ -1,9 +1,11 @@
-from trac.core import *
+from trac.core import Component, TracError, implements
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import Table, Column, Index
+from trac.db.api import DatabaseManager
 
 
 class TagModelProvider(Component):
+
     implements(IEnvironmentSetupParticipant)
 
     SCHEMA = [
@@ -14,6 +16,29 @@ class TagModelProvider(Component):
               Index(['tagspace', 'name']),
               Index(['tagspace', 'tag']),]
         ]
+    def __init__(self):
+        # Preemptive check for rollback tolerance of read-only db connections.
+        # This is required to avoid breaking `environment_needs_upgrade`,
+        #   if the plugin uses intentional db transaction errors for the test.
+        self.rollback_is_safe = True
+        try:
+            db = DatabaseManager(self.env).get_connection()
+            if hasattr(db, 'readonly'):
+                db = DatabaseManager(self.env).get_connection(readonly=True)
+                cursor = db.cursor()
+                # Test needed for rollback on read-only connections.
+                cursor.execute("SELECT COUNT(*) FROM system")
+                cursor.fetchone()
+                try:
+                    db.rollback()
+                except AttributeError:
+                    # Avoid rollback on read-only connections.
+                    self.rollback_is_safe = False
+                    return
+                # Test passed.
+        except TracError, e:
+            # Trac too old - expect no constraints.
+            return
 
     # IEnvironmentSetupParticipant methods
     def environment_created(self):
@@ -29,7 +54,8 @@ class TagModelProvider(Component):
             return False
         except Exception, e:
             self.log.error("DatabaseError: %s", e)
-            db.rollback()
+            if self.rollback_is_safe:
+                db.rollback()
             return True
 
     def upgrade_environment(self, db):
@@ -43,8 +69,9 @@ class TagModelProvider(Component):
             self.env.log.debug("tractags needs to migrate old data")
             return True
         except Exception, e:
-            # The expected outcome for any new/updated installation.
-            db.rollback()
+            # The expected outcome for any up-to-date installation.
+            if self.rollback_is_safe:
+                db.rollback()
             return False
 
     def _upgrade_db(self, db):
