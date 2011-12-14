@@ -26,18 +26,21 @@ validTimeFormats=[
     '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %I:%M:%S %p',
     '%Y-%m-%d %H:%M', '%Y-%m-%d %I:%M %p',
     '%Y-%m-%d %H', '%Y-%m-%d %I %p',
+    '%Y-%m-%d',
     
     '%Y/%m/%d %H:%M:%S.%f', '%Y/%m/%d %I:%M:%S.%f %p',
     '%Y/%m/%d %H:%M:%S', '%Y/%m/%d %I:%M:%S %p',
     '%Y/%m/%d %H:%M', '%Y/%m/%d %I:%M %p',
     '%Y/%m/%d %H', '%Y/%m/%d %H %p',
+    '%Y/%m/%d',
     
     '%Y.%m.%d %H:%M:%S.%f', '%Y.%m.%d %I:%M:%S.%f %p',
     '%Y.%m.%d %H:%M:%S', '%Y.%m.%d %I:%M:%S %p',
     '%Y.%m.%d %H:%M', '%Y.%m.%d %I:%M %p',
     '%Y.%m.%d %H', '%Y.%m.%d %I %p',
+    '%Y.%m.%d',
     ]
-def parsetime(val, tzinfo):
+def parsetime(val, tzinfo=trac.util.datefmt.to_datetime(None).tzinfo):
     if not val: return None
     val = val.strip()
     if not val: return None
