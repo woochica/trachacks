@@ -227,7 +227,6 @@ class QueueDependencyAnalysis(Component, Analysis):
             data = [data]
         
         # find position field
-        import pydevd; pydevd.settrace('192.168.56.100')
         for k,v in data[0].items():
             if k == 'ticket':
                 continue
