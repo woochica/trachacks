@@ -1,4 +1,5 @@
-"""Several queue-related analyses and fixes."""
+# several queue-related analyses and fixes
+# TODO: fix sql injection strings
 
 import copy
 
@@ -17,6 +18,7 @@ def get_dependency_solutions(db, args):
     
     # first check that the dependent ticket query fields are correct
     if standard or custom:
+        issue = "#%s's dependent tickets are not in the correct queue." % id
         ticket,ids = _get_query_field_violators(db, args, standard, custom, id)
         if ids:
             data = []
@@ -32,14 +34,15 @@ def get_dependency_solutions(db, args):
               'name': 'Move %s to %s' % (tix,fields),
               'data': data,
             })
-            return solutions
+            return issue,solutions
     
-    # queue fields are all good
-    # so now check positions only (but apply filter) 
+    # queue fields are all good, so how's their order?
+    issue = "#%s's dependent tickets are out of order." % id
+    
     sql  = "SELECT t.id, c.value FROM ticket t"
     sql += " JOIN ticket_custom c ON t.id = c.ticket"
     sql += " AND c.name = '%s' " % position_field
-    sql += _get_from(custom)
+    sql += _get_join(custom)
     sql += "WHERE t.id IN "
     sql += " (SELECT source FROM mastertickets WHERE dest = %s)" % id
     sql += " AND t.status != 'closed'"
@@ -49,7 +52,7 @@ def get_dependency_solutions(db, args):
     cursor.execute(sql)
     result = [(tid,pos) for tid,pos in cursor]
     if not result:
-        return []
+        return '',[] # no dependent tickets!  skip
     ids,positions = zip(*result)
     
     # solution 1: move dependent tickets above position
@@ -67,7 +70,8 @@ def get_dependency_solutions(db, args):
           'data': {'ticket':id,position_field:str(lowest+1)},
         })
         
-    return solutions
+    return issue,solutions
+
 
 def get_project_solutions(db, args):
     """For each blockedby ticket of two ids, check that the first id's
@@ -77,6 +81,7 @@ def get_project_solutions(db, args):
     id1 = args['id1']
     id2 = args['id2']
     position_field = args['col1_field1']
+    project_type = args['project_type']
     
     # iterate over the fields in same order every time
     standard = [field for field in args['standard_fields'].keys()]
@@ -85,6 +90,7 @@ def get_project_solutions(db, args):
     # first check that the dependent ticket query fields are correct
     if standard or custom:
         for tid in (id1,id2):
+            issue = "#%s's dependent tickets are not in the correct queue."%tid
             ticket,ids = _get_query_field_violators(db,args,standard,custom,tid)
             if ids:
                 data = []
@@ -99,18 +105,58 @@ def get_project_solutions(db, args):
                   'name': 'Move %s to %s' % (tix,fields),
                   'data': data,
                 })
-                return solutions
+                return issue,solutions
     
-    # queue fields are all good
-    # so now check positions only of sub-tickets
+    # second do a multi-parent analysis - else can cause havoc!
     cursor = db.cursor()
+    for tid in (id1,id2):
+        # get all (unfiltered) children from this parent
+        issue = "#%s's dependent tickets are in multiple %ss." % \
+                    (tid,project_type)
+        
+        # for each child, determine if it has multiple parents
+        sql  = "SELECT t.id, b.value FROM ticket t "
+        sql += " JOIN ticket_custom b ON t.id=b.ticket AND b.name='blocking'"
+        sql += _get_join(custom)
+        sql += " WHERE t.id IN"
+        sql += " (SELECT source FROM mastertickets WHERE dest=%s)" % tid
+        sql += " AND t.status != 'closed'"
+        sql += _get_filter_and(standard, custom, args) + ";"
+        cursor.execute(sql)
+        children = [(cid,[b.strip() for b in blocking.split(',')]) \
+                    for (cid,blocking) in cursor]
+        for cid,blocking in children:
+            if len(blocking) < 2:
+                continue # optimization
+            # for each child, determine if it has multiple parents
+            sql  = "SELECT p.id FROM ticket p WHERE p.id IN"
+            sql += " (SELECT dest FROM mastertickets WHERE source=%s)" % cid
+            sql += "AND p.status != 'closed' "
+            sql += "AND p.type = '%s';" % project_type
+            cursor.execute(sql)
+            ids = [pid for (pid,) in cursor]
+            if len(ids) >= 2:
+                for pid in ids:
+                    rest = [str(i) for i in ids if i != pid]
+                    block = [b for b in blocking if b not in rest]
+                    tix = ', '.join(["#%s" % i for i in rest])
+                    name = "%s%s" % (project_type,len(rest) > 1 and 's' or '')
+                    solutions.append({
+                      'name': 'Remove #%s from %s %s' % (cid,name,tix),
+                      'data': {'ticket':cid,'blocking':', '.join(block)},
+                    })
+                return issue,solutions
+
+    # queue fields are all good, so how's their childrens' order?
+    issue = "#%s and #%s's dependent tickets are out of order." % (id1,id2)
+    
     stats = [{'id':id1,'fn':'max','op':'>','label':'before'},
              {'id':id2,'fn':'min','op':'<','label':'after'}]
     for stat in stats:
         sql  = "SELECT %s(CAST(c.value AS INTEGER)) FROM ticket t" % stat['fn']
         sql += " JOIN ticket_custom c ON t.id = c.ticket"
-        sql += _get_from(custom)
         sql += " AND c.name = '%s' " % position_field
+        sql += _get_join(custom)
         sql += "WHERE t.id IN "
         sql += " (SELECT source FROM mastertickets WHERE dest=%s)" % stat['id']
         sql += " AND t.status != 'closed'"
@@ -124,7 +170,7 @@ def get_project_solutions(db, args):
         j = (i+1)%2 # the other stat
         sql  = "SELECT t.id FROM ticket t"
         sql += " JOIN ticket_custom c ON t.id = c.ticket"
-        sql += _get_from(custom)
+        sql += _get_join(custom)
         sql += " AND c.name = '%s' " % position_field
         sql += "WHERE t.id IN "
         sql += " (SELECT source FROM mastertickets WHERE dest=%s)" % stat['id']
@@ -146,18 +192,27 @@ def get_project_solutions(db, args):
               'data': [{'ticket':tid,position_field:new_pos} for tid in ids],
             })
     
-    return solutions
+    return issue,solutions
 
 
-def _get_from(custom):
+# common functions
+
+def _is_filter_field(name, standard, custom, args):
+    """Evaluates to True if the given name is a filter field."""
+    return (name in standard and args['standard_fields'][name] or \
+            name in custom and args['custom_fields'][name])
+            
+def _get_join(custom, t='t'):
+    """Get JOIN sql query part for custom fields."""
     sql = ' '
     for i in range(len(custom)):
         name = custom[i]
-        sql += "JOIN ticket_custom c%s ON t.id = c%d.ticket " % (i,i)
+        sql += "JOIN ticket_custom c%s ON %s.id = c%d.ticket " % (i,t,i)
         sql += "AND c%d.name = '%s' " % (i,name)
     return sql + ' '
 
 def _get_filter_and(standard, custom, args):
+    """Get AND sql query part for filtered standard and custom fields."""
     sql = ' '
     for name in standard:
         vals = copy.copy(args['standard_fields'][name])
@@ -175,9 +230,10 @@ def _get_filter_and(standard, custom, args):
         in_ = ','.join(["'%s'" % v for v in vals])
         sql += " AND c%d.value %s (%s)" % (i,not_,in_)
     return sql + ' '
-    
 
 def _get_query_field_violators(db, args, standard, custom, id):
+    """Return ticket id's queue fields and any children tickets that do
+    not have these fields (i.e., are in the wrong queue)."""
     cursor = db.cursor()
     
     # build field selectors
@@ -188,18 +244,20 @@ def _get_query_field_violators(db, args, standard, custom, id):
     # build "from" part of query
     from_  = " FROM ticket t"
     from_ += " LEFT OUTER JOIN milestone m ON t.milestone = m.name "
-    from_ += _get_from(custom)
+    from_ += _get_join(custom)
         
     # get this ticket's queue field values 
     sql = "SELECT m.due, " + ', '.join(fields) + from_ + "WHERE t.id = %s" % id
     cursor.execute(sql)
     result = cursor.fetchone()
     if not result:
-        return []
+        return {},[]
     due = result[0] # for comparing milestone due date below
     ticket = {}
     for i in range(len(keys)):
-        ticket[keys[i]] = result[i+1]
+        name = keys[i]
+        if (not _is_filter_field(name, standard, custom, args)):
+            ticket[name] = result[i+1]
     
     # find open dependent tickets that don't match queue fields
     sql = "SELECT t.id " + from_

@@ -1,4 +1,4 @@
-"""Several milestone-related analyses."""
+# several milestone-related analyses
 
 def get_dependency_solutions(db, args):
     """For each blockedby ticket of this id, check that it's milestone's
@@ -16,23 +16,25 @@ def get_dependency_solutions(db, args):
         """, (id,))
     result = cursor.fetchone()
     if not result:
-        return []
+        return '',[]
     type,milestone,due = result
     if not due:
-        return []
+        return '',[] # this ticket's milestone doesn't have a due date - skip 
     
-    # find all peers that are due too late
+    # find all peers that are due too late (or not scheduled at all)
     cursor.execute("""
-        SELECT t.id, t.milestone FROM ticket t
+        SELECT t.id, t.milestone, m.due FROM ticket t
         JOIN milestone m ON t.milestone = m.name
         WHERE t.id IN (SELECT source FROM mastertickets WHERE dest = %s)
         AND t.status != 'closed'
-        AND m.due > %s;
+        AND (t.milestone='' OR m.due=0 OR m.due > %s);
         """, (id,due))
-    result = zip(*[(t,m) for t,m in cursor])
+    result = zip(*[(t,m,d) for t,m,d in cursor])
     if not result:
-        return []
-    ids,milestones = result
+        return '',[] # no dependent tickets!  skip
+    
+    issue = "#%s's dependent tickets are in future (or no) milestones." % id
+    ids,milestones,dues = result
     solutions = []
     
     # solution 1: move dependent tickets to this milestone
@@ -49,19 +51,20 @@ def get_dependency_solutions(db, args):
     })
     
     # solution 2: move this ticket to latest dependent milestone
-    cursor.execute("""
-        SELECT name FROM milestone WHERE due =
-          (SELECT max(due) FROM milestone WHERE name in (%s));
-        """ % ','.join(["'%s'" % m for m in milestones]))
-    result = cursor.fetchone()
-    if result:
-        (latest_milestone,) = result
-        changes = {'ticket':id,'milestone':latest_milestone}
-        for field in args['on_change_clear']:
-            changes.update({field:''})
-        solutions.append({
-          'name': 'Move #%s out to milestone %s' % (id,latest_milestone),
-          'data': changes,
-        })
+    if any(m for m in milestones) and any(d for d in dues):
+        cursor.execute("""
+            SELECT name FROM milestone WHERE due =
+              (SELECT max(due) FROM milestone WHERE name in (%s));
+            """ % ','.join(["'%s'" % m for m in milestones if m]))
+        result = cursor.fetchone()
+        if result:
+            (latest_milestone,) = result
+            changes = {'ticket':id,'milestone':latest_milestone}
+            for field in args['on_change_clear']:
+                changes.update({field:''})
+            solutions.append({
+              'name': 'Move #%s out to milestone %s' % (id,latest_milestone),
+              'data': changes,
+            })
     
-    return solutions
+    return issue,solutions

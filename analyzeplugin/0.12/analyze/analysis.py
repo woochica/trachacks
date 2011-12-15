@@ -2,27 +2,34 @@ import re
 from trac.core import *
 from trac.ticket.model import Ticket
 from trac.ticket.api import TicketSystem
-from trac.config import ListOption, Option
+from trac.config import ListOption, Option, ChoiceOption
 from analyze.analyses import milestone, queue
 
 class IAnalysis(Interface):
-    """An extension point interface for adding analyses."""
+    """An extension point interface for adding analyses.  Each analysis
+    can detect one or more issues in a report.  Each issue can suggest
+    one or more solutions to the user.  The user can select amongst the
+    solutions to fix the issue."""
     
     def can_analyze(self, report):
         """Return True if this analysis can analyze the given report."""
     
     def get_solutions(self, db, args, report):
-        """Return a list of solution dicts comprising:
+        """Return a tuple of an issue description and a dict of its solution
+        dict - or a list of solution dicts - with each dict comprising:
         
          * name - Text describing the solution
          * data - any serializable python object that defines the fix/solution
         
+        Any "#<num>" ticket string found in the issue description or name
+        will be converted to its corresponding href. 
+        
         If data is a dict of field/value pairs of changes - or a list of
-        these - then the base implementation of fix_issue() below will
-        execute the fix upon user command.  Use 'ticket' as the field name
-        for the ticket's id value.
-        """
-    def fix_issue(self, db, data):
+        these - then the base implementation of fix_issue() will execute
+        the fix upon user command.  Use 'ticket' as the field name for the
+        ticket's id value."""
+    
+    def fix_issue(self, db, data, author):
         """Execute the solution specified by the given data which was
         previously returned from get_solutions() above.  This method
         only needs to be defined if the data is not field/value pairs
@@ -50,23 +57,26 @@ class Analysis(object):
         # split CamelCase to Camel Case
         return self._split_camel_case(self.__class__.__name__)
     
-    @property
-    def desc(self):
-        """Returns the analysis description.  The default implementation
-        returns the first paragraph of the docstring."""
-        return self.__doc__.split('\n')[0]
-    
     def can_analyze(self, report):
         """Returns True if this analysis can analyze the given report."""
         return True
     
+    def get_refresh_report(self):
+        """Returns the report (and any params) to refresh upon making one or
+        more fixes.  The default behavior is to refresh the current report."""
+        return None # default refreshes current report
+    
+    def get_solutions(self, db, args, report):
+        raise Exception("Provide this method")
+    
     def fix_issue(self, db, data, author):
-        """Base fix is to update a ticket with the data values which can
-        either be a dict of changes or a list of such dicts."""
+        """This base fix updates a ticket with the field/value pairs in
+        data.  The data object can either be a dict or a list of dicts
+        with the 'ticket' field of each identifying the ticket to change."""
         if not isinstance(data,list):
             data = [data]
         
-        # update each ticket - TODO: honor queues audit config
+        # update each ticket
         for changes in data:
             ticket = Ticket(self.env, changes['ticket'])
             del changes['ticket']
@@ -85,10 +95,24 @@ class Analysis(object):
 
 
 class MilestoneDependencyAnalysis(Component, Analysis):
-    """Dependent tickets are in milestones after #'s milestone.
-    This builds on mastertickets' blockedby relationships.
-    No blockedby ticket should be in a later milestone than
-    this ticket."""
+    """Building on mastertickets' blockedby relationships, this analyzes
+    a report's tickets for one issue:
+    
+     1. Detects when dependent tickets are not scheduled in or before
+        the master ticket's milestone. 
+    
+    This includes when dependent tickets are not yet scheduled or when
+    the scheduled milestone has no due date.  Specify which reports can
+    be analyzed with the milestone_reports option:
+    
+     [analyze]
+     milestone_reports = 1,2
+     on_change_clear = version
+    
+    In the example above, this analysis is only available for reports
+    1 and 2.  Also, if a ticket's milestone gets fixed, then its version
+    field will get cleared as defined by the on_change_clear option above.
+    """
     
     implements(IAnalysis)
     
@@ -106,24 +130,36 @@ class MilestoneDependencyAnalysis(Component, Analysis):
 
 
 class QueueDependencyAnalysis(Component, Analysis):
-    """Dependent tickets are not in the queue or are after #.
-    This builds on mastertickets' blockedby relationships and
-    the queue's position.  No blockedby ticket should be lower
-    in the queue (i.e., have a larger position number) than
-    this ticket.
+    """Building on mastertickets' blockedby relationships and the queue's
+    position, this analyzes a report's tickets for two issues:
     
-    The queue_fields config option are the list of fields that
-    define a queue.  You can create report-specific versions:
+     1. Detects when dependent tickets are in the wrong queue.
+     2. Detects when dependent tickets' positions are out of order.
+    
+    Specify which reports can be analyzed with the queue_reports option:
+    
+     [analyze]
+     queue_reports = 1,2,3,9
+    
+    In the example above, this analysis is available for reports 1, 2, 3
+    and 9.  If no queue_reports is provided, then the queue's full list of
+    reports will be used instead from the [queues] 'reports' option.
+    
+    The queue_fields config option is the list of fields that define
+    a queue.  You can optionally override with a report-specific option:
     
      [analyze]
      queue_fields = milestone,queue
      queue_fields.2 = queue
      queue_fields.9 = queue,phase!=verifying|readying
     
-    The last example above includes a "filter" field (phase).
-    This is used to filter tickets whose values match (or don't
-    match with '!=') the pipe-delimited list of values.
-    """
+    In the example above, reports 1 and 3 are defined by fields 'milestone'
+    and 'queue', report 2 is defined only by field 'queue', and report 9
+    is defined by field 'queue' as well as filtering the 'phase' field.
+    
+    The filtering spec should usually match those in the report - i.e., via
+    a pipe-delimited list specify which tickets to include ('=') or not
+    include ('!=') in the analysis."""
     
     implements(IAnalysis)
     
@@ -133,14 +169,15 @@ class QueueDependencyAnalysis(Component, Analysis):
             doc="Reports that can be queue dependency analyzed.")
     queue_fields = ListOption('analyze', 'queue_fields', default=[],
             doc="Ticket fields that define each queue.")
+    audit = ChoiceOption('queues', 'audit', choices=['log','ticket','none'],
+      doc="Record reorderings in log, in ticket, or not at all.")
     
     def can_analyze(self, report):
         # fallback to actual queue report list if not made explicit
         return report in (self.reports1 or self.reports2)
     
     def _add_args(self, args, report):
-        """Adds several args needed for solution processing."""
-        # split the queue fields for this report into standard and custom
+        """Split queue fields into standard and custom."""
         queue_fields = self.env.config.get('analyze','queue_fields.'+report,
                         self.queue_fields) # fallback if not report-specific
         if not isinstance(queue_fields,list):
@@ -154,6 +191,7 @@ class QueueDependencyAnalysis(Component, Analysis):
                 not_ = name.endswith('!')
                 if not_:
                     name = name[:-1]
+                # save 'not' info at end of vals to pop off later
                 vals = [v.strip() for v in vals.split('|')] + [not_]
             for field in TicketSystem(self.env).get_ticket_fields():
                 if name == field['name']:
@@ -167,9 +205,60 @@ class QueueDependencyAnalysis(Component, Analysis):
     
     def get_solutions(self, db, args, report):
         if not args['col1_value1']:
-            return [] # has no position so skip
+            return '',[] # has no position so skip
         self._add_args(args, report)
         return queue.get_dependency_solutions(db, args)
+
+    def fix_issue(self, db, data, author):
+        """Honor queues audit config."""
+        
+        def isint(i):
+            try:
+                int(i)
+            except (ValueError, TypeError):
+                return False
+            else:
+                return True
+        
+        if not isinstance(data,list):
+            data = [data]
+        
+        # find position field
+        import pydevd; pydevd.settrace('192.168.56.100')
+        for k,v in data[0].items():
+            if k == 'ticket':
+                continue
+            field = k
+            if self.audit == 'ticket' or any(len(c) != 2 for c in data) or \
+               not isint(v): # heuristic for position field (since not explicit)
+                return Analysis.fix_issue(self, db, data, author)
+        
+        # honor audit config
+        cursor = db.cursor()
+        for changes in data:
+            id = changes['ticket']
+            new_pos = changes[field]
+            cursor.execute("""
+                SELECT value from ticket_custom
+                 WHERE name=%s AND ticket=%s
+                """, (field,id))
+            result = cursor.fetchone()
+            if result:
+                old_pos = result[0]
+                cursor.execute("""
+                    UPDATE ticket_custom SET value=%s
+                     WHERE name=%s AND ticket=%s
+                    """, (new_pos,field,id))
+            else:
+                old_pos = '(none)'
+                cursor.execute("""
+                    INSERT INTO ticket_custom (ticket,name,value)
+                     VALUES (%s,%s,%s)
+                    """, (id,field,new_pos))
+            if self.audit == 'log':
+                self.log.info("%s reordered ticket #%s's %s from %s to %s" \
+                    % (author,id,field,old_pos,new_pos))
+        db.commit()
 
 
 class ProjectQueueAnalysis(QueueDependencyAnalysis):
@@ -178,24 +267,56 @@ class ProjectQueueAnalysis(QueueDependencyAnalysis):
     *containment* (i.e., parent-child) semantics, and also the
     queue's position.  All sub-tickets of the first project
     should be ordered before all sub-tickets of the second
-    project, and so on."""
+    project, and so on.
+    
+    This analysis builds on mastertickets' blockedby relationships under
+    a parent-child semantics and the queue's position.  This analyzes
+    a report's tickets for three issues:
+    
+     1. Detects when dependent tickets are in the wrong queue.
+     2. Detects when dependent tickets have more than one parent.
+     3. Detects when dependent tickets' positions are out of order.
+    
+    The last analysis above ensures that the relative ordering of two
+    parents' children match the relative ordering of the parents.  To
+    do this, then children can have only one parent (issue 2 above)
+    else the algorithm will likely thrash.
+    
+    Specify which reports can be analyzed with the project_queue option:
+    
+     [analyze]
+     project_reports = 12,14
+    
+    In the example above, this analysis is available for reports 12 and 14.
+    To differentiate between peer relationships and parent-child
+    relationships of blockedby tickets, parent tickets must have a
+    unique ticket type that is specified in the project_type option (the
+    default is 'epic'):
+    
+     [analyze]
+     project_type = epic
+     refresh_report = 2
+    
+    Tickets listed in project_reports should all be of this type.  If an
+    'refresh_report' option is provided, then if there are fixes made,
+    instead of refreshing the current report, it will load the impacted
+    report.  You can also add parameters to that report if desired such as
+    'impacted_report = 2?max=1000'.
+    """
     
     implements(IAnalysis)
     
     reports = ListOption('analyze', 'project_reports', default=[],
             doc="Reports that can be queue dependency analyzed.")
     project_type = Option('analyze', 'project_type', default='epic',
-            doc="Ticket type indicating a project (aka epic).")
+            doc="Ticket type indicating a project (default is 'epic').")
+    refresh_report = Option('analyze', 'project_refresh_report', default=None,
+            doc="Report being impacted by this report.")
     
     @property
     def title(self):
         title = "%s Queue Analysis" % self._capitalize(self.project_type)
         return title
-    
-    @property
-    def desc(self):
-        name = self._capitalize(self.project_type)
-        return "%s %s" % (name,self.__doc__.split('\n')[0])
     
     @property
     def num(self):
@@ -204,9 +325,76 @@ class ProjectQueueAnalysis(QueueDependencyAnalysis):
     def can_analyze(self, report):
         return report in self.reports
     
+    def get_refresh_report(self):
+        return self.refresh_report
+    
     def get_solutions(self, db, args, report):
         if not args['col1_value1'] or not args['col1_value2']:
-            return [] # has no position so skip
+            return '',[] # has no position so skip
         self._add_args(args, report)
         args['project_type'] = self.project_type
+        args['impacted_report'] = self.project_type
         return queue.get_project_solutions(db, args)
+
+
+#class ProjectRollupAnalysis(Component, Analysis):
+#    """#'s sub-tickets have new rollup values.
+#    This builds on mastertickets' blockedby relationships using
+#    *containment* (i.e., parent-child) semantics.  It rolls up
+#    the values of the sub-tasks using a specified stat:
+#    
+#     [analyze]
+#     rollup.effort = sum
+#     rollup.phase = pivot=implementation
+#    
+#     * sum - adds numeric values
+#     * pivot - for select fields only
+#    
+#    The pivot algorithm is as follows:
+#    
+#     * if all values are < the pivot index, then select their max index
+#     * else if all are > the pivot index, then select their min index
+#     * else select the pivot index
+#    """
+#    
+#    implements(IAnalysis)
+#    
+#    reports = ListOption('analyze', 'rollup_reports', default=[],
+#            doc="Reports that can rollup field values.")
+#    project_type = Option('analyze', 'project_type', default='epic',
+#            doc="Ticket type indicating a project (default is 'epic').")
+#    
+#    @property
+#    def title(self):
+#        title = "%s Rollup Analysis" % self._capitalize(self.project_type)
+#        return title
+#    
+#    def can_analyze(self, report):
+#        return report in self.reports
+#    
+#    def _add_args(self, args, report):
+#        """Process rollup field configs."""
+#        args['standard_fields'] = {}
+#        args['custom_fields'] = {}
+#        for name,stat in self.env.config.options('analyze'):
+#            if not option.startswith('rollup.'):
+#                continue
+#            name = name[7:]
+#            pivot = None
+#            if '=' in stat:
+#                stat,pivot = stat.split('=',1)
+#            rollup = {'stat':stat.strip(),'pivot':pivot.strip()}
+#            for field in TicketSystem(self.env).get_ticket_fields():
+#                if name == field['name']:
+#                    rollup['options'] =  field.get('options',None)
+#                    if 'custom' in field:
+#                        args['custom_fields'][name] = rollup
+#                    else:
+#                        args['standard_fields'][name] = rollup
+#                    break
+#            else:
+#                raise Exception("Unknown rollup field: %s" % name)
+#    
+#    def get_solutions(self, db, args, report):
+#        self._add_args(args, report)
+#        return project.get_rollup_solutions(db, args)

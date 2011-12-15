@@ -37,6 +37,7 @@ class AnalyzeModule(Component):
             add_stylesheet(req, 'analyze/jquery-ui-1.8.16.custom.css')
             add_script(req, 'analyze/jquery-ui-1.8.16.custom.min.js')
             add_script(req, '/analyze/analyze.html')
+            add_script(req, 'analyze/analyze.js')
         return template, data, content_type
     
     # IRequestHandler methods
@@ -68,6 +69,7 @@ class AnalyzeModule(Component):
 
 
 class AnalyzeAjaxModule(Component):
+    """Ajax handler for suggesting solutions to users and fixing issues."""
     implements(IRequestHandler)
     
     analyses = ExtensionPoint(IAnalysis)
@@ -80,19 +82,23 @@ class AnalyzeAjaxModule(Component):
     def process_request(self, req):
         """Process AJAX request."""
         try:
-            for analysis in self.analyses:
-                if req.path_info.endswith('/'+analysis.path) or \
-                   req.path_info.endswith('/'+analysis.path+'/fix'):
+            if req.path_info.endswith('/list'):
+                result = self._get_analyses(req.args['report'])
+            else:
+                for analysis in self.analyses:
+                    if not req.path_info.endswith('/'+analysis.path) and  \
+                       not req.path_info.endswith('/'+analysis.path+'/fix'):
+                        continue
                     db = self.env.get_db_cnx()
                     if req.path_info.endswith('/fix'):
                         result = self._fix_issue(analysis, db, req)
                     else:
                         report = get_report(req, check_referer=True)
                         result = self._get_solutions(analysis, db, req, report)
-                    code,type,msg = 200,'application/json',json.dumps(result)
                     break
-            else:
-                raise Exception("Unknown path: %s" % req.path_info)
+                else:
+                    raise Exception("Unknown path: %s" % req.path_info)
+            code,type,msg = 200,'application/json',json.dumps(result)
         except Exception, e:
             import traceback;
             code,type = 500,'text/plain'
@@ -103,17 +109,24 @@ class AnalyzeAjaxModule(Component):
         req.end_headers()
         req.write(msg)
     
-    def _fix_issue(self, analysis, db, req):
-        """Return the result of the fix."""
-        data = json.loads(req.args['data'])
-        return analysis.fix_issue(db, data, req.authname)
+    def _get_analyses(self, report):
+        result = []
+        for analysis in self.analyses:
+            if analysis.can_analyze(report):
+                result.append({
+                    'path': analysis.path,
+                    'num': analysis.num,
+                    'title': analysis.title,
+                })
+        return result
     
     def _get_solutions(self, analysis, db, req, report):
         """Return the solutions with serialized data to use for the fix.
         Ticket references are converted to hrefs."""
-        solutions = analysis.get_solutions(db, req.args, report)
+        issue,solutions = analysis.get_solutions(db, req.args, report)
         base = req.base_url+'/ticket/'
         id = re.compile(r"(#([1-9][0-9]*))")
+        issue = id.sub(r'<a href="%s\2">\1</a>' % base, issue)
         
         # serialize solution data; convert ticket refs to hrefs
         for solution in solutions:
@@ -122,20 +135,15 @@ class AnalyzeAjaxModule(Component):
             name = solution['name']
             solution['name'] = id.sub(r'<a href="%s\2">\1</a>' % base, name)
         
-        # replace '#' in description with hrefs
-        if solutions:
-            desc = ''
-            parts = analysis.desc.split('#')
-            for i in range(len(parts)-1):
-                tix = '#'+req.args['id%s' % (i+1)]
-                tix = id.sub(r'<a href="%s\2">\1</a>' % base, tix)
-                desc += parts[i] + tix
-            desc += parts[-1]
-        else:
-            desc = analysis.desc
-            
-        return {'title': analysis.title, 'desc': desc,
-                'exists': len(solutions) > 0, 'solutions': solutions}
+        return {'title': analysis.title, 'label': issue,
+                'exists': len(solutions) > 0, 'solutions': solutions,
+                'refresh': analysis.get_refresh_report() or \
+                           get_report(req, check_referer=True)}
+    
+    def _fix_issue(self, analysis, db, req):
+        """Return the result of the fix."""
+        data = json.loads(req.args['data'])
+        return analysis.fix_issue(db, data, req.authname)
 
 
 # common functions
@@ -150,4 +158,3 @@ def get_report(req, check_referer=False):
     if match:
         return match.groupdict()['num']
     return None
-
