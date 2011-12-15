@@ -14,6 +14,10 @@ class IAnalysis(Interface):
     def can_analyze(self, report):
         """Return True if this analysis can analyze the given report."""
     
+    def get_refresh_report(self):
+        """Returns the report (and any params) to refresh upon making one or
+        more fixes.  The default behavior is to refresh the current report."""
+    
     def get_solutions(self, db, args, report):
         """Return a tuple of an issue description and a dict of its solution
         dict - or a list of solution dicts - with each dict comprising:
@@ -62,8 +66,7 @@ class Analysis(object):
         return True
     
     def get_refresh_report(self):
-        """Returns the report (and any params) to refresh upon making one or
-        more fixes.  The default behavior is to refresh the current report."""
+        """This default behavior refreshes the current report."""
         return None # default refreshes current report
     
     def get_solutions(self, db, args, report):
