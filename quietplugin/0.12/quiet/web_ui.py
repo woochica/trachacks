@@ -1,4 +1,3 @@
-import json
 from trac.core import *
 from genshi.builder import tag
 from trac.web.chrome import add_script, add_stylesheet, add_ctxtnav
@@ -7,8 +6,10 @@ from trac.web.main import IRequestFilter, IRequestHandler
 from trac.perm import IPermissionRequestor
 from trac.config import Option
 from trac.util.translation import _
+import json
 
-NAME = 'quietmode'
+MODE = 'quietmode'
+LISTEN = 'quietlisten'
 
 # WARNING: dependency on Announcer plugin!
 from announcer.distributors.mail import EmailDistributor
@@ -27,7 +28,7 @@ class QuietEmailDistributor(EmailDistributor):
               FROM session_attribute
              WHERE sid=%s
                AND name=%s
-        """, (user,NAME))
+        """, (user,MODE))
         result = cursor.fetchone()
         if not result:
             return False
@@ -40,20 +41,28 @@ class QuietBase(object):
     enter_label = Option('quiet', 'enter_label', _('Enter Quiet Mode'))
     leave_label = Option('quiet', 'leave_label', _('Leave Quiet Mode'))
     
-    def _is_quiet(self, req):
-        """Returns true if the user requested quiet mode."""
-        val = req.session.get(NAME, '0')
-        return val == '1'
-    
     def _get_label(self, req, is_quiet=None):
         if is_quiet is None:
             is_quiet = self._is_quiet(req)
         return is_quiet and _(self.leave_label) or _(self.enter_label)
     
-    def _toggle_quiet(self, req):
+    def _set_quiet_action(self, req, action):
+        if action == 'toggle':
+            return self._set_quiet(req, not self._is_quiet(req))
+        elif action in ('enter','leave'):
+            return self._set_quiet(req, action == 'enter')
+        else:
+            return self._is_quiet(req)
+    
+    def _is_quiet(self, req):
+        """Returns true if the user requested quiet mode."""
+        val = req.session.get(MODE, '0')
+        return val == '1'
+    
+    def _set_quiet(self, req, yes):
         """Set or unset quiet mode for the user."""
-        val = self._is_quiet(req) and '0' or '1' # toggle value
-        req.session[NAME] = val
+        val = yes and '1' or '0'
+        req.session[MODE] = val
         req.session.save()
         return val == '1'
 
@@ -85,10 +94,11 @@ class QuietModule(Component,QuietBase):
             req.path_info.startswith('/newticket') or \
             req.path_info.startswith('/query') or \
             req.path_info.startswith('/report')):
-            href = req.href(NAME,'toggle')
-            a = tag.a(self._get_label(req), href=href, id=NAME)
+            href = req.href(MODE,'toggle')
+            a = tag.a(self._get_label(req), href=href, id=MODE)
             add_ctxtnav(req, a)
             add_script(req, '/quiet/quiet.html')
+            add_script(req, 'quiet/quiet.js')
             add_stylesheet(req, 'quiet/quiet.css')
         return template, data, content_type
     
@@ -98,7 +108,7 @@ class QuietModule(Component,QuietBase):
     
     def process_request(self, req):
         req.perm.require('QUIET_MODE')
-        return 'quiet.html', {'id':NAME}, 'text/javascript'
+        return 'quiet.html', {'toggle':MODE,'listen':LISTEN}, 'text/javascript'
 
 
 class QuietAjaxModule(Component,QuietBase):
@@ -106,22 +116,66 @@ class QuietAjaxModule(Component,QuietBase):
     
     # IRequestHandler methods
     def match_request(self, req):
-        return req.path_info.startswith('/'+NAME)
+        return req.path_info.startswith('/'+MODE)
     
     def process_request(self, req):
         try:
-            if 'toggle' in req.path_info:
-                is_quiet = self._toggle_quiet(req)
-            else:
-                is_quiet = self._is_quiet(req)
+            action = req.path_info[req.path_info.rfind('/')+1:]
+            is_quiet = self._set_quiet_action(req, action)
             data = {'label':self._get_label(req, is_quiet),
                     'is_quiet':is_quiet}
-            code,msg = 200,json.dumps(data)
-        except Exception, e:
-            import traceback;
-            code,msg = 500,"Oops...\n" + traceback.format_exc()+"\n"
-        req.send_response(code)
-        req.send_header('Content-Type', 'text/plain')
-        req.send_header('Content-Length', len(msg))
-        req.end_headers()
-        req.write(msg);
+            process_json(req, data)
+        except:
+            process_error(req)
+
+
+class QuietListenerAjaxModule(Component):
+    implements(IRequestHandler)
+    
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info.startswith('/'+LISTEN)
+    
+    def process_request(self, req):
+        try:
+            data = self._get_listeners(req)
+            process_json(req, data)
+        except:
+            process_error(req)
+    
+    def _get_listeners(self, req):
+        listeners = []
+        for key,action in self.env.config.options('quiet'):
+            if not key.endswith('.action'):
+                continue
+            num = key.split('.',1)[0]
+            only,eq = self.env.config.get('quiet',num+'.only_if',''),''
+            if only and '=' in only:
+                only,eq = only.split('=',1)
+            submit = self.env.config.get('quiet',num+'.submit','false').lower()
+            listeners.append({
+                'action': action,
+                'selector': self.env.config.get('quiet',num+'.selector',''),
+                'only': only, 'eq': eq,
+                'submit': submit == 'true',
+            })
+        return listeners
+
+# utils
+def process_json(req, data):
+    try:
+        process_msg(req, 200, 'application/json', json.dumps(data))
+    except:
+        process_error(req)
+
+def process_error(req):
+    import traceback;
+    msg = "Oops...\n" + traceback.format_exc()+"\n"
+    process_msg(req, 500, 'text/plain', msg)
+
+def process_msg(req, code, type, msg):
+    req.send_response(code)
+    req.send_header('Content-Type', type)
+    req.send_header('Content-Length', len(msg))
+    req.end_headers()
+    req.write(msg);

@@ -3,33 +3,41 @@
       xmlns:py="http://genshi.edgewall.org/" py:strip="">
 
 var query = function(action){
-    var url = jQuery('link[rel="search"]').attr('href').replace(/\/search/, '');
     jQuery.ajax({
         'type': "GET",
-        'url': url+'/${id}/'+action,
-        'success': function(data){refresh(jQuery('#${id}'),data);},
+        'url': get_url()+'/${toggle}/'+action,
+        'success': function(data){refresh(jQuery('#${toggle}'),data);},
         'error': function(r){alert("ERROR:\n\n"+r.responseText);}
     });
 }
 
-var refresh = function(a,data){
-    var o = jQuery.parseJSON(data);
-    a.text(o.label);
-    if (o.is_quiet)
-      jQuery('body').addClass('quiet');
-    else
-      jQuery('body').removeClass('quiet');
+var listeners = function(action){
+    jQuery.ajax({
+        'type': "GET",
+        'url': get_url()+'/${listen}',
+        'success': function(data){listen(data);},
+        'error': function(r){alert("ERROR:\n\n"+r.responseText);}
+    });
 }
 
+var get_url = function(){
+    return jQuery('link[rel="search"]').attr('href').replace(/\/search/, '');
+}
+
+
 jQuery(document).ready(function(){
-	// set the visuals
-	query('status');
-	
-	// toggle on link click
-    jQuery('#${id}').click(function(e){
+    // set the visuals
+    query('status');
+    
+    // toggle on link click
+    jQuery('#${toggle}').click(function(e){
         e.preventDefault();
-		query('toggle');
+        query('toggle');
         return false;
     });
+    
+    // setup event listeners
+    listeners();
 });
+
 </script>
