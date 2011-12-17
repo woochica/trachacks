@@ -3,7 +3,6 @@ import os
 import locale
 
 from genshi.builder import tag
-from trac import env
 
 from trac.core import *
 from trac.admin.api import IAdminPanelProvider
@@ -20,21 +19,20 @@ class DiskUsage(Component):
         return totalsize
     
     def get_trac_disk_usage(self):
-        return self.get_disk_usage(self.env.path)
+        trac_disk_usage = self.get_disk_usage(self.env.path)
+        # separate number
+        locale.setlocale(locale.LC_ALL, "")
+        trac_disk_usage_string = locale.format("%d", trac_disk_usage, grouping=True)
+        
+        return trac_disk_usage_string
     
-    def get_svn_disk_usage(self, db=None):
-        svn_disk_usage = 0
-        dir = self.config.get('trac', 'repository_dir')
-        if dir != "":
-            svn_disk_usage += self.get_disk_usage(dir)
-        if not db:
-            db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("SELECT value FROM repository WHERE name='dir'")
-        rows = cursor.fetchall()
-        for row in rows:
-            svn_disk_usage += self.get_disk_usage(row[0])
-        return svn_disk_usage
+    def get_svn_disk_usage(self):
+        svn_disk_usage = self.get_disk_usage(self.config.get('trac', 'repository_dir'))
+        # separate number
+        locale.setlocale(locale.LC_ALL, "")
+        svn_disk_usage_string = locale.format("%d", svn_disk_usage, grouping=True)
+        
+        return svn_disk_usage_string
         
     # ITemplateProvider methods
     def get_templates_dirs(self):
@@ -62,12 +60,11 @@ class DiskUsage(Component):
         data to be passed to the template.
         """
         req.perm.require('TICKET_ADMIN')
-        locale.setlocale(locale.LC_ALL, "")
         svn_disk_usage = self.get_svn_disk_usage()
         trac_disk_usage = self.get_trac_disk_usage()
         data = {
-            'trac_disk_usage': locale.format("%d", trac_disk_usage, grouping=True),
-            'svn_disk_usage': locale.format("%d", svn_disk_usage, grouping=True)
+            'trac_disk_usage': trac_disk_usage,
+            'svn_disk_usage': svn_disk_usage
         }    
         
         return 'diskusage.html', data

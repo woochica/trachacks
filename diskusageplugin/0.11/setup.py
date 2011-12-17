@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='DiskUsagePlugin', version='0.2',
+    name='DiskUsagePlugin', version='0.1',
     author = "lino",
     author_email = "",
     description = "This plugin visible trac and svn disk usage from admin panel",
