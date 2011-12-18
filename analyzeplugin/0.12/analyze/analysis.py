@@ -3,7 +3,7 @@ from trac.core import *
 from trac.ticket.model import Ticket
 from trac.ticket.api import TicketSystem
 from trac.config import ListOption, Option, ChoiceOption
-from analyze.analyses import milestone, queue
+from analyze.analyses import milestone, queue, rollup
 
 class IAnalysis(Interface):
     """An extension point interface for adding analyses.  Each analysis
@@ -95,6 +95,22 @@ class Analysis(object):
     
     def _split_camel_case(self, s):
         return re.sub('((?=[A-Z][a-z])|(?<=[a-z])(?=[A-Z]))', ' ', s).strip()
+
+    def _isint(self, i):
+        try:
+            int(i)
+        except (ValueError, TypeError):
+            return False
+        else:
+            return True
+
+    def _isnum(self, i):
+        try:
+            float(i)
+        except (ValueError, TypeError):
+            return False
+        else:
+            return True
 
 
 class MilestoneDependencyAnalysis(Component, Analysis):
@@ -215,14 +231,6 @@ class QueueDependencyAnalysis(Component, Analysis):
     def fix_issue(self, db, data, author):
         """Honor queues audit config."""
         
-        def isint(i):
-            try:
-                int(i)
-            except (ValueError, TypeError):
-                return False
-            else:
-                return True
-        
         if not isinstance(data,list):
             data = [data]
         
@@ -232,7 +240,7 @@ class QueueDependencyAnalysis(Component, Analysis):
                 continue
             field = k
             if self.audit == 'ticket' or any(len(c) != 2 for c in data) or \
-               not isint(v): # heuristic for position field (since not explicit)
+               not self._isint(v): # heuristic for position field
                 return Analysis.fix_issue(self, db, data, author)
         
         # honor audit config
@@ -264,16 +272,9 @@ class QueueDependencyAnalysis(Component, Analysis):
 
 
 class ProjectQueueAnalysis(QueueDependencyAnalysis):
-    """#'s sub-tickets are not in the queue or are after #'s.
-    This builds on mastertickets' blockedby relationships using
-    *containment* (i.e., parent-child) semantics, and also the
-    queue's position.  All sub-tickets of the first project
-    should be ordered before all sub-tickets of the second
-    project, and so on.
-    
-    This analysis builds on mastertickets' blockedby relationships under
-    a parent-child semantics and the queue's position.  This analyzes
-    a report's tickets for three issues:
+    """This analysis builds on mastertickets' blockedby relationships under
+    a parent-child semantics and the queue's position.  This analyzes a
+    report's tickets for three issues:
     
      1. Detects when dependent tickets are in the wrong queue.
      2. Detects when dependent tickets have more than one parent.
@@ -339,64 +340,92 @@ class ProjectQueueAnalysis(QueueDependencyAnalysis):
         return queue.get_project_solutions(db, args)
 
 
-#class ProjectRollupAnalysis(Component, Analysis):
-#    """#'s sub-tickets have new rollup values.
-#    This builds on mastertickets' blockedby relationships using
-#    *containment* (i.e., parent-child) semantics.  It rolls up
-#    the values of the sub-tasks using a specified stat:
-#    
-#     [analyze]
-#     rollup.effort = sum
-#     rollup.phase = pivot=implementation
-#    
-#     * sum - adds numeric values
-#     * pivot - for select fields only
-#    
-#    The pivot algorithm is as follows:
-#    
-#     * if all values are < the pivot index, then select their max index
-#     * else if all are > the pivot index, then select their min index
-#     * else select the pivot index
-#    """
-#    
-#    implements(IAnalysis)
-#    
-#    reports = ListOption('analyze', 'rollup_reports', default=[],
-#            doc="Reports that can rollup field values.")
-#    project_type = Option('analyze', 'project_type', default='epic',
-#            doc="Ticket type indicating a project (default is 'epic').")
-#    
-#    @property
-#    def title(self):
-#        title = "%s Rollup Analysis" % self._capitalize(self.project_type)
-#        return title
-#    
-#    def can_analyze(self, report):
-#        return report in self.reports
-#    
-#    def _add_args(self, args, report):
-#        """Process rollup field configs."""
-#        args['standard_fields'] = {}
-#        args['custom_fields'] = {}
-#        for name,stat in self.env.config.options('analyze'):
-#            if not option.startswith('rollup.'):
-#                continue
-#            name = name[7:]
-#            pivot = None
-#            if '=' in stat:
-#                stat,pivot = stat.split('=',1)
-#            rollup = {'stat':stat.strip(),'pivot':pivot.strip()}
-#            for field in TicketSystem(self.env).get_ticket_fields():
-#                if name == field['name']:
-#                    rollup['options'] =  field.get('options',None)
-#                    if 'custom' in field:
-#                        args['custom_fields'][name] = rollup
-#                    else:
-#                        args['standard_fields'][name] = rollup
-#                    break
-#            else:
-#                raise Exception("Unknown rollup field: %s" % name)
-#    
-#    def get_solutions(self, db, args, report):
-#        self._add_args(args, report)
-#        return project.get_rollup_solutions(db, args)
+class ProjectRollupAnalysis(Component, Analysis):
+    """This analysis builds on mastertickets' blockedby relationships under
+    a parent-child semantics.  This analysis rolls up field values for each
+    master ticket in a report.  Specify which reports can be analyzed with
+    the rollup_reports option:
+    
+     [analyze]
+     rollup_reports = 1,2,3,9
+    
+    In the example above, this analysis is available for reports 1, 2, 3
+    and 9.  If no rollup_reports is provided, then the project_reports list
+    is used instead.
+    
+    The available rollup stats are sum, min, max, median, mode, and a
+    special 'pivot' analysis.  All but pivot apply to numeric fields, and
+    all but sum apply to select option fields.  Here are several examples
+    of specifying a stat for different fields:
+    
+     [analyze]
+     rollup.effort = sum
+     rollup.severity = min
+     rollup.captain = mode
+     rollup.phase = implementation
+    
+    In the example above, the project's
+    
+     * effort field sums all of its children numeric values
+     * severity field gets set to the minimum (index) value of its children
+     * captain field gets set to the most frequent captain of its children
+     * phase pivots on the 'implementation' select option value value
+    
+    In brief, The pivot algorithm is as follows (using the option's index):
+    
+     * if all values are < the pivot value, then select their max value
+     * else if all are > the pivot value, then select their min value
+     * else select the pivot value
+    """
+    
+    implements(IAnalysis)
+    
+    reports1 = ListOption('analyze', 'rollup_reports', default=[],
+            doc="Reports that can be project rollup analyzed.")
+    reports2 = ListOption('analyze', 'project_reports', default=[],
+            doc="Reports that can be project rollup analyzed.")
+    project_type = Option('analyze', 'project_type', default='epic',
+            doc="Ticket type indicating a project (default is 'epic').")
+    
+    @property
+    def title(self):
+        title = "%s Rollup Analysis" % self._capitalize(self.project_type)
+        return title
+    
+    def can_analyze(self, report):
+        # fallback to project report list if not made explicit
+        return report in (self.reports1 or self.reports2)
+    
+    def _add_args(self, args, report):
+        """Process rollup field configs."""
+        args['standard_fields'] = {}
+        args['custom_fields'] = {}
+        for name,stat in self.env.config.options('analyze'):
+            if not name.startswith('rollup.'):
+                continue
+            name = name[7:]
+            rollup = {'stat':stat.strip()}
+            for field in TicketSystem(self.env).get_ticket_fields():
+                if name == field['name']:
+                    rollup['options'] = field.get('options',None)
+                    rollup['numeric'] = True
+                    if rollup['options']:
+                        # check if all options are numeric
+                        for option in rollup['options']:
+                            if not self._isnum(option):
+                                rollup['numeric'] = False
+                                break
+                    if 'custom' in field:
+                        args['custom_fields'][name] = rollup
+                    else:
+                        args['standard_fields'][name] = rollup
+                    break
+            else:
+                raise Exception("Unknown rollup field: %s" % name)
+    
+    def get_solutions(self, db, args, report):
+        self._add_args(args, report)
+        if not args['standard_fields'] and not args['custom_fields']:
+            return '',[] # has rollup fields so skip
+        args['project_type'] = self.project_type
+        return rollup.get_solutions(db, args)
