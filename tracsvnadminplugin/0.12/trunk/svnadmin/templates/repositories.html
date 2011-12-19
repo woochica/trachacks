@@ -1,0 +1,54 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html"/>
+  <head>
+    <title>SVNAdmin Repositories</title>
+  </head>
+
+  <body>
+    <h2>Manage Repositories</h2>
+
+	<form class="addnew" id="trac-addrepos" method="post" action="">
+      <fieldset>
+        <legend>Add Repository:</legend>
+        <div class="field">
+          <label>Name:<br/><input type="text" name="name"/></label>
+        </div>
+        <div class="field" style="display: none;">
+          <label>Directory:<br/><input type="text" name="dir"/></label>
+        </div>
+        <div class="buttons">
+          <input type="submit" name="add_repos" value="${_('Add')}"/>
+        </div>
+      </fieldset>
+    </form>
+
+    <form id="trac-repository_table" method="post" action="">
+      <table class="listing" id="trac-reposlist">
+        <thead>
+          <tr>
+          	<th class="sel">&nbsp;</th>
+            <th>Repository</th>
+            <th>Revision</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr py:for="(reponame, repo) in sorted(repositories)">
+            <td class="sel"><input type="checkbox" name="sel" value="$reponame"/></td>
+            <td>$reponame</td>
+            <td><a py:if="repo.rev" href="${href.changeset(repo.rev, reponame) or None}">[$repo.display_rev]</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="buttons">
+        <input type="submit" name="remove" value="${_('Remove selected items')}"/>
+      </div>
+    </form>
+  </body>
+
+</html>

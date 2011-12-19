@@ -1,0 +1,38 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html"/>
+  <head>
+    <title>SVNAdmin Configuration</title>
+  </head>
+
+  <body>
+    <h2>Configuration</h2>
+      
+	<form id="trac-svnsettings" method="post" action="">
+		<fieldset>
+			<legend>Settings:</legend>
+			<div class="field">
+				<label>Parent directory of the repositories (SVNParentPath):</label><br />
+				<input type="text" name="parentpath" value="$parentpath" />
+			</div>
+			<div class="field">
+				<label>Subversion client executable:</label><br />
+				<input type="text" name="client" value="$client" />
+			</div>
+			<div class="field">
+				<label>Subversion admin executable:</label><br />
+				<input type="text" name="admin" value="$admin" />
+			</div>
+			<div class="buttons">
+				<input type="submit" name="save_settings" value="${_('Save')}" />
+			</div>
+		</fieldset>
+	</form>
+  </body>
+
+</html>
