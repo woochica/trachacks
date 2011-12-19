@@ -2,7 +2,7 @@ import re
 from trac.core import *
 from trac.ticket.model import Ticket
 from trac.ticket.api import TicketSystem
-from trac.config import ListOption, Option, ChoiceOption
+from trac.config import ListOption, Option, ChoiceOption, BoolOption
 from analyze.analyses import milestone, queue, rollup
 
 class IAnalysis(Interface):
@@ -386,6 +386,8 @@ class ProjectRollupAnalysis(Component, Analysis):
             doc="Reports that can be project rollup analyzed.")
     project_type = Option('analyze', 'project_type', default='epic',
             doc="Ticket type indicating a project (default is 'epic').")
+    recurse = BoolOption('analyze', 'rollup_recurse', default=True,
+            doc="Include all dependent tickets recursively in rollups.")
     
     @property
     def title(self):
@@ -428,4 +430,5 @@ class ProjectRollupAnalysis(Component, Analysis):
         if not args['standard_fields'] and not args['custom_fields']:
             return '',[] # has rollup fields so skip
         args['project_type'] = self.project_type
+        args['recurse'] = self.recurse
         return rollup.get_solutions(db, args)

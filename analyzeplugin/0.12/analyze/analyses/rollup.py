@@ -80,6 +80,12 @@ def _get_stat_rollup(field, rollup, tickets):
             return max(vals)
         else:
             return options[max(vals)]
+    if rollup['stat'] in ('avg','mean'):
+        avg = sum(vals)/len(vals)
+        if rollup['numeric']:
+            return avg # TODO: handle precision of floats
+        else:
+            return options[avg]
     if rollup['stat'] == 'median':
         vals.sort()
         mid = len(vals)/2
@@ -88,6 +94,7 @@ def _get_stat_rollup(field, rollup, tickets):
         else:
             return options[vals[mid]]
     if rollup['stat'] == 'mode':
+        vals.sort()
         counts = {}
         hi_count = 0
         hi_value = 0
@@ -145,8 +152,8 @@ def _get_filter_and(standard, custom, args):
     return sql + ' '
 
 def _get_rollup_fields(db, args, standard, custom, id):
-    """Return ticket id's queue fields and any children tickets that do
-    not have these fields (i.e., are in the wrong queue)."""
+    """Return ticket id's rollup fields and all of its children tickets
+    recursively."""
     cursor = db.cursor()
     project_type = args['project_type']
     
@@ -170,17 +177,36 @@ def _get_rollup_fields(db, args, standard, custom, id):
         name = keys[i]
         ticket[name] = result[i]
     
-    # find open dependent tickets that don't match queue fields
+    sql = "SELECT t.id, " + ', '.join(fields) + from_ + "WHERE t.id IN"
+    sql += " (SELECT source FROM mastertickets WHERE dest = %s)" # % id
+    sql += " AND t.status != 'closed' AND t.type != '%s'" % project_type
+    sql += " AND t.id NOT IN (%s);" # skip visited tickets
+    visited = [id]
+    recurse = args['recurse']
+    tickets = _get_rollup_children(cursor, sql, id, keys, visited, recurse)
+    return ticket,tickets
+
+
+def _get_rollup_children(cursor, sql, id, keys, visited, recurse):
+    """Recursively return all children tickets of the given id that have
+    not yet been visited."""
+    # find open dependent tickets that haven't been seen yet
     tickets = []
-    sql = "SELECT " + ', '.join(fields) + from_ + "WHERE t.id IN"
-    sql += " (SELECT source FROM mastertickets WHERE dest = %s)" % id
-    sql += " AND t.status != 'closed' AND t.type != '%s';" % project_type
-    cursor.execute(sql)
+    cursor.execute(sql % (id,','.join(visited)))
     for result in cursor:
-        child = {}
+        cid = str(result[0])
+        visited.append(cid) # add ticket id to visited
+        ticket = {'id':cid}
         for i in range(len(keys)):
             name = keys[i]
-            child[name] = result[i]
-        tickets.append(child)
+            ticket[name] = result[i+1]
+        tickets.append(ticket)
     
-    return ticket,tickets
+    # now get children tickets (separate loop to avoid confusing cursor)
+    children = []
+    if recurse:
+        for ticket in tickets:
+            id = ticket['id']
+            children += _get_rollup_children(cursor,sql,id,keys,visited,recurse)
+    
+    return tickets + children
