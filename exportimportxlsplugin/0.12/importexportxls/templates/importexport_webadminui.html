@@ -86,6 +86,44 @@
     <form method="POST">
         <fieldset>
             <legend>Export</legend>
+            <div>
+                <select name="filter.type">
+                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'type'][0]}" value="" />
+                    <py:for each="type in types">
+                        <option label="${type}" value="${type}" />
+                    </py:for>
+                </select>
+                <select name="filter.version">
+                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'version'][0]}" value="" />
+                    <py:for each="version in versions">
+                        <option label="${version}" value="${version}" />
+                    </py:for>
+                </select>
+                <select name="filter.milestone">
+                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'milestone'][0]}" value="" />
+                    <py:for each="mtn in milestones">
+                        <option label="${mtn}" value="${mtn}" />
+                    </py:for>
+                </select>
+                <select name="filter.component">
+                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'component'][0]}" value="" />
+                    <py:for each="comp in components">
+                        <option label="${comp}" value="${comp}" />
+                    </py:for>
+                </select>
+                <select name="filter.status">
+                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'status'][0]}" value="" />
+                    <py:for each="stat in status">
+                        <option label="${stat}" value="${stat}" />
+                    </py:for>
+                </select>
+                <select name="filter.resolution">
+                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'resolution'][0]}" value="" />
+                    <py:for each="res in resolutions">
+                        <option label="${res}" value="${res}" />
+                    </py:for>
+                </select>
+            </div>
             <div class="buttons">
                 <input type="submit" name="export" value="Export Tickets" />
             </div>

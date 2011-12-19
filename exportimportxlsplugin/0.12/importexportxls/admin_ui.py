@@ -45,6 +45,7 @@ from trac.ticket.admin import IAdminPanelProvider
 from trac.web.chrome import add_script, ITemplateProvider, Chrome
 from trac.ticket.api import TicketSystem
 from trac.ticket.query import Query
+from trac.ticket import model
 from trac.ticket.model import Ticket
 from trac.mimeview.api import Mimeview, Context
 from trac.resource import Resource
@@ -129,7 +130,13 @@ class ImportExportAdminPanel(Component):
                 settings = self._process_import(req)
                 template = 'importexport_done.html'
         
-        
+        if template == 'importexport_webadminui.html' and not req.args.get('export'):
+            settings['types'] = [m.name for m in model.Type.select(self.env)]
+            settings['versions'] = [m.name for m in model.Version.select(self.env)]
+            settings['milestones'] = [m.name for m in model.Milestone.select(self.env, True)]
+            settings['components'] = [m.name for m in model.Component.select(self.env)]
+            settings['status'] = [m.name for m in model.Status.select(self.env)]
+            settings['resolutions'] = [m.name for m in model.Resolution.select(self.env)]
         settings['endofline'] = self.config.get('import-export-xls', 'endofline', 'LF')
         settings['defaultfields'] = defaultfields
         settings['customfields'] = customfields
@@ -281,7 +288,26 @@ class ImportExportAdminPanel(Component):
             colIndex[f['name']] = c
             c += 1
         
-        query = Query(self.env, cols=fieldnames, order='id', max=sys.maxint)
+        constraints = {}
+        if req.args.get('filter.type') and req.args.get('filter.type') != '' :
+            constraints['type'] = [ req.args['filter.type'] ]
+        
+        if req.args.get('filter.version') and req.args.get('filter.version') != '' :
+            constraints['version'] = [ req.args['filter.version'] ]
+        
+        if req.args.get('filter.milestone') and req.args.get('filter.milestone') != '' :
+            constraints['milestone'] = [ req.args['filter.milestone'] ]
+        
+        if req.args.get('filter.component') and req.args.get('filter.component') != '' :
+            constraints['component'] = [ req.args['filter.component'] ]
+        
+        if req.args.get('filter.status') and req.args.get('filter.status') != '' :
+            constraints['status'] = [ req.args['filter.status'] ]
+        
+        if req.args.get('filter.resolution') and req.args.get('filter.resolution') != '' :
+            constraints['resolution'] = [ req.args['filter.resolution'] ]
+        
+        query = Query(self.env, cols=fieldnames, order='id', max=sys.maxint, constraints=constraints)
         results = query.execute(req)
         r = 0
         cols = query.get_columns()

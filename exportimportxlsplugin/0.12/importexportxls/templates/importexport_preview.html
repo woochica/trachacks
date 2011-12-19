@@ -88,6 +88,8 @@
           <input type="button" value="Uncheck All" onclick="importexportxls_set_import_checkbox(false)" />
           <input type="button" value="Select modified" onclick="importexportxls_select(modified_tickets)" />
           <input type="button" value="Select added" onclick="importexportxls_select(added_tickets)" />
+          <input type="button" value="Hide unchanged" onclick="importexportxls_hide(added_tickets, modified_tickets, true)" />
+          <input type="button" value="Unhide unchanged" onclick="importexportxls_hide(added_tickets, modified_tickets, false)" />
         </div>
         <div class="buttons">
           <input type="submit" name="import" value="Save" />
