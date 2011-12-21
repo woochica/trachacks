@@ -47,6 +47,8 @@ class IRule(Interface):
 class Rule(object):
     """Abstract class for common rule properties and utilities."""
     
+    OVERWRITE = '(overwrite)'
+    
     @property
     def name(self):
         """Returns the rule instance's class name.  The corresponding
@@ -79,6 +81,16 @@ class Rule(object):
     
     def _split_camel_case(self, s):
         return re.sub('((?=[A-Z][a-z])|(?<=[a-z])(?=[A-Z]))', ' ', s)
+    
+    def _extract_overwrite(self, target, key, opts):
+        """Extract any <overwrite> prefix from value string."""
+        value = opts[key]
+        if value.startswith(self.OVERWRITE):
+            value = value.replace(self.OVERWRITE,'').lstrip()
+            overwrite = 'true'
+        else:
+            overwrite = opts.get('%s.overwrite' % target,'false')
+        return value,overwrite
     
 
 class ClearRule(Component, Rule):
@@ -113,25 +125,28 @@ class CopyRule(Component, Rule):
     
       [ticket-custom]
       captain.copy_from = owner
-      captain.overwrite = true
       
     In this example, if the owner value changes, then the captain field's
     value gets set to that value if the captain field is empty and visible
-    (the default).  If 'overwrite' is true, then the captain field's value
-    will get over-written even if it already has a value (and even if it's
-    hidden).
+    (the default).  By default, the current value if set will not be
+    overwritten.  To overwrite the current value, add "(overwrite)" as
+    follows:
+    
+      [ticket-custom]
+      captain.copy_from = (overwrite) owner
     """
     
     implements(IRule)
     
     def get_trigger(self, target, key, opts):
         if key == '%s.copy_from' % target:
-            return opts[key]
+            return self._extract_overwrite(target, key, opts)[0]
         return None
         
     def update_spec(self, req, key, opts, spec):
+        target = spec['target']
         spec['op'] = 'copy'
-        spec['overwrite'] = opts.get(spec['target']+'.overwrite','false')
+        spec['overwrite'] = self._extract_overwrite(target, key, opts)[1]
 
     def update_pref(self, req, trigger, target, key, opts, pref):
         pref['label'] = "Copy %s to %s" % (trigger, target)
@@ -276,29 +291,35 @@ class SetRule(Component, Rule):
     Example trac.ini specs:
     
       [ticket-custom]
-      milestone.set_when_phase = implementation|verifying|releasing
-      milestone.set_to = !
-      milestone.overwrite = false
+      milestone.set_to_!_when_phase = implementation|verifying
     
-    If 'overwrite' is true, then the milestone field's value will get
-    over-written even if it already has a value. The "!" is used only
-    for select fields to specify the first non-empty option; a common
-    use case is to auto-select the current milestone.
+    The "!" is used only for select fields to specify the first non-empty
+    option; a common use case is to auto-select the current milestone.
+    By default, the current value if set will not be overwritten.  To
+    overwrite the current value, add "(overwrite)" as follows:
+    
+      [ticket-custom]
+      milestone.set_to_!_when_phase = (overwrite) implementation|verifying
     """
     
     implements(IRule)
     
     def get_trigger(self, target, key, opts):
-        rule_re = re.compile(r"%s.set_when_(?P<trigger>.*)" % target)
+        rule_re = re.compile(r"%s.set_to_(.*)_when_(?P<trigger>.+)" % target)
         match = rule_re.match(key)
         if match:
             return match.groupdict()['trigger']
         return None
     
     def update_spec(self, req, key, opts, spec):
-        spec['trigger_value'] = opts[key]
-        spec['set_to'] = opts.get("%s.set_to" % spec['target'],'invalid_value')
-        spec['overwrite'] = opts.get('%s.overwrite' % spec['target'],'false')
+        target,trigger = spec['target'],spec['trigger']
+        spec_re = re.compile(r"%s.set_to_(?P<to>.*)_when_%s" % (target,trigger))
+        match = spec_re.match(key)
+        if not match:
+            return
+        spec['set_to'] = match.groupdict()['to']
+        spec['trigger_value'],spec['overwrite'] = \
+            self._extract_overwrite(target, key, opts)
     
     def update_pref(self, req, trigger, target, key, opts, pref):
         spec = {'target':target}
