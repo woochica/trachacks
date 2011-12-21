@@ -1,4 +1,6 @@
 import trac.db.sqlite_backend
+import trac.db.postgres_backend
+import trac.db.mysql_backend
 
 def get_all(env, sql, *params):
     """Executes the query and returns the (description, data)"""
@@ -81,13 +83,26 @@ def execute_in_nested_trans(env, name, *args):
             raise e
     return result
 
+def current_schema (env):
+    db = env.get_read_db()
+    if (type(db.cnx) == trac.db.sqlite_backend.SQLiteConnection):
+        return None
+    elif (type(db.cnx) == trac.db.mysql_backend.MySQLConnection):
+        return get_scalar(env, 'SELECT schema();')
+    elif (type(db.cnx) == trac.db.postgres_backend.PostgreSQLConnection):
+        return get_scalar(env, 'SHOW search_path;')
+
+
 def db_table_exists(env,  table):
     db = env.get_read_db()
+    cnt = None
     if(type(db.cnx) == trac.db.sqlite_backend.SQLiteConnection):
         sql = "select count(*) from sqlite_master where type = 'table' and name = %s"
+        cnt = get_scalar(env, sql, 0, table)
     else:
-        sql = "SELECT count(*) FROM information_schema.tables WHERE table_name = %s"
-    cnt = get_scalar(env, sql, 0, table)
+        sql = """SELECT count(*) FROM information_schema.tables 
+                 WHERE table_name = %s and table_schema=%s"""
+        cnt = get_scalar(env, sql, 0, table, current_schema(env))
     return cnt > 0
 
 def get_column_as_list(env, sql, col=0, *params):
