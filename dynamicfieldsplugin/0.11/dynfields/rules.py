@@ -85,8 +85,8 @@ class Rule(object):
     def _extract_overwrite(self, target, key, opts):
         """Extract any <overwrite> prefix from value string."""
         value = opts[key]
-        if value.startswith(self.OVERWRITE):
-            value = value.replace(self.OVERWRITE,'').lstrip()
+        if value.endswith(self.OVERWRITE):
+            value = value.replace(self.OVERWRITE,'').rstrip()
             overwrite = 'true'
         else:
             overwrite = opts.get('%s.overwrite' % target,'false')
@@ -334,6 +334,8 @@ class SetRule(Component, Rule):
                 pref['type'] = 'text'
         elif spec['set_to'] == '!':
             set_to = 'the first non-empty option'
+        elif spec['set_to'] == '':
+            set_to = '(empty)'
         else:
             set_to = spec['set_to']
         pref['label'] = "When %s = %s, set %s to %s" % \
