@@ -326,7 +326,7 @@ class SetRule(Component, Rule):
         self.update_spec(req, key, opts, spec)
         # "When trigger = value set target to"
         trigval = spec['trigger_value'].replace('|',' or ')
-        if spec['set_to'] == '*':
+        if spec['set_to'] == '?':
             set_to = ''
             if opts.get(target) == 'select':
                 pref['type'] = 'select'
