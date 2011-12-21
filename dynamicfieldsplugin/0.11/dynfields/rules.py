@@ -322,11 +322,11 @@ class SetRule(Component, Rule):
             self._extract_overwrite(target, key, opts)
     
     def update_pref(self, req, trigger, target, key, opts, pref):
-        spec = {'target':target}
+        spec = {'target':target,'trigger':trigger}
         self.update_spec(req, key, opts, spec)
         # "When trigger = value set target to"
         trigval = spec['trigger_value'].replace('|',' or ')
-        if spec['set_to'] == 'invalid_value':
+        if spec['set_to'] == '*':
             set_to = ''
             if opts.get(target) == 'select':
                 pref['type'] = 'select'
