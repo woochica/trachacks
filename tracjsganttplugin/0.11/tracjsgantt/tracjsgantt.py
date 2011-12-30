@@ -477,7 +477,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += '"%s",' % javascript_quote(_owner(ticket))
 
         # pComp (percent complete); integer 0..100
-        task += '"%s",' % self.pm.percent(ticket)
+        task += '"%s",' % self.pm.percentComplete(ticket)
 
         # pGroup (has children)
         if self.pm.children(ticket):

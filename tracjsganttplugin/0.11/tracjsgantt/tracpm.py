@@ -261,25 +261,26 @@ class TracPM(Component):
 
         return hours
 
-    # Return percent complete as an integer
-    # FIXME - or "worked/estimate"
-    def percent(self, ticket):
-        # Compute percent complete if given estimate and worked
-        if self.isCfg(['estimate', 'worked']):
-            # Try to compute the percent complete, default to 0
-            try:
-                worked = float(ticket[self.fields['worked']])
-                if ticket['status'] == 'closed':
-                    estimate = worked
-                else:
-                    estimate = self.workHours(ticket) / self.hpe
-                percent = '%s/%s' % (worked, estimate)
-            except:
-                # Don't bother logging because 0 for an estimate is common.
-                percent = 0
+    # Return percent complete.  
+    # 
+    # If estimate and worked are configured and estimate is not 0,
+    # returns 'est/work' as a string.
+    #
+    # If estimate or work are not configured or estimate is 0, returns
+    # percent complete as an integer.
+    def percentComplete(self, ticket):
         # Closed tickets are 100% complete
-        elif ticket['status'] == 'closed':
+        if ticket['status'] == 'closed':
             percent = 100
+        # Compute percent complete if given estimate and worked
+        elif self.isCfg(['estimate', 'worked']):
+            # Try to compute the percent complete, default to 0
+            estimate = self.workHours(ticket) / self.hpe
+            if (estimate == 0):
+                percent = 0
+            else:
+                worked = float(ticket[self.fields['worked']])
+                percent = '%s/%s' % (worked, estimate)
         # Use percent if provided
         elif self.isCfg('percent'):
             try:
