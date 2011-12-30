@@ -11,6 +11,29 @@ from trac.ticket.query import Query
 from trac.config import IntOption, Option, ExtensionOption
 from trac.core import implements, Component, TracError, Interface
 
+class IResourceCalendar(Interface):
+    # Return the number of hours available for the resource on the
+    # specified date.
+    # FIXME - should this be pm_hoursAvailable or something so other
+    # plugins can implement it without potential conflict?
+    def hoursAvailable(self, date, resource = None):
+        """Called to see how many hours are available on date"""
+
+class ITaskScheduler(Interface):
+    # Schedule each the ticket in tickets with consideration for
+    # dependencies, estimated work, hours per day, etc.
+    # 
+    # Assumes tickets is a list, each element contains at least the
+    # fields returned by queryFields() and the whole list was
+    # processed by postQuery().
+    #
+    # On exit, each ticket has t['calc_start'] and t['calc_finish']
+    # set and can be accessed with TracPM.start() and finish().  No
+    # other changes are made.  (FIXME - we should probably be able to
+    # configure those field names.)
+    def scheduleTasks(self, options, tickets):
+        """Called to schedule tasks"""
+
 # TracPM masks implementation details of how various plugins implement
 # dates and ticket relationships and business rules about what the
 # default estimate for a ticket is, etc.
@@ -38,22 +61,6 @@ from trac.core import implements, Component, TracError, Interface
 # field names ("pm_", etc.).  Perhaps configurable.
 #
 # FIXME - do we need access methods for estimate and worked?
-
-class ITaskScheduler(Interface):
-    # Schedule each the ticket in tickets with consideration for
-    # dependencies, estimated work, hours per day, etc.
-    # 
-    # Assumes tickets is a list, each element contains at least the
-    # fields returned by queryFields() and the whole list was
-    # processed by postQuery().
-    #
-    # On exit, each ticket has t['calc_start'] and t['calc_finish']
-    # set and can be accessed with TracPM.start() and finish().  No
-    # other changes are made.  (FIXME - we should probably be able to
-    # configure those field names.)
-    def scheduleTasks(self, options, tickets):
-        """Called to schedule tasks"""
-
 
 class TracPM(Component):
     cfgSection = 'TracPM'
@@ -91,10 +98,10 @@ class TracPM(Component):
            """Ticket type for milestone-like tickets""")
  
     scheduler = ExtensionOption(cfgSection, 'scheduler', 
-                                ITaskScheduler, 'SimpleScheduler')
+                                ITaskScheduler, 'CalendarScheduler')
 
     def __init__(self):
-        self.env.log.debug('Initializing TracPM')
+        self.env.log.info('Initializing TracPM')
 
         # Configurable fields
         fields = ('percent', 'estimate', 'worked', 'start', 'finish',
@@ -539,6 +546,26 @@ class TracPM(Component):
 
 
 # ========================================================================
+# Really simple calendar
+#
+class SimpleCalendar(Component):
+    implements(IResourceCalendar)
+
+    def __init__(self):
+        self.env.log.debug('Creating a simple calendar')
+        """Nothing"""
+
+    # FIXME - we'd like this to honor hoursPerDay
+    def hoursAvailable(self, date, resource = None):
+        # No hours on weekends
+        if date.weekday() > 4:
+            hours = 0
+        # 8 hours on week days
+        else:
+            hours = 8.0
+        return hours
+
+# ------------------------------------------------------------------------
 # Handles dates, duration (estimate) and dependencies but not resource
 # leveling.  
 #
@@ -556,7 +583,10 @@ class TracPM(Component):
 # checking throughout the scheduler, calculations are done as if the
 # work day starts at midnight (hour==0) and continues for the
 # configured number of hours per day (e.g., 00:00..08:00).
-class SimpleScheduler(Component):
+#
+# Differs from SimpleScheduler only in using a pluggable calendar to
+# determine hours available on a date.
+class CalendarScheduler(Component):
     implements(ITaskScheduler)
 
     pm = None
@@ -564,6 +594,7 @@ class SimpleScheduler(Component):
     def __init__(self):
         # Instantiate the PM component
         self.pm = TracPM(self.env)
+        self.cal = SimpleCalendar(self.env)
 
 
     # ITaskScheduler method
@@ -576,10 +607,7 @@ class SimpleScheduler(Component):
 
         # Return a time delta hours (positive or negative) from
         # fromDate, accounting for working hours and weekends.
-        #
-        # FIXME - this needs a ticket or a resource so it can call use
-        # IResourceCalendar.
-        def _calendarOffset(hours, fromDate):
+        def _calendarOffset(ticket, hours, fromDate):
             if hours < 0:
                 sign = -1
             else:
@@ -590,11 +618,8 @@ class SimpleScheduler(Component):
             while hours != 0:
                 f = fromDate+delta
 
-                # No time on weekends, full day on week days.
-                if f.weekday() > 4:
-                    available = 0
-                else:
-                    available = options['hoursPerDay']
+                # Get total hours available for resource on that date
+                available = self.cal.hoursAvailable(f, ticket['owner'])
 
                 # Clip available based on time of day on target date
                 # (hours before a finish or after a start)
@@ -760,7 +785,7 @@ class SimpleScheduler(Component):
                         f -= timedelta(hours=24-options['hoursPerDay'])
                         # Adjust for work days as needed
                         f += timedelta(hours=1)
-                        f += _calendarOffset(-1, f)
+                        f += _calendarOffset(t, -1, f)
                         finish[0] = f
 
                 # Set the field
@@ -778,7 +803,9 @@ class SimpleScheduler(Component):
                 else:
                     hours = self.pm.workHours(t)
                     start = t['calc_finish'][0] + \
-                        _calendarOffset(-1*hours, t['calc_finish'][0])
+                        _calendarOffset(t, 
+                                        -1*hours, 
+                                        t['calc_finish'][0])
                     start = [start, t['calc_finish'][1]]
 
                 t['calc_start'] = start
@@ -861,7 +888,7 @@ class SimpleScheduler(Component):
                         # Move ahead to the start of the next day
                         s += timedelta(hours=24-options['hoursPerDay'])
                         # Adjust for work days as needed
-                        s += _calendarOffset(1, s)
+                        s += _calendarOffset(t, 1, s)
                         s += timedelta(hours=-1)
                         start = [s, start[1]]
                 
@@ -875,7 +902,9 @@ class SimpleScheduler(Component):
                 else:
                     hours = self.pm.workHours(t)
                     finish = t['calc_start'][0] + \
-                        _calendarOffset(+1*hours, t['calc_start'][0])
+                        _calendarOffset(t,
+                                        +1*hours,
+                                        t['calc_start'][0])
                     finish = [finish, start[1]]
                 t['calc_finish'] = finish
 
