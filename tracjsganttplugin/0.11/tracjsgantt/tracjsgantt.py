@@ -19,185 +19,83 @@ from pkg_resources import resource_filename
 
 from trac.wiki.api import parse_args
 
-# A Note About Working Hours
+# TracPM masks implementation details of how various plugins implement
+# dates and ticket relationships and business rules about what the
+# default estimate for a ticket is, etc.
 #
-# The naive scheduling algorithm in the plugin assumes all resources
-# work the same number of hours per day.  That limit can be configured
-# (hoursPerDay) but defaults to 8.0.  While is is likely that these
-# hours are something like 8am to 4pm (or 8am to 5pm, minus an hour
-# lunch), daily scheduling isn't concerned with which hours are
-# worked, only how many are worked each day.  To simplify range
-# checking throughout the plugin, calculations are done as if the work
-# day starts at midnight (hour==0) and continues for the configured
-# number of hours per day (e.g., 00:00..08:00).
+# It provides utility functions to augment TicketQuery so that you can
+# find all the descendants of a ticket (root=id) or all the tickets
+# required for a specified ticket (goal=id).
+#
+# After querying, TracPM can be used to post-process the query results
+# to augment the tickets in memory with normalized meta-data about
+# their relationships.  After that processing, a ticket may have the
+# properties listed below.  Which properties are present depends on
+# what is configured in the [TracPM] section of trac.ini.
+#
+#  parent - accessed with TracPM.parent(t)
+#  children - accessed with TracPM.children(t)
+#
+#  successors - accessed with TracPM.successors(t)
+#  predecessors - accessed with TracPM.predecessors(t)
+#
+#  start - accessed with TracPM.start(t)
+#  finish - accessed with TracPM.finish(t)
+#
+# FIXME - do we need access methods for estimate and worked?
+class TracPM(Component):
+    cfgSection = 'TracPM'
+    fields = None
 
+    Option(cfgSection, 'hours_per_estimate', '1', 
+           """Hours represented by each unit of estimated work""")
+    Option(cfgSection, 'default_estimate', '4.0', 
+           """Default work for an unestimated task, same units as estimate""")
+    Option(cfgSection, 'estimate_pad', '0.0', 
+           """How much work may be remaining when a task goes over estimate, same units as estimate""")
 
-class TracJSGanttSupport(Component):
-    implements(IRequestFilter, ITemplateProvider)
-    
-    Option('trac-jsgantt', 'fields.percent', None,
+    Option(cfgSection, 'fields.percent', None,
            """Ticket field to use as the data source for the percent 
               complete column.""")
-    Option('trac-jsgantt', 'fields.estimate', None, 
+    Option(cfgSection, 'fields.estimate', None, 
            """Ticket field to use as the data source for estimated work""")
-    Option('trac-jsgantt', 'hours_per_estimate', '1', 
-           """Hours represented by each unit of estimated work""")
-    Option('trac-jsgantt', 'default_estimate', '4.0', 
-           """Default work for an unestimated task, same units as estimate""")
-    Option('trac-jsgantt', 'estimate_pad', '0.0', 
-           """How much work may be remaining when a task goes over estimate, same units as estimate""")
-    Option('trac-jsgantt', 'fields.worked', None,
+    Option(cfgSection, 'fields.worked', None,
            """Ticket field to use as the data source for completed work""")
-    Option('trac-jsgantt', 'fields.start', None, 
+    Option(cfgSection, 'fields.start', None, 
            """Ticket field to use as the data source for start date""")
-    Option('trac-jsgantt', 'fields.finish', None, 
+    Option(cfgSection, 'fields.finish', None, 
            """Ticket field to use as the data source for finish date""" )
-    Option('trac-jsgantt', 'date_format', '%Y-%m-%d', 
-           """Format for ''start'' and ''finish'' date strings""")    
-    Option('trac-jsgantt', 'fields.pred', None,
+    Option(cfgSection, 'fields.pred', None,
            """Ticket field to use as the data source for predecessor list""")
-    Option('trac-jsgantt', 'fields.succ', None,
+    Option(cfgSection, 'fields.succ', None,
            """Ticket field to use as the data source for successor list""")
-    Option('trac-jsgantt', 'fields.parent', None,
+    Option(cfgSection, 'fields.parent', None,
            """Ticket field to use as the data source for the parent""")
-    Option('trac-jsgantt', 'parent_format', '%s',
+
+    Option(cfgSection, 'parent_format', '%s',
            """Format of ticket IDs in parent field""")
-    Option('trac-jsgantt', 'milestone_type', 'milestone', 
+    Option(cfgSection, 'milestone_type', 'milestone', 
            """Ticket type for milestone-like tickets""")
-    
-    Option('trac-jsgantt', 'option.format', 'day', 
-           """Initial format of Gantt chart""")
-    Option('trac-jsgantt', 'option.formats', 'day|week|month|quarter', 
-           """Formats to show for Gantt chart""")
-    IntOption('trac-jsgantt', 'option.sample', 0,
-              """Show sample Gantt""")
-    IntOption('trac-jsgantt', 'option.res', 1, 
-              """Show resource column""")
-    IntOption('trac-jsgantt', 'option.dur', 1, 
-              """Show duration column""")              
-    IntOption('trac-jsgantt', 'option.comp', 1,
-              """Show percent complete column""")              
-    Option('trac-jsgantt', 'option.caption', 'Resource',
-           """Caption to follow task in Gantt""")
-    IntOption('trac-jsgantt', 'option.startDate', 1, 
-              """Show start date column""")
-    IntOption('trac-jsgantt', 'option.endDate', 1, 
-              """Show finish date column""")
-    Option('trac-jsgantt', 'option.dateDisplay', 'mm/dd/yyyy', 
-           """Format to display dates""")
-    IntOption('trac-jsgantt', 'option.openLevel', 999, 
-              """How many levels of task hierarchy to show open""")
-    IntOption('trac-jsgantt', 'option.expandClosedTickets', 1, 
-              """Show children of closed tasks in the task hierarchy""")
-    Option('trac-jsgantt', 'option.colorBy', 'priority', 
-           """Field to use to color tasks""")
-    IntOption('trac-jsgantt', 'option.lwidth', None, 
-              """Width (in pixels) of left table""")
-    IntOption('trac-jsgantt', 'option.root', None,
-              """Ticket(s) to show descendants of""")
-    IntOption('trac-jsgantt', 'option.goal', None,
-              """Ticket(s) to show predecessors of""")
-    IntOption('trac-jsgantt', 'option.showdep', 1, 
-              """Show dependencies in Gantt""")
-    IntOption('trac-jsgantt', 'option.userMap', 1, 
-              """Map user IDs to user names""")
-    IntOption('trac-jsgantt', 'option.omitMilestones', 0,
-              """Omit milestones""")
-    Option('trac-jsgantt', 'option.schedule', 'alap',
-           """Schedule algorithm: alap or asap""")
-    # This seems to be the first floating point option.
-    Option('trac-jsgantt', 'option.hoursPerDay', '8.0',
-                """Hours worked per day""")
-     
-
-    # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        return [('tracjsgantt', resource_filename(__name__, 'htdocs'))]
-
-    def get_templates_dirs(self):
-        return []
-
-    # IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        # I think we should look for a TracJSGantt on the page and set
-        # a flag for the post_process_request handler if found
-        return handler
-            
-    def post_process_request(self, req, template, data, content_type):
-        add_script(req, 'tracjsgantt/jsgantt.js')
-        add_stylesheet(req, 'tracjsgantt/jsgantt.css')
-        add_stylesheet(req, 'tracjsgantt/tracjsgantt.css')
-        return template, data, content_type
-
-class TracJSGanttChart(WikiMacroBase):
-    """
-Displays a Gantt chart for the specified tickets.
-
-The chart display can be controlled with a number of macro arguments:
-
-||'''Argument'''||'''Description'''||'''Default'''||
-|| `formats`||What to display in the format control.  A pipe-separated list of `minute`, `hour`, `day`, `week`, `month`, and `quarter` (though `minute` may not be very useful). ||'day|week|month|quarter'||
-|| `format`||Initial display format, one of those listed in `formats` || First format ||
-|| `sample`||Display sample tasks (1) or not (0) || 0 ||
-|| `res`||Show resource column (1) or not (0) || 1 ||
-|| `dur`||Show duration colunn (1) or not (0) || 1 ||
-|| `comp`||Show percent complete column (1) or not (0) || 1 ||
-|| `caption`||Caption to place to right of tasks: None, Caption, Resource, Duration, %Complete || Resource ||
-|| `startDate`||Show start date column (1) or not (0) || 1 ||
-|| `endDate`||Show end date column (1) or not (0) || 1 ||
-|| `dateDisplay`||Date display format: 'mm/dd/yyyy', 'dd/mm/yyyy', or 'yyyy-mm-dd' || 'mm/dd/yyyy' ||
-|| `openLevel`||Number of levels of tasks to show.  1 = only top level task.  || 999 ||
-|| `colorBy`||Field to use to choose task colors.  Each unique value of the field will have a different color task.  Other likely useful values are owner and milestone but any field can be used. || priority ||
-|| `root`||When using something like Subtickets plugin to maintain a tree of tickets and subtickets, you may create a Gantt showing a ticket and all of its descendants with `root=<ticket#>`.  The macro uses the configured `parent` field to find all descendant tasks and build an `id=` argument for Trac's native query handler.[[br]][[br]]Multiple roots may be provided like `root=1|12|32`.[[br]][[br]]When used in a ticket description or comment, `root=self` will display the current ticket's descendants.||None||
-|| `goal`||When using something like MasterTickets plugin to maintain ticket dependencies, you may create a Gantt showing a ticket and all of its predecessors with `goal=<ticket#>`.  The macro uses the configured `succ` field to find all predecessor tasks and build an `id=` argument for Trac's native query handler.[[br]][[br]]Multiple goals may be provided like `goal=1|12|32`.[[br]][[br]]When used in a ticket description or comment, `goal=self` will display the current ticket's predecessors.||None||
-|| `lwidth`||The width, in pixels, of the table of task names, etc. on the left of the Gantt. || ||
-|| `showdep`||Show dependencies (1) or not (0)||1||
-|| `userMap`||Map user !IDs to full names (1) or not (0).||1||
-|| `omitMilestones`||Show milestones for displayed tickets (0) or only those specified by `milestone=` (1)||0||
-|| `schedule`||Schedule tasks based on dependenies and estimates.  Either as soon as possible (asap) or as late as possible (alap)||alap||
-
-Site-wide defaults for macro arguments may be set in `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
-
-All other macro arguments are treated as TracQuery specification (e.g., milestone=ms1|ms2) to control which tickets are displayed.
-
-    """
+ 
     def __init__(self):
-        # All the macro's options with default values.
-        # Anything else passed to the macro is a TracQuery field.
-        options = ('format', 'formats', 'sample', 'res', 'dur', 'comp', 
-                   'caption', 'startDate', 'endDate', 'dateDisplay', 
-                   'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
-                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
-                   'schedule', 'hoursPerDay')
+        self.env.log.debug('Initializing TracPM')
 
-        self.GanttID = 'g'
-        self.options = {}
-        for opt in options:
-            self.options[opt] = self.config.get('trac-jsgantt',
-                                                'option.%s' % opt)
-
-        # Configuration fields
+        # Configurable fields
         fields = ('percent', 'estimate', 'worked', 'start', 'finish',
                   'pred', 'succ', 'parent')
 
         self.fields = {}
         for field in fields:
-            self.fields[field] = self.config.get('trac-jsgantt',
+            self.fields[field] = self.config.get(self.cfgSection,
                                                  'fields.%s' % field)
-
-        # This is the format of start and finish in the Trac database
-        self.dbDateFormat = str(self.config.get('trac-jsgantt', 'date_format'))
-
-        # These have to be in sync.  jsDateFormat is the date format
-        # that the JavaScript expects dates in.  It can be one of
-        # 'mm/dd/yyyy', 'dd/mm/yyyy', or 'yyyy-mm-dd'.  pyDateFormat
-        # is a strptime() format that matches jsDateFormat.  As long
-        # as they are in sync, there's no real reason to change them.
-        self.jsDateFormat = 'yyyy-mm-dd'
-        self.pyDateFormat = '%Y-%m-%d %H:%M'
-
+            # As of 0.11.6, there appears to be a bug in Option() so
+            # that a defauilt of None isn't used and we get an empty
+            # string instead.  We test for '' and make it None here.
+            if self.fields[field] == '' or self.fields[field] == None:
+                del(self.fields[field])
+    
         # Tickets of this type will be displayed as milestones.
-        self.milestoneType = self.config.get('trac-jsgantt', 'milestone_type')
+        self.milestoneType = self.config.get(self.cfgSection, 'milestone_type')
 
         # Hours per estimate unit.  
         #
@@ -205,326 +103,122 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         #
         # If estimate is in days, this is may be 8 or 24, depending on
         # your needs and the setting of hoursPerDay
-        self.hpe = float(self.config.get('trac-jsgantt', 'hours_per_estimate'))
+        self.hpe = float(self.config.get(self.cfgSection, 'hours_per_estimate'))
 
         # Default work in an unestimated task
-        self.dftEst = float(self.config.get('trac-jsgantt', 
-                                            'default_estimate'))
+        self.dftEst = float(self.config.get(self.cfgSection, 'default_estimate'))
 
         # How much to pad an estimate when a task has run over
-        self.estPad = float(self.config.get('trac-jsgantt', 
-                                            'estimate_pad'))
-
-        # User map (login -> realname) is loaded on demand, once.
-        # Initialization to None means it is not yet initialized.
-        self.user_map = None
-
+        self.estPad = float(self.config.get(self.cfgSection, 'estimate_pad'))
 
 	# Parent format option
-	self.parent_format = self.config.get('trac-jsgantt','parent_format')
+	self.parent_format = self.config.get(self.cfgSection,'parent_format')
 
-    def _begin_gantt(self, options):
-        if options['format']:
-            format = options['format']
+        # This is the format of start and finish in the Trac database
+        self.dbDateFormat = str(self.config.get(self.cfgSection, 'date_format'))
+
+
+    # Return True if all of the listed fields are configured, False
+    # otherwise
+    def isCfg(self, fields):
+        if type(fields) == type([]):
+            for f in fields:
+                if f not in self.fields:
+                    return False
         else:
-            format = options['formats'].split('|')[0]
-        showdep = options['showdep']
-        text = ''
-        text += '<div style="position:relative" class="gantt" id="GanttChartDIV_'+self.GanttID+'"></div>\n'
-        text += '<script language="javascript">\n'
-        text += 'var '+self.GanttID+' = new JSGantt.GanttChart("'+self.GanttID+'",document.getElementById("GanttChartDIV_'+self.GanttID+'"), "%s", "%s");\n' % (javascript_quote(format), showdep)
-        text += 'var t;\n'
-        text += 'if (window.addEventListener){\n'
-        text += '  window.addEventListener("resize", function() { g.Draw();\n }, false);\n'
-        text += '} else {\n'
-        text += '  window.attachEvent("onresize", function() { g.Draw();\n });\n'
-        text += '}\n'
-        return text
+            return fields in self.fields
 
-    def _end_gantt(self, options):
-        chart = ''
-        chart += self.GanttID+'.Draw();\n' 
-        if options['showdep']:
-            chart += self.GanttID+'.DrawDependencies();\n'
-        chart += '</script>\n'
-        return chart
+        return True
 
-    def _gantt_options(self, options):
-        opt = ''
-        opt += self.GanttID+'.setShowRes(%s);\n' % options['res']
-        opt += self.GanttID+'.setShowDur(%s);\n' % options['dur']
-        opt += self.GanttID+'.setShowComp(%s);\n' % options['comp']
-        w = options['lwidth']
-        if w:
-            opt += self.GanttID+'.setLeftWidth(%s);\n' % w
-            
+    # Return True if ticket has a non-empty value for field, False
+    # otherwise.
+    def isSet(self, ticket, field):
+        if self.isCfg(field) \
+                and len(ticket[self.fields[field]]) != 0:
+            return True
+        else:
+            return False
+           
+    # Parse the start field and return a datetime
+    # Return None if the field is not configured or empty.
+    def parseStart(self, ticket):
+        if self.isSet(ticket, 'start'):
+            return datetime(*time.strptime(ticket[self.fields['start']], 
+                                       self.dbDateFormat)[0:7])
+        else:
+            return None
 
-        opt += self.GanttID+'.setCaptionType("%s");\n' % \
-            javascript_quote(options['caption'])
+    # Parse the finish field and return a datetime
+    # Return None if the field is not configured or empty.
+    def parseFinish(self, ticket):
+        if self.isSet(ticket, 'finish'):
+            return datetime(*time.strptime(ticket[self.fields['finish']], 
+                                           self.dbDateFormat)[0:7])
+        else:
+            return None
 
-        opt += self.GanttID+'.setShowStartDate(%s);\n' % options['startDate']
-        opt += self.GanttID+'.setShowEndDate(%s);\n' % options['endDate']
+    # Return the integer ID of the parent ticket
+    # 0 if no parent
+    # None if parent is not configured
+    def parent(self, ticket):
+        if self.isCfg('parent'):
+            return int(ticket[self.fields['parent']])
+        else:
+            return None
 
-        opt += self.GanttID+'.setDateInputFormat("%s");\n' % \
-            javascript_quote(self.jsDateFormat)
+    # Return list of integer IDs of children.
+    # None if parent is not configured.
+    def children(self, ticket):
+        return ticket['children']
 
-        opt += self.GanttID+'.setDateDisplayFormat("%s");\n' % \
-            javascript_quote(options['dateDisplay'])
+    # Return a list of immediate precedessors for ticket or an empty
+    # list if there are none.
+    def predecessors(self, ticket):
+        if self.isCfg('pred'):
+            return ticket[self.fields['pred']]
+        else:
+            return []
 
-        opt += self.GanttID+'.setFormatArr(%s);\n' % ','.join(
-            '"%s"' % javascript_quote(f) for f in options['formats'].split('|'))
-        opt += self.GanttID+'.setPopupFeatures("location=1,scrollbars=1");\n'
-        return opt
+    # Return a list of immediate successors for ticket or an empty
+    # list if there are none.
+    def successors(self, ticket):
+        if self.isCfg('succ'):
+            return ticket[self.fields['succ']]
+        else:
+            return []
 
-    # TODO - use ticket-classN styles instead of colors?
-    def _add_sample_tasks(self):
-        tasks = ''
-        tasks = self.GanttID+'.setDateInputFormat("mm/dd/yyyy");'
+    # Return computed start for ticket
+    def start(self, ticket):
+        return ticket['calc_start'][0]
 
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(1,   "Define Chart API",     "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(11,  "Chart Object",         "2/20/2011", "2/20/2011", "#ff00ff", "http://www.yahoo.com", 1, "Shlomy",  100, 0, 1, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(12,  "Task Objects",         "",          "",          "#00ff00", "", 0, "Shlomy",   40, 1, 1, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(121, "Constructor Proc",     "2/21/2011", "3/9/2011",  "#00ffff", "http://www.yahoo.com", 0, "Brian T.", 60, 0, 12, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(122, "Task Variables",       "3/6/2011",  "3/11/2011", "#ff0000", "http://help.com", 0, "",         60, 0, 12, 1,121, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(123, "Task Functions",       "3/9/2011",  "3/29/2011", "#ff0000", "http://help.com", 0, "Anyone",   60, 0, 12, 1, 0, "This is another caption", '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(2,   "Create HTML Shell",    "3/24/2011", "3/25/2011", "#ffff00", "http://help.com", 0, "Brian",    20, 0, 0, 1,122, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(3,   "Code Javascript",      "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1 , '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(31,  "Define Variables",     "2/25/2011", "3/17/2011", "#ff00ff", "http://help.com", 0, "Brian",    30, 0, 3, 1, 0,"Caption 1", '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(32,  "Calculate Chart Size", "3/15/2011", "3/24/2011", "#00ff00", "http://help.com", 0, "Shlomy",   40, 0, 3, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(33,  "Draw Taks Items",      "",          "",          "#00ff00", "http://help.com", 0, "Someone",  40, 1, 3, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(332, "Task Label Table",     "3/6/2011",  "3/11/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(333, "Task Scrolling Grid",  "3/9/2011",  "3/20/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(34,  "Draw Task Bars",       "",          "",          "#990000", "http://help.com", 0, "Anybody",  60, 1, 3, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(341, "Loop each Task",       "3/26/2011", "4/11/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, "332,333", '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(342, "Calculate Start/Stop", "4/12/2011", "5/18/2011", "#ff6666", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(343, "Draw Task Div",        "5/13/2011", "5/17/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(344, "Draw Completion Div",  "5/17/2011", "6/04/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(35,  "Make Updates",         "10/17/2011","12/04/2011","#f600f6", "http://help.com", 0, "Brian",    30, 0, 3,  1, '+self.GanttID+'));\n'
-        return tasks
-
-    # Get the required columns for the tickets which match the
-    # criteria in options.
-    def _query_tickets(self, options):
-        # Expand the list of tickets in origins to include those
-        # related through field.
-        # origins is a list of strings
-        def _expand(origins, field, format):
-            if len(origins) == 0:
-                return []
-
-            node_list = [format % id for id in origins]
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
-            cursor.execute("SELECT t.id "
-                           "FROM ticket AS t "
-                           "LEFT OUTER JOIN ticket_custom AS p ON "
-                           "    (t.id=p.ticket AND p.name='%s') "
-                           "WHERE p.value IN (%s)" % 
-                           (field,
-                            "'" + "','".join(node_list) + "'"))
-            nodes = ['%s'%row[0] for row in cursor] 
-
-            return origins + _expand(nodes, field, format)
-
-        query_args = {}
-        for key in options.keys():
-            if not key in self.options:
-                query_args[key] = options[key]
-
-        if options['root']:
-            if 'id' in query_args:
-                query_args['id'] += '|'
-            else:
-                query_args['id'] = ''
-            if options['root'] == 'self':
-                this_ticket = self._this_ticket()
-                if this_ticket:
-                    nodes = [ this_ticket ]
-                else:
-                    nodes = []
-            else:
-                nodes = options['root'].split('|')
-
-            query_args['id'] += '|'.join(_expand(nodes, 
-                                                 self.fields['parent'], 
-                                                 self.parent_format))
-
-        if options['goal']:
-            if 'id' in query_args:            
-                query_args['id'] += '|'
-            else:
-                query_args['id'] = ''
-            if options['goal'] == 'self':
-                this_ticket = self._this_ticket()
-                if this_ticket:
-                    nodes = [ this_ticket ]
-                else:
-                    nodes = []
-            else:
-                nodes = options['goal'].split('|')
-
-            query_args['id'] += '|'.join(_expand(nodes, 
-                                                 self.fields['succ'], 
-                                                 '%s'))
+    # Return computed start for ticket
+    def finish(self, ticket):
+        return ticket['calc_finish'][0]
 
 
-        # Start with values that are always needed
-        fields = [
-            'description', 
-            'owner', 
-            'type', 
-            'status', 
-            'summary', 
-            'milestone', 
-            'priorty'] 
-
-        # Add configured fields
+    # Return a list of fields that PM needs to work.  The caller can
+    # add this to the list of fields in a query so that when the
+    # tickets are passed back to PM the necessary data is there.
+    def queryFields(self):
+        fields = []
         for field in self.fields:
-            if self.fields[field]:
+            if self.isCfg(field):
                 fields.append(self.fields[field])
+        return fields
 
-        # Make sure the coloring field is included
-        if 'colorBy' in options and options['colorBy'] not in fields:
-            fields.append(options['colorBy'])
+    # Return True if ticket is a milestone, False otherwise.
+    def isMilestone(self, ticket):
+        return ticket['type'] == self.milestoneType
 
-        # Make the query argument
-        query_args['col'] = "|".join(fields)  
-
-        # Construct the querystring. 
-        query_string = '&'.join(['%s=%s' % 
-                                 (f, str(v)) for (f, v) in 
-                                 query_args.iteritems()]) 
-
-        # Get the Query Object. 
-        query = Query.from_string(self.env, query_string)
-
-        # Get all tickets 
- 	rawtickets = query.execute(self.req) 
-
- 	# Do permissions check on tickets 
- 	tickets = [t for t in rawtickets  
-                   if 'TICKET_VIEW' in self.req.perm('ticket', t['id'])] 
-
-        return tickets
-
-    # Process the tickets to make displaying easy.
-    def _process_tickets(self, options):
-        # ChildTicketsPlugin puts '#' at the start of the parent
-        # field.  Strip it for simplicity.
-        for t in self.tickets:
-            if self.fields['parent']:
-                parent = t[self.fields['parent']]
-                if len(parent) > 0 and parent[0] == '#':
-                    t[self.fields['parent']] = parent[1:]
-
-        for t in self.tickets:
-            # Clean up custom fields which might be null ('--') vs. blank ('')
-            nullable = [ 'pred', 'succ', 
-                         'start', 'finish', 
-                         'parent', 
-                         'worked', 'estimate', 'percent' ]
-            for field in nullable:
-                if self.fields[field] and self.fields[field] not in t:
-                    raise TracError('%s is not a custom ticket field' %
-                                    self.fields[field])
-                
-                if self.fields[field] and t[self.fields[field]] == '--':
-                    t[self.fields[field]] = ''
-
-            # Get list of children
-            if self.fields['parent']:
-                if t[self.fields['parent']] == '':
-                    t[self.fields['parent']] = 0
-                
-                t['children'] = [c['id'] for c in self.tickets \
-                                     if c[self.fields['parent']] == str(t['id'])]
-            else:
-                t['children'] = None
-
-            t['link'] = self.req.href.ticket(t['id'])
-
-        for t in self.tickets:
-            lists = [ 'pred', 'succ' ]
-            for field in lists:
-                if self.fields.get(field):
-                    if t[self.fields[field]] == '':
-                        t[self.fields[field]] = []
-                    else:
-                        t[self.fields[field]] = \
-                            [s.strip() for s in t[self.fields[field]].split(',')]
-
-    def _compare_tickets(self, t1, t2):
-        # If t2 depends on t1, t2 is first
-        if self.fields['succ'] and \
-                str(t1['id']) in t2[self.fields['succ']]:
-            return 1
-        # If t1 depends on t2, t1 is first
-        elif self.fields['succ'] and \
-                str(t2['id']) in t1[self.fields['succ']]:
-            return -1
-        # If t1 ends first, it's first
-        elif t1['calc_finish'] < t2['calc_finish']:
-            return -1
-        # If t2 ends first, it's first
-        elif t1['calc_finish'] > t2['calc_finish']:
-            return 1
-        # End dates are same. If t1 starts later, it's later
-        elif t1['calc_start'] > t2['calc_start']:
-            return 1
-        # Otherwise, preserve order (assume t1 is before t2 when called)
-        else:
-            return 0
-
-    # Compute WBS for sorting and figure out the tickets' levels for
-    # controlling how many levels are open.  
-    #
-    # WBS is a list like [ 2, 4, 1] (the first child of the fourth
-    # child of the second top-level element).
-    def _compute_wbs(self):
-        # Set the ticket's level and wbs then recurse to children.
-        def _setLevel(id, wbs, level):
-            # Update this node
-            self.ticketsByID[id]['level'] = level
-            self.ticketsByID[id]['wbs'] = copy.copy(wbs)
-
-            # Recurse to children
-            childIDs = self.ticketsByID[id]['children']
-            if childIDs:
-                childTickets = [self.ticketsByID[id] for id in childIDs]
-                childTickets.sort(self._compare_tickets)
-                childIDs = [ct['id'] for ct in childTickets]
-                
-                # Add another level
-                wbs.append(1)
-                for c in childIDs:
-                    wbs = _setLevel(c, wbs, level+1)
-                # Remove the level we added
-                wbs.pop()
-            
-
-            # Increment last element of wbs
-            wbs[len(wbs)-1] += 1
-
-            return wbs
-
-        # Set WBS and level on all top level tickets (and recurse)
-        # If a ticket's parent is in the viewed tickets, consider it top-level
-        wbs = [ 1 ]
-        for t in self.tickets:
-            if not self.fields['parent'] \
-                    or t[self.fields['parent']] == 0 \
-                    or int(t[self.fields['parent']]) \
-                    not in self.ticketsByID.keys():
-                wbs = _setLevel(t['id'], wbs, 1)
 
     # Return hours of work in ticket as a floating point number
-    def _workHours(self, options, ticket):
-        if self.fields['estimate'] and ticket.get(self.fields['estimate']):
+    def workHours(self, ticket):
+        if self.isCfg('estimate') and ticket.get(self.fields['estimate']):
             est = float(ticket[self.fields['estimate']])
         else:
             est = None
 
-        if self.fields['worked'] and ticket.get(self.fields['worked']):
+        if self.isCfg('worked') and ticket.get(self.fields['worked']):
             work = float(ticket[self.fields['worked']])
         else:
             work = None
@@ -550,9 +244,275 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         return hours
 
-    def _schedule_tasks(self, options):
-        # Return a time delta for hours (positive or negative) from
-        # fromDate, accounting for working hours and weekends.
+    # Return percent complete as an integer or "worked/estimate"
+    # (which is then parsed by the Gantt to rollw up completion).
+    def percent(self, ticket):
+        # Compute percent complete if given estimate and worked
+        if self.isCfg(['estimate', 'worked']):
+            # Try to compute the percent complete, default to 0
+            try:
+                worked = float(ticket[self.fields['worked']])
+                if ticket['status'] == 'closed':
+                    estimate = worked
+                else:
+                    estimate = self.workHours(ticket) / self.hpe
+                percent = '%s/%s' % (worked, estimate)
+            except:
+                # Don't bother logging because 0 for an estimate is common.
+                percent = 0
+        # Closed tickets are 100% complete
+        elif ticket['status'] == 'closed':
+            percent = 100
+        # Use percent if provided
+        elif self.isCfg('percent'):
+            try:
+                percent = int(ticket[self.fields['percent']])
+            except:
+                percent = 0
+        # If no estimate and worked (above) and no percent, it's 0
+        else:
+            percent = 0
+            
+        return percent
+
+
+    # Returns pipe-delimited string of ticket IDs meeting PM
+    # constraints.  Suitable for use as id field in ticket query
+    # engine.
+    # FIXME - dumb name
+    def preQuery(self, options, this_ticket = None):
+        # Expand the list of tickets in origins to include those
+        # related through field.
+        # origins is a list of strings
+        def _expand(origins, field, format):
+            if len(origins) == 0:
+                return []
+
+            node_list = [format % tid for tid in origins]
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            # FIXME - is this portable across DBMSs?
+            cursor.execute("SELECT t.id "
+                           "FROM ticket AS t "
+                           "LEFT OUTER JOIN ticket_custom AS p ON "
+                           "    (t.id=p.ticket AND p.name='%s') "
+                           "WHERE p.value IN (%s)" % 
+                           (field,
+                            "'" + "','".join(node_list) + "'"))
+            nodes = ['%s' % row[0] for row in cursor] 
+
+            return origins + _expand(nodes, field, format)
+
+        id = ''
+
+        if options['root']:
+            if options['root'] == 'self':
+                if this_ticket:
+                    nodes = [ this_ticket ]
+                else:
+                    nodes = []
+            else:
+                nodes = options['root'].split('|')
+
+            id += '|'.join(_expand(nodes, 
+                                    self.fields['parent'], 
+                                    self.parent_format))
+
+        if options['goal']:
+            if options['goal'] == 'self':
+                if this_ticket:
+                    nodes = [ this_ticket ]
+                else:
+                    nodes = []
+            else:
+                nodes = options['goal'].split('|')
+
+            id += '|'.join(_expand(nodes, 
+                                    self.fields['succ'], 
+                                    '%s'))
+
+        return id
+
+    # Add tasks for milestones related to the tickets
+    def _add_milestones(self, options, tickets):
+        if options.get('milestone'):
+            milestones = options['milestone'].split('|')
+        else:
+            milestones = []
+
+        # FIXME - Really?  This is a display option
+        if not options['omitMilestones']:
+            for t in tickets:
+                if 'milestone' in t and \
+                        t['milestone'] != '' and \
+                        t['milestone'] not in milestones:
+                    milestones.append(t['milestone'])
+
+        # Need a unique ID for each task.
+        if len(milestones) > 0:
+            id = 0
+
+            # Get the milestones and their due dates
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            # FIXME - is this portable across DBMSs?
+            cursor.execute("SELECT name, due FROM milestone " +
+                           "WHERE name in ('" + "','".join(milestones) + "')")
+            for row in cursor:
+                milestoneTicket = {}
+                id = id-1
+                milestoneTicket['id'] = id
+                milestoneTicket['summary'] = row[0]
+                milestoneTicket['description'] = 'Milestone %s' % row[0]
+                milestoneTicket['milestone'] = row[0]
+                # A milestone has no owner
+                milestoneTicket['owner'] = ''
+                milestoneTicket['type'] = self.milestoneType
+                milestoneTicket['status'] = ''
+                # Milestones are always shown
+                milestoneTicket['level'] = 0
+                
+                # If there's no due date, default to today at close of business
+                ts = row[1] or \
+                    (datetime.now(utc) + 
+                     timedelta(hours=options['hoursPerDay']))
+                if self.isCfg('finish'):
+                    milestoneTicket[self.fields['finish']] = \
+                        format_date(ts, self.dbDateFormat)
+
+                # jsGantt ignores start for a milestone but we use it
+                # for scheduling.
+                if self.isCfg(['start', 'finish']):
+                    milestoneTicket[self.fields['start']] = \
+                        milestoneTicket[self.fields['finish']]
+                if self.isCfg('estimate'):
+                    milestoneTicket[self.fields['estimate']] = 0
+                # There is no percent complete for a milestone
+                if self.isCfg('percent'):
+                    milestoneTicket[self.fields['percent']] = 0
+                # A milestone has no children or parent
+                milestoneTicket['children'] = None
+                if self.isCfg('parent'):
+                    milestoneTicket[self.fields['parent']] = '0'
+                # Place holder.
+                milestoneTicket['link'] = ''
+                # A milestone has no priority
+                milestoneTicket['priority'] = 'n/a'
+
+                # Any ticket with this as a milestone and no
+                # successors has the milestone as a successor
+                if self.isCfg(['pred', 'succ']):
+                    pred = []
+                    for t in tickets:
+                        if not t['children'] and \
+                                t['milestone'] == row[0] and \
+                                t[self.fields['succ']] == []:
+                            t[self.fields['succ']] = [ str(id) ]
+                            pred.append(str(t['id']))
+                    milestoneTicket[self.fields['pred']] = pred
+
+                # A Trac milestone has no successors
+                if self.isCfg('succ'):
+                    milestoneTicket[self.fields['succ']] = []
+                
+                tickets.append(milestoneTicket)
+
+    # Process the tickets to normalize formats, etc. to simplify
+    # access functions.
+    #
+    # A 'children' field is added to each ticket.  If a 'parent' field
+    # is configurd for PM, then 'children' is the (possibly empty)
+    # list of children.  if there is no 'parent' field, then
+    # 'children' is set to None.
+    #
+    # Milestones for the tickets are added pseudo-tickets.
+    def postQuery(self, options, tickets):
+        # ChildTicketsPlugin puts '#' at the start of the parent
+        # field.  Strip it for simplicity.
+        for t in tickets:
+            if self.isCfg('parent'):
+                parent = t[self.fields['parent']]
+                if len(parent) > 0 and parent[0] == '#':
+                    t[self.fields['parent']] = parent[1:]
+
+        for t in tickets:
+            # Clean up custom fields which might be null ('--') vs. blank ('')
+            nullable = [ 'pred', 'succ', 
+                         'start', 'finish', 
+                         'parent', 
+                         'worked', 'estimate', 'percent' ]
+            for field in nullable:
+                if self.isCfg(field):
+                    if self.fields[field] not in t:
+                        raise TracError('%s is not a custom ticket field' %
+                                        self.fields[field])
+                
+                    if t[self.fields[field]] == '--':
+                        t[self.fields[field]] = ''
+
+            # Get list of children
+            if self.isCfg('parent'):
+                if t[self.fields['parent']] == '':
+                    t[self.fields['parent']] = '0'
+                
+                t['children'] = [c['id'] for c in tickets \
+                                     if c[self.fields['parent']] == \
+                                     str(t['id'])]
+            else:
+                t['children'] = None
+
+        for t in tickets:
+            lists = [ 'pred', 'succ' ]
+            for field in lists:
+                if self.isCfg(field):
+                    if t[self.fields[field]] == '':
+                        t[self.fields[field]] = []
+                    else:
+                        t[self.fields[field]] = \
+                            [s.strip() \
+                                 for s in t[self.fields[field]].split(',')]
+
+        self._add_milestones(options, tickets)
+
+    # Schedule each ticket in tickets with consideration for
+    # dependencies, estimated work, hours per day, etc.
+    # 
+    # Assumes tickets is a list, each element contains at least the
+    # fields returned by queryFields() and the whole list was
+    # processed by postQuery().
+    #
+    # On exit, each ticket has t['calc_start'] and t['calc_finish']
+    # set and can be accessed with TracPM.start() and finish().  No
+    # other changes are made.  (FIXME - we should probably be able to
+    # configure those field names or have some weird, unique prefix on
+    # the field names ("pm_", etc.), perhaps configurable.
+    #
+    # Uses options hoursPerDay and schedule (alap or asap).
+    #
+    #
+    # A Note About Working Hours
+    #
+    # The naive scheduling algorithm in the plugin assumes all
+    # resources work the same number of hours per day.  That limit can
+    # be configured (hoursPerDay) but defaults to 8.0.  While is is
+    # likely that these hours are something like 8am to 4pm (or 8am to
+    # 5pm, minus an hour lunch), daily scheduling isn't concerned with
+    # which hours are worked, only how many are worked each day.  To
+    # simplify range checking throughout the plugin, calculations are
+    # done as if the work day starts at midnight (hour==0) and
+    # continues for the configured number of hours per day (e.g.,
+    # 00:00..08:00).
+    def scheduleTasks(self, options, tickets):
+        # Faster lookups
+        self.ticketsByID = {}
+        for t in tickets:
+            self.ticketsByID[t['id']] = t
+
+        # Return a time delta hours (positive or negative) from
+        # fromDate, accounting for working hours and weekends.  
+        #
+        # FIXME - this needs a ticket or a resource so it can call use
+        # IResourceCalendar.
         def _calendarOffset(hours, fromDate):
             if hours < 0:
                 sign = -1
@@ -644,8 +604,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             def _ancestor_finish(t):
                 finish = None
                 # If there are parent and finish fields
-                if self.fields['finish'] and self.fields['parent']:
-                    pid = int(t[self.fields['parent']])
+                if self.isCfg(['finish', 'parent']):
+                    pid = self.parent(t)
                     # If this ticket has a parent, process it
                     if pid != 0:
                         if pid in self.ticketsByID:
@@ -666,12 +626,12 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             # t is a ticket (list of ticket fields)
             # start is a tuple ([date, explicit])
             def _earliest_successor(t, start):
-                if self.fields['succ'] and t[self.fields['succ']] != []:
+                if self.isCfg('succ') and t[self.fields['succ']] != []:
                     for id in t[self.fields['succ']]:
                         id = int(id)
                         if id in self.ticketsByID:
                             s = _schedule_task_alap(self.ticketsByID[id])
-                            if _betterDate(s, start) \
+                            if _betterDate(s, start) and \
                                     start == None or \
                                     (s and start and s[0] < start[0]):
                                 start = s
@@ -685,9 +645,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             # If we haven't scheduled this yet, do it now.
             if t.get('calc_finish') == None:
                 # If there is a finish set, use it
-                if self.fields['finish'] and t[self.fields['finish']] != '':
-                    finish = datetime(*time.strptime(t[self.fields['finish']], 
-                                                     self.dbDateFormat)[0:7])
+                if self.isSet(t, 'finish'):
+                    finish = self.parseFinish(t)
                     finish = finish.replace(hour=0, minute=0) + \
                         timedelta(hours=options['hoursPerDay'])
                     finish = [finish, True]
@@ -722,14 +681,13 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 t['calc_finish'] = finish
 
             if t.get('calc_start') == None:
-                if self.fields['start'] and t[self.fields['start']] != '':
-                    start = datetime(*time.strptime(t[self.fields['start']], 
-                                                     self.dbDateFormat)[0:7])
+                if self.isSet(t, 'start'):
+                    start = self.parseStart(t)
                     start = start.replace(hour=0, minute=0) + \
                         timedelta(hours=options['hoursPerDay'])
                     start = [start, True]
                 else:
-                    hours = self._workHours(options, t)
+                    hours = self.workHours(t)
                     start = t['calc_finish'][0] + \
                         _calendarOffset(-1*hours, t['calc_finish'][0])
                     start = [start, t['calc_finish'][1]]
@@ -745,7 +703,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             def _ancestor_start(t):
                 start = None
                 # If there are parent and start fields
-                if self.fields['start'] and self.fields['parent']:
+                if self.isCfg(['start', 'parent']):
                     pid = int(t[self.fields['parent']])
                     # If this ticket has a parent, process it
                     if pid != 0:
@@ -767,28 +725,26 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             # t is a ticket (list of ticket fields)
             # start is a tuple ([date, explicit])
             def _latest_predecessor(t, finish):
-                if self.fields['pred'] and t[self.fields['pred']] != []:
-                    for id in t[self.fields['pred']]:
-                        id = int(id)
-                        if id in self.ticketsByID:
-                            f = _schedule_task_asap(self.ticketsByID[id])
-                            if _betterDate(f, finish) and \
-                                    finish == None or \
-                                    (f and finish and f[0] > finish[0]):
-                                finish = f
-                        else:
-                            self.env.log.info(('Ticket %s has predecessor %s ' +
-                                               'but %s is not in the chart. ' +
-                                               'Dependency deadlines ignored.') %
-                                              (t['id'], id, id))
+                for id in self.predecessors(t):
+                    id = int(id)
+                    if id in self.ticketsByID:
+                        f = _schedule_task_asap(self.ticketsByID[id])
+                        if _betterDate(f, finish) and \
+                                finish == None or \
+                                (f and finish and f[0] > finish[0]):
+                            finish = f
+                    else:
+                        self.env.log.info(('Ticket %s has predecessor %s ' +
+                                           'but %s is not in the chart. ' +
+                                           'Dependency deadlines ignored.') %
+                                          (t['id'], id, id))
                 return finish
 
             # If we haven't scheduled this yet, do it now.
             if t.get('calc_start') == None:
                 # If there is a start set, use it
-                if self.fields['start'] and t[self.fields['start']] != '':
-                    start = datetime(*time.strptime(t[self.fields['start']], 
-                                                     self.dbDateFormat)[0:7])
+                if self.isSet(t, 'start'):
+                    start = self.parseStart(t)
                     start = start.replace(hour=0, minute=0)
                     start = [start, True]
                 # Otherwise, compute start from dependencies.
@@ -823,13 +779,12 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 t['calc_start'] = start
                 
             if t.get('calc_finish') == None:
-                if self.fields['finish'] and t[self.fields['finish']] != '':
-                    finish = datetime(*time.strptime(t[self.fields['finish']], 
-                                                     self.dbDateFormat)[0:7])
+                if self.isSet(t, 'finish'):
+                    finish = self.parseFinish(t)
                     finish = finish.replace(hour=0, minute=0)
                     finish = [finish, True]
                 else:
-                    hours = self._workHours(options, t)
+                    hours = self.workHours(t)
                     finish = t['calc_start'][0] + \
                         _calendarOffset(+1*hours, t['calc_start'][0])
                     finish = [finish, start[1]]
@@ -838,97 +793,373 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             return t['calc_finish']
 
 
-        for t in self.tickets:
+        for id in self.ticketsByID:
             if options['schedule'] == 'alap':
-                _schedule_task_alap(t)
+                _schedule_task_alap(self.ticketsByID[id])
             else:
-                _schedule_task_asap(t)
+                _schedule_task_asap(self.ticketsByID[id])
 
-    # Add tasks for milestones related to the tickets
-    def _add_milestones(self, options):
-        if options.get('milestone'):
-            milestones = options['milestone'].split('|')
+# ========================================================================
+class TracJSGanttSupport(Component):
+    implements(IRequestFilter, ITemplateProvider)
+    
+    Option('trac-jsgantt', 'hours_per_estimate', '1', 
+           """Hours represented by each unit of estimated work""")
+    Option('trac-jsgantt', 'default_estimate', '4.0', 
+           """Default work for an unestimated task, same units as estimate""")
+    Option('trac-jsgantt', 'estimate_pad', '0.0', 
+           """How much work may be remaining when a task goes over estimate, same units as estimate""")
+    Option('trac-jsgantt', 'date_format', '%Y-%m-%d', 
+           """Format for ''start'' and ''finish'' date strings""")    
+    
+    Option('trac-jsgantt', 'option.format', 'day', 
+           """Initial format of Gantt chart""")
+    Option('trac-jsgantt', 'option.formats', 'day|week|month|quarter', 
+           """Formats to show for Gantt chart""")
+    IntOption('trac-jsgantt', 'option.sample', 0,
+              """Show sample Gantt""")
+    IntOption('trac-jsgantt', 'option.res', 1, 
+              """Show resource column""")
+    IntOption('trac-jsgantt', 'option.dur', 1, 
+              """Show duration column""")              
+    IntOption('trac-jsgantt', 'option.comp', 1,
+              """Show percent complete column""")              
+    Option('trac-jsgantt', 'option.caption', 'Resource',
+           """Caption to follow task in Gantt""")
+    IntOption('trac-jsgantt', 'option.startDate', 1, 
+              """Show start date column""")
+    IntOption('trac-jsgantt', 'option.endDate', 1, 
+              """Show finish date column""")
+    Option('trac-jsgantt', 'option.dateDisplay', 'mm/dd/yyyy', 
+           """Format to display dates""")
+    IntOption('trac-jsgantt', 'option.openLevel', 999, 
+              """How many levels of task hierarchy to show open""")
+    IntOption('trac-jsgantt', 'option.expandClosedTickets', 1, 
+              """Show children of closed tasks in the task hierarchy""")
+    Option('trac-jsgantt', 'option.colorBy', 'priority', 
+           """Field to use to color tasks""")
+    IntOption('trac-jsgantt', 'option.lwidth', None, 
+              """Width (in pixels) of left table""")
+    IntOption('trac-jsgantt', 'option.root', None,
+              """Ticket(s) to show descendants of""")
+    IntOption('trac-jsgantt', 'option.goal', None,
+              """Ticket(s) to show predecessors of""")
+    IntOption('trac-jsgantt', 'option.showdep', 1, 
+              """Show dependencies in Gantt""")
+    IntOption('trac-jsgantt', 'option.userMap', 1, 
+              """Map user IDs to user names""")
+    IntOption('trac-jsgantt', 'option.omitMilestones', 0,
+              """Omit milestones""")
+    Option('trac-jsgantt', 'option.schedule', 'alap',
+           """Schedule algorithm: alap or asap""")
+    # This seems to be the first floating point option.
+    Option('trac-jsgantt', 'option.hoursPerDay', '8.0',
+                """Hours worked per day""")
+     
+
+    # ITemplateProvider methods
+    def get_htdocs_dirs(self):
+        return [('tracjsgantt', resource_filename(__name__, 'htdocs'))]
+
+    def get_templates_dirs(self):
+        return []
+
+    # IRequestFilter methods
+    def pre_process_request(self, req, handler):
+        # I think we should look for a TracJSGantt on the page and set
+        # a flag for the post_process_request handler if found
+        return handler
+            
+    def post_process_request(self, req, template, data, content_type):
+        add_script(req, 'tracjsgantt/jsgantt.js')
+        add_stylesheet(req, 'tracjsgantt/jsgantt.css')
+        add_stylesheet(req, 'tracjsgantt/tracjsgantt.css')
+        return template, data, content_type
+
+
+class TracJSGanttChart(WikiMacroBase):
+    """
+Displays a Gantt chart for the specified tickets.
+
+The chart display can be controlled with a number of macro arguments:
+
+||'''Argument'''||'''Description'''||'''Default'''||
+|| `formats`||What to display in the format control.  A pipe-separated list of `minute`, `hour`, `day`, `week`, `month`, and `quarter` (though `minute` may not be very useful). ||'day|week|month|quarter'||
+|| `format`||Initial display format, one of those listed in `formats` || First format ||
+|| `sample`||Display sample tasks (1) or not (0) || 0 ||
+|| `res`||Show resource column (1) or not (0) || 1 ||
+|| `dur`||Show duration colunn (1) or not (0) || 1 ||
+|| `comp`||Show percent complete column (1) or not (0) || 1 ||
+|| `caption`||Caption to place to right of tasks: None, Caption, Resource, Duration, %Complete || Resource ||
+|| `startDate`||Show start date column (1) or not (0) || 1 ||
+|| `endDate`||Show end date column (1) or not (0) || 1 ||
+|| `dateDisplay`||Date display format: 'mm/dd/yyyy', 'dd/mm/yyyy', or 'yyyy-mm-dd' || 'mm/dd/yyyy' ||
+|| `openLevel`||Number of levels of tasks to show.  1 = only top level task.  || 999 ||
+|| `colorBy`||Field to use to choose task colors.  Each unique value of the field will have a different color task.  Other likely useful values are owner and milestone but any field can be used. || priority ||
+|| `root`||When using something like Subtickets plugin to maintain a tree of tickets and subtickets, you may create a Gantt showing a ticket and all of its descendants with `root=<ticket#>`.  The macro uses the configured `parent` field to find all descendant tasks and build an `id=` argument for Trac's native query handler.[[br]][[br]]Multiple roots may be provided like `root=1|12|32`.[[br]][[br]]When used in a ticket description or comment, `root=self` will display the current ticket's descendants.||None||
+|| `goal`||When using something like MasterTickets plugin to maintain ticket dependencies, you may create a Gantt showing a ticket and all of its predecessors with `goal=<ticket#>`.  The macro uses the configured `succ` field to find all predecessor tasks and build an `id=` argument for Trac's native query handler.[[br]][[br]]Multiple goals may be provided like `goal=1|12|32`.[[br]][[br]]When used in a ticket description or comment, `goal=self` will display the current ticket's predecessors.||None||
+|| `lwidth`||The width, in pixels, of the table of task names, etc. on the left of the Gantt. || ||
+|| `showdep`||Show dependencies (1) or not (0)||1||
+|| `userMap`||Map user !IDs to full names (1) or not (0).||1||
+|| `omitMilestones`||Show milestones for displayed tickets (0) or only those specified by `milestone=` (1)||0||
+|| `schedule`||Schedule tasks based on dependenies and estimates.  Either as soon as possible (asap) or as late as possible (alap)||alap||
+
+Site-wide defaults for macro arguments may be set in `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
+
+All other macro arguments are treated as TracQuery specification (e.g., milestone=ms1|ms2) to control which tickets are displayed.
+
+    """
+
+    pm = None
+
+    def __init__(self):
+        # Instantiate the PM component
+        self.pm = TracPM(self.env)
+
+        self.GanttID = 'g'
+
+
+        # All the macro's options with default values.
+        # Anything else passed to the macro is a TracQuery field.
+        options = ('format', 'formats', 'sample', 'res', 'dur', 'comp', 
+                   'caption', 'startDate', 'endDate', 'dateDisplay', 
+                   'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
+                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
+                   'schedule', 'hoursPerDay')
+
+        self.options = {}
+        for opt in options:
+            self.options[opt] = self.config.get('trac-jsgantt',
+                                                'option.%s' % opt)
+
+
+        # These have to be in sync.  jsDateFormat is the date format
+        # that the JavaScript expects dates in.  It can be one of
+        # 'mm/dd/yyyy', 'dd/mm/yyyy', or 'yyyy-mm-dd'.  pyDateFormat
+        # is a strptime() format that matches jsDateFormat.  As long
+        # as they are in sync, there's no real reason to change them.
+        self.jsDateFormat = 'yyyy-mm-dd'
+        self.pyDateFormat = '%Y-%m-%d %H:%M'
+
+        # Hours per estimate unit.  
+        #
+        # If estimate is in hours, this is 1.
+        #
+        # If estimate is in days, this is may be 8 or 24, depending on
+        # your needs and the setting of hoursPerDay
+        self.hpe = float(self.config.get('trac-jsgantt', 'hours_per_estimate'))
+
+        # Default work in an unestimated task
+        self.dftEst = float(self.config.get('trac-jsgantt', 
+                                            'default_estimate'))
+
+        # How much to pad an estimate when a task has run over
+        self.estPad = float(self.config.get('trac-jsgantt', 
+                                            'estimate_pad'))
+
+        # User map (login -> realname) is loaded on demand, once.
+        # Initialization to None means it is not yet initialized.
+        self.user_map = None
+
+
+    def _begin_gantt(self, options):
+        if options['format']:
+            defaultFormat = options['format']
         else:
-            milestones = []
+            defaultFormat = options['formats'].split('|')[0]
+        showdep = options['showdep']
+        text = ''
+        text += '<div style="position:relative" class="gantt" id="GanttChartDIV_'+self.GanttID+'"></div>\n'
+        text += '<script language="javascript">\n'
+        text += 'var '+self.GanttID+' = new JSGantt.GanttChart("'+ \
+            self.GanttID+'",document.getElementById("GanttChartDIV_'+ \
+            self.GanttID+'"), "%s", "%s");\n' % \
+            (javascript_quote(defaultFormat), showdep)
+        text += 'var t;\n'
+        text += 'if (window.addEventListener){\n'
+        text += '  window.addEventListener("resize", function() { g.Draw();\n }, false);\n'
+        text += '} else {\n'
+        text += '  window.attachEvent("onresize", function() { g.Draw();\n });\n'
+        text += '}\n'
+        return text
 
-        if not options['omitMilestones']:
-            for t in self.tickets:
-                if 'milestone' in t and \
-                        t['milestone'] != '' and \
-                        t['milestone'] not in milestones:
-                    milestones.append(t['milestone'])
+    def _end_gantt(self, options):
+        chart = ''
+        chart += self.GanttID+'.Draw();\n' 
+        if options['showdep']:
+            chart += self.GanttID+'.DrawDependencies();\n'
+        chart += '</script>\n'
+        return chart
 
-        self.firstMilestoneID = 9999
+    def _gantt_options(self, options):
+        opt = ''
+        opt += self.GanttID+'.setShowRes(%s);\n' % options['res']
+        opt += self.GanttID+'.setShowDur(%s);\n' % options['dur']
+        opt += self.GanttID+'.setShowComp(%s);\n' % options['comp']
+        w = options['lwidth']
+        if w:
+            opt += self.GanttID+'.setLeftWidth(%s);\n' % w
+            
 
-        # Need a unique ID for each task.
-        if len(milestones) > 0:
-            id = self.firstMilestoneID
-            for t in self.tickets:
-                if t['id'] > id:
-                    id = t['id']
-            self.firstMilestoneID = id+1
+        opt += self.GanttID+'.setCaptionType("%s");\n' % \
+            javascript_quote(options['caption'])
 
-            # Get the milestones and their due dates
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
-            cursor.execute("SELECT name, due FROM milestone " +
-                           "WHERE name in ('" + "','".join(milestones) + "')")
-            for row in cursor:
-                milestoneTicket = {}
-                id = id+1
-                milestoneTicket['id'] = id
-                milestoneTicket['summary'] = row[0]
-                milestoneTicket['description'] = 'Milestone %s' % row[0]
-                milestoneTicket['milestone'] = row[0]
-                # A milestone has no owner
-                milestoneTicket['owner'] = ''
-                milestoneTicket['type'] = self.milestoneType
-                milestoneTicket['status'] = ''
-                # Milestones are always shown
-                milestoneTicket['level'] = 0
+        opt += self.GanttID+'.setShowStartDate(%s);\n' % options['startDate']
+        opt += self.GanttID+'.setShowEndDate(%s);\n' % options['endDate']
+
+        opt += self.GanttID+'.setDateInputFormat("%s");\n' % \
+            javascript_quote(self.jsDateFormat)
+
+        opt += self.GanttID+'.setDateDisplayFormat("%s");\n' % \
+            javascript_quote(options['dateDisplay'])
+
+        opt += self.GanttID+'.setFormatArr(%s);\n' % ','.join(
+            '"%s"' % javascript_quote(f) for f in options['formats'].split('|'))
+        opt += self.GanttID+'.setPopupFeatures("location=1,scrollbars=1");\n'
+        return opt
+
+    # TODO - use ticket-classN styles instead of colors?
+    def _add_sample_tasks(self):
+        tasks = ''
+        tasks = self.GanttID+'.setDateInputFormat("mm/dd/yyyy");'
+
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(1,   "Define Chart API",     "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(11,  "Chart Object",         "2/20/2011", "2/20/2011", "#ff00ff", "http://www.yahoo.com", 1, "Shlomy",  100, 0, 1, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(12,  "Task Objects",         "",          "",          "#00ff00", "", 0, "Shlomy",   40, 1, 1, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(121, "Constructor Proc",     "2/21/2011", "3/9/2011",  "#00ffff", "http://www.yahoo.com", 0, "Brian T.", 60, 0, 12, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(122, "Task Variables",       "3/6/2011",  "3/11/2011", "#ff0000", "http://help.com", 0, "",         60, 0, 12, 1,121, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(123, "Task Functions",       "3/9/2011",  "3/29/2011", "#ff0000", "http://help.com", 0, "Anyone",   60, 0, 12, 1, 0, "This is another caption", '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(2,   "Create HTML Shell",    "3/24/2011", "3/25/2011", "#ffff00", "http://help.com", 0, "Brian",    20, 0, 0, 1,122, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(3,   "Code Javascript",      "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1 , '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(31,  "Define Variables",     "2/25/2011", "3/17/2011", "#ff00ff", "http://help.com", 0, "Brian",    30, 0, 3, 1, 0,"Caption 1", '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(32,  "Calculate Chart Size", "3/15/2011", "3/24/2011", "#00ff00", "http://help.com", 0, "Shlomy",   40, 0, 3, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(33,  "Draw Taks Items",      "",          "",          "#00ff00", "http://help.com", 0, "Someone",  40, 1, 3, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(332, "Task Label Table",     "3/6/2011",  "3/11/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(333, "Task Scrolling Grid",  "3/9/2011",  "3/20/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(34,  "Draw Task Bars",       "",          "",          "#990000", "http://help.com", 0, "Anybody",  60, 1, 3, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(341, "Loop each Task",       "3/26/2011", "4/11/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, "332,333", '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(342, "Calculate Start/Stop", "4/12/2011", "5/18/2011", "#ff6666", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(343, "Draw Task Div",        "5/13/2011", "5/17/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(344, "Draw Completion Div",  "5/17/2011", "6/04/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(35,  "Make Updates",         "10/17/2011","12/04/2011","#f600f6", "http://help.com", 0, "Brian",    30, 0, 3,  1, '+self.GanttID+'));\n'
+        return tasks
+
+    # Get the required columns for the tickets which match the
+    # criteria in options.
+    def _query_tickets(self, options):
+        query_args = {}
+        for key in options.keys():
+            if not key in self.options:
+                query_args[key] = options[key]
+
+        # Expand (or set) list of IDs to include those specified by PM
+        # query meta-options (e.g., root)
+        pm_id = self.pm.preQuery(options, self._this_ticket())
+        if pm_id != '':
+            if 'id' in query_args:
+                query_args['id'] += '|' + pm_id
+            else:
+                query_args['id'] = pm_id
+
+        # Start with values that are always needed
+        fields = [
+            'description', 
+            'owner', 
+            'type', 
+            'status', 
+            'summary', 
+            'milestone', 
+            'priorty'] 
+
+        # Add configured fields
+        fields += self.pm.queryFields()
+
+        # Make sure the coloring field is included
+        if 'colorBy' in options and options['colorBy'] not in fields:
+            fields.append(options['colorBy'])
+
+        # Make the query argument
+        query_args['col'] = "|".join(fields)  
+
+        # Construct the querystring. 
+        query_string = '&'.join(['%s=%s' % 
+                                 (f, str(v)) for (f, v) in 
+                                 query_args.iteritems()]) 
+
+        # Get the Query Object. 
+        query = Query.from_string(self.env, query_string)
+
+        # Get all tickets 
+ 	rawtickets = query.execute(self.req) 
+
+ 	# Do permissions check on tickets 
+ 	tickets = [t for t in rawtickets  
+                   if 'TICKET_VIEW' in self.req.perm('ticket', t['id'])] 
+
+        return tickets
+
+    def _compare_tickets(self, t1, t2):
+        # If t2 depends on t1, t2 is first
+        if str(t1['id']) in self.pm.successors(t2):
+            return 1
+        # If t1 depends on t2, t1 is first
+        elif str(t2['id']) in self.pm.successors(t1):
+            return -1
+        # If t1 ends first, it's first
+        elif t1['calc_finish'] < t2['calc_finish']:
+            return -1
+        # If t2 ends first, it's first
+        elif t1['calc_finish'] > t2['calc_finish']:
+            return 1
+        # End dates are same. If t1 starts later, it's later
+        elif t1['calc_start'] > t2['calc_start']:
+            return 1
+        # Otherwise, preserve order (assume t1 is before t2 when called)
+        else:
+            return 0
+
+    # Compute WBS for sorting and figure out the tickets' levels for
+    # controlling how many levels are open.  
+    #
+    # WBS is a list like [ 2, 4, 1] (the first child of the fourth
+    # child of the second top-level element).
+    def _compute_wbs(self):
+        # Set the ticket's level and wbs then recurse to children.
+        def _setLevel(id, wbs, level):
+            # Update this node
+            self.ticketsByID[id]['level'] = level
+            self.ticketsByID[id]['wbs'] = copy.copy(wbs)
+
+            # Recurse to children
+            childIDs = self.pm.children(self.ticketsByID[id])
+            if childIDs:
+                childTickets = [self.ticketsByID[id] for id in childIDs]
+                childTickets.sort(self._compare_tickets)
+                childIDs = [ct['id'] for ct in childTickets]
                 
-                # If there's no due date, default to today at close of business
-                ts = row[1] or \
-                    (datetime.now(utc) + 
-                     timedelta(hours=options['hoursPerDay']))
-                milestoneTicket[self.fields['finish']] = \
-                    format_date(ts, self.dbDateFormat)
+                # Add another level
+                wbs.append(1)
+                for c in childIDs:
+                    wbs = _setLevel(c, wbs, level+1)
+                # Remove the level we added
+                wbs.pop()
+            
 
-                # jsGantt ignores start for a milestone but we use it
-                # for scheduling.
-                if self.fields['start'] and self.fields['finish']:
-                    milestoneTicket[self.fields['start']] = \
-                        milestoneTicket[self.fields['finish']]
-                if self.fields['estimate']:
-                    milestoneTicket[self.fields['estimate']] = 0
-                # There is no percent complete for a milestone
-                milestoneTicket[self.fields['percent']] = 0
-                # A milestone has no children or parent
-                milestoneTicket['children'] = None
-                if self.fields['parent']:
-                    milestoneTicket[self.fields['parent']] = 0
-                # Link to the milestone page
-                milestoneTicket['link'] = self.req.href.milestone(row[0])
-                # A milestone has no priority
-                milestoneTicket['priority'] = 'n/a'
+            # Increment last element of wbs
+            wbs[len(wbs)-1] += 1
 
-                # Any ticket with this as a milestone and no
-                # successors has the milestone as a successor
-                if self.fields['pred'] and self.fields['succ']:
-                    pred = []
-                    for t in self.tickets:
-                        if not t['children'] and \
-                                t['milestone'] == row[0] and \
-                                t[self.fields['succ']] == []:
-                            t[self.fields['succ']] = [ str(id) ]
-                            pred.append(str(t['id']))
-                    milestoneTicket[self.fields['pred']] = pred
+            return wbs
 
-                # A Trac milestone has no successors
-                if self.fields['succ']:
-                    milestoneTicket[self.fields['succ']] = []
-                
-                self.tickets.append(milestoneTicket)
+        # Set WBS and level on all top level tickets (and recurse) If
+        # a ticket's parent is not in the viewed tickets, consider it
+        # top-level
+        wbs = [ 1 ]
+        for t in self.tickets:
+            if self.pm.parent(t) == None \
+                    or self.pm.parent(t) == 0 \
+                    or self.pm.parent(t) not in self.ticketsByID.keys():
+                wbs = _setLevel(t['id'], wbs, 1)
+
 
     def _task_display(self, t, options):
         def _buildMap(field):
@@ -996,7 +1227,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     def _format_ticket(self, ticket, options):
         # Translate owner to full name
         def _owner(ticket):
-            if ticket['type'] == self.milestoneType:
+            if self.pm.isMilestone(ticket):
                 owner_name = ''
             else:
                 owner_name = ticket['owner']
@@ -1011,42 +1242,11 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         owner_name = self.user_map[owner_name]
             return owner_name
             
-        def _percent(ticket):
-            # Compute percent complete if given estimate and worked
-            if self.fields['estimate'] and self.fields['worked']:
-                # Try to compute the percent complete, default to 0
-                try:
-                    worked = float(ticket[self.fields['worked']])
-                    if ticket['status'] == 'closed':
-                        estimate = worked
-                    else:
-                        estimate = self._workHours(options, ticket) / self.hpe
-                    percent = '%s/%s' % (worked, estimate)
-                except:
-                    # Don't bother logging because 0 for an estimate is common.
-                    percent = 0
-            # Closed tickets are 100% complete
-            elif ticket['status'] == 'closed':
-                percent = 100
-            # Use percent if provided
-            elif self.fields.get('percent'):
-                self.env.log.debug('Parsing percent complete from %s' %
-                                   self.fields['percent'])
-                try:
-                    percent = int(ticket[self.fields['percent']])
-                except:
-                    percent = 0
-            # If no estimate and worked (above) and no percent, it's 0
-            else:
-                percent = 0
-
-            return percent
-
         task = ''
 
         # pID, pName
-        if ticket['type'] == self.milestoneType:
-            if ticket['id'] < self.firstMilestoneID:
+        if self.pm.isMilestone(ticket):
+            if ticket['id'] > 0:
                 # Put ID number on inchpebbles
                 name = 'MS:%s (#%s)' % (ticket['summary'], ticket['id'])
             else:
@@ -1060,8 +1260,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             (ticket['id'], javascript_quote(name))
 
         # pStart, pEnd
-        task += '"%s",' % ticket['calc_start'][0].strftime(self.pyDateFormat)
-        task += '"%s",' % ticket['calc_finish'][0].strftime(self.pyDateFormat)
+        task += '"%s",' % self.pm.start(ticket).strftime(self.pyDateFormat)
+        task += '"%s",' % self.pm.finish(ticket).strftime(self.pyDateFormat)
 
         # pDisplay
         task += '"%s",' % javascript_quote(self._task_display(ticket, options))
@@ -1070,7 +1270,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += '"%s",' % javascript_quote(ticket['link'])
 
         # pMile
-        if ticket['type'] == self.milestoneType:
+        if self.pm.isMilestone(ticket):
             task += '1,'
         else:
             task += '0,'
@@ -1079,17 +1279,17 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += '"%s",' % javascript_quote(_owner(ticket))
 
         # pComp (percent complete); integer 0..100
-        task += '"%s",' % _percent(ticket)
+        task += '"%s",' % self.pm.percent(ticket)
 
         # pGroup (has children)
-        if ticket['children']:
+        if self.pm.children(ticket):
             task += '%s,' % 1
         else:
             task += '%s,' % 0
         
         # pParent (parent task ID) 
         # If there's no parent field configured, don't link to parents
-        if not self.fields['parent'] or not ticket[self.fields['parent']]:
+        if self.pm.parent(ticket) == None:
             task += '%s,' % 0
         # If there's a parent field, but the ticket is in root, don't
         # link to parent
@@ -1103,7 +1303,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             task += '%s,' % 0
         # If there's a parent, and the ticket is not a root, link to parent
         else:
-            task += '%s,' % javascript_quote(ticket[self.fields['parent']])
+            task += '%s,' % self.pm.parent(ticket)
 
         # open
         if ticket['level'] < options['openLevel'] and \
@@ -1115,8 +1315,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += '%d,' % open
 
         # predecessors
-        if self.fields['pred']:
-            task += '"%s",' % javascript_quote(','.join(ticket[self.fields['pred']]))
+        pred = self.pm.predecessors(ticket)
+        if len(pred):
+            task += '"%s",' % javascript_quote(','.join(pred))
         else:
             task += '"%s",' % javascript_quote(','.join(''))
         
@@ -1133,12 +1334,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         return task
 
     def _add_tasks(self, options):
-        # Return -1 if a should be before b, 1 otherwise.
-        def _compare_children(a, b):
-            return self._compare_tickets(self.ticketsByID[a],
-                                         self.ticketsByID[b])
-
-
         if options.get('sample'):
             tasks = self._add_sample_tasks()
         else:
@@ -1147,23 +1342,30 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
             # Post process the query to add and compute fields so
             # displaying the tickets is easy
-            self._process_tickets(options)
-
-            # Add the milestone(s) with all their tickets depending on them.
-            self._add_milestones(options)
+            self.pm.postQuery(options, self.tickets)
 
             # Faster lookups for WBS and scheduling.
             self.ticketsByID = {}
             for t in self.tickets:
                 self.ticketsByID[t['id']] = t
 
-            # Schedule the tasks and sort them by date for computing WBS
-            self._schedule_tasks(options)
+            # Schedule the tasks
+            self.pm.scheduleTasks(options, self.tickets)
+
+            # Sort tickets by date for computing WBS
             self.tickets.sort(self._compare_tickets)
 
             # Compute the WBS and sort them by WBS for display
             self._compute_wbs()                
             self.tickets.sort(key=itemgetter('wbs'))
+
+            # Set the link for clicking through the Gantt chart
+            for t in self.tickets:
+                if t['id'] > 0:
+                    t['link'] = self.req.href.ticket(t['id'])
+                else:
+                    t['link'] = self.req.href.milestone(t['summary'])
+
 
             for ticket in self.tickets:
                 tasks += self._format_ticket(ticket, options)
