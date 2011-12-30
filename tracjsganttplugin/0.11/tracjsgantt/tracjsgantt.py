@@ -11,8 +11,8 @@ from trac.web.chrome import Chrome
 import copy
 from trac.ticket.query import Query
 
-from trac.config import IntOption, Option
-from trac.core import implements, Component, TracError
+from trac.config import IntOption, Option, ExtensionOption
+from trac.core import implements, Component, TracError, Interface
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from pkg_resources import resource_filename
@@ -43,6 +43,23 @@ from trac.wiki.api import parse_args
 #  finish - accessed with TracPM.finish(t)
 #
 # FIXME - do we need access methods for estimate and worked?
+
+class ITaskScheduler(Interface):
+    # Schedule each the ticket in tickets with consideration for
+    # dependencies, estimated work, hours per day, etc.
+    # 
+    # Assumes tickets is a list, each element contains at least the
+    # fields returned by queryFields() and the whole list was
+    # processed by postQuery().
+    #
+    # On exit, each ticket has t['calc_start'] and t['calc_finish']
+    # set and can be accessed with TracPM.start() and finish().  No
+    # other changes are made.  (FIXME - we should probably be able to
+    # configure those field names.)
+    def scheduleTasks(self, options, tickets):
+        """Called to schedule tasks"""
+
+
 class TracPM(Component):
     cfgSection = 'TracPM'
     fields = None
@@ -77,6 +94,9 @@ class TracPM(Component):
     Option(cfgSection, 'milestone_type', 'milestone', 
            """Ticket type for milestone-like tickets""")
  
+    scheduler = ExtensionOption(cfgSection, 'scheduler', 
+                                ITaskScheduler, 'SimpleScheduler')
+
     def __init__(self):
         self.env.log.debug('Initializing TracPM')
 
@@ -244,8 +264,8 @@ class TracPM(Component):
 
         return hours
 
-    # Return percent complete as an integer or "worked/estimate"
-    # (which is then parsed by the Gantt to rollw up completion).
+    # Return percent complete as an integer
+    # FIXME - or "worked/estimate"
     def percent(self, ticket):
         # Compute percent complete if given estimate and worked
         if self.isCfg(['estimate', 'worked']):
@@ -474,34 +494,40 @@ class TracPM(Component):
 
         self._add_milestones(options, tickets)
 
-    # Schedule each ticket in tickets with consideration for
-    # dependencies, estimated work, hours per day, etc.
-    # 
-    # Assumes tickets is a list, each element contains at least the
-    # fields returned by queryFields() and the whole list was
-    # processed by postQuery().
-    #
-    # On exit, each ticket has t['calc_start'] and t['calc_finish']
-    # set and can be accessed with TracPM.start() and finish().  No
-    # other changes are made.  (FIXME - we should probably be able to
-    # configure those field names or have some weird, unique prefix on
-    # the field names ("pm_", etc.), perhaps configurable.
-    #
+    def computeSchedule(self, options, tickets):
+        self.scheduler.scheduleTasks(options, tickets)
+
+
+# ========================================================================
+# Handles dates, duration (estimate) and dependencies but not resource
+# leveling.  
+#
+# Assumes a 5-day work week (Monday-Friday) and options['hoursPerDay']
+# for every resource.
+#
+# A Note About Working Hours
+#
+# The naive scheduling algorithm in the plugin assumes all resources
+# work the same number of hours per day.  That limit can be configured
+# (hoursPerDay) but defaults to 8.0.  While is is likely that these
+# hours are something like 8am to 4pm (or 8am to 5pm, minus an hour
+# lunch), daily scheduling isn't concerned with which hours are
+# worked, only how many are worked each day.  To simplify range
+# checking throughout the scheduler, calculations are done as if the
+# work day starts at midnight (hour==0) and continues for the
+# configured number of hours per day (e.g., 00:00..08:00).
+class SimpleScheduler(Component):
+    implements(ITaskScheduler)
+
+    pm = None
+
+    def __init__(self):
+        # Instantiate the PM component
+        self.pm = TracPM(self.env)
+
+
+    # ITaskScheduler method
     # Uses options hoursPerDay and schedule (alap or asap).
-    #
-    #
-    # A Note About Working Hours
-    #
-    # The naive scheduling algorithm in the plugin assumes all
-    # resources work the same number of hours per day.  That limit can
-    # be configured (hoursPerDay) but defaults to 8.0.  While is is
-    # likely that these hours are something like 8am to 4pm (or 8am to
-    # 5pm, minus an hour lunch), daily scheduling isn't concerned with
-    # which hours are worked, only how many are worked each day.  To
-    # simplify range checking throughout the plugin, calculations are
-    # done as if the work day starts at midnight (hour==0) and
-    # continues for the configured number of hours per day (e.g.,
-    # 00:00..08:00).
     def scheduleTasks(self, options, tickets):
         # Faster lookups
         self.ticketsByID = {}
@@ -509,7 +535,7 @@ class TracPM(Component):
             self.ticketsByID[t['id']] = t
 
         # Return a time delta hours (positive or negative) from
-        # fromDate, accounting for working hours and weekends.  
+        # fromDate, accounting for working hours and weekends.
         #
         # FIXME - this needs a ticket or a resource so it can call use
         # IResourceCalendar.
@@ -604,8 +630,8 @@ class TracPM(Component):
             def _ancestor_finish(t):
                 finish = None
                 # If there are parent and finish fields
-                if self.isCfg(['finish', 'parent']):
-                    pid = self.parent(t)
+                if self.pm.isCfg(['finish', 'parent']):
+                    pid = self.pm.parent(t)
                     # If this ticket has a parent, process it
                     if pid != 0:
                         if pid in self.ticketsByID:
@@ -626,27 +652,26 @@ class TracPM(Component):
             # t is a ticket (list of ticket fields)
             # start is a tuple ([date, explicit])
             def _earliest_successor(t, start):
-                if self.isCfg('succ') and t[self.fields['succ']] != []:
-                    for id in t[self.fields['succ']]:
-                        id = int(id)
-                        if id in self.ticketsByID:
-                            s = _schedule_task_alap(self.ticketsByID[id])
-                            if _betterDate(s, start) and \
-                                    start == None or \
-                                    (s and start and s[0] < start[0]):
-                                start = s
-                        else:
-                            self.env.log.info(('Ticket %s has successor %s ' +
-                                               'but %s is not in the chart. ' +
-                                               'Dependency deadlines ignored.') %
-                                              (t['id'], id, id))
+                for id in self.pm.successors(t):
+                    id = int(id)
+                    if id in self.ticketsByID:
+                        s = _schedule_task_alap(self.ticketsByID[id])
+                        if _betterDate(s, start) and \
+                                start == None or \
+                                (s and start and s[0] < start[0]):
+                            start = s
+                    else:
+                        self.env.log.info(('Ticket %s has successor %s ' +
+                                           'but %s is not in the chart. ' +
+                                           'Dependency deadlines ignored.') %
+                                          (t['id'], id, id))
                 return start
 
             # If we haven't scheduled this yet, do it now.
             if t.get('calc_finish') == None:
                 # If there is a finish set, use it
-                if self.isSet(t, 'finish'):
-                    finish = self.parseFinish(t)
+                if self.pm.isSet(t, 'finish'):
+                    finish = self.pm.parseFinish(t)
                     finish = finish.replace(hour=0, minute=0) + \
                         timedelta(hours=options['hoursPerDay'])
                     finish = [finish, True]
@@ -681,13 +706,13 @@ class TracPM(Component):
                 t['calc_finish'] = finish
 
             if t.get('calc_start') == None:
-                if self.isSet(t, 'start'):
-                    start = self.parseStart(t)
+                if self.pm.isSet(t, 'start'):
+                    start = self.pm.parseStart(t)
                     start = start.replace(hour=0, minute=0) + \
                         timedelta(hours=options['hoursPerDay'])
                     start = [start, True]
                 else:
-                    hours = self.workHours(t)
+                    hours = self.pm.workHours(t)
                     start = t['calc_finish'][0] + \
                         _calendarOffset(-1*hours, t['calc_finish'][0])
                     start = [start, t['calc_finish'][1]]
@@ -703,8 +728,8 @@ class TracPM(Component):
             def _ancestor_start(t):
                 start = None
                 # If there are parent and start fields
-                if self.isCfg(['start', 'parent']):
-                    pid = int(t[self.fields['parent']])
+                if self.pm.isCfg(['start', 'parent']):
+                    pid = self.pm.parent(t)
                     # If this ticket has a parent, process it
                     if pid != 0:
                         if pid in self.ticketsByID:
@@ -725,7 +750,7 @@ class TracPM(Component):
             # t is a ticket (list of ticket fields)
             # start is a tuple ([date, explicit])
             def _latest_predecessor(t, finish):
-                for id in self.predecessors(t):
+                for id in self.pm.predecessors(t):
                     id = int(id)
                     if id in self.ticketsByID:
                         f = _schedule_task_asap(self.ticketsByID[id])
@@ -743,8 +768,8 @@ class TracPM(Component):
             # If we haven't scheduled this yet, do it now.
             if t.get('calc_start') == None:
                 # If there is a start set, use it
-                if self.isSet(t, 'start'):
-                    start = self.parseStart(t)
+                if self.pm.isSet(t, 'start'):
+                    start = self.pm.parseStart(t)
                     start = start.replace(hour=0, minute=0)
                     start = [start, True]
                 # Otherwise, compute start from dependencies.
@@ -779,12 +804,12 @@ class TracPM(Component):
                 t['calc_start'] = start
                 
             if t.get('calc_finish') == None:
-                if self.isSet(t, 'finish'):
-                    finish = self.parseFinish(t)
+                if self.pm.isSet(t, 'finish'):
+                    finish = self.pm.parseFinish(t)
                     finish = finish.replace(hour=0, minute=0)
                     finish = [finish, True]
                 else:
-                    hours = self.workHours(t)
+                    hours = self.pm.workHours(t)
                     finish = t['calc_start'][0] + \
                         _calendarOffset(+1*hours, t['calc_start'][0])
                     finish = [finish, start[1]]
@@ -1106,13 +1131,13 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         elif str(t2['id']) in self.pm.successors(t1):
             return -1
         # If t1 ends first, it's first
-        elif t1['calc_finish'] < t2['calc_finish']:
+        elif self.pm.finish(t1) < self.pm.finish(t2):
             return -1
         # If t2 ends first, it's first
-        elif t1['calc_finish'] > t2['calc_finish']:
+        elif self.pm.finish(t1) > self.pm.finish(t2):
             return 1
         # End dates are same. If t1 starts later, it's later
-        elif t1['calc_start'] > t2['calc_start']:
+        elif self.pm.start(t1) > self.pm.start(t2):
             return 1
         # Otherwise, preserve order (assume t1 is before t2 when called)
         else:
@@ -1350,7 +1375,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 self.ticketsByID[t['id']] = t
 
             # Schedule the tasks
-            self.pm.scheduleTasks(options, self.tickets)
+            self.pm.computeSchedule(options, self.tickets)
 
             # Sort tickets by date for computing WBS
             self.tickets.sort(self._compare_tickets)
