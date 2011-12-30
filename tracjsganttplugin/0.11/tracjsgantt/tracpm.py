@@ -1,6 +1,7 @@
 import re
 import time
 import math
+import copy
 from datetime import timedelta, datetime
 
 
@@ -703,8 +704,7 @@ class SimpleScheduler(Component):
                                                'but %s is not in the chart. ' +
                                                'Ancestor deadlines ignored.') %
                                               (t['id'], pid, pid))
-
-                return finish
+                return copy.copy(finish)
 
             # Find the earliest start of any successor
             # t is a ticket (list of ticket fields)
@@ -723,7 +723,7 @@ class SimpleScheduler(Component):
                                            'Dependency deadlines ignored.') %
                                           (t['id'], id, id))
                 self.env.log.debug('earliest successor is %s' % start)
-                return start
+                return copy.copy(start)
 
             # If we haven't scheduled this yet, do it now.
             if t.get('calc_finish') == None:
@@ -807,8 +807,7 @@ class SimpleScheduler(Component):
                                                'but %s is not in the chart. ' +
                                                'Ancestor deadlines ignored.') %
                                               (t['id'], pid, pid))
-
-                return start
+                return copy.copy(start)
 
             # Find the latest finish of any predecessor
             # t is a ticket (list of ticket fields)
@@ -826,7 +825,7 @@ class SimpleScheduler(Component):
                                            'but %s is not in the chart. ' +
                                            'Dependency deadlines ignored.') %
                                           (t['id'], id, id))
-                return finish
+                return copy.copy(finish)
 
             # If we haven't scheduled this yet, do it now.
             if t.get('calc_start') == None:
