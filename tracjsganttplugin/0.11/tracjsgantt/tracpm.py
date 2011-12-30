@@ -780,12 +780,14 @@ class CalendarScheduler(Component):
                     # day, our finish is really the end of the previous
                     # work day
                     if self.pm.isStartOfDay(finish[0]):
+                        # Start at start of day
                         f = finish[0]
-                        # Move back to the end of the previous day
-                        f -= timedelta(hours=24-options['hoursPerDay'])
-                        # Adjust for work days as needed
-                        f += timedelta(hours=1)
+                        # Move back one hour from start of day to make
+                        # sure finish is on a work day.
                         f += _calendarOffset(t, -1, f)
+                        # Move forward one hour to the end of the day
+                        f += timedelta(hours=1)
+
                         finish[0] = f
 
                 # Set the field
@@ -887,6 +889,7 @@ class CalendarScheduler(Component):
                         s = start[0]
                         # Move ahead to the start of the next day
                         s += timedelta(hours=24-options['hoursPerDay'])
+                        # FIXME - untested
                         # Adjust for work days as needed
                         s += _calendarOffset(t, 1, s)
                         s += timedelta(hours=-1)
