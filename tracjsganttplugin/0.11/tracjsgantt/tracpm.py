@@ -31,6 +31,9 @@ from trac.core import implements, Component, TracError, Interface
 #  start - accessed with TracPM.start(t)
 #  finish - accessed with TracPM.finish(t)
 #
+# FIXME - we should probably have some weird, unique prefix on the
+# field names ("pm_", etc.).  Perhaps configurable.
+#
 # FIXME - do we need access methods for estimate and worked?
 
 class ITaskScheduler(Interface):
@@ -58,7 +61,8 @@ class TracPM(Component):
     Option(cfgSection, 'default_estimate', '4.0', 
            """Default work for an unestimated task, same units as estimate""")
     Option(cfgSection, 'estimate_pad', '0.0', 
-           """How much work may be remaining when a task goes over estimate, same units as estimate""")
+           "How much work may be remaining when a task goes over estimate,"+
+           " same units as estimate""")
 
     Option(cfgSection, 'fields.percent', None,
            """Ticket field to use as the data source for the percent 
@@ -115,7 +119,8 @@ class TracPM(Component):
         self.hpe = float(self.config.get(self.cfgSection, 'hours_per_estimate'))
 
         # Default work in an unestimated task
-        self.dftEst = float(self.config.get(self.cfgSection, 'default_estimate'))
+        self.dftEst = float(self.config.get(self.cfgSection, 
+                                            'default_estimate'))
 
         # How much to pad an estimate when a task has run over
         self.estPad = float(self.config.get(self.cfgSection, 'estimate_pad'))
@@ -219,7 +224,7 @@ class TracPM(Component):
         return ticket['type'] == self.milestoneType
 
 
-    # Return hours of work in ticket as a floating point number
+    # Return total hours of work in ticket as a floating point number
     def workHours(self, ticket):
         if self.isCfg('estimate') and ticket.get(self.fields['estimate']):
             est = float(ticket[self.fields['estimate']])
@@ -630,12 +635,12 @@ class SimpleScheduler(Component):
                         if pid in self.ticketsByID:
                             parent = self.ticketsByID[pid]
                             _schedule_task_alap(parent)
-                            if _betterDate(self.ticketsByID[pid]['calc_finish'], 
+                            if _betterDate(self.ticketsByID[pid]['calc_finish'],
                                            finish):
                                 finish = self.ticketsByID[pid]['calc_finish']
                         else:
                             self.env.log.info(('Ticket %s has parent %s ' +
-                                               'but %s is not in the chart.' +
+                                               'but %s is not in the chart. ' +
                                                'Ancestor deadlines ignored.') %
                                               (t['id'], pid, pid))
 

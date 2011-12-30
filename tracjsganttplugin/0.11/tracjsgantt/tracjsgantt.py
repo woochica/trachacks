@@ -164,7 +164,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             defaultFormat = options['formats'].split('|')[0]
         showdep = options['showdep']
         text = ''
-        text += '<div style="position:relative" class="gantt" id="GanttChartDIV_'+self.GanttID+'"></div>\n'
+        text += '<div style="position:relative" class="gantt" ' + \
+            'id="GanttChartDIV_'+self.GanttID+'"></div>\n'
         text += '<script language="javascript">\n'
         text += 'var '+self.GanttID+' = new JSGantt.GanttChart("'+ \
             self.GanttID+'",document.getElementById("GanttChartDIV_'+ \
@@ -172,9 +173,11 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             (javascript_quote(defaultFormat), showdep)
         text += 'var t;\n'
         text += 'if (window.addEventListener){\n'
-        text += '  window.addEventListener("resize", function() { g.Draw();\n }, false);\n'
+        text += '  window.addEventListener("resize", ' + \
+            'function() { g.Draw();\n }, false);\n'
         text += '} else {\n'
-        text += '  window.attachEvent("onresize", function() { g.Draw();\n });\n'
+        text += '  window.attachEvent("onresize", ' + \
+            'function() { g.Draw();\n });\n'
         text += '}\n'
         return text
 
@@ -402,8 +405,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         return display
         
 
-    # Format a ticket into JavaScript source to display the task. t is
-    # expected to have:
+    # Format a ticket into JavaScript source to display the
+    # task. ticket is expected to have:
     #   children - child ticket IDs or None
     #   description - ticket description.
     #   id - ticket ID, an integer
@@ -412,10 +415,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     #   owner - Used as resource name.
     #   percent - integer percent complete, 0..100 (or "act/est")
     #   priority - used to color the task
-    #   self.fields[finish] - end date (ignored if children is not None)
+    #   calc_finish - end date (ignored if children is not None)
     #   self.fields[parent] - parent ticket ID
     #   self.fields[pred] - predecessor ticket IDs
-    #   self.fields[start] - start date (ignored if children is not None)
+    #   calc_start - start date (ignored if children is not None)
     #   status - string displayed in tool tip ; FIXME - not displayed yet
     #   summary - ticket summary
     #   type - string displayed in tool tip FIXME - not displayed yet
@@ -488,7 +491,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             task += '%s,' % 0
         # If there's a parent field, but the ticket is in root, don't
         # link to parent
-        elif options['root'] and str(ticket['id']) in options['root'].split('|'):
+        elif options['root'] and \
+                str(ticket['id']) in options['root'].split('|'):
             task += '%s,' % 0
         # If there's a parent field, root == self and this ticket is self, 
         # don't link to parents
