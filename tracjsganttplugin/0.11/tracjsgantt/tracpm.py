@@ -180,16 +180,16 @@ class TracPM(Component):
     def children(self, ticket):
         return ticket['children']
 
-    # Return a list of immediate precedessors for ticket or an empty
-    # list if there are none.
+    # Return a list of integer ticket IDs for immediate precedessors
+    # for ticket or an empty list if there are none.
     def predecessors(self, ticket):
         if self.isCfg('pred'):
             return ticket[self.fields['pred']]
         else:
             return []
 
-    # Return a list of immediate successors for ticket or an empty
-    # list if there are none.
+    # Return a list of integer ticket IDs for immediate successors for
+    # ticket or an empty list if there are none.
     def successors(self, ticket):
         if self.isCfg('succ'):
             return ticket[self.fields['succ']]
@@ -482,7 +482,7 @@ class TracPM(Component):
                         t[self.fields[field]] = []
                     else:
                         t[self.fields[field]] = \
-                            [s.strip() \
+                            [int(s.strip()) \
                                  for s in t[self.fields[field]].split(',')]
 
         self._add_milestones(options, tickets)
@@ -646,7 +646,6 @@ class SimpleScheduler(Component):
             # start is a tuple ([date, explicit])
             def _earliest_successor(t, start):
                 for id in self.pm.successors(t):
-                    id = int(id)
                     if id in self.ticketsByID:
                         s = _schedule_task_alap(self.ticketsByID[id])
                         if _betterDate(s, start) and \
@@ -745,7 +744,6 @@ class SimpleScheduler(Component):
             # start is a tuple ([date, explicit])
             def _latest_predecessor(t, finish):
                 for id in self.pm.predecessors(t):
-                    id = int(id)
                     if id in self.ticketsByID:
                         f = _schedule_task_asap(self.ticketsByID[id])
                         if _betterDate(f, finish) and \

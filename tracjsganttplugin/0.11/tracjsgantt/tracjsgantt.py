@@ -295,10 +295,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
     def _compare_tickets(self, t1, t2):
         # If t2 depends on t1, t2 is first
-        if str(t1['id']) in self.pm.successors(t2):
+        if t1['id'] in self.pm.successors(t2):
             return 1
         # If t1 depends on t2, t1 is first
-        elif str(t2['id']) in self.pm.successors(t1):
+        elif t2['id'] in self.pm.successors(t1):
             return -1
         # If t1 ends first, it's first
         elif self.pm.finish(t1) < self.pm.finish(t2):
@@ -510,7 +510,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += '%d,' % open
 
         # predecessors
-        pred = self.pm.predecessors(ticket)
+        pred = [str(s) for s in self.pm.predecessors(ticket)]
         if len(pred):
             task += '"%s",' % javascript_quote(','.join(pred))
         else:
