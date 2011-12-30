@@ -157,19 +157,23 @@ class TracPM(Component):
     # Return None if the field is not configured or empty.
     def parseStart(self, ticket):
         if self.isSet(ticket, 'start'):
-            return datetime(*time.strptime(ticket[self.fields['start']], 
+            start = datetime(*time.strptime(ticket[self.fields['start']], 
                                        self.dbDateFormat)[0:7])
+            start.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
-            return None
+            start = None
+        return start
 
     # Parse the finish field and return a datetime
     # Return None if the field is not configured or empty.
     def parseFinish(self, ticket):
         if self.isSet(ticket, 'finish'):
-            return datetime(*time.strptime(ticket[self.fields['finish']], 
+            finish = datetime(*time.strptime(ticket[self.fields['finish']], 
                                            self.dbDateFormat)[0:7])
+            finish.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
-            return None
+            finish = None
+        return finish
 
     # Return the integer ID of the parent ticket
     # 0 if no parent
@@ -670,8 +674,7 @@ class SimpleScheduler(Component):
                 # If there is a finish set, use it
                 if self.pm.isSet(t, 'finish'):
                     finish = self.pm.parseFinish(t)
-                    finish = finish.replace(hour=0, minute=0) + \
-                        timedelta(hours=options['hoursPerDay'])
+                    finish += timedelta(hours=options['hoursPerDay'])
                     finish = [finish, True]
                 # Otherwise, compute finish from dependencies.
                 else:
@@ -681,17 +684,18 @@ class SimpleScheduler(Component):
                     # today at close of business
                     if finish == None:
                         finish = datetime.today().replace(hour=0, 
-                                                          minute=0) + \
+                                                          minute=0, 
+                                                          second=0, 
+                                                          microsecond=0) + \
                             timedelta(hours=options['hoursPerDay'])
-                        # If today is on a weekend, move back to Friday
-                        if finish.weekday() > 4:
-                            finish += timedelta(days=7-finish.weekday())
                         finish = [finish, False]
                     # If we are to finish at the beginning of the work
                     # day, our finish is really the end of the previous
                     # work day
-                    elif finish[0] == finish[0].replace(hour=0, minute=0):
-                        # Tuesday-Friday, back up to end of previous day
+                    elif finish[0] == finish[0].replace(hour=0, 
+                                                        minute=0, 
+                                                        second=0, 
+                                                        microsecond=0):
                         f = finish[0]
                         if f.weekday() > 0:
                             f -= timedelta(hours=24-options['hoursPerDay'])
@@ -767,7 +771,6 @@ class SimpleScheduler(Component):
                 # If there is a start set, use it
                 if self.pm.isSet(t, 'start'):
                     start = self.pm.parseStart(t)
-                    start = start.replace(hour=0, minute=0)
                     start = [start, True]
                 # Otherwise, compute start from dependencies.
                 else:
@@ -775,7 +778,10 @@ class SimpleScheduler(Component):
                     
                     # If dependencies don't give a date, default to today
                     if start == None:
-                        start = datetime.today().replace(hour=0, minute=0)
+                        start = datetime.today().replace(hour=0, 
+                                                         minute=0, 
+                                                         second=0, 
+                                                         microsecond=0)
 
                         # FIXME - do the converse in ALAP, too.
                         # If today is on a weekend, move ahead to Monday
@@ -785,7 +791,10 @@ class SimpleScheduler(Component):
                     # If we are to start at the end of the work
                     # day, our start is really the beginning of the next
                     # work day
-                    elif start[0] == start[0].replace(hour=0, minute=0) + \
+                    elif start[0] == start[0].replace(hour=0, 
+                                                      minute=0,
+                                                      second=0,
+                                                      microsecond=0) + \
                             timedelta(hours=options['hoursPerDay']):
                         # Monday-Thursday, move ahead to beginning of
                         # previous day
@@ -803,7 +812,6 @@ class SimpleScheduler(Component):
             if t.get('calc_finish') == None:
                 if self.pm.isSet(t, 'finish'):
                     finish = self.pm.parseFinish(t)
-                    finish = finish.replace(hour=0, minute=0)
                     finish = [finish, True]
                 else:
                     hours = self.pm.workHours(t)
