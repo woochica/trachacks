@@ -8,7 +8,7 @@ from pkg_resources import resource_filename
 from trac.config import Option, FloatOption, ListOption
 from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
-from trac.mimeview.api import IContentConverter, Context
+from trac.mimeview.api import IContentConverter
 from trac.resource import Resource
 from trac.ticket.api import TicketSystem
 from trac.ticket.query import Query
@@ -95,7 +95,6 @@ class StickyTicketModule(Component):
                  'pdf')
 
     def _sticky_from_query(self, req, query):
-        context = Context.from_request(req, 'query', absurls=True)
         for col in ['id', 'summary', 'type'] + self._fields:
             if col not in query.rows:
                 query.rows.append(col)
