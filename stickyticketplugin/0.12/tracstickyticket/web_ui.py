@@ -139,7 +139,7 @@ class StickyTicketModule(Component):
         tickets = []
         while start < len(ids):
             constraints = [{
-                'id': ','.join(str(id) for id in ids[start:start + count])
+                'id': [str(id) for id in ids[start:start + count]],
             }]
             query = Query(self.env, constraints=constraints, cols=cols, max=0)
             tickets.extend(query.execute(req, db))
