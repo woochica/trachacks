@@ -930,12 +930,14 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             else:
                 owner_name = ticket['owner']
                 if options['userMap']:
+                    # Build the map the first time we use it
                     if self.user_map is None:
                         self.user_map = {}
                         for username, name, email in self.env.get_known_users():
                             self.user_map[username] = name
-                    if ticket['owner'] in self.user_map:
-                        owner_name = self.user_map[ticket['owner']]
+                    # Map the user name
+                    if self.user_map.get(owner_name):
+                        owner_name = self.user_map[owner_name]
             return owner_name
             
         def _percent(ticket):
