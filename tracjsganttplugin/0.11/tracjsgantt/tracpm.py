@@ -796,12 +796,14 @@ class CalendarScheduler(Component):
             if t.get('calc_start') == None:
                 if self.pm.isSet(t, 'start'):
                     start = self.pm.parseStart(t)
-                    start = start.replace(hour=0, 
-                                          minute=0,
-                                          second=0,
-                                          microsecond=0) + \
-                        timedelta(hours=options['hoursPerDay'])
                     start = [start, True]
+                    # Adjust implicit finish for explicit start
+                    if _betterDate(start, finish):
+                        hours = self.pm.workHours(t)
+                        finish[0] = start[0] + _calendarOffset(t,
+                                                               hours,
+                                                               start[0])
+                        t['calc_finish'] = finish
                 else:
                     hours = self.pm.workHours(t)
                     start = t['calc_finish'][0] + \
@@ -889,7 +891,6 @@ class CalendarScheduler(Component):
                         s = start[0]
                         # Move ahead to the start of the next day
                         s += timedelta(hours=24-options['hoursPerDay'])
-                        # FIXME - untested
                         # Adjust for work days as needed
                         s += _calendarOffset(t, 1, s)
                         s += timedelta(hours=-1)
@@ -900,8 +901,17 @@ class CalendarScheduler(Component):
                 
             if t.get('calc_finish') == None:
                 if self.pm.isSet(t, 'finish'):
+                    # Don't adjust for work week; use the explicit date.
                     finish = self.pm.parseFinish(t)
+                    finish += timedelta(hours=options['hoursPerDay'])
                     finish = [finish, True]
+                    # Adjust implicit start for explicit finish
+                    if _betterDate(finish, start):
+                        hours = self.pm.workHours(t)
+                        start[0] = finish[0] + _calendarOffset(t, 
+                                                               -1*hours, 
+                                                               finish[0])
+                        t['calc_start'] = start
                 else:
                     hours = self.pm.workHours(t)
                     finish = t['calc_start'][0] + \
