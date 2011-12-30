@@ -586,12 +586,50 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             return timedelta(weeks=weeks, days=days, hours=hours)            
 
 
+        # Return True if d1 is better than d2
+        # Each is a tuple in the form [date, explicit] or None
+        def _betterDate(d1, d2):
+            # If both are None, neither is better
+            if d1 == None and d2 == None:
+                better = False
+            # If d1 is None, d2 is better if it is explicit
+            # That is, don't replace "not yet set" with an implicit date
+            elif d1 == None:
+                better = d2[1]
+            # If d2 is None, d1 has to be better
+            elif d2 == None:
+                better = True
+            # If d1 is explicit
+            elif d1[1]:
+                # If d2 is implicit, d1 is better
+                if not d2[1]:
+                    better = True
+                # If d2 is also explicit, d1 isn't better
+                else:
+                    better = False
+            # d1 is implicit, it can't be better than d2
+            else:
+                better = False
+
+            if (better):
+                self.env.log.debug('%s is better than %s' % (d1, d2))
+            else:
+                self.env.log.debug('%s is NOT better than %s' % (d1, d2))
+                
+            return better
+                
         # TODO: If we have start and estimate, we can figure out
         # finish (opposite case of figuring out start from finish and
         # estimate as we do now).  
 
         # Schedule a task As Late As Possible
-        # Return the start of the task as a date object
+        #
+        # Return a tuple like [start, explicit] where 
+        #   start is the start of the task as a date object
+        #
+        #   explicit is True if start was parsed from a user
+        #   specified value and False if it was it is inferred as
+        #   today
         def _schedule_task_alap(t):
             # Find the finish of the closest ancestor with one set (if any)
             def _ancestor_finish(t):
@@ -604,7 +642,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         if pid in self.ticketsByID:
                             parent = self.ticketsByID[pid]
                             _schedule_task_alap(parent)
-                            finish = self.ticketsByID[pid]['calc_finish']
+                            if _betterDate(self.ticketsByID[pid]['calc_finish'], 
+                                           finish):
+                                finish = self.ticketsByID[pid]['calc_finish']
                         else:
                             self.env.log.info(('Ticket %s has parent %s ' +
                                                'but %s is not in the chart.' +
@@ -614,20 +654,23 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 return finish
 
             # Find the earliest start of any successor
+            # t is a ticket (list of ticket fields)
+            # start is a tuple ([date, explicit])
             def _earliest_successor(t, start):
                 if self.fields['succ'] and t[self.fields['succ']] != []:
                     for id in t[self.fields['succ']]:
                         id = int(id)
                         if id in self.ticketsByID:
                             s = _schedule_task_alap(self.ticketsByID[id])
-                            if start == None or s < start:
+                            if _betterDate(s, start) \
+                                    start == None or \
+                                    (s and start and s[0] < start[0]):
                                 start = s
                         else:
                             self.env.log.info(('Ticket %s has successor %s ' +
                                                'but %s is not in the chart. ' +
                                                'Dependency deadlines ignored.') %
                                               (t['id'], id, id))
-                            
                 return start
 
             # If we haven't scheduled this yet, do it now.
@@ -638,6 +681,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                                                      self.dbDateFormat)[0:7])
                     finish = finish.replace(hour=0, minute=0) + \
                         timedelta(hours=options['hoursPerDay'])
+                    finish = [finish, True]
                 # Otherwise, compute finish from dependencies.
                 else:
                     finish = _earliest_successor(t, _ancestor_finish(t))
@@ -651,16 +695,20 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         # If today is on a weekend, move back to Friday
                         if finish.weekday() > 4:
                             finish += timedelta(days=7-finish.weekday())
+                        finish = [finish, False]
                     # If we are to finish at the beginning of the work
                     # day, our finish is really the end of the previous
                     # work day
-                    elif finish == finish.replace(hour=0, minute=0):            
+                    elif finish[0] == finish[0].replace(hour=0, minute=0):
                         # Tuesday-Friday, back up to end of previous day
-                        if finish.weekday() > 0:
-                            finish -= timedelta(hours=24-options['hoursPerDay'])
+                        f = finish[0]
+                        if f.weekday() > 0:
+                            f -= timedelta(hours=24-options['hoursPerDay'])
                         # Monday, skip the weekend, too.
                         else:
-                            finish -= timedelta(hours=(24-options['hoursPerDay'])+48)
+                            f -= timedelta(hours=(24-options['hoursPerDay'])+48)
+                        finish = [f, finish[1]]
+
                 # Set the field
                 t['calc_finish'] = finish
 
@@ -670,11 +718,14 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                                                      self.dbDateFormat)[0:7])
                     start = start.replace(hour=0, minute=0) + \
                         timedelta(hours=options['hoursPerDay'])
+                    start = [start, True]
                 else:
                     hours = self._workHours(options, t)
-                    start = t['calc_finish'] + \
-                        _calendarOffset(-1*hours, t['calc_finish'])
-                t['calc_start']=start
+                    start = t['calc_finish'][0] + \
+                        _calendarOffset(-1*hours, t['calc_finish'][0])
+                    start = [start, t['calc_finish'][1]]
+
+                t['calc_start'] = start
 
             return t['calc_start']
 
@@ -692,7 +743,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         if pid in self.ticketsByID:
                             parent = self.ticketsByID[pid]
                             _schedule_task_asap(parent)
-                            start = self.ticketsByID[pid]['calc_start']
+                            if _betterDate(self.ticketsByID[pid]['calc_start'], 
+                                           start):
+                                start = self.ticketsByID[pid]['calc_start']
                         else:
                             self.env.log.info(('Ticket %s has parent %s ' +
                                                'but %s is not in the chart. ' +
@@ -702,20 +755,23 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 return start
 
             # Find the latest finish of any predecessor
+            # t is a ticket (list of ticket fields)
+            # start is a tuple ([date, explicit])
             def _latest_predecessor(t, finish):
                 if self.fields['pred'] and t[self.fields['pred']] != []:
                     for id in t[self.fields['pred']]:
                         id = int(id)
                         if id in self.ticketsByID:
                             f = _schedule_task_asap(self.ticketsByID[id])
-                            if finish == None or f > finish:
+                            if _betterDate(f, finish) and \
+                                    finish == None or \
+                                    (f and finish and f[0] > finish[0]):
                                 finish = f
                         else:
                             self.env.log.info(('Ticket %s has predecessor %s ' +
                                                'but %s is not in the chart. ' +
                                                'Dependency deadlines ignored.') %
                                               (t['id'], id, id))
-                            
                 return finish
 
             # If we haven't scheduled this yet, do it now.
@@ -725,6 +781,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     start = datetime(*time.strptime(t[self.fields['start']], 
                                                      self.dbDateFormat)[0:7])
                     start = start.replace(hour=0, minute=0)
+                    start = [start, True]
                 # Otherwise, compute start from dependencies.
                 else:
                     start = _latest_predecessor(t, _ancestor_start(t))
@@ -737,18 +794,21 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         # If today is on a weekend, move ahead to Monday
                         if start.weekday() > 4:
                             start += timedelta(days=7-start.weekday())
+                        start = [start, False]
                     # If we are to start at the end of the work
                     # day, our start is really the beginning of the next
                     # work day
-                    elif start == start.replace(hour=0, minute=0) + \
+                    elif start[0] == start[0].replace(hour=0, minute=0) + \
                             timedelta(hours=options['hoursPerDay']):
                         # Monday-Thursday, move ahead to beginning of
                         # previous day
-                        if start.weekday() < 4:
-                            start += timedelta(hours=24-options['hoursPerDay'])
+                        s = start[0]
+                        if s.weekday() < 4:
+                            s += timedelta(hours=24-options['hoursPerDay'])
                         # Friday, skip the weekend, too.
                         else:
-                            start += timedelta(hours=(24-options['hoursPerDay'])+48)
+                            s += timedelta(hours=(24-options['hoursPerDay'])+48)
+                        start = [s, start[1]]
                 
                 # Set the field
                 t['calc_start'] = start
@@ -758,11 +818,13 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     finish = datetime(*time.strptime(t[self.fields['finish']], 
                                                      self.dbDateFormat)[0:7])
                     finish = finish.replace(hour=0, minute=0)
+                    finish = [finish, True]
                 else:
                     hours = self._workHours(options, t)
-                    finish = t['calc_start'] + \
-                        _calendarOffset(+1*hours, t['calc_start'])
-                t['calc_finish']=finish
+                    finish = t['calc_start'][0] + \
+                        _calendarOffset(+1*hours, t['calc_start'][0])
+                    finish = [finish, start[1]]
+                t['calc_finish'] = finish
 
             return t['calc_finish']
 
@@ -989,8 +1051,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             (ticket['id'], javascript_quote(name))
 
         # pStart, pEnd
-        task += '"%s",' % ticket['calc_start'].strftime(self.pyDateFormat)
-        task += '"%s",' % ticket['calc_finish'].strftime(self.pyDateFormat)
+        task += '"%s",' % ticket['calc_start'][0].strftime(self.pyDateFormat)
+        task += '"%s",' % ticket['calc_finish'][0].strftime(self.pyDateFormat)
 
         # pDisplay
         task += '"%s",' % javascript_quote(self._task_display(ticket, options))
