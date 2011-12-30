@@ -175,6 +175,22 @@ class TracPM(Component):
             finish = None
         return finish
 
+    # Is d at the start of the day
+    #
+    # It gets messy to do this explicitly inline, especially because
+    # some date math seems to have rounding issues that result in
+    # non-zero microseconds.
+    def isStartOfDay(self, d):
+        # Subtract d from midnight that day
+        delta = d - d.replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # If within 5 seconds of midnight, it's midnight.
+        #
+        # Note that seconds and microseconds are always positive
+        # http://docs.python.org/library/datetime.html#timedelta-objects
+        return  delta.seconds < 5
+        
+
     # Return the integer ID of the parent ticket
     # 0 if no parent
     # None if parent is not configured
@@ -692,6 +708,7 @@ class SimpleScheduler(Component):
             if t.get('calc_finish') == None:
                 # If there is a finish set, use it
                 if self.pm.isSet(t, 'finish'):
+                    # Don't adjust for work week; use the explicit date.
                     finish = self.pm.parseFinish(t)
                     finish += timedelta(hours=options['hoursPerDay'])
                     finish = [finish, True]
@@ -702,26 +719,28 @@ class SimpleScheduler(Component):
                     # If dependencies don't give a date, default to
                     # today at close of business
                     if finish == None:
+                        # Start at midnight today
                         finish = datetime.today().replace(hour=0, 
                                                           minute=0, 
                                                           second=0, 
-                                                          microsecond=0) + \
-                            timedelta(hours=options['hoursPerDay'])
+                                                          microsecond=0)
+                        # Move ahead to beginning of next day so fixup
+                        # below will handle work week.
+                        finish += timedelta(days=1)
+
                         finish = [finish, False]
+
                     # If we are to finish at the beginning of the work
                     # day, our finish is really the end of the previous
                     # work day
-                    elif finish[0] == finish[0].replace(hour=0, 
-                                                        minute=0, 
-                                                        second=0, 
-                                                        microsecond=0):
+                    if self.pm.isStartOfDay(finish[0]):
                         f = finish[0]
-                        if f.weekday() > 0:
-                            f -= timedelta(hours=24-options['hoursPerDay'])
-                        # Monday, skip the weekend, too.
-                        else:
-                            f -= timedelta(hours=(24-options['hoursPerDay'])+48)
-                        finish = [f, finish[1]]
+                        # Move back to the end of the previous day
+                        f -= timedelta(hours=24-options['hoursPerDay'])
+                        # Adjust for work days as needed
+                        f += timedelta(hours=1)
+                        f += _calendarOffset(-1, f)
+                        finish[0] = f
 
                 # Set the field
                 t['calc_finish'] = finish
@@ -729,7 +748,10 @@ class SimpleScheduler(Component):
             if t.get('calc_start') == None:
                 if self.pm.isSet(t, 'start'):
                     start = self.pm.parseStart(t)
-                    start = start.replace(hour=0, minute=0) + \
+                    start = start.replace(hour=0, 
+                                          minute=0,
+                                          second=0,
+                                          microsecond=0) + \
                         timedelta(hours=options['hoursPerDay'])
                     start = [start, True]
                 else:
@@ -789,6 +811,7 @@ class SimpleScheduler(Component):
             if t.get('calc_start') == None:
                 # If there is a start set, use it
                 if self.pm.isSet(t, 'start'):
+                    # Don't adjust for work week; use the explicit date.
                     start = self.pm.parseStart(t)
                     start = [start, True]
                 # Otherwise, compute start from dependencies.
@@ -797,32 +820,29 @@ class SimpleScheduler(Component):
                     
                     # If dependencies don't give a date, default to today
                     if start == None:
+                        # Start at midnight today
                         start = datetime.today().replace(hour=0, 
                                                          minute=0, 
                                                          second=0, 
                                                          microsecond=0)
-
-                        # FIXME - do the converse in ALAP, too.
-                        # If today is on a weekend, move ahead to Monday
-                        if start.weekday() > 4:
-                            start += timedelta(days=7-start.weekday())
+                        # Move back to end of previous day so fixup
+                        # below will handle work week.
+                        start += timedelta(days=-1,
+                                           hours=options['hoursPerDay'])
                         start = [start, False]
+
                     # If we are to start at the end of the work
                     # day, our start is really the beginning of the next
                     # work day
-                    elif start[0] == start[0].replace(hour=0, 
-                                                      minute=0,
-                                                      second=0,
-                                                      microsecond=0) + \
-                            timedelta(hours=options['hoursPerDay']):
-                        # Monday-Thursday, move ahead to beginning of
-                        # previous day
+                    if self.pm.isStartOfDay(start[0] -
+                                            timedelta(hours =
+                                                      options['hoursPerDay'])):
                         s = start[0]
-                        if s.weekday() < 4:
-                            s += timedelta(hours=24-options['hoursPerDay'])
-                        # Friday, skip the weekend, too.
-                        else:
-                            s += timedelta(hours=(24-options['hoursPerDay'])+48)
+                        # Move ahead to the start of the next day
+                        s += timedelta(hours=24-options['hoursPerDay'])
+                        # Adjust for work days as needed
+                        s += _calendarOffset(1, s)
+                        s += timedelta(hours=-1)
                         start = [s, start[1]]
                 
                 # Set the field
