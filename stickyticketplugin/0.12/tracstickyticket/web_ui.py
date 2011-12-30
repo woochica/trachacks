@@ -38,8 +38,11 @@ class StickyTicketModule(Component):
 
     def __init__(self):
         Component.__init__(self)
-        dir = resource_filename(__name__, 'locale')
-        add_domain(self.env.path, dir)
+        try:
+            dir = resource_filename(__name__, 'locale')
+            add_domain(self.env.path, dir)
+        except:
+            pass
 
     # IEnvironmentSetupParticipant
     def environment_created(self):

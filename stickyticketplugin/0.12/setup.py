@@ -19,7 +19,7 @@ except ImportError:
 
 setup(
     name = 'StickyTicketPlugin',
-    version = '0.12.0.2',
+    version = '0.12.0.3',
     description = 'Print Ticket on Sticky',
     license = 'BSD', # the same license as Trac
     url = 'http://trac-hacks.org/wiki/StickyTicketPlugin',

@@ -6,4 +6,4 @@ NAME = 'StickyTicketPlugin'
 try:
     VERSION = get_distribution(NAME).version
 except DistributionNotFound:
-    VERSION = '0.12.0.2'
+    VERSION = '0.12.0.3'
