@@ -305,7 +305,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     # Get the required columns for the tickets which match the
     # criteria in options.
     def _query_tickets(self, options):
-        # Parents is a list of strings
+        # Expand the list of tickets in origins to include those
+        # related through field.
+        # origins is a list of strings
         def _expand(origins, field, format):
             if len(origins) == 0:
                 return []
@@ -324,7 +326,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
             return origins + _expand(nodes, field, format)
 
-
         query_args = {}
         for key in options.keys():
             if not key in self.options:
@@ -339,10 +340,14 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 this_ticket = self._this_ticket()
                 if this_ticket:
                     nodes = [ this_ticket ]
-                    query_args['id'] += '|'.join(_expand(nodes, self.fields['parent'], self.parent_format))
+                else:
+                    nodes = []
             else:
                 nodes = options['root'].split('|')
-                query_args['id'] += '|'.join(_expand(nodes, self.fields['parent'], self.parent_format))
+
+            query_args['id'] += '|'.join(_expand(nodes, 
+                                                 self.fields['parent'], 
+                                                 self.parent_format))
 
         if options['goal']:
             if 'id' in query_args:            
@@ -353,10 +358,14 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 this_ticket = self._this_ticket()
                 if this_ticket:
                     nodes = [ this_ticket ]
-                    query_args['id'] += '|'.join(_expand(nodes, self.fields['succ'], '%s'))
+                else:
+                    nodes = []
             else:
                 nodes = options['goal'].split('|')
-                query_args['id'] += '|'.join(_expand(nodes, self.fields['succ'], '%s'))
+
+            query_args['id'] += '|'.join(_expand(nodes, 
+                                                 self.fields['succ'], 
+                                                 '%s'))
 
 
         # Start with values that are always needed
@@ -383,12 +392,14 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         # Construct the querystring. 
         query_string = '&'.join(['%s=%s' % 
-                                 (f, str(v)) for (f,v) in query_args.iteritems()]) 
+                                 (f, str(v)) for (f, v) in 
+                                 query_args.iteritems()]) 
 
         # Get the Query Object. 
         query = Query.from_string(self.env, query_string)
 
- 	rawtickets = query.execute(self.req) # Get all tickets 
+        # Get all tickets 
+ 	rawtickets = query.execute(self.req) 
 
  	# Do permissions check on tickets 
  	tickets = [t for t in rawtickets  
@@ -441,8 +452,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     else:
                         t[self.fields[field]] = \
                             [s.strip() for s in t[self.fields[field]].split(',')]
-
-
 
     def _compare_tickets(self, t1, t2):
         # If t2 depends on t1, t2 is first
@@ -1088,7 +1097,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             task += '%s,' % 0
         # If there's a parent field, root == self and this ticket is self, 
         # don't link to parents
-        elif options['root'] and options['root'] == 'self' and str(ticket['id']) == self._this_ticket():
+        elif options['root'] and \
+                options['root'] == 'self' and \
+                str(ticket['id']) == self._this_ticket():
             task += '%s,' % 0
         # If there's a parent, and the ticket is not a root, link to parent
         else:
