@@ -359,6 +359,41 @@ class TracPM(Component):
 
         return id
 
+    def _pseudoticket(self, id, summary, description, milestone):
+        ticket = {}
+        ticket['id'] = id
+        ticket['summary'] = summary
+        ticket['description'] = description
+        ticket['milestone'] = milestone
+
+        # Milestones are always shown
+        ticket['level'] = 0
+
+        # A milestone has no owner
+        ticket['owner'] = ''
+        ticket['type'] = self.milestoneType
+        ticket['status'] = ''
+
+        if self.isCfg('estimate'):
+            ticket[self.fields['estimate']] = 0
+
+        # There is no percent complete for a milestone
+        if self.isCfg('percent'):
+            ticket[self.fields['percent']] = 0
+
+        # A milestone has no children or parent
+        ticket['children'] = None
+        if self.isCfg('parent'):
+            ticket[self.fields['parent']] = '0'
+
+        # Place holder.
+        ticket['link'] = ''
+
+        # A milestone has no priority
+        ticket['priority'] = 'n/a'
+
+        return ticket
+
     # Add tasks for milestones related to the tickets
     def _add_milestones(self, options, tickets):
         if options.get('milestone'):
@@ -385,43 +420,26 @@ class TracPM(Component):
             cursor.execute("SELECT name, due FROM milestone " +
                            "WHERE name in ('" + "','".join(milestones) + "')")
             for row in cursor:
-                milestoneTicket = {}
                 id = id-1
-                milestoneTicket['id'] = id
-                milestoneTicket['summary'] = row[0]
-                milestoneTicket['description'] = 'Milestone %s' % row[0]
-                milestoneTicket['milestone'] = row[0]
-                # A milestone has no owner
-                milestoneTicket['owner'] = ''
-                milestoneTicket['type'] = self.milestoneType
-                milestoneTicket['status'] = ''
-                # Milestones are always shown
-                milestoneTicket['level'] = 0
-                
-                # If there's no due date, default to today at close of business
-                ts = row[1] or \
-                    (datetime.now(utc) + 
-                     timedelta(hours=options['hoursPerDay']))
-                milestoneTicket[self.fields['finish']] = \
-                    format_date(ts, self.dbDateFormat)
+                milestoneTicket = self.pm._pseudoTicket(id, 
+                                                        row[0],
+                                                        'Milestone %s' % row[0],
+                                                        row[0])
 
-                # jsGantt ignores start for a milestone but we use it
-                # for scheduling.
-                if self.isCfg(['start', 'finish']):
-                    milestoneTicket[self.fields['start']] = \
-                        milestoneTicket[self.fields['finish']]
-                if self.fields['estimate']:
-                    milestoneTicket[self.fields['estimate']] = 0
-                # There is no percent complete for a milestone
-                milestoneTicket[self.fields['percent']] = 0
-                # A milestone has no children or parent
-                milestoneTicket['children'] = None
-                if self.fields['parent']:
-                    milestoneTicket[self.fields['parent']] = '0'
-                # Place holder.
-                milestoneTicket['link'] = ''
-                # A milestone has no priority
-                milestoneTicket['priority'] = 'n/a'
+                # If there's no due date, default to today at close of business
+                if self.isCfg('finish'):
+                    ts = row[1] or \
+                        (datetime.now(utc) + 
+                         timedelta(hours=options['hoursPerDay']))
+                    milestoneTicket[self.fields['finish']] = \
+                        format_date(ts, self.dbDateFormat)
+
+                    # jsGantt ignores start for a milestone but we use it
+                    # for scheduling.
+                    if self.isCfg('start'):
+                        milestoneTicket[self.fields['start']] = \
+                              milestoneTicket[self.fields['finish']]
+
 
                 # Any ticket with this as a milestone and no
                 # successors has the milestone as a successor
