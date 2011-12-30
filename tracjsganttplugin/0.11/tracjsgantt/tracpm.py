@@ -1,6 +1,8 @@
 import re
 import time
+import math
 from datetime import timedelta, datetime
+
 
 from trac.util.datefmt import format_date, utc
 from trac.ticket.query import Query
@@ -582,41 +584,60 @@ class SimpleScheduler(Component):
             else:
                 sign = 1
 
-            # Normalize hours into days and weeks.
-            # Note: hours, days, and weeks all have the same sign
-            # Figure out days from hours
-            days = int(hours / options['hoursPerDay'])
-            hours -= (days * options['hoursPerDay'])
-            # Figure out weeks from days
-            weeks = int(days / 7.0)
-            days -= (weeks * 7)
-            
-            # If we're at the start of the work day and moving
-            # forwards or the end of the work day and moving
-            # backwards, one day of hours are worked today so move
-            # hours from days to hours
-            endOfDay = fromDate.replace(hour=0, minute=0)
-            if fromDate == endOfDay or \
-                    fromDate == endOfDay + \
-                    timedelta(hours=options['hoursPerDay']):
-                days -= 1 * sign
-                hours += options['hoursPerDay'] * sign
-                
-            # If the new time is outside business hours, skip
-            # non-business hours
-            toDate = fromDate + timedelta(weeks=weeks, days=days, hours=hours)
-            endOfDay = toDate.replace(hour=0, minute=0) + \
-                timedelta(hours=options['hoursPerDay'])
-            if toDate > endOfDay:
-                hours += (24-options['hoursPerDay']) * sign
+            delta = timedelta(hours=0)
 
-            # If the new time is on the weekend, skip the weekend
-            toDate = fromDate + timedelta(weeks=weeks, days=days, hours=hours)
-            if toDate.weekday() > 4:
-                days += 2 * sign
-                
-            return timedelta(weeks=weeks, days=days, hours=hours)            
+            while hours != 0:
+                f = fromDate+delta
 
+                # No time on weekends, full day on week days.
+                if f.weekday() > 4:
+                    available = 0
+                else:
+                    available = options['hoursPerDay']
+
+                # Clip available based on time of day on target date
+                # (hours before a finish or after a start)
+                #
+                # Convert 4:30 into 4.5, 16:15 into 16.25, etc.
+                h = f.hour + f.minute / 60. + f.second / 3600.
+
+                # See how many hours are available before or after the
+                # threshold on this day
+                if sign == -1:
+                    if h < available:
+                        available = h
+                else:
+                    if options['hoursPerDay']-h < available:
+                        available = options['hoursPerDay']-h
+
+                # If we can finish the task this day
+                if available >= math.fabs(hours):
+                    # Add the remaining time to the delta (sign is
+                    # implicit in hours)
+                    delta += timedelta(hours=hours)
+                    # No hours left when we're done.
+                    hours = 0
+                # If we can't finish the task this day
+                else:
+                    # We do available hours of work this day ...
+                    hours -= sign * available
+
+                    # ... And move to another day to do more.
+                    if sign == -1:
+                        # Account for the time worked this date
+                        # (That is, get to start of the day)
+                        delta += timedelta(hours = -available)
+                        # Back up to end of previous day
+                        delta += timedelta(hours = 
+                                           -(24 - options['hoursPerDay']))
+                    else:
+                        # Account for the time work this date
+                        # (That is move to the end of today)
+                        delta += timedelta(hours = available)
+                        # Move ahead to the start of the next day
+                        delta += timedelta(hours = 24 - options['hoursPerDay'])
+
+            return delta
 
         # Return True if d1 is better than d2
         # Each is a tuple in the form [date, explicit] or None
