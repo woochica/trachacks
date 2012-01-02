@@ -6,7 +6,7 @@ import sys
 
 setup(
     name='FieldTooltip',
-    version='0.2',
+    version='0.3',
     license='Modified BSD',
     author='MATOBA Akihiro',
     author_email='matobaa+trac-hacks@gmail.com',

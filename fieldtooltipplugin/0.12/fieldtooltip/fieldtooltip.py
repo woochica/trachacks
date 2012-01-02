@@ -4,16 +4,17 @@
 from genshi import XML
 from genshi.core import QName
 from genshi.filters.transform import START, END
+from trac.cache import cached
 from trac.core import Component, implements
+from trac.mimeview import Context
 from trac.web.api import ITemplateStreamFilter
 from trac.wiki.api import IWikiChangeListener, WikiSystem
-from trac.wiki.formatter import wiki_to_html
+from trac.wiki.formatter import format_to_html
 
 class FieldTooltip(Component):
     """ Provides tooltip for ticket fields. (In Japanese/KANJI) チケットフィールドのツールチップを提供します。
-        if wiki page named 'help/'''field-name'''' is supplied, use it for tooltip text. """
+        if wiki page named 'help/field-name is supplied, use it for tooltip text. """
     implements(ITemplateStreamFilter, IWikiChangeListener)
-    _titleMode = False
     _default_pages = {  'reporter': 'The author of the ticket.',
                         'type': 'The nature of the ticket (for example, defect or enhancement request). See TicketTypes for more details.',
                         'component': 'The project module or subsystem this ticket concerns.',
@@ -28,18 +29,33 @@ class FieldTooltip(Component):
                         'status': 'What is the current status? One of new, assigned, closed, reopened.',
                         'summary': 'A brief description summarizing the problem or issue. Simple text without WikiFormatting.',
                         'description': 'The body of the ticket. A good description should be specific, descriptive and to the point. Accepts WikiFormatting.'}
+    # blocking, blockedby for MasterTicketsPlugin, TicketRelationsPlugin
+    # position for QueuesPlugin
+    # estimatedhours for EstimationToolsPlugin, TracHoursPlugin, SchedulingToolsPlugin
+    # startdate, duedate for SchedulingToolsPlugin
+    # totalhours for TracHoursPlugin
+    # duetime for TracMileMixViewPlugin
+    # completed,storypoints,userstory for TracStoryPointsPlugin
+    # fields = "'estimatedhours', 'hours', 'billable', 'totalhours', 'internal'" for T&E;
+    #    See http://trac-hacks.org/wiki/TimeEstimationUserManual
+    # and any more default tooltip text...
+
     _wiki_prefix = 'help/'
 
     def __init__(self):
-        self._pages = {} # for each trac Project
-        # retrieve initial wiki contents for field help
-        db = self.env.get_db_cnx()
+        pass
+
+    @cached
+    def pages(self, db):
+        # retrieve wiki contents for field help
+        pages = {}
         cursor = db.cursor()
         wiki_pages = WikiSystem(self.env).get_pages(FieldTooltip._wiki_prefix)
         for page in wiki_pages:
             cursor.execute("SELECT text FROM wiki WHERE name = '%s' ORDER BY version DESC LIMIT 1" % page)
-            for (text,) in cursor:
-                self._pages[page[len(FieldTooltip._wiki_prefix):]] = text
+            for text, in cursor:
+                pages[page[len(FieldTooltip._wiki_prefix):]] = text
+        return pages
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
@@ -49,22 +65,19 @@ class FieldTooltip(Component):
 
     # IWikiChangeListener methods
     def wiki_page_added(self, page):
-        self._pages[page.name[len(FieldTooltip._wiki_prefix):]] = page.text
-        
+        del self.pages
+
     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
-        self._pages[page.name[len(FieldTooltip._wiki_prefix):]] = page.text
-        
+        del self.pages
+
     def wiki_page_deleted(self, page):
-        if page.name[len(FieldTooltip._wiki_prefix):] in self._pages:
-            del self._pages[page.name[len(FieldTooltip._wiki_prefix):]]
-    
+        del self.pages
+
     def wiki_page_version_deleted(self, page):
-        self._pages[page.name[len(FieldTooltip._wiki_prefix):]] = page.text
-        
+        del self.pages
+
     def wiki_page_renamed(self, page, old_name):
-        if old_name[len(FieldTooltip._wiki_prefix):] in self._pages:
-            del self._pages[old_name[len(FieldTooltip._wiki_prefix):]]
-        self._pages[page.name[len(FieldTooltip._wiki_prefix):]] = page.text
+        del self.pages
 
 
 class FieldTooltipFilter(object):
@@ -74,28 +87,29 @@ class FieldTooltipFilter(object):
         <div id="tooltip-ZZZZZ"> zzzzz </div> という要素を追加します。
         div要素の中身はWikiフォーマットされたHTMLで説明を追加します。太字やリンクなども表現されます。
         
-               通常のHTMLでは title属性がポップアップしますが、
-        jquery cluetip plugin では、{local:true} と指定することで、relで指定したIDのdivをポップアップできます。
-        jquery tooltip plugin では bodyHandler で 当該divを返すようにすることで、そのdivがポップアップします。
-                ターゲットの next要素をポップアップするプラグインもあったような気がする。全部実現できるよ。
+               通常のHTMLでは title属性がポップアップします。
+        jquery cluetip plugin を使う場合、{local:true} と指定することで、relで指定したIDのdivがポップアップします。
+        jquery tooltip plugin を使う場合、bodyHandler で 当該divを返すようにすることで、そのdivがポップアップします。
+        jquery tools tooltop を使う場合、remoteAttr('title') することで next要素(=div)がポップアップします。
         """
-     
+
     def __init__(self, parent, req):
         self.parent = parent
-        self.req = req
-    
+        self.context = Context.from_request(req)
+
     def __call__(self, stream):
         after_stream = {}
         depth = 0
         for kind, data, pos in stream:
             if kind is START:
-                attr_value = None
                 depth += 1
+                # add title and rel attribute to the element
                 data = self._add_title(data, 'label', 'for', 'field-', after_stream, depth)
                 data = self._add_title(data, 'th', 'id', 'h_', after_stream, depth)
                 yield kind, data, pos
             elif kind is END:
                 yield kind, data, pos
+                # add div element after the element
                 if str(depth) in after_stream:
                     for subevent in after_stream[str(depth)]:
                         yield subevent
@@ -105,28 +119,25 @@ class FieldTooltipFilter(object):
                 yield kind, data, pos
 
     def _add_title(self, data, tagname, attr_name, prefix, after_stream, depth):
-        """ after_stream has side effect """
+        """ data で与えられた要素が、引数で指定された tagname であり、attr_name 属性の値が prefix で始まる場合、
+            add title and rel attribute to the element.
+                       またそのとき、after_stream[depth] に DIV 要素を格納します。
+        """
+        text = None
         tag, attrs = data
-        if tag.localname == tagname:
-            attr_value = attrs.get(attr_name)
-            if attr_value and attr_value.startswith(prefix):
-                attr_value = attr_value[len(prefix):]
-                if attr_value in self.parent._pages:
-                    text = self.parent._pages.get(attr_value)
-                    attrs |= [(QName('title'), attr_value + ' | ' + text)]
-                    attrs |= [(QName('rel'), '#tooltip-' + attr_value)]
-                    text = attr_value + ":\n" + wiki_to_html(text, self.parent.env, self.req)
-                    after_stream[str(depth)] = \
-                        XML('<div id="%s" class="tooltip" style="display: none">%s</div>' \
-                            % ('tooltip-' + attr_value, text))
-                    data = tag, attrs
-                elif attr_value in FieldTooltip._default_pages:
-                    text = FieldTooltip._default_pages.get(attr_value)
-                    attrs |= [(QName('title'), attr_value + ' | ' + text)]
-                    attrs |= [(QName('rel'), '#tooltip-' + attr_value)]
-                    text = attr_value + ":\n" + wiki_to_html(text, self.parent.env, self.req)
-                    after_stream[str(depth)] = \
-                        XML('<div id="%s" class="tooltip" style="display: none">%s</div>' \
-                            % ('tooltip-' + attr_value, text))
-                    data = tag, attrs
+        attr_value = attrs.get(attr_name)
+        if tag.localname == tagname and attr_value and attr_value.startswith(prefix):
+            attr_value = attr_value[len(prefix):]
+            if attr_value in self.parent.pages:
+                text = self.parent.pages.get(attr_value)
+            elif attr_value in FieldTooltip._default_pages:
+                text = FieldTooltip._default_pages.get(attr_value)
+            if text:
+                attrs |= [(QName('title'), attr_value + ' | ' + text)]
+                attrs |= [(QName('rel'), '#tooltip-' + attr_value)]
+                text = attr_value + ":\n" + format_to_html(self.parent.env, self.context, text, False)
+                after_stream[str(depth)] = \
+                    XML('<div id="%s" class="tooltip" style="display: none">%s</div>' \
+                        % ('tooltip-' + attr_value, text))
+                data = tag, attrs
         return data
