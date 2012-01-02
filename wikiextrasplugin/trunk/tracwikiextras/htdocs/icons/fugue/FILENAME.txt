@@ -48,6 +48,7 @@ application-export.png
 application-form.png
 application-home.png
 application-icon.png
+application-icon-large.png
 application-image.png
 application-import.png
 application-list.png
@@ -56,6 +57,7 @@ application-monitor.png
 application-network.png
 application-plus.png
 application-plus-black.png
+application-plus-red.png
 application-rename.png
 application-resize.png
 application-resize-actual.png
@@ -225,6 +227,9 @@ auction-hammer--minus.png
 auction-hammer--pencil.png
 auction-hammer--plus.png
 auction-hammer-gavel.png
+baggage-cart.png
+baggage-cart-box.png
+baggage-cart-box-label.png
 balance.png
 balance--arrow.png
 balance--exclamation.png
@@ -245,7 +250,7 @@ balloon-facebook.png
 balloon-facebook-left.png
 balloon-left.png
 balloon-quotation.png
-balloon-slash.png
+balloon-prohibition.png
 balloon-small.png
 balloon-small-left.png
 balloon-smiley.png
@@ -452,6 +457,7 @@ blue-document-table.png
 blue-document-tag.png
 blue-document-task.png
 blue-document-template.png
+blue-document-tex.png
 blue-document-text.png
 blue-document-text-image.png
 blue-document-tree.png
@@ -634,6 +640,7 @@ burn--minus.png
 burn--pencil.png
 burn--plus.png
 burn-small.png
+cactus.png
 cake.png
 cake--arrow.png
 cake--exclamation.png
@@ -730,6 +737,8 @@ cassette--plus.png
 cassette-label.png
 cassette-small.png
 category.png
+caution-board.png
+caution-board-prohibition.png
 certificate.png
 chain.png
 chain--arrow.png
@@ -771,7 +780,7 @@ chevron-small.png
 chevron-small-expand.png
 church.png
 cigarette.png
-cigarette-slash.png
+cigarette-prohibition.png
 clapperboard.png
 clapperboard--arrow.png
 clapperboard--exclamation.png
@@ -1038,7 +1047,7 @@ disk-small-black.png
 disks.png
 disks-black.png
 do-not-disturb-sign.png
-do-not-disturb-sign-slash.png
+do-not-disturb-sign-prohibition.png
 document.png
 document--arrow.png
 document--exclamation.png
@@ -1140,6 +1149,7 @@ document-table.png
 document-tag.png
 document-task.png
 document-template.png
+document-tex.png
 document-text.png
 document-text-image.png
 document-tree.png
@@ -1450,6 +1460,7 @@ folders.png
 folders-stack.png
 folding-fan.png
 fruit.png
+fruit-apple-half.png
 fruit-grape.png
 fruit-lime.png
 fruit-orange.png
@@ -1593,6 +1604,9 @@ home-medium.png
 home-network.png
 home-share.png
 home-small.png
+home-for-sale-sign.png
+home-for-sale-sign-blue.png
+home-for-sale-sign-red.png
 hourglass.png
 hourglass--arrow.png
 hourglass--exclamation.png
@@ -1610,6 +1624,7 @@ ice--plus.png
 ice-cream.png
 ice-cream-blue-moon.png
 ice-cream-chocolate.png
+ice-cream-empty.png
 ice-cream-sprinkles.png
 ice-cream-sprinkles-blue-moon.png
 ice-cream-sprinkles-chocolate.png
@@ -1938,6 +1953,8 @@ media-player-medium-red.png
 media-player-medium-yellow.png
 media-player-phone.png
 media-player-phone-horizontal.png
+media-player-phone-protector.png
+media-player-protector.png
 media-player-small.png
 media-player-small-blue.png
 media-player-small-green.png
@@ -1992,6 +2009,7 @@ mobile-phone--plus.png
 mobile-phone-cast.png
 mobile-phone-medium.png
 mobile-phone-off.png
+mobile-phone-protector.png
 molecule.png
 money.png
 money--arrow.png
@@ -2014,6 +2032,7 @@ monitor-image.png
 monitor-medium.png
 monitor-network.png
 monitor-off.png
+monitor-protector.png
 monitor-screensaver.png
 monitor-sidebar.png
 monitor-wallpaper.png
@@ -2038,21 +2057,26 @@ music--plus.png
 music-beam.png
 music-beam-16.png
 music-small.png
+mustache.png
 na.png
 navigation.png
 navigation-000-button.png
+navigation-000-button-white.png
 navigation-000-frame.png
 navigation-000-white.png
 navigation-090.png
 navigation-090-button.png
+navigation-090-button-white.png
 navigation-090-frame.png
 navigation-090-white.png
 navigation-180.png
 navigation-180-button.png
+navigation-180-button-white.png
 navigation-180-frame.png
 navigation-180-white.png
 navigation-270.png
 navigation-270-button.png
+navigation-270-button-white.png
 navigation-270-frame.png
 navigation-270-white.png
 network.png
@@ -2126,7 +2150,7 @@ paint-brush--minus.png
 paint-brush--pencil.png
 paint-brush--plus.png
 paint-brush-color.png
-paint-brush-slash.png
+paint-brush-prohibition.png
 paint-brush-small.png
 paint-can.png
 paint-can--arrow.png
@@ -2163,6 +2187,7 @@ paper-bag--plus.png
 paper-bag-label.png
 paper-bag-recycle.png
 paper-clip.png
+paper-clip-prohibition.png
 paper-clip-small.png
 paper-lantern.png
 paper-lantern-emblem.png
@@ -2184,6 +2209,7 @@ pda--minus.png
 pda--pencil.png
 pda--plus.png
 pda-off.png
+pda-protector.png
 pearl.png
 pearl-shell.png
 pencil.png
@@ -2193,8 +2219,8 @@ pencil--minus.png
 pencil--plus.png
 pencil-color.png
 pencil-field.png
+pencil-prohibition.png
 pencil-ruler.png
-pencil-slash.png
 pencil-small.png
 photo-album.png
 photo-album--arrow.png
@@ -2263,7 +2289,7 @@ plug--pencil.png
 plug--plus.png
 plug-connect.png
 plug-disconnect.png
-plug-disconnect-slash.png
+plug-disconnect-prohibition.png
 plus.png
 plus-button.png
 plus-circle.png
@@ -2285,6 +2311,8 @@ point-bronze.png
 point-silver.png
 point-small.png
 points.png
+popcorn.png
+popcorn-empty.png
 postage-stamp.png
 postage-stamp--arrow.png
 postage-stamp--exclamation.png
@@ -2321,6 +2349,9 @@ printer-network.png
 printer-share.png
 printer-small.png
 processor.png
+prohibition.png
+prohibition-button.png
+prohibition-small.png
 projection-screen.png
 projection-screen--arrow.png
 projection-screen--exclamation.png
@@ -2353,8 +2384,15 @@ quill--arrow.png
 quill--exclamation.png
 quill--minus.png
 quill--plus.png
-quill-slash.png
+quill-prohibition.png
 radar.png
+radio.png
+radio--arrow.png
+radio--exclamation.png
+radio--minus.png
+radio--pencil.png
+radio--plus.png
+radio-old.png
 radioactivity.png
 radioactivity-drum.png
 rainbow.png
@@ -2396,6 +2434,7 @@ report-word.png
 reports.png
 reports-stack.png
 resource-monitor.png
+resource-monitor-protector.png
 ribbon.png
 ring.png
 road-sign.png
@@ -2555,9 +2594,6 @@ skull-happy.png
 skull-mad.png
 skull-old.png
 skull-sad.png
-slash.png
-slash-button.png
-slash-small.png
 slide.png
 slide--arrow.png
 slide--exclamation.png
@@ -2738,6 +2774,7 @@ store--minus.png
 store--pencil.png
 store--plus.png
 store-label.png
+store-market-stall.png
 store-medium.png
 store-network.png
 store-open.png
@@ -2763,6 +2800,7 @@ system-monitor--pencil.png
 system-monitor--plus.png
 system-monitor-medium.png
 system-monitor-network.png
+system-monitor-protector.png
 t-shirt.png
 t-shirt-gray.png
 t-shirt-print.png
@@ -2861,6 +2899,7 @@ television--pencil.png
 television--plus.png
 television-image.png
 television-off.png
+television-protector.png
 television-test.png
 terminal.png
 terminal--arrow.png
@@ -2870,6 +2909,7 @@ terminal--pencil.png
 terminal--plus.png
 terminal-medium.png
 terminal-network.png
+terminal-protector.png
 thermometer.png
 thermometer--arrow.png
 thermometer--exclamation.png

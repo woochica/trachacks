@@ -1,3 +1,33 @@
+Version 3.3 (November 19, 2011)
+- Add <application-icon-large> and <application-plus-red>.
+- Add <fruit-apple-half>.
+- Add <media-player-protector>.
+- Add <mustache>.
+- Add <navigation-*-button-white>.
+- Add <radio*>.
+- Add <resource-monitor-protector>.
+- Add <store-market-stall>.
+- Add <system-monitor-protector>.
+- Add <terminal-protector>.
+- Add <32/tick>.
+------------------------------------------------------------
+Version 3.2.4 (November 7, 2011)
+- Rename <*slash*> to <*prohibition*>.
+- Add <baggage-cart*>.
+- Add <blue-document-tex>.
+- Add <cactus>.
+- Add <caution-board*>.
+- Add <document-tex>.
+- Add <home-for-sale-sign*>.
+- Add <ice-cream-empty>.
+- Add <media-player-phone-protector>.
+- Add <mobile-phone-protector>.
+- Add <monitor-protector>.
+- Add <paper-clip-prohibition>.
+- Add <pda-protector>.
+- Add <popcorn*>.
+- Add <television-protector>.
+------------------------------------------------------------
 Version 3.2.3 (October 29, 2011)
 - Add <application-ab>.
 - Add <balloon-slash>.

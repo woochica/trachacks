@@ -2,7 +2,7 @@ Fugue Icons
 
 (C) 2011 Yusuke Kamiyamane. All rights reserved.
 These icons are licensed under a Creative Commons
-Attribution 3.0 license.
+Attribution 3.0 License.
 <http://creativecommons.org/licenses/by/3.0/>
 
 If you can't or don't want to provide attribution, please
@@ -21,7 +21,7 @@ suggestions are always welcome!
   <http://www.geotagicons.com/>
 
   Geotag icon is licensed under a Creative Commons
-  Attribution-Share Alike 3.0 license or LGPL.
+  Attribution-Share Alike 3.0 License or LGPL.
   <http://creativecommons.org/licenses/by-sa/3.0/>
   <http://opensource.org/licenses/lgpl-license.php>
 
@@ -31,7 +31,7 @@ suggestions are always welcome!
   <http://www.languageicon.org/>
 
   Language icon is licensed under a Creative Commons
-  Attribution-Share Alike 3.0 license.
+  Attribution-Share Alike 3.0 License.
   <http://creativecommons.org/licenses/by-sa/3.0/>
 
 - open-share
@@ -40,7 +40,7 @@ suggestions are always welcome!
   <http://www.openshareicons.com/>
 
   Open Share icon is licensed under a Creative Commons
-  Attribution-Share Alike 3.0 license.
+  Attribution-Share Alike 3.0 License.
   <http://creativecommons.org/licenses/by-sa/3.0/>
 
 - opml
@@ -49,7 +49,7 @@ suggestions are always welcome!
   <http://opmlicons.com/>
 
   OPML icon is licensed under a Creative Commons
-  Attribution-Share Alike 2.5 license.
+  Attribution-Share Alike 2.5 License.
   <http://creativecommons.org/licenses/by-sa/2.5/>
 
 - share
@@ -58,7 +58,7 @@ suggestions are always welcome!
   <http://shareicons.com/>
 
   Share icon is licensed under a GPL or LGPL or BSD or
-  Creative Commons Attribution 2.5 license.
+  Creative Commons Attribution 2.5 License.
   <http://opensource.org/licenses/gpl-license.php>
   <http://opensource.org/licenses/lgpl-license.php>
   <http://opensource.org/licenses/bsd-license.php>
@@ -70,5 +70,5 @@ suggestions are always welcome!
   <http://www.bartelme.at/>
 
   XFN icon is licensed under a Creative Commons
-  Attribution-Share Alike 2.5 license.
+  Attribution-Share Alike 2.5 License.
   <http://creativecommons.org/licenses/by-sa/2.5/>
