@@ -447,10 +447,10 @@ class TracPM(Component):
                            "WHERE name in ('" + "','".join(milestones) + "')")
             for row in cursor:
                 id = id-1
-                milestoneTicket = self.pm._pseudoTicket(id, 
-                                                        row[0],
-                                                        'Milestone %s' % row[0],
-                                                        row[0])
+                milestoneTicket = self._pseudoTicket(id, 
+                                                     row[0],
+                                                     'Milestone %s' % row[0],
+                                                     row[0])
 
                 # If there's no due date, default to today at close of business
                 if self.isCfg('finish'):
