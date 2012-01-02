@@ -385,7 +385,7 @@ class TracPM(Component):
 
         return id
 
-    def _pseudoticket(self, id, summary, description, milestone):
+    def _pseudoTicket(self, id, summary, description, milestone):
         ticket = {}
         ticket['id'] = id
         ticket['summary'] = summary
