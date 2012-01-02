@@ -115,7 +115,7 @@ The chart display can be controlled with a number of macro arguments:
 || `omitMilestones`||Show milestones for displayed tickets (0) or only those specified by `milestone=` (1)||0||
 || `schedule`||Schedule tasks based on dependenies and estimates.  Either as soon as possible (asap) or as late as possible (alap)||alap||
 
-Site-wide defaults for macro arguments may be set in `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
+Site-wide defaults for macro arguments may be set in the `trac-jsgantt` section of `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
 
 All other macro arguments are treated as TracQuery specification (e.g., milestone=ms1|ms2) to control which tickets are displayed.
 
