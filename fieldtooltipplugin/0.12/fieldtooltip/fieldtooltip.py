@@ -51,10 +51,11 @@ class FieldTooltip(Component):
         pages = {}
         cursor = db.cursor()
         wiki_pages = WikiSystem(self.env).get_pages(FieldTooltip._wiki_prefix)
+        prefix_len = len(FieldTooltip._wiki_prefix)
         for page in wiki_pages:
-            cursor.execute("SELECT text FROM wiki WHERE name = '%s' ORDER BY version DESC LIMIT 1" % page)
+            cursor.execute("SELECT text FROM wiki WHERE name = %s ORDER BY version DESC LIMIT 1", (page,))
             for text, in cursor:
-                pages[page[len(FieldTooltip._wiki_prefix):]] = text
+                pages[page[prefix_len:]] = text
         return pages
 
     # ITemplateStreamFilter methods
