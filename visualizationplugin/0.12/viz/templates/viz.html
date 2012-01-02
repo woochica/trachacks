@@ -1,0 +1,44 @@
+<script type="text/javascript" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+
+var prepare = function(){
+    var selector = jQuery('${selector}');
+    
+    // prepare data from a local table or remote query
+    if ('${source}' == 'table'){
+        var data = new google.visualization.DataTable();
+        populate(data, selector);
+        draw(data, selector);
+    } else {
+        var query = new google.visualization.Query('${source}');
+        if ('${query}'.length)
+            query.setQuery('${query}');
+        query.send(function(response){
+            if (!response.isError()) {
+                var data = response.getDataTable();
+                draw(data, selector);
+            }
+        });
+    }
+}
+
+var draw = function(data, selector){
+    var chart = new google.visualization.${type}(get_div(selector));
+    chart.draw(data, {${options}});
+}
+
+// wait for google libs to load
+var t;
+var wait = function(){
+    if (libs_loaded)
+        prepare();
+    else
+        t = setTimeout("wait()", 100);
+}
+
+jQuery(document).ready(function(){
+    t = setTimeout("wait()", 100);
+});
+
+</script>
