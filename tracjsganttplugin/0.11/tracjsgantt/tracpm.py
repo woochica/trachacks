@@ -305,8 +305,12 @@ class TracPM(Component):
             if (estimate == 0):
                 percent = 0
             else:
-                worked = float(ticket[self.fields['worked']])
-                percent = '%s/%s' % (worked, estimate)
+                worked = ticket[self.fields['worked']]
+                if worked == '':
+                    percent = 0
+                else:
+                    worked = float(worked)
+                    percent = '%s/%s' % (worked, estimate)
         # Use percent if provided
         elif self.isCfg('percent'):
             try:
