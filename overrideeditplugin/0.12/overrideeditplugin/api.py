@@ -57,15 +57,17 @@ def _validate_ticket(self, req, ticket, force_collision_check=False):
         ticket.values['changetime'] = iso8601.parse_date(req.args.get('ts'))
         valid = original_validate_ticket(self, req, ticket, force_collision_check)
         self.env.log.debug("Override edit plugin: original validation (without"
-                           " midair collision check): %s, ts:%s, changetime:%s, collision?:%s " % 
+                           " midair collision check): %s, ts:%s, changetime:%s, collision?:%s /%r and (%r or %r) and %r != %r/ " % 
                            (valid, req.args.get('ts'),old_ticket_changetime,
                             ticket.exists and (ticket._old or comment) and
-                            req.args.get('ts') != str(ticket['changetime'])))
+                            req.args.get('ts') != str(ticket['changetime']),
+                            ticket.exists, ticket._old, comment,
+                            req.args.get('ts'), str(ticket['changetime'])))
     finally:
         ticket.values['changetime'] = old_ticket_changetime
 
     # Avoidable mid air collision checks
-    if ticket.exists and (ticket._old or comment):
+    if ticket.exists and (ticket._old or comment) and req.args.get('id'):
         skey = "warning-"+req.args['id']+'-'+req.args.get('ts')
         if req.args.get('ts') != str(ticket['changetime']) and not req.session.has_key(skey):
             req.session[skey] = True;

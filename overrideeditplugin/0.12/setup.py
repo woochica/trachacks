@@ -3,7 +3,7 @@ from setuptools import setup
 PACKAGE = 'overrideeditplugin'
 
 setup(name="OverrideEditPlugin",
-      version='0.0.5',
+      version='0.0.6',
       packages=[PACKAGE],
       url='http://www.trac-hacks.org/wiki/OverrideEditPlugin',
       license='http://www.opensource.org/licenses/mit-license.php',
