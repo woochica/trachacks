@@ -172,9 +172,10 @@ class DefaultTagProvider(Component):
                                comment=u''):
         assert old_resource.realm == self.realm
         assert new_resource.realm == self.realm
-        if not self.check_permission(req.perm(old_resource), 'modify') or \
-                not self.check_permission(req.perm(new_resource), 'modify'):
-            raise PermissionError(resource=resource, env=self.env)
+        if not self.check_permission(req.perm(old_resource), 'modify'):
+            raise PermissionError(resource=old_resource, env=self.env)
+        if not self.check_permission(req.perm(new_resource), 'modify'):
+            raise PermissionError(resource=new_resource, env=self.env)
         db = self.env.get_db_cnx()
         try:
             cursor = db.cursor()
