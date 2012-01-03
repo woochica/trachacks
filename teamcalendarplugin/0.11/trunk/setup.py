@@ -7,6 +7,8 @@ setup(
     name = 'teamcalendar',
     author = 'Martin Aspeli',
     author_email = 'optilude@gmail.com',
+    maintainer = 'Chris Nelson',
+    maintainer_email = 'Chris.Nelson@SIXNET.com',
     description = 'Trac plugin for managing team availability',
     version = '0.1',
     license='BSD',
