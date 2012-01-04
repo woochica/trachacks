@@ -11,6 +11,8 @@ setup(
     author = "Eric Hodges",
     author_email = "eric.hodges@gmail.com",
     description = "Add private wiki ability.",
+    maintainer = "Nathan Lewis",
+    maintainer_email = "natewlew@gmail.com",
     long_description = "Allow admins to restrict access to wikis.",
     license = "BSD",
     keywords = "trac plugin wiki permissions security",
