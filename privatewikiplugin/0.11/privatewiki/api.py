@@ -23,13 +23,20 @@ class PrivateWikiSystem(Component):
 
     # IPermissionPolicy(Interface)
     def check_permission(self, action, username, resource, perm):
-	if username == 'anonymous' or resource is None or resource.id is None:
+	self.env.log.debug('Checking permission called with: action(%s), username(%s), resource(%s), perm(%s)' % (str(action), str(username), str(resource), str(perm)))
+	if resource is None or resource.id is None:
 		return None
+
+        if username == 'anonymous' and resource.realm == 'wiki':
+                wiki = WikiPage(self.env, resource.id)
+                page = self._prep_page(wiki.name)
+                if self._protected_page(page):
+                        return False
 
 	if resource.realm == 'wiki' and action in ('WIKI_VIEW','WIKI_MODIFY'):
 		wiki = WikiPage(self.env, resource.id)
 		return self.check_wiki_access(perm, resource, action, wiki.name)
-	return None;
+	return None
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -42,12 +49,14 @@ class PrivateWikiSystem(Component):
 	return page.upper().replace('/','_')
 
     def _protected_page(self, page):
+	self.env.log.debug('Checking privacy of page %s' % (page))
 	page = self._prep_page(page)
 	member_of = []
 	for base_page in self.wikis:
 		if page.startswith(base_page + '_') or page == base_page:
 			member_of.append(base_page)
 
+	self.env.log.debug('Privacy check results %s' % str(member_of))
 	return member_of
 	
     # Public methods
