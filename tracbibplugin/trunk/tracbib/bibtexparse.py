@@ -339,6 +339,8 @@ def bibtexload(filecontents_source):
   comment=[]
   entries={}
   start= 0
+  s = 0
+  e = 0
   final=len(filecontents)-1
 
   while start < final:
