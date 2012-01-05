@@ -6,6 +6,7 @@
 from genshi.filters.transform import Transformer
 from genshi.input import HTML
 from simplemultiproject.model import *
+from trac.util.text import to_unicode
 from trac.core import *
 from trac.web.api import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
@@ -74,7 +75,7 @@ class SmpRoadmapProject(Component):
                     if(div_milestones_array[i].find(mi)>0):
                         div_milestone = div_milestone + div_milestones_array[i]
             div_project = div_project + div_milestone + '</fieldset></div>'
-            div_projects_milestones = div_projects_milestones + div_project
+            div_projects_milestones = to_unicode(div_projects_milestones + div_project)
         stream_div_projects_milestones = HTML(div_projects_milestones)
         return stream_div_projects_milestones
         

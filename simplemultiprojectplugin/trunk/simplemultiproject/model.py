@@ -61,7 +61,7 @@ class SmpModel(Component):
         cursor = self.__get_cursor()
         query = """INSERT INTO
                         smp_milestone_project(milestone, id_project)
-                    VALUES ('%s', %s)""" % (str(milestone), str(id_project))
+                    VALUES ('%s', %s)""" % (milestone, str(id_project))
         cursor.execute(query)
         self.__start_transacction()
 
