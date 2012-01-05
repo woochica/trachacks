@@ -20,8 +20,12 @@ class TracchildticketsModule(Component):
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
 
+
+        # If anyone has problems, we get some output!
+        self.env.log.debug("TracchildticketsModule : handler.__class__.__name__: %s" % handler.__class__.__name__)
+
         # Get ticket relationships before processing anything.
-        if req.path_info[0:8] == '/ticket/':
+        if handler and handler.__class__.__name__ in ['TicketModule','RPCWeb']:
             db = self.env.get_db_cnx() 
             cursor = db.cursor() 
             cursor.execute("SELECT ticket,value FROM ticket_custom WHERE name='parent'")
