@@ -183,7 +183,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             'function() { '+self.GanttID+'.Draw(); '
         if options['showdep']:
             text += self.GanttID+'.DrawDependencies();'
-        text += '}, false);\n'
+        text += '});\n'
         text += '}\n'
         return text
 
