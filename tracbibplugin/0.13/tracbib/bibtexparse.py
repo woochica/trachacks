@@ -307,22 +307,16 @@ def get_fields(strng):
 # Bug: Does not handle "=" inside a field data (for instance in url)
 def bibtexload(filecontents_source):
   space_rex = re.compile('\s+')
-  comment_rex = re.compile('\s*%')
-  commentline_rex = re.compile(r'[^\\]%.*$')
   pubtype_rex = re.compile('\W?@(\w*)\s*{\s*([^,]*),')
   pub_rex = re.compile('\W?@(\w*)\s*{')
 
   filecontents = []
 
   # remove trailing and excessive whitespace
-  # ignore comments
   for line in filecontents_source:
     line = string.strip(line)
     line = space_rex.sub(' ', line)
-    line = commentline_rex.sub('',line)
-    # ignore comments
-    if not comment_rex.match(line):
-      filecontents.append(' '+ line)
+    filecontents.append(' '+ line)
   filecontents = string.join(filecontents, '')
 
   # the file is in one long string
