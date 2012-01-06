@@ -174,10 +174,16 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         text += 'var t;\n'
         text += 'if (window.addEventListener){\n'
         text += '  window.addEventListener("resize", ' + \
-            'function() { g.Draw();\n }, false);\n'
+            'function() { ' + self.GanttID+'.Draw(); '
+        if options['showdep']:
+            text += self.GanttID+'.DrawDependencies();'
+        text += '}, false);\n'
         text += '} else {\n'
         text += '  window.attachEvent("onresize", ' + \
-            'function() { g.Draw();\n });\n'
+            'function() { '+self.GanttID+'.Draw(); '
+        if options['showdep']:
+            text += self.GanttID+'.DrawDependencies();'
+        text += '}, false);\n'
         text += '}\n'
         return text
 
