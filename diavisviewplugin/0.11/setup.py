@@ -10,7 +10,7 @@ setup(  name=PACKAGE, version=VERSION,
         author_email = 'robert.martin@arqiva.com',
         url = '',
         description = 'Renders Dia and vdx files to png',
-        license='GPL',
+        license='BSD',
 
         package_dir = { 'DiaVisView' : 'DiaVisView'},
         packages = ['DiaVisView'],
