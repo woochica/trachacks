@@ -239,14 +239,14 @@ class BibRefMacro(WikiMacroBase):
 
         try:
             for format in self.formatter:
-                tags = format.format_ref(items,'References')
+                div = format.format_ref(items,'References')
         finally:
             # CLEANUP: outdated entries might survive in memory, so clear the container
             cite.clear()
             for source in self.sources:
                 source.clear()
        
-        return tag.div(id='References')(*tags)
+        return div
 
 class BibFullRefMacro(WikiMacroBase):
     formatter = ExtensionPoint(IBibRefFormatter)
@@ -271,12 +271,12 @@ class BibFullRefMacro(WikiMacroBase):
                     cite[key]=value
 
             for format in self.formatter:
-                tags = format.format_fullref(cite.items(),'Bibliography')
+                div = format.format_fullref(cite.items(),'References')
         finally:
             # CLEANUP: outdated entries might survive in memory, so clear the container
             cite.clear()
             for source in self.sources:
                 source.clear()
        
-        return tag.div(id='References')(*tags)
+        return div
 

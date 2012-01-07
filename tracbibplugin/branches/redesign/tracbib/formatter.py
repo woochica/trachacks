@@ -62,7 +62,6 @@ BIBTEX_KEYS = [
     'chapter',
     'volume',
     'paper',
-    'type',
     'revision',
     'isbn',
     'pages',
@@ -75,18 +74,26 @@ class BibRefFormatterBasic(Component):
         return "basic"
 
     def format_entry(self,key,value):
-        content = ''
+        content = tag()
+        content.append(tag.a(name='ref_%s' % key))
         for bibkey in BIBTEX_KEYS:
             if value.has_key(bibkey):
                 if bibkey in BIBTEX_PERSON:
-                    content += authors(value[bibkey])+', '
+                    #TODO
+                    #content += authors(value[bibkey])+', '
+                    print "blub"
                 else:
-                    content += capitalizetitle(replace_tags(value[bibkey])) + ', '
-        if value.has_key('url') == False:
-            return tag.li(tag.a(name='ref_%s' % key), tag.a(href='#cite_%s' % key)('^') ,content)
-        else:
+                    span = tag.span(class_=bibkey)
+                    span.append(capitalizetitle(replace_tags(value[bibkey])))
+                    content.append(tag(span , ', '))
+        if value.has_key('url'):
             url = value['url']
-            return tag.li(tag.a(name='ref_%s' % key), tag.a(href='#cite_%s' % key)('^') ,content, tag.br(),tag.a(href=url)(url))
+            span = tag.span(class_='url')
+            span.append(tag.a(href=url)(url))
+            content.append(tag(tag.br(),span))
+        
+        #return tag.li(tag.a(name='ref_%s' % key), tag.a(href='#cite_%s' % key)('^') ,content)
+        return content
 
     def format_ref(self,entries,label):
         return self.format_fullref(entries,label)
@@ -117,11 +124,16 @@ class BibRefFormatterBasic(Component):
             cite[key][":index"]=len(cite)
 
     def format(self,entries,label):
-        l = []
+        div = tag.div(class_="references")
+        div.append(tag.h1(id='references')(label))
+        count = 0
         for key,value in entries:
-            l.append(self.format_entry(key,value))
-        ol = tag.ol(*l)
-        tags = []
-        tags.append(tag.h1(id='References')(label))
-        tags.append(ol)
-        return tags
+            count = count + 1
+            sortkey = tag.span(class_="key")
+            sortkey.append(str(count) + ". ")
+            element = tag.div(class_=value["type"])
+            element.append(sortkey)
+            element.append(self.format_entry(key,value))
+            div.append(element)
+
+        return div

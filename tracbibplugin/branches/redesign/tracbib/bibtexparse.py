@@ -356,8 +356,12 @@ def authors(data):
         elif count > 1:
             pass
         
-        for k in a:
+        for k,v in a:
             a[k] = a[k].lstrip()
+            if len(v) == 0:
+                del a[k]
+                continue
+
         ret.append(a)
 
     return ret
@@ -472,9 +476,6 @@ def get_fields(strng):
 # Bug: Does not handle "=" inside a field data (for instance in url)
 def bibtexload(filecontents_source):
   space_rex = re.compile('\s+')
-  comment_rex = re.compile('\s*%')
-  commentline_rex = re.compile(r'[^\\]%.*$')
-  pubtype_rex = re.compile('\W?@(\w*)\s*{\s*([^,]*),')
   pub_rex = re.compile('\W?@(\w*)\s*{')
 
   filecontents = []
@@ -484,10 +485,8 @@ def bibtexload(filecontents_source):
   for line in filecontents_source:
     line = string.strip(line)
     line = space_rex.sub(' ', line)
-    line = commentline_rex.sub('',line)
     # ignore comments
-    if not comment_rex.match(line):
-      filecontents.append(' '+ line)
+    filecontents.append(' '+ line)
   filecontents = string.join(filecontents, '')
 
   # the file is in one long string
@@ -503,6 +502,8 @@ def bibtexload(filecontents_source):
   preamble=[]
   comment=[]
   entries={}
+  s=0
+  e=0
   start= 0
   final=len(filecontents)-1
 
