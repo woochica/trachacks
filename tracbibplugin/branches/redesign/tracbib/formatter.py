@@ -26,12 +26,19 @@
 
 from api import IBibRefFormatter
 from trac.core import implements, Component
+from trac.web.chrome import add_stylesheet, ITemplateProvider
+from trac.web.api import IRequestFilter
 from helper import replace_tags
+from trac.util.text import unicode_unquote
 from bibtexparse import capitalizetitle, authors
+from pkg_resources import resource_filename
 try:
   from genshi.builder import tag
+  from genshi.core import Markup
 except ImportError: # for trac 0.10:
   from trac.util.html import html as tag
+  #TODO from genshi.core import Markup
+
 
 BIBTEX_PERSON = [
     'author',
@@ -65,11 +72,12 @@ BIBTEX_KEYS = [
     'revision',
     'isbn',
     'pages',
+    'url',
 ]
 
 class BibRefFormatterBasic(Component):
     implements(IBibRefFormatter)
-
+    implements(IRequestFilter,ITemplateProvider)
     def formatter_type(self):
         return "basic"
 
@@ -81,17 +89,33 @@ class BibRefFormatterBasic(Component):
                 if bibkey in BIBTEX_PERSON:
                     #TODO
                     #content += authors(value[bibkey])+', '
-                    print "blub"
+                    a = authors(value[bibkey])
+                    for person in a:
+                        span = tag.span(class_=bibkey)
+                        partindex = 0
+                        for part in ['last','first','von']:
+                            if person.has_key(part):
+                                partindex = partindex+1
+                                partspan = tag.span(class_=part)
+                                partspan.append(person[part])
+                                if len(person) >= partindex+1:
+                                    partspan.append(", ")
+                                span.append(partspan)
+                        if person != a[-1]:
+                                span.append("; ")
+                    content.append(tag(span,": "))
+                elif bibkey == 'url':
+                    url = value['url']
+                    span = tag.span(class_='url')
+                    span.append(tag.a(href=url)(unicode_unquote(url)))
+                    content.append(tag(tag.br(),span))
                 else:
                     span = tag.span(class_=bibkey)
-                    span.append(capitalizetitle(replace_tags(value[bibkey])))
-                    content.append(tag(span , ', '))
-        if value.has_key('url'):
-            url = value['url']
-            span = tag.span(class_='url')
-            span.append(tag.a(href=url)(url))
-            content.append(tag(tag.br(),span))
-        
+                    span.append(Markup(capitalizetitle(replace_tags(value[bibkey]))))
+                    content.append(span)
+                    #TODO:
+                    content.append(', ')
+       
         #return tag.li(tag.a(name='ref_%s' % key), tag.a(href='#cite_%s' % key)('^') ,content)
         return content
 
@@ -137,3 +161,19 @@ class BibRefFormatterBasic(Component):
             div.append(element)
 
         return div
+
+    #IRequestFilter
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        add_stylesheet(req,"tracbib/base.css")
+        return (template, data, content_type)
+
+    #ITemplateProvider
+    def get_htdocs_dirs(self):
+        return [('tracbib', resource_filename('tracbib', 'htdocs'))]
+
+    def get_templates_dirs(self):
+        return []
+

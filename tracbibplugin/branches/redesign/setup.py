@@ -13,5 +13,6 @@ setup(
     license = 'gpl',
     keywords = 'trac plugin cite macro bibtex',
     classifiers = ['Framework :: Trac'],
+    package_data={'tracbib' : ['htdocs/*.css','htdocs/*.js']},
     entry_points = {'trac.plugins': ['tracbib.macro = tracbib.tracbib']}
 )

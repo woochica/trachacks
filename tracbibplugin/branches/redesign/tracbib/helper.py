@@ -134,6 +134,8 @@ xml_tags= [  # xml/html entities
   ('&', '&amp;'),
   ('<', '&lt;'),
   ('>', '&gt;'),
+  ('---', '&#8212;'),
+  ('--', '&#8211;'),
 ]
 
 accent_tags= [  # Accents and other latin symbols

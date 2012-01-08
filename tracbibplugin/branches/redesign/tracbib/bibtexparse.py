@@ -356,13 +356,13 @@ def authors(data):
         elif count > 1:
             pass
         
-        for k,v in a:
-            a[k] = a[k].lstrip()
-            if len(v) == 0:
-                del a[k]
-                continue
+        b = {}
+        for k in a:
+            if len(a[k])>0:
+                b[k] = a[k]
+                b[k] = b[k].lstrip()
 
-        ret.append(a)
+        ret.append(b)
 
     return ret
 
