@@ -29,6 +29,7 @@ tfRE = re.compile('\['
 kwtrans = {
     'class'     : '_class',
     'id'        : '_id',
+    'title'     : '_title',
     }
 
 
@@ -419,19 +420,23 @@ class FormProcessor(object):
                 raise FormTooManyValuesError(str(name))
         return current
 
-    def op_input(self, field, content=None, size=None, _id=None, _class=None):
+    def op_input(self, field, content=None, size=None, maxlen=None,
+                 _title=None, _id=None, _class=None):
         current = self.get_field(field)
         if current is not None:
             content = current
         return ("<INPUT name='%s'" % field +
                 (size is not None and ' size="%s"' % size or '') +
+                (maxlen is not None and ' maxlength="%s"' % maxlen or '') +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
+                (_title is not None and ' title="%s"' % _title or '') +
                 (content is not None and (" value=%r" % xml_escape(
                                                      content)) or '') +
                 '>')
 
-    def op_checkbox(self, field, value=None, _id=None, _class=None):
+    def op_checkbox(self, field, value=None, _title=None, _id=None,
+                    _class=None):
         current = self.get_field(field)
         if value is not None:
             checked = value == current
@@ -440,15 +445,17 @@ class FormProcessor(object):
         return ("<INPUT type='checkbox' name='%s'" % field +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
+                (_title is not None and ' title="%s"' % _title or '') +
                 (value and (' value="' + value + '"') or '') +
                 (checked and ' checked' or '') +
                 '>')
 
-    def op_radio(self, field, value, _id=None, _class=None):
+    def op_radio(self, field, value, _title=None, _id=None, _class=None):
         current = self.get_field(field)
         return ("<INPUT type='radio' name='%s'" % field +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
+                (_title is not None and ' title="%s"' % _title or '') +
                 " value='%s'" % value +
                 (current == value and ' checked' or '') +
                 '>')
@@ -456,11 +463,13 @@ class FormProcessor(object):
     def op_select(self, field, *values, **kw):
         _id = kw.pop('_id', None)
         _class = kw.pop('_class', None)
+        _title = kw.pop('_title', None)
         current = self.get_field(field)
         result = []
         result.append("<SELECT name='%s'" % field +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
+                (_title is not None and ' title="%s"' % _title or '') +
                 '>')
         for value in values:
             value, label = (value.split('//', 1) + [value])[:2]
@@ -470,9 +479,8 @@ class FormProcessor(object):
         result.append("</SELECT>")
         return ''.join(result)
 
-    def op_textarea(self, field, content='',
-                    cols=None, rows=None,
-                    _id=None, _class=None):
+    def op_textarea(self, field, content='', cols=None, rows=None,
+                    _title=None, _id=None, _class=None):
         current = self.get_field(field)
         if current is not None:
             content = current
@@ -481,6 +489,7 @@ class FormProcessor(object):
                 (rows is not None and ' rows="%s"' % rows or '') +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
+                (_title is not None and ' title="%s"' % _title or '') +
                 '>' + content + '</TEXTAREA>')
 
     def op_context(self):

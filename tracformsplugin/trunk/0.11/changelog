@@ -6,6 +6,10 @@ tracforms-0.5 (yet unreleased):
  * #6033: tf.who should be passed through format_author
    adding a private, optionally cached version of `env.get_known_users()`
  * #9286: Only first update of Form works, all others fail
+ new features
+ * add universal title keyword argument for all typs of input field
+ * allow to translate another optional argument into MAXLENGTH attribute
+   for input fields of tpye TEXT exclusively
 
 
 tracforms-0.4.1 (22-Jul-2011):
