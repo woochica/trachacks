@@ -1693,7 +1693,10 @@ Complete-Displays task percent complete</p>
          {
 	     // 95% of overall window width
 	     width = window.innerWidth * 0.95 + 'px';
-         }
+         } 
+	 else {
+	     width = document.documentElement.clientWidth * 0.95 + 'px';
+	 }
 
 	 vDiv.style.width = width;
       }
