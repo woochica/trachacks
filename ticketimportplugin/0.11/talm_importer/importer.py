@@ -237,7 +237,7 @@ class ImportModule(Component):
             computedfields['owner']['value'] = 'Computed from component'
             computedfields['owner']['set'] = False
 
-        # to get the compulted default values
+        # to get the computed default values
         from ticket import PatchedTicket
         ticket = PatchedTicket(self.env)
         

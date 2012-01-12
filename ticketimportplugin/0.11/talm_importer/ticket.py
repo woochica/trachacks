@@ -4,34 +4,40 @@
 # Licensed under the same license as Trac - http://trac.edgewall.org/wiki/TracLicense
 #
 
-from trac.ticket import Ticket, model
 
-class PatchedTicket(Ticket):
-    ''' patched version of the Ticket class, that doesn't make the difference between a field defaulting to an empty string, and a field not defaulted
-    '''
+def PatchedTicket(*args, **argv):
 
-    # TODO: report it as a bug, and/or check if it is fixed in more recent versions
-    def _init_defaults(self, db=None):
-        for field in self.fields:
-            default = None
-            if field['name'] in ['resolution']:
-                # Ignore for new - only change through workflow
-                pass
-            elif not field.get('custom'):
-                default = self.env.config.get('ticket',
-                                              'default_' + field['name'], None)
-            else:
-                default = field.get('value')
-                options = field.get('options')
-                if default and default != '' and options and default not in options:
-                    try:
-                        default = options[int(default)]
-                    except (ValueError, IndexError):
-                        self.env.log.warning('Invalid default value "%s" '
-                                             'for custom field "%s"'
-                                             % (default, field['name']))
-            if default or default == '':
-                self.values.setdefault(field['name'], default)
+    # Some plugins (such as Agilo) overwrite the original Ticket class.
+    # So import at the latest moment...
+    from trac.ticket import Ticket
+    class PatchedTicketClass(Ticket):
+        ''' patched version of the Ticket class, that doesn't make the difference between a field defaulting to an empty string, and a field not defaulted
+        '''
 
-    def is_modified(self):
-        return self._old
+        # TODO: report it as a bug, and/or check if it is fixed in more recent versions
+        def _init_defaults(self, db=None):
+            for field in self.fields:
+                default = None
+                if field['name'] in ['resolution']:
+                    # Ignore for new - only change through workflow
+                    pass
+                elif not field.get('custom'):
+                    default = self.env.config.get('ticket',
+                                                  'default_' + field['name'], None)
+                else:
+                    default = field.get('value')
+                    options = field.get('options')
+                    if default and default != '' and options and default not in options:
+                        try:
+                            default = options[int(default)]
+                        except (ValueError, IndexError):
+                            self.env.log.warning('Invalid default value "%s" '
+                                                 'for custom field "%s"'
+                                                 % (default, field['name']))
+                if default or default == '':
+                    self.values.setdefault(field['name'], default)
+    
+        def is_modified(self):
+            return self._old
+
+    return PatchedTicketClass(*args, **argv)
