@@ -79,6 +79,9 @@ class IFormDBObserver(Interface):
     def get_tracform_history(self, src, cursor=None):
         pass
 
+    def save_tracform_allowed(self, path_or_realm, resource_id):
+        pass
+
     def save_tracform(self, src, state, updater,
                         base_version=None, keep_history=False,
                         track_fields=False, cursor=None):
@@ -122,6 +125,10 @@ class FormDBUser(Component):
 
     @tracob_first
     def save_tracform(self, *_args, **_kw):
+        return self.tracformdb_observers
+
+    @tracob_first
+    def save_tracform_allowed(self, *_args, **_kw):
         return self.tracformdb_observers
 
     @tracob_first

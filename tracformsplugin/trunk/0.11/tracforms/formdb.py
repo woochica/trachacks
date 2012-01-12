@@ -5,7 +5,7 @@ import re
 import time
 import unittest
 
-from trac.config import BoolOption, ListOption
+from trac.config import BoolOption, ListOption, Option
 from trac.core import Component, implements
 from trac.db import Column, DatabaseManager, Index, Table
 from trac.resource import Resource
@@ -27,6 +27,12 @@ class FormDBComponent(DBComponent):
 
     applySchema = True
 
+    parent_blacklist = Option(
+        'forms', 'parent_blacklist', 'wiki:PageTemplates/*,/newticket',
+        doc="""Deaktivate form submission from these (parent) resources.
+            Resources are specified as comma-separated list of paths and/or
+            <realm>:<resource_id> pairs, even with REGEXP pattern supported 
+            for resource IDs in the latter specifier type.""")
     show_fullname = BoolOption(
         'forms', 'show_fullname', False,
         doc="Display full names instead of usernames if available.")
@@ -36,6 +42,25 @@ class FormDBComponent(DBComponent):
             positional descriptors 'change', 'macro', 'value'.  Default is
             to show full names in 'macro' content only.
             """)
+
+    def __init__(self):
+        # Preprocess blacklist configuration option.
+        listd = {}
+        for elem in self.parent_blacklist.split(','):
+            res = elem.split(':', 1)
+            # Result is a Trac resource realm or a special context without
+            #   resource ID, i.e. /newticket
+            if [elem] == res:
+                if listd.get('paths'):
+                    listd['paths'].append(res[0])
+                else:
+                    listd['paths'] = res
+            else:
+                if listd.get(res[0]):
+                    listd[res[0]].append(res[1])
+                else:
+                    listd[res[0]] = [res[1]]
+        self.parent_blacklisted = listd
 
     # abstract TracForms update methods
 
@@ -121,6 +146,20 @@ class FormDBComponent(DBComponent):
         row = cursor.fetchone()
         return row and row[0]
 
+    def save_tracform_allowed(self, path_or_realm, resource_id):
+        if not resource_id:
+            if path_or_realm not in self.parent_blacklisted.get('paths', []):
+                return True
+        else:
+            if not path_or_realm in self.parent_blacklisted.keys():
+                return True
+            else:
+                for pattern in self.parent_blacklisted[path_or_realm]:
+                    if re.match(pattern, resource_id):
+                        return False
+                return True
+        return False
+
     def save_tracform(self, src, state, author,
                         base_version=None, keep_history=False,
                         track_fields=False, db=None):
@@ -139,7 +178,8 @@ class FormDBComponent(DBComponent):
 
         if ((base_version is None and last_updated_on is None) or
             (base_version == last_updated_on)):
-            if state != old_state:
+            if state != old_state and self.save_tracform_allowed(realm,
+                                                                 resource_id):
                 updated_on = int(time.time())
                 db = self._get_db(db)
                 cursor = db.cursor()

@@ -175,6 +175,9 @@ class FormProcessor(object):
                 # TRANSLATOR: Default submit button label
                 submit_label = self.submit_label or _("Update Form")
                 yield '<INPUT class="buttons" type="submit"'
+                if not self.macro.save_tracform_allowed(self.context[0],
+                                                        self.context[1]):
+                    yield ' disabled="disabled"'
                 if self.submit_name:
                     yield ' name=%r' % str(self.submit_name)
                 yield ' value=%r' % xml_escape(submit_label)

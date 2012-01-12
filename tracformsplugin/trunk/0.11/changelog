@@ -9,7 +9,9 @@ tracforms-0.5 (yet unreleased):
  new features
  * add universal title keyword argument for all typs of input field
  * allow to translate another optional argument into MAXLENGTH attribute
-   for input fields of tpye TEXT exclusively
+   for input fields of tpye TEXT exclusively, hint: others require HTML5
+ * add 'parent_blacklist' Option to prevent form submission from parent
+   resources known as template
 
 
 tracforms-0.4.1 (22-Jul-2011):
